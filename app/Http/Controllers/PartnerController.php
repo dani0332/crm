@@ -1,0 +1,116 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+use App\Models\Partner;
+class PartnerController extends Controller
+{
+    /**
+     * Display a listing of the resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function index()
+    {
+        $partners = Partner::all();
+        return view('partner.view',compact('partners'));
+    }
+    /**
+     * Show the form for creating a new resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function create()
+    {
+        return view('partner.add');
+    }
+    /**
+     * Store a newly created resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function store(Request $request)
+    {
+        $this->validate($request,[
+            'name' => 'required|max:120',
+            'name_ar' => 'required|max:120',
+            'logo_image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+        ]);
+
+        $partner = new Partner();
+        $partner->name=  $request->name;
+        $partner->name_ar=  $request->name_ar;
+        $partner->is_active =  $request->is_active == 'on' ? 1 : 0;
+        if($request->file()) {
+            $fileName = time().'_'.$request->logo_image->getClientOriginalName();
+            // save file to azure blob virtual directory uplaods in your container
+            $filePath = $request->file('logo_image')->storeAs('myrewards/', $fileName, 'public');
+            $partner->logo_image=  $fileName;
+        }
+        
+        $partner->save();
+        return back()
+            ->with('success','Partner has been stored');
+    }
+    /**
+     * Display the specified resource.
+     *
+     * @param  \App\partner  $partner
+     * @return \Illuminate\Http\Response
+     */
+    public function show(partner $partner)
+    {
+        //
+    }
+    /**
+     * Show the form for editing the specified resource.
+     *
+     * @param  \App\partner  $partner
+     * @return \Illuminate\Http\Response
+     */
+    public function edit(partner $partner)
+    {
+        return view('partner.edit',compact('partner'));
+    }
+    /**
+     * Update the specified resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \App\partner  $partner
+     * @return \Illuminate\Http\Response
+     */
+    public function update(Request $request, partner $partner)
+    {
+        $this->validate($request,[
+            'name' => 'required|max:120',
+            'name_ar' => 'required|max:120',
+        ]);
+        $partner->name =  $request->name;
+        $partner->name_ar =  $request->name_ar;
+        $partner->is_active =  $request->is_active == 'on' ? 1 : 0;
+        if($request->file()) {
+            $fileName = time().'_'.$request->logo_image->getClientOriginalName();
+            // save file to azure blob virtual directory uplaods in your container
+            $filePath = $request->file('logo_image')->storeAs('myrewards/', $fileName, 'public');
+            $partner->logo_image=  $fileName;
+        }
+        
+        $partner->save();
+        return back()
+            ->with('success','Partner has been Updated');
+    }
+    /**
+     * Remove the specified resource from storage.
+     *
+     * @param  \App\partner  $partner
+     * @return \Illuminate\Http\Response
+     */
+    public function destroy(partner $partner)
+    {
+        $partner->delete();
+        return back()
+            ->with('success','Partner has been stored');
+    }
+}
