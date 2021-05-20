@@ -71,8 +71,8 @@
     <script src="{{ asset('build/js/custom.min.js') }}"></script>
     <script>
     $( function() {
-      $( "#datepicker" ).datepicker({ dateFormat: 'dd-mm-yy' });
-      $( "#datepicker_2" ).datepicker({ dateFormat: 'dd-mm-yy' });
+      $( "#datepicker" ).datepicker({ dateFormat: 'yy-mm-dd' });
+      $( "#datepicker_2" ).datepicker({ dateFormat: 'yy-mm-dd' });
     } );
     </script>
     </body>

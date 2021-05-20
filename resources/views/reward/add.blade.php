@@ -59,7 +59,7 @@
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="start_date">Start Date<span class="required">*</span>
                         </label>
                         <div class="col-md-6 col-sm-6 ">
-                            <input type="date" id="start_date" name="start_date" value="{{ old('start_date') }}"  class="form-control">
+                            <input type="text" id="datepicker" name="start_date" value="{{ old('start_date') }}"  class="form-control">
                             @if ($errors->has('start_date'))
                                 <span class="text-danger">{{ $errors->first('start_date') }}</span>
                             @endif
@@ -70,7 +70,7 @@
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="end_date">End Date <span class="required">*</span>
                         </label>
                         <div class="col-md-6 col-sm-6 ">
-                            <input type="date" type="text" id="end_date" name="end_date" value="{{ old('end_date') }}"  class="form-control">
+                            <input type="text" id="datepicker_2" name="end_date" value="{{ old('end_date') }}"  class="form-control">
                             @if ($errors->has('end_date'))
                                 <span class="text-danger">{{ $errors->first('end_date') }}</span>
                             @endif
