@@ -9,6 +9,7 @@ use Exception;
 use App\Models\User;
 use Config;
 use Str;
+
 class GoogleSocialiteController extends Controller
 {
      /**
@@ -40,15 +41,7 @@ class GoogleSocialiteController extends Controller
                 ]);
         }
 
-        // Very Important! Stops anyone with any google accessing Nova!
-        if (! Str::endsWith($socialUser->getEmail(), 'afia.ae')) {
-            return redirect()->route('login')
-                ->withErrors([
-                    'email' => [
-                        __('You can only sign in with AFIA account.'),
-                    ],
-                ]);
-        }
+        
         $isExisted = User::where('email' ,$socialUser->getEmail())->get();
 
         if (count($isExisted) == 0) {

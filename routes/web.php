@@ -3,6 +3,9 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PartnerController;
 use App\Http\Controllers\RewardController;
+use App\Http\Controllers\RewardCategoryController;
+use App\Http\Controllers\RewardTagController;
+
 
 
 /*
@@ -19,6 +22,7 @@ use App\Http\Controllers\RewardController;
 Route::get('/', function () {
     return redirect('login');
 });
+
 Route::get('auth/google','App\Http\Controllers\GoogleSocialiteController@redirectToGoogle');
 Route::get('google/callback', 'App\Http\Controllers\GoogleSocialiteController@handleCallback');
 
@@ -30,4 +34,7 @@ Route::middleware(['auth:sanctum', 'verified'])->get('/home', function () {
 Route::group(['prefix' => 'rewards'], function() {
     Route::resource('partner', PartnerController::class);
     Route::resource('reward', RewardController::class);
+    Route::resource('reward-categories', RewardCategoryController::class);
+    Route::resource('reward-tags', RewardTagController::class);
+
 });
