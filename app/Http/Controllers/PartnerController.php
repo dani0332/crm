@@ -46,7 +46,7 @@ class PartnerController extends Controller
         if($request->file()) {
             $fileName = time().'_'.$request->logo_image->getClientOriginalName();
             // save file to azure blob virtual directory uplaods in your container
-            $filePath = $request->file('logo_image')->storeAs('myrewards/', $fileName, 'public');
+            $filePath = $request->file('logo_image')->storeAs('/', $fileName, 'azure');
             $partner->logo_image=  $fileName;
         }
         
@@ -57,20 +57,20 @@ class PartnerController extends Controller
     /**
      * Display the specified resource.
      *
-     * @param  \App\partner  $partner
+     * @param  \App\Partner  $partner
      * @return \Illuminate\Http\Response
      */
-    public function show(partner $partner)
+    public function show(Partner $partner)
     {
         //
     }
     /**
      * Show the form for editing the specified resource.
      *
-     * @param  \App\partner  $partner
+     * @param  \App\Partner  $partner
      * @return \Illuminate\Http\Response
      */
-    public function edit(partner $partner)
+    public function edit(Partner $partner)
     {
         return view('partner.edit',compact('partner'));
     }
@@ -78,10 +78,10 @@ class PartnerController extends Controller
      * Update the specified resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @param  \App\partner  $partner
+     * @param  \App\Partner  $partner
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, partner $partner)
+    public function update(Request $request, Partner $partner)
     {
         $this->validate($request,[
             'name' => 'required|max:120',
@@ -93,7 +93,7 @@ class PartnerController extends Controller
         if($request->file()) {
             $fileName = time().'_'.$request->logo_image->getClientOriginalName();
             // save file to azure blob virtual directory uplaods in your container
-            $filePath = $request->file('logo_image')->storeAs('myrewards/', $fileName, 'public');
+            $filePath = $request->file('logo_image')->storeAs('/', $fileName, 'azure');
             $partner->logo_image=  $fileName;
         }
         
@@ -104,13 +104,13 @@ class PartnerController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param  \App\partner  $partner
+     * @param  \App\Partner  $partner
      * @return \Illuminate\Http\Response
      */
-    public function destroy(partner $partner)
+    public function destroy(Partner $partner)
     {
         $partner->delete();
         return back()
-            ->with('success','Partner has been stored');
+            ->with('success','Partner has been Deleted');
     }
 }

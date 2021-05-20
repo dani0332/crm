@@ -45,7 +45,7 @@
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="logo_image">Logo Image 
                         </label>
                         <div class="col-md-6 col-sm-6 ">
-                            <img src="{{ asset('storage/myrewards/'.$partner->logo_image) }}" style='width:100px;' /> <br /><br />
+                            <img src="{{ \Config::get('constants.azure_storage_url').'myrewards/'.$partner->logo_image }}" style='width:100px;' /> <br /><br />
                             <input type="file" id="logo_image"  name="logo_image"  >
                         </div>
                        
@@ -59,7 +59,7 @@
                     <div class="ln_solid"></div>
                     <div class="item form-group">
                         <div class="col-md-6 col-sm-6 offset-md-3">
-                          <button type="submit" class="btn btn-success">Create Partner</button>
+                          <button type="submit" class="btn btn-success">Update Partner</button>
                         </div>
                     </div>
 

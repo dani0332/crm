@@ -17,7 +17,9 @@
             <ul class="nav child_menu">
                 <li><a href="{{ url('rewards/partner') }}">Partners</a></li>
                 <li><a href="{{ url('rewards/reward') }}">Rewards</a></li>
-                <li><a href="index3.html">Rewards Category</a></li>
+                <li><a href="{{ url('rewards/reward-categories') }}">Reward Category</a></li>
+                <li><a href="{{ url('rewards/reward-tags') }}">Reward Tags</a></li>
+
             </ul>
             </li>
         </ul>
