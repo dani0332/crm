@@ -28,8 +28,12 @@
     <link href="{{ asset('vendors/datatables.net-fixedheader-bs/css/fixedHeader.bootstrap.min.css') }}" rel="stylesheet">
     <link href="{{ asset('vendors/datatables.net-responsive-bs/css/responsive.bootstrap.min.css') }}" rel="stylesheet">
     <link href="{{ asset('vendors/datatables.net-scroller-bs/css/scroller.bootstrap.min.css') }}" rel="stylesheet">
+	  <link href="https://www.jquery-az.com/jquery/css/bootstrap-markdown-editor.css" rel="stylesheet">
+
     <!-- iCheck -->
 	  <link href="{{ asset('vendors/iCheck/skins/flat/green.css') }}" rel="stylesheet">
+
+    
   </head>
 
     <body class="nav-md">
@@ -60,6 +64,11 @@
     <script src="{{ asset('vendors/bootstrap-wysiwyg/js/bootstrap-wysiwyg.min.js') }}"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.1/js/bootstrap-select.min.js"></script>
     <script src="{{ asset('vendors/jquery.hotkeys/jquery.hotkeys.js') }}"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.1.3/ace.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/0.3.2/marked.min.js"></script>
+    <script src="https://www.jquery-az.com/jquery/js/bootstrap-markdown-editor.js"></script>
+
+    
     <script src="{{ asset('vendors/google-code-prettify/src/prettify.js') }}"></script>
     <script src="{{ asset('vendors/datatables.net/js/jquery.dataTables.min.js') }}"></script>
     <script src="{{ asset('vendors/datatables.net-bs/js/dataTables.bootstrap.min.js') }}"></script>
@@ -82,6 +91,72 @@
       $( "#datepicker" ).datepicker({ dateFormat: 'yy-mm-dd' });
       $( "#datepicker_2" ).datepicker({ dateFormat: 'yy-mm-dd' });
     } );
+    jQuery(document).ready(function($) {
+ 
+ 
+ 
+      $('#editor1').markdownEditor({
+        
+      preview: true,
+      fullscreen:false,
+      // imageUpload: true, // Activate the option
+        
+      // uploadPath: 'upload.php',
+      onPreview: function (content, callback) {
+        
+      callback( marked(content) );
+        
+      }
+        
+      });
+
+      $('#editor2').markdownEditor({
+        
+        preview: true,
+        fullscreen:false,
+        // imageUpload: true, // Activate the option
+          
+        // uploadPath: 'upload.php',
+        onPreview: function (content, callback) {
+          
+        callback( marked(content) );
+          
+        }
+          
+        });
+
+
+        $('#editor3').markdownEditor({
+        
+        preview: true,
+        fullscreen:false,
+        // imageUpload: true, // Activate the option
+          
+        // uploadPath: 'upload.php',
+        onPreview: function (content, callback) {
+          
+        callback( marked(content) );
+          
+        }
+          
+        });
+        
+        $('#editor4').markdownEditor({
+        
+        preview: true,
+        fullscreen:false,
+        // imageUpload: true, // Activate the option
+          
+        // uploadPath: 'upload.php',
+        onPreview: function (content, callback) {
+          
+        callback( marked(content) );
+          
+        }
+          
+        });
+        
+      });
     </script>
     </body>
 </html>
