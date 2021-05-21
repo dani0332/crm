@@ -97,4 +97,53 @@
         </div>
     </div>
 </div>
+
+<div class="row">
+    <div class="col-md-12 col-sm-12 ">
+        <div class="x_panel">
+            <div class="x_title">
+                <h2>Reward Translations</h2>
+                
+                <ul class="nav navbar-right panel_toolbox">
+                    <li><a href="{{ route('reward.reward-translation.create',['reward'=>$reward->id]) }}" class="btn btn-success btn-sm">Create Reward Translation</a></li>
+                </ul>
+                <div class="clearfix"></div>
+            </div>
+            <div class="x_content">
+                <br />
+                <table id="datatable" class="table table-striped table-bordered" style="width:100%">
+                    <thead>
+                      <tr>
+                        <th>Title</th>
+                        <th>Product Image</th>
+                        <th>Language</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+
+
+                    <tbody>
+                      
+                      @foreach($reward->rewardTranslations as $key => $rewardTranslation)
+                      <tr>
+                        <td>{{ $rewardTranslation->title }}</td>
+                        <td><img src="{{  \Config::get('constants.azure_storage_url').'myrewards/'.$rewardTranslation->product_image }}" style='width:40px;'/></td>
+                        <td>{{ $rewardTranslation->lang }}</td>
+                        <td><a href="{{ route('reward.reward-translation.edit', ['reward'=>$reward->id,'reward_translation' => $rewardTranslation->id]) }}" class='btn btn-info btn-sm'><i class="fa fa-edit"></i> </a>
+                        <form action="{{ route('reward.reward-translation.destroy', ['reward'=>$reward->id,'reward_translation' => $rewardTranslation->id]) }}" method="POST">  
+                              @csrf 
+                              @method('DELETE')
+                              <button type="submit" class="btn btn-danger btn-sm"><i class="fa fa-trash"></i></button>
+                          </form>
+                          <a href="{{ route('reward.reward-translation.show', ['reward'=>$reward->id,'reward_translation' => $rewardTranslation->id]) }}" class='btn btn-info btn-sm'><i class="fa fa-eye"></i> </a>
+                        </td>
+                      </tr>
+                      @endforeach
+                      
+                    </tbody>
+                  </table>
+            </div>
+        </div>
+    </div>
+</div>
 @endsection

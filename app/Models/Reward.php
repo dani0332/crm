@@ -30,4 +30,9 @@ class Reward extends Model
     {
         return $this->belongsTo(Partner::class,'id','partner_id');
     }
+
+    public function rewardTranslations()
+    {
+        return $this->hasMany(RewardTranslation::class);
+    }
 }

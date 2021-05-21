@@ -5,8 +5,7 @@ use App\Http\Controllers\PartnerController;
 use App\Http\Controllers\RewardController;
 use App\Http\Controllers\RewardCategoryController;
 use App\Http\Controllers\RewardTagController;
-
-
+use App\Http\Controllers\RewardTranslationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -36,5 +35,5 @@ Route::group(['prefix' => 'rewards'], function() {
     Route::resource('reward', RewardController::class);
     Route::resource('reward-categories', RewardCategoryController::class);
     Route::resource('reward-tags', RewardTagController::class);
-
+    Route::resource('reward.reward-translation', RewardTranslationController::class);
 });
