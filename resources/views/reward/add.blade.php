@@ -97,6 +97,28 @@
                         </div>
                         </div>
                     </div>
+
+                    <div class="item form-group">
+                    <label for="middle-name" class="col-form-label col-md-3 col-sm-3 label-align">Reward Category</label>
+                        <div class="col-md-6 col-sm-6 ">
+                            <select class="selectpicker" name='reward_categories[]' multiple data-live-search="true">
+                                @foreach($rewardCategories as $rewardCategory)
+                                    <option value="{{ $rewardCategory->id }}">{{ $rewardCategory->text }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                    <div class="item form-group">
+                    <label for="middle-name" class="col-form-label col-md-3 col-sm-3 label-align">Reward Tag</label>
+                        <div class="col-md-6 col-sm-6 ">
+                            <select class="selectpicker" name='reward_tags[]' multiple data-live-search="true">
+                                @foreach($rewardTags as $rewardTag)
+                                    <option value="{{ $rewardTag->id }}">{{ $rewardTag->text }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                   
                     <div class="ln_solid"></div>
                     <div class="item form-group">
                         <div class="col-md-6 col-sm-6 offset-md-3">

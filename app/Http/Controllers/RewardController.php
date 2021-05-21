@@ -5,6 +5,13 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Reward;
 use App\Models\Partner;
+use App\Models\RewardCategory;
+use App\Models\RewardTag;
+use App\Services\RewardCategoryMapping;
+use App\Services\RewardTagMapping;
+
+
+
 class RewardController extends Controller
 {
     /**
@@ -25,7 +32,9 @@ class RewardController extends Controller
     public function create()
     {
         $partners = Partner::all();
-        return view('reward.add',compact('partners'));
+        $rewardCategories = RewardCategory::all();
+        $rewardTags = RewardTag::all();
+        return view('reward.add',compact('partners','rewardTags','rewardCategories'));
     }
     /**
      * Store a newly created resource in storage.
@@ -51,6 +60,18 @@ class RewardController extends Controller
         $reward->is_flat_discount =$request->is_flat_discount == 'on' ? 1 : 0;
         $reward->is_active = $request->is_active == 'on' ? 1 : 0;
         $reward->save();
+        if(isset($request->reward_categories)){
+            foreach($request->reward_categories as $rewardCategory){
+                $rewardCategoryMapping = new RewardCategoryMapping;
+                $rewardCategoryMapping->mapRewardCategory($rewardCategory,$reward->id);
+            }
+        }
+        if(isset($request->reward_tags)){
+            foreach($request->reward_tags as $rewardTag){
+                $rewardTagMapping = new RewardTagMapping;
+                $rewardTagMapping->mapRewardTag($rewardTag,$reward->id);
+            }
+        }
         return back()
             ->with('success','reward has been stored');
     }
@@ -73,7 +94,9 @@ class RewardController extends Controller
     public function edit(Reward $reward)
     {
         $partners = Partner::all();
-        return view('reward.edit',compact('partners','reward'));
+        $rewardCategories = RewardCategory::all();
+        $rewardTags = RewardTag::all();
+        return view('reward.edit',compact('partners','reward','rewardCategories','rewardTags'));
     }
     /**
      * Update the specified resource in storage.
@@ -99,6 +122,23 @@ class RewardController extends Controller
         $reward->is_flat_discount =$request->is_flat_discount == 'on' ? 1 : 0;
         $reward->is_active = $request->is_active == 'on' ? 1 : 0;
         $reward->save();
+        if(isset($request->reward_categories)){
+            $rewardCategoryMapping = new RewardCategoryMapping;
+            $rewardCategoryMapping->unMapRewardCategory($reward->id);
+            foreach($request->reward_categories as $rewardCategory){
+                $rewardCategoryMapping = new RewardCategoryMapping;
+                $rewardCategoryMapping->mapRewardCategory($rewardCategory,$reward->id);
+            }
+        }
+
+        if(isset($request->reward_tags)){
+            $rewardTagMapping = new RewardTagMapping;
+            $rewardTagMapping->unMapRewardTag($reward->id);
+            foreach($request->reward_tags as $rewardTag){
+                $rewardTagMapping = new RewardTagMapping;
+                $rewardTagMapping->mapRewardTag($rewardTag,$reward->id);
+            }
+        }
         return back()
             ->with('success','reward has been stored');
     }
