@@ -56,7 +56,7 @@ class RewardCategoryController extends Controller
      */
     public function show(RewardCategory $rewardCategory)
     {
-        //
+        return view('rewardcategory.show',compact('rewardCategory'));
     }
     /**
      * Show the form for editing the specified resource.

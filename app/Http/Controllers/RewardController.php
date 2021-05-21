@@ -83,7 +83,7 @@ class RewardController extends Controller
      */
     public function show(Reward $reward)
     {
-        //
+        return view('reward.show',compact('reward'));
     }
     /**
      * Show the form for editing the specified resource.

@@ -56,7 +56,7 @@ class RewardTagController extends Controller
      */
     public function show(RewardTag $rewardTag)
     {
-        //
+        return view('rewardtag.show',compact('rewardTag'));
     }
     /**
      * Show the form for editing the specified resource.

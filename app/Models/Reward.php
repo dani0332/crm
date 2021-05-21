@@ -25,4 +25,9 @@ class Reward extends Model
     {
         return $this->belongsToMany(RewardTag::class,'reward_tag_mapping','reward_id','reward_tag_id');
     }
+
+    public function partner()
+    {
+        return $this->belongsTo(Partner::class,'id','partner_id');
+    }
 }
