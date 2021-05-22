@@ -86,32 +86,13 @@
 	  <script src="{{ asset('vendors/iCheck/icheck.min.js') }}"></script>
     <!-- Custom Theme Scripts -->
     <script src="{{ asset('build/js/custom.min.js') }}"></script>
-    <script>
-    $( function() {
-      $( "#datepicker" ).datepicker({ dateFormat: 'yy-mm-dd' });
-      $( "#datepicker_2" ).datepicker({ dateFormat: 'yy-mm-dd' });
-    } );
-    jQuery(document).ready(function($) {
- 
- 
- 
-      $('#editor1').markdownEditor({
-        
-      preview: true,
-      fullscreen:false,
-      // imageUpload: true, // Activate the option
-        
-      // uploadPath: 'upload.php',
-      onPreview: function (content, callback) {
-        
-      callback( marked(content) );
-        
-      }
-        
-      });
+    <script type="text/javascript">
+      var imagePath ="{{ \Config::get('constants.azure_storage_url').'myrewards/' }}";
+      $(document).ready(function(){
+        $( "#datepicker" ).datepicker({ dateFormat: 'yy-mm-dd' });
+        $( "#datepicker_2" ).datepicker({ dateFormat: 'yy-mm-dd' });
 
-      $('#editor2').markdownEditor({
-        
+        $('#editor1').markdownEditor({
         preview: true,
         fullscreen:false,
         // imageUpload: true, // Activate the option
@@ -124,39 +105,82 @@
         }
           
         });
-
-
-        $('#editor3').markdownEditor({
-        
-        preview: true,
-        fullscreen:false,
-        // imageUpload: true, // Activate the option
+  
+        $('#editor2').markdownEditor({
           
-        // uploadPath: 'upload.php',
-        onPreview: function (content, callback) {
+          preview: true,
+          fullscreen:false,
+          // imageUpload: true, // Activate the option
+            
+          // uploadPath: 'upload.php',
+          onPreview: function (content, callback) {
+            
+          callback( marked(content) );
+            
+          }
+            
+          });
+  
+  
+          $('#editor3').markdownEditor({
           
-        callback( marked(content) );
+          preview: true,
+          fullscreen:false,
+          // imageUpload: true, // Activate the option
+            
+          // uploadPath: 'upload.php',
+          onPreview: function (content, callback) {
+            
+          callback( marked(content) );
+            
+          }
+            
+          });
           
-        }
+          $('#editor4').markdownEditor({
           
+          preview: true,
+          fullscreen:false,
+          // imageUpload: true, // Activate the option
+            
+          // uploadPath: 'upload.php',
+          onPreview: function (content, callback) {
+            
+          callback( marked(content) );
+            
+          }
+            
         });
-        
-        $('#editor4').markdownEditor({
-        
-        preview: true,
-        fullscreen:false,
-        // imageUpload: true, // Activate the option
-          
-        // uploadPath: 'upload.php',
-        onPreview: function (content, callback) {
-          
-        callback( marked(content) );
-          
-        }
-          
+
+        var table = $('.data-table').DataTable({
+            // processing: true,
+            serverSide: true,
+            ajax: "{{ route('partner.index') }}",
+            columns: [
+                {data: 'id', name: 'id'},
+                {data: 'name', name: 'name'},
+                {data: 'name_ar', name: 'name_ar'},
+                {data: "logo_image", name: "logo_image",
+                render: function (data, type, row, meta) {
+                    var imgsrc = imagePath + data; // here data should be in base64 string
+                    return '<img class="img-responsive" src="' + imgsrc +'" alt="logo_image" height="40px" width="40px">';
+                }},
+                {data: 'action', name: 'action', orderable: false, searchable: false},
+            ]
         });
-        
-      });
+
+        var table = $('.user-data-table').DataTable({
+            // processing: true,
+            serverSide: true,
+            ajax: "{{ route('users.index') }}",
+            columns: [
+                {data: 'id', name: 'id'},
+                {data: 'name', name: 'name'},
+                {data: 'email', name: 'email'},
+                {data: 'action', name: 'action', orderable: false, searchable: false},
+            ]
+        });
+      })
     </script>
     </body>
 </html>
