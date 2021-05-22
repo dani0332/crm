@@ -87,6 +87,7 @@
     <!-- Custom Theme Scripts -->
     <script src="{{ asset('build/js/custom.min.js') }}"></script>
     <script>
+   
     $( function() {
       $( "#datepicker" ).datepicker({ dateFormat: 'yy-mm-dd' });
       $( "#datepicker_2" ).datepicker({ dateFormat: 'yy-mm-dd' });
@@ -157,6 +158,28 @@
         });
         
       });
+    </script>
+    <script type="text/javascript">
+      var imagePath ="{{ \Config::get('constants.azure_storage_url').'myrewards/' }}";
+      $(document).ready(function(){
+        
+        var table = $('.data-table').DataTable({
+            // processing: true,
+            serverSide: true,
+            ajax: "{{ route('partner.index') }}",
+            columns: [
+                {data: 'id', name: 'id'},
+                {data: 'name', name: 'name'},
+                {data: 'name_ar', name: 'name_ar'},
+                {data: "logo_image", name: "logo_image",
+                render: function (data, type, row, meta) {
+                    var imgsrc = imagePath + data; // here data should be in base64 string
+                    return '<img class="img-responsive" src="' + imgsrc +'" alt="logo_image" height="40px" width="40px">';
+                }},
+                {data: 'action', name: 'action', orderable: false, searchable: false},
+            ]
+        });
+      })
     </script>
     </body>
 </html>

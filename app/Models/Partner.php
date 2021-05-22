@@ -13,6 +13,16 @@ class Partner extends Model
 
     public function rewards()
     {
-        return $this->hasMany(Reward::class,'id','partner_id');
+        return $this->hasMany(Reward::class);
+    }
+
+    // this is a recommended way to declare event handlers
+    public static function boot() {
+        parent::boot();
+
+        static::deleting(function($partner) { // before delete() method call this
+            $partner->rewards->each->delete();
+             // do the rest of the cleanup...
+        });
     }
 }

@@ -5,7 +5,7 @@
     <div class="col-md-12 col-sm-12 ">
         <div class="x_panel">
             <div class="x_title">
-                <h2>Edit Reward</h2>
+                <h2>Edit Reward Translation</h2>
                 <div class="clearfix"></div>
             </div>
             <div class="x_content">
@@ -128,7 +128,7 @@
                         <div class="ln_solid"></div>
                         <div class="item form-group">
                             <div class="col-md-6 col-sm-6 offset-md-3">
-                              <button type="submit" class="btn btn-success">Create Reward Translation</button>
+                              <button type="submit" class="btn btn-success">Update</button>
                             </div>
                         </div>
     

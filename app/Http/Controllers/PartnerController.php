@@ -4,6 +4,9 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Partner;
+use DataTables;
+
+
 class PartnerController extends Controller
 {
     /**
@@ -11,10 +14,23 @@ class PartnerController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
-        $partners = Partner::all();
-        return view('partner.view',compact('partners'));
+        if ($request->ajax()) {
+            $data = Partner::select('*');
+            return Datatables::of($data)
+                    ->addIndexColumn()
+                    ->addColumn('logo_image', function($row){
+                            return $row->logo_image;
+                    })
+                    ->addColumn('action', function($row){
+                        return view('partner.actions', compact('row'))->render();
+                    })
+                    ->rawColumns(['action'])
+                    ->make(true);
+        }
+        
+        return view('partner.view');
     }
     /**
      * Show the form for creating a new resource.

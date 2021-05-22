@@ -75,7 +75,7 @@
                     </div>
 
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="full_width_banner_image">Logo Image <span class="required">*</span>
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="full_width_banner_image">Full Width Banner <span class="required">*</span>
                         </label>
                         <div class="col-md-6 col-sm-6 ">
                             <input type="file" id="full_width_banner_image"  name="full_width_banner_image" /> <br/>
@@ -87,7 +87,7 @@
                     </div>
 
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="generic_banner_image">Logo Image <span class="required">*</span>
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="generic_banner_image">Generic Banner <span class="required">*</span>
                         </label>
                         <div class="col-md-6 col-sm-6 ">
                             <input type="file" id="generic_banner_image"  name="generic_banner_image" /> <br/>
@@ -126,7 +126,7 @@
                     <div class="ln_solid"></div>
                     <div class="item form-group">
                         <div class="col-md-6 col-sm-6 offset-md-3">
-                          <button type="submit" class="btn btn-success">Create Reward Translation</button>
+                          <button type="submit" class="btn btn-success">Create</button>
                         </div>
                     </div>
 

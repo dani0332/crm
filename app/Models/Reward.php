@@ -18,12 +18,12 @@ class Reward extends Model
 
     public function rewardCategories()
     {
-        return $this->belongsToMany(RewardCategory::class,'reward_category_mapping','reward_id','reward_category_id');
+        return $this->belongsToMany(RewardCategory::class,'reward_category_mapping');
     }
 
     public function rewardTags()
     {
-        return $this->belongsToMany(RewardTag::class,'reward_tag_mapping','reward_id','reward_tag_id');
+        return $this->belongsToMany(RewardTag::class,'reward_tag_mapping');
     }
 
     public function partner()
@@ -34,5 +34,18 @@ class Reward extends Model
     public function rewardTranslations()
     {
         return $this->hasMany(RewardTranslation::class);
+    }
+
+    // this is a recommended way to declare event handlers
+    public static function boot() {
+        parent::boot();
+
+        static::deleting(function($reward) { 
+            // before delete() method call this
+             $reward->rewardCategories()->detach($reward->id);
+             $reward->rewardTags()->detach($reward->id);
+             $reward->rewardTranslations()->delete();
+             // do the rest of the cleanup...
+        });
     }
 }
