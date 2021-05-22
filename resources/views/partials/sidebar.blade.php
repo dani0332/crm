@@ -19,7 +19,15 @@
                 <li><a href="{{ url('rewards/reward') }}">Rewards</a></li>
                 <li><a href="{{ url('rewards/reward-categories') }}">Reward Category</a></li>
                 <li><a href="{{ url('rewards/reward-tags') }}">Reward Tags</a></li>
+                <li><a href="{{ url('users') }}">Reward Tags</a></li>
+            </ul>
+            </li>
+        </ul>
 
+        <ul class="nav side-menu">
+            <li><a><i class="fa fa-gift"></i> Admin <span class="fa fa-chevron-down"></span></a>
+            <ul class="nav child_menu">
+                <li><a href="{{ url('admin/users') }}">Users</a></li>
             </ul>
             </li>
         </ul>
