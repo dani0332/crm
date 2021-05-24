@@ -179,7 +179,7 @@ return [
         App\Providers\JetstreamServiceProvider::class,
         Matthewbdaly\LaravelAzureStorage\AzureStorageServiceProvider::class,
         Yajra\DataTables\DataTablesServiceProvider::class,
-        
+        Spatie\Permission\PermissionServiceProvider::class,
 
     ],
 

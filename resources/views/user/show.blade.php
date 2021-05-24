@@ -35,10 +35,13 @@
                             {{ $user->email }}
                         </td>
                     </tr>
-                        
-                    <td >
-                        <a href="{{ route('users.edit', ['user' => $user->id]) }}" class='btn btn-info btn-sm'><i class="fa fa-edit"></i> </a>
-                    </td>
+                    <tr>
+                    @can('users-edit')
+                        <td >
+                            <a href="{{ route('users.edit', ['user' => $user->id]) }}" class='btn btn-info btn-sm'><i class="fa fa-edit"></i> </a>
+                        </td>
+                    @endcan    
+                    @can('users-delete')
                     <td >
                         <form action="{{ route('users.destroy', ['user' => $user->id]) }}" method="POST">  
                             @csrf 
@@ -46,6 +49,7 @@
                             <button type="submit" class="btn btn-danger btn-sm"><i class="fa fa-trash"></i></button>
                         </form>
                     </td>
+                    @endcan
                     </tr>
                 </table >
                     

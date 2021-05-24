@@ -1,11 +1,11 @@
 @extends('layouts.app')
-@section('title','Partner Detail')
+@section('title','Role Detail')
 @section('content')
 <div class="row">
     <div class="col-md-12 col-sm-12 ">
         <div class="x_panel">
             <div class="x_title">
-                <h2>Partner Detail</h2>
+                <h2>Role Detail</h2>
                 <div class="clearfix"></div>
             </div>
             <div class="x_content">
@@ -16,7 +16,7 @@
                             Id 
                         </td>
                         <td>
-                            {{ $partner->id }}
+                            {{ $role->id }}
                         </td>
                     </tr>
                     <tr>
@@ -24,34 +24,35 @@
                             Name 
                         </td>
                         <td>
-                            {{ $partner->name }}
+                            {{ $role->name }}
                         </td>
                     </tr>
                     <tr>
                         <td>
-                            Name Ar 
+                            Permissions 
                         </td>
                         <td>
-                            {{ $partner->name_ar }}
+                            @foreach($rolePermissions->chunk(4) as $chunk)
+                            <div class="row">
+                                <div class="col-md-12" style="padding:15px;">
+                                    @foreach($chunk as $item)
+                                        {{ $item->name }} <input checked type="checkbox" class="flat" value="{{ $item->id }}" name='permission[]' />
+                                    @endforeach 
+                                </div>
+                            </div>
+                                <hr />
+                            @endforeach
                         </td>
                     </tr>
                     <tr>
-                        <td>
-                            Logo Image 
-                        </td>
-                        <td>
-                            {{ $partner->logo_image }}
-                        </td>
-                    </tr>
-                    <tr>
-                        @can('partners-edit')
+                        @can('role-edit')
                         <td >
-                            <a href="{{ route('partner.edit', ['partner' => $partner->id]) }}" class='btn btn-info btn-sm'><i class="fa fa-edit"></i> </a>
+                            <a href="{{ route('roles.edit', ['role' => $role->id]) }}" class='btn btn-info btn-sm'><i class="fa fa-edit"></i> </a>
                         </td>
                         @endcan
-                        @can('partners-delete')
+                        @can('role-delete')
                         <td >
-                            <form action="{{ route('partner.destroy', ['partner' => $partner->id]) }}" method="POST">  
+                            <form action="{{ route('roles.destroy', ['role' => $role->id]) }}" method="POST">  
                                 @csrf 
                                 @method('DELETE')
                                 <button type="submit" class="btn btn-danger btn-sm"><i class="fa fa-trash"></i></button>

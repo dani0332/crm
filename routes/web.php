@@ -7,6 +7,7 @@ use App\Http\Controllers\RewardCategoryController;
 use App\Http\Controllers\RewardTagController;
 use App\Http\Controllers\RewardTranslationController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\RoleController;
 
 
 
@@ -43,4 +44,5 @@ Route::group(['prefix' => 'rewards'], function() {
 
 Route::group(['prefix' => 'admin'], function() {
     Route::resource('users', UserController::class);
+    Route::resource('roles', RoleController::class);
 });

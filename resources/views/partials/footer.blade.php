@@ -1,7 +1,7 @@
 <!-- footer content -->
 <footer>
     <div class="pull-right">
-    Gentelella - Bootstrap Admin Template by <a href="https://colorlib.com">Colorlib</a>
+        © AFIA Insurance Brokerage Services LLC, registration no. 85, under UAE Insurance Authority
     </div>
     <div class="clearfix"></div>
 </footer>

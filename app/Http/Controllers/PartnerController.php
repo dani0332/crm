@@ -9,6 +9,30 @@ use DataTables;
 
 class PartnerController extends Controller
 {
+     /**
+
+     * Display a listing of the resource.
+
+     *
+
+     * @return \Illuminate\Http\Response
+
+     */
+
+    function __construct()
+
+    {
+
+         $this->middleware('permission:partners-list|partners-create|partners-edit|partners-delete', ['only' => ['index','store']]);
+
+         $this->middleware('permission:partners-create', ['only' => ['create','store']]);
+
+         $this->middleware('permission:partners-edit', ['only' => ['edit','update']]);
+
+         $this->middleware('permission:partners-delete', ['only' => ['destroy']]);
+
+    }
+
     /**
      * Display a listing of the resource.
      *
@@ -20,9 +44,9 @@ class PartnerController extends Controller
             $data = Partner::select('*');
             return Datatables::of($data)
                     ->addIndexColumn()
-                    ->addColumn('logo_image', function($row){
-                            return $row->logo_image;
-                    })
+                    // ->addColumn('logo_image', function($row){
+                    //         return $row->logo_image;
+                    // })
                     ->addColumn('action', function($row){
                         return view('partner.actions', compact('row'))->render();
                     })

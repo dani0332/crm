@@ -6,9 +6,11 @@
         <div class="x_panel">
             <div class="x_title">
                 <h2>Users</h2>
+                @can('users-create')
                 <ul class="nav navbar-right panel_toolbox">
                     <li><a href="{{ url('admin/users/create') }}" class="btn btn-success btn-sm">Create User</a></li>
                 </ul>
+                @endcan
                 <div class="clearfix"></div>
                 
             </div>

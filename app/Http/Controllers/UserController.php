@@ -5,10 +5,37 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\User;
 use DataTables;
-
+use Spatie\Permission\Models\Role;
+use DB;
+use Hash;
+use Illuminate\Support\Arr;
 
 class UserController extends Controller
 {
+     /**
+
+     * Display a listing of the resource.
+
+     *
+
+     * @return \Illuminate\Http\Response
+
+     */
+
+    function __construct()
+
+    {
+
+         $this->middleware('permission:users-list|users-create|users-edit|users-delete', ['only' => ['index','store']]);
+
+         $this->middleware('permission:users-create', ['only' => ['create','store']]);
+
+         $this->middleware('permission:users-edit', ['only' => ['edit','update']]);
+
+         $this->middleware('permission:users-delete', ['only' => ['destroy']]);
+
+    }
+
     /**
      * Display a listing of the resource.
      *
@@ -36,7 +63,8 @@ class UserController extends Controller
      */
     public function create()
     {
-        return view('user.add');
+        $roles = Role::pluck('name','name')->all();
+        return view('user.add',compact('roles'));
     }
     /**
      * Store a newly created resource in storage.
@@ -49,6 +77,7 @@ class UserController extends Controller
         $this->validate($request,[
             'name' => 'required|max:120',
             'email' => 'required|email|unique:users',
+            'roles' => 'required'
         ]);
 
         $user = new User();
@@ -56,6 +85,7 @@ class UserController extends Controller
         $user->email=  $request->email;
         $user->password =  $request->password;
         $user->save();
+        $user->assignRole($request->input('roles'));
         return back()
             ->with('success','Partner has been stored');
     }
@@ -77,7 +107,10 @@ class UserController extends Controller
      */
     public function edit(User $user)
     {
-        return view('user.edit',compact('user'));
+        $roles = Role::pluck('name','name')->all();
+
+        $userRole = $user->roles->pluck('name','name')->all();
+        return view('user.edit',compact('user','roles','userRole'));
     }
     /**
      * Update the specified resource in storage.
@@ -88,14 +121,20 @@ class UserController extends Controller
      */
     public function update(Request $request, User $user)
     {
+        // return $user;
         $this->validate($request,[
             'name' => 'required',
-            'email' => 'required|email|unique:users'.$user->id,
+            'roles' => 'required'
         ]);
         $user->name =  $request->name;
         $user->email =  $request->email;
         $user->password =  $request->password;
         $user->save();
+        
+        DB::table('model_has_roles')->where('model_id',$user->id)->delete();
+
+        $user->assignRole($request->input('roles'));
+
         return back()
             ->with('success','User has been Updated');
     }
