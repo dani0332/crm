@@ -156,12 +156,16 @@
             // "paging":   false,
             "ordering": false,
             "info":     false,
-            'searching':false
+            'searching':false,
+            "bLengthChange": false
         } );
 
         var table = $('.data-table').DataTable({
             
-            serverSide: true,
+            ordering: false,
+            info:     false,
+            searching:false,
+            bLengthChange: false,
             ajax: "{{ route('partner.index') }}",
             columns: [
                 {data: 'id', name: 'id'},
@@ -177,7 +181,10 @@
         });
 
         var table = $('.user-data-table').DataTable({
-            // processing: true,
+            ordering: false,
+            info:     false,
+            searching:false,
+            bLengthChange: false,
             serverSide: true,
             ajax: "{{ route('users.index') }}",
             columns: [
@@ -188,15 +195,39 @@
             ]
         });
 
-
         var table = $('.role-data-table').DataTable({
-            // processing: true,
+            ordering: false,
+            info:     false,
+            searching:false,
+            bLengthChange: false,
             serverSide: true,
             ajax: "{{ route('roles.index') }}",
             columns: [
                 {data: 'id', name: 'id'},
                 {data: 'name', name: 'name'},
                 {data: 'action', name: 'action', orderable: false, searchable: false},
+            ]
+        });
+
+        var table = $('.carqoute-data-table').DataTable({
+            ordering: false,
+            info:     false,
+            searching:false,
+            bLengthChange: false,
+            serverSide: true,
+            ajax: "{{ route('carqoutes.index') }}",
+            columns: [
+                {data: "checkbox", name: "checkbox",
+                render: function (data, type, row, meta) {
+                    var imgsrc = imagePath + data; // here data should be in base64 string
+                    return '<input type="checkbox" class="flat multicheckbox" name="row[]" data-id="'+row.id+'">';
+                }},
+                {data: 'id', name: 'id'},
+                {data: 'car_value', name: 'car_value'},
+                {data: 'is_synced', name: 'is_synced'},
+                {data: 'device', name: 'device'},
+                {data: 'code', name: 'code'},
+
             ]
         });
       })

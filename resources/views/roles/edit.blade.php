@@ -35,9 +35,9 @@
                     <div class="col-md-6 col-sm-6 ">
                         @foreach($permission->chunk(4) as $chunk)
                             <div class="row">
-                                <div class="col-md-12" style="padding:15px;">
+                                <div class="col-md-12">
                                     @foreach($chunk as $item)
-                                        {{ $item->name }} <input {{ in_array($item->id, $rolePermissions) ? 'checked' : '' }} type="checkbox" class="flat" value="{{ $item->id }}" name='permission[]' />
+                                        <span class="badge badge-pill" style="margin:5px;font-size:13px;">  {{ $item->name }} <input {{ in_array($item->id, $rolePermissions) ? 'checked' : '' }} type="checkbox" class="flat" value="{{ $item->id }}" name='permission[]' /></span>
                                     @endforeach 
                                 </div>
                             </div>

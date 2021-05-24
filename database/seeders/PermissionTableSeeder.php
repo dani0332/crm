@@ -122,5 +122,18 @@ class PermissionTableSeeder extends Seeder
             'name'=>'reward-tags-delete',
             'guard_name'=>'web',
         ]);
+
+
+
+        //car-qoutes
+        \DB::table('permissions')->insertGetId([
+            'name'=>'car-qoutes-list',
+            'guard_name'=>'web',
+        ]);
+
+        \DB::table('permissions')->insertGetId([
+            'name'=>'car-qoutes-resubmit-api',
+            'guard_name'=>'web',
+        ]);
     }
 }
