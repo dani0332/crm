@@ -8,6 +8,7 @@ use App\Http\Controllers\RewardTagController;
 use App\Http\Controllers\RewardTranslationController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\RoleController;
+use App\Http\Controllers\CarQouteController;
 
 
 
@@ -45,4 +46,9 @@ Route::group(['prefix' => 'rewards'], function() {
 Route::group(['prefix' => 'admin'], function() {
     Route::resource('users', UserController::class);
     Route::resource('roles', RoleController::class);
+});
+
+
+Route::group(['prefix' => 'qoutes'], function() {
+    Route::resource('carqoutes', CarQouteController::class);
 });

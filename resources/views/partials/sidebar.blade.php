@@ -30,9 +30,19 @@
             </ul>
             </li>
         </ul>
+        
+        <ul class="nav side-menu">
+            <li><a><i class="fa fa-quote-left"></i> Personal Qoutes <span class="fa fa-chevron-down"></span></a>
+            <ul class="nav child_menu">
+                @can('car-qoutes-list')
+                    <li><a href="{{ url('qoutes/carqoutes') }}">Car Qoutes</a></li>
+                @endcan
+            </ul>
+            </li>
+        </ul>
 
         <ul class="nav side-menu">
-            <li><a><i class="fa fa-gift"></i> Admin <span class="fa fa-chevron-down"></span></a>
+            <li><a><i class="fa fa-user"></i> Admin <span class="fa fa-chevron-down"></span></a>
             <ul class="nav child_menu">
                 @can('users-list')
                     <li><a href="{{ url('admin/users') }}">Users</a></li>
