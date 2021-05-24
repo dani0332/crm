@@ -13,6 +13,7 @@ class UserTableSeeder extends Seeder
      */
     public function run()
     {
+        
         $user_1 = \DB::table('users')->insertGetId([
             'name'=>'Hussain',
             'email'=>'hussain.fakhruddin@afia.ae',

@@ -15,11 +15,18 @@
         <ul class="nav side-menu">
             <li><a><i class="fa fa-gift"></i> Rewards <span class="fa fa-chevron-down"></span></a>
             <ul class="nav child_menu">
+                @can('partners-list')
                 <li><a href="{{ url('rewards/partner') }}">Partners</a></li>
+                @endcan
+                @can('rewards-list')
                 <li><a href="{{ url('rewards/reward') }}">Rewards</a></li>
+                @endcan
+                @can('reward-categories-list')
                 <li><a href="{{ url('rewards/reward-categories') }}">Reward Category</a></li>
+                @endcan
+                @can('reward-tags-list')
                 <li><a href="{{ url('rewards/reward-tags') }}">Reward Tags</a></li>
-                <li><a href="{{ url('users') }}">Reward Tags</a></li>
+                @endcan
             </ul>
             </li>
         </ul>
@@ -27,7 +34,12 @@
         <ul class="nav side-menu">
             <li><a><i class="fa fa-gift"></i> Admin <span class="fa fa-chevron-down"></span></a>
             <ul class="nav child_menu">
-                <li><a href="{{ url('admin/users') }}">Users</a></li>
+                @can('users-list')
+                    <li><a href="{{ url('admin/users') }}">Users</a></li>
+                @endcan
+                @can('role-list')
+                    <li><a href="{{ url('admin/roles') }}">Roles</a></li>
+                @endcan
             </ul>
             </li>
         </ul>

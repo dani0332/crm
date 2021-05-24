@@ -151,9 +151,16 @@
           }
             
         });
+        $("#datatable").DataTable().destroy()
+        $('#datatable').DataTable( {
+            // "paging":   false,
+            "ordering": false,
+            "info":     false,
+            'searching':false
+        } );
 
         var table = $('.data-table').DataTable({
-            // processing: true,
+            
             serverSide: true,
             ajax: "{{ route('partner.index') }}",
             columns: [
@@ -177,6 +184,18 @@
                 {data: 'id', name: 'id'},
                 {data: 'name', name: 'name'},
                 {data: 'email', name: 'email'},
+                {data: 'action', name: 'action', orderable: false, searchable: false},
+            ]
+        });
+
+
+        var table = $('.role-data-table').DataTable({
+            // processing: true,
+            serverSide: true,
+            ajax: "{{ route('roles.index') }}",
+            columns: [
+                {data: 'id', name: 'id'},
+                {data: 'name', name: 'name'},
                 {data: 'action', name: 'action', orderable: false, searchable: false},
             ]
         });
