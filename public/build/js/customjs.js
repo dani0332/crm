@@ -84,7 +84,7 @@ $(document).ready(function(){
           {data: 'name_ar', name: 'name_ar'},
           {data: "logo_image", name: "logo_image",
           render: function (data, type, row, meta) {
-              var imgsrc = imagePath + data; // here data should be in base64 string
+              var imgsrc = config.image_path + data; // here data should be in base64 string
               return '<img class="img-responsive" src="' + imgsrc +'" alt="logo_image" height="40px" width="40px">';
           }},
           {data: 'action', name: 'action', orderable: false, searchable: false},
@@ -130,7 +130,7 @@ $(document).ready(function(){
       columns: [
           {data: "checkbox", name: "checkbox",
           render: function (data, type, row, meta) {
-              var imgsrc = imagePath + data; // here data should be in base64 string
+              var imgsrc = config.image_path + data; // here data should be in base64 string
               return '<input type="checkbox" class="flat multicheckbox" name="row[]" data-id="'+row.id+'">';
           }},
           {data: 'id', name: 'id'},

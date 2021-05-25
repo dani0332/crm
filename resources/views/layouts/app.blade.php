@@ -95,12 +95,10 @@
                 role_datatable_route:"{{ route('roles.index') }}",
                 carqoute_datatable_route:"{{ route('carqoutes.index') }}",
                 routes_carqoute_resubmitap_route:"{{ url('qoutes/carqoutes/resubmit_api') }}",
-                
-
             },
-            _token:"{{ csrf_token() }}"
+            _token:"{{ csrf_token() }}",
+            image_path ="{{ \Config::get('constants.azure_storage_url').'myrewards/' }}";
         };
-        var imagePath ="{{ \Config::get('constants.azure_storage_url').'myrewards/' }}";
     </script>
     <script src="{{ asset('build/js/customjs.js') }}"></script>
     </body>
