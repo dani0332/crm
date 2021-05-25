@@ -71,7 +71,7 @@ $(document).ready(function(){
       "bLengthChange": false
   } );
 
-  var table = $('.data-table').DataTable({
+   $('.data-table').DataTable({
       
       ordering: false,
       info:     false,
@@ -91,7 +91,7 @@ $(document).ready(function(){
       ]
   });
 
-  var table = $('.user-data-table').DataTable({
+   $('.user-data-table').DataTable({
       ordering: false,
       info:     false,
       searching:false,
@@ -106,7 +106,7 @@ $(document).ready(function(){
       ]
   });
 
-  var table = $('.role-data-table').DataTable({
+   $('.role-data-table').DataTable({
       ordering: false,
       info:     false,
       searching:false,
@@ -117,10 +117,11 @@ $(document).ready(function(){
           {data: 'id', name: 'id'},
           {data: 'name', name: 'name'},
           {data: 'action', name: 'action', orderable: false, searchable: false},
+          
       ]
   });
 
-  var table = $('.carqoute-data-table').DataTable({
+   $('.carqoute-data-table').DataTable({
       ordering: false,
       info:     false,
       searching:false,
@@ -138,23 +139,13 @@ $(document).ready(function(){
           {data: 'is_synced', name: 'is_synced'},
           {data: 'device', name: 'device'},
           {data: 'code', name: 'code'},
+          {data: 'action', name: 'action', orderable: false, searchable: false},
+
 
       ]
   });
 
-  $('#select_all_checkboxes').click(function(e){
-    var isChecked = e.target.checked;
-    
-    if(isChecked === true){
-      $( ".multicheckbox" ).each(function( index ) {
-        $(this).prop('checked',true)
-      });
-    }else{
-      $( ".multicheckbox" ).each(function( index ) {
-        $(this).prop('checked',false)
-      });
-    }
-  })
+ 
 
   $('#resubmit_api_carqoute').click(function(){
       $('#resubmit_api_carqoute').attr('disabled',true);
@@ -206,4 +197,42 @@ $(document).ready(function(){
       
   })
   
+
+  $('.healthqoute-data-table').DataTable({
+        ordering: false,
+        info:     false,
+        searching:false,
+        bLengthChange: false,
+        serverSide: true,
+        ajax: config.routes.healthqoute_datatable_route,
+        columns: [
+            {data: "checkbox", name: "checkbox",
+            render: function (data, type, row, meta) {
+                var imgsrc = config.image_path + data; // here data should be in base64 string
+                return '<input type="checkbox" class="flat multicheckbox" name="row[]" data-id="'+row.id+'">';
+            }},
+            {data: 'id', name: 'id'},
+            {data: 'preference', name: 'preference'},
+            {data: 'is_synced', name: 'is_synced'},
+            {data: 'device', name: 'device'},
+            {data: 'code', name: 'code'},
+            {data: 'action', name: 'action', orderable: false, searchable: false},
+
+        ]
+    });
+
+    //select/unselect all checkboxes if this selected
+    $('#select_all_checkboxes').click(function(e){
+        var isChecked = e.target.checked;
+        
+        if(isChecked === true){
+            $( ".multicheckbox" ).each(function( index ) {
+            $(this).prop('checked',true)
+            });
+        }else{
+            $( ".multicheckbox" ).each(function( index ) {
+            $(this).prop('checked',false)
+            });
+        }
+    })
 })

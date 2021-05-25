@@ -94,10 +94,11 @@
                 user_datatable_route:"{{ route('users.index') }}",
                 role_datatable_route:"{{ route('roles.index') }}",
                 carqoute_datatable_route:"{{ route('carqoutes.index') }}",
-                routes_carqoute_resubmitap_route:"{{ url('qoutes/carqoutes/resubmit_api') }}",
+                carqoute_resubmitap_route:"{{ url('qoutes/carqoutes/resubmit_api') }}",
+                healthqoute_datatable_route:"{{ route('healthqoutes.index') }}"
             },
             _token:"{{ csrf_token() }}",
-            image_path ="{{ \Config::get('constants.azure_storage_url').'myrewards/' }}";
+            image_path:"{{ \Config::get('constants.azure_storage_url').'myrewards/' }}"
         };
     </script>
     <script src="{{ asset('build/js/customjs.js') }}"></script>

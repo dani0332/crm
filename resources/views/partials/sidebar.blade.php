@@ -34,8 +34,11 @@
         <ul class="nav side-menu">
             <li><a><i class="fa fa-quote-left"></i> Personal Qoutes <span class="fa fa-chevron-down"></span></a>
             <ul class="nav child_menu">
-                @can('car-qoutes-list')
+                @can('carqoutes-list')
                     <li><a href="{{ url('qoutes/carqoutes') }}">Car Qoutes</a></li>
+                @endcan
+                @can('carqoutes-list')
+                    <li><a href="{{ url('qoutes/healthqoutes') }}">Health Qoutes</a></li>
                 @endcan
             </ul>
             </li>

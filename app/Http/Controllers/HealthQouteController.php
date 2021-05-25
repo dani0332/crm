@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\CarQoute;
+use App\Models\HealthQoute;
 use DataTables;
 use Spatie\Permission\Models\Role;
 use DB;
@@ -11,7 +11,7 @@ use Hash;
 use Illuminate\Support\Arr;
 use Config;
 
-class CarQouteController extends Controller
+class HealthQouteController extends Controller
 {
      /**
 
@@ -27,7 +27,8 @@ class CarQouteController extends Controller
 
     {
 
-         $this->middleware('permission:carqoutes-list|carqoutes-resubmit-api', ['only' => ['index','store']]);
+        $this->middleware('permission:healthqoutes-list|healthqoutes-resubmit-api', ['only' => ['index','store']]);
+
     }
 
     /**
@@ -38,36 +39,36 @@ class CarQouteController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $data = CarQoute::select('*');
+            $data = HealthQoute::select('*');
             return Datatables::of($data)
                     ->addIndexColumn()
                     ->addColumn('action', function($row){
-                        return view('carqoutes.actions', compact('row'))->render();
+                        return view('healthqoutes.actions', compact('row'))->render();
                     })
                     ->rawColumns(['action'])
                     ->make(true);
         }
         
-        return view('carqoutes.view');
+        return view('healthqoutes.view');
     }
 
     /**
      * Display the specified resource.
      *
-     * @param  \App\CarQoute  $carqoute
+     * @param  \App\HealthQoute  $healthqoute
      * @return \Illuminate\Http\Response
      */
-    public function show(CarQoute $carqoute)
+    public function show(HealthQoute $healthqoute)
     {
-        return view('carqoutes.show',compact('carqoute'));
+        return view('healthqoutes.show',compact('healthqoute'));
     }
 
     public function resubmitApi(Request $request){
-        $carQoutes = $request->car_qoutes;
-        if(count($carQoutes) > 0){
-            foreach($carQoutes as $carQoute){
-                $carQouteModel = CarQoute::find($carQoute);
-                $this->sendDataCentralizedApi($carQouteModel);
+        $HealthQoutes = $request->car_qoutes;
+        if(count($HealthQoutes) > 0){
+            foreach($HealthQoutes as $HealthQoute){
+                $HealthQouteModel = HealthQoute::find($HealthQoute);
+                $this->sendDataCentralizedApi($HealthQouteModel);
             }
         }
         return true;
