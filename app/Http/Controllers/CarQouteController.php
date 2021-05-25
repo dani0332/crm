@@ -163,7 +163,7 @@ class CarQouteController extends Controller
              'emailCntrData'=>$emailCntrData
             ], function($message) use ($subject) {
                 $message->to(
-                ['adeelbajwa786@gmail.com'])->subject
+                ['adeel.rehman@afia.ae'])->subject
                    ($subject);
                 $message->from('alfred@insurancemarket.ae','Alfred - Error');
              });
