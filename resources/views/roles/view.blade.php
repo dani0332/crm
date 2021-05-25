@@ -8,7 +8,7 @@
                 <h2>Roles</h2>
                 @can('role-create')
                 <ul class="nav navbar-right panel_toolbox">
-                    <li><a href="{{ url('admin/roles/create') }}" class="btn btn-success btn-sm">Create Role</a></li>
+                    <li><a href="{{ url('admin/roles/create') }}" class="btn btn-warning btn-sm">Create Role</a></li>
                 </ul>
                 @endcan
                 

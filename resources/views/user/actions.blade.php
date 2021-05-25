@@ -1,24 +1,22 @@
-<div style="with:100%;text-align: center;">
+<div class="row">
         @can('users-edit')
-        <div style='display: inline-block;'>
-                <a href="{{ route('users.edit', ['user' => $row->id])}}" style="margin-top: -55px;" class='btn btn-info btn-sm'><i class='fa fa-edit'></i> 
+        <div class="col-md-1">
+                <a href="{{ route('users.edit', ['user' => $row->id])}}" style="margin-top: -55px;" class='no-style-btn'><i class='fa fa-edit'></i> 
                 </a>
         </div>
         @endcan
-<div style='display: inline-block;'>
+        <div class="col-md-1">
         @can('users-delete')
         <form action="{{ route('users.destroy', ['user' => $row->id])}}" method='POST'>  
                 @csrf 
                 @method('DELETE')
-                <button type='submit' class='btn btn-danger btn-sm'><i class='fa fa-trash'></i></button>
+                <button type='submit' class='no-style-btn'><i class='fa fa-trash'></i></button>
         </form>
         @endcan
-</div>
+        </div>
         @can('users-list')
-        <div style='display: inline-block;'>
-                
-                        <a href="{{ route('users.show', ['user' => $row->id])}}" style="margin-top: -55px;" class='btn btn-info btn-sm'><i class='fa fa-eye'></i></a>
-                
+        <div class="col-md-1">
+                <a href="{{ route('users.show', ['user' => $row->id])}}" style="margin-top: -55px;" class='no-style-btn'><i class='fa fa-eye'></i></a>        
         </div>
         @endcan
 </div>

@@ -78,10 +78,13 @@
                         </td>
                     </tr>
 
-                    <tr>    
+                    <tr>
+                    @can('rewards-edit')
                     <td >
                         <a href="{{ route('reward.edit', ['reward' => $reward->id]) }}" class='no-style-btn'><i class="fa fa-edit"></i> </a>
                     </td>
+                    @endcan
+                    @can('rewards-delete')
                     <td >
                         <form action="{{ route('reward.destroy', ['reward' => $reward->id]) }}" method="POST">  
                             @csrf 
@@ -89,6 +92,7 @@
                             <button type="submit" class="no-style-btn"><i class="fa fa-trash"></i></button>
                         </form>
                     </td>
+                    @endcan
                     </tr>
                 </table >
                     
@@ -103,7 +107,6 @@
         <div class="x_panel">
             <div class="x_title">
                 <h2>Reward Translations</h2>
-                
                 <ul class="nav navbar-right panel_toolbox">
                     <li><a href="{{ route('reward.reward-translation.create',['reward'=>$reward->id]) }}" class="btn btn-warning btn-sm">Create Reward Translation</a></li>
                 </ul>
