@@ -4,18 +4,42 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\RewardCategory;
+use DataTables;
 
 class RewardCategoryController extends Controller
 {
+    function __construct()
+
+    {
+
+         $this->middleware('permission:reward-categories-list|reward-categories-create|reward-categories-edit|reward-categories-delete', ['only' => ['index','store']]);
+
+         $this->middleware('permission:reward-categories-create', ['only' => ['create','store']]);
+
+         $this->middleware('permission:reward-categories-edit', ['only' => ['edit','update']]);
+
+         $this->middleware('permission:reward-categories-delete', ['only' => ['destroy']]);
+
+    }
     /**
      * Display a listing of the resource.
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
-        $rewardCategories = RewardCategory::all();
-        return view('rewardcategory.view',compact('rewardCategories'));
+        if ($request->ajax()) {
+            $data = RewardCategory::select('*');
+            return DataTables::of($data)
+                    ->addIndexColumn()
+                    ->addColumn('action', function($row){
+                        return view('rewardcategory.actions', compact('row'))->render();
+                    })
+                    ->rawColumns(['action'])
+                    ->make(true);
+        }
+        
+        return view('rewardcategory.view');
     }
     /**
      * Show the form for creating a new resource.

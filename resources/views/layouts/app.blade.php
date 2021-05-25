@@ -23,6 +23,7 @@
 
     <!-- Custom styling plus plugins -->
     <link href="{{ asset('build/css/custom.min.css') }}" rel="stylesheet">
+    <link href="{{ asset('build/style.css') }}" rel="stylesheet">
     <link href="{{ asset('vendors/datatables.net-bs/css/dataTables.bootstrap.min.css') }}" rel="stylesheet">
     <link href="{{ asset('vendors/datatables.net-buttons-bs/css/buttons.bootstrap.min.css') }}" rel="stylesheet">
     <link href="{{ asset('vendors/datatables.net-fixedheader-bs/css/fixedHeader.bootstrap.min.css') }}" rel="stylesheet">
@@ -95,7 +96,10 @@
                 role_datatable_route:"{{ route('roles.index') }}",
                 carqoute_datatable_route:"{{ route('carqoutes.index') }}",
                 carqoute_resubmitap_route:"{{ url('qoutes/carqoutes/resubmit_api') }}",
-                healthqoute_datatable_route:"{{ route('healthqoutes.index') }}"
+                healthqoute_datatable_route:"{{ route('healthqoutes.index') }}",
+                reward_datatable_route:"{{ route('reward.index') }}",
+                reward_categories_datatable_route:"{{ route('reward-categories.index') }}",
+                reward_tags_datatable_route:"{{ route('reward-tags.index') }}",
             },
             _token:"{{ csrf_token() }}",
             image_path:"{{ \Config::get('constants.azure_storage_url').'myrewards/' }}"

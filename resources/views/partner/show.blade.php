@@ -46,7 +46,7 @@
                     <tr>
                         @can('partners-edit')
                         <td >
-                            <a href="{{ route('partner.edit', ['partner' => $partner->id]) }}" class='btn btn-info btn-sm'><i class="fa fa-edit"></i> </a>
+                            <a href="{{ route('partner.edit', ['partner' => $partner->id]) }}" class='no-style-btn'><i class="fa fa-edit"></i> </a>
                         </td>
                         @endcan
                         @can('partners-delete')
@@ -54,7 +54,7 @@
                             <form action="{{ route('partner.destroy', ['partner' => $partner->id]) }}" method="POST">  
                                 @csrf 
                                 @method('DELETE')
-                                <button type="submit" class="btn btn-danger btn-sm"><i class="fa fa-trash"></i></button>
+                                <button type="submit" class="no-style-btn"><i class="fa fa-trash"></i></button>
                             </form>
                         </td>
                         @endcan

@@ -10,7 +10,7 @@ use DB;
 use Hash;
 use Illuminate\Support\Arr;
 use Config;
-
+use Str;
 class CarQouteController extends Controller
 {
      /**
@@ -38,7 +38,10 @@ class CarQouteController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
+            
             $data = CarQoute::select('*');
+            if(isset($request->searchtype) && !empty($request->searchtype) && isset($request->searchfield) && !empty($request->searchfield))
+                $data->where($request->searchtype,$request->searchfield);
             return Datatables::of($data)
                     ->addIndexColumn()
                     ->addColumn('action', function($row){

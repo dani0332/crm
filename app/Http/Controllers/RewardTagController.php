@@ -4,18 +4,42 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\RewardTag;
+use DataTables;
 
 class RewardTagController extends Controller
 {
+    function __construct()
+
+    {
+
+         $this->middleware('permission:reward-tags-list|reward-tags-create|reward-tags-edit|reward-tags-delete', ['only' => ['index','store']]);
+
+         $this->middleware('permission:reward-tags-create', ['only' => ['create','store']]);
+
+         $this->middleware('permission:reward-tags-edit', ['only' => ['edit','update']]);
+
+         $this->middleware('permission:reward-tags-delete', ['only' => ['destroy']]);
+
+    }
     /**
      * Display a listing of the resource.
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
-        $rewardTags = RewardTag::all();
-        return view('rewardtag.view',compact('rewardTags'));
+        if ($request->ajax()) {
+            $data = RewardTag::select('*');
+            return DataTables::of($data)
+                    ->addIndexColumn()
+                    ->addColumn('action', function($row){
+                        return view('rewardTag.actions', compact('row'))->render();
+                    })
+                    ->rawColumns(['action'])
+                    ->make(true);
+        }
+        
+        return view('rewardTag.view');
     }
     /**
      * Show the form for creating a new resource.

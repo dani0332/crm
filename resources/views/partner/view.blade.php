@@ -8,7 +8,7 @@
                 <h2>Partners</h2>
                 @can('partners-create')
                 <ul class="nav navbar-right panel_toolbox">
-                    <li><a href="{{ url('rewards/partner/create') }}" class="btn btn-success btn-sm">Create Partner</a></li>
+                    <li><a href="{{ url('rewards/partner/create') }}" class="btn btn-warning btn-sm">Create Partner</a></li>
                 </ul>
                 @endcan
                 <div class="clearfix"></div>
