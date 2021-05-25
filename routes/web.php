@@ -51,4 +51,5 @@ Route::group(['prefix' => 'admin'], function() {
 
 Route::group(['prefix' => 'qoutes'], function() {
     Route::resource('carqoutes', CarQouteController::class);
+    Route::POST('carqoutes/resubmit_api', [ CarQouteController::class , 'resubmitApi']);
 });

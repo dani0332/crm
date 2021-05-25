@@ -230,6 +230,70 @@
 
             ]
         });
+
+        $('#select_all_checkboxes').click(function(e){
+          var isChecked = e.target.checked;
+          
+          if(isChecked === true){
+            $( ".multicheckbox" ).each(function( index ) {
+              $(this).prop('checked',true)
+            });
+          }else{
+            $( ".multicheckbox" ).each(function( index ) {
+              $(this).prop('checked',false)
+            });
+          }
+        })
+
+        $('#resubmit_api_carqoute').click(function(){
+            $('#resubmit_api_carqoute').attr('disabled',true);
+            var carQoutes = [];
+            $( ".multicheckbox" ).each(function( index ) {
+                if($(this).prop('checked')){
+                    var id = $(this).attr('data-id');
+                    carQoutes.push(id);
+                }
+            });
+            if(carQoutes.length > 0){
+                $.ajax({
+                        url:"{{ url('qoutes/carqoutes/resubmit_api') }}",
+                        type: "post",
+                        data: {car_qoutes:carQoutes,"_token": "{{ csrf_token() }}"},
+                        success: function (response) {
+                            $('#success_message').show();
+                            $('#success_message').fadeIn().html('Resubmit Api Execution is successfull');
+                            
+                            $('.carqoute-data-table').DataTable().ajax.reload();
+
+                            setTimeout(function() {
+                                $('#resubmit_api_carqoute').attr('disabled',false);
+                                $('#success_message').fadeOut("slow");
+                            }, 3000 );
+
+
+                            
+                        },
+                        error: function(jqXHR, textStatus, errorThrown) {
+                        console.log(textStatus, errorThrown);
+                            $('#error_message').show();
+                                $('#error_message').fadeIn().html(errorThrown);
+                            setTimeout(function() {
+                                $('#resubmit_api_carqoute').attr('disabled',false);
+                                $('#error_message').fadeOut("slow");
+                            }, 3000 );
+                        }
+                });
+            }
+            else{
+                $('#error_message').show();
+                    $('#error_message').fadeIn().html('Please select atleast one row');
+                setTimeout(function() {
+                    $('#resubmit_api_carqoute').attr('disabled',false);
+                    $('#error_message').fadeOut("slow");
+                }, 3000 );
+            }
+            
+        })
       })
     </script>
     </body>

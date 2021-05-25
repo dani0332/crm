@@ -6,10 +6,15 @@
         <div class="x_panel">
             <div class="x_title">
                 <h2>Car Qoutes</h2>
-                <div class="clearfix"></div>
                 
+                <ul class="nav navbar-right panel_toolbox">
+                    <li><button id="resubmit_api_carqoute" class="btn btn-success btn-sm">ReSubmit Api</button></li>
+                </ul>
+                <div class="clearfix"></div>
             </div>
             <div class="x_content">
+                <div id="success_message" class="alert alert-success" style="display:none"></div>
+                <div id="error_message" class="alert alert-danger" style="display:none"></div>
                 <br />
                 <table  class="table table-striped table-bordered carqoute-data-table" style="width:100%">
                       <thead>
