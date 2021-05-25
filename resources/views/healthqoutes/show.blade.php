@@ -1,11 +1,11 @@
 @extends('layouts.app')
-@section('title','Car Qoute Detail')
+@section('title','Health Qoute Detail')
 @section('content')
 <div class="row">
     <div class="col-md-12 col-sm-12 ">
         <div class="x_panel">
             <div class="x_title">
-                <h2>Car Qoute Detail</h2>
+                <h2>Health Qoute Detail</h2>
                 <div class="clearfix"></div>
             </div>
             <div class="x_content">
@@ -16,69 +16,69 @@
                             Id 
                         </td>
                         <td>
-                            {{ $carqoute->id }}
+                            {{ $healthqoute->id }}
                         </td>
                     </tr>
                     <tr>
                         <td>
-                            Car Value
+                            Preference
                         </td>
                         <td>
-                            {{ $carqoute->car_value }}
-                        </td>
-                    </tr>
-
-                    <tr>
-                        <td>
-                            Currently Insured With
-                        </td>
-                        <td>
-                            {{ $carqoute->currently_insured_with }}
+                            {{ $healthqoute->preference }}
                         </td>
                     </tr>
 
                     <tr>
                         <td>
-                            Year Of Manufacture
+                            Details
                         </td>
                         <td>
-                            {{ $carqoute->year_of_manufacture }}
-                        </td>
-                    </tr>
-
-                    <tr>
-                        <td>
-                            UAE License Held For
-                        </td>
-                        <td>
-                            {{ $carqoute->uaeLicenseHeldFor->code }}
+                            {{ $healthqoute->details }}
                         </td>
                     </tr>
 
                     <tr>
                         <td>
-                            Car Make
+                            Has Dental
                         </td>
                         <td>
-                            {{ $carqoute->carMake->code  }}
-                        </td>
-                    </tr>
-
-                    <tr>
-                        <td>
-                            Car Model
-                        </td>
-                        <td>
-                            {{ $carqoute->carModel->code }}
+                            {{ $healthqoute->has_dental }}
                         </td>
                     </tr>
 
                     <tr>
                         <td>
-                            Car Value
+                            Has Worldwide Cover
                         </td>
                         <td>
-                            {{ $carqoute->car_value }}
+                            {{ $healthqoute->has_worldwide_cover }}
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td>
+                            Has Home
+                        </td>
+                        <td>
+                            {{ $healthqoute->has_home  }}
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td>
+                            Marital Status
+                        </td>
+                        <td>
+                            {{ $healthqoute->marital_status_id }}
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td>
+                            Cover For
+                        </td>
+                        <td>
+                            {{ $healthqoute->cover_for_id }}
                         </td>
                     </tr>
                     
@@ -87,7 +87,7 @@
                             Emirate Of Registration
                         </td>
                         <td>
-                            {{ $carqoute->emirate->code }}
+                            {{ $healthqoute->emirate->code }}
                         </td>
                     </tr>
 
@@ -96,7 +96,7 @@
                             First Name 
                         </td>
                         <td>
-                            {{ $carqoute->first_name }}
+                            {{ $healthqoute->first_name }}
                         </td>
                     </tr>
                      
@@ -105,7 +105,7 @@
                             Last Name 
                         </td>
                         <td>
-                            {{ $carqoute->last_name }}
+                            {{ $healthqoute->last_name }}
                         </td>
                     </tr>
                     <tr>
@@ -113,24 +113,7 @@
                             Email 
                         </td>
                         <td>
-                            {{ $carqoute->email }}
-                        </td>
-                    </tr>
-
-                    <tr>
-                        <td>
-                            Claim History
-                        </td>
-                        <td>
-                            {{ $carqoute->claimHistory->code }}
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            Car Type Insurance 
-                        </td>
-                        <td>
-                            {{ $carqoute->carTypeInsurance->code }}
+                            {{ $healthqoute->email }}
                         </td>
                     </tr>
                     <tr>
@@ -138,7 +121,7 @@
                             Mobile No
                         </td>
                         <td>
-                            {{ $carqoute->mobile_no }}
+                            {{ $healthqoute->mobile_no }}
                         </td>
                     </tr>
                     <tr>
@@ -146,7 +129,7 @@
                            Gender 
                         </td>
                         <td>
-                            {{ $carqoute->gender }}
+                            {{ $healthqoute->gender }}
                         </td>
                     </tr>
 
@@ -156,7 +139,7 @@
                             Lang 
                         </td>
                         <td>
-                            {{ $carqoute->lang }}
+                            {{ $healthqoute->lang }}
                         </td>
                     </tr>
 
@@ -165,7 +148,7 @@
                             Source 
                         </td>
                         <td>
-                            {{ $carqoute->source }}
+                            {{ $healthqoute->source }}
                         </td>
                     </tr>
 
@@ -174,7 +157,7 @@
                             DOB 
                         </td>
                         <td>
-                            {{ $carqoute->dob }}
+                            {{ $healthqoute->dob }}
                         </td>
                     </tr>
 
@@ -183,7 +166,7 @@
                             Customer 
                         </td>
                         <td>
-                            {{ $carqoute->customer->first_name .' '. $carqoute->customer->last_name }}
+                            {{ $healthqoute->customer->first_name .' '. $healthqoute->customer->last_name }}
                         </td>
                     </tr>
 
@@ -192,7 +175,7 @@
                            Nationality 
                         </td>
                         <td>
-                            {{ $carqoute->nationality->code }}
+                            {{ $healthqoute->nationality->code }}
                         </td>
                     </tr>
 
@@ -201,7 +184,7 @@
                             Payment Status
                         </td>
                         <td>
-                            {{ $carqoute->paymentStatus->code }}
+                            {{ $healthqoute->paymentStatus->code }}
                         </td>
                     </tr>
 
@@ -210,7 +193,7 @@
                             Quote Status Id
                         </td>
                         <td>
-                            {{ $carqoute->quoteStatus->code }}
+                            {{ $healthqoute->quoteStatus->code }}
                         </td>
                     </tr>
 
@@ -219,7 +202,7 @@
                             Is Synced
                         </td>
                         <td>
-                            {{ $carqoute->is_synced }}
+                            {{ $healthqoute->is_synced }}
                         </td>
                     </tr>
                     
@@ -228,7 +211,7 @@
                             Device
                         </td>
                         <td>
-                            {{ $carqoute->device }}
+                            {{ $healthqoute->device }}
                         </td>
                     </tr>
 
@@ -237,7 +220,7 @@
                             Reference Url
                         </td>
                         <td>
-                            {{ $carqoute->reference_url }}
+                            {{ $healthqoute->reference_url }}
                         </td>
                     </tr>
 
@@ -246,7 +229,7 @@
                             Additional Notes
                         </td>
                         <td>
-                            {{ $carqoute->additional_notes }}
+                            {{ $healthqoute->additional_notes }}
                         </td>
                     </tr>
 
@@ -255,7 +238,7 @@
                             Reviver Name
                         </td>
                         <td>
-                            {{ $carqoute->reviver_name }}
+                            {{ $healthqoute->reviver_name }}
                         </td>
                     </tr>
 
@@ -264,7 +247,7 @@
                             Promo Code
                         </td>
                         <td>
-                            {{ $carqoute->promo_code }}
+                            {{ $healthqoute->promo_code }}
                         </td>
                     </tr>
 
@@ -273,7 +256,7 @@
                             Code
                         </td>
                         <td>
-                            {{ $carqoute->code }}
+                            {{ $healthqoute->code }}
                         </td>
                     </tr>
                     
