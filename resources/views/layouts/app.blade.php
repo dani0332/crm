@@ -86,151 +86,20 @@
 	  <script src="{{ asset('vendors/iCheck/icheck.min.js') }}"></script>
     <!-- Custom Theme Scripts -->
     <script src="{{ asset('build/js/custom.min.js') }}"></script>
-    <script type="text/javascript">
-      var imagePath ="{{ \Config::get('constants.azure_storage_url').'myrewards/' }}";
-      $(document).ready(function(){
-        $( "#datepicker" ).datepicker({ dateFormat: 'yy-mm-dd' });
-        $( "#datepicker_2" ).datepicker({ dateFormat: 'yy-mm-dd' });
-
-        $('#editor1').markdownEditor({
-        preview: true,
-        fullscreen:false,
-        // imageUpload: true, // Activate the option
-          
-        // uploadPath: 'upload.php',
-        onPreview: function (content, callback) {
-          
-        callback( marked(content) );
-          
-        }
-          
-        });
-  
-        $('#editor2').markdownEditor({
-          
-          preview: true,
-          fullscreen:false,
-          // imageUpload: true, // Activate the option
-            
-          // uploadPath: 'upload.php',
-          onPreview: function (content, callback) {
-            
-          callback( marked(content) );
-            
-          }
-            
-          });
-  
-  
-          $('#editor3').markdownEditor({
-          
-          preview: true,
-          fullscreen:false,
-          // imageUpload: true, // Activate the option
-            
-          // uploadPath: 'upload.php',
-          onPreview: function (content, callback) {
-            
-          callback( marked(content) );
-            
-          }
-            
-          });
-          
-          $('#editor4').markdownEditor({
-          
-          preview: true,
-          fullscreen:false,
-          // imageUpload: true, // Activate the option
-            
-          // uploadPath: 'upload.php',
-          onPreview: function (content, callback) {
-            
-          callback( marked(content) );
-            
-          }
-            
-        });
-        $("#datatable").DataTable().destroy()
-        $('#datatable').DataTable( {
-            // "paging":   false,
-            "ordering": false,
-            "info":     false,
-            'searching':false,
-            "bLengthChange": false
-        } );
-
-        var table = $('.data-table').DataTable({
-            
-            ordering: false,
-            info:     false,
-            searching:false,
-            bLengthChange: false,
-            ajax: "{{ route('partner.index') }}",
-            columns: [
-                {data: 'id', name: 'id'},
-                {data: 'name', name: 'name'},
-                {data: 'name_ar', name: 'name_ar'},
-                {data: "logo_image", name: "logo_image",
-                render: function (data, type, row, meta) {
-                    var imgsrc = imagePath + data; // here data should be in base64 string
-                    return '<img class="img-responsive" src="' + imgsrc +'" alt="logo_image" height="40px" width="40px">';
-                }},
-                {data: 'action', name: 'action', orderable: false, searchable: false},
-            ]
-        });
-
-        var table = $('.user-data-table').DataTable({
-            ordering: false,
-            info:     false,
-            searching:false,
-            bLengthChange: false,
-            serverSide: true,
-            ajax: "{{ route('users.index') }}",
-            columns: [
-                {data: 'id', name: 'id'},
-                {data: 'name', name: 'name'},
-                {data: 'email', name: 'email'},
-                {data: 'action', name: 'action', orderable: false, searchable: false},
-            ]
-        });
-
-        var table = $('.role-data-table').DataTable({
-            ordering: false,
-            info:     false,
-            searching:false,
-            bLengthChange: false,
-            serverSide: true,
-            ajax: "{{ route('roles.index') }}",
-            columns: [
-                {data: 'id', name: 'id'},
-                {data: 'name', name: 'name'},
-                {data: 'action', name: 'action', orderable: false, searchable: false},
-            ]
-        });
-
-        var table = $('.carqoute-data-table').DataTable({
-            ordering: false,
-            info:     false,
-            searching:false,
-            bLengthChange: false,
-            serverSide: true,
-            ajax: "{{ route('carqoutes.index') }}",
-            columns: [
-                {data: "checkbox", name: "checkbox",
-                render: function (data, type, row, meta) {
-                    var imgsrc = imagePath + data; // here data should be in base64 string
-                    return '<input type="checkbox" class="flat multicheckbox" name="row[]" data-id="'+row.id+'">';
-                }},
-                {data: 'id', name: 'id'},
-                {data: 'car_value', name: 'car_value'},
-                {data: 'is_synced', name: 'is_synced'},
-                {data: 'device', name: 'device'},
-                {data: 'code', name: 'code'},
-
-            ]
-        });
-      })
+    <script>
+        // global app configuration object
+        var config = {
+            routes: {
+                partner_datatable_route: "{{ route('partner.index') }}",
+                user_datatable_route:"{{ route('users.index') }}",
+                role_datatable_route:"{{ route('roles.index') }}",
+                carqoute_datatable_route:"{{ route('carqoutes.index') }}",
+                routes_carqoute_resubmitap_route:"{{ url('qoutes/carqoutes/resubmit_api') }}",
+            },
+            _token:"{{ csrf_token() }}",
+            image_path ="{{ \Config::get('constants.azure_storage_url').'myrewards/' }}";
+        };
     </script>
+    <script src="{{ asset('build/js/customjs.js') }}"></script>
     </body>
 </html>
