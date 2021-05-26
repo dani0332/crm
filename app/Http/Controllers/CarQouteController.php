@@ -41,8 +41,15 @@ class CarQouteController extends Controller
             
             $data = CarQoute::select('*');
             if(isset($request->searchtype) && !empty($request->searchtype) && isset($request->searchfield) && !empty($request->searchfield))
-                $data->where($request->searchtype,$request->searchfield);
-            return Datatables::of($data)
+            {
+                if($request->searchtype === 'name'){
+                    $data->where('first_name',$request->searchfield)->orWhere('last_name',$request->searchfield);
+                }else{
+                    $data->where($request->searchtype,$request->searchfield);
+                }
+            }    
+            
+            return DataTables::of($data)
                     ->addIndexColumn()
                     ->addColumn('action', function($row){
                         return view('carqoutes.actions', compact('row'))->render();

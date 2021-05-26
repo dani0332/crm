@@ -1,15 +1,15 @@
 @extends('layouts.app')
-@section('title','View CarQoute')
+@section('title','View Customer')
 @section('content')
 <div class="row">
     <div class="col-md-12 col-sm-12 ">
         <div class="x_panel">
             <div class="x_title">
-                <h2>Search Car Qoutes</h2>
+                <h2>Search Customers</h2>
                 <div class="clearfix"></div>
             </div>
             <div class="x_content">
-            <form method="POST" id="search-car-qoute" class="form-horizontal form-label-left"  role="form"  data-parsley-validate=""novalidate="">
+            <form method="POST" id="search-customer" class="form-horizontal form-label-left"  role="form"  data-parsley-validate=""novalidate="">
                 <div class="item form-group">
                     <label class="col-form-label col-md-2 col-sm-2 " for="first-name">Search By 
                     </label>
@@ -18,22 +18,7 @@
                         <input type="radio" class="flat" name="searchtype" checked  value="id"  required /> ID
                         </p>
                         <p>
-                        <input type="radio" class="flat" name="searchtype"  value="code" /> Code
-                        </p>
-
-                        <p>
                         <input type="radio" class="flat" name="searchtype"  value="email"   /> Email
-                        </p>
-                        <p>
-                        <input type="radio" class="flat" name="searchtype"  value="mn" /> Mobile No
-                        </p>
-
-
-                        <p>
-                        <input type="radio" class="flat" name="searchtype"  value="name"   /> Name
-                        </p>
-                        <p>
-                        <input type="radio" class="flat" name="searchtype"  value="code" /> Code
                         </p>
                     </div>
                 </div>
@@ -55,7 +40,7 @@
         </div>
         <div class="x_panel">
             <div class="x_title">
-                <h2>Car Qoutes</h2>
+                <h2>Customers</h2>
                 
                 {{-- <ul class="nav navbar-right panel_toolbox">
                     <li><button id="resubmit_api_carqoute" class="btn btn-success btn-sm">ReSubmit Api</button></li>
@@ -69,15 +54,15 @@
                 
                 
                 <br/>
-                <table  class="table table-striped jambo_table carqoute-data-table" style="width:100%">
+                <table  class="table table-striped jambo_table customer-data-table" style="width:100%">
                       <thead>
                         <tr>
                           <th>id</th>
-                          <th>Car Value</th>
-                          <th>Is Synced</th>
-                          <th>Device</th>
-                          <th>Code</th>
-                          <th>Actions</th>
+                          <th>Name</th>
+                          <th>Email</th>
+                          <th>Mobile No</th>
+                          <th>Gender</th>
+                          <th>DOB</th>
                         </tr>
                       </thead>
 

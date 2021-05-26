@@ -10,6 +10,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\CarQouteController;
 use App\Http\Controllers\HealthQouteController;
+use App\Http\Controllers\CustomerController;
 
 
 
@@ -55,3 +56,6 @@ Route::group(['prefix' => 'qoutes'], function() {
     Route::POST('carqoutes/resubmit_api', [ CarQouteController::class , 'resubmitApi']);
     Route::resource('healthqoutes', HealthQouteController::class);
 });
+
+Route::resource('customer', CustomerController::class);
+

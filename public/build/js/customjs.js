@@ -282,6 +282,37 @@ $(document).ready(function(){
         ]
     });
 
+    var customerDataTable = $('.customer-data-table').DataTable({
+        ordering: false,
+        info:     false,
+        searching:false,
+        bLengthChange: false,
+        serverSide: true,
+        ajax: {
+            url:config.routes.customer_data_table_route,
+              data: function (d) {
+                  d.searchtype = $('input[name=searchtype]:checked').val();
+                  d.searchfield = $('input[name=searchfield]').val();
+              }
+          },
+        columns: [
+            // {data: "checkbox", name: "checkbox",
+            // render: function (data, type, row, meta) {
+            //     return '<input type="checkbox" class="flat multicheckbox" name="row[]" data-id="'+row.id+'">';
+            // }},
+            {data: 'id', name: 'id'},
+            {data: 'first_name', name: 'first_name'},
+            {data: 'email', name: 'email'},
+            {data: 'mobile_no', name: 'mobile_no'},
+            {data: 'gender', name: 'gender'},
+            {data: 'dob', name: 'dob', orderable: false, searchable: false},
+
+        ]
+    });
+    $('#search-customer').submit(function(e){
+        customerDataTable.draw();
+        e.preventDefault();
+    })
     //select/unselect all checkboxes if this selected
     $('#select_all_checkboxes').click(function(e){
         var isChecked = e.target.checked;

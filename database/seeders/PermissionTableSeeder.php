@@ -135,5 +135,12 @@ class PermissionTableSeeder extends Seeder
             'name'=>'car-qoutes-resubmit-api',
             'guard_name'=>'web',
         ]);
+
+        \DB::table('permissions')->insertGetId([
+            'name'=>'customers-list',
+            'guard_name'=>'web',
+        ]);
+
+        
     }
 }
