@@ -90,6 +90,61 @@ $(document).ready(function(){
           {data: 'action', name: 'action', orderable: false, searchable: false},
       ]
   });
+  
+  var rewardCategory = $('.reward-category-data-table').DataTable({
+        ordering: false,
+        info:     false,
+        searching:false,
+        bLengthChange: false,
+        ajax: config.routes.reward_categories_datatable_route,
+        columns: [
+            {data: 'text', name: 'text'},
+            {data: 'text_ar', name: 'text_ar'},
+            {data: "sort_order", name: "sort_order"},
+            {data: "is_active", name: "is_active"},
+            {data: "created_at", name: "created_at"},
+            {data: "updated_at", name: "updated_at"},
+            {data: 'action', name: 'action', orderable: false, searchable: false},
+        ]
+    });
+
+    var rewardTags = $('.reward-tag-data-table').DataTable({
+        ordering: false,
+        info:     false,
+        searching:false,
+        bLengthChange: false,
+        ajax: config.routes.reward_tags_datatable_route,
+        columns: [
+            {data: 'text', name: 'text'},
+            {data: 'text_ar', name: 'text_ar'},
+            {data: "sort_order", name: "sort_order"},
+            {data: "is_active", name: "is_active"},
+            {data: "created_at", name: "created_at"},
+            {data: "updated_at", name: "updated_at"},
+            {data: 'action', name: 'action', orderable: false, searchable: false},
+        ]
+    });
+
+  $('.reward-data-table').DataTable({
+      
+        ordering: false,
+        info:     false,
+        searching:false,
+        bLengthChange: false,
+        ajax: config.routes.reward_datatable_route,
+        columns: [
+            {data: 'id', name: 'id'},
+            {data: 'partner_id', name: 'partner_id'},
+            {data: 'discount', name: 'discount'},
+            {data: "start_date", name: "start_date"},
+            {data: "end_date", name: "end_date"},
+            {data: "is_active", name: "is_active"},
+            {data: "is_flat_discount", name: "is_flat_discount"},
+            {data: 'action', name: 'action', orderable: false, searchable: false},
+        ]
+    });
+
+    
 
    $('.user-data-table').DataTable({
       ordering: false,
@@ -121,19 +176,20 @@ $(document).ready(function(){
       ]
   });
 
-   $('.carqoute-data-table').DataTable({
+   var carqouteDatatable = $('.carqoute-data-table').DataTable({
       ordering: false,
       info:     false,
       searching:false,
       bLengthChange: false,
       serverSide: true,
-      ajax: config.routes.carqoute_datatable_route,
+      ajax: {
+          url:config.routes.carqoute_datatable_route,
+            data: function (d) {
+                d.searchtype = $('input[name=searchtype]:checked').val();
+                d.searchfield = $('input[name=searchfield]').val();
+            }
+        },
       columns: [
-          {data: "checkbox", name: "checkbox",
-          render: function (data, type, row, meta) {
-              var imgsrc = config.image_path + data; // here data should be in base64 string
-              return '<input type="checkbox" class="flat multicheckbox" name="row[]" data-id="'+row.id+'">';
-          }},
           {data: 'id', name: 'id'},
           {data: 'car_value', name: 'car_value'},
           {data: 'is_synced', name: 'is_synced'},
@@ -145,11 +201,17 @@ $(document).ready(function(){
       ]
   });
 
- 
+    $('#search-car-qoute').submit(function(e){
+        carqouteDatatable.draw();
+        e.preventDefault();
+    })
 
   $('#resubmit_api_carqoute').click(function(){
       $('#resubmit_api_carqoute').attr('disabled',true);
+      var data_id = $(this).attr('data-id');
       var carQoutes = [];
+      if(data_id != '')
+        carQoutes.push(data_id);
       $( ".multicheckbox" ).each(function( index ) {
           if($(this).prop('checked')){
               var id = $(this).attr('data-id');
@@ -206,11 +268,10 @@ $(document).ready(function(){
         serverSide: true,
         ajax: config.routes.healthqoute_datatable_route,
         columns: [
-            {data: "checkbox", name: "checkbox",
-            render: function (data, type, row, meta) {
-                var imgsrc = config.image_path + data; // here data should be in base64 string
-                return '<input type="checkbox" class="flat multicheckbox" name="row[]" data-id="'+row.id+'">';
-            }},
+            // {data: "checkbox", name: "checkbox",
+            // render: function (data, type, row, meta) {
+            //     return '<input type="checkbox" class="flat multicheckbox" name="row[]" data-id="'+row.id+'">';
+            // }},
             {data: 'id', name: 'id'},
             {data: 'preference', name: 'preference'},
             {data: 'is_synced', name: 'is_synced'},

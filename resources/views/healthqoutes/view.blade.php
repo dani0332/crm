@@ -16,10 +16,9 @@
                 <div id="success_message" class="alert alert-success" style="display:none"></div>
                 <div id="error_message" class="alert alert-danger" style="display:none"></div>
                 <br />
-                <table  class="table table-striped table-bordered healthqoute-data-table" style="width:100%">
+                <table  class="table table-striped jambo_table healthqoute-data-table" style="width:100%">
                       <thead>
                         <tr>
-                          <th><input type="checkbox" class="multiselect" id="select_all_checkboxes"/></th>
                           <th>id</th>
                           <th>Preference</th>
                           <th>Is Synced</th>

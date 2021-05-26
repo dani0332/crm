@@ -38,7 +38,7 @@
                     <tr>
                     @can('users-edit')
                         <td >
-                            <a href="{{ route('users.edit', ['user' => $user->id]) }}" class='btn btn-info btn-sm'><i class="fa fa-edit"></i> </a>
+                            <a href="{{ route('users.edit', ['user' => $user->id]) }}" class='no-style-btn'><i class="fa fa-edit"></i> </a>
                         </td>
                     @endcan    
                     @can('users-delete')
@@ -46,7 +46,7 @@
                         <form action="{{ route('users.destroy', ['user' => $user->id]) }}" method="POST">  
                             @csrf 
                             @method('DELETE')
-                            <button type="submit" class="btn btn-danger btn-sm"><i class="fa fa-trash"></i></button>
+                            <button type="submit" class="no-style-btn"><i class="fa fa-trash"></i></button>
                         </form>
                     </td>
                     @endcan

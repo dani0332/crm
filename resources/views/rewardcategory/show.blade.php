@@ -60,13 +60,13 @@
                     <tr>
                         
                     <td >
-                        <a href="{{ route('reward-categories.edit', ['reward_category' => $rewardCategory->id]) }}" class='btn btn-info btn-sm'><i class="fa fa-edit"></i> </a>
+                        <a href="{{ route('reward-categories.edit', ['reward_category' => $rewardCategory->id]) }}" class='no-style-btn'><i class="fa fa-edit"></i> </a>
                     </td>
                     <td >
                         <form action="{{ route('reward-categories.destroy', ['reward_category' => $rewardCategory->id]) }}" method="POST">  
                             @csrf 
                             @method('DELETE')
-                            <button type="submit" class="btn btn-danger btn-sm"><i class="fa fa-trash"></i></button>
+                            <button type="submit" class="no-style-btn"><i class="fa fa-trash"></i></button>
                         </form>
                     </td>
                     </tr>

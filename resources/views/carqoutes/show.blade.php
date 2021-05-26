@@ -6,9 +6,14 @@
         <div class="x_panel">
             <div class="x_title">
                 <h2>Car Qoute Detail</h2>
+                <ul class="nav navbar-right panel_toolbox">
+                    <li><button id="resubmit_api_carqoute" class="btn btn-success btn-sm" data-id="{{ $carqoute->id }}">ReSubmit Api</button></li>
+                </ul>
                 <div class="clearfix"></div>
             </div>
             <div class="x_content">
+                <div id="success_message" class="alert alert-success" style="display:none"></div>
+                <div id="error_message" class="alert alert-danger" style="display:none"></div>
                 <br />
                 <table class="table table-striped">
                     <tr>

@@ -1,5 +1,5 @@
 <div class="col-md-3 left_col">
-    <div class="left_col scroll-view">
+    <div class="left_col scroll-view" style="border: 0;backgroundlinear-gradient(0deg,#69d0fe,#4183bd);">
     <div class="navbar nav_title" style="border: 0;background:#eef1f4;">
         <a href="index.html" class="site_title">
             <img src='{{ asset("image/logo.png") }}' style="width:200px;height:30px;" />

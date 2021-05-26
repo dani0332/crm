@@ -9,20 +9,43 @@ use App\Models\RewardCategory;
 use App\Models\RewardTag;
 use App\Services\RewardCategoryMapping;
 use App\Services\RewardTagMapping;
-
+use DataTables;
 
 
 class RewardController extends Controller
 {
+    function __construct()
+
+    {
+
+         $this->middleware('permission:rewards-list|rewards-create|rewards-edit|rewards-delete', ['only' => ['index','store']]);
+
+         $this->middleware('permission:rewards-create', ['only' => ['create','store']]);
+
+         $this->middleware('permission:rewards-edit', ['only' => ['edit','update']]);
+
+         $this->middleware('permission:rewards-delete', ['only' => ['destroy']]);
+
+    }
     /**
      * Display a listing of the resource.
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
-        $rewards = Reward::all();
-        return view('reward.view',compact('rewards'));
+        if ($request->ajax()) {
+            $data = Reward::select('*');
+            return Datatables::of($data)
+                    ->addIndexColumn()
+                    ->addColumn('action', function($row){
+                        return view('reward.actions', compact('row'))->render();
+                    })
+                    ->rawColumns(['action'])
+                    ->make(true);
+        }
+        
+        return view('reward.view');
     }
     /**
      * Show the form for creating a new resource.

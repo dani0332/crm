@@ -8,7 +8,7 @@
                 <h2>Roles</h2>
                 @can('role-create')
                 <ul class="nav navbar-right panel_toolbox">
-                    <li><a href="{{ url('admin/roles/create') }}" class="btn btn-success btn-sm">Create Role</a></li>
+                    <li><a href="{{ url('admin/roles/create') }}" class="btn btn-warning btn-sm">Create Role</a></li>
                 </ul>
                 @endcan
                 
@@ -17,7 +17,7 @@
             </div>
             <div class="x_content">
                 <br />
-                <table  class="table table-striped table-bordered role-data-table" style="width:100%">
+                <table  class="table table-striped jambo_table role-data-table" style="width:100%">
                       <thead>
                         <tr>
                           <th>id</th>
