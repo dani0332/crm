@@ -14,7 +14,7 @@
             </div>
             <div class="x_content">
                 <br />
-                <table class="table table-striped table-bordered reward-data-table">
+                <table class="table table-striped jambo_table reward-data-table">
                       <thead>
                         <tr>
                           <th>Coupon Code</th>

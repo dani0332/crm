@@ -37,7 +37,8 @@
 
   
   .fa{
-      font-size: 20px;
+      font-size: 16px;
+      padding: 10px;
   }
 
   .nav_menu{
@@ -56,3 +57,12 @@
   .btn-warning{
     background-color:#e24c00 !important;
   }
+  .nav.side-menu li.active-sm {
+      border-right: 5px solid #e24c00 !important;
+  }
+  
+  .dataTables_paginate a {
+    padding: 12px 15px !important;
+    background: #ddd !important;
+    font-size: 14px;
+}

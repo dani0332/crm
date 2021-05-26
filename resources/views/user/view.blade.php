@@ -16,7 +16,7 @@
             </div>
             <div class="x_content">
                 <br />
-                <table  class="table table-striped table-bordered user-data-table" style="width:100%">
+                <table  class="table table-striped jambo_table user-data-table" style="width:100%">
                       <thead>
                         <tr>
                           <th>id</th>

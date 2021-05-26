@@ -190,11 +190,6 @@ $(document).ready(function(){
             }
         },
       columns: [
-          {data: "checkbox", name: "checkbox",
-          render: function (data, type, row, meta) {
-              var imgsrc = config.image_path + data; // here data should be in base64 string
-              return '<input type="checkbox" class="flat multicheckbox" name="row[]" data-id="'+row.id+'">';
-          }},
           {data: 'id', name: 'id'},
           {data: 'car_value', name: 'car_value'},
           {data: 'is_synced', name: 'is_synced'},
@@ -273,11 +268,10 @@ $(document).ready(function(){
         serverSide: true,
         ajax: config.routes.healthqoute_datatable_route,
         columns: [
-            {data: "checkbox", name: "checkbox",
-            render: function (data, type, row, meta) {
-                var imgsrc = config.image_path + data; // here data should be in base64 string
-                return '<input type="checkbox" class="flat multicheckbox" name="row[]" data-id="'+row.id+'">';
-            }},
+            // {data: "checkbox", name: "checkbox",
+            // render: function (data, type, row, meta) {
+            //     return '<input type="checkbox" class="flat multicheckbox" name="row[]" data-id="'+row.id+'">';
+            // }},
             {data: 'id', name: 'id'},
             {data: 'preference', name: 'preference'},
             {data: 'is_synced', name: 'is_synced'},

@@ -14,7 +14,7 @@
             </div>
             <div class="x_content">
                 <br />
-                <table  class="table table-striped table-bordered reward-category-data-table" style="width:100%">
+                <table  class="table table-striped jambo_table reward-category-data-table" style="width:100%">
                       <thead>
                         <tr>
                           <th>Text</th>
