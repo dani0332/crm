@@ -109,6 +109,11 @@
     </div>
 </div>
 
-
-<x-auditable  :auditableId="$rewardTranslation->id" auditableType="App\Models\RewardTranslation"/>
+@can('auditable')
+    <div id="auditable">
+        <button id='auditablebtn' class="btn btn-warning auditablebtn" data-id="{{ $rewardTranslation->id }}" data-model="App\Models\RewardTranslation">
+            View Auditable
+        </button>
+    </div>
+@endcan
 @endsection

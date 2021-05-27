@@ -8,18 +8,17 @@
                 </div>
                 <div class="x_content">
                     <br />
-                    <table id="datatable" class="table table-striped jambo_table table-responsive">
+                    <div class="table-responsive">
+                    <table id="datatable" class="table table-striped jambo_table">
                           <thead>
                             <tr>
                               <th>Id</th>
                               <th>User</th>
                               <th>Event</th>
-                              <th>Auditable type</th>
-                              <th>Auditable Id</th>
                               <th>Old Values</th>
                               <th>New Values</th>
-                              <th>Url</th>
                               <th>Ip Address</th>
+                              <th>Created_at</th>
                             </tr>
                           </thead>
     
@@ -31,17 +30,16 @@
                               <td>{{ $audit->id }}</td>
                               <td>{{ $audit->name }}</td>
                               <td>{{ $audit->event }}</td>
-                              <td>{{ $audit->auditable_type }}</td>
-                              <td>{{ $audit->auditable_id }}</td>
                               <td>{{ $audit->old_values }}</td>
                               <td>{{ $audit->new_values }}</td>
-                              <td>{{ $audit->url }}</td>
                               <td>{{ $audit->ip_address }}</td>
+                              <td>{{ $audit->created_at }}</td>
                             </tr>
                             @endforeach
                             
                           </tbody>
                         </table>
+                    </div>
                 </div>
             </div>
         </div>

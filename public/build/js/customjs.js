@@ -350,4 +350,21 @@ $(document).ready(function () {
             });
         }
     });
+
+
+    $('.auditablebtn').click(function(){
+        var auditableId = $(this).attr('data-id');
+        var auditableType = $(this).attr('data-model');
+        $(this).attr('disabled',true);
+
+        $.ajax({
+            url:config.routes.load_auditable,
+            method:"POST",
+            data:{auditableId,auditableType,_token:config._token},
+            success:function(data){
+                $('#auditable').html(data);
+                $('.auditablebtn').hide();
+            }
+        })
+    })
 });

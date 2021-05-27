@@ -57,7 +57,7 @@
                     <div class="item form-group">
                         <div class="col-md-6 col-sm-6 offset-md-3">
                                 @can('partners-edit')
-                                    <a href="{{ route('partner.edit', ['partner' => $partner->id]) }}" class='btn btn-warning btn-sm'>Edit </a>
+                                    <a id="texta" href="{{ route('partner.edit', ['partner' => $partner->id]) }}" class='btn btn-warning btn-sm'>Edit </a>
                                 
                                 @endcan
                                 @can('partners-delete')
@@ -77,6 +77,11 @@
         </div>
     </div>
 </div>
-
-<x-auditable  :auditableId="$partner->id" auditableType="App\Models\Partner"/>
+@can('auditable')
+    <div id="auditable">
+        <button id='auditablebtn' class="btn btn-warning auditablebtn" data-id="{{ $partner->id }}" data-model="App\Models\Partner">
+            View Auditable
+        </button>
+    </div>
+@endcan
 @endsection

@@ -11,7 +11,7 @@ use App\Http\Controllers\RoleController;
 use App\Http\Controllers\CarQouteController;
 use App\Http\Controllers\HealthQouteController;
 use App\Http\Controllers\CustomerController;
-
+use App\Http\Controllers\AuditableController;
 
 
 /*
@@ -58,4 +58,6 @@ Route::group(['prefix' => 'qoutes'], function() {
 });
 
 Route::resource('customer', CustomerController::class);
+
+Route::post('auditable',[AuditableController::class,'loadAuditableComponent']);
 

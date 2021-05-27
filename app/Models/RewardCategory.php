@@ -8,7 +8,7 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 use OwenIt\Auditing\Auditable;
 
 
-class RewardCategory extends Model implements AuditableContract , AuditableContract
+class RewardCategory extends Model implements AuditableContract
 {
     use HasFactory,Auditable;
     protected $table = 'reward_category';

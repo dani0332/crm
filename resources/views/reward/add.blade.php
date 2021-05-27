@@ -101,7 +101,7 @@
                     <div class="item form-group">
                     <label for="middle-name" class="col-form-label col-md-3 col-sm-3 label-align">Reward Category</label>
                         <div class="col-md-6 col-sm-6 ">
-                            <select class="selectpicker" name='reward_categories[]' multiple data-live-search="true">
+                            <select class="select2_multiple form-control" name='reward_categories[]' multiple>
                                 @foreach($rewardCategories as $rewardCategory)
                                     <option value="{{ $rewardCategory->id }}">{{ $rewardCategory->text }}</option>
                                 @endforeach
@@ -111,7 +111,7 @@
                     <div class="item form-group">
                     <label for="middle-name" class="col-form-label col-md-3 col-sm-3 label-align">Reward Tag</label>
                         <div class="col-md-6 col-sm-6 ">
-                            <select class="selectpicker" name='reward_tags[]' multiple data-live-search="true">
+                            <select  name='reward_tags[]' class="select2_multiple form-control" multiple data-live-search="true">
                                 @foreach($rewardTags as $rewardTag)
                                     <option value="{{ $rewardTag->id }}">{{ $rewardTag->text }}</option>
                                 @endforeach

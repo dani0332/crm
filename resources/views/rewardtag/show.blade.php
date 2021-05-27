@@ -70,6 +70,10 @@
     </div>
 </div>
 
-<x-auditable  :auditableId="$rewardTag->id" auditableType="App\Models\RewardTag"/>
+<div id="auditable">
+    <button id='auditablebtn' class="btn btn-warning auditablebtn" data-id="{{ $rewardTag->id }}" data-model="App\Models\RewardTag">
+        View Auditable
+    </button>
+</div>
 
 @endsection

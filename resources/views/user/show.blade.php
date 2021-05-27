@@ -50,6 +50,9 @@
         </div>
     </div>
 </div>
-
-<x-auditable  :auditableId="$user->id" auditableType="App\Models\User"/>
+<div id="auditable">
+    <button id='auditablebtn' class="btn btn-warning auditablebtn" data-id="{{ $user->id }}" data-model="App\Models\User">
+        View Auditable
+    </button>
+</div>
 @endsection
