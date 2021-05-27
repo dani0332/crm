@@ -1,292 +1,106 @@
 @extends('layouts.app')
-@section('title','Car Qoute Detail')
+@section('title','Customer Detail ')
 @section('content')
 <div class="row">
-    <div class="col-md-12 col-sm-12 ">
+    <div class="col-md-12 col-sm-12 admin-detail">
         <div class="x_panel">
             <div class="x_title">
-                <h2>Car Qoute Detail</h2>
-                <ul class="nav navbar-right panel_toolbox">
-                    <li><button id="resubmit_api_carqoute" class="btn btn-warning btn-sm" data-id="{{ $carqoute->id }}">ReSubmit Api</button></li>
-                </ul>
+                <h2>Customer</h2>
                 <div class="clearfix"></div>
             </div>
             <div class="x_content">
-                <div id="success_message" class="alert alert-success" style="display:none"></div>
-                <div id="error_message" class="alert alert-danger" style="display:none"></div>
                 <br />
-                <table class="table table-striped">
-                    <tr>
-                        <td>
-                            Id 
-                        </td>
-                        <td>
-                            {{ $carqoute->id }}
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            Car Value
-                        </td>
-                        <td>
-                            {{ $carqoute->car_value }}
-                        </td>
-                    </tr>
+                @if(session()->has('success'))
+                    <div class="alert alert-success">
+                        {{ session()->get('success') }}
+                    </div>
+                @endif
+                <form id="demo-form2" method='post' action="" enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left">
+                    <div class="item form-group">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="first_name">
+                            <b>First Name : </b>
+                        </label>
+                        <div class="col-md-6 col-sm-6 ">
+                           <p class="label-align-center">{{  $customer->first_name  }}</p>
+                        </div>
+                       
+                    </div>
+                    <div class="item form-group">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="last_name">
+                            <b>Last Name :</b>
+                        </label>
+                        <div class="col-md-6 col-sm-6 ">
+                            <p class="label-align-center">{{  $customer->last_name  }}</p>
+                        </div>
+                        
+                    </div>
 
-                    <tr>
-                        <td>
-                            Currently Insured With
-                        </td>
-                        <td>
-                            {{ $carqoute->currently_insured_with }}
-                        </td>
-                    </tr>
+                    <div class="item form-group">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="email">
+                            <b> Email : </b></label>
+                        <div class="col-md-6 col-sm-6 ">
+                            <p class="label-align-center">{{  $customer->email  }}</p>
+                        </div>
+                        
+                    </div>
 
-                    <tr>
-                        <td>
-                            Year Of Manufacture
-                        </td>
-                        <td>
-                            {{ $carqoute->year_of_manufacture }}
-                        </td>
-                    </tr>
+                    <div class="item form-group">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="mobile_no">
+                            <b> Mobile No : </b></label>
+                        <div class="col-md-6 col-sm-6 ">
+                            <p class="label-align-center">{{  $customer->mobile_no  }}</p>
+                        </div>
+                    </div>
 
-                    <tr>
-                        <td>
-                            UAE License Held For
-                        </td>
-                        <td>
-                            {{ $carqoute->uaeLicenseHeldFor->code }}
-                        </td>
-                    </tr>
-
-                    <tr>
-                        <td>
-                            Car Make
-                        </td>
-                        <td>
-                            {{ $carqoute->carMake->code  }}
-                        </td>
-                    </tr>
-
-                    <tr>
-                        <td>
-                            Car Model
-                        </td>
-                        <td>
-                            {{ $carqoute->carModel->code }}
-                        </td>
-                    </tr>
-
-                    <tr>
-                        <td>
-                            Car Value
-                        </td>
-                        <td>
-                            {{ $carqoute->car_value }}
-                        </td>
-                    </tr>
-                    
-                    <tr>
-                        <td>
-                            Emirate Of Registration
-                        </td>
-                        <td>
-                            {{ $carqoute->emirate->code }}
-                        </td>
-                    </tr>
-
-                    <tr>
-                        <td>
-                            First Name 
-                        </td>
-                        <td>
-                            {{ $carqoute->first_name }}
-                        </td>
-                    </tr>
-                     
-                    <tr>
-                        <td>
-                            Last Name 
-                        </td>
-                        <td>
-                            {{ $carqoute->last_name }}
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            Email 
-                        </td>
-                        <td>
-                            {{ $carqoute->email }}
-                        </td>
-                    </tr>
-
-                    <tr>
-                        <td>
-                            Claim History
-                        </td>
-                        <td>
-                            {{ $carqoute->claimHistory->code }}
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            Car Type Insurance 
-                        </td>
-                        <td>
-                            {{ $carqoute->carTypeInsurance->code }}
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            Mobile No
-                        </td>
-                        <td>
-                            {{ $carqoute->mobile_no }}
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                           Gender 
-                        </td>
-                        <td>
-                            {{ $carqoute->gender }}
-                        </td>
-                    </tr>
+                    <div class="item form-group">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="gender">
+                            <b>Gender : </b></label>
+                        <div class="col-md-6 col-sm-6 ">
+                            <p class="label-align-center">{{  $customer->gender  }}</p>
+                        </div>
+                    </div>
 
 
-                    <tr>
-                        <td>
-                            Lang 
-                        </td>
-                        <td>
-                            {{ $carqoute->lang }}
-                        </td>
-                    </tr>
+                    <div class="item form-group">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="lang">
+                            <b>Lang: </b></label>
+                        <div class="col-md-6 col-sm-6 ">
+                            <p class="label-align-center">{{  $customer->lang  }}</p>
+                        </div>
+                    </div>
 
-                    <tr>
-                        <td>
-                            Source 
-                        </td>
-                        <td>
-                            {{ $carqoute->source }}
-                        </td>
-                    </tr>
 
-                    <tr>
-                        <td>
-                            DOB 
-                        </td>
-                        <td>
-                            {{ $carqoute->dob }}
-                        </td>
-                    </tr>
+                    <div class="item form-group">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="dob">
+                            <b>Dob: </b></label>
+                        <div class="col-md-6 col-sm-6 ">
+                            <p class="label-align-center">{{  $customer->dob  }}</p>
+                        </div>
+                    </div>
 
-                    <tr>
-                        <td>
-                            Customer 
-                        </td>
-                        <td>
-                            {{ $carqoute->customer->first_name .' '. $carqoute->customer->last_name }}
-                        </td>
-                    </tr>
+                    <div class="item form-group">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="nationality_id">
+                            <b>Nationality: </b></label>
+                        <div class="col-md-6 col-sm-6 ">
+                            <p class="label-align-center">{{  $customer->nationality->code  }}</p>
+                        </div>
+                    </div>
 
-                    <tr>
-                        <td>
-                           Nationality 
-                        </td>
-                        <td>
-                            {{ $carqoute->nationality->code }}
-                        </td>
-                    </tr>
 
-                    <tr>
-                        <td>
-                            Payment Status
-                        </td>
-                        <td>
-                            {{ $carqoute->paymentStatus->code }}
-                        </td>
-                    </tr>
+                    <div class="item form-group">
+                        <label for="middle-name" class="col-form-label col-md-3 col-sm-3 label-align"><b>Has Alfred Access : </b></label>
+                        <div class="col-md-6 col-sm-6 ">
+                            <p class="label-align-center"> {{ $customer->has_alfred_access ? 'True' : 'False' }} </p>
+                        </div>
+                    </div>
+                    <div class="ln_solid"></div>
+                    <div class="item form-group">
+                        <div class="col-md-6 col-sm-6 offset-md-3">
+                            <a href="{{ route('customer.edit', ['customer' => $customer->id])}}"  class='btn btn-warning'>Edit</a>
+                        </div>
+                    </div>
 
-                    <tr>
-                        <td>
-                            Quote Status Id
-                        </td>
-                        <td>
-                            {{ $carqoute->quoteStatus->code }}
-                        </td>
-                    </tr>
-
-                    <tr>
-                        <td>
-                            Is Synced
-                        </td>
-                        <td>
-                            {{ $carqoute->is_synced }}
-                        </td>
-                    </tr>
-                    
-                    <tr>
-                        <td>
-                            Device
-                        </td>
-                        <td>
-                            {{ $carqoute->device }}
-                        </td>
-                    </tr>
-
-                    <tr>
-                        <td>
-                            Reference Url
-                        </td>
-                        <td>
-                            {{ $carqoute->reference_url }}
-                        </td>
-                    </tr>
-
-                    <tr>
-                        <td>
-                            Additional Notes
-                        </td>
-                        <td>
-                            {{ $carqoute->additional_notes }}
-                        </td>
-                    </tr>
-
-                    <tr>
-                        <td>
-                            Reviver Name
-                        </td>
-                        <td>
-                            {{ $carqoute->reviver_name }}
-                        </td>
-                    </tr>
-
-                    <tr>
-                        <td>
-                            Promo Code
-                        </td>
-                        <td>
-                            {{ $carqoute->promo_code }}
-                        </td>
-                    </tr>
-
-                    <tr>
-                        <td>
-                            Code
-                        </td>
-                        <td>
-                            {{ $carqoute->code }}
-                        </td>
-                    </tr>
-                    
-                    
-                    
-                </table >
-                    
-                </div>
+                </form>
             </div>
         </div>
     </div>

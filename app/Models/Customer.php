@@ -9,4 +9,9 @@ class Customer extends Model
 {
     use HasFactory;
     protected $table = 'customer';
+
+
+    public function nationality(){
+        return $this->hasOne( Nationality::class , 'id','nationality_id');
+    }
 }

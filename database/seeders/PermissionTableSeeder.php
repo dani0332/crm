@@ -140,6 +140,12 @@ class PermissionTableSeeder extends Seeder
             'name'=>'customers-list',
             'guard_name'=>'web',
         ]);
+        \DB::table('permissions')->insertGetId([
+            'name'=>'customers-edit',
+            'guard_name'=>'web',
+        ]);
+
+        
 
         
     }

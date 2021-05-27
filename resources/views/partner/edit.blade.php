@@ -2,7 +2,7 @@
 @section('title','Edit Partner')
 @section('content')
 <div class="row">
-    <div class="col-md-12 col-sm-12 ">
+    <div class="col-md-12 col-sm-12 admin-edit">
         <div class="x_panel">
             <div class="x_title">
                 <h2>Edit Partner</h2>

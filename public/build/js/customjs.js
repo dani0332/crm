@@ -305,7 +305,9 @@ $(document).ready(function(){
             {data: 'email', name: 'email'},
             {data: 'mobile_no', name: 'mobile_no'},
             {data: 'gender', name: 'gender'},
+            {data: 'has_alfred_access', name: 'has_alfred_access'},
             {data: 'dob', name: 'dob', orderable: false, searchable: false},
+            {data: 'action', name: 'action', orderable: false, searchable: false},
 
         ]
     });

@@ -2,7 +2,7 @@
 @section('title','View Customer')
 @section('content')
 <div class="row">
-    <div class="col-md-12 col-sm-12 ">
+    <div class="col-md-12 col-sm-12 admin-view">
         <div class="x_panel">
             <div class="x_title">
                 <h2>Search Customers</h2>
@@ -15,10 +15,7 @@
                     </label>
                     <div class="col-md-9 col-sm-9 ">
                         <p>
-                        <input type="radio" class="flat" name="searchtype" checked  value="id"  required /> ID
-                        </p>
-                        <p>
-                        <input type="radio" class="flat" name="searchtype"  value="email"   /> Email
+                        <input type="radio" checked class="flat" name="searchtype"  value="email"   /> Email
                         </p>
                     </div>
                 </div>
@@ -62,7 +59,9 @@
                           <th>Email</th>
                           <th>Mobile No</th>
                           <th>Gender</th>
+                          <th>Has Alfred Access</th>
                           <th>DOB</th>
+                          <th>Actions</th>
                         </tr>
                       </thead>
 

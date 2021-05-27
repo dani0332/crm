@@ -26,7 +26,6 @@ class CarQouteController extends Controller
     function __construct()
 
     {
-
          $this->middleware('permission:carqoutes-list|carqoutes-resubmit-api', ['only' => ['index','store']]);
     }
 

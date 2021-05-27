@@ -5,12 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Customer;
 use DataTables;
-use Spatie\Permission\Models\Role;
-use DB;
-use Hash;
-use Illuminate\Support\Arr;
-use Config;
-use Str;
+use App\Models\Nationality;
+
 class CustomerController extends Controller
 {
      /**
@@ -37,7 +33,7 @@ class CustomerController extends Controller
      */
     public function index(Request $request)
     {
-        
+
         if ($request->ajax()) {
             
             $data = Customer::select('*');
@@ -45,11 +41,69 @@ class CustomerController extends Controller
                 $data->where($request->searchtype,$request->searchfield);
                 return DataTables::of($data)
                         ->addIndexColumn()
+                        ->addColumn('action', function($row){
+                            return view('customers.actions', compact('row'))->render();
+                        })
+                        ->rawColumns(['action'])
                         ->make(true);
             }
         return view('customers.view');
     }
 
+    /**
+     * Display the specified resource.
+     *
+     * @param  \App\Customer  $carqoute
+     * @return \Illuminate\Http\Response
+     */
+    public function show(Customer $customer)
+    {
+        return view('customers.show',compact('customer'));
+    }
+
+
+    /**
+     * Show the form for editing the specified resource.
+     *
+     * @param  \App\Customer  $customer
+     * @return \Illuminate\Http\Response
+     */
+    public function edit(Customer $customer)
+    {
+        $nationalities = Nationality::all();
+        return view('customers.edit',compact('customer','nationalities'));
+    }
+    /**
+     * Update the specified resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \App\Customer  $customer
+     * @return \Illuminate\Http\Response
+     */
+    public function update(Request $request, Customer $customer)
+    {
+        $this->validate($request,[
+            'first_name' => 'required|max:120',
+            'last_name' => 'required|max:120',
+            'mobile_no' => 'required|max:120',
+            'lang' => 'required|max:2',
+            'gender' => 'required|max:120',
+            'dob' => 'required|max:120',
+            'nationality_id' => 'required|max:120'
+
+        ]);
+        $customer->first_name =  $request->first_name;
+        $customer->last_name =  $request->last_name;
+        $customer->mobile_no =  $request->mobile_no;
+        $customer->lang =  $request->lang;
+        $customer->gender =  $request->gender;
+        $customer->dob =  $request->dob;
+        $customer->nationality_id =  $request->nationality_id;
+        $customer->has_alfred_access = $request->has_alfred_access == 'on' ? 1 : 0;
+        $customer->save();
+        return back()
+            ->with('success','Customer has been Updated');
+    }
     
     
 }
