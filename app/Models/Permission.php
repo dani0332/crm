@@ -4,11 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Spatie\Permission\Models\Permission as BasePermission
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 use OwenIt\Auditing\Auditable;
-class RewardCategoryMapping extends Model implements AuditableContract
+
+class Permission extends BasePermission implements AuditableContract
 {
-    use HasFactory,Auditable;
-    protected $table = 'reward_category_mapping';
-    public $timestamps = false;
+    use HasFactory , Auditable;
 }

@@ -49,7 +49,13 @@
   .btn{
       color: white !important;
   }
-
+  .btn-disabled{
+    color: black !important;
+  }
+  .filter-option{
+    color: black !important;
+    background-color:#4183bd !important;
+  }
   .btn:hover{
     background: #4183bd !important;
   }

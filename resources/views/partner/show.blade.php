@@ -77,4 +77,6 @@
         </div>
     </div>
 </div>
+
+<x-auditable  :auditableId="$partner->id" auditableType="App\Models\Partner"/>
 @endsection

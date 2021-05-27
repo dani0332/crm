@@ -109,4 +109,6 @@
     </div>
 </div>
 
+
+<x-auditable  :auditableId="$rewardTranslation->id" auditableType="App\Models\RewardTranslation"/>
 @endsection

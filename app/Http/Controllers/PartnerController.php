@@ -150,7 +150,6 @@ class PartnerController extends Controller
     public function destroy(Partner $partner)
     {
         $partner->delete();
-        return back()
-            ->with('success','Partner has been Deleted');
+        return redirect('rewards/partner');
     }
 }

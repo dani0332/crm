@@ -174,4 +174,8 @@
         </div>
     </div>
 </div>
+
+
+<x-auditable  :auditableId="$reward->id" auditableType="App\Models\Reward"/>
+
 @endsection

@@ -17,6 +17,7 @@
         "laravelcollective/html": "^6.2",
         "livewire/livewire": "^2.0",
         "matthewbdaly/laravel-azure-storage": "^1.6",
+        "owen-it/laravel-auditing": "^12.0",
         "spatie/laravel-permission": "^4.0",
         "yajra/laravel-datatables-oracle": "^9.18"
     },

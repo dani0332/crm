@@ -77,4 +77,6 @@
         </div>
     </div>
 </div>
+
+<x-auditable  :auditableId="$rewardCategory->id" auditableType="App\Models\RewardCategory"/>
 @endsection
