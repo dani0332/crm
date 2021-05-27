@@ -28,7 +28,7 @@ class Reward extends Model
 
     public function partner()
     {
-        return $this->belongsTo(Partner::class,'id','partner_id');
+        return $this->belongsTo(Partner::class);
     }
 
     public function rewardTranslations()

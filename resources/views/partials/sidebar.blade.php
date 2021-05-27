@@ -56,7 +56,10 @@
             </ul>
             </li>
         </ul>
-        </div>
+        <ul class="nav side-menu">
+            <li><a href="{{ url('customer') }}"><i class="fa fa-user"></i> Customer </a>
+        </ul>
+    </div>
     </div>
     <!-- /sidebar menu -->
     </div>

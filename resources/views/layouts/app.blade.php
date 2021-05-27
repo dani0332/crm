@@ -100,6 +100,7 @@
                 reward_datatable_route:"{{ route('reward.index') }}",
                 reward_categories_datatable_route:"{{ route('reward-categories.index') }}",
                 reward_tags_datatable_route:"{{ route('reward-tags.index') }}",
+                customer_data_table_route:"{{ route('customer.index') }}",
             },
             _token:"{{ csrf_token() }}",
             image_path:"{{ \Config::get('constants.azure_storage_url').'myrewards/' }}"

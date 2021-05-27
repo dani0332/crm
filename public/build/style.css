@@ -29,7 +29,7 @@
   }
 
   .left_col{
-    background:linear-gradient(0deg,#69d0fe,#4183bd) !important;
+    background:transparent !important;
   }
   .right_col{
     background:#eef1f4 !important;
@@ -65,4 +65,8 @@
     padding: 10px 12px !important;
     background: #ddd !important;
     font-size: 14px;
+}
+
+.label-align-center{
+  margin-top: 8px;
 }
