@@ -6,6 +6,9 @@
         <div class="x_panel">
             <div class="x_title">
                 <h2>Reward Tag Detail</h2>
+                <ul class="nav navbar-right panel_toolbox">
+                    <li><a href="{{ route('reward-tags.index') }}" class="btn btn-warning btn-sm">Reward Tag List</a></li>
+                </ul>
                 <div class="clearfix"></div>
             </div>
             <div class="x_content">

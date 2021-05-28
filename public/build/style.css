@@ -75,3 +75,20 @@
 .label-align-center{
   margin-top: 8px;
 }
+
+
+.btn-group .btn{
+    color: black !important;
+}
+
+
+
+.action-container{
+  width: 100%;
+}
+
+.action-item{
+  width:33%;
+  padding:10px;
+  float:left;
+}

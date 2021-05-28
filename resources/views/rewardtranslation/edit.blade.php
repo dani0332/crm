@@ -125,10 +125,11 @@
                                 @endif
                             </div>
                         </div>
+                        <div id='redirect_to_view_div'></div>
                         <div class="ln_solid"></div>
                         <div class="item form-group">
                             <div class="col-md-6 col-sm-6 offset-md-3">
-                              <button type="submit" class="btn btn-success">Update</button>
+                            <button type="submit" class="btn btn-warning">Update & Continue Updating</button> <button type="submit" class="btn btn-warning" id="return_to_view" >Update</button>
                             </div>
                         </div>
     

@@ -78,7 +78,8 @@ class RewardTranslationController extends Controller
             $rewardTranslation->generic_banner_image = $fileName;
         }
         $rewardTranslation->save();
-
+        if(isset($request->return_to_view))
+            return redirect("rewards/reward".$reward->id);
         return back()
             ->with('success', 'Reward Translation has been stored');
     }
@@ -144,7 +145,8 @@ class RewardTranslationController extends Controller
             $rewardTranslation->generic_banner_image = $fileName;
         }
         $rewardTranslation->save();
-
+        if(isset($request->return_to_view))
+            return redirect("rewards/reward/".$reward->id);
         return back()
             ->with('success', 'Reward Translation has been Updated');
     }

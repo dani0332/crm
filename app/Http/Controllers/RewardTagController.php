@@ -67,6 +67,8 @@ class RewardTagController extends Controller
         $rewardTag->is_active = $request->is_active == 'on' ? 1 : 0;
         $rewardTag->sort_order = $request->sort_order;
         $rewardTag->save();
+        if(isset($request->return_to_view))
+            return redirect("rewards/reward-tags");
         return back()
             ->with('success', 'Reward Tag has been stored');
     }
@@ -109,6 +111,8 @@ class RewardTagController extends Controller
         $rewardTag->is_active = $request->is_active == 'on' ? 1 : 0;
         $rewardTag->sort_order = $request->sort_order;
         $rewardTag->save();
+        if(isset($request->return_to_view))
+            return redirect("rewards/reward-tags");
         return back()
             ->with('success', 'Reward Tag has been Updated');
     }

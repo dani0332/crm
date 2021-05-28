@@ -82,6 +82,8 @@ class UserController extends Controller
         $user->password = $request->password;
         $user->save();
         $user->assignRole($request->input('roles'));
+        if(isset($request->return_to_view))
+            return redirect("admin/users");
         return back()
             ->with('success', 'Partner has been stored');
     }
@@ -130,7 +132,8 @@ class UserController extends Controller
         DB::table('model_has_roles')->where('model_id', $user->id)->delete();
 
         $user->assignRole($request->input('roles'));
-
+        if(isset($request->return_to_view))
+            return redirect("admin/users");
         return back()
             ->with('success', 'User has been Updated');
     }
