@@ -6,6 +6,9 @@
         <div class="x_panel">
             <div class="x_title">
                 <h2>Edit Role</h2>
+                 <ul class="nav navbar-right panel_toolbox">
+                    <li><a href="{{ route('roles.index') }}" class="btn btn-warning btn-sm">Roles List</a></li>
+                </ul>
                 <div class="clearfix"></div>
             </div>
             <div class="x_content">
@@ -46,10 +49,11 @@
                     </div>
 
                 </div>
+                <div id='redirect_to_view_div'></div>
                 <div class="ln_solid"></div>
                 <div class="item form-group">
                     <div class="col-md-6 col-sm-6 offset-md-3">
-                      <button type="submit" class="btn btn-warning">Update</button>
+                        <button type="submit" class="btn btn-warning">Update & Continue Updating</button> <button type="submit" class="btn btn-warning" id="return_to_view" >Update</button>
                     </div>
                 </div>
                 </form>

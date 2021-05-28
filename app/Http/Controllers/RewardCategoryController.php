@@ -67,6 +67,8 @@ class RewardCategoryController extends Controller
         $rewardCategory->is_active = $request->is_active == 'on' ? 1 : 0;
         $rewardCategory->sort_order = $request->sort_order;
         $rewardCategory->save();
+        if(isset($request->return_to_view))
+            return redirect("rewards/reward-categories");
         return back()
             ->with('success', 'Reward Category has been stored');
     }
@@ -109,6 +111,8 @@ class RewardCategoryController extends Controller
         $rewardCategory->is_active = $request->is_active == 'on' ? 1 : 0;
         $rewardCategory->sort_order = $request->sort_order;
         $rewardCategory->save();
+        if(isset($request->return_to_view))
+            return redirect("rewards/reward-categories");
         return back()
             ->with('success', 'Reward Category has been Updated');
     }

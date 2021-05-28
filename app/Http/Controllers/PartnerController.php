@@ -88,6 +88,8 @@ class PartnerController extends Controller
         }
 
         $partner->save();
+        if(isset($request->return_to_view))
+            return redirect("rewards/partner");
         return back()
             ->with('success', 'Partner has been stored');
     }
@@ -135,6 +137,8 @@ class PartnerController extends Controller
         }
 
         $partner->save();
+        if(isset($request->return_to_view))
+            return redirect("rewards/partner");
         return back()
             ->with('success', 'Partner has been Updated');
     }

@@ -394,4 +394,14 @@ $(document).ready(function () {
             });
         }, 1000);
     }
+
+
+    $('#return_to_view').click(function(e){
+        e.preventDefault();
+        var input = '<input name="return_to_view" type="hidden" value="1"/>';
+        $('#redirect_to_view_div').html(input);
+        setTimeout(function () {
+            $('form').submit();
+        }, 500);  
+    })
 });

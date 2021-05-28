@@ -95,6 +95,8 @@ class RewardController extends Controller
                 $rewardTagMapping->mapRewardTag($rewardTag, $reward->id);
             }
         }
+        if(isset($request->return_to_view))
+            return redirect("rewards/reward");
         return back()
             ->with('success', 'reward has been stored');
     }
@@ -162,6 +164,9 @@ class RewardController extends Controller
                 $rewardTagMapping->mapRewardTag($rewardTag, $reward->id);
             }
         }
+
+        if(isset($request->return_to_view))
+            return redirect("rewards/reward");
         return back()
             ->with('success', 'reward has been stored');
     }

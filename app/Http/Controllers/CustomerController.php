@@ -99,6 +99,9 @@ class CustomerController extends Controller
         $customer->nationality_id = $request->nationality_id;
         $customer->has_alfred_access = $request->has_alfred_access == 'on' ? 1 : 0;
         $customer->save();
+        if(isset($request->return_to_view))
+            return redirect("customer");
+
         return back()
             ->with('success', 'Customer has been Updated');
     }

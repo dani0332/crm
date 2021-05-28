@@ -6,6 +6,9 @@
         <div class="x_panel">
             <div class="x_title">
                 <h2>Create Reward</h2>
+                <ul class="nav navbar-right panel_toolbox">
+                    <li><a href="{{ route('reward.index') }}" class="btn btn-warning btn-sm">Reward List</a></li>
+                </ul>
                 <div class="clearfix"></div>
             </div>
             <div class="x_content">
@@ -119,12 +122,14 @@
                         </div>
                     </div>
                    
+                    <div id='redirect_to_view_div'></div>
                     <div class="ln_solid"></div>
                     <div class="item form-group">
                         <div class="col-md-6 col-sm-6 offset-md-3">
-                          <button type="submit" class="btn btn-warning">Create</button>
+                          <button type="submit" class="btn btn-warning">Create & Add New</button> <button type="submit" class="btn btn-warning" id="return_to_view" >Cretae</button>
                         </div>
                     </div>
+
 
                 </form>
             </div>

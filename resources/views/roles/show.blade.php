@@ -6,6 +6,9 @@
         <div class="x_panel">
             <div class="x_title">
                 <h2>Role Detail</h2>
+                 <ul class="nav navbar-right panel_toolbox">
+                    <li><a href="{{ route('roles.index') }}" class="btn btn-warning btn-sm">Roles List</a></li>
+                </ul>
                 <div class="clearfix"></div>
             </div>
             <div class="x_content">

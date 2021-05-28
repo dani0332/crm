@@ -92,7 +92,9 @@ class RoleController extends Controller
         $role = Role::create(['name' => $request->input('name')]);
 
         $role->syncPermissions($request->input('permission'));
-
+        if(isset($request->return_to_view))
+            return redirect("admin/roles");
+            
         return redirect()->back()
         ->with('success', 'Role created successfully');
     }
@@ -159,8 +161,9 @@ class RoleController extends Controller
         $role->save();
 
         $role->syncPermissions($request->input('permission'));
-
-        return redirect()->route('roles.index')
+        if(isset($request->return_to_view))
+            return redirect("admin/roles");
+        return redirect()->back()
 
             ->with('success', 'Role updated successfully');
     }
