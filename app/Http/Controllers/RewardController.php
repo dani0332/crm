@@ -9,6 +9,7 @@ use App\Models\RewardTag;
 use App\Services\RewardCategoryMapping;
 use App\Services\RewardTagMapping;
 use DataTables;
+use DB;
 use Illuminate\Http\Request;
 
 class RewardController extends Controller
@@ -79,6 +80,8 @@ class RewardController extends Controller
         $reward->end_date = $request->end_date;
         $reward->is_flat_discount = $request->is_flat_discount == 'on' ? 1 : 0;
         $reward->is_active = $request->is_active == 'on' ? 1 : 0;
+        $reward->viewed_count = 0;
+        $reward->viewed_count_unique = 0;
         $reward->save();
         if (isset($request->reward_categories)) {
             foreach ($request->reward_categories as $rewardCategory) {
@@ -170,8 +173,13 @@ class RewardController extends Controller
      */
     public function destroy(Reward $reward)
     {
+        DB::statement('SET FOREIGN_KEY_CHECKS=0');
+        $reward->rewardTranslations()->delete();
+        $reward->rewardCategories()->delete();
+        $reward->rewardTags()->delete();
         $reward->delete();
-        return back()
-            ->with('success', 'reward has been stored');
+        DB::statement('SET FOREIGN_KEY_CHECKS=1');
+        return redirect('rewards/reward');
+
     }
 }

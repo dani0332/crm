@@ -27,10 +27,10 @@
                             <span class="text-danger">{{ $errors->first('name') }}</span>
                         @endif
                     </div>
-                    
+
                 </div>
                 <div class="item form-group">
-                    <label class="col-form-label col-md-3 col-sm-3 label-align" for="name">Name <span class="required">*</span>
+                    <label class="col-form-label col-md-3 col-sm-3 label-align" for="name">Permission <span class="required">*</span>
                     </label>
                     <div class="col-md-6 col-sm-6 ">
                         @foreach($permission->chunk(4) as $chunk)
@@ -38,13 +38,13 @@
                                 <div class="col-md-12">
                                     @foreach($chunk as $item)
                                         <span class="badge badge-pill" style="margin:5px;font-size:13px;">  {{ $item->name }} <input {{ in_array($item->id, $rolePermissions) ? 'checked' : '' }} type="checkbox" class="flat" value="{{ $item->id }}" name='permission[]' /></span>
-                                    @endforeach 
+                                    @endforeach
                                 </div>
                             </div>
                             <hr />
                         @endforeach
                     </div>
-                    
+
                 </div>
                 <div class="ln_solid"></div>
                 <div class="item form-group">

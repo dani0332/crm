@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Partner;
 use DataTables;
 use Illuminate\Http\Request;
-
+use DB;
 class PartnerController extends Controller
 {
     /**
@@ -146,7 +146,9 @@ class PartnerController extends Controller
      */
     public function destroy(Partner $partner)
     {
+        DB::statement('SET FOREIGN_KEY_CHECKS=0');
         $partner->delete();
+        DB::statement('SET FOREIGN_KEY_CHECKS=1');
         return redirect('rewards/partner');
     }
 }

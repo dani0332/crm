@@ -1,12 +1,3 @@
-<div style="with:100%;text-align: center;">
-        @can('customers-list')
-        <div style='display: inline-block;'>
-                <a href="{{ route('customer.edit', ['customer' => $row->id])}}"  class='no-style-btn'><i class='fa fa-edit'></i></a>        
-        </div>
-        @endcan
-        @can('customers-edit')
-        <div style='display: inline-block;'>
-                <a href="{{ route('customer.show', ['customer' => $row->id])}}"  class='no-style-btn'><i class='fa fa-eye'></i></a>        
-        </div>
-        @endcan
-</div>
+<x-action :editRoute="route('customer.edit', ['customer' => $row->id])"
+    :deleteRoute="route('customer.destroy', ['customer' => $row->id])"
+    :viewRoute="route('customer.destroy', ['customer' => $row->id])" permission="customers"/>
