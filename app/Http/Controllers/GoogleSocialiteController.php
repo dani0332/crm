@@ -2,17 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Socialite;
-use Auth;
-use Exception;
 use App\Models\User;
+use Auth;
 use Config;
-use Str;
+use Socialite;
 
 class GoogleSocialiteController extends Controller
 {
-     /**
+    /**
      * Create a new controller instance.
      *
      * @return void
@@ -21,7 +18,7 @@ class GoogleSocialiteController extends Controller
     {
         return Socialite::driver('google')->redirect();
     }
-       
+
     /**
      * Create a new controller instance.
      *
@@ -32,7 +29,6 @@ class GoogleSocialiteController extends Controller
         try {
             $socialUser = Socialite::driver(Config::get('constants.social_driver'))->user();
         } catch (InvalidStateException $exception) {
-            
             return redirect()->route('login')
                 ->withErrors([
                     'email' => [
@@ -40,10 +36,7 @@ class GoogleSocialiteController extends Controller
                     ],
                 ]);
         }
-
-        
-        $isExisted = User::where('email' ,$socialUser->getEmail())->get();
-
+        $isExisted = User::where('email', $socialUser->getEmail())->get();
         if (count($isExisted) == 0) {
             return redirect()->route('login')
                 ->withErrors([

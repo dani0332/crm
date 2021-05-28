@@ -4,7 +4,7 @@
     border: 0px solid transparent;
     text-shadow: 0px 0px 0px transparent;
   }
-  
+
   .no-style-btn:hover {
     background: transparent;
     box-shadow: 0px 0px 0px transparent;
@@ -12,12 +12,12 @@
     text-shadow: 0px 0px 0px transparent;
     color:#4183bd;
   }
-  
+
   .no-style-btn:active {
     outline: none;
     border: none;
   }
-  
+
   .no-style-btn:focus {
     outline: 0;
   }
@@ -35,10 +35,9 @@
     background:#eef1f4 !important;
   }
 
-  
+
   .fa{
       font-size: 16px;
-      padding: 10px;
   }
 
   .nav_menu{
@@ -49,7 +48,13 @@
   .btn{
       color: white !important;
   }
-
+  .btn-disabled{
+    color: black !important;
+  }
+  .filter-option{
+    color: black !important;
+    background-color:#4183bd !important;
+  }
   .btn:hover{
     background: #4183bd !important;
   }
@@ -60,7 +65,7 @@
   .nav.side-menu li.active-sm {
       border-right: 5px solid #e24c00 !important;
   }
-  
+
   .dataTables_paginate a {
     padding: 10px 12px !important;
     background: #ddd !important;

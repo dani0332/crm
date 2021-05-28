@@ -49,7 +49,7 @@ class PermissionTableSeeder extends Seeder
             'guard_name'=>'web',
         ]);
 
-        
+
         //partners
         \DB::table('permissions')->insertGetId([
             'name'=>'partners-list',
@@ -125,14 +125,14 @@ class PermissionTableSeeder extends Seeder
 
 
 
-        //car-qoutes
+        //car-quotes
         \DB::table('permissions')->insertGetId([
-            'name'=>'car-qoutes-list',
+            'name'=>'car-quotes-list',
             'guard_name'=>'web',
         ]);
 
         \DB::table('permissions')->insertGetId([
-            'name'=>'car-qoutes-resubmit-api',
+            'name'=>'car-quotes-resubmit-api',
             'guard_name'=>'web',
         ]);
 
@@ -145,8 +145,8 @@ class PermissionTableSeeder extends Seeder
             'guard_name'=>'web',
         ]);
 
-        
 
-        
+
+
     }
 }

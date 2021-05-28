@@ -77,4 +77,10 @@
         </div>
     </div>
 </div>
+
+<div id="auditable">
+    <button id='auditablebtn' class="btn btn-warning auditablebtn" data-id="{{ $rewardCategory->id }}" data-model="App\Models\RewardCategory">
+        View Auditable
+    </button>
+</div>
 @endsection

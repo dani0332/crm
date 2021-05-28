@@ -1,8 +1,7 @@
 <div class="row">
     @can('rewards-edit')
         <div class="col-md-1">
-                <a href="{{ route('reward.edit', ['reward' => $row->id])}}"  class='no-style-btn'><i class='fa fa-edit'></i> 
-                </a>
+         <a href="{{ route('reward.edit', ['reward' => $row->id])}}"  class='no-style-btn'><i class='fa fa-edit'></i></a>
         </div> 
     @endcan
     @can('rewards-delete')

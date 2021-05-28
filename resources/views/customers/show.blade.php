@@ -105,4 +105,10 @@
         </div>
     </div>
 </div>
+
+<div id="auditable">
+    <button id='auditablebtn' class="btn btn-warning auditablebtn" data-id="{{ $customer->id }}" data-model="App\Models\Customer">
+        View Auditable
+    </button>
+</div>
 @endsection

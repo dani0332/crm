@@ -2,15 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Reward;
-use App\Models\Partner;
-use App\Models\RewardCategory;
-use App\Models\RewardTag;
-use App\Services\RewardCategoryMapping;
-use App\Services\RewardTagMapping;
 use App\Models\RewardTranslation;
+use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+
 class RewardTranslationController extends Controller
 {
     /**
@@ -21,7 +17,7 @@ class RewardTranslationController extends Controller
     public function index(Reward $reward)
     {
         $rewards = Reward::all();
-        return view('reward.view',compact('rewards'));
+        return view('reward.view', compact('rewards'));
     }
     /**
      * Show the form for creating a new resource.
@@ -30,7 +26,7 @@ class RewardTranslationController extends Controller
      */
     public function create(Reward $reward)
     {
-        return view('rewardtranslation.add',compact('reward'));
+        return view('rewardtranslation.add', compact('reward'));
     }
     /**
      * Store a newly created resource in storage.
@@ -38,9 +34,9 @@ class RewardTranslationController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request,Reward $reward)
+    public function store(Request $request, Reward $reward)
     {
-        $this->validate($request,[
+        $this->validate($request, [
             'title' => 'required',
             'description1' => 'required|max:1000',
             'description2' => 'required|max:1000',
@@ -49,41 +45,42 @@ class RewardTranslationController extends Controller
             'product_image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
             'full_width_banner_image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
             'generic_banner_image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-            
+
         ]);
-        if($this->validateLang($request->lang , $reward->id)) 
+        if ($this->validateLang($request->lang, $reward->id)) {
             throw ValidationException::withMessages(['lang' => 'Please choose unique Language Field']);
+        }
 
         $rewardTranslation = new RewardTranslation();
-        $rewardTranslation->title  = $request->title;
+        $rewardTranslation->title = $request->title;
         $rewardTranslation->description1 = $request->description1;
         $rewardTranslation->description2 = $request->description2;
         $rewardTranslation->instructions = $request->instructions;
         $rewardTranslation->terms_and_conditions = $request->terms_and_conditions;
         $rewardTranslation->reward_id = $reward->id;
         $rewardTranslation->lang = $request->lang;
-        if($request->file('product_image')) {
-            $fileName = time().'_'.$request->product_image->getClientOriginalName();
+        if ($request->file('product_image')) {
+            $fileName = time() . '_' . $request->product_image->getClientOriginalName();
             // save file to azure blob virtual directory uplaods in your container
             $filePath = $request->file('product_image')->storeAs('/', $fileName, 'azure');
-            $rewardTranslation->product_image=  $fileName;
+            $rewardTranslation->product_image = $fileName;
         }
-        if($request->file('full_width_banner_image')) {
-            $fileName = time().'_'.$request->full_width_banner_image->getClientOriginalName();
+        if ($request->file('full_width_banner_image')) {
+            $fileName = time() . '_' . $request->full_width_banner_image->getClientOriginalName();
             // save file to azure blob virtual directory uplaods in your container
             $filePath = $request->file('full_width_banner_image')->storeAs('/', $fileName, 'azure');
-            $rewardTranslation->full_width_banner_image=  $fileName;
+            $rewardTranslation->full_width_banner_image = $fileName;
         }
-        if($request->file('generic_banner_image')) {
-            $fileName = time().'_'.$request->generic_banner_image->getClientOriginalName();
+        if ($request->file('generic_banner_image')) {
+            $fileName = time() . '_' . $request->generic_banner_image->getClientOriginalName();
             // save file to azure blob virtual directory uplaods in your container
             $filePath = $request->file('generic_banner_image')->storeAs('/', $fileName, 'azure');
-            $rewardTranslation->generic_banner_image=  $fileName;
-        }        
+            $rewardTranslation->generic_banner_image = $fileName;
+        }
         $rewardTranslation->save();
-        
+
         return back()
-            ->with('success','Reward Translation has been stored');
+            ->with('success', 'Reward Translation has been stored');
     }
     /**
      * Display the specified resource.
@@ -91,9 +88,9 @@ class RewardTranslationController extends Controller
      * @param  \App\Reward  $reward
      * @return \Illuminate\Http\Response
      */
-    public function show(Reward $reward,RewardTranslation $rewardTranslation)
+    public function show(Reward $reward, RewardTranslation $rewardTranslation)
     {
-        return view('rewardtranslation.show',compact('reward','rewardTranslation'));
+        return view('rewardtranslation.show', compact('reward', 'rewardTranslation'));
     }
     /**
      * Show the form for editing the specified resource.
@@ -101,9 +98,9 @@ class RewardTranslationController extends Controller
      * @param  \App\Reward  $reward
      * @return \Illuminate\Http\Response
      */
-    public function edit(Reward $reward,RewardTranslation $rewardTranslation)
+    public function edit(Reward $reward, RewardTranslation $rewardTranslation)
     {
-        return view('rewardtranslation.edit',compact('reward','rewardTranslation'));
+        return view('rewardtranslation.edit', compact('reward', 'rewardTranslation'));
     }
     /**
      * Update the specified resource in storage.
@@ -112,44 +109,44 @@ class RewardTranslationController extends Controller
      * @param  \App\Reward  $reward
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, reward $reward,RewardTranslation $rewardTranslation)
+    public function update(Request $request, reward $reward, RewardTranslation $rewardTranslation)
     {
-        $this->validate($request,[
+        $this->validate($request, [
             'title' => 'required',
             'description1' => 'required|max:1000',
             'description2' => 'required|max:1000',
             'instructions' => 'required|max:1000',
-            'terms_and_conditions' => 'required|max:1000'
+            'terms_and_conditions' => 'required|max:1000',
         ]);
-        $rewardTranslation->title  = $request->title;
+        $rewardTranslation->title = $request->title;
         $rewardTranslation->description1 = $request->description1;
         $rewardTranslation->description2 = $request->description2;
         $rewardTranslation->instructions = $request->instructions;
         $rewardTranslation->terms_and_conditions = $request->terms_and_conditions;
         $rewardTranslation->reward_id = $reward->id;
 
-        if($request->file('product_image')) {
-            $fileName = time().'_'.$request->product_image->getClientOriginalName();
+        if ($request->file('product_image')) {
+            $fileName = time() . '_' . $request->product_image->getClientOriginalName();
             // save file to azure blob virtual directory uplaods in your container
             $filePath = $request->file('product_image')->storeAs('/', $fileName, 'azure');
-            $rewardTranslation->product_image=  $fileName;
+            $rewardTranslation->product_image = $fileName;
         }
-        if($request->file('full_width_banner_image')) {
-            $fileName = time().'_'.$request->full_width_banner_image->getClientOriginalName();
+        if ($request->file('full_width_banner_image')) {
+            $fileName = time() . '_' . $request->full_width_banner_image->getClientOriginalName();
             // save file to azure blob virtual directory uplaods in your container
             $filePath = $request->file('full_width_banner_image')->storeAs('/', $fileName, 'azure');
-            $rewardTranslation->full_width_banner_image=  $fileName;
+            $rewardTranslation->full_width_banner_image = $fileName;
         }
-        if($request->file('generic_banner_image')) {
-            $fileName = time().'_'.$request->generic_banner_image->getClientOriginalName();
+        if ($request->file('generic_banner_image')) {
+            $fileName = time() . '_' . $request->generic_banner_image->getClientOriginalName();
             // save file to azure blob virtual directory uplaods in your container
             $filePath = $request->file('generic_banner_image')->storeAs('/', $fileName, 'azure');
-            $rewardTranslation->generic_banner_image=  $fileName;
-        }        
+            $rewardTranslation->generic_banner_image = $fileName;
+        }
         $rewardTranslation->save();
-        
+
         return back()
-            ->with('success','Reward Translation has been Updated');
+            ->with('success', 'Reward Translation has been Updated');
     }
     /**
      * Remove the specified resource from storage.
@@ -157,19 +154,20 @@ class RewardTranslationController extends Controller
      * @param  \App\Reward  $reward
      * @return \Illuminate\Http\Response
      */
-    public function destroy(Reward $reward,RewardTranslation $rewardTranslation)
+    public function destroy(Reward $reward, RewardTranslation $rewardTranslation)
     {
         $rewardTranslation->delete();
         return back()
-            ->with('success','reward has been stored');
+            ->with('success', 'reward has been stored');
     }
 
-    public function validateLang($lang,$reward){
+    public function validateLang($lang, $reward)
+    {
 
-        $isExist = RewardTranslation::where('lang',$lang)->where('reward_id',$reward)->count();
-        if($isExist == 0){
+        $isExist = RewardTranslation::where('lang', $lang)->where('reward_id', $reward)->count();
+        if ($isExist == 0) {
             return false;
-        }else{
+        } else {
             return true;
         }
     }
