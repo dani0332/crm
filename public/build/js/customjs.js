@@ -191,14 +191,14 @@ $(document).ready(function () {
         ],
     });
 
-    var carqouteDatatable = $(".carqoute-data-table").DataTable({
+    var carquoteDatatable = $(".carquote-data-table").DataTable({
         ordering: false,
         info: false,
         searching: false,
         bLengthChange: false,
         serverSide: true,
         ajax: {
-            url: config.routes.carqoute_datatable_route,
+            url: config.routes.carquote_datatable_route,
             data: function (d) {
                 d.searchtype = $("input[name=searchtype]:checked").val();
                 d.searchfield = $("input[name=searchfield]").val();
@@ -219,37 +219,37 @@ $(document).ready(function () {
         ],
     });
 
-    $("#search-car-qoute").submit(function (e) {
-        carqouteDatatable.draw();
+    $("#search-car-quote").submit(function (e) {
+        carquoteDatatable.draw();
         e.preventDefault();
     });
 
-    $("#resubmit_api_carqoute").click(function () {
-        $("#resubmit_api_carqoute").attr("disabled", true);
+    $("#resubmit_api_carquote").click(function () {
+        $("#resubmit_api_carquote").attr("disabled", true);
         var data_id = $(this).attr("data-id");
-        var carQoutes = [];
-        if (data_id != "") carQoutes.push(data_id);
+        var carQuotes = [];
+        if (data_id != "") carQuotes.push(data_id);
         $(".multicheckbox").each(function (index) {
             if ($(this).prop("checked")) {
                 var id = $(this).attr("data-id");
-                carQoutes.push(id);
+                carQuotes.push(id);
             }
         });
-        if (carQoutes.length > 0) {
+        if (carQuotes.length > 0) {
             $.ajax({
-                url: config.routes.carqoute_resubmitap_route,
+                url: config.routes.carquote_resubmitap_route,
                 type: "post",
-                data: { car_qoutes: carQoutes, _token: config._token },
+                data: { car_quotes: carQuotes, _token: config._token },
                 success: function (response) {
                     $("#success_message").show();
                     $("#success_message")
                         .fadeIn()
                         .html("Resubmit Api Execution is successfull");
 
-                    $(".carqoute-data-table").DataTable().ajax.reload();
+                    $(".carquote-data-table").DataTable().ajax.reload();
 
                     setTimeout(function () {
-                        $("#resubmit_api_carqoute").attr("disabled", false);
+                        $("#resubmit_api_carquote").attr("disabled", false);
                         $("#success_message").fadeOut("slow");
                     }, 3000);
                 },
@@ -258,7 +258,7 @@ $(document).ready(function () {
                     $("#error_message").show();
                     $("#error_message").fadeIn().html(errorThrown);
                     setTimeout(function () {
-                        $("#resubmit_api_carqoute").attr("disabled", false);
+                        $("#resubmit_api_carquote").attr("disabled", false);
                         $("#error_message").fadeOut("slow");
                     }, 3000);
                 },
@@ -267,19 +267,19 @@ $(document).ready(function () {
             $("#error_message").show();
             $("#error_message").fadeIn().html("Please select atleast one row");
             setTimeout(function () {
-                $("#resubmit_api_carqoute").attr("disabled", false);
+                $("#resubmit_api_carquote").attr("disabled", false);
                 $("#error_message").fadeOut("slow");
             }, 3000);
         }
     });
 
-    $(".healthqoute-data-table").DataTable({
+    $(".healthquote-data-table").DataTable({
         ordering: false,
         info: false,
         searching: false,
         bLengthChange: false,
         serverSide: true,
-        ajax: config.routes.healthqoute_datatable_route,
+        ajax: config.routes.healthquote_datatable_route,
         columns: [
             // {data: "checkbox", name: "checkbox",
             // render: function (data, type, row, meta) {
@@ -351,20 +351,47 @@ $(document).ready(function () {
         }
     });
 
-
-    $('.auditablebtn').click(function(){
-        var auditableId = $(this).attr('data-id');
-        var auditableType = $(this).attr('data-model');
-        $(this).attr('disabled',true);
+    $(".auditablebtn").click(function () {
+        var auditableId = $(this).attr("data-id");
+        var auditableType = $(this).attr("data-model");
+        $(this).attr("disabled", true);
 
         $.ajax({
-            url:config.routes.load_auditable,
-            method:"POST",
-            data:{auditableId,auditableType,_token:config._token},
-            success:function(data){
-                $('#auditable').html(data);
-                $('.auditablebtn').hide();
-            }
-        })
-    })
+            url: config.routes.load_auditable,
+            method: "POST",
+            data: { auditableId, auditableType, _token: config._token },
+            success: function (data) {
+                $("#auditable").html(data);
+                $(".auditablebtn").hide();
+            },
+        });
+    });
+
+    $(".applyBtn").click(function () {
+        dateRangePickerChange();
+    });
+
+    $(".ranges li").click(function () {
+        dateRangePickerChange();
+    });
+
+    function dateRangePickerChange() {
+        setTimeout(() => {
+            var date = $("#reportrange span").html();
+            var dateAsArray = date.split("-");
+            var startDate = moment(dateAsArray[0]).format("YYYY-MM-DD");
+            var endDate = moment(dateAsArray[1]).format("YYYY-MM-DD");
+            $.ajax({
+                url: config.routes.load_dashboard_stats,
+                method: "POST",
+                data: { startDate, endDate, _token: config._token },
+                success: function (data) {
+                    console.log("request " + data);
+                    $(".customer-count").html(data.totalCustomers);
+                    $(".carquote-count").html(data.totalCarQuotes);
+                    $(".duration").html(startDate + " - " + endDate);
+                },
+            });
+        }, 1000);
+    }
 });

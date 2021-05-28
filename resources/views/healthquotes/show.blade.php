@@ -1,81 +1,76 @@
 @extends('layouts.app')
-@section('title','Car Qoute Detail ')
+@section('title','Health Quote Detail ')
 @section('content')
 <div class="row">
     <div class="col-md-12 col-sm-12 admin-detail">
         <div class="x_panel">
             <div class="x_title">
-                <h2>Car Qoute</h2>
+                <h2>Health Quote</h2>
                 <div class="clearfix"></div>
             </div>
             <div class="x_content">
                 <br />
-                @if(session()->has('success'))
-                    <div class="alert alert-success">
-                        {{ session()->get('success') }}
-                    </div>
-                @endif
-                <form id="demo-form2" method='post' action="" enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left">
+             <form id="demo-form2" method='post' action="" enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left">
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="first_name">
-                            <b> Car Value : </b>
+                            <b> Preference : </b>
                         </label>
                         <div class="col-md-6 col-sm-6 ">
-                           <p class="label-align-center">{{  $carqoute->car_value  }}</p>
+                           <p class="label-align-center">{{  $healthquote->preference  }}</p>
                         </div>
-                       
+
                     </div>
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="last_name">
-                            <b>Currently Insured With :</b>
+                            <b>Details :</b>
                         </label>
                         <div class="col-md-6 col-sm-6 ">
-                            <p class="label-align-center">{{  $carqoute->currently_insured_with  }}</p>
+                            <p class="label-align-center">{{  $healthquote->details  }}</p>
                         </div>
-                        
+
                     </div>
 
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="email">
-                            <b> Year Of Manufacture : </b></label>
+                            <b> Has Dental : </b></label>
                         <div class="col-md-6 col-sm-6 ">
-                            <p class="label-align-center">{{  $carqoute->year_of_manufacture  }}</p>
+                            <p class="label-align-center">{{   $healthquote->has_dental  }}</p>
                         </div>
-                        
+
                     </div>
-                    
+
 
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="mobile_no">
-                            <b>UAE License Held For : </b></label>
+                            <b>Has Worldwide Cover: </b></label>
                         <div class="col-md-6 col-sm-6 ">
-                            <p class="label-align-center">{{  $carqoute->uaeLicenseHeldFor->code  }}</p>
+                            <p class="label-align-center">{{  $healthquote->has_worldwide_cover  }}</p>
                         </div>
                     </div>
 
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="gender">
-                            <b> Car Make : </b></label>
+                            <b> Has Home : </b></label>
                         <div class="col-md-6 col-sm-6 ">
-                            <p class="label-align-center">{{  $carqoute->carMake->code  }}</p>
+                            <p class="label-align-center">{{  $healthquote->has_home  }}</p>
                         </div>
                     </div>
 
 
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="lang">
-                            <b>Car Model : </b></label>
+                            <b>Marital Status : </b></label>
                         <div class="col-md-6 col-sm-6 ">
-                            <p class="label-align-center">{{  $carqoute->carModel->code   }}</p>
+                            <p class="label-align-center">{{  $healthquote->marital_status_id   }}</p>
                         </div>
                     </div>
 
 
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="dob">
-                            <b>Car Value : </b></label>
+                            <b>Cover For : </b></label>
                         <div class="col-md-6 col-sm-6 ">
-                            <p class="label-align-center">{{  $carqoute->car_value  }}</p>
+                            <p class="label-align-center">{{  $healthquote->cover_for_id  }}</p>
                         </div>
                     </div>
 
@@ -83,7 +78,7 @@
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="dob">
                             <b>Emirate Of Registration : </b></label>
                         <div class="col-md-6 col-sm-6 ">
-                            <p class="label-align-center">{{  $carqoute->emirate->code  }}</p>
+                            <p class="label-align-center">{{  $healthquote->emirate->code  }}</p>
                         </div>
                     </div>
 
@@ -91,7 +86,7 @@
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="dob">
                             <b>First Name : </b></label>
                         <div class="col-md-6 col-sm-6 ">
-                            <p class="label-align-center">{{  $carqoute->first_name  }}</p>
+                            <p class="label-align-center">{{ $healthquote->first_name  }}</p>
                         </div>
                     </div>
 
@@ -100,7 +95,7 @@
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="dob">
                             <b>Last Name : </b></label>
                         <div class="col-md-6 col-sm-6 ">
-                            <p class="label-align-center">{{ $carqoute->last_name  }}</p>
+                            <p class="label-align-center">{{$healthquote->last_name  }}</p>
                         </div>
                     </div>
 
@@ -108,32 +103,15 @@
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="dob">
                             <b>Email : </b></label>
                         <div class="col-md-6 col-sm-6 ">
-                            <p class="label-align-center">{{ $carqoute->email  }}</p>
+                            <p class="label-align-center">{{$healthquote->email  }}</p>
                         </div>
                     </div>
-
-                    <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="dob">
-                            <b>Claim History : </b></label>
-                        <div class="col-md-6 col-sm-6 ">
-                            <p class="label-align-center">{{ $carqoute->claimHistory->code  }}</p>
-                        </div>
-                    </div>
-
-                    <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="dob">
-                            <b>Car Type Insurance : </b></label>
-                        <div class="col-md-6 col-sm-6 ">
-                            <p class="label-align-center">{{ $carqoute->carTypeInsurance->code  }}</p>
-                        </div>
-                    </div>
-                    
 
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="dob">
                             <b>Mobile No : </b></label>
                         <div class="col-md-6 col-sm-6 ">
-                            <p class="label-align-center">{{ $carqoute->mobile_no  }}</p>
+                            <p class="label-align-center">{{$healthquote->mobile_no  }}</p>
                         </div>
                     </div>
 
@@ -142,7 +120,7 @@
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="dob">
                             <b>Gender : </b></label>
                         <div class="col-md-6 col-sm-6 ">
-                            <p class="label-align-center">{{ $carqoute->gender  }}</p>
+                            <p class="label-align-center">{{$healthquote->gender  }}</p>
                         </div>
                     </div>
 
@@ -151,7 +129,7 @@
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="dob">
                             <b>Lang : </b></label>
                         <div class="col-md-6 col-sm-6 ">
-                            <p class="label-align-center">{{ $carqoute->lang  }}</p>
+                            <p class="label-align-center">{{$healthquote->lang  }}</p>
                         </div>
                     </div>
 
@@ -160,16 +138,16 @@
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="dob">
                             <b>Source : </b></label>
                         <div class="col-md-6 col-sm-6 ">
-                            <p class="label-align-center">{{ $carqoute->source  }}</p>
+                            <p class="label-align-center">{{$healthquote->source  }}</p>
                         </div>
                     </div>
-                    
+
 
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="dob">
                             <b>DOB : </b></label>
                         <div class="col-md-6 col-sm-6 ">
-                            <p class="label-align-center">{{ $carqoute->dob  }}</p>
+                            <p class="label-align-center">{{$healthquote->dob  }}</p>
                         </div>
                     </div>
 
@@ -177,14 +155,14 @@
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="dob">
                             <b>Customer : </b></label>
                         <div class="col-md-6 col-sm-6 ">
-                            <p class="label-align-center">{{ $carqoute->customer->first_name .' '. $carqoute->customer->last_name  }}</p>
+                            <p class="label-align-center">{{$healthquote->customer->first_name .' '.$healthquote->customer->last_name  }}</p>
                         </div>
                     </div>
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="nationality_id">
                             <b>Nationality: </b></label>
                         <div class="col-md-6 col-sm-6 ">
-                            <p class="label-align-center">{{  $carqoute->nationality->code  }}</p>
+                            <p class="label-align-center">{{ $healthquote->nationality->code  }}</p>
                         </div>
                     </div>
 
@@ -192,7 +170,7 @@
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="dob">
                             <b>Payment Status : </b></label>
                         <div class="col-md-6 col-sm-6 ">
-                            <p class="label-align-center">{{ $carqoute->paymentStatus->code  }}</p>
+                            <p class="label-align-center">{{$healthquote->paymentStatus->code  }}</p>
                         </div>
                     </div>
 
@@ -200,7 +178,7 @@
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="dob">
                             <b>Quote Status Id : </b></label>
                         <div class="col-md-6 col-sm-6 ">
-                            <p class="label-align-center">{{ $carqoute->quoteStatus->code  }}</p>
+                            <p class="label-align-center">{{$healthquote->quoteStatus->code  }}</p>
                         </div>
                     </div>
 
@@ -208,7 +186,7 @@
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="dob">
                             <b>Is Synced : </b></label>
                         <div class="col-md-6 col-sm-6 ">
-                            <p class="label-align-center">{{ $carqoute->is_synced  }}</p>
+                            <p class="label-align-center">{{$healthquote->is_synced  }}</p>
                         </div>
                     </div>
 
@@ -217,7 +195,7 @@
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="dob">
                             <b>Device : </b></label>
                         <div class="col-md-6 col-sm-6 ">
-                            <p class="label-align-center">{{ $carqoute->device  }}</p>
+                            <p class="label-align-center">{{$healthquote->device  }}</p>
                         </div>
                     </div>
 
@@ -225,7 +203,7 @@
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="dob">
                             <b>Reference Url : </b></label>
                         <div class="col-md-6 col-sm-6 ">
-                            <p class="label-align-center">{{ $carqoute->reference_url  }}</p>
+                            <p class="label-align-center">{{$healthquote->reference_url  }}</p>
                         </div>
                     </div>
 
@@ -233,7 +211,7 @@
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="dob">
                             <b>Additional Notes : </b></label>
                         <div class="col-md-6 col-sm-6 ">
-                            <p class="label-align-center">{{ $carqoute->additional_notes  }}</p>
+                            <p class="label-align-center">{{$healthquote->additional_notes  }}</p>
                         </div>
                     </div>
 
@@ -241,7 +219,7 @@
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="dob">
                             <b>Reviver Name : </b></label>
                         <div class="col-md-6 col-sm-6 ">
-                            <p class="label-align-center">{{ $carqoute->reviver_name }}</p>
+                            <p class="label-align-center">{{$healthquote->reviver_name }}</p>
                         </div>
                     </div>
 
@@ -249,7 +227,7 @@
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="dob">
                             <b>Promo Code : </b></label>
                         <div class="col-md-6 col-sm-6 ">
-                            <p class="label-align-center">{{ $carqoute->promo_code }}</p>
+                            <p class="label-align-center">{{$healthquote->promo_code }}</p>
                         </div>
                     </div>
 
@@ -257,14 +235,14 @@
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="dob">
                             <b>Code : </b></label>
                         <div class="col-md-6 col-sm-6 ">
-                            <p class="label-align-center">{{  $carqoute->code }}</p>
+                            <p class="label-align-center">{{ $healthquote->code }}</p>
                         </div>
                     </div>
-                    
+
                     <div class="item form-group">
                         <label for="middle-name" class="col-form-label col-md-3 col-sm-3 label-align"><b>Has Alfred Access : </b></label>
                         <div class="col-md-6 col-sm-6 ">
-                            <p class="label-align-center"> {{ $carqoute->has_alfred_access ? 'True' : 'False' }} </p>
+                            <p class="label-align-center"> {{$healthquote->has_alfred_access ? 'True' : 'False' }} </p>
                         </div>
                     </div>
                     <div class="ln_solid"></div>

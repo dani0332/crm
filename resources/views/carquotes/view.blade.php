@@ -1,17 +1,17 @@
 @extends('layouts.app')
-@section('title','View CarQoute')
+@section('title','View CarQuote')
 @section('content')
 <div class="row">
     <div class="col-md-12 col-sm-12 admin-view">
         <div class="x_panel">
             <div class="x_title">
-                <h2>Search Car Qoutes</h2>
+                <h2>Search Car Quotes</h2>
                 <div class="clearfix"></div>
             </div>
             <div class="x_content">
-            <form method="POST" id="search-car-qoute" class="form-horizontal form-label-left"  role="form"  data-parsley-validate=""novalidate="">
+            <form method="POST" id="search-car-quote" class="form-horizontal form-label-left"  role="form"  data-parsley-validate=""novalidate="">
                 <div class="item form-group">
-                    <label class="col-form-label col-md-2 col-sm-2 " for="first-name">Search By 
+                    <label class="col-form-label col-md-2 col-sm-2 " for="first-name">Search By
                     </label>
                     <div class="col-md-9 col-sm-9 ">
                         <p>
@@ -39,7 +39,7 @@
                 </div>
 
                 <div class="item form-group">
-                    <label class="col-form-label col-md-2 col-sm-2 " for="first-name">Search Value 
+                    <label class="col-form-label col-md-2 col-sm-2 " for="first-name">Search Value
                     </label>
                     <div class="col-md-6 col-sm-6 ">
                         <div class="input-group">
@@ -55,10 +55,10 @@
         </div>
         <div class="x_panel">
             <div class="x_title">
-                <h2>Car Qoutes</h2>
-                
+                <h2>Car Quotes</h2>
+
                 {{-- <ul class="nav navbar-right panel_toolbox">
-                    <li><button id="resubmit_api_carqoute" class="btn btn-success btn-sm">ReSubmit Api</button></li>
+                    <li><button id="resubmit_api_carquote" class="btn btn-success btn-sm">ReSubmit Api</button></li>
                 </ul> --}}
                 <div class="clearfix"></div>
             </div>
@@ -66,10 +66,10 @@
                 {{-- <div id="success_message" class="alert alert-success" style="display:none"></div>
                 <div id="error_message" class="alert alert-danger" style="display:none"></div> --}}
                 <br />
-                
-                
+
+
                 <br/>
-                <table  class="table table-striped jambo_table carqoute-data-table" style="width:100%">
+                <table  class="table table-striped jambo_table carquote-data-table" style="width:100%">
                       <thead>
                         <tr>
                           <th>id</th>
@@ -83,9 +83,9 @@
 
 
                       <tbody>
-                        
-                        
-                        
+
+
+
                       </tbody>
                     </table>
             </div>
