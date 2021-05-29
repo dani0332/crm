@@ -200,8 +200,10 @@ $(document).ready(function () {
         ajax: {
             url: config.routes.carquote_datatable_route,
             data: function (d) {
-                d.searchtype = $("input[name=searchtype]:checked").val();
+                d.searchtype = $("#search_type").val();
                 d.searchfield = $("input[name=searchfield]").val();
+                d.quotestatus = $("#quote_status_value").val();
+                d.paymentstatus = $("#payment_status_value").val();
             },
         },
         columns: [
@@ -220,8 +222,8 @@ $(document).ready(function () {
     });
 
     $("#search-car-quote").submit(function (e) {
-        carquoteDatatable.draw();
         e.preventDefault();
+        carquoteDatatable.draw();
     });
 
     $("#resubmit_api_carquote").click(function () {
@@ -395,13 +397,12 @@ $(document).ready(function () {
         }, 1000);
     }
 
-
-    $('#return_to_view').click(function(e){
+    $("#return_to_view").click(function (e) {
         e.preventDefault();
         var input = '<input name="return_to_view" type="hidden" value="1"/>';
-        $('#redirect_to_view_div').html(input);
+        $("#redirect_to_view_div").html(input);
         setTimeout(function () {
-            $('form').submit();
-        }, 500);  
-    })
+            $("form").submit();
+        }, 500);
+    });
 });

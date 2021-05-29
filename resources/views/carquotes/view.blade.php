@@ -11,45 +11,66 @@
             <div class="x_content">
             <form method="POST" id="search-car-quote" class="form-horizontal form-label-left"  role="form"  data-parsley-validate=""novalidate="">
                 <div class="item form-group">
-                    <label class="col-form-label col-md-2 col-sm-2 " for="first-name">Search By
+                    <label class="col-form-label col-md-2 col-sm-2 " for="searchtype">Search By
                     </label>
-                    <div class="col-md-9 col-sm-9 ">
-                        <p>
-                        <input type="radio" class="flat" name="searchtype" checked  value="id"  required /> ID
-                        </p>
-                        <p>
-                        <input type="radio" class="flat" name="searchtype"  value="code" /> Code
-                        </p>
-
-                        <p>
-                        <input type="radio" class="flat" name="searchtype"  value="email"   /> Email
-                        </p>
-                        <p>
-                        <input type="radio" class="flat" name="searchtype"  value="mn" /> Mobile No
-                        </p>
-
-
-                        <p>
-                        <input type="radio" class="flat" name="searchtype"  value="name"   /> Name
-                        </p>
-                        <p>
-                        <input type="radio" class="flat" name="searchtype"  value="code" /> Code
-                        </p>
+                    <div class="col-md-6 col-sm-6 ">
+                        <select class="form-control" name="searchtype" id="search_type">
+                            <option value="id">ID</option>
+                            <option value="code">Code</option>
+                            <option value="email">Email</option>
+                            <option value="mobile_no">Mobile No</option>
+                        </select>
                     </div>
                 </div>
 
                 <div class="item form-group">
-                    <label class="col-form-label col-md-2 col-sm-2 " for="first-name">Search Value
+                    <label class="col-form-label col-md-2 col-sm-2 " for="searchfield">Search Value
                     </label>
                     <div class="col-md-6 col-sm-6 ">
                         <div class="input-group">
                             <input type="text" class="form-control" name="searchfield" id="searchfield" placeholder="search ..">
-                            <span class="input-group-btn">
-                                <button type="submit" class="btn btn-warning">Search</button>
-                            </span>
                         </div>
                     </div>
                 </div>
+
+                <div class="item form-group">
+                    <label class="col-form-label col-md-2 col-sm-2 " for="quote-status" id='quotestatus'>Quote Status
+                    </label>
+                    <div class="col-md-6 col-sm-6 ">
+                        <div class="input-group">
+                            <select class="form-control" name="quotestatus" id="quote_status_value">
+                                <option value="">Select</option>
+                                @foreach ($quoteStatuses as $item)
+                                    <option value="{{ $item->id }}">{{ $item->code }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="item form-group">
+                    <label class="col-form-label col-md-2 col-sm-2 " for="payment-status" id='paymentstatus'>Payment Status
+                    </label>
+                    <div class="col-md-6 col-sm-6 ">
+                        <div class="input-group">
+                            <select class="form-control" name="paymentstatus" id="payment_status_value">
+                                <option value="">Select</option>
+                                @foreach ($paymentStatuses as $item)
+                                    <option value="{{ $item->id }}">{{ $item->code }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="item form-group">
+                    <label class="col-form-label col-md-2 col-sm-2 " for="first-name">
+                    </label>
+                    <div class="col-md-6 col-sm-6 ">
+                        <div class="input-group">
+                            <button type="submit" class="btn btn-warning">Search</button>
+                        </div>
+                    </div>
+                </div>
+                
             </form>
             </div>
         </div>

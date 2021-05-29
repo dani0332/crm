@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\CarQuote;
 use Config;
 use DataTables;
+use App\Models\QuoteStatus;
+use App\Models\PaymentStatus;
 use Illuminate\Http\Request;
 
 class CarQuoteController extends Controller
@@ -31,6 +33,8 @@ class CarQuoteController extends Controller
      */
     public function index(Request $request)
     {
+        $quoteStatuses = QuoteStatus::all();
+        $paymentStatuses = PaymentStatus::all();
         if ($request->ajax()) {
             $data = CarQuote::select('*');
             if (isset($request->searchtype) && !empty($request->searchtype)
@@ -41,6 +45,12 @@ class CarQuoteController extends Controller
                     $data->where($request->searchtype, $request->searchfield);
                 }
             }
+            if(isset($request->quotestatus) && !empty($request->quotestatus))
+                $data->where('quote_status_id', $request->quotestatus);
+            if(isset($request->paymentstatus) && !empty($request->paymentstatus))
+                $data->where('payment_status_id', $request->paymentstatus);
+            
+            
             return DataTables::of($data)
                 ->addIndexColumn()
                 ->addColumn('action', function ($row) {
@@ -49,7 +59,7 @@ class CarQuoteController extends Controller
                 ->rawColumns(['action'])
                 ->make(true);
         }
-        return view('carquotes.view');
+        return view('carquotes.view',compact('quoteStatuses','paymentStatuses'));
     }
 
     /**
