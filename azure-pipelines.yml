@@ -19,4 +19,4 @@ steps:
     echo "Artifacts uploaded to $(System.DefaultWorkingDirectory)"
 
 - publish: '$(System.DefaultWorkingDirectory)'
-  artifact: myalfredcms
+  artifact: myalfredcrm
