@@ -235,6 +235,27 @@ $(document).ready(function () {
         ],
     });
 
+    $(".status-data-table").DataTable({
+        ordering: false,
+        info: false,
+        searching: false,
+        bLengthChange: false,
+        serverSide: true,
+        ajax: config.routes.status_datatable_route,
+        columns: [
+            { data: "id", name: "id" },
+            { data: "name", name: "name" },
+            { data: "is_active", name: "is_active" },
+            { data: "created_by", name: "created_by" },
+            { data: "updated_by", name: "updated_by" },
+            {
+                data: "action",
+                name: "action",
+                orderable: false,
+                searchable: false,
+            },
+        ],
+    });
     $(".reason-data-table").DataTable({
         ordering: false,
         info: false,
@@ -278,6 +299,7 @@ $(document).ready(function () {
             },
         ],
     });
+
     var carquoteDatatable = $(".carquote-data-table").DataTable({
         ordering: false,
         info: false,
