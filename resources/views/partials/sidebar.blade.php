@@ -52,7 +52,7 @@
         <ul class="nav side-menu">
             <li><a><i class="fa fa-desktop"></i> Trans App <span class="fa fa-chevron-down"></span></a>
             <ul class="nav child_menu">
-                <li><a href="{{ url('transapp/home') }}">Home</a></li>
+                {{-- <li><a href="{{ url('transapp/home') }}">Home</a></li> --}}
                 @can('insurance-company-list')
                     <li><a href="{{ route('insurancecompany.index') }}">Insurance Company</a></li>
                 @endcan
