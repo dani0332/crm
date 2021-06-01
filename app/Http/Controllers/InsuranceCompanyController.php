@@ -160,4 +160,4 @@ class InsuranceCompanyController extends Controller
 
         $insurancecompany->delete();
         return redirect()->route('Insurancecompany.index')
-turn redirect()->route('insurancecompany.index')
+turn redirect()->route('Insurancecompany.index')
