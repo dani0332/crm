@@ -85,7 +85,7 @@
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="nationality_id">
                             <b>Nationality: </b></label>
                         <div class="col-md-6 col-sm-6 ">
-                            <p class="label-align-center">{{  $customer->nationality->code  }}</p>
+                            <p class="label-align-center">{{  $customer->nationality ? $customer->nationality->code : ''  }}</p>
                         </div>
                     </div>
 
