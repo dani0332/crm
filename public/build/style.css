@@ -110,3 +110,8 @@ table td:last-child {
 .transparent {
     background: transparent !important;
 }
+
+
+.jambo_table th{
+    background:#4183bd !important;
+}

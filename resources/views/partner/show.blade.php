@@ -28,7 +28,7 @@
                         <div class="col-md-6 col-sm-6 ">
                             <p class="label-align-center">{{ $partner->name }}</p>
                         </div>
-                       
+
                     </div>
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="name_ar">
@@ -37,18 +37,18 @@
                         <div class="col-md-6 col-sm-6 ">
                             <p class="label-align-center">{{ $partner->name_ar }}</p>
                         </div>
-                        
+
                     </div>
                     <div class="item form-group">
-                        
+
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="logo_image">
-                            <b> Logo Image </b> 
+                            <b> Logo Image </b>
                         </label>
                         <div class="col-md-6 col-sm-6 ">
                             <p class="label-align-center"><img src="{{ \Config::get('constants.azure_storage_url').'myrewards/'.$partner->logo_image }}" style='width:100px;' /></p>
 
                         </div>
-                       
+
                     </div>
                     <div class="item form-group">
                         <label for="middle-name" class="col-form-label col-md-3 col-sm-3 label-align">Is Active</label>
@@ -61,15 +61,15 @@
                         <div class="col-md-6 col-sm-6 offset-md-3">
                                 @can('partners-edit')
                                     <a id="texta" href="{{ route('partner.edit', ['partner' => $partner->id]) }}" class='btn btn-warning btn-sm'>Edit </a>
-                                
+
                                 @endcan
                                 @can('partners-delete')
-                                    <form action="{{ route('partner.destroy', ['partner' => $partner->id]) }}" method="POST">  
-                                        @csrf 
+                                    <form action="{{ route('partner.destroy', ['partner' => $partner->id]) }}" method="POST">
+                                        @csrf
                                         @method('DELETE')
                                         <button type="submit" class="btn btn-warning btn-sm">Delete</button>
                                     </form>
-                                
+
                                 @endcan
                             </tr>
                         </div>
@@ -83,7 +83,7 @@
 @can('auditable')
     <div id="auditable">
         <button id='auditablebtn' class="btn btn-warning auditablebtn" data-id="{{ $partner->id }}" data-model="App\Models\Partner">
-            View Auditable
+            View Audit Logs
         </button>
     </div>
 @endcan

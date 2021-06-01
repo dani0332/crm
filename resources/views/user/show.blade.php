@@ -20,7 +20,7 @@
                     <div class="col-md-6 col-sm-6 ">
                         <p class="label-align-center">{{ $user->name }}</p>
                     </div>
-                    
+
                 </div>
                 <div class="item form-group">
                     <label class="col-form-label col-md-3 col-sm-3 label-align" for="email">Email <span class="required">*</span>
@@ -28,7 +28,7 @@
                     <div class="col-md-6 col-sm-6 ">
                         <p class="label-align-center">{{ $user->email }}</p>
                     </div>
-                    
+
                 </div>
                 <div class="item form-group">
                     <label class="col-form-label col-md-3 col-sm-3 label-align" for="roles">Role <span class="required">*</span>
@@ -41,8 +41,8 @@
                 <div class="item form-group">
                     <div class="col-md-6 col-sm-6 offset-md-3">
                         <a href="{{ route('users.edit', ['user' => $user->id])}}"  class='btn btn-warning btn-sm'>Edit</a>
-                        <form action="{{ route('users.destroy', ['user' => $user->id])}}" method='POST'>  
-                            @csrf 
+                        <form action="{{ route('users.destroy', ['user' => $user->id])}}" method='POST'>
+                            @csrf
                             @method('DELETE')
                             <button type='submit' class='btn btn-warning btn-sm'>Delete</button>
                         </form>
@@ -55,7 +55,7 @@
 </div>
 <div id="auditable">
     <button id='auditablebtn' class="btn btn-warning auditablebtn" data-id="{{ $user->id }}" data-model="App\Models\User">
-        View Auditable
+        View Audit Logs
     </button>
 </div>
 @endsection

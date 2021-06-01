@@ -27,7 +27,7 @@
                     <div class="col-md-6 col-sm-6 ">
                         <p class="label-align-center">{{ $rewardTag->text }}</p>
                     </div>
-                    
+
                 </div>
                 <div class="item form-group">
                     <label class="col-form-label col-md-3 col-sm-3 label-align" for="text_ar">Text Ar <span class="required">*</span>
@@ -35,7 +35,7 @@
                     <div class="col-md-6 col-sm-6 ">
                         <p class="label-align-center">{{ $rewardTag->text_ar }}</p>
                     </div>
-                    
+
                 </div>
                 <div class="item form-group">
                     <label class="col-form-label col-md-3 col-sm-3 label-align" for="sort_order">Sort Order <span class="required">*</span>
@@ -43,7 +43,7 @@
                     <div class="col-md-6 col-sm-6 ">
                         <p class="label-align-center">{{ $rewardTag->sort_order }}</p>
                     </div>
-                    
+
                 </div>
                 <div class="item form-group">
                     <label for="middle-name" class="col-form-label col-md-3 col-sm-3 label-align">Is Active</label>
@@ -58,8 +58,8 @@
                         <a href="{{ route('reward-tags.edit', ['reward_tag' => $rewardTag->id])}}"  class='btn btn-warning btn-sm'>Edit</a>
                         @endcan
                         @can('reward-tags-delete')
-                        <form action="{{ route('reward-tags.destroy', ['reward_tag' => $rewardTag->id])}}" method='POST' style="margin-top: -3px;">  
-                                @csrf 
+                        <form action="{{ route('reward-tags.destroy', ['reward_tag' => $rewardTag->id])}}" method='POST' style="margin-top: -3px;">
+                                @csrf
                                 @method('DELETE')
                                 <button type='submit' class='btn btn-warning btn-sm'>Delete</button>
                         </form>
@@ -75,7 +75,7 @@
 
 <div id="auditable">
     <button id='auditablebtn' class="btn btn-warning auditablebtn" data-id="{{ $rewardTag->id }}" data-model="App\Models\RewardTag">
-        View Auditable
+        View Audit Logs
     </button>
 </div>
 

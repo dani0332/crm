@@ -31,7 +31,7 @@
                         <div class="col-md-6 col-sm-6 ">
                             <p class="label-align-center"> {{ $rewardCategory->text }} </p>
                         </div>
-                        
+
                     </div>
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="text_ar"><b> Text Ar : </b>
@@ -39,7 +39,7 @@
                         <div class="col-md-6 col-sm-6 ">
                             <p class="label-align-center">{{ $rewardCategory->text_ar }}</p>
                         </div>
-                        
+
                     </div>
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="sort_order">
@@ -48,7 +48,7 @@
                         <div class="col-md-6 col-sm-6 ">
                             <p class="label-align-center">{{ $rewardCategory->sort_order }}</p>
                         </div>
-                        
+
                     </div>
                     <div class="item form-group">
                         <label for="middle-name" class="col-form-label col-md-3 col-sm-3 label-align">
@@ -62,19 +62,19 @@
                     <div class="item form-group">
                         <div class="col-md-6 col-sm-6 offset-md-3">
                         @can('reward-categories-edit')
-                            <a href="{{ route('reward-categories.edit', ['reward_category' => $rewardCategory->id])}}"  class='btn btn-warning btn-sm'>Edit</i> 
-                            </a> 
+                            <a href="{{ route('reward-categories.edit', ['reward_category' => $rewardCategory->id])}}"  class='btn btn-warning btn-sm'>Edit</i>
+                            </a>
                         @endcan
                         @can('reward-categories-delete')
-                            <form action="{{ route('reward-categories.destroy', ['reward_category' => $rewardCategory->id])}}" method='POST' style="margin-top: -3px;">  
-                                @csrf 
+                            <form action="{{ route('reward-categories.destroy', ['reward_category' => $rewardCategory->id])}}" method='POST' style="margin-top: -3px;">
+                                @csrf
                                 @method('DELETE')
                                 <button type='submit' class='btn btn-warning btn-sm'>Delete</button>
                             </form>
                         @endcan
                     </div>
                 </div>
-                
+
                 </form>
             </div>
         </div>
@@ -83,7 +83,7 @@
 
 <div id="auditable">
     <button id='auditablebtn' class="btn btn-warning auditablebtn" data-id="{{ $rewardCategory->id }}" data-model="App\Models\RewardCategory">
-        View Auditable
+        View Audit Logs
     </button>
 </div>
 @endsection

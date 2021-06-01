@@ -12,6 +12,12 @@ use App\Http\Controllers\RewardTagController;
 use App\Http\Controllers\RewardTranslationController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\InsuranceCompanyController;
+use App\Http\Controllers\HandlerController;
+use App\Http\Controllers\ReasonController;
+use App\Http\Controllers\StatusController;
+use App\Http\Controllers\PaymentModeController;
+use App\Http\Controllers\TransectionController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -53,6 +59,16 @@ Route::group(['prefix' => 'quotes'], function () {
     Route::resource('carquotes', CarQuoteController::class);
     Route::POST('carquotes/resubmit_api', [CarQuoteController::class, 'resubmitApi']);
     Route::resource('healthquotes', HealthQuoteController::class);
+});
+
+
+Route::group(['prefix' => 'transapp'], function () {
+    Route::resource('insurancecompany', InsuranceCompanyController::class);
+    Route::resource('handler', HandlerController::class);
+    Route::resource('reason',ReasonController::class);
+    Route::resource('status',StatusController::class);
+    Route::resource('paymentmode',PaymentModeController::class);
+    Route::resource('transection',TransectionController::class);
 });
 
 Route::resource('customer', CustomerController::class);

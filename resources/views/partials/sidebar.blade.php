@@ -13,7 +13,10 @@
     <div id="sidebar-menu" class="main_menu_side hidden-print main_menu">
         <div class="menu_section">
         <ul class="nav side-menu">
-            <li><a href="{{ url('dashboard') }}"><i class="fa fa-laptop"></i> Dashboard </a>
+            <li> <a><i class="fa fa-dashboard"></i> Dashboard  <span class="fa fa-chevron-down"></span></a>
+            <ul class="nav child_menu">
+                <li><a href="{{ url('dashboard') }}">Over All Dashboard</a></li>
+            </ul>
         </ul>
         <ul class="nav side-menu">
             <li><a><i class="fa fa-gift"></i> Rewards <span class="fa fa-chevron-down"></span></a>
@@ -46,7 +49,36 @@
             </ul>
             </li>
         </ul>
+        <ul class="nav side-menu">
+            <li><a><i class="fa fa-desktop"></i> Trans App <span class="fa fa-chevron-down"></span></a>
+            <ul class="nav child_menu">
+                <li><a href="{{ url('transapp/home') }}">Home</a></li>
+                @can('insurance-company-list')
+                    <li><a href="{{ route('insurancecompany.index') }}">Insurance Company</a></li>
+                @endcan
+                @can('handler-list')
+                    <li><a href="{{ route('handler.index') }}">Handler</a></li>
+                @endcan
+                @can('reason-list')
+                    <li><a href="{{ route('reason.index') }}">Reason</a></li>
+                @endcan
+                @can('status-list')
+                    <li><a href="{{ route('status.index') }}">Status</a></li>
+                @endcan
 
+                @can('payment-mode-list')
+                    <li><a href="{{ route('paymentmode.index') }}">Payment Mode</a></li>
+                @endcan
+
+                @can('transection-list')
+                    {{-- <li><a href="{{ route('transection.index') }}">Transection</a></li> --}}
+                @endcan
+            </ul>
+            </li>
+        </ul>
+        <ul class="nav side-menu">
+            <li><a href="{{ url('customer') }}"><i class="fa fa-user"></i> Customer </a>
+        </ul>
         <ul class="nav side-menu">
             <li><a><i class="fa fa-user"></i> Admin <span class="fa fa-chevron-down"></span></a>
             <ul class="nav child_menu">
@@ -59,9 +91,8 @@
             </ul>
             </li>
         </ul>
-        <ul class="nav side-menu">
-            <li><a href="{{ url('customer') }}"><i class="fa fa-user"></i> Customer </a>
-        </ul>
+
+
     </div>
     </div>
     <!-- /sidebar menu -->
