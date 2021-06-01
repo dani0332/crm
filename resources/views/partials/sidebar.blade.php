@@ -71,7 +71,7 @@
                 @endcan
 
                 @can('transection-list')
-                    {{-- <li><a href="{{ route('transection.index') }}">Transection</a></li> --}}
+                    <li><a href="{{ route('transection.index') }}">Transection</a></li>
                 @endcan
             </ul>
             </li>

@@ -48,12 +48,13 @@ class InsuranceCompanyController extends Controller
             return Datatables::of($data)
                 ->addIndexColumn()
                 ->addColumn('action', function ($row) {
-                    return view('insurancecompany.actions', compact('row'))->render();
+
+                    return view('Insurancecompany.actions', compact('row'))->render();
                 })
                 ->rawColumns(['action'])
                 ->make(true);
         }
-        return view('insurancecompany.view');
+        return view('Insurancecompany.view');
     }
 
     /**
@@ -64,7 +65,7 @@ class InsuranceCompanyController extends Controller
 
     public function create()
     {
-        return view('insurancecompany.add');
+        return view('Insurancecompany.add');
     }
 
     /**
@@ -106,7 +107,7 @@ class InsuranceCompanyController extends Controller
 
     public function show(InsuranceCompany $insurancecompany)
     {
-        return view('insurancecompany.show', compact('insurancecompany'));
+        return view('Insurancecompany.show', compact('insurancecompany'));
     }
 
     /**
@@ -118,7 +119,7 @@ class InsuranceCompanyController extends Controller
 
     public function edit(InsuranceCompany $insurancecompany)
     {
-        return view('insurancecompany.edit', compact('insurancecompany'));
+        return view('Insurancecompany.edit', compact('insurancecompany'));
     }
 
     /**
@@ -158,7 +159,5 @@ class InsuranceCompanyController extends Controller
     {
 
         $insurancecompany->delete();
-        return redirect()->route('insurancecompany.index')
-            ->with('success', 'Insurance Company deleted successfully');
-    }
-}
+        return redirect()->route('Insurancecompany.index')
+turn redirect()->route('insurancecompany.index')

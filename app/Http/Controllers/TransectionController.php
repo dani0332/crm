@@ -6,6 +6,10 @@ use App\Models\Transection;
 use Illuminate\Http\Request;
 use DataTables;
 use Auth;
+use App\Models\InsuranceCompany;
+use App\Models\Handler;
+use App\Models\PaymentMode;
+
 class TransectionController extends Controller
 {
     /**
@@ -43,7 +47,11 @@ class TransectionController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $data = Transection::select('*');
+            $data = Transection::
+            select('transections.*','insurance_companies.name as insurance','handlers.name as handler','handlers.name as handler','payment_modes.name as payment_mode')
+            ->leftjoin('insurance_companies','insurance_companies.id','transections.insurance_company_id')
+            ->leftjoin('handlers','handlers.id','transections.handler_id')
+            ->leftjoin('payment_modes','payment_modes.id','transections.payment_mode_id');
             return Datatables::of($data)
                 ->addIndexColumn()
                 ->addColumn('action', function ($row) {
@@ -63,7 +71,10 @@ class TransectionController extends Controller
 
     public function create()
     {
-        return view('transection.add');
+        $insurancecompanies = InsuranceCompany::all();
+        $handlers = Handler::all();
+        $paymentmodes = PaymentMode::all();
+        return view('transection.add',compact('insurancecompanies','handlers','paymentmodes'));
     }
 
     /**
@@ -77,20 +88,26 @@ class TransectionController extends Controller
     {
 
         $this->validate($request, [
-
-            'name' => 'required',
-
-            'is_active' => 'required',
-
+            'insurance_company'=> 'required',
+            'customer_name'=> 'required',
+            'handler'=> 'required',
+            'paymentmode'=> 'required',
+            'amount_paid' =>'required',
+            'risk_detail'=> 'required',
         ]);
 
         $transection = new Transection;
-        $transection->name = $request->name;
-        $transection->is_active = $request->is_active == 'on' ? 1 : 0;
+        $transection->approval_code = substr(md5(uniqid(rand(1,6))), 0, 8);
+        $transection->insurance_company_id = $request->insurance_company;
+        $transection->customer_name = $request->customer_name;
+        $transection->handler_id = $request->handler;
+        $transection->payment_mode_id = $request->paymentmode;
+        $transection->risk_details = $request->risk_detail;
+        $transection->amount_paid = $request->amount_paid;
         $transection->created_by = Auth::user()->email;
         $transection->save();
         if(isset($request->return_to_view))
-            return redirect("transapp/Transection");
+            return redirect("transapp/transection");
 
         return redirect()->back()
         ->with('success', 'Transection created successfully');
@@ -105,7 +122,12 @@ class TransectionController extends Controller
 
     public function show(Transection $transection)
     {
-        return view('transection.show', compact('Transection'));
+        $transection = Transection::select('transections.*','insurance_companies.name as insurance','handlers.name as handler','handlers.name as handler','payment_modes.name as payment_mode')
+            ->leftjoin('insurance_companies','insurance_companies.id','transections.insurance_company_id')
+            ->leftjoin('handlers','handlers.id','transections.handler_id')
+            ->leftjoin('payment_modes','payment_modes.id','transections.payment_mode_id')
+            ->where('transections.id',$transection->id)->first();
+        return view('transection.show', compact('transection'));
     }
 
     /**
@@ -117,7 +139,10 @@ class TransectionController extends Controller
 
     public function edit(Transection $transection)
     {
-        return view('transection.edit', compact('Transection'));
+        $insurancecompanies = InsuranceCompany::all();
+        $handlers = Handler::all();
+        $paymentmodes = PaymentMode::all();
+        return view('transection.edit', compact('transection','insurancecompanies','handlers','paymentmodes'));
     }
 
     /**
@@ -130,20 +155,27 @@ class TransectionController extends Controller
 
     public function update(Request $request,Transection $transection)
     {
-        $this->validate($request, [
 
-            'name' => 'required',
+        $this->validate($request, [
+            'insurance_company'=> 'required',
+            'customer_name'=> 'required',
+            'handler'=> 'required',
+            'paymentmode'=> 'required',
+            'amount_paid' =>'required',
+            'risk_detail'=> 'required',
         ]);
-        // return $request->is_active;
-        $transection->name = $request->name;
-        $transection->is_active = $request->is_active == 'on' ? 1 : 0;
+        $transection->insurance_company_id = $request->insurance_company;
+        $transection->customer_name = $request->customer_name;
+        $transection->handler_id = $request->handler;
+        $transection->payment_mode_id = $request->paymentmode;
+        $transection->risk_details = $request->risk_detail;
+        $transection->amount_paid = $request->amount_paid;
         $transection->updated_by = Auth::user()->email;
         $transection->save();
         if(isset($request->return_to_view))
-        return redirect("transapp/Transection");
+        return redirect("transapp/transection");
 
-        return redirect()->back()
-            ->with('success', 'Transection updated successfully');
+
     }
 
     /**
