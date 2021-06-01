@@ -17,14 +17,19 @@
             </div>
             <div class="x_content">
                 <br />
+                <div class="table-responsive">
                 <table  class="table table-striped jambo_table transection-data-table" style="width:100%">
                       <thead>
                         <tr>
-                          <th>id</th>
-                          <th>Name</th>
-                          <th>Is Active</th>
-                          <th>Created By</th>
-                          <th>Modified By</th>
+                          <th>Approval Code</th>
+                          <th>Transection Date</th>
+                          <th>Insurance Company</th>
+                          <th>Premium</th>
+                          <th>Risk</th>
+                          <th>Transector</th>
+                          <th>Handler</th>
+                          <th>Mode Of Payment</th>
+                          <th>Last Modified</th>
                           <th>Actions</th>
                         </tr>
                       </thead>
@@ -36,6 +41,7 @@
 
                       </tbody>
                     </table>
+                </div>
             </div>
         </div>
     </div>

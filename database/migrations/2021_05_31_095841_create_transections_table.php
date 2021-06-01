@@ -15,11 +15,13 @@ class CreateTransectionsTable extends Migration
     {
         Schema::create('transections', function (Blueprint $table) {
             $table->id();
+            $table->string('approval_code');
             $table->bigInteger('insurance_company_id');
             $table->string('customer_name');
             $table->bigInteger('handler_id');
             $table->bigInteger('payment_mode_id');
             $table->text('risk_details');
+            $table->string('amount_paid');
             $table->string('created_by');
             $table->string('updated_by')->nullable();
             $table->timestamps();

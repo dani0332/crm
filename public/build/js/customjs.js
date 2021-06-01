@@ -256,6 +256,33 @@ $(document).ready(function () {
             },
         ],
     });
+
+    $(".transection-data-table").DataTable({
+        ordering: false,
+        info: false,
+        searching: false,
+        bLengthChange: false,
+        serverSide: true,
+        ajax: config.routes.transection_datatable_route,
+        columns: [
+            { data: "approval_code", name: "approval_code" },
+            { data: "created_at", name: "created_at" },
+            { data: "insurance", name: "insurance" },
+            { data: "amount_paid", name: "amount_paid" },
+            { data: "risk_details", name: "risk_details" },
+            { data: "created_by", name: "created_by" },
+            { data: "handler", name: "handler" },
+            { data: "payment_mode", name: "payment_mode" },
+            { data: "updated_at", name: "updated_at" },
+            {
+                data: "action",
+                name: "action",
+                orderable: false,
+                searchable: false,
+            },
+        ],
+    });
+
     $(".reason-data-table").DataTable({
         ordering: false,
         info: false,

@@ -129,6 +129,7 @@
                 reason_datatable_route:"{{ route('reason.index') }}",
                 status_datatable_route:"{{ route('status.index') }}",
                 paymentmode_datatable_route:"{{ route('paymentmode.index') }}",
+                transection_datatable_route:"{{ route('transection.index') }}",
             },
             _token:"{{ csrf_token() }}",
             image_path:"{{ \Config::get('constants.azure_storage_url').'myrewards/' }}"

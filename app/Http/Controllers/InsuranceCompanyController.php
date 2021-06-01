@@ -48,6 +48,7 @@ class InsuranceCompanyController extends Controller
             return Datatables::of($data)
                 ->addIndexColumn()
                 ->addColumn('action', function ($row) {
+
                     return view('Insurancecompany.actions', compact('row'))->render();
                 })
                 ->rawColumns(['action'])
@@ -159,6 +160,4 @@ class InsuranceCompanyController extends Controller
 
         $insurancecompany->delete();
         return redirect()->route('Insurancecompany.index')
-            ->with('success', 'Insurance Company deleted successfully');
-    }
-}
+turn redirect()->route('insurancecompany.index')
