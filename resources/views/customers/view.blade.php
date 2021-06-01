@@ -2,39 +2,45 @@
 @section('title','View Customer')
 @section('content')
 <div class="row">
-    <div class="col-md-12 col-sm-12 admin-view">
-        <div class="x_panel">
-            <div class="x_title">
-                <h2>Search Customers</h2>
-                <div class="clearfix"></div>
-            </div>
-            <div class="x_content">
-            <form method="POST" id="search-customer" class="form-horizontal form-label-left"  role="form"  data-parsley-validate=""novalidate="">
-                <div class="item form-group">
-                    <label class="col-form-label col-md-2 col-sm-2 " for="first-name">Search By
-                    </label>
-                    <div class="col-md-9 col-sm-9 ">
-                        <p>
-                        <input type="radio" checked class="flat" name="searchtype"  value="email"   /> Email
-                        </p>
-                    </div>
-                </div>
-
-                <div class="item form-group">
-                    <label class="col-form-label col-md-2 col-sm-2 " for="first-name">Search Value
-                    </label>
-                    <div class="col-md-6 col-sm-6 ">
-                        <div class="input-group">
-                            <input type="text" class="form-control" name="searchfield" id="searchfield" placeholder="search ..">
-                            <span class="input-group-btn">
-                                <button type="submit" class="btn btn-warning">Search</button>
-                            </span>
-                        </div>
-                    </div>
-                </div>
-            </form>
-            </div>
+    <div class="x_panel">
+        <div class="x_title">
+            <h2>Search Customers</h2>
+            <div class="clearfix"></div>
         </div>
+        <div class="x_content">
+        <form method="POST" id="search-customer" class="form-horizontal form-label-left"  role="form"  data-parsley-validate=""novalidate="">
+            <div class="item form-group">
+                <label class="col-form-label col-md-2 col-sm-2 " for="searchtype">Search By
+                </label>
+                <div class="col-md-6 col-sm-6 ">
+                    <select class="form-control" name="searchtype" id="search_type">
+                        <option value="email">Email</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="item form-group">
+                <label class="col-form-label col-md-2 col-sm-2 " for="searchfield">Search Value
+                </label>
+                <div class="col-md-6 col-sm-6 ">
+                    <div class="input-group">
+                        <input type="text" class="form-control" name="searchfield" id="searchfield" placeholder="search ..">
+                    </div>
+                </div>
+            </div>
+            <div class="item form-group">
+                <label class="col-form-label col-md-2 col-sm-2 " for="first-name">
+                </label>
+                <div class="col-md-6 col-sm-6 ">
+                    <div class="input-group">
+                        <button type="submit" class="btn btn-warning">Search</button>
+                    </div>
+                </div>
+            </div>
+
+        </form>
+        </div>
+    </div>
         <div class="x_panel">
             <div class="x_title">
                 <h2>Customers</h2>

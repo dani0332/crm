@@ -397,8 +397,8 @@ $(document).ready(function () {
         ajax: {
             url: config.routes.customer_data_table_route,
             data: function (d) {
-                d.searchtype = $("input[name=searchtype]:checked").val();
-                d.searchfield = $("input[name=searchfield]").val();
+                d.searchtype = $("#search_type").val();
+                d.searchfield = $("#searchfield").val();
             },
         },
         columns: [
@@ -422,8 +422,8 @@ $(document).ready(function () {
         ],
     });
     $("#search-customer").submit(function (e) {
-        customerDataTable.draw();
         e.preventDefault();
+        customerDataTable.draw();
     });
     //select/unselect all checkboxes if this selected
     $("#select_all_checkboxes").click(function (e) {

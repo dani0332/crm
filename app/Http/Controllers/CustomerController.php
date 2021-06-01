@@ -32,9 +32,10 @@ class CustomerController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $data = Customer::select('*');
+            $data =[];
             if (isset($request->searchtype) && !empty($request->searchtype)
             && isset($request->searchfield) && !empty($request->searchfield)) {
+                $data = Customer::select('*');
                 $data->where($request->searchtype, $request->searchfield);
             }
 
