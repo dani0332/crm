@@ -48,7 +48,6 @@ class InsuranceCompanyController extends Controller
             return Datatables::of($data)
                 ->addIndexColumn()
                 ->addColumn('action', function ($row) {
-
                     return view('Insurancecompany.actions', compact('row'))->render();
                 })
                 ->rawColumns(['action'])
