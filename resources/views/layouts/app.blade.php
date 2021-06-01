@@ -124,6 +124,11 @@
                 customer_data_table_route:"{{ route('customer.index') }}",
                 load_auditable:"{{ url('auditable') }}",
                 load_dashboard_stats:"{{ url('dashboard-stats') }}",
+                insurancecompany_datatable_route:"{{ route('insurancecompany.index') }}",
+                handler_datatable_route:"{{ route('handler.index') }}",
+                reason_datatable_route:"{{ route('reason.index') }}",
+                status_datatable_route:"{{ route('status.index') }}",
+                paymentmode_datatable_route:"{{ route('paymentmode.index') }}",
             },
             _token:"{{ csrf_token() }}",
             image_path:"{{ \Config::get('constants.azure_storage_url').'myrewards/' }}"

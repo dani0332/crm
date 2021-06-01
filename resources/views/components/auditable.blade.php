@@ -2,9 +2,9 @@
         <div class="col-md-12 col-sm-12 ">
             <div class="x_panel">
                 <div class="x_title">
-                    <h2>Audits</h2>
+                    <h2>Audit Logs</h2>
                     <div class="clearfix"></div>
-                    
+
                 </div>
                 <div class="x_content">
                     <br />
@@ -21,10 +21,10 @@
                               <th>Created_at</th>
                             </tr>
                           </thead>
-    
-    
+
+
                           <tbody>
-                            
+
                             @foreach($audits as $key => $audit)
                             <tr>
                               <td>{{ $audit->id }}</td>
@@ -36,7 +36,7 @@
                               <td>{{ $audit->created_at }}</td>
                             </tr>
                             @endforeach
-                            
+
                           </tbody>
                         </table>
                     </div>

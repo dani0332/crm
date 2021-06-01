@@ -1,13 +1,13 @@
 @extends('layouts.app')
-@section('title','Add Partner')
+@section('title','Add Insurance Company')
 @section('content')
 <div class="row">
-    <div class="col-md-12 col-sm-12 admin-add">
+    <div class="col-md-12 col-sm-12 ">
         <div class="x_panel">
             <div class="x_title">
-                <h2>Create Partner</h2>
+                <h2>Create Insurance Company</h2>
                 <ul class="nav navbar-right panel_toolbox">
-                    <li><a href="{{ route('partner.index') }}" class="btn btn-warning btn-sm">Partner List</a></li>
+                    <li><a href="{{ route('insurancecompany.index') }}" class="btn btn-warning btn-sm">Insurance Company List</a></li>
                 </ul>
                 <div class="clearfix"></div>
             </div>
@@ -18,37 +18,15 @@
                         {{ session()->get('success') }}
                     </div>
                 @endif
-                <form id="demo-form2" method='post' action="{{ url('rewards/partner') }}" enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left">
+                <form id="demo-form2" method='post' action="{{ route('insurancecompany.store') }}" enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left">
                 {{csrf_field()}}
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="name">Name En <span class="required">*</span>
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="name">Name <span class="required">*</span>
                         </label>
                         <div class="col-md-6 col-sm-6 ">
                             <input type="text" id="name" name="name" value="{{ old('name') }}"  class="form-control ">
                             @if ($errors->has('name'))
                                 <span class="text-danger">{{ $errors->first('name') }}</span>
-                            @endif
-                        </div>
-
-                    </div>
-                    <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="name_ar">Name Ar <span class="required">*</span>
-                        </label>
-                        <div class="col-md-6 col-sm-6 ">
-                            <input type="text" id="name_ar" name="name_ar" value="{{ old('name_ar') }}"  class="form-control">
-                            @if ($errors->has('name_ar'))
-                                <span class="text-danger">{{ $errors->first('name_ar') }}</span>
-                            @endif
-                        </div>
-
-                    </div>
-                    <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="logo_image">Logo Image <span class="required">*</span>
-                        </label>
-                        <div class="col-md-6 col-sm-6 ">
-                            <input type="file" id="logo_image"  name="logo_image" /> <br/>
-                            @if ($errors->has('logo_image'))
-                                <span class="text-danger">{{ $errors->first('logo_image') }}</span>
                             @endif
                         </div>
 
@@ -70,6 +48,7 @@
                           <button type="submit" class="btn btn-warning">Create & Add New</button> <button type="submit" class="btn btn-warning" id="return_to_view" >Cretae</button>
                         </div>
                     </div>
+
 
                 </form>
             </div>
