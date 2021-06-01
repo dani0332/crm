@@ -282,6 +282,139 @@ $(document).ready(function(){
         ]
     });
 
+    $('.claim-data-table').DataTable({
+        ordering: false,
+        info:     false,
+        searching:false,
+        bLengthChange: false,
+        serverSide: true,
+        ajax: config.routes.claim_datatable_route,
+        columns: [
+            {data: 'id', name: 'id'},
+            {data: 'policy_number', name: 'policy_number'},
+            {data: 'first_name', name: 'first_name'},
+            {data: 'last_name', name: 'last_name'},
+            {data: 'email_address', name: 'email_address'},
+            {data: 'phone_number', name: 'phone_number'},
+            {data: 'created_at', name: 'created_at'},
+            {data: 'action', name: 'action', orderable: false, searchable: false},
+        ]
+    });
+
+    $('.typeofinsurance-data-table').DataTable({
+        ordering: false,
+        info:     false,
+        searching:false,
+        bLengthChange: false,
+        serverSide: true,
+        ajax: config.routes.typeofinsurance_datatable_route,
+        columns: [
+            {data: 'id', name: 'id'},
+            {data: 'text', name: 'text'},
+            {data: 'text_ar', name: 'text_ar'},
+            {data: 'is_active', name: 'is_active'},
+            {data: 'sort_order', name: 'sort_order'},
+            {data: 'created_at', name: 'created_at'},
+            {data: 'updated_at', name: 'updated_at'},
+            {data: 'action', name: 'action', orderable: false, searchable: false},
+        ]
+    });
+
+    $('.subtypeofinsurance-data-table').DataTable({
+        ordering: false,
+        info:     false,
+        searching:false,
+        bLengthChange: false,
+        serverSide: true,
+        ajax: config.routes.subtypeofinsurance_datatable_route,
+        columns: [
+            {data: 'id', name: 'id'},
+            {data: 'text', name: 'text'},
+            {data: 'text_ar', name: 'text_ar'},
+            {data: 'is_active', name: 'is_active'},
+            {data: 'sort_order', name: 'sort_order'},
+            {data: 'created_at', name: 'created_at'},
+            {data: 'updated_at', name: 'updated_at'},
+            {data: 'action', name: 'action', orderable: false, searchable: false},
+        ]
+    });
+
+    $('.claimsstatus-data-table').DataTable({
+        ordering: false,
+        info:     false,
+        searching:false,
+        bLengthChange: false,
+        serverSide: true,
+        ajax: config.routes.claimsstatus_datatable_route,
+        columns: [
+            {data: 'id', name: 'id'},
+            {data: 'text', name: 'text'},
+            {data: 'text_ar', name: 'text_ar'},
+            {data: 'is_active', name: 'is_active'},
+            {data: 'sort_order', name: 'sort_order'},
+            {data: 'created_at', name: 'created_at'},
+            {data: 'updated_at', name: 'updated_at'},
+            {data: 'action', name: 'action', orderable: false, searchable: false},
+        ]
+    });
+
+    $('.carrepaircoverage-data-table').DataTable({
+        ordering: false,
+        info:     false,
+        searching:false,
+        bLengthChange: false,
+        serverSide: true,
+        ajax: config.routes.carrepaircoverage_datatable_route,
+        columns: [
+            {data: 'id', name: 'id'},
+            {data: 'text', name: 'text'},
+            {data: 'text_ar', name: 'text_ar'},
+            {data: 'is_active', name: 'is_active'},
+            {data: 'sort_order', name: 'sort_order'},
+            {data: 'created_at', name: 'created_at'},
+            {data: 'updated_at', name: 'updated_at'},
+            {data: 'action', name: 'action', orderable: false, searchable: false},
+        ]
+    });
+
+    $('.carrepairtype-data-table').DataTable({
+        ordering: false,
+        info:     false,
+        searching:false,
+        bLengthChange: false,
+        serverSide: true,
+        ajax: config.routes.carrepairtype_datatable_route,
+        columns: [
+            {data: 'id', name: 'id'},
+            {data: 'text', name: 'text'},
+            {data: 'text_ar', name: 'text_ar'},
+            {data: 'is_active', name: 'is_active'},
+            {data: 'sort_order', name: 'sort_order'},
+            {data: 'created_at', name: 'created_at'},
+            {data: 'updated_at', name: 'updated_at'},
+            {data: 'action', name: 'action', orderable: false, searchable: false},
+        ]
+    });
+
+    $('.rentacar-data-table').DataTable({
+        ordering: false,
+        info:     false,
+        searching:false,
+        bLengthChange: false,
+        serverSide: true,
+        ajax: config.routes.rentacar_datatable_route,
+        columns: [
+            {data: 'id', name: 'id'},
+            {data: 'text', name: 'text'},
+            {data: 'text_ar', name: 'text_ar'},
+            {data: 'is_active', name: 'is_active'},
+            {data: 'sort_order', name: 'sort_order'},
+            {data: 'created_at', name: 'created_at'},
+            {data: 'updated_at', name: 'updated_at'},
+            {data: 'action', name: 'action', orderable: false, searchable: false},
+        ]
+    });
+
     //select/unselect all checkboxes if this selected
     $('#select_all_checkboxes').click(function(e){
         var isChecked = e.target.checked;
