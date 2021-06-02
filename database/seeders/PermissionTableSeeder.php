@@ -242,21 +242,21 @@ class PermissionTableSeeder extends Seeder
         ]);
 
 
-        //Transection
+        //Transaction
         \DB::table('permissions')->insertGetId([
-            'name'=>'transection-list',
+            'name'=>'transaction-list',
             'guard_name'=>'web',
         ]);
         \DB::table('permissions')->insertGetId([
-            'name'=>'transection-create',
+            'name'=>'transaction-create',
             'guard_name'=>'web',
         ]);
         \DB::table('permissions')->insertGetId([
-            'name'=>'transection-edit',
+            'name'=>'transaction-edit',
             'guard_name'=>'web',
         ]);
         \DB::table('permissions')->insertGetId([
-            'name'=>'transection-delete',
+            'name'=>'transaction-delete',
             'guard_name'=>'web',
         ]);
     }

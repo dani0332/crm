@@ -27,7 +27,7 @@
         </p>
         <form method="POST" action="{{ route('login') }}">
             @csrf
-            <a href="{{ url('auth/google') }}"  class="btn btn-primary btn-block">
+            <a href="{{ url('auth/google') }}"  class="btn btn-block" style="background: #4183bd;color:fff;">
                 <strong>Google Login</strong>
             </a>
         </form>

@@ -36,11 +36,25 @@
 
     <!-- iCheck -->
 	  <link href="{{ asset('vendors/iCheck/skins/flat/green.css') }}" rel="stylesheet">
-
-
+      <style>
+          .loader{
+                position: fixed;
+                left: 0px;
+                top: 0px;
+                width: 100%;
+                height: 100%;
+                z-index: 9999;
+                opacity: 0.7;
+                background: url('//upload.wikimedia.org/wikipedia/commons/thumb/e/e5/Phi_fenomeni.gif/50px-Phi_fenomeni.gif')
+                            50% 50% no-repeat rgb(249,249,249);
+                display: none;
+            }
+      </style>
   </head>
 
     <body class="nav-md">
+    <div class="loader">
+    </div>
     <div class="container body">
       <div class="main_container">
             @include('partials.sidebar')
@@ -129,7 +143,7 @@
                 reason_datatable_route:"{{ route('reason.index') }}",
                 status_datatable_route:"{{ route('status.index') }}",
                 paymentmode_datatable_route:"{{ route('paymentmode.index') }}",
-                transection_datatable_route:"{{ route('transection.index') }}",
+                transaction_datatable_route:"{{ route('transaction.index') }}",
             },
             _token:"{{ csrf_token() }}",
             image_path:"{{ \Config::get('constants.azure_storage_url').'myrewards/' }}"

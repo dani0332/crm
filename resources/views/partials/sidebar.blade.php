@@ -70,8 +70,8 @@
                     <li><a href="{{ route('paymentmode.index') }}">Payment Mode</a></li>
                 @endcan
 
-                @can('transection-list')
-                    <li><a href="{{ route('transection.index') }}">Transection</a></li>
+                @can('transaction-list')
+                    <li><a href="{{ route('transaction.index') }}">Transaction</a></li>
                 @endcan
             </ul>
             </li>
