@@ -35,6 +35,11 @@ return [
     */
 
     'channels' => [
+        'customlog' => [
+            'driver' => 'single',
+            'path' => storage_path('logs/ma_crm_log.txt'),
+            'level' => 'info',
+        ],
         'stack' => [
             'driver' => 'stack',
             'channels' => ['single'],

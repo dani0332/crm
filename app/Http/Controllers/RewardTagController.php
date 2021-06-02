@@ -1,0 +1,131 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\RewardTag;
+use DataTables;
+use Illuminate\Http\Request;
+
+class RewardTagController extends Controller
+{
+    public function __construct()
+    {
+
+        $this->middleware('permission:reward-tags-list|reward-tags-create|reward-tags-edit|reward-tags-delete', ['only' => ['index', 'store']]);
+
+        $this->middleware('permission:reward-tags-create', ['only' => ['create', 'store']]);
+
+        $this->middleware('permission:reward-tags-edit', ['only' => ['edit', 'update']]);
+
+        $this->middleware('permission:reward-tags-delete', ['only' => ['destroy']]);
+    }
+    /**
+     * Display a listing of the resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function index(Request $request)
+    {
+        if ($request->ajax()) {
+            $data = RewardTag::select('*');
+            return DataTables::of($data)
+                ->addIndexColumn()
+                ->addColumn('action', function ($row) {
+                    return view('rewardTag.actions', compact('row'))->render();
+                })
+                ->rawColumns(['action'])
+                ->make(true);
+        }
+
+        return view('rewardTag.view');
+    }
+    /**
+     * Show the form for creating a new resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function create()
+    {
+        return view('rewardtag.add');
+    }
+    /**
+     * Store a newly created resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function store(Request $request)
+    {
+        $this->validate($request, [
+            'text' => 'required|max:120',
+            'text_ar' => 'required|max:120',
+        ]);
+
+        $rewardTag = new RewardTag();
+        $rewardTag->text = $request->text;
+        $rewardTag->text_ar = $request->text_ar;
+        $rewardTag->is_active = $request->is_active == 'on' ? 1 : 0;
+        $rewardTag->sort_order = $request->sort_order;
+        $rewardTag->save();
+        if(isset($request->return_to_view))
+            return redirect("rewards/reward-tags");
+        return back()
+            ->with('success', 'Reward Tag has been stored');
+    }
+    /**
+     * Display the specified resource.
+     *
+     * @param  \App\Rewardtag  $rewardTag
+     * @return \Illuminate\Http\Response
+     */
+    public function show(RewardTag $rewardTag)
+    {
+        return view('rewardtag.show', compact('rewardTag'));
+    }
+    /**
+     * Show the form for editing the specified resource.
+     *
+     * @param  \App\RewardTag  $rewardTag
+     * @return \Illuminate\Http\Response
+     */
+    public function edit(RewardTag $rewardTag)
+    {
+        return view('rewardtag.edit', compact('rewardTag'));
+    }
+    /**
+     * Update the specified resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \App\RewardTag  $rewardTag
+     * @return \Illuminate\Http\Response
+     */
+    public function update(Request $request, Rewardtag $rewardTag)
+    {
+
+        $this->validate($request, [
+            'text' => 'required|max:120',
+            'text_ar' => 'required|max:120',
+        ]);
+        $rewardTag->text = $request->text;
+        $rewardTag->text_ar = $request->text_ar;
+        $rewardTag->is_active = $request->is_active == 'on' ? 1 : 0;
+        $rewardTag->sort_order = $request->sort_order;
+        $rewardTag->save();
+        if(isset($request->return_to_view))
+            return redirect("rewards/reward-tags");
+        return back()
+            ->with('success', 'Reward Tag has been Updated');
+    }
+    /**
+     * Remove the specified resource from storage.
+     *
+     * @param  \App\Rewardtag  $rewardTag
+     * @return \Illuminate\Http\Response
+     */
+    public function destroy(RewardTag $rewardTag)
+    {
+        $rewardTag->delete();
+        return back()
+            ->with('success', 'reward Tag has been Deleted');
+    }
+}
