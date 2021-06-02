@@ -1,13 +1,13 @@
 @extends('layouts.app')
-@section('title','Add Transection')
+@section('title','Add Transaction')
 @section('content')
 <div class="row">
     <div class="col-md-12 col-sm-12 ">
         <div class="x_panel">
             <div class="x_title">
-                <h2>Create Transection</h2>
+                <h2>Create Transaction</h2>
                 <ul class="nav navbar-right panel_toolbox">
-                    <li><a href="{{ route('transection.index') }}" class="btn btn-warning btn-sm">Transection List</a></li>
+                    <li><a href="{{ route('transaction.index') }}" class="btn btn-warning btn-sm">Transaction List</a></li>
                 </ul>
                 <div class="clearfix"></div>
             </div>
@@ -18,7 +18,7 @@
                         {{ session()->get('success') }}
                     </div>
                 @endif
-                <form id="demo-form2" method='post' action="{{ route('transection.store') }}" enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left">
+                <form id="demo-form2" method='post' action="{{ route('transaction.store') }}" enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left">
                 {{csrf_field()}}
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="insurance_company">Insurance Company <span class="required">*</span>

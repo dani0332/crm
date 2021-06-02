@@ -17,15 +17,13 @@
           <div class="x_content">
             <x-dashboard-tile
             icon="fa fa-comments-user"
-            :data="$customers"
             class='customer'
             title='Customers' />
 
             <x-dashboard-tile
             icon="fa fa-comments-o"
-            :data="$carQuotes"
             class='carquote'
-            title='CarQuotes' />
+            title='Car Quotes' />
 
           </div>
         </div>

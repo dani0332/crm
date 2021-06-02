@@ -1,7 +1,6 @@
 $(document).ready(function () {
     $("#datepicker").datepicker({ dateFormat: "yy-mm-dd" });
     $("#datepicker_2").datepicker({ dateFormat: "yy-mm-dd" });
-
     $("#editor1").markdownEditor({
         preview: true,
         fullscreen: false,
@@ -257,13 +256,13 @@ $(document).ready(function () {
         ],
     });
 
-    $(".transection-data-table").DataTable({
+    $(".transaction-data-table").DataTable({
         ordering: false,
         info: false,
         searching: false,
         bLengthChange: false,
         serverSide: true,
-        ajax: config.routes.transection_datatable_route,
+        ajax: config.routes.transaction_datatable_route,
         columns: [
             { data: "approval_code", name: "approval_code" },
             { data: "created_at", name: "created_at" },
@@ -359,10 +358,15 @@ $(document).ready(function () {
 
     $("#search-car-quote").submit(function (e) {
         e.preventDefault();
+        $('.loader').show();
         carquoteDatatable.draw();
+        setTimeout(() => {
+            $('.loader').hide();
+        }, 1000);
     });
 
     $("#resubmit_api_carquote").click(function () {
+        $('.loader').show();
         $("#resubmit_api_carquote").attr("disabled", true);
         var data_id = $(this).attr("data-id");
         var carQuotes = [];
@@ -379,6 +383,7 @@ $(document).ready(function () {
                 type: "post",
                 data: { car_quotes: carQuotes, _token: config._token },
                 success: function (response) {
+                    $('.loader').hide();
                     $("#success_message").show();
                     $("#success_message")
                         .fadeIn()
@@ -392,6 +397,7 @@ $(document).ready(function () {
                     }, 3000);
                 },
                 error: function (jqXHR, textStatus, errorThrown) {
+                    $('.loader').hide();
                     console.log(textStatus, errorThrown);
                     $("#error_message").show();
                     $("#error_message").fadeIn().html(errorThrown);
@@ -402,6 +408,7 @@ $(document).ready(function () {
                 },
             });
         } else {
+            $('.loader').hide();
             $("#error_message").show();
             $("#error_message").fadeIn().html("Please select atleast one row");
             setTimeout(function () {
@@ -470,9 +477,14 @@ $(document).ready(function () {
             },
         ],
     });
+
     $("#search-customer").submit(function (e) {
         e.preventDefault();
+        $('.loader').show();
         customerDataTable.draw();
+        setTimeout(() => {
+            $('.loader').hide();
+        }, 1000);
     });
     //select/unselect all checkboxes if this selected
     $("#select_all_checkboxes").click(function (e) {
@@ -505,33 +517,17 @@ $(document).ready(function () {
         });
     });
 
-    $(".applyBtn").click(function () {
-        dateRangePickerChange();
-    });
-
-    $(".ranges li").click(function () {
-        dateRangePickerChange();
-    });
-
-    function dateRangePickerChange() {
+    dateRangePickerChange('','');
+    $(".applyBtn, .ranges li").click(function () {
+        $('.loader').show();
         setTimeout(() => {
             var date = $("#reportrange span").html();
             var dateAsArray = date.split("-");
             var startDate = moment(dateAsArray[0]).format("YYYY-MM-DD");
             var endDate = moment(dateAsArray[1]).format("YYYY-MM-DD");
-            $.ajax({
-                url: config.routes.load_dashboard_stats,
-                method: "POST",
-                data: { startDate, endDate, _token: config._token },
-                success: function (data) {
-                    console.log("request " + data);
-                    $(".customer-count").html(data.totalCustomers);
-                    $(".carquote-count").html(data.totalCarQuotes);
-                    $(".duration").html(startDate + " - " + endDate);
-                },
-            });
+            dateRangePickerChange(startDate,endDate)
         }, 1000);
-    }
+    });
 
     $("#return_to_view").click(function (e) {
         e.preventDefault();
@@ -542,3 +538,21 @@ $(document).ready(function () {
         }, 500);
     });
 });
+
+
+function dateRangePickerChange(startDate,endDate) {
+
+
+        $.ajax({
+            url: config.routes.load_dashboard_stats,
+            method: "POST",
+            data: { startDate, endDate, _token: config._token },
+            success: function (data) {
+                console.log("request " + data);
+                $(".customer-count").html(data.totalCustomers);
+                $(".carquote-count").html(data.totalCarQuotes);
+                $(".duration").html(startDate + " - " + endDate);
+                $('.loader').hide();
+            },
+        });
+}

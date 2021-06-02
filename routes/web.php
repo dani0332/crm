@@ -17,7 +17,7 @@ use App\Http\Controllers\HandlerController;
 use App\Http\Controllers\ReasonController;
 use App\Http\Controllers\StatusController;
 use App\Http\Controllers\PaymentModeController;
-use App\Http\Controllers\TransectionController;
+use App\Http\Controllers\TransactionController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -68,7 +68,7 @@ Route::group(['prefix' => 'transapp'], function () {
     Route::resource('reason',ReasonController::class);
     Route::resource('status',StatusController::class);
     Route::resource('paymentmode',PaymentModeController::class);
-    Route::resource('transection',TransectionController::class);
+    Route::resource('transaction',TransactionController::class);
 });
 
 Route::resource('customer', CustomerController::class);

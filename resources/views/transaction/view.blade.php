@@ -1,14 +1,14 @@
 @extends('layouts.app')
-@section('title','View Transection')
+@section('title','View Transaction')
 @section('content')
 <div class="row">
     <div class="col-md-12 col-sm-12 ">
         <div class="x_panel">
             <div class="x_title">
-                <h2>Transection</h2>
+                <h2>Transaction</h2>
                 @can('role-create')
                 <ul class="nav navbar-right panel_toolbox">
-                    <li><a href="{{ route('transection.create') }}" class="btn btn-warning btn-sm">Create Transection</a></li>
+                    <li><a href="{{ route('transaction.create') }}" class="btn btn-warning btn-sm">Create Transaction</a></li>
                 </ul>
                 @endcan
 
@@ -18,11 +18,11 @@
             <div class="x_content">
                 <br />
                 <div class="table-responsive">
-                <table  class="table table-striped jambo_table transection-data-table" style="width:100%">
+                <table  class="table table-striped jambo_table transaction-data-table" style="width:100%">
                       <thead>
                         <tr>
                           <th>Approval Code</th>
-                          <th>Transection Date</th>
+                          <th>Transaction Date</th>
                           <th>Insurance Company</th>
                           <th>Premium</th>
                           <th>Risk</th>
