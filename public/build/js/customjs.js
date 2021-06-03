@@ -415,6 +415,28 @@ $(document).ready(function(){
         ]
     });
 
+    $('#car_make_id').on('change',function(e) {
+        var cat_id = $("#car_make_id option:selected").attr('data-id');
+        $.get('/car-model?cat_id='+ cat_id,function(data) {
+            var subcat = $('#car_model_id').empty();
+            $.each(data,function(create,subcatObj) {
+                var option = $('<option/>', {id:create, value:subcatObj});
+                subcat.append('<option data-id="'+subcatObj.code+'" value="'+subcatObj.id+'">'+subcatObj.text+'</option>');
+            });
+        });
+    });
+
+    // $('#car_make_id').on('change',function(e) {
+    //     var cat_id = $("#car_make_id option:selected").attr('data-id');
+    //     $.get('/ajax-subcat?cat_id='+ cat_id,function(data) {
+    //         var subcat = $('#car_model_id').empty();
+    //         $.each(data,function(create,subcatObj) {
+    //             var option = $('<option/>', {id:create, value:subcatObj});
+    //             subcat.append('<option data-id="'+subcatObj.code+'" value="'+subcatObj.id+'">'+subcatObj.text+'</option>');
+    //         });
+    //     });
+    // });
+
     //select/unselect all checkboxes if this selected
     $('#select_all_checkboxes').click(function(e){
         var isChecked = e.target.checked;

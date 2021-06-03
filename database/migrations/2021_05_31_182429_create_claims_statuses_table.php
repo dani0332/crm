@@ -15,11 +15,11 @@ class CreateClaimsStatusesTable extends Migration
     {
         Schema::create('claims_statuses', function (Blueprint $table) {
             $table->id();
-            $table->string('text');
-            $table->string('text_ar');
-            $table->tinyInteger('is_active')->default('1');
-            $table->integer('sort_order');
-            $table->tinyInteger('is_deleted')->default('0');
+            $table->string('text','255');
+            $table->string('text_ar','255');
+            $table->tinyInteger('is_active','4')->default('1');
+            $table->integer('sort_order','11');
+            $table->tinyInteger('is_deleted','4')->default('0');
             $table->timestamps();
         });
     }

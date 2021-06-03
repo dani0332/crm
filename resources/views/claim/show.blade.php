@@ -36,40 +36,80 @@
                         <td>{{ $claim->insurance_company }}</td>
                     </tr>
                     <tr>
-                        <td>Insurance Type</td>
-                        <td>{{ $claim->insurance_type }}</td>
-                    </tr>
-                    <tr>
                         <td>Policy Number</td>
                         <td>{{ $claim->policy_number }}</td>
                     </tr>
                     <tr>
-                        <td>Basic Details</td>
-                        <td>{{ $claim->basic_details }}</td>
+                        <td>Additional Notes</td>
+                        <td>{{ $claim->additional_notes }}</td>
                     </tr>
                     <tr>
-                        <td>Attachment 1</td>
-                        <td>{{ $claim->attachment_1 }}</td>
+                        <td>Type of Insurance</td>
+                        <td>{{ $claim->typeofinsurance->text }}</td>
                     </tr>
                     <tr>
-                        <td>Attachment 2</td>
-                        <td>{{ $claim->attachment_2 }}</td>
+                        <td>Sub Type of Insurance</td>
+                        <td>{{ $claim->SSSSSSS }}</td>
                     </tr>
                     <tr>
-                        <td>Attachment 3</td>
-                        <td>{{ $claim->attachment_3}}</td>
+                        <td>Car Make</td>
+                        <td>{{ $claim->SSSSSSS }}</td>
                     </tr>
                     <tr>
-                        <td>Attachment 4</td>
-                        <td>{{ $claim->attachment_4 }}</td>
+                        <td>Car Model</td>
+                        <td>{{ $claim->SSSSSSS }}</td>
                     </tr>
                     <tr>
-                        <td>Advisor Name</td>
-                        <td>{{ $claim->advisor_name }}</td>
+                        <td>Claim Status</td>
+                        <td>{{ $claim->SSSSSSS }}</td>
+                    </tr>
+                    <tr>
+                        <td>Car Repair Coverage</td>
+                        <td>{{ $claim->SSSSSSS }}</td>
+                    </tr>
+                    <tr>
+                        <td>Car Repair Type</td>
+                        <td>{{ $claim->SSSSSSS }}</td>
+                    </tr>
+                    <tr>
+                        <td>Rent a car</td>
+                        <td>{{ $claim->SSSSSSS }}</td>
+                    </tr>
+                    <tr>
+                        <td>Assigned To</td>
+                        <td>{{ $claim->SSSSSSS }}</td>
                     </tr>
                     <tr>
                         <td>Ticket Number</td>
                         <td>{{ $claim->ticket_number }}</td>
+                    </tr>
+                    <tr>
+                        <td>Plate Number</td>
+                        <td>{{ $claim->plate_number }}</td>
+                    </tr>
+                    <tr>
+                        <td>Standard Excess payable</td>
+                        <td>{{ $claim->standard_excess_payable }}</td>
+                    </tr>
+                    <tr>
+                        <td>Liability</td>
+                        <td>{{ $claim->liability }}</td>
+                    </tr>
+                    <tr>
+                        <td>Workshop</td>
+                        <td>{{ $claim->workshop }}</td>
+                    </tr>
+                    <tr>
+                        <td>Insurer Reference</td>
+                        <td>{{ $claim->insurer_reference }}</td>
+                    </tr>
+                    <tr>
+                        <td>Date of loss</td>
+                        <td>{{ $claim->date_of_loss }}</td>
+                    </tr>
+                    <tr>
+                        <td>Claim Amount</td>
+                        <td>{{ $claim->claim_amount }}</td>
                     </tr>
                     <tr>
                         <td>Created At</td>
