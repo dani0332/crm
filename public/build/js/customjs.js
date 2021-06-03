@@ -1,4 +1,5 @@
 $(document).ready(function () {
+    $('.selectpicker').selectpicker();
     $("#datepicker").datepicker({ dateFormat: "yy-mm-dd" });
     $("#datepicker_2").datepicker({ dateFormat: "yy-mm-dd" });
     $("#editor1").markdownEditor({
@@ -262,23 +263,29 @@ $(document).ready(function () {
         searching: false,
         bLengthChange: false,
         serverSide: true,
+        responsive: true,
         ajax: config.routes.transaction_datatable_route,
         columns: [
             { data: "approval_code", name: "approval_code" },
             { data: "created_at", name: "created_at" },
             { data: "insurance", name: "insurance" },
             { data: "amount_paid", name: "amount_paid" },
+            { data: "customer_name", name: "customer_name" },
             { data: "risk_details", name: "risk_details" },
             { data: "created_by", name: "created_by" },
             { data: "handler", name: "handler" },
             { data: "payment_mode", name: "payment_mode" },
+            { data: "prev_approval_code", name: "prev_approval_code" },
+            { data: "prev_transaction_date", name: "prev_transaction_date" },
             { data: "updated_at", name: "updated_at" },
-            {
-                data: "action",
-                name: "action",
-                orderable: false,
-                searchable: false,
-            },
+            { data: "status", name: "status" },
+            { data: "comments", name: "comments" },
+            // {
+            //     data: "action",
+            //     name: "action",
+            //     orderable: false,
+            //     searchable: false,
+            // },
         ],
     });
 
@@ -537,22 +544,21 @@ $(document).ready(function () {
             $("form").submit();
         }, 500);
     });
+
 });
 
 
 function dateRangePickerChange(startDate,endDate) {
-
-
-        $.ajax({
-            url: config.routes.load_dashboard_stats,
-            method: "POST",
-            data: { startDate, endDate, _token: config._token },
-            success: function (data) {
-                console.log("request " + data);
-                $(".customer-count").html(data.totalCustomers);
-                $(".carquote-count").html(data.totalCarQuotes);
-                $(".duration").html(startDate + " - " + endDate);
-                $('.loader').hide();
-            },
-        });
+    $.ajax({
+        url: config.routes.load_dashboard_stats,
+        method: "POST",
+        data: { startDate, endDate, _token: config._token },
+        success: function (data) {
+            console.log("request " + data);
+            $(".customer-count").html(data.totalCustomers);
+            $(".carquote-count").html(data.totalCarQuotes);
+            $(".duration").html(startDate + " - " + endDate);
+            $('.loader').hide();
+        },
+    });
 }

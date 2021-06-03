@@ -52,26 +52,38 @@
         <ul class="nav side-menu">
             <li><a><i class="fa fa-desktop"></i> Trans App <span class="fa fa-chevron-down"></span></a>
             <ul class="nav child_menu">
-                {{-- <li><a href="{{ url('transapp/home') }}">Home</a></li> --}}
-                @can('insurance-company-list')
-                    <li><a href="{{ route('insurancecompany.index') }}">Insurance Company</a></li>
-                @endcan
-                @can('handler-list')
-                    <li><a href="{{ route('handler.index') }}">Handler</a></li>
-                @endcan
-                @can('reason-list')
-                    <li><a href="{{ route('reason.index') }}">Reason</a></li>
-                @endcan
-                @can('status-list')
-                    <li><a href="{{ route('status.index') }}">Status</a></li>
-                @endcan
-
-                @can('payment-mode-list')
-                    <li><a href="{{ route('paymentmode.index') }}">Payment Mode</a></li>
-                @endcan
-
                 @can('transaction-list')
-                    <li><a href="{{ route('transaction.index') }}">Transaction</a></li>
+                    <li><a href="{{ route('home') }}">Home</a></li>
+                @endcan
+                <li><a href="#">Admin <span class="fa fa-chevron-down"></span></a>
+                    <ul class="nav child_menu">
+                        @can('insurance-company-list')
+                            <li><a href="{{ route('insurancecompany.index') }}">Insurance Company</a></li>
+                        @endcan
+                        @can('handler-list')
+                            <li><a href="{{ route('handler.index') }}">Handler</a></li>
+                        @endcan
+                        @can('reason-list')
+                            <li><a href="{{ route('reason.index') }}">Reason</a></li>
+                        @endcan
+                        @can('status-list')
+                            <li><a href="{{ route('status.index') }}">Status</a></li>
+                        @endcan
+
+                        @can('payment-mode-list')
+                            <li><a href="{{ route('paymentmode.index') }}">Payment Mode</a></li>
+                        @endcan
+                    </ul>
+                </li>
+                @can('transaction-list')
+                    <li><a href="#">Transaction <span class="fa fa-chevron-down"></span></a>
+                        <ul class="nav child_menu">
+
+                            <li class="sub_menu"><a href="{{ route('transaction.create') }}">Create a Transaction </a></li>
+                            <li class="sub_menu"><a href="{{ route('reissue_view') }}">Cancel & Re-Issue Transaction </a></li>
+                            <li class="sub_menu"><a href="{{ route('cancel_view') }}">Cancel Transaction (without re-issue) </a></li>
+                        </ul>
+                    </li>
                 @endcan
             </ul>
             </li>
