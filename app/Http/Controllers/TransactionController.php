@@ -99,7 +99,6 @@ class TransactionController extends Controller
         ]);
 
         $transaction = new Transaction;
-        $transaction->approval_code = generate_code('T');
         $transaction->insurance_company_id = $request->insurance_company;
         $transaction->customer_name = $request->customer_name;
         $transaction->handler_id = $request->handler;
@@ -108,6 +107,9 @@ class TransactionController extends Controller
         $transaction->amount_paid = $request->amount_paid;
         $transaction->created_by = Auth::user()->email;
         $transaction->save();
+        if($transaction->save()){
+            Transaction::where('id',$transaction->id)->update(['approval_code'=>generate_code('T').$transaction->id]);
+        }
         if (isset($request->return_to_view)) {
             return redirect("transapp/transaction");
         }
@@ -278,7 +280,6 @@ class TransactionController extends Controller
         $previous_transaction->is_cancelled=true;
         $previous_transaction->save();
         $transaction = new Transaction;
-        $transaction->approval_code =$is_cancelled ? generate_code('C') : generate_code('CR');
         $transaction->insurance_company_id = $request->insurance_company;
         $transaction->customer_name = $request->customer_name;
         $transaction->handler_id = $request->handler;
@@ -292,7 +293,11 @@ class TransactionController extends Controller
         if($is_cancelled)
             $transaction->is_cancelled=true;
         $transaction->prev_transaction_date = $previous_transaction->created_at;
-        $transaction->save();
+        if($transaction->save())
+        {
+            $approval_code = $is_cancelled ? generate_code('C') : generate_code('CR');
+            Transaction::where('id',$transaction->id)->update(['approval_code'=>$approval_code.$transaction->id]);
+        }
 
         return redirect("transapp/transaction");
     }
