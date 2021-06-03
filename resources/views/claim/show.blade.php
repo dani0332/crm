@@ -2,144 +2,259 @@
 @section('title','Claim Detail')
 @section('content')
 <div class="row">
-    <div class="col-md-12 col-sm-12 ">
+    <div class="col-md-12 col-sm-12 admin-detail">
         <div class="x_panel">
             <div class="x_title">
                 <h2>Claim Detail</h2>
+                <ul class="nav navbar-right panel_toolbox">
+                    <li><a href="{{ route('claims.index') }}" class="btn btn-warning btn-sm">Claims List</a></li>
+                </ul>
                 <div class="clearfix"></div>
             </div>
             <div class="x_content">
                 <br />
-                <table class="table table-striped">
-                    <tr>
-                        <td>Id</td>
-                        <td>{{ $claim->id }}</td>
-                    </tr>
-                    <tr>
-                        <td>First Name</td>
-                        <td>{{ $claim->first_name }}</td>
-                    </tr>
-                    <tr>
-                        <td>Last Name</td>
-                        <td>{{ $claim->last_name }}</td>
-                    </tr>
-                    <tr>
-                        <td>Email Address</td>
-                        <td>{{ $claim->email_address }}</td>
-                    </tr>
-                    <tr>
-                        <td>Phone Number</td>
-                        <td>{{ $claim->phone_number }}</td>
-                    </tr>
-                    <tr>
-                        <td>Insurance Company</td>
-                        <td>{{ $claim->insurance_company }}</td>
-                    </tr>
-                    <tr>
-                        <td>Policy Number</td>
-                        <td>{{ $claim->policy_number }}</td>
-                    </tr>
-                    <tr>
-                        <td>Additional Notes</td>
-                        <td>{{ $claim->additional_notes }}</td>
-                    </tr>
-                    <tr>
-                        <td>Type of Insurance</td>
-                        <td>{{ $claim->typeofinsurance->text }}</td>
-                    </tr>
-                    <tr>
-                        <td>Sub Type of Insurance</td>
-                        <td>{{ $claim->subtypeofinsurance_id }}</td>
-                    </tr>
-                    <tr>
-                        <td>Car Make</td>
-                        <td>{{ $claim->carmake->text }}</td>
-                    </tr>
-                    <tr>
-                        <td>Car Model</td>
-                        <td>{{ $claim->carmodel->text }}</td>
-                    </tr>
-                    <tr>
-                        <td>Claim Status</td>
-                        <td>{{ $claim->claimsstatus->text }}</td>
-                    </tr>
-                    <tr>
-                        <td>Car Repair Coverage</td>
-                        <td>{{ $claim->carrepaircoverage->text }}</td>
-                    </tr>
-                    <tr>
-                        <td>Car Repair Type</td>
-                        <td>{{ $claim->carrepairtype->text }}</td>
-                    </tr>
-                    <tr>
-                        <td>Rent a car</td>
-                        <td>{{ $claim->rentacar->text }}</td>
-                    </tr>
-                    <tr>
-                        <td>Assigned To</td>
-                        <td>{{ $claim->assignedto->name }}</td>
-                    </tr>
-                    <tr>
-                        <td>Ticket Number</td>
-                        <td>{{ $claim->ticket_number }}</td>
-                    </tr>
-                    <tr>
-                        <td>Plate Number</td>
-                        <td>{{ $claim->plate_number }}</td>
-                    </tr>
-                    <tr>
-                        <td>Standard Excess payable</td>
-                        <td>{{ $claim->standard_excess_payable }}</td>
-                    </tr>
-                    <tr>
-                        <td>Liability</td>
-                        <td>{{ $claim->liability }}</td>
-                    </tr>
-                    <tr>
-                        <td>Workshop</td>
-                        <td>{{ $claim->workshop }}</td>
-                    </tr>
-                    <tr>
-                        <td>Insurer Reference</td>
-                        <td>{{ $claim->insurer_reference }}</td>
-                    </tr>
-                    <tr>
-                        <td>Date of loss</td>
-                        <td>{{ $claim->date_of_loss }}</td>
-                    </tr>
-                    <tr>
-                        <td>Claim Amount</td>
-                        <td>{{ $claim->claim_amount }}</td>
-                    </tr>
-                    <tr>
-                        <td>Created At</td>
-                        <td>{{ $claim->created_at }}</td>
-                    </tr>
-                    <tr>
-                        <td>Updated At</td>
-                        <td>{{ $claim->updated_at }}</td>
-                    </tr>
-                    <tr>
-                        @can('claim-edit')
-                        <td >
-                            <a href="{{ route('claims.edit', ['claim' => $claim->id]) }}" class='no-style-btn'><i class="fa fa-edit"></i> </a>
-                        </td>
-                        @endcan
-                        @can('claim-delete')
-                        <td >
-                            <form action="{{ route('claims.destroy', ['claim' => $claim->id]) }}" method="POST">  
-                                @csrf 
-                                @method('DELETE')
-                                <button type="submit" class="no-style-btn"><i class="fa fa-trash"></i></button>
-                            </form>
-                        </td>
-                        @endcan
-                    </tr>
-                </table >
-                    
-                </div>
+                @if(session()->has('success'))
+                    <div class="alert alert-success">
+                        {{ session()->get('success') }}
+                    </div>
+                @endif
+                <form id="demo-form2" method='post' action="{{ route('claims.update', ['claim' => $claim->id]) }}" enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left">
+                {{csrf_field()}}
+                @method('PUT')
+                    <div class="item form-group">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="firstname">
+                            <b> First Name </b>
+                        </label>
+                        <div class="col-md-6 col-sm-6 ">
+                            <p class="label-align-center">{{ $claim->first_name }}</p>
+                        </div>
+                    </div>
+                    <div class="item form-group">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="lastname">
+                            <b> Last Name </b>
+                        </label>
+                        <div class="col-md-6 col-sm-6 ">
+                            <p class="label-align-center">{{ $claim->last_name }}</p>
+                        </div>
+                    </div>
+                    <div class="item form-group">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="SSSSS">
+                            <b> Email Address </b>
+                        </label>
+                        <div class="col-md-6 col-sm-6 ">
+                            <p class="label-align-center">{{ $claim->email_address }}</p>
+                        </div>
+                    </div>
+                    <div class="item form-group">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="SSSSS">
+                            <b> Phone Number </b>
+                        </label>
+                        <div class="col-md-6 col-sm-6 ">
+                            <p class="label-align-center">{{ $claim->phone_number }}</p>
+                        </div>
+                    </div>
+                    <div class="item form-group">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="SSSSS">
+                            <b> Insurance Company </b>
+                        </label>
+                        <div class="col-md-6 col-sm-6 ">
+                            <p class="label-align-center">{{ $claim->insurance_company }}</p>
+                        </div>
+                    </div>
+                    <div class="item form-group">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="SSSSS">
+                            <b> Policy Number </b>
+                        </label>
+                        <div class="col-md-6 col-sm-6 ">
+                            <p class="label-align-center">{{ $claim->policy_number }}</p>
+                        </div>
+                    </div>
+                    <div class="item form-group">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="SSSSS">
+                            <b> Additional Notes </b>
+                        </label>
+                        <div class="col-md-6 col-sm-6 ">
+                            <p class="label-align-center">{{ $claim->additional_notes }}</p>
+                        </div>
+                    </div>
+                    <div class="item form-group">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="SSSSS">
+                            <b> Type of Insurance </b>
+                        </label>
+                        <div class="col-md-6 col-sm-6 ">
+                            <p class="label-align-center">{{ $claim->typeofinsurance ? $claim->typeofinsurance->text : '' }}</p>
+                        </div>
+                    </div>
+                    <div class="item form-group">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="SSSSS">
+                            <b> Sub Type of Insurance </b>
+                        </label>
+                        <div class="col-md-6 col-sm-6 ">
+                            <p class="label-align-center">{{ $claim->subtypeofinsurance ? $claim->subtypeofinsurance->text : '' }}</p>
+                        </div>
+                    </div>
+                    <div class="item form-group">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="SSSSS">
+                            <b> Car Make </b>
+                        </label>
+                        <div class="col-md-6 col-sm-6 ">
+                            <p class="label-align-center">{{ $claim->carmake ? $claim->carmake->text : '' }}</p>
+                        </div>
+                    </div>
+                    <div class="item form-group">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="SSSSS">
+                            <b> Car Model </b>
+                        </label>
+                        <div class="col-md-6 col-sm-6 ">
+                            <p class="label-align-center">{{ $claim->carmodel ? $claim->carmodel->text : '' }}</p>
+                        </div>
+                    </div>
+                    <div class="item form-group">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="SSSSS">
+                            <b> Claim Status </b>
+                        </label>
+                        <div class="col-md-6 col-sm-6 ">
+                            <p class="label-align-center">{{ $claim->claimsstatus ? $claim->claimsstatus->text : '' }}</p>
+                        </div>
+                    </div>
+                    <div class="item form-group">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="SSSSS">
+                            <b> Car Repair Coverage </b>
+                        </label>
+                        <div class="col-md-6 col-sm-6 ">
+                            <p class="label-align-center">{{ $claim->carrepaircoverage ? $claim->carrepaircoverage->text : '' }}</p>
+                        </div>
+                    </div>
+                    <div class="item form-group">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="SSSSS">
+                            <b> Car Repair Type </b>
+                        </label>
+                        <div class="col-md-6 col-sm-6 ">
+                            <p class="label-align-center">{{ $claim->carrepairtype ? $claim->carrepairtype->text : '' }}</p>
+                        </div>
+                    </div>
+                    <div class="item form-group">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="SSSSS">
+                            <b> Rent a car </b>
+                        </label>
+                        <div class="col-md-6 col-sm-6 ">
+                            <p class="label-align-center">{{ $claim->rentacar ? $claim->rentacar->text : '' }}</p>
+                        </div>
+                    </div>
+                    <div class="item form-group">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="SSSSS">
+                            <b> Assigned To </b>
+                        </label>
+                        <div class="col-md-6 col-sm-6 ">
+                            <p class="label-align-center">{{ $claim->assignedto ? $claim->assignedto->name : '' }}</p>
+                        </div>
+                    </div>
+                    <div class="item form-group">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="SSSSS">
+                            <b> Ticket Number </b>
+                        </label>
+                        <div class="col-md-6 col-sm-6 ">
+                            <p class="label-align-center">{{ $claim->ticket_number }}</p>
+                        </div>
+                    </div>
+                    <div class="item form-group">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="SSSSS">
+                            <b> Plate Number </b>
+                        </label>
+                        <div class="col-md-6 col-sm-6 ">
+                            <p class="label-align-center">{{ $claim->plate_number }}</p>
+                        </div>
+                    </div>
+                    <div class="item form-group">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="SSSSS">
+                            <b> Standard Excess payable </b>
+                        </label>
+                        <div class="col-md-6 col-sm-6 ">
+                            <p class="label-align-center">{{ $claim->standard_excess_payable }}</p>
+                        </div>
+                    </div>
+                    <div class="item form-group">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="SSSSS">
+                            <b> Liability </b>
+                        </label>
+                        <div class="col-md-6 col-sm-6 ">
+                            <p class="label-align-center">{{ $claim->liability }}</p>
+                        </div>
+                    </div>
+                    <div class="item form-group">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="SSSSS">
+                            <b> Workshop </b>
+                        </label>
+                        <div class="col-md-6 col-sm-6 ">
+                            <p class="label-align-center">{{ $claim->workshop }}</p>
+                        </div>
+                    </div>
+                    <div class="item form-group">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="SSSSS">
+                            <b> Insurer Reference </b>
+                        </label>
+                        <div class="col-md-6 col-sm-6 ">
+                            <p class="label-align-center">{{ $claim->insurer_reference }}</p>
+                        </div>
+                    </div>
+                    <div class="item form-group">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="SSSSS">
+                            <b> Date of loss </b>
+                        </label>
+                        <div class="col-md-6 col-sm-6 ">
+                            <p class="label-align-center">{{ $claim->date_of_loss }}</p>
+                        </div>
+                    </div>
+                    <div class="item form-group">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="SSSSS">
+                            <b> Claim Amount </b>
+                        </label>
+                        <div class="col-md-6 col-sm-6 ">
+                            <p class="label-align-center">{{ $claim->claim_amount }}</p>
+                        </div>
+                    </div>
+                    <div class="item form-group">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="SSSSS">
+                            <b> Created At </b>
+                        </label>
+                        <div class="col-md-6 col-sm-6 ">
+                            <p class="label-align-center">{{ $claim->created_at }}</p>
+                        </div>
+                    </div>
+                    <div class="item form-group">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="SSSSS">
+                            <b> Updated At </b>
+                        </label>
+                        <div class="col-md-6 col-sm-6 ">
+                            <p class="label-align-center">{{ $claim->updated_at }}</p>
+                        </div>
+                    </div>
+                    <div class="ln_solid"></div>
+                    <div class="item form-group">
+                        <div class="col-md-6 col-sm-6 offset-md-3">
+                                @can('claim-edit')
+                                    <a id="texta" href="{{ route('claims.edit', ['claim' => $claim->id]) }}" class='btn btn-warning btn-sm'>Edit </a>
+                                @endcan
+                                @can('claim-delete')
+                                    <form action="{{ route('claims.destroy', ['claim' => $claim->id]) }}" method="POST">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-warning btn-sm">Delete</button>
+                                    </form>
+                                @endcan
+                            </tr>
+                        </div>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
 </div>
+@can('auditable')
+    <div id="auditable">
+        <button id='auditablebtn' class="btn btn-warning auditablebtn" data-id="{{ $claim->id }}" data-model="App\Models\ClaimController">
+            View Audit Logs
+        </button>
+    </div>
+@endcan
 @endsection

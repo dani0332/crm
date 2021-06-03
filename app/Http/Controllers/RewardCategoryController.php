@@ -2,24 +2,22 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\RewardCategory;
 use DataTables;
+use Illuminate\Http\Request;
 
 class RewardCategoryController extends Controller
 {
-    function __construct()
-
+    public function __construct()
     {
 
-         $this->middleware('permission:reward-categories-list|reward-categories-create|reward-categories-edit|reward-categories-delete', ['only' => ['index','store']]);
+        $this->middleware('permission:reward-categories-list|reward-categories-create|reward-categories-edit|reward-categories-delete', ['only' => ['index', 'store']]);
 
-         $this->middleware('permission:reward-categories-create', ['only' => ['create','store']]);
+        $this->middleware('permission:reward-categories-create', ['only' => ['create', 'store']]);
 
-         $this->middleware('permission:reward-categories-edit', ['only' => ['edit','update']]);
+        $this->middleware('permission:reward-categories-edit', ['only' => ['edit', 'update']]);
 
-         $this->middleware('permission:reward-categories-delete', ['only' => ['destroy']]);
-
+        $this->middleware('permission:reward-categories-delete', ['only' => ['destroy']]);
     }
     /**
      * Display a listing of the resource.
@@ -31,14 +29,14 @@ class RewardCategoryController extends Controller
         if ($request->ajax()) {
             $data = RewardCategory::select('*');
             return DataTables::of($data)
-                    ->addIndexColumn()
-                    ->addColumn('action', function($row){
-                        return view('rewardcategory.actions', compact('row'))->render();
-                    })
-                    ->rawColumns(['action'])
-                    ->make(true);
+                ->addIndexColumn()
+                ->addColumn('action', function ($row) {
+                    return view('rewardcategory.actions', compact('row'))->render();
+                })
+                ->rawColumns(['action'])
+                ->make(true);
         }
-        
+
         return view('rewardcategory.view');
     }
     /**
@@ -58,19 +56,21 @@ class RewardCategoryController extends Controller
      */
     public function store(Request $request)
     {
-        $this->validate($request,[
+        $this->validate($request, [
             'text' => 'required|max:120',
             'text_ar' => 'required|max:120',
         ]);
 
         $rewardCategory = new RewardCategory();
-        $rewardCategory->text=  $request->text;
-        $rewardCategory->text_ar=  $request->text_ar;
-        $rewardCategory->is_active =  $request->is_active == 'on' ? 1 : 0; 
-        $rewardCategory->sort_order =  $request->sort_order;    
+        $rewardCategory->text = $request->text;
+        $rewardCategory->text_ar = $request->text_ar;
+        $rewardCategory->is_active = $request->is_active == 'on' ? 1 : 0;
+        $rewardCategory->sort_order = $request->sort_order;
         $rewardCategory->save();
+        if(isset($request->return_to_view))
+            return redirect("rewards/reward-categories");
         return back()
-            ->with('success','Reward Category has been stored');
+            ->with('success', 'Reward Category has been stored');
     }
     /**
      * Display the specified resource.
@@ -80,7 +80,7 @@ class RewardCategoryController extends Controller
      */
     public function show(RewardCategory $rewardCategory)
     {
-        return view('rewardcategory.show',compact('rewardCategory'));
+        return view('rewardcategory.show', compact('rewardCategory'));
     }
     /**
      * Show the form for editing the specified resource.
@@ -90,7 +90,7 @@ class RewardCategoryController extends Controller
      */
     public function edit(RewardCategory $rewardCategory)
     {
-        return view('rewardcategory.edit',compact('rewardCategory'));
+        return view('rewardcategory.edit', compact('rewardCategory'));
     }
     /**
      * Update the specified resource in storage.
@@ -101,18 +101,20 @@ class RewardCategoryController extends Controller
      */
     public function update(Request $request, RewardCategory $rewardCategory)
     {
-      
-        $this->validate($request,[
+
+        $this->validate($request, [
             'text' => 'required|max:120',
             'text_ar' => 'required|max:120',
         ]);
-        $rewardCategory->text=  $request->text;
-        $rewardCategory->text_ar=  $request->text_ar;
-        $rewardCategory->is_active =  $request->is_active == 'on' ? 1 : 0; 
-        $rewardCategory->sort_order =  $request->sort_order;    
+        $rewardCategory->text = $request->text;
+        $rewardCategory->text_ar = $request->text_ar;
+        $rewardCategory->is_active = $request->is_active == 'on' ? 1 : 0;
+        $rewardCategory->sort_order = $request->sort_order;
         $rewardCategory->save();
+        if(isset($request->return_to_view))
+            return redirect("rewards/reward-categories");
         return back()
-            ->with('success','Reward Category has been Updated');
+            ->with('success', 'Reward Category has been Updated');
     }
     /**
      * Remove the specified resource from storage.
@@ -124,6 +126,6 @@ class RewardCategoryController extends Controller
     {
         $rewardCategory->delete();
         return back()
-            ->with('success','rewardCategory has been Deleted');
+            ->with('success', 'rewardCategory has been Deleted');
     }
 }

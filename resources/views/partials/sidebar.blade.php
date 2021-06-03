@@ -13,6 +13,12 @@
     <div id="sidebar-menu" class="main_menu_side hidden-print main_menu">
         <div class="menu_section">
         <ul class="nav side-menu">
+            <li> <a><i class="fa fa-dashboard"></i> Dashboard  <span class="fa fa-chevron-down"></span></a>
+            <ul class="nav child_menu">
+                <li><a href="{{ url('dashboard') }}">Over All Dashboard</a></li>
+            </ul>
+        </ul>
+        <ul class="nav side-menu">
             <li><a><i class="fa fa-gift"></i> Rewards <span class="fa fa-chevron-down"></span></a>
             <ul class="nav child_menu">
                 @can('partners-list')
@@ -30,20 +36,61 @@
             </ul>
             </li>
         </ul>
-        
+
         <ul class="nav side-menu">
-            <li><a><i class="fa fa-quote-left"></i> Personal Qoutes <span class="fa fa-chevron-down"></span></a>
+            <li><a><i class="fa fa-quote-left"></i> Personal Quotes <span class="fa fa-chevron-down"></span></a>
             <ul class="nav child_menu">
-                @can('carqoutes-list')
-                    <li><a href="{{ url('qoutes/carqoutes') }}">Car Qoutes</a></li>
+                @can('carquotes-list')
+                    <li><a href="{{ url('quotes/carquotes') }}">Car Quotes</a></li>
                 @endcan
-                @can('carqoutes-list')
-                    <li><a href="{{ url('qoutes/healthqoutes') }}">Health Qoutes</a></li>
+                @can('carquotes-list')
+                    <li><a href="{{ url('quotes/healthquotes') }}">Health Quotes</a></li>
                 @endcan
             </ul>
             </li>
         </ul>
+        <ul class="nav side-menu">
+            <li><a><i class="fa fa-desktop"></i> Trans App <span class="fa fa-chevron-down"></span></a>
+            <ul class="nav child_menu">
+                @can('transaction-list')
+                    <li><a href="{{ route('home') }}">Home</a></li>
+                @endcan
+                <li><a href="#">Admin <span class="fa fa-chevron-down"></span></a>
+                    <ul class="nav child_menu">
+                        @can('insurance-company-list')
+                            <li><a href="{{ route('insurancecompany.index') }}">Insurance Company</a></li>
+                        @endcan
+                        @can('handler-list')
+                            <li><a href="{{ route('handler.index') }}">Handler</a></li>
+                        @endcan
+                        @can('reason-list')
+                            <li><a href="{{ route('reason.index') }}">Reason</a></li>
+                        @endcan
+                        @can('status-list')
+                            <li><a href="{{ route('status.index') }}">Status</a></li>
+                        @endcan
 
+                        @can('payment-mode-list')
+                            <li><a href="{{ route('paymentmode.index') }}">Payment Mode</a></li>
+                        @endcan
+                    </ul>
+                </li>
+                @can('transaction-list')
+                    <li><a href="#">Transaction <span class="fa fa-chevron-down"></span></a>
+                        <ul class="nav child_menu">
+
+                            <li class="sub_menu"><a href="{{ route('transaction.create') }}">Create a Transaction </a></li>
+                            <li class="sub_menu"><a href="{{ route('reissue_view') }}">Cancel & Re-Issue Transaction </a></li>
+                            <li class="sub_menu"><a href="{{ route('cancel_view') }}">Cancel Transaction (without re-issue) </a></li>
+                        </ul>
+                    </li>
+                @endcan
+            </ul>
+            </li>
+        </ul>
+        <ul class="nav side-menu">
+            <li><a href="{{ url('customer') }}"><i class="fa fa-user"></i> Customer </a>
+        </ul>
         <ul class="nav side-menu">
             <li><a><i class="fa fa-quote-left"></i> Claims <span class="fa fa-chevron-down"></span></a>
             <ul class="nav child_menu">
@@ -84,7 +131,9 @@
             </ul>
             </li>
         </ul>
-        </div>
+
+
+    </div>
     </div>
     <!-- /sidebar menu -->
     </div>

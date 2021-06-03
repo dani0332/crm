@@ -8,4 +8,6 @@ use Illuminate\Database\Eloquent\Model;
 class ClaimsStatus extends Model
 {
     use HasFactory;
+    protected $table = 'claims_statuses';
+    public $timestamps = false;
 }

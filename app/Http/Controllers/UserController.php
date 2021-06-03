@@ -2,17 +2,15 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\User;
 use DataTables;
-use Spatie\Permission\Models\Role;
 use DB;
-use Hash;
-use Illuminate\Support\Arr;
+use Illuminate\Http\Request;
+use Spatie\Permission\Models\Role;
 
 class UserController extends Controller
 {
-     /**
+    /**
 
      * Display a listing of the resource.
 
@@ -22,18 +20,16 @@ class UserController extends Controller
 
      */
 
-    function __construct()
-
+    public function __construct()
     {
 
-         $this->middleware('permission:users-list|users-create|users-edit|users-delete', ['only' => ['index','store']]);
+        $this->middleware('permission:users-list|users-create|users-edit|users-delete', ['only' => ['index', 'store']]);
 
-         $this->middleware('permission:users-create', ['only' => ['create','store']]);
+        $this->middleware('permission:users-create', ['only' => ['create', 'store']]);
 
-         $this->middleware('permission:users-edit', ['only' => ['edit','update']]);
+        $this->middleware('permission:users-edit', ['only' => ['edit', 'update']]);
 
-         $this->middleware('permission:users-delete', ['only' => ['destroy']]);
-
+        $this->middleware('permission:users-delete', ['only' => ['destroy']]);
     }
 
     /**
@@ -46,14 +42,14 @@ class UserController extends Controller
         if ($request->ajax()) {
             $data = User::select('*');
             return Datatables::of($data)
-                    ->addIndexColumn()
-                    ->addColumn('action', function($row){
-                        return view('user.actions', compact('row'))->render();
-                    })
-                    ->rawColumns(['action'])
-                    ->make(true);
+                ->addIndexColumn()
+                ->addColumn('action', function ($row) {
+                    return view('user.actions', compact('row'))->render();
+                })
+                ->rawColumns(['action'])
+                ->make(true);
         }
-        
+
         return view('user.view');
     }
     /**
@@ -63,8 +59,8 @@ class UserController extends Controller
      */
     public function create()
     {
-        $roles = Role::pluck('name','name')->all();
-        return view('user.add',compact('roles'));
+        $roles = Role::pluck('name', 'name')->all();
+        return view('user.add', compact('roles'));
     }
     /**
      * Store a newly created resource in storage.
@@ -74,20 +70,22 @@ class UserController extends Controller
      */
     public function store(Request $request)
     {
-        $this->validate($request,[
+        $this->validate($request, [
             'name' => 'required|max:120',
             'email' => 'required|email|unique:users',
-            'roles' => 'required'
+            'roles' => 'required',
         ]);
 
         $user = new User();
-        $user->name=  $request->name;
-        $user->email=  $request->email;
-        $user->password =  $request->password;
+        $user->name = $request->name;
+        $user->email = $request->email;
+        $user->password = $request->password;
         $user->save();
         $user->assignRole($request->input('roles'));
+        if(isset($request->return_to_view))
+            return redirect("admin/users");
         return back()
-            ->with('success','Partner has been stored');
+            ->with('success', 'Partner has been stored');
     }
     /**
      * Display the specified resource.
@@ -97,7 +95,7 @@ class UserController extends Controller
      */
     public function show(User $user)
     {
-        return view('user.show',compact('user'));
+        return view('user.show', compact('user'));
     }
     /**
      * Show the form for editing the specified resource.
@@ -107,10 +105,10 @@ class UserController extends Controller
      */
     public function edit(User $user)
     {
-        $roles = Role::pluck('name','name')->all();
+        $roles = Role::pluck('name', 'name')->all();
 
-        $userRole = $user->roles->pluck('name','name')->all();
-        return view('user.edit',compact('user','roles','userRole'));
+        $userRole = $user->roles->pluck('name', 'name')->all();
+        return view('user.edit', compact('user', 'roles', 'userRole'));
     }
     /**
      * Update the specified resource in storage.
@@ -122,21 +120,22 @@ class UserController extends Controller
     public function update(Request $request, User $user)
     {
         // return $user;
-        $this->validate($request,[
+        $this->validate($request, [
             'name' => 'required',
-            'roles' => 'required'
+            'roles' => 'required',
         ]);
-        $user->name =  $request->name;
-        $user->email =  $request->email;
-        $user->password =  $request->password;
+        $user->name = $request->name;
+        $user->email = $request->email;
+        $user->password = $request->password;
         $user->save();
-        
-        DB::table('model_has_roles')->where('model_id',$user->id)->delete();
+
+        DB::table('model_has_roles')->where('model_id', $user->id)->delete();
 
         $user->assignRole($request->input('roles'));
-
+        if(isset($request->return_to_view))
+            return redirect("admin/users");
         return back()
-            ->with('success','User has been Updated');
+            ->with('success', 'User has been Updated');
     }
     /**
      * Remove the specified resource from storage.
@@ -148,6 +147,6 @@ class UserController extends Controller
     {
         $user->delete();
         return back()
-            ->with('success','User has been Deleted');
+            ->with('success', 'User has been Deleted');
     }
 }

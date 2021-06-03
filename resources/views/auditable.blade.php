@@ -1,0 +1,1 @@
+<x-auditable  :auditableId="$auditableId" :auditableType="$auditableType"/>

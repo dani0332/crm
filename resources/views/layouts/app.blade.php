@@ -18,6 +18,9 @@
     <link href="{{ asset('vendors/font-awesome/css/font-awesome.min.css') }}" rel="stylesheet">
     <!-- NProgress -->
     <link href="{{ asset('vendors/nprogress/nprogress.css') }}" rel="stylesheet">
+    <!-- bootstrap-daterangepicker -->
+    <link href="{{ asset('vendors/bootstrap-daterangepicker/daterangepicker.css') }}" rel="stylesheet">
+
     <!-- bootstrap-wysiwyg -->
     <link href="{{ asset('vendors/google-code-prettify/bin/prettify.min.css') }}" rel="stylesheet">
 
@@ -33,11 +36,25 @@
 
     <!-- iCheck -->
 	  <link href="{{ asset('vendors/iCheck/skins/flat/green.css') }}" rel="stylesheet">
-
-    
+      <style>
+          .loader{
+                position: fixed;
+                left: 0px;
+                top: 0px;
+                width: 100%;
+                height: 100%;
+                z-index: 9999;
+                opacity: 0.7;
+                background: url('//upload.wikimedia.org/wikipedia/commons/thumb/e/e5/Phi_fenomeni.gif/50px-Phi_fenomeni.gif')
+                            50% 50% no-repeat rgb(249,249,249);
+                display: none;
+            }
+      </style>
   </head>
 
     <body class="nav-md">
+    <div class="loader">
+    </div>
     <div class="container body">
       <div class="main_container">
             @include('partials.sidebar')
@@ -47,11 +64,11 @@
                     @yield('content')
                 </div>
             </div>
-           
+
             @include('partials.footer')
 
       </div>
-    </div>   
+    </div>
     <!-- jQuery -->
     <script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
     <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
@@ -68,8 +85,26 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.1.3/ace.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/0.3.2/marked.min.js"></script>
     <script src="https://www.jquery-az.com/jquery/js/bootstrap-markdown-editor.js"></script>
+    <!-- Chart.js -->
+    <script src="{{ asset('vendors/Chart.js/dist/Chart.min.js') }}"></script>
+    <!-- jQuery Sparklines -->
+    <script src="{{ asset('vendors/jquery-sparkline/dist/jquery.sparkline.min.js') }}"></script>
+    <!-- Flot -->
+    <script src="{{ asset('vendors/Flot/jquery.flot.js') }}"></script>
+    <script src="{{ asset('vendors/Flot/jquery.flot.pie.js') }}"></script>
+    <script src="{{ asset('vendors/Flot/jquery.flot.time.js') }}"></script>
+    <script src="{{ asset('vendors/Flot/jquery.flot.stack.js') }}"></script>
+    <script src="{{ asset('vendors/Flot/jquery.flot.resize.js') }}"></script>
+    <!-- Flot plugins -->
+    <script src="{{ asset('vendors/flot.orderbars/js/jquery.flot.orderBars.js') }}"></script>
+    <script src="{{ asset('vendors/flot-spline/js/jquery.flot.spline.min.js') }}"></script>
+    <script src="{{ asset('vendors/flot.curvedlines/curvedLines.js') }}"></script>
+    <!-- DateJS -->
+    <script src="{{ asset('vendors/DateJS/build/date.js') }}"></script>
+    <!-- bootstrap-daterangepicker -->
+    <script src="{{ asset('vendors/moment/min/moment.min.js') }}"></script>
+    <script src="{{ asset('vendors/bootstrap-daterangepicker/daterangepicker.js') }}"></script>
 
-    
     <script src="{{ asset('vendors/google-code-prettify/src/prettify.js') }}"></script>
     <script src="{{ asset('vendors/datatables.net/js/jquery.dataTables.min.js') }}"></script>
     <script src="{{ asset('vendors/datatables.net-bs/js/dataTables.bootstrap.min.js') }}"></script>
@@ -86,7 +121,7 @@
     <!-- iCheck -->
 	  <script src="{{ asset('vendors/iCheck/icheck.min.js') }}"></script>
     <!-- Custom Theme Scripts -->
-    <script src="{{ asset('build/js/custom.min.js') }}"></script>
+    <script src="{{ asset('build/js/custom.js') }}"></script>
     <script>
         // global app configuration object
         var config = {
@@ -94,9 +129,9 @@
                 partner_datatable_route: "{{ route('partner.index') }}",
                 user_datatable_route:"{{ route('users.index') }}",
                 role_datatable_route:"{{ route('roles.index') }}",
-                carqoute_datatable_route:"{{ route('carqoutes.index') }}",
-                carqoute_resubmitap_route:"{{ url('qoutes/carqoutes/resubmit_api') }}",
-                healthqoute_datatable_route:"{{ route('healthqoutes.index') }}",
+                carquote_datatable_route:"{{ route('carquotes.index') }}",
+                carquote_resubmitap_route:"{{ url('quotes/carquotes/resubmit_api') }}",
+                healthquote_datatable_route:"{{ route('healthquotes.index') }}",
                 reward_datatable_route:"{{ route('reward.index') }}",
                 reward_categories_datatable_route:"{{ route('reward-categories.index') }}",
                 reward_tags_datatable_route:"{{ route('reward-tags.index') }}",
@@ -107,6 +142,16 @@
                 carrepaircoverage_datatable_route:"{{ route('carrepaircoverage.index') }}",
                 carrepairtype_datatable_route:"{{ route('carrepairtype.index') }}",
                 rentacar_datatable_route:"{{ route('rentacar.index') }}",
+                customer_data_table_route:"{{ route('customer.index') }}",
+                load_auditable:"{{ url('auditable') }}",
+                load_dashboard_stats:"{{ url('dashboard-stats') }}",
+                insurancecompany_datatable_route:"{{ route('insurancecompany.index') }}",
+                handler_datatable_route:"{{ route('handler.index') }}",
+                reason_datatable_route:"{{ route('reason.index') }}",
+                status_datatable_route:"{{ route('status.index') }}",
+                paymentmode_datatable_route:"{{ route('paymentmode.index') }}",
+                transaction_datatable_route:"{{ route('transaction.index') }}",
+                re_issue_transaction_form:"{{ route('re_issue_transaction_form') }}",
             },
             _token:"{{ csrf_token() }}",
             image_path:"{{ \Config::get('constants.azure_storage_url').'myrewards/' }}"

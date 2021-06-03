@@ -2,30 +2,28 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use App\Models\Reward;
 use App\Models\Partner;
+use App\Models\Reward;
 use App\Models\RewardCategory;
 use App\Models\RewardTag;
 use App\Services\RewardCategoryMapping;
 use App\Services\RewardTagMapping;
 use DataTables;
-
+use DB;
+use Illuminate\Http\Request;
 
 class RewardController extends Controller
 {
-    function __construct()
-
+    public function __construct()
     {
 
-         $this->middleware('permission:rewards-list|rewards-create|rewards-edit|rewards-delete', ['only' => ['index','store']]);
+        $this->middleware('permission:rewards-list|rewards-create|rewards-edit|rewards-delete', ['only' => ['index', 'store']]);
 
-         $this->middleware('permission:rewards-create', ['only' => ['create','store']]);
+        $this->middleware('permission:rewards-create', ['only' => ['create', 'store']]);
 
-         $this->middleware('permission:rewards-edit', ['only' => ['edit','update']]);
+        $this->middleware('permission:rewards-edit', ['only' => ['edit', 'update']]);
 
-         $this->middleware('permission:rewards-delete', ['only' => ['destroy']]);
-
+        $this->middleware('permission:rewards-delete', ['only' => ['destroy']]);
     }
     /**
      * Display a listing of the resource.
@@ -37,14 +35,14 @@ class RewardController extends Controller
         if ($request->ajax()) {
             $data = Reward::select('*');
             return Datatables::of($data)
-                    ->addIndexColumn()
-                    ->addColumn('action', function($row){
-                        return view('reward.actions', compact('row'))->render();
-                    })
-                    ->rawColumns(['action'])
-                    ->make(true);
+                ->addIndexColumn()
+                ->addColumn('action', function ($row) {
+                    return view('reward.actions', compact('row'))->render();
+                })
+                ->rawColumns(['action'])
+                ->make(true);
         }
-        
+
         return view('reward.view');
     }
     /**
@@ -57,7 +55,7 @@ class RewardController extends Controller
         $partners = Partner::all();
         $rewardCategories = RewardCategory::all();
         $rewardTags = RewardTag::all();
-        return view('reward.add',compact('partners','rewardTags','rewardCategories'));
+        return view('reward.add', compact('partners', 'rewardTags', 'rewardCategories'));
     }
     /**
      * Store a newly created resource in storage.
@@ -67,36 +65,40 @@ class RewardController extends Controller
      */
     public function store(Request $request)
     {
-        $this->validate($request,[
+        $this->validate($request, [
             'coupon_code' => 'required',
             'partner_id' => 'required',
             'discount' => 'required',
-            'start_date'=> 'required',
-            'end_date'=> 'required',
+            'start_date' => 'required',
+            'end_date' => 'required',
         ]);
         $reward = new Reward();
-        $reward->coupon_code  = $request->coupon_code;
+        $reward->coupon_code = $request->coupon_code;
         $reward->partner_id = $request->partner_id;
         $reward->discount = $request->discount;
         $reward->start_date = $request->start_date;
         $reward->end_date = $request->end_date;
-        $reward->is_flat_discount =$request->is_flat_discount == 'on' ? 1 : 0;
+        $reward->is_flat_discount = $request->is_flat_discount == 'on' ? 1 : 0;
         $reward->is_active = $request->is_active == 'on' ? 1 : 0;
+        $reward->viewed_count = 0;
+        $reward->viewed_count_unique = 0;
         $reward->save();
-        if(isset($request->reward_categories)){
-            foreach($request->reward_categories as $rewardCategory){
+        if (isset($request->reward_categories)) {
+            foreach ($request->reward_categories as $rewardCategory) {
                 $rewardCategoryMapping = new RewardCategoryMapping;
-                $rewardCategoryMapping->mapRewardCategory($rewardCategory,$reward->id);
+                $rewardCategoryMapping->mapRewardCategory($rewardCategory, $reward->id);
             }
         }
-        if(isset($request->reward_tags)){
-            foreach($request->reward_tags as $rewardTag){
+        if (isset($request->reward_tags)) {
+            foreach ($request->reward_tags as $rewardTag) {
                 $rewardTagMapping = new RewardTagMapping;
-                $rewardTagMapping->mapRewardTag($rewardTag,$reward->id);
+                $rewardTagMapping->mapRewardTag($rewardTag, $reward->id);
             }
         }
+        if(isset($request->return_to_view))
+            return redirect("rewards/reward");
         return back()
-            ->with('success','reward has been stored');
+            ->with('success', 'reward has been stored');
     }
     /**
      * Display the specified resource.
@@ -106,7 +108,7 @@ class RewardController extends Controller
      */
     public function show(Reward $reward)
     {
-        return view('reward.show',compact('reward'));
+        return view('reward.show', compact('reward'));
     }
     /**
      * Show the form for editing the specified resource.
@@ -119,7 +121,7 @@ class RewardController extends Controller
         $partners = Partner::all();
         $rewardCategories = RewardCategory::all();
         $rewardTags = RewardTag::all();
-        return view('reward.edit',compact('partners','reward','rewardCategories','rewardTags'));
+        return view('reward.edit', compact('partners', 'reward', 'rewardCategories', 'rewardTags'));
     }
     /**
      * Update the specified resource in storage.
@@ -130,40 +132,43 @@ class RewardController extends Controller
      */
     public function update(Request $request, reward $reward)
     {
-        $this->validate($request,[
+        $this->validate($request, [
             'coupon_code' => 'required|max:120',
             'partner_id' => 'required|max:120',
             'discount' => 'required|max:120',
-            'start_date'=> 'required|max:120',
-            'end_date'=> 'required|max:120',
+            'start_date' => 'required|max:120',
+            'end_date' => 'required|max:120',
         ]);
-        $reward->coupon_code  = $request->coupon_code;
+        $reward->coupon_code = $request->coupon_code;
         $reward->partner_id = $request->partner_id;
         $reward->discount = $request->discount;
         $reward->start_date = $request->start_date;
         $reward->end_date = $request->end_date;
-        $reward->is_flat_discount =$request->is_flat_discount == 'on' ? 1 : 0;
+        $reward->is_flat_discount = $request->is_flat_discount == 'on' ? 1 : 0;
         $reward->is_active = $request->is_active == 'on' ? 1 : 0;
         $reward->save();
-        if(isset($request->reward_categories)){
+        if (isset($request->reward_categories)) {
             $rewardCategoryMapping = new RewardCategoryMapping;
             $rewardCategoryMapping->unMapRewardCategory($reward->id);
-            foreach($request->reward_categories as $rewardCategory){
+            foreach ($request->reward_categories as $rewardCategory) {
                 $rewardCategoryMapping = new RewardCategoryMapping;
-                $rewardCategoryMapping->mapRewardCategory($rewardCategory,$reward->id);
+                $rewardCategoryMapping->mapRewardCategory($rewardCategory, $reward->id);
             }
         }
 
-        if(isset($request->reward_tags)){
+        if (isset($request->reward_tags)) {
             $rewardTagMapping = new RewardTagMapping;
             $rewardTagMapping->unMapRewardTag($reward->id);
-            foreach($request->reward_tags as $rewardTag){
+            foreach ($request->reward_tags as $rewardTag) {
                 $rewardTagMapping = new RewardTagMapping;
-                $rewardTagMapping->mapRewardTag($rewardTag,$reward->id);
+                $rewardTagMapping->mapRewardTag($rewardTag, $reward->id);
             }
         }
+
+        if(isset($request->return_to_view))
+            return redirect("rewards/reward");
         return back()
-            ->with('success','reward has been stored');
+            ->with('success', 'reward has been stored');
     }
     /**
      * Remove the specified resource from storage.
@@ -173,8 +178,13 @@ class RewardController extends Controller
      */
     public function destroy(Reward $reward)
     {
+        DB::statement('SET FOREIGN_KEY_CHECKS=0');
+        $reward->rewardTranslations()->delete();
+        $reward->rewardCategories()->delete();
+        $reward->rewardTags()->delete();
         $reward->delete();
-        return back()
-            ->with('success','reward has been stored');
+        DB::statement('SET FOREIGN_KEY_CHECKS=1');
+        return redirect('rewards/reward');
+
     }
 }

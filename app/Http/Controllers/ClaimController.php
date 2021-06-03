@@ -219,4 +219,10 @@ class ClaimController extends Controller
         $claim->delete();
         return back()->with('success','Claim has been deleted');
     }
+
+    public function carModelBasedOnCarMake(Request $request){
+        $make_code =$request->make_code;
+        $carmodel = DB::table('car_model')->where('car_make_code','=',$make_code)->get(array('id','text','code'));
+        return response()->json($carmodel);
+    }
 }

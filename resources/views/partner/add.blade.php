@@ -2,10 +2,13 @@
 @section('title','Add Partner')
 @section('content')
 <div class="row">
-    <div class="col-md-12 col-sm-12 ">
+    <div class="col-md-12 col-sm-12 admin-add">
         <div class="x_panel">
             <div class="x_title">
                 <h2>Create Partner</h2>
+                <ul class="nav navbar-right panel_toolbox">
+                    <li><a href="{{ route('partner.index') }}" class="btn btn-warning btn-sm">Partner List</a></li>
+                </ul>
                 <div class="clearfix"></div>
             </div>
             <div class="x_content">
@@ -26,7 +29,7 @@
                                 <span class="text-danger">{{ $errors->first('name') }}</span>
                             @endif
                         </div>
-                        
+
                     </div>
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="name_ar">Name Ar <span class="required">*</span>
@@ -37,7 +40,7 @@
                                 <span class="text-danger">{{ $errors->first('name_ar') }}</span>
                             @endif
                         </div>
-                        
+
                     </div>
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="logo_image">Logo Image <span class="required">*</span>
@@ -48,7 +51,7 @@
                                 <span class="text-danger">{{ $errors->first('logo_image') }}</span>
                             @endif
                         </div>
-                        
+
                     </div>
                     <div class="item form-group">
                         <label for="middle-name" class="col-form-label col-md-3 col-sm-3 label-align">Is Active</label>
@@ -60,10 +63,11 @@
                         </div>
                         </div>
                     </div>
+                    <div id='redirect_to_view_div'></div>
                     <div class="ln_solid"></div>
                     <div class="item form-group">
                         <div class="col-md-6 col-sm-6 offset-md-3">
-                          <button type="submit" class="btn btn-warning">Create</button>
+                          <button type="submit" class="btn btn-warning">Create & Add New</button> <button type="submit" class="btn btn-warning" id="return_to_view" >Cretae</button>
                         </div>
                     </div>
 

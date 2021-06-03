@@ -2,10 +2,13 @@
 @section('title','Edit Reward')
 @section('content')
 <div class="row">
-    <div class="col-md-12 col-sm-12 ">
+    <div class="col-md-12 col-sm-12 admin-edit">
         <div class="x_panel">
             <div class="x_title">
                 <h2>Edit Reward</h2>
+                <ul class="nav navbar-right panel_toolbox">
+                    <li><a href="{{ route('reward.index') }}" class="btn btn-warning btn-sm">Reward List</a></li>
+                </ul>
                 <div class="clearfix"></div>
             </div>
             <div class="x_content">
@@ -101,15 +104,9 @@
                     <div class="item form-group">
                     <label for="middle-name" class="col-form-label col-md-3 col-sm-3 label-align">Reward Category</label>
                         <div class="col-md-6 col-sm-6 ">
-                            @foreach($reward->rewardCategories as $rewardCategory)
-                                <button type="button" class="btn  btn-disabled">
-                                    {{   $rewardCategory->text }}
-                                </button>
-                            @endforeach
-                            <hr />
-                            <select class="selectpicker" name='reward_categories[]' multiple data-live-search="true">
+                            <select class="select2_multiple form-control" name='reward_categories[]' multiple data-live-search="true">
                                 @foreach($rewardCategories as $rewardCategory)
-                                    <option  value="{{ $rewardCategory->id }}">{{ $rewardCategory->text }}</option>
+                                    <option  {{ in_array($rewardCategory->id ,$reward->rewardCategories->pluck('id')->toArray() ) ? 'selected' : '' }} value="{{ $rewardCategory->id }}">{{ $rewardCategory->text }}</option>
                                 @endforeach
                             </select>
                         </div>
@@ -117,23 +114,18 @@
                     <div class="item form-group">
                     <label for="middle-name" class="col-form-label col-md-3 col-sm-3 label-align">Reward Tag</label>
                         <div class="col-md-6 col-sm-6 ">
-                            @foreach($reward->rewardTags as $rewardTag)
-                                <button type="button" class="btn  btn-disabled">
-                                    {{   $rewardTag->text }}
-                                </button>
-                            @endforeach
-                            <hr />
-                            <select class="selectpicker" name='reward_tags[]' multiple data-live-search="true">
+                            <select class="select2_multiple form-control" name='reward_tags[]' multiple data-live-search="true">
                                 @foreach($rewardTags as $rewardTag)
-                                    <option  value="{{ $rewardTag->id }}">{{ $rewardTag->text }}</option>
+                                    <option {{ in_array($rewardTag->id ,$reward->rewardTags->pluck('id')->toArray() ) ? 'selected' : '' }} value="{{ $rewardTag->id }}">{{ $rewardTag->text }}</option>
                                 @endforeach
                             </select>
                         </div>
                     </div>
+                    <div id='redirect_to_view_div'></div>
                     <div class="ln_solid"></div>
                     <div class="item form-group">
                         <div class="col-md-6 col-sm-6 offset-md-3">
-                          <button type="submit" class="btn btn-warning">Update</button>
+                          <button type="submit" class="btn btn-warning">Update & Continue Updating</button> <button type="submit" class="btn btn-warning" id="return_to_view" >Update</button>
                         </div>
                     </div>
 

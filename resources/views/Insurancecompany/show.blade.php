@@ -1,0 +1,65 @@
+@extends('layouts.app')
+@section('title','Insurance Company Detail')
+@section('content')
+<div class="row">
+    <div class="col-md-12 col-sm-12 ">
+        <div class="x_panel">
+            <div class="x_title">
+                <h2>Insurance Company Detail</h2>
+                 <ul class="nav navbar-right panel_toolbox">
+                    <li><a href="{{ route('insurancecompany.index') }}" class="btn btn-warning btn-sm">Insurance Company List</a></li>
+                </ul>
+                <div class="clearfix"></div>
+            </div>
+            <div class="x_content">
+                <br />
+                <form id="demo-form2" method='post'  enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left">
+                <div class="item form-group">
+                    <label class="col-form-label col-md-3 col-sm-3 label-align" for="name">Name
+                    </label>
+                    <div class="col-md-6 col-sm-6 ">
+                        <p class="label-align-center">{{ $insurancecompany->name }}</p>
+                    </div>
+
+                </div>
+
+                <div class="item form-group">
+                    <label class="col-form-label col-md-3 col-sm-3 label-align" for="name">Created By
+                    </label>
+                    <div class="col-md-6 col-sm-6 ">
+                        <p class="label-align-center">{{ $insurancecompany->created_by }}</p>
+                    </div>
+
+                </div>
+
+                <div class="item form-group">
+                    <label class="col-form-label col-md-3 col-sm-3 label-align" for="name">Modified By
+                    </label>
+                    <div class="col-md-6 col-sm-6 ">
+                        <p class="label-align-center">{{ $insurancecompany->updated_by }}</p>
+                    </div>
+
+                </div>
+                <div class="item form-group">
+                    <label for="middle-name" class="col-form-label col-md-3 col-sm-3 label-align">Is Active</label>
+                    <div class="col-md-6 col-sm-6 ">
+                        <p class="label-align-center"> {{ $insurancecompany->is_active ? 'True' : 'False' }} </p>
+                    </div>
+                </div>
+                <div class="ln_solid"></div>
+                <div class="item form-group">
+                    <div class="col-md-6 col-sm-6 offset-md-3">
+                        <a href="{{ route('insurancecompany.edit', ['insurancecompany' => $insurancecompany->id]) }}" class='btn btn-warning btn-sm'>Edit</a>
+                        <form action="{{ route('insurancecompany.destroy', ['insurancecompany' => $insurancecompany->id]) }}" method="POST">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class='btn btn-warning btn-sm'>Delete</button>
+                        </form>
+                    </div>
+                </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+@endsection

@@ -134,10 +134,11 @@
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="car_model_id">Car Model</label>
                         <div class="col-md-6 col-sm-6 ">
+                            <input type="hidden" value="{{ $claim->car_model_id }}" id="old_car_model_id" />
                             <select class="form-control" id='car_model_id' name='car_model_id'>
-                                {{--@foreach($carmodels as $carmodel)
-                                    <option {{ $claim->car_model_id == $carmodel->id ? 'selected' : '' }} data-id="{{ $carmodel['code'] }}" value="{{ $carmodel->id }}">{{ $carmake->text }}</option>
-                                @endforeach--}}
+                                @foreach($carmodels as $carmodel)
+                                    <option data-id="{{ $carmodel['code'] }}" value="{{ $carmodel->id }}">{{ $carmake->text }}</option>
+                                @endforeach
                             </select>
                             @if ($errors->has('car_model_id'))
                                 <span class="text-danger">{{ $errors->first('car_model_id') }}</span>
