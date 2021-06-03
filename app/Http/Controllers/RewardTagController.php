@@ -31,13 +31,13 @@ class RewardTagController extends Controller
             return DataTables::of($data)
                 ->addIndexColumn()
                 ->addColumn('action', function ($row) {
-                    return view('rewardTag.actions', compact('row'))->render();
+                    return view('rewardtag.actions', compact('row'))->render();
                 })
                 ->rawColumns(['action'])
                 ->make(true);
         }
 
-        return view('rewardTag.view');
+        return view('rewardtag.view');
     }
     /**
      * Show the form for creating a new resource.
