@@ -68,7 +68,7 @@ class RewardController extends Controller
         $this->validate($request, [
             'coupon_code' => 'required',
             'partner_id' => 'required',
-            'discount' => 'required',
+            'discount' => 'required|numeric',
             'start_date' => 'required',
             'end_date' => 'required',
         ]);

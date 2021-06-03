@@ -14,8 +14,8 @@ class CreateTransactionsTable extends Migration
     public function up()
     {
         Schema::create('transactions', function (Blueprint $table) {
-            $table->id();
-            $table->string('approval_code');
+            $table->id()->startingValue(350000);
+            $table->string('approval_code')->nullable();
             $table->bigInteger('insurance_company_id');
             $table->string('customer_name');
             $table->bigInteger('handler_id');

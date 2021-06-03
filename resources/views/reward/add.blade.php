@@ -24,12 +24,12 @@
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="coupon_code">Coupon Code <span class="required">*</span>
                         </label>
                         <div class="col-md-6 col-sm-6 ">
-                            <input type="text" id="coupon_code" name="coupon_code" value="{{ old('coupon_code') }}"  class="form-control ">
+                            <input type="number" id="coupon_code" name="coupon_code" value="{{ old('coupon_code') }}"  class="form-control ">
                             @if ($errors->has('coupon_code'))
                                 <span class="text-danger">{{ $errors->first('coupon_code') }}</span>
                             @endif
                         </div>
-                        
+
                     </div>
 
                     <div class="item form-group">
@@ -56,7 +56,7 @@
                                 <span class="text-danger">{{ $errors->first('discount') }}</span>
                             @endif
                         </div>
-                        
+
                     </div>
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="start_date">Start Date<span class="required">*</span>
@@ -67,7 +67,7 @@
                                 <span class="text-danger">{{ $errors->first('start_date') }}</span>
                             @endif
                         </div>
-                        
+
                     </div>
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="end_date">End Date <span class="required">*</span>
@@ -78,7 +78,7 @@
                                 <span class="text-danger">{{ $errors->first('end_date') }}</span>
                             @endif
                         </div>
-                        
+
                     </div>
                     <div class="item form-group">
                         <label for="middle-name" class="col-form-label col-md-3 col-sm-3 label-align">Is Flat Discount</label>
@@ -121,7 +121,7 @@
                             </select>
                         </div>
                     </div>
-                   
+
                     <div id='redirect_to_view_div'></div>
                     <div class="ln_solid"></div>
                     <div class="item form-group">
