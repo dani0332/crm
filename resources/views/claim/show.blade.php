@@ -49,35 +49,35 @@
                     </tr>
                     <tr>
                         <td>Sub Type of Insurance</td>
-                        <td>{{ $claim->SSSSSSS }}</td>
+                        <td>{{ $claim->subtypeofinsurance_id }}</td>
                     </tr>
                     <tr>
                         <td>Car Make</td>
-                        <td>{{ $claim->SSSSSSS }}</td>
+                        <td>{{ $claim->carmake->text }}</td>
                     </tr>
                     <tr>
                         <td>Car Model</td>
-                        <td>{{ $claim->SSSSSSS }}</td>
+                        <td>{{ $claim->carmodel->text }}</td>
                     </tr>
                     <tr>
                         <td>Claim Status</td>
-                        <td>{{ $claim->SSSSSSS }}</td>
+                        <td>{{ $claim->claimsstatus->text }}</td>
                     </tr>
                     <tr>
                         <td>Car Repair Coverage</td>
-                        <td>{{ $claim->SSSSSSS }}</td>
+                        <td>{{ $claim->carrepaircoverage->text }}</td>
                     </tr>
                     <tr>
                         <td>Car Repair Type</td>
-                        <td>{{ $claim->SSSSSSS }}</td>
+                        <td>{{ $claim->carrepairtype->text }}</td>
                     </tr>
                     <tr>
                         <td>Rent a car</td>
-                        <td>{{ $claim->SSSSSSS }}</td>
+                        <td>{{ $claim->rentacar->text }}</td>
                     </tr>
                     <tr>
                         <td>Assigned To</td>
-                        <td>{{ $claim->SSSSSSS }}</td>
+                        <td>{{ $claim->assignedto->name }}</td>
                     </tr>
                     <tr>
                         <td>Ticket Number</td>

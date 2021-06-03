@@ -84,6 +84,6 @@ Route::group(['prefix' => 'claim'], function() {
     Route::resource('rentacar', RentACarController::class);
 });
 Route::get('/car-model',function () {
-$cat_id = Request::get('cat_id');
-$subcategories = DB::table('car_model')->where('car_make_code','=',$cat_id)->get(array('id','text','code'));
-return Response::json($subcategories);});
+$make_code = Request::get('make_code');
+$carmodel = DB::table('car_model')->where('car_make_code','=',$make_code)->get(array('id','text','code'));
+return Response::json($carmodel);});
