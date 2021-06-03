@@ -51,7 +51,7 @@
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="discount">Discount <span class="required">*</span>
                         </label>
                         <div class="col-md-6 col-sm-6 ">
-                            <input type="number" id="discount" name="discount" value="{{ old('discount') }}"  class="form-control">
+                            <input type="text" id="discount" name="discount" value="{{ old('discount') }}"  class="form-control">
                             @if ($errors->has('discount'))
                                 <span class="text-danger">{{ $errors->first('discount') }}</span>
                             @endif
@@ -80,7 +80,7 @@
                         </div>
 
                     </div>
-                    <div class="item form-group">
+                    {{-- <div class="item form-group">
                         <label for="middle-name" class="col-form-label col-md-3 col-sm-3 label-align">Is Flat Discount</label>
                         <div class="col-md-6 col-sm-6 ">
                         <div class="checkbox">
@@ -89,7 +89,7 @@
                             </label>
                         </div>
                         </div>
-                    </div>
+                    </div> --}}
                     <div class="item form-group">
                         <label for="middle-name" class="col-form-label col-md-3 col-sm-3 label-align">Is Active</label>
                         <div class="col-md-6 col-sm-6 ">
@@ -102,23 +102,29 @@
                     </div>
 
                     <div class="item form-group">
-                    <label for="middle-name" class="col-form-label col-md-3 col-sm-3 label-align">Reward Category</label>
+                    <label for="middle-name" class="col-form-label col-md-3 col-sm-3 label-align">Reward Category</label>  <span class="required">*</span>
                         <div class="col-md-6 col-sm-6 ">
                             <select class="select2_multiple form-control" name='reward_categories[]' multiple>
                                 @foreach($rewardCategories as $rewardCategory)
                                     <option value="{{ $rewardCategory->id }}">{{ $rewardCategory->text }}</option>
                                 @endforeach
                             </select>
+                            @if ($errors->has('reward_categories'))
+                                <span class="text-danger">{{ $errors->first('reward_categories') }}</span>
+                            @endif
                         </div>
                     </div>
                     <div class="item form-group">
-                    <label for="middle-name" class="col-form-label col-md-3 col-sm-3 label-align">Reward Tag</label>
+                    <label for="middle-name" class="col-form-label col-md-3 col-sm-3 label-align">Reward Tag</label>  <span class="required">*</span>
                         <div class="col-md-6 col-sm-6 ">
                             <select  name='reward_tags[]' class="select2_multiple form-control" multiple data-live-search="true">
                                 @foreach($rewardTags as $rewardTag)
                                     <option value="{{ $rewardTag->id }}">{{ $rewardTag->text }}</option>
                                 @endforeach
                             </select>
+                            @if ($errors->has('reward_tags'))
+                                <span class="text-danger">{{ $errors->first('reward_tags') }}</span>
+                            @endif
                         </div>
                     </div>
 

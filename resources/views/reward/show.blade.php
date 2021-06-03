@@ -59,12 +59,12 @@
                         </div>
 
                     </div>
-                    <div class="item form-group">
+                    {{-- <div class="item form-group">
                         <label for="middle-name" class="col-form-label col-md-3 col-sm-3 label-align">Is Flat Discount</label>
                         <div class="col-md-6 col-sm-6 ">
                             <p class="label-align-center">{{ $reward->is_flat_discount ? 'True' : 'False' }}</p>
                         </div>
-                    </div>
+                    </div> --}}
                     <div class="item form-group">
                         <label for="middle-name" class="col-form-label col-md-3 col-sm-3 label-align">Is Active</label>
                         <div class="col-md-6 col-sm-6 ">

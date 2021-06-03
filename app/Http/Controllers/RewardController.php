@@ -33,7 +33,8 @@ class RewardController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $data = Reward::select('*');
+            $data = Reward::select('reward.*','partner.name as partner')
+            ->leftjoin('partner','reward.partner_id','partner.id');
             return Datatables::of($data)
                 ->addIndexColumn()
                 ->addColumn('action', function ($row) {
@@ -68,10 +69,12 @@ class RewardController extends Controller
         $this->validate($request, [
             'coupon_code' => 'required',
             'partner_id' => 'required',
-            'discount' => 'required|numeric',
+            'discount' => 'required|string|max:15',
             'start_date' => 'required',
-            'end_date' => 'required',
+            'reward_categories' => 'required',
+            'reward_tags' => 'required'
         ]);
+
         $reward = new Reward();
         $reward->coupon_code = $request->coupon_code;
         $reward->partner_id = $request->partner_id;
@@ -138,6 +141,8 @@ class RewardController extends Controller
             'discount' => 'required|max:120',
             'start_date' => 'required|max:120',
             'end_date' => 'required|max:120',
+            'reward_categories' => 'required',
+            'reward_tags' => 'required'
         ]);
         $reward->coupon_code = $request->coupon_code;
         $reward->partner_id = $request->partner_id;
