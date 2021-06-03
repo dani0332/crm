@@ -17,7 +17,7 @@
             </div>
             <div class="x_content">
                 <br />
-                <div class="table-responsive">
+                <div>
                 <table  class="table table-striped jambo_table transaction-data-table" style="width:100%">
                       <thead>
                         <tr>
@@ -25,12 +25,16 @@
                           <th>Transaction Date</th>
                           <th>Insurance Company</th>
                           <th>Premium</th>
+                          <th>Name</th>
                           <th>Risk</th>
                           <th>Transector</th>
                           <th>Handler</th>
                           <th>Mode Of Payment</th>
+                          <th>Prev Approval Code</th>
+                          <th>Prev Tansaction Date</th>
                           <th>Last Modified</th>
-                          <th>Actions</th>
+                          <th>Status</th>
+                          <th>Comments</th>
                         </tr>
                       </thead>
 

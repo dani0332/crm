@@ -21,15 +21,16 @@
                 <form id="demo-form2" method='post' action="{{ route('transaction.store') }}" enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left">
                 {{csrf_field()}}
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="insurance_company">Insurance Company <span class="required">*</span>
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="insurance_company">Insurance Company<span class="required">*</span>
                         </label>
                         <div class="col-md-6 col-sm-6 ">
                             <select class="form-control" name="insurance_company">
                                 <option value="">Select</option>
                                 @foreach ($insurancecompanies as $insurancecompany )
-                                    <option value="{{ $insurancecompany->id }}">{{ $insurancecompany->name }}</option>
+                                    <option {{ old('insurance_company') == $insurancecompany->id ? "selected":""  }} value="{{ $insurancecompany->id }}">{{ $insurancecompany->name }}</option>
                                 @endforeach
                             </select>
+                            <span class="text">Please select Insurance Company Name</span> <br/>
                             @if ($errors->has('insurance_company'))
                                 <span class="text-danger">{{ $errors->first('insurance_company') }}</span>
                             @endif
@@ -40,7 +41,8 @@
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="customer_name">Customer Name <span class="required">*</span>
                         </label>
                         <div class="col-md-6 col-sm-6 ">
-                            <input name="customer_name" class="form-control"/>
+                            <input name="customer_name" class="form-control" value="{{ old('customer_name') }}"/>
+                            <span class="text">Please enter Customer Name</span> <br/>
                             @if ($errors->has('customer_name'))
                                 <span class="text-danger">{{ $errors->first('customer_name') }}</span>
                             @endif
@@ -55,9 +57,10 @@
                             <select class="form-control" name="handler">
                                 <option value="">Select</option>
                                 @foreach ($handlers as $handler )
-                                    <option value="{{ $handler->id }}">{{ $handler->name }}</option>
+                                    <option {{ old('handler') == $handler->id ? "selected":""  }} value="{{ $handler->id }}">{{ $handler->name }}</option>
                                 @endforeach
                             </select>
+                            <span class="text">Please select Handler name</span> <br/>
                             @if ($errors->has('handler'))
                                 <span class="text-danger">{{ $errors->first('handler') }}</span>
                             @endif
@@ -72,9 +75,10 @@
                             <select class="form-control" name="paymentmode">
                                 <option value="">Select</option>
                                 @foreach ($paymentmodes as $paymentmode )
-                                    <option value="{{ $paymentmode->id }}">{{ $paymentmode->name }}</option>
+                                    <option {{ old('paymentmode') == $paymentmode->id ? "selected":""  }} value="{{ $paymentmode->id }}">{{ $paymentmode->name }}</option>
                                 @endforeach
                             </select>
+                            <span class="text">Please select Mode Of Paymet</span> <br/>
                             @if ($errors->has('paymentmode'))
                                 <span class="text-danger">{{ $errors->first('paymentmode') }}</span>
                             @endif
@@ -85,7 +89,8 @@
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="amount_paid">Amount Paid <span class="required">*</span>
                         </label>
                         <div class="col-md-6 col-sm-6 ">
-                            <input name="amount_paid" class="form-control"/>
+                            <input type="number" name="amount_paid" class="form-control" value="{{ old('amount_paid') }}"/>
+                            <span class="text">Please enter the Amount Paid</span> <br/>
                             @if ($errors->has('amount_paid'))
                                 <span class="text-danger">{{ $errors->first('amount_paid') }}</span>
                             @endif
@@ -97,7 +102,8 @@
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="risk_detail">Risk Details <span class="required">*</span>
                         </label>
                         <div class="col-md-6 col-sm-6 ">
-                            <input name="risk_detail" class="form-control"/>
+                            <textarea name="risk_detail" class="form-control" >{{ old('risk_detail') }}</textarea>
+                            <span class="text">Please enter Risk Details</span> <br/>
                             @if ($errors->has('risk_detail'))
                                 <span class="text-danger">{{ $errors->first('risk_detail') }}</span>
                             @endif

@@ -27,7 +27,6 @@ class DashboardController extends Controller
             $startDate = Carbon::parse($request->startDate)->startOfDay()->toDateTimeString();
             $endDate = Carbon::parse($request->endDate)->endOfDay()->toDateTimeString();
         }
-
         $customers = Customer::whereBetween('created_at', [$startDate, $endDate]);
         $carQuotes = CarQuote::whereBetween('created_at', [$startDate, $endDate])->GroupBy('customer_id');
         return response()->json([

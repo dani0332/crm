@@ -144,6 +144,7 @@
                 status_datatable_route:"{{ route('status.index') }}",
                 paymentmode_datatable_route:"{{ route('paymentmode.index') }}",
                 transaction_datatable_route:"{{ route('transaction.index') }}",
+                re_issue_transaction_form:"{{ route('re_issue_transaction_form') }}",
             },
             _token:"{{ csrf_token() }}",
             image_path:"{{ \Config::get('constants.azure_storage_url').'myrewards/' }}"

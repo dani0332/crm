@@ -93,17 +93,6 @@
                     </div>
 
                 </div>
-                <div class="ln_solid"></div>
-                <div class="item form-group">
-                    <div class="col-md-6 col-sm-6 offset-md-3">
-                        <a href="{{ route('transaction.edit', ['transaction' => $transaction->id]) }}" class='btn btn-warning btn-sm'>Edit</a>
-                        <form action="{{ route('transaction.destroy', ['transaction' => $transaction->id]) }}" method="POST">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" class='btn btn-warning btn-sm'>Delete</button>
-                        </form>
-                    </div>
-                </div>
                 </form>
             </div>
         </div>

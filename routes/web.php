@@ -61,7 +61,6 @@ Route::group(['prefix' => 'quotes'], function () {
     Route::resource('healthquotes', HealthQuoteController::class);
 });
 
-
 Route::group(['prefix' => 'transapp'], function () {
     Route::resource('insurancecompany', InsuranceCompanyController::class);
     Route::resource('handler', HandlerController::class);
@@ -69,6 +68,15 @@ Route::group(['prefix' => 'transapp'], function () {
     Route::resource('status',StatusController::class);
     Route::resource('paymentmode',PaymentModeController::class);
     Route::resource('transaction',TransactionController::class);
+    Route::get('home',[TransactionController::class,'transectionHome'])->name('home');
+    Route::get('showtransaction',[TransactionController::class,'showTransaction'])->name('showtransaction');
+    Route::get('re-issue-transaction',[TransactionController::class,'cancelAndReIssueTransectionView'])->name('reissue_view');
+    Route::get('re-issue-transaction-form',[TransactionController::class,'cancelAndReIssueTransectionForm'])->name('re_issue_transaction_form');
+    Route::post('re-issue-transaction',[TransactionController::class,'cancelAndReIssueTransection'])->name('re_issue');
+    Route::get('cancel-transaction',[TransactionController::class,'cancelAndReIssueTransectionView'])->name('cancel_view');
+    Route::get('cancel-transaction-form',[TransactionController::class,'cancelAndReIssueTransectionForm'])->name('cancel_transaction_form');
+    Route::post('cancel-transaction',[TransactionController::class,'cancelAndReIssueTransection'])->name('cancel');
+
 });
 
 Route::resource('customer', CustomerController::class);
