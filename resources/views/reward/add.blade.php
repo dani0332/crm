@@ -24,7 +24,7 @@
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="coupon_code">Coupon Code <span class="required">*</span>
                         </label>
                         <div class="col-md-6 col-sm-6 ">
-                            <input type="number" id="coupon_code" name="coupon_code" value="{{ old('coupon_code') }}"  class="form-control ">
+                            <input type="text" id="coupon_code" name="coupon_code" value="{{ old('coupon_code') }}"  class="form-control ">
                             @if ($errors->has('coupon_code'))
                                 <span class="text-danger">{{ $errors->first('coupon_code') }}</span>
                             @endif
@@ -51,7 +51,7 @@
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="discount">Discount <span class="required">*</span>
                         </label>
                         <div class="col-md-6 col-sm-6 ">
-                            <input type="text" id="discount" name="discount" value="{{ old('discount') }}"  class="form-control">
+                            <input type="number" id="discount" name="discount" value="{{ old('discount') }}"  class="form-control">
                             @if ($errors->has('discount'))
                                 <span class="text-danger">{{ $errors->first('discount') }}</span>
                             @endif
