@@ -5,7 +5,10 @@
     <div class="col-md-12 col-sm-12 ">
         <div class="x_panel">
             <div class="x_title">
-                <h2>Create Partner</h2>
+                <h2>Create Claim</h2>
+                <ul class="nav navbar-right panel_toolbox">
+                    <li><a href="{{ route('claims.index') }}" class="btn btn-warning btn-sm">Claims List</a></li>
+                </ul>
                 <div class="clearfix"></div>
             </div>
             <div class="x_content">
@@ -17,7 +20,7 @@
                 @endif
                 <form id="demo-form2" method='post' action="{{ url('claim/claims') }}" enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left">
                 {{csrf_field()}}
-                    <div class="item form-group">
+                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="first_name">First Name <span class="required">*</span>
                         </label>
                         <div class="col-md-6 col-sm-6 ">
@@ -94,7 +97,11 @@
                             <select class="form-control" id='typeofinsurance_id' name='typeofinsurance_id'>
                                 <option value=''>Choose Type of Insurance</option>
                                 @foreach($typeofinsurances as $typeofinsurance)
+                                @if (old('typeofinsurance_id') == $typeofinsurance->id)
+                                    <option value="{{ $typeofinsurance->id }}" selected>{{ $typeofinsurance->text }}</option>
+                                @else
                                     <option value="{{ $typeofinsurance->id }}">{{ $typeofinsurance->text }}</option>
+                                @endif
                                 @endforeach
                             </select>
                             @if ($errors->has('typeofinsurance_id'))
@@ -108,7 +115,11 @@
                             <select class="form-control" id='subtypeofinsurance_id' name='subtypeofinsurance_id'>
                                 <option value=''>Choose Sub Type of Insurance</option>
                                 @foreach($subtypeofinsurances as $subtypeofinsurance)
+                                @if (old('subtypeofinsurance_id') == $subtypeofinsurance->id)
+                                    <option value="{{ $subtypeofinsurance->id }}" selected>{{ $subtypeofinsurance->text }}</option>
+                                @else
                                     <option value="{{ $subtypeofinsurance->id }}">{{ $subtypeofinsurance->text }}</option>
+                                @endif
                                 @endforeach
                             </select>
                             @if ($errors->has('subtypeofinsurance_id'))
@@ -122,9 +133,13 @@
                         <div class="col-md-6 col-sm-6 ">
                             <select class="form-control" id='car_make_id' name='car_make_id'>
                                 <option value=''>Choose Car Make</option>
-                                    @foreach($carmakes as $carmake)
-                                        <option data-id="{{ $carmake['code'] }}" value="{{ $carmake['id'] }}">{{ $carmake['text'] }}</option>
-                                    @endforeach
+                                @foreach($carmakes as $carmake)
+                                @if (old('car_make_id') == $carmake->id)
+                                    <option value="{{ $carmake->id }}" data-id="{{ $carmake->code }}" selected>{{ $carmake->text }}</option>
+                                @else
+                                    <option value="{{ $carmake->id }}" data-id="{{ $carmake->code }}">{{ $carmake->text }}</option>
+                                @endif
+                                @endforeach
                             </select>
                             @if ($errors->has('car_make_id'))
                                 <span class="text-danger">{{ $errors->first('car_make_id') }}</span>
@@ -149,7 +164,11 @@
                             <select class="form-control" id='claimsstatus_id' name='claimsstatus_id'>
                                 <option value=''>Choose Claim Status</option>
                                 @foreach($claimsstatuses as $claimsstatuse)
+                                @if (old('claimsstatus_id') == $claimsstatuse->id)
+                                    <option value="{{ $claimsstatuse->id }}" selected>{{ $claimsstatuse->text }}</option>
+                                @else
                                     <option value="{{ $claimsstatuse->id }}">{{ $claimsstatuse->text }}</option>
+                                @endif
                                 @endforeach
                             </select>
                             @if ($errors->has('claimsstatus_id'))
@@ -164,7 +183,11 @@
                             <select class="form-control" id='carrepaircoverage_id' name='carrepaircoverage_id'>
                                 <option value=''>Choose Car Repair Coverage</option>
                                 @foreach($carrepaircoverages as $carrepaircoverage)
+                                @if (old('carrepaircoverage_id') == $carrepaircoverage->id)
+                                    <option value="{{ $carrepaircoverage->id }}" selected>{{ $carrepaircoverage->text }}</option>
+                                @else
                                     <option value="{{ $carrepaircoverage->id }}">{{ $carrepaircoverage->text }}</option>
+                                @endif
                                 @endforeach
                             </select>
                             @if ($errors->has('carrepaircoverage_id'))
@@ -179,7 +202,11 @@
                             <select class="form-control" id='carrepairtype_id' name='carrepairtype_id'>
                                 <option value=''>Choose Car Repair Type</option>
                                 @foreach($carrepairtypes as $carrepairtype)
+                                @if (old('carrepairtype_id') == $carrepairtype->id)
+                                    <option value="{{ $carrepairtype->id }}" selected>{{ $carrepairtype->text }}</option>
+                                @else
                                     <option value="{{ $carrepairtype->id }}">{{ $carrepairtype->text }}</option>
+                                @endif
                                 @endforeach
                             </select>
                             @if ($errors->has('carrepairtype_id'))
@@ -194,7 +221,11 @@
                             <select class="form-control" id='rentacar_id' name='rentacar_id'>
                                 <option value=''>Choose Rent a Car</option>
                                 @foreach($rentacars as $rentacar)
+                                @if (old('rentacar_id') == $rentacar->id)
+                                    <option value="{{ $rentacar->id }}" selected>{{ $rentacar->text }}</option>
+                                @else
                                     <option value="{{ $rentacar->id }}">{{ $rentacar->text }}</option>
+                                @endif
                                 @endforeach
                             </select>
                             @if ($errors->has('rentacar_id'))
@@ -209,7 +240,11 @@
                             <select class="form-control" id='assigned_to_id' name='assigned_to_id'>
                                 <option value=''>Choose Advisor</option>
                                 @foreach($advisors as $advisor)
+                                @if (old('assigned_to_id') == $advisor->id)
+                                    <option value="{{ $advisor->id }}" selected>{{ $advisor->name }}</option>
+                                @else
                                     <option value="{{ $advisor->id }}">{{ $advisor->name }}</option>
+                                @endif
                                 @endforeach
                             </select>
                             @if ($errors->has('assigned_to_id'))
@@ -297,12 +332,14 @@
                             @endif
                         </div>
                     </div>
+                   <div id='redirect_to_view_div'></div>
                     <div class="ln_solid"></div>
                     <div class="item form-group">
                         <div class="col-md-6 col-sm-6 offset-md-3">
-                          <button type="submit" class="btn btn-warning">Create</button>
+                          <button type="submit" class="btn btn-warning">Create & Add New</button> <button type="submit" class="btn btn-warning" id="return_to_view" >Cretae</button>
                         </div>
                     </div>
+
                 </form>
             </div>
         </div>

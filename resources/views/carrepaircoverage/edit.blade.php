@@ -6,6 +6,9 @@
         <div class="x_panel">
             <div class="x_title">
                 <h2>Edit Car Repair Coverage</h2>
+                <ul class="nav navbar-right panel_toolbox">
+                    <li><a href="{{ route('carrepaircoverage.index') }}" class="btn btn-warning btn-sm">Car Repair Coverage List</a></li>
+                </ul>
                 <div class="clearfix"></div>
             </div>
             <div class="x_content">
@@ -27,7 +30,6 @@
                             <span class="text-danger">{{ $errors->first('text') }}</span>
                         @endif
                     </div>
-                    
                 </div>
                 <div class="item form-group">
                     <label class="col-form-label col-md-3 col-sm-3 label-align" for="text_ar">Text Ar <span class="required">*</span>
@@ -38,7 +40,6 @@
                             <span class="text-danger">{{ $errors->first('text_ar') }}</span>
                         @endif
                     </div>
-                    
                 </div>
                 <div class="item form-group">
                     <label class="col-form-label col-md-3 col-sm-3 label-align" for="sort_order">Sort Order <span class="required">*</span>
@@ -49,7 +50,6 @@
                             <span class="text-danger">{{ $errors->first('sort_order') }}</span>
                         @endif
                     </div>
-                    
                 </div>
                 <div class="item form-group">
                     <label for="middle-name" class="col-form-label col-md-3 col-sm-3 label-align">Is Active</label>
@@ -61,13 +61,13 @@
                     </div>
                     </div>
                 </div>
+                <div id='redirect_to_view_div'></div>
                 <div class="ln_solid"></div>
                 <div class="item form-group">
                     <div class="col-md-6 col-sm-6 offset-md-3">
-                      <button type="submit" class="btn btn-warning">Update</button>
+                        <button type="submit" class="btn btn-warning">Update & Continue Updating</button> <button type="submit" class="btn btn-warning" id="return_to_view" >Update</button>
                     </div>
                 </div>
-
                 </form>
             </div>
         </div>

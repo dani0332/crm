@@ -479,8 +479,8 @@ $(document).ready(function () {
         columns: [
             {data: 'text', name: 'text'},
             {data: 'text_ar', name: 'text_ar'},
-            {data: 'is_active', name: 'is_active'},
             {data: 'sort_order', name: 'sort_order'},
+            {data: 'is_active', name: 'is_active'},
             {data: 'created_at', name: 'created_at'},
             {data: 'updated_at', name: 'updated_at'},
             {data: 'action', name: 'action', orderable: false, searchable: false},
@@ -497,8 +497,8 @@ $(document).ready(function () {
         columns: [
             {data: 'text', name: 'text'},
             {data: 'text_ar', name: 'text_ar'},
-            {data: 'is_active', name: 'is_active'},
             {data: 'sort_order', name: 'sort_order'},
+            {data: 'is_active', name: 'is_active'},
             {data: 'created_at', name: 'created_at'},
             {data: 'updated_at', name: 'updated_at'},
             {data: 'action', name: 'action', orderable: false, searchable: false},
@@ -515,8 +515,8 @@ $(document).ready(function () {
         columns: [
             {data: 'text', name: 'text'},
             {data: 'text_ar', name: 'text_ar'},
-            {data: 'is_active', name: 'is_active'},
             {data: 'sort_order', name: 'sort_order'},
+            {data: 'is_active', name: 'is_active'},
             {data: 'created_at', name: 'created_at'},
             {data: 'updated_at', name: 'updated_at'},
             {data: 'action', name: 'action', orderable: false, searchable: false},
@@ -533,8 +533,8 @@ $(document).ready(function () {
         columns: [
             {data: 'text', name: 'text'},
             {data: 'text_ar', name: 'text_ar'},
-            {data: 'is_active', name: 'is_active'},
             {data: 'sort_order', name: 'sort_order'},
+            {data: 'is_active', name: 'is_active'},
             {data: 'created_at', name: 'created_at'},
             {data: 'updated_at', name: 'updated_at'},
             {data: 'action', name: 'action', orderable: false, searchable: false},
@@ -552,8 +552,8 @@ $(document).ready(function () {
 
             {data: 'text', name: 'text'},
             {data: 'text_ar', name: 'text_ar'},
-            {data: 'is_active', name: 'is_active'},
             {data: 'sort_order', name: 'sort_order'},
+            {data: 'is_active', name: 'is_active'},
             {data: 'created_at', name: 'created_at'},
             {data: 'updated_at', name: 'updated_at'},
             {data: 'action', name: 'action', orderable: false, searchable: false},
@@ -570,8 +570,8 @@ $(document).ready(function () {
         columns: [
             {data: 'text', name: 'text'},
             {data: 'text_ar', name: 'text_ar'},
-            {data: 'is_active', name: 'is_active'},
             {data: 'sort_order', name: 'sort_order'},
+            {data: 'is_active', name: 'is_active'},
             {data: 'created_at', name: 'created_at'},
             {data: 'updated_at', name: 'updated_at'},
             {data: 'action', name: 'action', orderable: false, searchable: false},

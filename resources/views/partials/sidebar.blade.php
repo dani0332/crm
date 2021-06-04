@@ -93,29 +93,33 @@
         </ul>
         <ul class="nav side-menu">
             <li><a><i class="fa fa-quote-left"></i> Claims <span class="fa fa-chevron-down"></span></a>
-            <ul class="nav child_menu">
-                @can('claim-list')
-                    <li><a href="{{ url('claim/claims') }}">Claims</a></li>
-                @endcan
-                @can('type-of-insurance-list')
-                    <li><a href="{{ url('claim/typeofinsurance') }}">Type of Insurance</a></li>
-                @endcan
-                @can('sub-type-of-insurance-list')
-                    <li><a href="{{ url('claim/subtypeofinsurance') }}">Sub Type of Insurance</a></li>
-                @endcan
-                @can('claims-status-list')
-                    <li><a href="{{ url('claim/claimsstatus') }}">Claim Status</a></li>
-                @endcan
-                @can('car-repair-coverage-list')
-                    <li><a href="{{ url('claim/carrepaircoverage') }}">Car Repair Coverage</a></li>
-                @endcan
-                @can('car-repair-type-list')
-                    <li><a href="{{ url('claim/carrepairtype') }}">Car Repair Type</a></li>
-                @endcan
-                @can('rent-a-car-list')
-                    <li><a href="{{ url('claim/rentacar') }}">Rent a Car</a></li>
-                @endcan
-            </ul>
+                <ul class="nav child_menu">
+                    @can('claim-list')
+                        <li><a href="{{ url('claim/claims') }}">Claims</a></li>
+                    @endcan
+                    <li><a href="#">Admin <span class="fa fa-chevron-down"></span></a>
+                        <ul class="nav child_menu">
+                            @can('type-of-insurance-list')
+                                <li><a href="{{ url('claim/typeofinsurance') }}">Type of Insurance</a></li>
+                            @endcan
+                            @can('sub-type-of-insurance-list')
+                                <li><a href="{{ url('claim/subtypeofinsurance') }}">Sub Type of Insurance</a></li>
+                            @endcan
+                            @can('claims-status-list')
+                                <li><a href="{{ url('claim/claimsstatus') }}">Claim Status</a></li>
+                            @endcan
+                            @can('car-repair-coverage-list')
+                                <li><a href="{{ url('claim/carrepaircoverage') }}">Car Repair Coverage</a></li>
+                            @endcan
+                            @can('car-repair-type-list')
+                                <li><a href="{{ url('claim/carrepairtype') }}">Car Repair Type</a></li>
+                            @endcan
+                            @can('rent-a-car-list')
+                                <li><a href="{{ url('claim/rentacar') }}">Rent a Car</a></li>
+                            @endcan
+                        </ul>
+                    </li>
+                </ul>
             </li>
         </ul>
 
