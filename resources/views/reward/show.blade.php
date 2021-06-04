@@ -133,6 +133,7 @@
                 <table id="datatable" class="table table-striped jambo_table" style="width:100%">
                     <thead>
                       <tr>
+
                         <th>Title</th>
                         <th>Product Image</th>
                         <th>Language</th>
