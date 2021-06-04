@@ -123,8 +123,9 @@ class TypeOfInsuranceController extends Controller
      */
     public function destroy(TypeOfInsurance $typeofinsurance)
     {
+        DB::statement('SET FOREIGN_KEY_CHECKS=0');
         $typeofinsurance->delete();
-        return back()
-            ->with('success','Type of Insurance has been Deleted');
+        DB::statement('SET FOREIGN_KEY_CHECKS=1');
+        return redirect()->route('typeofinsurance.index');
     }
 }

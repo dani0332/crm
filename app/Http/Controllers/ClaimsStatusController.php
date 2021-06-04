@@ -123,8 +123,9 @@ class ClaimsStatusController extends Controller
      */
     public function destroy(ClaimsStatus $claimsstatus)
     {
+        DB::statement('SET FOREIGN_KEY_CHECKS=0');
         $claimsstatus->delete();
-        return back()
-            ->with('success','Claims Status has been Deleted');
+        DB::statement('SET FOREIGN_KEY_CHECKS=1');
+        return redirect()->route('claimsstatus.index');
     }
 }

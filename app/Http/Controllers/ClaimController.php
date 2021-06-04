@@ -221,8 +221,10 @@ class ClaimController extends Controller
      */
     public function destroy(Claim $claim)
     {
+        DB::statement('SET FOREIGN_KEY_CHECKS=0');
         $claim->delete();
-        return back()->with('success','Claim has been deleted');
+        DB::statement('SET FOREIGN_KEY_CHECKS=1');
+        return redirect()->route('claims.index');
     }
 
     public function carModelBasedOnCarMake(Request $request){
