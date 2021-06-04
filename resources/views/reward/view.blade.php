@@ -17,6 +17,7 @@
                 <table class="table table-striped jambo_table reward-data-table">
                       <thead>
                         <tr>
+                        <th>Id</th>
                           <th>Coupon Code</th>
                           <th>Partner</th>
                           <th>Discount</th>

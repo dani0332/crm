@@ -1,5 +1,5 @@
 $(document).ready(function () {
-    $('.selectpicker').selectpicker();
+    $(".selectpicker").selectpicker();
     $("#datepicker").datepicker({ dateFormat: "yy-mm-dd" });
     $("#datepicker_2").datepicker({ dateFormat: "yy-mm-dd" });
     $("#editor1").markdownEditor({
@@ -61,7 +61,21 @@ $(document).ready(function () {
         bLengthChange: false,
         ajax: config.routes.partner_datatable_route,
         columns: [
-            { data: "id", name: "id" },
+            {
+                data: "id",
+                name: "id",
+                render: function (data, type, row) {
+                    return (
+                        "<a href='" +
+                        config.routes.partner_datatable_route +
+                        "/" +
+                        row.id +
+                        "'>" +
+                        row.id +
+                        "</a>"
+                    );
+                },
+            },
             { data: "name", name: "name" },
             { data: "name_ar", name: "name_ar" },
             {
@@ -92,6 +106,21 @@ $(document).ready(function () {
         bLengthChange: false,
         ajax: config.routes.reward_categories_datatable_route,
         columns: [
+            {
+                data: "id",
+                name: "id",
+                render: function (data, type, row) {
+                    return (
+                        "<a href='" +
+                        config.routes.reward_categories_datatable_route +
+                        "/" +
+                        row.id +
+                        "'>" +
+                        row.id +
+                        "</a>"
+                    );
+                },
+            },
             { data: "text", name: "text" },
             { data: "text_ar", name: "text_ar" },
             { data: "sort_order", name: "sort_order" },
@@ -114,6 +143,21 @@ $(document).ready(function () {
         bLengthChange: false,
         ajax: config.routes.reward_tags_datatable_route,
         columns: [
+            {
+                data: "id",
+                name: "id",
+                render: function (data, type, row) {
+                    return (
+                        "<a href='" +
+                        config.routes.reward_tags_datatable_route +
+                        "/" +
+                        row.id +
+                        "'>" +
+                        row.id +
+                        "</a>"
+                    );
+                },
+            },
             { data: "text", name: "text" },
             { data: "text_ar", name: "text_ar" },
             { data: "sort_order", name: "sort_order" },
@@ -136,7 +180,22 @@ $(document).ready(function () {
         bLengthChange: false,
         ajax: config.routes.reward_datatable_route,
         columns: [
-            { data: "id", name: "id" },
+            {
+                data: "id",
+                name: "id",
+                render: function (data, type, row) {
+                    return (
+                        "<a href='" +
+                        config.routes.reward_datatable_route +
+                        "/" +
+                        row.id +
+                        "'>" +
+                        row.id +
+                        "</a>"
+                    );
+                },
+            },
+            { data: "coupon_code", name: "coupon_code" },
             { data: "partner", name: "partner" },
             { data: "discount", name: "discount" },
             { data: "start_date", name: "start_date" },
@@ -160,7 +219,21 @@ $(document).ready(function () {
         serverSide: true,
         ajax: config.routes.user_datatable_route,
         columns: [
-            { data: "id", name: "id" },
+            {
+                data: "id",
+                name: "id",
+                render: function (data, type, row) {
+                    return (
+                        "<a href='" +
+                        config.routes.user_datatable_route +
+                        "/" +
+                        row.id +
+                        "'>" +
+                        row.id +
+                        "</a>"
+                    );
+                },
+            },
             { data: "name", name: "name" },
             { data: "email", name: "email" },
             {
@@ -180,7 +253,21 @@ $(document).ready(function () {
         serverSide: true,
         ajax: config.routes.role_datatable_route,
         columns: [
-            { data: "id", name: "id" },
+            {
+                data: "id",
+                name: "id",
+                render: function (data, type, row) {
+                    return (
+                        "<a href='" +
+                        config.routes.role_datatable_route +
+                        "/" +
+                        row.id +
+                        "'>" +
+                        row.id +
+                        "</a>"
+                    );
+                },
+            },
             { data: "name", name: "name" },
             {
                 data: "action",
@@ -199,7 +286,9 @@ $(document).ready(function () {
         serverSide: true,
         ajax: config.routes.insurancecompany_datatable_route,
         columns: [
-            { data: "id", name: "id" },
+            { data: 'id', name: 'id', render:function(data, type, row){
+                return "<a href='"+config.routes.insurancecompany_datatable_route+'/'+row.id +"'>" + row.id + "</a>"
+            }},
             { data: "name", name: "name" },
             { data: "is_active", name: "is_active" },
             { data: "created_by", name: "created_by" },
@@ -221,7 +310,9 @@ $(document).ready(function () {
         serverSide: true,
         ajax: config.routes.handler_datatable_route,
         columns: [
-            { data: "id", name: "id" },
+            { data: 'id', name: 'id', render:function(data, type, row){
+                return "<a href='"+config.routes.handler_datatable_route+'/'+row.id +"'>" + row.id + "</a>"
+            }},
             { data: "name", name: "name" },
             { data: "is_active", name: "is_active" },
             { data: "created_by", name: "created_by" },
@@ -243,7 +334,9 @@ $(document).ready(function () {
         serverSide: true,
         ajax: config.routes.status_datatable_route,
         columns: [
-            { data: "id", name: "id" },
+            { data: 'id', name: 'id', render:function(data, type, row){
+                return "<a href='"+config.routes.status_datatable_route+'/'+row.id +"'>" + row.id + "</a>"
+            }},
             { data: "name", name: "name" },
             { data: "is_active", name: "is_active" },
             { data: "created_by", name: "created_by" },
@@ -297,7 +390,9 @@ $(document).ready(function () {
         serverSide: true,
         ajax: config.routes.reason_datatable_route,
         columns: [
-            { data: "id", name: "id" },
+            { data: 'id', name: 'id', render:function(data, type, row){
+                return "<a href='"+config.routes.reason_datatable_route+'/'+row.id +"'>" + row.id + "</a>"
+            }},
             { data: "name", name: "name" },
             { data: "is_active", name: "is_active" },
             { data: "created_by", name: "created_by" },
@@ -319,7 +414,9 @@ $(document).ready(function () {
         serverSide: true,
         ajax: config.routes.paymentmode_datatable_route,
         columns: [
-            { data: "id", name: "id" },
+            { data: 'id', name: 'id', render:function(data, type, row){
+                return "<a href='"+config.routes.paymentmode_datatable_route+'/'+row.id +"'>" + row.id + "</a>"
+            }},
             { data: "name", name: "name" },
             { data: "is_active", name: "is_active" },
             { data: "created_by", name: "created_by" },
@@ -349,7 +446,9 @@ $(document).ready(function () {
             },
         },
         columns: [
-            { data: "id", name: "id" },
+            { data: 'id', name: 'id', render:function(data, type, row){
+                return "<a href='"+config.routes.carquote_datatable_route+'/'+row.id +"'>" + row.id + "</a>"
+            }},
             { data: "car_value", name: "car_value" },
             { data: "is_synced", name: "is_synced" },
             { data: "device", name: "device" },
@@ -365,15 +464,15 @@ $(document).ready(function () {
 
     $("#search-car-quote").submit(function (e) {
         e.preventDefault();
-        $('.loader').show();
+        $(".loader").show();
         carquoteDatatable.draw();
         setTimeout(() => {
-            $('.loader').hide();
+            $(".loader").hide();
         }, 1000);
     });
 
     $("#resubmit_api_carquote").click(function () {
-        $('.loader').show();
+        $(".loader").show();
         $("#resubmit_api_carquote").attr("disabled", true);
         var data_id = $(this).attr("data-id");
         var carQuotes = [];
@@ -390,7 +489,7 @@ $(document).ready(function () {
                 type: "post",
                 data: { car_quotes: carQuotes, _token: config._token },
                 success: function (response) {
-                    $('.loader').hide();
+                    $(".loader").hide();
                     $("#success_message").show();
                     $("#success_message")
                         .fadeIn()
@@ -404,7 +503,7 @@ $(document).ready(function () {
                     }, 3000);
                 },
                 error: function (jqXHR, textStatus, errorThrown) {
-                    $('.loader').hide();
+                    $(".loader").hide();
                     console.log(textStatus, errorThrown);
                     $("#error_message").show();
                     $("#error_message").fadeIn().html(errorThrown);
@@ -415,7 +514,7 @@ $(document).ready(function () {
                 },
             });
         } else {
-            $('.loader').hide();
+            $(".loader").hide();
             $("#error_message").show();
             $("#error_message").fadeIn().html("Please select atleast one row");
             setTimeout(function () {
@@ -433,11 +532,9 @@ $(document).ready(function () {
         serverSide: true,
         ajax: config.routes.healthquote_datatable_route,
         columns: [
-            // {data: "checkbox", name: "checkbox",
-            // render: function (data, type, row, meta) {
-            //     return '<input type="checkbox" class="flat multicheckbox" name="row[]" data-id="'+row.id+'">';
-            // }},
-            { data: "id", name: "id" },
+            { data: 'id', name: 'id', render:function(data, type, row){
+                return "<a href='"+config.routes.healthquote_datatable_route+'/'+row.id +"'>" + row.id + "</a>"
+            }},
             { data: "preference", name: "preference" },
             { data: "is_synced", name: "is_synced" },
             { data: "device", name: "device" },
@@ -627,11 +724,9 @@ $(document).ready(function () {
             },
         },
         columns: [
-            // {data: "checkbox", name: "checkbox",
-            // render: function (data, type, row, meta) {
-            //     return '<input type="checkbox" class="flat multicheckbox" name="row[]" data-id="'+row.id+'">';
-            // }},
-            { data: "id", name: "id" },
+            { data: 'id', name: 'id', render:function(data, type, row){
+                return "<a href='"+config.routes.customer_data_table_route+'/'+row.id +"'>" + row.id + "</a>"
+            }},
             { data: "first_name", name: "first_name" },
             { data: "email", name: "email" },
             { data: "mobile_no", name: "mobile_no" },
@@ -649,10 +744,10 @@ $(document).ready(function () {
 
     $("#search-customer").submit(function (e) {
         e.preventDefault();
-        $('.loader').show();
+        $(".loader").show();
         customerDataTable.draw();
         setTimeout(() => {
-            $('.loader').hide();
+            $(".loader").hide();
         }, 1000);
     });
     //select/unselect all checkboxes if this selected
@@ -686,15 +781,15 @@ $(document).ready(function () {
         });
     });
 
-    dateRangePickerChange('','');
+    dateRangePickerChange("", "");
     $(".applyBtn, .ranges li").click(function () {
-        $('.loader').show();
+        $(".loader").show();
         setTimeout(() => {
             var date = $("#reportrange span").html();
             var dateAsArray = date.split("-");
             var startDate = moment(dateAsArray[0]).format("YYYY-MM-DD");
             var endDate = moment(dateAsArray[1]).format("YYYY-MM-DD");
-            dateRangePickerChange(startDate,endDate)
+            dateRangePickerChange(startDate, endDate);
         }, 1000);
     });
 
@@ -706,11 +801,9 @@ $(document).ready(function () {
             $("form").submit();
         }, 500);
     });
-
 });
 
-
-function dateRangePickerChange(startDate,endDate) {
+function dateRangePickerChange(startDate, endDate) {
     $.ajax({
         url: config.routes.load_dashboard_stats,
         method: "POST",
@@ -720,7 +813,7 @@ function dateRangePickerChange(startDate,endDate) {
             $(".customer-count").html(data.totalCustomers);
             $(".carquote-count").html(data.totalCarQuotes);
             $(".duration").html(startDate + " - " + endDate);
-            $('.loader').hide();
+            $(".loader").hide();
         },
     });
 }
