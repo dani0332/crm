@@ -14,6 +14,7 @@ use App\Models\CarMake;
 use App\Models\CarModel;
 
 use Illuminate\Http\Request;
+use Auth;
 use DataTables;
 use Spatie\Permission\Models\Role;
 use DB;
@@ -87,11 +88,11 @@ class ClaimController extends Controller
             'insurance_company' => 'required|max:255',
             'policy_number' => 'required|max:150',
             'additional_notes' => 'required|max:2000',
-            'typeofinsurance_id' => 'required',
-            'claimsstatus_id' => 'required',
-            'carrepaircoverage_id' => 'required',
-            'carrepairtype_id' => 'required',
-            'rentacar_id' => 'required',
+            'type_of_insurances_id' => 'required',
+            'claims_status_id' => 'required',
+            'car_repair_coverage_id' => 'required',
+            'car_repair_type_id' => 'required',
+            'rent_a_car_id' => 'required',
             'assigned_to_id' => 'required',
         ]);
 
@@ -111,15 +112,17 @@ class ClaimController extends Controller
         $claim->insurer_reference =  $request->insurer_reference;
         $claim->date_of_loss =  $request->date_of_loss;
         $claim->claim_amount =  $request->claim_amount;
-        $claim->typeofinsurance_id = $request->typeofinsurance_id;
-        $claim->subtypeofinsurance_id = $request->subtypeofinsurance_id;
-        $claim->claimsstatus_id = $request->claimsstatus_id;
-        $claim->carrepaircoverage_id = $request->carrepaircoverage_id;
-        $claim->carrepairtype_id = $request->carrepairtype_id;
-        $claim->rentacar_id = $request->rentacar_id;
+        $claim->type_of_insurances_id = $request->type_of_insurances_id;
+        $claim->sub_type_of_insurance_id = $request->sub_type_of_insurance_id;
+        $claim->claims_status_id = $request->claims_status_id;
+        $claim->car_repair_coverage_id = $request->car_repair_coverage_id;
+        $claim->car_repair_type_id = $request->car_repair_type_id;
+        $claim->rent_a_car_id = $request->rent_a_car_id;
         $claim->assigned_to_id = $request->assigned_to_id;
         $claim->car_make_id = $request->car_make_id;
         $claim->car_model_id = $request->car_model_id;
+        $claim->created_by_id = Auth::user()->id;
+        $claim->modified_by_id = Auth::user()->id;
         $claim->save();
         return back()->with('success','Claim has been stored');
     }
@@ -174,10 +177,11 @@ class ClaimController extends Controller
             'insurance_company' => 'required|max:255',
             'policy_number' => 'required|max:150',
             'additional_notes' => 'required|max:2000',
-            'claimsstatus_id' => 'required',
-            'carrepaircoverage_id' => 'required',
-            'carrepairtype_id' => 'required',
-            'rentacar_id' => 'required',
+            'type_of_insurances_id' => 'required',
+            'claims_status_id' => 'required',
+            'car_repair_coverage_id' => 'required',
+            'car_repair_type_id' => 'required',
+            'rent_a_car_id' => 'required',
             'assigned_to_id' => 'required',
         ]);
         $claim->first_name =  $request->first_name;
@@ -195,15 +199,16 @@ class ClaimController extends Controller
         $claim->insurer_reference =  $request->insurer_reference;
         $claim->date_of_loss =  $request->date_of_loss;
         $claim->claim_amount =  $request->claim_amount;
-        $claim->typeofinsurance_id = $request->typeofinsurance_id;
-        $claim->subtypeofinsurance_id = $request->subtypeofinsurance_id;
-        $claim->claimsstatus_id = $request->claimsstatus_id;
-        $claim->carrepaircoverage_id = $request->carrepaircoverage_id;
-        $claim->carrepairtype_id = $request->carrepairtype_id;
-        $claim->rentacar_id = $request->rentacar_id;
+        $claim->type_of_insurances_id = $request->type_of_insurances_id;
+        $claim->sub_type_of_insurance_id = $request->sub_type_of_insurance_id;
+        $claim->claims_status_id = $request->claims_status_id;
+        $claim->car_repair_coverage_id = $request->car_repair_coverage_id;
+        $claim->car_repair_type_id = $request->car_repair_type_id;
+        $claim->rent_a_car_id = $request->rent_a_car_id;
         $claim->assigned_to_id = $request->assigned_to_id;
         $claim->car_make_id = $request->car_make_id;
         $claim->car_model_id = $request->car_model_id;
+        $claim->modified_by_id = Auth::user()->id;
         $claim->save();
         return back()->with('success','Claim has been Updated');
     }

@@ -9,5 +9,4 @@ class TypeOfInsurance extends Model
 {
     use HasFactory;
     protected $table = 'type_of_insurances';
-    public $timestamps = false;
 }
