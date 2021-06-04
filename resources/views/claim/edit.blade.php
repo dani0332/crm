@@ -92,31 +92,31 @@
                         </div>
                     </div>
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="typeofinsurance_id">Type of Insurance <span class="required">*</span>
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="type_of_insurances_id">Type of Insurance <span class="required">*</span>
                         </label>
                         <div class="col-md-6 col-sm-6 ">
-                            <select class="form-control" id='typeofinsurance_id' name='typeofinsurance_id'>
-                                <option value=''>Choose Type of Insuranc</option>
+                            <select class="form-control" id='type_of_insurances_id' name='type_of_insurances_id'>
+                                <option value=''>Choose Type of Insurance</option>
                                 @foreach($typeofinsurances as $typeofinsurance)
-                                    <option {{ $claim->typeofinsurance_id == $typeofinsurance->id ? 'selected' : '' }} value="{{ $typeofinsurance->id }}">{{ $typeofinsurance->text }}</option>
+                                    <option {{ $claim->type_of_insurances_id == $typeofinsurance->id ? 'selected' : '' }} value="{{ $typeofinsurance->id }}">{{ $typeofinsurance->text }}</option>
                                 @endforeach
                             </select>
-                            @if ($errors->has('typeofinsurance_id'))
-                                <span class="text-danger">{{ $errors->first('typeofinsurance_id') }}</span>
+                            @if ($errors->has('type_of_insurances_id'))
+                                <span class="text-danger">{{ $errors->first('type_of_insurances_id') }}</span>
                             @endif
                         </div>
                     </div>
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="subtypeofinsurance_id">Sub Type of Insurance</label>
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="sub_type_of_insurance_id">Sub Type of Insurance</label>
                         <div class="col-md-6 col-sm-6 ">
-                            <select class="form-control" id='subtypeofinsurance_id' name='subtypeofinsurance_id'>
+                            <select class="form-control" id='sub_type_of_insurance_id' name='sub_type_of_insurance_id'>
                                 <option value=''>Choose Sub Type of Insurance</option>
                                 @foreach($subtypeofinsurances as $subtypeofinsurance)
-                                    <option {{ $claim->subtypeofinsurance_id == $subtypeofinsurance->id ? 'selected' : '' }} value="{{ $subtypeofinsurance->id }}">{{ $subtypeofinsurance->text }}</option>
+                                    <option {{ $claim->sub_type_of_insurance_id == $subtypeofinsurance->id ? 'selected' : '' }} value="{{ $subtypeofinsurance->id }}">{{ $subtypeofinsurance->text }}</option>
                                 @endforeach
                             </select>
-                            @if ($errors->has('subtypeofinsurance_id'))
-                                <span class="text-danger">{{ $errors->first('subtypeofinsurance_id') }}</span>
+                            @if ($errors->has('sub_type_of_insurance_id'))
+                                <span class="text-danger">{{ $errors->first('sub_type_of_insurance_id') }}</span>
                             @endif
                         </div>
                     </div>
@@ -149,58 +149,58 @@
                         </div>
                     </div>
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="claimsstatus_id">Claim Status <span class="required">*</span></label>
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="claims_status_id">Claim Status <span class="required">*</span></label>
                         <div class="col-md-6 col-sm-6 ">
-                            <select class="form-control" id='claimsstatus_id' name='claimsstatus_id'>
+                            <select class="form-control" id='claims_status_id' name='claims_status_id'>
                                 <option value=''>Choose Claim Status</option>
                                 @foreach($claimsstatuses as $claimsstatus)
-                                    <option {{ $claim->claimsstatus_id == $claimsstatus->id ? 'selected' : '' }} value="{{ $claimsstatus->id }}">{{ $claimsstatus->text }}</option>
+                                    <option {{ $claim->claims_status_id == $claimsstatus->id ? 'selected' : '' }} value="{{ $claimsstatus->id }}">{{ $claimsstatus->text }}</option>
                                 @endforeach
                             </select>
-                            @if ($errors->has('claimsstatus_id'))
-                                <span class="text-danger">{{ $errors->first('claimsstatus_id') }}</span>
+                            @if ($errors->has('claims_status_id'))
+                                <span class="text-danger">{{ $errors->first('claims_status_id') }}</span>
                             @endif
                         </div>
                     </div>
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="carrepaircoverage_id">Car Repair Coverage <span class="required">*</span></label>
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="car_repair_coverage_id">Car Repair Coverage <span class="required">*</span></label>
                         <div class="col-md-6 col-sm-6 ">
-                            <select class="form-control" id='carrepaircoverage_id' name='carrepaircoverage_id'>
+                            <select class="form-control" id='car_repair_coverage_id' name='car_repair_coverage_id'>
                                 <option value=''>Choose Car Repair Coverage</option>
                                 @foreach($carrepaircoverages as $carrepaircoverage)
-                                    <option {{ $claim->carrepaircoverage_id == $carrepaircoverage->id ? 'selected' : '' }} value="{{ $carrepaircoverage->id }}">{{ $carrepaircoverage->text }}</option>
+                                    <option {{ $claim->car_repair_coverage_id == $carrepaircoverage->id ? 'selected' : '' }} value="{{ $carrepaircoverage->id }}">{{ $carrepaircoverage->text }}</option>
                                 @endforeach
                             </select>
-                            @if ($errors->has('carrepaircoverage_id'))
-                                <span class="text-danger">{{ $errors->first('carrepaircoverage_id') }}</span>
+                            @if ($errors->has('car_repair_coverage_id'))
+                                <span class="text-danger">{{ $errors->first('car_repair_coverage_id') }}</span>
                             @endif
                         </div>
                     </div>
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="carrepairtype_id">Car Repair Type <span class="required">*</span></label>
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="car_repair_type_id">Car Repair Type <span class="required">*</span></label>
                         <div class="col-md-6 col-sm-6 ">
-                            <select class="form-control" id='carrepairtype_id' name='carrepairtype_id'>
+                            <select class="form-control" id='car_repair_type_id' name='car_repair_type_id'>
                                 <option value=''>Choose Car Repair Type</option>
                                 @foreach($carrepairtypes as $carrepairtype)
-                                    <option {{ $claim->carrepairtype_id == $carrepairtype->id ? 'selected' : '' }} value="{{ $carrepairtype->id }}">{{ $carrepairtype->text }}</option>
+                                    <option {{ $claim->car_repair_type_id == $carrepairtype->id ? 'selected' : '' }} value="{{ $carrepairtype->id }}">{{ $carrepairtype->text }}</option>
                                 @endforeach
                             </select>
-                            @if ($errors->has('carrepairtype_id'))
-                                <span class="text-danger">{{ $errors->first('carrepairtype_id') }}</span>
+                            @if ($errors->has('car_repair_type_id'))
+                                <span class="text-danger">{{ $errors->first('car_repair_type_id') }}</span>
                             @endif
                         </div>
                     </div>
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="rentacar_id">Rent a Car <span class="required">*</span></label>
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="rent_a_car_id">Rent a Car <span class="required">*</span></label>
                         <div class="col-md-6 col-sm-6 ">
-                            <select class="form-control" id='rentacar_id' name='rentacar_id'>
+                            <select class="form-control" id='rent_a_car_id' name='rent_a_car_id'>
                                 <option value=''>Choose Rent a Car</option>
                                 @foreach($rentacars as $rentacar)
-                                    <option {{ $claim->rentacar_id == $rentacar->id ? 'selected' : '' }} value="{{ $rentacar->id }}">{{ $rentacar->text }}</option>
+                                    <option {{ $claim->rent_a_car_id == $rentacar->id ? 'selected' : '' }} value="{{ $rentacar->id }}">{{ $rentacar->text }}</option>
                                 @endforeach
                             </select>
-                            @if ($errors->has('rentacar_id'))
-                                <span class="text-danger">{{ $errors->first('rentacar_id') }}</span>
+                            @if ($errors->has('rent_a_car_id'))
+                                <span class="text-danger">{{ $errors->first('rent_a_car_id') }}</span>
                             @endif
                         </div>
                     </div>

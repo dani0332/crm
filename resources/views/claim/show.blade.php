@@ -38,7 +38,7 @@
                         </div>
                     </div>
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="SSSSS">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="email_address">
                             <b> Email Address </b>
                         </label>
                         <div class="col-md-6 col-sm-6 ">
@@ -46,7 +46,7 @@
                         </div>
                     </div>
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="SSSSS">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="phone_number">
                             <b> Phone Number </b>
                         </label>
                         <div class="col-md-6 col-sm-6 ">
@@ -54,7 +54,7 @@
                         </div>
                     </div>
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="SSSSS">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="insurance_company">
                             <b> Insurance Company </b>
                         </label>
                         <div class="col-md-6 col-sm-6 ">
@@ -62,7 +62,7 @@
                         </div>
                     </div>
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="SSSSS">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="policy_number">
                             <b> Policy Number </b>
                         </label>
                         <div class="col-md-6 col-sm-6 ">
@@ -70,7 +70,7 @@
                         </div>
                     </div>
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="SSSSS">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="additional_notes">
                             <b> Additional Notes </b>
                         </label>
                         <div class="col-md-6 col-sm-6 ">
@@ -78,7 +78,7 @@
                         </div>
                     </div>
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="SSSSS">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="type_of_insurance">
                             <b> Type of Insurance </b>
                         </label>
                         <div class="col-md-6 col-sm-6 ">
@@ -86,7 +86,7 @@
                         </div>
                     </div>
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="SSSSS">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="sub_type_of_insurance">
                             <b> Sub Type of Insurance </b>
                         </label>
                         <div class="col-md-6 col-sm-6 ">
@@ -94,7 +94,7 @@
                         </div>
                     </div>
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="SSSSS">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="car_make">
                             <b> Car Make </b>
                         </label>
                         <div class="col-md-6 col-sm-6 ">
@@ -102,7 +102,7 @@
                         </div>
                     </div>
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="SSSSS">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="car_model">
                             <b> Car Model </b>
                         </label>
                         <div class="col-md-6 col-sm-6 ">
@@ -110,7 +110,7 @@
                         </div>
                     </div>
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="SSSSS">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="claim_status">
                             <b> Claim Status </b>
                         </label>
                         <div class="col-md-6 col-sm-6 ">
@@ -118,7 +118,7 @@
                         </div>
                     </div>
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="SSSSS">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="car_repair_coverage">
                             <b> Car Repair Coverage </b>
                         </label>
                         <div class="col-md-6 col-sm-6 ">
@@ -126,7 +126,7 @@
                         </div>
                     </div>
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="SSSSS">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="car_repair_type">
                             <b> Car Repair Type </b>
                         </label>
                         <div class="col-md-6 col-sm-6 ">
@@ -134,7 +134,7 @@
                         </div>
                     </div>
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="SSSSS">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="rent_a_car">
                             <b> Rent a car </b>
                         </label>
                         <div class="col-md-6 col-sm-6 ">
@@ -142,7 +142,7 @@
                         </div>
                     </div>
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="SSSSS">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="assigned_to">
                             <b> Assigned To </b>
                         </label>
                         <div class="col-md-6 col-sm-6 ">
@@ -150,7 +150,7 @@
                         </div>
                     </div>
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="SSSSS">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="ticket_number">
                             <b> Ticket Number </b>
                         </label>
                         <div class="col-md-6 col-sm-6 ">
@@ -158,7 +158,7 @@
                         </div>
                     </div>
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="SSSSS">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="plate_number">
                             <b> Plate Number </b>
                         </label>
                         <div class="col-md-6 col-sm-6 ">
@@ -166,7 +166,7 @@
                         </div>
                     </div>
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="SSSSS">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="standard_excess_payable">
                             <b> Standard Excess payable </b>
                         </label>
                         <div class="col-md-6 col-sm-6 ">
@@ -174,7 +174,7 @@
                         </div>
                     </div>
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="SSSSS">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="lability">
                             <b> Liability </b>
                         </label>
                         <div class="col-md-6 col-sm-6 ">
@@ -182,7 +182,7 @@
                         </div>
                     </div>
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="SSSSS">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="workshop">
                             <b> Workshop </b>
                         </label>
                         <div class="col-md-6 col-sm-6 ">
@@ -190,7 +190,7 @@
                         </div>
                     </div>
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="SSSSS">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="insurer_reference">
                             <b> Insurer Reference </b>
                         </label>
                         <div class="col-md-6 col-sm-6 ">
@@ -198,7 +198,7 @@
                         </div>
                     </div>
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="SSSSS">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="date_of_loss">
                             <b> Date of loss </b>
                         </label>
                         <div class="col-md-6 col-sm-6 ">
@@ -206,7 +206,7 @@
                         </div>
                     </div>
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="SSSSS">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="claim_amount">
                             <b> Claim Amount </b>
                         </label>
                         <div class="col-md-6 col-sm-6 ">
@@ -214,7 +214,7 @@
                         </div>
                     </div>
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="SSSSS">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="created_at">
                             <b> Created At </b>
                         </label>
                         <div class="col-md-6 col-sm-6 ">
@@ -222,11 +222,27 @@
                         </div>
                     </div>
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="SSSSS">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="created_by">
+                            <b> Created by </b>
+                        </label>
+                        <div class="col-md-6 col-sm-6 ">
+                            <p class="label-align-center">{{ $claim->createdby ? $claim->createdby->name : '' }}</p>
+                        </div>
+                    </div>
+                    <div class="item form-group">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="updated_at">
                             <b> Updated At </b>
                         </label>
                         <div class="col-md-6 col-sm-6 ">
                             <p class="label-align-center">{{ $claim->updated_at }}</p>
+                        </div>
+                    </div>
+                    <div class="item form-group">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="modified_by">
+                            <b> Updated by </b>
+                        </label>
+                        <div class="col-md-6 col-sm-6 ">
+                            <p class="label-align-center">{{ $claim->modifiedby ? $claim->modifiedby->name : '' }}</p>
                         </div>
                     </div>
                     <div class="ln_solid"></div>

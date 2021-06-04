@@ -9,15 +9,14 @@ class Claim extends Model
 {
     use HasFactory;
     protected $table = 'claims';
-    public $timestamps = false;
 
     public function typeofinsurance()
     {
-        return $this->belongsTo(TypeOfInsurance::class,'typeofinsurance_id','id');
+        return $this->belongsTo(TypeOfInsurance::class,'type_of_insurances_id','id');
     }
     public function subtypeofinsurance()
     {
-        return $this->belongsTo(SubTypeOfInsurance::class,'subtypeofinsurance_id','id');
+        return $this->belongsTo(SubTypeOfInsurance::class,'sub_type_of_insurance_id','id');
     }
     public function carmake()
     {
@@ -29,22 +28,30 @@ class Claim extends Model
     }
     public function claimsstatus()
     {
-        return $this->belongsTo(ClaimsStatus::class,'claimsstatus_id','id');
+        return $this->belongsTo(ClaimsStatus::class,'claims_status_id','id');
     }
     public function carrepaircoverage()
     {
-        return $this->belongsTo(CarRepairCoverage::class,'carrepaircoverage_id','id');
+        return $this->belongsTo(CarRepairCoverage::class,'car_repair_coverage_id','id');
     }
     public function carrepairtype()
     {
-        return $this->belongsTo(CarRepairType::class,'carrepairtype_id','id');
+        return $this->belongsTo(CarRepairType::class,'car_repair_type_id','id');
     }
     public function rentacar()
     {
-        return $this->belongsTo(RentACar::class,'rentacar_id','id');
+        return $this->belongsTo(RentACar::class,'rent_a_car_id','id');
     }
     public function assignedto()
     {
         return $this->belongsTo(User::class,'assigned_to_id','id');
+    }
+    public function createdby()
+    {
+        return $this->belongsTo(User::class,'created_by_id','id');
+    }
+    public function modifiedby()
+    {
+        return $this->belongsTo(User::class,'modified_by_id','id');
     }
 }
