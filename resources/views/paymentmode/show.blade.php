@@ -62,4 +62,12 @@
         </div>
     </div>
 </div>
+
+@can('auditable')
+    <div id="auditable">
+        <button id='auditablebtn' class="btn btn-warning auditablebtn" data-id="{{ $paymentmode->id }}" data-model="App\Models\PaymentMode">
+            View Audit Logs
+        </button>
+    </div>
+@endcan
 @endsection

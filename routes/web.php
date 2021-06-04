@@ -49,7 +49,10 @@ Route::get('auth/google', 'App\Http\Controllers\GoogleSocialiteController@redire
 Route::get('google/callback', 'App\Http\Controllers\GoogleSocialiteController@handleCallback');
 
 Route::middleware(['auth:sanctum', 'verified'])
-    ->get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    ->get('/home', function(){
+        return view('home');
+    });
+Route::get('/dashboard',[DashboardController::class, 'index'])->name('dashboard');
 
 Route::post('dashboard-stats', [DashboardController::class, 'dashboardStats']);
 Route::group(['prefix' => 'rewards'], function () {

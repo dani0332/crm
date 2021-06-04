@@ -6,9 +6,9 @@
         <div class="x_panel">
             <div class="x_title">
                 <h2>Transaction Detail</h2>
-                 <ul class="nav navbar-right panel_toolbox">
+                 {{-- <ul class="nav navbar-right panel_toolbox">
                     <li><a href="{{ route('transaction.index') }}" class="btn btn-warning btn-sm">Transaction List</a></li>
-                </ul>
+                </ul> --}}
                 <div class="clearfix"></div>
             </div>
             <div class="x_content">
@@ -98,4 +98,11 @@
         </div>
     </div>
 </div>
+@can('auditable')
+    <div id="auditable">
+        <button id='auditablebtn' class="btn btn-warning auditablebtn" data-id="{{ $transaction->id }}" data-model="App\Models\Transaction">
+            View Audit Logs
+        </button>
+    </div>
+@endcan
 @endsection

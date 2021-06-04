@@ -47,6 +47,6 @@ class GoogleSocialiteController extends Controller
         }
 
         Auth::login($isExisted[0]);
-        return redirect('/dashboard');
+        return redirect('/home');
     }
 }

@@ -137,12 +137,12 @@ $(document).ready(function () {
         ajax: config.routes.reward_datatable_route,
         columns: [
             { data: "id", name: "id" },
-            { data: "partner_id", name: "partner_id" },
+            { data: "partner", name: "partner" },
             { data: "discount", name: "discount" },
             { data: "start_date", name: "start_date" },
             { data: "end_date", name: "end_date" },
             { data: "is_active", name: "is_active" },
-            { data: "is_flat_discount", name: "is_flat_discount" },
+            // { data: "is_flat_discount", name: "is_flat_discount" },
             {
                 data: "action",
                 name: "action",

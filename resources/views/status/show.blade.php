@@ -49,8 +49,8 @@
                 <div class="ln_solid"></div>
                 <div class="item form-group">
                     <div class="col-md-6 col-sm-6 offset-md-3">
-                        <a href="{{ route('reason.edit', ['reason' => $status->id]) }}" class='btn btn-warning btn-sm'>Edit</a>
-                        <form action="{{ route('reason.destroy', ['reason' => $status->id]) }}" method="POST">
+                        <a href="{{ route('status.edit', ['status' => $status->id]) }}" class='btn btn-warning btn-sm'>Edit</a>
+                        <form action="{{ route('status.destroy', ['status' => $status->id]) }}" method="POST">
                             @csrf
                             @method('DELETE')
                             <button type="submit" class='btn btn-warning btn-sm'>Delete</button>
@@ -62,4 +62,11 @@
         </div>
     </div>
 </div>
+@can('auditable')
+    <div id="auditable">
+        <button id='auditablebtn' class="btn btn-warning auditablebtn" data-id="{{ $status->id }}" data-model="App\Models\Status">
+            View Audit Logs
+        </button>
+    </div>
+@endcan
 @endsection

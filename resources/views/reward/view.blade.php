@@ -10,7 +10,7 @@
                     <li><a href="{{ url('rewards/reward/create') }}" class="btn btn-warning btn-sm">Create reward</a></li>
                 </ul>
                 <div class="clearfix"></div>
-                
+
             </div>
             <div class="x_content">
                 <br />
@@ -23,13 +23,13 @@
                           <th>Start Date</th>
                           <th>End Date</th>
                           <th>Is Active</th>
-                          <th>Is Flat Discount</th>
+                          {{-- <th>Is Flat Discount</th> --}}
                           <th>Actions</th>
                         </tr>
                       </thead>
 
 
-                      <tbody>  
+                      <tbody>
                       </tbody>
                     </table>
             </div>
