@@ -6,6 +6,8 @@ use App\Models\Reason;
 use Illuminate\Http\Request;
 use DataTables;
 use Auth;
+use DB;
+
 class ReasonController extends Controller
 {
     /**
@@ -156,7 +158,9 @@ class ReasonController extends Controller
     public function destroy(Reason $reason)
     {
 
+        DB::statement('SET FOREIGN_KEY_CHECKS=0');
         $reason->delete();
+        DB::statement('SET FOREIGN_KEY_CHECKS=1');
         return redirect()->route('reason.index')
             ->with('success', 'Reason deleted successfully');
     }

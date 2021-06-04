@@ -6,6 +6,8 @@ use App\Models\Handler;
 use Illuminate\Http\Request;
 use DataTables;
 use Auth;
+use DB;
+
 class HandlerController extends Controller
 {
     /**
@@ -155,8 +157,10 @@ class HandlerController extends Controller
 
     public function destroy(Handler $handler)
     {
-
+        DB::statement('SET FOREIGN_KEY_CHECKS=0');
         $handler->delete();
+        DB::statement('SET FOREIGN_KEY_CHECKS=1');
+
         return redirect()->route('handler.index')
             ->with('success', 'Handler deleted successfully');
     }

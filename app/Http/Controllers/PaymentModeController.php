@@ -6,6 +6,7 @@ use App\Models\PaymentMode;
 use Illuminate\Http\Request;
 use DataTables;
 use Auth;
+use DB;
 class PaymentModeController extends Controller
 {
     /**
@@ -156,7 +157,9 @@ class PaymentModeController extends Controller
     public function destroy(PaymentMode $paymentmode)
     {
 
+        DB::statement('SET FOREIGN_KEY_CHECKS=0');
         $paymentmode->delete();
+        DB::statement('SET FOREIGN_KEY_CHECKS=1');;
         return redirect()->route('paymentmode.index')
             ->with('success', 'Insurance Company deleted successfully');
     }
