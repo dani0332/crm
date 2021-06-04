@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\RewardCategory;
 use DataTables;
 use Illuminate\Http\Request;
-
+use DB;
 class RewardCategoryController extends Controller
 {
     public function __construct()
@@ -124,7 +124,9 @@ class RewardCategoryController extends Controller
      */
     public function destroy(RewardCategory $rewardCategory)
     {
+        DB::statement('SET FOREIGN_KEY_CHECKS=0');
         $rewardCategory->delete();
+        DB::statement('SET FOREIGN_KEY_CHECKS=1');
         return back()
             ->with('success', 'rewardCategory has been Deleted');
     }

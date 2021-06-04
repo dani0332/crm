@@ -52,7 +52,7 @@
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="mobile_no">
                             <b>UAE License Held For : </b></label>
                         <div class="col-md-6 col-sm-6 ">
-                            <p class="label-align-center">{{  $carquote->uaeLicenseHeldFor->code  }}</p>
+                            <p class="label-align-center">{{ $carquote->uaeLicenseHeldFor ? $carquote->uaeLicenseHeldFor->code : ''  }}</p>
                         </div>
                     </div>
 
@@ -60,7 +60,7 @@
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="gender">
                             <b> Car Make : </b></label>
                         <div class="col-md-6 col-sm-6 ">
-                            <p class="label-align-center">{{  $carquote->carMake->code  }}</p>
+                            <p class="label-align-center">{{ $carquote->carMake ? $carquote->carMake->code :''  }}</p>
                         </div>
                     </div>
 
@@ -69,7 +69,7 @@
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="lang">
                             <b>Car Model : </b></label>
                         <div class="col-md-6 col-sm-6 ">
-                            <p class="label-align-center">{{  $carquote->carModel->code   }}</p>
+                            <p class="label-align-center">{{  $carquote->carModel ? $carquote->carModel->code : ''   }}</p>
                         </div>
                     </div>
 
@@ -86,7 +86,7 @@
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="dob">
                             <b>Emirate Of Registration : </b></label>
                         <div class="col-md-6 col-sm-6 ">
-                            <p class="label-align-center">{{  $carquote->emirate->code  }}</p>
+                            <p class="label-align-center">{{ $carquote->emirate ? $carquote->emirate->code : ''  }}</p>
                         </div>
                     </div>
 
@@ -119,7 +119,7 @@
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="dob">
                             <b>Claim History : </b></label>
                         <div class="col-md-6 col-sm-6 ">
-                            <p class="label-align-center">{{ $carquote->claimHistory->code  }}</p>
+                            <p class="label-align-center">{{ $carquote->claimHistory ? $carquote->claimHistory->code :''  }}</p>
                         </div>
                     </div>
 
@@ -127,7 +127,7 @@
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="dob">
                             <b>Car Type Insurance : </b></label>
                         <div class="col-md-6 col-sm-6 ">
-                            <p class="label-align-center">{{ $carquote->carTypeInsurance->code  }}</p>
+                            <p class="label-align-center">{{ $carquote->carTypeInsurance ? $carquote->carTypeInsurance->code : ''  }}</p>
                         </div>
                     </div>
 
@@ -180,14 +180,14 @@
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="dob">
                             <b>Customer : </b></label>
                         <div class="col-md-6 col-sm-6 ">
-                            <p class="label-align-center">{{ $carquote->customer->first_name .' '. $carquote->customer->last_name  }}</p>
+                            <p class="label-align-center">{{ $carquote->customer ? $carquote->customer->first_name .' '. $carquote->customer->last_name : ''  }}</p>
                         </div>
                     </div>
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="nationality_id">
                             <b>Nationality: </b></label>
                         <div class="col-md-6 col-sm-6 ">
-                            <p class="label-align-center">{{  $carquote->nationality->code  }}</p>
+                            <p class="label-align-center">{{  $carquote->nationality ? $carquote->nationality->code : '' }}</p>
                         </div>
                     </div>
 
@@ -195,7 +195,7 @@
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="dob">
                             <b>Payment Status : </b></label>
                         <div class="col-md-6 col-sm-6 ">
-                            <p class="label-align-center">{{ $carquote->paymentStatus->code  }}</p>
+                            <p class="label-align-center">{{  $carquote->paymentStatus ? $carquote->paymentStatus->code : ''  }}</p>
                         </div>
                     </div>
 
@@ -203,7 +203,7 @@
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="dob">
                             <b>Quote Status Id : </b></label>
                         <div class="col-md-6 col-sm-6 ">
-                            <p class="label-align-center">{{ $carquote->quoteStatus->code  }}</p>
+                            <p class="label-align-center">{{ $carquote->quoteStatus ? $carquote->quoteStatus->code : '' }}</p>
                         </div>
                     </div>
 
