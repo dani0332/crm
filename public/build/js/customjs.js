@@ -451,6 +451,168 @@ $(document).ready(function () {
         ],
     });
 
+    $('.claim-data-table').DataTable({
+        ordering: false,
+        info:     false,
+        searching:false,
+        bLengthChange: false,
+        serverSide: true,
+        ajax: config.routes.claim_datatable_route,
+        columns: [
+            {data: 'policy_number', name: 'policy_number'},
+            {data: 'first_name', name: 'first_name'},
+            {data: 'last_name', name: 'last_name'},
+            {data: 'email_address', name: 'email_address'},
+            {data: 'phone_number', name: 'phone_number'},
+            {data: 'created_at', name: 'created_at'},
+            {data: 'action', name: 'action', orderable: false, searchable: false},
+        ]
+    });
+
+    $('.typeofinsurance-data-table').DataTable({
+        ordering: false,
+        info:     false,
+        searching:false,
+        bLengthChange: false,
+        serverSide: true,
+        ajax: config.routes.typeofinsurance_datatable_route,
+        columns: [
+            {data: 'text', name: 'text'},
+            {data: 'text_ar', name: 'text_ar'},
+            {data: 'sort_order', name: 'sort_order'},
+            {data: 'is_active', name: 'is_active'},
+            {data: 'created_at', name: 'created_at'},
+            {data: 'updated_at', name: 'updated_at'},
+            {data: 'action', name: 'action', orderable: false, searchable: false},
+        ]
+    });
+
+    $('.subtypeofinsurance-data-table').DataTable({
+        ordering: false,
+        info:     false,
+        searching:false,
+        bLengthChange: false,
+        serverSide: true,
+        ajax: config.routes.subtypeofinsurance_datatable_route,
+        columns: [
+            {data: 'text', name: 'text'},
+            {data: 'text_ar', name: 'text_ar'},
+            {data: 'sort_order', name: 'sort_order'},
+            {data: 'is_active', name: 'is_active'},
+            {data: 'created_at', name: 'created_at'},
+            {data: 'updated_at', name: 'updated_at'},
+            {data: 'action', name: 'action', orderable: false, searchable: false},
+        ]
+    });
+
+    $('.claimsstatus-data-table').DataTable({
+        ordering: false,
+        info:     false,
+        searching:false,
+        bLengthChange: false,
+        serverSide: true,
+        ajax: config.routes.claimsstatus_datatable_route,
+        columns: [
+            {data: 'text', name: 'text'},
+            {data: 'text_ar', name: 'text_ar'},
+            {data: 'sort_order', name: 'sort_order'},
+            {data: 'is_active', name: 'is_active'},
+            {data: 'created_at', name: 'created_at'},
+            {data: 'updated_at', name: 'updated_at'},
+            {data: 'action', name: 'action', orderable: false, searchable: false},
+        ]
+    });
+
+    $('.carrepaircoverage-data-table').DataTable({
+        ordering: false,
+        info:     false,
+        searching:false,
+        bLengthChange: false,
+        serverSide: true,
+        ajax: config.routes.carrepaircoverage_datatable_route,
+        columns: [
+            {data: 'text', name: 'text'},
+            {data: 'text_ar', name: 'text_ar'},
+            {data: 'sort_order', name: 'sort_order'},
+            {data: 'is_active', name: 'is_active'},
+            {data: 'created_at', name: 'created_at'},
+            {data: 'updated_at', name: 'updated_at'},
+            {data: 'action', name: 'action', orderable: false, searchable: false},
+        ]
+    });
+
+    $('.carrepairtype-data-table').DataTable({
+        ordering: false,
+        info:     false,
+        searching:false,
+        bLengthChange: false,
+        serverSide: true,
+        ajax: config.routes.carrepairtype_datatable_route,
+        columns: [
+
+            {data: 'text', name: 'text'},
+            {data: 'text_ar', name: 'text_ar'},
+            {data: 'sort_order', name: 'sort_order'},
+            {data: 'is_active', name: 'is_active'},
+            {data: 'created_at', name: 'created_at'},
+            {data: 'updated_at', name: 'updated_at'},
+            {data: 'action', name: 'action', orderable: false, searchable: false},
+        ]
+    });
+
+    $('.rentacar-data-table').DataTable({
+        ordering: false,
+        info:     false,
+        searching:false,
+        bLengthChange: false,
+        serverSide: true,
+        ajax: config.routes.rentacar_datatable_route,
+        columns: [
+            {data: 'text', name: 'text'},
+            {data: 'text_ar', name: 'text_ar'},
+            {data: 'sort_order', name: 'sort_order'},
+            {data: 'is_active', name: 'is_active'},
+            {data: 'created_at', name: 'created_at'},
+            {data: 'updated_at', name: 'updated_at'},
+            {data: 'action', name: 'action', orderable: false, searchable: false},
+        ]
+    });
+
+    $('#car_make_id').on('change',function(e) {
+        var make_code = $("#car_make_id option:selected").attr('data-id');
+        $.get('/car-model?make_code='+ make_code,function(data) {
+            var carmodel = $('#car_model_id').empty();
+            $.each(data,function(create,carmodelObj) {
+                var option = $('<option/>', {id:create, value:carmodelObj});
+                carmodel.append('<option data-id="'+carmodelObj.code+'" value="'+carmodelObj.id+'">'+carmodelObj.text+'</option>');
+            });
+        });
+    });
+
+    var make_code = $("#car_make_id option:selected").attr('data-id');
+    var old_car_model_id = $("#old_car_model_id").val();
+    $.get('/car-model?make_code='+ make_code,function(data) {
+        var carmodel = $('#car_model_id').empty();
+        $.each(data,function(create,carmodelObj) {
+            var option = $('<option/>', {id:create, value:carmodelObj});
+            if(old_car_model_id == carmodelObj.id)
+                carmodel.append('<option selected data-id="'+carmodelObj.code+'" value="'+carmodelObj.id+'">'+carmodelObj.text+'</option>');
+            else
+                carmodel.append('<option  data-id="'+carmodelObj.code+'" value="'+carmodelObj.id+'">'+carmodelObj.text+'</option>');
+        });
+    });
+
+    // $('#car_make_id').on('change',function(e) {
+    //     var cat_id = $("#car_make_id option:selected").attr('data-id');
+    //     $.get('/ajax-subcat?cat_id='+ cat_id,function(data) {
+    //         var subcat = $('#car_model_id').empty();
+    //         $.each(data,function(create,subcatObj) {
+    //             var option = $('<option/>', {id:create, value:subcatObj});
+    //             subcat.append('<option data-id="'+subcatObj.code+'" value="'+subcatObj.id+'">'+subcatObj.text+'</option>');
+    //         });
+    //     });
+    // });
+
     var customerDataTable = $(".customer-data-table").DataTable({
         ordering: false,
         info: false,

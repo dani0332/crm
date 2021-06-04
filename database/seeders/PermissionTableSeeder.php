@@ -259,5 +259,12 @@ class PermissionTableSeeder extends Seeder
             'name'=>'transaction-delete',
             'guard_name'=>'web',
         ]);
+
+        //claim
+        \DB::table('permissions')->insertGetId([
+            'name'=>'claim-list',
+            'guard_name'=>'web',
+        ]);
+
     }
 }

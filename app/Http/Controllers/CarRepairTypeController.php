@@ -1,0 +1,130 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\CarRepairType;
+use Illuminate\Http\Request;
+use DataTables;
+use Spatie\Permission\Models\Role;
+use DB;
+
+class CarRepairTypeController extends Controller
+{
+    function __construct()
+    {
+         $this->middleware('permission:car-repair-type-list|car-repair-type-create|car-repair-type-edit|car-repair-type-delete', ['only' => ['index','store']]);
+         $this->middleware('permission:car-repair-type-create', ['only' => ['create','store']]);
+         $this->middleware('permission:car-repair-type-edit', ['only' => ['edit','update']]);
+         $this->middleware('permission:car-repair-type-delete', ['only' => ['destroy']]);
+    }
+    /**
+     * Display a listing of the resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function index(Request $request)
+    {
+        if ($request->ajax()) {
+            $data = CarRepairType::select('*');
+            return DataTables::of($data)
+                    ->addIndexColumn()
+                    ->addColumn('action', function($row){
+                        return view('carrepairtype.actions', compact('row'))->render();
+                    })
+                    ->rawColumns(['action'])
+                    ->make(true);
+        }
+        
+        return view('carrepairtype.view');
+    }
+
+    /**
+     * Show the form for creating a new resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function create()
+    {
+        return view('carrepairtype.add');
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function store(Request $request)
+    {
+        $this->validate($request,[
+            'text' => 'required|max:120',
+            'text_ar' => 'required|max:120',
+        ]);
+
+        $carrepairtype = new CarRepairType();
+        $carrepairtype->text=  $request->text;
+        $carrepairtype->text_ar=  $request->text_ar;
+        $carrepairtype->is_active =  $request->is_active == 'on' ? 1 : 0;
+        $carrepairtype->sort_order =  $request->sort_order;
+        $carrepairtype->save();
+        return back()
+            ->with('success','Car Repair Type has been stored');
+    }
+
+    /**
+     * Display the specified resource.
+     *
+     * @param  \App\Models\CarRepairType  $carRepairType
+     * @return \Illuminate\Http\Response
+     */
+    public function show(CarRepairType $carrepairtype)
+    {
+        return view('carrepairtype.show',compact('carrepairtype'));
+    }
+
+    /**
+     * Show the form for editing the specified resource.
+     *
+     * @param  \App\Models\CarRepairType  $carRepairType
+     * @return \Illuminate\Http\Response
+     */
+    public function edit(CarRepairType $carrepairtype)
+    {
+        return view('carrepairtype.edit',compact('carrepairtype'));
+    }
+
+    /**
+     * Update the specified resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \App\Models\CarRepairType  $carRepairType
+     * @return \Illuminate\Http\Response
+     */
+    public function update(Request $request, CarRepairType $carrepairtype)
+    {
+        $this->validate($request,[
+            'text' => 'required|max:120',
+            'text_ar' => 'required|max:120',
+        ]);
+        $carrepairtype->text=  $request->text;
+        $carrepairtype->text_ar=  $request->text_ar;
+        $carrepairtype->is_active =  $request->is_active == 'on' ? 1 : 0; 
+        $carrepairtype->sort_order =  $request->sort_order;    
+        $carrepairtype->save();
+        return back()
+            ->with('success','Car Repair Type has been Updated');
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     *
+     * @param  \App\Models\CarRepairType  $carRepairType
+     * @return \Illuminate\Http\Response
+     */
+    public function destroy(CarRepairType $carrepairtype)
+    {
+        $carrepairtype->delete();
+        return back()
+            ->with('success','Car Repair Type has been Deleted');
+    }
+}

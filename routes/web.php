@@ -11,6 +11,16 @@ use App\Http\Controllers\RewardController;
 use App\Http\Controllers\RewardTagController;
 use App\Http\Controllers\RewardTranslationController;
 use App\Http\Controllers\RoleController;
+use App\Http\Controllers\CarQouteController;
+use App\Http\Controllers\HealthQouteController;
+use App\Http\Controllers\ClaimController;
+use App\Http\Controllers\TypeOfInsuranceController;
+use App\Http\Controllers\SubTypeOfInsuranceController;
+use App\Http\Controllers\ClaimsStatusController;
+use App\Http\Controllers\CarRepairCoverageController;
+use App\Http\Controllers\CarRepairTypeController;
+use App\Http\Controllers\RentACarController;
+
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\InsuranceCompanyController;
 use App\Http\Controllers\HandlerController;
@@ -81,4 +91,33 @@ Route::group(['prefix' => 'transapp'], function () {
 
 Route::resource('customer', CustomerController::class);
 
+Route::group(['prefix' => 'qoutes'], function() {
+    Route::resource('carqoutes', CarQouteController::class);
+    Route::POST('carqoutes/resubmit_api', [ CarQouteController::class , 'resubmitApi']);
+    Route::resource('healthqoutes', HealthQouteController::class);
+});
+
+Route::group(['prefix' => 'claim'], function() {
+    Route::resource('claims', ClaimController::class);
+});
+Route::group(['prefix' => 'claim'], function() {
+    Route::resource('typeofinsurance', TypeOfInsuranceController::class);
+});
+Route::group(['prefix' => 'claim'], function() {
+    Route::resource('subtypeofinsurance', SubTypeOfInsuranceController::class);
+});
+Route::group(['prefix' => 'claim'], function() {
+    Route::resource('claimsstatus', ClaimsStatusController::class);
+});
+Route::group(['prefix' => 'claim'], function() {
+    Route::resource('carrepaircoverage', CarRepairCoverageController::class);
+});
+Route::group(['prefix' => 'claim'], function() {
+    Route::resource('carrepairtype', CarRepairTypeController::class);
+});
+Route::group(['prefix' => 'claim'], function() {
+    Route::resource('rentacar', RentACarController::class);
+});
+
+Route::get('/car-model',[ClaimController::class,'carModelBasedOnCarMake']);
 Route::post('auditable', [AuditableController::class, 'loadAuditableComponent']);
