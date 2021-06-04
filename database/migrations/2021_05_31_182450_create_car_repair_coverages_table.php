@@ -14,12 +14,12 @@ class CreateCarRepairCoveragesTable extends Migration
     public function up()
     {
         Schema::create('car_repair_coverages', function (Blueprint $table) {
-            $table->id();
+            $table->bigIncrements('id');
             $table->string('text','255');
             $table->string('text_ar','255');
-            $table->tinyInteger('is_active','4')->default('1');
-            $table->integer('sort_order','11');
-            $table->tinyInteger('is_deleted','4')->default('0');
+            $table->boolean('is_active')->default('1');
+            $table->integer('sort_order');
+            $table->boolean('is_deleted')->default('0');
             $table->timestamps();
         });
     }
