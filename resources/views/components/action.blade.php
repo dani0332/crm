@@ -8,14 +8,15 @@
     <div class='action-item'>
         <a href="{{ $editRoute}}"  class='no-style-btn'><i class='fa fa-edit'></i></a>
     </div>
-    @endcan  
+    @endcan
     @can($permission.'-delete')
     <div class='action-item'>
-    <form action="{{ $deleteRoute }}" method='POST' style="margin-top: -2px;">
+        <a href="#" date-route="{{$deleteRoute}}"  class='no-style-btn delete'><i class='fa fa-trash'></i></a>
+    {{-- <form action="{{ $deleteRoute }}" method='POST' style="margin-top: -2px;">
         @csrf
         @method('DELETE')
         <button type='submit' class='no-style-btn' style='margin-left:-7px;color:#5A738E;'><i class='fa fa-trash'></i></button>
-    </form>
+    </form> --}}
     </div>
     @endcan
 </div>
