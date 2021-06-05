@@ -26,7 +26,7 @@
                                 <span class="text-danger">{{ $errors->first('title') }}</span>
                             @endif
                         </div>
-                        
+
                     </div>
 
                     <div class="item form-group">
@@ -38,7 +38,7 @@
                                 <span class="text-danger">{{ $errors->first('description1') }}</span>
                             @endif
                         </div>
-                        
+
                     </div>
 
                     <div class="item form-group">
@@ -50,7 +50,7 @@
                                 <span class="text-danger">{{ $errors->first('description2') }}</span>
                             @endif
                         </div>
-                        
+
                     </div>
 
                     <div class="item form-group">
@@ -83,7 +83,7 @@
                                 <span class="text-danger">{{ $errors->first('full_width_banner_image') }}</span>
                             @endif
                         </div>
-                        
+
                     </div>
 
                     <div class="item form-group">
@@ -95,7 +95,7 @@
                                 <span class="text-danger">{{ $errors->first('generic_banner_image') }}</span>
                             @endif
                         </div>
-                        
+
                     </div>
 
                     <div class="item form-group">
@@ -103,7 +103,7 @@
                         </label>
                         <div class="col-md-6 col-sm-6 ">
                             <textarea id='editor4'  name="terms_and_conditions">{{ old('terms_and_conditions') }}</textarea>
-                            
+
                             @if ($errors->has('terms_and_conditions'))
                                 <span class="text-danger">{{ $errors->first('terms_and_conditions') }}</span>
                             @endif
@@ -127,7 +127,7 @@
                     <div class="ln_solid"></div>
                     <div class="item form-group">
                         <div class="col-md-6 col-sm-6 offset-md-3">
-                          <button type="submit" class="btn btn-warning">Create & Add New</button> <button type="submit" class="btn btn-warning" id="return_to_view" >Cretae</button>
+                          <button type="submit" class="btn btn-warning">Create & Add New</button> <button type="submit" class="btn btn-warning" id="return_to_view" >Create</button>
                         </div>
                     </div>
 
