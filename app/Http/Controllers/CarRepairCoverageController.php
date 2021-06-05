@@ -123,8 +123,9 @@ class CarRepairCoverageController extends Controller
      */
     public function destroy(CarRepairCoverage $carrepaircoverage)
     {
+        DB::statement('SET FOREIGN_KEY_CHECKS=0');
         $carrepaircoverage->delete();
-        return back()
-            ->with('success','Car Repair Coverage has been Deleted');
+        DB::statement('SET FOREIGN_KEY_CHECKS=1');
+        return redirect()->route('carrepaircoverage.index');
     }
 }

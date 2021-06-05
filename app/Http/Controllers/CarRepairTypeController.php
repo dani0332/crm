@@ -123,8 +123,9 @@ class CarRepairTypeController extends Controller
      */
     public function destroy(CarRepairType $carrepairtype)
     {
+        DB::statement('SET FOREIGN_KEY_CHECKS=0');
         $carrepairtype->delete();
-        return back()
-            ->with('success','Car Repair Type has been Deleted');
+        DB::statement('SET FOREIGN_KEY_CHECKS=1');
+        return redirect()->route('carrepairtype.index');
     }
 }

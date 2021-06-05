@@ -123,8 +123,9 @@ class RentACarController extends Controller
      */
     public function destroy(RentACar $rentacar)
     {
+        DB::statement('SET FOREIGN_KEY_CHECKS=0');
         $rentacar->delete();
-        return back()
-            ->with('success','Rent a Car has been Deleted');
+        DB::statement('SET FOREIGN_KEY_CHECKS=1');
+        return redirect()->route('rentacar.index');
     }
 }

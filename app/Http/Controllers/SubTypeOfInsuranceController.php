@@ -123,8 +123,9 @@ class SubTypeOfInsuranceController extends Controller
      */
     public function destroy(SubTypeOfInsurance $subtypeofinsurance)
     {
+        DB::statement('SET FOREIGN_KEY_CHECKS=0');
         $subtypeofinsurance->delete();
-        return back()
-            ->with('success','Sub Type of Insurance has been Deleted');
+        DB::statement('SET FOREIGN_KEY_CHECKS=1');
+        return redirect()->route('subtypeofinsurance.index');
     }
 }
