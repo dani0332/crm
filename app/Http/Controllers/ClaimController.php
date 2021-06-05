@@ -58,15 +58,15 @@ class ClaimController extends Controller
      */
     public function create()
     {
-        $typeofinsurances = TypeOfInsurance::all();
-        $subtypeofinsurances = SubTypeOfInsurance::all();
-        $claimsstatuses = ClaimsStatus::all();
-        $carrepaircoverages = CarRepairCoverage::all();
-        $carrepairtypes = CarRepairType::all();
-        $rentacars = RentACar::all();
+        $typeofinsurances = TypeOfInsurance::where('is_active', '=', 1)->get();
+        $subtypeofinsurances = SubTypeOfInsurance::where('is_active', '=', 1)->get();
+        $claimsstatuses = ClaimsStatus::where('is_active', '=', 1)->get();
+        $carrepaircoverages = CarRepairCoverage::where('is_active', '=', 1)->get();
+        $carrepairtypes = CarRepairType::where('is_active', '=', 1)->get();
+        $rentacars = RentACar::where('is_active', '=', 1)->get();
         $advisors = User::all();
-        $carmakes = CarMake::all();
-        $carmodels = CarModel::all();
+        $carmakes = CarMake::where('is_active', '=', 1)->get();
+        $carmodels = CarModel::where('is_active', '=', 1)->get();
         return view('claim.add',compact('typeofinsurances','subtypeofinsurances','claimsstatuses',
         'carrepaircoverages','carrepairtypes','rentacars','advisors','carmakes','carmodels'));
         //return view('claim.add');
@@ -124,6 +124,8 @@ class ClaimController extends Controller
         $claim->created_by_id = Auth::user()->id;
         $claim->modified_by_id = Auth::user()->id;
         $claim->save();
+        if(isset($request->return_to_view))
+            return redirect("claim/claims");
         return back()->with('success','Claim has been stored');
     }
 
@@ -146,15 +148,15 @@ class ClaimController extends Controller
      */
     public function edit(Claim $claim)
     {
-        $typeofinsurances = TypeOfInsurance::all();
-        $subtypeofinsurances = SubTypeOfInsurance::all();
-        $claimsstatuses = ClaimsStatus::all();
-        $carrepaircoverages = CarRepairCoverage::all();
-        $carrepairtypes = CarRepairType::all();
-        $rentacars = RentACar::all();
+        $typeofinsurances = TypeOfInsurance::where('is_active', '=', 1)->get();
+        $subtypeofinsurances = SubTypeOfInsurance::where('is_active', '=', 1)->get();
+        $claimsstatuses = ClaimsStatus::where('is_active', '=', 1)->get();
+        $carrepaircoverages = CarRepairCoverage::where('is_active', '=', 1)->get();
+        $carrepairtypes = CarRepairType::where('is_active', '=', 1)->get();
+        $rentacars = RentACar::where('is_active', '=', 1)->get();
         $advisors = User::all();
-        $carmakes = CarMake::all();
-        $carmodels = CarModel::all();
+        $carmakes = CarMake::where('is_active', '=', 1)->get();
+        $carmodels = CarModel::where('is_active', '=', 1)->get();
         return view('claim.edit',compact('typeofinsurances','claim','subtypeofinsurances','claimsstatuses',
         'carrepaircoverages','carrepairtypes','rentacars','advisors','carmakes','carmodels'));
         //return view('claim.edit',compact('claim'));
@@ -210,6 +212,8 @@ class ClaimController extends Controller
         $claim->car_model_id = $request->car_model_id;
         $claim->modified_by_id = Auth::user()->id;
         $claim->save();
+        if(isset($request->return_to_view))
+            return redirect("claim/claims");
         return back()->with('success','Claim has been Updated');
     }
 

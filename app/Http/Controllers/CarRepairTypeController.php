@@ -67,8 +67,9 @@ class CarRepairTypeController extends Controller
         $carrepairtype->is_active =  $request->is_active == 'on' ? 1 : 0;
         $carrepairtype->sort_order =  $request->sort_order;
         $carrepairtype->save();
-        return back()
-            ->with('success','Car Repair Type has been stored');
+        if(isset($request->return_to_view))
+            return redirect("claim/carrepairtype");
+        return back()->with('success','Car Repair Type has been stored');
     }
 
     /**
@@ -111,6 +112,8 @@ class CarRepairTypeController extends Controller
         $carrepairtype->is_active =  $request->is_active == 'on' ? 1 : 0; 
         $carrepairtype->sort_order =  $request->sort_order;    
         $carrepairtype->save();
+        if(isset($request->return_to_view))
+            return redirect("claim/carrepairtype");
         return back()
             ->with('success','Car Repair Type has been Updated');
     }

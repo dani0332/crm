@@ -67,8 +67,9 @@ class TypeOfInsuranceController extends Controller
         $typeofinsurance->is_active =  $request->is_active == 'on' ? 1 : 0; 
         $typeofinsurance->sort_order =  $request->sort_order;    
         $typeofinsurance->save();
-        return back()
-            ->with('success','Type Of Insurance has been stored');
+        if(isset($request->return_to_view))
+            return redirect("claim/typeofinsurance");
+        return back()->with('success','Type Of Insurance has been stored');
     }
 
     /**
@@ -111,8 +112,9 @@ class TypeOfInsuranceController extends Controller
         $typeofinsurance->is_active =  $request->is_active == 'on' ? 1 : 0; 
         $typeofinsurance->sort_order =  $request->sort_order;    
         $typeofinsurance->save();
-        return back()
-            ->with('success','Type of Insurance has been Updated');
+        if(isset($request->return_to_view))
+            return redirect("claim/typeofinsurance");
+        return back()->with('success','Type of Insurance has been Updated');
     }
 
     /**
