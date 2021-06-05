@@ -79,7 +79,7 @@
                     <li><a href="#">Transaction <span class="fa fa-chevron-down"></span></a>
                         <ul class="nav child_menu">
 
-                            <li class="sub_menu"><a href="{{ route('transapp.create') }}">Create a Transaction </a></li>
+                            <li class="sub_menu"><a href="{{ route('transaction.create') }}">Create a Transaction </a></li>
                             <li class="sub_menu"><a href="{{ route('reissue_view') }}">Cancel & Re-Issue Transaction </a></li>
                             <li class="sub_menu"><a href="{{ route('cancel_view') }}">Cancel Transaction (without re-issue) </a></li>
                         </ul>
