@@ -67,8 +67,9 @@ class RentACarController extends Controller
         $rentacar->is_active =  $request->is_active == 'on' ? 1 : 0;
         $rentacar->sort_order =  $request->sort_order;
         $rentacar->save();
-        return back()
-            ->with('success','Rent a Car has been stored');
+        if(isset($request->return_to_view))
+            return redirect("claim/rentacar");
+        return back()->with('success','Rent a Car has been stored');
     }
 
     /**
@@ -111,8 +112,9 @@ class RentACarController extends Controller
         $rentacar->is_active =  $request->is_active == 'on' ? 1 : 0; 
         $rentacar->sort_order =  $request->sort_order;    
         $rentacar->save();
-        return back()
-            ->with('success','Rent a Car has been Updated');
+        if(isset($request->return_to_view))
+            return redirect("claim/rentacar");
+        return back()->with('success','Rent a Car has been Updated');
     }
 
     /**

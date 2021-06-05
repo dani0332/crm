@@ -34,7 +34,6 @@ class ClaimsStatusController extends Controller
                     ->rawColumns(['action'])
                     ->make(true);
         }
-        
         return view('claimsstatus.view');
     }
 
@@ -67,8 +66,9 @@ class ClaimsStatusController extends Controller
         $claimsstatus->is_active =  $request->is_active == 'on' ? 1 : 0;
         $claimsstatus->sort_order =  $request->sort_order;
         $claimsstatus->save();
-        return back()
-            ->with('success','Claims Status has been stored');
+        if(isset($request->return_to_view))
+            return redirect("claim/claimsstatus");
+        return back()->with('success','Claims Status has been stored');
     }
 
     /**
@@ -111,8 +111,9 @@ class ClaimsStatusController extends Controller
         $claimsstatus->is_active =  $request->is_active == 'on' ? 1 : 0; 
         $claimsstatus->sort_order =  $request->sort_order;    
         $claimsstatus->save();
-        return back()
-            ->with('success','Claims Status has been Updated');
+        if(isset($request->return_to_view))
+            return redirect("claim/claimsstatus");
+        return back()->with('success','Claims Status has been Updated');
     }
 
     /**
