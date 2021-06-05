@@ -1581,7 +1581,7 @@ function init_daterangepicker() {
         minDate: '01/01/2021',
         maxDate: '12/31/2025',
         dateLimit: {
-            days: 30
+            month: 1
         },
         showDropdowns: true,
         showWeekNumbers: true,
