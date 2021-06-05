@@ -801,8 +801,15 @@ $(document).ready(function () {
             $("form").submit();
         }, 500);
     });
-});
 
+
+});
+$(document).on('click','.delete', function(){
+    var route = $(this).attr('date-route');
+    $('#delete-form').attr('action',route);
+    $('#exampleModal').modal('show');
+
+})
 function dateRangePickerChange(startDate, endDate) {
     $.ajax({
         url: config.routes.load_dashboard_stats,
