@@ -1576,12 +1576,12 @@ function init_daterangepicker() {
     };
 
     var optionSet1 = {
-        startDate: moment().subtract(29, 'days'),
-        endDate: moment(),
+        startDate: moment().subtract(1, 'months'),
+        endDate: moment().subtract(1, 'months'),
         minDate: '01/01/2021',
         maxDate: '12/31/2025',
         dateLimit: {
-            days: 60
+            days: 30
         },
         showDropdowns: true,
         showWeekNumbers: true,
@@ -1614,7 +1614,7 @@ function init_daterangepicker() {
         }
     };
 
-    $('#reportrange span').html(moment().subtract(29, 'days').format('MMMM D, YYYY') + ' - ' + moment().format('MMMM D, YYYY'));
+    $('#reportrange span').html(moment().subtract(1, 'months').format('MMMM D, YYYY') + ' - ' +moment().subtract(1, 'months').format('MMMM D, YYYY'));
     $('#reportrange').daterangepicker(optionSet1, cb);
     $('#reportrange').on('show.daterangepicker', function () {
         console.log("show event fired");
