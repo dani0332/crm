@@ -294,6 +294,46 @@
 
                         </div>
                     </div>
+                    <div class="item form-group">
+                        <div class="col">
+                            <span class="col-form-label col-md-6 col-sm-6">Attachment 1 </span>
+                            <input type="file" id="attachment_1" name="attachment_1" class="form-control form-control-sm" /> <br/>
+                            @if ($errors->has('attachment_1'))
+                                <span class="text-danger">{{ $errors->first('attachment_1') }}</span>
+                            @endif
+                        </div>
+                        <div class="col">
+                            <span class="col-form-label col-md-6 col-sm-6">Attachment 2 </span>
+                            <input type="file" id="attachment_2" name="attachment_2" class="form-control form-control-sm" /> <br/>
+                            @if ($errors->has('attachment_2'))
+                                <span class="text-danger">{{ $errors->first('attachment_2') }}</span>
+                            @endif
+                        </div>
+                    </div>
+                    <div class="item form-group">
+                        <div class="col">
+                            <span class="col-form-label col-md-6 col-sm-6">Attachment 3 </span>
+                            <input type="file" id="attachment_3" name="attachment_3" class="form-control form-control-sm" /> <br/>
+                            @if ($errors->has('attachment_3'))
+                                <span class="text-danger">{{ $errors->first('attachment_3') }}</span>
+                            @endif
+                        </div>
+                        <div class="col">
+                            <span class="col-form-label col-md-6 col-sm-6">Attachment 4 </span>
+                            <input type="file" id="attachment_4" name="attachment_4" class="form-control form-control-sm" /> <br/>
+                            @if ($errors->has('attachment_4'))
+                                <span class="text-danger">{{ $errors->first('attachment_4') }}</span>
+                            @endif
+                        </div>
+                    </div>
+                    <div class="item form-group">
+                        <div class="col">
+                            <b>Important Note: Max upload size is 10mb each, allowed formats: jpg, jpeg, png, bmp, pdf, docx.</b>
+                        </div>
+                        <div class="col">
+                            
+                        </div>
+                    </div>
 
                     <div id='redirect_to_view_div'></div>
                     <div class="ln_solid"></div>
