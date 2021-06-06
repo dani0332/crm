@@ -10,20 +10,19 @@
                     <li><a href="{{ url('claim/rentacar/create') }}" class="btn btn-warning btn-sm">Create Rent a Car</a></li>
                 </ul>
                 <div class="clearfix"></div>
-                
             </div>
             <div class="x_content">
                 <br />
                 <table  class="table table-striped jambo_table rentacar-data-table" style="width:100%">
                       <thead>
                         <tr>
+                          <th>Id</th>
                           <th>Text</th>
                           <th>Text Ar</th>
                           <th>Sort Order</th>
                           <th>Is Active</th>
                           <th>Created At</th>
                           <th>Updated At</th>
-                          <th>Actions</th>
                         </tr>
                       </thead>
 

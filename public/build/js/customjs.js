@@ -556,13 +556,15 @@ $(document).ready(function () {
         serverSide: true,
         ajax: config.routes.claim_datatable_route,
         columns: [
-            {data: 'policy_number', name: 'policy_number'},
-            {data: 'first_name', name: 'first_name'},
-            {data: 'last_name', name: 'last_name'},
-            {data: 'email_address', name: 'email_address'},
-            {data: 'phone_number', name: 'phone_number'},
-            {data: 'created_at', name: 'created_at'},
-            {data: 'action', name: 'action', orderable: false, searchable: false},
+            { data: 'id', name: 'id', render:function(data, type, row){
+                return "<a href='"+config.routes.claim_datatable_route+'/'+row.id +"'>" + row.id + "</a>"
+            }},
+            { data: 'policy_number', name: 'policy_number' },
+            { data: 'first_name', name: 'first_name' },
+            { data: 'last_name', name: 'last_name' },
+            { data: 'email_address', name: 'email_address' },
+            { data: 'phone_number', name: 'phone_number' },
+            { data: 'created_at', name: 'created_at' },
         ]
     });
 
@@ -574,13 +576,15 @@ $(document).ready(function () {
         serverSide: true,
         ajax: config.routes.typeofinsurance_datatable_route,
         columns: [
+            { data: 'id', name: 'id', render:function(data, type, row){
+                return "<a href='"+config.routes.typeofinsurance_datatable_route+'/'+row.id +"'>" + row.id + "</a>"
+            }},
             {data: 'text', name: 'text'},
             {data: 'text_ar', name: 'text_ar'},
             {data: 'sort_order', name: 'sort_order'},
             {data: 'is_active', name: 'is_active'},
             {data: 'created_at', name: 'created_at'},
             {data: 'updated_at', name: 'updated_at'},
-            {data: 'action', name: 'action', orderable: false, searchable: false},
         ]
     });
 
@@ -592,13 +596,15 @@ $(document).ready(function () {
         serverSide: true,
         ajax: config.routes.subtypeofinsurance_datatable_route,
         columns: [
+            { data: 'id', name: 'id', render:function(data, type, row){
+                return "<a href='"+config.routes.subtypeofinsurance_datatable_route+'/'+row.id +"'>" + row.id + "</a>"
+            }},
             {data: 'text', name: 'text'},
             {data: 'text_ar', name: 'text_ar'},
             {data: 'sort_order', name: 'sort_order'},
             {data: 'is_active', name: 'is_active'},
             {data: 'created_at', name: 'created_at'},
             {data: 'updated_at', name: 'updated_at'},
-            {data: 'action', name: 'action', orderable: false, searchable: false},
         ]
     });
 
@@ -610,13 +616,15 @@ $(document).ready(function () {
         serverSide: true,
         ajax: config.routes.claimsstatus_datatable_route,
         columns: [
+            { data: 'id', name: 'id', render:function(data, type, row){
+                return "<a href='"+config.routes.claimsstatus_datatable_route+'/'+row.id +"'>" + row.id + "</a>"
+            }},
             {data: 'text', name: 'text'},
             {data: 'text_ar', name: 'text_ar'},
             {data: 'sort_order', name: 'sort_order'},
             {data: 'is_active', name: 'is_active'},
             {data: 'created_at', name: 'created_at'},
             {data: 'updated_at', name: 'updated_at'},
-            {data: 'action', name: 'action', orderable: false, searchable: false},
         ]
     });
 
@@ -628,13 +636,15 @@ $(document).ready(function () {
         serverSide: true,
         ajax: config.routes.carrepaircoverage_datatable_route,
         columns: [
+            { data: 'id', name: 'id', render:function(data, type, row){
+                return "<a href='"+config.routes.carrepaircoverage_datatable_route+'/'+row.id +"'>" + row.id + "</a>"
+            }},
             {data: 'text', name: 'text'},
             {data: 'text_ar', name: 'text_ar'},
             {data: 'sort_order', name: 'sort_order'},
             {data: 'is_active', name: 'is_active'},
             {data: 'created_at', name: 'created_at'},
             {data: 'updated_at', name: 'updated_at'},
-            {data: 'action', name: 'action', orderable: false, searchable: false},
         ]
     });
 
@@ -646,14 +656,15 @@ $(document).ready(function () {
         serverSide: true,
         ajax: config.routes.carrepairtype_datatable_route,
         columns: [
-
+            { data: 'id', name: 'id', render:function(data, type, row){
+                return "<a href='"+config.routes.carrepairtype_datatable_route+'/'+row.id +"'>" + row.id + "</a>"
+            }},
             {data: 'text', name: 'text'},
             {data: 'text_ar', name: 'text_ar'},
             {data: 'sort_order', name: 'sort_order'},
             {data: 'is_active', name: 'is_active'},
             {data: 'created_at', name: 'created_at'},
             {data: 'updated_at', name: 'updated_at'},
-            {data: 'action', name: 'action', orderable: false, searchable: false},
         ]
     });
 
@@ -665,13 +676,15 @@ $(document).ready(function () {
         serverSide: true,
         ajax: config.routes.rentacar_datatable_route,
         columns: [
+            { data: 'id', name: 'id', render:function(data, type, row){
+                return "<a href='"+config.routes.rentacar_datatable_route+'/'+row.id +"'>" + row.id + "</a>"
+            }},
             {data: 'text', name: 'text'},
             {data: 'text_ar', name: 'text_ar'},
             {data: 'sort_order', name: 'sort_order'},
             {data: 'is_active', name: 'is_active'},
             {data: 'created_at', name: 'created_at'},
             {data: 'updated_at', name: 'updated_at'},
-            {data: 'action', name: 'action', orderable: false, searchable: false},
         ]
     });
 

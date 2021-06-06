@@ -16,13 +16,13 @@
                 <table class="table table-striped jambo_table claim-data-table" style="width:100%">
                       <thead>
                         <tr>
+                          <th>Id</th>
                           <th>Policy Number</th>
                           <th>First Name</th>
                           <th>Last Name</th>
                           <th>Email Address</th>
                           <th>Phone Number</th>
                           <th>Created At</th>
-                          <th>Actions</th>
                         </tr>
                       </thead>
 
