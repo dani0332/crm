@@ -7,7 +7,7 @@
             <div class="x_title">
                 <h2>Edit Claim</h2>
                 <ul class="nav navbar-right panel_toolbox">
-                    <li><a href="{{ route('claims.index') }}" class="btn btn-warning btn-sm">Claim List</a></li>
+                    <li><a href="{{ route('claims.index') }}" class="btn btn-warning">Claim List</a></li>
                 </ul>
                 <div class="clearfix"></div>
             </div>
@@ -246,11 +246,13 @@
 
                 <div id='redirect_to_view_div'></div>
                 <div class="ln_solid"></div>
-                <div class="item form-group">
-                    <div class="col-md-6 col-sm-6 offset-md-3">
-                        <button type="submit" class="btn btn-warning">Update & Continue Updating</button> <button type="submit" class="btn btn-warning" id="return_to_view" >Update</button>
+
+                <div class="row">
+                    <div class="col-auto mr-auto"></div>
+                        <div class="col-auto">
+                            <button type="submit" class="btn btn-warning btn-sm">Update & Continue Updating</button> <button type="submit" class="btn btn-warning btn-sm" id="return_to_view" >Update</button>
+                        </div>
                     </div>
-                </div>
                 </form>
             </div>
         </div>

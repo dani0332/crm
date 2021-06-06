@@ -273,9 +273,11 @@
 
                    <div id='redirect_to_view_div'></div>
                     <div class="ln_solid"></div>
-                    <div class="item form-group">
-                        <div class="col-md-6 col-sm-6 offset-md-3">
-                          <button type="submit" class="btn btn-warning">Create & Add New</button> <button type="submit" class="btn btn-warning" id="return_to_view" >Cretae</button>
+
+                    <div class="row">
+                    <div class="col-auto mr-auto"></div>
+                        <div class="col-auto">
+                        <button type="submit" class="btn btn-warning btn-sm">Create & Add New</button> <button type="submit" class="btn btn-warning btn-sm" id="return_to_view" >Cretae</button>
                         </div>
                     </div>
                 </form>
