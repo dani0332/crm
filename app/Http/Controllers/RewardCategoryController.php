@@ -127,7 +127,6 @@ class RewardCategoryController extends Controller
         DB::statement('SET FOREIGN_KEY_CHECKS=0');
         $rewardCategory->delete();
         DB::statement('SET FOREIGN_KEY_CHECKS=1');
-        return back()
-            ->with('success', 'rewardCategory has been Deleted');
+        return redirect()->route('reward-categories.index');
     }
 }
