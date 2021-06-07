@@ -64,12 +64,12 @@
 
                                 @endcan
                                 @can('partners-delete')
-                                    <form action="{{ route('partner.destroy', ['partner' => $partner->id]) }}" method="POST">
+                                    <a href="#" date-route="{{ route('partner.destroy', ['partner' => $partner->id]) }}"   class='btn btn-warning btn-sm delete'>Delete</a>
+                                    {{-- <form action="" method="POST">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="btn btn-warning btn-sm">Delete</button>
-                                    </form>
-
+                                    </form> --}}
                                 @endcan
                             </tr>
                         </div>

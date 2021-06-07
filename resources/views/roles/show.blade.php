@@ -43,11 +43,13 @@
                 <div class="item form-group">
                     <div class="col-md-6 col-sm-6 offset-md-3">
                         <a href="{{ route('roles.edit', ['role' => $role->id]) }}" class='btn btn-warning btn-sm'>Edit</a>
-                        <form action="{{ route('roles.destroy', ['role' => $role->id]) }}" method="POST">
+                        <a href="#" date-route="{{ route('roles.destroy', ['role' => $role->id]) }}"   class='btn btn-warning btn-sm delete'>Delete</a>
+
+                        {{-- <form action="" method="POST">
                             @csrf
                             @method('DELETE')
                             <button type="submit" class='btn btn-warning btn-sm'>Delete</button>
-                        </form>
+                        </form> --}}
                     </div>
                 </div>
                 </form>

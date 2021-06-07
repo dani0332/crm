@@ -11,7 +11,7 @@
     @endcan
     @can($permission.'-delete')
     <div class='action-item'>
-        <a href="#" date-route="{{$deleteRoute}}"  class='no-style-btn delete'><i class='fa fa-trash'></i></a>
+        <a href="#" date-route="{{$deleteRoute}}"   class='btn btn-warning btn-sm delete'>Delete</a>
     {{-- <form action="{{ $deleteRoute }}" method='POST' style="margin-top: -2px;">
         @csrf
         @method('DELETE')

@@ -103,11 +103,12 @@
                             </a>
                         @endcan
                         @can('rewards-delete')
-                            <form action="{{ route('reward.destroy', ['reward' => $reward->id])}}" method='POST' style="margin-top: -3px;">
+                            <a href="#" date-route="{{ route('reward.destroy', ['reward' => $reward->id])}}"   class='btn btn-warning btn-sm delete'>Delete</a>
+                            {{-- <form action="" method='POST' style="margin-top: -3px;">
                                 @csrf
                                 @method('DELETE')
                                 <button type='submit' class='btn btn-warning btn-sm'>Delete</button>
-                            </form>
+                            </form> --}}
                         @endcan
                         </div>
                     </div>
@@ -133,11 +134,10 @@
                 <table id="datatable" class="table table-striped jambo_table" style="width:100%">
                     <thead>
                       <tr>
-
+                        <th>id</th>
                         <th>Title</th>
                         <th>Product Image</th>
                         <th>Language</th>
-                        <th>Actions</th>
                       </tr>
                     </thead>
 
@@ -146,29 +146,13 @@
 
                       @foreach($reward->rewardTranslations as $key => $rewardTranslation)
                       <tr>
+                        <td>
+                            <a href="{{ route('reward.reward-translation.show', ['reward'=>$reward->id,'reward_translation' => $rewardTranslation->id]) }}">
+                        {{ $rewardTranslation->id }}</a></td>
                         <td>{{ $rewardTranslation->title }}</td>
                         <td><img src="{{  \Config::get('constants.azure_storage_url').'myrewards/'.$rewardTranslation->product_image }}" style='width:40px;'/></td>
                         <td>{{ $rewardTranslation->lang }}</td>
-                        <td>
-                        <div class="row">
-                            <div class="col-md-1">
-                                <a href="{{ route('reward.reward-translation.edit', ['reward'=>$reward->id,'reward_translation' => $rewardTranslation->id]) }}" class='no-style-btn'><i class="fa fa-edit"></i> </a>
-                            </div>
-                            <div class="col-md-2">
-                                <form action="{{ route('reward.reward-translation.destroy', ['reward'=>$reward->id,'reward_translation' => $rewardTranslation->id]) }}" method="POST">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="no-style-btn"><i class="fa fa-trash"></i></button>
-                                </form>
-                            </div>
-                            <div class="col-md-1">
-                                <a href="{{ route('reward.reward-translation.show', ['reward'=>$reward->id,'reward_translation' => $rewardTranslation->id]) }}" class='no-style-btn'><i class="fa fa-eye"></i> </a>
-                            </div>
-                        </div>
 
-
-
-                        </td>
                       </tr>
                       @endforeach
 

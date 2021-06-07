@@ -66,11 +66,12 @@
                             </a>
                         @endcan
                         @can('reward-categories-delete')
-                            <form action="{{ route('reward-categories.destroy', ['reward_category' => $rewardCategory->id])}}" method='POST' style="margin-top: -3px;">
+                            <a href="#" date-route="{{ route('reward-categories.destroy', ['reward_category' => $rewardCategory->id])}}"   class='btn btn-warning btn-sm delete'>Delete</a>
+                            {{-- <form action="" method='POST' style="margin-top: -3px;">
                                 @csrf
                                 @method('DELETE')
                                 <button type='submit' class='btn btn-warning btn-sm'>Delete</button>
-                            </form>
+                            </form> --}}
                         @endcan
                     </div>
                 </div>

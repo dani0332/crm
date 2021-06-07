@@ -58,11 +58,12 @@
                                     <a id="texta" href="{{ route('carrepairtype.edit', ['carrepairtype' => $carrepairtype->id]) }}" class='btn btn-warning btn-sm'>Edit </a>
                                 @endcan
                                 @can('car-repair-type-delete')
-                                    <form action="{{ route('carrepairtype.destroy', ['carrepairtype' => $carrepairtype->id]) }}" method="POST">
+                                    <a href="#" date-route="{{ route('carrepairtype.edit', ['carrepairtype' => $carrepairtype->id]) }}"   class='btn btn-warning btn-sm delete'>Delete</a>
+                                    {{-- <form action="" method="POST">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="btn btn-warning btn-sm">Delete</button>
-                                    </form>
+                                    </form> --}}
                                 @endcan
                             </tr>
                         </div>

@@ -23,7 +23,6 @@
                           <th>Name</th>
                           <th>Name Ar</th>
                           <th>Logo</th>
-                          <th>Actions</th>
                         </tr>
                       </thead>
 
