@@ -53,7 +53,7 @@
 
 .filter-option {
     color: black !important;
-    background-color: #4183bd !important;
+    background-color: #eef1f4 !important;
 }
 
 .btn:hover {
@@ -114,3 +114,5 @@ table td:last-child {
 .jambo_table th{
     background:#4183bd !important;
 }
+
+

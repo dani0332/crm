@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\RewardTag;
 use DataTables;
 use Illuminate\Http\Request;
-
+use DB;
 class RewardTagController extends Controller
 {
     public function __construct()
@@ -31,13 +31,13 @@ class RewardTagController extends Controller
             return DataTables::of($data)
                 ->addIndexColumn()
                 ->addColumn('action', function ($row) {
-                    return view('rewardTag.actions', compact('row'))->render();
+                    return view('rewardtag.actions', compact('row'))->render();
                 })
                 ->rawColumns(['action'])
                 ->make(true);
         }
 
-        return view('rewardTag.view');
+        return view('rewardtag.view');
     }
     /**
      * Show the form for creating a new resource.
@@ -124,7 +124,9 @@ class RewardTagController extends Controller
      */
     public function destroy(RewardTag $rewardTag)
     {
+        DB::statement('SET FOREIGN_KEY_CHECKS=0');
         $rewardTag->delete();
+        DB::statement('SET FOREIGN_KEY_CHECKS=1');
         return back()
             ->with('success', 'reward Tag has been Deleted');
     }

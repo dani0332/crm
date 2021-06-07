@@ -12,14 +12,14 @@
                 </ul>
                 @endcan
                 <div class="clearfix"></div>
-                
+
             </div>
             <div class="x_content">
                 <br />
                 <table  class="table table-striped jambo_table data-table" style="width:100%">
                       <thead>
                         <tr>
-                          <th>id</th>
+                          <th>Id</th>
                           <th>Name</th>
                           <th>Name Ar</th>
                           <th>Logo</th>
@@ -29,9 +29,9 @@
 
 
                       <tbody>
-                        
-                        
-                        
+
+
+
                       </tbody>
                     </table>
             </div>

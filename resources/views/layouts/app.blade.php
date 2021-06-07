@@ -36,11 +36,50 @@
 
     <!-- iCheck -->
 	  <link href="{{ asset('vendors/iCheck/skins/flat/green.css') }}" rel="stylesheet">
-
-
+      <style>
+          .loader{
+                position: fixed;
+                left: 0px;
+                top: 0px;
+                width: 100%;
+                height: 100%;
+                z-index: 9999;
+                opacity: 0.7;
+                background: url('//upload.wikimedia.org/wikipedia/commons/thumb/e/e5/Phi_fenomeni.gif/50px-Phi_fenomeni.gif')
+                            50% 50% no-repeat rgb(249,249,249);
+                display: none;
+            }
+      </style>
   </head>
 
     <body class="nav-md">
+    <div class="loader">
+    </div>
+    <!-- Modal -->
+    <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+            <h5 class="modal-title" id="exampleModalLabel">Confirmation</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+            </div>
+            <div class="modal-body">
+            Are you sure you want to delete!
+            </div>
+            <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            <form action="" id="delete-form" method='POST' style="margin-top: -2px;">
+                @csrf
+                @method('DELETE')
+                <button type='submit' type="button" class="btn btn-danger">Delete</button>
+            </form>
+
+            </div>
+        </div>
+        </div>
+    </div>
     <div class="container body">
       <div class="main_container">
             @include('partials.sidebar')
@@ -121,6 +160,13 @@
                 reward_datatable_route:"{{ route('reward.index') }}",
                 reward_categories_datatable_route:"{{ route('reward-categories.index') }}",
                 reward_tags_datatable_route:"{{ route('reward-tags.index') }}",
+                claim_datatable_route:"{{ route('claims.index') }}",
+                typeofinsurance_datatable_route:"{{ route('typeofinsurance.index') }}",
+                subtypeofinsurance_datatable_route:"{{ route('subtypeofinsurance.index') }}",
+                claimsstatus_datatable_route:"{{ route('claimsstatus.index') }}",
+                carrepaircoverage_datatable_route:"{{ route('carrepaircoverage.index') }}",
+                carrepairtype_datatable_route:"{{ route('carrepairtype.index') }}",
+                rentacar_datatable_route:"{{ route('rentacar.index') }}",
                 customer_data_table_route:"{{ route('customer.index') }}",
                 load_auditable:"{{ url('auditable') }}",
                 load_dashboard_stats:"{{ url('dashboard-stats') }}",
@@ -129,7 +175,8 @@
                 reason_datatable_route:"{{ route('reason.index') }}",
                 status_datatable_route:"{{ route('status.index') }}",
                 paymentmode_datatable_route:"{{ route('paymentmode.index') }}",
-                transection_datatable_route:"{{ route('transection.index') }}",
+                transaction_datatable_route:"{{ route('transaction.index') }}",
+                re_issue_transaction_form:"{{ route('re_issue_transaction_form') }}",
             },
             _token:"{{ csrf_token() }}",
             image_path:"{{ \Config::get('constants.azure_storage_url').'myrewards/' }}"

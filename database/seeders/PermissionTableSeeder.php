@@ -242,22 +242,151 @@ class PermissionTableSeeder extends Seeder
         ]);
 
 
-        //Transection
+        //Transaction
         \DB::table('permissions')->insertGetId([
-            'name'=>'transection-list',
+            'name'=>'transapp-list',
             'guard_name'=>'web',
         ]);
         \DB::table('permissions')->insertGetId([
-            'name'=>'transection-create',
+            'name'=>'transapp-create',
             'guard_name'=>'web',
         ]);
         \DB::table('permissions')->insertGetId([
-            'name'=>'transection-edit',
+            'name'=>'transapp-edit',
             'guard_name'=>'web',
         ]);
         \DB::table('permissions')->insertGetId([
-            'name'=>'transection-delete',
+            'name'=>'transapp-delete',
             'guard_name'=>'web',
         ]);
+
+        //Claims
+        \DB::table('permissions')->insertGetId([
+            'name'=>'claim-list',
+            'guard_name'=>'web',
+        ]);
+        \DB::table('permissions')->insertGetId([
+            'name'=>'claim-create',
+            'guard_name'=>'web',
+        ]);
+        \DB::table('permissions')->insertGetId([
+            'name'=>'claim-edit',
+            'guard_name'=>'web',
+        ]);
+        \DB::table('permissions')->insertGetId([
+            'name'=>'claim-delete',
+            'guard_name'=>'web',
+        ]);
+
+        //Type of Insurance
+        \DB::table('permissions')->insertGetId([
+            'name'=>'type-of-insurance-list',
+            'guard_name'=>'web',
+        ]);
+        \DB::table('permissions')->insertGetId([
+            'name'=>'type-of-insurance-create',
+            'guard_name'=>'web',
+        ]);
+        \DB::table('permissions')->insertGetId([
+            'name'=>'type-of-insurance-edit',
+            'guard_name'=>'web',
+        ]);
+        \DB::table('permissions')->insertGetId([
+            'name'=>'type-of-insurance-delete',
+            'guard_name'=>'web',
+        ]);
+
+        //Sub Type of Insurance
+        \DB::table('permissions')->insertGetId([
+            'name'=>'sub-type-of-insurance-list',
+            'guard_name'=>'web',
+        ]);
+        \DB::table('permissions')->insertGetId([
+            'name'=>'sub-type-of-insurance-create',
+            'guard_name'=>'web',
+        ]);
+        \DB::table('permissions')->insertGetId([
+            'name'=>'sub-type-of-insurance-edit',
+            'guard_name'=>'web',
+        ]);
+        \DB::table('permissions')->insertGetId([
+            'name'=>'sub-type-of-insurance-delete',
+            'guard_name'=>'web',
+        ]);
+
+        //Claims Status
+        \DB::table('permissions')->insertGetId([
+            'name'=>'claims-status-list',
+            'guard_name'=>'web',
+        ]);
+        \DB::table('permissions')->insertGetId([
+            'name'=>'claims-status-create',
+            'guard_name'=>'web',
+        ]);
+        \DB::table('permissions')->insertGetId([
+            'name'=>'claims-status-edit',
+            'guard_name'=>'web',
+        ]);
+        \DB::table('permissions')->insertGetId([
+            'name'=>'claims-status-delete',
+            'guard_name'=>'web',
+        ]);
+
+        //Car Repair Coverage
+        \DB::table('permissions')->insertGetId([
+            'name'=>'car-repair-coverage-list',
+            'guard_name'=>'web',
+        ]);
+        \DB::table('permissions')->insertGetId([
+            'name'=>'car-repair-coverage-create',
+            'guard_name'=>'web',
+        ]);
+        \DB::table('permissions')->insertGetId([
+            'name'=>'car-repair-coverage-edit',
+            'guard_name'=>'web',
+        ]);
+        \DB::table('permissions')->insertGetId([
+            'name'=>'car-repair-coverage-delete',
+            'guard_name'=>'web',
+        ]);
+
+        //Car Repair Type
+        \DB::table('permissions')->insertGetId([
+            'name'=>'car-repair-type-list',
+            'guard_name'=>'web',
+        ]);
+        \DB::table('permissions')->insertGetId([
+            'name'=>'car-repair-type-create',
+            'guard_name'=>'web',
+        ]);
+        \DB::table('permissions')->insertGetId([
+            'name'=>'car-repair-type-edit',
+            'guard_name'=>'web',
+        ]);
+        \DB::table('permissions')->insertGetId([
+            'name'=>'car-repair-type-delete',
+            'guard_name'=>'web',
+        ]);
+
+        //Rent a Car
+        \DB::table('permissions')->insertGetId([
+            'name'=>'rent-a-car-list',
+            'guard_name'=>'web',
+        ]);
+        \DB::table('permissions')->insertGetId([
+            'name'=>'rent-a-car-create',
+            'guard_name'=>'web',
+        ]);
+        \DB::table('permissions')->insertGetId([
+            'name'=>'rent-a-car-edit',
+            'guard_name'=>'web',
+        ]);
+        \DB::table('permissions')->insertGetId([
+            'name'=>'rent-a-car-delete',
+            'guard_name'=>'web',
+        ]);
+
+
+
     }
 }

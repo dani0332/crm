@@ -34,7 +34,7 @@
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="name">Partner <span class="required">*</span>
                         </label>
                         <div class="col-md-6 col-sm-6 ">
-                            <p class="label-align-center">{{ $reward->partner->name }}</p>
+                            <p class="label-align-center">{{ $reward->partner ? $reward->partner->name : "" }}</p>
                         </div>
                     </div>
                     <div class="item form-group">
@@ -59,12 +59,12 @@
                         </div>
 
                     </div>
-                    <div class="item form-group">
+                    {{-- <div class="item form-group">
                         <label for="middle-name" class="col-form-label col-md-3 col-sm-3 label-align">Is Flat Discount</label>
                         <div class="col-md-6 col-sm-6 ">
                             <p class="label-align-center">{{ $reward->is_flat_discount ? 'True' : 'False' }}</p>
                         </div>
-                    </div>
+                    </div> --}}
                     <div class="item form-group">
                         <label for="middle-name" class="col-form-label col-md-3 col-sm-3 label-align">Is Active</label>
                         <div class="col-md-6 col-sm-6 ">
@@ -133,6 +133,7 @@
                 <table id="datatable" class="table table-striped jambo_table" style="width:100%">
                     <thead>
                       <tr>
+
                         <th>Title</th>
                         <th>Product Image</th>
                         <th>Language</th>

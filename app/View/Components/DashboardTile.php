@@ -8,7 +8,6 @@ class DashboardTile extends Component
 {
     public $icon;
     public $class;
-    public $data;
     public $title;
 
     /**
@@ -16,11 +15,10 @@ class DashboardTile extends Component
      *
      * @return void
      */
-    public function __construct($icon,$class,$data,$title)
+    public function __construct($icon,$class,$title)
     {
         $this->icon = $icon;
         $this->class= $class;
-        $this->data = $data;
         $this->title = $title;
     }
 
@@ -33,8 +31,7 @@ class DashboardTile extends Component
     {
         $icon = $this->icon;
         $class = $this->class;
-        $data = $this->data;
         $title = $this->title;
-        return view('components.dashboard-tile',compact('icon','class','data','title'));
+        return view('components.dashboard-tile',compact('icon','class','title'));
     }
 }

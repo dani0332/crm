@@ -4,8 +4,10 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
+use OwenIt\Auditing\Auditable;
 
-class PaymentMode extends Model
+class PaymentMode extends Model implements AuditableContract
 {
-    use HasFactory;
+    use HasFactory , Auditable;
 }

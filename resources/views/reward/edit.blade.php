@@ -30,7 +30,7 @@
                                 <span class="text-danger">{{ $errors->first('coupon_code') }}</span>
                             @endif
                         </div>
-                        
+
                     </div>
 
                     <div class="item form-group">
@@ -57,7 +57,7 @@
                                 <span class="text-danger">{{ $errors->first('discount') }}</span>
                             @endif
                         </div>
-                        
+
                     </div>
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="start_date">Start Date<span class="required">*</span>
@@ -68,7 +68,7 @@
                                 <span class="text-danger">{{ $errors->first('start_date') }}</span>
                             @endif
                         </div>
-                        
+
                     </div>
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="end_date">End Date <span class="required">*</span>
@@ -79,9 +79,9 @@
                                 <span class="text-danger">{{ $errors->first('end_date') }}</span>
                             @endif
                         </div>
-                        
+
                     </div>
-                    <div class="item form-group">
+                    {{-- <div class="item form-group">
                         <label for="middle-name" class="col-form-label col-md-3 col-sm-3 label-align">Is Flat Discount</label>
                         <div class="col-md-6 col-sm-6 ">
                         <div class="checkbox">
@@ -90,7 +90,7 @@
                             </label>
                         </div>
                         </div>
-                    </div>
+                    </div> --}}
                     <div class="item form-group">
                         <label for="middle-name" class="col-form-label col-md-3 col-sm-3 label-align">Is Active</label>
                         <div class="col-md-6 col-sm-6 ">
@@ -98,6 +98,10 @@
                             <label>
                                 <input type="checkbox" {{ $reward->is_active ? 'checked' : '' }} class="flat" name='is_active'>
                             </label>
+                            <br />
+                            @if ($errors->has('is_active'))
+                                <span class="text-danger">{{ $errors->first('is_active') }}</span>
+                            @endif
                         </div>
                         </div>
                     </div>
@@ -109,6 +113,9 @@
                                     <option  {{ in_array($rewardCategory->id ,$reward->rewardCategories->pluck('id')->toArray() ) ? 'selected' : '' }} value="{{ $rewardCategory->id }}">{{ $rewardCategory->text }}</option>
                                 @endforeach
                             </select>
+                            @if ($errors->has('reward_categories'))
+                                <span class="text-danger">{{ $errors->first('reward_categories') }}</span>
+                            @endif
                         </div>
                     </div>
                     <div class="item form-group">
@@ -119,6 +126,9 @@
                                     <option {{ in_array($rewardTag->id ,$reward->rewardTags->pluck('id')->toArray() ) ? 'selected' : '' }} value="{{ $rewardTag->id }}">{{ $rewardTag->text }}</option>
                                 @endforeach
                             </select>
+                            @if ($errors->has('reward_tags'))
+                                <span class="text-danger">{{ $errors->first('reward_tags') }}</span>
+                            @endif
                         </div>
                     </div>
                     <div id='redirect_to_view_div'></div>

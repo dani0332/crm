@@ -92,13 +92,11 @@
                         <a href="{{ route('reward.reward-translation.edit', ['reward'=>$reward->id,'reward_translation' => $rewardTranslation->id]) }}" class='btn btn-info btn-sm'><i class="fa fa-edit"></i> </a>
                     </td>
                     <td >
-
                         <form action="{{ route('reward.reward-translation.destroy', ['reward'=>$reward->id,'reward_translation' => $rewardTranslation->id]) }}" method="POST">
                             @csrf
                             @method('DELETE')
                             <button type="submit" class="btn btn-danger btn-sm"><i class="fa fa-trash"></i></button>
                         </form>
-
                     </td>
                     </tr>
                 </table >

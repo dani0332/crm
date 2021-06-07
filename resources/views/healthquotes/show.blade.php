@@ -6,13 +6,10 @@
         <div class="x_panel">
             <div class="x_title">
                 <h2>Health Quote</h2>
-                <div class="x_title">
-                <h2>Car Quote</h2>
                 <ul class="nav navbar-right panel_toolbox">
                     <li><a href="{{ route('healthquotes.index') }}" class="btn btn-warning btn-sm">Health Quotes List</a></li>
                 </ul>
                 <div class="clearfix"></div>
-            </div>
             </div>
             <div class="x_content">
                 <br />
@@ -84,7 +81,7 @@
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="dob">
                             <b>Emirate Of Registration : </b></label>
                         <div class="col-md-6 col-sm-6 ">
-                            <p class="label-align-center">{{  $healthquote->emirate->code  }}</p>
+                            <p class="label-align-center">{{ $healthquote->emirate ? $healthquote->emirate->code :''  }}</p>
                         </div>
                     </div>
 
@@ -161,14 +158,14 @@
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="dob">
                             <b>Customer : </b></label>
                         <div class="col-md-6 col-sm-6 ">
-                            <p class="label-align-center">{{$healthquote->customer->first_name .' '.$healthquote->customer->last_name  }}</p>
+                            <p class="label-align-center">{{ $healthquote->customer ? $healthquote->customer->first_name .' '.$healthquote->customer->last_name : ''  }}</p>
                         </div>
                     </div>
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="nationality_id">
                             <b>Nationality: </b></label>
                         <div class="col-md-6 col-sm-6 ">
-                            <p class="label-align-center">{{ $healthquote->nationality->code  }}</p>
+                            <p class="label-align-center">{{ $healthquote->nationality ? $healthquote->nationality->code : ''  }}</p>
                         </div>
                     </div>
 
@@ -176,7 +173,7 @@
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="dob">
                             <b>Payment Status : </b></label>
                         <div class="col-md-6 col-sm-6 ">
-                            <p class="label-align-center">{{$healthquote->paymentStatus->code  }}</p>
+                            <p class="label-align-center">{{ $healthquote->paymentStatus ? $healthquote->paymentStatus->code : ''  }}</p>
                         </div>
                     </div>
 
@@ -184,7 +181,7 @@
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="dob">
                             <b>Quote Status Id : </b></label>
                         <div class="col-md-6 col-sm-6 ">
-                            <p class="label-align-center">{{$healthquote->quoteStatus->code  }}</p>
+                            <p class="label-align-center">{{ $healthquote->quoteStatus ? $healthquote->quoteStatus->code : ''  }}</p>
                         </div>
                     </div>
 
@@ -192,7 +189,7 @@
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="dob">
                             <b>Is Synced : </b></label>
                         <div class="col-md-6 col-sm-6 ">
-                            <p class="label-align-center">{{$healthquote->is_synced  }}</p>
+                            <p class="label-align-center">{{ $healthquote->is_synced  }}</p>
                         </div>
                     </div>
 
@@ -201,7 +198,7 @@
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="dob">
                             <b>Device : </b></label>
                         <div class="col-md-6 col-sm-6 ">
-                            <p class="label-align-center">{{$healthquote->device  }}</p>
+                            <p class="label-align-center">{{ $healthquote->device  }}</p>
                         </div>
                     </div>
 
@@ -209,7 +206,7 @@
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="dob">
                             <b>Reference Url : </b></label>
                         <div class="col-md-6 col-sm-6 ">
-                            <p class="label-align-center">{{$healthquote->reference_url  }}</p>
+                            <p class="label-align-center">{{ $healthquote->reference_url  }}</p>
                         </div>
                     </div>
 
@@ -217,7 +214,7 @@
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="dob">
                             <b>Additional Notes : </b></label>
                         <div class="col-md-6 col-sm-6 ">
-                            <p class="label-align-center">{{$healthquote->additional_notes  }}</p>
+                            <p class="label-align-center">{{ $healthquote->additional_notes  }}</p>
                         </div>
                     </div>
 
@@ -225,7 +222,7 @@
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="dob">
                             <b>Reviver Name : </b></label>
                         <div class="col-md-6 col-sm-6 ">
-                            <p class="label-align-center">{{$healthquote->reviver_name }}</p>
+                            <p class="label-align-center">{{ $healthquote->reviver_name }}</p>
                         </div>
                     </div>
 
@@ -233,7 +230,7 @@
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="dob">
                             <b>Promo Code : </b></label>
                         <div class="col-md-6 col-sm-6 ">
-                            <p class="label-align-center">{{$healthquote->promo_code }}</p>
+                            <p class="label-align-center">{{ $healthquote->promo_code }}</p>
                         </div>
                     </div>
 

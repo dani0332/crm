@@ -10,13 +10,14 @@
                     <li><a href="{{ url('rewards/reward-tags/create') }}" class="btn btn-warning btn-sm">Create Reward Tag</a></li>
                 </ul>
                 <div class="clearfix"></div>
-                
+
             </div>
             <div class="x_content">
                 <br />
                 <table  class="table table-striped jambo_table reward-tag-data-table" style="width:100%">
                       <thead>
                         <tr>
+                          <th>Id</th>
                           <th>Text</th>
                           <th>Text Ar</th>
                           <th>Sort Order</th>
@@ -29,7 +30,7 @@
 
 
                       <tbody>
-                            
+
                       </tbody>
                     </table>
             </div>

@@ -15,22 +15,23 @@ class DashboardController extends Controller
      */
     public function index()
     {
-        $date = Carbon::now();
-
-        $customers = Customer::whereDate('created_at', $date)->count();
-
-        $carQuotes = CarQuote::whereDate('created_at', $date)->GroupBy('customer_id')->count();
-        return view('dashboard', compact('customers', 'carQuotes'));
+        return view('dashboard');
     }
 
     public function dashboardStats(Request $request)
     {
-        // return $request->startDate.' '.$request->endDate;
-        $customers = Customer::whereBetween('created_at', [$request->startDate, $request->endDate])->count();
-        $carQuotes = CarQuote::whereBetween('created_at', [$request->startDate, $request->endDate])->GroupBy('customer_id')->count();
+        $startDate = Carbon::now()->startOfDay()->toDateTimeString();
+        $endDate = Carbon::now()->endOfDay()->toDateTimeString();
+        if (isset($request->startDate) && !empty($request->startDate)
+            && isset($request->endDate) && !empty($request->endDate)) {
+            $startDate = Carbon::parse($request->startDate)->startOfDay()->toDateTimeString();
+            $endDate = Carbon::parse($request->endDate)->endOfDay()->toDateTimeString();
+        }
+        $customers = Customer::whereBetween('created_at', [$startDate, $endDate]);
+        $carQuotes = CarQuote::whereBetween('created_at', [$startDate, $endDate])->GroupBy('customer_id');
         return response()->json([
-            'totalCustomers' => $customers,
-            'totalCarQuotes' => $carQuotes,
+            'totalCustomers' => $customers->count(),
+            'totalCarQuotes' => $carQuotes->count(),
         ]);
     }
 }

@@ -29,7 +29,7 @@
                                 <span class="text-danger">{{ $errors->first('coupon_code') }}</span>
                             @endif
                         </div>
-                        
+
                     </div>
 
                     <div class="item form-group">
@@ -56,7 +56,7 @@
                                 <span class="text-danger">{{ $errors->first('discount') }}</span>
                             @endif
                         </div>
-                        
+
                     </div>
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="start_date">Start Date<span class="required">*</span>
@@ -67,7 +67,7 @@
                                 <span class="text-danger">{{ $errors->first('start_date') }}</span>
                             @endif
                         </div>
-                        
+
                     </div>
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="end_date">End Date <span class="required">*</span>
@@ -78,9 +78,9 @@
                                 <span class="text-danger">{{ $errors->first('end_date') }}</span>
                             @endif
                         </div>
-                        
+
                     </div>
-                    <div class="item form-group">
+                    {{-- <div class="item form-group">
                         <label for="middle-name" class="col-form-label col-md-3 col-sm-3 label-align">Is Flat Discount</label>
                         <div class="col-md-6 col-sm-6 ">
                         <div class="checkbox">
@@ -89,7 +89,7 @@
                             </label>
                         </div>
                         </div>
-                    </div>
+                    </div> --}}
                     <div class="item form-group">
                         <label for="middle-name" class="col-form-label col-md-3 col-sm-3 label-align">Is Active</label>
                         <div class="col-md-6 col-sm-6 ">
@@ -97,36 +97,46 @@
                             <label>
                                 <input type="checkbox" class="flat" name='is_active'>
                             </label>
+                            <br />
+                            @if ($errors->has('is_active'))
+                                <span class="text-danger">{{ $errors->first('is_active') }}</span>
+                            @endif
                         </div>
                         </div>
                     </div>
 
                     <div class="item form-group">
-                    <label for="middle-name" class="col-form-label col-md-3 col-sm-3 label-align">Reward Category</label>
+                    <label for="middle-name" class="col-form-label col-md-3 col-sm-3 label-align">Reward Category</label>  <span class="required">*</span>
                         <div class="col-md-6 col-sm-6 ">
                             <select class="select2_multiple form-control" name='reward_categories[]' multiple>
                                 @foreach($rewardCategories as $rewardCategory)
                                     <option value="{{ $rewardCategory->id }}">{{ $rewardCategory->text }}</option>
                                 @endforeach
                             </select>
+                            @if ($errors->has('reward_categories'))
+                                <span class="text-danger">{{ $errors->first('reward_categories') }}</span>
+                            @endif
                         </div>
                     </div>
                     <div class="item form-group">
-                    <label for="middle-name" class="col-form-label col-md-3 col-sm-3 label-align">Reward Tag</label>
+                    <label for="middle-name" class="col-form-label col-md-3 col-sm-3 label-align">Reward Tag</label>  <span class="required">*</span>
                         <div class="col-md-6 col-sm-6 ">
                             <select  name='reward_tags[]' class="select2_multiple form-control" multiple data-live-search="true">
                                 @foreach($rewardTags as $rewardTag)
                                     <option value="{{ $rewardTag->id }}">{{ $rewardTag->text }}</option>
                                 @endforeach
                             </select>
+                            @if ($errors->has('reward_tags'))
+                                <span class="text-danger">{{ $errors->first('reward_tags') }}</span>
+                            @endif
                         </div>
                     </div>
-                   
+
                     <div id='redirect_to_view_div'></div>
                     <div class="ln_solid"></div>
                     <div class="item form-group">
                         <div class="col-md-6 col-sm-6 offset-md-3">
-                          <button type="submit" class="btn btn-warning">Create & Add New</button> <button type="submit" class="btn btn-warning" id="return_to_view" >Cretae</button>
+                          <button type="submit" class="btn btn-warning">Create & Add New</button> <button type="submit" class="btn btn-warning" id="return_to_view" >Create</button>
                         </div>
                     </div>
 

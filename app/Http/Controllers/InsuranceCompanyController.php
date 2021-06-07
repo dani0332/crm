@@ -6,6 +6,7 @@ use App\Models\InsuranceCompany;
 use Illuminate\Http\Request;
 use DataTables;
 use Auth;
+use DB;
 
 class InsuranceCompanyController extends Controller
 {
@@ -156,8 +157,9 @@ class InsuranceCompanyController extends Controller
 
     public function destroy(InsuranceCompany $insurancecompany)
     {
-
+        DB::statement('SET FOREIGN_KEY_CHECKS=0');
         $insurancecompany->delete();
-        return redirect()->route('Insurancecompany.index');
+        DB::statement('SET FOREIGN_KEY_CHECKS=1');
+        return redirect()->route('insurancecompany.index');
     }
 }

@@ -29,7 +29,7 @@
                                 <span class="text-danger">{{ $errors->first('name') }}</span>
                             @endif
                         </div>
-                        
+
                     </div>
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="email">Email <span class="required">*</span>
@@ -40,7 +40,7 @@
                                 <span class="text-danger">{{ $errors->first('email') }}</span>
                             @endif
                         </div>
-                        
+
                     </div>
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="password">Password <span class="required">*</span>
@@ -51,7 +51,7 @@
                                 <span class="text-danger">{{ $errors->first('password') }}</span>
                             @endif
                         </div>
-                        
+
                     </div>
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="roles">Role <span class="required">*</span>
@@ -66,13 +66,13 @@
                                 <span class="text-danger">{{ $errors->first('roles') }}</span>
                             @endif
                         </div>
-                        
+
                     </div>
                     <div id='redirect_to_view_div'></div>
                     <div class="ln_solid"></div>
                     <div class="item form-group">
                         <div class="col-md-6 col-sm-6 offset-md-3">
-                          <button type="submit" class="btn btn-warning">Create & Add New</button> <button type="submit" class="btn btn-warning" id="return_to_view" >Cretae</button>
+                          <button type="submit" class="btn btn-warning">Create & Add New</button> <button type="submit" class="btn btn-warning" id="return_to_view" >Create</button>
                         </div>
                     </div>
 

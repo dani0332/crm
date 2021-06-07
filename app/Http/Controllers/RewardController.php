@@ -10,7 +10,9 @@ use App\Services\RewardCategoryMapping;
 use App\Services\RewardTagMapping;
 use DataTables;
 use DB;
+use App\Models\RewardTranslation;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class RewardController extends Controller
 {
@@ -33,7 +35,8 @@ class RewardController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $data = Reward::select('*');
+            $data = Reward::select('reward.*','partner.name as partner')
+            ->leftjoin('partner','reward.partner_id','partner.id');
             return Datatables::of($data)
                 ->addIndexColumn()
                 ->addColumn('action', function ($row) {
@@ -68,10 +71,15 @@ class RewardController extends Controller
         $this->validate($request, [
             'coupon_code' => 'required',
             'partner_id' => 'required',
-            'discount' => 'required',
+            'discount' => 'required|string|max:15',
             'start_date' => 'required',
-            'end_date' => 'required',
+            'reward_categories' => 'required',
+            'reward_tags' => 'required'
         ]);
+
+        if($request->is_active == 'on'){
+            throw ValidationException::withMessages(['is_active' => 'There is no translation against this reward please create one first']);
+        }
         $reward = new Reward();
         $reward->coupon_code = $request->coupon_code;
         $reward->partner_id = $request->partner_id;
@@ -79,7 +87,6 @@ class RewardController extends Controller
         $reward->start_date = $request->start_date;
         $reward->end_date = $request->end_date;
         $reward->is_flat_discount = $request->is_flat_discount == 'on' ? 1 : 0;
-        $reward->is_active = $request->is_active == 'on' ? 1 : 0;
         $reward->viewed_count = 0;
         $reward->viewed_count_unique = 0;
         $reward->save();
@@ -138,7 +145,15 @@ class RewardController extends Controller
             'discount' => 'required|max:120',
             'start_date' => 'required|max:120',
             'end_date' => 'required|max:120',
+            'reward_categories' => 'required',
+            'reward_tags' => 'required'
         ]);
+
+        if($request->is_active == 'on'){
+            if(RewardTranslation::where('reward_id',$reward->id)->count() == 0)
+                throw ValidationException::withMessages(['is_active' => 'There is no translation against this reward please create one first']);
+        }
+
         $reward->coupon_code = $request->coupon_code;
         $reward->partner_id = $request->partner_id;
         $reward->discount = $request->discount;
