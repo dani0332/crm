@@ -81,8 +81,6 @@ class PaymentModeController extends Controller
 
             'name' => 'required',
 
-            'is_active' => 'required',
-
         ]);
 
         $paymentmode = new PaymentMode;

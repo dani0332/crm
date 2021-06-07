@@ -82,8 +82,6 @@ class ReasonController extends Controller
 
             'name' => 'required',
 
-            'is_active' => 'required',
-
         ]);
 
         $reason = new Reason;
