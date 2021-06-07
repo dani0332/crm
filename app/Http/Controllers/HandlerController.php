@@ -82,8 +82,6 @@ class HandlerController extends Controller
 
             'name' => 'required',
 
-            'is_active' => 'required',
-
         ]);
 
         $handler = new Handler;
