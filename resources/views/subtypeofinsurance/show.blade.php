@@ -58,11 +58,13 @@
                                     <a id="texta" href="{{ route('subtypeofinsurance.edit', ['subtypeofinsurance' => $subtypeofinsurance->id]) }}" class='btn btn-warning btn-sm'>Edit </a>
                                 @endcan
                                 @can('sub-type-of-insurance-delete')
-                                    <form action="{{ route('subtypeofinsurance.destroy', ['subtypeofinsurance' => $subtypeofinsurance->id]) }}" method="POST">
+                                    <a href="#" date-route="{{ route('subtypeofinsurance.destroy', ['subtypeofinsurance' => $subtypeofinsurance->id]) }}"   class='btn btn-warning btn-sm delete'>Delete</a>
+                                
+                                    {{-- <form action="" method="POST">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="btn btn-warning btn-sm">Delete</button>
-                                    </form>
+                                    </form> --}}
                                 @endcan
                             </tr>
                         </div>
