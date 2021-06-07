@@ -10,6 +10,10 @@
                     <li><a href="{{ url('claim/claimsstatus/create') }}" class="btn btn-warning btn-sm">Create Claim Status</a></li>
                 </ul>
                 <div class="clearfix"></div>
+<<<<<<< HEAD
+
+=======
+>>>>>>> develop
             </div>
             <div class="x_content">
                 <br />
@@ -28,7 +32,7 @@
 
 
                       <tbody>
-                                
+
                       </tbody>
                     </table>
             </div>

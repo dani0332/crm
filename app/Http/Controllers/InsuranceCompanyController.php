@@ -79,11 +79,7 @@ class InsuranceCompanyController extends Controller
     {
 
         $this->validate($request, [
-
             'name' => 'required',
-
-            'is_active' => 'required',
-
         ]);
 
         $insurancecompany = new InsuranceCompany;

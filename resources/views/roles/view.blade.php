@@ -11,9 +11,9 @@
                     <li><a href="{{ url('admin/roles/create') }}" class="btn btn-warning btn-sm">Create Role</a></li>
                 </ul>
                 @endcan
-                
+
                 <div class="clearfix"></div>
-                
+
             </div>
             <div class="x_content">
                 <br />
@@ -22,15 +22,14 @@
                         <tr>
                           <th>id</th>
                           <th>Name</th>
-                          <th>Actions</th>
                         </tr>
                       </thead>
 
 
                       <tbody>
-                        
-                        
-                        
+
+
+
                       </tbody>
                     </table>
             </div>

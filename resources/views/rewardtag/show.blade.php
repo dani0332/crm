@@ -58,11 +58,12 @@
                         <a href="{{ route('reward-tags.edit', ['reward_tag' => $rewardTag->id])}}"  class='btn btn-warning btn-sm'>Edit</a>
                         @endcan
                         @can('reward-tags-delete')
-                        <form action="{{ route('reward-tags.destroy', ['reward_tag' => $rewardTag->id])}}" method='POST' style="margin-top: -3px;">
+                        <a href="#" date-route="{{ route('reward-tags.destroy', ['reward_tag' => $rewardTag->id])}}"   class='btn btn-warning btn-sm delete'>Delete</a>
+                        {{-- <form action="" method='POST' style="margin-top: -3px;">
                                 @csrf
                                 @method('DELETE')
                                 <button type='submit' class='btn btn-warning btn-sm'>Delete</button>
-                        </form>
+                        </form> --}}
                         @endcan
                     </div>
                 </div>

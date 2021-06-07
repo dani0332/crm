@@ -67,7 +67,6 @@
                           <th>Gender</th>
                           <th>Has Alfred Access</th>
                           <th>DOB</th>
-                          <th>Actions</th>
                         </tr>
                       </thead>
 

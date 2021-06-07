@@ -10,7 +10,7 @@
                     <li><a href="{{ url('claim/subtypeofinsurance/create') }}" class="btn btn-warning btn-sm">Create Sub Type of Insurance</a></li>
                 </ul>
                 <div class="clearfix"></div>
-                
+
             </div>
             <div class="x_content">
                 <br />
@@ -29,7 +29,7 @@
 
 
                       <tbody>
-                                
+
                       </tbody>
                     </table>
             </div>

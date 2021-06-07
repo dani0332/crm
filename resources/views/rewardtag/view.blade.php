@@ -24,7 +24,6 @@
                           <th>Is Active</th>
                           <th>Created At</th>
                           <th>Updated At</th>
-                          <th>Actions</th>
                         </tr>
                       </thead>
 

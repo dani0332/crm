@@ -24,7 +24,6 @@
                           <th>Is Synced</th>
                           <th>Device</th>
                           <th>Code</th>
-                          <th>Actions</th>
                         </tr>
                       </thead>
 

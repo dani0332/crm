@@ -50,11 +50,12 @@
                 <div class="item form-group">
                     <div class="col-md-6 col-sm-6 offset-md-3">
                         <a href="{{ route('insurancecompany.edit', ['insurancecompany' => $insurancecompany->id]) }}" class='btn btn-warning btn-sm'>Edit</a>
-                        <form action="{{ route('insurancecompany.destroy', ['insurancecompany' => $insurancecompany->id]) }}" method="POST">
+                        <a href="#" date-route="{{ route('insurancecompany.destroy', ['insurancecompany' => $insurancecompany->id]) }}"   class='btn btn-warning btn-sm delete'>Delete</a>
+                        {{-- <form action="" method="POST">
                             @csrf
                             @method('DELETE')
                             <button type="submit" class='btn btn-warning btn-sm'>Delete</button>
-                        </form>
+                        </form> --}}
                     </div>
                 </div>
                 </form>

@@ -80,9 +80,6 @@ class StatusController extends Controller
         $this->validate($request, [
 
             'name' => 'required',
-
-            'is_active' => 'required',
-
         ]);
 
         $status = new Status;

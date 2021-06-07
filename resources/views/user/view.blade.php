@@ -12,7 +12,7 @@
                 </ul>
                 @endcan
                 <div class="clearfix"></div>
-                
+
             </div>
             <div class="x_content">
                 <br />
@@ -22,15 +22,14 @@
                           <th>id</th>
                           <th>Name</th>
                           <th>Email</th>
-                          <th>Actions</th>
                         </tr>
                       </thead>
 
 
                       <tbody>
-                        
-                        
-                        
+
+
+
                       </tbody>
                     </table>
             </div>
