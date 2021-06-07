@@ -127,7 +127,6 @@ class RewardTagController extends Controller
         DB::statement('SET FOREIGN_KEY_CHECKS=0');
         $rewardTag->delete();
         DB::statement('SET FOREIGN_KEY_CHECKS=1');
-        return back()
-            ->with('success', 'reward Tag has been Deleted');
+        return redirect()->route('reward-tags.index');
     }
 }

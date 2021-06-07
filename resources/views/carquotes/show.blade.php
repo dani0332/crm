@@ -270,6 +270,20 @@
                             <p class="label-align-center"> {{ $carquote->has_alfred_access ? 'True' : 'False' }} </p>
                         </div>
                     </div>
+
+                    <div class="item form-group">
+                        <label for="middle-name" class="col-form-label col-md-3 col-sm-3 label-align"><b>Created At : </b></label>
+                        <div class="col-md-6 col-sm-6 ">
+                            <p class="label-align-center"> {{ $carquote->created_at }} </p>
+                        </div>
+                    </div>
+
+                    <div class="item form-group">
+                        <label for="middle-name" class="col-form-label col-md-3 col-sm-3 label-align"><b>Updated At : </b></label>
+                        <div class="col-md-6 col-sm-6 ">
+                            <p class="label-align-center"> {{ $carquote->updated_at }} </p>
+                        </div>
+                    </div>
                     <div class="ln_solid"></div>
                 </form>
             </div>
