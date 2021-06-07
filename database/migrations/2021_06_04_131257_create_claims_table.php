@@ -65,6 +65,10 @@ class CreateClaimsTable extends Migration
             $table->date('date_of_loss')->nullable();
             $table->decimal('claim_amount', $precision = 14, $scale = 2)->nullable();
             $table->boolean('is_deleted')->default('0');
+            $table->string('attachment_1','255')->nullable();
+            $table->string('attachment_2','255')->nullable();
+            $table->string('attachment_3','255')->nullable();
+            $table->string('attachment_4','255')->nullable();
             $table->timestamps();
         });
     }

@@ -17,6 +17,7 @@
                 <table  class="table table-striped jambo_table subtypeofinsurance-data-table" style="width:100%">
                       <thead>
                         <tr>
+                          <th>Id</th>
                           <th>Text</th>
                           <th>Text Ar</th>
                           <th>Sort Order</th>

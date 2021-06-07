@@ -52,7 +52,7 @@
         <ul class="nav side-menu">
             <li><a><i class="fa fa-desktop"></i> Trans App <span class="fa fa-chevron-down"></span></a>
             <ul class="nav child_menu">
-                @can('transaction-list')
+                @can('transapp-list')
                     <li><a href="{{ route('home') }}">Home</a></li>
                 @endcan
                 <li><a href="#">Admin <span class="fa fa-chevron-down"></span></a>
