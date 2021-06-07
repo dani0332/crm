@@ -27,13 +27,13 @@ class TransactionController extends Controller
     public function __construct()
     {
 
-        $this->middleware('permission:transaction-list|transaction-create|transaction-edit|transaction-delete', ['only' => ['index', 'store']]);
+        $this->middleware('permission:transapp-list|transapp-create|transapp-edit|transapp-delete', ['only' => ['index', 'store']]);
 
-        $this->middleware('permission:transaction-create', ['only' => ['create', 'store']]);
+        $this->middleware('permission:transapp-create', ['only' => ['create', 'store']]);
 
-        $this->middleware('permission:transaction-edit', ['only' => ['edit', 'update']]);
+        $this->middleware('permission:transapp-edit', ['only' => ['edit', 'update']]);
 
-        $this->middleware('permission:transaction-delete', ['only' => ['destroy']]);
+        $this->middleware('permission:transapp-delete', ['only' => ['destroy']]);
     }
 
     /**

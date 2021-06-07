@@ -40,10 +40,10 @@
         <ul class="nav side-menu">
             <li><a><i class="fa fa-quote-left"></i> Personal Quotes <span class="fa fa-chevron-down"></span></a>
             <ul class="nav child_menu">
-                @can('carquotes-list')
+                @can('car-quotes-list')
                     <li><a href="{{ url('quotes/carquotes') }}">Car Quotes</a></li>
                 @endcan
-                @can('carquotes-list')
+                @can('health-quotes-list')
                     <li><a href="{{ url('quotes/healthquotes') }}">Health Quotes</a></li>
                 @endcan
             </ul>
@@ -75,7 +75,7 @@
                         @endcan
                     </ul>
                 </li>
-                @can('transaction-list')
+                @can('transapp-list')
                     <li><a href="#">Transaction <span class="fa fa-chevron-down"></span></a>
                         <ul class="nav child_menu">
 

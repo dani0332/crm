@@ -23,7 +23,7 @@ class CarQuoteController extends Controller
 
     public function __construct()
     {
-        $this->middleware('permission:carquotes-list|carquotes-resubmit-api', ['only' => ['index', 'store']]);
+        $this->middleware('permission:car-quotes-list|car-quotes-resubmit-api', ['only' => ['index', 'store']]);
     }
 
     /**
@@ -49,8 +49,8 @@ class CarQuoteController extends Controller
                 $data->where('quote_status_id', $request->quotestatus);
             if(isset($request->paymentstatus) && !empty($request->paymentstatus))
                 $data->where('payment_status_id', $request->paymentstatus);
-            
-            
+
+
             return DataTables::of($data)
                 ->addIndexColumn()
                 ->addColumn('action', function ($row) {

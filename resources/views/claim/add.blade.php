@@ -341,7 +341,7 @@
                     <div class="row">
                     <div class="col-auto mr-auto"></div>
                         <div class="col-auto">
-                        <button type="submit" class="btn btn-warning btn-sm">Create & Add New</button> <button type="submit" class="btn btn-warning btn-sm" id="return_to_view" >Cretae</button>
+                        <button type="submit" class="btn btn-warning btn-sm">Create & Add New</button> <button type="submit" class="btn btn-warning btn-sm" id="return_to_view" >Create</button>
                         </div>
                     </div>
                 </form>
