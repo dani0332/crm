@@ -97,6 +97,10 @@
                             <label>
                                 <input type="checkbox" class="flat" name='is_active'>
                             </label>
+                            <br />
+                            @if ($errors->has('is_active'))
+                                <span class="text-danger">{{ $errors->first('is_active') }}</span>
+                            @endif
                         </div>
                         </div>
                     </div>
