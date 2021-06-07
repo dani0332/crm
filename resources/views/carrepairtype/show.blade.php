@@ -74,7 +74,7 @@
 </div>
 @can('auditable')
     <div id="auditable">
-        <button id='auditablebtn' class="btn btn-warning auditablebtn" data-id="{{ $carrepairtype->id }}" data-model="App\Models\CarRepairTypeController">
+        <button id='auditablebtn' class="btn btn-warning btn-sm" data-id="{{ $carrepairtype->id }}" data-model="App\Models\CarRepairTypeController">
             View Audit Logs
         </button>
     </div>

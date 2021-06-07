@@ -90,10 +90,14 @@ class ClaimController extends Controller
             'additional_notes' => 'required|max:2000',
             'type_of_insurances_id' => 'required',
             'claims_status_id' => 'required',
-            'car_repair_coverage_id' => 'required',
-            'car_repair_type_id' => 'required',
-            'rent_a_car_id' => 'required',
-            'assigned_to_id' => 'required',
+            //'car_repair_coverage_id' => 'required',
+            //'car_repair_type_id' => 'required',
+            //'rent_a_car_id' => 'required',
+            //'assigned_to_id' => 'required',
+            'attachment_1' => 'mimes:jpg,jpeg,png,bmp,pdf,docx|max:10240',
+            'attachment_2' => 'mimes:jpg,jpeg,png,bmp,pdf,docx|max:10240',
+            'attachment_3' => 'mimes:jpg,jpeg,png,bmp,pdf,docx|max:10240',
+            'attachment_4' => 'mimes:jpg,jpeg,png,bmp,pdf,docx|max:10240',
         ]);
 
         $claim = new Claim();
@@ -123,6 +127,32 @@ class ClaimController extends Controller
         $claim->car_model_id = $request->car_model_id;
         $claim->created_by_id = Auth::user()->id;
         $claim->modified_by_id = Auth::user()->id;
+
+        if($request->hasFile('attachment_1')) {
+            $fileName_1 = time() . '_' . $request->attachment_1->getClientOriginalName();
+            // save file to azure blob virtual directory uplaods in your container
+            $filePath = $request->file('attachment_1')->storeAs('/', $fileName_1, 'azure');
+            $claim->attachment_1 = $fileName_1;
+        }
+        if($request->hasFile('attachment_2')) {
+            $fileName_2 = time() . '_' . $request->attachment_2->getClientOriginalName();
+            // save file to azure blob virtual directory uplaods in your container
+            $filePath = $request->file('attachment_2')->storeAs('/', $fileName_2, 'azure');
+            $claim->attachment_2 = $fileName_2;
+        }
+        if($request->hasFile('attachment_3')) {
+            $fileName_3 = time() . '_' . $request->attachment_3->getClientOriginalName();
+            // save file to azure blob virtual directory uplaods in your container
+            $filePath = $request->file('attachment_3')->storeAs('/', $fileName_3, 'azure');
+            $claim->attachment_3 = $fileName_3;
+        }
+        if($request->hasFile('attachment_4')) {
+            $fileName_4 = time() . '_' . $request->attachment_4->getClientOriginalName();
+            // save file to azure blob virtual directory uplaods in your container
+            $filePath = $request->file('attachment_4')->storeAs('/', $fileName_4, 'azure');
+            $claim->attachment_4 = $fileName_4;
+        }
+
         $claim->save();
         if(isset($request->return_to_view))
             return redirect("claim/claims");
@@ -181,10 +211,14 @@ class ClaimController extends Controller
             'additional_notes' => 'required|max:2000',
             'type_of_insurances_id' => 'required',
             'claims_status_id' => 'required',
-            'car_repair_coverage_id' => 'required',
-            'car_repair_type_id' => 'required',
-            'rent_a_car_id' => 'required',
-            'assigned_to_id' => 'required',
+            //'car_repair_coverage_id' => 'required',
+            //'car_repair_type_id' => 'required',
+            //'rent_a_car_id' => 'required',
+            //'assigned_to_id' => 'required',
+            'attachment_1' => 'mimes:jpg,jpeg,png,bmp,pdf,docx|max:10240',
+            'attachment_2' => 'mimes:jpg,jpeg,png,bmp,pdf,docx|max:10240',
+            'attachment_3' => 'mimes:jpg,jpeg,png,bmp,pdf,docx|max:10240',
+            'attachment_4' => 'mimes:jpg,jpeg,png,bmp,pdf,docx|max:10240',
         ]);
         $claim->first_name =  $request->first_name;
         $claim->last_name =  $request->last_name;
@@ -211,6 +245,32 @@ class ClaimController extends Controller
         $claim->car_make_id = $request->car_make_id;
         $claim->car_model_id = $request->car_model_id;
         $claim->modified_by_id = Auth::user()->id;
+
+        if($request->hasFile('attachment_1')) {
+            $fileName_1 = time() . '_' . $request->attachment_1->getClientOriginalName();
+            // save file to azure blob virtual directory uplaods in your container
+            $filePath = $request->file('attachment_1')->storeAs('/', $fileName_1, 'azure');
+            $claim->attachment_1 = $fileName_1;
+        }
+        if($request->hasFile('attachment_2')) {
+            $fileName_2 = time() . '_' . $request->attachment_2->getClientOriginalName();
+            // save file to azure blob virtual directory uplaods in your container
+            $filePath = $request->file('attachment_2')->storeAs('/', $fileName_2, 'azure');
+            $claim->attachment_2 = $fileName_2;
+        }
+        if($request->hasFile('attachment_3')) {
+            $fileName_3 = time() . '_' . $request->attachment_3->getClientOriginalName();
+            // save file to azure blob virtual directory uplaods in your container
+            $filePath = $request->file('attachment_3')->storeAs('/', $fileName_3, 'azure');
+            $claim->attachment_3 = $fileName_3;
+        }
+        if($request->hasFile('attachment_4')) {
+            $fileName_4 = time() . '_' . $request->attachment_4->getClientOriginalName();
+            // save file to azure blob virtual directory uplaods in your container
+            $filePath = $request->file('attachment_4')->storeAs('/', $fileName_4, 'azure');
+            $claim->attachment_4 = $fileName_4;
+        }
+
         $claim->save();
         if(isset($request->return_to_view))
             return redirect("claim/claims");
