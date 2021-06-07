@@ -21,7 +21,7 @@ class HealthQuoteController extends Controller
 
     public function __construct()
     {
-        $this->middleware('permission:healthquotes-list|healthquotes-resubmit-api', ['only' => ['index', 'store']]);
+        $this->middleware('permission:health-quotes-list|health-quotes-resubmit-api', ['only' => ['index', 'store']]);
     }
 
     /**

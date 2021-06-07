@@ -43,7 +43,7 @@
                 @can('car-quotes-list')
                     <li><a href="{{ url('quotes/carquotes') }}">Car Quotes</a></li>
                 @endcan
-                @can('car-quotes-list')
+                @can('health-quotes-list')
                     <li><a href="{{ url('quotes/healthquotes') }}">Health Quotes</a></li>
                 @endcan
             </ul>
