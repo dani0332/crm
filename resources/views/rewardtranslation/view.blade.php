@@ -25,7 +25,6 @@
                           <th>End Date</th>
                           <th>Is Active</th>
                           <th>Is Flat Discount</th>
-                          <th>Actions</th>
                         </tr>
                       </thead>
 
@@ -42,14 +41,6 @@
                           <td>{{ $reward->end_date }}</td>
                           <td>{{ $reward->is_active }}</td>
                           <td>{{ $reward->is_flat_discount }}</td>
-                          <td><a href="{{ route('reward.edit', ['reward' => $reward->id]) }}" class='btn btn-info btn-sm'><i class="fa fa-edit"></i> </a>
-                          <form action="{{ route('reward.destroy', ['reward' => $reward->id]) }}" method="POST">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="btn btn-danger btn-sm"><i class="fa fa-trash"></i></button>
-                            </form>
-                            <a href="{{ route('reward.show', ['reward' => $reward->id]) }}" class='btn btn-info btn-sm'><i class="fa fa-eye"></i> </a>
-                          </td>
                         </tr>
                         @endforeach
 

@@ -10,7 +10,7 @@
                     <li><a href="{{ url('claim/carrepaircoverage/create') }}" class="btn btn-warning btn-sm">Create Car Repair Coverage</a></li>
                 </ul>
                 <div class="clearfix"></div>
-                
+
             </div>
             <div class="x_content">
                 <br />
@@ -23,13 +23,12 @@
                           <th>Is Active</th>
                           <th>Created At</th>
                           <th>Updated At</th>
-                          <th>Actions</th>
                         </tr>
                       </thead>
 
 
                       <tbody>
-                                
+
                       </tbody>
                     </table>
             </div>

@@ -58,11 +58,12 @@
                                     <a id="texta" href="{{ route('rentacar.edit', ['rentacar' => $rentacar->id]) }}" class='btn btn-warning btn-sm'>Edit </a>
                                 @endcan
                                 @can('rent-a-car-delete')
-                                    <form action="{{ route('rentacar.destroy', ['rentacar' => $rentacar->id]) }}" method="POST">
+                                    <a href="#" date-route="{{ route('rentacar.destroy', ['rentacar' => $rentacar->id]) }}"   class='btn btn-warning btn-sm delete'>Delete</a>
+                                    {{-- <form action="" method="POST">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="btn btn-warning btn-sm">Delete</button>
-                                    </form>
+                                    </form> --}}
                                 @endcan
                             </tr>
                         </div>

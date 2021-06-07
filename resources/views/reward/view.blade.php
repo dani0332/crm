@@ -24,8 +24,6 @@
                           <th>Start Date</th>
                           <th>End Date</th>
                           <th>Is Active</th>
-                          {{-- <th>Is Flat Discount</th> --}}
-                          <th>Actions</th>
                         </tr>
                       </thead>
 

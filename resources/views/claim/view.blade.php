@@ -22,15 +22,14 @@
                           <th>Email Address</th>
                           <th>Phone Number</th>
                           <th>Created At</th>
-                          <th>Actions</th>
                         </tr>
                       </thead>
 
 
                       <tbody>
-                        
-                        
-                        
+
+
+
                       </tbody>
                     </table>
             </div>

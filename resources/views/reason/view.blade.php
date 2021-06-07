@@ -25,7 +25,6 @@
                           <th>Is Active</th>
                           <th>Created By</th>
                           <th>Modified By</th>
-                          <th>Actions</th>
                         </tr>
                       </thead>
 
