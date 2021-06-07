@@ -17,13 +17,13 @@
                 <table  class="table table-striped jambo_table typeofinsurance-data-table" style="width:100%">
                       <thead>
                         <tr>
+                          <th>Id</th>
                           <th>Text</th>
                           <th>Text Ar</th>
                           <th>Sort Order</th>
                           <th>Is Active</th>
                           <th>Created At</th>
                           <th>Updated At</th>
-                          <th>Actions</th>
                         </tr>
                       </thead>
 
