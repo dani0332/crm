@@ -815,6 +815,15 @@ $(document).ready(function () {
         }, 500);
     });
 
+    $(".active_reward").click(function (e) {
+        e.preventDefault();
+        var input = '<input name="active_reward" type="hidden" value="1"/>';
+        $("#active_reward").html(input);
+        setTimeout(function () {
+            $("form").submit();
+        }, 500);
+    });
+
 
 });
 $(document).on('click','.delete', function(){

@@ -10,10 +10,6 @@
                     <li><a href="{{ url('claim/rentacar/create') }}" class="btn btn-warning btn-sm">Create Rent a Car</a></li>
                 </ul>
                 <div class="clearfix"></div>
-<<<<<<< HEAD
-
-=======
->>>>>>> develop
             </div>
             <div class="x_content">
                 <br />

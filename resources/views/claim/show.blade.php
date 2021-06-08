@@ -300,7 +300,6 @@
                         <p class="label-align-center">{{ $claim->modifiedby ? $claim->modifiedby->name : '' }}</p>
                         </div>
                     </div>
-<<<<<<< HEAD
                     <div class="ln_solid"></div>
                     <div class="item form-group">
                         <div class="col-md-6 col-sm-6 offset-md-3">
@@ -316,25 +315,6 @@
                                     </form> --}}
                                 @endcan
                             </tr>
-=======
-                </div>
-
-                <div class="ln_solid"></div>
-
-                <div class="row">
-                    <div class="col-auto mr-auto"></div>
-                        <div class="col-auto">
-                            @can('claim-edit')
-                            <a id="texta" href="{{ route('claims.edit', ['claim' => $claim->id]) }}" class='btn btn-warning btn-sm'>Edit </a>
-                            @endcan
-                            @can('claim-delete')
-                            <form action="{{ route('claims.destroy', ['claim' => $claim->id]) }}" method="POST">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" class="btn btn-warning btn-sm">Delete</button>
-                            </form>
-                            @endcan
->>>>>>> develop
                         </div>
                     </div>
                 </form>

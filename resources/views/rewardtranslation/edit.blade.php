@@ -27,9 +27,9 @@
                                     <span class="text-danger">{{ $errors->first('title') }}</span>
                                 @endif
                             </div>
-                            
+
                         </div>
-    
+
                         <div class="item form-group">
                             <label class="col-form-label col-md-3 col-sm-3 label-align" for="description1">Description 1 <span class="required">*</span>
                             </label>
@@ -39,9 +39,9 @@
                                     <span class="text-danger">{{ $errors->first('description1') }}</span>
                                 @endif
                             </div>
-                            
+
                         </div>
-    
+
                         <div class="item form-group">
                             <label class="col-form-label col-md-3 col-sm-3 label-align" for="description2">Description 2 <span class="required">*</span>
                             </label>
@@ -51,9 +51,9 @@
                                     <span class="text-danger">{{ $errors->first('description2') }}</span>
                                 @endif
                             </div>
-                            
+
                         </div>
-    
+
                         <div class="item form-group">
                             <label class="col-form-label col-md-3 col-sm-3 label-align" for="instructions">Instructions<span class="required">*</span>
                             </label>
@@ -75,7 +75,7 @@
                                 @endif
                             </div>
                         </div>
-    
+
                         <div class="item form-group">
                             <label class="col-form-label col-md-3 col-sm-3 label-align" for="full_width_banner_image">Full Banner Image <span class="required">*</span>
                             </label>
@@ -86,11 +86,11 @@
                                     <span class="text-danger">{{ $errors->first('full_width_banner_image') }}</span>
                                 @endif
                             </div>
-                            
+
                         </div>
-    
+
                         <div class="item form-group">
-                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="generic_banner_image">Generic Banner Image <span class="required">*</span> 
+                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="generic_banner_image">Generic Banner Image <span class="required">*</span>
                             </label>
                             <div class="col-md-6 col-sm-6 ">
                                 <img src="{{  \Config::get('constants.azure_storage_url').'myrewards/'.$rewardTranslation->generic_banner_image }}" style='width:200px;'/> <hr />
@@ -99,15 +99,15 @@
                                     <span class="text-danger">{{ $errors->first('generic_banner_image') }}</span>
                                 @endif
                             </div>
-                            
+
                         </div>
-    
+
                         <div class="item form-group">
                             <label class="col-form-label col-md-3 col-sm-3 label-align" for="terms_and_conditions">Terms And Conditions<span class="required">*</span>
                             </label>
                             <div class="col-md-6 col-sm-6 ">
                                 <textarea id='editor4'  name="terms_and_conditions">{{ $rewardTranslation->terms_and_conditions }}</textarea>
-                                
+
                                 @if ($errors->has('terms_and_conditions'))
                                     <span class="text-danger">{{ $errors->first('terms_and_conditions') }}</span>
                                 @endif
@@ -117,7 +117,7 @@
                             <label class="col-form-label col-md-3 col-sm-3 label-align" for="lang">Language <span class="required">*</span>
                             </label>
                             <div class="col-md-6 col-sm-6 ">
-                                <select class="form-control" name='lang'>
+                                <select class="form-control" name='lang' readonly>
                                     <option selected value='{{ $rewardTranslation->lang }}'>{{ $rewardTranslation->lang }}</option>
                                 </select>
                                 @if ($errors->has('lang'))
@@ -132,7 +132,7 @@
                             <button type="submit" class="btn btn-warning">Update & Continue Updating</button> <button type="submit" class="btn btn-warning" id="return_to_view" >Update</button>
                             </div>
                         </div>
-    
+
                     </form>
 
             </div>
