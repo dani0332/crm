@@ -16,7 +16,7 @@ class RewardTranslationController extends Controller
      */
     public function index(Reward $reward)
     {
-        $rewards = Reward::all();
+        $rewards = Reward::orderBy('created_at','desc')->get();
         return view('reward.view', compact('rewards'));
     }
     /**

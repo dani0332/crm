@@ -44,7 +44,7 @@ class PaymentModeController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $data = PaymentMode::select('*');
+            $data = PaymentMode::select('*')->orderBy('created_at','desc');
             return Datatables::of($data)
                 ->addIndexColumn()
                 ->addColumn('action', function ($row) {

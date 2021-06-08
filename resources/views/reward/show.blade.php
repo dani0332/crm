@@ -22,7 +22,8 @@
                 {{csrf_field()}}
                 @method('PUT')
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="coupon_code">Coupon Code  <span class="required">*</span>
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="coupon_code">
+                            <b>Coupon Code</b>
                         </label>
                         <div class="col-md-6 col-sm-6 ">
                             <p class="label-align-center">{{ $reward->coupon_code }}</p>
@@ -31,20 +32,23 @@
                     </div>
 
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="name">Partner <span class="required">*</span>
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="name">
+                            <b>Partner</b>
                         </label>
                         <div class="col-md-6 col-sm-6 ">
                             <p class="label-align-center">{{ $reward->partner ? $reward->partner->name : "" }}</p>
                         </div>
                     </div>
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="discount">Discount <span class="required">*</span>
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="discount">
+                            <b>Discount</b>
                         </label>
                         <p class="label-align-center">{{ $reward->discount }}</p>
 
                     </div>
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="start_date">Start Date<span class="required">*</span>
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="start_date">
+                            <b> Start Date </b>
                         </label>
                         <div class="col-md-6 col-sm-6 ">
                             <p class="label-align-center">{{ $reward->start_date }}</p>
@@ -52,7 +56,8 @@
 
                     </div>
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="end_date">End Date <span class="required">*</span>
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="end_date">
+                            <b>End Date</b>
                         </label>
                         <div class="col-md-6 col-sm-6 ">
                             <p class="label-align-center">{{ $reward->end_date }}</p>
@@ -66,13 +71,17 @@
                         </div>
                     </div> --}}
                     <div class="item form-group">
-                        <label for="middle-name" class="col-form-label col-md-3 col-sm-3 label-align">Is Active</label>
+                        <label for="middle-name" class="col-form-label col-md-3 col-sm-3 label-align">
+                            <b>Is Active</b>
+                        </label>
                         <div class="col-md-6 col-sm-6 ">
                             <p class="label-align-center">{{ $reward->is_active ? 'True' : 'False' }}</p>
                         </div>
                     </div>
                     <div class="item form-group">
-                    <label for="middle-name" class="col-form-label col-md-3 col-sm-3 label-align">Reward Category</label>
+                    <label for="middle-name" class="col-form-label col-md-3 col-sm-3 label-align">
+                        <b>Reward Category</b>
+                    </label>
                         <div class="col-md-6 col-sm-6 ">
                             <p class="label-align-center">
                                 @foreach($reward->rewardCategories as $rewardCategory)
@@ -84,7 +93,9 @@
                         </div>
                     </div>
                     <div class="item form-group">
-                    <label for="middle-name" class="col-form-label col-md-3 col-sm-3 label-align">Reward Tag</label>
+                    <label for="middle-name" class="col-form-label col-md-3 col-sm-3 label-align">
+                        <b>Reward Tag</b>
+                    </label>
                         <div class="col-md-6 col-sm-6 ">
                             <p class="label-align-center">
                                 @foreach($reward->rewardTags as $rewardTag)
@@ -138,6 +149,7 @@
                         <th>Title</th>
                         <th>Product Image</th>
                         <th>Language</th>
+
                       </tr>
                     </thead>
 

@@ -38,7 +38,7 @@ class PartnerController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $data = Partner::select('*');
+            $data = Partner::select('*')->orderBy('created_at','desc');
             return Datatables::of($data)
                 ->addIndexColumn()
             // ->addColumn('logo_image', function($row){

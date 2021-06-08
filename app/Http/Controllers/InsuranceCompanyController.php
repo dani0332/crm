@@ -45,7 +45,7 @@ class InsuranceCompanyController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $data = InsuranceCompany::select('*');
+            $data = InsuranceCompany::select('*')->orderBy('created_at','desc');
             return Datatables::of($data)
                 ->addIndexColumn()
                 ->addColumn('action', function ($row) {

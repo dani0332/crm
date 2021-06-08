@@ -25,7 +25,7 @@ class CarRepairCoverageController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $data = CarRepairCoverage::select('*');
+            $data = CarRepairCoverage::select('*')->orderBy('sort_order','asc');
             return DataTables::of($data)
                     ->addIndexColumn()
                     ->addColumn('action', function($row){
@@ -34,7 +34,7 @@ class CarRepairCoverageController extends Controller
                     ->rawColumns(['action'])
                     ->make(true);
         }
-        
+
         return view('carrepaircoverage.view');
     }
 
@@ -109,8 +109,8 @@ class CarRepairCoverageController extends Controller
         ]);
         $carrepaircoverage->text=  $request->text;
         $carrepaircoverage->text_ar=  $request->text_ar;
-        $carrepaircoverage->is_active =  $request->is_active == 'on' ? 1 : 0; 
-        $carrepaircoverage->sort_order =  $request->sort_order;    
+        $carrepaircoverage->is_active =  $request->is_active == 'on' ? 1 : 0;
+        $carrepaircoverage->sort_order =  $request->sort_order;
         $carrepaircoverage->save();
         if(isset($request->return_to_view))
             return redirect("claim/carrepaircoverage");

@@ -27,7 +27,7 @@ class RewardCategoryController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $data = RewardCategory::select('*');
+            $data = RewardCategory::select('*')->orderBy('sort_order','asc');
             return DataTables::of($data)
                 ->addIndexColumn()
                 ->addColumn('action', function ($row) {

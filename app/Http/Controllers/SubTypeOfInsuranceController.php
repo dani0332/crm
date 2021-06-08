@@ -25,7 +25,7 @@ class SubTypeOfInsuranceController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $data = SubTypeOfInsurance::select('*');
+            $data = SubTypeOfInsurance::select('*')->orderBy('sort_order','asc');
             return DataTables::of($data)
                     ->addIndexColumn()
                     ->addColumn('action', function($row){
@@ -34,7 +34,7 @@ class SubTypeOfInsuranceController extends Controller
                     ->rawColumns(['action'])
                     ->make(true);
         }
-        
+
         return view('subtypeofinsurance.view');
     }
 
@@ -109,8 +109,8 @@ class SubTypeOfInsuranceController extends Controller
         ]);
         $subtypeofinsurance->text=  $request->text;
         $subtypeofinsurance->text_ar=  $request->text_ar;
-        $subtypeofinsurance->is_active =  $request->is_active == 'on' ? 1 : 0; 
-        $subtypeofinsurance->sort_order =  $request->sort_order;    
+        $subtypeofinsurance->is_active =  $request->is_active == 'on' ? 1 : 0;
+        $subtypeofinsurance->sort_order =  $request->sort_order;
         $subtypeofinsurance->save();
         if(isset($request->return_to_view))
             return redirect("claim/subtypeofinsurance");

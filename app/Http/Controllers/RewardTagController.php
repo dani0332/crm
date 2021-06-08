@@ -27,7 +27,7 @@ class RewardTagController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $data = RewardTag::select('*');
+            $data = RewardTag::select('*')->orderBy('sort_order','desc');
             return DataTables::of($data)
                 ->addIndexColumn()
                 ->addColumn('action', function ($row) {

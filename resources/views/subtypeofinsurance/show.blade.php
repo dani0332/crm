@@ -46,6 +46,22 @@
                         </div>
                     </div>
                     <div class="item form-group">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="text_ar">
+                            <b> Created At </b>
+                        </label>
+                        <div class="col-md-6 col-sm-6 ">
+                            <p class="label-align-center">{{ $subtypeofinsurance->created_at }}</p>
+                        </div>
+                    </div>
+                    <div class="item form-group">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="sort_order">
+                            <b> Updated At </b>
+                        </label>
+                        <div class="col-md-6 col-sm-6 ">
+                            <p class="label-align-center">{{ $subtypeofinsurance->updated_at }}</p>
+                        </div>
+                    </div>
+                    <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="is_active"><b>Is Active</b></label>
                         <div class="col-md-6 col-sm-6 ">
                             <p class="label-align-center"> {{ $subtypeofinsurance->is_active ? 'True' : 'False' }} </p>
@@ -59,7 +75,7 @@
                                 @endcan
                                 @can('sub-type-of-insurance-delete')
                                     <a href="#" date-route="{{ route('subtypeofinsurance.destroy', ['subtypeofinsurance' => $subtypeofinsurance->id]) }}"   class='btn btn-warning btn-sm delete'>Delete</a>
-                                
+
                                     {{-- <form action="" method="POST">
                                         @csrf
                                         @method('DELETE')

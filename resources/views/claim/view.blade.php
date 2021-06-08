@@ -23,6 +23,7 @@
                           <th>Email Address</th>
                           <th>Phone Number</th>
                           <th>Created At</th>
+                          <th>Updated At</th>
                         </tr>
                       </thead>
 
