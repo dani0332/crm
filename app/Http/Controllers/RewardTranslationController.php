@@ -78,8 +78,14 @@ class RewardTranslationController extends Controller
             $rewardTranslation->generic_banner_image = $fileName;
         }
         $rewardTranslation->save();
+        if(isset($request->active_reward)){
+            $reward->is_active = 1;
+            $reward->save();
+            return redirect("rewards/reward/".$reward->id);
+
+        }
         if(isset($request->return_to_view))
-            return redirect("rewards/reward".$reward->id);
+            return redirect("rewards/reward/".$reward->id);
         return back()
             ->with('success', 'Reward Translation has been stored');
     }
@@ -159,8 +165,7 @@ class RewardTranslationController extends Controller
     public function destroy(Reward $reward, RewardTranslation $rewardTranslation)
     {
         $rewardTranslation->delete();
-        return back()
-            ->with('success', 'reward has been stored');
+        return redirect("rewards/reward/".$reward->id);
     }
 
     public function validateLang($lang, $reward)
