@@ -25,7 +25,7 @@ class TypeOfInsuranceController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $data = TypeOfInsurance::select('*');
+            $data = TypeOfInsurance::select('*')->orderBy('sort_order','asc');
             return DataTables::of($data)
                     ->addIndexColumn()
                     ->addColumn('action', function($row){
@@ -34,7 +34,7 @@ class TypeOfInsuranceController extends Controller
                     ->rawColumns(['action'])
                     ->make(true);
         }
-        
+
         return view('typeofinsurance.view');
     }
 
@@ -64,8 +64,8 @@ class TypeOfInsuranceController extends Controller
         $typeofinsurance = new TypeOfInsurance();
         $typeofinsurance->text=  $request->text;
         $typeofinsurance->text_ar=  $request->text_ar;
-        $typeofinsurance->is_active =  $request->is_active == 'on' ? 1 : 0; 
-        $typeofinsurance->sort_order =  $request->sort_order;    
+        $typeofinsurance->is_active =  $request->is_active == 'on' ? 1 : 0;
+        $typeofinsurance->sort_order =  $request->sort_order;
         $typeofinsurance->save();
         if(isset($request->return_to_view))
             return redirect("claim/typeofinsurance");
@@ -109,8 +109,8 @@ class TypeOfInsuranceController extends Controller
         ]);
         $typeofinsurance->text=  $request->text;
         $typeofinsurance->text_ar=  $request->text_ar;
-        $typeofinsurance->is_active =  $request->is_active == 'on' ? 1 : 0; 
-        $typeofinsurance->sort_order =  $request->sort_order;    
+        $typeofinsurance->is_active =  $request->is_active == 'on' ? 1 : 0;
+        $typeofinsurance->sort_order =  $request->sort_order;
         $typeofinsurance->save();
         if(isset($request->return_to_view))
             return redirect("claim/typeofinsurance");

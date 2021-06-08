@@ -90,6 +90,8 @@ $(document).ready(function () {
                     );
                 },
             },
+            { data: "created_at", name: "created_at" },
+            { data: "updated_at", name: "updated_at" },
             // {
             //     data: "action",
             //     name: "action",
@@ -236,6 +238,8 @@ $(document).ready(function () {
             },
             { data: "name", name: "name" },
             { data: "email", name: "email" },
+            { data: 'created_at', name: 'created_at' },
+            { data: 'updated_at', name: 'updated_at' },
             // {
             //     data: "action",
             //     name: "action",
@@ -269,6 +273,8 @@ $(document).ready(function () {
                 },
             },
             { data: "name", name: "name" },
+            { data: 'created_at', name: 'created_at' },
+            { data: 'updated_at', name: 'updated_at' },
             // {
             //     data: "action",
             //     name: "action",
@@ -293,6 +299,8 @@ $(document).ready(function () {
             { data: "is_active", name: "is_active" },
             { data: "created_by", name: "created_by" },
             { data: "updated_by", name: "updated_by" },
+            { data: "created_at", name: "created_at" },
+            { data: "updated_at", name: "updated_at" },
             // {
             //     data: "action",
             //     name: "action",
@@ -317,6 +325,8 @@ $(document).ready(function () {
             { data: "is_active", name: "is_active" },
             { data: "created_by", name: "created_by" },
             { data: "updated_by", name: "updated_by" },
+            { data: "created_at", name: "created_at" },
+            { data: "updated_at", name: "updated_at" },
             // {
             //     data: "action",
             //     name: "action",
@@ -341,6 +351,8 @@ $(document).ready(function () {
             { data: "is_active", name: "is_active" },
             { data: "created_by", name: "created_by" },
             { data: "updated_by", name: "updated_by" },
+            { data: "created_at", name: "created_at" },
+            { data: "updated_at", name: "updated_at" },
             // {
             //     data: "action",
             //     name: "action",
@@ -397,6 +409,8 @@ $(document).ready(function () {
             { data: "is_active", name: "is_active" },
             { data: "created_by", name: "created_by" },
             { data: "updated_by", name: "updated_by" },
+            { data: "created_at", name: "created_at" },
+            { data: "updated_at", name: "updated_at" },
             // {
             //     data: "action",
             //     name: "action",
@@ -421,6 +435,8 @@ $(document).ready(function () {
             { data: "is_active", name: "is_active" },
             { data: "created_by", name: "created_by" },
             { data: "updated_by", name: "updated_by" },
+            { data: "created_at", name: "created_at" },
+            { data: "updated_at", name: "updated_at" },
             // {
             //     data: "action",
             //     name: "action",
@@ -453,6 +469,8 @@ $(document).ready(function () {
             { data: "is_synced", name: "is_synced" },
             { data: "device", name: "device" },
             { data: "code", name: "code" },
+            { data: "created_at", name: "created_at" },
+            { data: "updated_at", name: "updated_at" },
             // {
             //     data: "action",
             //     name: "action",
@@ -539,6 +557,8 @@ $(document).ready(function () {
             { data: "is_synced", name: "is_synced" },
             { data: "device", name: "device" },
             { data: "code", name: "code" },
+            { data: "created_at", name: "created_at" },
+            { data: "updated_at", name: "updated_at" },
             // {
             //     data: "action",
             //     name: "action",
@@ -565,6 +585,7 @@ $(document).ready(function () {
             { data: 'email_address', name: 'email_address' },
             { data: 'phone_number', name: 'phone_number' },
             { data: 'created_at', name: 'created_at' },
+            { data: 'updated_at', name: 'updated_at' },
         ]
     });
 
@@ -746,6 +767,8 @@ $(document).ready(function () {
             { data: "gender", name: "gender" },
             { data: "has_alfred_access", name: "has_alfred_access" },
             { data: "dob", name: "dob", orderable: false, searchable: false },
+            { data: "created_at", name: "created_at" },
+            { data: "updated_at", name: "updated_at" },
             // {
             //     data: "action",
             //     name: "action",

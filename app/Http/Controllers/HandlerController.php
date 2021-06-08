@@ -45,7 +45,7 @@ class HandlerController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $data = Handler::select('*');
+            $data = Handler::select('*')->orderBy('created_at','desc');
             return Datatables::of($data)
                 ->addIndexColumn()
                 ->addColumn('action', function ($row) {

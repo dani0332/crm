@@ -25,7 +25,7 @@ class ClaimsStatusController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $data = ClaimsStatus::select('*');
+            $data = ClaimsStatus::select('*')->orderBy('sort_order','asc');
             return DataTables::of($data)
                     ->addIndexColumn()
                     ->addColumn('action', function($row){
@@ -108,8 +108,8 @@ class ClaimsStatusController extends Controller
         ]);
         $claimsstatus->text=  $request->text;
         $claimsstatus->text_ar=  $request->text_ar;
-        $claimsstatus->is_active =  $request->is_active == 'on' ? 1 : 0; 
-        $claimsstatus->sort_order =  $request->sort_order;    
+        $claimsstatus->is_active =  $request->is_active == 'on' ? 1 : 0;
+        $claimsstatus->sort_order =  $request->sort_order;
         $claimsstatus->save();
         if(isset($request->return_to_view))
             return redirect("claim/claimsstatus");

@@ -67,6 +67,8 @@
                           <th>Gender</th>
                           <th>Has Alfred Access</th>
                           <th>DOB</th>
+                          <th>Created At</th>
+                          <th>Updated At</th>
                         </tr>
                       </thead>
 

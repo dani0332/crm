@@ -50,11 +50,11 @@ class TransactionController extends Controller
     {
         if ($request->ajax()) {
             $data = Transaction::
-                select('transactions.*', 'statuses.name as status', 'insurance_companies.name as insurance', 'handlers.name as handler', 'handlers.name as handler', 'payment_modes.name as payment_mode')
+                select('transactions.*', 'statuses.name as status', 'insurance_companies.name as insurance','handlers.name as handler', 'payment_modes.name as payment_mode')
                 ->leftjoin('insurance_companies', 'insurance_companies.id', 'transactions.insurance_company_id')
                 ->leftjoin('handlers', 'handlers.id', 'transactions.handler_id')
                 ->leftjoin('payment_modes', 'payment_modes.id', 'transactions.payment_mode_id')
-                ->leftjoin('statuses', 'statuses.id', 'transactions.status_id');
+                ->leftjoin('statuses', 'statuses.id', 'transactions.status_id')->orderBy('transactions.created_at','desc');
             return Datatables::of($data)
                 ->addIndexColumn()
                 ->addColumn('action', function ($row) {

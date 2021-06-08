@@ -25,7 +25,7 @@ class CarRepairTypeController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $data = CarRepairType::select('*');
+            $data = CarRepairType::select('*')->orderBy('sort_order','asc');;
             return DataTables::of($data)
                     ->addIndexColumn()
                     ->addColumn('action', function($row){
@@ -34,7 +34,7 @@ class CarRepairTypeController extends Controller
                     ->rawColumns(['action'])
                     ->make(true);
         }
-        
+
         return view('carrepairtype.view');
     }
 
@@ -109,8 +109,8 @@ class CarRepairTypeController extends Controller
         ]);
         $carrepairtype->text=  $request->text;
         $carrepairtype->text_ar=  $request->text_ar;
-        $carrepairtype->is_active =  $request->is_active == 'on' ? 1 : 0; 
-        $carrepairtype->sort_order =  $request->sort_order;    
+        $carrepairtype->is_active =  $request->is_active == 'on' ? 1 : 0;
+        $carrepairtype->sort_order =  $request->sort_order;
         $carrepairtype->save();
         if(isset($request->return_to_view))
             return redirect("claim/carrepairtype");

@@ -35,7 +35,7 @@ class CustomerController extends Controller
             $data =[];
             if (isset($request->searchtype) && !empty($request->searchtype)
             && isset($request->searchfield) && !empty($request->searchfield)) {
-                $data = Customer::select('*');
+                $data = Customer::select('*')->orderBy('created_at','desc');
                 $data->where($request->searchtype, $request->searchfield);
             }
 

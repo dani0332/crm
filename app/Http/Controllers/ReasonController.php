@@ -45,7 +45,7 @@ class ReasonController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $data = Reason::select('*');
+            $data = Reason::select('*')->orderBy('created_at','desc');
             return Datatables::of($data)
                 ->addIndexColumn()
                 ->addColumn('action', function ($row) {

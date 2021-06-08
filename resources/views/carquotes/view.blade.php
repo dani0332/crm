@@ -98,6 +98,8 @@
                           <th>Is Synced</th>
                           <th>Device</th>
                           <th>Code</th>
+                          <th>Created At</th>
+                          <th>Updated At</th>
                         </tr>
                       </thead>
 

@@ -26,7 +26,7 @@
                 {{csrf_field()}}
                 @method('PUT')
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="text"><b> Text En : </b>
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="text"><b> Text En</b>
                         </label>
                         <div class="col-md-6 col-sm-6 ">
                             <p class="label-align-center"> {{ $rewardCategory->text }} </p>
@@ -34,7 +34,7 @@
 
                     </div>
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="text_ar"><b> Text Ar : </b>
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="text_ar"><b> Text Ar</b>
                         </label>
                         <div class="col-md-6 col-sm-6 ">
                             <p class="label-align-center">{{ $rewardCategory->text_ar }}</p>
@@ -43,16 +43,37 @@
                     </div>
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="sort_order">
-                            <b> Sort Order : </b>
+                            <b> Sort Order</b>
                         </label>
                         <div class="col-md-6 col-sm-6 ">
                             <p class="label-align-center">{{ $rewardCategory->sort_order }}</p>
                         </div>
 
                     </div>
+
+
+                    <div class="item form-group">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="sort_order">
+                            <b> Created At</b>
+                        </label>
+                        <div class="col-md-6 col-sm-6 ">
+                            <p class="label-align-center">{{ $rewardCategory->created_at }}</p>
+                        </div>
+
+                    </div>
+
+                    <div class="item form-group">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="sort_order">
+                            <b> Updated At</b>
+                        </label>
+                        <div class="col-md-6 col-sm-6 ">
+                            <p class="label-align-center">{{ $rewardCategory->updated_at }}</p>
+                        </div>
+
+                    </div>
                     <div class="item form-group">
                         <label for="middle-name" class="col-form-label col-md-3 col-sm-3 label-align">
-                            <b> Is Active : </b>
+                            <b> Is Active</b>
                         </label>
                         <div class="col-md-6 col-sm-6 ">
                             <p class="label-align-center">{{ $rewardCategory->is_active ? 'True' : 'False' }} </p>

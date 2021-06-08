@@ -46,6 +46,22 @@
                         </div>
                     </div>
                     <div class="item form-group">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="text_ar">
+                            <b> Created At </b>
+                        </label>
+                        <div class="col-md-6 col-sm-6 ">
+                            <p class="label-align-center">{{ $carrepaircoverage->created_at }}</p>
+                        </div>
+                    </div>
+                    <div class="item form-group">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="sort_order">
+                            <b> Updated At </b>
+                        </label>
+                        <div class="col-md-6 col-sm-6 ">
+                            <p class="label-align-center">{{ $carrepaircoverage->updated_at }}</p>
+                        </div>
+                    </div>
+                    <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="is_active"><b>Is Active</b></label>
                         <div class="col-md-6 col-sm-6 ">
                             <p class="label-align-center"> {{ $carrepaircoverage->is_active ? 'True' : 'False' }} </p>
