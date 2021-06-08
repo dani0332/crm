@@ -36,7 +36,7 @@ class RewardController extends Controller
     {
         if ($request->ajax()) {
             $data = Reward::select('reward.*','partner.name as partner')
-            ->leftjoin('partner','reward.partner_id','partner.id')->orderBy('start_date','desc');
+            ->leftjoin('partner','reward.partner_id','partner.id');
             return Datatables::of($data)
                 ->addIndexColumn()
                 ->addColumn('action', function ($row) {
@@ -103,7 +103,7 @@ class RewardController extends Controller
             }
         }
         if(isset($request->return_to_view))
-            return redirect("rewards/reward");
+            return redirect("rewards/reward/".$reward->id);
         return back()
             ->with('success', 'reward has been stored');
     }

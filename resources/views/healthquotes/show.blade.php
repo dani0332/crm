@@ -163,7 +163,7 @@
                     </div>
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="nationality_id">
-                            <b>Nationality: </b></label>
+                            <b>Nationality</b></label>
                         <div class="col-md-6 col-sm-6 ">
                             <p class="label-align-center">{{ $healthquote->nationality ? $healthquote->nationality->code : ''  }}</p>
                         </div>
