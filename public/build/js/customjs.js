@@ -688,6 +688,7 @@ $(document).ready(function () {
         ]
     });
 
+    // Claims-CreateView: Populate models of selected car make
     $('#car_make_id').on('change',function(e) {
         var make_code = $("#car_make_id option:selected").attr('data-id');
         $.get('/car-model?make_code='+ make_code,function(data) {
@@ -699,6 +700,7 @@ $(document).ready(function () {
         });
     });
 
+    // Claims-EditView: Populate models of selected car make
     var make_code = $("#car_make_id option:selected").attr('data-id');
     var old_car_model_id = $("#old_car_model_id").val();
     $.get('/car-model?make_code='+ make_code,function(data) {
@@ -712,16 +714,30 @@ $(document).ready(function () {
         });
     });
 
-    // $('#car_make_id').on('change',function(e) {
-    //     var cat_id = $("#car_make_id option:selected").attr('data-id');
-    //     $.get('/ajax-subcat?cat_id='+ cat_id,function(data) {
-    //         var subcat = $('#car_model_id').empty();
-    //         $.each(data,function(create,subcatObj) {
-    //             var option = $('<option/>', {id:create, value:subcatObj});
-    //             subcat.append('<option data-id="'+subcatObj.code+'" value="'+subcatObj.id+'">'+subcatObj.text+'</option>');
-    //         });
-    //     });
-    // });
+    // Claims-CreateView: Fields visibility on the basis of selected Type of Insurance > Create/Edit views
+    $("#sub_type_of_insurance").hide();
+    $("#car_fields").hide();
+    type_of_insurance_fields_visibility();
+    $('#type_of_insurances_id').on('change',function(e) {
+        type_of_insurance_fields_visibility();
+    });
+    function type_of_insurance_fields_visibility() {
+        var type_of_insurance_text = $("#type_of_insurances_id option:selected").attr('data-id');
+        if(type_of_insurance_text == 'Business') {
+            $("#sub_type_of_insurance").show();
+            $("#sub_type_of_insurance").prop('required',true);
+        }
+        else {
+            $("#sub_type_of_insurance").hide();
+            $("#sub_type_of_insurance").prop('required',false);
+        }
+        if(type_of_insurance_text == 'Car') {
+            $("#car_fields").show();
+        }
+        else {
+            $("#car_fields").hide();
+        }
+    }
 
     var customerDataTable = $(".customer-data-table").DataTable({
         ordering: false,

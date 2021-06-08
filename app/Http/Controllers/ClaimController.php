@@ -58,15 +58,15 @@ class ClaimController extends Controller
      */
     public function create()
     {
-        $typeofinsurances = TypeOfInsurance::where('is_active', '=', 1)->get();
-        $subtypeofinsurances = SubTypeOfInsurance::where('is_active', '=', 1)->get();
-        $claimsstatuses = ClaimsStatus::where('is_active', '=', 1)->get();
-        $carrepaircoverages = CarRepairCoverage::where('is_active', '=', 1)->get();
-        $carrepairtypes = CarRepairType::where('is_active', '=', 1)->get();
-        $rentacars = RentACar::where('is_active', '=', 1)->get();
+        $typeofinsurances = TypeOfInsurance::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
+        $subtypeofinsurances = SubTypeOfInsurance::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
+        $claimsstatuses = ClaimsStatus::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
+        $carrepaircoverages = CarRepairCoverage::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
+        $carrepairtypes = CarRepairType::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
+        $rentacars = RentACar::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
         $advisors = User::all();
-        $carmakes = CarMake::where('is_active', '=', 1)->get();
-        $carmodels = CarModel::where('is_active', '=', 1)->get();
+        $carmakes = CarMake::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
+        $carmodels = CarModel::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
         return view('claim.add',compact('typeofinsurances','subtypeofinsurances','claimsstatuses',
         'carrepaircoverages','carrepairtypes','rentacars','advisors','carmakes','carmodels'));
         //return view('claim.add');
@@ -87,17 +87,17 @@ class ClaimController extends Controller
             'phone_number' => 'required|max:20',
             'insurance_company' => 'required|max:255',
             'policy_number' => 'required|max:150',
-            'additional_notes' => 'required|max:2000',
+            //'additional_notes' => 'required|max:2000',
             'type_of_insurances_id' => 'required',
             'claims_status_id' => 'required',
             //'car_repair_coverage_id' => 'required',
             //'car_repair_type_id' => 'required',
             //'rent_a_car_id' => 'required',
             //'assigned_to_id' => 'required',
-            'attachment_1' => 'mimes:jpg,jpeg,png,bmp,pdf,docx|max:10240',
-            'attachment_2' => 'mimes:jpg,jpeg,png,bmp,pdf,docx|max:10240',
-            'attachment_3' => 'mimes:jpg,jpeg,png,bmp,pdf,docx|max:10240',
-            'attachment_4' => 'mimes:jpg,jpeg,png,bmp,pdf,docx|max:10240',
+            'attachment_1' => 'mimes:jpg,jpeg,png,bmp,pdf,docx|max:5120',
+            'attachment_2' => 'mimes:jpg,jpeg,png,bmp,pdf,docx|max:5120',
+            'attachment_3' => 'mimes:jpg,jpeg,png,bmp,pdf,docx|max:5120',
+            'attachment_4' => 'mimes:jpg,jpeg,png,bmp,pdf,docx|max:5120',
         ]);
 
         $claim = new Claim();
@@ -178,15 +178,15 @@ class ClaimController extends Controller
      */
     public function edit(Claim $claim)
     {
-        $typeofinsurances = TypeOfInsurance::where('is_active', '=', 1)->get();
-        $subtypeofinsurances = SubTypeOfInsurance::where('is_active', '=', 1)->get();
-        $claimsstatuses = ClaimsStatus::where('is_active', '=', 1)->get();
-        $carrepaircoverages = CarRepairCoverage::where('is_active', '=', 1)->get();
-        $carrepairtypes = CarRepairType::where('is_active', '=', 1)->get();
-        $rentacars = RentACar::where('is_active', '=', 1)->get();
+        $typeofinsurances = TypeOfInsurance::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
+        $subtypeofinsurances = SubTypeOfInsurance::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
+        $claimsstatuses = ClaimsStatus::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
+        $carrepaircoverages = CarRepairCoverage::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
+        $carrepairtypes = CarRepairType::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
+        $rentacars = RentACar::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
         $advisors = User::all();
-        $carmakes = CarMake::where('is_active', '=', 1)->get();
-        $carmodels = CarModel::where('is_active', '=', 1)->get();
+        $carmakes = CarMake::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
+        $carmodels = CarModel::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
         return view('claim.edit',compact('typeofinsurances','claim','subtypeofinsurances','claimsstatuses',
         'carrepaircoverages','carrepairtypes','rentacars','advisors','carmakes','carmodels'));
         //return view('claim.edit',compact('claim'));
@@ -208,17 +208,17 @@ class ClaimController extends Controller
             'phone_number' => 'required|max:20',
             'insurance_company' => 'required|max:255',
             'policy_number' => 'required|max:150',
-            'additional_notes' => 'required|max:2000',
+            //'additional_notes' => 'required|max:2000',
             'type_of_insurances_id' => 'required',
             'claims_status_id' => 'required',
             //'car_repair_coverage_id' => 'required',
             //'car_repair_type_id' => 'required',
             //'rent_a_car_id' => 'required',
             //'assigned_to_id' => 'required',
-            'attachment_1' => 'mimes:jpg,jpeg,png,bmp,pdf,docx|max:10240',
-            'attachment_2' => 'mimes:jpg,jpeg,png,bmp,pdf,docx|max:10240',
-            'attachment_3' => 'mimes:jpg,jpeg,png,bmp,pdf,docx|max:10240',
-            'attachment_4' => 'mimes:jpg,jpeg,png,bmp,pdf,docx|max:10240',
+            'attachment_1' => 'mimes:jpg,jpeg,png,bmp,pdf,docx|max:5120',
+            'attachment_2' => 'mimes:jpg,jpeg,png,bmp,pdf,docx|max:5120',
+            'attachment_3' => 'mimes:jpg,jpeg,png,bmp,pdf,docx|max:5120',
+            'attachment_4' => 'mimes:jpg,jpeg,png,bmp,pdf,docx|max:5120',
         ]);
         $claim->first_name =  $request->first_name;
         $claim->last_name =  $request->last_name;
