@@ -746,11 +746,9 @@ $(document).ready(function () {
         var type_of_insurance_text = $("#type_of_insurances_id option:selected").attr('data-id');
         if(type_of_insurance_text == 'Business') {
             $("#sub_type_of_insurance").show();
-            $("#sub_type_of_insurance").prop('required',true);
         }
         else {
             $("#sub_type_of_insurance").hide();
-            $("#sub_type_of_insurance").prop('required',false);
         }
         if(type_of_insurance_text == 'Car') {
             $("#car_fields").show();

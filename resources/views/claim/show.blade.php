@@ -185,7 +185,8 @@
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="rent_a_car">
                         <b> Rent a car </b></label>
                         <div class="col-md-6 col-sm-6 ">
-                        <p class="label-align-center">{{ $claim->rentacar ? $claim->rentacar->text : '' }}</p>
+                        <p class="label-align-center"> {{ $claim->rent_a_car ? 'Yes' : 'No' }} </p>
+                        {{--<p class="label-align-center">{{ $claim->rentacar ? $claim->rentacar->text : '' }}</p>--}}
                         </div>
                     </div>
                     <div class="col">
@@ -328,7 +329,7 @@
 </div>
 @can('auditable')
     <div id="auditable">
-        <button id='auditablebtn' class="btn btn-warning btn-sm" data-id="{{ $claim->id }}" data-model="App\Models\ClaimController">
+        <button id='auditablebtn' class="btn btn-warning auditablebtn" data-id="{{ $claim->id }}" data-model="App\Models\Claim">
             View Audit Logs
         </button>
     </div>

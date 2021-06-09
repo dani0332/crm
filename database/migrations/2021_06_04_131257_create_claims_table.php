@@ -37,7 +37,7 @@ class CreateClaimsTable extends Migration
             $table->foreign('type_of_insurances_id')->references('id')->on('type_of_insurances')->onDelete('no action');
 
             $table->unsignedBigInteger('sub_type_of_insurance_id')->nullable();
-            $table->foreign('sub_type_of_insurance_id')->references('id')->on('sub_type_of_insurances')->onDelete('no action');
+            $table->foreign('sub_type_of_insurance_id')->references('id')->on('business_type_of_insurance')->onDelete('no action');
 
             $table->unsignedBigInteger('claims_status_id')->nullable();
             $table->foreign('claims_status_id')->references('id')->on('claims_statuses')->onDelete('no action');

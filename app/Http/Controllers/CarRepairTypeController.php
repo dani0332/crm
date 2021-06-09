@@ -68,7 +68,7 @@ class CarRepairTypeController extends Controller
         $carrepairtype->sort_order =  $request->sort_order;
         $carrepairtype->save();
         if(isset($request->return_to_view))
-            return redirect("claim/carrepairtype");
+            return redirect("claim/carrepairtype/".$carrepairtype->id);
         return back()->with('success','Car Repair Type has been stored');
     }
 
@@ -113,7 +113,7 @@ class CarRepairTypeController extends Controller
         $carrepairtype->sort_order =  $request->sort_order;
         $carrepairtype->save();
         if(isset($request->return_to_view))
-            return redirect("claim/carrepairtype");
+            return redirect("claim/carrepairtype/".$carrepairtype->id);
         return back()
             ->with('success','Car Repair Type has been Updated');
     }

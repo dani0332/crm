@@ -223,8 +223,11 @@
                 </div>
                 <div class="item form-group">
                     <div class="col">
-                        <span class="col-form-label col-md-6 col-sm-6">Rent a Car </span>
-                        <select class="form-control" id='rent_a_car_id' name='rent_a_car_id'>
+                        <span class="col-form-label col-md-6 col-sm-6">Rent a Car
+                        <br>
+                        <input type="checkbox" {{ $claim->rent_a_car ? 'checked' : '' }} class="flat" id='rent_a_car' name='rent_a_car'>
+                        </span>
+                        {{--<select class="form-control" id='rent_a_car_id' name='rent_a_car_id'>
                         <option value=''></option>
                         @foreach($rentacars as $rentacar)
                         <option {{ $claim->rent_a_car_id == $rentacar->id ? 'selected' : '' }} value="{{ $rentacar->id }}">{{ $rentacar->text }}</option>
@@ -232,7 +235,7 @@
                         </select>
                         @if ($errors->has('rent_a_car_id'))
                         <span class="text-danger">{{ $errors->first('rent_a_car_id') }}</span>
-                        @endif
+                        @endif--}}
                     </div>
                     <div class="col">
                         <span class="col-form-label col-md-6 col-sm-6">Plate Number </span>

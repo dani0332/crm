@@ -110,6 +110,7 @@
                             @endif
                             @endforeach
                             </select>
+                            <span class="text-danger" id="sub_type_of_insurance_msg"></span>
                             @if ($errors->has('sub_type_of_insurance_id'))
                             <span class="text-danger">{{ $errors->first('sub_type_of_insurance_id') }}</span>
                             @endif
@@ -123,7 +124,7 @@
                             <option value=''></option>
                             @foreach($claimsstatuses as $claimsstatuse)
                             @if ($claimsstatuse->text == 'New'))
-                            <option value="{{ $claimsstatuse->id }}">{{ $claimsstatuse->text }}</option>
+                            <option value="{{ $claimsstatuse->id }}" selected>{{ $claimsstatuse->text }}</option>
                             @endif
                             @endforeach
                             </select>
@@ -244,8 +245,11 @@
                     </div>
                     <div class="item form-group">
                         <div class="col">
-                            <span class="col-form-label col-md-6 col-sm-6">Rent a Car </span>
-                            <select class="form-control" id='rent_a_car_id' name='rent_a_car_id'>
+                            <span class="col-form-label col-md-6 col-sm-6">Rent a Car 
+                            <br />
+                            <input type="checkbox" class="flat" id='rent_a_car' name='rent_a_car'>
+                            </span>
+                            {{--<select class="form-control" id='rent_a_car_id' name='rent_a_car_id'>
                             <option value=''></option>
                             @foreach($rentacars as $rentacar)
                             @if (old('rent_a_car_id') == $rentacar->id)
@@ -257,7 +261,7 @@
                             </select>
                             @if ($errors->has('rent_a_car_id'))
                             <span class="text-danger">{{ $errors->first('rent_a_car_id') }}</span>
-                            @endif
+                            @endif--}}
                         </div>
                         <div class="col">
                             <span class="col-form-label col-md-6 col-sm-6">Plate Number </span>

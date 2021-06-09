@@ -80,6 +80,14 @@ class ClaimController extends Controller
      */
     public function store(Request $request)
     {
+        $type_of_insurances_text = DB::table('type_of_insurances')->where('id', $request->type_of_insurances_id)->value('text');
+
+        if($type_of_insurances_text == 'Business'){
+            $this->validate($request,[
+                'sub_type_of_insurance_id' => 'required',
+            ]);
+        }
+
         $this->validate($request,[
             'first_name' => 'required|max:255',
             'last_name' => 'required|max:255',
@@ -87,7 +95,7 @@ class ClaimController extends Controller
             'phone_number' => 'required|max:20',
             'insurance_company' => 'required|max:255',
             'policy_number' => 'required|max:150',
-            //'additional_notes' => 'required|max:2000',
+            'additional_notes' => 'required|max:2000',
             'type_of_insurances_id' => 'required',
             'claims_status_id' => 'required',
             //'car_repair_coverage_id' => 'required',
@@ -127,6 +135,7 @@ class ClaimController extends Controller
         $claim->car_model_id = $request->car_model_id;
         $claim->created_by_id = Auth::user()->id;
         $claim->modified_by_id = Auth::user()->id;
+        $claim->rent_a_car =  $request->rent_a_car == 'on' ? 1 : 0;
 
         if($request->hasFile('attachment_1')) {
             $fileName_1 = time() . '_' . $request->attachment_1->getClientOriginalName();
@@ -155,7 +164,7 @@ class ClaimController extends Controller
 
         $claim->save();
         if(isset($request->return_to_view))
-            return redirect("claim/claims");
+            return redirect("claim/claims/".$claim->id);
         return back()->with('success','Claim has been stored');
     }
 
@@ -201,6 +210,13 @@ class ClaimController extends Controller
      */
     public function update(Request $request, Claim $claim)
     {
+        $type_of_insurances_text = DB::table('type_of_insurances')->where('id', $request->type_of_insurances_id)->value('text');
+
+        if($type_of_insurances_text == 'Business'){
+            $this->validate($request,[
+                'sub_type_of_insurance_id' => 'required',
+            ]);
+        }
         $this->validate($request,[
             'first_name' => 'required|max:255',
             'last_name' => 'required|max:255',
@@ -208,7 +224,7 @@ class ClaimController extends Controller
             'phone_number' => 'required|max:20',
             'insurance_company' => 'required|max:255',
             'policy_number' => 'required|max:150',
-            //'additional_notes' => 'required|max:2000',
+            'additional_notes' => 'required|max:2000',
             'type_of_insurances_id' => 'required',
             'claims_status_id' => 'required',
             //'car_repair_coverage_id' => 'required',
@@ -245,6 +261,7 @@ class ClaimController extends Controller
         $claim->car_make_id = $request->car_make_id;
         $claim->car_model_id = $request->car_model_id;
         $claim->modified_by_id = Auth::user()->id;
+        $claim->rent_a_car =  $request->rent_a_car == 'on' ? 1 : 0;
 
         if($request->hasFile('attachment_1')) {
             $fileName_1 = time() . '_' . $request->attachment_1->getClientOriginalName();
@@ -273,7 +290,7 @@ class ClaimController extends Controller
 
         $claim->save();
         if(isset($request->return_to_view))
-            return redirect("claim/claims");
+            return redirect("claim/claims/".$claim->id);
         return back()->with('success','Claim has been Updated');
     }
 
