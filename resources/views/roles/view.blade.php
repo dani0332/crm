@@ -22,6 +22,8 @@
                         <tr>
                           <th>id</th>
                           <th>Name</th>
+                          <th>Created At</th>
+                          <th>Updated At</th>
                         </tr>
                       </thead>
 

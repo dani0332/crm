@@ -124,10 +124,11 @@
                         </div>
                     </div>
                     <div id='redirect_to_view_div'></div>
+                    <div id='active_reward'></div>
                     <div class="ln_solid"></div>
                     <div class="item form-group">
                         <div class="col-md-6 col-sm-6 offset-md-3">
-                          <button type="submit" class="btn btn-warning">Create & Add New</button> <button type="submit" class="btn btn-warning" id="return_to_view" >Create</button>
+                            <button type="submit" class="btn btn-warning active_reward">Create & Active Reward</button> <button type="submit" class="btn btn-warning">Create & Add New</button> <button type="submit" class="btn btn-warning" id="return_to_view" >Create</button>
                         </div>
                     </div>
 

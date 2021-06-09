@@ -15,7 +15,8 @@
                 <br />
                 <form id="demo-form2" method='post'  enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left">
                 <div class="item form-group">
-                    <label class="col-form-label col-md-3 col-sm-3 label-align" for="name">Name
+                    <label class="col-form-label col-md-3 col-sm-3 label-align" for="name">
+                        <b>Name</b>
                     </label>
                     <div class="col-md-6 col-sm-6 ">
                         <p class="label-align-center">{{ $paymentmode->name }}</p>
@@ -24,7 +25,8 @@
                 </div>
 
                 <div class="item form-group">
-                    <label class="col-form-label col-md-3 col-sm-3 label-align" for="name">Created By
+                    <label class="col-form-label col-md-3 col-sm-3 label-align" for="name">
+                        <b>Created By</b>
                     </label>
                     <div class="col-md-6 col-sm-6 ">
                         <p class="label-align-center">{{ $paymentmode->created_by }}</p>
@@ -33,7 +35,8 @@
                 </div>
 
                 <div class="item form-group">
-                    <label class="col-form-label col-md-3 col-sm-3 label-align" for="name">Modified By
+                    <label class="col-form-label col-md-3 col-sm-3 label-align" for="name">
+                        <b>Updated By</b>
                     </label>
                     <div class="col-md-6 col-sm-6 ">
                         <p class="label-align-center">{{ $paymentmode->updated_by }}</p>
@@ -41,7 +44,26 @@
 
                 </div>
                 <div class="item form-group">
-                    <label for="middle-name" class="col-form-label col-md-3 col-sm-3 label-align">Is Active</label>
+                    <label class="col-form-label col-md-3 col-sm-3 label-align" for="name">
+                        <b>Created At</b>
+                    </label>
+                    <div class="col-md-6 col-sm-6 ">
+                        <p class="label-align-center">{{ $paymentmode->created_at }}</p>
+                    </div>
+
+                </div>
+                <div class="item form-group">
+                    <label for="middle-name" class="col-form-label col-md-3 col-sm-3 label-align">
+                        <b>Updated At</b>
+                    </label>
+                    <div class="col-md-6 col-sm-6 ">
+                        <p class="label-align-center"> {{ $paymentmode->updated_at }} </p>
+                    </div>
+                </div>
+                <div class="item form-group">
+                    <label for="middle-name" class="col-form-label col-md-3 col-sm-3 label-align">
+                        <b>Is Active</b>
+                    </label>
                     <div class="col-md-6 col-sm-6 ">
                         <p class="label-align-center"> {{ $paymentmode->is_active ? 'True' : 'False' }} </p>
                     </div>

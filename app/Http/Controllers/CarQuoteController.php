@@ -36,7 +36,7 @@ class CarQuoteController extends Controller
         $quoteStatuses = QuoteStatus::all();
         $paymentStatuses = PaymentStatus::all();
         if ($request->ajax()) {
-            $data = CarQuote::select('*');
+            $data = CarQuote::select('*')->orderBy('created_at','desc');
             if (isset($request->searchtype) && !empty($request->searchtype)
             && isset($request->searchfield) && !empty($request->searchfield)) {
                 if ($request->searchtype === 'name') {

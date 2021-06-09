@@ -22,7 +22,8 @@
                 {{csrf_field()}}
                 @method('PUT')
                 <div class="item form-group">
-                    <label class="col-form-label col-md-3 col-sm-3 label-align" for="text">Text En <span class="required">*</span>
+                    <label class="col-form-label col-md-3 col-sm-3 label-align" for="text">
+                        <b>Text En</b>
                     </label>
                     <div class="col-md-6 col-sm-6 ">
                         <p class="label-align-center">{{ $rewardTag->text }}</p>
@@ -30,7 +31,8 @@
 
                 </div>
                 <div class="item form-group">
-                    <label class="col-form-label col-md-3 col-sm-3 label-align" for="text_ar">Text Ar <span class="required">*</span>
+                    <label class="col-form-label col-md-3 col-sm-3 label-align" for="text_ar">
+                        <b>Text Ar</b>
                     </label>
                     <div class="col-md-6 col-sm-6 ">
                         <p class="label-align-center">{{ $rewardTag->text_ar }}</p>
@@ -38,7 +40,8 @@
 
                 </div>
                 <div class="item form-group">
-                    <label class="col-form-label col-md-3 col-sm-3 label-align" for="sort_order">Sort Order <span class="required">*</span>
+                    <label class="col-form-label col-md-3 col-sm-3 label-align" for="sort_order">
+                        <b>Sort Order</b>
                     </label>
                     <div class="col-md-6 col-sm-6 ">
                         <p class="label-align-center">{{ $rewardTag->sort_order }}</p>
@@ -46,7 +49,28 @@
 
                 </div>
                 <div class="item form-group">
-                    <label for="middle-name" class="col-form-label col-md-3 col-sm-3 label-align">Is Active</label>
+                    <label class="col-form-label col-md-3 col-sm-3 label-align" for="sort_order">
+                        <b> Created At</b>
+                    </label>
+                    <div class="col-md-6 col-sm-6 ">
+                        <p class="label-align-center">{{ $rewardTag->created_at }}</p>
+                    </div>
+
+                </div>
+
+                <div class="item form-group">
+                    <label class="col-form-label col-md-3 col-sm-3 label-align" for="sort_order">
+                        <b> Updated At</b>
+                    </label>
+                    <div class="col-md-6 col-sm-6 ">
+                        <p class="label-align-center">{{ $rewardTag->updated_at }}</p>
+                    </div>
+
+                </div>
+                <div class="item form-group">
+                    <label for="middle-name" class="col-form-label col-md-3 col-sm-3 label-align">
+                        <b>Is Active</b>
+                    </label>
                     <div class="col-md-6 col-sm-6 ">
                         <p class="label-align-center">{{ $rewardTag->is_active ? 'True' : 'False' }}</p>
                     </div>

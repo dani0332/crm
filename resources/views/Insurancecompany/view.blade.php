@@ -24,7 +24,9 @@
                           <th>Name</th>
                           <th>Is Active</th>
                           <th>Created By</th>
-                          <th>Modified By</th>
+                          <th>Updated By</th>
+                          <th>Created At</th>
+                          <th>Updated At</th>
                         </tr>
                       </thead>
 

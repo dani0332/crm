@@ -46,7 +46,7 @@ class RoleController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $data = Role::select('*');
+            $data = Role::select('*')->orderBy('created_at','desc');
             return Datatables::of($data)
                 ->addIndexColumn()
                 ->addColumn('action', function ($row) {
@@ -94,7 +94,7 @@ class RoleController extends Controller
         $role->syncPermissions($request->input('permission'));
         if(isset($request->return_to_view))
             return redirect("admin/roles");
-            
+
         return redirect()->back()
         ->with('success', 'Role created successfully');
     }

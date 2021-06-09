@@ -103,7 +103,7 @@ class RewardController extends Controller
             }
         }
         if(isset($request->return_to_view))
-            return redirect("rewards/reward");
+            return redirect("rewards/reward/".$reward->id);
         return back()
             ->with('success', 'reward has been stored');
     }

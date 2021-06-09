@@ -23,6 +23,8 @@
                           <th>Name</th>
                           <th>Name Ar</th>
                           <th>Logo</th>
+                          <th>Created At</th>
+                          <th>Updated At</th>
                         </tr>
                       </thead>
 
