@@ -11,3 +11,6 @@
 #slash{
 	display: none;
 }
+#ui-datepicker-div td.ui-datepicker-week-end {
+    width: unset !important;
+}
