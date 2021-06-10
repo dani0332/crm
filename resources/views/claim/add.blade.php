@@ -14,9 +14,7 @@
             <div class="x_content">
                 <br />
                 @if(session()->has('success'))
-                    <div class="alert alert-success">
-                        {{ session()->get('success') }}
-                    </div>
+                    <div class="alert alert-success">{{ session()->get('success') }}</div>
                 @endif
                 <form id="demo-form2" method='post' action="{{ url('claim/claims') }}" enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left">
                 {{csrf_field()}}
@@ -343,7 +341,6 @@
 
                     <div id='redirect_to_view_div'></div>
                     <div class="ln_solid"></div>
-
                     <div class="row">
                     <div class="col-auto mr-auto"></div>
                         <div class="col-auto">
