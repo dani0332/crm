@@ -59,6 +59,7 @@ class CarRepairTypeController extends Controller
         $this->validate($request,[
             'text' => 'required|max:120',
             'text_ar' => 'required|max:120',
+            'sort_order' => 'required',
         ]);
 
         $carrepairtype = new CarRepairType();
@@ -69,7 +70,7 @@ class CarRepairTypeController extends Controller
         $carrepairtype->save();
         if(isset($request->return_to_view))
             return redirect("claim/carrepairtype/".$carrepairtype->id);
-        return back()->with('success','Car Repair Type has been stored');
+            return back()->with('success','Car Repair Type has been stored');
     }
 
     /**
@@ -106,6 +107,7 @@ class CarRepairTypeController extends Controller
         $this->validate($request,[
             'text' => 'required|max:120',
             'text_ar' => 'required|max:120',
+            'sort_order' => 'required',
         ]);
         $carrepairtype->text=  $request->text;
         $carrepairtype->text_ar=  $request->text_ar;
@@ -114,8 +116,7 @@ class CarRepairTypeController extends Controller
         $carrepairtype->save();
         if(isset($request->return_to_view))
             return redirect("claim/carrepairtype/".$carrepairtype->id);
-        return back()
-            ->with('success','Car Repair Type has been Updated');
+            return back()->with('success','Car Repair Type has been Updated');
     }
 
     /**

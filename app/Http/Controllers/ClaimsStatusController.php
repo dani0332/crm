@@ -58,6 +58,7 @@ class ClaimsStatusController extends Controller
         $this->validate($request,[
             'text' => 'required|max:120',
             'text_ar' => 'required|max:120',
+            'sort_order' => 'required',
         ]);
 
         $claimsstatus = new ClaimsStatus();
@@ -68,7 +69,7 @@ class ClaimsStatusController extends Controller
         $claimsstatus->save();
         if(isset($request->return_to_view))
             return redirect("claim/claimsstatus/".$claimsstatus->id);
-        return back()->with('success','Claims Status has been stored');
+            return back()->with('success','Claims Status has been stored');
     }
 
     /**
@@ -105,6 +106,7 @@ class ClaimsStatusController extends Controller
         $this->validate($request,[
             'text' => 'required|max:120',
             'text_ar' => 'required|max:120',
+            'sort_order' => 'required',
         ]);
         $claimsstatus->text=  $request->text;
         $claimsstatus->text_ar=  $request->text_ar;
@@ -113,7 +115,7 @@ class ClaimsStatusController extends Controller
         $claimsstatus->save();
         if(isset($request->return_to_view))
             return redirect("claim/claimsstatus/".$claimsstatus->id);
-        return back()->with('success','Claims Status has been Updated');
+            return back()->with('success','Claims Status has been Updated');
     }
 
     /**

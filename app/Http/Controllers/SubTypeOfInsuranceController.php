@@ -34,7 +34,6 @@ class SubTypeOfInsuranceController extends Controller
                     ->rawColumns(['action'])
                     ->make(true);
         }
-
         return view('subtypeofinsurance.view');
     }
 
@@ -59,6 +58,7 @@ class SubTypeOfInsuranceController extends Controller
         $this->validate($request,[
             'text' => 'required|max:120',
             'text_ar' => 'required|max:120',
+            'sort_order' => 'required',
         ]);
 
         $subtypeofinsurance = new SubTypeOfInsurance();
@@ -69,7 +69,7 @@ class SubTypeOfInsuranceController extends Controller
         $subtypeofinsurance->save();
         if(isset($request->return_to_view))
             return redirect("claim/subtypeofinsurance/".$subtypeofinsurance->id);
-        return back()->with('success','Sub Type Of Insurance has been stored');
+            return back()->with('success','Sub Type Of Insurance has been stored');
     }
 
     /**
@@ -106,6 +106,7 @@ class SubTypeOfInsuranceController extends Controller
         $this->validate($request,[
             'text' => 'required|max:120',
             'text_ar' => 'required|max:120',
+            'sort_order' => 'required',
         ]);
         $subtypeofinsurance->text=  $request->text;
         $subtypeofinsurance->text_ar=  $request->text_ar;
@@ -114,7 +115,7 @@ class SubTypeOfInsuranceController extends Controller
         $subtypeofinsurance->save();
         if(isset($request->return_to_view))
             return redirect("claim/subtypeofinsurance/".$subtypeofinsurance->id);
-        return back()->with('success','Sub Type of Insurance has been Updated');
+            return back()->with('success','Sub Type of Insurance has been Updated');
     }
 
     /**
