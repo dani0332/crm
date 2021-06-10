@@ -19,8 +19,7 @@
                 <form id="demo-form2" method='post' action="{{ url('rewards/reward') }}" enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left" autocomplete="off">
                 {{csrf_field()}}
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="coupon_code">Coupon Code <span class="required">*</span>
-                        </label>
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="coupon_code">Coupon Code <span class="required">*</span></label>
                         <div class="col-md-6 col-sm-6">
                             <input type="text" id="coupon_code" name="coupon_code" value="{{ old('coupon_code') }}" class="form-control">
                             @if ($errors->has('coupon_code'))
@@ -29,23 +28,25 @@
                         </div>
                     </div>
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="name">Partner <span class="required">*</span>
-                        </label>
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="name">Partner <span class="required">*</span></label>
                         <div class="col-md-6 col-sm-6">
-                            <select class="form-control" id="partner_id" name="partner_id">
-                                <option value=''>Choose Partner</option>
+                            <select class="form-control" id='partner_id' name='partner_id'>
+                                <option value=''></option>
                                 @foreach($partners as $partner)
-                                <option value="{{ $partner->id }}">{{ $partner->name }}</option>
+                                @if (old('partner_id') == $partner->id)
+                                    <option value="{{ $partner->id }}" selected>{{ $partner->name }}</option>
+                                @else
+                                    <option value="{{ $partner->id }}">{{ $partner->name }}</option>
+                                @endif
                                 @endforeach
                             </select>
                             @if ($errors->has('partner_id'))
-                                <span class="text-danger">{{ $errors->first('partner_id') }}</span>
+                            <span class="text-danger">{{ $errors->first('partner_id') }}</span>
                             @endif
                         </div>
                     </div>
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="discount">Discount <span class="required">*</span>
-                        </label>
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="discount">Discount <span class="required">*</span></label>
                         <div class="col-md-6 col-sm-6">
                             <input type="text" id="discount" name="discount" value="{{ old('discount') }}" class="form-control">
                             @if ($errors->has('discount'))
@@ -54,8 +55,7 @@
                         </div>
                     </div>
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="start_date">Start Date<span class="required">*</span>
-                        </label>
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="start_date">Start Date<span class="required">*</span></label>
                         <div class="col-md-6 col-sm-6">
                             <input type="text" id="datepicker" name="start_date" value="{{ old('start_date') }}" class="form-control">
                             @if ($errors->has('start_date'))
@@ -64,8 +64,7 @@
                         </div>
                     </div>
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="end_date">End Date <span class="required">*</span>
-                        </label>
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="end_date">End Date <span class="required">*</span></label>
                         <div class="col-md-6 col-sm-6">
                             <input type="text" id="datepicker_2" name="end_date" value="{{ old('end_date') }}" class="form-control">
                             @if ($errors->has('end_date'))
@@ -82,14 +81,19 @@
                         </div>
                     </div> --}}
                     <div class="item form-group">
-                    <label class="col-form-label col-md-3 col-sm-3 label-align" for="reward_category">Reward Category <span class="required">*</span>
-                    </label>
+                    <label class="col-form-label col-md-3 col-sm-3 label-align" for="reward_category">Reward Category <span class="required">*</span></label>
                         <div class="col-md-6 col-sm-6">
                             <select class="select2_multiple form-control" name='reward_categories[]' multiple>
                                 @foreach($rewardCategories as $rewardCategory)
-                                <option value="{{ $rewardCategory->id }}">{{ $rewardCategory->text }}</option>
+                                <option value="{{$rewardCategory->id}}" {{in_array($rewardCategory->id, old("reward_categories") ?: []) ? "selected" : ""}}>{{$rewardCategory->text}}</option>
                                 @endforeach
                             </select>
+
+                            {{--<select class="select2_multiple form-control" name='reward_categories[]' multiple>
+                                @foreach($rewardCategories as $rewardCategory)
+                                <option value="{{ $rewardCategory->id }}">{{ $rewardCategory->text }}</option>
+                                @endforeach
+                            </select>--}}
                             @if ($errors->has('reward_categories'))
                                 <span class="text-danger">{{ $errors->first('reward_categories') }}</span>
                             @endif
@@ -99,11 +103,16 @@
                     <label class="col-form-label col-md-3 col-sm-3 label-align" for="reward_tag">Reward Tag <span class="required">*</span>
                     </label>
                         <div class="col-md-6 col-sm-6">
-                            <select  name='reward_tags[]' class="select2_multiple form-control" multiple data-live-search="true">
-                                @foreach($rewardTags as $rewardTag)
-                                <option value="{{ $rewardTag->id }}">{{ $rewardTag->text }}</option>
-                                @endforeach
+                            <select class="select2_multiple form-control" name='reward_tags[]' multiple data-live-search="true">
+                            @foreach($rewardTags as $rewardTag)
+                                <option value="{{$rewardTag->id}}" {{in_array($rewardTag->id, old("reward_tags") ?: []) ? "selected" : ""}}>{{$rewardTag->text}}</option>
+                            @endforeach
                             </select>
+                            {{--<select class="select2_multiple form-control" name='reward_tags[]' multiple data-live-search="true">
+                            @foreach($rewardTags as $rewardTag)
+                                <option value="{{ $rewardTag->id }}">{{ $rewardTag->text }}</option>
+                            @endforeach
+                            </select>--}}
                             @if ($errors->has('reward_tags'))
                                 <span class="text-danger">{{ $errors->first('reward_tags') }}</span>
                             @endif
@@ -112,13 +121,13 @@
                     {{--<div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="is_active">Is Active</label>
                         <div class="col-md-6 col-sm-6">
-                        <div class="checkbox">
-                            <input type="checkbox" class="flat" id='is_active' name='is_active'>
-                            <br />
-                            @if ($errors->has('is_active'))
-                                <span class="text-danger">{{ $errors->first('is_active') }}</span>
-                            @endif
-                        </div>
+                            <div class="checkbox">
+                                <input type="checkbox" class="flat" id='is_active' name='is_active'>
+                                <br />
+                                @if ($errors->has('is_active'))
+                                    <span class="text-danger">{{ $errors->first('is_active') }}</span>
+                                @endif
+                            </div>
                         </div>
                     </div>--}}
                     <div id='redirect_to_view_div'></div>
