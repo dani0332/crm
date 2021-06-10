@@ -16,7 +16,7 @@
                 @if(session()->has('success'))
                     <div class="alert alert-success">{{ session()->get('success') }}</div>
                 @endif
-                <form id="demo-form2" method='post' action="{{ route('reward-tags.update', ['reward_tag' => $rewardTag->id]) }}" enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left">
+                <form id="demo-form2" method='post' action="{{ route('reward-tags.update', ['reward_tag' => $rewardTag->id]) }}" enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left" autocomplete="off">
                 {{csrf_field()}}
                 @method('PUT')
                     <div class="item form-group">

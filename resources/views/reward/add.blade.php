@@ -16,7 +16,7 @@
                 @if(session()->has('success'))
                     <div class="alert alert-success">{{ session()->get('success') }}</div>
                 @endif
-                <form id="demo-form2" method='post' action="{{ url('rewards/reward') }}" enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left">
+                <form id="demo-form2" method='post' action="{{ url('rewards/reward') }}" enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left" autocomplete="off">
                 {{csrf_field()}}
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="coupon_code">Coupon Code <span class="required">*</span>
