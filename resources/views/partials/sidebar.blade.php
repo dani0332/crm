@@ -114,9 +114,9 @@
                             @can('car-repair-type-list')
                                 <li><a href="{{ url('claim/carrepairtype') }}">Car Repair Type</a></li>
                             @endcan
-                            @can('rent-a-car-list')
+                            {{--@can('rent-a-car-list')
                                 <li><a href="{{ url('claim/rentacar') }}">Rent a Car</a></li>
-                            @endcan
+                            @endcan--}}
                         </ul>
                     </li>
                 </ul>

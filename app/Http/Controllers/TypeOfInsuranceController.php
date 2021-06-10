@@ -68,7 +68,7 @@ class TypeOfInsuranceController extends Controller
         $typeofinsurance->sort_order =  $request->sort_order;
         $typeofinsurance->save();
         if(isset($request->return_to_view))
-            return redirect("claim/typeofinsurance");
+            return redirect("claim/typeofinsurance/".$typeofinsurance->id);
         return back()->with('success','Type Of Insurance has been stored');
     }
 
@@ -113,7 +113,7 @@ class TypeOfInsuranceController extends Controller
         $typeofinsurance->sort_order =  $request->sort_order;
         $typeofinsurance->save();
         if(isset($request->return_to_view))
-            return redirect("claim/typeofinsurance");
+            return redirect("claim/typeofinsurance/".$typeofinsurance->id);
         return back()->with('success','Type of Insurance has been Updated');
     }
 

@@ -58,15 +58,15 @@ class ClaimController extends Controller
      */
     public function create()
     {
-        $typeofinsurances = TypeOfInsurance::where('is_active', '=', 1)->get();
-        $subtypeofinsurances = SubTypeOfInsurance::where('is_active', '=', 1)->get();
-        $claimsstatuses = ClaimsStatus::where('is_active', '=', 1)->get();
-        $carrepaircoverages = CarRepairCoverage::where('is_active', '=', 1)->get();
-        $carrepairtypes = CarRepairType::where('is_active', '=', 1)->get();
-        $rentacars = RentACar::where('is_active', '=', 1)->get();
+        $typeofinsurances = TypeOfInsurance::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
+        $subtypeofinsurances = SubTypeOfInsurance::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
+        $claimsstatuses = ClaimsStatus::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
+        $carrepaircoverages = CarRepairCoverage::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
+        $carrepairtypes = CarRepairType::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
+        $rentacars = RentACar::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
         $advisors = User::all();
-        $carmakes = CarMake::where('is_active', '=', 1)->get();
-        $carmodels = CarModel::where('is_active', '=', 1)->get();
+        $carmakes = CarMake::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
+        $carmodels = CarModel::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
         return view('claim.add',compact('typeofinsurances','subtypeofinsurances','claimsstatuses',
         'carrepaircoverages','carrepairtypes','rentacars','advisors','carmakes','carmodels'));
         //return view('claim.add');
@@ -80,6 +80,14 @@ class ClaimController extends Controller
      */
     public function store(Request $request)
     {
+        $type_of_insurances_text = DB::table('type_of_insurances')->where('id', $request->type_of_insurances_id)->value('text');
+
+        if($type_of_insurances_text == 'Business'){
+            $this->validate($request,[
+                'sub_type_of_insurance_id' => 'required',
+            ]);
+        }
+
         $this->validate($request,[
             'first_name' => 'required|max:255',
             'last_name' => 'required|max:255',
@@ -94,10 +102,10 @@ class ClaimController extends Controller
             //'car_repair_type_id' => 'required',
             //'rent_a_car_id' => 'required',
             //'assigned_to_id' => 'required',
-            'attachment_1' => 'mimes:jpg,jpeg,png,bmp,pdf,docx|max:10240',
-            'attachment_2' => 'mimes:jpg,jpeg,png,bmp,pdf,docx|max:10240',
-            'attachment_3' => 'mimes:jpg,jpeg,png,bmp,pdf,docx|max:10240',
-            'attachment_4' => 'mimes:jpg,jpeg,png,bmp,pdf,docx|max:10240',
+            'attachment_1' => 'mimes:jpg,jpeg,png,bmp,pdf,docx|max:5120',
+            'attachment_2' => 'mimes:jpg,jpeg,png,bmp,pdf,docx|max:5120',
+            'attachment_3' => 'mimes:jpg,jpeg,png,bmp,pdf,docx|max:5120',
+            'attachment_4' => 'mimes:jpg,jpeg,png,bmp,pdf,docx|max:5120',
         ]);
 
         $claim = new Claim();
@@ -127,6 +135,7 @@ class ClaimController extends Controller
         $claim->car_model_id = $request->car_model_id;
         $claim->created_by_id = Auth::user()->id;
         $claim->modified_by_id = Auth::user()->id;
+        $claim->rent_a_car =  $request->rent_a_car == 'on' ? 1 : 0;
 
         if($request->hasFile('attachment_1')) {
             $fileName_1 = time() . '_' . $request->attachment_1->getClientOriginalName();
@@ -155,7 +164,7 @@ class ClaimController extends Controller
 
         $claim->save();
         if(isset($request->return_to_view))
-            return redirect("claim/claims");
+            return redirect("claim/claims/".$claim->id);
         return back()->with('success','Claim has been stored');
     }
 
@@ -178,15 +187,15 @@ class ClaimController extends Controller
      */
     public function edit(Claim $claim)
     {
-        $typeofinsurances = TypeOfInsurance::where('is_active', '=', 1)->get();
-        $subtypeofinsurances = SubTypeOfInsurance::where('is_active', '=', 1)->get();
-        $claimsstatuses = ClaimsStatus::where('is_active', '=', 1)->get();
-        $carrepaircoverages = CarRepairCoverage::where('is_active', '=', 1)->get();
-        $carrepairtypes = CarRepairType::where('is_active', '=', 1)->get();
-        $rentacars = RentACar::where('is_active', '=', 1)->get();
+        $typeofinsurances = TypeOfInsurance::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
+        $subtypeofinsurances = SubTypeOfInsurance::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
+        $claimsstatuses = ClaimsStatus::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
+        $carrepaircoverages = CarRepairCoverage::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
+        $carrepairtypes = CarRepairType::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
+        $rentacars = RentACar::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
         $advisors = User::all();
-        $carmakes = CarMake::where('is_active', '=', 1)->get();
-        $carmodels = CarModel::where('is_active', '=', 1)->get();
+        $carmakes = CarMake::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
+        $carmodels = CarModel::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
         return view('claim.edit',compact('typeofinsurances','claim','subtypeofinsurances','claimsstatuses',
         'carrepaircoverages','carrepairtypes','rentacars','advisors','carmakes','carmodels'));
         //return view('claim.edit',compact('claim'));
@@ -201,6 +210,13 @@ class ClaimController extends Controller
      */
     public function update(Request $request, Claim $claim)
     {
+        $type_of_insurances_text = DB::table('type_of_insurances')->where('id', $request->type_of_insurances_id)->value('text');
+
+        if($type_of_insurances_text == 'Business'){
+            $this->validate($request,[
+                'sub_type_of_insurance_id' => 'required',
+            ]);
+        }
         $this->validate($request,[
             'first_name' => 'required|max:255',
             'last_name' => 'required|max:255',
@@ -215,10 +231,10 @@ class ClaimController extends Controller
             //'car_repair_type_id' => 'required',
             //'rent_a_car_id' => 'required',
             //'assigned_to_id' => 'required',
-            'attachment_1' => 'mimes:jpg,jpeg,png,bmp,pdf,docx|max:10240',
-            'attachment_2' => 'mimes:jpg,jpeg,png,bmp,pdf,docx|max:10240',
-            'attachment_3' => 'mimes:jpg,jpeg,png,bmp,pdf,docx|max:10240',
-            'attachment_4' => 'mimes:jpg,jpeg,png,bmp,pdf,docx|max:10240',
+            'attachment_1' => 'mimes:jpg,jpeg,png,bmp,pdf,docx|max:5120',
+            'attachment_2' => 'mimes:jpg,jpeg,png,bmp,pdf,docx|max:5120',
+            'attachment_3' => 'mimes:jpg,jpeg,png,bmp,pdf,docx|max:5120',
+            'attachment_4' => 'mimes:jpg,jpeg,png,bmp,pdf,docx|max:5120',
         ]);
         $claim->first_name =  $request->first_name;
         $claim->last_name =  $request->last_name;
@@ -245,6 +261,7 @@ class ClaimController extends Controller
         $claim->car_make_id = $request->car_make_id;
         $claim->car_model_id = $request->car_model_id;
         $claim->modified_by_id = Auth::user()->id;
+        $claim->rent_a_car =  $request->rent_a_car == 'on' ? 1 : 0;
 
         if($request->hasFile('attachment_1')) {
             $fileName_1 = time() . '_' . $request->attachment_1->getClientOriginalName();
@@ -273,7 +290,7 @@ class ClaimController extends Controller
 
         $claim->save();
         if(isset($request->return_to_view))
-            return redirect("claim/claims");
+            return redirect("claim/claims/".$claim->id);
         return back()->with('success','Claim has been Updated');
     }
 

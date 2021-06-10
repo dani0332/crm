@@ -90,11 +90,13 @@
                         </div>
                     </div>
                     <div class="col">
+                        @if ($claim->typeofinsurance->text == 'Business')
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="sub_type_of_insurance">
                         <b> Sub Type of Insurance </b></label>
                         <div class="col-md-6 col-sm-6 ">
                         <p class="label-align-center">{{ $claim->subtypeofinsurance ? $claim->subtypeofinsurance->text : '' }}</p>
                         </div>
+                        @endif
                     </div>
                 </div>
                 <div class="item form-group">
@@ -145,6 +147,7 @@
                         </div>
                     </div>
                 </div>
+                @if ($claim->typeofinsurance->text == 'Car')
                 <div class="item form-group">
                     <div class="col">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="car_make">
@@ -182,7 +185,8 @@
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="rent_a_car">
                         <b> Rent a car </b></label>
                         <div class="col-md-6 col-sm-6 ">
-                        <p class="label-align-center">{{ $claim->rentacar ? $claim->rentacar->text : '' }}</p>
+                        <p class="label-align-center"> {{ $claim->rent_a_car ? 'Yes' : 'No' }} </p>
+                        {{--<p class="label-align-center">{{ $claim->rentacar ? $claim->rentacar->text : '' }}</p>--}}
                         </div>
                     </div>
                     <div class="col">
@@ -221,6 +225,7 @@
 
                     </div>
                 </div>
+                @endif
                 <div class="item form-group">
                     <div class="col">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="attachment_1">
@@ -300,21 +305,21 @@
                         <p class="label-align-center">{{ $claim->modifiedby ? $claim->modifiedby->name : '' }}</p>
                         </div>
                     </div>
+                </div>
                     <div class="ln_solid"></div>
-                    <div class="item form-group">
-                        <div class="col-md-6 col-sm-6 offset-md-3">
-                                @can('claim-edit')
-                                    <a id="texta" href="{{ route('claims.edit', ['claim' => $claim->id]) }}" class='btn btn-warning btn-sm'>Edit </a>
-                                @endcan
-                                @can('claim-delete')
-                                    <a href="#" date-route="{{ route('claims.destroy', ['claim' => $claim->id]) }}"   class='btn btn-warning btn-sm delete'>Delete</a>
-                                    {{-- <form action="" method="POST">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-warning btn-sm">Delete</button>
-                                    </form> --}}
-                                @endcan
-                            </tr>
+                    <div class="row">
+                    <div class="col-auto mr-auto"></div>
+                        <div class="col-auto">
+                            @can('claim-edit')
+                            <a id="texta" href="{{ route('claims.edit', ['claim' => $claim->id]) }}" class='btn btn-warning btn-sm'>Edit </a>
+                            @endcan
+                            @can('claim-delete')
+                            <form action="{{ route('claims.destroy', ['claim' => $claim->id]) }}" method="POST">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="btn btn-warning btn-sm">Delete</button>
+                            </form>
+                            @endcan
                         </div>
                     </div>
                 </form>
@@ -324,7 +329,7 @@
 </div>
 @can('auditable')
     <div id="auditable">
-        <button id='auditablebtn' class="btn btn-warning btn-sm" data-id="{{ $claim->id }}" data-model="App\Models\ClaimController">
+        <button id='auditablebtn' class="btn btn-warning auditablebtn" data-id="{{ $claim->id }}" data-model="App\Models\Claim">
             View Audit Logs
         </button>
     </div>

@@ -68,7 +68,7 @@ class CarRepairCoverageController extends Controller
         $carrepaircoverage->sort_order =  $request->sort_order;
         $carrepaircoverage->save();
         if(isset($request->return_to_view))
-            return redirect("claim/carrepaircoverage");
+            return redirect("claim/carrepaircoverage/".$carrepaircoverage->id);
         return back()->with('success','Car Repair Coverage has been stored');
     }
 
@@ -113,7 +113,7 @@ class CarRepairCoverageController extends Controller
         $carrepaircoverage->sort_order =  $request->sort_order;
         $carrepaircoverage->save();
         if(isset($request->return_to_view))
-            return redirect("claim/carrepaircoverage");
+            return redirect("claim/carrepaircoverage/".$carrepaircoverage->id);
         return back()
             ->with('success','Car Repair Coverage has been Updated');
     }

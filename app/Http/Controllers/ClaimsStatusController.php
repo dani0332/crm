@@ -67,7 +67,7 @@ class ClaimsStatusController extends Controller
         $claimsstatus->sort_order =  $request->sort_order;
         $claimsstatus->save();
         if(isset($request->return_to_view))
-            return redirect("claim/claimsstatus");
+            return redirect("claim/claimsstatus/".$claimsstatus->id);
         return back()->with('success','Claims Status has been stored');
     }
 
@@ -112,7 +112,7 @@ class ClaimsStatusController extends Controller
         $claimsstatus->sort_order =  $request->sort_order;
         $claimsstatus->save();
         if(isset($request->return_to_view))
-            return redirect("claim/claimsstatus");
+            return redirect("claim/claimsstatus/".$claimsstatus->id);
         return back()->with('success','Claims Status has been Updated');
     }
 

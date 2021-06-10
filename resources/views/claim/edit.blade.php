@@ -72,7 +72,7 @@
                 </div>
                 <div class="item form-group">
                     <div class="col">
-                        <span class="col-form-label col-md-6 col-sm-6">Additional Notes <span class="required">*</span></span>
+                        <span class="col-form-label col-md-6 col-sm-6">Additional Notes </span>
                         <textarea id="additional_notes" name="additional_notes" rows="4" cols="50" class="form-control">{{ $claim->additional_notes }}</textarea>
                         @if ($errors->has('additional_notes'))
                         <span class="text-danger">{{ $errors->first('additional_notes') }}</span>
@@ -88,7 +88,7 @@
                         <select class="form-control" id='type_of_insurances_id' name='type_of_insurances_id'>
                         <option value=''></option>
                         @foreach($typeofinsurances as $typeofinsurance)
-                        <option {{ $claim->type_of_insurances_id == $typeofinsurance->id ? 'selected' : '' }} value="{{ $typeofinsurance->id }}">{{ $typeofinsurance->text }}</option>
+                        <option {{ $claim->type_of_insurances_id == $typeofinsurance->id ? 'selected' : '' }} value="{{ $typeofinsurance->id }}" data-id="{{ $typeofinsurance->text }}">{{ $typeofinsurance->text }}</option>
                         @endforeach
                         </select>
                         @if ($errors->has('type_of_insurances_id'))
@@ -96,7 +96,8 @@
                         @endif
                     </div>
                     <div class="col">
-                        <span class="col-form-label col-md-6 col-sm-6">Sub Type of Insurance </span>
+                        <div id="sub_type_of_insurance">
+                        <span class="col-form-label col-md-6 col-sm-6">Sub Type of Insurance <span class="required">*</span></span>
                         <select class="form-control" id='sub_type_of_insurance_id' name='sub_type_of_insurance_id'>
                         <option value=''></option>
                         @foreach($subtypeofinsurances as $subtypeofinsurance)
@@ -106,6 +107,7 @@
                         @if ($errors->has('sub_type_of_insurance_id'))
                         <span class="text-danger">{{ $errors->first('sub_type_of_insurance_id') }}</span>
                         @endif
+                        </div>
                     </div>
                 </div>
                 <div class="item form-group">
@@ -159,13 +161,14 @@
                         @endif
                     </div>
                     <div class="col">
-                        <span class="col-form-label col-md-6 col-sm-6">Ticket Number </span>
+                        <span class="col-form-label col-md-6 col-sm-6">Ticket Number <span class="required"></span></span>
                         <input type="text" id="ticket_number" name="ticket_number" value="{{ $claim->ticket_number }}" class="form-control">
                         @if ($errors->has('ticket_number'))
                         <span class="text-danger">{{ $errors->first('ticket_number') }}</span>
                         @endif
                     </div>
                 </div>
+                <div id="car_fields">
                 <div class="item form-group">
                     <div class="col">
                         <span class="col-form-label col-md-6 col-sm-6">Car Make </span>
@@ -220,8 +223,11 @@
                 </div>
                 <div class="item form-group">
                     <div class="col">
-                        <span class="col-form-label col-md-6 col-sm-6">Rent a Car </span>
-                        <select class="form-control" id='rent_a_car_id' name='rent_a_car_id'>
+                        <span class="col-form-label col-md-6 col-sm-6">Rent a Car
+                        <br>
+                        <input type="checkbox" {{ $claim->rent_a_car ? 'checked' : '' }} class="flat" id='rent_a_car' name='rent_a_car'>
+                        </span>
+                        {{--<select class="form-control" id='rent_a_car_id' name='rent_a_car_id'>
                         <option value=''></option>
                         @foreach($rentacars as $rentacar)
                         <option {{ $claim->rent_a_car_id == $rentacar->id ? 'selected' : '' }} value="{{ $rentacar->id }}">{{ $rentacar->text }}</option>
@@ -229,7 +235,7 @@
                         </select>
                         @if ($errors->has('rent_a_car_id'))
                         <span class="text-danger">{{ $errors->first('rent_a_car_id') }}</span>
-                        @endif
+                        @endif--}}
                     </div>
                     <div class="col">
                         <span class="col-form-label col-md-6 col-sm-6">Plate Number </span>
@@ -266,6 +272,7 @@
                     <div class="col">
 
                     </div>
+                </div>
                 </div>
                 <div class="item form-group">
                     <div class="col">
@@ -333,7 +340,7 @@
                 </div>
                 <div class="item form-group">
                     <div class="col">
-                        <b>Important Note: Max upload size is 10mb each, allowed formats: jpg, jpeg, png, bmp, pdf, docx.</b>
+                        <b>Important Note: Max upload size is 5 MB, allowed formats: jpg, jpeg, png, bmp, pdf, docx.</b>
                     </div>
                     <div class="col">
                         

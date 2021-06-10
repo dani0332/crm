@@ -68,7 +68,7 @@ class SubTypeOfInsuranceController extends Controller
         $subtypeofinsurance->sort_order =  $request->sort_order;
         $subtypeofinsurance->save();
         if(isset($request->return_to_view))
-            return redirect("claim/subtypeofinsurance");
+            return redirect("claim/subtypeofinsurance/".$subtypeofinsurance->id);
         return back()->with('success','Sub Type Of Insurance has been stored');
     }
 
@@ -113,7 +113,7 @@ class SubTypeOfInsuranceController extends Controller
         $subtypeofinsurance->sort_order =  $request->sort_order;
         $subtypeofinsurance->save();
         if(isset($request->return_to_view))
-            return redirect("claim/subtypeofinsurance");
+            return redirect("claim/subtypeofinsurance/".$subtypeofinsurance->id);
         return back()->with('success','Sub Type of Insurance has been Updated');
     }
 
