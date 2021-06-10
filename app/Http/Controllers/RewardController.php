@@ -73,9 +73,9 @@ class RewardController extends Controller
             'reward_tags' => 'required'
         ]);
 
-        if($request->is_active == 'on'){
-            throw ValidationException::withMessages(['is_active' => 'There is no translation against this reward please create one first']);
-        }
+        // if($request->is_active == 'on'){
+        //     throw ValidationException::withMessages(['is_active' => 'There is no translation against this reward please create one first']);
+        // }
         $reward = new Reward();
         $reward->coupon_code = $request->coupon_code;
         $reward->partner_id = $request->partner_id;

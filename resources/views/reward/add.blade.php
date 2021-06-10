@@ -109,14 +109,18 @@
                             @endif
                         </div>
                     </div>
-                    <div class="item form-group">
+                    {{--<div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="is_active">Is Active</label>
                         <div class="col-md-6 col-sm-6">
                         <div class="checkbox">
-                            <input type="checkbox" class="flat" name='is_active'>
+                            <input type="checkbox" class="flat" id='is_active' name='is_active'>
+                            <br />
+                            @if ($errors->has('is_active'))
+                                <span class="text-danger">{{ $errors->first('is_active') }}</span>
+                            @endif
                         </div>
                         </div>
-                    </div>
+                    </div>--}}
                     <div id='redirect_to_view_div'></div>
                     <div class="ln_solid"></div>
                     <div class="row">
