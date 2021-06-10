@@ -4,9 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use OwenIt\Auditing\Auditable;
+use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
-class SubTypeOfInsurance extends Model
+class SubTypeOfInsurance extends Model implements AuditableContract
 {
-    use HasFactory;
-    protected $table = 'sub_type_of_insurances';
+    use HasFactory, Auditable;
+    protected $table = 'business_type_of_insurance';
 }

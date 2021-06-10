@@ -20,7 +20,7 @@
                 @endif
                 <form id="demo-form2" method='post'  enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left">
                 <div class="item form-group">
-                    <label class="col-form-label col-md-3 col-sm-3 label-align" for="name">Name
+                    <label class="col-form-label col-md-3 col-sm-3 label-align" for="name"><b>Name</b>
                     </label>
                     <div class="col-md-6 col-sm-6 ">
                         <p class="label-align-center">{{ $role->name }}</p>
@@ -28,7 +28,24 @@
 
                 </div>
                 <div class="item form-group">
-                    <label class="col-form-label col-md-3 col-sm-3 label-align" for="name">Permissions
+                    <label class="col-form-label col-md-3 col-sm-3 label-align" for="email"><b>Created At</b>
+                    </label>
+                    <div class="col-md-6 col-sm-6 ">
+                        <p class="label-align-center">{{ $role->created_at }}</p>
+                    </div>
+
+                </div>
+                <div class="item form-group">
+                    <label class="col-form-label col-md-3 col-sm-3 label-align" for="email"><b>Updated At</b>
+                    </label>
+                    <div class="col-md-6 col-sm-6 ">
+                        <p class="label-align-center">{{ $role->updated_at }}</p>
+                    </div>
+
+                </div>
+                <div class="item form-group">
+                    <label class="col-form-label col-md-3 col-sm-3 label-align" for="name">
+                        <b>Permissions</b>
                     </label>
                     <div class="col-md-6 col-sm-6 ">
                         <p class="label-align-center">

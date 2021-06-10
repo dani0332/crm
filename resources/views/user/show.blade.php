@@ -15,7 +15,7 @@
                 <br />
                 <form id="demo-form2" method='post' action="{{ route('users.update', ['user' => $user->id]) }}" enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left">
                 <div class="item form-group">
-                    <label class="col-form-label col-md-3 col-sm-3 label-align" for="name">Name <span class="required">*</span>
+                    <label class="col-form-label col-md-3 col-sm-3 label-align" for="name"><b>Name</b>
                     </label>
                     <div class="col-md-6 col-sm-6 ">
                         <p class="label-align-center">{{ $user->name }}</p>
@@ -23,15 +23,32 @@
 
                 </div>
                 <div class="item form-group">
-                    <label class="col-form-label col-md-3 col-sm-3 label-align" for="email">Email <span class="required">*</span>
+                    <label class="col-form-label col-md-3 col-sm-3 label-align" for="email"><b>Email</b>
                     </label>
                     <div class="col-md-6 col-sm-6 ">
                         <p class="label-align-center">{{ $user->email }}</p>
                     </div>
 
                 </div>
+
                 <div class="item form-group">
-                    <label class="col-form-label col-md-3 col-sm-3 label-align" for="roles">Role <span class="required">*</span>
+                    <label class="col-form-label col-md-3 col-sm-3 label-align" for="email"><b>Created At</b>
+                    </label>
+                    <div class="col-md-6 col-sm-6 ">
+                        <p class="label-align-center">{{ $user->created_at }}</p>
+                    </div>
+
+                </div>
+                <div class="item form-group">
+                    <label class="col-form-label col-md-3 col-sm-3 label-align" for="email"><b>Updated At</b>
+                    </label>
+                    <div class="col-md-6 col-sm-6 ">
+                        <p class="label-align-center">{{ $user->updated_at }}</p>
+                    </div>
+
+                </div>
+                <div class="item form-group">
+                    <label class="col-form-label col-md-3 col-sm-3 label-align" for="roles"><b>Role</b>
                     </label>
                     <div class="col-md-6 col-sm-6 ">
                         <p class="label-align-center">Admin</p>

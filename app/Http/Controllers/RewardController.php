@@ -18,13 +18,9 @@ class RewardController extends Controller
 {
     public function __construct()
     {
-
         $this->middleware('permission:rewards-list|rewards-create|rewards-edit|rewards-delete', ['only' => ['index', 'store']]);
-
         $this->middleware('permission:rewards-create', ['only' => ['create', 'store']]);
-
         $this->middleware('permission:rewards-edit', ['only' => ['edit', 'update']]);
-
         $this->middleware('permission:rewards-delete', ['only' => ['destroy']]);
     }
     /**
@@ -45,7 +41,6 @@ class RewardController extends Controller
                 ->rawColumns(['action'])
                 ->make(true);
         }
-
         return view('reward.view');
     }
     /**
@@ -73,13 +68,14 @@ class RewardController extends Controller
             'partner_id' => 'required',
             'discount' => 'required|string|max:15',
             'start_date' => 'required',
+            'end_date' => 'required',
             'reward_categories' => 'required',
             'reward_tags' => 'required'
         ]);
 
-        if($request->is_active == 'on'){
-            throw ValidationException::withMessages(['is_active' => 'There is no translation against this reward please create one first']);
-        }
+        // if($request->is_active == 'on'){
+        //     throw ValidationException::withMessages(['is_active' => 'There is no translation against this reward please create one first']);
+        // }
         $reward = new Reward();
         $reward->coupon_code = $request->coupon_code;
         $reward->partner_id = $request->partner_id;
@@ -103,9 +99,9 @@ class RewardController extends Controller
             }
         }
         if(isset($request->return_to_view))
-            return redirect("rewards/reward");
+            return redirect("rewards/reward/".$reward->id);
         return back()
-            ->with('success', 'reward has been stored');
+            ->with('success', 'Reward has been stored');
     }
     /**
      * Display the specified resource.
@@ -143,8 +139,8 @@ class RewardController extends Controller
             'coupon_code' => 'required|max:120',
             'partner_id' => 'required|max:120',
             'discount' => 'required|max:120',
-            'start_date' => 'required|max:120',
-            'end_date' => 'required|max:120',
+            'start_date' => 'required',
+            'end_date' => 'required',
             'reward_categories' => 'required',
             'reward_tags' => 'required'
         ]);
@@ -181,9 +177,9 @@ class RewardController extends Controller
         }
 
         if(isset($request->return_to_view))
-            return redirect("rewards/reward");
+            return redirect("rewards/reward/".$reward->id);
         return back()
-            ->with('success', 'reward has been stored');
+            ->with('success', 'Reward has been stored');
     }
     /**
      * Remove the specified resource from storage.
@@ -200,6 +196,5 @@ class RewardController extends Controller
         $reward->delete();
         DB::statement('SET FOREIGN_KEY_CHECKS=1');
         return redirect('rewards/reward');
-
     }
 }

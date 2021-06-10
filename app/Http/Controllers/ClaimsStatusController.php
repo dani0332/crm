@@ -25,7 +25,7 @@ class ClaimsStatusController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $data = ClaimsStatus::select('*');
+            $data = ClaimsStatus::select('*')->orderBy('sort_order','asc');
             return DataTables::of($data)
                     ->addIndexColumn()
                     ->addColumn('action', function($row){
@@ -58,6 +58,7 @@ class ClaimsStatusController extends Controller
         $this->validate($request,[
             'text' => 'required|max:120',
             'text_ar' => 'required|max:120',
+            'sort_order' => 'required',
         ]);
 
         $claimsstatus = new ClaimsStatus();
@@ -67,8 +68,8 @@ class ClaimsStatusController extends Controller
         $claimsstatus->sort_order =  $request->sort_order;
         $claimsstatus->save();
         if(isset($request->return_to_view))
-            return redirect("claim/claimsstatus");
-        return back()->with('success','Claims Status has been stored');
+            return redirect("claim/claimsstatus/".$claimsstatus->id);
+            return back()->with('success','Claims Status has been stored');
     }
 
     /**
@@ -105,15 +106,16 @@ class ClaimsStatusController extends Controller
         $this->validate($request,[
             'text' => 'required|max:120',
             'text_ar' => 'required|max:120',
+            'sort_order' => 'required',
         ]);
         $claimsstatus->text=  $request->text;
         $claimsstatus->text_ar=  $request->text_ar;
-        $claimsstatus->is_active =  $request->is_active == 'on' ? 1 : 0; 
-        $claimsstatus->sort_order =  $request->sort_order;    
+        $claimsstatus->is_active =  $request->is_active == 'on' ? 1 : 0;
+        $claimsstatus->sort_order =  $request->sort_order;
         $claimsstatus->save();
         if(isset($request->return_to_view))
-            return redirect("claim/claimsstatus");
-        return back()->with('success','Claims Status has been Updated');
+            return redirect("claim/claimsstatus/".$claimsstatus->id);
+            return back()->with('success','Claims Status has been Updated');
     }
 
     /**

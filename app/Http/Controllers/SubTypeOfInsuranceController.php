@@ -25,7 +25,7 @@ class SubTypeOfInsuranceController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $data = SubTypeOfInsurance::select('*');
+            $data = SubTypeOfInsurance::select('*')->orderBy('sort_order','asc');
             return DataTables::of($data)
                     ->addIndexColumn()
                     ->addColumn('action', function($row){
@@ -34,7 +34,6 @@ class SubTypeOfInsuranceController extends Controller
                     ->rawColumns(['action'])
                     ->make(true);
         }
-        
         return view('subtypeofinsurance.view');
     }
 
@@ -59,6 +58,7 @@ class SubTypeOfInsuranceController extends Controller
         $this->validate($request,[
             'text' => 'required|max:120',
             'text_ar' => 'required|max:120',
+            'sort_order' => 'required',
         ]);
 
         $subtypeofinsurance = new SubTypeOfInsurance();
@@ -68,8 +68,8 @@ class SubTypeOfInsuranceController extends Controller
         $subtypeofinsurance->sort_order =  $request->sort_order;
         $subtypeofinsurance->save();
         if(isset($request->return_to_view))
-            return redirect("claim/subtypeofinsurance");
-        return back()->with('success','Sub Type Of Insurance has been stored');
+            return redirect("claim/subtypeofinsurance/".$subtypeofinsurance->id);
+            return back()->with('success','Sub Type Of Insurance has been stored');
     }
 
     /**
@@ -106,15 +106,16 @@ class SubTypeOfInsuranceController extends Controller
         $this->validate($request,[
             'text' => 'required|max:120',
             'text_ar' => 'required|max:120',
+            'sort_order' => 'required',
         ]);
         $subtypeofinsurance->text=  $request->text;
         $subtypeofinsurance->text_ar=  $request->text_ar;
-        $subtypeofinsurance->is_active =  $request->is_active == 'on' ? 1 : 0; 
-        $subtypeofinsurance->sort_order =  $request->sort_order;    
+        $subtypeofinsurance->is_active =  $request->is_active == 'on' ? 1 : 0;
+        $subtypeofinsurance->sort_order =  $request->sort_order;
         $subtypeofinsurance->save();
         if(isset($request->return_to_view))
-            return redirect("claim/subtypeofinsurance");
-        return back()->with('success','Sub Type of Insurance has been Updated');
+            return redirect("claim/subtypeofinsurance/".$subtypeofinsurance->id);
+            return back()->with('success','Sub Type of Insurance has been Updated');
     }
 
     /**

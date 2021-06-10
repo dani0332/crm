@@ -22,51 +22,51 @@
                 {{csrf_field()}}
                 @method('PUT')
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="text">
-                            <b> Text </b>
-                        </label>
-                        <div class="col-md-6 col-sm-6 ">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="text"><b>Text</b></label>
+                        <div class="col-md-6 col-sm-6">
                             <p class="label-align-center">{{ $subtypeofinsurance->text }}</p>
                         </div>
                     </div>
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="text_ar">
-                            <b> Text Ar </b>
-                        </label>
-                        <div class="col-md-6 col-sm-6 ">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="text_ar"><b>Text Ar</b></label>
+                        <div class="col-md-6 col-sm-6">
                             <p class="label-align-center">{{ $subtypeofinsurance->text_ar }}</p>
                         </div>
                     </div>
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="sort_order">
-                            <b> Sort Order </b>
-                        </label>
-                        <div class="col-md-6 col-sm-6 ">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="sort_order"><b>Sort Order</b></label>
+                        <div class="col-md-6 col-sm-6">
                             <p class="label-align-center">{{ $subtypeofinsurance->sort_order }}</p>
                         </div>
                     </div>
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="is_active"><b>Is Active</b></label>
-                        <div class="col-md-6 col-sm-6 ">
+                        <div class="col-md-6 col-sm-6">
                             <p class="label-align-center"> {{ $subtypeofinsurance->is_active ? 'True' : 'False' }} </p>
                         </div>
                     </div>
-                    <div class="ln_solid"></div>
                     <div class="item form-group">
-                        <div class="col-md-6 col-sm-6 offset-md-3">
-                                @can('sub-type-of-insurance-edit')
-                                    <a id="texta" href="{{ route('subtypeofinsurance.edit', ['subtypeofinsurance' => $subtypeofinsurance->id]) }}" class='btn btn-warning btn-sm'>Edit </a>
-                                @endcan
-                                @can('sub-type-of-insurance-delete')
-                                    <a href="#" date-route="{{ route('subtypeofinsurance.destroy', ['subtypeofinsurance' => $subtypeofinsurance->id]) }}"   class='btn btn-warning btn-sm delete'>Delete</a>
-                                
-                                    {{-- <form action="" method="POST">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-warning btn-sm">Delete</button>
-                                    </form> --}}
-                                @endcan
-                            </tr>
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="created_at"><b>Created At</b></label>
+                        <div class="col-md-6 col-sm-6">
+                            <p class="label-align-center">{{ $subtypeofinsurance->created_at }}</p>
+                        </div>
+                    </div>
+                    <div class="item form-group">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="updated_at"><b>Updated At</b></label>
+                        <div class="col-md-6 col-sm-6">
+                            <p class="label-align-center">{{ $subtypeofinsurance->updated_at }}</p>
+                        </div>
+                    </div>
+                    <div class="ln_solid"></div>
+                    <div class="row">
+                    <div class="col-auto mr-auto"></div>
+                        <div class="col-auto">
+                            @can('sub-type-of-insurance-edit')
+                                <a id="texta" href="{{ route('subtypeofinsurance.edit', ['subtypeofinsurance' => $subtypeofinsurance->id]) }}" class='btn btn-warning btn-sm'>Edit </a>
+                            @endcan
+                            @can('sub-type-of-insurance-delete')
+                                <a href="#" date-route="{{ route('subtypeofinsurance.destroy', ['subtypeofinsurance' => $subtypeofinsurance->id]) }}" class='btn btn-warning btn-sm delete'>Delete</a>
+                            @endcan
                         </div>
                     </div>
                 </form>
@@ -76,7 +76,7 @@
 </div>
 @can('auditable')
     <div id="auditable">
-        <button id='auditablebtn' class="btn btn-warning btn-sm" data-id="{{ $subtypeofinsurance->id }}" data-model="App\Models\SubTypeOfInsuranceController">
+        <button id='auditablebtn' class="btn btn-warning btn-sm auditablebtn" data-id="{{ $subtypeofinsurance->id }}" data-model="App\Models\SubTypeOfInsurance">
             View Audit Logs
         </button>
     </div>

@@ -10,13 +10,9 @@ class RewardTagController extends Controller
 {
     public function __construct()
     {
-
         $this->middleware('permission:reward-tags-list|reward-tags-create|reward-tags-edit|reward-tags-delete', ['only' => ['index', 'store']]);
-
         $this->middleware('permission:reward-tags-create', ['only' => ['create', 'store']]);
-
         $this->middleware('permission:reward-tags-edit', ['only' => ['edit', 'update']]);
-
         $this->middleware('permission:reward-tags-delete', ['only' => ['destroy']]);
     }
     /**
@@ -27,7 +23,7 @@ class RewardTagController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $data = RewardTag::select('*');
+            $data = RewardTag::select('*')->orderBy('sort_order','desc');
             return DataTables::of($data)
                 ->addIndexColumn()
                 ->addColumn('action', function ($row) {
@@ -36,7 +32,6 @@ class RewardTagController extends Controller
                 ->rawColumns(['action'])
                 ->make(true);
         }
-
         return view('rewardtag.view');
     }
     /**
@@ -59,6 +54,7 @@ class RewardTagController extends Controller
         $this->validate($request, [
             'text' => 'required|max:120',
             'text_ar' => 'required|max:120',
+            'sort_order' => 'required',
         ]);
 
         $rewardTag = new RewardTag();
@@ -68,9 +64,8 @@ class RewardTagController extends Controller
         $rewardTag->sort_order = $request->sort_order;
         $rewardTag->save();
         if(isset($request->return_to_view))
-            return redirect("rewards/reward-tags");
-        return back()
-            ->with('success', 'Reward Tag has been stored');
+            return redirect("rewards/reward-tags/".$rewardTag->id);
+        return back()->with('success', 'Reward Tag has been stored');
     }
     /**
      * Display the specified resource.
@@ -101,10 +96,10 @@ class RewardTagController extends Controller
      */
     public function update(Request $request, Rewardtag $rewardTag)
     {
-
         $this->validate($request, [
             'text' => 'required|max:120',
             'text_ar' => 'required|max:120',
+            'sort_order' => 'required',
         ]);
         $rewardTag->text = $request->text;
         $rewardTag->text_ar = $request->text_ar;
@@ -112,9 +107,8 @@ class RewardTagController extends Controller
         $rewardTag->sort_order = $request->sort_order;
         $rewardTag->save();
         if(isset($request->return_to_view))
-            return redirect("rewards/reward-tags");
-        return back()
-            ->with('success', 'Reward Tag has been Updated');
+            return redirect("rewards/reward-tags/".$rewardTag->id);
+        return back()->with('success', 'Reward Tag has been Updated');
     }
     /**
      * Remove the specified resource from storage.

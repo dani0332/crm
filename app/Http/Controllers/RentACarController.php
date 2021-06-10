@@ -25,7 +25,7 @@ class RentACarController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $data = RentACar::select('*');
+            $data = RentACar::select('*')->orderBy('sort_order','asc');
             return DataTables::of($data)
                     ->addIndexColumn()
                     ->addColumn('action', function($row){
@@ -34,7 +34,7 @@ class RentACarController extends Controller
                     ->rawColumns(['action'])
                     ->make(true);
         }
-        
+
         return view('rentacar.view');
     }
 
@@ -109,8 +109,8 @@ class RentACarController extends Controller
         ]);
         $rentacar->text=  $request->text;
         $rentacar->text_ar=  $request->text_ar;
-        $rentacar->is_active =  $request->is_active == 'on' ? 1 : 0; 
-        $rentacar->sort_order =  $request->sort_order;    
+        $rentacar->is_active =  $request->is_active == 'on' ? 1 : 0;
+        $rentacar->sort_order =  $request->sort_order;
         $rentacar->save();
         if(isset($request->return_to_view))
             return redirect("claim/rentacar");

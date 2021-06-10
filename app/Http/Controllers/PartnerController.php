@@ -9,24 +9,15 @@ use DB;
 class PartnerController extends Controller
 {
     /**
-
      * Display a listing of the resource.
-
      *
-
      * @return \Illuminate\Http\Response
-
      */
-
     public function __construct()
     {
-
         $this->middleware('permission:partners-list|partners-create|partners-edit|partners-delete', ['only' => ['index', 'store']]);
-
         $this->middleware('permission:partners-create', ['only' => ['create', 'store']]);
-
         $this->middleware('permission:partners-edit', ['only' => ['edit', 'update']]);
-
         $this->middleware('permission:partners-delete', ['only' => ['destroy']]);
     }
 
@@ -38,7 +29,7 @@ class PartnerController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $data = Partner::select('*');
+            $data = Partner::select('*')->orderBy('created_at','desc');
             return Datatables::of($data)
                 ->addIndexColumn()
             // ->addColumn('logo_image', function($row){
@@ -50,7 +41,6 @@ class PartnerController extends Controller
                 ->rawColumns(['action'])
                 ->make(true);
         }
-
         return view('partner.view');
     }
     /**
@@ -89,7 +79,7 @@ class PartnerController extends Controller
 
         $partner->save();
         if(isset($request->return_to_view))
-            return redirect("rewards/partner");
+            return redirect("rewards/partner/".$partner->id);
         return back()
             ->with('success', 'Partner has been stored');
     }
@@ -138,7 +128,7 @@ class PartnerController extends Controller
 
         $partner->save();
         if(isset($request->return_to_view))
-            return redirect("rewards/partner");
+            return redirect("rewards/partner/".$partner->id);
         return back()
             ->with('success', 'Partner has been Updated');
     }
