@@ -34,7 +34,6 @@ class CarRepairCoverageController extends Controller
                     ->rawColumns(['action'])
                     ->make(true);
         }
-
         return view('carrepaircoverage.view');
     }
 
@@ -59,6 +58,7 @@ class CarRepairCoverageController extends Controller
         $this->validate($request,[
             'text' => 'required|max:120',
             'text_ar' => 'required|max:120',
+            'sort_order' => 'required',
         ]);
 
         $carrepaircoverage = new CarRepairCoverage();
@@ -69,7 +69,7 @@ class CarRepairCoverageController extends Controller
         $carrepaircoverage->save();
         if(isset($request->return_to_view))
             return redirect("claim/carrepaircoverage/".$carrepaircoverage->id);
-        return back()->with('success','Car Repair Coverage has been stored');
+            return back()->with('success','Car Repair Coverage has been stored');
     }
 
     /**
@@ -106,6 +106,7 @@ class CarRepairCoverageController extends Controller
         $this->validate($request,[
             'text' => 'required|max:120',
             'text_ar' => 'required|max:120',
+            'sort_order' => 'required',
         ]);
         $carrepaircoverage->text=  $request->text;
         $carrepaircoverage->text_ar=  $request->text_ar;
@@ -114,8 +115,7 @@ class CarRepairCoverageController extends Controller
         $carrepaircoverage->save();
         if(isset($request->return_to_view))
             return redirect("claim/carrepaircoverage/".$carrepaircoverage->id);
-        return back()
-            ->with('success','Car Repair Coverage has been Updated');
+            return back()->with('success','Car Repair Coverage has been Updated');
     }
 
     /**

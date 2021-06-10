@@ -34,7 +34,6 @@ class TypeOfInsuranceController extends Controller
                     ->rawColumns(['action'])
                     ->make(true);
         }
-
         return view('typeofinsurance.view');
     }
 
@@ -59,6 +58,7 @@ class TypeOfInsuranceController extends Controller
         $this->validate($request,[
             'text' => 'required|max:120',
             'text_ar' => 'required|max:120',
+            'sort_order' => 'required',
         ]);
 
         $typeofinsurance = new TypeOfInsurance();
@@ -69,7 +69,7 @@ class TypeOfInsuranceController extends Controller
         $typeofinsurance->save();
         if(isset($request->return_to_view))
             return redirect("claim/typeofinsurance/".$typeofinsurance->id);
-        return back()->with('success','Type Of Insurance has been stored');
+            return back()->with('success','Type Of Insurance has been stored');
     }
 
     /**
@@ -106,6 +106,7 @@ class TypeOfInsuranceController extends Controller
         $this->validate($request,[
             'text' => 'required|max:120',
             'text_ar' => 'required|max:120',
+            'sort_order' => 'required',
         ]);
         $typeofinsurance->text=  $request->text;
         $typeofinsurance->text_ar=  $request->text_ar;
@@ -114,7 +115,7 @@ class TypeOfInsuranceController extends Controller
         $typeofinsurance->save();
         if(isset($request->return_to_view))
             return redirect("claim/typeofinsurance/".$typeofinsurance->id);
-        return back()->with('success','Type of Insurance has been Updated');
+            return back()->with('success','Type of Insurance has been Updated');
     }
 
     /**

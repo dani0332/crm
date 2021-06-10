@@ -135,7 +135,7 @@ class ClaimController extends Controller
         $claim->car_model_id = $request->car_model_id;
         $claim->created_by_id = Auth::user()->id;
         $claim->modified_by_id = Auth::user()->id;
-        $claim->rent_a_car =  $request->rent_a_car == 'on' ? 1 : 0;
+        $claim->is_rent_a_car =  $request->is_rent_a_car == 'on' ? 1 : 0;
 
         if($request->hasFile('attachment_1')) {
             $fileName_1 = time() . '_' . $request->attachment_1->getClientOriginalName();
@@ -261,7 +261,7 @@ class ClaimController extends Controller
         $claim->car_make_id = $request->car_make_id;
         $claim->car_model_id = $request->car_model_id;
         $claim->modified_by_id = Auth::user()->id;
-        $claim->rent_a_car =  $request->rent_a_car == 'on' ? 1 : 0;
+        $claim->is_rent_a_car =  $request->is_rent_a_car == 'on' ? 1 : 0;
 
         if($request->hasFile('attachment_1')) {
             $fileName_1 = time() . '_' . $request->attachment_1->getClientOriginalName();
