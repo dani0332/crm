@@ -68,7 +68,7 @@
                     </div>
                     <div class="item form-group">
                         <div class="col">
-                            <span class="col-form-label col-md-6 col-sm-6">Additional Notes </span>
+                            <span class="col-form-label col-md-6 col-sm-6">Additional Notes <span class="required">*</span></span>
                             <textarea id="additional_notes" name="additional_notes" rows="4" cols="50" class="form-control">{{ old('additional_notes') }}</textarea>
                             @if ($errors->has('additional_notes'))
                                 <span class="text-danger">{{ $errors->first('additional_notes') }}</span>

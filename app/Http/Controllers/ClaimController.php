@@ -18,6 +18,7 @@ use Auth;
 use DataTables;
 use Spatie\Permission\Models\Role;
 use DB;
+use Config;
 
 class ClaimController extends Controller
 {
@@ -91,7 +92,7 @@ class ClaimController extends Controller
         $this->validate($request,[
             'first_name' => 'required|max:255',
             'last_name' => 'required|max:255',
-            'email_address' => 'required|max:150',
+            'email_address' => 'required|email|max:150',
             'phone_number' => 'required|max:20',
             'insurance_company' => 'required|max:255',
             'policy_number' => 'required|max:150',
@@ -211,6 +212,7 @@ class ClaimController extends Controller
     public function update(Request $request, Claim $claim)
     {
         $type_of_insurances_text = DB::table('type_of_insurances')->where('id', $request->type_of_insurances_id)->value('text');
+        $claim_status_text = DB::table('claims_statuses')->where('id', $request->claims_status_id)->value('text');
 
         if($type_of_insurances_text == 'Business'){
             $this->validate($request,[
@@ -220,7 +222,7 @@ class ClaimController extends Controller
         $this->validate($request,[
             'first_name' => 'required|max:255',
             'last_name' => 'required|max:255',
-            'email_address' => 'required|max:150',
+            'email_address' => 'required|email|max:150',
             'phone_number' => 'required|max:20',
             'insurance_company' => 'required|max:255',
             'policy_number' => 'required|max:150',
@@ -286,6 +288,80 @@ class ClaimController extends Controller
             // save file to azure blob virtual directory uplaods in your container
             $filePath = $request->file('attachment_4')->storeAs('/', $fileName_4, 'azure');
             $claim->attachment_4 = $fileName_4;
+        }
+
+        if($claim_status_text == 'Settled') {
+
+            $name = $request->first_name.' '.$request->last_name;
+            $phone = $request->phone_number;
+            $email = $request->email_address;
+
+            $phonefirstCharacter = substr($phone, 0, 1);
+            if($phonefirstCharacter == "0") { $phone_number = ltrim($phone, $phone[0]); } else { $phone_number = $phone; }
+
+            $delighted_url = "https://api.delighted.com/v1/people.json";
+            $delighted_method = "POST";
+
+            $dayOfWeek = date("l");
+            if($dayOfWeek == "Sunday") { $nps_delay = 259200; }
+            else if($dayOfWeek == "Monday") { $nps_delay = 259200; }
+            else if($dayOfWeek == "Tuesday") { $nps_delay = 432000; }
+            else if($dayOfWeek == "Wednesday") { $nps_delay = 432000; }
+            else if($dayOfWeek == "Thursday") { $nps_delay = 432000; }
+            else if($dayOfWeek == "Friday") { $nps_delay = 345600; }
+            else if($dayOfWeek == "Saturday") { $nps_delay = 259200; }
+            else { }
+
+            $data_d = array();
+            $data_d['name'] = "$name";
+            $data_d['email'] = "$email";
+            $data_d['phone_number'] = "+971".$phone_number;
+            $data_d['delay'] = $nps_delay;
+            $data_d['properties'] = array();
+            $data_d['properties']['Type of Insurance'] = $type_of_insurances_text;
+            $delighted_data = json_encode($data_d);
+            $delighted_curl = curl_init();
+            curl_setopt_array($delighted_curl, array(
+                    CURLOPT_URL => $delighted_url,
+                    CURLOPT_RETURNTRANSFER => true,
+                    CURLOPT_ENCODING => "",
+                    CURLOPT_MAXREDIRS => 10,
+                    CURLOPT_TIMEOUT => 0,
+                    CURLOPT_FOLLOWLOCATION => true,
+                    CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+                    CURLOPT_CUSTOMREQUEST => $delighted_method,
+                    CURLOPT_POSTFIELDS =>$delighted_data,
+                    CURLOPT_HTTPHEADER => array("Content-Type: application/json","Authorization: Basic ".base64_encode("sU5Iy4HKzOoIILcRH8P4Rnzax6bbcje7"),),
+                )
+            );
+            $delighted_response = curl_exec($delighted_curl);
+            $delighted_decoded_response = json_decode($delighted_response, true);
+            if(isset($delighted_decoded_response['errors'])) {
+
+                $emailSys = Config::get('constants.email_sys');
+                $refUrl = Request::url();
+
+                $subject = $emailSys . " CENTRAL API ERROR | CLAIMS FORM | ". \Request::url(). " | " . date('d-m-Y H:i:s');
+
+                $curlMesg =
+                'Customer Name: '.$name.
+                ', Email: '.$email.
+                ', Phone: '.$phone.
+                ', Error status: '.$delighted_decoded_response['status'].
+                ', Error Message: '.$delighted_decoded_response['message'].
+                ', Errors: '.$delighted_decoded_response['errors'].
+                ','.date('d-m-Y H:i:s')."\n";
+
+                Mail::send(['html' => 'apiemail'], [
+                    'refUrl' => $refUrl,
+                    'insuranceName' => $type_of_insurances_text,
+                    'curlMesg' => $curlMesg,
+                ], function ($message) use ($subject) {
+                    $message->to(['shajiuddinse@gmail.com'])->subject($subject);
+                    $message->from('alfred@insurancemarket.ae', 'Alfred - Error');
+                });
+            }
+            curl_close($delighted_curl);
         }
 
         $claim->save();
