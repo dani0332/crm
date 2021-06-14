@@ -43,7 +43,7 @@ class RewardTranslationController extends Controller
             'instructions' => 'required|max:1000',
             'terms_and_conditions' => 'required|max:1000',
             'product_image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-            'full_width_banner_image' => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048|dimensions:width=1920,height=320',
+            'full_width_banner_image' => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048',
             //'generic_banner_image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
         if ($this->validateLang($request->lang, $reward->id)) {
@@ -118,7 +118,7 @@ class RewardTranslationController extends Controller
             'instructions' => 'required|max:1000',
             'terms_and_conditions' => 'required|max:1000',
             'product_image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-            'full_width_banner_image' => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048|dimensions:width=1920,height=320',
+            'full_width_banner_image' => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
         $rewardTranslation->title = $request->title;
         $rewardTranslation->description1 = $request->description1;
