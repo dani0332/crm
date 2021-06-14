@@ -43,9 +43,8 @@ class RewardTranslationController extends Controller
             'instructions' => 'required|max:1000',
             'terms_and_conditions' => 'required|max:1000',
             'product_image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-            'full_width_banner_image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-            'generic_banner_image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-
+            'full_width_banner_image' => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048|dimensions:width=1920,height=320',
+            //'generic_banner_image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
         if ($this->validateLang($request->lang, $reward->id)) {
             throw ValidationException::withMessages(['lang' => 'Please choose unique Language Field']);
@@ -61,33 +60,27 @@ class RewardTranslationController extends Controller
         $rewardTranslation->lang = $request->lang;
         if ($request->file('product_image')) {
             $fileName = time() . '_' . $request->product_image->getClientOriginalName();
-            // save file to azure blob virtual directory uplaods in your container
             $filePath = $request->file('product_image')->storeAs('/', $fileName, 'azure');
             $rewardTranslation->product_image = $fileName;
         }
         if ($request->file('full_width_banner_image')) {
             $fileName = time() . '_' . $request->full_width_banner_image->getClientOriginalName();
-            // save file to azure blob virtual directory uplaods in your container
             $filePath = $request->file('full_width_banner_image')->storeAs('/', $fileName, 'azure');
             $rewardTranslation->full_width_banner_image = $fileName;
         }
-        if ($request->file('generic_banner_image')) {
-            $fileName = time() . '_' . $request->generic_banner_image->getClientOriginalName();
-            // save file to azure blob virtual directory uplaods in your container
-            $filePath = $request->file('generic_banner_image')->storeAs('/', $fileName, 'azure');
-            $rewardTranslation->generic_banner_image = $fileName;
-        }
+        // if ($request->file('generic_banner_image')) {
+        //     $fileName = time() . '_' . $request->generic_banner_image->getClientOriginalName();
+        //     $filePath = $request->file('generic_banner_image')->storeAs('/', $fileName, 'azure');
+        //     $rewardTranslation->generic_banner_image = $fileName;
+        // }
         $rewardTranslation->save();
         if(isset($request->active_reward)){
             $reward->is_active = 1;
             $reward->save();
-            return redirect("rewards/reward/".$reward->id);
-
+            return redirect("rewards/reward/".$reward->id)->with('success', 'Reward Translation has been stored');
         }
         if(isset($request->return_to_view))
-            return redirect("rewards/reward/".$reward->id);
-        return back()
-            ->with('success', 'Reward Translation has been stored');
+            return redirect("rewards/reward/".$reward->id)->with('success', 'Reward Translation has been stored');            
     }
     /**
      * Display the specified resource.
@@ -124,6 +117,8 @@ class RewardTranslationController extends Controller
             'description2' => 'required|max:1000',
             'instructions' => 'required|max:1000',
             'terms_and_conditions' => 'required|max:1000',
+            'product_image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'full_width_banner_image' => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048|dimensions:width=1920,height=320',
         ]);
         $rewardTranslation->title = $request->title;
         $rewardTranslation->description1 = $request->description1;
@@ -134,27 +129,22 @@ class RewardTranslationController extends Controller
 
         if ($request->file('product_image')) {
             $fileName = time() . '_' . $request->product_image->getClientOriginalName();
-            // save file to azure blob virtual directory uplaods in your container
             $filePath = $request->file('product_image')->storeAs('/', $fileName, 'azure');
             $rewardTranslation->product_image = $fileName;
         }
         if ($request->file('full_width_banner_image')) {
             $fileName = time() . '_' . $request->full_width_banner_image->getClientOriginalName();
-            // save file to azure blob virtual directory uplaods in your container
             $filePath = $request->file('full_width_banner_image')->storeAs('/', $fileName, 'azure');
             $rewardTranslation->full_width_banner_image = $fileName;
         }
-        if ($request->file('generic_banner_image')) {
-            $fileName = time() . '_' . $request->generic_banner_image->getClientOriginalName();
-            // save file to azure blob virtual directory uplaods in your container
-            $filePath = $request->file('generic_banner_image')->storeAs('/', $fileName, 'azure');
-            $rewardTranslation->generic_banner_image = $fileName;
-        }
+        // if ($request->file('generic_banner_image')) {
+        //     $fileName = time() . '_' . $request->generic_banner_image->getClientOriginalName();
+        //     $filePath = $request->file('generic_banner_image')->storeAs('/', $fileName, 'azure');
+        //     $rewardTranslation->generic_banner_image = $fileName;
+        // }
         $rewardTranslation->save();
         if(isset($request->return_to_view))
-            return redirect("rewards/reward/".$reward->id);
-        return back()
-            ->with('success', 'Reward Translation has been Updated');
+            return redirect("rewards/reward/".$reward->id)->with('success', 'Reward Translation has been Updated');
     }
     /**
      * Remove the specified resource from storage.
@@ -170,7 +160,6 @@ class RewardTranslationController extends Controller
 
     public function validateLang($lang, $reward)
     {
-
         $isExist = RewardTranslation::where('lang', $lang)->where('reward_id', $reward)->count();
         if ($isExist == 0) {
             return false;
