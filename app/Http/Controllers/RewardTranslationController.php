@@ -45,6 +45,7 @@ class RewardTranslationController extends Controller
             'product_image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
             'full_width_banner_image' => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048',
             //'generic_banner_image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'lang' => 'required',
         ]);
         if ($this->validateLang($request->lang, $reward->id)) {
             throw ValidationException::withMessages(['lang' => 'Please choose unique Language Field']);
@@ -119,6 +120,7 @@ class RewardTranslationController extends Controller
             'terms_and_conditions' => 'required|max:1000',
             'product_image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
             'full_width_banner_image' => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'lang' => 'required',
         ]);
         $rewardTranslation->title = $request->title;
         $rewardTranslation->description1 = $request->description1;

@@ -60,7 +60,7 @@
                             <input type="file" id="product_image" name="product_image" /> <br/>
                             <small class="text-muted">
                             Max upload size: 2MB<br>
-                            Dimensions: 640 x 640<br>
+                            Dimensions: 640 x 640 px<br>
                             Formats: jpeg, png, jpg, gif, svg</small>
                             @if ($errors->has('product_image'))
                                 <span class="text-danger">{{ $errors->first('product_image') }}</span>
@@ -73,7 +73,7 @@
                             <input type="file" id="full_width_banner_image" name="full_width_banner_image" /> <br/>
                             <small class="text-muted">
                             Max upload size: 2MB<br>
-                            Dimensions: 1920 x 320px<br>
+                            Dimensions: 1920 x 320 px<br>
                             Formats: jpeg, png, jpg, gif, svg</small>
                             @if ($errors->has('full_width_banner_image'))
                                 <span class="text-danger">{{ $errors->first('full_width_banner_image') }}</span>
