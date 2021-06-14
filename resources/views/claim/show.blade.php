@@ -277,7 +277,9 @@
                     <div class="col-auto mr-auto"></div>
                         <div class="col-auto">
                             @can('claim-edit')
+                            @if ($claim->claimsstatus->text != 'Settled')
                             <a id="texta" href="{{ route('claims.edit', ['claim' => $claim->id]) }}" class='btn btn-warning btn-sm'>Edit </a>
+                            @endif
                             @endcan
                             @can('claim-delete')
                             <a href="#" date-route="{{ route('claims.destroy', ['claim' => $claim->id]) }}" class='btn btn-warning btn-sm delete'>Delete</a>

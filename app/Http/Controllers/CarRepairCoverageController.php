@@ -68,8 +68,7 @@ class CarRepairCoverageController extends Controller
         $carrepaircoverage->sort_order =  $request->sort_order;
         $carrepaircoverage->save();
         if(isset($request->return_to_view))
-            return redirect("claim/carrepaircoverage/".$carrepaircoverage->id);
-            return back()->with('success','Car Repair Coverage has been stored');
+            return redirect("claim/carrepaircoverage/".$carrepaircoverage->id)->with('success','Car Repair Coverage has been stored');
     }
 
     /**
@@ -114,8 +113,7 @@ class CarRepairCoverageController extends Controller
         $carrepaircoverage->sort_order =  $request->sort_order;
         $carrepaircoverage->save();
         if(isset($request->return_to_view))
-            return redirect("claim/carrepaircoverage/".$carrepaircoverage->id);
-            return back()->with('success','Car Repair Coverage has been Updated');
+            return redirect("claim/carrepaircoverage/".$carrepaircoverage->id)->with('success','Car Repair Coverage has been Updated');
     }
 
     /**
@@ -126,9 +124,7 @@ class CarRepairCoverageController extends Controller
      */
     public function destroy(CarRepairCoverage $carrepaircoverage)
     {
-        DB::statement('SET FOREIGN_KEY_CHECKS=0');
         $carrepaircoverage->delete();
-        DB::statement('SET FOREIGN_KEY_CHECKS=1');
-        return redirect()->route('carrepaircoverage.index');
+        return redirect()->route('carrepaircoverage.index')->with('message','Car Repair Coverage has been Deleted');
     }
 }
