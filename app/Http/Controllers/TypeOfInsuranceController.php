@@ -68,8 +68,7 @@ class TypeOfInsuranceController extends Controller
         $typeofinsurance->sort_order =  $request->sort_order;
         $typeofinsurance->save();
         if(isset($request->return_to_view))
-            return redirect("claim/typeofinsurance/".$typeofinsurance->id);
-            return back()->with('success','Type Of Insurance has been stored');
+            return redirect("claim/typeofinsurance/".$typeofinsurance->id)->with('success','Type Of Insurance has been stored');
     }
 
     /**
@@ -114,8 +113,7 @@ class TypeOfInsuranceController extends Controller
         $typeofinsurance->sort_order =  $request->sort_order;
         $typeofinsurance->save();
         if(isset($request->return_to_view))
-            return redirect("claim/typeofinsurance/".$typeofinsurance->id);
-            return back()->with('success','Type of Insurance has been Updated');
+            return redirect("claim/typeofinsurance/".$typeofinsurance->id)->with('success','Type of Insurance has been Updated');
     }
 
     /**
@@ -126,9 +124,7 @@ class TypeOfInsuranceController extends Controller
      */
     public function destroy(TypeOfInsurance $typeofinsurance)
     {
-        DB::statement('SET FOREIGN_KEY_CHECKS=0');
         $typeofinsurance->delete();
-        DB::statement('SET FOREIGN_KEY_CHECKS=1');
-        return redirect()->route('typeofinsurance.index');
+        return redirect()->route('typeofinsurance.index')->with('message','Type of Insurance has been Deleted');
     }
 }

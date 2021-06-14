@@ -120,9 +120,9 @@
                             <span class="col-form-label col-md-6 col-sm-6">Claim Status </span>
                             <select class="form-control" id='claims_status_id' name='claims_status_id'>
                             <option value=''></option>
-                            @foreach($claimsstatuses as $claimsstatuse)
-                                @if ($claimsstatuse->text == 'New'))
-                                    <option value="{{ $claimsstatuse->id }}" selected>{{ $claimsstatuse->text }}</option>
+                            @foreach($claimsstatuses as $claimstatus)
+                                @if ($claimstatus->text == 'New'))
+                                    <option value="{{ $claimstatus->id }}" selected>{{ $claimstatus->text }}</option>
                                 @endif
                             @endforeach
                             </select>

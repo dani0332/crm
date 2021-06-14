@@ -69,8 +69,7 @@ class CarRepairTypeController extends Controller
         $carrepairtype->sort_order =  $request->sort_order;
         $carrepairtype->save();
         if(isset($request->return_to_view))
-            return redirect("claim/carrepairtype/".$carrepairtype->id);
-            return back()->with('success','Car Repair Type has been stored');
+            return redirect("claim/carrepairtype/".$carrepairtype->id)->with('success','Car Repair Type has been stored');
     }
 
     /**
@@ -115,8 +114,7 @@ class CarRepairTypeController extends Controller
         $carrepairtype->sort_order =  $request->sort_order;
         $carrepairtype->save();
         if(isset($request->return_to_view))
-            return redirect("claim/carrepairtype/".$carrepairtype->id);
-            return back()->with('success','Car Repair Type has been Updated');
+            return redirect("claim/carrepairtype/".$carrepairtype->id)->with('success','Car Repair Type has been Updated');
     }
 
     /**
@@ -127,9 +125,7 @@ class CarRepairTypeController extends Controller
      */
     public function destroy(CarRepairType $carrepairtype)
     {
-        DB::statement('SET FOREIGN_KEY_CHECKS=0');
         $carrepairtype->delete();
-        DB::statement('SET FOREIGN_KEY_CHECKS=1');
-        return redirect()->route('carrepairtype.index');
+        return redirect()->route('carrepairtype.index')->with('message','Car Repair Type has been Deleted');
     }
 }
