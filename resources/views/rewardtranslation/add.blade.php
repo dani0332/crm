@@ -92,10 +92,10 @@
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="Language">Language <span class="required">*</span></label>
                         <div class="col-md-6 col-sm-6">
-                            <select class="form-control" name='lang'>
+                            <select class="form-control" id='lang' name='lang'>
                                 <option value=''>Choose Language</option>
-                                <option value='en'>English</option>
-                                <option value='ar'>Arabic</option>
+                                <option value='en' {{ old('lang') == 'en' ? 'selected' : '' }}>English</option>
+                                <option value='ar' {{ old('lang') == 'ar' ? 'selected' : '' }}>Arabic</option>
                             </select>
                             @if ($errors->has('lang'))
                                 <span class="text-danger">{{ $errors->first('lang') }}</span>
