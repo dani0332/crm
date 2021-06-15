@@ -12,6 +12,7 @@ use App\Models\RentACar;
 use App\Models\User;
 use App\Models\CarMake;
 use App\Models\CarModel;
+use App\Models\InsuranceProvider;
 
 use Illuminate\Http\Request;
 use Auth;
@@ -49,7 +50,7 @@ class ClaimController extends Controller
             ->leftjoin('type_of_insurances','claims.type_of_insurances_id','type_of_insurances.id')
             ->leftjoin('claims_statuses','claims.claims_status_id','claims_statuses.id')
             ->orderBy('created_at','desc');
-            //$data = Claim::select('*')->orderBy('created_at','desc');
+
             if(Auth::user()->hasRole('CLAIMS_ADVISOR')) {
                 $data->where('assigned_to_id', Auth::user()->id);
             }
@@ -92,8 +93,9 @@ class ClaimController extends Controller
         $advisors = User::all();
         $carmakes = CarMake::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
         $carmodels = CarModel::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
+        $insuranceproviders = InsuranceProvider::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
         return view('claim.add',compact('typeofinsurances','subtypeofinsurances','claimsstatuses',
-        'carrepaircoverages','carrepairtypes','rentacars','advisors','carmakes','carmodels'));
+        'carrepaircoverages','carrepairtypes','rentacars','advisors','carmakes','carmodels','insuranceproviders'));
     }
 
     /**
@@ -117,7 +119,8 @@ class ClaimController extends Controller
             'last_name' => 'required|max:255',
             'email_address' => 'required|email|max:150',
             'phone_number' => 'required|max:20',
-            'insurance_company' => 'required|max:255',
+            'insurance_provider_id' => 'required',
+            //'insurance_company' => 'required|max:255',
             'policy_number' => 'required|max:150',
             'additional_notes' => 'required|max:2000',
             'type_of_insurances_id' => 'required',
@@ -133,7 +136,8 @@ class ClaimController extends Controller
         $claim->last_name = $request->last_name;
         $claim->email_address = strtolower(trim(ltrim(rtrim($request->email_address))));
         $claim->phone_number = $request->phone_number;
-        $claim->insurance_company = $request->insurance_company;
+        $claim->insurance_provider_id = $request->insurance_provider_id;
+        //$claim->insurance_company = $request->insurance_company;
         $claim->policy_number = $request->policy_number;
         $claim->additional_notes = $request->additional_notes;
         $claim->ticket_number = $request->ticket_number;
@@ -221,8 +225,9 @@ class ClaimController extends Controller
         $advisors = User::all();
         $carmakes = CarMake::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
         $carmodels = CarModel::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
+        $insuranceproviders = InsuranceProvider::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
         return view('claim.edit',compact('typeofinsurances','claim','subtypeofinsurances','claimsstatuses',
-        'carrepaircoverages','carrepairtypes','rentacars','advisors','carmakes','carmodels'));
+        'carrepaircoverages','carrepairtypes','rentacars','advisors','carmakes','carmodels','insuranceproviders'));
     }
 
     /**
@@ -247,7 +252,8 @@ class ClaimController extends Controller
             'last_name' => 'required|max:255',
             'email_address' => 'required|email|max:150',
             'phone_number' => 'required|max:20',
-            'insurance_company' => 'required|max:255',
+            'insurance_provider_id' => 'required',
+            //'insurance_company' => 'required|max:255',
             'policy_number' => 'required|max:150',
             'additional_notes' => 'required|max:2000',
             'type_of_insurances_id' => 'required',
@@ -261,7 +267,8 @@ class ClaimController extends Controller
         $claim->last_name = $request->last_name;
         $claim->email_address = strtolower(trim(ltrim(rtrim($request->email_address))));
         $claim->phone_number = $request->phone_number;
-        $claim->insurance_company = $request->insurance_company;
+        $claim->insurance_provider_id = $request->insurance_provider_id;
+        //$claim->insurance_company = $request->insurance_company;
         $claim->policy_number = $request->policy_number;
         $claim->additional_notes = $request->additional_notes;
         $claim->ticket_number = $request->ticket_number;

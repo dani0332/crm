@@ -67,4 +67,8 @@ class Claim extends Model implements AuditableContract
         $date_time_format = env("DATETIME_FORMAT");
         return $this->asDateTime($table)->timezone(config('app.timezone'))->format($date_time_format);
     }
+    public function insuranceprovider()
+    {
+        return $this->belongsTo(InsuranceProvider::class,'insurance_provider_id','id');
+    }
 }
