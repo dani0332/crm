@@ -20,8 +20,8 @@
                 {{csrf_field()}}
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="name">Name <span class="required">*</span></label>
-                        <div class="col-md-6 col-sm-6 ">
-                            <input type="text" id="name" name="name" value="{{ old('name') }}" class="form-control ">
+                        <div class="col-md-6 col-sm-6">
+                            <input type="text" id="name" name="name" value="{{ old('name') }}" class="form-control">
                             @if ($errors->has('name'))
                                 <span class="text-danger">{{ $errors->first('name') }}</span>
                             @endif
@@ -29,7 +29,7 @@
                     </div>
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="name">Permission <span class="required">*</span></label>
-                        <div class="col-md-6 col-sm-6 ">
+                        <div class="col-md-6 col-sm-6">
                             @foreach($permission->chunk(4) as $chunk)
                                 <div class="row">
                                     <div class="col-md-12">
