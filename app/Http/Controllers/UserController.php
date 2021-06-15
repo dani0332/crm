@@ -66,7 +66,7 @@ class UserController extends Controller
         $user = new User();
         $user->name = $request->name;
         $user->email = $request->email;
-        $user->password = $request->password;
+        $user->password = bcrypt($request->password);
         $user->save();
         $user->assignRole($request->input('roles'));
         if(isset($request->return_to_view))
@@ -109,7 +109,7 @@ class UserController extends Controller
         ]);
         $user->name = $request->name;
         $user->email = $request->email;
-        $user->password = $request->password;
+        $user->password = bcrypt($request->password);
         $user->save();
 
         DB::table('model_has_roles')->where('model_id', $user->id)->delete();
