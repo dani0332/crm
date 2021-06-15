@@ -53,9 +53,21 @@
                     <div class="item form-group">
                         <div class="col">
                             <span class="col-form-label col-md-6 col-sm-6">Insurance Company <span class="required">*</span></span>
-                            <input type="text" id="insurance_company" name="insurance_company" value="{{ old('insurance_company') }}" class="form-control">
-                            @if ($errors->has('insurance_company'))
-                                <span class="text-danger">{{ $errors->first('insurance_company') }}</span>
+
+                            <select class="form-control" id='insurance_provider_id' name='insurance_provider_id'>
+                            <option value=''></option>
+                            @foreach($insuranceproviders as $insuranceprovider)
+                                @if (old('insurance_provider_id') == $insuranceprovider->id)
+                                    <option value="{{ $insuranceprovider->id }}" data-id="{{ $insuranceprovider->text }}" selected>{{ $insuranceprovider->text }}</option>
+                                @else
+                                    <option value="{{ $insuranceprovider->id }}" data-id="{{ $insuranceprovider->text }}">{{ $insuranceprovider->text }}</option>
+                                @endif
+                            @endforeach
+                            </select>
+
+                            {{--<input type="text" id="insurance_company" name="insurance_company" value="{{ old('insurance_company') }}" class="form-control">--}}
+                            @if ($errors->has('insurance_provider_id'))
+                                <span class="text-danger">{{ $errors->first('insurance_provider_id') }}</span>
                             @endif
                         </div>
                         <div class="col">

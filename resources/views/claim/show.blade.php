@@ -49,9 +49,9 @@
                 </div>
                 <div class="item form-group">
                     <div class="col">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="insurance_company"><b> Insurance Company </b></label>
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="insurance_provider_id"><b> Insurance Company </b></label>
                         <div class="col-md-6 col-sm-6 ">
-                        <p class="label-align-center">{{ $claim->insurance_company }}</p>
+                        <p class="label-align-center">{{ $claim->insuranceprovider ? $claim->insuranceprovider->text : '' }}</p>
                         </div>
                     </div>
                     <div class="col">
