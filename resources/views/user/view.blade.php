@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title','View User')
+@section('title','View Users')
 @section('content')
 <div class="row">
     <div class="col-md-12 col-sm-12 ">
@@ -12,32 +12,28 @@
                 </ul>
                 @endcan
                 <div class="clearfix"></div>
-
             </div>
             <div class="x_content">
                 <br />
-                <table  class="table table-striped jambo_table user-data-table" style="width:100%">
-                      <thead>
-                        <tr>
-                          <th>id</th>
-                          <th>Name</th>
-                          <th>Email</th>
-                          <th>Created At</th>
-                          <th>Updated At</th>
-                        </tr>
-                      </thead>
+                @if(session()->has('message'))
+                    <div class="alert alert-danger">{{ session()->get('message') }}</div>
+                @endif
+                <table class="table table-striped jambo_table user-data-table" style="width:100%">
+                    <thead>
+                    <tr>
+                        <th>id</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Created At</th>
+                        <th>Updated At</th>
+                    </tr>
+                    </thead>
+                    <tbody>
 
-
-                      <tbody>
-
-
-
-                      </tbody>
-                    </table>
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
 </div>
-
-
 @endsection

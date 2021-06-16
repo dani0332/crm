@@ -10,25 +10,11 @@ use Spatie\Permission\Models\Role;
 
 class UserController extends Controller
 {
-    /**
-
-     * Display a listing of the resource.
-
-     *
-
-     * @return \Illuminate\Http\Response
-
-     */
-
     public function __construct()
     {
-
         $this->middleware('permission:users-list|users-create|users-edit|users-delete', ['only' => ['index', 'store']]);
-
         $this->middleware('permission:users-create', ['only' => ['create', 'store']]);
-
         $this->middleware('permission:users-edit', ['only' => ['edit', 'update']]);
-
         $this->middleware('permission:users-delete', ['only' => ['destroy']]);
     }
 
@@ -74,18 +60,17 @@ class UserController extends Controller
             'name' => 'required|max:120',
             'email' => 'required|email|unique:users',
             'roles' => 'required',
+            'password' => 'required',
         ]);
 
         $user = new User();
         $user->name = $request->name;
         $user->email = $request->email;
-        $user->password = $request->password;
+        $user->password = bcrypt($request->password);
         $user->save();
         $user->assignRole($request->input('roles'));
         if(isset($request->return_to_view))
-            return redirect("admin/users");
-        return back()
-            ->with('success', 'Partner has been stored');
+            return redirect("admin/users/".$user->id)->with('success','User has been stored');
     }
     /**
      * Display the specified resource.
@@ -106,7 +91,6 @@ class UserController extends Controller
     public function edit(User $user)
     {
         $roles = Role::pluck('name', 'name')->all();
-
         $userRole = $user->roles->pluck('name', 'name')->all();
         return view('user.edit', compact('user', 'roles', 'userRole'));
     }
@@ -119,23 +103,19 @@ class UserController extends Controller
      */
     public function update(Request $request, User $user)
     {
-        // return $user;
         $this->validate($request, [
-            'name' => 'required',
+            'name' => 'required|max:120',
             'roles' => 'required',
         ]);
         $user->name = $request->name;
         $user->email = $request->email;
-        $user->password = $request->password;
+        $user->password = bcrypt($request->password);
         $user->save();
 
         DB::table('model_has_roles')->where('model_id', $user->id)->delete();
-
         $user->assignRole($request->input('roles'));
         if(isset($request->return_to_view))
-            return redirect("admin/users");
-        return back()
-            ->with('success', 'User has been Updated');
+            return redirect("admin/users/".$user->id)->with('success','User has been updated');
     }
     /**
      * Remove the specified resource from storage.
@@ -146,7 +126,6 @@ class UserController extends Controller
     public function destroy(User $user)
     {
         $user->delete();
-        return back()
-            ->with('success', 'User has been Deleted');
+        return redirect()->route('user.index')->with('message','User has been deleted');
     }
 }
