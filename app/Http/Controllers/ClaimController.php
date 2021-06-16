@@ -374,7 +374,7 @@ class ClaimController extends Controller
                     'insuranceName' => $type_of_insurances_text,
                     'curlMesg' => $curlMesg,
                 ], function ($message) use ($subject) {
-                    $message->to(['shajiuddinse@gmail.com'])->subject($subject);
+                    $message->to(['muhammad.shajiuddin@afia.ae'])->subject($subject);
                     $message->from('alfred@insurancemarket.ae', 'Alfred - Error');
                 });
             }
