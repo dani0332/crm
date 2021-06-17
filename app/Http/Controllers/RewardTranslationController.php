@@ -120,7 +120,7 @@ class RewardTranslationController extends Controller
             'terms_and_conditions' => 'required|max:1000',
             'product_image' => 'image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
             'full_width_banner_image' => 'image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048', // for desktop view
-            'generic_banner_image' => 'image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048', /// for mobile view
+            'generic_banner_image' => 'image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048', // for mobile view
             'lang' => 'required',
         ]);
         $rewardTranslation->title = $request->title;
