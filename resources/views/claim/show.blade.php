@@ -80,11 +80,13 @@
                         </div>
                     </div>
                     <div class="col">
+                        @if ($claim->typeofinsurance)
                         @if ($claim->typeofinsurance->text == 'Business')
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="sub_type_of_insurance"><b> Sub Type of Insurance </b></label>
                         <div class="col-md-6 col-sm-6 ">
                         <p class="label-align-center">{{ $claim->subtypeofinsurance ? $claim->subtypeofinsurance->text : '' }}</p>
                         </div>
+                        @endif
                         @endif
                     </div>
                 </div>
@@ -130,6 +132,7 @@
                         </div>
                     </div>
                 </div>
+                @if ($claim->typeofinsurance)
                 @if ($claim->typeofinsurance->text == 'Car')
                 <div class="item form-group">
                     <div class="col">
@@ -199,6 +202,7 @@
 
                     </div>
                 </div>
+                @endif
                 @endif
                 <div class="item form-group">
                     <div class="col">
