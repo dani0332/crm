@@ -52,6 +52,12 @@
                         </div>
                     </div>
                     <div class="item form-group">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Mobile Banner Image"><b>Mobile Banner Image</b></label>
+                        <div class="col-md-6 col-sm-6">
+                            <p class="label-align-center"><img src="{{ \Config::get('constants.azure_storage_url').'myrewards/'.$rewardTranslation->generic_banner_image }}" style='width:200px;'/> <hr /></p>
+                        </div>
+                    </div>
+                    <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="Terms And Conditions"><b>Terms And Conditions</b></label>
                         <div class="col-md-6 col-sm-6">
                             <p class="label-align-center">{{ $rewardTranslation->terms_and_conditions }}</p>

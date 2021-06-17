@@ -42,9 +42,9 @@ class RewardTranslationController extends Controller
             'description2' => 'required|max:1000',
             'instructions' => 'required|max:1000',
             'terms_and_conditions' => 'required|max:1000',
-            'product_image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-            'full_width_banner_image' => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-            //'generic_banner_image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'product_image' => 'required|image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
+            'full_width_banner_image' => 'image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048', // for desktop view
+            'generic_banner_image' => 'image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048', // for mobile view
             'lang' => 'required',
         ]);
         if ($this->validateLang($request->lang, $reward->id)) {
@@ -69,11 +69,11 @@ class RewardTranslationController extends Controller
             $filePath = $request->file('full_width_banner_image')->storeAs('/', $fileName, 'azure');
             $rewardTranslation->full_width_banner_image = $fileName;
         }
-        // if ($request->file('generic_banner_image')) {
-        //     $fileName = time() . '_' . $request->generic_banner_image->getClientOriginalName();
-        //     $filePath = $request->file('generic_banner_image')->storeAs('/', $fileName, 'azure');
-        //     $rewardTranslation->generic_banner_image = $fileName;
-        // }
+        if ($request->file('generic_banner_image')) {
+            $fileName = time() . '_' . $request->generic_banner_image->getClientOriginalName();
+            $filePath = $request->file('generic_banner_image')->storeAs('/', $fileName, 'azure');
+            $rewardTranslation->generic_banner_image = $fileName;
+        }
         $rewardTranslation->save();
         if(isset($request->active_reward)){
             $reward->is_active = 1;
@@ -118,8 +118,9 @@ class RewardTranslationController extends Controller
             'description2' => 'required|max:1000',
             'instructions' => 'required|max:1000',
             'terms_and_conditions' => 'required|max:1000',
-            'product_image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-            'full_width_banner_image' => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'product_image' => 'image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
+            'full_width_banner_image' => 'image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048', // for desktop view
+            'generic_banner_image' => 'image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048', // for mobile view
             'lang' => 'required',
         ]);
         $rewardTranslation->title = $request->title;
@@ -139,11 +140,11 @@ class RewardTranslationController extends Controller
             $filePath = $request->file('full_width_banner_image')->storeAs('/', $fileName, 'azure');
             $rewardTranslation->full_width_banner_image = $fileName;
         }
-        // if ($request->file('generic_banner_image')) {
-        //     $fileName = time() . '_' . $request->generic_banner_image->getClientOriginalName();
-        //     $filePath = $request->file('generic_banner_image')->storeAs('/', $fileName, 'azure');
-        //     $rewardTranslation->generic_banner_image = $fileName;
-        // }
+        if ($request->file('generic_banner_image')) {
+            $fileName = time() . '_' . $request->generic_banner_image->getClientOriginalName();
+            $filePath = $request->file('generic_banner_image')->storeAs('/', $fileName, 'azure');
+            $rewardTranslation->generic_banner_image = $fileName;
+        }
         $rewardTranslation->save();
         if(isset($request->return_to_view))
             return redirect("rewards/reward/".$reward->id)->with('success', 'Reward Translation has been Updated');

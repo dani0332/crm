@@ -60,8 +60,8 @@
                             <input type="file" id="product_image" name="product_image" /> <br/>
                             <small class="text-muted">
                             Max upload size: 2MB<br>
-                            Dimensions: 640 x 640 px<br>
-                            Formats: jpeg, png, jpg, gif, svg</small>
+                            Dimensions: 240 x 240 px<br>
+                            Formats: jpeg, png, jpg, gif, svg, webp</small>
                             @if ($errors->has('product_image'))
                                 <span class="text-danger">{{ $errors->first('product_image') }}</span>
                             @endif
@@ -73,10 +73,23 @@
                             <input type="file" id="full_width_banner_image" name="full_width_banner_image" /> <br/>
                             <small class="text-muted">
                             Max upload size: 2MB<br>
-                            Dimensions: 1920 x 320 px<br>
-                            Formats: jpeg, png, jpg, gif, svg</small>
+                            Dimensions: 1100 x 320 px<br>
+                            Formats: jpeg, png, jpg, gif, svg, webp</small>
                             @if ($errors->has('full_width_banner_image'))
                                 <span class="text-danger">{{ $errors->first('full_width_banner_image') }}</span>
+                            @endif
+                        </div>
+                    </div>
+                    <div class="item form-group">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Mobile Banner Image">Mobile Banner Image </label>
+                        <div class="col-md-6 col-sm-6">
+                            <input type="file" id="generic_banner_image" name="generic_banner_image" /> <br/>
+                            <small class="text-muted">
+                            Max upload size: 2MB<br>
+                            Dimensions: 720 x 320 px<br>
+                            Formats: jpeg, png, jpg, gif, svg, webp</small>
+                            @if ($errors->has('generic_banner_image'))
+                                <span class="text-danger">{{ $errors->first('generic_banner_image') }}</span>
                             @endif
                         </div>
                     </div>
@@ -94,8 +107,10 @@
                         <div class="col-md-6 col-sm-6">
                             <select class="form-control" id='lang' name='lang'>
                                 <option value=''>Choose Language</option>
-                                <option value='en' {{ old('lang') == 'en' ? 'selected' : '' }}>English</option>
-                                <option value='ar' {{ old('lang') == 'ar' ? 'selected' : '' }}>Arabic</option>
+                                <option value='en'>English</option>
+                                <option value='ar'>Arabic</option>
+                                {{--<option value='en' {{ old('lang') == 'en' ? 'selected' : '' }}>English</option>
+                                <option value='ar' {{ old('lang') == 'ar' ? 'selected' : '' }}>Arabic</option>--}}
                             </select>
                             @if ($errors->has('lang'))
                                 <span class="text-danger">{{ $errors->first('lang') }}</span>
