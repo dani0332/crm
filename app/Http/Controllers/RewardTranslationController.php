@@ -147,7 +147,7 @@ class RewardTranslationController extends Controller
         }
         $rewardTranslation->save();
         if(isset($request->return_to_view))
-            return redirect("rewards/reward/".$reward->id)->with('success', 'Reward Translation has been Updated');
+            return redirect("rewards/reward/".$reward->id)->with('success', 'Reward Translation has been updated');
     }
     /**
      * Remove the specified resource from storage.
@@ -158,7 +158,7 @@ class RewardTranslationController extends Controller
     public function destroy(Reward $reward, RewardTranslation $rewardTranslation)
     {
         $rewardTranslation->delete();
-        return redirect("rewards/reward/".$reward->id);
+        return redirect("rewards/reward/".$reward->id)->with('message','Reward Translation has been deleted');
     }
 
     public function validateLang($lang, $reward)

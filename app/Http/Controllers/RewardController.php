@@ -33,6 +33,7 @@ class RewardController extends Controller
         if ($request->ajax()) {
             $data = Reward::select('reward.*','partner.name as partner')
             ->leftjoin('partner','reward.partner_id','partner.id');
+            //$data->select(ssssss);
             return Datatables::of($data)
                 ->addIndexColumn()
                 ->addColumn('action', function ($row) {
@@ -99,9 +100,7 @@ class RewardController extends Controller
             }
         }
         if(isset($request->return_to_view))
-            return redirect("rewards/reward/".$reward->id);
-        return back()
-            ->with('success', 'Reward has been stored');
+            return redirect("rewards/reward/".$reward->id)->with('success', 'Reward has been stored');
     }
     /**
      * Display the specified resource.
@@ -177,9 +176,7 @@ class RewardController extends Controller
         }
 
         if(isset($request->return_to_view))
-            return redirect("rewards/reward/".$reward->id);
-        return back()
-            ->with('success', 'Reward has been stored');
+            return redirect("rewards/reward/".$reward->id)->with('success', 'Reward has been updated');
     }
     /**
      * Remove the specified resource from storage.
@@ -189,12 +186,10 @@ class RewardController extends Controller
      */
     public function destroy(Reward $reward)
     {
-        DB::statement('SET FOREIGN_KEY_CHECKS=0');
         $reward->rewardTranslations()->delete();
         $reward->rewardCategories()->delete();
         $reward->rewardTags()->delete();
         $reward->delete();
-        DB::statement('SET FOREIGN_KEY_CHECKS=1');
-        return redirect('rewards/reward');
+        return redirect('rewards/reward')->with('message','Reward has been deleted');
     }
 }
