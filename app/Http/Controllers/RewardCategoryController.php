@@ -64,8 +64,7 @@ class RewardCategoryController extends Controller
         $rewardCategory->sort_order = $request->sort_order;
         $rewardCategory->save();
         if(isset($request->return_to_view))
-            return redirect("rewards/reward-categories/".$rewardCategory->id);
-        return back()->with('success', 'Reward Category has been stored');
+            return redirect("rewards/reward-categories/".$rewardCategory->id)->with('success', 'Reward Category has been stored');
     }
     /**
      * Display the specified resource.
@@ -107,8 +106,7 @@ class RewardCategoryController extends Controller
         $rewardCategory->sort_order = $request->sort_order;
         $rewardCategory->save();
         if(isset($request->return_to_view))
-            return redirect("rewards/reward-categories/".$rewardCategory->id);
-        return back()->with('success', 'Reward Category has been Updated');
+            return redirect("rewards/reward-categories/".$rewardCategory->id)->with('success', 'Reward Category has been updated');
     }
     /**
      * Remove the specified resource from storage.
@@ -118,9 +116,7 @@ class RewardCategoryController extends Controller
      */
     public function destroy(RewardCategory $rewardCategory)
     {
-        DB::statement('SET FOREIGN_KEY_CHECKS=0');
         $rewardCategory->delete();
-        DB::statement('SET FOREIGN_KEY_CHECKS=1');
-        return redirect()->route('reward-categories.index');
+        return redirect()->route('reward-categories.index')->with('message','Reward Category has been deleted');
     }
 }

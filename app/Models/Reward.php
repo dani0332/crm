@@ -11,7 +11,7 @@ class Reward extends Model implements AuditableContract
 {
     use HasFactory, Auditable;
     protected $table = 'reward';
-    public $timestamps = false;
+    //public $timestamps = false;
 
     public function sgetCreatedAtAttribute($value)
     {
