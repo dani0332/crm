@@ -12,11 +12,13 @@
                 </ul>
                 @endcan
                 <div class="clearfix"></div>
-
             </div>
             <div class="x_content">
                 <br />
-                <table  class="table table-striped jambo_table data-table" style="width:100%">
+                @if(session()->has('message'))
+                    <div class="alert alert-danger">{{ session()->get('message') }}</div>
+                @endif
+                <table class="table table-striped jambo_table data-table" style="width:100%">
                       <thead>
                         <tr>
                           <th>Id</th>
@@ -28,10 +30,7 @@
                         </tr>
                       </thead>
 
-
                       <tbody>
-
-
 
                       </tbody>
                     </table>

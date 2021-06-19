@@ -12,12 +12,14 @@ use App\Models\RentACar;
 use App\Models\User;
 use App\Models\CarMake;
 use App\Models\CarModel;
+use App\Models\InsuranceProvider;
 
 use Illuminate\Http\Request;
 use Auth;
 use DataTables;
 use Spatie\Permission\Models\Role;
 use DB;
+use Config;
 
 class ClaimController extends Controller
 {
@@ -37,8 +39,33 @@ class ClaimController extends Controller
 
     public function index(Request $request)
     {
+        $claimsstatuses = ClaimsStatus::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
+        $typeofinsurances = TypeOfInsurance::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
+        $advisors = User::all();
+
         if ($request->ajax()) {
-            $data = Claim::select('*')->orderBy('created_at','desc');
+
+            $data = Claim::select('claims.*','type_of_insurances.text as type_of_insurance_text'
+            ,'claims_statuses.text as claims_status_text')
+            ->leftjoin('type_of_insurances','claims.type_of_insurances_id','type_of_insurances.id')
+            ->leftjoin('claims_statuses','claims.claims_status_id','claims_statuses.id')
+            ->orderBy('created_at','desc');
+
+            if(Auth::user()->hasRole('CLAIMS_ADVISOR')) {
+                $data->where('assigned_to_id', Auth::user()->id);
+            }
+
+            if (isset($request->searchtype) && !empty($request->searchtype)
+            && isset($request->searchfield) && !empty($request->searchfield)) {
+                $data->where($request->searchtype, $request->searchfield);
+            }
+            if(isset($request->claimstatus) && !empty($request->claimstatus))
+                $data->where('claims_status_id', $request->claimstatus);
+            if(isset($request->assignedto) && !empty($request->assignedto))
+                $data->where('assigned_to_id', $request->assignedto);
+            if(isset($request->type_of_insurance) && !empty($request->type_of_insurance))
+                $data->where('type_of_insurances_id', $request->type_of_insurance);
+
             return DataTables::of($data)
                     ->addIndexColumn()
                     ->addColumn('action', function($row){
@@ -47,8 +74,7 @@ class ClaimController extends Controller
                     ->rawColumns(['action'])
                     ->make(true);
         }
-
-        return view('claim.view');
+        return view('claim.view',compact('claimsstatuses','typeofinsurances','advisors'));
     }
 
     /**
@@ -67,9 +93,9 @@ class ClaimController extends Controller
         $advisors = User::all();
         $carmakes = CarMake::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
         $carmodels = CarModel::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
+        $insuranceproviders = InsuranceProvider::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
         return view('claim.add',compact('typeofinsurances','subtypeofinsurances','claimsstatuses',
-        'carrepaircoverages','carrepairtypes','rentacars','advisors','carmakes','carmodels'));
-        //return view('claim.add');
+        'carrepaircoverages','carrepairtypes','rentacars','advisors','carmakes','carmodels','insuranceproviders'));
     }
 
     /**
@@ -91,17 +117,14 @@ class ClaimController extends Controller
         $this->validate($request,[
             'first_name' => 'required|max:255',
             'last_name' => 'required|max:255',
-            'email_address' => 'required|max:150',
+            'email_address' => 'required|email|max:150',
             'phone_number' => 'required|max:20',
-            'insurance_company' => 'required|max:255',
+            'insurance_provider_id' => 'required',
+            //'insurance_company' => 'required|max:255',
             'policy_number' => 'required|max:150',
             'additional_notes' => 'required|max:2000',
             'type_of_insurances_id' => 'required',
             'claims_status_id' => 'required',
-            //'car_repair_coverage_id' => 'required',
-            //'car_repair_type_id' => 'required',
-            //'rent_a_car_id' => 'required',
-            //'assigned_to_id' => 'required',
             'attachment_1' => 'mimes:jpg,jpeg,png,bmp,pdf,docx|max:5120',
             'attachment_2' => 'mimes:jpg,jpeg,png,bmp,pdf,docx|max:5120',
             'attachment_3' => 'mimes:jpg,jpeg,png,bmp,pdf,docx|max:5120',
@@ -109,21 +132,22 @@ class ClaimController extends Controller
         ]);
 
         $claim = new Claim();
-        $claim->first_name =  $request->first_name;
-        $claim->last_name =  $request->last_name;
-        $claim->email_address =  $request->email_address;
-        $claim->phone_number =  $request->phone_number;
-        $claim->insurance_company =  $request->insurance_company;
-        $claim->policy_number =  $request->policy_number;
-        $claim->additional_notes =  $request->additional_notes;
-        $claim->ticket_number =  $request->ticket_number;
-        $claim->plate_number =  $request->plate_number;
-        $claim->standard_excess_payable =  $request->standard_excess_payable;
-        $claim->liability =  $request->liability;
-        $claim->workshop =  $request->workshop;
-        $claim->insurer_reference =  $request->insurer_reference;
-        $claim->date_of_loss =  $request->date_of_loss;
-        $claim->claim_amount =  $request->claim_amount;
+        $claim->first_name = $request->first_name;
+        $claim->last_name = $request->last_name;
+        $claim->email_address = strtolower(trim(ltrim(rtrim($request->email_address))));
+        $claim->phone_number = $request->phone_number;
+        $claim->insurance_provider_id = $request->insurance_provider_id;
+        //$claim->insurance_company = $request->insurance_company;
+        $claim->policy_number = $request->policy_number;
+        $claim->additional_notes = $request->additional_notes;
+        $claim->ticket_number = $request->ticket_number;
+        $claim->plate_number = $request->plate_number;
+        $claim->standard_excess_payable = $request->standard_excess_payable;
+        $claim->liability = $request->liability;
+        $claim->workshop = $request->workshop;
+        $claim->insurer_reference = $request->insurer_reference;
+        $claim->date_of_loss = $request->date_of_loss;
+        $claim->claim_amount = $request->claim_amount;
         $claim->type_of_insurances_id = $request->type_of_insurances_id;
         $claim->sub_type_of_insurance_id = $request->sub_type_of_insurance_id;
         $claim->claims_status_id = $request->claims_status_id;
@@ -135,37 +159,32 @@ class ClaimController extends Controller
         $claim->car_model_id = $request->car_model_id;
         $claim->created_by_id = Auth::user()->id;
         $claim->modified_by_id = Auth::user()->id;
-        $claim->is_rent_a_car =  $request->is_rent_a_car == 'on' ? 1 : 0;
+        $claim->is_rent_a_car = $request->is_rent_a_car == 'on' ? 1 : 0;
 
         if($request->hasFile('attachment_1')) {
             $fileName_1 = time() . '_' . $request->attachment_1->getClientOriginalName();
-            // save file to azure blob virtual directory uplaods in your container
             $filePath = $request->file('attachment_1')->storeAs('/', $fileName_1, 'azure');
             $claim->attachment_1 = $fileName_1;
         }
         if($request->hasFile('attachment_2')) {
             $fileName_2 = time() . '_' . $request->attachment_2->getClientOriginalName();
-            // save file to azure blob virtual directory uplaods in your container
             $filePath = $request->file('attachment_2')->storeAs('/', $fileName_2, 'azure');
             $claim->attachment_2 = $fileName_2;
         }
         if($request->hasFile('attachment_3')) {
             $fileName_3 = time() . '_' . $request->attachment_3->getClientOriginalName();
-            // save file to azure blob virtual directory uplaods in your container
             $filePath = $request->file('attachment_3')->storeAs('/', $fileName_3, 'azure');
             $claim->attachment_3 = $fileName_3;
         }
         if($request->hasFile('attachment_4')) {
             $fileName_4 = time() . '_' . $request->attachment_4->getClientOriginalName();
-            // save file to azure blob virtual directory uplaods in your container
             $filePath = $request->file('attachment_4')->storeAs('/', $fileName_4, 'azure');
             $claim->attachment_4 = $fileName_4;
         }
 
         $claim->save();
         if(isset($request->return_to_view))
-            return redirect("claim/claims/".$claim->id);
-        return back()->with('success','Claim has been stored');
+            return redirect("claim/claims/".$claim->id)->with('success','Claim has been stored');
     }
 
     /**
@@ -176,6 +195,11 @@ class ClaimController extends Controller
      */
     public function show(Claim $claim)
     {
+        if(Auth::user()->hasRole('CLAIMS_ADVISOR')) {
+            if(Auth::user()->id != $claim->assigned_to_id) {
+                return redirect()->route('claims.index')->with('message','Access Forbidden');
+            }
+        }
         return view('claim.show',compact('claim'));
     }
 
@@ -187,6 +211,11 @@ class ClaimController extends Controller
      */
     public function edit(Claim $claim)
     {
+        if(Auth::user()->hasRole('CLAIMS_ADVISOR')) {
+            if(Auth::user()->id != $claim->assigned_to_id) {
+                return redirect()->route('claims.index')->with('message','Access Forbidden');
+            }
+        }
         $typeofinsurances = TypeOfInsurance::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
         $subtypeofinsurances = SubTypeOfInsurance::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
         $claimsstatuses = ClaimsStatus::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
@@ -196,9 +225,9 @@ class ClaimController extends Controller
         $advisors = User::all();
         $carmakes = CarMake::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
         $carmodels = CarModel::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
+        $insuranceproviders = InsuranceProvider::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
         return view('claim.edit',compact('typeofinsurances','claim','subtypeofinsurances','claimsstatuses',
-        'carrepaircoverages','carrepairtypes','rentacars','advisors','carmakes','carmodels'));
-        //return view('claim.edit',compact('claim'));
+        'carrepaircoverages','carrepairtypes','rentacars','advisors','carmakes','carmodels','insuranceproviders'));
     }
 
     /**
@@ -211,6 +240,7 @@ class ClaimController extends Controller
     public function update(Request $request, Claim $claim)
     {
         $type_of_insurances_text = DB::table('type_of_insurances')->where('id', $request->type_of_insurances_id)->value('text');
+        $claim_status_text = DB::table('claims_statuses')->where('id', $request->claims_status_id)->value('text');
 
         if($type_of_insurances_text == 'Business'){
             $this->validate($request,[
@@ -220,37 +250,35 @@ class ClaimController extends Controller
         $this->validate($request,[
             'first_name' => 'required|max:255',
             'last_name' => 'required|max:255',
-            'email_address' => 'required|max:150',
+            'email_address' => 'required|email|max:150',
             'phone_number' => 'required|max:20',
-            'insurance_company' => 'required|max:255',
+            'insurance_provider_id' => 'required',
+            //'insurance_company' => 'required|max:255',
             'policy_number' => 'required|max:150',
             'additional_notes' => 'required|max:2000',
             'type_of_insurances_id' => 'required',
             'claims_status_id' => 'required',
-            //'car_repair_coverage_id' => 'required',
-            //'car_repair_type_id' => 'required',
-            //'rent_a_car_id' => 'required',
-            //'assigned_to_id' => 'required',
             'attachment_1' => 'mimes:jpg,jpeg,png,bmp,pdf,docx|max:5120',
             'attachment_2' => 'mimes:jpg,jpeg,png,bmp,pdf,docx|max:5120',
             'attachment_3' => 'mimes:jpg,jpeg,png,bmp,pdf,docx|max:5120',
             'attachment_4' => 'mimes:jpg,jpeg,png,bmp,pdf,docx|max:5120',
         ]);
-        $claim->first_name =  $request->first_name;
-        $claim->last_name =  $request->last_name;
-        $claim->email_address =  $request->email_address;
-        $claim->phone_number =  $request->phone_number;
-        $claim->insurance_company =  $request->insurance_company;
-        $claim->policy_number =  $request->policy_number;
-        $claim->additional_notes =  $request->additional_notes;
-        $claim->ticket_number =  $request->ticket_number;
-        $claim->plate_number =  $request->plate_number;
-        $claim->standard_excess_payable =  $request->standard_excess_payable;
-        $claim->liability =  $request->liability;
-        $claim->workshop =  $request->workshop;
-        $claim->insurer_reference =  $request->insurer_reference;
-        $claim->date_of_loss =  $request->date_of_loss;
-        $claim->claim_amount =  $request->claim_amount;
+        $claim->first_name = $request->first_name;
+        $claim->last_name = $request->last_name;
+        $claim->email_address = strtolower(trim(ltrim(rtrim($request->email_address))));
+        $claim->phone_number = $request->phone_number;
+        $claim->insurance_provider_id = $request->insurance_provider_id;
+        //$claim->insurance_company = $request->insurance_company;
+        $claim->policy_number = $request->policy_number;
+        $claim->additional_notes = $request->additional_notes;
+        $claim->ticket_number = $request->ticket_number;
+        $claim->plate_number = $request->plate_number;
+        $claim->standard_excess_payable = $request->standard_excess_payable;
+        $claim->liability = $request->liability;
+        $claim->workshop = $request->workshop;
+        $claim->insurer_reference = $request->insurer_reference;
+        $claim->date_of_loss = $request->date_of_loss;
+        $claim->claim_amount = $request->claim_amount;
         $claim->type_of_insurances_id = $request->type_of_insurances_id;
         $claim->sub_type_of_insurance_id = $request->sub_type_of_insurance_id;
         $claim->claims_status_id = $request->claims_status_id;
@@ -261,37 +289,101 @@ class ClaimController extends Controller
         $claim->car_make_id = $request->car_make_id;
         $claim->car_model_id = $request->car_model_id;
         $claim->modified_by_id = Auth::user()->id;
-        $claim->is_rent_a_car =  $request->is_rent_a_car == 'on' ? 1 : 0;
+        $claim->is_rent_a_car = $request->is_rent_a_car == 'on' ? 1 : 0;
 
         if($request->hasFile('attachment_1')) {
             $fileName_1 = time() . '_' . $request->attachment_1->getClientOriginalName();
-            // save file to azure blob virtual directory uplaods in your container
             $filePath = $request->file('attachment_1')->storeAs('/', $fileName_1, 'azure');
             $claim->attachment_1 = $fileName_1;
         }
         if($request->hasFile('attachment_2')) {
             $fileName_2 = time() . '_' . $request->attachment_2->getClientOriginalName();
-            // save file to azure blob virtual directory uplaods in your container
             $filePath = $request->file('attachment_2')->storeAs('/', $fileName_2, 'azure');
             $claim->attachment_2 = $fileName_2;
         }
         if($request->hasFile('attachment_3')) {
             $fileName_3 = time() . '_' . $request->attachment_3->getClientOriginalName();
-            // save file to azure blob virtual directory uplaods in your container
             $filePath = $request->file('attachment_3')->storeAs('/', $fileName_3, 'azure');
             $claim->attachment_3 = $fileName_3;
         }
         if($request->hasFile('attachment_4')) {
             $fileName_4 = time() . '_' . $request->attachment_4->getClientOriginalName();
-            // save file to azure blob virtual directory uplaods in your container
             $filePath = $request->file('attachment_4')->storeAs('/', $fileName_4, 'azure');
             $claim->attachment_4 = $fileName_4;
         }
 
+        if($claim_status_text == 'Settled') {
+
+            $name = $request->first_name.' '.$request->last_name;
+            $phone = $request->phone_number;
+            $email = $request->email_address;
+
+            $phonefirstCharacter = substr($phone, 0, 1);
+            if($phonefirstCharacter == "0") { $phone_number = ltrim($phone, $phone[0]); } else { $phone_number = $phone; }
+
+            $dayOfWeek = date("l");
+            if($dayOfWeek == "Sunday") { $nps_delay = 259200; }
+            else if($dayOfWeek == "Monday") { $nps_delay = 259200; }
+            else if($dayOfWeek == "Tuesday") { $nps_delay = 432000; }
+            else if($dayOfWeek == "Wednesday") { $nps_delay = 432000; }
+            else if($dayOfWeek == "Thursday") { $nps_delay = 432000; }
+            else if($dayOfWeek == "Friday") { $nps_delay = 345600; }
+            else if($dayOfWeek == "Saturday") { $nps_delay = 259200; }
+            else { }
+
+            $data_d = array();
+            $data_d['name'] = "$name";
+            $data_d['email'] = "$email";
+            $data_d['phone_number'] = "+971".$phone_number;
+            $data_d['delay'] = $nps_delay;
+            $data_d['properties'] = array();
+            $data_d['properties']['Type of Insurance'] = $type_of_insurances_text;
+            $delighted_data = json_encode($data_d);
+            $delighted_curl = curl_init();
+            curl_setopt_array($delighted_curl, array(
+                    CURLOPT_URL => "https://api.delighted.com/v1/peopjosle.n",
+                    CURLOPT_RETURNTRANSFER => true,
+                    CURLOPT_ENCODING => "",
+                    CURLOPT_MAXREDIRS => 10,
+                    CURLOPT_TIMEOUT => 0,
+                    CURLOPT_FOLLOWLOCATION => true,
+                    CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+                    CURLOPT_CUSTOMREQUEST => "POST",
+                    CURLOPT_POSTFIELDS =>$delighted_data,
+                    CURLOPT_HTTPHEADER => array("Content-Type: application/json","Authorization: Basic ".base64_encode("sU5Iy4HKzOoIILcRH8P4Rnzax6bbcje7"),),
+                )
+            );
+            $delighted_response = curl_exec($delighted_curl);
+            $delighted_decoded_response = json_decode($delighted_response, true);
+            if(isset($delighted_decoded_response['errors'])) {
+
+                $emailSys = Config::get('constants.email_sys');
+                $refUrl = Request::url();
+                $subject = $emailSys . " NPS API ERROR | CLAIMS FORM | ". \Request::url(). " | " . date('d-m-Y H:i:s');
+                $curlMesg =
+                'Customer Name: '.$name.
+                ', Email: '.$email.
+                ', Phone: '.$phone.
+                ', Error status: '.$delighted_decoded_response['status'].
+                ', Error Message: '.$delighted_decoded_response['message'].
+                ', Errors: '.$delighted_decoded_response['errors'].
+                ','.date('d-m-Y H:i:s')."\n";
+
+                Mail::send(['html' => 'apiemail'], [
+                    'refUrl' => $refUrl,
+                    'insuranceName' => $type_of_insurances_text,
+                    'curlMesg' => $curlMesg,
+                ], function ($message) use ($subject) {
+                    $message->to(['muhammad.shajiuddin@afia.ae'])->subject($subject);
+                    $message->from('alfred@insurancemarket.ae', 'Alfred - Error');
+                });
+            }
+            curl_close($delighted_curl);
+        }
+
         $claim->save();
         if(isset($request->return_to_view))
-            return redirect("claim/claims/".$claim->id);
-        return back()->with('success','Claim has been Updated');
+            return redirect("claim/claims/".$claim->id)->with('success','Claim has been Updated');
     }
 
     /**
@@ -302,10 +394,8 @@ class ClaimController extends Controller
      */
     public function destroy(Claim $claim)
     {
-        DB::statement('SET FOREIGN_KEY_CHECKS=0');
         $claim->delete();
-        DB::statement('SET FOREIGN_KEY_CHECKS=1');
-        return redirect()->route('claims.index');
+        return redirect()->route('claims.index')->with('message','Claim has been Deleted');
     }
 
     public function carModelBasedOnCarMake(Request $request){

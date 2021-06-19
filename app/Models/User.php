@@ -62,4 +62,20 @@ class User extends Authenticatable implements AuditableContract
     protected $appends = [
         'profile_photo_url',
     ];
+
+    public function usersroles()
+    {
+        return $this->belongsToMany(Role::class, 'model_has_roles', 'model_id');
+    }
+
+    public function getCreatedAtAttribute($table)
+    {
+        $date_time_format = env("DATETIME_FORMAT");
+        return $this->asDateTime($table)->timezone(config('app.timezone'))->format($date_time_format);
+    }
+    public function getUpdatedAtAttribute($table)
+    {
+        $date_time_format = env("DATETIME_FORMAT");
+        return $this->asDateTime($table)->timezone(config('app.timezone'))->format($date_time_format);
+    }
 }

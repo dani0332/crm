@@ -68,8 +68,7 @@ class ClaimsStatusController extends Controller
         $claimsstatus->sort_order =  $request->sort_order;
         $claimsstatus->save();
         if(isset($request->return_to_view))
-            return redirect("claim/claimsstatus/".$claimsstatus->id);
-            return back()->with('success','Claims Status has been stored');
+            return redirect("claim/claimsstatus/".$claimsstatus->id)->with('success','Claim Status has been stored');
     }
 
     /**
@@ -114,8 +113,7 @@ class ClaimsStatusController extends Controller
         $claimsstatus->sort_order =  $request->sort_order;
         $claimsstatus->save();
         if(isset($request->return_to_view))
-            return redirect("claim/claimsstatus/".$claimsstatus->id);
-            return back()->with('success','Claims Status has been Updated');
+            return redirect("claim/claimsstatus/".$claimsstatus->id)->with('success','Claim Status has been Updated');
     }
 
     /**
@@ -126,9 +124,7 @@ class ClaimsStatusController extends Controller
      */
     public function destroy(ClaimsStatus $claimsstatus)
     {
-        DB::statement('SET FOREIGN_KEY_CHECKS=0');
         $claimsstatus->delete();
-        DB::statement('SET FOREIGN_KEY_CHECKS=1');
-        return redirect()->route('claimsstatus.index');
+        return redirect()->route('claimsstatus.index')->with('message','Claim Status Type has been Deleted');
     }
 }

@@ -64,8 +64,7 @@ class RewardTagController extends Controller
         $rewardTag->sort_order = $request->sort_order;
         $rewardTag->save();
         if(isset($request->return_to_view))
-            return redirect("rewards/reward-tags/".$rewardTag->id);
-        return back()->with('success', 'Reward Tag has been stored');
+            return redirect("rewards/reward-tags/".$rewardTag->id)->with('success', 'Reward Tag has been stored');
     }
     /**
      * Display the specified resource.
@@ -107,8 +106,7 @@ class RewardTagController extends Controller
         $rewardTag->sort_order = $request->sort_order;
         $rewardTag->save();
         if(isset($request->return_to_view))
-            return redirect("rewards/reward-tags/".$rewardTag->id);
-        return back()->with('success', 'Reward Tag has been Updated');
+            return redirect("rewards/reward-tags/".$rewardTag->id)->with('success', 'Reward Tag has been updated');
     }
     /**
      * Remove the specified resource from storage.
@@ -118,9 +116,7 @@ class RewardTagController extends Controller
      */
     public function destroy(RewardTag $rewardTag)
     {
-        DB::statement('SET FOREIGN_KEY_CHECKS=0');
         $rewardTag->delete();
-        DB::statement('SET FOREIGN_KEY_CHECKS=1');
-        return redirect()->route('reward-tags.index');
+        return redirect()->route('reward-tags.index')->with('message','Reward Tag has been deleted');
     }
 }

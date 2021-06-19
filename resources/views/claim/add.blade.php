@@ -53,9 +53,21 @@
                     <div class="item form-group">
                         <div class="col">
                             <span class="col-form-label col-md-6 col-sm-6">Insurance Company <span class="required">*</span></span>
-                            <input type="text" id="insurance_company" name="insurance_company" value="{{ old('insurance_company') }}" class="form-control">
-                            @if ($errors->has('insurance_company'))
-                                <span class="text-danger">{{ $errors->first('insurance_company') }}</span>
+
+                            <select class="form-control" id='insurance_provider_id' name='insurance_provider_id'>
+                            <option value=''></option>
+                            @foreach($insuranceproviders as $insuranceprovider)
+                                @if (old('insurance_provider_id') == $insuranceprovider->id)
+                                    <option value="{{ $insuranceprovider->id }}" data-id="{{ $insuranceprovider->text }}" selected>{{ $insuranceprovider->text }}</option>
+                                @else
+                                    <option value="{{ $insuranceprovider->id }}" data-id="{{ $insuranceprovider->text }}">{{ $insuranceprovider->text }}</option>
+                                @endif
+                            @endforeach
+                            </select>
+
+                            {{--<input type="text" id="insurance_company" name="insurance_company" value="{{ old('insurance_company') }}" class="form-control">--}}
+                            @if ($errors->has('insurance_provider_id'))
+                                <span class="text-danger">{{ $errors->first('insurance_provider_id') }}</span>
                             @endif
                         </div>
                         <div class="col">
@@ -68,7 +80,7 @@
                     </div>
                     <div class="item form-group">
                         <div class="col">
-                            <span class="col-form-label col-md-6 col-sm-6">Additional Notes </span>
+                            <span class="col-form-label col-md-6 col-sm-6">Additional Notes <span class="required">*</span></span>
                             <textarea id="additional_notes" name="additional_notes" rows="4" cols="50" class="form-control">{{ old('additional_notes') }}</textarea>
                             @if ($errors->has('additional_notes'))
                                 <span class="text-danger">{{ $errors->first('additional_notes') }}</span>
@@ -120,9 +132,9 @@
                             <span class="col-form-label col-md-6 col-sm-6">Claim Status </span>
                             <select class="form-control" id='claims_status_id' name='claims_status_id'>
                             <option value=''></option>
-                            @foreach($claimsstatuses as $claimsstatuse)
-                                @if ($claimsstatuse->text == 'New'))
-                                    <option value="{{ $claimsstatuse->id }}" selected>{{ $claimsstatuse->text }}</option>
+                            @foreach($claimsstatuses as $claimstatus)
+                                @if ($claimstatus->text == 'New'))
+                                    <option value="{{ $claimstatus->id }}" selected>{{ $claimstatus->text }}</option>
                                 @endif
                             @endforeach
                             </select>

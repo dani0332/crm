@@ -54,7 +54,13 @@
                     <div class="item form-group">
                         <div class="col">
                             <span class="col-form-label col-md-6 col-sm-6">Insurance Company <span class="required">*</span></span>
-                            <input type="text" id="insurance_company" name="insurance_company" value="{{ $claim->insurance_company }}" class="form-control">
+                            <select class="form-control" id='insurance_provider_id' name='insurance_provider_id'>
+                            <option value=''></option>
+                            @foreach($insuranceproviders as $insuranceprovider)
+                                <option {{ $claim->insurance_provider_id == $insuranceprovider->id ? 'selected' : '' }} value="{{ $insuranceprovider->id }}">{{ $insuranceprovider->text }}</option>
+                            @endforeach
+                            </select>
+                            {{--<input type="text" id="insurance_company" name="insurance_company" value="{{ $claim->insurance_company }}" class="form-control">--}}
                             @if ($errors->has('insurance_company'))
                                 <span class="text-danger">{{ $errors->first('insurance_company') }}</span>
                             @endif
@@ -69,7 +75,7 @@
                     </div>
                     <div class="item form-group">
                         <div class="col">
-                            <span class="col-form-label col-md-6 col-sm-6">Additional Notes </span>
+                            <span class="col-form-label col-md-6 col-sm-6">Additional Notes <span class="required">*</span></span>
                             <textarea id="additional_notes" name="additional_notes" rows="4" cols="50" class="form-control">{{ $claim->additional_notes }}</textarea>
                             @if ($errors->has('additional_notes'))
                                 <span class="text-danger">{{ $errors->first('additional_notes') }}</span>

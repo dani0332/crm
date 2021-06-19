@@ -568,13 +568,22 @@ $(document).ready(function () {
         ],
     });
 
-    $('.claim-data-table').DataTable({
+    var claimsDatatable = $('.claim-data-table').DataTable({
         ordering: false,
         info:     false,
         searching:false,
         bLengthChange: false,
         serverSide: true,
-        ajax: config.routes.claim_datatable_route,
+        ajax: {
+            url: config.routes.claim_datatable_route,
+            data: function (d) {
+                d.searchtype = $("#search_type").val();
+                d.searchfield = $("input[name=searchfield]").val();
+                d.claimstatus = $("#claim_status_value").val();
+                d.assignedto = $("#assigned_to_value").val();
+                d.type_of_insurance = $("#type_of_insurance_value").val();
+            },
+        },
         columns: [
             { data: 'id', name: 'id', render:function(data, type, row){
                 return "<a href='"+config.routes.claim_datatable_route+'/'+row.id +"'>" + row.id + "</a>"
@@ -584,9 +593,20 @@ $(document).ready(function () {
             { data: 'last_name', name: 'last_name' },
             { data: 'email_address', name: 'email_address' },
             { data: 'phone_number', name: 'phone_number' },
+            { data: 'type_of_insurance_text', name: 'type_of_insurance_text' },
+            { data: 'claims_status_text', name: 'claims_status_text' },
             { data: 'created_at', name: 'created_at' },
             { data: 'updated_at', name: 'updated_at' },
         ]
+    });
+
+    $("#search-claims").submit(function (e) {
+        e.preventDefault();
+        $(".loader").show();
+        claimsDatatable.draw();
+        setTimeout(() => {
+            $(".loader").hide();
+        }, 1000);
     });
 
     $('.typeofinsurance-data-table').DataTable({

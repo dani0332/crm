@@ -2,7 +2,7 @@
 @section('title','View Reward Category')
 @section('content')
 <div class="row">
-    <div class="col-md-12 col-sm-12 ">
+    <div class="col-md-12 col-sm-12">
         <div class="x_panel">
             <div class="x_title">
                 <h2>Reward Categories</h2>
@@ -10,11 +10,13 @@
                     <li><a href="{{ url('rewards/reward-categories/create') }}" class="btn btn-warning btn-sm">Create Reward Category</a></li>
                 </ul>
                 <div class="clearfix"></div>
-
             </div>
             <div class="x_content">
                 <br />
-                <table  class="table table-striped jambo_table reward-category-data-table" style="width:100%">
+                @if(session()->has('message'))
+                    <div class="alert alert-danger">{{ session()->get('message') }}</div>
+                @endif
+                <table class="table table-striped jambo_table reward-category-data-table" style="width:100%">
                       <thead>
                         <tr>
                           <th>Id</th>

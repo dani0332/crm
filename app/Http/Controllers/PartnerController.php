@@ -32,9 +32,6 @@ class PartnerController extends Controller
             $data = Partner::select('*')->orderBy('created_at','desc');
             return Datatables::of($data)
                 ->addIndexColumn()
-            // ->addColumn('logo_image', function($row){
-            //         return $row->logo_image;
-            // })
                 ->addColumn('action', function ($row) {
                     return view('partner.actions', compact('row'))->render();
                 })
@@ -72,16 +69,13 @@ class PartnerController extends Controller
         $partner->is_active = $request->is_active == 'on' ? 1 : 0;
         if ($request->file()) {
             $fileName = time() . '_' . $request->logo_image->getClientOriginalName();
-            // save file to azure blob virtual directory uplaods in your container
             $filePath = $request->file('logo_image')->storeAs('/', $fileName, 'azure');
             $partner->logo_image = $fileName;
         }
 
         $partner->save();
         if(isset($request->return_to_view))
-            return redirect("rewards/partner/".$partner->id);
-        return back()
-            ->with('success', 'Partner has been stored');
+            return redirect("rewards/partner/".$partner->id)->with('success', 'Partner has been stored');
     }
     /**
      * Display the specified resource.
@@ -115,22 +109,20 @@ class PartnerController extends Controller
         $this->validate($request, [
             'name' => 'required|max:120',
             'name_ar' => 'required|max:120',
+            'logo_image' => 'image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
         ]);
         $partner->name = $request->name;
         $partner->name_ar = $request->name_ar;
         $partner->is_active = $request->is_active == 'on' ? 1 : 0;
         if ($request->file()) {
             $fileName = time() . '_' . $request->logo_image->getClientOriginalName();
-            // save file to azure blob virtual directory uplaods in your container
             $filePath = $request->file('logo_image')->storeAs('/', $fileName, 'azure');
             $partner->logo_image = $fileName;
         }
 
         $partner->save();
         if(isset($request->return_to_view))
-            return redirect("rewards/partner/".$partner->id);
-        return back()
-            ->with('success', 'Partner has been Updated');
+            return redirect("rewards/partner/".$partner->id)->with('success', 'Partner has been updated');
     }
     /**
      * Remove the specified resource from storage.
@@ -140,9 +132,7 @@ class PartnerController extends Controller
      */
     public function destroy(Partner $partner)
     {
-        DB::statement('SET FOREIGN_KEY_CHECKS=0');
         $partner->delete();
-        DB::statement('SET FOREIGN_KEY_CHECKS=1');
-        return redirect('rewards/partner');
+        return redirect('rewards/partner')->with('message','Partner has been deleted');
     }
 }

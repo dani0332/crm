@@ -49,9 +49,9 @@
                 </div>
                 <div class="item form-group">
                     <div class="col">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="insurance_company"><b> Insurance Company </b></label>
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="insurance_provider_id"><b> Insurance Company </b></label>
                         <div class="col-md-6 col-sm-6 ">
-                        <p class="label-align-center">{{ $claim->insurance_company }}</p>
+                        <p class="label-align-center">{{ $claim->insuranceprovider ? $claim->insuranceprovider->text : '' }}</p>
                         </div>
                     </div>
                     <div class="col">
@@ -80,11 +80,13 @@
                         </div>
                     </div>
                     <div class="col">
+                        @if ($claim->typeofinsurance)
                         @if ($claim->typeofinsurance->text == 'Business')
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="sub_type_of_insurance"><b> Sub Type of Insurance </b></label>
                         <div class="col-md-6 col-sm-6 ">
                         <p class="label-align-center">{{ $claim->subtypeofinsurance ? $claim->subtypeofinsurance->text : '' }}</p>
                         </div>
+                        @endif
                         @endif
                     </div>
                 </div>
@@ -130,6 +132,7 @@
                         </div>
                     </div>
                 </div>
+                @if ($claim->typeofinsurance)
                 @if ($claim->typeofinsurance->text == 'Car')
                 <div class="item form-group">
                     <div class="col">
@@ -199,6 +202,7 @@
 
                     </div>
                 </div>
+                @endif
                 @endif
                 <div class="item form-group">
                     <div class="col">
@@ -277,7 +281,9 @@
                     <div class="col-auto mr-auto"></div>
                         <div class="col-auto">
                             @can('claim-edit')
+                            @if ($claim->claimsstatus->text != 'Settled')
                             <a id="texta" href="{{ route('claims.edit', ['claim' => $claim->id]) }}" class='btn btn-warning btn-sm'>Edit </a>
+                            @endif
                             @endcan
                             @can('claim-delete')
                             <a href="#" date-route="{{ route('claims.destroy', ['claim' => $claim->id]) }}" class='btn btn-warning btn-sm delete'>Delete</a>
