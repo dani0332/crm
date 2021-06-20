@@ -13,11 +13,12 @@ use App\Models\User;
 use App\Models\CarMake;
 use App\Models\CarModel;
 use App\Models\InsuranceProvider;
+use App\Models\ClaimsAttachments;
 
 use Illuminate\Http\Request;
 use Auth;
 use DataTables;
-use Spatie\Permission\Models\Role;
+//use Spatie\Permission\Models\Role;
 use DB;
 use Config;
 
@@ -125,10 +126,10 @@ class ClaimController extends Controller
             'additional_notes' => 'required|max:2000',
             'type_of_insurances_id' => 'required',
             'claims_status_id' => 'required',
-            'attachment_1' => 'mimes:jpg,jpeg,png,bmp,pdf,docx|max:5120',
-            'attachment_2' => 'mimes:jpg,jpeg,png,bmp,pdf,docx|max:5120',
-            'attachment_3' => 'mimes:jpg,jpeg,png,bmp,pdf,docx|max:5120',
-            'attachment_4' => 'mimes:jpg,jpeg,png,bmp,pdf,docx|max:5120',
+            'attachment_1' => 'mimes:jpg,jpeg,png,bmp,webp,pdf,docx|max:5120',
+            'attachment_2' => 'mimes:jpg,jpeg,png,bmp,webp,pdf,docx|max:5120',
+            'attachment_3' => 'mimes:jpg,jpeg,png,bmp,webp,pdf,docx|max:5120',
+            'attachment_4' => 'mimes:jpg,jpeg,png,bmp,webp,pdf,docx|max:5120',
         ]);
 
         $claim = new Claim();
@@ -258,10 +259,10 @@ class ClaimController extends Controller
             'additional_notes' => 'required|max:2000',
             'type_of_insurances_id' => 'required',
             'claims_status_id' => 'required',
-            'attachment_1' => 'mimes:jpg,jpeg,png,bmp,pdf,docx|max:5120',
-            'attachment_2' => 'mimes:jpg,jpeg,png,bmp,pdf,docx|max:5120',
-            'attachment_3' => 'mimes:jpg,jpeg,png,bmp,pdf,docx|max:5120',
-            'attachment_4' => 'mimes:jpg,jpeg,png,bmp,pdf,docx|max:5120',
+            'attachment_1' => 'mimes:jpg,jpeg,png,bmp,webp,pdf,docx|max:5120',
+            'attachment_2' => 'mimes:jpg,jpeg,png,bmp,webp,pdf,docx|max:5120',
+            'attachment_3' => 'mimes:jpg,jpeg,png,bmp,webp,pdf,docx|max:5120',
+            'attachment_4' => 'mimes:jpg,jpeg,png,bmp,webp,pdf,docx|max:5120',
         ]);
         $claim->first_name = $request->first_name;
         $claim->last_name = $request->last_name;
