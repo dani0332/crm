@@ -75,6 +75,5 @@ class Claim extends Model implements AuditableContract
     public function claimsAttachments()
     {
         return $this->hasMany(ClaimsAttachments::class,'claims_id','id');
-        //return $this->hasMany(ClaimsAttachments::class);
     }
 }

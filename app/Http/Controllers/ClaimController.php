@@ -18,7 +18,7 @@ use App\Models\ClaimsAttachments;
 use Illuminate\Http\Request;
 use Auth;
 use DataTables;
-//use Spatie\Permission\Models\Role;
+use Spatie\Permission\Models\Role;
 use DB;
 use Config;
 
