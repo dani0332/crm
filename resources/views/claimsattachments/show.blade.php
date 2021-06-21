@@ -32,6 +32,20 @@
 
                         </div>
                     </div>
+                    <div class="item form-group">
+                    <div class="col">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="created_at"><b> Created At </b></label>
+                        <div class="col-md-6 col-sm-6 ">
+                        <p class="label-align-center">{{ $claimAttachment->created_at }}</p>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="created_by"><b> Created by </b></label>
+                        <div class="col-md-6 col-sm-6 ">
+                        <p class="label-align-center">{{ $claimAttachment->createdby ? $claimAttachment->createdby->name : '' }}</p>
+                        </div>
+                    </div>
+                </div>
                     <div class="ln_solid"></div>
                     <div class="row">
                     <div class="col-auto mr-auto"></div>

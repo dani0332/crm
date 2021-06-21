@@ -27,4 +27,12 @@ class ClaimsAttachments extends Model implements AuditableContract
     {
         return $this->belongsTo(Claim::class, 'id', 'claims_id');
     }
+    public function createdby()
+    {
+        return $this->belongsTo(User::class,'created_by_id','id');
+    }
+    public function modifiedby()
+    {
+        return $this->belongsTo(User::class,'modified_by_id','id');
+    }
 }

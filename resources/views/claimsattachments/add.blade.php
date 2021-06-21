@@ -27,7 +27,15 @@
                             @endif
                         </div>
                         <div class="col">
-
+                            
+                        </div>
+                    </div>
+                    <div class="item form-group">
+                        <div class="col">
+                            <b>Important Note: Max upload size is 5 MB, allowed formats: jpg, jpeg, png, bmp, webp, pdf, docx.</b>
+                        </div>
+                        <div class="col">
+                            
                         </div>
                     </div>
                     <div id='redirect_to_view_div'></div>

@@ -277,7 +277,7 @@
                         </div>
                     </div>
                     </div>
-                    <div class="item form-group">
+                    {{--<div class="item form-group">
                         <div class="col">
                             <span class="col-form-label col-md-6 col-sm-6">Attachment 1 </span>
                             <input type="file" id="attachment_1" name="attachment_1" class="form-control form-control-sm" />
@@ -331,12 +331,12 @@
                     </div>
                     <div class="item form-group">
                         <div class="col">
-                            <b>Important Note: Max upload size is 5 MB, allowed formats: jpg, jpeg, png, bmp, pdf, docx.</b>
+                            <b>Important Note: Max upload size is 5 MB, allowed formats: jpg, jpeg, png, bmp, webp, pdf, docx.</b>
                         </div>
                         <div class="col">
                             
                         </div>
-                    </div>
+                    </div>--}}
                     <div id='redirect_to_view_div'></div>
                     <div class="ln_solid"></div>
                     <div class="row">

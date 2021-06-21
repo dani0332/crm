@@ -44,16 +44,16 @@ class ClaimsAttachmentsController extends Controller
      */
     public function store(Request $request, Claim $claim)
     {
-        //return $request;
+        $CLAIMS_UPLOAD_MIME_TYPES = Config::get('constants.CLAIMS_UPLOAD_MIME_TYPES');
         $this->validate($request, [
-            'file_name' => 'mimes:jpg,jpeg,png,bmp,webp,pdf,docx|max:5120',
+            'file_name' => 'mimes:'.$CLAIMS_UPLOAD_MIME_TYPES.'|max:5120',
         ]);
 
         $claimsAttachment = new ClaimsAttachments();
         $claimsAttachment->claims_id = $claim->id;
 
         if ($request->hasFile('file_name')) {
-            $fileName = time() . '_' . $request->file_name->getClientOriginalName();
+            $fileName = get_guid().'_'.$request->file_name->getClientOriginalName();
             $filePath = $request->file('file_name')->storeAs('/', $fileName, 'azure');
             $claimsAttachment->file_name = $fileName;
             $claimsAttachment->file_original_name = $request->file_name->getClientOriginalName();
@@ -64,8 +64,9 @@ class ClaimsAttachmentsController extends Controller
         $claimsAttachment->modified_by_id = Auth::user()->id;
         $claimsAttachment->save();
 
-        if(isset($request->return_to_view))
-            return redirect("claim/claims/61/claim-attachment/".$claimsAttachment->id)->with('success', 'Claim Attachment has been stored');  
+        if(isset($request->return_to_view)) {
+            return redirect("claim/claims/".$claim->id."/"."claim-attachment/".$claimsAttachment->id)->with('success', 'Claim Attachment has been stored');  
+        }
     }
 
     /**
@@ -100,12 +101,13 @@ class ClaimsAttachmentsController extends Controller
      */
     public function update(Request $request, Claim $claim, ClaimsAttachments $claimAttachment)
     {
+        $CLAIMS_UPLOAD_MIME_TYPES = Config::get('constants.CLAIMS_UPLOAD_MIME_TYPES');
         $this->validate($request, [
-            'file_name' => 'mimes:jpg,jpeg,png,bmp,webp,pdf,docx|max:5120',
+            'file_name' => 'mimes:'.$CLAIMS_UPLOAD_MIME_TYPES.'|max:5120',
         ]);
 
         if ($request->file('file_name')) {
-            $fileName = time() . '_' . $request->file_name->getClientOriginalName();
+            $fileName = get_guid().'_' .$request->file_name->getClientOriginalName();
             $filePath = $request->file('file_name')->storeAs('/', $fileName, 'azure');
             $claimAttachment->file_name = $fileName;
             $claimAttachment->file_original_name = $request->file_name->getClientOriginalName();
@@ -115,8 +117,9 @@ class ClaimsAttachmentsController extends Controller
         $claimAttachment->modified_by_id = Auth::user()->id;
         $claimAttachment->save();
 
-        if(isset($request->return_to_view))
+        if(isset($request->return_to_view)) {
             return redirect("claim/claims/".$claim->id)->with('success', 'Claim Attachment has been updated');
+        }
     }
 
     /**

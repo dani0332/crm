@@ -207,7 +207,7 @@
                 </div>
                 @endif
                 @endif
-                <div class="item form-group">
+                {{--<div class="item form-group">
                     <div class="col">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="attachment_1"><b> Attachment 1 </b></label>
                         <div class="col-md-6 col-sm-6 ">
@@ -250,7 +250,7 @@
                             @endif
                         </div>
                     </div>
-                </div>
+                </div>--}}
                 <div class="item form-group">
                     <div class="col">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="created_at"><b> Created At </b></label>

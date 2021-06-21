@@ -29,7 +29,6 @@ class ClaimController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-
     function __construct()
     {
          $this->middleware('permission:claim-list|claim-create|claim-edit|claim-delete', ['only' => ['index','store']]);
@@ -121,15 +120,14 @@ class ClaimController extends Controller
             'email_address' => 'required|email|max:150',
             'phone_number' => 'required|max:20',
             'insurance_provider_id' => 'required',
-            //'insurance_company' => 'required|max:255',
             'policy_number' => 'required|max:150',
             'additional_notes' => 'required|max:2000',
             'type_of_insurances_id' => 'required',
             'claims_status_id' => 'required',
-            'attachment_1' => 'mimes:jpg,jpeg,png,bmp,webp,pdf,docx|max:5120',
+            /*'attachment_1' => 'mimes:jpg,jpeg,png,bmp,webp,pdf,docx|max:5120',
             'attachment_2' => 'mimes:jpg,jpeg,png,bmp,webp,pdf,docx|max:5120',
             'attachment_3' => 'mimes:jpg,jpeg,png,bmp,webp,pdf,docx|max:5120',
-            'attachment_4' => 'mimes:jpg,jpeg,png,bmp,webp,pdf,docx|max:5120',
+            'attachment_4' => 'mimes:jpg,jpeg,png,bmp,webp,pdf,docx|max:5120',*/
         ]);
 
         $claim = new Claim();
@@ -138,7 +136,6 @@ class ClaimController extends Controller
         $claim->email_address = strtolower(trim(ltrim(rtrim($request->email_address))));
         $claim->phone_number = $request->phone_number;
         $claim->insurance_provider_id = $request->insurance_provider_id;
-        //$claim->insurance_company = $request->insurance_company;
         $claim->policy_number = $request->policy_number;
         $claim->additional_notes = $request->additional_notes;
         $claim->ticket_number = $request->ticket_number;
@@ -162,7 +159,7 @@ class ClaimController extends Controller
         $claim->modified_by_id = Auth::user()->id;
         $claim->is_rent_a_car = $request->is_rent_a_car == 'on' ? 1 : 0;
 
-        if($request->hasFile('attachment_1')) {
+        /*if($request->hasFile('attachment_1')) {
             $fileName_1 = time() . '_' . $request->attachment_1->getClientOriginalName();
             $filePath = $request->file('attachment_1')->storeAs('/', $fileName_1, 'azure');
             $claim->attachment_1 = $fileName_1;
@@ -181,7 +178,7 @@ class ClaimController extends Controller
             $fileName_4 = time() . '_' . $request->attachment_4->getClientOriginalName();
             $filePath = $request->file('attachment_4')->storeAs('/', $fileName_4, 'azure');
             $claim->attachment_4 = $fileName_4;
-        }
+        }*/
 
         $claim->save();
         if(isset($request->return_to_view))
@@ -254,22 +251,20 @@ class ClaimController extends Controller
             'email_address' => 'required|email|max:150',
             'phone_number' => 'required|max:20',
             'insurance_provider_id' => 'required',
-            //'insurance_company' => 'required|max:255',
             'policy_number' => 'required|max:150',
             'additional_notes' => 'required|max:2000',
             'type_of_insurances_id' => 'required',
             'claims_status_id' => 'required',
-            'attachment_1' => 'mimes:jpg,jpeg,png,bmp,webp,pdf,docx|max:5120',
+            /*'attachment_1' => 'mimes:jpg,jpeg,png,bmp,webp,pdf,docx|max:5120',
             'attachment_2' => 'mimes:jpg,jpeg,png,bmp,webp,pdf,docx|max:5120',
             'attachment_3' => 'mimes:jpg,jpeg,png,bmp,webp,pdf,docx|max:5120',
-            'attachment_4' => 'mimes:jpg,jpeg,png,bmp,webp,pdf,docx|max:5120',
+            'attachment_4' => 'mimes:jpg,jpeg,png,bmp,webp,pdf,docx|max:5120',*/
         ]);
         $claim->first_name = $request->first_name;
         $claim->last_name = $request->last_name;
         $claim->email_address = strtolower(trim(ltrim(rtrim($request->email_address))));
         $claim->phone_number = $request->phone_number;
         $claim->insurance_provider_id = $request->insurance_provider_id;
-        //$claim->insurance_company = $request->insurance_company;
         $claim->policy_number = $request->policy_number;
         $claim->additional_notes = $request->additional_notes;
         $claim->ticket_number = $request->ticket_number;
@@ -292,7 +287,7 @@ class ClaimController extends Controller
         $claim->modified_by_id = Auth::user()->id;
         $claim->is_rent_a_car = $request->is_rent_a_car == 'on' ? 1 : 0;
 
-        if($request->hasFile('attachment_1')) {
+        /*if($request->hasFile('attachment_1')) {
             $fileName_1 = time() . '_' . $request->attachment_1->getClientOriginalName();
             $filePath = $request->file('attachment_1')->storeAs('/', $fileName_1, 'azure');
             $claim->attachment_1 = $fileName_1;
@@ -311,7 +306,7 @@ class ClaimController extends Controller
             $fileName_4 = time() . '_' . $request->attachment_4->getClientOriginalName();
             $filePath = $request->file('attachment_4')->storeAs('/', $fileName_4, 'azure');
             $claim->attachment_4 = $fileName_4;
-        }
+        }*/
 
         if($claim_status_text == 'Settled') {
 
@@ -395,6 +390,7 @@ class ClaimController extends Controller
      */
     public function destroy(Claim $claim)
     {
+        $claim->claimsAttachments()->delete();
         $claim->delete();
         return redirect()->route('claims.index')->with('message','Claim has been Deleted');
     }

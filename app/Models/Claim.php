@@ -76,4 +76,11 @@ class Claim extends Model implements AuditableContract
     {
         return $this->hasMany(ClaimsAttachments::class,'claims_id','id');
     }
+    public static function boot()
+    {
+        parent::boot();
+        static::deleting(function ($claim) {
+            $claim->claimsAttachments()->delete();
+        });
+    }
 }

@@ -6,5 +6,6 @@ return [
     'emailL_sys' => env('EMAIL_SYS' , 'DEVELOPMENT'),
     'central_api_endpoint' => env('CENTRAL_API_ENDPOINT' , ''),
     'central_api_token'=>env('CENTRAL_API_TOKEN' , ''),
-    'datetime_format'=>env('DATETIME_FORMAT' , '')
+    'datetime_format'=>env('DATETIME_FORMAT' , ''),
+    'CLAIMS_UPLOAD_MIME_TYPES'=>env('CLAIMS_UPLOAD_MIME_TYPES' , '')
 ];
