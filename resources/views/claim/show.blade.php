@@ -16,6 +16,9 @@
                 @if(session()->has('success'))
                     <div class="alert alert-success">{{ session()->get('success') }}</div>
                 @endif
+                @if(session()->has('message'))
+                    <div class="alert alert-danger">{{ session()->get('message') }}</div>
+                @endif
                 <form id="demo-form2" method='post' action="{{ route('claims.update', ['claim' => $claim->id]) }}" enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left">
                 {{csrf_field()}}
                 @method('PUT')
@@ -204,7 +207,7 @@
                 </div>
                 @endif
                 @endif
-                <div class="item form-group">
+                {{--<div class="item form-group">
                     <div class="col">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="attachment_1"><b> Attachment 1 </b></label>
                         <div class="col-md-6 col-sm-6 ">
@@ -247,7 +250,7 @@
                             @endif
                         </div>
                     </div>
-                </div>
+                </div>--}}
                 <div class="item form-group">
                     <div class="col">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="created_at"><b> Created At </b></label>
@@ -295,6 +298,46 @@
         </div>
     </div>
 </div>
+
+<div class="row">
+    <div class="col-md-12 col-sm-12">
+        <div class="x_panel">
+            <div class="x_title">
+                <h2>Claims Attachments</h2>
+                <ul class="nav navbar-right panel_toolbox">
+                    <li><a href="{{ route('claims.claim-attachment.create',['claim'=>$claim->id]) }}" class="btn btn-warning btn-sm">Create Claim Attachment</a></li>
+                </ul>
+                <div class="clearfix"></div>
+            </div>
+            <div class="x_content">
+                <br />
+                <table id="datatable" class="table table-striped jambo_table" style="width:100%">
+                    <thead>
+                      <tr>
+                        <th>id</th>
+                        <th>File</th>
+                        <th>Created At</th>
+                        <th>Created by</th>
+                      </tr>
+                    </thead>
+
+                    <tbody>
+                      @foreach($claim->claimsAttachments as $key => $claimAttachment)
+                      <tr>
+                        <td><a href="{{ route('claims.claim-attachment.show', ['claim'=>$claim->id,'claim_attachment' => $claimAttachment->id]) }}">
+                        {{ $claimAttachment->id }}</a></td>
+                        <td><a href="{{ \Config::get('constants.azure_storage_url').'myrewards/'.$claimAttachment->file_name }}" target="_blank">{{$claimAttachment->file_original_name}}</a></td>
+                        <td>{{ $claimAttachment->created_at }}</td>
+                        <td>{{ $claimAttachment->createdby ? $claimAttachment->createdby->name : '' }}</td>
+                      </tr>
+                      @endforeach
+                    </tbody>
+                  </table>
+            </div>
+        </div>
+    </div>
+</div>
+
 @can('auditable')
     <div id="auditable">
         <button id='auditablebtn' class="btn btn-warning btn-sm auditablebtn" data-id="{{ $claim->id }}" data-model="App\Models\Claim">
