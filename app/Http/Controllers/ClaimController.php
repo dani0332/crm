@@ -390,7 +390,7 @@ class ClaimController extends Controller
      */
     public function destroy(Claim $claim)
     {
-        $claim->claimsAttachments()->delete();
+        $claim->claimsAttachments()->delete(); // Delete related attachments
         $claim->delete();
         return redirect()->route('claims.index')->with('message','Claim has been Deleted');
     }
