@@ -20,6 +20,7 @@ use App\Http\Controllers\ClaimsStatusController;
 use App\Http\Controllers\CarRepairCoverageController;
 use App\Http\Controllers\CarRepairTypeController;
 use App\Http\Controllers\RentACarController;
+use App\Http\Controllers\ClaimsAttachmentsController;
 
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\InsuranceCompanyController;
@@ -102,24 +103,13 @@ Route::group(['prefix' => 'qoutes'], function() {
 
 Route::group(['prefix' => 'claim'], function() {
     Route::resource('claims', ClaimController::class);
-});
-Route::group(['prefix' => 'claim'], function() {
     Route::resource('typeofinsurance', TypeOfInsuranceController::class);
-});
-Route::group(['prefix' => 'claim'], function() {
     Route::resource('subtypeofinsurance', SubTypeOfInsuranceController::class);
-});
-Route::group(['prefix' => 'claim'], function() {
     Route::resource('claimsstatus', ClaimsStatusController::class);
-});
-Route::group(['prefix' => 'claim'], function() {
     Route::resource('carrepaircoverage', CarRepairCoverageController::class);
-});
-Route::group(['prefix' => 'claim'], function() {
     Route::resource('carrepairtype', CarRepairTypeController::class);
-});
-Route::group(['prefix' => 'claim'], function() {
     Route::resource('rentacar', RentACarController::class);
+    Route::resource('claims.claim-attachment', ClaimsAttachmentsController::class);
 });
 
 Route::get('/car-model',[ClaimController::class,'carModelBasedOnCarMake']);
