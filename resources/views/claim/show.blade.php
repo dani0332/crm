@@ -317,6 +317,7 @@
                         <th>id</th>
                         <th>File</th>
                         <th>Created At</th>
+                        <th>Created by</th>
                       </tr>
                     </thead>
 
@@ -327,6 +328,7 @@
                         {{ $claimAttachment->id }}</a></td>
                         <td><a href="{{ \Config::get('constants.azure_storage_url').'myrewards/'.$claimAttachment->file_name }}" target="_blank">{{$claimAttachment->file_original_name}}</a></td>
                         <td>{{ $claimAttachment->created_at }}</td>
+                        <td>{{ $claimAttachment->createdby ? $claimAttachment->createdby->name : '' }}</td>
                       </tr>
                       @endforeach
                     </tbody>
