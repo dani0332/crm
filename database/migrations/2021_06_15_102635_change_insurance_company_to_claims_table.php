@@ -14,7 +14,7 @@ class ChangeInsuranceCompanyToClaimsTable extends Migration
     public function up()
     {
         Schema::table('claims', function (Blueprint $table) {
-            $table->date('insurance_company')->nullable()->change();
+            $table->string('insurance_company')->nullable()->change();
         });
     }
 
@@ -26,7 +26,7 @@ class ChangeInsuranceCompanyToClaimsTable extends Migration
     public function down()
     {
         Schema::table('claims', function (Blueprint $table) {
-            $table->date('insurance_company')->nullable(false)->change();
+            $table->string('insurance_company')->nullable(false)->change();
         });
     }
 }
