@@ -14,7 +14,7 @@ class AddInsuranceProviderIdToClaims extends Migration
     public function up()
     {
         Schema::table('claims', function (Blueprint $table) {
-            $table->integer('insurance_provider_id');
+            $table->integer('insurance_provider_id')->nullable();
             $table->foreign('insurance_provider_id')->references('id')->on('insurance_provider')->onDelete('no action');
         });
     }
