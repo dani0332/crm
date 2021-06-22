@@ -588,6 +588,7 @@ $(document).ready(function () {
             { data: 'id', name: 'id', render:function(data, type, row){
                 return "<a href='"+config.routes.claim_datatable_route+'/'+row.id +"'>" + row.id + "</a>"
             }},
+            { data: 'ticket_number', name: 'ticket_number' },
             { data: 'policy_number', name: 'policy_number' },
             { data: 'first_name', name: 'first_name' },
             { data: 'last_name', name: 'last_name' },
