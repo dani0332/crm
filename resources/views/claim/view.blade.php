@@ -92,6 +92,7 @@
                       <thead>
                         <tr>
                           <th>Id</th>
+                          <th>Ticket Number</th>
                           <th>Policy Number</th>
                           <th>First Name</th>
                           <th>Last Name</th>
