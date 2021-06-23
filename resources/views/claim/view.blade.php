@@ -7,7 +7,7 @@
             <div class="x_title">
                 <h2>Claims</h2>
                 <ul class="nav navbar-right panel_toolbox">
-                    <li><a href="{{ url('claim/claims/create') }}" class="btn btn-warning btn-sm">Create Claim</a></li>
+                    {{--<li><a href="{{ url('claim/claims/create') }}" class="btn btn-warning btn-sm">Create Claim</a></li>--}}
                 </ul>
                 <div class="clearfix"></div>
             </div>
@@ -105,10 +105,7 @@
                         </tr>
                       </thead>
 
-
                       <tbody>
-
-
 
                       </tbody>
                     </table>

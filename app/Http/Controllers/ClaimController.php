@@ -124,10 +124,6 @@ class ClaimController extends Controller
             'additional_notes' => 'required|max:2000',
             'type_of_insurances_id' => 'required',
             'claims_status_id' => 'required',
-            /*'attachment_1' => 'mimes:jpg,jpeg,png,bmp,webp,pdf,docx|max:5120',
-            'attachment_2' => 'mimes:jpg,jpeg,png,bmp,webp,pdf,docx|max:5120',
-            'attachment_3' => 'mimes:jpg,jpeg,png,bmp,webp,pdf,docx|max:5120',
-            'attachment_4' => 'mimes:jpg,jpeg,png,bmp,webp,pdf,docx|max:5120',*/
         ]);
 
         $claim = new Claim();
@@ -158,27 +154,6 @@ class ClaimController extends Controller
         $claim->created_by_id = Auth::user()->id;
         $claim->modified_by_id = Auth::user()->id;
         $claim->is_rent_a_car = $request->is_rent_a_car == 'on' ? 1 : 0;
-
-        /*if($request->hasFile('attachment_1')) {
-            $fileName_1 = time() . '_' . $request->attachment_1->getClientOriginalName();
-            $filePath = $request->file('attachment_1')->storeAs('/', $fileName_1, 'azure');
-            $claim->attachment_1 = $fileName_1;
-        }
-        if($request->hasFile('attachment_2')) {
-            $fileName_2 = time() . '_' . $request->attachment_2->getClientOriginalName();
-            $filePath = $request->file('attachment_2')->storeAs('/', $fileName_2, 'azure');
-            $claim->attachment_2 = $fileName_2;
-        }
-        if($request->hasFile('attachment_3')) {
-            $fileName_3 = time() . '_' . $request->attachment_3->getClientOriginalName();
-            $filePath = $request->file('attachment_3')->storeAs('/', $fileName_3, 'azure');
-            $claim->attachment_3 = $fileName_3;
-        }
-        if($request->hasFile('attachment_4')) {
-            $fileName_4 = time() . '_' . $request->attachment_4->getClientOriginalName();
-            $filePath = $request->file('attachment_4')->storeAs('/', $fileName_4, 'azure');
-            $claim->attachment_4 = $fileName_4;
-        }*/
 
         $claim->save();
         if(isset($request->return_to_view))
@@ -255,10 +230,7 @@ class ClaimController extends Controller
             'additional_notes' => 'required|max:2000',
             'type_of_insurances_id' => 'required',
             'claims_status_id' => 'required',
-            /*'attachment_1' => 'mimes:jpg,jpeg,png,bmp,webp,pdf,docx|max:5120',
-            'attachment_2' => 'mimes:jpg,jpeg,png,bmp,webp,pdf,docx|max:5120',
-            'attachment_3' => 'mimes:jpg,jpeg,png,bmp,webp,pdf,docx|max:5120',
-            'attachment_4' => 'mimes:jpg,jpeg,png,bmp,webp,pdf,docx|max:5120',*/
+            'assigned_to_id' => 'required',
         ]);
         $claim->first_name = $request->first_name;
         $claim->last_name = $request->last_name;
@@ -286,27 +258,6 @@ class ClaimController extends Controller
         $claim->car_model_id = $request->car_model_id;
         $claim->modified_by_id = Auth::user()->id;
         $claim->is_rent_a_car = $request->is_rent_a_car == 'on' ? 1 : 0;
-
-        /*if($request->hasFile('attachment_1')) {
-            $fileName_1 = time() . '_' . $request->attachment_1->getClientOriginalName();
-            $filePath = $request->file('attachment_1')->storeAs('/', $fileName_1, 'azure');
-            $claim->attachment_1 = $fileName_1;
-        }
-        if($request->hasFile('attachment_2')) {
-            $fileName_2 = time() . '_' . $request->attachment_2->getClientOriginalName();
-            $filePath = $request->file('attachment_2')->storeAs('/', $fileName_2, 'azure');
-            $claim->attachment_2 = $fileName_2;
-        }
-        if($request->hasFile('attachment_3')) {
-            $fileName_3 = time() . '_' . $request->attachment_3->getClientOriginalName();
-            $filePath = $request->file('attachment_3')->storeAs('/', $fileName_3, 'azure');
-            $claim->attachment_3 = $fileName_3;
-        }
-        if($request->hasFile('attachment_4')) {
-            $fileName_4 = time() . '_' . $request->attachment_4->getClientOriginalName();
-            $filePath = $request->file('attachment_4')->storeAs('/', $fileName_4, 'azure');
-            $claim->attachment_4 = $fileName_4;
-        }*/
 
         if($claim_status_text == 'Settled') {
 
