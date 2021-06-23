@@ -598,7 +598,6 @@ $(document).ready(function () {
             { data: 'claims_status_text', name: 'claims_status_text' },
             { data: 'assigned_user_name', name: 'assigned_user_name' },
             { data: 'created_at', name: 'created_at' },
-            { data: 'updated_at', name: 'updated_at' },
         ]
     });
 
