@@ -131,7 +131,9 @@
                             <select class="form-control" id='assigned_to_id' name='assigned_to_id'>
                             <option value=''></option>
                             @foreach($advisors as $advisor)
+                            @if($claim->assigned_to_id == $advisor->id)
                                 <option {{ $claim->assigned_to_id == $advisor->id ? 'selected' : '' }} value="{{ $advisor->id }}">{{ $advisor->name }}</option>
+                            @endif
                             @endforeach
                             </select>
                             @if ($errors->has('assigned_to_id'))
@@ -342,7 +344,7 @@
                     <div class="row">
                         <div class="col-auto mr-auto"></div>
                         <div class="col-auto">
-                            <button type="submit" class="btn btn-warning btn-sm">Update & Continue Updating</button> <button type="submit" class="btn btn-warning btn-sm" id="return_to_view" >Update</button>
+                            <button type="submit" class="btn btn-warning btn-sm" id="return_to_view">Update</button>
                         </div>
                     </div>
                 </form>
