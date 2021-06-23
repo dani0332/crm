@@ -46,9 +46,10 @@ class ClaimController extends Controller
         if ($request->ajax()) {
 
             $data = Claim::select('claims.*','type_of_insurances.text as type_of_insurance_text'
-            ,'claims_statuses.text as claims_status_text')
+            ,'claims_statuses.text as claims_status_text','users.name as assigned_user_name')
             ->leftjoin('type_of_insurances','claims.type_of_insurances_id','type_of_insurances.id')
             ->leftjoin('claims_statuses','claims.claims_status_id','claims_statuses.id')
+            ->leftjoin('users','claims.assigned_to_id','users.id')
             ->orderBy('created_at','desc');
 
             if(Auth::user()->hasRole('CLAIMS_ADVISOR')) {

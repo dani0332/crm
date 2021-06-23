@@ -207,50 +207,6 @@
                 </div>
                 @endif
                 @endif
-                {{--<div class="item form-group">
-                    <div class="col">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="attachment_1"><b> Attachment 1 </b></label>
-                        <div class="col-md-6 col-sm-6 ">
-                            @if($claim->attachment_1 != '')
-                            <p class="label-align-center"><a href="{{ \Config::get('constants.azure_storage_url').'myrewards/'.$claim->attachment_1 }}" target="_blank">Open file</a></p>
-                            @else
-                            <p class="label-align-center">File not uploaded!</p>
-                            @endif
-                        </div>
-                    </div>
-                    <div class="col">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="attachment_2"><b> Attachment 2 </b></label>
-                        <div class="col-md-6 col-sm-6 ">
-                            @if($claim->attachment_2 != '')
-                            <p class="label-align-center"><a href="{{ \Config::get('constants.azure_storage_url').'myrewards/'.$claim->attachment_2 }}" target="_blank">Open file</a></p>
-                            @else
-                            <p class="label-align-center">File not uploaded!</p>
-                            @endif
-                        </div>
-                    </div>
-                </div>
-                <div class="item form-group">
-                    <div class="col">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="attachment_3"><b> Attachment 3 </b></label>
-                        <div class="col-md-6 col-sm-6 ">
-                            @if($claim->attachment_3 != '')
-                            <p class="label-align-center"><a href="{{ \Config::get('constants.azure_storage_url').'myrewards/'.$claim->attachment_3 }}" target="_blank">Open file</a></p>
-                            @else
-                            <p class="label-align-center">File not uploaded!</p>
-                            @endif
-                        </div>
-                    </div>
-                    <div class="col">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="attachment_4"><b> Attachment 4 </b></label>
-                        <div class="col-md-6 col-sm-6 ">
-                            @if($claim->attachment_4 != '')
-                            <p class="label-align-center"><a href="{{ \Config::get('constants.azure_storage_url').'myrewards/'.$claim->attachment_4 }}" target="_blank">Open file</a></p>
-                            @else
-                            <p class="label-align-center">File not uploaded!</p>
-                            @endif
-                        </div>
-                    </div>
-                </div>--}}
                 <div class="item form-group">
                     <div class="col">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="created_at"><b> Created At </b></label>

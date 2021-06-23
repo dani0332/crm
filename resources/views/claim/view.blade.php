@@ -100,6 +100,7 @@
                           <th>Phone Number</th>
                           <th>Type of Insurance</th>
                           <th>Status</th>
+                          <th>Assigned To</th>
                           <th>Created At</th>
                           <th>Updated At</th>
                         </tr>
