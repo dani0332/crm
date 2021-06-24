@@ -1,40 +1,49 @@
-# For more information: https://laravel.com/docs/sail
 version: "3"
 services:
-  laravel.test:
-    build:
-      context: ./vendor/laravel/sail/runtimes/8.0
-      dockerfile: Dockerfile
-      args:
-        WWWGROUP: "${WWWGROUP}"
-    image: sail-8.0/app
+
+  app:
+    build: .
+    restart: unless-stopped
     ports:
-      - "${APP_PORT:-80}:80"
+      - 9101:9101
+    volumes:
+      - ./:/var/www/html
+      - ./docker/var/php-fpm/php.ini:/usr/local/etc/php/php.ini
+    networks:
+      - afia_insurance
+    depends_on:
+      - mysql
+
+  nginx:
+    image: nginx:alpine
+    restart: unless-stopped
+    ports:
+      - 8000:80
+    volumes:
+      - ./:/var/www/html
+      - ./docker/var/nginx/logs:/var/log/nginx
+      - ./docker/var/nginx:/etc/nginx/conf.d/
+    networks:
+      - afia_insurance
+
+  mysql:
+    image: "mysql:5.7.22"
+    ports:
+      - "3306:3306"
     environment:
-      WWWUSER: "${WWWUSER}"
-      LARAVEL_SAIL: 1
+      - MYSQL_ROOT_PASSWORD=${DB_USERNAME}
+      - MYSQL_PASSWORD=${DB_PASSWORD}
+      - MYSQL_DATABASE=default
     volumes:
-      - ".:/var/www/html"
+      - "afia_insurance_5.72:/var/lib/mysql"
     networks:
-      - sail
-  meilisearch:
-    image: "getmeili/meilisearch:latest"
-    ports:
-      - "${FORWARD_MEILISEARCH_PORT:-7700}:7700"
-    volumes:
-      - "sailmeilisearch:/data.ms"
-    networks:
-      - sail
-  mailhog:
-    image: "mailhog/mailhog:latest"
-    ports:
-      - "${FORWARD_MAILHOG_PORT:-1025}:1025"
-      - "${FORWARD_MAILHOG_DASHBOARD_PORT:-8025}:8025"
-    networks:
-      - sail
+      - afia_insurance
+
 networks:
-  sail:
+  afia_insurance:
     driver: bridge
+
 volumes:
-  sailmeilisearch:
+  afia_insurance_5.72:
     driver: local
+
