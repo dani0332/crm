@@ -119,7 +119,9 @@
                             <select class="form-control" id='claims_status_id' name='claims_status_id'>
                             <option value=''></option>
                             @foreach($claimsstatuses as $claimsstatus)
+                                @if($claimsstatus->text != 'Settled')
                                 <option {{ $claim->claims_status_id == $claimsstatus->id ? 'selected' : '' }} value="{{ $claimsstatus->id }}">{{ $claimsstatus->text }}</option>
+                                @endif
                             @endforeach
                             </select>
                             @if ($errors->has('claims_status_id'))
