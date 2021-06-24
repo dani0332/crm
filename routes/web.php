@@ -46,6 +46,10 @@ Route::get('/', function () {
     return redirect('login');
 });
 
+Route::get('/debug-sentry', function () {
+    throw new Exception('My first Sentry error!');
+});
+
 Route::get('auth/google', 'App\Http\Controllers\GoogleSocialiteController@redirectToGoogle');
 Route::get('google/callback', 'App\Http\Controllers\GoogleSocialiteController@handleCallback');
 
