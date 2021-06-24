@@ -41,7 +41,7 @@ class ClaimController extends Controller
     {
         $claimsstatuses = ClaimsStatus::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
         $typeofinsurances = TypeOfInsurance::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
-        $advisors = User::select('users.name')
+        $advisors = User::select('users.*')
         ->leftjoin('model_has_roles','users.id','model_has_roles.model_id')
         ->leftjoin('roles','roles.id','model_has_roles.role_id')
         ->whereIn('roles.name', ['CLAIMS_ADVISOR', 'CLAIMS_MANAGER', 'CLAIMS_ADMIN'])->orderBy('roles.name', 'asc')->get();
