@@ -72,7 +72,10 @@
                         </div>
                     </div>
                     <div class="col">
-
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="ticket_number"><b> Ticket Number </b></label>
+                        <div class="col-md-6 col-sm-6 ">
+                        <p class="label-align-center">{{ $claim->ticket_number }}</p>
+                        </div>
                     </div>
                 </div>
                 <div class="item form-group">
@@ -129,10 +132,7 @@
                         </div>
                     </div>
                     <div class="col">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="ticket_number"><b> Ticket Number </b></label>
-                        <div class="col-md-6 col-sm-6 ">
-                        <p class="label-align-center">{{ $claim->ticket_number }}</p>
-                        </div>
+
                     </div>
                 </div>
                 @if ($claim->typeofinsurance)
