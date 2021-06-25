@@ -22,7 +22,7 @@
                     <div class="item form-group">
                         <div class="col">
                             <span class="col-form-label col-md-6 col-sm-6">File Name </span>
-                            <input type="file" id="file_name" name="file_name" class="form-control form-control-sm" />
+                            <input type="file" id="file_name" name="file_name" class="form-control form-control-sm" accept='.jpg, .jpeg, .png, .bmp, .webp, .pdf, .doc, .docx, application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document' />
                             @if($claimAttachment->file_name != '')
                                 <div class="col-form-label col-md-6 col-sm-6"><a href="{{ \Config::get('constants.azure_storage_url').'myrewards/'.$claimAttachment->file_name }}" target="_blank">{{$claimAttachment->file_original_name}}</a></div>
                             @else
@@ -38,7 +38,7 @@
                     </div>
                     <div class="item form-group">
                         <div class="col">
-                            <b>Important Note: Max upload size is 5 MB, allowed formats: jpg, jpeg, png, bmp, webp, pdf, docx.</b>
+                            <b>Important Note: Max upload size is 5 MB, allowed formats: jpg, jpeg, png, bmp, webp, pdf, doc, docx.</b>
                         </div>
                         <div class="col">
                             
