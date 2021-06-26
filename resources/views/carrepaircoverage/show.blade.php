@@ -62,9 +62,9 @@
                             @can('car-repair-coverage-edit')
                             <a id="texta" href="{{ route('carrepaircoverage.edit', ['carrepaircoverage' => $carrepaircoverage->id]) }}" class='btn btn-warning btn-sm'>Edit</a>
                             @endcan
-                            @can('car-repair-coverage-delete')
+                            {{--@can('car-repair-coverage-delete')
                             <a href="#" date-route="{{ route('carrepaircoverage.destroy', ['carrepaircoverage' => $carrepaircoverage->id]) }}" class='btn btn-warning btn-sm delete'>Delete</a>
-                            @endcan
+                            @endcan--}}
                         </div>
                     </div>
                 </form>
