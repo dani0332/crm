@@ -3,6 +3,7 @@ trigger:
 
 pool:
   vmImage: ubuntu-latest
+name: 1.0$(Rev:.r)
 
 variables:
   phpVersion: 7.2
