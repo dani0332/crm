@@ -64,9 +64,9 @@
                             @can('sub-type-of-insurance-edit')
                                 <a id="texta" href="{{ route('subtypeofinsurance.edit', ['subtypeofinsurance' => $subtypeofinsurance->id]) }}" class='btn btn-warning btn-sm'>Edit </a>
                             @endcan
-                            @can('sub-type-of-insurance-delete')
+                            {{--@can('sub-type-of-insurance-delete')
                                 <a href="#" date-route="{{ route('subtypeofinsurance.destroy', ['subtypeofinsurance' => $subtypeofinsurance->id]) }}" class='btn btn-warning btn-sm delete'>Delete</a>
-                            @endcan
+                            @endcan--}}
                         </div>
                     </div>
                 </form>

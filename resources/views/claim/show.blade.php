@@ -239,14 +239,14 @@
                     <div class="row">
                     <div class="col-auto mr-auto"></div>
                         <div class="col-auto">
-                            @can('claim-edit')
-                            @if ($claim->claimsstatus->text != 'Settled')
-                            <a id="texta" href="{{ route('claims.edit', ['claim' => $claim->id]) }}" class='btn btn-warning btn-sm'>Edit </a>
+                            @if($claim->claimsstatus->text != 'Settled')
+                                @can('claim-edit')
+                                <a id="texta" href="{{ route('claims.edit', ['claim' => $claim->id]) }}" class='btn btn-warning btn-sm'>Edit</a>
+                                @endcan
+                                @can('claim-delete')
+                                <a href="#" date-route="{{ route('claims.destroy', ['claim' => $claim->id]) }}" class='btn btn-warning btn-sm delete'>Delete</a>
+                                @endcan
                             @endif
-                            @endcan
-                            @can('claim-delete')
-                            <a href="#" date-route="{{ route('claims.destroy', ['claim' => $claim->id]) }}" class='btn btn-warning btn-sm delete'>Delete</a>
-                            @endcan
                         </div>
                     </div>
                 </form>
