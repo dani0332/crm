@@ -80,8 +80,11 @@ class RewardTranslationController extends Controller
             $reward->save();
             return redirect("rewards/reward/".$reward->id)->with('success', 'Reward Translation has been stored');
         }
-        if(isset($request->return_to_view))
-            return redirect("rewards/reward/".$reward->id)->with('success', 'Reward Translation has been stored');            
+
+        if(isset($request->return_to_view)) {
+            return redirect("rewards/reward/".$reward->id."/"."reward-translation/".$rewardTranslation->id)->with('success', 'Reward Translation has been stored');
+        }
+        return redirect()->back()->with('success', 'Reward Translation has been stored');
     }
     /**
      * Display the specified resource.
@@ -146,8 +149,11 @@ class RewardTranslationController extends Controller
             $rewardTranslation->generic_banner_image = $fileName;
         }
         $rewardTranslation->save();
-        if(isset($request->return_to_view))
-            return redirect("rewards/reward/".$reward->id)->with('success', 'Reward Translation has been updated');
+
+        if(isset($request->return_to_view)) {
+            return redirect("rewards/reward/".$reward->id."/"."reward-translation/".$rewardTranslation->id)->with('success', 'Reward Translation has been updated');
+        }
+        return redirect()->back()->with('success', 'Reward Translation has been updated');
     }
     /**
      * Remove the specified resource from storage.

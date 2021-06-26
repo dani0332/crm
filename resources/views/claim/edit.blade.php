@@ -60,9 +60,8 @@
                                 <option {{ $claim->insurance_provider_id == $insuranceprovider->id ? 'selected' : '' }} value="{{ $insuranceprovider->id }}">{{ $insuranceprovider->text }}</option>
                             @endforeach
                             </select>
-                            {{--<input type="text" id="insurance_company" name="insurance_company" value="{{ $claim->insurance_company }}" class="form-control">--}}
-                            @if ($errors->has('insurance_company'))
-                                <span class="text-danger">{{ $errors->first('insurance_company') }}</span>
+                            @if ($errors->has('insurance_provider_id'))
+                                <span class="text-danger">{{ $errors->first('insurance_provider_id') }}</span>
                             @endif
                         </div>
                         <div class="col">
@@ -82,7 +81,11 @@
                             @endif
                         </div>
                         <div class="col">
-
+                            <span class="col-form-label col-md-6 col-sm-6">Ticket Number <span class="required"></span></span>
+                            <input type="text" id="ticket_number" name="ticket_number" value="{{ $claim->ticket_number }}" class="form-control" readonly>
+                            @if ($errors->has('ticket_number'))
+                                <span class="text-danger">{{ $errors->first('ticket_number') }}</span>
+                            @endif
                         </div>
                     </div>
                     <div class="item form-group">
@@ -168,11 +171,7 @@
                             @endif
                         </div>
                         <div class="col">
-                            <span class="col-form-label col-md-6 col-sm-6">Ticket Number <span class="required"></span></span>
-                            <input type="text" id="ticket_number" name="ticket_number" value="{{ $claim->ticket_number }}" class="form-control">
-                            @if ($errors->has('ticket_number'))
-                                <span class="text-danger">{{ $errors->first('ticket_number') }}</span>
-                            @endif
+
                         </div>
                     </div>
                     <div id="car_fields">

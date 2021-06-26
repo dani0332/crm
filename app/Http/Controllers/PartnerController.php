@@ -60,7 +60,7 @@ class PartnerController extends Controller
         $this->validate($request, [
             'name' => 'required|max:120',
             'name_ar' => 'required|max:120',
-            'logo_image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'logo_image' => 'required|image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
         ]);
 
         $partner = new Partner();
@@ -74,8 +74,11 @@ class PartnerController extends Controller
         }
 
         $partner->save();
-        if(isset($request->return_to_view))
+
+        if(isset($request->return_to_view)) {
             return redirect("rewards/partner/".$partner->id)->with('success', 'Partner has been stored');
+        }
+        return redirect()->back()->with('success', 'Partner has been stored');
     }
     /**
      * Display the specified resource.
@@ -121,8 +124,10 @@ class PartnerController extends Controller
         }
 
         $partner->save();
-        if(isset($request->return_to_view))
+        if(isset($request->return_to_view)) {
             return redirect("rewards/partner/".$partner->id)->with('success', 'Partner has been updated');
+        }
+        return redirect()->back()->with('success', 'Partner has been updated');
     }
     /**
      * Remove the specified resource from storage.
