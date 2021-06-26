@@ -62,9 +62,9 @@
                             @can('claims-status-edit')
                             <a id="texta" href="{{ route('claimsstatus.edit', ['claimsstatus' => $claimsstatus->id]) }}" class='btn btn-warning btn-sm'>Edit </a>
                             @endcan
-                            {{--@can('claims-status-delete')
+                            @can('claims-status-delete')
                             <a href="#" date-route="{{ route('claimsstatus.destroy', ['claimsstatus' => $claimsstatus->id]) }}" class='btn btn-warning btn-sm delete'>Delete</a>
-                            @endcan--}}
+                            @endcan
                         </div>
                     </div>
                 </form>

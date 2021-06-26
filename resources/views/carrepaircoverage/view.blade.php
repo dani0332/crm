@@ -7,10 +7,11 @@
             <div class="x_title">
                 <h2>Car Repair Coverage</h2>
                 <ul class="nav navbar-right panel_toolbox">
+                    @can('car-repair-coverage-create')
                     <li><a href="{{ url('claim/carrepaircoverage/create') }}" class="btn btn-warning btn-sm">Create Car Repair Coverage</a></li>
+                    @endcan
                 </ul>
                 <div class="clearfix"></div>
-
             </div>
             <div class="x_content">
                 <br />
