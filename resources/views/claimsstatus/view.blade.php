@@ -7,7 +7,9 @@
             <div class="x_title">
                 <h2>Claim Status</h2>
                 <ul class="nav navbar-right panel_toolbox">
+                    @can('claims-status-create')
                     <li><a href="{{ url('claim/claimsstatus/create') }}" class="btn btn-warning btn-sm">Create Claim Status</a></li>
+                    @endcan
                 </ul>
                 <div class="clearfix"></div>
             </div>
