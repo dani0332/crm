@@ -90,6 +90,7 @@ $(document).ready(function () {
                     );
                 },
             },
+            { data: "is_active", name: "is_active" },
             { data: "created_at", name: "created_at" },
             { data: "updated_at", name: "updated_at" },
             // {
