@@ -38,17 +38,18 @@ class Reward extends Model implements AuditableContract
         return $this->hasMany(RewardTranslation::class);
     }
 
-    // this is a recommended way to declare event handlers
+    public function rewardCustomers()
+    {
+        return $this->belongsToMany(Customer::class, 'reward_customer_viewed');
+    }
+
     public static function boot()
     {
         parent::boot();
 
         static::deleting(function ($reward) {
-            // before delete() method call this
-            $reward->rewardCategories()->detach($reward->id);
-            $reward->rewardTags()->detach($reward->id);
+
             $reward->rewardTranslations()->delete();
-            // do the rest of the cleanup...
         });
     }
 }
