@@ -32,8 +32,7 @@ class RewardController extends Controller
     {
         if ($request->ajax()) {
             $data = Reward::select('reward.*','partner.name as partner')
-            ->leftjoin('partner','reward.partner_id','partner.id');
-            //$data->select(ssssss);
+            ->leftjoin('partner','reward.partner_id','partner.id')->orderBy('reward.start_date','desc');;
             return Datatables::of($data)
                 ->addIndexColumn()
                 ->addColumn('action', function ($row) {
@@ -51,9 +50,9 @@ class RewardController extends Controller
      */
     public function create()
     {
-        $partners = Partner::all();
-        $rewardCategories = RewardCategory::all();
-        $rewardTags = RewardTag::all();
+        $partners = Partner::where('is_active', '=', 1)->orderBy('name', 'asc')->get();
+        $rewardCategories = RewardCategory::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
+        $rewardTags = RewardTag::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
         return view('reward.add', compact('partners', 'rewardTags', 'rewardCategories'));
     }
     /**
@@ -122,9 +121,9 @@ class RewardController extends Controller
      */
     public function edit(Reward $reward)
     {
-        $partners = Partner::all();
-        $rewardCategories = RewardCategory::all();
-        $rewardTags = RewardTag::all();
+        $partners = Partner::where('is_active', '=', 1)->orderBy('name', 'asc')->get();
+        $rewardCategories = RewardCategory::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
+        $rewardTags = RewardTag::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
         return view('reward.edit', compact('partners', 'reward', 'rewardCategories', 'rewardTags'));
     }
     /**
