@@ -191,8 +191,11 @@ class RewardController extends Controller
     public function destroy(Reward $reward)
     {
         $reward->rewardTranslations()->delete();
-        $reward->rewardCategories()->delete();
-        $reward->rewardTags()->delete();
+        $reward->rewardCategories()->detach();
+        $reward->rewardTags()->detach();
+        $reward->rewardCustomers()->detach();
+        //$reward->rewardCategories()->delete();
+        //$reward->rewardTags()->delete();
         $reward->delete();
         return redirect('rewards/reward')->with('message','Reward has been deleted');
     }
