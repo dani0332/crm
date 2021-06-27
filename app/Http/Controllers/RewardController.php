@@ -194,8 +194,6 @@ class RewardController extends Controller
         $reward->rewardCategories()->detach();
         $reward->rewardTags()->detach();
         $reward->rewardCustomers()->detach();
-        //$reward->rewardCategories()->delete();
-        //$reward->rewardTags()->delete();
         $reward->delete();
         return redirect('rewards/reward')->with('message','Reward has been deleted');
     }
