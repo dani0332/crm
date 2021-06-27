@@ -25,6 +25,7 @@
                           <th>Name</th>
                           <th>Name Ar</th>
                           <th>Logo</th>
+                          <th>Is Active</th>
                           <th>Created At</th>
                           <th>Updated At</th>
                         </tr>
