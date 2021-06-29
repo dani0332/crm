@@ -21,7 +21,7 @@
                     <div class="item form-group">
                         <div class="col">
                             <span class="col-form-label col-md-6 col-sm-6">File Name </span>
-                            <input type="file" id="file_name" name="file_name" class="form-control form-control-sm" /> <br/>
+                            <input type="file" id="file_name" name="file_name" class="form-control form-control-sm" accept='.jpg, .jpeg, .png, .bmp, .webp, .pdf, .doc, .docx, application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document' /> <br/>
                             @if ($errors->has('file_name'))
                                 <span class="text-danger">{{ $errors->first('file_name') }}</span>
                             @endif
@@ -32,7 +32,7 @@
                     </div>
                     <div class="item form-group">
                         <div class="col">
-                            <b>Important Note: Max upload size is 5 MB, allowed formats: jpg, jpeg, png, bmp, webp, pdf, docx.</b>
+                            <b>Important Note: Max upload size is 5 MB, allowed formats: jpg, jpeg, png, bmp, webp, pdf, doc, docx.</b>
                         </div>
                         <div class="col">
                             
@@ -43,7 +43,7 @@
                     <div class="row">
                     <div class="col-auto mr-auto"></div>
                         <div class="col-auto">
-                            <button type="submit" class="btn btn-warning btn-sm" id="return_to_view" >Create</button>
+                            <button type="submit" class="btn btn-warning btn-sm">Create & Add New</button> <button type="submit" class="btn btn-warning btn-sm" id="return_to_view">Create</button>
                         </div>
                     </div>
                 </form>

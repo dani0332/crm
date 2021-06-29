@@ -7,10 +7,11 @@
             <div class="x_title">
                 <h2>Sub Type of Insurance</h2>
                 <ul class="nav navbar-right panel_toolbox">
+                    @can('sub-type-of-insurance-create')
                     <li><a href="{{ url('claim/subtypeofinsurance/create') }}" class="btn btn-warning btn-sm">Create Sub Type of Insurance</a></li>
+                    @endcan
                 </ul>
                 <div class="clearfix"></div>
-
             </div>
             <div class="x_content">
                 <br />

@@ -32,8 +32,7 @@ class RewardController extends Controller
     {
         if ($request->ajax()) {
             $data = Reward::select('reward.*','partner.name as partner')
-            ->leftjoin('partner','reward.partner_id','partner.id');
-            //$data->select(ssssss);
+            ->leftjoin('partner','reward.partner_id','partner.id')->orderBy('reward.start_date','desc');;
             return Datatables::of($data)
                 ->addIndexColumn()
                 ->addColumn('action', function ($row) {
@@ -51,9 +50,9 @@ class RewardController extends Controller
      */
     public function create()
     {
-        $partners = Partner::all();
-        $rewardCategories = RewardCategory::all();
-        $rewardTags = RewardTag::all();
+        $partners = Partner::where('is_active', '=', 1)->orderBy('name', 'asc')->get();
+        $rewardCategories = RewardCategory::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
+        $rewardTags = RewardTag::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
         return view('reward.add', compact('partners', 'rewardTags', 'rewardCategories'));
     }
     /**
@@ -99,8 +98,10 @@ class RewardController extends Controller
                 $rewardTagMapping->mapRewardTag($rewardTag, $reward->id);
             }
         }
-        if(isset($request->return_to_view))
+        if(isset($request->return_to_view)) {
             return redirect("rewards/reward/".$reward->id)->with('success', 'Reward has been stored');
+        }
+        return redirect()->back()->with('success', 'Reward has been stored');
     }
     /**
      * Display the specified resource.
@@ -120,9 +121,9 @@ class RewardController extends Controller
      */
     public function edit(Reward $reward)
     {
-        $partners = Partner::all();
-        $rewardCategories = RewardCategory::all();
-        $rewardTags = RewardTag::all();
+        $partners = Partner::where('is_active', '=', 1)->orderBy('name', 'asc')->get();
+        $rewardCategories = RewardCategory::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
+        $rewardTags = RewardTag::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
         return view('reward.edit', compact('partners', 'reward', 'rewardCategories', 'rewardTags'));
     }
     /**
@@ -175,8 +176,10 @@ class RewardController extends Controller
             }
         }
 
-        if(isset($request->return_to_view))
+        if(isset($request->return_to_view)) {
             return redirect("rewards/reward/".$reward->id)->with('success', 'Reward has been updated');
+        }
+        return redirect()->back()->with('success', 'Reward has been updated');
     }
     /**
      * Remove the specified resource from storage.
@@ -187,8 +190,9 @@ class RewardController extends Controller
     public function destroy(Reward $reward)
     {
         $reward->rewardTranslations()->delete();
-        $reward->rewardCategories()->delete();
-        $reward->rewardTags()->delete();
+        $reward->rewardCategories()->detach();
+        $reward->rewardTags()->detach();
+        $reward->rewardCustomers()->detach();
         $reward->delete();
         return redirect('rewards/reward')->with('message','Reward has been deleted');
     }

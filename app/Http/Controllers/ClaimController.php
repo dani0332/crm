@@ -41,7 +41,10 @@ class ClaimController extends Controller
     {
         $claimsstatuses = ClaimsStatus::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
         $typeofinsurances = TypeOfInsurance::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
-        $advisors = User::all();
+        $advisors = User::select('users.*')
+        ->leftjoin('model_has_roles','users.id','model_has_roles.model_id')
+        ->leftjoin('roles','roles.id','model_has_roles.role_id')
+        ->whereIn('roles.name', ['CLAIMS_ADVISOR', 'CLAIMS_MANAGER', 'CLAIMS_ADMIN'])->orderBy('roles.name', 'asc')->get();
 
         if ($request->ajax()) {
 
@@ -154,10 +157,11 @@ class ClaimController extends Controller
         $claim->created_by_id = Auth::user()->id;
         $claim->modified_by_id = Auth::user()->id;
         $claim->is_rent_a_car = $request->is_rent_a_car == 'on' ? 1 : 0;
-
         $claim->save();
-        if(isset($request->return_to_view))
-            return redirect("claim/claims/".$claim->id)->with('success','Claim has been stored');
+        if(isset($request->return_to_view)) {
+            return redirect("claim/claims/".$claim->id)->with('success', 'Claim has been stored');
+        }
+        return redirect()->back()->with('success', 'Claim has been stored');
     }
 
     /**
@@ -329,8 +333,10 @@ class ClaimController extends Controller
         }
 
         $claim->save();
-        if(isset($request->return_to_view))
-            return redirect("claim/claims/".$claim->id)->with('success','Claim has been Updated');
+        if(isset($request->return_to_view)) {
+            return redirect("claim/claims/".$claim->id)->with('success', 'Claim has been updated');
+        }
+        return redirect()->back()->with('success', 'Claim has been updated');
     }
 
     /**
@@ -343,7 +349,7 @@ class ClaimController extends Controller
     {
         $claim->claimsAttachments()->delete(); // Delete related attachments
         $claim->delete();
-        return redirect()->route('claims.index')->with('message','Claim has been Deleted');
+        return redirect()->route('claims.index')->with('message','Claim has been deleted');
     }
 
     public function carModelBasedOnCarMake(Request $request){

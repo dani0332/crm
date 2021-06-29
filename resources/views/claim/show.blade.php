@@ -72,7 +72,10 @@
                         </div>
                     </div>
                     <div class="col">
-
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="ticket_number"><b> Ticket Number </b></label>
+                        <div class="col-md-6 col-sm-6 ">
+                        <p class="label-align-center">{{ $claim->ticket_number }}</p>
+                        </div>
                     </div>
                 </div>
                 <div class="item form-group">
@@ -129,10 +132,7 @@
                         </div>
                     </div>
                     <div class="col">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="ticket_number"><b> Ticket Number </b></label>
-                        <div class="col-md-6 col-sm-6 ">
-                        <p class="label-align-center">{{ $claim->ticket_number }}</p>
-                        </div>
+
                     </div>
                 </div>
                 @if ($claim->typeofinsurance)
@@ -239,14 +239,14 @@
                     <div class="row">
                     <div class="col-auto mr-auto"></div>
                         <div class="col-auto">
-                            @can('claim-edit')
-                            @if ($claim->claimsstatus->text != 'Settled')
-                            <a id="texta" href="{{ route('claims.edit', ['claim' => $claim->id]) }}" class='btn btn-warning btn-sm'>Edit </a>
+                            @if($claim->claimsstatus->text != 'Settled')
+                                @can('claim-edit')
+                                <a id="texta" href="{{ route('claims.edit', ['claim' => $claim->id]) }}" class='btn btn-warning btn-sm'>Edit</a>
+                                @endcan
+                                @can('claim-delete')
+                                <a href="#" date-route="{{ route('claims.destroy', ['claim' => $claim->id]) }}" class='btn btn-warning btn-sm delete'>Delete</a>
+                                @endcan
                             @endif
-                            @endcan
-                            @can('claim-delete')
-                            <a href="#" date-route="{{ route('claims.destroy', ['claim' => $claim->id]) }}" class='btn btn-warning btn-sm delete'>Delete</a>
-                            @endcan
                         </div>
                     </div>
                 </form>

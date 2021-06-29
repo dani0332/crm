@@ -68,8 +68,10 @@ class CarRepairTypeController extends Controller
         $carrepairtype->is_active =  $request->is_active == 'on' ? 1 : 0;
         $carrepairtype->sort_order =  $request->sort_order;
         $carrepairtype->save();
-        if(isset($request->return_to_view))
-            return redirect("claim/carrepairtype/".$carrepairtype->id)->with('success','Car Repair Type has been stored');
+        if(isset($request->return_to_view)) {
+            return redirect("claim/carrepairtype/".$carrepairtype->id)->with('success', 'Car Repair Type has been stored');
+        }
+        return redirect()->back()->with('success', 'Car Repair Type has been stored');
     }
 
     /**
@@ -113,8 +115,10 @@ class CarRepairTypeController extends Controller
         $carrepairtype->is_active =  $request->is_active == 'on' ? 1 : 0;
         $carrepairtype->sort_order =  $request->sort_order;
         $carrepairtype->save();
-        if(isset($request->return_to_view))
-            return redirect("claim/carrepairtype/".$carrepairtype->id)->with('success','Car Repair Type has been Updated');
+        if(isset($request->return_to_view)) {
+            return redirect("claim/carrepairtype/".$carrepairtype->id)->with('success', 'Car Repair Type has been updated');
+        }
+        return redirect()->back()->with('success', 'Car Repair Type has been updated');
     }
 
     /**
@@ -126,6 +130,6 @@ class CarRepairTypeController extends Controller
     public function destroy(CarRepairType $carrepairtype)
     {
         $carrepairtype->delete();
-        return redirect()->route('carrepairtype.index')->with('message','Car Repair Type has been Deleted');
+        return redirect()->route('carrepairtype.index')->with('message','Car Repair Type has been deleted');
     }
 }

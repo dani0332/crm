@@ -67,8 +67,10 @@ class SubTypeOfInsuranceController extends Controller
         $subtypeofinsurance->is_active =  $request->is_active == 'on' ? 1 : 0;
         $subtypeofinsurance->sort_order =  $request->sort_order;
         $subtypeofinsurance->save();
-        if(isset($request->return_to_view))
-            return redirect("claim/subtypeofinsurance/".$subtypeofinsurance->id)->with('success','Sub Type Of Insurance has been stored');
+        if(isset($request->return_to_view)) {
+            return redirect("claim/subtypeofinsurance/".$subtypeofinsurance->id)->with('success', 'Sub Type Of Insurance has been stored');
+        }
+        return redirect()->back()->with('success', 'Sub Type Of Insurance has been stored');
     }
 
     /**
@@ -112,8 +114,10 @@ class SubTypeOfInsuranceController extends Controller
         $subtypeofinsurance->is_active =  $request->is_active == 'on' ? 1 : 0;
         $subtypeofinsurance->sort_order =  $request->sort_order;
         $subtypeofinsurance->save();
-        if(isset($request->return_to_view))
-            return redirect("claim/subtypeofinsurance/".$subtypeofinsurance->id)->with('success','Sub Type of Insurance has been Updated');
+        if(isset($request->return_to_view)) {
+            return redirect("claim/subtypeofinsurance/".$subtypeofinsurance->id)->with('success', 'Sub Type Of Insurance has been updated');
+        }
+        return redirect()->back()->with('success', 'Sub Type Of Insurance has been updated');
     }
 
     /**
@@ -125,6 +129,6 @@ class SubTypeOfInsuranceController extends Controller
     public function destroy(SubTypeOfInsurance $subtypeofinsurance)
     {
         $subtypeofinsurance->delete();
-        return redirect()->route('subtypeofinsurance.index')->with('message','Sub Type of Insurance has been Deleted');
+        return redirect()->route('subtypeofinsurance.index')->with('message','Sub Type of Insurance has been deleted');
     }
 }

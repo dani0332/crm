@@ -60,9 +60,8 @@
                                 <option {{ $claim->insurance_provider_id == $insuranceprovider->id ? 'selected' : '' }} value="{{ $insuranceprovider->id }}">{{ $insuranceprovider->text }}</option>
                             @endforeach
                             </select>
-                            {{--<input type="text" id="insurance_company" name="insurance_company" value="{{ $claim->insurance_company }}" class="form-control">--}}
-                            @if ($errors->has('insurance_company'))
-                                <span class="text-danger">{{ $errors->first('insurance_company') }}</span>
+                            @if ($errors->has('insurance_provider_id'))
+                                <span class="text-danger">{{ $errors->first('insurance_provider_id') }}</span>
                             @endif
                         </div>
                         <div class="col">
@@ -82,7 +81,11 @@
                             @endif
                         </div>
                         <div class="col">
-
+                            <span class="col-form-label col-md-6 col-sm-6">Ticket Number <span class="required"></span></span>
+                            <input type="text" id="ticket_number" name="ticket_number" value="{{ $claim->ticket_number }}" class="form-control" readonly>
+                            @if ($errors->has('ticket_number'))
+                                <span class="text-danger">{{ $errors->first('ticket_number') }}</span>
+                            @endif
                         </div>
                     </div>
                     <div class="item form-group">
@@ -119,7 +122,9 @@
                             <select class="form-control" id='claims_status_id' name='claims_status_id'>
                             <option value=''></option>
                             @foreach($claimsstatuses as $claimsstatus)
+                                @if($claimsstatus->text != 'Settled')
                                 <option {{ $claim->claims_status_id == $claimsstatus->id ? 'selected' : '' }} value="{{ $claimsstatus->id }}">{{ $claimsstatus->text }}</option>
+                                @endif
                             @endforeach
                             </select>
                             @if ($errors->has('claims_status_id'))
@@ -166,11 +171,7 @@
                             @endif
                         </div>
                         <div class="col">
-                            <span class="col-form-label col-md-6 col-sm-6">Ticket Number <span class="required"></span></span>
-                            <input type="text" id="ticket_number" name="ticket_number" value="{{ $claim->ticket_number }}" class="form-control">
-                            @if ($errors->has('ticket_number'))
-                                <span class="text-danger">{{ $errors->first('ticket_number') }}</span>
-                            @endif
+
                         </div>
                     </div>
                     <div id="car_fields">
@@ -284,7 +285,7 @@
                     <div class="row">
                         <div class="col-auto mr-auto"></div>
                         <div class="col-auto">
-                            <button type="submit" class="btn btn-warning btn-sm" id="return_to_view">Update</button>
+                            <button type="submit" class="btn btn-warning btn-sm">Update & Continue Updating</button> <button type="submit" class="btn btn-warning btn-sm" id="return_to_view">Update</button>
                         </div>
                     </div>
                 </form>

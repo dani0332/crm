@@ -67,6 +67,7 @@ class ClaimsAttachmentsController extends Controller
         if(isset($request->return_to_view)) {
             return redirect("claim/claims/".$claim->id."/"."claim-attachment/".$claimsAttachment->id)->with('success', 'Claim Attachment has been stored');  
         }
+        return redirect()->back()->with('success', 'Claim Attachment has been stored');
     }
 
     /**
@@ -118,8 +119,9 @@ class ClaimsAttachmentsController extends Controller
         $claimAttachment->save();
 
         if(isset($request->return_to_view)) {
-            return redirect("claim/claims/".$claim->id)->with('success', 'Claim Attachment has been updated');
+            return redirect("claim/claims/".$claim->id."/"."claim-attachment/".$claimAttachment->id)->with('success', 'Claim Attachment has been updated');  
         }
+        return redirect()->back()->with('success', 'Claim Attachment has been updated');
     }
 
     /**
