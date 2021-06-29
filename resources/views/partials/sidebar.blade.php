@@ -122,7 +122,9 @@
                 </ul>
             </li>
         </ul>
-
+        <ul class="nav side-menu">
+             <li><a href="{{ url('ftcform') }}"><i ></i> FTC Form </a>
+         </ul>
         <ul class="nav side-menu">
             <li><a><i class="fa fa-user"></i> Admin <span class="fa fa-chevron-down"></span></a>
             <ul class="nav child_menu">

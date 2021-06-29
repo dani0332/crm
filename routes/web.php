@@ -21,6 +21,7 @@ use App\Http\Controllers\CarRepairCoverageController;
 use App\Http\Controllers\CarRepairTypeController;
 use App\Http\Controllers\RentACarController;
 use App\Http\Controllers\ClaimsAttachmentsController;
+use App\Http\Controllers\FtcFormController;
 
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\InsuranceCompanyController;
@@ -98,6 +99,7 @@ Route::group(['prefix' => 'transapp'], function () {
 });
 
 Route::resource('customer', CustomerController::class);
+Route::resource('ftcform', FtcFormController::class);
 
 Route::group(['prefix' => 'qoutes'], function() {
     Route::resource('carqoutes', CarQouteController::class);
