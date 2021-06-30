@@ -6,30 +6,22 @@ import theme from './modules/theme';
 import styled, { ThemeProvider } from 'styled-components';
 import { Provider } from 'react-redux'
 import { store } from './redux/getStore'
+import DashboardFtcWizard from './modules/ftc-forms/dashboard'
 
-function Example() {
+function Root() {
     return (
     <Provider store={store}>
         <Router history={history}>
             <ThemeProvider theme={theme}>
-                <div className="container">
-                    <div className="row justify-content-center">
-                        <div className="col-md-8">
-                            <div className="card">
-                                <div className="card-header">Example Component amjad</div>
-                                <div className="card-body">I'm an example component!</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                    <DashboardFtcWizard />
             </ThemeProvider>
         </Router>
     </Provider>
     );
 }
 
-export default Example;
+export default Root;
 
 if (document.getElementById('app')) {
-    ReactDOM.render(<Example />, document.getElementById('app'));
+    ReactDOM.render(<Root />, document.getElementById('app'));
 }
