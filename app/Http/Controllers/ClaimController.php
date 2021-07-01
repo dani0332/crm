@@ -60,7 +60,12 @@ class ClaimController extends Controller
 
             if (isset($request->searchtype) && !empty($request->searchtype)
             && isset($request->searchfield) && !empty($request->searchfield)) {
-                $data->where($request->searchtype, $request->searchfield);
+                if($request->searchtype == 'id') {
+                    $data->where('claims.id',$request->searchfield);
+                }
+                else {
+                    $data->where($request->searchtype, $request->searchfield);
+                }
             }
             if(isset($request->claimstatus) && !empty($request->claimstatus))
                 $data->where('claims_status_id', $request->claimstatus);
