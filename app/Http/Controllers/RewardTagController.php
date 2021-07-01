@@ -123,11 +123,12 @@ class RewardTagController extends Controller
      */
     public function destroy(RewardTag $rewardTag)
     {
-        try {
-            $rewardTag->delete();
-          } catch (\Exception $e) {
+        if($rewardTag->Rewards()->count()) {
             return redirect()->route('reward-tags.index')->with('message','Reward Tag is linked with Reward and cannot be deleted');
-          }
-        return redirect()->route('reward-tags.index')->with('message','Reward Tag has been deleted');
+        }
+        else {
+            $rewardTag->delete();
+            return redirect()->route('reward-tags.index')->with('message','Reward Tag has been deleted');
+        }
     }
 }

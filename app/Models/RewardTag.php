@@ -15,7 +15,7 @@ class RewardTag extends Model implements AuditableContract
 
     public function Rewards()
     {
-        return $this->belongsToMany(Reward::class, 'reward_tag_mapping', 'reward_id', 'reward_tag_id');
+        return $this->belongsToMany(Reward::class, 'reward_tag_mapping');
     }
 
     public function getCreatedAtAttribute($table)
