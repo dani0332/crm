@@ -15,7 +15,7 @@ class RewardCategory extends Model implements AuditableContract
 
     public function Rewards()
     {
-        return $this->belongsToMany(Reward::class, 'reward_category_mapping', 'reward_id', 'reward_category_id');
+        return $this->belongsToMany(Reward::class, 'reward_category_mapping');
     }
 
     public function getCreatedAtAttribute($table)
