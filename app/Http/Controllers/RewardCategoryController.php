@@ -122,7 +122,12 @@ class RewardCategoryController extends Controller
      */
     public function destroy(RewardCategory $rewardCategory)
     {
-        $rewardCategory->delete();
-        return redirect()->route('reward-categories.index')->with('message','Reward Category has been deleted');
+        if($rewardCategory->Rewards()->count()) {
+            return redirect()->route('reward-categories.index')->with('message','Reward Category is linked with Reward and cannot be deleted');
+        }
+        else {
+            $rewardCategory->delete();
+            return redirect()->route('reward-categories.index')->with('message','Reward Category has been deleted');
+        }
     }
 }

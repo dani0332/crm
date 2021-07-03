@@ -41,7 +41,7 @@ class RewardTranslationController extends Controller
             'description1' => 'required|max:1000',
             'description2' => 'required|max:1000',
             'instructions' => 'required|max:1000',
-            'terms_and_conditions' => 'required|max:1000',
+            'terms_and_conditions' => 'required|max:1500',
             'product_image' => 'required|image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
             'full_width_banner_image' => 'image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048', // for desktop view
             'generic_banner_image' => 'image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048', // for mobile view
@@ -120,7 +120,7 @@ class RewardTranslationController extends Controller
             'description1' => 'required|max:1000',
             'description2' => 'required|max:1000',
             'instructions' => 'required|max:1000',
-            'terms_and_conditions' => 'required|max:1000',
+            'terms_and_conditions' => 'required|max:1500',
             'product_image' => 'image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
             'full_width_banner_image' => 'image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048', // for desktop view
             'generic_banner_image' => 'image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048', // for mobile view
