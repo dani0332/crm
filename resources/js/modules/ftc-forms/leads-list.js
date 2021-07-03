@@ -45,9 +45,9 @@ function LeadsList() {
       }
     ],
     []
-  );
+);
 
-  const options = {
+const options = {
     url:'',
     filter: [
         {
@@ -78,7 +78,6 @@ function LeadsList() {
     ]
 };
 const [data, setData] = useState([]);
-
   return (
     <Styles>
       <div className="row">
@@ -91,7 +90,7 @@ const [data, setData] = useState([]);
                     <div className="x_content">
                     <TableFilter filter={options.filter} url={options.url} />
                     </div>
-                    <Table columns={columns} data={data} ageOutside={0} />
+                    <Table columns={columns} data={data}  />
                 </div>
             </div>
       </div>

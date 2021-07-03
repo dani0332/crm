@@ -6,7 +6,7 @@ const Styles = styled.div`
 padding: 1rem;
 `;
 
-function Table({ columns, data, ageOutside }) {
+function Table({ columns, data }) {
   // Use the state and functions returned from useTable to build your UI
   const {
     getTableProps,
@@ -23,11 +23,7 @@ function Table({ columns, data, ageOutside }) {
     useFilters
   );
 
-  // Listen for input changes outside
-  useEffect(() => {
-    // This will now use our custom filter for age
-    setFilter("age", ageOutside);
-  }, [ageOutside]);
+
 
   // Render the UI for your table
   return (

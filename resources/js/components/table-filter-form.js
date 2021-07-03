@@ -8,7 +8,6 @@ const { register, handleSubmit, formState: { errors } } = useForm();
 const onSubmit = data => console.log(data);
 
   return (
-    /* "handleSubmit" will validate your inputs before invoking "onSubmit" */
     <form onSubmit={handleSubmit(onSubmit)}>
       <div className="col-md-12">
       {errors.exampleRequired && <span>This field is required</span>}
@@ -16,10 +15,10 @@ const onSubmit = data => console.log(data);
           return (
             <div className="col-md-6" key={i}>
                 <div className="form-group row">
-                    <label className="col-form-label col-md-2 col-sm-2 ">
+                    <label className="col-form-label col-md-3 col-sm-3 ">
                      {u.label}
                     </label>
-                    <div className="col-md-8 col-sm-8 ">
+                    <div className="col-md-7 col-sm-7 ">
                      <FormField field={u} register={register} />
                     </div>
                     <div className="col-md-2 col-sm-2 "></div>
