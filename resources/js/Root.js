@@ -7,13 +7,15 @@ import styled, { ThemeProvider } from 'styled-components';
 import { Provider } from 'react-redux'
 import { store } from './redux/getStore'
 import DashboardFtcWizard from './modules/ftc-forms/dashboard'
+import LeadsList from './modules/ftc-forms/leads-list';
 
 function Root() {
     return (
     <Provider store={store}>
         <Router history={history}>
             <ThemeProvider theme={theme}>
-                    <DashboardFtcWizard />
+                    {/* <DashboardFtcWizard /> */}
+                    <LeadsList />
             </ThemeProvider>
         </Router>
     </Provider>
