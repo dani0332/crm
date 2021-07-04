@@ -22,6 +22,8 @@ use App\Http\Controllers\CarRepairTypeController;
 use App\Http\Controllers\RentACarController;
 use App\Http\Controllers\ClaimsAttachmentsController;
 use App\Http\Controllers\FtcFormController;
+use App\Http\Controllers\LeadsController;
+
 
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\InsuranceCompanyController;
@@ -120,3 +122,10 @@ Route::group(['prefix' => 'claim'], function() {
 
 Route::get('/car-model',[ClaimController::class,'carModelBasedOnCarMake']);
 Route::post('auditable', [AuditableController::class, 'loadAuditableComponent']);
+
+
+/***** RestAPI */
+
+Route::group(['prefix' => 'leads'], function()use($router) {
+    Route::GET('/', [LeadsController::class,'index']);
+});
