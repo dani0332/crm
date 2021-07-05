@@ -9,38 +9,24 @@ use DataTables;
 
 class StatusController extends Controller
 {
-        /**
-
+     /**
      * Display a listing of the resource.
-
      *
-
      * @return \Illuminate\Http\Response
-
      */
-
     public function __construct()
     {
-
         $this->middleware('permission:status-list|status-create|status-edit|status-delete', ['only' => ['index', 'store']]);
-
         $this->middleware('permission:status-create', ['only' => ['create', 'store']]);
-
         $this->middleware('permission:status-edit', ['only' => ['edit', 'update']]);
-
         $this->middleware('permission:status-delete', ['only' => ['destroy']]);
     }
 
     /**
-
      * Display a listing of the resource.
-
      *
-
      * @return \Illuminate\Http\Response
-
      */
-
     public function index(Request $request)
     {
         if ($request->ajax()) {
@@ -61,7 +47,6 @@ class StatusController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-
     public function create()
     {
         return view('status.add');
@@ -73,25 +58,23 @@ class StatusController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-
     public function store(Request $request)
     {
-
         $this->validate($request, [
-
-            'name' => 'required',
+            'name' => 'required|max:150',
         ]);
 
         $status = new Status;
         $status->name = $request->name;
         $status->is_active = $request->is_active == 'on' ? 1 : 0;
         $status->created_by = Auth::user()->email;
+        $status->updated_by = Auth::user()->email;
         $status->save();
-        if(isset($request->return_to_view))
-            return redirect("transapp/status");
 
-        return redirect()->back()
-        ->with('success', 'Status created successfully');
+        if(isset($request->return_to_view)) {
+            return redirect("transapp/status/".$status->id)->with('success', 'Status has been stored');
+        }
+        return redirect()->back()->with('success', 'Status has been stored');
     }
 
     /**
@@ -100,7 +83,6 @@ class StatusController extends Controller
      * @param  Status  $status
      * @return \Illuminate\Http\Response
      */
-
     public function show(Status $status)
     {
         return view('status.show', compact('status'));
@@ -112,7 +94,6 @@ class StatusController extends Controller
      * @param  Status  $status
      * @return \Illuminate\Http\Response
      */
-
     public function edit(Status $status)
     {
         return view('status.edit', compact('status'));
@@ -125,23 +106,19 @@ class StatusController extends Controller
      * @param  Status  $status
      * @return \Illuminate\Http\Response
      */
-
     public function update(Request $request,Status $status)
     {
         $this->validate($request, [
-
-            'name' => 'required',
+            'name' => 'required|max:150',
         ]);
-        // return $request->is_active;
         $status->name = $request->name;
         $status->is_active = $request->is_active == 'on' ? 1 : 0;
         $status->updated_by = Auth::user()->email;
         $status->save();
-        if(isset($request->return_to_view))
-        return redirect("transapp/status");
-
-        return redirect()->back()
-            ->with('success', 'Status updated successfully');
+        if(isset($request->return_to_view)) {
+            return redirect("transapp/status/".$status->id)->with('success', 'Status has been updated');
+        }
+        return redirect()->back()->with('success', 'Status has been updated');
     }
 
     /**
@@ -150,12 +127,9 @@ class StatusController extends Controller
      * @param  Status  $status
      * @return \Illuminate\Http\Response
      */
-
     public function destroy(Status $status)
     {
-
         $status->delete();
-        return redirect()->route('status.index')
-            ->with('success', 'Status deleted successfully');
+        return redirect()->route('status.index')->with('message','Status has been deleted');
     }
 }

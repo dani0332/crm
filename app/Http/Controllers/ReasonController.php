@@ -11,37 +11,23 @@ use DB;
 class ReasonController extends Controller
 {
     /**
-
      * Display a listing of the resource.
-
      *
-
      * @return \Illuminate\Http\Response
-
      */
-
     public function __construct()
     {
-
         $this->middleware('permission:reason-list|reason-create|reason-edit|reason-delete', ['only' => ['index', 'store']]);
-
         $this->middleware('permission:reason-create', ['only' => ['create', 'store']]);
-
         $this->middleware('permission:reason-edit', ['only' => ['edit', 'update']]);
-
         $this->middleware('permission:reason-delete', ['only' => ['destroy']]);
     }
 
     /**
-
      * Display a listing of the resource.
-
      *
-
      * @return \Illuminate\Http\Response
-
      */
-
     public function index(Request $request)
     {
         if ($request->ajax()) {
@@ -62,7 +48,6 @@ class ReasonController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-
     public function create()
     {
         return view('reason.add');
@@ -74,26 +59,23 @@ class ReasonController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-
     public function store(Request $request)
     {
-
         $this->validate($request, [
-
-            'name' => 'required',
-
+            'name' => 'required|max:150',
         ]);
 
         $reason = new Reason;
         $reason->name = $request->name;
         $reason->is_active = $request->is_active == 'on' ? 1 : 0;
         $reason->created_by = Auth::user()->email;
+        $reason->updated_by = Auth::user()->email;
         $reason->save();
-        if(isset($request->return_to_view))
-            return redirect("transapp/reason");
 
-        return redirect()->back()
-        ->with('success', 'Reason created successfully');
+        if(isset($request->return_to_view)) {
+            return redirect("transapp/reason/".$reason->id)->with('success', 'Reason Description has been stored');
+        }
+        return redirect()->back()->with('success', 'Reason Description has been stored');
     }
 
     /**
@@ -102,7 +84,6 @@ class ReasonController extends Controller
      * @param  Reason  $reason
      * @return \Illuminate\Http\Response
      */
-
     public function show(Reason $reason)
     {
         return view('reason.show', compact('reason'));
@@ -114,7 +95,6 @@ class ReasonController extends Controller
      * @param  Reason  $reason
      * @return \Illuminate\Http\Response
      */
-
     public function edit(Reason $reason)
     {
         return view('reason.edit', compact('reason'));
@@ -127,23 +107,19 @@ class ReasonController extends Controller
      * @param  Reason  $reason
      * @return \Illuminate\Http\Response
      */
-
     public function update(Request $request,Reason $reason)
     {
         $this->validate($request, [
-
-            'name' => 'required',
+            'name' => 'required|max:150',
         ]);
-        // return $request->is_active;
         $reason->name = $request->name;
         $reason->is_active = $request->is_active == 'on' ? 1 : 0;
         $reason->updated_by = Auth::user()->email;
         $reason->save();
-        if(isset($request->return_to_view))
-        return redirect("transapp/reason");
-
-        return redirect()->back()
-            ->with('success', 'Reason updated successfully');
+        if(isset($request->return_to_view)) {
+            return redirect("transapp/reason/".$reason->id)->with('success', 'Reason Description has been updated');
+        }
+        return redirect()->back()->with('success', 'Reason Description has been updated');
     }
 
     /**
@@ -152,14 +128,9 @@ class ReasonController extends Controller
      * @param  Reason  $reason
      * @return \Illuminate\Http\Response
      */
-
     public function destroy(Reason $reason)
     {
-
-        DB::statement('SET FOREIGN_KEY_CHECKS=0');
         $reason->delete();
-        DB::statement('SET FOREIGN_KEY_CHECKS=1');
-        return redirect()->route('reason.index')
-            ->with('success', 'Reason deleted successfully');
+        return redirect()->route('reason.index')->with('message','Reason Description has been deleted');
     }
 }
