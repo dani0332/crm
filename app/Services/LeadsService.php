@@ -11,16 +11,16 @@ class LeadsService extends BaseService
     public function getLeadListWithFilter($filters = []){
 
 
-        DB::enableQueryLog();
+       // DB::enableQueryLog();
         $response = DB::table('reward')
         ->where(function($query) use($filters) {
             foreach($filters as $key => $value) {
-                $query->where($key, $value);
+                $query->where($key,'like', '%'.$value.'%');
             }
         })
         ->get();
 
-       dd(DB::getQueryLog());exit;
+      // dd(DB::getQueryLog());exit;
         //dd($response);exit;
         //$response = Reward::get();
         return $response;

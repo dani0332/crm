@@ -9,7 +9,6 @@ class LeadsTransformer extends Fractal\TransformerAbstract
 {
 	public function transform(Customer $customer)
 	{
-
         return [
 	        'title'   => 'title_123',
             'id' => $customer->id

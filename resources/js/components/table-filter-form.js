@@ -2,10 +2,10 @@ import React, {  useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import FormField from "./field";
 
-export default function TableFilter({filter, url}) {
+export default function TableFilter({filter, url, search}) {
 
 const { register, handleSubmit, formState: { errors } } = useForm();
-const onSubmit = data => console.log(data);
+const onSubmit = data => search(data);
 
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
@@ -28,7 +28,14 @@ const onSubmit = data => console.log(data);
       })
       }
       </div>
-      <input type="submit" />
+      <div className="col-md-12">
+      <div className="ln_solid"></div>
+        <div className="col-md-2 col-sm-2 offset-md-10">
+            <button className="btn btn-primary" type="reset">Reset</button>
+            <button type="submit" class="btn btn-success">Submit</button>
+        </div>
+        </div>
+
     </form>
   );
 }

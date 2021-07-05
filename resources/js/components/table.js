@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
-import { useFilters, useTable } from "react-table";
+import { useFilters, useTable,  useSortBy } from "react-table";
 
 const Styles = styled.div`
 padding: 1rem;
@@ -20,10 +20,9 @@ function Table({ columns, data }) {
       columns,
       data
     },
-    useFilters
+    useFilters,
+    useSortBy
   );
-
-
 
   // Render the UI for your table
   return (
@@ -34,7 +33,16 @@ function Table({ columns, data }) {
           {headerGroups.map((headerGroup) => (
             <tr {...headerGroup.getHeaderGroupProps()} className="headings">
               {headerGroup.headers.map((column) => (
-                <th {...column.getHeaderProps()}>{column.render("Header")}</th>
+                <th {...column.getHeaderProps()}>{column.render("Header")}
+                {/* Add a sort direction indicator */}
+                <span>
+                    {column.isSorted
+                      ? column.isSortedDesc
+                        ? ' 🔽'
+                        : ' 🔼'
+                      : ''}
+                  </span>
+                </th>
               ))}
             </tr>
           ))}
