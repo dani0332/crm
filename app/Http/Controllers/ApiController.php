@@ -5,6 +5,13 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 
+use League\Fractal\Manager;
+use League\Fractal\Resource\Collection;
+
+
+use App\Transformers\LeadsTransformer;
+use App\Models\Customer;
+
 class ApiController extends Controller
 {
 
@@ -47,6 +54,42 @@ class ApiController extends Controller
         }
 
         return $this->respondError($message, $errorCode, $e);
+    }
+
+    /**
+     * response for error
+     * @param  Exception $e
+     * @return Response Json
+     */
+    public function respondError($message, $errorCode=Response::HTTP_UNPROCESSABLE_ENTITY, $e = null)
+    {
+        $response = [
+            'error' => true,
+            'message' => $message,
+        ];
+
+        if(env('APP_DEBUG') && $e) {
+            $response['file'] = $e->getFile();
+            $response['line'] = $e->getLine();
+        }
+
+        return response()->json($response, $errorCode, []);
+    }
+
+    /**
+     * response for collection
+     *
+     * @param Collection $data
+     * @param Transformer $transformer
+     * @param String $type
+     * @return Response json
+     */
+    public function respondCollection($data, $transformer)
+    {
+        $manager = new Manager();
+        $resource = new Collection($data, $transformer);
+        $res = $manager->createData($resource)->toArray();
+        return response()->json($res, Response::HTTP_OK);
     }
 
     public function respondSuccess($message="Success", $data=[])
