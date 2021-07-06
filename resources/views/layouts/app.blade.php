@@ -183,5 +183,16 @@
         };
     </script>
     <script src="{{ asset('build/js/customjs.js') }}"></script>
+
+    <script>
+        $(document).ajaxError(function(event, jqxhr, settings, exception) {
+        if (exception == 'Unauthorized') {
+            alert('Session has expired.')
+            window.location = '/login';
+        }
+        });
+        $.fn.dataTable.ext.errMode = 'none'; // disable datatables error prompt
+    </script>
+
     </body>
 </html>
