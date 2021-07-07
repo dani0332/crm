@@ -22,14 +22,14 @@
                     <div class="item form-group">
                         <div class="col">
                             <span class="col-form-label col-md-6 col-sm-6">First Name <span class="required">*</span></span>
-                            <input type="text" id="first_name" name="first_name" value="{{ $claim->first_name }}" class="form-control">
+                            <input type="text" id="first_name" name="first_name" value="{{ old('first_name', $claim->first_name) }}" class="form-control">
                             @if ($errors->has('first_name'))
                                 <span class="text-danger">{{ $errors->first('first_name') }}</span>
                             @endif
                         </div>
                         <div class="col">
                             <span class="col-form-label col-md-6 col-sm-6">Last Name <span class="required">*</span></span>
-                            <input type="text" id="last_name" name="last_name" value="{{ $claim->last_name }}" class="form-control">
+                            <input type="text" id="last_name" name="last_name" value="{{ old('last_name', $claim->last_name) }}" class="form-control">
                             @if ($errors->has('last_name'))
                                 <span class="text-danger">{{ $errors->first('last_name') }}</span>
                             @endif
@@ -38,14 +38,14 @@
                     <div class="item form-group">
                         <div class="col">
                             <span class="col-form-label col-md-6 col-sm-6">Email Address <span class="required">*</span></span>
-                            <input type="text" id="email_address" name="email_address" value="{{ $claim->email_address }}" class="form-control">
+                            <input type="text" id="email_address" name="email_address" value="{{ old('email_address', $claim->email_address) }}" class="form-control">
                             @if ($errors->has('email_address'))
                                 <span class="text-danger">{{ $errors->first('email_address') }}</span>
                             @endif
                         </div>
                         <div class="col">
                             <span class="col-form-label col-md-6 col-sm-6">Phone Number <span class="required">*</span></span>
-                            <input type="text" id="phone_number" name="phone_number" value="{{ $claim->phone_number }}" class="form-control">
+                            <input type="text" id="phone_number" name="phone_number" value="{{ old('phone_number', $claim->phone_number) }}" class="form-control">
                             @if ($errors->has('phone_number'))
                                 <span class="text-danger">{{ $errors->first('phone_number') }}</span>
                             @endif
@@ -57,7 +57,10 @@
                             <select class="form-control" id='insurance_provider_id' name='insurance_provider_id'>
                             <option value=''></option>
                             @foreach($insuranceproviders as $insuranceprovider)
-                                <option {{ $claim->insurance_provider_id == $insuranceprovider->id ? 'selected' : '' }} value="{{ $insuranceprovider->id }}">{{ $insuranceprovider->text }}</option>
+                                <option value="{{$insuranceprovider->id}}" 
+                                {{ $insuranceprovider->id == old('insurance_provider_id',$claim->insurance_provider_id) ? 'selected' : ''}}>
+		                        {{ $insuranceprovider->text }}
+                                </option>
                             @endforeach
                             </select>
                             @if ($errors->has('insurance_provider_id'))
@@ -66,7 +69,7 @@
                         </div>
                         <div class="col">
                             <span class="col-form-label col-md-6 col-sm-6">Policy Number <span class="required">*</span></span>
-                            <input type="text" id="policy_number" name="policy_number" value="{{ $claim->policy_number }}" class="form-control">
+                            <input type="text" id="policy_number" name="policy_number" value="{{ old('policy_number', $claim->policy_number) }}" class="form-control">
                             @if ($errors->has('policy_number'))
                                 <span class="text-danger">{{ $errors->first('policy_number') }}</span>
                             @endif
@@ -75,14 +78,14 @@
                     <div class="item form-group">
                         <div class="col">
                             <span class="col-form-label col-md-6 col-sm-6">Additional Notes <span class="required">*</span></span>
-                            <textarea id="additional_notes" name="additional_notes" rows="4" cols="50" class="form-control">{{ $claim->additional_notes }}</textarea>
+                            <textarea id="additional_notes" name="additional_notes" rows="4" cols="50" class="form-control">{{ old('additional_notes', $claim->additional_notes) }}</textarea>
                             @if ($errors->has('additional_notes'))
                                 <span class="text-danger">{{ $errors->first('additional_notes') }}</span>
                             @endif
                         </div>
                         <div class="col">
                             <span class="col-form-label col-md-6 col-sm-6">Ticket Number <span class="required"></span></span>
-                            <input type="text" id="ticket_number" name="ticket_number" value="{{ $claim->ticket_number }}" class="form-control" readonly>
+                            <input type="text" id="ticket_number" name="ticket_number" value="{{ old('ticket_number', $claim->ticket_number) }}" class="form-control" readonly>
                             @if ($errors->has('ticket_number'))
                                 <span class="text-danger">{{ $errors->first('ticket_number') }}</span>
                             @endif
@@ -94,7 +97,10 @@
                             <select class="form-control" id='type_of_insurances_id' name='type_of_insurances_id'>
                             <option value=''></option>
                             @foreach($typeofinsurances as $typeofinsurance)
-                                <option {{ $claim->type_of_insurances_id == $typeofinsurance->id ? 'selected' : '' }} value="{{ $typeofinsurance->id }}" data-id="{{ $typeofinsurance->text }}">{{ $typeofinsurance->text }}</option>
+                                <option value="{{$typeofinsurance->id}}" data-id="{{ $typeofinsurance->text }}" 
+                                {{ $typeofinsurance->id == old('type_of_insurances_id',$claim->type_of_insurances_id) ? 'selected' : ''}}>
+		                        {{ $typeofinsurance->text }}
+                                </option>
                             @endforeach
                             </select>
                             @if ($errors->has('type_of_insurances_id'))
@@ -107,7 +113,10 @@
                             <select class="form-control" id='sub_type_of_insurance_id' name='sub_type_of_insurance_id'>
                             <option value=''></option>
                             @foreach($subtypeofinsurances as $subtypeofinsurance)
-                                <option {{ $claim->sub_type_of_insurance_id == $subtypeofinsurance->id ? 'selected' : '' }} value="{{ $subtypeofinsurance->id }}">{{ $subtypeofinsurance->text }}</option>
+                                <option value="{{$subtypeofinsurance->id}}" 
+                                {{ $subtypeofinsurance->id == old('sub_type_of_insurance_id',$claim->sub_type_of_insurance_id) ? 'selected' : ''}}>
+		                        {{ $subtypeofinsurance->text }}
+                                </option>
                             @endforeach
                             </select>
                             @if ($errors->has('sub_type_of_insurance_id'))
@@ -123,7 +132,10 @@
                             <option value=''></option>
                             @foreach($claimsstatuses as $claimsstatus)
                                 @if($claimsstatus->text != 'Settled')
-                                <option {{ $claim->claims_status_id == $claimsstatus->id ? 'selected' : '' }} value="{{ $claimsstatus->id }}">{{ $claimsstatus->text }}</option>
+                                    <option value="{{$claimsstatus->id}}" 
+                                    {{ $claimsstatus->id == old('claims_status_id',$claim->claims_status_id) ? 'selected' : ''}}>
+                                    {{ $claimsstatus->text }}
+                                    </option>
                                 @endif
                             @endforeach
                             </select>
@@ -136,9 +148,12 @@
                             <select class="form-control" id='assigned_to_id' name='assigned_to_id'>
                             <option value=''></option>
                             @foreach($advisors as $advisor)
-                            @if($claim->assigned_to_id == $advisor->id)
-                                <option {{ $claim->assigned_to_id == $advisor->id ? 'selected' : '' }} value="{{ $advisor->id }}">{{ $advisor->name }}</option>
-                            @endif
+                                @if($claim->assigned_to_id == $advisor->id)
+                                    <option value="{{$advisor->id}}" 
+                                    {{ $advisor->id == old('assigned_to_id',$claim->assigned_to_id) ? 'selected' : ''}}>
+                                    {{ $advisor->name }}
+                                    </option>
+                                @endif
                             @endforeach
                             </select>
                             @if ($errors->has('assigned_to_id'))
@@ -149,14 +164,14 @@
                     <div class="item form-group">
                         <div class="col">
                             <span class="col-form-label col-md-6 col-sm-6">Insurer Reference </span>
-                            <input type="text" id="insurer_reference" name="insurer_reference" value="{{ $claim->insurer_reference }}" class="form-control">
+                            <input type="text" id="insurer_reference" name="insurer_reference" value="{{ old('insurer_reference', $claim->insurer_reference) }}" class="form-control">
                             @if ($errors->has('insurer_reference'))
                                 <span class="text-danger">{{ $errors->first('insurer_reference') }}</span>
                             @endif
                         </div>
                         <div class="col">
                             <span class="col-form-label col-md-6 col-sm-6">Date of loss </span>
-                            <input type="text" id="datepicker" name="date_of_loss" value="{{ $claim->date_of_loss  }}" class="form-control">
+                            <input type="text" id="datepicker" name="date_of_loss" value="{{ old('date_of_loss', $claim->date_of_loss) }}" class="form-control">
                             @if ($errors->has('date_of_loss'))
                                 <span class="text-danger">{{ $errors->first('date_of_loss') }}</span>
                             @endif
@@ -165,7 +180,7 @@
                     <div class="item form-group">
                         <div class="col">
                             <span class="col-form-label col-md-6 col-sm-6">Claim Amount </span>
-                            <input type="text" id="claim_amount" name="claim_amount" value="{{ $claim->claim_amount }}" class="form-control">
+                            <input type="text" id="claim_amount" name="claim_amount" value="{{ old('claim_amount', $claim->claim_amount) }}" class="form-control">
                             @if ($errors->has('claim_amount'))
                                 <span class="text-danger">{{ $errors->first('claim_amount') }}</span>
                             @endif
@@ -181,7 +196,10 @@
                             <select class="form-control" id='car_make_id' name='car_make_id'>
                             <option value=''></option>
                             @foreach($carmakes as $carmake)
-                                <option {{ $claim->car_make_id == $carmake->id ? 'selected' : '' }} data-id="{{ $carmake['code'] }}" value="{{ $carmake->id }}">{{ $carmake->text }}</option>
+                                <option value="{{$carmake->id}}" data-id="{{ $carmake['code'] }}" 
+                                {{ $carmake->id == old('car_make_id',$claim->car_make_id) ? 'selected' : ''}}>
+                                {{ $carmake->text }}
+                                </option>
                             @endforeach
                             </select>
                             @if ($errors->has('car_make_id'))
@@ -193,7 +211,11 @@
                             <input type="hidden" value="{{ $claim->car_model_id }}" id="old_car_model_id" />
                             <select class="form-control" id='car_model_id' name='car_model_id'>
                             @foreach($carmodels as $carmodel)
-                                <option data-id="{{ $carmodel['code'] }}" value="{{ $carmodel->id }}">{{ $carmake->text }}</option>
+                                <option value="{{$carmodel->id}}" data-id="{{ $carmodel['code'] }}" 
+                                {{ $carmodel->id == old('car_model_id',$claim->car_model_id) ? 'selected' : ''}}>
+                                {{ $carmodel->text }}
+                                </option>
+                               {{--<option data-id="{{ $carmodel['code'] }}" value="{{ $carmodel->id }}">{{ $carmake->text }}</option>--}}
                             @endforeach
                             </select>
                             @if ($errors->has('car_model_id'))
@@ -207,7 +229,10 @@
                             <select class="form-control" id='car_repair_coverage_id' name='car_repair_coverage_id'>
                             <option value=''></option>
                             @foreach($carrepaircoverages as $carrepaircoverage)
-                                <option {{ $claim->car_repair_coverage_id == $carrepaircoverage->id ? 'selected' : '' }} value="{{ $carrepaircoverage->id }}">{{ $carrepaircoverage->text }}</option>
+                                <option value="{{$carrepaircoverage->id}}" 
+                                {{ $carrepaircoverage->id == old('car_repair_coverage_id',$claim->car_repair_coverage_id) ? 'selected' : ''}}>
+                                {{ $carrepaircoverage->text }}
+                                </option>
                             @endforeach
                             </select>
                             @if ($errors->has('car_repair_coverage_id'))
@@ -219,7 +244,10 @@
                             <select class="form-control" id='car_repair_type_id' name='car_repair_type_id'>
                             <option value=''></option>
                             @foreach($carrepairtypes as $carrepairtype)
-                                <option {{ $claim->car_repair_type_id == $carrepairtype->id ? 'selected' : '' }} value="{{ $carrepairtype->id }}">{{ $carrepairtype->text }}</option>
+                                <option value="{{$carrepairtype->id}}" 
+                                {{ $carrepairtype->id == old('car_repair_type_id',$claim->car_repair_type_id) ? 'selected' : ''}}>
+                                {{ $carrepairtype->text }}
+                                </option>
                             @endforeach
                             </select>
                             @if ($errors->has('car_repair_type_id'))
@@ -231,21 +259,16 @@
                         <div class="col">
                             <span class="col-form-label col-md-6 col-sm-6">Rent a Car
                             <br>
-                            <input type="checkbox" {{ $claim->is_rent_a_car ? 'checked' : '' }} class="flat" id='is_rent_a_car' name='is_rent_a_car'>
+                            @if ($claim->is_rent_a_car === 1)
+                            <input type="checkbox" name="is_rent_a_car" class="flat" checked="">
+                            @else
+                            <input type="checkbox" name="is_rent_a_car" class="flat" {{ old("is_rent_a_car") ? "checked" : "" }} >
+                            @endif
                             </span>
-                            {{--<select class="form-control" id='rent_a_car_id' name='rent_a_car_id'>
-                            <option value=''></option>
-                            @foreach($rentacars as $rentacar)
-                                <option {{ $claim->rent_a_car_id == $rentacar->id ? 'selected' : '' }} value="{{ $rentacar->id }}">{{ $rentacar->text }}</option>
-                            @endforeach
-                            </select>
-                            @if ($errors->has('rent_a_car_id'))
-                                <span class="text-danger">{{ $errors->first('rent_a_car_id') }}</span>
-                            @endif--}}
                         </div>
                         <div class="col">
                             <span class="col-form-label col-md-6 col-sm-6">Plate Number </span>
-                            <input type="text" id="plate_number" name="plate_number" value="{{ $claim->plate_number }}" class="form-control">
+                            <input type="text" id="plate_number" name="plate_number" value="{{ old('plate_number', $claim->plate_number) }}" class="form-control">
                             @if ($errors->has('plate_number'))
                                 <span class="text-danger">{{ $errors->first('plate_number') }}</span>
                             @endif
@@ -254,14 +277,14 @@
                     <div class="item form-group">
                         <div class="col">
                             <span class="col-form-label col-md-6 col-sm-6">Standard Excess payable </span>
-                            <input type="text" id="standard_excess_payable" name="standard_excess_payable" value="{{ $claim->standard_excess_payable }}" class="form-control">
+                            <input type="text" id="standard_excess_payable" name="standard_excess_payable" value="{{ old('standard_excess_payable', $claim->standard_excess_payable) }}" class="form-control">
                             @if ($errors->has('standard_excess_payable'))
                                 <span class="text-danger">{{ $errors->first('standard_excess_payable') }}</span>
                             @endif
                         </div>
                         <div class="col">
                             <span class="col-form-label col-md-6 col-sm-6">Liability </span>
-                            <input type="text" id="liability" name="liability" value="{{ $claim->liability }}" class="form-control">
+                            <input type="text" id="liability" name="liability" value="{{ old('liability', $claim->liability) }}" class="form-control">
                             @if ($errors->has('liability'))
                                 <span class="text-danger">{{ $errors->first('liability') }}</span>
                             @endif
@@ -270,7 +293,7 @@
                     <div class="item form-group">
                         <div class="col">
                             <span class="col-form-label col-md-6 col-sm-6">Workshop </span>
-                            <input type="text" id="workshop" name="workshop" value="{{ $claim->workshop }}" class="form-control">
+                            <input type="text" id="workshop" name="workshop" value="{{ old('workshop', $claim->workshop) }}" class="form-control">
                             @if ($errors->has('workshop'))
                                 <span class="text-danger">{{ $errors->first('workshop') }}</span>
                             @endif
@@ -285,7 +308,7 @@
                     <div class="row">
                         <div class="col-auto mr-auto"></div>
                         <div class="col-auto">
-                            <button type="submit" class="btn btn-warning btn-sm">Update & Continue Updating</button> <button type="submit" class="btn btn-warning btn-sm" id="return_to_view">Update</button>
+                            <button type="submit" class="btn btn-warning btn-sm">Update & Continue Editing</button> <button type="submit" class="btn btn-warning btn-sm" id="return_to_view">Update</button>
                         </div>
                     </div>
                 </form>
