@@ -72,7 +72,7 @@ return [
     |
     */
 
-    'connection' => env('mysql', null),
+    'connection' => env('SESSION_CONNECTION', null),
 
     /*
     |--------------------------------------------------------------------------
@@ -199,3 +199,6 @@ return [
     'same_site' => 'lax',
 
 ];
+
+
+//test
