@@ -14,6 +14,7 @@ class RewardTagController extends Controller
         $this->middleware('permission:reward-tags-list|reward-tags-create|reward-tags-edit|reward-tags-delete', ['only' => ['index', 'store']]);
         $this->middleware('permission:reward-tags-create', ['only' => ['create', 'store']]);
         $this->middleware('permission:reward-tags-edit', ['only' => ['edit', 'update']]);
+        //$this->middleware('permission:reward-tags-delete', ['only' => ['destroy']]);
         $this->middleware('permission:reward-tags-delete', ['only' => ['destroy']]);
     }
     /**
