@@ -1,4 +1,4 @@
-import React, {  useEffect, useState } from "react";
+import React, {  useRef, useState } from "react";
 import styled from "styled-components";
 import makeData from "./makeData";
 import Table from "../../components/table";
@@ -8,52 +8,96 @@ import useFetch from 'use-http'
 const Styles = styled.div` padding: 1rem;`;
 
 function LeadsList() {
+
+  const {page, setPage_ } = useState(0);
   const columns = React.useMemo(
     () => [
           {
-            Header: "Coupon Code",
-            accessor: "coupon_code",
+            Header: "COB ID",
+            accessor: "code",
             canSort:true
           },
+
           {
-            Header: "Active",
-            accessor: "is_active"
+            Header: "Client Name",
+            accessor: d => `${d.first_name} ${d.last_name}`
           },
           {
-            Header: "Discount",
-            accessor: "discount"
-          }
+            Header: "Email",
+            accessor: "email"
+          },
+          {
+            Header: "Contact Number",
+            accessor: "mobile_no"
+          },
+          {
+            Header: "Created on",
+            accessor: "created_at"
+          },
         ],
     []
 );
 
+
 const { get, loading, error, data = { data:[] } } = useFetch('http://127.0.0.1:8000/leads', options, [])
+const refOptions = useRef({});
+
+const nextPage = async () => {
+
+    console.log('-age')
+    await get(`?page=${page}`)
+    refOptions.current = {...refOptions.current, page:page + 1}
+}
+
+const prevPage = () => {
+    console.log('--------data prev----------')
+
+}
+
+const setPage = (page) => {
+    console.log('--------data prev----------')
+
+}
+
 const options = {
     url:'',
     filter: [
         {
             type:'text',
-            label:'Coupon Code',
-            field:'coupon_code',
+            label:'First Name',
+            field:'first_name',
             validation:{}
         },
-        // {
-        //     type:'text',
-        //     label:'First Name',
-        //     field:'first_name',
-        //     validation:{}
-        // },
-        // {
-        //     type:'text',
-        //     label:'Last Name',
-        //     field:'last_name',
-        //     validation:{}
-        // },
+        {
+            type:'text',
+            label:'Last Name',
+            field:'last_name',
+            validation:{}
+        },
+        {
+            type:'text',
+            label:'COB ID',
+            field:'code',
+            validation:{}
+        },
+        {
+            type:'text',
+            label:'Contact Number',
+            field:'mobile_no',
+            validation:{}
+        },
+        {
+            type:'text',
+            label:'Email',
+            field:'email',
+            validation:{}
+        },
         // {
         //     type: 'dropdown',
         //     label:'Month of Year',
         //     field:'year',
         //     data: [{ title: ' First Value', id: 1 }, { title: 'Second Value',  id: 2 }],
+         //      'api':'red'
         //     validation:{}
         // }
     ]
@@ -67,6 +111,7 @@ const doSearch = async (obj) => {
     console.log('--------doSearch----------')
     console.log(obj)
     console.log('--------doSearch----------')
+    options.current = {...options.current, filter:obj}
     await get(`?filter=${JSON.stringify(obj)}`)
 
 }
@@ -78,12 +123,17 @@ return (
                 <div className="x_panel">
                     <div className="x_title">
                         <h2>Leads <small>Information</small></h2>
+                        <ul className="nav navbar-right panel_toolbox">
+                        <li><i className="fa fa-plus" style={{paddingTop: 3}}></i>
+                            <a style={{display: 'inline'}}>New Lead</a>
+                        </li>
+                        </ul>
                         <div className="clearfix"></div>
                     </div>
                     <div className="x_content">
                     <TableFilter filter={options.filter} url={options.url} search={doSearch} />
                     </div>
-                    <Table columns={columns} data={data.data}  />
+                    <Table columns={columns} data={data.data} nextPage={nextPage}  prevPage={prevPage} setPage={setPage}/>
                 </div>
             </div>
       </div>

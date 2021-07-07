@@ -32,7 +32,7 @@ const onSubmit = data => search(data);
       <div className="ln_solid"></div>
         <div className="col-md-2 col-sm-2 offset-md-10">
             <button className="btn btn-primary" type="reset">Reset</button>
-            <button type="submit" class="btn btn-success">Submit</button>
+            <button type="submit" class="btn btn-success">Search</button>
         </div>
         </div>
 

@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
-import { useFilters, useTable,  useSortBy } from "react-table";
+import { useFilters, useTable,  useSortBy, usePagination } from "react-table";
 
 const Styles = styled.div`
 padding: 1rem;
 `;
 
-function Table({ columns, data }) {
+function Table({ columns, data, nextPage, prevPage, setPage }) {
   // Use the state and functions returned from useTable to build your UI
   const {
     getTableProps,
@@ -14,21 +14,21 @@ function Table({ columns, data }) {
     headerGroups,
     rows,
     prepareRow,
-    setFilter
   } = useTable(
     {
       columns,
       data
     },
-    useFilters,
     useSortBy
   );
 
   // Render the UI for your table
+
+
   return (
     <>
       <div className="table-responsive">
-      <table style={{ marginTop: 30 }} {...getTableProps()} className="table table-striped jambo_table bulk_action">
+      <table style={{ marginTop: 30 }} {...getTableProps()} className="table table-striped  ">
         <thead>
           {headerGroups.map((headerGroup) => (
             <tr {...headerGroup.getHeaderGroupProps()} className="headings">
@@ -62,6 +62,24 @@ function Table({ columns, data }) {
           })}
         </tbody>
       </table>
+
+      <div className="dataTables_paginate paging_simple_numbers">
+        <ul class="pagination">
+          <li class="paginate_button previous" style={{paddingRight: 2}}>
+              <a href="javascript:void(0)" onClick={prevPage} style={{borderRadius:7}}  >Previous</a>
+            </li>
+            <li>
+            <input className="form-control"
+                style={{width:80, marginTop:-8}}
+                type="number"
+
+            />
+            </li>
+            <li className="paginate_button next" style={{paddingLeft: 2}}>
+                <a href="javascript:void(0)" onClick={nextPage} style={{borderRadius:7}}>Next</a>
+            </li>
+        </ul>
+      </div>
       </div>
     </>
   );
