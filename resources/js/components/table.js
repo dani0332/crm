@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 import { useFilters, useTable,  useSortBy, usePagination } from "react-table";
+import { useHistory } from "react-router-dom";
 
 const Styles = styled.div`
 padding: 1rem;
@@ -8,6 +9,7 @@ padding: 1rem;
 
 function Table({ columns, data, nextPage, prevPage, setPage }) {
   // Use the state and functions returned from useTable to build your UI
+  const history = useHistory();
   const {
     getTableProps,
     getTableBodyProps,
@@ -51,7 +53,7 @@ function Table({ columns, data, nextPage, prevPage, setPage }) {
           {rows.map((row, i) => {
             prepareRow(row);
             return (
-              <tr {...row.getRowProps()}>
+              <tr style={{cursor:'pointer'}} {...row.getRowProps()} onClick={() => history.push("/about")}>
                 {row.cells.map((cell) => {
                   return (
                     <td {...cell.getCellProps()}>{cell.render("Cell")}</td>

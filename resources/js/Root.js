@@ -15,7 +15,14 @@ function Root() {
         <Router history={history}>
             <ThemeProvider theme={theme}>
                     {/* <DashboardFtcWizard /> */}
-                    <LeadsList />
+                <Switch>
+                    <Route path="/ftcform">
+                        <LeadsList />
+                    </Route>
+                    <Route path="/about">
+                        <DashboardFtcWizard />
+                    </Route>
+                </Switch>
             </ThemeProvider>
         </Router>
     </Provider>
