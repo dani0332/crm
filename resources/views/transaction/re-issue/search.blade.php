@@ -9,19 +9,22 @@
                 <div class="clearfix"></div>
             </div>
             <div class="x_content" id="form-to-show">
-            <br />
+                <br />
                 @if(session()->has('success'))
                     <div class="alert alert-success">{{ session()->get('success') }}</div>
                 @endif
-            <form method="get" action="{{ route($route) }}" id="search-transection" class="form-horizontal form-label-left" role="form" data-parsley-validate=""novalidate="">
+                @if(session()->has('message'))
+                    <div class="alert alert-danger">{{ session()->get('message') }}</div>
+                @endif
+            <form method="get" action="{{ route($route) }}" id="search-transection" class="form-horizontal form-label-left" role="form" data-parsley-validate=""novalidate="" autocomplete="off">
                 <div class="item form-group">
                     <label class="col-form-label col-md-2 col-sm-2" for="Approval Code">Approval Code<span class="required">*</span></label>
                     <div class="col-md-6 col-sm-6">
-                        <input class="form-control" name="approval_code" id="approval_code" value="{{ old('approval_code') }}" />
-                        <small class="text-muted">Please enter Approval Code to search transaction</small><br/>
                         @if ($errors->has('approval_code'))
                             <span class="text-danger">{{ $errors->first('approval_code') }}</span>
                         @endif
+                        <input class="form-control" name="approval_code" id="approval_code" value="{{ old('approval_code') }}" />
+                        <small class="text-muted">Please enter Approval Code to search transaction</small><br/>
                     </div>
                 </div>
                 <div class="item form-group">

@@ -34,10 +34,6 @@
                           <th>Handler</th>
                           <th>Mode Of Payment</th>
                           <th>Prev Approval Code</th>
-                          <th>Prev Tansaction Date</th>
-                          <th>Last Modified</th>
-                          <th>Status</th>
-                          <th>Comments</th>
                         </tr>
                       </thead>
 

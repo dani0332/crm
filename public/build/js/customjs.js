@@ -382,16 +382,6 @@ $(document).ready(function () {
             { data: "handler_name", name: "handler_name" },
             { data: "payment_mode", name: "payment_mode" },
             { data: "prev_approval_code", name: "prev_approval_code" },
-            { data: "prev_transaction_date", name: "prev_transaction_date" },
-            { data: "updated_at", name: "updated_at" },
-            { data: "status", name: "status" },
-            { data: "comments", name: "comments" },
-            // {
-            //     data: "action",
-            //     name: "action",
-            //     orderable: false,
-            //     searchable: false,
-            // },
         ],
     });
 

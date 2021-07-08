@@ -63,7 +63,7 @@
                         </div>
                     </div>
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Mode Of Payment">Mode Of Payment<span class="required">*</span></label>
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Mode of payment">Mode of payment<span class="required">*</span></label>
                         <div class="col-md-6 col-sm-6">
                             <select class="form-control" id="paymentmode" name="paymentmode">
                                 <option value="">Select</option>

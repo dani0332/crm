@@ -6,9 +6,9 @@
         <div class="x_panel">
             <div class="x_title">
                 <h2>Transaction Detail</h2>
-                 {{-- <ul class="nav navbar-right panel_toolbox">
-                    <li><a href="{{ route('transaction.index') }}" class="btn btn-warning btn-sm">Transaction List</a></li>
-                </ul> --}}
+                <ul class="nav navbar-right panel_toolbox">
+                    <li><a href="{{ route('transaction.index') }}" class="btn btn-warning btn-sm">Transactions List</a></li>
+                </ul>
                 <div class="clearfix"></div>
             </div>
             <div class="x_content">
@@ -21,33 +21,33 @@
                         </div>
                     </div>
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Transaction Date"><b>Transaction Date</b></label>
-                        <div class="col-md-6 col-sm-6">
-                            <p class="label-align-center">{{ $transaction->created_at }}</p>
-                        </div>
-                    </div>
-                    <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="Insurance Company"><b>Insurance Company</b></label>
                         <div class="col-md-6 col-sm-6">
                             <p class="label-align-center">{{ $transaction->insurance }}</p>
                         </div>
                     </div>
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Premium"><b>Premium</b></label>
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Paid Amount"><b>Paid Amount</b></label>
                         <div class="col-md-6 col-sm-6">
                             <p class="label-align-center">{{ $transaction->amount_paid }}</p>
                         </div>
                     </div>
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Risk"><b>Risk</b></label>
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Mode Of Payment"><b>Payment mode</b></label>
                         <div class="col-md-6 col-sm-6">
-                            <p class="label-align-center">{{ $transaction->risk_details }}</p>
+                            <p class="label-align-center">{{ $transaction->payment_mode }}</p>
                         </div>
                     </div>
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Transector"><b>Transector</b></label>
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Mode Of Payment"><b>Customer Name</b></label>
                         <div class="col-md-6 col-sm-6">
-                            <p class="label-align-center">{{ $transaction->createdby ? $transaction->createdby->name : '' }}</p>
+                            <p class="label-align-center">{{ $transaction->customer_name }}</p>
+                        </div>
+                    </div>
+                    <div class="item form-group">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Risk Details"><b>Risk Details</b></label>
+                        <div class="col-md-6 col-sm-6">
+                            <p class="label-align-center">{{ $transaction->risk_details }}</p>
                         </div>
                     </div>
                     <div class="item form-group">
@@ -57,15 +57,51 @@
                         </div>
                     </div>
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Mode Of Payment"><b>Mode Of Payment</b></label>
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Last Transactor"><b>Last Transactor</b></label>
                         <div class="col-md-6 col-sm-6">
-                            <p class="label-align-center">{{ $transaction->payment_mode }}</p>
+                            <p class="label-align-center">{{ $transaction->createdby ? $transaction->createdby->name : '' }}</p>
                         </div>
                     </div>
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Last Modified"><b>Last Modified</b></label>
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Last transaction date"><b>Last transaction date</b></label>
+                        <div class="col-md-6 col-sm-6">
+                            <p class="label-align-center">{{ $transaction->created_at }}</p>
+                        </div>
+                    </div>
+                    <div class="item form-group">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Last Modified By"><b>Last Modified By</b></label>
+                        <div class="col-md-6 col-sm-6">
+                            <p class="label-align-center">{{ $transaction->modifiedby ? $transaction->modifiedby->name : '' }}</p>
+                        </div>
+                    </div>
+                    <div class="item form-group">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Last Modified Date"><b>Last Modified Date</b></label>
                         <div class="col-md-6 col-sm-6">
                             <p class="label-align-center">{{ $transaction->updated_at }}</p>
+                        </div>
+                    </div>
+                    <div class="item form-group">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Status"><b>Status</b></label>
+                        <div class="col-md-6 col-sm-6">
+                            <p class="label-align-center">Nothing selected</p>
+                        </div>
+                    </div>
+                    <div class="item form-group">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Comments"><b>Comments</b></label>
+                        <div class="col-md-6 col-sm-6">
+                            <p class="label-align-center">{{ $transaction->comments }}</p>
+                        </div>
+                    </div>
+                    <div class="item form-group">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Status Modified Date"><b>Status Modified Date</b></label>
+                        <div class="col-md-6 col-sm-6">
+                            <p class="label-align-center">{{ $transaction->status_modified_date }}</p>
+                        </div>
+                    </div>
+                    <div class="item form-group">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Status Modified By"><b>Status Modified By</b></label>
+                        <div class="col-md-6 col-sm-6">
+                            <p class="label-align-center">{{ $transaction->status_modified_by }}</p>
                         </div>
                     </div>
                 </form>

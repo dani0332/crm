@@ -206,8 +206,7 @@ class TransactionController extends Controller
     public function destroy(Transaction $transaction)
     {
         $transaction->delete();
-        return redirect()->route('transaction.index')
-            ->with('success', 'Transaction deleted successfully');
+        return redirect()->route('transaction.index')->with('success', 'Transaction deleted successfully');
     }
 
     public function transectionHome(Request $request)
@@ -241,7 +240,15 @@ class TransactionController extends Controller
             }
         }
 
-        return view('transaction.show',compact('transaction'));
+        if(empty($transaction)) {
+            return redirect('transapp/home')->withErrors([
+                    'approval_code' => [__('Could not find any matching Transaction'),
+                ],
+            ]);
+        }
+        else {
+            return view('transaction.show',compact('transaction'));
+        }
     }
 
     public function cancelAndReIssueTransectionView(Request $request)
@@ -263,6 +270,15 @@ class TransactionController extends Controller
         $this->validate($request, [
             'approval_code' => 'required',
         ]);
+
+        $trans_assigned_to_id = DB::table('transactions')->where('approval_code', $request->approval_code)->value('assigned_to_id');
+
+        if(Auth::user()->hasRole('TRANSAPP_ADVISOR') || Auth::user()->hasRole('TRANSAPP_APPROVER')) {
+            if(Auth::user()->id != $trans_assigned_to_id) {
+                return redirect()->route('transaction.index')->with('message','Access Forbidden');
+            }
+        }
+
         $route = '';
         $title = '';
         if (\Request::route()->getName() == 'cancel_transaction_form') {
@@ -272,6 +288,18 @@ class TransactionController extends Controller
             $route = 're_issue';
             $title = 'Cancel & Re-Issue';
         }
+
+        if($route == 're_issue') { $route_to = 'reissue_view'; }
+        if($route == 'cancel') { $route_to = 'cancel_view'; }
+
+        $is_cancelled = DB::table('transactions')->where('approval_code', $request->approval_code)->value('is_cancelled');
+        if($is_cancelled == 1) {
+            return redirect()->route($route_to)->withErrors([
+                    'approval_code' => [__('Policy for Approval code '.$request->approval_code.' is not active'),
+                ],
+            ]);
+        }
+
         $insurancecompanies = InsuranceCompany::where('is_active', '=', 1)->orderBy('created_at', 'desc')->get();
         $paymentmodes = PaymentMode::where('is_active', '=', 1)->orderBy('created_at', 'desc')->get();
         $transaction = Transaction::where('approval_code', $request->approval_code)->get();
@@ -285,12 +313,12 @@ class TransactionController extends Controller
             $transaction = $transaction[0];
             return view('transaction.re-issue.form', compact('title','route', 'statuses', 'reasons', 'transaction', 'insurancecompanies', 'handlers', 'paymentmodes'));
         } else {
-            return redirect()->route('reissue_view')
-                ->withErrors([
-                    'approval_code' => [
-                        __('Approval code ' . $request->approval_code . ' not found'),
-                    ],
-                ]);
+            if($route == 're_issue') { $route_to = 'reissue_view'; }
+            if($route == 'cancel') { $route_to = 'cancel_view'; }
+            return redirect()->route($route_to)->withErrors([
+                    'approval_code' => [__('No transaction found for Approval code '.$request->approval_code),
+                ],
+            ]);
         }
     }
 
@@ -303,13 +331,15 @@ class TransactionController extends Controller
             'paymentmode' => 'required',
             'amount_paid' => 'required|max:8',
             'risk_detail' => 'required|max:2000',
-            'status' => 'required',
             'reason' => 'required',
         ]);
+
         $is_cancelled = \Request::route()->getName() == 'cancel' ? true : false;
+        $status_id = DB::table('statuses')->where('name', 'Inactive')->value('id');
 
         $previous_transaction = Transaction::where('approval_code', $request->approval_code)->first();
         $previous_transaction->is_cancelled=true;
+        $previous_transaction->status_id = $status_id;
         $previous_transaction->save();
         $transaction = new Transaction;
         $transaction->insurance_company_id = $request->insurance_company;
@@ -319,7 +349,7 @@ class TransactionController extends Controller
         $transaction->risk_details = $request->risk_detail;
         $transaction->amount_paid = $request->amount_paid;
         $transaction->reason_id = $request->reason;
-        $transaction->status_id = $request->status;
+        $transaction->comments = $request->comments;
         $transaction->created_by_id = Auth::user()->id;
         $transaction->modified_by_id = Auth::user()->id;
         $transaction->prev_approval_code = $previous_transaction->approval_code;
@@ -331,8 +361,7 @@ class TransactionController extends Controller
             $approval_code = $is_cancelled ? generate_code('C') : generate_code('CR');
             Transaction::where('id',$transaction->id)->update(['approval_code'=>$approval_code.$transaction->id]);
         }
-
-        return redirect("transapp/home")->with('success', 'Transaction added successfully, Approval code is '.$approval_code);
-        //return redirect("transapp/transaction");
+        $approval_code = DB::table('transactions')->where('id', $transaction->id)->value('approval_code');
+        return redirect("transapp/home")->with('success', 'Transaction added successfully, new Approval code is '.$approval_code);
     }
 }
