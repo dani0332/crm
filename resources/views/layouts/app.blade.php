@@ -190,7 +190,7 @@
             alert('Session has expired.')
             window.location = '/login';
         }
-        }); // testing
+        });
         $.fn.dataTable.ext.errMode = 'none'; // disable datatables error prompt
     </script>
 

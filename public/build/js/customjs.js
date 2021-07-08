@@ -378,20 +378,10 @@ $(document).ready(function () {
             { data: "amount_paid", name: "amount_paid" },
             { data: "customer_name", name: "customer_name" },
             { data: "risk_details", name: "risk_details" },
-            { data: "created_by", name: "created_by" },
-            { data: "handler", name: "handler" },
+            { data: "created_by_name", name: "created_by_name" },
+            { data: "handler_name", name: "handler_name" },
             { data: "payment_mode", name: "payment_mode" },
             { data: "prev_approval_code", name: "prev_approval_code" },
-            { data: "prev_transaction_date", name: "prev_transaction_date" },
-            { data: "updated_at", name: "updated_at" },
-            { data: "status", name: "status" },
-            { data: "comments", name: "comments" },
-            // {
-            //     data: "action",
-            //     name: "action",
-            //     orderable: false,
-            //     searchable: false,
-            // },
         ],
     });
 

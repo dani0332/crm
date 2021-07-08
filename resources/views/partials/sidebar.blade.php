@@ -60,9 +60,9 @@
                         @can('insurance-company-list')
                             <li><a href="{{ route('insurancecompany.index') }}">Insurance Company</a></li>
                         @endcan
-                        @can('handler-list')
+                        {{-- @can('handler-list')
                             <li><a href="{{ route('handler.index') }}">Handler</a></li>
-                        @endcan
+                        @endcan --}}
                         @can('reason-list')
                             <li><a href="{{ route('reason.index') }}">Reason</a></li>
                         @endcan
@@ -78,10 +78,13 @@
                 @can('transapp-list')
                     <li><a href="#">Transaction <span class="fa fa-chevron-down"></span></a>
                         <ul class="nav child_menu">
-
+                            @can('transapp-create')
                             <li class="sub_menu"><a href="{{ route('transaction.create') }}">Create a Transaction </a></li>
+                            @endcan
+                            @can('transapp-edit')
                             <li class="sub_menu"><a href="{{ route('reissue_view') }}">Cancel & Re-Issue Transaction </a></li>
                             <li class="sub_menu"><a href="{{ route('cancel_view') }}">Cancel Transaction (without re-issue) </a></li>
+                            @endcan
                         </ul>
                     </li>
                 @endcan
