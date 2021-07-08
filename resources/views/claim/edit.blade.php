@@ -7,7 +7,7 @@
             <div class="x_title">
                 <h2>Edit Claim</h2>
                 <ul class="nav navbar-right panel_toolbox">
-                    <li><a href="{{ route('claims.index') }}" class="btn btn-warning">Claims List</a></li>
+                    <li><a href="{{ route('claims.index') }}" id="" class="btn btn-warning">Claims List</a></li>
                 </ul>
                 <div class="clearfix"></div>
             </div>
