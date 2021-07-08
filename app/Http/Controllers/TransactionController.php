@@ -12,6 +12,7 @@ use Auth;
 use DataTables;
 use Illuminate\Http\Request;
 use App\Models\User;
+use DB;
 
 class TransactionController extends Controller
 {
@@ -93,6 +94,8 @@ class TransactionController extends Controller
             'risk_detail' => 'required|max:2000',
         ]);
 
+        $status_id = DB::table('statuses')->where('name', 'Active')->value('id');
+
         $transaction = new Transaction;
         $transaction->insurance_company_id = $request->insurance_company;
         $transaction->customer_name = $request->customer_name;
@@ -102,14 +105,13 @@ class TransactionController extends Controller
         $transaction->payment_mode_id = $request->paymentmode;
         $transaction->risk_details = $request->risk_detail;
         $transaction->amount_paid = $request->amount_paid;
+        $transaction->status_id = $status_id;
         $transaction->save();
-        if($transaction->save()){
+        if($transaction->save()) {
             Transaction::where('id',$transaction->id)->update(['approval_code'=>generate_code('T').$transaction->id]);
         }
-        if (isset($request->return_to_view)) {
-            return redirect("transapp/transaction")->with('success', 'Transaction created successfully');
-        }
-        return redirect()->back()->with('success', 'Transaction created successfully');
+        $approval_code = DB::table('transactions')->where('id', $transaction->id)->value('approval_code');
+        return redirect("transapp/home")->with('success', 'Transaction added successfully, Approval code is '.$approval_code);
     }
 
     /**
@@ -321,15 +323,16 @@ class TransactionController extends Controller
         $transaction->created_by_id = Auth::user()->id;
         $transaction->modified_by_id = Auth::user()->id;
         $transaction->prev_approval_code = $previous_transaction->approval_code;
-        if($is_cancelled)
+        if($is_cancelled) {
             $transaction->is_cancelled=true;
+        }
         $transaction->prev_transaction_date = $previous_transaction->created_at;
-        if($transaction->save())
-        {
+        if($transaction->save()) {
             $approval_code = $is_cancelled ? generate_code('C') : generate_code('CR');
             Transaction::where('id',$transaction->id)->update(['approval_code'=>$approval_code.$transaction->id]);
         }
 
-        return redirect("transapp/transaction");
+        return redirect("transapp/home")->with('success', 'Transaction added successfully, Approval code is '.$approval_code);
+        //return redirect("transapp/transaction");
     }
 }

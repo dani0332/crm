@@ -9,6 +9,10 @@
                 <div class="clearfix"></div>
             </div>
             <div class="x_content" id="form-to-show">
+            <br />
+                @if(session()->has('success'))
+                    <div class="alert alert-success">{{ session()->get('success') }}</div>
+                @endif
             <form method="get" action="{{ route($route) }}" id="search-transection" class="form-horizontal form-label-left" role="form" data-parsley-validate=""novalidate="">
                 <div class="item form-group">
                     <label class="col-form-label col-md-2 col-sm-2" for="Approval Code">Approval Code<span class="required">*</span></label>
