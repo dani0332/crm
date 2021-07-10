@@ -3,9 +3,11 @@ import styled from "styled-components";
 import makeData from "./makeData";
 import Table from "../../components/table";
 import TableFilter from "../../components/table-filter-form";
+import SubNaV from "../../components/sub-nav";
 import useFetch from 'use-http'
 
-const Styles = styled.div` padding: 1rem;`;
+
+const Styles = styled.div``;
 
 function LeadsList() {
 
@@ -13,7 +15,7 @@ function LeadsList() {
   const columns = React.useMemo(
     () => [
           {
-            Header: "COB ID",
+            Header: "CDB ID",
             accessor: "code",
             canSort:true
           },
@@ -38,8 +40,8 @@ function LeadsList() {
     []
 );
 
-
-const { get, loading, error, data = { data:[] } } = useFetch('http://127.0.0.1:8000/leads', options, [])
+const [data, setData] = useState({data:[]})
+const { get, loading, error } = useFetch()
 const refOptions = useRef({});
 
 const nextPage = async () => {
@@ -64,26 +66,8 @@ const options = {
     filter: [
         {
             type:'text',
-            label:'First Name',
-            field:'first_name',
-            validation:{}
-        },
-        {
-            type:'text',
-            label:'Last Name',
-            field:'last_name',
-            validation:{}
-        },
-        {
-            type:'text',
-            label:'COB ID',
+            label:'CDB ID',
             field:'code',
-            validation:{}
-        },
-        {
-            type:'text',
-            label:'Contact Number',
-            field:'mobile_no',
             validation:{}
         },
         {
@@ -91,15 +75,7 @@ const options = {
             label:'Email',
             field:'email',
             validation:{}
-        },
-        // {
-        //     type: 'dropdown',
-        //     label:'Month of Year',
-        //     field:'year',
-        //     data: [{ title: ' First Value', id: 1 }, { title: 'Second Value',  id: 2 }],
-         //      'api':'red'
-        //     validation:{}
-        // }
+        }
     ]
 };
 
@@ -112,15 +88,19 @@ const doSearch = async (obj) => {
     console.log(obj)
     console.log('--------doSearch----------')
     options.current = {...options.current, filter:obj}
-    await get(`?filter=${JSON.stringify(obj)}`)
+    const respose = await get(`leads?filter=${JSON.stringify(obj)}`)
+    setData(respose)
 
 }
 
 return (
     <Styles>
-      <div className="row">
-            <div className="col-md-12 col-sm-12 ">
-                <div className="x_panel">
+      <div className="row x_panel">
+            <div className="col-md-2 col-sm-2">
+                <SubNaV />
+            </div>
+            <div className="col-md-10 col-sm-10 ">
+                <div className="">
                     <div className="x_title">
                         <h2>Leads <small>Information</small></h2>
                         <ul className="nav navbar-right panel_toolbox">
