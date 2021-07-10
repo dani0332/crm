@@ -66,8 +66,8 @@ function Table({ columns, data, nextPage, prevPage, setPage }) {
       </table>
 
       <div className="dataTables_paginate paging_simple_numbers">
-        <ul class="pagination">
-          <li class="paginate_button previous" style={{paddingRight: 2}}>
+        <ul className="pagination">
+          <li className="paginate_button previous" style={{paddingRight: 2}}>
               <a href="javascript:void(0)" onClick={prevPage} style={{borderRadius:7}}  >Previous</a>
             </li>
             <li>
