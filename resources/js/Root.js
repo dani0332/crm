@@ -8,6 +8,7 @@ import { Provider } from 'react-redux'
 import { store } from './redux/getStore'
 import DashboardFtcWizard from './modules/ftc-forms/dashboard'
 import LeadsList from './modules/ftc-forms/leads-list';
+import LeadSnapShot from './modules/ftc-forms/snaphot';
 
 function Root() {
     return (
@@ -20,7 +21,7 @@ function Root() {
                         <LeadsList />
                     </Route>
                     <Route path="/about">
-                        <DashboardFtcWizard />
+                        <LeadSnapShot />
                     </Route>
                 </Switch>
             </ThemeProvider>

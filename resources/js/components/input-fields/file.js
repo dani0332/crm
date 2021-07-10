@@ -44,6 +44,8 @@ export default function File({field,register}) {
       } = useDropzone({
           accept: 'image/*',
           onDrop: acceptedFiles => {
+
+            console.log(acceptedFiles)
             setFiles(acceptedFiles.map(file => Object.assign(file, {
               preview: URL.createObjectURL(file)
             })));
@@ -54,6 +56,7 @@ export default function File({field,register}) {
     <li key={file.path}>
         <a>
         <span className="image"><img src={file.preview} style={{height:90,width:'auto'}}/></span>
+        <span>{file.name}</span>
         <span>
             <span className="time"><a className="close-link" onClick={()=>console.log('close')}><i className="fa fa-close"></i></a></span>
         </span>

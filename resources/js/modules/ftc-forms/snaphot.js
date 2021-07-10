@@ -61,6 +61,15 @@ const form = {
             type:'file',
             label:'documents',
             field:'document'
+        },
+        {
+            type:'dropdown',
+            label:'Source Array',
+            field:'source',
+           // source: 'leads',
+            //template: ` `
+            //source: [{ id: 1, title: 'One' }, { id: 2, title: 'Two' }]
+            source: ["One", "Two", "Three"]
         }
 
     ],
