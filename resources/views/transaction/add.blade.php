@@ -49,7 +49,7 @@
                             <select class="form-control" id='assigned_to_id' name='assigned_to_id'>
                             <option value=''></option>
                             @foreach($handlers as $handler)
-                                @if (old('assigned_to_id') == $handler->id)
+                                @if (old('assigned_to_id') == $handler->id || $handler->id == Auth::user()->id)
                                     <option value="{{ $handler->id }}" selected>{{ $handler->name }}</option>
                                 @else
                                     <option value="{{ $handler->id }}">{{ $handler->name }}</option>
