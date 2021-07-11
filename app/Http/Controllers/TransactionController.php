@@ -36,6 +36,20 @@ class TransactionController extends Controller
      */
     public function index(Request $request)
     {
+        $transactors = User::select('users.*')
+        ->leftjoin('model_has_roles','users.id','model_has_roles.model_id')
+        ->leftjoin('roles','roles.id','model_has_roles.role_id')
+        ->whereIn('roles.name', ['TRANSAPP_ADVISOR', 'TRANSAPP_APPROVER', 'TRANSAPP_ADMIN'])->orderBy('roles.name', 'asc')->get();
+
+        $handlers = User::select('users.*')
+        ->leftjoin('model_has_roles','users.id','model_has_roles.model_id')
+        ->leftjoin('roles','roles.id','model_has_roles.role_id')
+        ->whereIn('roles.name', ['TRANSAPP_ADVISOR', 'TRANSAPP_APPROVER', 'TRANSAPP_ADMIN'])->orderBy('roles.name', 'asc')->get();
+
+        $insurance_companies = InsuranceCompany::where('is_active', '=', 1)->orderBy('created_at', 'desc')->get();
+        $payment_modes = PaymentMode::where('is_active', '=', 1)->orderBy('created_at', 'desc')->get();
+        $reasons = Reason::where('is_active', '=', 1)->orderBy('created_at', 'desc')->get();
+
         if ($request->ajax()) {
 
             $data = Transaction::select('transactions.*', 'statuses.name as status', 'insurance_companies.name as insurance', 
@@ -50,6 +64,28 @@ class TransactionController extends Controller
                 $data->where('transactions.assigned_to_id', Auth::user()->id);
             }
 
+            if (isset($request->transapp_start_date) && !empty($request->transapp_start_date)
+            && isset($request->transapp_stop_date) && !empty($request->transapp_stop_date)) {
+                $data->where('transactions.created_at', '>=', $request->transapp_start_date);
+                $data->where('transactions.created_at', '<=', $request->transapp_stop_date);
+            }
+
+            if(isset($request->transactor) && !empty($request->transactor)) {
+                $data->where('transactions.created_by_id', $request->transactor);
+            }
+            if(isset($request->handler) && !empty($request->handler)) {
+                $data->where('transactions.assigned_to_id', $request->handler);
+            }
+            if(isset($request->insurance_company) && !empty($request->insurance_company)) {
+                $data->where('transactions.insurance_company_id', $request->insurance_company);
+            }
+            if(isset($request->reason) && !empty($request->reason)) {
+                $data->where('transactions.reason_id', $request->reason);
+            }
+            if(isset($request->payment_mode) && !empty($request->payment_mode)) {
+                $data->where('transactions.payment_mode_id', $request->payment_mode);
+            }
+
             return Datatables::of($data)
             ->addIndexColumn()
             ->addColumn('action', function ($row) {
@@ -58,7 +94,8 @@ class TransactionController extends Controller
             ->rawColumns(['action'])
             ->make(true);
         }
-        return view('transaction.view');
+        return view('transaction.view',compact('transactors','handlers','insurance_companies','payment_modes','reasons'));
+        //return view('transaction.view');
     }
 
     /**
@@ -236,7 +273,10 @@ class TransactionController extends Controller
 
         if(Auth::user()->hasRole('TRANSAPP_ADVISOR') || Auth::user()->hasRole('TRANSAPP_APPROVER')) {
             if(Auth::user()->id != $transaction->assigned_to_id) {
-                return redirect()->route('transaction.index')->with('message','Access Forbidden');
+                return redirect('transapp/home')->withErrors([
+                    'approval_code' => [__('Access Forbidden'),
+                ],
+                ]);
             }
         }
 
@@ -273,12 +313,6 @@ class TransactionController extends Controller
 
         $trans_assigned_to_id = DB::table('transactions')->where('approval_code', $request->approval_code)->value('assigned_to_id');
 
-        if(Auth::user()->hasRole('TRANSAPP_ADVISOR') || Auth::user()->hasRole('TRANSAPP_APPROVER')) {
-            if(Auth::user()->id != $trans_assigned_to_id) {
-                return redirect()->route('transaction.index')->with('message','Access Forbidden');
-            }
-        }
-
         $route = '';
         $title = '';
         if (\Request::route()->getName() == 'cancel_transaction_form') {
@@ -291,6 +325,15 @@ class TransactionController extends Controller
 
         if($route == 're_issue') { $route_to = 'reissue_view'; }
         if($route == 'cancel') { $route_to = 'cancel_view'; }
+
+        if(Auth::user()->hasRole('TRANSAPP_ADVISOR') || Auth::user()->hasRole('TRANSAPP_APPROVER')) {
+            if(Auth::user()->id != $trans_assigned_to_id) {
+                return redirect()->route($route_to)->withErrors([
+                    'approval_code' => [__('Access Forbidden'),
+                ],
+                ]);
+            }
+        }
 
         $is_cancelled = DB::table('transactions')->where('approval_code', $request->approval_code)->value('is_cancelled');
         if($is_cancelled == 1) {
