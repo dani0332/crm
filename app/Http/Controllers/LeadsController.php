@@ -24,10 +24,11 @@ class LeadsController extends ApiController
     {
         try {
 
-
+            $form = $request->form;
             $filters = $request->query('filter') ? json_decode($request->query('filter'), true) : [];
+           // dd($request->query('filter'));exit;
             //['coupon_code' => 'fsd', 'is_active' => 1, 'discount' => 0];
-            $response = $this->service->getLeadListWithFilter($filters);
+            $response = $this->service->getLeadListWithFilter($filters,$form);
             return $this->respondData($response);
         } catch (Exception $e) {
             return $this->respondError($e->getMessage());

@@ -59,7 +59,20 @@ Route::get('google/callback', 'App\Http\Controllers\GoogleSocialiteController@ha
 Route::middleware(['auth:sanctum', 'verified'])
     ->get('/home', function(){
         return view('home');
-    });
+});
+
+
+Route::group(['middleware' =>  ['auth']], function(){
+    Route::resource('customer', CustomerController::class);
+});
+//     ->get('/home', function(){
+//         return view('home');
+// });
+
+
+
+
+
 Route::get('/dashboard',[DashboardController::class, 'index'])->name('dashboard');
 
 Route::post('dashboard-stats', [DashboardController::class, 'dashboardStats']);
@@ -100,7 +113,7 @@ Route::group(['prefix' => 'transapp'], function () {
 
 });
 
-Route::resource('customer', CustomerController::class);
+//Route::resource('customer', CustomerController::class);
 Route::resource('ftcform', FtcFormController::class);
 
 Route::group(['prefix' => 'qoutes'], function() {
@@ -126,6 +139,6 @@ Route::post('auditable', [AuditableController::class, 'loadAuditableComponent'])
 
 /***** RestAPI */
 
-Route::group(['prefix' => 'leads'], function()use($router) {
-    Route::GET('/', [LeadsController::class,'index']);
+Route::group(['prefix' => 'form'], function()use($router) {
+    Route::GET('/{form}', [LeadsController::class,'index']);
 });
