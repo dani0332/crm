@@ -21,6 +21,17 @@
                             @endif
                         </div>
                     </div>
+                    @if ($transaction->prev_approval_code)
+                    <div class="item form-group">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Previous Approval Code">Previous Approval Code <span class="required">*</span></label>
+                        <div class="col-md-6 col-sm-6">
+                            <input type="text" id="prev_approval_code" name="prev_approval_code" value="{{ $transaction->prev_approval_code }}" class="form-control" readonly/>
+                            @if ($errors->has('prev_approval_code'))
+                                <span class="text-danger">{{ $errors->first('prev_approval_code') }}</span>
+                            @endif
+                        </div>
+                    </div>
+                    @endif
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="Insurance Company">Insurance Company <span class="required">*</span></label>
                         <div class="col-md-6 col-sm-6">

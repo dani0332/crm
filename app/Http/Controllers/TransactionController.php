@@ -127,7 +127,7 @@ class TransactionController extends Controller
             'customer_name' => 'required|max:150',
             'assigned_to_id' => 'required',
             'paymentmode' => 'required',
-            'amount_paid' => 'required|max:8',
+            'amount_paid' => "required|max:12|regex:/^\d*(\.\d{1,2})?$/",
             'risk_detail' => 'required|max:2000',
         ]);
 
@@ -217,7 +217,7 @@ class TransactionController extends Controller
             'customer_name' => 'required|max:150',
             'assigned_to_id' => 'required',
             'paymentmode' => 'required',
-            'amount_paid' => 'required|max:8',
+            'amount_paid' => "required|max:12|regex:/^\d*(\.\d{1,2})?$/",
             'risk_detail' => 'required|max:2000',
         ]);
 
@@ -372,7 +372,7 @@ class TransactionController extends Controller
             'customer_name' => 'required|max:150',
             'assigned_to_id' => 'required',
             'paymentmode' => 'required',
-            'amount_paid' => 'required|max:8',
+            'amount_paid' => "required|max:12|regex:/^\d*(\.\d{1,2})?$/",
             'risk_detail' => 'required|max:2000',
             'reason' => 'required',
         ]);

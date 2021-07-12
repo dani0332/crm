@@ -7,7 +7,7 @@
             <div class="x_title">
                 <h2>Transaction Detail</h2>
                 <ul class="nav navbar-right panel_toolbox">
-                    <li><a href="{{ route('transaction.index') }}" class="btn btn-warning btn-sm">Transactions List</a></li>
+                    <li><a href="{{ route('home') }}" class="btn btn-warning btn-sm">Go back</a></li>
                 </ul>
                 <div class="clearfix"></div>
             </div>
@@ -20,6 +20,14 @@
                             <p class="label-align-center">{{ $transaction->approval_code }}</p>
                         </div>
                     </div>
+                    @if ($transaction->prev_approval_code)
+                    <div class="item form-group">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Previous Approval Code"><b>Previous Approval Code</b></label>
+                        <div class="col-md-6 col-sm-6">
+                            <p class="label-align-center">{{ $transaction->prev_approval_code }}</p>
+                        </div>
+                    </div>
+                    @endif
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="Insurance Company"><b>Insurance Company</b></label>
                         <div class="col-md-6 col-sm-6">
@@ -69,39 +77,9 @@
                         </div>
                     </div>
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Last Modified By"><b>Last Modified By</b></label>
-                        <div class="col-md-6 col-sm-6">
-                            <p class="label-align-center">{{ $transaction->modifiedby ? $transaction->modifiedby->name : '' }}</p>
-                        </div>
-                    </div>
-                    <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Last Modified Date"><b>Last Modified Date</b></label>
-                        <div class="col-md-6 col-sm-6">
-                            <p class="label-align-center">{{ $transaction->updated_at }}</p>
-                        </div>
-                    </div>
-                    <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Status"><b>Status</b></label>
-                        <div class="col-md-6 col-sm-6">
-                            <p class="label-align-center">Nothing selected</p>
-                        </div>
-                    </div>
-                    <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="Comments"><b>Comments</b></label>
                         <div class="col-md-6 col-sm-6">
                             <p class="label-align-center">{{ $transaction->comments }}</p>
-                        </div>
-                    </div>
-                    <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Status Modified Date"><b>Status Modified Date</b></label>
-                        <div class="col-md-6 col-sm-6">
-                            <p class="label-align-center">{{ $transaction->status_modified_date }}</p>
-                        </div>
-                    </div>
-                    <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Status Modified By"><b>Status Modified By</b></label>
-                        <div class="col-md-6 col-sm-6">
-                            <p class="label-align-center">{{ $transaction->status_modified_by }}</p>
                         </div>
                     </div>
                 </form>
@@ -109,11 +87,4 @@
         </div>
     </div>
 </div>
-@can('auditable')
-    <div id="auditable">
-        <button id='auditablebtn' class="btn btn-warning btn-sm auditablebtn" data-id="{{ $transaction->id }}" data-model="App\Models\Transaction">
-            View Audit Logs
-        </button>
-    </div>
-@endcan
 @endsection

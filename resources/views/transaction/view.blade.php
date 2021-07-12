@@ -5,12 +5,7 @@
     <div class="col-md-12 col-sm-12">
         <div class="x_panel">
             <div class="x_title">
-                <h2>Transactions</h2>
-                @can('transapp-create')
-                <ul class="nav navbar-right panel_toolbox">
-                    <li><a href="{{ route('transaction.create') }}" class="btn btn-warning btn-sm">Create Transaction</a></li>
-                </ul>
-                @endcan
+                <h2>Transaction List</h2>
                 <div class="clearfix"></div>
             </div>
             <div class="x_content">
