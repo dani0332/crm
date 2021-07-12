@@ -28,6 +28,7 @@
                             </div>
                         </div>
                     </div>
+                    @if(!Auth::user()->hasRole('TRANSAPP_ADVISOR') && !Auth::user()->hasRole('TRANSAPP_APPROVER'))
                     <div class="item form-group">
                         <div class="col">
                             <label class="col-form-label col-md-2 col-sm-2" id='created_by_id' for="Transactor">Transactor</label>
@@ -56,6 +57,7 @@
                             </div>
                         </div>
                     </div>
+                    @endif
                     <div class="item form-group">
                         <div class="col">
                             <label class="col-form-label col-md-2 col-sm-2" id='insurance_company_id' for="Insurance Company">Insurance Company</label>

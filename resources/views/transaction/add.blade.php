@@ -43,6 +43,10 @@
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="Handler">Handler<span class="required">*</span></label>
                         <div class="col-md-6 col-sm-6">
+                        @if(Auth::user()->hasRole('TRANSAPP_APPROVER'))
+                        <input type="text" value="{{ Auth::user()->name }}" class="form-control" readonly/>
+                        <input type="hidden" id="assigned_to_id" name="assigned_to_id" value="{{ Auth::user()->id }}" />
+                        @else
                             <select class="form-control" id='assigned_to_id' name='assigned_to_id'>
                             <option value=''></option>
                             @foreach($handlers as $handler)
@@ -53,6 +57,7 @@
                                 @endif
                             @endforeach
                             </select>
+                            @endif
                             <small class="text-muted">Please select Handler name</small><br/>
                             @if ($errors->has('assigned_to_id'))
                                 <span class="text-danger">{{ $errors->first('assigned_to_id') }}</span>

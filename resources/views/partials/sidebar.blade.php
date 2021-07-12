@@ -57,7 +57,7 @@
         <ul class="nav side-menu">
             <li><a><i class="fa fa-desktop"></i> Trans App <span class="fa fa-chevron-down"></span></a>
             <ul class="nav child_menu">
-                <li><a href="{{ route('home') }}">Home</a></li>
+                <li><a href="{{ route('home') }}">Search Transaction</a></li>
                 @can('transapp-create')
                 <li><a href="{{ route('transaction.create') }}">Create Transaction</a></li>
                 @endcan
