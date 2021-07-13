@@ -31,7 +31,7 @@ class ReasonController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $data = Reason::select('*')->orderBy('created_at','desc');
+            $data = Reason::select('*')->where('is_deleted', 0)->orderBy('created_at','desc');
             return Datatables::of($data)
                 ->addIndexColumn()
                 ->addColumn('action', function ($row) {
@@ -130,7 +130,8 @@ class ReasonController extends Controller
      */
     public function destroy(Reason $reason)
     {
-        $reason->delete();
+        $reason->is_deleted = 1;
+        $reason->save();
         return redirect()->route('reason.index')->with('message','Reason Description has been deleted');
     }
 }

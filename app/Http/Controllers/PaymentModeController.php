@@ -30,7 +30,7 @@ class PaymentModeController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $data = PaymentMode::select('*')->orderBy('created_at','desc');
+            $data = PaymentMode::select('*')->where('is_deleted', 0)->orderBy('created_at','desc');
             return Datatables::of($data)
                 ->addIndexColumn()
                 ->addColumn('action', function ($row) {
@@ -129,7 +129,8 @@ class PaymentModeController extends Controller
      */
     public function destroy(PaymentMode $paymentmode)
     {
-        $paymentmode->delete();
+        $paymentmode->is_deleted = 1;
+        $paymentmode->save();
         return redirect()->route('paymentmode.index')->with('message','Payment Mode has been deleted');
     }
 }

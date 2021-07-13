@@ -46,9 +46,9 @@ class TransactionController extends Controller
         ->leftjoin('roles','roles.id','model_has_roles.role_id')
         ->whereIn('roles.name', ['TRANSAPP_ADVISOR', 'TRANSAPP_APPROVER', 'TRANSAPP_ADMIN'])->orderBy('roles.name', 'asc')->get();
 
-        $insurance_companies = InsuranceCompany::where('is_active', '=', 1)->orderBy('created_at', 'desc')->get();
-        $payment_modes = PaymentMode::where('is_active', '=', 1)->orderBy('created_at', 'desc')->get();
-        $reasons = Reason::where('is_active', '=', 1)->orderBy('created_at', 'desc')->get();
+        $insurance_companies = InsuranceCompany::where('is_active', '=', 1)->where('is_deleted', 0)->orderBy('created_at', 'desc')->get();
+        $payment_modes = PaymentMode::where('is_active', '=', 1)->where('is_deleted', 0)->orderBy('created_at', 'desc')->get();
+        $reasons = Reason::where('is_active', '=', 1)->where('is_deleted', 0)->orderBy('created_at', 'desc')->get();
 
         if ($request->ajax()) {
 
@@ -58,7 +58,8 @@ class TransactionController extends Controller
             ->leftjoin('users as handlers', 'transactions.assigned_to_id','handlers.id')
             ->leftjoin('users as creaters', 'transactions.created_by_id','creaters.id')
             ->leftjoin('payment_modes', 'payment_modes.id', 'transactions.payment_mode_id')
-            ->leftjoin('statuses', 'statuses.id', 'transactions.status_id')->orderBy('transactions.created_at','desc');
+            ->leftjoin('statuses', 'statuses.id', 'transactions.status_id')->orderBy('transactions.created_at','desc')
+            ->where('transactions.is_deleted', 0);
 
             if(Auth::user()->hasRole('TRANSAPP_ADVISOR') || Auth::user()->hasRole('TRANSAPP_APPROVER')) {
                 $data->where('transactions.assigned_to_id', Auth::user()->id);
@@ -109,8 +110,8 @@ class TransactionController extends Controller
         ->leftjoin('model_has_roles','users.id','model_has_roles.model_id')
         ->leftjoin('roles','roles.id','model_has_roles.role_id')
         ->whereIn('roles.name', ['TRANSAPP_ADVISOR', 'TRANSAPP_APPROVER', 'TRANSAPP_ADMIN'])->orderBy('roles.name', 'asc')->get();
-        $insurancecompanies = InsuranceCompany::where('is_active', '=', 1)->orderBy('created_at', 'desc')->get();
-        $paymentmodes = PaymentMode::where('is_active', '=', 1)->orderBy('created_at', 'desc')->get();
+        $insurancecompanies = InsuranceCompany::where('is_active', '=', 1)->where('is_deleted', 0)->orderBy('created_at', 'desc')->get();
+        $paymentmodes = PaymentMode::where('is_active', '=', 1)->where('is_deleted', 0)->orderBy('created_at', 'desc')->get();
         return view('transaction.add', compact('insurancecompanies', 'handlers', 'paymentmodes'));
     }
 
@@ -171,7 +172,7 @@ class TransactionController extends Controller
         ->leftjoin('users as handlers', 'transactions.assigned_to_id','handlers.id')
         ->leftjoin('users as creaters', 'transactions.created_by_id','creaters.id')
         ->leftjoin('payment_modes', 'payment_modes.id', 'transactions.payment_mode_id')
-        ->where('transactions.id', $transaction->id)->first();
+        ->where('transactions.id', $transaction->id)->where('transactions.is_deleted', 0)->first();
 
         if(Auth::user()->hasRole('TRANSAPP_ADVISOR') || Auth::user()->hasRole('TRANSAPP_APPROVER')) {
             $transaction->where('transactions.assigned_to_id', Auth::user()->id);
@@ -194,8 +195,8 @@ class TransactionController extends Controller
             }
         }
 
-        $insurancecompanies = InsuranceCompany::where('is_active', '=', 1)->orderBy('created_at', 'desc')->get();
-        $paymentmodes = PaymentMode::where('is_active', '=', 1)->orderBy('created_at', 'desc')->get();
+        $insurancecompanies = InsuranceCompany::where('is_active', '=', 1)->where('is_deleted', 0)->orderBy('created_at', 'desc')->get();
+        $paymentmodes = PaymentMode::where('is_active', '=', 1)->where('is_deleted', 0)->orderBy('created_at', 'desc')->get();
         $handlers = User::select('users.*')
         ->leftjoin('model_has_roles','users.id','model_has_roles.model_id')
         ->leftjoin('roles','roles.id','model_has_roles.role_id')
@@ -242,8 +243,9 @@ class TransactionController extends Controller
      */
     public function destroy(Transaction $transaction)
     {
-        $transaction->delete();
-        return redirect()->route('transaction.index')->with('success', 'Transaction deleted successfully');
+        $transaction->is_deleted = 1;
+        $transaction->save();
+        return redirect()->route("transaction.index")->with("message", "Transaction ".$transaction->approval_code." has been deleted");
     }
 
     public function transectionHome(Request $request)
@@ -265,7 +267,7 @@ class TransactionController extends Controller
         ->leftjoin('users as handlers', 'transactions.assigned_to_id','handlers.id')
         ->leftjoin('users as creaters', 'transactions.created_by_id','creaters.id')
         ->leftjoin('payment_modes', 'payment_modes.id', 'transactions.payment_mode_id')
-        ->where('approval_code', $request->approval_code)->first();
+        ->where('approval_code', $request->approval_code)->where('transactions.is_deleted', 0)->where('transactions.is_deleted', 0)->first();
 
         if(Auth::user()->hasRole('TRANSAPP_ADVISOR') || Auth::user()->hasRole('TRANSAPP_APPROVER')) {
             $transaction->where('transactions.assigned_to_id', Auth::user()->id);
@@ -343,11 +345,11 @@ class TransactionController extends Controller
             ]);
         }
 
-        $insurancecompanies = InsuranceCompany::where('is_active', '=', 1)->orderBy('created_at', 'desc')->get();
-        $paymentmodes = PaymentMode::where('is_active', '=', 1)->orderBy('created_at', 'desc')->get();
-        $transaction = Transaction::where('approval_code', $request->approval_code)->get();
-        $reasons = Reason::where('is_active', '=', 1)->orderBy('created_at', 'desc')->get();
-        $statuses = Status::where('is_active', '=', 1)->orderBy('created_at', 'desc')->get();
+        $transaction = Transaction::where('approval_code', $request->approval_code)->where('is_deleted', 0)->get();
+        $insurancecompanies = InsuranceCompany::where('is_active', '=', 1)->where('is_deleted', 0)->orderBy('created_at', 'desc')->get();
+        $paymentmodes = PaymentMode::where('is_active', '=', 1)->where('is_deleted', 0)->orderBy('created_at', 'desc')->get();
+        $reasons = Reason::where('is_active', '=', 1)->where('is_deleted', 0)->orderBy('created_at', 'desc')->get();
+        $statuses = Status::where('is_active', '=', 1)->where('is_deleted', 0)->orderBy('created_at', 'desc')->get();
         $handlers = User::select('users.*')
         ->leftjoin('model_has_roles','users.id','model_has_roles.model_id')
         ->leftjoin('roles','roles.id','model_has_roles.role_id')

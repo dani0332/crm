@@ -31,7 +31,7 @@ class InsuranceCompanyController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $data = InsuranceCompany::select('*')->orderBy('created_at','desc');
+            $data = InsuranceCompany::select('*')->where('is_deleted', 0)->orderBy('created_at','desc');
             return Datatables::of($data)
                 ->addIndexColumn()
                 ->addColumn('action', function ($row) {
@@ -131,7 +131,8 @@ class InsuranceCompanyController extends Controller
      */
     public function destroy(InsuranceCompany $insurancecompany)
     {
-        $insurancecompany->delete();
+        $insurancecompany->is_deleted = 1;
+        $insurancecompany->save();
         return redirect()->route('insurancecompany.index')->with('message','Insurance Company has been deleted');
     }
 }

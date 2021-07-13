@@ -30,7 +30,7 @@ class StatusController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $data = Status::select('*')->orderBy('created_at','desc');
+            $data = Status::select('*')->where('is_deleted', 0)->orderBy('created_at','desc');
             return Datatables::of($data)
                 ->addIndexColumn()
                 ->addColumn('action', function ($row) {
@@ -129,7 +129,8 @@ class StatusController extends Controller
      */
     public function destroy(Status $status)
     {
-        $status->delete();
+        $status->is_deleted = 1;
+        $status->save();
         return redirect()->route('status.index')->with('message','Status has been deleted');
     }
 }

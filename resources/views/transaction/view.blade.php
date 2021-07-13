@@ -9,6 +9,13 @@
                 <div class="clearfix"></div>
             </div>
             <div class="x_content">
+                <br />
+                @if(session()->has('message'))
+                    <div class="alert alert-danger">{{ session()->get('message') }}</div>
+                @endif
+                @if(session()->has('success'))
+                    <div class="alert alert-success">{{ session()->get('success') }}</div>
+                @endif
                 <form method="POST" id="search-transactions" class="form-horizontal form-label-left" role="form" data-parsley-validate="" novalidate="" autocomplete="off">
                 <div class="item form-group">
                         <div class="col">
@@ -108,13 +115,6 @@
                         </div>
                     </div>
                 </form>
-                <br />
-                @if(session()->has('message'))
-                    <div class="alert alert-danger">{{ session()->get('message') }}</div>
-                @endif
-                @if(session()->has('success'))
-                    <div class="alert alert-success">{{ session()->get('success') }}</div>
-                @endif
                 <table class="table table-striped jambo_table transaction-data-table" style="width:100%">
                       <thead>
                         <tr>
