@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import {useDropzone} from 'react-dropzone';
 import styled from "styled-components";
 import useFetch from 'use-http'
@@ -33,10 +33,10 @@ const Container = styled.div`
   transition: border .24s ease-in-out;
 `;
 
-export default function File({field , register, controller}) {
+export default function File({field, controller}) {
     const [files, setFiles] = useState([]);
     const { post } = useFetch('resource/store')
-
+    useEffect(() => { controller.onChange(null); },[])
     const {
         getRootProps,
         getInputProps,
@@ -53,9 +53,6 @@ export default function File({field , register, controller}) {
             const fileObj = Object.assign(file, {
                 preview: URL.createObjectURL(file)
             })
-            // const getFiles = acceptedFiles.map(file => Object.assign(file, {
-            //     preview: URL.createObjectURL(file)
-            //   }));
             controller.onChange(response?.data);
             setFiles([fileObj]);
           }

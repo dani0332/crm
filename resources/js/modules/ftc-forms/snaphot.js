@@ -125,20 +125,13 @@ const doSearch = async (obj) => {
 }
 const onSelect = (obj) => {
 
-
     console.log(forms)
     const { data: {form} } = obj
     const formObj = forms[form]
-
-    //const objs = forms['leadAttachment']
-    //console.log('-------obj------')
-    //console.log(forms['leadAttachment'])
-     console.log('-------obj------')
-
-     console.log(formObj)
-     console.log(obj)
-     console.log('-------obj------')
-
+    console.log('-------obj------')
+    console.log(formObj)
+    console.log(obj)
+    console.log('-------obj------')
     setForm(form)
 }
 

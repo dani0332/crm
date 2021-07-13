@@ -9,12 +9,14 @@ const leadAttachment = {
             type:'dropdown',
             label:'Choose Document',
             field:'source',
-            source: ["Driving Licence", "National ID", "Passport ID"]
+            source: ["Driving Licence", "National ID", "Passport ID"],
+            defaultValue:''
         },
         {
             type:'file',
             label:'Upload Document',
-            field:'document'
+            field:'document',
+            defaultValue:''
         },
     ]
 };

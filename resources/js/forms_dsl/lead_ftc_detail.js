@@ -9,13 +9,15 @@ const ftcDetail = {
         {
             type:'text',
             label:'CDB',
-            field:'code'
+            field:'code',
+            defaultValue:''
 
         },
         {
             type:'text',
             label:'Email',
-            field:'email'
+            field:'email',
+            defaultValue:''
         },
         {
             type:'dropdown',
@@ -28,7 +30,8 @@ const ftcDetail = {
 			// 		'static': '!tech'
            // source: 'leads',
             //template: ` `
-            source: [{ id: 1, title: 'Pakistani' }, { id: 2, title: 'India' }]
+            source: [{ id: 1, title: 'Pakistani' }, { id: 2, title: 'India' }],
+            defaultValue: 1
             //source: ["One", "Two", "Three"]
         }
 
