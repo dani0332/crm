@@ -7,6 +7,7 @@ import DrawForm from "../../components/form/draw-form";
 import SubNaV from "../../components/sub-nav";
 import useFetch from 'use-http'
 import * as yup from 'yup';
+import * as forms from "../../forms_dsl";
 
 
 const Styles = styled.div``;
@@ -41,86 +42,75 @@ function LeadSnapShot() {
     []
 );
 
+
+// const defaultForm = {
+//     fields: [
+//         {
+//             type:'text',
+//             label:'CDB ID',
+//             field:'code'
+//         },
+//         {
+//             type:'text',
+//             label:'Email',
+//             field:'email'
+//         },
+//         {
+//             type:'file',
+//             label:'documents',
+//             field:'document'
+//         },
+//         {
+//             type:'dropdown',
+//             label:'Source Array',
+//             field:'source',
+//             // sourcefilter:
+// 			// 	role:
+// 			// 		'static': 'pharm'
+// 			// 	group_role:
+// 			// 		'static': '!tech'
+//            // source: 'leads',
+//             //template: ` `
+//             source: [{ id: 1, title: 'One' }, { id: 2, title: 'Two' }]
+//             //source: ["One", "Two", "Three"]
+//         }
+
+//     ],
+//     schema: yup.object().shape({
+//         code: yup.string().required().min(4),
+//         email: yup.string().email()
+//       })
+// };
+
+
 const [data, setData] = useState({data:[]})
+const [form, setForm] = useState('leadAttachment')
 const { get, loading, error } = useFetch()
 const refOptions = useRef({});
 
-const form = {
-    fields: [
-        {
-            type:'text',
-            label:'CDB ID',
-            field:'code'
-        },
-        {
-            type:'text',
-            label:'Email',
-            field:'email'
-        },
-        {
-            type:'file',
-            label:'documents',
-            field:'document'
-        },
-        {
-            type:'dropdown',
-            label:'Source Array',
-            field:'source',
-           // source: 'leads',
-            //template: ` `
-            //source: [{ id: 1, title: 'One' }, { id: 2, title: 'Two' }]
-            source: ["One", "Two", "Three"]
-        }
 
-    ],
-    schema: yup.object().shape({
-        code: yup.string().required().min(4),
-        email: yup.string().email()
-      })
-};
 
 const leftNavList = [
     {
-        icon:'fa fa-calendar',
+        icon:'fa fa-upload',
         label:'Upload Documents',
-        active: 0,
+        active: 1,
         id:1,
-        data:{}
+        data:{ form: 'leadAttachment'}
     },
     {
-       icon:'fa fa-bar-chart',
-       label:'Auto Renewal',
-       active: 1,
+       icon:'fa fa-file-text-o',
+       label:'FTC Detail',
+       active: 0,
        id:2,
-       data:{}
+       data:{ form: 'ftcDetail'}
    },
    {
        icon:'fa fa-line-chart',
        label:'Achievements',
        active: 0,
        id:3,
-       data:{}
-   },
-   {
-       icon:'fa fa-calendar',
-       label:'Achievements',
-       active: 0,
-       id:4,
-       data:{}
-   },
-   {
-       icon:'fa fa-calendar',
-       label:'Setting',
-       active: 0,
-       id:5,
-       data:{}
-   },
-   {
-       icon:'fa fa-line-chart',
-       label:'Setting',
-       active: 0,
-       id:6,
-       data:{}
+       data:{ form: 'ftcDetail'}
    }
 ]
 const doSearch = async (obj) => {
@@ -135,10 +125,24 @@ const doSearch = async (obj) => {
 }
 const onSelect = (obj) => {
 
-    console.log('-------obj------')
-    console.log(obj)
-    console.log('-------obj------')
+
+    console.log(forms)
+    const { data: {form} } = obj
+    const formObj = forms[form]
+
+    //const objs = forms['leadAttachment']
+    //console.log('-------obj------')
+    //console.log(forms['leadAttachment'])
+     console.log('-------obj------')
+
+     console.log(formObj)
+     console.log(obj)
+     console.log('-------obj------')
+
+    setForm(form)
 }
+
+const formObj = forms[form]
 
 return (
     <Styles>
@@ -149,16 +153,16 @@ return (
             <div className="col-md-10 col-sm-10 ">
                 <div className="">
                     <div className="x_title">
-                        <h2>Leads <small>Information</small></h2>
+                        <h2>{formObj.title} <small>{formObj.subtitle}</small></h2>
                         <ul className="nav navbar-right panel_toolbox">
-                        <li><i className="fa fa-plus" style={{paddingTop: 3}}></i>
-                            <a style={{display: 'inline'}}>New Lead</a>
+                        <li><i className="fa fa-save" style={{paddingTop: 3}}></i>
+                            <a style={{display: 'inline'}}>Save</a>
                         </li>
                         </ul>
                         <div className="clearfix"></div>
                     </div>
                     <div className="x_content">
-                    <DrawForm options={form}  />
+                    <DrawForm options={formObj}  />
                     </div>
                     {/* <Table columns={columns} data={data.data} nextPage={nextPage}  prevPage={prevPage} setPage={setPage}/> */}
                 </div>

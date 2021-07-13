@@ -4,7 +4,7 @@ import InputField from "./input-fields/input";
 import SelectField from "./input-fields/select";
 import File from "./input-fields/file";
 
-export default function FormField({field, register}) {
+export default function FormField({field, register, controller}) {
  const getComponent = (field) => {
     let compute = []
     switch(field.type){
@@ -12,10 +12,10 @@ export default function FormField({field, register}) {
             compute.push(<InputField field={field} register={register}/>);
             break;
         case 'dropdown':
-            compute.push(<SelectField field={field} register={register} />);
+            compute.push(<SelectField field={field} register={register} controller={controller} />);
             break;
         case 'file':
-            compute.push(<File field={field} register={register} />);
+            compute.push(<File field={field} register={register} controller={controller} />);
             break;
     }
     return compute

@@ -33,7 +33,7 @@ const Container = styled.div`
   transition: border .24s ease-in-out;
 `;
 
-export default function File({field,register}) {
+export default function File({field , register, controller}) {
     const [files, setFiles] = useState([]);
     const {
         getRootProps,
@@ -46,9 +46,13 @@ export default function File({field,register}) {
           onDrop: acceptedFiles => {
 
             console.log(acceptedFiles)
-            setFiles(acceptedFiles.map(file => Object.assign(file, {
-              preview: URL.createObjectURL(file)
-            })));
+            const getFiles = acceptedFiles.map(file => Object.assign(file, {
+                preview: URL.createObjectURL(file)
+              }));
+
+            controller.onChange(getFiles);
+            console.log(getFiles);
+            setFiles(getFiles);
           }
         });
 
