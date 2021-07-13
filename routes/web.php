@@ -23,6 +23,7 @@ use App\Http\Controllers\RentACarController;
 use App\Http\Controllers\ClaimsAttachmentsController;
 use App\Http\Controllers\FtcFormController;
 use App\Http\Controllers\LeadsController;
+use App\Http\Controllers\UploadResourceController;
 
 
 use App\Http\Controllers\UserController;
@@ -142,3 +143,8 @@ Route::post('auditable', [AuditableController::class, 'loadAuditableComponent'])
 Route::group(['prefix' => 'form'], function()use($router) {
     Route::GET('/{form}', [LeadsController::class,'index']);
 });
+
+Route::group(['prefix' => 'resource'], function()use($router) {
+    Route::POST('/store', [UploadResourceController::class,'store']);
+});
+

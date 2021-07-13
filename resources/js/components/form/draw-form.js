@@ -9,15 +9,11 @@ import * as yup from "yup";
 export default function DrawForm({options}) {
 
 
- console.log('--------------options------------')
- console.log(options)
- console.log('--------------options------------')
-
 // const { register, control ,handleSubmit, formState:{ errors } } = useForm({
 //     resolver: yupResolver(options.schema)
 //   });
 const {  control ,handleSubmit, formState:{ errors } } = useForm();
-const onSubmit = data => search(data);
+const onSubmit = data => console.log(data);
 
 console.log(errors)
 

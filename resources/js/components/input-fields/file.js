@@ -1,7 +1,7 @@
 import React, {useState} from 'react';
 import {useDropzone} from 'react-dropzone';
 import styled from "styled-components";
-
+import useFetch from 'use-http'
 
 
 const getColor = (props) => {
@@ -35,6 +35,8 @@ const Container = styled.div`
 
 export default function File({field , register, controller}) {
     const [files, setFiles] = useState([]);
+    const { post } = useFetch('resource/store')
+
     const {
         getRootProps,
         getInputProps,
@@ -43,16 +45,22 @@ export default function File({field , register, controller}) {
         isDragReject
       } = useDropzone({
           accept: 'image/*',
-          onDrop: acceptedFiles => {
-
-            console.log(acceptedFiles)
-            const getFiles = acceptedFiles.map(file => Object.assign(file, {
+          onDrop: async acceptedFiles => {
+            const file = acceptedFiles[0]
+            const data = new FormData()
+            data.append('file', file)
+            const response = await post(data)
+            console.log('----------response---------')
+            console.log(response?.data)
+            console.log('----------response---------')
+            const fileObj = Object.assign(file, {
                 preview: URL.createObjectURL(file)
-              }));
-
-            controller.onChange(getFiles);
-            console.log(getFiles);
-            setFiles(getFiles);
+            })
+            // const getFiles = acceptedFiles.map(file => Object.assign(file, {
+            //     preview: URL.createObjectURL(file)
+            //   }));
+            controller.onChange(response?.data);
+            setFiles([fileObj]);
           }
         });
 
@@ -66,10 +74,7 @@ export default function File({field , register, controller}) {
         </span>
         </a>
     </li>
-
   ));
-
-  console.log(thumbs)
 
   return (
     <div className="container">
