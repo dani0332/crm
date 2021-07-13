@@ -50,9 +50,6 @@ export default function File({field , register, controller}) {
             const data = new FormData()
             data.append('file', file)
             const response = await post(data)
-            console.log('----------response---------')
-            console.log(response?.data)
-            console.log('----------response---------')
             const fileObj = Object.assign(file, {
                 preview: URL.createObjectURL(file)
             })
@@ -70,7 +67,7 @@ export default function File({field , register, controller}) {
         <span className="image"><img src={file.preview} style={{height:90,width:'auto'}}/></span>
         <span>{file.name}</span>
         <span>
-            <span className="time"><a className="close-link" onClick={()=>console.log('close')}><i className="fa fa-close"></i></a></span>
+            <span className="time"><a className="close-link" onClick={()=>setFiles([])}><i className="fa fa-close"></i></a></span>
         </span>
         </a>
     </li>
