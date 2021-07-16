@@ -1,5 +1,8 @@
 const policyHolderDetail = {
 
+    readOnly:true,
+    db_table: 'car_quote_request',
+    mode: 'policy_holder_detail',
     title: 'FTC Form',
     subtitle: '',
     fields: {
@@ -9,7 +12,6 @@ const policyHolderDetail = {
             field: 'first_name',
             rules:{ required: true },
             defaultValue:''
-
         },
         last_name: {
             type:'text',
@@ -24,35 +26,36 @@ const policyHolderDetail = {
             field:'email',
             defaultValue:''
         },
-        phone: {
+        mobile_no: {
             type:'text',
             label:'Phone Number',
-            field:'phone',
+            field:'mobile_no',
             defaultValue:''
         },
-        source: {
-            type:'dropdown',
-            label:'Nationality',
-            field:'source',
-            source: ['United Arab Emirates', 'Canada' , 'Turkey',  'China' ]
-        },
-        licence: {
+        emirate_of_registration_id: {
             type: 'dropdown',
             label: 'UAE licence held for',
-            field: 'licence',
-            source: ['1 year', '2 year' , '3 year',  '4 year', '5 year' ]
+            field: 'emirate_of_registration_id',
+            form: 'emirates',
+            transform(data) {
+                const values = data.map(function (item) {
+                    return  { value: item.id, label: item.code };
+                });
+                return values
+            },
         },
-        date: {
+        dob: {
             type: 'datePicker',
             label: 'Birth Date',
-            field: 'date'
+            field: 'dob',
+            readOnly:true,
+            value: '12/12/2009',
         }
     },
     sections:[
         {
             label: 'Policy Holder Detail',
-            //fields: ['first_name']
-             fields: ['first_name', 'last_name', 'email', 'phone', 'source', 'date', 'licence']
+             fields: ['first_name', 'last_name', 'email', 'mobile_no', 'emirate_of_registration_id', 'dob']
         }
     ]
 };

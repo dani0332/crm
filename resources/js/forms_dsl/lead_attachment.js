@@ -1,6 +1,4 @@
 
-import * as yup from 'yup';
-
 const leadAttachment = {
     title: 'Document Attachment',
     subtitle: 'document need for insurance purpose',
@@ -25,6 +23,7 @@ const leadAttachment = {
             fields: ['source', 'document']
         },
     ]
+
 };
 
 export default leadAttachment

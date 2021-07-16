@@ -63,34 +63,25 @@ class CarQuote extends Model
         return $this->hasOne(QuoteStatus::class, 'id', 'quote_status_id');
     }
 
+    public function processGetDSL($filters = [], $request) {
 
-    public function processGetDSL() {
-
+        $select = ['car_value', 'id', 'year_of_manufacture', 'car_make_id','car_model_id'];
+        switch($request->query('mode')){
+            case 'policy_holder_detail':
+                $select = ['first_name', 'last_name', 'mobile_no', 'email','dob', 'emirate_of_registration_id'];
+                break;
+            case 'vehicle_detail':
+                $select = ['year_of_manufacture', 'car_model_id', 'car_make_id'];
+                break;
+        }
         $response = DB::table('car_quote_request')
-            ->select('car_value', 'id', 'year_of_manufacture')
+            ->select($select)
+            ->where(function($query) use($filters) {
+                foreach($filters as $key => $value) {
+                    $query->where($key,$value);
+                }
+            })
             ->get();
-
         return $response;
-
-    //         $select = ['car_value', 'id', 'year_of_manufacture'];
-    //         $this->find();
-    //         $response = DB::table('car_quote_request')
-    //                     ->select('name', 'email as user_email')
-    //                     ->where()
-    //                     ->get();
     }
-
-    // public function processGetByIdDSL() {
-
-    //     $select = ['car_value', 'id', 'year_of_manufacture'];
-    //     $this->find();
-    //     $response = DB::table('car_quote_request')
-    //                 ->select('name', 'email as user_email')
-    //                 ->where()
-    //                 ->get();
-    // }
-
-    // public function processSaveDSL($payload, $parent) {
-    //     $select = ['car_value', 'id', 'year_of_manufacture'];
-    // }
 }

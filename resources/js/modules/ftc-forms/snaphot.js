@@ -83,7 +83,7 @@ function LeadSnapShot() {
 const childRef = useRef();
 
 const [data, setData] = useState({data:[]})
-const [form, setForm] = useState('policyHolderDetail')
+const [form, setForm] = useState('leadAttachment')
 const { get, post,  loading, error } = useFetch()
 
 
@@ -98,7 +98,7 @@ const leftNavList = [
     {
         icon:'fa fa-upload',
         label:'Upload Documents',
-        active: 0,
+        active: 1,
         id:1,
         data:{ form: 'leadAttachment'}
     },
@@ -112,23 +112,16 @@ const leftNavList = [
     {
         icon:'fa fa-file-text-o',
         label:'Policy Holder Detail',
-        active: 1,
+        active: 0,
         id:4,
         data:{ form: 'policyHolderDetail'}
-        },
-//     {
-//     icon:'fa fa-file-text-o',
-//     label:'Vehicle Detail',
-//     active: 0,
-//     id:2,
-//     data:{ form: 'ftcDetail'}
-//     },
+    },
    {
        icon:'fa fa-line-chart',
-       label:'Achievements',
+       label:'Vehicle Detail',
        active: 0,
        id:3,
-       data:{ form: 'ftcDetail'}
+       data:{ form: 'vehicleDetail'}
    }
 ]
 const doSearch = async (obj) => {
@@ -141,20 +134,17 @@ const doSearch = async (obj) => {
     setData(respose)
 
 }
-const onSelect = (obj) => {
-
-    //console.log(childRef.current)
-    //onsole.log(forms)
+const onSelect = async (obj) => {
     const { data: {form} } = obj
     const formObj = forms[form]
     console.log('-------obj------')
-    childRef.current.reRender(formObj)
-    //console.log(refForm)
-  //  console.log(obj)
+    console.log(formObj)
+    const { db_table, mode } = formObj;
+    const resp = await get(`form/${db_table}/8?mode=${mode}`)
     console.log('-------obj------')
-    //setForm(form)
-
-    //refForm.current.reDraw()
+    console.log(resp)
+    console.log('--------obj-----')
+    childRef.current.reRender(formObj,resp?.data)
 }
 
 const saveForm = async (obj) => {

@@ -1,4 +1,4 @@
-import React, {  useEffect, useReducer, forwardRef, useImperativeHandle } from "react";
+import React, {  useRef, useReducer, forwardRef, useImperativeHandle } from "react";
 import { useForm, Controller } from "react-hook-form";
 import FormField from "../../components/field";
 import {Error} from "../../modules/theme";
@@ -10,22 +10,26 @@ function reducer(state, action) {
       default:
         throw new Error();
     }
-  }
+}
 
 const DrawForm  = forwardRef((props, ref) => {
+
+const dataRef = useRef();
 const { options, onSave } = props
 const [state, dispatch] = useReducer(reducer, options);
 const { control ,handleSubmit ,formState: { errors }, reset, clearErrors } = useForm( {shouldUnregister: true });
 const onSubmit = data => onSave(data);
 
 useImperativeHandle(ref, (form) => ({
-reRender(formObj) {
-    console.log('**********reRender*********')
-    console.log(formObj)
-    console.log('**********reRender*********')
-    dispatch({type: 'reset', state: formObj })
-}
-
+    reRender(formObj, data) {
+        console.log('**********reRender*********')
+        console.log(formObj)
+        console.log(data)
+        console.log('**********reRender*********')
+        dataRef.current = data
+        console.log(dataRef.current)
+        dispatch({ type: 'reset', state: formObj })
+    }
 }));
 
 return (
@@ -40,7 +44,7 @@ return (
                 </div>
                 <div className="x_content">
                 { section && section.fields.map((u,i) => {
-                    const dslField = state.fields[u]
+                    const dslField = { ...state.fields[u], readOnly : state?.readOnly == true ? true : false, value: dataRef?.current?.[u]  }
                     const rules = dslField.rules ? dslField.rules : {}
                     return (
                         <div className="item form-group" key={i}>
@@ -73,6 +77,7 @@ return (
     }
 
       </div>
+      { state?.readOnly !== true &&
       <div className="col-md-12">
       <div className="ln_solid"></div>
         <div className="col-md-3 col-sm-3 offset-md-9 offset-sm-9">
@@ -80,6 +85,7 @@ return (
             <button type="submit" className="btn btn-success">Save</button>
         </div>
         </div>
+    }
     </form>
   );
 })

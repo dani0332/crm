@@ -22,7 +22,7 @@ use App\Http\Controllers\CarRepairTypeController;
 use App\Http\Controllers\RentACarController;
 use App\Http\Controllers\ClaimsAttachmentsController;
 use App\Http\Controllers\FtcFormController;
-use App\Http\Controllers\LeadsController;
+use App\Http\Controllers\FormController;
 use App\Http\Controllers\UploadResourceController;
 
 
@@ -141,9 +141,9 @@ Route::post('auditable', [AuditableController::class, 'loadAuditableComponent'])
 /***** RestAPI */
 
 Route::group(['prefix' => 'form'], function()use($router) {
-    Route::GET('/{form}', [LeadsController::class,'index']);
-    Route::GET('/{form}/{form_id}', [LeadsController::class,'getFormDetail']);
-    Route::POST('/{form}', [LeadsController::class,'save']);
+    Route::GET('/{form}', [FormController::class,'index']);
+    Route::GET('/{form}/{form_id}', [FormController::class,'getFormDetail']);
+    Route::POST('/{form}', [FormController::class,'save']);
 });
 
 Route::group(['prefix' => 'resource'], function()use($router) {
