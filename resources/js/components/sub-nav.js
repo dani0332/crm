@@ -4,7 +4,6 @@ import _ from "lodash";
 const Nav = styled.div`
     .quick-list {
         border-right: 1px #cccc solid;
-        min-height: 500px;
         width:100%;
     }
     li {

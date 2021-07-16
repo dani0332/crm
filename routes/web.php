@@ -142,6 +142,8 @@ Route::post('auditable', [AuditableController::class, 'loadAuditableComponent'])
 
 Route::group(['prefix' => 'form'], function()use($router) {
     Route::GET('/{form}', [LeadsController::class,'index']);
+    Route::GET('/{form}/{form_id}', [LeadsController::class,'getFormDetail']);
+    Route::POST('/{form}', [LeadsController::class,'save']);
 });
 
 Route::group(['prefix' => 'resource'], function()use($router) {

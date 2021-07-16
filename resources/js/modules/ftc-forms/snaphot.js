@@ -1,4 +1,4 @@
-import React, {  useRef, useState } from "react";
+import React, {  useRef, useState, useEffect } from "react";
 import styled from "styled-components";
 import makeData from "./makeData";
 import Table from "../../components/table";
@@ -6,7 +6,6 @@ import TableFilter from "../../components/table-filter-form";
 import DrawForm from "../../components/form/draw-form";
 import SubNaV from "../../components/sub-nav";
 import useFetch from 'use-http'
-import * as yup from 'yup';
 import * as forms from "../../forms_dsl";
 
 
@@ -41,7 +40,6 @@ function LeadSnapShot() {
         ],
     []
 );
-
 
 // const defaultForm = {
 //     fields: [
@@ -82,19 +80,25 @@ function LeadSnapShot() {
 //       })
 // };
 
+const childRef = useRef();
 
 const [data, setData] = useState({data:[]})
-const [form, setForm] = useState('leadAttachment')
-const { get, loading, error } = useFetch()
-const refOptions = useRef({});
+const [form, setForm] = useState('policyHolderDetail')
+const { get, post,  loading, error } = useFetch()
 
+
+// useEffect(() => {
+//     console.log('-------Ref------')
+//     console.log(refForm.current)
+//     console.log('-------Ref------')
+//   }, []);
 
 
 const leftNavList = [
     {
         icon:'fa fa-upload',
         label:'Upload Documents',
-        active: 1,
+        active: 0,
         id:1,
         data:{ form: 'leadAttachment'}
     },
@@ -105,6 +109,20 @@ const leftNavList = [
        id:2,
        data:{ form: 'ftcDetail'}
    },
+    {
+        icon:'fa fa-file-text-o',
+        label:'Policy Holder Detail',
+        active: 1,
+        id:4,
+        data:{ form: 'policyHolderDetail'}
+        },
+//     {
+//     icon:'fa fa-file-text-o',
+//     label:'Vehicle Detail',
+//     active: 0,
+//     id:2,
+//     data:{ form: 'ftcDetail'}
+//     },
    {
        icon:'fa fa-line-chart',
        label:'Achievements',
@@ -125,17 +143,34 @@ const doSearch = async (obj) => {
 }
 const onSelect = (obj) => {
 
-    console.log(forms)
+    //console.log(childRef.current)
+    //onsole.log(forms)
     const { data: {form} } = obj
     const formObj = forms[form]
     console.log('-------obj------')
-    console.log(formObj)
-    console.log(obj)
+    childRef.current.reRender(formObj)
+    //console.log(refForm)
+  //  console.log(obj)
     console.log('-------obj------')
-    setForm(form)
+    //setForm(form)
+
+    //refForm.current.reDraw()
+}
+
+const saveForm = async (obj) => {
+
+    const resp = await post('form/requestSave',obj)
+    console.log('-------saveForm------')
+    console.log(obj)
+    console.log('-------saveForm------')
+
 }
 
 const formObj = forms[form]
+
+console.log('-------formObj------')
+console.log(formObj)
+console.log('-------formObj------')
 
 return (
     <Styles>
@@ -145,17 +180,17 @@ return (
             </div>
             <div className="col-md-10 col-sm-10 ">
                 <div className="">
-                    <div className="x_title">
-                        <h2>{formObj.title} <small>{formObj.subtitle}</small></h2>
-                        <ul className="nav navbar-right panel_toolbox">
+                    {/* <div className="x_title"> */}
+                        {/* <h2>{formObj.title} <small>{formObj.subtitle}</small></h2> */}
+                        {/* <ul className="nav navbar-right panel_toolbox">
                         <li><i className="fa fa-save" style={{paddingTop: 3}}></i>
                             <a style={{display: 'inline'}}>Save</a>
                         </li>
-                        </ul>
-                        <div className="clearfix"></div>
-                    </div>
+                        </ul> */}
+                        {/* <div className="clearfix"></div> */}
+                    {/* </div> */}
                     <div className="x_content">
-                    <DrawForm options={formObj}  />
+                    <DrawForm options={formObj} ref={childRef}  onSave={saveForm}/>
                     </div>
                     {/* <Table columns={columns} data={data.data} nextPage={nextPage}  prevPage={prevPage} setPage={setPage}/> */}
                 </div>

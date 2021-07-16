@@ -1,11 +1,11 @@
 import React, {  useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import FormField from "./field";
 import useFetch from 'use-http'
 
 export default function TableFilter({filter, url, search}) {
 
-const { register, handleSubmit, formState: { errors } } = useForm();
+const {control, handleSubmit, formState: { errors } } = useForm();
 const onSubmit = data => search(data);
 
   return (
@@ -20,7 +20,15 @@ const onSubmit = data => search(data);
                      {u.label}
                     </label>
                     <div className="col-md-7 col-sm-7 ">
-                     <FormField field={u} register={register} />
+                     {/* <FormField field={u} register={register} /> */}
+                     <Controller
+                        key={i}
+                        name={u.field}
+                        control={control}
+                        defaultValue={u.defaultValue}
+                        shouldUnregister={true}
+                        render={({ field  }) => <FormField field={u} controller={{...field}} />}
+                    />
                     </div>
                     <div className="col-md-2 col-sm-2 "></div>
                 </div>

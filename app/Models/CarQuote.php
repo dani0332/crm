@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Models;
+use Illuminate\Support\Facades\DB;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -61,4 +62,35 @@ class CarQuote extends Model
     {
         return $this->hasOne(QuoteStatus::class, 'id', 'quote_status_id');
     }
+
+
+    public function processGetDSL() {
+
+        $response = DB::table('car_quote_request')
+            ->select('car_value', 'id', 'year_of_manufacture')
+            ->get();
+
+        return $response;
+
+    //         $select = ['car_value', 'id', 'year_of_manufacture'];
+    //         $this->find();
+    //         $response = DB::table('car_quote_request')
+    //                     ->select('name', 'email as user_email')
+    //                     ->where()
+    //                     ->get();
+    }
+
+    // public function processGetByIdDSL() {
+
+    //     $select = ['car_value', 'id', 'year_of_manufacture'];
+    //     $this->find();
+    //     $response = DB::table('car_quote_request')
+    //                 ->select('name', 'email as user_email')
+    //                 ->where()
+    //                 ->get();
+    // }
+
+    // public function processSaveDSL($payload, $parent) {
+    //     $select = ['car_value', 'id', 'year_of_manufacture'];
+    // }
 }

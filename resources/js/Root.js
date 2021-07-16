@@ -25,19 +25,18 @@ function Root() {
             // }
             // options.headers.Authorization = `Bearer ${token}`
 
-            console.log('---------options------------')
+            console.log('********RequestOptions********')
             console.log(options)
-            console.log('---------options------------')
+            console.log('********RequestOptions********')
             return options
           },
           // every time we make an http request, before getting the response back, this will run
           response: async ({ response }) => {
 
-            console.log('********Response **********---')
+            console.log('********Response********')
             console.log(response)
-            console.log('---------Response------------')
+            console.log('********Response********')
             const res = response
-            // if (res.data) res.data = toCamel(res.data)
             return res
           }
         }
@@ -51,7 +50,8 @@ function Root() {
                     {/* <DashboardFtcWizard /> */}
                 <Switch>
                     <Route path="/ftcform">
-                        <LeadsList />
+                        <LeadSnapShot />
+                        {/* <LeadsList /> */}
                     </Route>
                     <Route path="/about">
                         <LeadSnapShot />

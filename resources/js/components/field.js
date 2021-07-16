@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form";
 import InputField from "./input-fields/input";
 import SelectField from "./input-fields/select";
 import File from "./input-fields/file";
+import DatePickerField from "./input-fields/date-picker";
 
 export default function FormField({field, controller}) {
  const getComponent = (field) => {
@@ -16,6 +17,9 @@ export default function FormField({field, controller}) {
             break;
         case 'file':
             compute.push(<File field={field}  controller={controller} />);
+            break;
+        case 'datePicker':
+            compute.push(<DatePickerField field={field}  controller={controller} />);
             break;
     }
     return compute
