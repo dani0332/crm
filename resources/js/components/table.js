@@ -53,7 +53,9 @@ function Table({ columns, data, nextPage, prevPage, setPage }) {
           {rows.map((row, i) => {
             prepareRow(row);
             return (
-              <tr style={{cursor:'pointer'}} {...row.getRowProps()} onClick={() => history.push("/about")}>
+              <tr style={{cursor:'pointer'}} {...row.getRowProps()} onClick={() => {
+                history.push("/lead/" + row.original.id)
+              }}>
                 {row.cells.map((cell) => {
                   return (
                     <td {...cell.getCellProps()}>{cell.render("Cell")}</td>

@@ -7,10 +7,10 @@ import DrawForm from "../../components/form/draw-form";
 import SubNaV from "../../components/sub-nav";
 import useFetch from 'use-http'
 import * as forms from "../../forms_dsl";
-
+import { useParams } from "react-router-dom";
 
 const Styles = styled.div``;
-function LeadSnapShot() {
+function LeadSnapShot(props) {
 
   const {page, setPage_ } = useState(0);
   const columns = React.useMemo(
@@ -81,19 +81,17 @@ function LeadSnapShot() {
 // };
 
 const childRef = useRef();
+let paramRef = useRef();
 
 const [data, setData] = useState({data:[]})
 const [form, setForm] = useState('leadAttachment')
 const { get, post,  loading, error } = useFetch()
 
 
-// useEffect(() => {
-//     console.log('-------Ref------')
-//     console.log(refForm.current)
-//     console.log('-------Ref------')
-//   }, []);
+useEffect(() => {
+  }, []);
 
-
+paramRef.current = useParams()
 const leftNavList = [
     {
         icon:'fa fa-upload',
@@ -102,13 +100,13 @@ const leftNavList = [
         id:1,
         data:{ form: 'leadAttachment'}
     },
-    {
-       icon:'fa fa-file-text-o',
-       label:'FTC Detail',
-       active: 0,
-       id:2,
-       data:{ form: 'ftcDetail'}
-   },
+//     {
+//        icon:'fa fa-file-text-o',
+//        label:'FTC Detail',
+//        active: 0,
+//        id:2,
+//        data:{ form: 'ftcDetail'}
+//    },
     {
         icon:'fa fa-file-text-o',
         label:'Policy Holder Detail',
@@ -140,7 +138,7 @@ const onSelect = async (obj) => {
     console.log('-------obj------')
     console.log(formObj)
     const { db_table, mode } = formObj;
-    const resp = await get(`form/${db_table}/8?mode=${mode}`)
+    const resp = await get(`form/${db_table}/${paramRef.current.id}?mode=${mode}`)
     console.log('-------obj------')
     console.log(resp)
     console.log('--------obj-----')

@@ -42,6 +42,7 @@ function Root() {
         }
       }
 
+      //https://crm-multipipeline.alfred.ae
     return (
     <Provider store={store}>
         <Router history={history}>
@@ -52,7 +53,7 @@ function Root() {
                     <Route path="/ftcform">
                         <LeadsList />
                     </Route>
-                    <Route path="/about">
+                    <Route path="/lead/:id">
                         <LeadSnapShot />
                     </Route>
                 </Switch>
