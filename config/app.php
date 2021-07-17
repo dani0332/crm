@@ -181,6 +181,7 @@ return [
         Yajra\DataTables\DataTablesServiceProvider::class,
         Spatie\Permission\PermissionServiceProvider::class,
         OwenIt\Auditing\AuditingServiceProvider::class,
+        Spatie\Fractal\FractalServiceProvider::class
 
     ],
 

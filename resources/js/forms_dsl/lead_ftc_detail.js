@@ -1,0 +1,217 @@
+const ftcDetail = {
+
+    title: 'FTC Form',
+    subtitle: '',
+    fields: {
+        first_name: {
+            type:'text',
+            label:'First Name',
+            field: 'first_name',
+            defaultValue:''
+
+        },
+        last_name: {
+            type:'text',
+            label:'Last Name',
+            field:'last_name',
+            defaultValue:''
+        },
+        email: {
+            type:'text',
+            label:'Email Address',
+            field:'last_name',
+            defaultValue:''
+        },
+        phone: {
+            type:'text',
+            label:'Phone Number',
+            field:'phone',
+            defaultValue:''
+        },
+        source: {
+            type:'dropdown',
+            label:'Nationality',
+            field:'source',
+            source: ['United Arab Emirates', 'Canada' , 'Turkey',  'China' ]
+        },
+        code: {
+            type:'text',
+            label:'Code',
+            field: 'code',
+            defaultValue:''
+        },
+        licence: {
+            type: 'dropdown',
+            label: 'UAE licence held for',
+            field: 'licence',
+            source: ['1 year', '2 year' , '3 year',  '4 year', '5 year' ]
+        },
+        date: {
+            type: 'datePicker',
+            label: 'Birth Date',
+            field: 'date'
+        },
+        year_manufacture: {
+            type: 'dropdown',
+            label: 'Year of Manufacture',
+            field: 'year_manufacture',
+            source: ['2020', '2019' , '2018',  '2017', '2016' ]
+        },
+        emirates_registration: {
+            type: 'dropdown',
+            label: 'Emirates of Registration',
+            field: 'emirates_registration',
+            source: ['Dubai', 'Abu Dhabi' , 'Sharjah', 'Ajman', 'Ras Al-Khaimah', 'Fujairah', 'Umm al-Quwain' ]
+        },
+        car_model: {
+            type: 'dropdown',
+            label: 'Car Model',
+            field: 'car_model',
+            source: ['Acura', 'Honda' , 'Toyta', 'Audi' ]
+        },
+        car_value: {
+            type:'text',
+            label:'Car Value (AED)',
+            field: 'car_value',
+            defaultValue:''
+        },
+        insurance_type: {
+            type: 'dropdown',
+            label: 'Type of Insurance',
+            field: 'insurance_type',
+            source: ['Comprehensive', 'Other' ]
+        },
+        claim_history: {
+            type:'text',
+            label:'Claim History',
+            field: 'claim_history',
+            defaultValue:''
+        },
+        insurer: {
+            type:'text',
+            label:'Currently With Witch insurer',
+            field: 'insurer',
+            defaultValue:''
+        },
+        registration_date: {
+            type: 'datePicker',
+            label: 'Date of first registration',
+            field: 'registration_date'
+        },
+        policy_date: {
+            type: 'datePicker',
+            label: 'Policy start date',
+            field: 'date'
+        },
+        insurance_company: {
+            type: 'dropdown',
+            label: 'Insurance Company',
+            field: 'insurance_type',
+            source: ['Company ABC', 'Other' ]
+        },
+        insurance_plan: {
+            type: 'dropdown',
+            label: 'Insurance Plan',
+            field: 'insurance_plan',
+            source: ['Plane ABC', 'Other' ]
+        },
+        excess: {
+            type:'text',
+            label:'Excess',
+            field: 'excess',
+            defaultValue:''
+        },
+        ancillary_excess: {
+            type:'text',
+            label:'Ancillary Excess:(Applicable only to HPV or subjected to specific make & model)',
+            field: 'ancillary_excess',
+            defaultValue:''
+        },
+        premium_price: {
+            type:'text',
+            label:'Premium/Price',
+            field: 'premium_price',
+            defaultValue:''
+        },
+        personal_accident_benefit: {
+            type: 'dropdown',
+            label: 'Personal Accident Benefit (Driver & Passenger)',
+            field: 'personal_accident_benefit',
+            source: ['INCLUDED', 'NOT INCLUDED' ]
+        },
+        breakdown_recovery: {
+            type: 'dropdown',
+            label: 'Breakdown recovery',
+            field: 'breakdown_recovery',
+            source: ['INCLUDED', 'NOT INCLUDED' ]
+        },
+        off_road_cover: {
+            type: 'dropdown',
+            label: 'Off-road cover (for 4X4 only)',
+            field: 'off_road_cover',
+            source: ['INCLUDED', 'NOT INCLUDED' ]
+        },
+        rent_car: {
+            type: 'dropdown',
+            label: 'Rent a car',
+            field: 'rent_car',
+            source: ['INCLUDED', 'NOT INCLUDED' ]
+        },
+        geographical_area: {
+            type:'text',
+            label:'Geographical Area',
+            field: 'geographical_area',
+            defaultValue:''
+        },
+        vehicle_type: {
+            type:'text',
+            label:'Vehicle Type',
+            field: 'vehicle_type',
+            defaultValue:''
+        },
+        profession: {
+            type:'text',
+            label:'Profession',
+            field: 'profession',
+            defaultValue:''
+        },
+        org_name: {
+            type:'text',
+            label:'Name of Organization',
+            field: 'org_name',
+            defaultValue:''
+        },
+        payment_mode: {
+            type: 'dropdown',
+            label: 'Payment Mode',
+            field: 'payment_mode',
+            source: ['CC', 'Non-CC']
+        },
+    },
+    sections:[
+        {
+            label: 'Policy Holder Detail',
+            fields: ['first_name', 'last_name', 'email', 'phone', 'source', 'date', 'licence']
+        },
+        {
+            label: 'Vehicle Detail',
+            fields: ['year_manufacture', 'emirates_registration', 'car_model', 'car_value', 'claim_history', 'insurer', 'registration_date']
+        },
+        {
+            label: 'Insurance Coverage Information',
+            fields: ['policy_date', 'insurance_company', 'insurance_plan', 'excess', 'ancillary_excess',
+             'premium_price', 'personal_accident_benefit', 'breakdown_recovery', 'off_road_cover',
+             'rent_car', 'geographical_area', 'vehicle_type']
+        },
+        {
+            label: 'KYC Detail',
+            fields: ['profession', 'org_name']
+        },
+        {
+            label: 'Payment',
+            fields: ['payment_mode']
+        }
+    ]
+};
+
+export default ftcDetail

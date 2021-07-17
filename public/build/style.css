@@ -13,6 +13,7 @@
     color: #4183bd;
 }
 
+
 .no-style-btn:active {
     outline: none;
     border: none;
@@ -46,6 +47,10 @@
 
 .btn {
     color: white !important;
+}
+
+.btn_react_table {
+    color: transparent;
 }
 .btn-disabled {
     color: black !important;
@@ -102,9 +107,9 @@ input {
     height: 2.25rem !important;
 }
 
-table td:last-child {
+/* table td:last-child {
     width: 75px;
-}
+} */
 
 .transparent {
     background: transparent !important;

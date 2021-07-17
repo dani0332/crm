@@ -21,6 +21,10 @@ use App\Http\Controllers\CarRepairCoverageController;
 use App\Http\Controllers\CarRepairTypeController;
 use App\Http\Controllers\RentACarController;
 use App\Http\Controllers\ClaimsAttachmentsController;
+use App\Http\Controllers\FtcFormController;
+use App\Http\Controllers\FormController;
+use App\Http\Controllers\UploadResourceController;
+
 
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\InsuranceCompanyController;
@@ -44,6 +48,10 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return redirect('login');
+});
+
+Route::get('/debug-sentry', function () {
+    throw new Exception('My first Sentry error!');
 });
 
 Route::get('auth/google', 'App\Http\Controllers\GoogleSocialiteController@redirectToGoogle');
@@ -114,4 +122,17 @@ Route::group(['middleware' =>  ['auth']], function() {
 
     Route::get('/car-model',[ClaimController::class,'carModelBasedOnCarMake']);
     Route::post('auditable', [AuditableController::class, 'loadAuditableComponent']);
+});
+
+
+/***** RestAPI */
+Route::resource('ftcform', FtcFormController::class);
+Route::group(['prefix' => 'form'], function()use($router) {
+    Route::GET('/{form}', [FormController::class,'index']);
+    Route::GET('/{form}/{form_id}', [FormController::class,'getFormDetail']);
+    Route::POST('/{form}', [FormController::class,'save']);
+});
+
+Route::group(['prefix' => 'resource'], function()use($router) {
+    Route::POST('/store', [UploadResourceController::class,'store']);
 });

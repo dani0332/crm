@@ -1,5 +1,6 @@
 /node_modules
 /public/hot
+/docker/var/nginx/logs
 /public/storage
 /storage/*.key
 /vendor
@@ -11,3 +12,7 @@ Homestead.json
 Homestead.yaml
 npm-debug.log
 yarn-error.log
+public/js/app.js
+resources/views/.DS_Store
+public/.DS_Store
+public/dist/.DS_Store
