@@ -73,6 +73,9 @@ class CarQuote extends Model
             case 'vehicle_detail':
                 $select = ['year_of_manufacture', 'car_model_id', 'car_make_id'];
                 break;
+            case 'listView':
+                $select = ['code', 'first_name', 'last_name', 'email' , 'mobile_no', 'created_at'];
+                break;
         }
         $response = DB::table('car_quote_request')
             ->select($select)

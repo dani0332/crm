@@ -50,8 +50,7 @@ function Root() {
                     {/* <DashboardFtcWizard /> */}
                 <Switch>
                     <Route path="/ftcform">
-                        <LeadSnapShot />
-                        {/* <LeadsList /> */}
+                        <LeadsList />
                     </Route>
                     <Route path="/about">
                         <LeadSnapShot />

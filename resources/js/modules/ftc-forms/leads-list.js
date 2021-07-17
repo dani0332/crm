@@ -86,7 +86,7 @@ const doSearch = async (obj) => {
     console.log(obj)
     console.log('--------doSearch----------')
     options.current = { ...options.current, filter:obj }
-    const respose = await get(`form/car_quote_request/?filter=${JSON.stringify(obj)}`)
+    const respose = await get(`form/car_quote_request/?filter=${JSON.stringify(obj)}&mode=listView`)
     setData(respose)
 
 }
