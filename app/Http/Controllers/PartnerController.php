@@ -137,7 +137,12 @@ class PartnerController extends Controller
      */
     public function destroy(Partner $partner)
     {
-        $partner->delete();
-        return redirect('rewards/partner')->with('message','Partner has been deleted');
+        if($partner->rewards()->count()) {
+            return redirect()->route('partner.index')->with('message','Partner is linked with Reward and cannot be deleted');
+        }
+        else {
+            $partner->delete();
+            return redirect()->route('partner.index')->with('message','Partner has been deleted');
+        }
     }
 }

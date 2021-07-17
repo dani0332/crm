@@ -2,6 +2,8 @@ $(document).ready(function () {
     $(".selectpicker").selectpicker();
     $("#datepicker").datepicker({ dateFormat: "yy-mm-dd" });
     $("#datepicker_2").datepicker({ dateFormat: "yy-mm-dd" });
+    $("#transapp_start_date").datepicker({ dateFormat: "yy-mm-dd" });
+    $("#transapp_stop_date").datepicker({ dateFormat: "yy-mm-dd" });
     $("#editor1").markdownEditor({
         preview: true,
         fullscreen: false,
@@ -363,14 +365,24 @@ $(document).ready(function () {
         ],
     });
 
-    $(".transaction-data-table").DataTable({
+    var transactionsDatatable = $('.transaction-data-table').DataTable({
         ordering: false,
-        info: false,
-        searching: false,
+        info:     false,
+        searching:false,
         bLengthChange: false,
         serverSide: true,
-        responsive: true,
-        ajax: config.routes.transaction_datatable_route,
+        ajax: {
+            url: config.routes.transaction_datatable_route,
+            data: function (d) {
+                d.transapp_start_date = $("#transapp_start_date").val();
+                d.transapp_stop_date = $("#transapp_stop_date").val();
+                d.transactor = $("#transactor_value").val();
+                d.handler = $("#handler_value").val();
+                d.insurance_company = $("#insurance_company_value").val();
+                d.reason = $("#reason_value").val();
+                d.payment_mode = $("#payment_mode_value").val();
+            },
+        },
         columns: [
             { data: "approval_code", name: "approval_code" },
             { data: "created_at", name: "created_at" },
@@ -378,21 +390,42 @@ $(document).ready(function () {
             { data: "amount_paid", name: "amount_paid" },
             { data: "customer_name", name: "customer_name" },
             { data: "risk_details", name: "risk_details" },
-            { data: "created_by", name: "created_by" },
-            { data: "handler", name: "handler" },
+            { data: "created_by_name", name: "created_by_name" },
+            { data: "handler_name", name: "handler_name" },
             { data: "payment_mode", name: "payment_mode" },
             { data: "prev_approval_code", name: "prev_approval_code" },
-            { data: "prev_transaction_date", name: "prev_transaction_date" },
-            { data: "updated_at", name: "updated_at" },
-            { data: "status", name: "status" },
-            { data: "comments", name: "comments" },
-            // {
-            //     data: "action",
-            //     name: "action",
-            //     orderable: false,
-            //     searchable: false,
-            // },
-        ],
+        ]
+    });
+
+    // $(".transaction-data-table").DataTable({
+    //     ordering: false,
+    //     info: false,
+    //     searching: false,
+    //     bLengthChange: false,
+    //     serverSide: true,
+    //     responsive: true,
+    //     ajax: config.routes.transaction_datatable_route,
+    //     columns: [
+    //         { data: "approval_code", name: "approval_code" },
+    //         { data: "created_at", name: "created_at" },
+    //         { data: "insurance", name: "insurance" },
+    //         { data: "amount_paid", name: "amount_paid" },
+    //         { data: "customer_name", name: "customer_name" },
+    //         { data: "risk_details", name: "risk_details" },
+    //         { data: "created_by_name", name: "created_by_name" },
+    //         { data: "handler_name", name: "handler_name" },
+    //         { data: "payment_mode", name: "payment_mode" },
+    //         { data: "prev_approval_code", name: "prev_approval_code" },
+    //     ],
+    // });
+
+    $("#search-transactions").submit(function (e) {
+        e.preventDefault();
+        $(".loader").show();
+        transactionsDatatable.draw();
+        setTimeout(() => {
+            $(".loader").hide();
+        }, 1000);
     });
 
     $(".reason-data-table").DataTable({

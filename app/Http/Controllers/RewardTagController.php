@@ -6,6 +6,7 @@ use App\Models\RewardTag;
 use DataTables;
 use Illuminate\Http\Request;
 use DB;
+
 class RewardTagController extends Controller
 {
     public function __construct()
@@ -122,7 +123,12 @@ class RewardTagController extends Controller
      */
     public function destroy(RewardTag $rewardTag)
     {
-        $rewardTag->delete();
-        return redirect()->route('reward-tags.index')->with('message','Reward Tag has been deleted');
+        if($rewardTag->Rewards()->count()) {
+            return redirect()->route('reward-tags.index')->with('message','Reward Tag is linked with Reward and cannot be deleted');
+        }
+        else {
+            $rewardTag->delete();
+            return redirect()->route('reward-tags.index')->with('message','Reward Tag has been deleted');
+        }
     }
 }
