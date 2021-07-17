@@ -10844,7 +10844,7 @@ function Root() {
       children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__.jsx)(styled_components__WEBPACK_IMPORTED_MODULE_13__.ThemeProvider, {
         theme: _modules_theme__WEBPACK_IMPORTED_MODULE_4__.default,
         children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__.jsx)(use_http__WEBPACK_IMPORTED_MODULE_10__.Provider, {
-          url: "http://127.0.0.1:8000",
+          url: "https://crm-multipipeline.alfred.ae",
           options: options,
           children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__.jsxs)(react_router_dom__WEBPACK_IMPORTED_MODULE_12__.Switch, {
             children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__.jsx)(react_router_dom__WEBPACK_IMPORTED_MODULE_12__.Route, {
