@@ -125,9 +125,9 @@
             </li>
         </ul>
         @endcan
-        <ul class="nav side-menu">
+        <!-- <ul class="nav side-menu">
              <li><a href="{{ url('ftcform') }}"><i ></i> FTC Form </a>
-         </ul>
+         </ul> -->
         @can('crm-admin')
         <ul class="nav side-menu">
             <li><a><i class="fa fa-user"></i> Admin <span class="fa fa-chevron-down"></span></a>
