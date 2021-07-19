@@ -11,11 +11,27 @@ const mix = require('laravel-mix');
  |
  */
 
-mix.js('resources/js/app.js', 'public/js')
-    .react()
-    .less('resources/less/app.less', 'public/build', {
+// mix.js('resources/js/app.js', 'public/js')
+//     .react()
+//     .less('resources/less/app.less', 'public/build', {
+//         lessOptions: {
+//             strictMath: true
+//         }
+//     }
+//     .postCss("resources/css/app.css", "public/build", [
+//         require("tailwindcss"),
+//        ])
+//     );
+
+
+
+mix.js("resources/js/app.js", "public/js")
+.react()
+.postCss("resources/css/app.css", "public/css", [
+    require("tailwindcss"),
+])
+.less('resources/less/app.less', 'public/build', {
         lessOptions: {
             strictMath: true
         }
-    });
-
+});
