@@ -10837,6 +10837,7 @@ function Root() {
       }()
     }
   }; //https://crm-multipipeline.alfred.ae
+  //https://crmstage.alfred.ae/
 
   return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__.jsx)(react_redux__WEBPACK_IMPORTED_MODULE_5__.Provider, {
     store: _redux_getStore__WEBPACK_IMPORTED_MODULE_6__.store,
@@ -10845,7 +10846,7 @@ function Root() {
       children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__.jsx)(styled_components__WEBPACK_IMPORTED_MODULE_13__.ThemeProvider, {
         theme: _modules_theme__WEBPACK_IMPORTED_MODULE_4__.default,
         children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__.jsx)(use_http__WEBPACK_IMPORTED_MODULE_10__.Provider, {
-          url: "https://crm-multipipeline.alfred.ae",
+          url: "https://crmstage.alfred.ae",
           options: options,
           children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__.jsxs)(react_router_dom__WEBPACK_IMPORTED_MODULE_12__.Switch, {
             children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__.jsx)(react_router_dom__WEBPACK_IMPORTED_MODULE_12__.Route, {
