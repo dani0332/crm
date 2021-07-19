@@ -10836,7 +10836,8 @@ function Root() {
         return response;
       }()
     }
-  };
+  }; //https://crm-multipipeline.alfred.ae
+
   return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__.jsx)(react_redux__WEBPACK_IMPORTED_MODULE_5__.Provider, {
     store: _redux_getStore__WEBPACK_IMPORTED_MODULE_6__.store,
     children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__.jsx)(react_router_dom__WEBPACK_IMPORTED_MODULE_12__.Router, {
@@ -10844,14 +10845,14 @@ function Root() {
       children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__.jsx)(styled_components__WEBPACK_IMPORTED_MODULE_13__.ThemeProvider, {
         theme: _modules_theme__WEBPACK_IMPORTED_MODULE_4__.default,
         children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__.jsx)(use_http__WEBPACK_IMPORTED_MODULE_10__.Provider, {
-          url: "http://127.0.0.1:8000",
+          url: "https://crm-multipipeline.alfred.ae",
           options: options,
           children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__.jsxs)(react_router_dom__WEBPACK_IMPORTED_MODULE_12__.Switch, {
             children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__.jsx)(react_router_dom__WEBPACK_IMPORTED_MODULE_12__.Route, {
               path: "/ftcform",
               children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__.jsx)(_modules_ftc_forms_leads_list__WEBPACK_IMPORTED_MODULE_8__.default, {})
             }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__.jsx)(react_router_dom__WEBPACK_IMPORTED_MODULE_12__.Route, {
-              path: "/about",
+              path: "/lead/:id",
               children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__.jsx)(_modules_ftc_forms_snaphot__WEBPACK_IMPORTED_MODULE_9__.default, {})
             })]
           })
@@ -11851,7 +11852,7 @@ function Table(_ref) {
               }
             }, row.getRowProps()), {}, {
               onClick: function onClick() {
-                return history.push("/about");
+                history.push("/lead/" + row.original.id);
               },
               children: row.cells.map(function (cell) {
                 return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_2__.jsx)("td", _objectSpread(_objectSpread({}, cell.getCellProps()), {}, {
@@ -12803,6 +12804,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _components_sub_nav__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ../../components/sub-nav */ "./resources/js/components/sub-nav.js");
 /* harmony import */ var use_http__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! use-http */ "./node_modules/use-http/dist/esm/index.js");
 /* harmony import */ var _forms_dsl__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ../../forms_dsl */ "./resources/js/forms_dsl/index.js");
+/* harmony import */ var react_router_dom__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! react-router-dom */ "./node_modules/react-router/esm/react-router.js");
 /* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! react/jsx-runtime */ "./node_modules/react/jsx-runtime.js");
 var _templateObject;
 
@@ -12843,9 +12845,10 @@ function _taggedTemplateLiteral(strings, raw) { if (!raw) { raw = strings.slice(
 
 
 
+
 var Styles = styled_components__WEBPACK_IMPORTED_MODULE_10__.default.div(_templateObject || (_templateObject = _taggedTemplateLiteral([""])));
 
-function LeadSnapShot() {
+function LeadSnapShot(props) {
   var _useState = (0,react__WEBPACK_IMPORTED_MODULE_1__.useState)(0),
       page = _useState.page,
       setPage_ = _useState.setPage_;
@@ -12909,6 +12912,7 @@ function LeadSnapShot() {
   // };
 
   var childRef = (0,react__WEBPACK_IMPORTED_MODULE_1__.useRef)();
+  var paramRef = (0,react__WEBPACK_IMPORTED_MODULE_1__.useRef)();
 
   var _useState2 = (0,react__WEBPACK_IMPORTED_MODULE_1__.useState)({
     data: []
@@ -12926,13 +12930,10 @@ function LeadSnapShot() {
       get = _useFetch.get,
       post = _useFetch.post,
       loading = _useFetch.loading,
-      error = _useFetch.error; // useEffect(() => {
-  //     console.log('-------Ref------')
-  //     console.log(refForm.current)
-  //     console.log('-------Ref------')
-  //   }, []);
+      error = _useFetch.error;
 
-
+  (0,react__WEBPACK_IMPORTED_MODULE_1__.useEffect)(function () {}, []);
+  paramRef.current = (0,react_router_dom__WEBPACK_IMPORTED_MODULE_11__.useParams)();
   var leftNavList = [{
     icon: 'fa fa-upload',
     label: 'Upload Documents',
@@ -12941,15 +12942,14 @@ function LeadSnapShot() {
     data: {
       form: 'leadAttachment'
     }
-  }, {
-    icon: 'fa fa-file-text-o',
-    label: 'FTC Detail',
-    active: 0,
-    id: 2,
-    data: {
-      form: 'ftcDetail'
-    }
-  }, {
+  }, //     {
+  //        icon:'fa fa-file-text-o',
+  //        label:'FTC Detail',
+  //        active: 0,
+  //        id:2,
+  //        data:{ form: 'ftcDetail'}
+  //    },
+  {
     icon: 'fa fa-file-text-o',
     label: 'Policy Holder Detail',
     active: 0,
@@ -13013,7 +13013,7 @@ function LeadSnapShot() {
               console.log(formObj);
               db_table = formObj.db_table, mode = formObj.mode;
               _context2.next = 7;
-              return get("form/".concat(db_table, "/8?mode=").concat(mode));
+              return get("form/".concat(db_table, "/").concat(paramRef.current.id, "?mode=").concat(mode));
 
             case 7:
               resp = _context2.sent;
