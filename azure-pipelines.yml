@@ -1,9 +1,9 @@
 trigger:
-- develop
+- none
 
 pool:
   vmImage: ubuntu-latest
-name: 1.0$(Rev:.r)
+
 variables:
   phpVersion: 7.2
 
@@ -12,11 +12,10 @@ steps:
   name: env
   displayName: 'Download env file'
   inputs:
-    secureFile: '.env.crmstage'
+    secureFile: '.env.crmstagemultipipeline'
     
 - script: cp $(env.secureFilePath) $(System.DefaultWorkingDirectory)/
 - script: |
     echo "Artifacts uploaded to $(System.DefaultWorkingDirectory)"
-
 - publish: '$(System.DefaultWorkingDirectory)'
   artifact: myalfredcrm

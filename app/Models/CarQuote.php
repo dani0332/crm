@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Models;
+use Illuminate\Support\Facades\DB;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -60,5 +61,30 @@ class CarQuote extends Model
     public function quoteStatus()
     {
         return $this->hasOne(QuoteStatus::class, 'id', 'quote_status_id');
+    }
+
+    public function processGetDSL($filters = [], $request) {
+
+        $select = ['car_value', 'id', 'year_of_manufacture', 'car_make_id','car_model_id'];
+        switch($request->query('mode')){
+            case 'policy_holder_detail':
+                $select = ['first_name', 'last_name', 'mobile_no', 'email','dob', 'emirate_of_registration_id'];
+                break;
+            case 'vehicle_detail':
+                $select = ['year_of_manufacture', 'car_model_id', 'car_make_id'];
+                break;
+            case 'listView':
+                $select = ['id', 'code', 'first_name', 'last_name', 'email' , 'mobile_no', 'created_at'];
+                break;
+        }
+        $response = DB::table('car_quote_request')
+            ->select($select)
+            ->where(function($query) use($filters) {
+                foreach($filters as $key => $value) {
+                    $query->where($key,$value);
+                }
+            })
+            ->get();
+        return $response;
     }
 }

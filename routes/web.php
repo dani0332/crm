@@ -21,6 +21,10 @@ use App\Http\Controllers\CarRepairCoverageController;
 use App\Http\Controllers\CarRepairTypeController;
 use App\Http\Controllers\RentACarController;
 use App\Http\Controllers\ClaimsAttachmentsController;
+use App\Http\Controllers\FtcFormController;
+use App\Http\Controllers\FormController;
+use App\Http\Controllers\UploadResourceController;
+
 
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\InsuranceCompanyController;
@@ -46,71 +50,89 @@ Route::get('/', function () {
     return redirect('login');
 });
 
+Route::get('/debug-sentry', function () {
+    throw new Exception('My first Sentry error!');
+});
+
 Route::get('auth/google', 'App\Http\Controllers\GoogleSocialiteController@redirectToGoogle');
 Route::get('google/callback', 'App\Http\Controllers\GoogleSocialiteController@handleCallback');
 
-Route::middleware(['auth:sanctum', 'verified'])
-    ->get('/home', function(){
-        return view('home');
+Route::middleware(['auth'])->get('/home', function() {
+    return view('home');
+});
+
+Route::group(['middleware' =>  ['auth']], function() {
+
+    Route::resource('customer', CustomerController::class);
+    Route::get('/dashboard',[DashboardController::class, 'index'])->name('dashboard');
+
+    Route::post('dashboard-stats', [DashboardController::class, 'dashboardStats']);
+    Route::group(['prefix' => 'rewards'], function () {
+        Route::resource('partner', PartnerController::class);
+        Route::resource('reward', RewardController::class);
+        Route::resource('reward-categories', RewardCategoryController::class);
+        Route::resource('reward-tags', RewardTagController::class);
+        Route::resource('reward.reward-translation', RewardTranslationController::class);
     });
-Route::get('/dashboard',[DashboardController::class, 'index'])->name('dashboard');
 
-Route::post('dashboard-stats', [DashboardController::class, 'dashboardStats']);
-Route::group(['prefix' => 'rewards'], function () {
-    Route::resource('partner', PartnerController::class);
-    Route::resource('reward', RewardController::class);
-    Route::resource('reward-categories', RewardCategoryController::class);
-    Route::resource('reward-tags', RewardTagController::class);
-    Route::resource('reward.reward-translation', RewardTranslationController::class);
+    Route::group(['prefix' => 'admin'], function () {
+        Route::resource('users', UserController::class);
+        Route::resource('roles', RoleController::class);
+    });
+
+    Route::group(['prefix' => 'quotes'], function () {
+        Route::resource('carquotes', CarQuoteController::class);
+        Route::POST('carquotes/resubmit_api', [CarQuoteController::class, 'resubmitApi']);
+        Route::resource('healthquotes', HealthQuoteController::class);
+    });
+
+    Route::group(['prefix' => 'transapp'], function () {
+        Route::resource('insurancecompany', InsuranceCompanyController::class);
+        Route::resource('handler', HandlerController::class);
+        Route::resource('reason',ReasonController::class);
+        Route::resource('status',StatusController::class);
+        Route::resource('paymentmode',PaymentModeController::class);
+        Route::resource('transaction',TransactionController::class);
+        Route::get('home',[TransactionController::class,'transectionHome'])->name('home');
+        Route::get('showtransaction',[TransactionController::class,'showTransaction'])->name('showtransaction');
+        Route::get('re-issue-transaction',[TransactionController::class,'cancelAndReIssueTransectionView'])->name('reissue_view');
+        Route::get('re-issue-transaction-form',[TransactionController::class,'cancelAndReIssueTransectionForm'])->name('re_issue_transaction_form');
+        Route::post('re-issue-transaction',[TransactionController::class,'cancelAndReIssueTransection'])->name('re_issue');
+        Route::get('cancel-transaction',[TransactionController::class,'cancelAndReIssueTransectionView'])->name('cancel_view');
+        Route::get('cancel-transaction-form',[TransactionController::class,'cancelAndReIssueTransectionForm'])->name('cancel_transaction_form');
+        Route::post('cancel-transaction',[TransactionController::class,'cancelAndReIssueTransection'])->name('cancel');
+    });
+
+    Route::group(['prefix' => 'qoutes'], function() {
+        Route::resource('carqoutes', CarQouteController::class);
+        Route::POST('carqoutes/resubmit_api', [ CarQouteController::class , 'resubmitApi']);
+        Route::resource('healthqoutes', HealthQouteController::class);
+    });
+
+    Route::group(['prefix' => 'claim'], function() {
+        Route::resource('claims', ClaimController::class);
+        Route::resource('typeofinsurance', TypeOfInsuranceController::class);
+        Route::resource('subtypeofinsurance', SubTypeOfInsuranceController::class);
+        Route::resource('claimsstatus', ClaimsStatusController::class);
+        Route::resource('carrepaircoverage', CarRepairCoverageController::class);
+        Route::resource('carrepairtype', CarRepairTypeController::class);
+        Route::resource('rentacar', RentACarController::class);
+        Route::resource('claims.claim-attachment', ClaimsAttachmentsController::class);
+    });
+
+    Route::get('/car-model',[ClaimController::class,'carModelBasedOnCarMake']);
+    Route::post('auditable', [AuditableController::class, 'loadAuditableComponent']);
 });
 
-Route::group(['prefix' => 'admin'], function () {
-    Route::resource('users', UserController::class);
-    Route::resource('roles', RoleController::class);
+
+/***** RestAPI */
+Route::resource('ftcform', FtcFormController::class);
+Route::group(['prefix' => 'form'], function()use($router) {
+    Route::GET('/{form}', [FormController::class,'index']);
+    Route::GET('/{form}/{form_id}', [FormController::class,'getFormDetail']);
+    Route::POST('/{form}', [FormController::class,'save']);
 });
 
-Route::group(['prefix' => 'quotes'], function () {
-    Route::resource('carquotes', CarQuoteController::class);
-    Route::POST('carquotes/resubmit_api', [CarQuoteController::class, 'resubmitApi']);
-    Route::resource('healthquotes', HealthQuoteController::class);
+Route::group(['prefix' => 'resource'], function()use($router) {
+    Route::POST('/store', [UploadResourceController::class,'store']);
 });
-
-Route::group(['prefix' => 'transapp'], function () {
-    Route::resource('insurancecompany', InsuranceCompanyController::class);
-    Route::resource('handler', HandlerController::class);
-    Route::resource('reason',ReasonController::class);
-    Route::resource('status',StatusController::class);
-    Route::resource('paymentmode',PaymentModeController::class);
-    Route::resource('transaction',TransactionController::class);
-    Route::get('home',[TransactionController::class,'transectionHome'])->name('home');
-    Route::get('showtransaction',[TransactionController::class,'showTransaction'])->name('showtransaction');
-    Route::get('re-issue-transaction',[TransactionController::class,'cancelAndReIssueTransectionView'])->name('reissue_view');
-    Route::get('re-issue-transaction-form',[TransactionController::class,'cancelAndReIssueTransectionForm'])->name('re_issue_transaction_form');
-    Route::post('re-issue-transaction',[TransactionController::class,'cancelAndReIssueTransection'])->name('re_issue');
-    Route::get('cancel-transaction',[TransactionController::class,'cancelAndReIssueTransectionView'])->name('cancel_view');
-    Route::get('cancel-transaction-form',[TransactionController::class,'cancelAndReIssueTransectionForm'])->name('cancel_transaction_form');
-    Route::post('cancel-transaction',[TransactionController::class,'cancelAndReIssueTransection'])->name('cancel');
-
-});
-
-Route::resource('customer', CustomerController::class);
-
-Route::group(['prefix' => 'qoutes'], function() {
-    Route::resource('carqoutes', CarQouteController::class);
-    Route::POST('carqoutes/resubmit_api', [ CarQouteController::class , 'resubmitApi']);
-    Route::resource('healthqoutes', HealthQouteController::class);
-});
-
-Route::group(['prefix' => 'claim'], function() {
-    Route::resource('claims', ClaimController::class);
-    Route::resource('typeofinsurance', TypeOfInsuranceController::class);
-    Route::resource('subtypeofinsurance', SubTypeOfInsuranceController::class);
-    Route::resource('claimsstatus', ClaimsStatusController::class);
-    Route::resource('carrepaircoverage', CarRepairCoverageController::class);
-    Route::resource('carrepairtype', CarRepairTypeController::class);
-    Route::resource('rentacar', RentACarController::class);
-    Route::resource('claims.claim-attachment', ClaimsAttachmentsController::class);
-});
-
-Route::get('/car-model',[ClaimController::class,'carModelBasedOnCarMake']);
-Route::post('auditable', [AuditableController::class, 'loadAuditableComponent']);
