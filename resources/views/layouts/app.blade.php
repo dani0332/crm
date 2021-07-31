@@ -143,6 +143,8 @@
     <script src="{{ asset('vendors/datatables.net-responsive/js/dataTables.responsive.min.js') }}"></script>
     <script src="{{ asset('vendors/datatables.net-responsive-bs/js/responsive.bootstrap.js') }}"></script>
     <script src="{{ asset('vendors/datatables.net-scroller/js/dataTables.scroller.min.js') }}"></script>
+    <script src="https://cdn.jsdelivr.net/jquery.validation/1.16.0/jquery.validate.min.js"></script>
+
     <!-- iCheck -->
 	  <script src="{{ asset('vendors/iCheck/icheck.min.js') }}"></script>
     <!-- Custom Theme Scripts -->
@@ -151,7 +153,7 @@
         // global app configuration object
         var config = {
             routes: {
-                partner_datatable_route: "{{ route('partner.index') }}",
+                partner_datatable_route: "{{ route('partner.index') }}", 
                 user_datatable_route:"{{ route('users.index') }}",
                 role_datatable_route:"{{ route('roles.index') }}",
                 carquote_datatable_route:"{{ route('carquotes.index') }}",
@@ -162,6 +164,7 @@
                 reward_tags_datatable_route:"{{ route('reward-tags.index') }}",
                 claim_datatable_route:"{{ route('claims.index') }}",
                 typeofinsurance_datatable_route:"{{ route('typeofinsurance.index') }}",
+                vehicledepreciation_datatable_route:"{{ route('vehicledepreciation.index') }}",
                 subtypeofinsurance_datatable_route:"{{ route('subtypeofinsurance.index') }}",
                 claimsstatus_datatable_route:"{{ route('claimsstatus.index') }}",
                 carrepaircoverage_datatable_route:"{{ route('carrepaircoverage.index') }}",
@@ -177,6 +180,7 @@
                 paymentmode_datatable_route:"{{ route('paymentmode.index') }}",
                 transaction_datatable_route:"{{ route('transaction.index') }}",
                 re_issue_transaction_form:"{{ route('re_issue_transaction_form') }}",
+                valuation_api_route: "{{ Config::get('constants.valuation_api_route') }}"
             },
             _token:"{{ csrf_token() }}",
             image_path:"{{ \Config::get('constants.azure_storage_url').'myrewards/' }}"

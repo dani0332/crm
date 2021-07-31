@@ -53,6 +53,16 @@
             </li>
         </ul>
         @endcan
+        @canany(['vehicle-depreciation-list', 'vehicle-valuation-list'])
+        <ul class="nav side-menu">
+            <li><a><i class="fa fa-car" aria-hidden="true"></i> Car <span class="fa fa-chevron-down"></span></a>
+            <ul class="nav child_menu">
+                <li><a href="{{ route('calculatevaluation') }}">Valuation</a></li>
+                <li><a href="{{ url('valuation/vehicledepreciation') }}">Vehicle Depreciation</a></li>
+            </ul>
+            </li>
+        </ul>
+        @endcanany
         @can('transapp-list')
         <ul class="nav side-menu">
             <li><a><i class="fa fa-desktop"></i> Trans App <span class="fa fa-chevron-down"></span></a>

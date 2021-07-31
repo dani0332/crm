@@ -4,6 +4,77 @@ $(document).ready(function () {
     $("#datepicker_2").datepicker({ dateFormat: "yy-mm-dd" });
     $("#transapp_start_date").datepicker({ dateFormat: "yy-mm-dd" });
     $("#transapp_stop_date").datepicker({ dateFormat: "yy-mm-dd" });
+    $('#search-valuation').validate({ 
+        rules: {
+            carmake: {
+                required: true,
+            },
+            carmodel: {
+                required: true,
+            },
+            cartrim: {
+                required: true,
+            },
+            yom: {
+                required: true,
+                digits: true,
+            },
+        },
+          errorElement: 'span',
+          errorPlacement: function (error, element) {
+            error.addClass('invalid-feedback').attr('style', 'font-size: 17px');
+            element.closest('.form-group').append(error);
+          },
+          highlight: function (element, errorClass, validClass) {
+            $(element).addClass('is-invalid');
+          },
+          unhighlight: function (element, errorClass, validClass) {
+            $(element).removeClass('is-invalid');
+          }
+    });
+    $('#calculateValuation').click(function(){
+        if($('#search-valuation').valid()){
+            console.log('c');
+            var carMake = $('#car_make_value option:selected').val();
+            var carModel = $('#car_model_value option:selected').val();
+            var carTrim = $('#car_trim_value option:selected').val();
+            var yom = $('#yom').val();
+            $.ajax({
+                url: config.routes.valuation_api_route + 'get-vehicle-value',
+                type: "post",
+                data: { carModelDetailId: carTrim, yearOfManufacture: yom },
+                success: function (response) {
+                    console.log('c');
+                    $('#carValue').text(response.carValue.toString());
+                    $('#uLimit').text(response.carValueUpperLimit.toString());
+                    $('#lLimit').text(response.carValueLowerLimit.toString());
+                    $('#result').show();
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    if(jqXHR.responseJSON.msg == 'Car Trim Not found'){ 
+                        $('#error').show();
+                        $('#error').text('Cannot calculate depreciation without trim');
+                        $('#error').hide().delay(5000).fadeIn(400);
+                     }
+                     else{
+                        $('#error').show();
+                        $('#error').text(jqXHR.responseJSON.msg);
+                        $('#error').hide().delay(5000).fadeIn(400);
+                    }
+                },
+            });
+        }
+    });
+    $('#reset').click(function(){
+        console.log('r');
+        $('#result').hide();
+        $('#carValue').text('');
+        $('#uLimit').text('');
+        $('#lLimit').text('');
+        $('#car_model_value').find('option').not(':first').remove();
+        $('#car_trim_value').find('option').not(':first').remove();
+        $('#yom').val(new Date().getFullYear() - 1);
+    });
     $("#editor1").markdownEditor({
         preview: true,
         fullscreen: false,
@@ -664,6 +735,34 @@ $(document).ready(function () {
         ]
     });
 
+    $('.vehicledepreciation-data-table').DataTable({
+        ordering: false,
+        info:     false,
+        searching:false,
+        bLengthChange: false,
+        serverSide: true,
+        ajax: config.routes.vehicledepreciation_datatable_route,
+        columns: [
+            { data: 'id', name: 'id', render:function(data, type, row){
+                return "<a href='"+config.routes.vehicledepreciation_datatable_route+'/'+row.id +"'>" + row.id + "</a>"
+            }},
+            {data: 'car_make_text', name: 'car_make_text'},
+            {data: 'car_model_text', name: 'car_model_text'},
+            {data: 'first_year', name: 'first_year'},
+            {data: 'second_year', name: 'first_year'},
+            {data: 'third_year', name: 'first_year'},
+            {data: 'fourth_year', name: 'first_year'},
+            {data: 'fifth_year', name: 'first_year'},
+            {data: 'sixth_year', name: 'first_year'},
+            {data: 'seventh_year', name: 'first_year'},
+            {data: 'eighth_year', name: 'first_year'},
+            {data: 'ninth_year', name: 'first_year'},
+            {data: 'tenth_year', name: 'first_year'},
+            {data: 'upper_limit', name: 'first_year'},
+            {data: 'lower_limit', name: 'first_year'},
+        ]
+    });
+
     $('.subtypeofinsurance-data-table').DataTable({
         ordering: false,
         info:     false,
@@ -918,6 +1017,35 @@ $(document).ready(function () {
 
 
 });
+$('#car_make_value').on('change',function(e) {
+    console.log('m');
+    var make_code = $("#car_make_value option:selected").attr('data-id');
+    $.get('/valuation/car-models?make_code='+ make_code,function(data) {
+        var carmodel = $('#car_model_value').empty();
+        carmodel.append('<option value="">Select</option>');
+        $.each(data,function(create,carmodelObj) {
+            var option = $('<option/>', {id:create, value:carmodelObj});
+            carmodel.append('<option value="'+carmodelObj.id+'">'+carmodelObj.text+'</option>');
+        });
+    });
+});
+$('#car_model_value').on('change',function(e) {
+    console.log('md');
+    var modelId = $("#car_model_value option:selected").val();
+    $.get('/valuation/car-model-detail?modelId='+ modelId, function(data) {
+        var cartrim = $('#car_trim_value').empty();
+         cartrim.append('<option value="">Select</option>');
+        if(data.length == 0){
+            cartrim.append('<option value="">No Trim Available</option>');
+            $('#car_trim_value option:eq(1)').prop('selected', true);
+        }
+        $.each(data,function(create,cartrimObj) {
+            var option = $('<option/>', {id:create, value:cartrimObj});
+            cartrim.append('<option value="'+cartrimObj.id+'">'+cartrimObj.text+'</option>');
+        });
+    });
+});
+
 $(document).on('click','.delete', function(){
     var route = $(this).attr('date-route');
     $('#delete-form').attr('action',route);
