@@ -180,6 +180,7 @@
                 paymentmode_datatable_route:"{{ route('paymentmode.index') }}",
                 transaction_datatable_route:"{{ route('transaction.index') }}",
                 re_issue_transaction_form:"{{ route('re_issue_transaction_form') }}",
+                aml_datatable_route:"{{ route('aml.index') }}",
                 valuation_api_route: "{{ Config::get('constants.valuation_api_route') }}"
             },
             _token:"{{ csrf_token() }}",

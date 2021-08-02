@@ -76,7 +76,6 @@ $(document).ready(function () {
         preview: true,
         fullscreen: false,
         // imageUpload: true, // Activate the option
-
         // uploadPath: 'upload.php',
         onPreview: function (content, callback) {
             callback(marked(content));
@@ -87,7 +86,6 @@ $(document).ready(function () {
         preview: true,
         fullscreen: false,
         // imageUpload: true, // Activate the option
-
         // uploadPath: 'upload.php',
         onPreview: function (content, callback) {
             callback(marked(content));
@@ -98,7 +96,6 @@ $(document).ready(function () {
         preview: true,
         fullscreen: false,
         // imageUpload: true, // Activate the option
-
         // uploadPath: 'upload.php',
         onPreview: function (content, callback) {
             callback(marked(content));
@@ -109,7 +106,6 @@ $(document).ready(function () {
         preview: true,
         fullscreen: false,
         // imageUpload: true, // Activate the option
-
         // uploadPath: 'upload.php',
         onPreview: function (content, callback) {
             callback(marked(content));
@@ -117,7 +113,7 @@ $(document).ready(function () {
     });
     $("#datatable").DataTable().destroy();
     $("#datatable").DataTable({
-        // "paging":   false,
+        // "paging": false,
         ordering: false,
         info: false,
         searching: false,
@@ -163,12 +159,6 @@ $(document).ready(function () {
             { data: "is_active", name: "is_active" },
             { data: "created_at", name: "created_at" },
             { data: "updated_at", name: "updated_at" },
-            // {
-            //     data: "action",
-            //     name: "action",
-            //     orderable: false,
-            //     searchable: false,
-            // },
         ],
     });
 
@@ -200,12 +190,6 @@ $(document).ready(function () {
             { data: "is_active", name: "is_active" },
             { data: "created_at", name: "created_at" },
             { data: "updated_at", name: "updated_at" },
-            // {
-            //     data: "action",
-            //     name: "action",
-            //     orderable: false,
-            //     searchable: false,
-            // },
         ],
     });
 
@@ -237,12 +221,6 @@ $(document).ready(function () {
             { data: "is_active", name: "is_active" },
             { data: "created_at", name: "created_at" },
             { data: "updated_at", name: "updated_at" },
-            // {
-            //     data: "action",
-            //     name: "action",
-            //     orderable: false,
-            //     searchable: false,
-            // },
         ],
     });
 
@@ -274,13 +252,6 @@ $(document).ready(function () {
             { data: "start_date", name: "start_date" },
             { data: "end_date", name: "end_date" },
             { data: "is_active", name: "is_active" },
-            // { data: "is_flat_discount", name: "is_flat_discount" },
-            // {
-            //     data: "action",
-            //     name: "action",
-            //     orderable: false,
-            //     searchable: false,
-            // },
         ],
     });
 
@@ -311,12 +282,6 @@ $(document).ready(function () {
             { data: "email", name: "email" },
             { data: 'created_at', name: 'created_at' },
             { data: 'updated_at', name: 'updated_at' },
-            // {
-            //     data: "action",
-            //     name: "action",
-            //     orderable: false,
-            //     searchable: false,
-            // },
         ],
     });
 
@@ -346,12 +311,6 @@ $(document).ready(function () {
             { data: "name", name: "name" },
             { data: 'created_at', name: 'created_at' },
             { data: 'updated_at', name: 'updated_at' },
-            // {
-            //     data: "action",
-            //     name: "action",
-            //     orderable: false,
-            //     searchable: false,
-            // },
         ],
     });
 
@@ -372,12 +331,6 @@ $(document).ready(function () {
             { data: "updated_by", name: "updated_by" },
             { data: "created_at", name: "created_at" },
             { data: "updated_at", name: "updated_at" },
-            // {
-            //     data: "action",
-            //     name: "action",
-            //     orderable: false,
-            //     searchable: false,
-            // },
         ],
     });
 
@@ -398,12 +351,6 @@ $(document).ready(function () {
             { data: "updated_by", name: "updated_by" },
             { data: "created_at", name: "created_at" },
             { data: "updated_at", name: "updated_at" },
-            // {
-            //     data: "action",
-            //     name: "action",
-            //     orderable: false,
-            //     searchable: false,
-            // },
         ],
     });
 
@@ -424,12 +371,6 @@ $(document).ready(function () {
             { data: "updated_by", name: "updated_by" },
             { data: "created_at", name: "created_at" },
             { data: "updated_at", name: "updated_at" },
-            // {
-            //     data: "action",
-            //     name: "action",
-            //     orderable: false,
-            //     searchable: false,
-            // },
         ],
     });
 
@@ -465,28 +406,6 @@ $(document).ready(function () {
         ]
     });
 
-    // $(".transaction-data-table").DataTable({
-    //     ordering: false,
-    //     info: false,
-    //     searching: false,
-    //     bLengthChange: false,
-    //     serverSide: true,
-    //     responsive: true,
-    //     ajax: config.routes.transaction_datatable_route,
-    //     columns: [
-    //         { data: "approval_code", name: "approval_code" },
-    //         { data: "created_at", name: "created_at" },
-    //         { data: "insurance", name: "insurance" },
-    //         { data: "amount_paid", name: "amount_paid" },
-    //         { data: "customer_name", name: "customer_name" },
-    //         { data: "risk_details", name: "risk_details" },
-    //         { data: "created_by_name", name: "created_by_name" },
-    //         { data: "handler_name", name: "handler_name" },
-    //         { data: "payment_mode", name: "payment_mode" },
-    //         { data: "prev_approval_code", name: "prev_approval_code" },
-    //     ],
-    // });
-
     $("#search-transactions").submit(function (e) {
         e.preventDefault();
         $(".loader").show();
@@ -513,12 +432,6 @@ $(document).ready(function () {
             { data: "updated_by", name: "updated_by" },
             { data: "created_at", name: "created_at" },
             { data: "updated_at", name: "updated_at" },
-            // {
-            //     data: "action",
-            //     name: "action",
-            //     orderable: false,
-            //     searchable: false,
-            // },
         ],
     });
 
@@ -539,12 +452,6 @@ $(document).ready(function () {
             { data: "updated_by", name: "updated_by" },
             { data: "created_at", name: "created_at" },
             { data: "updated_at", name: "updated_at" },
-            // {
-            //     data: "action",
-            //     name: "action",
-            //     orderable: false,
-            //     searchable: false,
-            // },
         ],
     });
 
@@ -573,12 +480,6 @@ $(document).ready(function () {
             { data: "code", name: "code" },
             { data: "created_at", name: "created_at" },
             { data: "updated_at", name: "updated_at" },
-            // {
-            //     data: "action",
-            //     name: "action",
-            //     orderable: false,
-            //     searchable: false,
-            // },
         ],
     });
 
@@ -660,12 +561,6 @@ $(document).ready(function () {
             { data: "code", name: "code" },
             { data: "created_at", name: "created_at" },
             { data: "updated_at", name: "updated_at" },
-            // {
-            //     data: "action",
-            //     name: "action",
-            //     orderable: false,
-            //     searchable: false,
-            // },
         ],
     });
 
@@ -839,52 +734,31 @@ $(document).ready(function () {
         ]
     });
 
-    $('.rentacar-data-table').DataTable({
-        ordering: false,
-        info:     false,
-        searching:false,
-        bLengthChange: false,
-        serverSide: true,
-        ajax: config.routes.rentacar_datatable_route,
-        columns: [
-            { data: 'id', name: 'id', render:function(data, type, row){
-                return "<a href='"+config.routes.rentacar_datatable_route+'/'+row.id +"'>" + row.id + "</a>"
-            }},
-            {data: 'text', name: 'text'},
-            {data: 'text_ar', name: 'text_ar'},
-            {data: 'sort_order', name: 'sort_order'},
-            {data: 'is_active', name: 'is_active'},
-            {data: 'created_at', name: 'created_at'},
-            {data: 'updated_at', name: 'updated_at'},
-        ]
-    });
-    // Claims-CreateView: Fields visibility on the basis of selected Type of Insurance > Create/Edit views
-        // Claims-CreateView: Populate models of selected car make
-        $('#car_make_id').on('change',function(e) {
-            var make_code = $("#car_make_id option:selected").attr('data-id');
-            $.get('/car-model?make_code='+ make_code,function(data) {
-                var carmodel = $('#car_model_id').empty();
-                $.each(data,function(create,carmodelObj) {
-                    var option = $('<option/>', {id:create, value:carmodelObj});
-                    carmodel.append('<option data-id="'+carmodelObj.code+'" value="'+carmodelObj.id+'">'+carmodelObj.text+'</option>');
-                });
-            });
-        });
-    
-        // Claims-EditView: Populate models of selected car make
+    $('#car_make_id').on('change',function(e) {
         var make_code = $("#car_make_id option:selected").attr('data-id');
-        var old_car_model_id = $("#old_car_model_id").val();
         $.get('/car-model?make_code='+ make_code,function(data) {
             var carmodel = $('#car_model_id').empty();
             $.each(data,function(create,carmodelObj) {
                 var option = $('<option/>', {id:create, value:carmodelObj});
-                if(old_car_model_id == carmodelObj.id)
-                    carmodel.append('<option selected data-id="'+carmodelObj.code+'" value="'+carmodelObj.id+'">'+carmodelObj.text+'</option>');
-                else
-                    carmodel.append('<option  data-id="'+carmodelObj.code+'" value="'+carmodelObj.id+'">'+carmodelObj.text+'</option>');
+                carmodel.append('<option data-id="'+carmodelObj.code+'" value="'+carmodelObj.id+'">'+carmodelObj.text+'</option>');
             });
         });
-    
+    });
+
+    // Claims-EditView: Populate models of selected car make
+    var make_code = $("#car_make_id option:selected").attr('data-id');
+    var old_car_model_id = $("#old_car_model_id").val();
+    $.get('/car-model?make_code='+ make_code,function(data) {
+        var carmodel = $('#car_model_id').empty();
+        $.each(data,function(create,carmodelObj) {
+            var option = $('<option/>', {id:create, value:carmodelObj});
+            if(old_car_model_id == carmodelObj.id)
+                carmodel.append('<option selected data-id="'+carmodelObj.code+'" value="'+carmodelObj.id+'">'+carmodelObj.text+'</option>');
+            else
+                carmodel.append('<option  data-id="'+carmodelObj.code+'" value="'+carmodelObj.id+'">'+carmodelObj.text+'</option>');
+        });
+    });
+
     $("#sub_type_of_insurance").hide();
     $("#car_fields").hide();
     type_of_insurance_fields_visibility();
@@ -932,12 +806,6 @@ $(document).ready(function () {
             { data: "dob", name: "dob", orderable: false, searchable: false },
             { data: "created_at", name: "created_at" },
             { data: "updated_at", name: "updated_at" },
-            // {
-            //     data: "action",
-            //     name: "action",
-            //     orderable: false,
-            //     searchable: false,
-            // },
         ],
     });
 
@@ -949,6 +817,57 @@ $(document).ready(function () {
             $(".loader").hide();
         }, 1000);
     });
+
+    var amlDatatable = $('.aml-data-table').DataTable({
+        ordering: false,
+        info: false,
+        searching:false,
+        bLengthChange: false,
+        serverSide: true,
+        ajax: {
+            url: config.routes.aml_datatable_route,
+            data: function (d) {
+                d.searchtype = $("#search_type").val();
+                d.searchfield = $("input[name=searchfield]").val();
+                d.quotetype = $("#quote_type_value").val();
+            },
+        },
+        columns: [
+            { data: 'id', name: 'id', render:function(data, type, row) {
+                return "<a href='"+config.routes.aml_datatable_route+'/'+row.id +"'>" + row.id + "</a>"
+            }},
+            { data: "quote_type_text", name: "quote_type_text" },
+            { data: 'quote_request_id', name: 'quote_request_id', render:function(data, type, row) {
+                return "<a href='"+config.routes.aml_datatable_route+'/'+row.quote_type_id +'/details/'+row.quote_request_id +"'>" + row.quote_request_id + "</a>"
+            }},
+            { data: "input", name: "input" },
+            {
+                data: "screenshot",
+                name: "screenshot",
+                render: function (data, type, row, meta) {
+                    var imgsrc = data;
+                    if(imgsrc != null) {
+                        return (
+                            '<a href="'+imgsrc +'" target="_blank">'+
+                            '<img class="img-responsive" src="'+imgsrc +'" alt="screenshot" height="80px" width="80px"></a>'
+                        );
+                    }
+                },
+            },
+            { data: "created_at", name: "created_at" },
+            { data: "updated_at", name: "updated_at" },
+        ]
+    });
+
+    $("#search-aml").submit(function (e) {
+        e.preventDefault();
+        $(".loader").show();
+        amlDatatable.draw();
+        setTimeout(() => {
+            $(".loader").hide();
+        }, 1000);
+    });
+
     //select/unselect all checkboxes if this selected
     $("#select_all_checkboxes").click(function (e) {
         var isChecked = e.target.checked;
@@ -1009,8 +928,6 @@ $(document).ready(function () {
             $("form").submit();
         }, 500);
     });
-
-
 });
 $('#car_make_value').on('change',function(e) {
     var make_code = $("#car_make_value option:selected").attr('data-id');
@@ -1044,7 +961,7 @@ $(document).on('click','.delete', function(){
     $('#delete-form').attr('action',route);
     $('#exampleModal').modal('show');
 
-})
+});
 function dateRangePickerChange(startDate, endDate) {
     $.ajax({
         url: config.routes.load_dashboard_stats,

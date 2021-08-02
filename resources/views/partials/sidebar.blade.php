@@ -135,6 +135,15 @@
             </li>
         </ul>
         @endcan
+        @can('aml-list')
+        <ul class="nav side-menu">
+            <li><a><i class="fa fa-desktop"></i> AML <span class="fa fa-chevron-down"></span></a>
+            <ul class="nav child_menu">
+                    <li><a href="{{ url('kyc/aml') }}">Home</a></li>
+            </ul>
+            </li>
+        </ul>
+        @endcan
         <!-- <ul class="nav side-menu">
              <li><a href="{{ url('ftcform') }}"><i ></i> FTC Form </a>
          </ul> -->
