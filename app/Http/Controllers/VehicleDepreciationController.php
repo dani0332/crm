@@ -40,25 +40,12 @@ class VehicleDepreciationController extends Controller
             ->leftjoin('car_make','vehicle_depreciation.car_make_id','car_make.id')
             ->leftjoin('car_model','vehicle_depreciation.car_model_id','car_model.id')
             ->orderBy('created_at','desc');
-            if (isset($request->searchtype) && !empty($request->searchtype)
-            && isset($request->searchfield) && !empty($request->searchfield)) {
-                if($request->searchtype == 'id') {
-                    $data->where('vehicle_depreciation.id',$request->searchfield);
-                }
-                else {
-                    $data->where($request->searchtype, $request->searchfield);
-                }
-            }
             if(isset($request->carmake) && !empty($request->carmake))
                 $data->where('car_make_id', $request->carmake);
             if(isset($request->carmodel) && !empty($request->carmodel))
                 $data->where('car_model_id', $request->carmodel);
             return DataTables::of($data)
                     ->addIndexColumn()
-                    ->addColumn('action', function($row){
-                        return view('vehicleDepreciation.actions', compact('row'))->render();
-                    })
-                    ->rawColumns(['action'])
                     ->make(true);
         }
         return view('vehicledepreciation.view');
