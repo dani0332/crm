@@ -34,7 +34,6 @@ $(document).ready(function () {
     });
     $('#calculateValuation').click(function(){
         if($('#search-valuation').valid()){
-            console.log('c');
             var carMake = $('#car_make_value option:selected').val();
             var carModel = $('#car_model_value option:selected').val();
             var carTrim = $('#car_trim_value option:selected').val();
@@ -44,10 +43,9 @@ $(document).ready(function () {
                 type: "post",
                 data: { carModelDetailId: carTrim, yearOfManufacture: yom },
                 success: function (response) {
-                    console.log('c');
-                    $('#carValue').text(response.carValue.toString());
-                    $('#uLimit').text(response.carValueUpperLimit.toString());
-                    $('#lLimit').text(response.carValueLowerLimit.toString());
+                    $('#carValue').text(Number(response.carValue).toFixed(2));
+                    $('#uLimit').text(Number(response.carValueUpperLimit).toFixed(2));
+                    $('#lLimit').text(Number(response.carValueLowerLimit).toFixed(2));
                     $('#result').show();
                 },
                 error: function (jqXHR, textStatus, errorThrown) {
@@ -66,7 +64,6 @@ $(document).ready(function () {
         }
     });
     $('#reset').click(function(){
-        console.log('r');
         $('#result').hide();
         $('#carValue').text('');
         $('#uLimit').text('');
@@ -627,7 +624,6 @@ $(document).ready(function () {
                 },
                 error: function (jqXHR, textStatus, errorThrown) {
                     $(".loader").hide();
-                    console.log(textStatus, errorThrown);
                     $("#error_message").show();
                     $("#error_message").fadeIn().html(errorThrown);
                     setTimeout(function () {
@@ -862,34 +858,33 @@ $(document).ready(function () {
             {data: 'updated_at', name: 'updated_at'},
         ]
     });
-
-    // Claims-CreateView: Populate models of selected car make
-    $('#car_make_id').on('change',function(e) {
+    // Claims-CreateView: Fields visibility on the basis of selected Type of Insurance > Create/Edit views
+        // Claims-CreateView: Populate models of selected car make
+        $('#car_make_id').on('change',function(e) {
+            var make_code = $("#car_make_id option:selected").attr('data-id');
+            $.get('/car-model?make_code='+ make_code,function(data) {
+                var carmodel = $('#car_model_id').empty();
+                $.each(data,function(create,carmodelObj) {
+                    var option = $('<option/>', {id:create, value:carmodelObj});
+                    carmodel.append('<option data-id="'+carmodelObj.code+'" value="'+carmodelObj.id+'">'+carmodelObj.text+'</option>');
+                });
+            });
+        });
+    
+        // Claims-EditView: Populate models of selected car make
         var make_code = $("#car_make_id option:selected").attr('data-id');
+        var old_car_model_id = $("#old_car_model_id").val();
         $.get('/car-model?make_code='+ make_code,function(data) {
             var carmodel = $('#car_model_id').empty();
             $.each(data,function(create,carmodelObj) {
                 var option = $('<option/>', {id:create, value:carmodelObj});
-                carmodel.append('<option data-id="'+carmodelObj.code+'" value="'+carmodelObj.id+'">'+carmodelObj.text+'</option>');
+                if(old_car_model_id == carmodelObj.id)
+                    carmodel.append('<option selected data-id="'+carmodelObj.code+'" value="'+carmodelObj.id+'">'+carmodelObj.text+'</option>');
+                else
+                    carmodel.append('<option  data-id="'+carmodelObj.code+'" value="'+carmodelObj.id+'">'+carmodelObj.text+'</option>');
             });
         });
-    });
-
-    // Claims-EditView: Populate models of selected car make
-    var make_code = $("#car_make_id option:selected").attr('data-id');
-    var old_car_model_id = $("#old_car_model_id").val();
-    $.get('/car-model?make_code='+ make_code,function(data) {
-        var carmodel = $('#car_model_id').empty();
-        $.each(data,function(create,carmodelObj) {
-            var option = $('<option/>', {id:create, value:carmodelObj});
-            if(old_car_model_id == carmodelObj.id)
-                carmodel.append('<option selected data-id="'+carmodelObj.code+'" value="'+carmodelObj.id+'">'+carmodelObj.text+'</option>');
-            else
-                carmodel.append('<option  data-id="'+carmodelObj.code+'" value="'+carmodelObj.id+'">'+carmodelObj.text+'</option>');
-        });
-    });
-
-    // Claims-CreateView: Fields visibility on the basis of selected Type of Insurance > Create/Edit views
+    
     $("#sub_type_of_insurance").hide();
     $("#car_fields").hide();
     type_of_insurance_fields_visibility();
@@ -1018,7 +1013,6 @@ $(document).ready(function () {
 
 });
 $('#car_make_value').on('change',function(e) {
-    console.log('m');
     var make_code = $("#car_make_value option:selected").attr('data-id');
     $.get('/valuation/car-models?make_code='+ make_code,function(data) {
         var carmodel = $('#car_model_value').empty();
@@ -1030,7 +1024,6 @@ $('#car_make_value').on('change',function(e) {
     });
 });
 $('#car_model_value').on('change',function(e) {
-    console.log('md');
     var modelId = $("#car_model_value option:selected").val();
     $.get('/valuation/car-model-detail?modelId='+ modelId, function(data) {
         var cartrim = $('#car_trim_value').empty();

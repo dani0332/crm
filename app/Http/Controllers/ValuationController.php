@@ -24,7 +24,7 @@ class ValuationController extends Controller
 
     public function calculateValuation(Request $request)
     {
-        $carMakes = DB::table('car_make')->get();
+        $carMakes = DB::table('car_make')->where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
 
         return view('valuation.view', compact('carMakes'));
     }
@@ -32,13 +32,13 @@ class ValuationController extends Controller
     public function carModelBasedOnCarMake(Request $request){
 
         $make_code =$request->make_code;
-        $carmodel = DB::table('car_model')->where('car_make_code','=',$make_code)->get(array('id','text','code'));
+        $carmodel = DB::table('car_model')->where('car_make_code','=',$make_code)->where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get(array('id','text','code'));
         return response()->json($carmodel);
     }
 
     public function carTrimBasedOnCarModel(Request $request){
         $modelId =$request->modelId;
-        $carModelDetails = DB::table('car_model_detail')->where('car_model_id','=',$modelId)->get(array('id','text'));
+        $carModelDetails = DB::table('car_model_detail')->where('car_model_id','=',$modelId)->where('is_active', '=', 1)->orderBy('text', 'asc')->get(array('id','text'));
         return response()->json($carModelDetails);
     }
 
