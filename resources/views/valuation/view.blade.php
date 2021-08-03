@@ -1,5 +1,4 @@
 @extends('layouts.app') 
-`
 @section('title','View CarQuote')
 @section('content')
 <div class="row">

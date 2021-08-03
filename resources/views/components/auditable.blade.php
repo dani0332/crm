@@ -9,7 +9,7 @@
                 <div class="x_content">
                     <br />
                     <div class="table-responsive">
-                    <table id="datatable" class="table table-striped jambo_table">
+                    <table id="datatable" style="width:100%; table-layout: fixed;" class="table table-striped jambo_table">
                           <thead>
                             <tr>
                               <th>Id</th>
@@ -27,13 +27,13 @@
 
                             @foreach($audits as $key => $audit)
                             <tr>
-                              <td>{{ $audit->id }}</td>
-                              <td>{{ $audit->name }}</td>
-                              <td>{{ $audit->event }}</td>
-                              <td>{{ $audit->old_values }}</td>
-                              <td>{{ $audit->new_values }}</td>
-                              <td>{{ $audit->ip_address }}</td>
-                              <td>{{ $audit->created_at }}</td>
+                              <td style="word-wrap:break-word;">{{ $audit->id }}</td>
+                              <td style="word-wrap:break-word;">{{ $audit->name }}</td>
+                              <td style="word-wrap:break-word;">{{ $audit->event }}</td>
+                              <td style="word-wrap:break-word;">{{ $audit->old_values }}</td>
+                              <td style="word-wrap:break-word;">{{ $audit->new_values }}</td>
+                              <td style="word-wrap:break-word;">{{ $audit->ip_address }}</td>
+                              <td style="word-wrap:break-word;">{{ $audit->created_at }}</td>
                             </tr>
                             @endforeach
 
