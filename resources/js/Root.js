@@ -43,11 +43,12 @@ function Root() {
       }
 
       //https://crm-multipipeline.alfred.ae
+      //https://crmstage.alfred.ae/
     return (
     <Provider store={store}>
         <Router history={history}>
             <ThemeProvider theme={theme}>
-                <HttpProvider url='https://crm-multipipeline.alfred.ae' options={options}>
+                <HttpProvider url='https://crmstage.alfred.ae' options={options}>
                     {/* <DashboardFtcWizard /> */}
                 <Switch>
                     <Route path="/ftcform">

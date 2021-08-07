@@ -12,15 +12,10 @@ use Illuminate\Http\Request;
 class CarQuoteController extends Controller
 {
     /**
-
      * Display a listing of the resource.
-
      *
-
      * @return \Illuminate\Http\Response
-
      */
-
     public function __construct()
     {
         $this->middleware('permission:car-quotes-list|car-quotes-resubmit-api', ['only' => ['index', 'store']]);
@@ -45,11 +40,13 @@ class CarQuoteController extends Controller
                     $data->where($request->searchtype, $request->searchfield);
                 }
             }
-            if(isset($request->quotestatus) && !empty($request->quotestatus))
+            if(isset($request->quotestatus) && !empty($request->quotestatus)) {
                 $data->where('quote_status_id', $request->quotestatus);
-            if(isset($request->paymentstatus) && !empty($request->paymentstatus))
-                $data->where('payment_status_id', $request->paymentstatus);
+            }
 
+            if(isset($request->paymentstatus) && !empty($request->paymentstatus)) {
+                $data->where('payment_status_id', $request->paymentstatus);
+            }
 
             return DataTables::of($data)
                 ->addIndexColumn()
@@ -70,14 +67,19 @@ class CarQuoteController extends Controller
      */
     public function show(CarQuote $carquote)
     {
-
         return view('carquotes.show', compact('carquote'));
+    }
+
+    public function car_resubmit_capi(CarQuote $carquote)
+    {
+        return $carquote;
     }
 
     public function resubmitApi(Request $request)
     {
+        return "rtrter: ".$request;
         $carQuotes = $request->car_quotes;
-        if (count($carQuotes) > 0) {
+        if(count($carQuotes) > 0) {
             foreach ($carQuotes as $carQuote) {
                 $carQuoteModel = CarQuote::find($carQuote);
                 $this->sendDataCentralizedApi($carQuoteModel);
@@ -88,7 +90,6 @@ class CarQuoteController extends Controller
 
     public function sendDataCentralizedApi($bean)
     {
-
         $refUrl = $bean->reference_url;
         $carQuoteSaveApi = '/api/v1-wrapper-save-car-quote';
         $emailSys = Config::get('constants.emailL_sys');
@@ -96,24 +97,16 @@ class CarQuoteController extends Controller
         $centralApiToken = Config::get('constants.central_api_token');
 
         $carValue = $bean->car_value == "?" ? "0" : $bean->car_value;
-
         $uaeLicenseHeldFor = $bean->uae_license_held_for == '' ? null : $bean->uae_license_held_for_id;
-
         $emirateOfRegistration = $bean->emirate_of_registration == '' ? null : $bean->emirate_of_registration_id;
-
         $claimsHistory = $bean->claims_history == '' ? null : $bean->claim_history_id;
-
         $typeOfCarIns = $bean->type_of_car_insurance_c == '' ? null : $bean->car_type_insurance_id;
-
         $nationality = \App\Models\Nationality::find($bean->nationality_id);
         $nationality = $nationality ? $nationality->code : '';
-
         $carMakeCode = \App\Models\CarMake::find($bean->car_make_id);
         $carMakeCode = $carMakeCode ? $carMakeCode->code : '';
-
         $carModelCode = \App\Models\CarModel::find($bean->car_model_id);
         $carModelCode = $carModelCode ? $carModelCode->code : '';
-
         $data = array(
             "firstName" => $bean->first_name,
             "lastName" => $bean->last_name,
@@ -140,11 +133,9 @@ class CarQuoteController extends Controller
         );
 
         $dataCentr = array_filter($data);
-
         $formName = 'CAR FORM';
         $insuranceName = 'Car Insurance';
         $emailDataCenter = $data;
-
         $chCenter = curl_init($centralApi);
         curl_setopt($chCenter, CURLOPT_CONNECTTIMEOUT, 15);
         $dataCentrProcess = json_encode($dataCentr);
@@ -157,7 +148,7 @@ class CarQuoteController extends Controller
         $curlErrnoCentr = curl_errno($chCenter);
         $curlErrorCentr = curl_error($chCenter);
 
-        if ($curlErrnoCentr > 0) {
+        if($curlErrnoCentr > 0) {
             $curlMesg = "cURL Error ($curlErrnoCentr): $curlErrorCentr\n";
         } else {
             $curlMesg = "Data received: $resultCentr\n";
@@ -184,8 +175,7 @@ class CarQuoteController extends Controller
                 'curlMesg' => $curlMesg,
                 'emailCntrData' => $emailCntrData,
             ], function ($message) use ($subject) {
-                $message->to(['adeel.rehman@afia.ae'])
-                    ->subject($subject);
+                $message->to(['hussain.fakhruddin@afia.ae,ahsan.ashfaq@afia.ae,muhammad.usama@afia.ae,muhammad.shajiuddin@afia.ae'])->subject($subject);
                 $message->from('alfred@insurancemarket.ae', 'Alfred - Error');
             });
         }

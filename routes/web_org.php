@@ -77,7 +77,6 @@ Route::group(['middleware' =>  ['auth']], function() {
         Route::POST('carquotes/resubmit_api', [CarQuoteController::class, 'resubmitApi']);
         Route::resource('healthquotes', HealthQuoteController::class);
     });
-
     Route::group(['prefix' => 'transapp'], function () {
         Route::resource('insurancecompany', InsuranceCompanyController::class);
         Route::resource('handler', HandlerController::class);
