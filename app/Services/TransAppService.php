@@ -14,6 +14,7 @@ class TransAppService extends BaseService
 	public static function createTransaction(Request $request)
     {
         $existingCustomer = CustomerService::getCustomerByEmail($request->email)->first();
+        $sendWelcomeEmail = ($existingCustomer && !$existingCustomer->has_reward_access) || !$existingCustomer ? true : false;
         $customerId = CustomerService::getCustomerIdAndCreateIfNotExists($request->first_name, $request->last_name, $request->email);
         $status_id = DB::table('statuses')->where('name', 'Active')->value('id');
         $transaction = new Transaction;
@@ -30,7 +31,8 @@ class TransAppService extends BaseService
         $approvalCode = generate_code('T').$transaction->id;
         Transaction::where('id',$transaction->id)->update(['approval_code'=>$approvalCode]);
         CustomerService::setCustomerAccess($customerId);
-        if(!$existingCustomer) {
+
+        if($sendWelcomeEmail) {
             TransAppService::sendWelcomeEmail($customerId);
         }
         return $approvalCode;
