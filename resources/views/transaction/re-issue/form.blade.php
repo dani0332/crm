@@ -89,7 +89,7 @@
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="First Name">First Name <span class="required">*</span></label>
                         <div class="col-md-6 col-sm-6">
-                            <input id="first_name" name="first_name" value="{{ $customer->first_name }}" class="form-control" readonly />
+                            <input id="first_name" name="first_name" value="{{ $customer ? $customer->first_name : '' }}" class="form-control" readonly />
                             <small class="text-muted">Please enter First Name</small><br/>
                             @if ($errors->has('first_name'))
                                 <span class="text-danger">{{ $errors->first('first_name') }}</span>
@@ -99,7 +99,7 @@
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="Last Name">Last Name <span class="required">*</span></label>
                         <div class="col-md-6 col-sm-6">
-                            <input id="last_name" name="last_name" value="{{ $customer->last_name }}" class="form-control" readonly />
+                            <input id="last_name" name="last_name" value="{{ $customer ? $customer->last_name : '' }}" class="form-control" readonly />
                             <small class="text-muted">Please enter Last Name</small><br/>
                             @if ($errors->has('last_name'))
                                 <span class="text-danger">{{ $errors->first('last_name') }}</span>
@@ -109,7 +109,7 @@
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="Customer Email">Customer Email <span class="required">*</span></label>
                         <div class="col-md-6 col-sm-6">
-                            <input id="email" name="email" value="{{ $customer->email }}" class="form-control" readonly />
+                            <input id="email" name="email" value="{{ $customer ? $customer->email : '' }}" class="form-control" readonly />
                             <small class="text-muted">Please enter Customer Email</small><br/>
                             @if ($errors->has('email'))
                                 <span class="text-danger">{{ $errors->first('email') }}</span>
