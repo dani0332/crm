@@ -13,6 +13,12 @@ class AlterTransactionTable extends Migration
      */
     public function up()
     {
+        if (Schema::hasColumn('transactions', 'customer_name'))
+        {
+            Schema::table('transactions', function (Blueprint $table) {
+                $table->dropColumn('customer_name');
+            });
+        }
 
         if (!Schema::hasColumn('customer', 'has_reward_access'))
         {
@@ -41,11 +47,5 @@ class AlterTransactionTable extends Migration
      */
     public function down()
     {
-        if (Schema::hasColumn('transactions', 'customer_name'))
-        {
-            Schema::table('transactions', function (Blueprint $table) {
-                $table->dropColumn('customer_name');
-            });
-        }
     }
 }
