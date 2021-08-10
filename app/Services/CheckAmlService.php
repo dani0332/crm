@@ -31,7 +31,7 @@ class CheckAmlService
         $dataArr = array("search" => $firstName." ".$lastName,"quoteRequestId" => $quoteRequestId,"quoteTypeId" => $quoteTypeId);
         $dataArrProc = json_encode($dataArr);
 
-        $chAml = Http::contentType("application/json")->send('POST',$amlSearchEndPoint."/safsafasd", ['body' => $dataArrProc]);
+        $chAml = Http::contentType("application/json")->send('POST',$amlSearchEndPoint, ['body' => $dataArrProc]);
         $chAmlStatus = $chAml->status();
         $chAmlMessage = $chAml->json();
 
