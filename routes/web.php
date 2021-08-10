@@ -124,9 +124,8 @@ Route::group(['middleware' =>  ['auth']], function() {
 
     Route::group(['prefix' => 'kyc'], function () {
         Route::resource('aml', AMLController::class);
-        Route::get('aml/{quote_type_id}/details/{quote_request_id}' , [AMLController::class,'aml_details']);
-        Route::get('aml/{quote_type_id}/details/{quote_request_id}/quote_status_rejected',[AMLController::class,'quote_status_rejected'])->name('quote_status_rejected');
-        Route::get('aml/{quote_type_id}/details/{quote_request_id}/quote_status_approved',[AMLController::class,'quote_status_approved'])->name('quote_status_approved');
+        Route::get('aml/{quoteTypeId}/details/{quoteRequestId}' , [AMLController::class,'amlQuoteDetails']);
+        Route::get('aml/{quoteTypeId}/details/{quoteRequestId}/quoteStatusUpdate/{quoteTypeCode}',[AMLController::class,'quoteStatusUpdate'])->name('quoteStatusUpdate');
     });
 
     Route::get('/car-model',[ClaimController::class,'carModelBasedOnCarMake']);
