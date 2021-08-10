@@ -43,7 +43,7 @@ class CheckAmlService
 
         if($chAmlStatus == 201) { // Match is found
 
-            // Update Quote Status
+            // Update Quote Status 
             $quoteTypeCode = QuoteType::where('id', '=', $quoteTypeId)->value('code');
             $quoteStatusId = QuoteStatus::where('code', '=', 'approvalRequired')->value('id');
             if($quoteTypeCode && $quoteTypeCode != "") {
@@ -77,6 +77,7 @@ class CheckAmlService
         }
         return $chAmlStatus; // return http code
     }
+    // Match found Email
     public static function sendAMLMatchedEmailComplianceTeam($emailAmlData,$emailL_sys,$amlUrl)
     {
         $amlMatchedEmailRecipients = Config::get('constants.AML_MATCHED_EMAIL_RECIPIENTS');
@@ -87,6 +88,7 @@ class CheckAmlService
             'emailAmlData' => $emailAmlData,
         ], $subject, $amlMatchedEmailRecipients);
     }
+    // Error Email
     public static function sendAMLErrorEmailEngTeam($emailAmlData,$emailL_sys,$amlUrl,$chAmlStatus,$requestMessage)
     {
         $errorEmailRecipients = Config::get('constants.ERROR_EMAIL_RECIPIENTS');
