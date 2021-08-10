@@ -100,7 +100,7 @@ class AMLController extends Controller
 
     public function amlQuoteDetails($quoteTypeId, $quoteRequestId)
     {
-        return $this->checkAmlService->checkAml("Saddam","Hussain",$quoteRequestId,$quoteTypeId);
+        //return $this->checkAmlService->checkAml("Saddam","Hussain",$quoteRequestId,$quoteTypeId);
 
         $quoteType = QuoteType::where('id', '=', $quoteTypeId)->get(array('code','text'));
         $quoteTypeCode = $quoteType[0]->code;
