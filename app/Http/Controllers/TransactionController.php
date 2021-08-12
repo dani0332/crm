@@ -279,7 +279,7 @@ class TransactionController extends Controller
 
         if(empty($transaction)) {
             return redirect('transapp/home')->withErrors([
-                    'approval_code' => [__('Could not find any matching Transaction'),
+                    'approval_code' => [__('Approval code '. $request->approval_code .' is invalid'),
                 ],
             ]);
         }
@@ -351,15 +351,15 @@ class TransactionController extends Controller
         ->leftjoin('roles','roles.id','model_has_roles.role_id')
         ->whereIn('roles.name', ['TRANSAPP_ADVISOR', 'TRANSAPP_APPROVER', 'TRANSAPP_ADMIN'])->orderBy('roles.name', 'asc')->get();
 
-        $customer = $this->customerService->getCustomerById($transaction->first()->customer_id);
         if (count($transaction) > 0) {
             $transaction = $transaction[0];
+            $customer = $this->customerService->getCustomerById($transaction->first()->customer_id);
             return view('transaction.re-issue.form', compact('customer','title','route', 'statuses', 'reasons', 'transaction', 'insurancecompanies', 'handlers', 'paymentmodes'));
         } else {
             if($route == 're_issue') { $route_to = 'reissue_view'; }
             if($route == 'cancel') { $route_to = 'cancel_view'; }
             return redirect()->route($route_to)->withErrors([
-                    'approval_code' => [__('No transaction found for Approval code '.$request->approval_code),
+                    'approval_code' => [__('Approval code '.$request->approval_code.' is invalid '),
                 ],
             ]);
         }
