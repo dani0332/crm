@@ -353,7 +353,7 @@ class TransactionController extends Controller
 
         if (count($transaction) > 0) {
             $transaction = $transaction[0];
-            $customer = $this->customerService->getCustomerById($transaction->first()->customer_id);
+            $customer = $this->customerService->getCustomerById($transaction->customer_id);
             return view('transaction.re-issue.form', compact('customer','title','route', 'statuses', 'reasons', 'transaction', 'insurancecompanies', 'handlers', 'paymentmodes'));
         } else {
             if($route == 're_issue') { $route_to = 'reissue_view'; }
@@ -386,7 +386,7 @@ class TransactionController extends Controller
         $transaction = new Transaction;
         $transaction->insurance_company_id = $request->insurance_company;
         $customer = $this->customerService->getCustomerByEmail($request->email);
-        $transaction->customer_id = $customer->iId;
+        $transaction->customer_id = $customer->first()->id;
         $transaction->assigned_to_id = $request->assigned_to_id;
         $transaction->payment_mode_id = $request->paymentmode;
         $transaction->risk_details = $request->risk_detail;
