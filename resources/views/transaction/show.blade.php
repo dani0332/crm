@@ -83,14 +83,6 @@
                         </div>
                     </div>
                     <div class="ln_solid"></div>
-                    <div class="row">
-                    <div class="col-auto mr-auto"></div>
-                        <div class="col-auto">
-                            @can('crm-admin')
-                                <a href="#" date-route="{{ route('transaction.destroy', ['transaction' => $transaction->id]) }}" class='btn btn-warning btn-sm delete'>Delete</a>
-                            @endcan
-                        </div>
-                    </div>
                 </form>
             </div>
         </div>
