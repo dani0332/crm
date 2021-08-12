@@ -123,8 +123,9 @@
                           <th>Insurance<br>Company</th>
                           <th>Premium</th>
                           <th>Name</th>
+                          <th>Email</th>
                           <th>Risk</th>
-                          <th>Transector</th>
+                          <th>Transactor</th>
                           <th>Handler</th>
                           <th>Payment mode</th>
                           <th>Prev Approval Code</th>

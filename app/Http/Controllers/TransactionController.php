@@ -58,8 +58,9 @@ class TransactionController extends Controller
 
         if ($request->ajax()) {
 
-            $data = Transaction::select('transactions.*', 'statuses.name as status', 'insurance_companies.name as insurance',
-            'handlers.name as handler_name', 'creaters.name as created_by_name', 'payment_modes.name as payment_mode')
+            $data = Transaction::select('transactions.*', 'statuses.name as status', 'customer.email as customer_email', 'insurance_companies.name as insurance',
+            'handlers.name as handler_name', 'creaters.name as created_by_name', 'payment_modes.name as payment_mode', DB::raw('CONCAT(customer.first_name, " ", customer.last_name) AS customer_name'))
+            ->leftjoin('customer', 'customer.id', 'transactions.customer_id')
             ->leftjoin('insurance_companies', 'insurance_companies.id', 'transactions.insurance_company_id')
             ->leftjoin('users as handlers', 'transactions.assigned_to_id','handlers.id')
             ->leftjoin('users as creaters', 'transactions.created_by_id','creaters.id')
@@ -73,8 +74,7 @@ class TransactionController extends Controller
 
             if (isset($request->transapp_start_date) && !empty($request->transapp_start_date)
             && isset($request->transapp_stop_date) && !empty($request->transapp_stop_date)) {
-                $data->where('transactions.created_at', '>=', $request->transapp_start_date);
-                $data->where('transactions.created_at', '<=', $request->transapp_stop_date);
+                $data->whereBetween('transactions.created_at', [\Carbon\Carbon::parse($request->transapp_start_date)->format('Y-m-d')." 00:00:00", \Carbon\Carbon::parse($request->transapp_stop_date)->format('Y-m-d')." 23:59:59"]);
             }
 
             if(isset($request->transactor) && !empty($request->transactor)) {

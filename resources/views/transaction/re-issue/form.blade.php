@@ -181,37 +181,11 @@
                         </div>
                     </div>
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Status">Status <span class="required">*</span></label>
-                        <div class="col-md-6 col-sm-6">
-                            <select id="status_id" name="status_id" class="form-control" readonly>
-                                <option value="Nothing selected">Nothing selected</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="Comments">Comments </label>
                         <div class="col-md-6 col-sm-6">
                             <textarea id="comments" name="comments" class="form-control"></textarea>
                             @if ($errors->has('comment'))
                                 <span class="text-danger">{{ $errors->first('comment') }}</span>
-                            @endif
-                        </div>
-                    </div>
-                    <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Status Modified Date">Status Modified Date <span class="required">*</span></label>
-                        <div class="col-md-6 col-sm-6">
-                            <input type="text" id="status_modified_at" name="status_modified_at" class="form-control" readonly />
-                            @if ($errors->has('status_modified_at'))
-                                <span class="text-danger">{{ $errors->first('status_modified_at') }}</span>
-                            @endif
-                        </div>
-                    </div>
-                    <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Status Updated By">Status Updated By <span class="required">*</span></label>
-                        <div class="col-md-6 col-sm-6">
-                            <input type="text" id="status_modified_by" name="status_modified_by" class="form-control" readonly/>
-                            @if ($errors->has('status_modified_by'))
-                                <span class="text-danger">{{ $errors->first('status_modified_by') }}</span>
                             @endif
                         </div>
                     </div>

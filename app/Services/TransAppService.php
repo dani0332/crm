@@ -7,6 +7,7 @@ use Auth;
 use DB;
 use App\Models\Transaction;
 use Illuminate\Support\Facades\Mail;
+use Config;
 
 
 class TransAppService extends BaseService
@@ -32,7 +33,7 @@ class TransAppService extends BaseService
         Transaction::where('id',$transaction->id)->update(['approval_code'=>$approvalCode]);
         CustomerService::setCustomerAccess($customerId);
 
-        if($sendWelcomeEmail) {
+        if($sendWelcomeEmail && Config::get('constants.ENABLE_TRANSAPP_WE') == '1') {
             TransAppService::sendWelcomeEmail($customerId);
         }
         return $approvalCode;

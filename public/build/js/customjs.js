@@ -4,7 +4,7 @@ $(document).ready(function () {
     $("#datepicker_2").datepicker({ dateFormat: "yy-mm-dd" });
     $("#transapp_start_date").datepicker({ dateFormat: "yy-mm-dd" });
     $("#transapp_stop_date").datepicker({ dateFormat: "yy-mm-dd" });
-    $('#search-valuation').validate({ 
+    $('#search-valuation').validate({
         rules: {
             carmake: {
                 required: true,
@@ -49,7 +49,7 @@ $(document).ready(function () {
                     $('#result').show();
                 },
                 error: function (jqXHR, textStatus, errorThrown) {
-                    if(jqXHR.responseJSON.msg == 'Car Trim Not found'){ 
+                    if(jqXHR.responseJSON.msg == 'Car Trim Not found'){
                         $('#error').show();
                         $('#error').text('Cannot calculate depreciation without trim');
                         $('#error').hide().delay(5000).fadeIn(400);
@@ -398,6 +398,7 @@ $(document).ready(function () {
             { data: "insurance", name: "insurance" },
             { data: "amount_paid", name: "amount_paid" },
             { data: "customer_name", name: "customer_name" },
+            { data: "customer_email", name: "customer_email" },
             { data: "risk_details", name: "risk_details" },
             { data: "created_by_name", name: "created_by_name" },
             { data: "handler_name", name: "handler_name" },

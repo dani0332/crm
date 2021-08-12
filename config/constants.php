@@ -1,4 +1,4 @@
-<?php 
+<?php
 
 return [
     'social_driver' => 'google',
@@ -11,5 +11,6 @@ return [
     'valuation_api_route' => env('VALUATION_API_URL'),
     'AML_SEARCH_API_ENDPOINT' => env('AML_SEARCH_API_ENDPOINT'),
     'AML_MATCHED_EMAIL_RECIPIENTS' => env('AML_MATCHED_EMAIL_RECIPIENTS'),
-    'ERROR_EMAIL_RECIPIENTS' => env('ERROR_EMAIL_RECIPIENTS')
+    'ERROR_EMAIL_RECIPIENTS' => env('ERROR_EMAIL_RECIPIENTS'),
+    'ENABLE_TRANSAPP_WE' => env('ENABLE_TRANSAPP_WE')
 ];
