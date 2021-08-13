@@ -353,7 +353,6 @@ class TransactionController extends Controller
         ->leftjoin('model_has_roles','users.id','model_has_roles.model_id')
         ->leftjoin('roles','roles.id','model_has_roles.role_id')
         ->whereIn('roles.name', ['TRANSAPP_ADVISOR', 'TRANSAPP_APPROVER', 'TRANSAPP_ADMIN'])->orderBy('roles.name', 'asc')->get();
-
         if (count($transaction) > 0) {
             $transaction = $transaction[0];
             $customer = $this->customerService->getCustomerById($transaction->customer_id);
