@@ -5,10 +5,13 @@ use Illuminate\Support\Facades\DB;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use OwenIt\Auditing\Auditable;
+use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
+use Config;
 
-class CarQuote extends Model
+class CarQuote extends Model implements AuditableContract
 {
-    use HasFactory;
+    use HasFactory, Auditable;
     protected $table = 'car_quote_request';
     protected $casts = [
         'dob' => 'datetime',
@@ -62,7 +65,16 @@ class CarQuote extends Model
     {
         return $this->hasOne(QuoteStatus::class, 'id', 'quote_status_id');
     }
-
+    public function getCreatedAtAttribute($table)
+    {
+        $date_time_format = Config::get('constants.datetime_format');
+        return $this->asDateTime($table)->timezone(config('app.timezone'))->format($date_time_format);
+    }
+    public function getUpdatedAtAttribute($table)
+    {
+        $date_time_format = Config::get('constants.datetime_format');
+        return $this->asDateTime($table)->timezone(config('app.timezone'))->format($date_time_format);
+    }
     public function processGetDSL($filters = [], $request) {
 
         $select = ['car_value', 'id', 'year_of_manufacture', 'car_make_id','car_model_id'];

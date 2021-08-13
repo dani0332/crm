@@ -21,10 +21,11 @@ use App\Http\Controllers\CarRepairCoverageController;
 use App\Http\Controllers\CarRepairTypeController;
 use App\Http\Controllers\RentACarController;
 use App\Http\Controllers\ClaimsAttachmentsController;
+use App\Http\Controllers\AMLController;
 use App\Http\Controllers\FtcFormController;
 use App\Http\Controllers\FormController;
 use App\Http\Controllers\UploadResourceController;
-
+use App\Http\Controllers\ValuationController;
 
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\InsuranceCompanyController;
@@ -33,6 +34,7 @@ use App\Http\Controllers\ReasonController;
 use App\Http\Controllers\StatusController;
 use App\Http\Controllers\PaymentModeController;
 use App\Http\Controllers\TransactionController;
+use App\Http\Controllers\VehicleDepreciationController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -82,7 +84,7 @@ Route::group(['middleware' =>  ['auth']], function() {
 
     Route::group(['prefix' => 'quotes'], function () {
         Route::resource('carquotes', CarQuoteController::class);
-        Route::POST('carquotes/resubmit_api', [CarQuoteController::class, 'resubmitApi']);
+        Route::get('carquotes/car_resubmit/{id}',[CarQuoteController::class,'car_resubmit_capi'])->name('car_resubmit_capi');
         Route::resource('healthquotes', HealthQuoteController::class);
     });
 
@@ -102,12 +104,12 @@ Route::group(['middleware' =>  ['auth']], function() {
         Route::get('cancel-transaction-form',[TransactionController::class,'cancelAndReIssueTransectionForm'])->name('cancel_transaction_form');
         Route::post('cancel-transaction',[TransactionController::class,'cancelAndReIssueTransection'])->name('cancel');
     });
-
-    Route::group(['prefix' => 'qoutes'], function() {
-        Route::resource('carqoutes', CarQouteController::class);
-        Route::POST('carqoutes/resubmit_api', [ CarQouteController::class , 'resubmitApi']);
-        Route::resource('healthqoutes', HealthQouteController::class);
+    Route::group(['prefix' => 'valuation'], function () {
+        Route::get('calculatevaluation',[ValuationController::class,'calculateValuation'])->name('calculatevaluation');
+        Route::resource('vehicledepreciation', VehicleDepreciationController::class);
     });
+    Route::get('/valuation/car-models',[ValuationController::class,'carModelBasedOnCarMake']);
+    Route::get('/valuation/car-model-detail',[ValuationController::class,'carTrimBasedOnCarModel']);
 
     Route::group(['prefix' => 'claim'], function() {
         Route::resource('claims', ClaimController::class);
@@ -118,6 +120,12 @@ Route::group(['middleware' =>  ['auth']], function() {
         Route::resource('carrepairtype', CarRepairTypeController::class);
         Route::resource('rentacar', RentACarController::class);
         Route::resource('claims.claim-attachment', ClaimsAttachmentsController::class);
+    });
+
+    Route::group(['prefix' => 'kyc'], function () {
+        Route::resource('aml', AMLController::class);
+        Route::get('aml/{quoteTypeId}/details/{quoteRequestId}' , [AMLController::class,'amlQuoteDetails']);
+        Route::get('aml/{quoteTypeId}/details/{quoteRequestId}/quoteStatusUpdate/{quoteTypeCode}',[AMLController::class,'quoteStatusUpdate'])->name('quoteStatusUpdate');
     });
 
     Route::get('/car-model',[ClaimController::class,'carModelBasedOnCarMake']);

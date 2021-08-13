@@ -30,7 +30,7 @@
                                 <span class="text-danger">{{ $errors->first('first_name') }}</span>
                             @endif
                         </div>
-                       
+
                     </div>
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="last_name">Last Name<span class="required">*</span>
@@ -41,7 +41,7 @@
                                 <span class="text-danger">{{ $errors->first('last_name') }}</span>
                             @endif
                         </div>
-                        
+
                     </div>
 
                     <div class="item form-group">
@@ -53,11 +53,11 @@
                                 <span class="text-danger">{{ $errors->first('email') }}</span>
                             @endif
                         </div>
-                        
+
                     </div>
 
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="mobile_no">Mobile No<span class="required">*</span>
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="mobile_no">Mobile No
                         </label>
                         <div class="col-md-6 col-sm-6 ">
                             <input type="text" id="mobile_no" name="mobile_no" value="{{ $customer->mobile_no }}"  class="form-control">
@@ -68,7 +68,7 @@
                     </div>
 
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="gender">Gender<span class="required">*</span>
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="gender">Gender
                         </label>
                         <div class="col-md-6 col-sm-6 ">
                             <input type="text" id="gender" name="gender" value="{{ $customer->gender }}"  class="form-control">
@@ -80,7 +80,7 @@
 
 
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="lang">Lang<span class="required">*</span>
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="lang">Lang
                         </label>
                         <div class="col-md-6 col-sm-6 ">
                             <input type="text" id="lang" name="lang" value="{{ $customer->lang }}"  class="form-control">
@@ -92,7 +92,7 @@
 
 
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="dob">dob<span class="required">*</span>
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="dob">dob
                         </label>
                         <div class="col-md-6 col-sm-6 ">
                             <input type="text" id="datepicker" name="dob" value="{{ $customer->dob }}"  class="form-control">
@@ -103,7 +103,7 @@
                     </div>
 
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="nationality_id">Nationality<span class="required">*</span>
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="nationality_id">Nationality
                         </label>
                         <div class="col-md-6 col-sm-6 ">
                             <select class="form-control" name="nationality_id">
@@ -129,9 +129,20 @@
                             <span class="text-danger">{{ $errors->first('has_alfred_access') }}</span>
                         @endif
                     </div>
+
+                    <div class="item form-group">
+                        <label for="middle-name" class="col-form-label col-md-3 col-sm-3 label-align">Has Reward Access</label>
+                        <div class="col-md-6 col-sm-6 ">
+                            <input {{ $customer->has_reward_access ? 'checked' : '' }} type="checkbox" class="flat" name='has_reward_access'>
+                        </div>
+                        <br />
+                        @if ($errors->has('has_reward_access'))
+                            <span class="text-danger">{{ $errors->first('has_reward_access') }}</span>
+                        @endif
+                    </div>
                     <div id='redirect_to_view_div'></div>
                     <div class="ln_solid"></div>
-                    
+
                     <div class="item form-group">
                         <div class="col-md-6 col-sm-6 offset-md-3">
                           <button type="submit" class="btn btn-warning">Update & Continue Updating</button> <button type="submit" class="btn btn-warning" id="return_to_view" >Update</button>

@@ -49,7 +49,7 @@
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="Mode Of Payment"><b>Customer Name</b></label>
                         <div class="col-md-6 col-sm-6">
-                            <p class="label-align-center">{{ $transaction->customer_name }}</p>
+                            <p class="label-align-center">{{ $customer ? $customer->first_name.' '.$customer->last_name : '' }}</p>
                         </div>
                     </div>
                     <div class="item form-group">
@@ -83,14 +83,6 @@
                         </div>
                     </div>
                     <div class="ln_solid"></div>
-                    <div class="row">
-                    <div class="col-auto mr-auto"></div>
-                        <div class="col-auto">
-                            @can('crm-admin')
-                                <a href="#" date-route="{{ route('transaction.destroy', ['transaction' => $transaction->id]) }}" class='btn btn-warning btn-sm delete'>Delete</a>
-                            @endcan
-                        </div>
-                    </div>
                 </form>
             </div>
         </div>

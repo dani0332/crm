@@ -87,16 +87,32 @@
                         </div>
                     </div>
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Customer Name">Customer Name <span class="required">*</span></label>
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="First Name">First Name <span class="required">*</span></label>
                         <div class="col-md-6 col-sm-6">
-                            @if ($route == 'cancel')
-                            <input id="customer_name" name="customer_name" value="{{ $transaction->customer_name }}" class="form-control" readonly />
-                            @elseif ($route == 're_issue')
-                            <input id="customer_name" name="customer_name" value="{{ $transaction->customer_name }}" class="form-control" />
+                            <input id="first_name" name="first_name" value="{{ $customer ? $customer->first_name : '' }}" class="form-control" readonly />
+                            <small class="text-muted">Please enter First Name</small><br/>
+                            @if ($errors->has('first_name'))
+                                <span class="text-danger">{{ $errors->first('first_name') }}</span>
                             @endif
-                            <small class="text-muted">Please enter Customer Name</small><br/>
-                            @if ($errors->has('customer_name'))
-                                <span class="text-danger">{{ $errors->first('customer_name') }}</span>
+                        </div>
+                    </div>
+                    <div class="item form-group">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Last Name">Last Name <span class="required">*</span></label>
+                        <div class="col-md-6 col-sm-6">
+                            <input id="last_name" name="last_name" value="{{ $customer ? $customer->last_name : '' }}" class="form-control" readonly />
+                            <small class="text-muted">Please enter Last Name</small><br/>
+                            @if ($errors->has('last_name'))
+                                <span class="text-danger">{{ $errors->first('last_name') }}</span>
+                            @endif
+                        </div>
+                    </div>
+                    <div class="item form-group">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Customer Email">Customer Email <span class="required">*</span></label>
+                        <div class="col-md-6 col-sm-6">
+                            <input id="email" name="email" value="{{ $customer ? $customer->email : '' }}" class="form-control" readonly />
+                            <small class="text-muted">Please enter Customer Email</small><br/>
+                            @if ($errors->has('email'))
+                                <span class="text-danger">{{ $errors->first('email') }}</span>
                             @endif
                         </div>
                     </div>
@@ -165,37 +181,11 @@
                         </div>
                     </div>
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Status">Status <span class="required">*</span></label>
-                        <div class="col-md-6 col-sm-6">
-                            <select id="status_id" name="status_id" class="form-control" readonly>
-                                <option value="Nothing selected">Nothing selected</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="Comments">Comments </label>
                         <div class="col-md-6 col-sm-6">
                             <textarea id="comments" name="comments" class="form-control"></textarea>
                             @if ($errors->has('comment'))
                                 <span class="text-danger">{{ $errors->first('comment') }}</span>
-                            @endif
-                        </div>
-                    </div>
-                    <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Status Modified Date">Status Modified Date <span class="required">*</span></label>
-                        <div class="col-md-6 col-sm-6">
-                            <input type="text" id="status_modified_at" name="status_modified_at" class="form-control" readonly />
-                            @if ($errors->has('status_modified_at'))
-                                <span class="text-danger">{{ $errors->first('status_modified_at') }}</span>
-                            @endif
-                        </div>
-                    </div>
-                    <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Status Updated By">Status Updated By <span class="required">*</span></label>
-                        <div class="col-md-6 col-sm-6">
-                            <input type="text" id="status_modified_by" name="status_modified_by" class="form-control" readonly/>
-                            @if ($errors->has('status_modified_by'))
-                                <span class="text-danger">{{ $errors->first('status_modified_by') }}</span>
                             @endif
                         </div>
                     </div>
