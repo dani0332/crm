@@ -93,6 +93,24 @@
                             </div>
                         </div>
                     </div>
+                    {{-- <div class="item form-group">
+                        <div class="col">
+                            <label class="col-form-label col-md-2 col-sm-2" id='customer_name' for="Customer Name ">Customer Name</label>
+                            <div class="col-md-6 col-sm-6">
+                                <div class="input-group">
+                                <input type="text" name="transapp_customer_name" id="customer_name" class="form-control">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <label class="col-form-label col-md-2 col-sm-2" id='customer_email' for="Customer Email ">Customer Email</label>
+                            <div class="col-md-6 col-sm-6">
+                                <div class="input-group">
+                                <input type="text" name="transapp_customer_email" id="customer_email" class="form-control">
+                                </div>
+                            </div>
+                        </div>
+                    </div> --}}
                     <div class="item form-group">
                         <div class="col">
                             <label class="col-form-label col-md-2 col-sm-2" id="payment_mode_id" for="Payment mode">Payment mode</label>
@@ -107,6 +125,16 @@
                                 </div>
                             </div>
                         </div>
+                        <div class="col">
+                            <label class="col-form-label col-md-2 col-sm-2" id='transapp_approval' for="Customer Email ">Approval Code</label>
+                            <div class="col-md-6 col-sm-6">
+                                <div class="input-group">
+                                <input type="text" name="transapp_approval_code" id="transapp_approval_code" class="form-control">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="item form-group">
                         <div class="col">
                             <ul class="nav navbar-right panel_toolbox">
                             <li><input type="submit" class="btn btn-warning btn-sm"></li>

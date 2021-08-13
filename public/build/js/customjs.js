@@ -390,6 +390,7 @@ $(document).ready(function () {
                 d.insurance_company = $("#insurance_company_value").val();
                 d.reason = $("#reason_value").val();
                 d.payment_mode = $("#payment_mode_value").val();
+                d.transapp_approval_code = $("#transapp_approval_code").val();
             },
         },
         columns: [
