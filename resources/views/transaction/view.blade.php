@@ -126,16 +126,6 @@
                             </div>
                         </div>
                         <div class="col">
-                            <label class="col-form-label col-md-2 col-sm-2" id='transapp_approval' for="Customer Email ">Approval Code</label>
-                            <div class="col-md-6 col-sm-6">
-                                <div class="input-group">
-                                <input type="text" name="transapp_approval_code" id="transapp_approval_code" class="form-control">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="item form-group">
-                        <div class="col">
                             <ul class="nav navbar-right panel_toolbox">
                             <li><input type="submit" class="btn btn-warning btn-sm"></li>
                             <li><input type="reset" class="btn btn-warning btn-sm"></li>
@@ -151,7 +141,6 @@
                           <th>Insurance<br>Company</th>
                           <th>Premium</th>
                           <th>Name</th>
-                          <th>Email</th>
                           <th>Risk</th>
                           <th>Transactor</th>
                           <th>Handler</th>
