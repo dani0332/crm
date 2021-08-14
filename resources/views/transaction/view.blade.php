@@ -95,7 +95,7 @@
                     </div>
                     {{-- <div class="item form-group">
                         <div class="col">
-                            <label class="col-form-label col-md-2 col-sm-2" id='customer_name' for="Customer Name ">Customer Name</label>
+                            <label class="col-form-label col-md-2 col-sm-2" id='omer_name' for="Customer Name ">Customer Name</label>
                             <div class="col-md-6 col-sm-6">
                                 <div class="input-group">
                                 <input type="text" name="transapp_customer_name" id="customer_name" class="form-control">

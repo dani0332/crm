@@ -58,7 +58,7 @@ class TransactionController extends Controller
 
         if ($request->ajax()) {
 
-            $data = Transaction::select('transactions.*', 'statuses.name as status', 'customer.email as customer_email', 'insurance_companies.name as insurance',
+            $data = Transaction::select('transactions.*', 'statuses.name as status', 'insurance_companies.name as insurance',
             'handlers.name as handler_name', 'creaters.name as created_by_name', 'payment_modes.name as payment_mode', DB::raw('CONCAT(customer.first_name, " ", customer.last_name) AS customer_name'))
             ->leftjoin('customer', 'customer.id', 'transactions.customer_id')
             ->leftjoin('insurance_companies', 'insurance_companies.id', 'transactions.insurance_company_id')
