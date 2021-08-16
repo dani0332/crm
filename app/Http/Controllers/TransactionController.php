@@ -15,6 +15,7 @@ use App\Models\User;
 use App\Services\CustomerService;
 use DB;
 use App\Services\TransAppService;
+use App\Services\ReasonService;
 
 class TransactionController extends Controller
 {
@@ -25,10 +26,12 @@ class TransactionController extends Controller
      */
     private $transactionService;
     private $customerService;
-    public function __construct(TransAppService $service, CustomerService $cusService)
+    private $reasonService;
+    public function __construct(TransAppService $service, CustomerService $cusService, ReasonService $reasService)
     {
         $this->transactionService = $service;
         $this->customerService = $cusService;
+        $this->reasonService = $reasService;
         $this->middleware('permission:transapp-list|transapp-create|transapp-edit|transapp-delete', ['only' => ['index', 'store']]);
         $this->middleware('permission:transapp-create', ['only' => ['create', 'store']]);
         $this->middleware('permission:transapp-edit', ['only' => ['edit', 'update']]);
@@ -289,7 +292,14 @@ class TransactionController extends Controller
         }
         else {
             $customer = $this->customerService->getCustomerById($transaction->customer_id);
-            return view('transaction.show',compact('transaction', 'customer'));
+            $reason =  $this->reasonService->getReasonById($transaction->reason_id)->first();
+            $status = '';
+            if($transaction->status_id)
+            {
+                if($transaction->status_id == 2) $status = 'Active';
+                if($transaction->status_id == 32) $status = 'InActive';
+            }
+            return view('transaction.show',compact('transaction', 'customer', 'reason', 'status'));
         }
     }
 

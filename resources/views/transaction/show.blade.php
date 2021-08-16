@@ -82,6 +82,24 @@
                             <p class="label-align-center">{{ $transaction->comments }}</p>
                         </div>
                     </div>
+                    <div class="item form-group">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Comments"><b>Reason</b></label>
+                        <div class="col-md-6 col-sm-6">
+                            <p class="label-align-center">{{ $reason != null ? $reason->name: '' }}</p>
+                        </div>
+                    </div>
+                    <div class="item form-group">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Comments"><b>Status</b></label>
+                        <div class="col-md-6 col-sm-6">
+                            <p class="label-align-center">{{ $status }}</p>
+                        </div>
+                    </div>
+                    <div class="item form-group">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Comments"><b>Cancelled</b></label>
+                        <div class="col-md-6 col-sm-6">
+                            <p class="label-align-center">{{ $transaction->is_cancelled ? 'True' : 'False' }}</p>
+                        </div>
+                    </div>
                     <div class="ln_solid"></div>
                 </form>
             </div>
