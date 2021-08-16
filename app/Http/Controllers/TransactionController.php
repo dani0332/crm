@@ -78,7 +78,7 @@ class TransactionController extends Controller
                 $data->whereBetween('transactions.created_at', [\Carbon\Carbon::parse($request->transapp_start_date)->format('Y-m-d')." 00:00:00", \Carbon\Carbon::parse($request->transapp_stop_date)->format('Y-m-d')." 23:59:59"]);
             }
             if(!empty($request->transapp_approval_code)){
-                $data->where('transactions.approval_code', $request->transapp_approval_code);
+                $data->where('transactions.approval_code', $request->transapp_approval_code)->orWhere('transactions.prev_approval_code', $request->transapp_approval_code);
             }
 
             if(isset($request->transactor) && !empty($request->transactor)) {
