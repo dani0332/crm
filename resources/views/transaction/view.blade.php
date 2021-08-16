@@ -151,6 +151,7 @@
                           <th>Insurance<br>Company</th>
                           <th>Premium</th>
                           <th>Name</th>
+                          <th>Email</th>
                           <th>Risk</th>
                           <th>Transactor</th>
                           <th>Handler</th>
