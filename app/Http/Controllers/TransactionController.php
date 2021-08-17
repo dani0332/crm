@@ -297,7 +297,7 @@ class TransactionController extends Controller
             if($transaction->status_id)
             {
                 if($transaction->status_id == 2) $status = 'Active';
-                if($transaction->status_id == 32) $status = 'InActive';
+                if($transaction->status_id == 3) $status = 'In Active';
             }
             return view('transaction.show',compact('transaction', 'customer', 'reason', 'status'));
         }
@@ -391,6 +391,7 @@ class TransactionController extends Controller
 
         $is_cancelled = \Request::route()->getName() == 'cancel' ? true : false;
         $status_id = DB::table('statuses')->where('name', 'Inactive')->value('id');
+        $activeStatus_id = DB::table('statuses')->where('name', 'Active')->value('id');
 
         $previous_transaction = Transaction::where('approval_code', $request->approval_code)->first();
         $previous_transaction->is_cancelled=true;
@@ -406,6 +407,7 @@ class TransactionController extends Controller
         $transaction->amount_paid = $request->amount_paid;
         $transaction->reason_id = $request->reason;
         $transaction->comments = $request->comments;
+        $transaction->status_id = $activeStatus_id;
         $transaction->created_by_id = Auth::user()->id;
         $transaction->modified_by_id = Auth::user()->id;
         $transaction->prev_approval_code = $previous_transaction->approval_code;
