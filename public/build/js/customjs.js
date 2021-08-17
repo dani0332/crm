@@ -255,10 +255,10 @@ $(document).ready(function () {
         ],
     });
 
-    $(".user-data-table").DataTable({
+    var usersDataTable = $(".user-data-table").DataTable({
         ordering: false,
         info: false,
-        searching: false,
+        searching: true,
         bLengthChange: false,
         serverSide: true,
         ajax: config.routes.user_datatable_route,
@@ -280,6 +280,7 @@ $(document).ready(function () {
             },
             { data: "name", name: "name" },
             { data: "email", name: "email" },
+            { data: "roles", name: "roles" },
             { data: 'created_at', name: 'created_at' },
             { data: 'updated_at', name: 'updated_at' },
         ],
@@ -415,7 +416,6 @@ $(document).ready(function () {
             $(".loader").hide();
         }, 1000);
     });
-
     $(".reason-data-table").DataTable({
         ordering: false,
         info: false,

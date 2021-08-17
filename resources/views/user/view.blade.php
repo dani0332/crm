@@ -18,12 +18,16 @@
                 @if(session()->has('message'))
                     <div class="alert alert-danger">{{ session()->get('message') }}</div>
                 @endif
+                @if(session()->has('success'))
+                    <div class="alert alert-success">{{ session()->get('success') }}</div>
+                @endif
                 <table class="table table-striped jambo_table user-data-table" style="width:100%">
                     <thead>
                     <tr>
                         <th>id</th>
                         <th>Name</th>
                         <th>Email</th>
+                        <th>Roles</th>
                         <th>Created At</th>
                         <th>Updated At</th>
                     </tr>
