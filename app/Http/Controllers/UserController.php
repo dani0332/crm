@@ -52,7 +52,8 @@ class UserController extends Controller
             if(!empty($request->name)){
                 $collection = collect($filteredData);
                 $filteredData = $collection->filter(function ($value, $key) use ($request) {
-                    return strtoupper($value->name) == strtoupper($request->name);
+                    if(str_contains(strtoupper($value->name), strtoupper($request->name)))
+                    return $value;
                 });
             }
 
