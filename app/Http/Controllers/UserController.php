@@ -26,6 +26,7 @@ class UserController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
+            $filteredData = [];
             $users = DB::select("SELECT u1.id
                                         ,u1.name
                                         ,u1.email
@@ -41,15 +42,21 @@ class UserController extends Controller
                                         INNER JOIN roles ON roles.id = model_has_roles.role_id
                                         GROUP BY users.name, users.id
                                         ) u2 ON u2.id = u1.id");
-
+            $filteredData = $users;
             if(!empty($request->email)){
-                $users->where('u.email', $request->email);
+                $collection = collect($filteredData);
+                $filteredData = $collection->filter(function ($value, $key) use ($request) {
+                    return $value->email == $request->email;
+                });
             }
             if(!empty($request->name)){
-                $users->where('u.name', $request->name);
+                $collection = collect($filteredData);
+                $filteredData = $collection->filter(function ($value, $key) use ($request) {
+                    return $value->name == $request->name;
+                });
             }
 
-            return Datatables::of($users)
+            return Datatables::of($filteredData)
                 ->addIndexColumn()
                 ->make(true);
         }

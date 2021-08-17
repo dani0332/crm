@@ -258,10 +258,16 @@ $(document).ready(function () {
     var usersDataTable = $(".user-data-table").DataTable({
         ordering: false,
         info: false,
-        searching: true,
+        searching: false,
         bLengthChange: false,
         serverSide: true,
-        ajax: config.routes.user_datatable_route,
+        ajax: {
+            url: config.routes.user_datatable_route,
+            data: function (d) {
+                d.email = $("#users_email").val();
+                d.name = $("#users_name").val();
+            }
+        },
         columns: [
             {
                 data: "id",
@@ -416,6 +422,16 @@ $(document).ready(function () {
             $(".loader").hide();
         }, 1000);
     });
+
+    $("#search-users").submit(function (e) {
+        e.preventDefault();
+        $(".loader").show();
+        usersDataTable.draw();
+        setTimeout(() => {
+            $(".loader").hide();
+        }, 1000);
+    });
+
     $(".reason-data-table").DataTable({
         ordering: false,
         info: false,

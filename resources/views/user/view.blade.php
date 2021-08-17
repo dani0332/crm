@@ -21,6 +21,34 @@
                 @if(session()->has('success'))
                     <div class="alert alert-success">{{ session()->get('success') }}</div>
                 @endif
+                <form method="POST" id="search-users" class="form-horizontal form-label-left" role="form" data-parsley-validate="" novalidate="" autocomplete="off">
+                    <div class="item form-group">
+                            <div class="col">
+                                <label class="col-form-label col-md-2 col-sm-2" id='email' for="Email">Email</label>
+                                <div class="col-md-6 col-sm-6">
+                                    <div class="input-group">
+                                        <input type="text" name="email" id="users_email" class="form-control">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col">
+                                <label class="col-form-label col-md-2 col-sm-2" id='name' for="Stop Date">Name</label>
+                                <div class="col-md-6 col-sm-6">
+                                    <div class="input-group">
+                                    <input type="text" name="name" id="users_name" class="form-control">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="item form-group">
+                            <div class="col">
+                                <ul class="nav navbar-right panel_toolbox">
+                                <li><input type="submit" class="btn btn-warning btn-sm"></li>
+                                <li><input type="reset" class="btn btn-warning btn-sm"></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </form>
                 <table class="table table-striped jambo_table user-data-table" style="width:100%">
                     <thead>
                     <tr>
