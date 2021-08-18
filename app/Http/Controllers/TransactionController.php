@@ -138,8 +138,8 @@ class TransactionController extends Controller
     {
         $this->validate($request, [
             'insurance_company' => 'required',
-            'first_name' => 'required|alpha|max:150',
-            'last_name' => 'required|alpha|max:150',
+            'first_name' => 'required|max:150',
+            'last_name' => 'required|max:150',
             'email' => 'required|email',
             'assigned_to_id' => 'required',
             'paymentmode' => 'required',
@@ -214,8 +214,8 @@ class TransactionController extends Controller
     {
         $this->validate($request, [
             'insurance_company' => 'required',
-            'first_name' => 'required|alpha|max:150',
-            'last_name' => 'required|alpha|max:150',
+            'first_name' => 'required|max:150',
+            'last_name' => 'required|max:150',
             'email' => 'required|email',
             'assigned_to_id' => 'required',
             'paymentmode' => 'required',
