@@ -212,6 +212,7 @@ class TransactionController extends Controller
      */
     public function update(Request $request, Transaction $transaction)
     {
+
         $this->validate($request, [
             'insurance_company' => 'required',
             'first_name' => 'required|max:150',
