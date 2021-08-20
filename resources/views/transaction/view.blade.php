@@ -51,11 +51,11 @@
                             </div>
                         </div>
                         <div class="col">
-                            <label class="col-form-label col-md-2 col-sm-2" id='assigned_to_id' for="Handler">Handler</label>
+                            <label class="col-form-label col-md-2 col-sm-2" id='assigned_to_id' for="Handler">Advisor</label>
                             <div class="col-md-6 col-sm-6">
                                 <div class="input-group">
                                     <select class="form-control" name="handler" id="handler_value">
-                                        <option value="">Select</option>
+                                        <option value="">Please Select Advisor</option>
                                         @foreach ($handlers as $handler)
                                             <option value="{{ $handler->id }}">{{ $handler->name }}</option>
                                         @endforeach
