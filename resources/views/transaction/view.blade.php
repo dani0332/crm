@@ -103,7 +103,7 @@
                             </div>
                         </div>
                         <div class="col">
-                            <label class="col-form-label col-md-2 col-sm-2" id='customer_email' for="Customer Email ">Customer Email</label>
+                            <label class="col-form-label col-md-2 col-sm-2" id='customer_email_label' for="Customer Email ">Customer Email</label>
                             <div class="col-md-6 col-sm-6">
                                 <div class="input-group">
                                 <input type="text" name="transapp_customer_email" id="customer_email" class="form-control">
