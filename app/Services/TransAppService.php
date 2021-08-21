@@ -42,7 +42,7 @@ class TransAppService extends BaseService
     public static function sendWelcomeEmail($customerId)
     {
         $customer = CustomerService::getCustomerById($customerId);
-        $subject = 'Welcome to myAlfred - InsuranceMarket.ae';
+        $subject = 'Welcome to myAlfred by InsuranceMarket.ae';
         MailService::sendEmail('customerWelcome', [
             'customerName' => $customer->first_name." ".$customer->last_name,
         ], $subject, [$customer->email]);
