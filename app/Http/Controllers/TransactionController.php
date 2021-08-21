@@ -63,7 +63,7 @@ class TransactionController extends Controller
 
         if ($request->ajax()) {
 
-            $data = Transaction::select('transactions.*', 'statuses.name as status', 'insurance_companies.name as insurance',
+            $data = Transaction::select('transactions.*', 'statuses.name as status', 'insurance_companies.name as insurance', 'type_of_insurances.text as type_of_insurance',
             'handlers.name as handler_name', 'creaters.name as created_by_name', 'payment_modes.name as payment_mode', DB::raw('CONCAT(customer.first_name, " ", customer.last_name) AS customer_name'))
             ->leftjoin('customer', 'customer.id', 'transactions.customer_id')
             ->leftjoin('insurance_companies', 'insurance_companies.id', 'transactions.insurance_company_id')
@@ -71,6 +71,7 @@ class TransactionController extends Controller
             ->leftjoin('users as creaters', 'transactions.created_by_id','creaters.id')
             ->leftjoin('payment_modes', 'payment_modes.id', 'transactions.payment_mode_id')
             ->leftjoin('statuses', 'statuses.id', 'transactions.status_id')->orderBy('transactions.created_at','desc')
+            ->leftjoin('type_of_insurances', 'type_of_insurances.id', 'transactions.type_of_insurance_id')
             ->where('transactions.is_deleted', 0);
 
             if(Auth::user()->hasRole('TRANSAPP_ADVISOR') || Auth::user()->hasRole('TRANSAPP_APPROVER')) {
@@ -83,6 +84,14 @@ class TransactionController extends Controller
             }
             if(!empty($request->transapp_approval_code)){
                 $data->where('transactions.approval_code', $request->transapp_approval_code)->orWhere('transactions.prev_approval_code', $request->transapp_approval_code);
+            }
+
+            if(!empty($request->transapp_customer_email)){
+                $data->where('customer.email', $request->transapp_customer_email);
+            }
+
+            if(!empty($request->transapp_customer_name)){
+                $data->where('customer.first_name', 'like', '%' . $request->transapp_customer_name . '%')->orWhere('customer.last_name', 'like', '%' . $request->transapp_customer_name . '%');
             }
 
             if(isset($request->transactor) && !empty($request->transactor)) {

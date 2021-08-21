@@ -93,7 +93,7 @@
                             </div>
                         </div>
                     </div>
-                    {{-- <div class="item form-group">
+                    <div class="item form-group">
                         <div class="col">
                             <label class="col-form-label col-md-2 col-sm-2" id='omer_name' for="Customer Name ">Customer Name</label>
                             <div class="col-md-6 col-sm-6">
@@ -110,7 +110,7 @@
                                 </div>
                             </div>
                         </div>
-                    </div> --}}
+                    </div>
                     <div class="item form-group">
                         <div class="col">
                             <label class="col-form-label col-md-2 col-sm-2" id="payment_mode_id" for="Payment mode">Payment mode</label>
@@ -151,7 +151,7 @@
                           <th>Insurance<br>Company</th>
                           <th>Premium</th>
                           <th>Name</th>
-                          <th>Risk</th>
+                          <th>Type Of<br>Insurance</th>
                           <th>Transactor</th>
                           <th>Handler</th>
                           <th>Payment mode</th>
