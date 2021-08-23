@@ -33,10 +33,10 @@
 
       <!--[if !mso]><!-->
         <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet" type="text/css">
-<link href="https://fonts.googleapis.com/css?family=Ubuntu:300,400,500,700" rel="stylesheet" type="text/css">
+<link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700" rel="stylesheet" type="text/css">
         <style type="text/css">
           @import url(https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap);
-@import url(https://fonts.googleapis.com/css?family=Ubuntu:300,400,500,700);
+@import url(https://fonts.googleapis.com/css?family=Roboto:300,400,500,700);
         </style>
       <!--<![endif]-->
 
@@ -183,7 +183,7 @@
               <tr>
                 <td align="center" style="font-size:0px;padding:10px 25px;word-break:break-word;">
 
-      <div style="font-family:Open Sans;font-size:13px;line-height:1;text-align:center;color:#555555;"><h2>Rewards worth over AED 7500 on my<span style="color:#1D83BC">Alfred!</span></h2></div>
+      <div style="font-family:Open Sans, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';font-size:13px;line-height:1;text-align:center;color:#000000;"><h2>Rewards worth over AED 7500 on my<span style="color:#1D83BC">Alfred!</span></h2></div>
 
                 </td>
               </tr>
@@ -191,7 +191,7 @@
               <tr>
                 <td align="left" style="font-size:0px;padding:10px 25px;padding-top:0;word-break:break-word;">
 
-      <div style="font-family:Open Sans;font-size:13px;line-height:1;text-align:left;color:#555555;"><p><b>Dear {{ $customerName }}</b>,</p>
+      <div style="font-family:Open Sans, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';font-size:13px;line-height:1;text-align:left;color:#000000;"><p><b>Dear {{ $customerName }}</b>,</p>
             <p>We are delighted to welcome you to the InsuranceMarket.ae customer family. As a thank you, you now have access to a whole host of exclusive rewards and discounts from well-known brands worth over AED 7500 that are ready and waiting for you to redeem.</p>
             <p>Avail over 75 offers with brands like – NMC, Fitbit, elGrocer, Noon, Bloomingdales, OpenBonnet and many more on myAlfred’s myRewards.</p></div>
 
@@ -361,7 +361,7 @@
         <tbody>
 
               <tr>
-                <td align="right" style="font-size:0px;padding:10px 25px;word-break:break-word;">
+                <td align="center" style="font-size:0px;padding:10px 25px;word-break:break-word;">
 
       <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="border-collapse:collapse;border-spacing:0px;" class="mj-full-width-mobile">
         <tbody>
@@ -414,7 +414,7 @@
       <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="border-collapse:separate;width:80%;line-height:100%;">
         <tr>
           <td align="center" bgcolor="#1D83BC" role="presentation" style="border:none;border-radius:3px;cursor:auto;mso-padding-alt:10px 25px;background:#1D83BC;" valign="middle">
-            <a href="https://myalfred.insurancemarket.ae" style="display:inline-block;background:#1D83BC;color:#ffffff;font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:25px;font-weight:bold;line-height:120%;margin:0;text-decoration:none;text-transform:none;padding:10px 25px;mso-padding-alt:0px;border-radius:3px;" target="_blank">
+            <a href="https://myalfred.insurancemarket.ae" style="display:inline-block;background:#1D83BC;color:#ffffff;font-family:Open Sans, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';font-size:25px;font-weight:bold;line-height:120%;margin:0;text-decoration:none;text-transform:none;padding:10px 25px;mso-padding-alt:0px;border-radius:3px;" target="_blank">
               Login to myAlfred
             </a>
           </td>
@@ -439,7 +439,7 @@
               <tr>
                 <td align="left" style="font-size:0px;padding:10px 25px;word-break:break-word;">
 
-      <div style="font-family:Open Sans;font-size:13px;line-height:1;text-align:left;color:#555555;"><p><b>How to login?</b></p>
+      <div style="font-family:Open Sans, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';font-size:13px;line-height:1;text-align:left;color:#000000;"><p><b>How to login?</b></p>
             <ol>
               <li> Visit <a href="https://myalfred.insurancemarket.ae">https://myalfred.insurancemarket.ae</a></li>
               <li> Enter your email address registered with InsuranceMarket.ae and submit</li>
@@ -557,7 +557,7 @@
               <tr>
                 <td align="center" style="font-size:0px;padding:10px 25px;word-break:break-word;">
 
-      <div style="font-family:Open Sans;font-size:13px;line-height:1;text-align:center;color:#555555;">© AFIA Insurance Brokerage Services LLC | Registration No. 85 under UAE Insurance Authority Reserved.<br><br> Holder of HIIP from DHA, Intermediary ID No. BRK-00003 | Registered Member of Emirates Insurance Association</div>
+      <div style="font-family:Open Sans, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';font-size:13px;line-height:1;text-align:center;color:#000000;">© AFIA Insurance Brokerage Services LLC | Registration No. 85 under UAE Insurance Authority Reserved.<br><br> Holder of HIIP from DHA, Intermediary ID No. BRK-00003 | Registered Member of Emirates Insurance Association</div>
 
                 </td>
               </tr>
@@ -595,7 +595,7 @@
               <tr>
                 <td align="left" style="font-size:0px;padding:10px;word-break:break-word;">
 
-      <div style="font-family:Open Sans;font-size:13px;line-height:1;text-align:left;color:#ffffff;"><h4>Registered Office</h4>27th Floor, Control Tower, Motor City, Dubai United Arab Emirates, PO Box 26423</div>
+      <div style="font-family:Open Sans, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';font-size:13px;line-height:1;text-align:left;color:#ffffff;"><h4>Registered Office</h4>27th Floor, Control Tower, Motor City, Dubai United Arab Emirates, PO Box 26423</div>
 
                 </td>
               </tr>
@@ -615,7 +615,7 @@
               <tr>
                 <td align="left" style="font-size:0px;padding:10px;word-break:break-word;">
 
-      <div style="font-family:Open Sans;font-size:13px;line-height:1;text-align:left;color:#ffffff;"><h4>Contact number</h4>Office: (+971) (0) 4 421 5819<br> Toll Free Number: 800 ALFRED</div>
+      <div style="font-family:Open Sans, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';font-size:13px;line-height:1;text-align:left;color:#ffffff;"><h4>Contact number</h4>Office: (+971) (0) 4 421 5819<br> Toll Free Number: 800 ALFRED</div>
 
                 </td>
               </tr>
@@ -635,7 +635,7 @@
               <tr>
                 <td align="left" style="font-size:0px;padding:10px;padding-bottom:0px;word-break:break-word;">
 
-      <div style="font-family:Open Sans;font-size:13px;line-height:1;text-align:left;color:#ffffff;"><h4>Follow Us:</h4></div>
+      <div style="font-family:Open Sans, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';font-size:13px;line-height:1;text-align:left;color:#ffffff;"><h4>Follow Us:</h4></div>
 
                 </td>
               </tr>
