@@ -5,6 +5,8 @@ use App\Models\Customer;
 use App\Models\Nationality;
 use DataTables;
 use Illuminate\Http\Request;
+use Config;
+use App\Services\TransAppService;
 
 class CustomerController extends Controller
 {
@@ -91,6 +93,9 @@ class CustomerController extends Controller
             'nationality_id' => 'required|max:120',
 
         ]);
+        $existingCustomer = $customer;
+        $sendWelcomeEmail = (!$existingCustomer->has_alfred_access || !$existingCustomer->has_reward_access) && ($request->has_alfred_access && $request->has_reward_access) ? true : false;
+
         $customer->first_name = $request->first_name;
         $customer->last_name = $request->last_name;
         $customer->mobile_no = $request->mobile_no;
@@ -99,7 +104,16 @@ class CustomerController extends Controller
         $customer->dob = $request->dob;
         $customer->nationality_id = $request->nationality_id;
         $customer->has_alfred_access = $request->has_alfred_access == 'on' ? 1 : 0;
+        $customer->has_reward_access = $request->has_reward_access == 'on' ? 1 : 0;
         $customer->save();
+
+
+        if($sendWelcomeEmail && Config::get('constants.ENABLE_TRANSAPP_WE') == '1' && !$customer->is_we_sent) {
+            TransAppService::sendWelcomeEmail($customer->id);
+            $customer->is_we_sent = true;
+            $customer->save();
+        }
+
         if(isset($request->return_to_view))
             return redirect("customer");
 
