@@ -155,7 +155,8 @@ class TransactionController extends Controller
             'assigned_to_id' => 'required',
             'paymentmode' => 'required',
             'amount_paid' => "required|max:12|regex:/^\d*(\.\d{1,2})?$/",
-            'typeofinsurance' => 'required',
+            //'typeofinsurance' => 'required',
+            'risk_detail' => 'required|max:2000',
         ]);
 
 
@@ -399,7 +400,7 @@ class TransactionController extends Controller
             'assigned_to_id' => 'required',
             'paymentmode' => 'required',
             'amount_paid' => "required|max:12|regex:/^\d*(\.\d{1,2})?$/",
-            'type_of_insurance_id' => 'required',
+            //'type_of_insurance_id' => 'required',
             'reason' => 'required',
         ]);
 
@@ -417,7 +418,8 @@ class TransactionController extends Controller
         $transaction->customer_id = $customer->first()->id;
         $transaction->assigned_to_id = $request->assigned_to_id;
         $transaction->payment_mode_id = $request->paymentmode;
-        $transaction->type_of_insurance_id = $request->type_of_insurance_id;
+        $transaction->risk_details = $request->risk_detail;
+        //$transaction->type_of_insurance_id = $request->type_of_insurance_id;
         $transaction->amount_paid = $request->amount_paid;
         $transaction->reason_id = $request->reason;
         $transaction->comments = $request->comments;

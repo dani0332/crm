@@ -109,7 +109,7 @@
                             @endif
                         </div>
                     </div>
-                    <div class="item form-group">
+                    {{-- <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="Type Of Insurance">Type Of Insurance <span class="required">*</span></label>
                         <div class="col-md-6 col-sm-6">
                             <select class="form-control" id="typeofinsurance" name="typeofinsurance">
@@ -121,6 +121,16 @@
                             <small class="text-muted">Please select Type of Insurance</small><br/>
                             @if ($errors->has('typeofinsurance'))
                                 <span class="text-danger">{{ $errors->first('typeofinsurance') }}</span>
+                            @endif
+                        </div>
+                    </div> --}}
+                    <div class="item form-group">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Risk Details">Risk Details <span class="required">*</span></label>
+                        <div class="col-md-6 col-sm-6">
+                            <textarea id="risk_detail" name="risk_detail" class="form-control" >{{ old('risk_detail') }}</textarea>
+                            <small class="text-muted">Please enter Risk Details</small><br/>
+                            @if ($errors->has('risk_detail'))
+                                <span class="text-danger">{{ $errors->first('risk_detail') }}</span>
                             @endif
                         </div>
                     </div>

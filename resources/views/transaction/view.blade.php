@@ -151,7 +151,7 @@
                           <th>Insurance<br>Company</th>
                           <th>Premium</th>
                           <th>Name</th>
-                          <th>Type Of<br>Insurance</th>
+                          <th>Risk Detail</th>
                           <th>Transactor</th>
                           <th>Handler</th>
                           <th>Payment mode</th>

@@ -116,7 +116,7 @@
                             @endif
                         </div>
                     </div>
-                    <div class="item form-group">
+                    {{-- <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="Handler">Type Of Insurance <span class="required">*</span></label>
                         <div class="col-md-6 col-sm-6">
                             @if ($route == 'cancel')
@@ -133,6 +133,20 @@
                             <small class="text-muted">Please select Type Of Insurance</small><br/>
                             @if ($errors->has('type_of_insurance_id'))
                                 <span class="text-danger">{{ $errors->first('type_of_insurance_id') }}</span>
+                            @endif
+                        </div>
+                    </div> --}}
+                    <div class="item form-group">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Risk details">Risk details <span class="required">*</span></label>
+                        <div class="col-md-6 col-sm-6">
+                            @if ($route == 'cancel')
+                            <textarea id="risk_detail" name="risk_detail" class="form-control" readonly>{{ $transaction->risk_details }}</textarea>
+                            @elseif ($route == 're_issue')
+                            <textarea id="risk_detail" name="risk_detail" class="form-control">{{ $transaction->risk_details }}</textarea>
+                            @endif
+                            <small class="text-muted">Please enter Risk details</small><br/>
+                            @if ($errors->has('risk_detail'))
+                                <span class="text-danger">{{ $errors->first('risk_detail') }}</span>
                             @endif
                         </div>
                     </div>
