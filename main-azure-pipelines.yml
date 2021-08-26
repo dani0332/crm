@@ -14,8 +14,8 @@ steps:
 #  displayName: 'Download env file'
 #  inputs:
 #    secureFile: '.env.crmprod'
-    
-- script: cp $(env.secureFilePath) $(System.DefaultWorkingDirectory)/
+#- script: cp $(env.secureFilePath) $(System.DefaultWorkingDirectory)/
+
 - script: |
     echo "Artifacts uploaded to $(System.DefaultWorkingDirectory)"
 - publish: '$(System.DefaultWorkingDirectory)'
