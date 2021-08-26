@@ -154,7 +154,7 @@
                           <th>Name</th>
                           <th>Risk Detail</th>
                           <th>Transactor</th>
-                          <th>Handler</th>
+                          <th>Advisor</th>
                           <th>Payment mode</th>
                           <th>Prev Approval Code</th>
                         </tr>

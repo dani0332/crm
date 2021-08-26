@@ -86,8 +86,6 @@ class CustomerController extends Controller
         $this->validate($request, [
             'first_name' => 'required|max:120',
             'last_name' => 'required|max:120',
-            'has_reward_access' => 'required',
-            'has_alfred_access' => 'required'
 
         ]);
         $existingCustomer = $customer;
