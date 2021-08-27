@@ -26,6 +26,7 @@ class TransAppService extends BaseService
         $transaction->modified_by_id = Auth::user()->id;
         $transaction->payment_mode_id = $request->paymentmode;
         $transaction->risk_details = $request->risk_detail;
+        //$transaction->type_of_insurance_id = $request->typeofinsurance;
         $transaction->amount_paid = $request->amount_paid;
         $transaction->status_id = $status_id;
         $transaction->save();
@@ -42,7 +43,9 @@ class TransAppService extends BaseService
     public static function sendWelcomeEmail($customerId)
     {
         $customer = CustomerService::getCustomerById($customerId);
-        $subject = 'Welcome to myAlfred - InsuranceMarket.ae';
+        $customer->is_we_sent = true;
+        $customer->save();
+        $subject = 'Welcome to myAlfred by InsuranceMarket.ae';
         MailService::sendEmail('customerWelcome', [
             'customerName' => $customer->first_name." ".$customer->last_name,
         ], $subject, [$customer->email]);

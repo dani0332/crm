@@ -116,6 +116,26 @@
                             @endif
                         </div>
                     </div>
+                    {{-- <div class="item form-group">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Handler">Type Of Insurance <span class="required">*</span></label>
+                        <div class="col-md-6 col-sm-6">
+                            @if ($route == 'cancel')
+                            <input type="hidden" id="type_of_insurance_id" name="type_of_insurance_id" value="{{ $transaction->type_of_insurance_id }}" />
+                            <select class="form-control" disabled>
+                            @elseif ($route == 're_issue')
+                            <select id="type_of_insurance_id" name="type_of_insurance_id" class="form-control">
+                            @endif
+                                <option value="">Please select Type Of Insurance</option>
+                                @foreach ($typeofinsurances as $toi )
+                                    <option {{ $transaction->type_of_insurance_id == $toi->id ? 'selected':'' }} value="{{ $toi->id }}">{{ $toi->text }}</option>
+                                @endforeach
+                            </select>
+                            <small class="text-muted">Please select Type Of Insurance</small><br/>
+                            @if ($errors->has('type_of_insurance_id'))
+                                <span class="text-danger">{{ $errors->first('type_of_insurance_id') }}</span>
+                            @endif
+                        </div>
+                    </div> --}}
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="Risk details">Risk details <span class="required">*</span></label>
                         <div class="col-md-6 col-sm-6">
@@ -131,7 +151,7 @@
                         </div>
                     </div>
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Handler">Handler <span class="required">*</span></label>
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Handler">Advisor <span class="required">*</span></label>
                         <div class="col-md-6 col-sm-6">
                             @if ($route == 'cancel')
                             <input type="hidden" id="assigned_to_id" name="assigned_to_id" value="{{ $transaction->assigned_to_id }}" />
@@ -139,12 +159,12 @@
                             @elseif ($route == 're_issue')
                             <select id="assigned_to_id" name="assigned_to_id" class="form-control">
                             @endif
-                                <option value="">Select</option>
+                                <option value="">Please select Advisor</option>
                                 @foreach ($handlers as $handler )
                                     <option {{ $transaction->assigned_to_id == $handler->id ? 'selected':'' }} value="{{ $handler->id }}">{{ $handler->name }}</option>
                                 @endforeach
                             </select>
-                            <small class="text-muted">Please select Handler Name</small><br/>
+                            <small class="text-muted">Please select Advisor</small><br/>
                             @if ($errors->has('assigned_to_id'))
                                 <span class="text-danger">{{ $errors->first('assigned_to_id') }}</span>
                             @endif
@@ -154,7 +174,7 @@
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="Reason">Reason <span class="required">*</span></label>
                         <div class="col-md-6 col-sm-6">
                             <select id="reason" name="reason" class="form-control">
-                                <option value="">Select</option>
+                                <option value="">Please select Reason</option>
                                 @foreach ($reasons as $reason )
                                     <option {{ $transaction->reason_id == $reason->id ? 'selected':'' }} value="{{ $reason->id }}">{{ $reason->name }}</option>
                                 @endforeach

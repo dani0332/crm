@@ -4,17 +4,17 @@ trigger:
 pool:
   vmImage: ubuntu-latest
 
-variables:
-  phpVersion: 7.2
+#variables:
+#  phpVersion: 7.2
 
 steps:
-- task: DownloadSecureFile@1
-  name: env
-  displayName: 'Download env file'
-  inputs:
-    secureFile: '.env.crmstagemultipipeline'
-    
-- script: cp $(env.secureFilePath) $(System.DefaultWorkingDirectory)/
+#- task: DownloadSecureFile@1
+#  name: env
+#  displayName: 'Download env file'
+#  inputs:
+#    secureFile: '.env.crmstagemultipipeline'
+#- script: cp $(env.secureFilePath) $(System.DefaultWorkingDirectory)/
+
 - script: |
     echo "Artifacts uploaded to $(System.DefaultWorkingDirectory)"
 - publish: '$(System.DefaultWorkingDirectory)'

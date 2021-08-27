@@ -58,8 +58,14 @@
                             <p class="label-align-center">{{ $transaction->risk_details }}</p>
                         </div>
                     </div>
+                    {{-- <div class="item form-group">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Risk Details"><b>Type Of Insurance</b></label>
+                        <div class="col-md-6 col-sm-6">
+                            <p class="label-align-center">{{ $transaction->typeofinsurance ? $transaction->typeofinsurance->text: '' }}</p>
+                        </div>
+                    </div> --}}
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Handler"><b>Handler</b></label>
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Handler"><b>Advisor</b></label>
                         <div class="col-md-6 col-sm-6">
                             <p class="label-align-center">{{ $transaction->assignedto ? $transaction->assignedto->name : '' }}</p>
                         </div>

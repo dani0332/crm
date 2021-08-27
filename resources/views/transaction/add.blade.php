@@ -61,14 +61,14 @@
                         </div>
                     </div>
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Handler">Handler<span class="required">*</span></label>
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Advisor">Advisor<span class="required">*</span></label>
                         <div class="col-md-6 col-sm-6">
                         @if(Auth::user()->hasRole('TRANSAPP_APPROVER'))
                         <input type="text" value="{{ Auth::user()->name }}" class="form-control" readonly/>
                         <input type="hidden" id="assigned_to_id" name="assigned_to_id" value="{{ Auth::user()->id }}" />
                         @else
                             <select class="form-control" id='assigned_to_id' name='assigned_to_id'>
-                            <option value=''></option>
+                            <option value=''>Please select Advisor</option>
                             @foreach($handlers as $handler)
                                 @if (old('assigned_to_id') == $handler->id || $handler->id == Auth::user()->id)
                                     <option value="{{ $handler->id }}" selected>{{ $handler->name }}</option>
@@ -78,7 +78,7 @@
                             @endforeach
                             </select>
                             @endif
-                            <small class="text-muted">Please select Handler name</small><br/>
+                            <small class="text-muted">Please select Advisor</small><br/>
                             @if ($errors->has('assigned_to_id'))
                                 <span class="text-danger">{{ $errors->first('assigned_to_id') }}</span>
                             @endif
@@ -109,6 +109,21 @@
                             @endif
                         </div>
                     </div>
+                    {{-- <div class="item form-group">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Type Of Insurance">Type Of Insurance <span class="required">*</span></label>
+                        <div class="col-md-6 col-sm-6">
+                            <select class="form-control" id="typeofinsurance" name="typeofinsurance">
+                                <option value="">Select</option>
+                                @foreach ($typeofinsurances as $toi )
+                                    <option {{ old('typeofinsurance') == $toi->id ? "selected":""  }} value="{{ $toi->id }}">{{ $toi->text }}</option>
+                                @endforeach
+                            </select>
+                            <small class="text-muted">Please select Type of Insurance</small><br/>
+                            @if ($errors->has('typeofinsurance'))
+                                <span class="text-danger">{{ $errors->first('typeofinsurance') }}</span>
+                            @endif
+                        </div>
+                    </div> --}}
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="Risk Details">Risk Details <span class="required">*</span></label>
                         <div class="col-md-6 col-sm-6">

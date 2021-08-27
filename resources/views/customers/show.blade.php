@@ -98,6 +98,20 @@
                     </div>
 
                     <div class="item form-group">
+                        <label for="middle-name" class="col-form-label col-md-3 col-sm-3 label-align"><b>Has Reward Access </b></label>
+                        <div class="col-md-6 col-sm-6 ">
+                            <p class="label-align-center"> {{ $customer->has_reward_access ? 'True' : 'False' }} </p>
+                        </div>
+                    </div>
+
+                    <div class="item form-group">
+                        <label for="middle-name" class="col-form-label col-md-3 col-sm-3 label-align"><b>Has Welcome Email Sent </b></label>
+                        <div class="col-md-6 col-sm-6 ">
+                            <p class="label-align-center"> {{ $customer->is_we_sent ? 'True' : 'False' }} </p>
+                        </div>
+                    </div>
+
+                    <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="dob">
                             <b>Created At </b></label>
                         <div class="col-md-6 col-sm-6 ">

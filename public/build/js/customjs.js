@@ -398,6 +398,8 @@ $(document).ready(function () {
                 d.reason = $("#reason_value").val();
                 d.payment_mode = $("#payment_mode_value").val();
                 d.transapp_approval_code = $("#transapp_approval_code").val();
+                d.transapp_customer_email = $("#customer_email").val();
+                d.transapp_customer_name = $("#customer_name").val();
             },
         },
         columns: [
@@ -407,6 +409,7 @@ $(document).ready(function () {
             { data: "amount_paid", name: "amount_paid" },
             { data: "customer_name", name: "customer_name" },
             { data: "risk_details", name: "risk_details" },
+            //{ data: "type_of_insurance", name: "type_of_insurance" },
             { data: "created_by_name", name: "created_by_name" },
             { data: "handler_name", name: "handler_name" },
             { data: "payment_mode", name: "payment_mode" },
