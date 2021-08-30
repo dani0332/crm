@@ -8,10 +8,10 @@ use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 use Config;
 
-class CarTypeInsurance extends Model implements AuditableContract
+class TmUploadLead extends Model implements AuditableContract
 {
     use HasFactory, Auditable;
-    protected $table = 'car_type_insurance';
+    protected $table = 'tm_upload_leads';
 
     public function getCreatedAtAttribute($table)
     {

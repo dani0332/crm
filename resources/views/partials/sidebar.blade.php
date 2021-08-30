@@ -147,6 +147,33 @@
         <!-- <ul class="nav side-menu">
              <li><a href="{{ url('ftcform') }}"><i ></i> FTC Form </a>
          </ul> -->
+         @can('telemarketing-list')
+        <ul class="nav side-menu">
+            <li><a><i class="fa fa-quote-left"></i> Telemarketing <span class="fa fa-chevron-down"></span></a>
+                <ul class="nav child_menu">
+                    <li><a href="{{ url('telemarketing/tmleads') }}">TM Leads</a></li>
+                    @can('tm-upload-leads-list')
+                    <li><a href="{{ url('telemarketing/tmuploadlead') }}">Upload TM Leads</a></li>
+                    @endcan
+                    @can('crm-admin')
+                    <li><a href="#">Admin <span class="fa fa-chevron-down"></span></a>
+                        <ul class="nav child_menu">
+                            @can('tm-insurance-type-list')
+                                <li><a href="{{ url('telemarketing/tminsurancetype') }}">TM Type of Insurance</a></li>
+                            @endcan
+                            @can('tm-call-status-list')
+                                <li><a href="{{ url('telemarketing/tmcallstatus') }}">TM Call Status</a></li>
+                            @endcan
+                            @can('tm-lead-status-list')
+                                <li><a href="{{ url('telemarketing/tmleadstatus') }}">TM Lead Status</a></li>
+                            @endcan
+                        </ul>
+                    </li>
+                    @endcan
+                </ul>
+            </li>
+        </ul>
+        @endcan
         @can('crm-admin')
         <ul class="nav side-menu">
             <li><a><i class="fa fa-user"></i> Admin <span class="fa fa-chevron-down"></span></a>

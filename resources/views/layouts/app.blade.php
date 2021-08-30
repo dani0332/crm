@@ -181,7 +181,12 @@
                 transaction_datatable_route:"{{ route('transaction.index') }}",
                 re_issue_transaction_form:"{{ route('re_issue_transaction_form') }}",
                 aml_datatable_route:"{{ route('aml.index') }}",
-                valuation_api_route: "{{ Config::get('constants.valuation_api_route') }}"
+                valuation_api_route: "{{ Config::get('constants.valuation_api_route') }}",
+                tminsurancetype_datatable_route:"{{ route('tminsurancetype.index') }}",
+                tmcallstatus_datatable_route:"{{ route('tmcallstatus.index') }}",
+                tmleadstatus_datatable_route:"{{ route('tmleadstatus.index') }}",
+                tmlead_datatable_route:"{{ route('tmleads.index') }}",
+                tmuploadlead_datatable_route:"{{ route('tmuploadlead.index') }}"
             },
             _token:"{{ csrf_token() }}",
             image_path:"{{ \Config::get('constants.azure_storage_url').'myrewards/' }}"
