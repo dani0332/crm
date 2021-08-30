@@ -26,13 +26,39 @@ class UserController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $data = User::select('*')->orderBy('created_at','desc');
-            return Datatables::of($data)
+            $filteredData = [];
+            $users = DB::select("SELECT u1.id
+                                        ,u1.name
+                                        ,u1.email
+                                        ,u2.roles
+                                        ,u1.created_at
+                                        ,u1.updated_at
+                                    FROM users u1
+                                    JOIN (
+                                        SELECT users.id
+                                            ,GROUP_CONCAT(roles.name) AS roles
+                                        FROM users
+                                        INNER JOIN model_has_roles ON model_has_roles.model_id = users.id
+                                        INNER JOIN roles ON roles.id = model_has_roles.role_id
+                                        GROUP BY users.name, users.id
+                                        ) u2 ON u2.id = u1.id");
+            $filteredData = $users;
+            if(!empty($request->email)){
+                $collection = collect($filteredData);
+                $filteredData = $collection->filter(function ($value, $key) use ($request) {
+                    return $value->email == $request->email;
+                });
+            }
+            if(!empty($request->name)){
+                $collection = collect($filteredData);
+                $filteredData = $collection->filter(function ($value, $key) use ($request) {
+                    if(str_contains(strtoupper($value->name), strtoupper($request->name)))
+                    return $value;
+                });
+            }
+
+            return Datatables::of($filteredData)
                 ->addIndexColumn()
-                ->addColumn('action', function ($row) {
-                    return view('user.actions', compact('row'))->render();
-                })
-                ->rawColumns(['action'])
                 ->make(true);
         }
 
@@ -69,8 +95,8 @@ class UserController extends Controller
         $user->password = bcrypt($request->password);
         $user->save();
         $user->assignRole($request->input('roles'));
-        if(isset($request->return_to_view))
-            return redirect("admin/users/".$user->id)->with('success','User has been stored');
+        if (isset($request->return_to_view))
+            return redirect("admin/users/" . $user->id)->with('success', 'User has been stored');
     }
     /**
      * Display the specified resource.
@@ -114,8 +140,8 @@ class UserController extends Controller
 
         DB::table('model_has_roles')->where('model_id', $user->id)->delete();
         $user->assignRole($request->input('roles'));
-        if(isset($request->return_to_view))
-            return redirect("admin/users/".$user->id)->with('success','User has been updated');
+        if (isset($request->return_to_view))
+            return redirect("admin/users/" . $user->id)->with('success', 'User has been updated');
     }
     /**
      * Remove the specified resource from storage.
@@ -126,6 +152,6 @@ class UserController extends Controller
     public function destroy(User $user)
     {
         $user->delete();
-        return redirect()->route('users.index')->with('message','User has been deleted');
+        return redirect()->route('users.index')->with('message', 'User has been deleted');
     }
 }

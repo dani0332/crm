@@ -64,7 +64,7 @@ class RewardController extends Controller
     public function store(Request $request)
     {
         $this->validate($request, [
-            'coupon_code' => 'required',
+            'coupon_code' => 'required|max:25',
             'partner_id' => 'required',
             'discount' => 'required|string|max:15',
             'start_date' => 'required',
@@ -136,7 +136,7 @@ class RewardController extends Controller
     public function update(Request $request, reward $reward)
     {
         $this->validate($request, [
-            'coupon_code' => 'required|max:120',
+            'coupon_code' => 'required|max:25',
             'partner_id' => 'required|max:120',
             'discount' => 'required|max:120',
             'start_date' => 'required',

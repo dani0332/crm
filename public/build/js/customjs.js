@@ -4,7 +4,7 @@ $(document).ready(function () {
     $("#datepicker_2").datepicker({ dateFormat: "yy-mm-dd" });
     $("#transapp_start_date").datepicker({ dateFormat: "yy-mm-dd" });
     $("#transapp_stop_date").datepicker({ dateFormat: "yy-mm-dd" });
-    $('#search-valuation').validate({ 
+    $('#search-valuation').validate({
         rules: {
             carmake: {
                 required: true,
@@ -49,7 +49,7 @@ $(document).ready(function () {
                     $('#result').show();
                 },
                 error: function (jqXHR, textStatus, errorThrown) {
-                    if(jqXHR.responseJSON.msg == 'Car Trim Not found'){ 
+                    if(jqXHR.responseJSON.msg == 'Car Trim Not found'){
                         $('#error').show();
                         $('#error').text('Cannot calculate depreciation without trim');
                         $('#error').hide().delay(5000).fadeIn(400);
@@ -255,13 +255,19 @@ $(document).ready(function () {
         ],
     });
 
-    $(".user-data-table").DataTable({
+    var usersDataTable = $(".user-data-table").DataTable({
         ordering: false,
         info: false,
         searching: false,
         bLengthChange: false,
         serverSide: true,
-        ajax: config.routes.user_datatable_route,
+        ajax: {
+            url: config.routes.user_datatable_route,
+            data: function (d) {
+                d.email = $("#users_email").val();
+                d.name = $("#users_name").val();
+            }
+        },
         columns: [
             {
                 data: "id",
@@ -280,6 +286,7 @@ $(document).ready(function () {
             },
             { data: "name", name: "name" },
             { data: "email", name: "email" },
+            { data: "roles", name: "roles" },
             { data: 'created_at', name: 'created_at' },
             { data: 'updated_at', name: 'updated_at' },
         ],
@@ -390,6 +397,9 @@ $(document).ready(function () {
                 d.insurance_company = $("#insurance_company_value").val();
                 d.reason = $("#reason_value").val();
                 d.payment_mode = $("#payment_mode_value").val();
+                d.transapp_approval_code = $("#transapp_approval_code").val();
+                d.transapp_customer_email = $("#customer_email").val();
+                d.transapp_customer_name = $("#customer_name").val();
             },
         },
         columns: [
@@ -399,6 +409,7 @@ $(document).ready(function () {
             { data: "amount_paid", name: "amount_paid" },
             { data: "customer_name", name: "customer_name" },
             { data: "risk_details", name: "risk_details" },
+            //{ data: "type_of_insurance", name: "type_of_insurance" },
             { data: "created_by_name", name: "created_by_name" },
             { data: "handler_name", name: "handler_name" },
             { data: "payment_mode", name: "payment_mode" },
@@ -410,6 +421,15 @@ $(document).ready(function () {
         e.preventDefault();
         $(".loader").show();
         transactionsDatatable.draw();
+        setTimeout(() => {
+            $(".loader").hide();
+        }, 1000);
+    });
+
+    $("#search-users").submit(function (e) {
+        e.preventDefault();
+        $(".loader").show();
+        usersDataTable.draw();
         setTimeout(() => {
             $(".loader").hide();
         }, 1000);
@@ -736,15 +756,11 @@ $(document).ready(function () {
 
     $('#car_make_id').on('change',function(e) {
         var make_code = $("#car_make_id option:selected").attr('data-id');
-        var old_car_model_id = $("#old_car_model_id").val();
         $.get('/car-model?make_code='+ make_code,function(data) {
             var carmodel = $('#car_model_id').empty();
             $.each(data,function(create,carmodelObj) {
                 var option = $('<option/>', {id:create, value:carmodelObj});
-                if(old_car_model_id == carmodelObj.id)
-                    carmodel.append('<option selected data-id="'+carmodelObj.code+'" value="'+carmodelObj.id+'">'+carmodelObj.text+'</option>');
-                else
-                    carmodel.append('<option  data-id="'+carmodelObj.code+'" value="'+carmodelObj.id+'">'+carmodelObj.text+'</option>');
+                carmodel.append('<option data-id="'+carmodelObj.code+'" value="'+carmodelObj.id+'">'+carmodelObj.text+'</option>');
             });
         });
     });
@@ -831,9 +847,9 @@ $(document).ready(function () {
         ajax: {
             url: config.routes.aml_datatable_route,
             data: function (d) {
-                d.searchtype = $("#search_type").val();
-                d.searchfield = $("input[name=searchfield]").val();
-                d.quotetype = $("#quote_type_value").val();
+                d.searchType = $("#searchType").val();
+                d.searchField = $("input[name=searchField]").val();
+                d.quoteType = $("#quoteTypeValue").val();
             },
         },
         columns: [
@@ -849,11 +865,11 @@ $(document).ready(function () {
                 data: "screenshot",
                 name: "screenshot",
                 render: function (data, type, row, meta) {
-                    var imgsrc = data;
-                    if(imgsrc != null) {
+                    var imgSrc = data;
+                    if(imgSrc != null) {
                         return (
-                            '<a href="'+imgsrc +'" target="_blank">'+
-                            '<img class="img-responsive" src="'+imgsrc +'" alt="screenshot" height="80px" width="80px"></a>'
+                            '<a href="'+imgSrc +'" target="_blank">'+
+                            '<img class="img-responsive" src="'+imgSrc +'" alt="screenshot" height="80px" width="80px"></a>'
                         );
                     }
                 },
@@ -863,7 +879,7 @@ $(document).ready(function () {
         ]
     });
 
-    $("#search-aml").submit(function (e) {
+    $("#searchAML").submit(function (e) {
         e.preventDefault();
         $(".loader").show();
         amlDatatable.draw();

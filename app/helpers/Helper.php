@@ -1,6 +1,8 @@
 <?php
 
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
+use App\Enums\quoteTypeCode;
 
 if (!function_exists('generate_code')) {
 

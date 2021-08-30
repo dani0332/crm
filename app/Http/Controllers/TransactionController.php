@@ -8,11 +8,15 @@ use App\Models\PaymentMode;
 use App\Models\Reason;
 use App\Models\Status;
 use App\Models\Transaction;
+use App\Models\TypeOfInsurance;
 use Auth;
 use DataTables;
 use Illuminate\Http\Request;
 use App\Models\User;
+use App\Services\CustomerService;
 use DB;
+use App\Services\TransAppService;
+use App\Services\ReasonService;
 
 class TransactionController extends Controller
 {
@@ -21,8 +25,14 @@ class TransactionController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function __construct()
+    private $transactionService;
+    private $customerService;
+    private $reasonService;
+    public function __construct(TransAppService $service, CustomerService $cusService, ReasonService $reasService)
     {
+        $this->transactionService = $service;
+        $this->customerService = $cusService;
+        $this->reasonService = $reasService;
         $this->middleware('permission:transapp-list|transapp-create|transapp-edit|transapp-delete', ['only' => ['index', 'store']]);
         $this->middleware('permission:transapp-create', ['only' => ['create', 'store']]);
         $this->middleware('permission:transapp-edit', ['only' => ['edit', 'update']]);
@@ -36,6 +46,7 @@ class TransactionController extends Controller
      */
     public function index(Request $request)
     {
+
         $transactors = User::select('users.*')
         ->leftjoin('model_has_roles','users.id','model_has_roles.model_id')
         ->leftjoin('roles','roles.id','model_has_roles.role_id')
@@ -52,13 +63,15 @@ class TransactionController extends Controller
 
         if ($request->ajax()) {
 
-            $data = Transaction::select('transactions.*', 'statuses.name as status', 'insurance_companies.name as insurance', 
-            'handlers.name as handler_name', 'creaters.name as created_by_name', 'payment_modes.name as payment_mode')
+            $data = Transaction::select('transactions.*', 'statuses.name as status', 'insurance_companies.name as insurance', 'type_of_insurances.text as type_of_insurance',
+            'handlers.name as handler_name', 'creaters.name as created_by_name', 'payment_modes.name as payment_mode', DB::raw('CONCAT(customer.first_name, " ", customer.last_name) AS customer_name'))
+            ->leftjoin('customer', 'customer.id', 'transactions.customer_id')
             ->leftjoin('insurance_companies', 'insurance_companies.id', 'transactions.insurance_company_id')
             ->leftjoin('users as handlers', 'transactions.assigned_to_id','handlers.id')
             ->leftjoin('users as creaters', 'transactions.created_by_id','creaters.id')
             ->leftjoin('payment_modes', 'payment_modes.id', 'transactions.payment_mode_id')
             ->leftjoin('statuses', 'statuses.id', 'transactions.status_id')->orderBy('transactions.created_at','desc')
+            ->leftjoin('type_of_insurances', 'type_of_insurances.id', 'transactions.type_of_insurance_id')
             ->where('transactions.is_deleted', 0);
 
             if(Auth::user()->hasRole('TRANSAPP_ADVISOR') || Auth::user()->hasRole('TRANSAPP_APPROVER')) {
@@ -67,8 +80,18 @@ class TransactionController extends Controller
 
             if (isset($request->transapp_start_date) && !empty($request->transapp_start_date)
             && isset($request->transapp_stop_date) && !empty($request->transapp_stop_date)) {
-                $data->where('transactions.created_at', '>=', $request->transapp_start_date);
-                $data->where('transactions.created_at', '<=', $request->transapp_stop_date);
+                $data->whereBetween('transactions.created_at', [\Carbon\Carbon::parse($request->transapp_start_date)->format('Y-m-d')." 00:00:00", \Carbon\Carbon::parse($request->transapp_stop_date)->format('Y-m-d')." 23:59:59"]);
+            }
+            if(!empty($request->transapp_approval_code)){
+                $data->where('transactions.approval_code', $request->transapp_approval_code)->orWhere('transactions.prev_approval_code', $request->transapp_approval_code);
+            }
+
+            if(!empty($request->transapp_customer_email)){
+                $data->where('customer.email', $request->transapp_customer_email);
+            }
+
+            if(!empty($request->transapp_customer_name)){
+                $data->where('customer.first_name', 'like', '%' . $request->transapp_customer_name . '%')->orWhere('customer.last_name', 'like', '%' . $request->transapp_customer_name . '%');
             }
 
             if(isset($request->transactor) && !empty($request->transactor)) {
@@ -111,8 +134,9 @@ class TransactionController extends Controller
         ->leftjoin('roles','roles.id','model_has_roles.role_id')
         ->whereIn('roles.name', ['TRANSAPP_ADVISOR', 'TRANSAPP_APPROVER', 'TRANSAPP_ADMIN'])->orderBy('roles.name', 'asc')->get();
         $insurancecompanies = InsuranceCompany::where('is_active', '=', 1)->where('is_deleted', 0)->orderBy('created_at', 'desc')->get();
+        $typeofinsurances = TypeOfInsurance::where('is_active', '=', 1)->where('is_deleted', 0)->orderBy('created_at', 'desc')->get();
         $paymentmodes = PaymentMode::where('is_active', '=', 1)->where('is_deleted', 0)->orderBy('created_at', 'desc')->get();
-        return view('transaction.add', compact('insurancecompanies', 'handlers', 'paymentmodes'));
+        return view('transaction.add', compact('insurancecompanies', 'handlers', 'paymentmodes','typeofinsurances'));
     }
 
     /**
@@ -125,30 +149,18 @@ class TransactionController extends Controller
     {
         $this->validate($request, [
             'insurance_company' => 'required',
-            'customer_name' => 'required|max:150',
+            'first_name' => 'required|max:150',
+            'last_name' => 'required|max:150',
+            'email' => 'required|email',
             'assigned_to_id' => 'required',
             'paymentmode' => 'required',
             'amount_paid' => "required|max:12|regex:/^\d*(\.\d{1,2})?$/",
+            //'typeofinsurance' => 'required',
             'risk_detail' => 'required|max:2000',
         ]);
 
-        $status_id = DB::table('statuses')->where('name', 'Active')->value('id');
 
-        $transaction = new Transaction;
-        $transaction->insurance_company_id = $request->insurance_company;
-        $transaction->customer_name = $request->customer_name;
-        $transaction->assigned_to_id = $request->assigned_to_id;
-        $transaction->created_by_id = Auth::user()->id;
-        $transaction->modified_by_id = Auth::user()->id;
-        $transaction->payment_mode_id = $request->paymentmode;
-        $transaction->risk_details = $request->risk_detail;
-        $transaction->amount_paid = $request->amount_paid;
-        $transaction->status_id = $status_id;
-        $transaction->save();
-        if($transaction->save()) {
-            Transaction::where('id',$transaction->id)->update(['approval_code'=>generate_code('T').$transaction->id]);
-        }
-        $approval_code = DB::table('transactions')->where('id', $transaction->id)->value('approval_code');
+        $approval_code = $this->transactionService->createTransaction($request);
         return redirect("transapp/home")->with('success', 'Transaction added successfully, Approval code is '.$approval_code);
     }
 
@@ -166,18 +178,18 @@ class TransactionController extends Controller
             }
         }
 
-        $transaction = Transaction::select('transactions.*', 'insurance_companies.name as insurance', 
-        'handlers.name as handler_name', 'creaters.name as created_by_name', 'payment_modes.name as payment_mode')
+        $transaction = Transaction::select('transactions.*', 'insurance_companies.name as insurance',
+        'handlers.name as handler_name', 'creaters.name as created_by_name', 'payment_modes.name as payment_mode', 'type_of_insurances.text as type_of_insurance')
         ->leftjoin('insurance_companies', 'insurance_companies.id', 'transactions.insurance_company_id')
         ->leftjoin('users as handlers', 'transactions.assigned_to_id','handlers.id')
         ->leftjoin('users as creaters', 'transactions.created_by_id','creaters.id')
         ->leftjoin('payment_modes', 'payment_modes.id', 'transactions.payment_mode_id')
+        ->leftjoin('type_of_insurances', 'type_of_insurances.id', 'transactions.type_of_insurance_id')
         ->where('transactions.id', $transaction->id)->where('transactions.is_deleted', 0)->first();
 
         if(Auth::user()->hasRole('TRANSAPP_ADVISOR') || Auth::user()->hasRole('TRANSAPP_APPROVER')) {
             $transaction->where('transactions.assigned_to_id', Auth::user()->id);
         }
-
         return view('transaction.show', compact('transaction'));
     }
 
@@ -213,9 +225,12 @@ class TransactionController extends Controller
      */
     public function update(Request $request, Transaction $transaction)
     {
+
         $this->validate($request, [
             'insurance_company' => 'required',
-            'customer_name' => 'required|max:150',
+            'first_name' => 'required|max:150',
+            'last_name' => 'required|max:150',
+            'email' => 'required|email',
             'assigned_to_id' => 'required',
             'paymentmode' => 'required',
             'amount_paid' => "required|max:12|regex:/^\d*(\.\d{1,2})?$/",
@@ -223,7 +238,8 @@ class TransactionController extends Controller
         ]);
 
         $transaction->insurance_company_id = $request->insurance_company;
-        $transaction->customer_name = $request->customer_name;
+        $customer = $this->customerService->getCustomerByEmail($request->email);
+        $transaction->customer_id = $customer->id;
         $transaction->assigned_to_id = $request->assigned_to_id;
         $transaction->payment_mode_id = $request->paymentmode;
         $transaction->risk_details = $request->risk_detail;
@@ -261,7 +277,7 @@ class TransactionController extends Controller
             'approval_code' => 'required|max:50',
         ]);
 
-        $transaction = Transaction::select('transactions.*', 'insurance_companies.name as insurance', 
+        $transaction = Transaction::select('transactions.*', 'insurance_companies.name as insurance',
         'handlers.name as handler_name', 'creaters.name as created_by_name', 'payment_modes.name as payment_mode')
         ->leftjoin('insurance_companies', 'insurance_companies.id', 'transactions.insurance_company_id')
         ->leftjoin('users as handlers', 'transactions.assigned_to_id','handlers.id')
@@ -284,12 +300,20 @@ class TransactionController extends Controller
 
         if(empty($transaction)) {
             return redirect('transapp/home')->withErrors([
-                    'approval_code' => [__('Could not find any matching Transaction'),
+                    'approval_code' => [__('Approval code '. $request->approval_code .' is invalid'),
                 ],
             ]);
         }
         else {
-            return view('transaction.show',compact('transaction'));
+            $customer = $this->customerService->getCustomerById($transaction->customer_id);
+            $reason =  $this->reasonService->getReasonById($transaction->reason_id)->first();
+            $status = '';
+            if($transaction->status_id)
+            {
+                if($transaction->status_id == 2) $status = 'Active';
+                if($transaction->status_id == 3) $status = 'In Active';
+            }
+            return view('transaction.show',compact('transaction', 'customer', 'reason', 'status'));
         }
     }
 
@@ -350,18 +374,20 @@ class TransactionController extends Controller
         $paymentmodes = PaymentMode::where('is_active', '=', 1)->where('is_deleted', 0)->orderBy('created_at', 'desc')->get();
         $reasons = Reason::where('is_active', '=', 1)->where('is_deleted', 0)->orderBy('created_at', 'desc')->get();
         $statuses = Status::where('is_active', '=', 1)->where('is_deleted', 0)->orderBy('created_at', 'desc')->get();
+        $typeofinsurances = TypeOfInsurance::where('is_active', '=', 1)->where('is_deleted', 0)->orderBy('created_at', 'desc')->get();
         $handlers = User::select('users.*')
         ->leftjoin('model_has_roles','users.id','model_has_roles.model_id')
         ->leftjoin('roles','roles.id','model_has_roles.role_id')
         ->whereIn('roles.name', ['TRANSAPP_ADVISOR', 'TRANSAPP_APPROVER', 'TRANSAPP_ADMIN'])->orderBy('roles.name', 'asc')->get();
         if (count($transaction) > 0) {
             $transaction = $transaction[0];
-            return view('transaction.re-issue.form', compact('title','route', 'statuses', 'reasons', 'transaction', 'insurancecompanies', 'handlers', 'paymentmodes'));
+            $customer = $this->customerService->getCustomerById($transaction->customer_id);
+            return view('transaction.re-issue.form', compact('customer','title','route', 'statuses', 'reasons', 'transaction', 'insurancecompanies', 'handlers', 'paymentmodes', 'typeofinsurances'));
         } else {
             if($route == 're_issue') { $route_to = 'reissue_view'; }
             if($route == 'cancel') { $route_to = 'cancel_view'; }
             return redirect()->route($route_to)->withErrors([
-                    'approval_code' => [__('No transaction found for Approval code '.$request->approval_code),
+                    'approval_code' => [__('Approval code '.$request->approval_code.' is invalid '),
                 ],
             ]);
         }
@@ -371,16 +397,16 @@ class TransactionController extends Controller
     {
         $this->validate($request, [
             'insurance_company' => 'required',
-            'customer_name' => 'required|max:150',
             'assigned_to_id' => 'required',
             'paymentmode' => 'required',
             'amount_paid' => "required|max:12|regex:/^\d*(\.\d{1,2})?$/",
-            'risk_detail' => 'required|max:2000',
+            //'type_of_insurance_id' => 'required',
             'reason' => 'required',
         ]);
 
         $is_cancelled = \Request::route()->getName() == 'cancel' ? true : false;
         $status_id = DB::table('statuses')->where('name', 'Inactive')->value('id');
+        $activeStatus_id = DB::table('statuses')->where('name', 'Active')->value('id');
 
         $previous_transaction = Transaction::where('approval_code', $request->approval_code)->first();
         $previous_transaction->is_cancelled=true;
@@ -388,13 +414,16 @@ class TransactionController extends Controller
         $previous_transaction->save();
         $transaction = new Transaction;
         $transaction->insurance_company_id = $request->insurance_company;
-        $transaction->customer_name = $request->customer_name;
+        $customer = $this->customerService->getCustomerByEmail($request->email);
+        $transaction->customer_id = $customer->first()->id;
         $transaction->assigned_to_id = $request->assigned_to_id;
         $transaction->payment_mode_id = $request->paymentmode;
         $transaction->risk_details = $request->risk_detail;
+        //$transaction->type_of_insurance_id = $request->type_of_insurance_id;
         $transaction->amount_paid = $request->amount_paid;
         $transaction->reason_id = $request->reason;
         $transaction->comments = $request->comments;
+        $transaction->status_id = $activeStatus_id;
         $transaction->created_by_id = Auth::user()->id;
         $transaction->modified_by_id = Auth::user()->id;
         $transaction->prev_approval_code = $previous_transaction->approval_code;

@@ -71,21 +71,6 @@
 
                         </div>
                     </div>
-                    {{-- <div class="item form-group">
-                        <div class="col">
-                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="Results"><b style="width: 143.4px;">Results</b></label>
-                            <div class="col-md-6 col-sm-6">
-                            <p class="label-align-center" style="width: 286.8px;word-wrap: break-word;">
-                            @foreach($aml_results as $key => $aml_result)
-                                {{ $aml_result->id }}
-                            @endforeach
-                            </p>
-                            </div>
-                        </div>
-                        <div class="col">
-
-                        </div>
-                    </div> --}}
                     <div class="item form-group">
                         <div class="col">
                             <label class="col-form-label col-md-3 col-sm-3 label-align" for="Screenshot"><b style="width: 143.4px;">Screenshot</b></label>
@@ -140,22 +125,22 @@
                     </thead>
 
                     <tbody>
-                        @foreach($aml_results as $key => $aml_result)
+                        @foreach($amlResults as $key => $amlResult)
                       <tr>
-                        <td>{{ $aml_result->id }}</td>
-                        <td>{{ $aml_result->firstName }}</td>
-                        <td>{{ $aml_result->middleName }}</td>
-                        <td>{{ $aml_result->lastName }}</td>
-                        <td>{{ $aml_result->alias }}</td>
-                        <td>{{ $aml_result->gender }}</td>
-                        <td>{{ $aml_result->dob }}</td>
-                        <td>{{ $aml_result->pob }}</td>
-                        <td>{{ $aml_result->nationality }}</td>
-                        <td>{{ $aml_result->source }}</td>
-                        <td>{{ $aml_result->sourceId }}</td>
-                        <td>{{ $aml_result->createdAt }}</td>
-                        <td>{{ $aml_result->updatedAt }}</td>
-                        <td>{{ $aml_result->objectID }}</td>
+                        <td>{{ $amlResult->id }}</td>
+                        <td>{{ $amlResult->firstName }}</td>
+                        <td>{{ $amlResult->middleName }}</td>
+                        <td>{{ $amlResult->lastName }}</td>
+                        <td>{{ $amlResult->alias }}</td>
+                        <td>{{ $amlResult->gender }}</td>
+                        <td>{{ $amlResult->dob }}</td>
+                        <td>{{ $amlResult->pob }}</td>
+                        <td>{{ $amlResult->nationality }}</td>
+                        <td>{{ $amlResult->source }}</td>
+                        <td>{{ $amlResult->sourceId }}</td>
+                        <td>{{ date('d-M-Y h:ia', strtotime($amlResult->createdAt)) }}</td>
+                        <td>{{ date('d-M-Y h:ia', strtotime($amlResult->updatedAt)) }}</td>
+                        <td>{{ $amlResult->objectID }}</td>
                       </tr>
                       @endforeach
                     </tbody>

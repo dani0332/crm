@@ -5,11 +5,13 @@ use Illuminate\Support\Facades\DB;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use OwenIt\Auditing\Auditable;
+use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 use Config;
 
-class CarQuote extends Model
+class CarQuote extends Model implements AuditableContract
 {
-    use HasFactory;
+    use HasFactory, Auditable;
     protected $table = 'car_quote_request';
     protected $casts = [
         'dob' => 'datetime',

@@ -51,11 +51,11 @@
                             </div>
                         </div>
                         <div class="col">
-                            <label class="col-form-label col-md-2 col-sm-2" id='assigned_to_id' for="Handler">Handler</label>
+                            <label class="col-form-label col-md-2 col-sm-2" id='assigned_to_id' for="Handler">Advisor</label>
                             <div class="col-md-6 col-sm-6">
                                 <div class="input-group">
                                     <select class="form-control" name="handler" id="handler_value">
-                                        <option value="">Select</option>
+                                        <option value="">Please Select Advisor</option>
                                         @foreach ($handlers as $handler)
                                             <option value="{{ $handler->id }}">{{ $handler->name }}</option>
                                         @endforeach
@@ -94,7 +94,33 @@
                         </div>
                     </div>
                     <div class="item form-group">
+                        {{-- <div class="col">
+                            <label class="col-form-label col-md-2 col-sm-2" id='omer_name' for="Customer Name ">Customer Name</label>
+                            <div class="col-md-6 col-sm-6">
+                                <div class="input-group">
+                                <input type="text" name="transapp_customer_name" id="customer_name" class="form-control">
+                                </div>
+                            </div>
+                        </div> --}}
                         <div class="col">
+                            <label class="col-form-label col-md-2 col-sm-2" id='customer_email_label' for="Customer Email ">Customer Email</label>
+                            <div class="col-md-6 col-sm-6">
+                                <div class="input-group">
+                                <input type="text" name="transapp_customer_email" id="customer_email" class="form-control">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <label class="col-form-label col-md-2 col-sm-2" id='transapp_approval' for="Customer Email ">Approval Code</label>
+                            <div class="col-md-6 col-sm-6">
+                                <div class="input-group">
+                                <input type="text" name="transapp_approval_code" id="transapp_approval_code" class="form-control">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="item form-group">
+                        <div class="col col-md-6">
                             <label class="col-form-label col-md-2 col-sm-2" id="payment_mode_id" for="Payment mode">Payment mode</label>
                             <div class="col-md-6 col-sm-6">
                                 <div class="input-group">
@@ -107,6 +133,9 @@
                                 </div>
                             </div>
                         </div>
+
+                    </div>
+                    <div class="item form-group">
                         <div class="col">
                             <ul class="nav navbar-right panel_toolbox">
                             <li><input type="submit" class="btn btn-warning btn-sm"></li>
@@ -123,9 +152,9 @@
                           <th>Insurance<br>Company</th>
                           <th>Premium</th>
                           <th>Name</th>
-                          <th>Risk</th>
-                          <th>Transector</th>
-                          <th>Handler</th>
+                          <th>Risk Detail</th>
+                          <th>Transactor</th>
+                          <th>Advisor</th>
                           <th>Payment mode</th>
                           <th>Prev Approval Code</th>
                         </tr>

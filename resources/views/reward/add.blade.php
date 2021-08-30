@@ -21,7 +21,7 @@
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="coupon_code">Coupon Code <span class="required">*</span></label>
                         <div class="col-md-6 col-sm-6">
-                            <input type="text" id="coupon_code" name="coupon_code" value="{{ old('coupon_code') }}" class="form-control">
+                            <input type="text" id="coupon_code" name="coupon_code" value="{{ old('coupon_code') }}" class="form-control" maxlength="25">
                             @if ($errors->has('coupon_code'))
                                 <span class="text-danger">{{ $errors->first('coupon_code') }}</span>
                             @endif

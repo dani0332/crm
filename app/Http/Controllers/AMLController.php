@@ -8,19 +8,42 @@ use Illuminate\Http\Request;
 use DataTables;
 use Config;
 use DB;
+use Auth;
+use App\Enums\quoteTypeCode;
+use App\Enums\quoteStatusCode;
+use App\Enums\quoteBusinessTypeCode;
+use App\Services\CheckAmlService;
+use App\Services\QuoteStatusService;
 use App\Models\CarQuote;
+use App\Models\HealthQuote;
+use App\Models\HomeQuote;
+use App\Models\LifeQuote;
+use App\Models\BusinessQuote;
+use App\Models\BikeQuote;
+use App\Models\YachtQuote;
+use App\Models\TravelQuote;
+use App\Models\BusinessQuoteType;
+use App\Models\BusinessCoverType;
+use App\Models\CommunicationMode;
+use App\Models\QuoteStatus;
 
 class AMLController extends Controller
 {
+    protected $checkAmlService, $quoteStatusService;
+
     /**
      * Display a listing of the resource.
      *
      * @return \Illuminate\Http\Response
      */
-    public function __construct()
+
+    public function __construct(CheckAmlService $checkAmlService, QuoteStatusService $quoteStatusService)
     {
         $this->middleware('permission:aml-list', ['only' => ['index']]);
+        $this->checkAmlService = $checkAmlService;
+        $this->quoteStatusService = $quoteStatusService;
     }
+
     /**
      * Display a listing of the resource.
      *
@@ -28,30 +51,30 @@ class AMLController extends Controller
      */
     public function index(Request $request)
     {
-        $quotetypes = QuoteType::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
+        $quoteTypes = QuoteType::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
 
         if ($request->ajax()) {
-            $data = AML::select('kyc_logs.*', 'quote_type.text as quote_type_text')
+            $dataAml = AML::select('kyc_logs.*', 'quote_type.text as quote_type_text')
             ->leftjoin('quote_type', 'quote_type.id', 'kyc_logs.quote_type_id')->orderBy('kyc_logs.created_at','desc');
 
-            if (isset($request->searchtype) && !empty($request->searchtype)
-            && isset($request->searchfield) && !empty($request->searchfield)) {
-                if($request->searchtype == 'quote_request_id') {
-                    $data->where('kyc_logs.quote_request_id',$request->searchfield);
+            if (isset($request->searchType) && !empty($request->searchType)
+            && isset($request->searchField) && !empty($request->searchField)) {
+                if($request->searchType == 'quoteRequestId') {
+                    $dataAml->where('kyc_logs.quote_request_id',$request->searchField);
                 }
-                else if($request->searchtype == 'id') {
-                    $data->where('kyc_logs.id',$request->searchfield);
+                else if($request->searchType == 'id') {
+                    $dataAml->where('kyc_logs.id',$request->searchField);
                 }
                 else {
-                    $data->where($request->searchtype, $request->searchfield);
+                    $dataAml->where($request->searchType, $request->searchField);
                 }
             }
 
-            if(isset($request->quotetype) && !empty($request->quotetype)) {
-                $data->where('kyc_logs.quote_type_id', $request->quotetype);
+            if(isset($request->quoteType) && !empty($request->quoteType)) {
+                $dataAml->where('kyc_logs.quote_type_id', $request->quoteType);
             }
 
-            return DataTables::of($data)
+            return DataTables::of($dataAml)
                     ->addIndexColumn()
                     ->addColumn('action', function($row){
                         return view('aml.actions', compact('row'))->render();
@@ -59,28 +82,7 @@ class AMLController extends Controller
                     ->rawColumns(['action'])
                     ->make(true);
         }
-        return view('aml.view',compact('quotetypes'));
-    }
-
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
-    public function store(Request $request)
-    {
-        //
+        return view('aml.view',compact('quoteTypes'));
     }
 
     /**
@@ -91,23 +93,30 @@ class AMLController extends Controller
      */
     public function show(AML $aml)
     {
-        $aml_results = json_decode($aml->results);
-        
-        return view('aml.show',compact('aml','aml_results'));
+        $amlResults = json_decode($aml->results);
+
+        return view('aml.show',compact('aml','amlResults'));
     }
 
-    public function aml_details($quote_type_id, $quote_request_id)
+    public function amlQuoteDetails($quoteTypeId, $quoteRequestId)
     {
-        $quote_type_code = DB::table('quote_type')->where('id', $quote_type_id)->value('code');
-        $quote_type_text = DB::table('quote_type')->where('id', $quote_type_id)->value('text');
+        //return $this->checkAmlService->checkAml("Saddam","Hussain",$quoteRequestId,$quoteTypeId);
 
-        if($quote_type_code != "") {
+        $quoteType = QuoteType::where('id', '=', $quoteTypeId)->get(array('code','text'));
+        $quoteTypeCode = $quoteType[0]->code;
+        $quoteTypeText = $quoteType[0]->text;
 
-            $kyc_logs = DB::table('kyc_logs')->where('quote_request_id', '=', $quote_request_id)->orderBy('created_at', 'desc')->get();
-            $quote_type_text = $quote_type_text;
+        if($quoteTypeCode != "") {
 
-            if($quote_type_code == "Car") {
-                $quote_request = DB::table('car_quote_request')
+            $kycLogs = AML::where('quote_request_id', '=', $quoteRequestId)->orderBy('created_at', 'desc')->get();
+
+            if($quoteTypeCode == quoteTypeCode::Car) {
+
+                $quoteRequest = CarQuote::select('car_quote_request.*', 'quote_status.text as quote_status_text', 'payment_status.text as payment_status_text'
+                , 'customer.first_name as cust_f_name', 'customer.last_name as cust_l_name', 'uae_license_held_for.text as uae_license_text'
+                , 'car_make.text as car_make_text', 'car_model.text as car_model_text', 'emirates.text as emirates_text'
+                , 'car_type_insurance.text as car_type_ins_text', 'claim_history.text as claim_history_text'
+                , 'nationality.text as nationality_text')
                 ->leftjoin('quote_status','car_quote_request.quote_status_id','quote_status.id')
                 ->leftjoin('payment_status','car_quote_request.payment_status_id','payment_status.id')
                 ->leftjoin('customer','car_quote_request.customer_id','customer.id')
@@ -118,15 +127,15 @@ class AMLController extends Controller
                 ->leftjoin('car_type_insurance','car_quote_request.car_type_insurance_id','car_type_insurance.id')
                 ->leftjoin('claim_history','car_quote_request.claim_history_id','claim_history.id')
                 ->leftjoin('nationality','car_quote_request.nationality_id','nationality.id')
-                ->where('car_quote_request.id', $quote_request_id)
-                ->select('car_quote_request.*', 'quote_status.text as quote_status_text', 'payment_status.text as payment_status_text'
-                , 'customer.first_name as cust_f_name', 'customer.last_name as cust_l_name', 'uae_license_held_for.text as uae_license_text'
-                , 'car_make.text as car_make_text', 'car_model.text as car_model_text', 'emirates.text as emirates_text'
-                , 'car_type_insurance.text as car_type_ins_text', 'claim_history.text as claim_history_text'
-                , 'nationality.text as nationality_text')->first();
+                ->where('car_quote_request.id', $quoteRequestId)->first();
+                $auditLogLine = "CarQuote";
             }
-            else if($quote_type_code == "Health") {
-                $quote_request = DB::table('health_quote_request')
+            else if($quoteTypeCode == quoteTypeCode::Health) {
+
+                $quoteRequest = HealthQuote::select('health_quote_request.*', 'quote_status.text as quote_status_text', 'payment_status.text as payment_status_text'
+                , 'customer.first_name as cust_f_name', 'customer.last_name as cust_l_name'
+                , 'health_cover_for.text as health_cover_text', 'marital_status.text as marital_status_text', 'emirates.text as emirates_text'
+                , 'nationality.text as nationality_text')
                 ->leftjoin('quote_status','health_quote_request.quote_status_id','quote_status.id')
                 ->leftjoin('payment_status','health_quote_request.payment_status_id','payment_status.id')
                 ->leftjoin('customer','health_quote_request.customer_id','customer.id')
@@ -134,40 +143,44 @@ class AMLController extends Controller
                 ->leftjoin('marital_status','health_quote_request.marital_status_id','marital_status.id')
                 ->leftjoin('emirates','health_quote_request.emirate_of_your_visa_id','emirates.id')
                 ->leftjoin('nationality','health_quote_request.nationality_id','nationality.id')
-                ->where('health_quote_request.id', $quote_request_id)
-                ->select('health_quote_request.*', 'quote_status.text as quote_status_text', 'payment_status.text as payment_status_text'
-                , 'customer.first_name as cust_f_name', 'customer.last_name as cust_l_name'
-                , 'health_cover_for.text as health_cover_text', 'marital_status.text as marital_status_text', 'emirates.text as emirates_text'
-                , 'nationality.text as nationality_text')->first();
+                ->where('health_quote_request.id', $quoteRequestId)->first();
+                $auditLogLine = "HealthQuote";
             }
-            else if($quote_type_code == "Home") {
-                $quote_request = DB::table('home_quote_request')
+            else if($quoteTypeCode == quoteTypeCode::Home) {
+
+                $quoteRequest = HomeQuote::select('home_quote_request.*', 'quote_status.text as quote_status_text', 'payment_status.text as payment_status_text'
+                , 'customer.first_name as cust_f_name', 'customer.last_name as cust_l_name'
+                , 'home_possession_type.text as home_possession_type_text'
+                , 'home_accommodation_type.text as home_accommodation_type_text')
                 ->leftjoin('quote_status','home_quote_request.quote_status_id','quote_status.id')
                 ->leftjoin('payment_status','home_quote_request.payment_status_id','payment_status.id')
                 ->leftjoin('customer','home_quote_request.customer_id','customer.id')
                 ->leftjoin('home_possession_type','home_quote_request.iam_possesion_type_id','home_possession_type.id')
                 ->leftjoin('home_accommodation_type','home_quote_request.ilivein_accommodation_type_id','home_accommodation_type.id')
-                ->where('home_quote_request.id', $quote_request_id)
-                ->select('home_quote_request.*', 'quote_status.text as quote_status_text', 'payment_status.text as payment_status_text'
-                , 'customer.first_name as cust_f_name', 'customer.last_name as cust_l_name'
-                , 'home_possession_type.text as home_possession_type_text'
-                , 'home_accommodation_type.text as home_accommodation_type_text')->first();
+                ->where('home_quote_request.id', $quoteRequestId)->first();
+                $auditLogLine = "HomeQuote";
             }
-            else if($quote_type_code == "Travel") {
-                $quote_request = DB::table('travel_quote_request')
+            else if($quoteTypeCode == quoteTypeCode::Travel) {
+
+                $quoteRequest = TravelQuote::select('travel_quote_request.*', 'quote_status.text as quote_status_text', 'payment_status.text as payment_status_text'
+                , 'customer.first_name as cust_f_name', 'customer.last_name as cust_l_name'
+                , 'region.text as region_cover_text', 'travel_cover_for.text as cover_for_text', 'nationality.text as nationality_text')
                 ->leftjoin('quote_status','travel_quote_request.quote_status_id','quote_status.id')
                 ->leftjoin('payment_status','travel_quote_request.payment_status_id','payment_status.id')
                 ->leftjoin('customer','travel_quote_request.customer_id','customer.id')
                 ->leftjoin('region','travel_quote_request.region_cover_for_id','region.id')
                 ->leftjoin('travel_cover_for','travel_quote_request.travel_cover_for_id','travel_cover_for.id')
                 ->leftjoin('nationality','travel_quote_request.nationality_id','nationality.id')
-                ->where('travel_quote_request.id', $quote_request_id)
-                ->select('travel_quote_request.*', 'quote_status.text as quote_status_text', 'payment_status.text as payment_status_text'
-                , 'customer.first_name as cust_f_name', 'customer.last_name as cust_l_name'
-                , 'region.text as region_cover_text', 'travel_cover_for.text as cover_for_text', 'nationality.text as nationality_text')->first();
+                ->where('travel_quote_request.id', $quoteRequestId)->first();
+                $auditLogLine = "TravelQuote";
             }
-            else if($quote_type_code == "Life") {
-                $quote_request = DB::table('life_quote_request')
+            else if($quoteTypeCode == quoteTypeCode::Life) {
+
+                $quoteRequest = LifeQuote::select('life_quote_request.*', 'quote_status.text as quote_status_text', 'payment_status.text as payment_status_text'
+                , 'customer.first_name as cust_f_name', 'customer.last_name as cust_l_name'
+                , 'life_insurance_purpose.text as purpose_text', 'life_children.text as children_text', 'marital_status.text as marital_text'
+                , 'life_insurance_tenure.text as tenure_text', 'life_number_of_year.text as number_of_year_text'
+                , 'currency_type.text as currency_text', 'nationality.text as nationality_text')
                 ->leftjoin('quote_status','life_quote_request.quote_status_id','quote_status.id')
                 ->leftjoin('payment_status','life_quote_request.payment_status_id','payment_status.id')
                 ->leftjoin('customer','life_quote_request.customer_id','customer.id')
@@ -178,137 +191,82 @@ class AMLController extends Controller
                 ->leftjoin('life_number_of_year','life_quote_request.number_of_years_id','life_number_of_year.id')
                 ->leftjoin('currency_type','life_quote_request.sum_insured_currency_id','currency_type.id')
                 ->leftjoin('nationality','life_quote_request.nationality_id','nationality.id')
-                ->where('life_quote_request.id', $quote_request_id)
-                ->select('life_quote_request.*', 'quote_status.text as quote_status_text', 'payment_status.text as payment_status_text'
-                , 'customer.first_name as cust_f_name', 'customer.last_name as cust_l_name'
-                , 'life_insurance_purpose.text as purpose_text', 'life_children.text as children_text', 'marital_status.text as marital_text'
-                , 'life_insurance_tenure.text as tenure_text', 'life_number_of_year.text as number_of_year_text'
-                , 'currency_type.text as currency_text', 'nationality.text as nationality_text')->first();
+                ->where('life_quote_request.id', $quoteRequestId)->first();
+                $auditLogLine = "LifeQuote";
             }
-            else if($quote_type_code == "Bike") {
-                $quote_request = DB::table('bike_quote_request')
+            else if($quoteTypeCode == quoteTypeCode::Bike) {
+
+                $quoteRequest = BikeQuote::select('bike_quote_request.*', 'quote_status.text as quote_status_text', 'payment_status.text as payment_status_text'
+                , 'customer.first_name as cust_f_name', 'customer.last_name as cust_l_name'
+                , 'nationality.text as nationality_text', 'uae_license_held_for.text as uae_license_text')
                 ->leftjoin('quote_status','bike_quote_request.quote_status_id','quote_status.id')
                 ->leftjoin('payment_status','bike_quote_request.payment_status_id','payment_status.id')
                 ->leftjoin('customer','bike_quote_request.customer_id','customer.id')
                 ->leftjoin('nationality','bike_quote_request.nationality_id','nationality.id')
                 ->leftjoin('uae_license_held_for','bike_quote_request.uae_license_held_for_id','uae_license_held_for.id')
-                ->where('bike_quote_request.id', $quote_request_id)
-                ->select('bike_quote_request.*', 'quote_status.text as quote_status_text', 'payment_status.text as payment_status_text'
-                , 'customer.first_name as cust_f_name', 'customer.last_name as cust_l_name'
-                , 'nationality.text as nationality_text', 'uae_license_held_for.text as uae_license_text')->first();
+                ->where('bike_quote_request.id', $quoteRequestId)->first();
+                $auditLogLine = "BikeQuote";
             }
-            else if($quote_type_code == "Yacht") {
-                $quote_request = DB::table('yacht_quote_request')
+            else if($quoteTypeCode == quoteTypeCode::Yacht) {
+
+                $quoteRequest = YachtQuote::select('yacht_quote_request.*', 'quote_status.text as quote_status_text', 'payment_status.text as payment_status_text'
+                , 'customer.first_name as cust_f_name', 'customer.last_name as cust_l_name')
                 ->leftjoin('quote_status','yacht_quote_request.quote_status_id','quote_status.id')
                 ->leftjoin('payment_status','yacht_quote_request.payment_status_id','payment_status.id')
                 ->leftjoin('customer','yacht_quote_request.customer_id','customer.id')
-                ->where('yacht_quote_request.id', $quote_request_id)
-                ->select('yacht_quote_request.*', 'quote_status.text as quote_status_text', 'payment_status.text as payment_status_text'
-                , 'customer.first_name as cust_f_name', 'customer.last_name as cust_l_name')->first();
+                ->where('yacht_quote_request.id', $quoteRequestId)->first();
+                $auditLogLine = "YachtQuote";
             }
-            else if($quote_type_code == "Business") {
-                $quote_request = DB::table('business_quote_request')
+            else if($quoteTypeCode == quoteTypeCode::Business) {
+
+                $quoteRequest = BusinessQuote::select('business_quote_request.*', 'quote_status.text as quote_status_text', 'payment_status.text as payment_status_text'
+                , 'customer.first_name as cust_f_name', 'customer.last_name as cust_l_name'
+                , 'business_type_of_insurance.text as business_type_text')
                 ->leftjoin('quote_status','business_quote_request.quote_status_id','quote_status.id')
                 ->leftjoin('payment_status','business_quote_request.payment_status_id','payment_status.id')
                 ->leftjoin('customer','business_quote_request.customer_id','customer.id')
                 ->leftjoin('business_type_of_insurance','business_quote_request.business_type_of_insurance_id','business_type_of_insurance.id')
-                ->where('business_quote_request.id', $quote_request_id)
-                ->select('business_quote_request.*', 'quote_status.text as quote_status_text', 'payment_status.text as payment_status_text'
-                , 'customer.first_name as cust_f_name', 'customer.last_name as cust_l_name'
-                , 'business_type_of_insurance.text as business_type_text')->first();
-                $business_type_code = DB::table('business_type_of_insurance')->where('id', $quote_request->business_type_of_insurance_id)->value('code');
-                $business_cover_type_text = DB::table('business_cover_type')->where('id', $quote_request->business_cover_type_id)->value('text');
-                $business_communication_mode_text = DB::table('communication_mode')->where('id', $quote_request->communication_mode_id)->value('text');
+                ->where('business_quote_request.id', $quoteRequestId)->first();
+                $auditLogLine = "BusinessQuote";
+
+                $businessTypeCode = BusinessQuoteType::where('id', '=', $quoteRequest->business_type_of_insurance_id)->value('code');
+                $businessCoverTypeText = BusinessCoverType::where('id', '=', $quoteRequest->business_cover_type_id)->value('text');
+                $businessCommuModeText = CommunicationMode::where('id', '=', $quoteRequest->communication_mode_id)->value('text');
             }
             else {
-                $quote_request = "";
+                $quoteRequest = "";
             }
         }
         else { return redirect()->route('aml.details')->with('message','Not Found!'); }
 
-        if($quote_type_code == "Business") {
-            return view("aml.details", compact("quote_type_code","quote_type_text","quote_request","business_type_code"
-            ,"business_cover_type_text","business_communication_mode_text","kyc_logs"));
+        if($quoteRequest->quote_status_id && $quoteRequest->quote_status_id != "") {
+            $quoteStatus = QuoteStatus::where('id', '=', $quoteRequest->quote_status_id)->get(array('code'));
+            $quoteStatusCode = $quoteStatus[0]->code;
         }
         else {
-            return view("aml.details", compact("quote_type_code","quote_type_text","quote_request","kyc_logs"));
+            $quoteStatusCode = "";
         }
-    }
 
-    public function quote_status_rejected($quote_type_id, $quote_request_id)
-    {
-        $quote_type_code = DB::table('quote_type')->where('id', $quote_type_id)->value('code');
-
-        if($quote_type_code && $quote_type_code != "") {
-            if($quote_type_code == "Car") { $update_table = "car_quote_request"; }
-            if($quote_type_code == "Home") { $update_table = "home_quote_request"; }
-            if($quote_type_code == "Health") { $update_table = "health_quote_request"; }
-            if($quote_type_code == "Life") { $update_table = "life_quote_request"; }
-            if($quote_type_code == "Business") { $update_table = "business_quote_request"; }
-            if($quote_type_code == "Bike") { $update_table = "bike_quote_request"; }
-            if($quote_type_code == "Yacht") { $update_table = "yacht_quote_request"; }
-            if($quote_type_code == "Travel") { $update_table = "travel_quote_request"; }
-            $update_quote_status = DB::table($update_table)->where('id', $quote_request_id)->update(['quote_status_id' => 3]);
+        if($quoteTypeCode == quoteTypeCode::Business) {
+            return view("aml.details", compact("quoteTypeCode","quoteTypeText","quoteRequest","businessTypeCode"
+            ,"businessCoverTypeText","businessCommuModeText","kycLogs","quoteStatusCode","auditLogLine"));
         }
         else {
-            return redirect()->back()->with('message', 'Quote Type not exist!');
+            return view("aml.details", compact("quoteTypeCode","quoteTypeText","quoteRequest","kycLogs","quoteStatusCode","auditLogLine"));
         }
-
-        return redirect()->back()->with('success', 'Quote Status is set to Rejected');
     }
-    public function quote_status_approved($quote_type_id, $quote_request_id)
-    {
-        $quote_type_code = DB::table('quote_type')->where('id', $quote_type_id)->value('code');
 
-        if($quote_type_code && $quote_type_code != "") {
-            if($quote_type_code == "Car") { $update_table = "car_quote_request"; }
-            if($quote_type_code == "Home") { $update_table = "home_quote_request"; }
-            if($quote_type_code == "Health") { $update_table = "health_quote_request"; }
-            if($quote_type_code == "Life") { $update_table = "life_quote_request"; }
-            if($quote_type_code == "Business") { $update_table = "business_quote_request"; }
-            if($quote_type_code == "Bike") { $update_table = "bike_quote_request"; }
-            if($quote_type_code == "Yacht") { $update_table = "yacht_quote_request"; }
-            if($quote_type_code == "Travel") { $update_table = "travel_quote_request"; }
-            $update_quote_status = DB::table($update_table)->where('id', $quote_request_id)->update(['quote_status_id' => 1]);
+    public function quoteStatusUpdate($quoteTypeId, $quoteRequestId, $quoteStatusType)
+    {
+        $updateQuoteStatusResp = $this->quoteStatusService->updateQuoteStatus($quoteTypeId, $quoteRequestId, $quoteStatusType);
+
+        if($updateQuoteStatusResp == "false") {
+            return redirect()->back()->with('message', 'Quote Status is not updated');
         }
         else {
-            return redirect()->back()->with('message', 'Quote Type not exist!');
+            return redirect()->back()->with('success', 'Quote Status is set to '.$updateQuoteStatusResp.'');
         }
-
-        return redirect()->back()->with('success', 'Quote Status is set to Approved');
+        
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  \App\Models\AML  $aml
-     * @return \Illuminate\Http\Response
-     */
-    public function edit(AML $aml)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\AML  $aml
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, AML $aml)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  \App\Models\AML  $aml
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy(AML $aml)
-    {
-        //
-    }
 }

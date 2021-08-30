@@ -49,7 +49,7 @@
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="Mode Of Payment"><b>Customer Name</b></label>
                         <div class="col-md-6 col-sm-6">
-                            <p class="label-align-center">{{ $transaction->customer_name }}</p>
+                            <p class="label-align-center">{{ $customer ? $customer->first_name.' '.$customer->last_name : '' }}</p>
                         </div>
                     </div>
                     <div class="item form-group">
@@ -58,8 +58,14 @@
                             <p class="label-align-center">{{ $transaction->risk_details }}</p>
                         </div>
                     </div>
+                    {{-- <div class="item form-group">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Risk Details"><b>Type Of Insurance</b></label>
+                        <div class="col-md-6 col-sm-6">
+                            <p class="label-align-center">{{ $transaction->typeofinsurance ? $transaction->typeofinsurance->text: '' }}</p>
+                        </div>
+                    </div> --}}
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Handler"><b>Handler</b></label>
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Handler"><b>Advisor</b></label>
                         <div class="col-md-6 col-sm-6">
                             <p class="label-align-center">{{ $transaction->assignedto ? $transaction->assignedto->name : '' }}</p>
                         </div>
@@ -82,15 +88,25 @@
                             <p class="label-align-center">{{ $transaction->comments }}</p>
                         </div>
                     </div>
-                    <div class="ln_solid"></div>
-                    <div class="row">
-                    <div class="col-auto mr-auto"></div>
-                        <div class="col-auto">
-                            @can('crm-admin')
-                                <a href="#" date-route="{{ route('transaction.destroy', ['transaction' => $transaction->id]) }}" class='btn btn-warning btn-sm delete'>Delete</a>
-                            @endcan
+                    <div class="item form-group">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Comments"><b>Reason</b></label>
+                        <div class="col-md-6 col-sm-6">
+                            <p class="label-align-center">{{ $reason != null ? $reason->name: '' }}</p>
                         </div>
                     </div>
+                    <div class="item form-group">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Comments"><b>Status</b></label>
+                        <div class="col-md-6 col-sm-6">
+                            <p class="label-align-center">{{ $status }}</p>
+                        </div>
+                    </div>
+                    <div class="item form-group">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Comments"><b>Cancelled</b></label>
+                        <div class="col-md-6 col-sm-6">
+                            <p class="label-align-center">{{ $transaction->is_cancelled ? 'True' : 'False' }}</p>
+                        </div>
+                    </div>
+                    <div class="ln_solid"></div>
                 </form>
             </div>
         </div>

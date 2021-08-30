@@ -9,35 +9,35 @@
                 <div class="clearfix"></div>
             </div>
             <div class="x_content">
-            <form method="POST" id="search-aml" class="form-horizontal form-label-left" role="form" data-parsley-validate="" novalidate="" autocomplete="off">
+            <form method="POST" id="searchAML" class="form-horizontal form-label-left" role="form" data-parsley-validate="" novalidate="" autocomplete="off">
             <div class="item form-group">
                         <div class="col">
-                            <label class="col-form-label col-md-2 col-sm-2" for="searchtype">Search By</label>
+                            <label class="col-form-label col-md-2 col-sm-2" for="Search By">Search By</label>
                             <div class="col-md-6 col-sm-6">
-                                <select class="form-control" name="searchtype" id="search_type">
-                                    <option value="quote_request_id">Quote Request ID</option>
+                                <select class="form-control" id="searchType" name="searchType">
+                                    <option value="quoteRequestId">Quote Request ID</option>
                                     <option value="id">ID</option>
                                 </select>
                             </div>
                         </div>
                         <div class="col">
-                            <label class="col-form-label col-md-2 col-sm-2" for="searchfield">Search Value</label>
+                            <label class="col-form-label col-md-2 col-sm-2" for="Search Value">Search Value</label>
                             <div class="col-md-6 col-sm-6">
                                 <div class="input-group">
-                                    <input type="text" class="form-control" name="searchfield" id="searchfield" placeholder="Type here...">
+                                    <input type="text" class="form-control" id="searchField" name="searchField" placeholder="Type here...">
                                 </div>
                             </div>
                         </div>
                     </div>
                 <div class="item form-group">
                     <div class="col">
-                        <label class="col-form-label col-md-2 col-sm-2" for="Quote Type" id='quotetype'>Quote Type</label>
+                        <label class="col-form-label col-md-2 col-sm-2" for="Quote Type">Quote Type</label>
                         <div class="col-md-6 col-sm-6">
                             <div class="input-group">
-                                <select class="form-control" name="quotetype" id="quote_type_value">
+                                <select class="form-control" id="quoteTypeValue" name="quoteType">
                                     <option value="">Select</option>
-                                    @foreach ($quotetypes as $quotetype)
-                                        <option value="{{ $quotetype->id }}">{{ $quotetype->text }}</option>
+                                    @foreach ($quoteTypes as $quoteType)
+                                        <option value="{{ $quoteType->id }}">{{ $quoteType->text }}</option>
                                     @endforeach
                                 </select>
                             </div>
