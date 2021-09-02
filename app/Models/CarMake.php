@@ -10,7 +10,7 @@ class CarMake extends BaseModel
 {
     use HasFactory;
     protected $table = 'car_make';
-    public function processGetDSL($filters = []) {
+    public function processGetDSL($filters) {
         return self::processGetBaseDSL($filters, 'car_make', ['code', 'id', 'text', 'is_active']);
     }
 }

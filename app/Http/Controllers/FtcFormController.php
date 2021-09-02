@@ -16,8 +16,7 @@ class FtcFormController extends Controller
 
     public function __construct()
     {
-
-        $this->middleware('permission:customers-list', ['only' => ['index', 'store']]);
+       // $this->middleware('permission:customers-list', ['only' => ['index', 'store']]);
     }
 
     /**

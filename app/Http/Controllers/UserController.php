@@ -7,6 +7,7 @@ use DataTables;
 use DB;
 use Illuminate\Http\Request;
 use Spatie\Permission\Models\Role;
+use Auth;
 
 class UserController extends Controller
 {
@@ -153,5 +154,9 @@ class UserController extends Controller
     {
         $user->delete();
         return redirect()->route('users.index')->with('message', 'User has been deleted');
+    }
+
+    public function me(Request $request){
+        return ['name' => Auth::user()->name, 'email' => Auth::user()->email, 'id' => Auth::user()->id, 'role'=> strtolower(Auth::user()->usersroles[0]->name)];
     }
 }

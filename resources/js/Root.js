@@ -8,12 +8,16 @@ import { Provider } from 'react-redux'
 import { store } from './redux/getStore'
 import DashboardFtcWizard from './modules/ftc-forms/dashboard'
 import LeadsList from './modules/ftc-forms/leads-list';
+import ManageListFormView from './components/list-view/manage-list-form-view';
+import List from './components/list-view/list';
 import LeadSnapShot from './modules/ftc-forms/snaphot';
 import { Provider as HttpProvider } from 'use-http'
 
 function Root() {
 
     const options = {
+
+        cachePolicy: 'no-cache',
         interceptors: {
           // every time we make an http request, this will run 1st before the request is made
           // url, path and route are supplied to the interceptor
@@ -25,17 +29,17 @@ function Root() {
             // }
             // options.headers.Authorization = `Bearer ${token}`
 
-            console.log('********RequestOptions********')
-            console.log(options)
-            console.log('********RequestOptions********')
+            // console.log('********RequestOptions********')
+            // console.log(options)
+            // console.log('********RequestOptions********')
             return options
           },
           // every time we make an http request, before getting the response back, this will run
           response: async ({ response }) => {
 
-            console.log('********Response********')
-            console.log(response)
-            console.log('********Response********')
+            // console.log('********Response********')
+            // console.log(response)
+            // console.log('********Response********')
             const res = response
             return res
           }
@@ -48,11 +52,11 @@ function Root() {
     <Provider store={store}>
         <Router history={history}>
             <ThemeProvider theme={theme}>
-                <HttpProvider url='https://crmstage.alfred.ae' options={options}>
+                <HttpProvider  options={options}>
                     {/* <DashboardFtcWizard /> */}
                 <Switch>
                     <Route path="/ftcform">
-                        <LeadsList />
+                        <ManageListFormView form={{ context:'root', form: 'leadRequest', view_mode: 'list',action_type: 'list' }} />
                     </Route>
                     <Route path="/lead/:id">
                         <LeadSnapShot />

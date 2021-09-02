@@ -153,7 +153,15 @@ Route::resource('ftcform', FtcFormController::class);
 Route::group(['prefix' => 'form'], function()use($router) {
     Route::GET('/{form}', [FormController::class,'index']);
     Route::GET('/{form}/{form_id}', [FormController::class,'getFormDetail']);
+    Route::PUT('/{form}/{form_id}', [FormController::class,'update']);
+    Route::DELETE('/{form}/{form_id}', [FormController::class,'delete']);
     Route::POST('/{form}', [FormController::class,'save']);
+});
+// Route::POST('/sendReviewEmail', [FormController::class,'sendReviewEmail'])
+//         ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);;
+
+Route::group(['prefix' => 'users'], function()use($router) {
+    Route::GET('/me', [UserController::class,'me']);
 });
 
 Route::group(['prefix' => 'resource'], function()use($router) {

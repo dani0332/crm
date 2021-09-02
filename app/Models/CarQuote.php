@@ -5,17 +5,18 @@ use Illuminate\Support\Facades\DB;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use OwenIt\Auditing\Auditable;
-use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
-use Config;
+use App\Models\BaseModel;
+use Auth;
 
-class CarQuote extends Model implements AuditableContract
+class CarQuote extends BaseModel
 {
-    use HasFactory, Auditable;
+    use HasFactory;
     protected $table = 'car_quote_request';
     protected $casts = [
         'dob' => 'datetime',
     ];
+
+
 
     public function uaeLicenseHeldFor()
     {
@@ -67,36 +68,161 @@ class CarQuote extends Model implements AuditableContract
     }
     public function getCreatedAtAttribute($table)
     {
-        $date_time_format = Config::get('constants.datetime_format');
+        $date_time_format = config('constants.datetime_format');
         return $this->asDateTime($table)->timezone(config('app.timezone'))->format($date_time_format);
     }
     public function getUpdatedAtAttribute($table)
     {
-        $date_time_format = Config::get('constants.datetime_format');
+        $date_time_format = config('constants.datetime_format');
         return $this->asDateTime($table)->timezone(config('app.timezone'))->format($date_time_format);
     }
-    public function processGetDSL($filters = [], $request) {
 
-        $select = ['car_value', 'id', 'year_of_manufacture', 'car_make_id','car_model_id'];
-        switch($request->query('mode')){
-            case 'policy_holder_detail':
-                $select = ['first_name', 'last_name', 'mobile_no', 'email','dob', 'emirate_of_registration_id'];
-                break;
-            case 'vehicle_detail':
-                $select = ['year_of_manufacture', 'car_model_id', 'car_make_id'];
-                break;
-            case 'listView':
-                $select = ['id', 'code', 'first_name', 'last_name', 'email' , 'mobile_no', 'created_at'];
-                break;
-        }
-        $response = DB::table('car_quote_request')
-            ->select($select)
-            ->where(function($query) use($filters) {
-                foreach($filters as $key => $value) {
-                    $query->where($key,$value);
+
+    /*****  NewRelationships so old should not effect */
+
+
+    public function car_make_id()
+    {
+        return $this->hasOne(CarMake::class, 'id', 'car_make_id')->select(['id', 'code','text']);;
+    }
+
+    public function car_model_id()
+    {
+        return $this->hasOne(CarModel::class, 'id', 'car_model_id')->select(['id', 'code','text']);;
+    }
+
+    public function emirate_of_registration_id()
+    {
+        return $this->hasOne(Emirate::class, 'id', 'emirate_of_registration_id')->select(['id', 'code','text']);;
+    }
+    public function claim_history_id()
+    {
+        return $this->hasOne(ClaimHistory::class, 'id', 'claim_history_id')->select(['id', 'code','text']);;
+    }
+
+    public function car_type_insurance_id()
+    {
+        return $this->hasOne(CarTypeInsurance::class, 'id', 'car_type_insurance_id');
+    }
+    public function uae_license_held_for_id()
+    {
+        return $this->hasOne(UAELicenseHeldFor::class, 'id', 'uae_license_held_for_id');
+    }
+
+    public function customer_id()
+    {
+        return $this->hasOne(Customer::class, 'id', 'customer_id');
+    }
+
+    public function nationality_id()
+    {
+        return $this->hasOne(Nationality::class, 'id', 'nationality_id')->select(['id', 'code','text']);;
+    }
+
+    public function payment_status_id()
+    {
+        return $this->hasOne(PaymentStatus::class, 'id', 'payment_status_id');
+    }
+
+    public function quote_status_id()
+    {
+        return $this->hasOne(QuoteStatus::class, 'id', 'quote_status_id');
+    }
+    public function vehicle_detail_id()
+    {
+        return $this->hasOne(VehicleDetailCarQuote::class, 'car_quote_id', 'id');
+    }
+    public function insurance_coverage()
+    {
+        return $this->hasOne(CarQuoteInsuranceCoverage::class, 'car_quote_id', 'id');
+    }
+    public function pa_id()
+    {
+        return $this->hasOne(User::class, 'id', 'pa_id')->select(['id', 'email','name']);
+    }
+
+    public function advisor_id()
+    {
+        return $this->hasOne(User::class, 'id', 'advisor_id')->select(['id', 'email','name']);
+    }
+
+
+    /*****  NewRelationships so old should not effect */
+
+    public function relations() {
+
+        if($this->isGetList)
+            return [];
+        else
+            return ["insurance_coverage.insurance_company_id", "insurance_coverage.insurance_plan_id", "insurance_coverage.vehicle_type_id", "uae_license_held_for_id", "car_make_id", "car_model_id", "emirate_of_registration_id", "claim_history_id",  "nationality_id", "vehicle_detail_id", "pa_id"];
+    }
+
+    public $access = [
+
+        'write' => ['advisor'],
+        'update' => ['advisor'],
+        'delete' => ['advisor'],
+        'access' => [
+            "pa" => [ 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'created_at','car_value', "pa_id"],
+            "advisor" => [ 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'created_at','car_value' ],
+            "admin" => [ 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'created_at','car_value' ],
+            "invoicing" => [ 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'created_at','car_value']
+        ],
+        "list" => [
+            "pa" => [ 'id','code', 'first_name', 'last_name', 'email', 'mobile_no', 'created_at', "pa_id"],
+            "advisor" => [ 'id','code', 'first_name', 'last_name', 'email', 'mobile_no', 'created_at', "pa_id"],
+            "admin" => [ 'id','code', 'first_name', 'last_name', 'email', 'mobile_no', 'created_at'],
+            "invoicing" => [ 'id','code', 'first_name', 'last_name', 'email', 'mobile_no', 'created_at' ]
+        ],
+        "detail" => [
+            "pa" => [ 'id','code', 'first_name', 'last_name', 'email', 'mobile_no','Year_of_manufacture', 'created_at', "car_make_id", "car_model_id", "emirate_of_registration_id", "claim_history_id",  "nationality_id","uae_license_held_for_id", "pa_id"],
+            "advisor" => [ 'id','code', 'first_name', 'last_name', 'email', 'mobile_no', 'Year_of_manufacture', 'created_at', "car_make_id", "car_model_id", "emirate_of_registration_id", "claim_history_id",  "nationality_id","uae_license_held_for_id", "pa_id"],
+            "admin" => [ 'id','code', 'first_name', 'last_name', 'email', 'mobile_no', 'Year_of_manufacture', 'created_at', "car_make_id", "car_model_id", "emirate_of_registration_id", "claim_history_id",  "nationality_id","uae_license_held_for_id", "pa_id"],
+            "invoicing" => [ 'id','code', 'first_name', 'last_name', 'email', 'mobile_no','Year_of_manufacture', 'created_at', "car_make_id", "car_model_id", "emirate_of_registration_id", "claim_history_id",  "nationality_id","uae_license_held_for_id", "pa_id"],
+        ]
+    ];
+
+    public function processGetDSL($filters, $request) {
+
+        if($request->form_id){
+            return parent::processGetBaseDSL($filters, false);
+        }else{
+            $restrictFilter = [];
+
+            if(Auth::user()->hasRole('advisor')) {
+                if(!array_key_exists('code', $filters)){
+                    return [];
+                }else{
+                    $restrictFilter["code"] = $filters["code"];
+                    $restrictFilter["advisor_id"] = Auth::user()->id;
                 }
-            })
-            ->get();
-        return $response;
+            }
+
+            if(Auth::user()->hasRole('pa')) {
+                if(!array_key_exists('pa_id', $filters)){
+                    return [];
+                }else{
+                    $pa_id = $filters["pa_id"] == 0 ? NULL : Auth::user()->id;
+                    $restrictFilter["pa_id"] = $pa_id;
+                    $restrictFilter["kyc_status"] = 1; // show only completed
+                }
+
+            }
+
+            if(empty($restrictFilter))
+                return [];
+
+            return parent::processGetBaseDSL($restrictFilter, false);
+      }
+    }
+
+    public function saveForm($request, $update = false) {
+
+        if( Auth::user()->hasRole('pa') && $request->has('action')) {
+            $request->request->add(['pa_id' => Auth::user()->id]);
+            parent::saveForm($request, true);
+        }else{
+            parent::saveForm($request, $update );
+        }
     }
 }

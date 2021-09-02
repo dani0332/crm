@@ -78,4 +78,17 @@ class User extends Authenticatable implements AuditableContract
         $date_time_format = env("DATETIME_FORMAT");
         return $this->asDateTime($table)->timezone(config('app.timezone'))->format($date_time_format);
     }
+
+    public function processGetDSL($filters = []) {
+
+        return self::with( array('usersroles' => function($query) {
+            $query->where('name','admin');
+        }))->get();
+
+        // return User::whereHas(
+        //     'usersroles', function($q){
+        //         $q->where('name', 'admin');
+        //     }
+        // )->get();
+    }
 }

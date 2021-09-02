@@ -144,7 +144,7 @@
             </li>
         </ul>
         @endcan
-        <!-- <ul class="nav side-menu">
+        <ul class="nav side-menu">
              <li><a href="{{ url('ftcform') }}"><i ></i> FTC Form </a>
          </ul> -->
          @can('telemarketing-list')

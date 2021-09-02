@@ -27,7 +27,7 @@ class CarModelDetail extends BaseModel implements AuditableContract
         $date_time_format = Config::get('constants.datetime_format');
         return $this->asDateTime($table)->timezone(config('app.timezone'))->format($date_time_format);
     }
-    public function processGetDSL($filters = []) {
+    public function processGetDSL($filters) {
         return self::processGetBaseDSL($filters, 'car_model_detail', ['id', 'text', 'is_active', 'cylinder', 'seating_capacity', 'current_value', 'car_model_id', 'is_default']);
     }
 }
