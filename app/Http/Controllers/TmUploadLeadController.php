@@ -1,0 +1,140 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\TmUploadLead;
+use Illuminate\Http\Request;
+use DataTables;
+use Auth;
+use Config;
+use App\Services\TMUploadLeadsService;
+
+class TmUploadLeadController extends Controller
+{
+    private $teleMarketingUploadLeadsService;
+    function __construct(TMUploadLeadsService $tmUploadLeadsCreateUpdateService)
+    {
+        $this->teleMarketingUploadLeadsService = $tmUploadLeadsCreateUpdateService;
+        $this->middleware('permission:tm-upload-leads-list|tm-upload-leads-create|tm-upload-leads-edit|tm-upload-leads-delete', ['only' => ['index','store']]);
+        $this->middleware('permission:tm-upload-leads-create', ['only' => ['create','store']]);
+        $this->middleware('permission:tm-upload-leads-edit', ['only' => ['edit','update']]);
+        $this->middleware('permission:tm-upload-leads-delete', ['only' => ['destroy']]);
+    }
+    /**
+     * Display a listing of the resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function index(Request $request)
+    {
+        if ($request->ajax()) {
+            $data = TmUploadLead::select('tm_upload_leads.*','users.name as user_name')
+            ->leftjoin('users', 'tm_upload_leads.created_by_id','users.id')
+            ->where('tm_upload_leads.is_deleted', 0)
+            ->orderBy('tm_upload_leads.created_at','desc');
+            return Datatables::of($data)
+                ->addIndexColumn()
+                ->addColumn('action', function ($row) {
+                    return view('tmuploadlead.actions', compact('row'))->render();
+                })
+                ->rawColumns(['action'])
+                ->make(true);
+        }
+        return view('tmuploadlead.view');
+    }
+
+    /**
+     * Show the form for creating a new resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function create()
+    {
+        return view('tmuploadlead.add');
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function store(Request $request)
+    {
+        $this->validate($request, [
+            'file_name' => 'required|mimetypes:text/csv,text/plain,application/csv,text/comma-separated-values,text/anytext,application/octet-stream,application/txt|max:2048',
+        ]);
+
+        $tmUploadLeadID = $this->teleMarketingUploadLeadsService->tmUploadLeadsCreateUpdate($request,"create",$tmUploadLeadID="");
+
+        return redirect("telemarketing/tmuploadlead/".$tmUploadLeadID)->with('success', 'Upload TM Leads file has been stored');
+    }
+
+    /**
+     * Display the specified resource.
+     *
+     * @param  \App\Models\TmUploadLead  $tmuploadlead
+     * @return \Illuminate\Http\Response
+     */
+    public function show(TmUploadLead $tmuploadlead)
+    {
+        return view('tmuploadlead.show',compact('tmuploadlead'));
+    }
+
+    /**
+     * Show the form for editing the specified resource.
+     *
+     * @param  \App\Models\TmUploadLead  $tmuploadlead
+     * @return \Illuminate\Http\Response
+     */
+    public function edit(TmUploadLead $tmuploadlead)
+    {
+        return view('tmuploadlead.edit',compact('tmuploadlead'));
+    }
+
+    /**
+     * Update the specified resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \App\Models\TmUploadLead  $tmuploadlead
+     * @return \Illuminate\Http\Response
+     */
+    public function update(Request $request, TmUploadLead $tmuploadlead)
+    {
+        $this->validate($request, [
+            'file_name' => 'required|mimetypes:text/csv,text/plain,application/csv,text/comma-separated-values,text/anytext,application/octet-stream,application/txt|max:2048',
+        ]);
+
+        $tmUploadLeadID = $this->teleMarketingUploadLeadsService->tmUploadLeadsCreateUpdate($request,"update",$tmuploadlead->id);
+
+        return redirect("telemarketing/tmuploadlead/".$tmUploadLeadID)->with('success', 'Upload TM Leads file has been updated');
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     *
+     * @param  \App\Models\TmUploadLead  $tmuploadlead
+     * @return \Illuminate\Http\Response
+     */
+    public function destroy(TmUploadLead $tmuploadlead)
+    {
+        $tmuploadlead->is_deleted = 1;
+        $tmuploadlead->save();
+        return redirect()->route("tmuploadlead.index")->with("message", "Upload TM Leads file has been deleted");
+    }
+
+    public function tmUploadLeadsProcess($tmUploadLeadId)
+    {
+        $tmUploadLeadFile = TmUploadLead::where('id', '=', $tmUploadLeadId)->value('file_path');
+        $tmUploadLeadFile = Config::get('constants.azure_storage_url').'myrewards/'.$tmUploadLeadFile;
+        $tmUploadLeadFile = file($tmUploadLeadFile);
+
+        //$csvTmUploadLeads = new \ParseCsv\Csv();
+        //$csvTmUploadLeads->parseFile($tmUploadLeadFile);
+        //$csvTmUploadLeads->loadFile($tmUploadLeadFile);
+        //$csvTmUploadLeads->auto($tmUploadLeadFile);
+
+        //dd($csvTmUploadLeads);
+        //return $csvTmUploadLeads;
+    }
+}

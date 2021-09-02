@@ -21,6 +21,7 @@
         "livewire/livewire": "^2.0",
         "matthewbdaly/laravel-azure-storage": "^1.6",
         "owen-it/laravel-auditing": "^12.0",
+        "parsecsv/php-parsecsv": "^1.3",
         "sentry/sentry-laravel": "^2.7",
         "spatie/laravel-fractal": "^5.8",
         "spatie/laravel-permission": "^4.0",

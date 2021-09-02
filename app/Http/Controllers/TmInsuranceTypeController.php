@@ -1,0 +1,140 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\TmInsuranceType;
+use Illuminate\Http\Request;
+use DataTables;
+
+class TmInsuranceTypeController extends Controller
+{
+    function __construct()
+    {
+         $this->middleware('permission:tm-insurance-type-list|tm-insurance-type-create|tm-insurance-type-edit|tm-insurance-type-delete', ['only' => ['index','store']]);
+         $this->middleware('permission:tm-insurance-type-create', ['only' => ['create','store']]);
+         $this->middleware('permission:tm-insurance-type-edit', ['only' => ['edit','update']]);
+         $this->middleware('permission:tm-insurance-type-delete', ['only' => ['destroy']]);
+    }
+    /**
+     * Display a listing of the resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function index(Request $request)
+    {
+        if ($request->ajax()) {
+            $data = TmInsuranceType::select('*')->where('is_deleted', 0)->orderBy('created_at','desc');
+            return Datatables::of($data)
+                ->addIndexColumn()
+                ->addColumn('action', function ($row) {
+                    return view('tminsurancetype.actions', compact('row'))->render();
+                })
+                ->rawColumns(['action'])
+                ->make(true);
+        }
+        return view('tminsurancetype.view');
+    }
+
+    /**
+     * Show the form for creating a new resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function create()
+    {
+        return view('tminsurancetype.add');
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function store(Request $request)
+    {
+        $this->validate($request, [
+            'code' => 'required|max:100',
+            'text' => 'required|max:100',
+            'text_ar' => 'required|max:100',
+            'sort_order' => 'required|max:5',
+        ]);
+
+        $TmInsuranceType = new TmInsuranceType();
+        $TmInsuranceType->code = $request->code;
+        $TmInsuranceType->text = $request->text;
+        $TmInsuranceType->text_ar = $request->text_ar;
+        $TmInsuranceType->is_active = $request->is_active == 'on' ? 1 : 0;
+        $TmInsuranceType->sort_order = $request->sort_order;
+        $TmInsuranceType->save();
+
+        if(isset($request->return_to_view)) {
+            return redirect("telemarketing/tminsurancetype/".$TmInsuranceType->id)->with('success', 'TM Insurance Type has been stored');
+        }
+        return redirect()->back()->with('success', 'TM Insurance Type has been stored');
+    }
+
+    /**
+     * Display the specified resource.
+     *
+     * @param  \App\Models\TmInsuranceType  $tminsurancetype
+     * @return \Illuminate\Http\Response
+     */
+    public function show(TmInsuranceType $tminsurancetype)
+    {
+        return view('tminsurancetype.show',compact('tminsurancetype'));
+    }
+
+    /**
+     * Show the form for editing the specified resource.
+     *
+     * @param  \App\Models\TmInsuranceType  $tminsurancetype
+     * @return \Illuminate\Http\Response
+     */
+    public function edit(TmInsuranceType $tminsurancetype)
+    {
+        return view('tminsurancetype.edit',compact('tminsurancetype'));
+    }
+
+    /**
+     * Update the specified resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \App\Models\TmInsuranceType  $tminsurancetype
+     * @return \Illuminate\Http\Response
+     */
+    public function update(Request $request, TmInsuranceType $tminsurancetype)
+    {
+        $this->validate($request, [
+            'code' => 'required|max:100',
+            'text' => 'required|max:100',
+            'text_ar' => 'required|max:100',
+            'sort_order' => 'required|max:5',
+        ]);
+
+        $tminsurancetype->code = $request->code;
+        $tminsurancetype->text = $request->text;
+        $tminsurancetype->text_ar = $request->text_ar;
+        $tminsurancetype->is_active = $request->is_active == 'on' ? 1 : 0;
+        $tminsurancetype->sort_order = $request->sort_order;
+        $tminsurancetype->save();
+
+        if(isset($request->return_to_view)) {
+            return redirect("telemarketing/tminsurancetype/".$tminsurancetype->id)->with('success', 'TM Insurance Type has been updated');
+        }
+        return redirect()->back()->with('success', 'TM Insurance Type has been updated');
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     *
+     * @param  \App\Models\TmInsuranceType  $tminsurancetype
+     * @return \Illuminate\Http\Response
+     */
+    public function destroy(TmInsuranceType $tminsurancetype)
+    {
+        $tminsurancetype->is_deleted = 1;
+        $tminsurancetype->save();
+        return redirect()->route('tminsurancetype.index')->with('message','TM Insurance Type has been deleted');
+    }
+}

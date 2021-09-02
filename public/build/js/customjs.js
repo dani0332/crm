@@ -4,6 +4,9 @@ $(document).ready(function () {
     $("#datepicker_2").datepicker({ dateFormat: "yy-mm-dd" });
     $("#transapp_start_date").datepicker({ dateFormat: "yy-mm-dd" });
     $("#transapp_stop_date").datepicker({ dateFormat: "yy-mm-dd" });
+    $("#enquiry_date").datepicker({ dateFormat: "yy-mm-dd" });
+    $("#allocation_date").datepicker({ dateFormat: "yy-mm-dd" });
+    $("#next_followup_date").datepicker({ dateFormat: "yy-mm-dd" });
     $('#search-valuation').validate({
         rules: {
             carmake: {
@@ -887,6 +890,199 @@ $(document).ready(function () {
             $(".loader").hide();
         }, 1000);
     });
+
+    $('.tminsurancetype-data-table').DataTable({
+        ordering: false,
+        info:     false,
+        searching:false,
+        bLengthChange: false,
+        serverSide: true,
+        ajax: config.routes.tminsurancetype_datatable_route,
+        columns: [
+            { data: 'id', name: 'id', render:function(data, type, row){
+                return "<a href='"+config.routes.tminsurancetype_datatable_route+'/'+row.id +"'>" + row.id + "</a>"
+            }},
+            {data: 'code', name: 'code'},
+            {data: 'text', name: 'text'},
+            {data: 'text_ar', name: 'text_ar'},
+            {data: 'sort_order', name: 'sort_order'},
+            {data: 'is_active', name: 'is_active'},
+            {data: 'created_at', name: 'created_at'},
+            {data: 'updated_at', name: 'updated_at'},
+        ]
+    });
+
+    $('.tmcallstatus-data-table').DataTable({
+        ordering: false,
+        info:     false,
+        searching:false,
+        bLengthChange: false,
+        serverSide: true,
+        ajax: config.routes.tmcallstatus_datatable_route,
+        columns: [
+            { data: 'id', name: 'id', render:function(data, type, row){
+                return "<a href='"+config.routes.tmcallstatus_datatable_route+'/'+row.id +"'>" + row.id + "</a>"
+            }},
+            {data: 'code', name: 'code'},
+            {data: 'text', name: 'text'},
+            {data: 'text_ar', name: 'text_ar'},
+            {data: 'sort_order', name: 'sort_order'},
+            {data: 'is_active', name: 'is_active'},
+            {data: 'created_at', name: 'created_at'},
+            {data: 'updated_at', name: 'updated_at'},
+        ]
+    });
+
+    $('.tmleadstatus-data-table').DataTable({
+        ordering: false,
+        info:     false,
+        searching:false,
+        bLengthChange: false,
+        serverSide: true,
+        ajax: config.routes.tmleadstatus_datatable_route,
+        columns: [
+            { data: 'id', name: 'id', render:function(data, type, row){
+                return "<a href='"+config.routes.tmleadstatus_datatable_route+'/'+row.id +"'>" + row.id + "</a>"
+            }},
+            {data: 'code', name: 'code'},
+            {data: 'text', name: 'text'},
+            {data: 'text_ar', name: 'text_ar'},
+            {data: 'sort_order', name: 'sort_order'},
+            {data: 'is_active', name: 'is_active'},
+            {data: 'created_at', name: 'created_at'},
+            {data: 'updated_at', name: 'updated_at'},
+        ]
+    });
+
+    var tmLeadsDatatable = $('.tmlead-data-table').DataTable({
+        ordering: false,
+        info:     false,
+        searching:false,
+        bLengthChange: false,
+        serverSide: true,
+        ajax: {
+            url: config.routes.tmlead_datatable_route,
+            data: function (d) {
+                d.searchType = $("#searchType").val();
+                d.searchField = $("input[name=searchField]").val();
+            },
+        },
+        columns: [
+            { data: 'id', name: 'id', render:function(data, type, row){
+                return "<a href='"+config.routes.tmlead_datatable_route+'/'+row.id +"'>" + row.cdb_id + "</a>"
+            }},
+            {data: 'customer_name', name: 'customer_name'},
+            {data: 'handlers_name', name: 'handlers_name'},
+            {data: 'tm_lead_statuses_text', name: 'tm_lead_statuses_text'},
+            {data: 'tm_call_statuses_text', name: 'tm_call_statuses_text'},
+            {data: 'created_at', name: 'created_at'},
+            {data: 'updated_at', name: 'updated_at'},
+        ]
+    });
+
+    $("#search-tm-leads").submit(function (e) {
+        e.preventDefault();
+        $(".loader").show();
+        tmLeadsDatatable.draw();
+        setTimeout(() => {
+            $(".loader").hide();
+        }, 1000);
+    });
+
+    $('.tmuploadlead-data-table').DataTable({
+        ordering: false,
+        info:     false,
+        searching:false,
+        bLengthChange: false,
+        serverSide: true,
+        ajax: config.routes.tmuploadlead_datatable_route,
+        columns: [
+            { data: 'id', name: 'id', render:function(data, type, row){
+                return "<a href='"+config.routes.tmuploadlead_datatable_route+'/'+row.id +"'>" + row.id + "</a>"
+            }},
+            {data: 'file_name', name: 'file_name'},
+            // {
+            //     data: "file_path",
+            //     name: "file_path",
+            //     render: function (data, type, row, meta) {
+            //         var fileSrc = config.image_path + data;
+            //         if(fileSrc != null) {
+            //             return (
+            //                 '<a href="'+fileSrc +'" target="_blank">'+row.file_name+'</a>'
+            //             );
+            //         }
+            //     },
+            // },
+            {data: 'total_records', name: 'total_records'},
+            {data: 'good', name: 'good'},
+            {data: 'cannot_upload', name: 'cannot_upload'},
+            {data: 'is_submitted', name: 'is_submitted'},
+            {data: 'user_name', name: 'user_name'},
+            {data: 'created_at', name: 'created_at'},
+        ]
+    });
+    // $("#upload-tm-leads").click(function (e) {
+    //     e.preventDefault();
+    //     $(".loader").show();
+    //     window.location.replace("tmuploadleads");
+    //     setTimeout(() => {
+    //         $(".loader").hide();
+    //     }, 100000);
+    // });
+
+    // $('.tmlead-data-table').DataTable({
+    //     ordering: false,
+    //     info:     false,
+    //     searching:false,
+    //     bLengthChange: false,
+    //     serverSide: true,
+    //     ajax: config.routes.tmlead_datatable_route,
+    //     columns: [
+    //         { data: 'id', name: 'id', render:function(data, type, row){
+    //             return "<a href='"+config.routes.tmlead_datatable_route+'/'+row.id +"'>" + row.cdb_id + "</a>"
+    //         }},
+    //         {data: 'customer_name', name: 'customer_name'},
+    //         {data: 'handlers_name', name: 'handlers_name'},
+    //         {data: 'tm_lead_statuses_text', name: 'tm_lead_statuses_text'},
+    //         {data: 'tm_call_statuses_text', name: 'tm_call_statuses_text'},
+    //         {data: 'created_at', name: 'created_at'},
+    //         {data: 'updated_at', name: 'updated_at'},
+    //     ]
+    // });
+
+    // TM
+    $("#tm_car_fields").hide();
+    tm_type_of_insurance_fields_visibility();
+    $('#tm_insurance_types_id').on('change',function(e) {
+        tm_type_of_insurance_fields_visibility();
+    });
+    function tm_type_of_insurance_fields_visibility() {
+        var tm_insurance_types_id_code = $("#tm_insurance_types_id option:selected").attr('data-id');
+
+        if(tm_insurance_types_id_code == 'Car') {
+            $("#tm_car_fields").show();
+        }
+        else {
+            $("#tm_car_fields").hide();
+        }
+    }
+
+    // TM
+    $("#next_followup_date_field").hide();
+    next_followup_date_field_visibility();
+    $('#tm_call_statuses_id').on('change',function(e) {
+        next_followup_date_field_visibility();
+    });
+    function next_followup_date_field_visibility() {
+        var tm_call_statuses_code = $("#tm_call_statuses_id option:selected").attr('data-id');
+
+        if(tm_call_statuses_code == 'Callback' || tm_call_statuses_code == 'No Answer') {
+            $("#next_followup_date_field").show();
+        }
+        else {
+            $("#next_followup_date_field").hide();
+        }
+    }
 
     //select/unselect all checkboxes if this selected
     $("#select_all_checkboxes").click(function (e) {

@@ -35,6 +35,11 @@ use App\Http\Controllers\StatusController;
 use App\Http\Controllers\PaymentModeController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\VehicleDepreciationController;
+use App\Http\Controllers\TmInsuranceTypeController;
+use App\Http\Controllers\TmCallStatusController;
+use App\Http\Controllers\TmLeadStatusController;
+use App\Http\Controllers\TmLeadController;
+use App\Http\Controllers\TmUploadLeadController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -126,6 +131,16 @@ Route::group(['middleware' =>  ['auth']], function() {
         Route::resource('aml', AMLController::class);
         Route::get('aml/{quoteTypeId}/details/{quoteRequestId}' , [AMLController::class,'amlQuoteDetails']);
         Route::get('aml/{quoteTypeId}/details/{quoteRequestId}/quoteStatusUpdate/{quoteTypeCode}',[AMLController::class,'quoteStatusUpdate'])->name('quoteStatusUpdate');
+    });
+
+    Route::group(['prefix' => 'telemarketing'], function() {
+        Route::resource('tmleads', TmLeadController::class);
+        Route::resource('tminsurancetype', TmInsuranceTypeController::class);
+        Route::resource('tmcallstatus', TmCallStatusController::class);
+        Route::resource('tmleadstatus', TmLeadStatusController::class);
+        Route::get('/car-model',[TmLeadController::class,'carModelBasedOnCarMake']);
+        Route::resource('tmuploadlead', TmUploadLeadController::class);
+        Route::get('tmuploadlead/{tmUploadLeadId}/tmUploadLeadsProcess', [TmUploadLeadController::class,'tmUploadLeadsProcess'])->name('tmUploadLeadsProcess');
     });
 
     Route::get('/car-model',[ClaimController::class,'carModelBasedOnCarMake']);
