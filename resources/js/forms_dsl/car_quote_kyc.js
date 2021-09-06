@@ -1,0 +1,92 @@
+
+const carQuoteKycStatus = {
+    getForm() {
+        const form = {
+            db_table: 'car_quote_kyc',
+            title: 'KYC',
+            subtitle: '',
+            access: {
+                read: ['advisor', 'pa' , 'admin', 'invoicing'],
+                write: ['advisor', 'admin'],
+                update: ['advisor', 'admin'],
+                delete: [ 'admin' ]
+            },
+            fields: {
+                profession:{
+                    type: 'text',
+                    label:'Profession',
+                    source: 'kyc_statuses',
+                    rules: { required: true },
+                    access: {
+                        read: ['advisor', 'pa','advisor','admin', 'invoicing'],
+                        write: ['advisor', 'admin'],
+                        update: ['advisor', 'admin'],
+                    }
+                },
+                organization: {
+                    type:'text',
+                    label:'Organization',
+                    access: {
+                         read: [ 'advisor', 'pa', 'admin', 'invoicing'],
+                         write: [  'advisor', 'admin' ],
+                         update: [  'advisor', 'admin' ],
+                    },
+                    rules: { required: true }
+                },
+                designation: {
+                    type:'text',
+                    label:'designation',
+                    access: {
+                         read: [ 'advisor', 'pa', 'admin', 'invoicing'],
+                         write: [  'advisor', 'admin' ],
+                         update: [  'advisor', 'admin' ],
+                    },
+                    rules: { required: true }
+                }
+            },
+            sections:[
+                {
+                    label: 'KYC Profession/Organization',
+                    fields: [ 'profession', 'organization', 'designation' ]
+                },
+            ],
+            view: {
+                label: 'KYC ',
+                find:{
+                    basic: [],
+                    advanced: []
+                },
+                columns:[
+                    {
+                        Header: "ID",
+                        accessor: "id"
+                    },
+                    {
+                        Header: "Profession",
+                        accessor: `profession`
+                    },
+                    {
+                        Header: "Organization",
+                        accessor : `organization`
+                    }
+                ],
+                events: {
+                    applyFilter(options) {
+                        const { mode, url , params: { id } } = options
+                        const queryMode = { mode }
+                        const generateUrl = `/?filter={"car_quote_id":"${id}"}`
+                        return generateUrl
+                    }
+                }
+            },
+            postTransform(options){
+                const { data, state , params : { id }} = options
+                if(state?.context === 'car_quote_snap'){
+                    return { ...data, car_quote_id: id}
+                }
+            }
+    }
+        return form
+  }
+};
+export default carQuoteKycStatus

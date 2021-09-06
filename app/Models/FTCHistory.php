@@ -5,8 +5,12 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use App\Models\BaseModel;
 use App\Models\CarQuote;
+use App\Models\CarQuoteEmailUniqueLink;
 use Auth;
 use App\Jobs\MailServiceJob;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\ValidationException;
+
 
 class FTCHistory extends BaseModel
 {
@@ -42,7 +46,6 @@ class FTCHistory extends BaseModel
     public function saveForm($request, $update = false) {
 
         if( Auth::user()->hasRole('advisor') ) {
-
             $carQuote = CarQuote::where(['id' => $request->input('car_quote_id', -1), 'advisor_id' => Auth::user()->id])->get()->first();
             if($carQuote) {
 
@@ -55,18 +58,29 @@ class FTCHistory extends BaseModel
 
                 if($request->input('status', '') == 'FTC Sent') {
 
-                    $getQuote = new CarQuote;
-                    $results = $getQuote->processGetBaseDSL(["id" => $request->input('car_quote_id')] , false);
-                    $row = $results[0];
-                    $templateParams = collect($row)->toArray();
+                    $carQuoteEmailLink = new CarQuoteEmailUniqueLink;
+                    $carQuoteEmailLink->car_quote_id = $carQuote->id;
+                    $carQuoteEmailLink->hash = Hash::make($carQuote->id."-".$carQuote->code);
+                    $carQuoteEmailLink->status = "Pending";
 
-                    $params = [
-                        'to' => $carQuote->email,
-                        'subject' => 'Required Additional Document - CDB-ID:'.$carQuote->code,
-                        'templateName' => 'ftc_mail',
-                        'templateParams' => $templateParams
-                    ];
-                    dispatch(new MailServiceJob($params));
+                    if($carQuoteEmailLink->save()) {
+
+                        $getQuote = new CarQuote;
+                        $results = $getQuote->processGetBaseDSL(["id" => $request->input('car_quote_id')] , false);
+                        $row = $results[0];
+                        $row['generateLink'] = [ 'hash' => $carQuoteEmailLink->hash, 'quote' => $carQuote->id];
+                        $templateParams = collect($row)->toArray();
+
+                        $params = [
+                            'to' => $carQuote->email,
+                            'subject' => 'Required Additional Document - CDB-ID:'.$carQuote->code,
+                            'templateName' => 'ftc_mail',
+                            'templateParams' => $templateParams
+                        ];
+                        dispatch(new MailServiceJob($params));
+                    }else{
+
+                    }
                 }
             }
             return parent::saveForm($request, $update );

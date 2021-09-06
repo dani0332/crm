@@ -140,6 +140,27 @@ let insuranceDetail = {
                     },
                     rules: { required: true }
                 },
+                repair_type: {
+                    type: 'dropdown',
+                    label: 'Repair Type',
+                    source: ['Agency',  'NON Agency'],
+                    access: {
+                        read: [ 'pa','advisor','admin', 'invoicing'],
+                        write: [ 'advisor' ,'admin'],
+                        update: [ 'advisor' ,'admin'],
+                    },
+                    rules: { required: true }
+                },
+                financed_by: {
+                    type: 'text',
+                    label: 'Financed By',
+                    access: {
+                        read: [ 'pa','advisor','admin', 'invoicing'],
+                        write: [ 'advisor' ,'admin'],
+                        update: [ 'advisor' ,'admin'],
+                    },
+                    rules: { required: true }
+                },
                 geographical_area: {
                     type: 'text',
                     label: 'Geographical Area',
@@ -156,7 +177,7 @@ let insuranceDetail = {
                     label: 'Insurance Coverage Information',
                     //fields: ['start_date', 'insurance_company_id']
                     fields: ['start_date', 'insurance_company_id','insurance_plan_id',
-                    'vehicle_type_id','excess','premium_price','ancillary_excess','personal_accident_benefit','breakdown_recovery','off_road_cover','rend_a_car','geographical_area']
+                    'vehicle_type_id','excess','premium_price','ancillary_excess','personal_accident_benefit','breakdown_recovery','off_road_cover','rend_a_car','repair_type','financed_by','geographical_area']
 
              }
             ],

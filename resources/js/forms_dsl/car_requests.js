@@ -116,14 +116,6 @@ const leadRequest = {
                         accessor: d => `${d.first_name} ${d.last_name}`
                     },
                     {
-                        Header: "Email",
-                        accessor: "email"
-                    },
-                    {
-                        Header: "Contact Number",
-                        accessor: "mobile_no"
-                    },
-                    {
                         Header: "Created on",
                         accessor: "created_at"
                     }

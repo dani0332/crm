@@ -2,6 +2,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Facades\DB;
 use OwenIt\Auditing\Auditable;
@@ -11,6 +12,7 @@ class BaseModel extends Model implements AuditableContract
 {
 
     use HasFactory , Auditable;
+    use SoftDeletes;
 
     public $isGetList = false;
 
@@ -36,6 +38,15 @@ class BaseModel extends Model implements AuditableContract
        });
     }
 
+    public function deleteForm($request) {
+
+
+        $form_id = $request->form_id;
+        $model = self::find($form_id);
+        return $model->delete($request);
+
+
+    }
     public function saveForm($request, $update = false) {
 
         $role = strtolower(Auth::user()->usersroles[0]->name);
@@ -104,7 +115,6 @@ class BaseModel extends Model implements AuditableContract
                     $query->where($key,$value);
                 }
             })
-          //  ->where('is_deleted',0)
             ->get();
         return $response;
     }

@@ -4,10 +4,6 @@ import React from "react";
 
 export default function FTCDetail({field}) {
     const data  = JSON.parse(field?.value)
-
-    console.log('------------data-----------')
-    console.log(data)
-    console.log('------------data-----------')
     return(
         <div className=" hidden-small">
             <h2 class="line_30">Policy Holder & Vehicle Information</h2>

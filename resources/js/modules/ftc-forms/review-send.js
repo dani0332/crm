@@ -162,12 +162,12 @@ export default function ReviewSend(props) {
                         <td class="fs15 fw700 text-right">{data?.insurance_coverage?.ancillary_excess}</td>
                     </tr>
                     <tr>
-                        <td>Repair type:</td>
-                        <td class="fs15 fw700 text-right">-</td>
+                        <td>Repair type: </td>
+                        <td class="fs15 fw700 text-right">{data?.insurance_coverage?.repair_type}</td>
                     </tr>
                     <tr>
-                        <td>Financed by (if any):</td>
-                        <td class="fs15 fw700 text-right">-</td>
+                        <td>Financed by (if any): </td>
+                        <td class="fs15 fw700 text-right">{data?.insurance_coverage?.financed_by}</td>
                     </tr>
                     <tr>
                         <td>Personal Accident Benefit:</td>

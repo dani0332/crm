@@ -11541,9 +11541,6 @@ function FTCDetail(_ref) {
 
   var field = _ref.field;
   var data = JSON.parse(field === null || field === void 0 ? void 0 : field.value);
-  console.log('------------data-----------');
-  console.log(data);
-  console.log('------------data-----------');
   return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsxs)("div", {
     className: " hidden-small",
     children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)("h2", {
@@ -13406,6 +13403,31 @@ var insuranceDetail = {
             required: true
           }
         },
+        repair_type: {
+          type: 'dropdown',
+          label: 'Repair Type',
+          source: ['Agency', 'NON Agency'],
+          access: {
+            read: ['pa', 'advisor', 'admin', 'invoicing'],
+            write: ['advisor', 'admin'],
+            update: ['advisor', 'admin']
+          },
+          rules: {
+            required: true
+          }
+        },
+        financed_by: {
+          type: 'text',
+          label: 'Financed By',
+          access: {
+            read: ['pa', 'advisor', 'admin', 'invoicing'],
+            write: ['advisor', 'admin'],
+            update: ['advisor', 'admin']
+          },
+          rules: {
+            required: true
+          }
+        },
         geographical_area: {
           type: 'text',
           label: 'Geographical Area',
@@ -13422,7 +13444,7 @@ var insuranceDetail = {
       sections: [{
         label: 'Insurance Coverage Information',
         //fields: ['start_date', 'insurance_company_id']
-        fields: ['start_date', 'insurance_company_id', 'insurance_plan_id', 'vehicle_type_id', 'excess', 'premium_price', 'ancillary_excess', 'personal_accident_benefit', 'breakdown_recovery', 'off_road_cover', 'rend_a_car', 'geographical_area']
+        fields: ['start_date', 'insurance_company_id', 'insurance_plan_id', 'vehicle_type_id', 'excess', 'premium_price', 'ancillary_excess', 'personal_accident_benefit', 'breakdown_recovery', 'off_road_cover', 'rend_a_car', 'repair_type', 'financed_by', 'geographical_area']
       }],
       view: {
         find: {
@@ -13470,6 +13492,126 @@ var insuranceDetail = {
   }
 };
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (_objectSpread({}, insuranceDetail));
+
+/***/ }),
+
+/***/ "./resources/js/forms_dsl/car_quote_kyc.js":
+/*!*************************************************!*\
+  !*** ./resources/js/forms_dsl/car_quote_kyc.js ***!
+  \*************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) { symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); } keys.push.apply(keys, symbols); } return keys; }
+
+function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys(Object(source), true).forEach(function (key) { _defineProperty(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
+var carQuoteKycStatus = {
+  getForm: function getForm() {
+    var form = {
+      db_table: 'car_quote_kyc',
+      title: 'KYC',
+      subtitle: '',
+      access: {
+        read: ['advisor', 'pa', 'admin', 'invoicing'],
+        write: ['advisor', 'admin'],
+        update: ['advisor', 'admin'],
+        "delete": ['admin']
+      },
+      fields: {
+        profession: {
+          type: 'text',
+          label: 'Profession',
+          source: 'kyc_statuses',
+          rules: {
+            required: true
+          },
+          access: {
+            read: ['advisor', 'pa', 'advisor', 'admin', 'invoicing'],
+            write: ['advisor', 'admin'],
+            update: ['advisor', 'admin']
+          }
+        },
+        organization: {
+          type: 'text',
+          label: 'Organization',
+          access: {
+            read: ['advisor', 'pa', 'admin', 'invoicing'],
+            write: ['advisor', 'admin'],
+            update: ['advisor', 'admin']
+          },
+          rules: {
+            required: true
+          }
+        },
+        designation: {
+          type: 'text',
+          label: 'designation',
+          access: {
+            read: ['advisor', 'pa', 'admin', 'invoicing'],
+            write: ['advisor', 'admin'],
+            update: ['advisor', 'admin']
+          },
+          rules: {
+            required: true
+          }
+        }
+      },
+      sections: [{
+        label: 'KYC Profession/Organization',
+        fields: ['profession', 'organization', 'designation']
+      }],
+      view: {
+        label: 'KYC ',
+        find: {
+          basic: [],
+          advanced: []
+        },
+        columns: [{
+          Header: "ID",
+          accessor: "id"
+        }, {
+          Header: "Profession",
+          accessor: "profession"
+        }, {
+          Header: "Organization",
+          accessor: "organization"
+        }],
+        events: {
+          applyFilter: function applyFilter(options) {
+            var mode = options.mode,
+                url = options.url,
+                id = options.params.id;
+            var queryMode = {
+              mode: mode
+            };
+            var generateUrl = "/?filter={\"car_quote_id\":\"".concat(id, "\"}");
+            return generateUrl;
+          }
+        }
+      },
+      postTransform: function postTransform(options) {
+        var data = options.data,
+            state = options.state,
+            id = options.params.id;
+
+        if ((state === null || state === void 0 ? void 0 : state.context) === 'car_quote_snap') {
+          return _objectSpread(_objectSpread({}, data), {}, {
+            car_quote_id: id
+          });
+        }
+      }
+    };
+    return form;
+  }
+};
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (carQuoteKycStatus);
 
 /***/ }),
 
@@ -13740,12 +13882,6 @@ var leadRequest = {
             return "".concat(d.first_name, " ").concat(d.last_name);
           }
         }, {
-          Header: "Email",
-          accessor: "email"
-        }, {
-          Header: "Contact Number",
-          accessor: "mobile_no"
-        }, {
           Header: "Created on",
           accessor: "created_at"
         }],
@@ -14014,6 +14150,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _vehicle_subform__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./vehicle-subform */ "./resources/js/forms_dsl/vehicle-subform.js");
 /* harmony import */ var _ftc_history__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./ftc_history */ "./resources/js/forms_dsl/ftc_history.js");
 /* harmony import */ var _car_quote_kyc_status__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./car_quote_kyc_status */ "./resources/js/forms_dsl/car_quote_kyc_status.js");
+/* harmony import */ var _car_quote_kyc__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./car_quote_kyc */ "./resources/js/forms_dsl/car_quote_kyc.js");
+
 
 
 
@@ -14051,6 +14189,9 @@ var getDSLForm = function getDSLForm(options) {
 
     case 'carQuoteKycStatus':
       return _car_quote_kyc_status__WEBPACK_IMPORTED_MODULE_8__.default.getForm();
+
+    case 'carQuoteKyc':
+      return _car_quote_kyc__WEBPACK_IMPORTED_MODULE_9__.default.getForm();
   }
 };
 
@@ -15353,41 +15494,29 @@ function KycForm(props) {
       "delete": []
     }
   };
-  var leadRequestOverride = {
-    title: 'Assign User',
-    access: {
-      read: ['pa', 'advisor', 'admin', 'invoicing'],
-      write: [],
-      update: [],
-      "delete": []
-    },
-    fields: {
-      first_name: {
-        type: 'text',
-        label: 'First Name',
-        field: 'first_name',
-        defaultValue: 'hello',
-        rules: {
-          required: true
-        },
-        access: {
-          read: ['pa', 'advisor', 'admin', 'invoicing'],
-          write: [],
-          update: []
-        }
-      }
-    }
-  };
   var filter = props.filter;
   return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("div", {
     className: "col-md-12",
     children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxs)(react_tabs__WEBPACK_IMPORTED_MODULE_3__.Tabs, {
       children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxs)(react_tabs__WEBPACK_IMPORTED_MODULE_3__.TabList, {
         children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(react_tabs__WEBPACK_IMPORTED_MODULE_3__.Tab, {
+          children: "KYC"
+        }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(react_tabs__WEBPACK_IMPORTED_MODULE_3__.Tab, {
           children: "KYC Documents"
         }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(react_tabs__WEBPACK_IMPORTED_MODULE_3__.Tab, {
           children: "Request Advisor"
         })]
+      }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(react_tabs__WEBPACK_IMPORTED_MODULE_3__.TabPanel, {
+        children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(_components_list_view_manage_list_form_view__WEBPACK_IMPORTED_MODULE_2__.default, {
+          form: {
+            form: 'carQuoteKyc',
+            view_mode: 'list',
+            action_type: 'list',
+            context: 'car_quote_snap',
+            multi: false,
+            filter: filter
+          }
+        })
       }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(react_tabs__WEBPACK_IMPORTED_MODULE_3__.TabPanel, {
         children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(_components_list_view_manage_list_form_view__WEBPACK_IMPORTED_MODULE_2__.default, {
           form: {
@@ -15745,7 +15874,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
 
 
 function ReviewSend(props) {
-  var _data$vehicle_detail_, _data$vehicle_detail_2, _data$vehicle_detail_3, _data$vehicle_detail_4, _data$vehicle_detail_5, _data$vehicle_detail_6, _data$vehicle_detail_7, _data$insurance_cover, _data$insurance_cover2, _data$insurance_cover3, _data$insurance_cover4, _data$insurance_cover5, _data$insurance_cover6, _data$insurance_cover7, _data$insurance_cover8, _data$insurance_cover9, _data$insurance_cover10, _data$insurance_cover11;
+  var _data$vehicle_detail_, _data$vehicle_detail_2, _data$vehicle_detail_3, _data$vehicle_detail_4, _data$vehicle_detail_5, _data$vehicle_detail_6, _data$vehicle_detail_7, _data$insurance_cover, _data$insurance_cover2, _data$insurance_cover3, _data$insurance_cover4, _data$insurance_cover5, _data$insurance_cover6, _data$insurance_cover7, _data$insurance_cover8, _data$insurance_cover9, _data$insurance_cover10, _data$insurance_cover11, _data$insurance_cover12, _data$insurance_cover13;
 
   var _useParams = (0,react_router_dom__WEBPACK_IMPORTED_MODULE_6__.useParams)(),
       id = _useParams.id;
@@ -16027,52 +16156,52 @@ function ReviewSend(props) {
           })]
         }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxs)("tr", {
           children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("td", {
-            children: "Repair type:"
+            children: "Repair type: "
           }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("td", {
             "class": "fs15 fw700 text-right",
-            children: "-"
+            children: data === null || data === void 0 ? void 0 : (_data$insurance_cover7 = data.insurance_coverage) === null || _data$insurance_cover7 === void 0 ? void 0 : _data$insurance_cover7.repair_type
           })]
         }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxs)("tr", {
           children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("td", {
-            children: "Financed by (if any):"
+            children: "Financed by (if any): "
           }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("td", {
             "class": "fs15 fw700 text-right",
-            children: "-"
+            children: data === null || data === void 0 ? void 0 : (_data$insurance_cover8 = data.insurance_coverage) === null || _data$insurance_cover8 === void 0 ? void 0 : _data$insurance_cover8.financed_by
           })]
         }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxs)("tr", {
           children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("td", {
             children: "Personal Accident Benefit:"
           }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("td", {
             "class": "fs15 fw700 text-right",
-            children: data === null || data === void 0 ? void 0 : (_data$insurance_cover7 = data.insurance_coverage) === null || _data$insurance_cover7 === void 0 ? void 0 : _data$insurance_cover7.personal_accident_benefit
+            children: data === null || data === void 0 ? void 0 : (_data$insurance_cover9 = data.insurance_coverage) === null || _data$insurance_cover9 === void 0 ? void 0 : _data$insurance_cover9.personal_accident_benefit
           })]
         }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxs)("tr", {
           children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("td", {
             children: "Breakdown recovery:"
           }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("td", {
             "class": "fs15 fw700 text-right",
-            children: data === null || data === void 0 ? void 0 : (_data$insurance_cover8 = data.insurance_coverage) === null || _data$insurance_cover8 === void 0 ? void 0 : _data$insurance_cover8.breakdown_recovery
+            children: data === null || data === void 0 ? void 0 : (_data$insurance_cover10 = data.insurance_coverage) === null || _data$insurance_cover10 === void 0 ? void 0 : _data$insurance_cover10.breakdown_recovery
           })]
         }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxs)("tr", {
           children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("td", {
             children: "Off-road cover (for 4X4 only):"
           }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("td", {
             "class": "fs15 fw700 text-right",
-            children: data === null || data === void 0 ? void 0 : (_data$insurance_cover9 = data.insurance_coverage) === null || _data$insurance_cover9 === void 0 ? void 0 : _data$insurance_cover9.off_road_cover
+            children: data === null || data === void 0 ? void 0 : (_data$insurance_cover11 = data.insurance_coverage) === null || _data$insurance_cover11 === void 0 ? void 0 : _data$insurance_cover11.off_road_cover
           })]
         }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxs)("tr", {
           children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("td", {
             children: "Rent-a-car:"
           }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("td", {
             "class": "fs15 fw700 text-right",
-            children: data === null || data === void 0 ? void 0 : (_data$insurance_cover10 = data.insurance_coverage) === null || _data$insurance_cover10 === void 0 ? void 0 : _data$insurance_cover10.rend_a_car
+            children: data === null || data === void 0 ? void 0 : (_data$insurance_cover12 = data.insurance_coverage) === null || _data$insurance_cover12 === void 0 ? void 0 : _data$insurance_cover12.rend_a_car
           })]
         }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxs)("tr", {
           children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("td", {
             children: "Geographical Area:"
           }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("td", {
             "class": "fs15 fw700 text-right",
-            children: data === null || data === void 0 ? void 0 : (_data$insurance_cover11 = data.insurance_coverage) === null || _data$insurance_cover11 === void 0 ? void 0 : _data$insurance_cover11.geographical_area
+            children: data === null || data === void 0 ? void 0 : (_data$insurance_cover13 = data.insurance_coverage) === null || _data$insurance_cover13 === void 0 ? void 0 : _data$insurance_cover13.geographical_area
           })]
         }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("tr", {
           children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("td", {

@@ -9,9 +9,9 @@ class FtcDocument extends BaseModel
 
     protected $table = 'car_quote_ftc_documents';
     public $access = [
-        'write' => ['advisor'],
-        'update' => ['advisor'],
-        'delete' => ['advisor'],
+        'write' => ['advisor', 'admin'],
+        'update' => ['advisor', 'admin'],
+        'delete' => ['advisor', 'admin'],
         'access' => [
             "pa" => [ 'file_name' , 'document' , 'car_quote_id'],
             "invoicing" => [ 'file_name' , 'document' , 'car_quote_id'],
@@ -47,8 +47,5 @@ class FtcDocument extends BaseModel
 
     public function processGetDSL($filters, $request) {
        return self::processGetBaseDSL($filters, false);
-    }
-    public function saveForm($request, $update = false) {
-        parent::saveForm( $request, $update );
     }
 }

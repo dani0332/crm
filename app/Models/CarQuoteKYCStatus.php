@@ -13,9 +13,9 @@ class CarQuoteKYCStatus extends BaseModel
     use HasFactory;
     protected $table = 'car_quote_kyc_status';
     public $access = [
-        'write' => ['advisor'],
-        'update' => ['advisor'],
-        'delete' => ['advisor'],
+        'write' => ['pa', 'admin'],
+        'update' => ['pa', 'admin'],
+        'delete' => ['pa', 'admin'],
         'access' => [
             "pa" => [  'car_quote_id' , 'status', 'notes'],
             "advisor" => [  'car_quote_id' , 'status', 'notes'],

@@ -15,40 +15,20 @@ export default function KycForm(props) {
             delete: []
         }
     }
-
-    const leadRequestOverride = {
-        title: 'Assign User',
-        access: {
-            read: ['pa','advisor' , 'admin', 'invoicing' ],
-            write: [ ],
-            update: [ ],
-            delete: [ ]
-        },
-        fields: {
-            first_name: {
-                type:'text',
-                label:'First Name',
-                field:'first_name',
-                defaultValue:'hello',
-                rules: {required: true},
-                access: {
-                    read: ['pa', 'advisor', 'admin', 'invoicing'],
-                    write: [],
-                    update: [],
-                },
-            },
-        }
-    }
     const filter = props.filter
 
     return(
         <div className="col-md-12">
         <Tabs>
             <TabList>
+                <Tab>KYC</Tab>
                 <Tab>KYC Documents</Tab>
                 <Tab>Request Advisor</Tab>
                 {/* <Tab>Assign</Tab> */}
             </TabList>
+            <TabPanel>
+                <ManageListFormView form={{ form: 'carQuoteKyc',  view_mode: 'list', action_type: 'list' , context: 'car_quote_snap', multi: false, filter: filter }} />
+            </TabPanel>
             <TabPanel>
                 <ManageListFormView form={{ form: 'leadAttachment' , view_mode: 'list',action_type: 'list', context: 'car_quote_snap',  filter: filter, override: override}} />
             </TabPanel>
@@ -59,6 +39,6 @@ export default function KycForm(props) {
                 <AssignUser filter={filter} email={email} />
             </TabPanel> */}
         </Tabs>
-        </div>
+       </div>
     )
 }

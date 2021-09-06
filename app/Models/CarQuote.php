@@ -169,16 +169,16 @@ class CarQuote extends BaseModel
             "invoicing" => [ 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'created_at','car_value']
         ],
         "list" => [
-            "pa" => [ 'id','code', 'first_name', 'last_name', 'email', 'mobile_no', 'created_at', "pa_id"],
-            "advisor" => [ 'id','code', 'first_name', 'last_name', 'email', 'mobile_no', 'created_at', "pa_id"],
-            "admin" => [ 'id','code', 'first_name', 'last_name', 'email', 'mobile_no', 'created_at'],
-            "invoicing" => [ 'id','code', 'first_name', 'last_name', 'email', 'mobile_no', 'created_at' ]
+            "pa" => [ 'id','code', 'first_name', 'last_name',  'created_at', "pa_id"],
+            "advisor" => [ 'id','code', 'first_name', 'last_name',  'created_at', "pa_id"],
+            "admin" => [ 'id','code', 'first_name', 'last_name',  'created_at'],
+            "invoicing" => [ 'id','code', 'first_name', 'last_name',  'created_at' ]
         ],
         "detail" => [
-            "pa" => [ 'id','code', 'first_name', 'last_name', 'email', 'mobile_no','Year_of_manufacture', 'created_at', "car_make_id", "car_model_id", "emirate_of_registration_id", "claim_history_id",  "nationality_id","uae_license_held_for_id", "pa_id"],
-            "advisor" => [ 'id','code', 'first_name', 'last_name', 'email', 'mobile_no', 'Year_of_manufacture', 'created_at', "car_make_id", "car_model_id", "emirate_of_registration_id", "claim_history_id",  "nationality_id","uae_license_held_for_id", "pa_id"],
-            "admin" => [ 'id','code', 'first_name', 'last_name', 'email', 'mobile_no', 'Year_of_manufacture', 'created_at', "car_make_id", "car_model_id", "emirate_of_registration_id", "claim_history_id",  "nationality_id","uae_license_held_for_id", "pa_id"],
-            "invoicing" => [ 'id','code', 'first_name', 'last_name', 'email', 'mobile_no','Year_of_manufacture', 'created_at', "car_make_id", "car_model_id", "emirate_of_registration_id", "claim_history_id",  "nationality_id","uae_license_held_for_id", "pa_id"],
+            "pa" => [ 'id','code', 'dob','first_name', 'last_name', 'email', 'mobile_no','Year_of_manufacture', 'created_at', "car_make_id", "car_model_id", "emirate_of_registration_id", "claim_history_id",  "nationality_id","uae_license_held_for_id", "pa_id"],
+            "advisor" => [ 'id','code','dob', 'first_name', 'last_name', 'email', 'mobile_no', 'Year_of_manufacture', 'created_at', "car_make_id", "car_model_id", "emirate_of_registration_id", "claim_history_id",  "nationality_id","uae_license_held_for_id", "pa_id"],
+            "admin" => [ 'id','code', 'dob','first_name', 'last_name', 'email', 'mobile_no', 'Year_of_manufacture', 'created_at', "car_make_id", "car_model_id", "emirate_of_registration_id", "claim_history_id",  "nationality_id","uae_license_held_for_id", "pa_id"],
+            "invoicing" => [ 'id','code','dob', 'first_name', 'last_name', 'email', 'mobile_no','Year_of_manufacture', 'created_at', "car_make_id", "car_model_id", "emirate_of_registration_id", "claim_history_id",  "nationality_id","uae_license_held_for_id", "pa_id"],
         ]
     ];
 

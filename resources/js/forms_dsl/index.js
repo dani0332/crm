@@ -7,6 +7,7 @@ import insuranceDetail from "./car_insurance_coverage"
 import vehicleSubform from "./vehicle-subform";
 import ftcHistory from "./ftc_history";
 import carQuoteKycStatus from "./car_quote_kyc_status";
+import carQuoteKyc from "./car_quote_kyc";
 
 const getDSLForm = (options) => {
     const { form } = options
@@ -27,6 +28,8 @@ const getDSLForm = (options) => {
             return ftcHistory.getForm()
         case 'carQuoteKycStatus':
             return carQuoteKycStatus.getForm()
+        case 'carQuoteKyc':
+            return carQuoteKyc.getForm()
     }
 }
 

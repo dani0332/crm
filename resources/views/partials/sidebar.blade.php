@@ -144,9 +144,11 @@
             </li>
         </ul>
         @endcan
+        @if (Auth::user()->hasRole('advisor') ||  Auth::user()->hasRole('pa'))
         <ul class="nav side-menu">
              <li><a href="{{ url('ftcform') }}"><i ></i> FTC Form </a>
-         </ul> -->
+         </ul>
+         @endif
          @can('telemarketing-list')
         <ul class="nav side-menu">
             <li><a><i class="fa fa-quote-left"></i> Telemarketing <span class="fa fa-chevron-down"></span></a>

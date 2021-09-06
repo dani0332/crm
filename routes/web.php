@@ -149,8 +149,10 @@ Route::group(['middleware' =>  ['auth']], function() {
 
 
 /***** RestAPI */
+
+Route::group(['middleware' =>  ['auth.rest']], function() use($router) {
 Route::resource('ftcform', FtcFormController::class);
-Route::group(['prefix' => 'form'], function()use($router) {
+Route::group(['prefix' => 'form'], function()  {
     Route::GET('/{form}', [FormController::class,'index']);
     Route::GET('/{form}/{form_id}', [FormController::class,'getFormDetail']);
     Route::PUT('/{form}/{form_id}', [FormController::class,'update']);
@@ -166,4 +168,5 @@ Route::group(['prefix' => 'users'], function()use($router) {
 
 Route::group(['prefix' => 'resource'], function()use($router) {
     Route::POST('/store', [UploadResourceController::class,'store']);
+});
 });

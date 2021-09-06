@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Services\LeadsService;
 use App\Transformers\LeadsTransformer;
 use App\Jobs\MailServiceJob;
+use Auth;
 
 class FormController extends ApiController
 {
@@ -46,21 +47,21 @@ class FormController extends ApiController
     {
         try {
 
-            // $request->to = 'muhammad.amjad@afia.ae';
-            // $request->subject = 'Car Quote Request Policy Information';
-            // $request->templateName = 'demo';
+            $role = strtolower(Auth::user()->usersroles[0]->name);
+            $parentFormModelColl = collect(config('form-models')[$request->form]);
+            $parentFormModel = $parentFormModelColl->get('model');
+            $form_id = $request->form_id;
+            $Model = '\\App\\Models\\'.$parentFormModel;
+            $modelInstance = new $Model;
+            if(!array_key_exists('delete',$modelInstance->access)) {
+                return $this->respondError("Unable to delete");
+            }
 
-            $params = [
-                'to' => 'muhammad.amjad@afia.ae',
-                'subject' => 'Hello Testing',
-                'templateName' => 'demo',
-                'templateParams' => ['first_name' => "Amjad", 'last_name' => "LastName"],
-            ];
-            //$request->templateParams = $request->all()['data'];
-            $json = json_encode($params);
-            dispatch(new MailServiceJob($json));
-
-            return $this->respondData(["data" => true]);
+            $deletePermission = $modelInstance->access["delete"];
+            $collection = collect($deletePermission);
+            if(!$collection->contains($role))
+                return  $this->respondError('Access denied');
+            return $this->respondData($modelInstance->deleteForm($request));
         } catch (Exception $e) {
             return $this->respondError($e->getMessage());
         }
@@ -70,7 +71,7 @@ class FormController extends ApiController
     {
         try {
            // sleep(1);
-            $role = 'advisor';
+            $role = strtolower(Auth::user()->usersroles[0]->name);
             $parentFormModelColl = collect(config('form-models')[$request->form]);
             $filters = $request->query('filter') ? json_decode($request->query('filter'), true) : [];
             $parentFormModel = $parentFormModelColl->get('model');

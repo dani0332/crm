@@ -38,5 +38,8 @@ return [
     ],
     'users' => [
         'model' => User::class
+    ],
+    'car_quote_kyc' => [
+        'model' => CarQuoteKyc::class
     ]
 ];
