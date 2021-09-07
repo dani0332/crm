@@ -48,7 +48,7 @@ export default function ReviewSend(props) {
 
     return(
         <div className="offset-md-2 col-md-7 hidden-small">
-            { data?.vehicle_detail_id && data?.insurance_coverage &&
+            { data?.vehicle_detail_id && data?.insurance_coverage && data?.car_quote_kyc &&
             <div className="pull-right">
              { role === 'advisor' && <button type="submit" className="btn btn-success" onClick={submit}>Review & Send</button> }
              </div>
@@ -196,6 +196,23 @@ export default function ReviewSend(props) {
                         <td colSpan="2">Young/Novice Driver Clause: (10% of claim amount for drivers below the age of 25 or drivers holding less than one year UAE Driving Licence  who- unless convertible DL is known to have driven the car during the accident</td>
                     </tr>
                 </tbody>
+            </table>
+            <h2 class="line_30">KYC Detail</h2>
+            <table class="countries_list">
+                <tbody>
+                    <tr>
+                        <td>Profession:</td>
+                        <td class="fs15 fw700 text-right">{data?.car_quote_kyc?.profession}</td>
+                    </tr>
+                    <tr>
+                        <td>Name of Organization:</td>
+                        <td class="fs15 fw700 text-right">{data?.car_quote_kyc?.organization}</td>
+                    </tr>
+                    <tr>
+                        <td>Designation:</td>
+                        <td class="fs15 fw700 text-right">{data?.car_quote_kyc?.designation}</td>
+                    </tr>
+                    </tbody>
             </table>
         </div>
     )

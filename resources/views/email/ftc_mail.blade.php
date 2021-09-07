@@ -245,9 +245,9 @@
             </ol>
             <p><b>Section 3: <u>KYC details </u></b></p>
             <ul>
-              <li>Policy start date:</li>
-              <li>Insurance Company: </li>
-
+              <li>Profession: {{$car_quote_kyc['profession'] ?? ''}}</li>
+              <li>Organization: {{$car_quote_kyc['organization'] ?? ''}}</li>
+              <li>Designation: {{$car_quote_kyc['designation'] ?? ''}}</li>
               <p>Please make sure that all the above details are correct and click on either the button or the link below to “Proceed” to policy issuance.</p>
               <p>Should you need to change any details shown, please do not hesitate to contact us so we can amend accordingly.</p></ul></div>
 

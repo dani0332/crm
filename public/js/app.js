@@ -11381,10 +11381,10 @@ function File(_ref) {
   }, []);
 
   var _useDropzone = (0,react_dropzone__WEBPACK_IMPORTED_MODULE_2__.useDropzone)({
-    accept: 'image/*',
+    accept: 'image/*,application/pdf',
     onDrop: function () {
       var _onDrop = _asyncToGenerator( /*#__PURE__*/_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().mark(function _callee(acceptedFiles) {
-        var file, data, response, fileObj;
+        var file, data, response, fileExt, fileObj;
         return _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
@@ -11400,14 +11400,27 @@ function File(_ref) {
 
               case 6:
                 response = _context.sent;
-                fileObj = Object.assign(file, {
-                  preview: URL.createObjectURL(file),
-                  response: response === null || response === void 0 ? void 0 : response.data
-                });
-                setFiles({
-                  files: [fileObj],
-                  loader: false
-                });
+                fileExt = file.name.split('.').pop();
+
+                if (fileExt !== 'pdf') {
+                  fileObj = Object.assign(file, {
+                    preview: URL.createObjectURL(file),
+                    response: response === null || response === void 0 ? void 0 : response.data
+                  });
+                  setFiles({
+                    files: [fileObj],
+                    loader: false
+                  });
+                } else {
+                  setFiles({
+                    files: [{
+                      path: null,
+                      name: file.name,
+                      response: response === null || response === void 0 ? void 0 : response.data
+                    }],
+                    loader: false
+                  });
+                }
 
               case 9:
               case "end":
@@ -11431,6 +11444,41 @@ function File(_ref) {
       isDragReject = _useDropzone.isDragReject;
 
   var thumbs = files.files.map(function (file) {
+    if (!file.path) {
+      return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("li", {
+        children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxs)("a", {
+          children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("span", {
+            className: "image",
+            children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("i", {
+              className: "fa fa-file-pdf-o",
+              style: {
+                fontSize: '3.5em'
+              }
+            })
+          }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxs)("span", {
+            children: [" ", file.name]
+          }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("span", {
+            children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("span", {
+              className: "time",
+              children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("a", {
+                className: "close-link",
+                onClick: function onClick() {
+                  setFiles({
+                    files: [],
+                    loader: false
+                  });
+                  controller.onChange(null);
+                },
+                children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("i", {
+                  className: "fa fa-close"
+                })
+              })
+            })
+          })]
+        })
+      });
+    }
+
     return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("li", {
       children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxs)("a", {
         children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("span", {
@@ -11498,7 +11546,7 @@ function File(_ref) {
       })]
     })), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxs)("ul", {
       className: "list-unstyled msg_list",
-      children: [thumbs, shouldShowPreview === true && field.value && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("li", {
+      children: [thumbs, shouldShowPreview === true && field.value && field.value.split('.').pop() !== 'pdf' && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("li", {
         children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxs)("a", {
           children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("span", {
             className: "image",
@@ -11509,8 +11557,22 @@ function File(_ref) {
                 width: 'auto'
               }
             })
-          }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("span", {
-            children: field.value
+          }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxs)("span", {
+            children: [" ", field.value]
+          })]
+        })
+      }), shouldShowPreview === true && field.value && field.value.split('.').pop() === 'pdf' && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("li", {
+        children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxs)("a", {
+          children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("span", {
+            className: "image",
+            children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("i", {
+              className: "fa fa-file-pdf-o",
+              style: {
+                fontSize: '3.5em'
+              }
+            })
+          }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxs)("span", {
+            children: [" ", field.value]
           })]
         })
       })]
@@ -11537,7 +11599,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 function FTCDetail(_ref) {
-  var _data$insurance_cover, _data$insurance_cover2, _data$insurance_cover3, _data$insurance_cover4, _data$insurance_cover5, _data$insurance_cover6, _data$insurance_cover7, _data$insurance_cover8, _data$insurance_cover9, _data$insurance_cover10, _data$insurance_cover11;
+  var _data$insurance_cover, _data$insurance_cover2, _data$insurance_cover3, _data$insurance_cover4, _data$insurance_cover5, _data$insurance_cover6, _data$insurance_cover7, _data$insurance_cover8, _data$insurance_cover9, _data$insurance_cover10, _data$insurance_cover11, _data$car_quote_kyc, _data$car_quote_kyc2, _data$car_quote_kyc3;
 
   var field = _ref.field;
   var data = JSON.parse(field === null || field === void 0 ? void 0 : field.value);
@@ -11781,16 +11843,35 @@ function FTCDetail(_ref) {
             "class": "fs15 fw700 text-right",
             children: data === null || data === void 0 ? void 0 : (_data$insurance_cover11 = data.insurance_coverage) === null || _data$insurance_cover11 === void 0 ? void 0 : _data$insurance_cover11.geographical_area
           })]
-        }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)("tr", {
-          children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)("td", {
-            colSpan: "2",
-            children: "A driver below 25 years of age must be declared"
-          })
-        }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)("tr", {
-          children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)("td", {
-            colSpan: "2",
-            children: "Young/Novice Driver Clause: (10% of claim amount for drivers below the age of 25 or drivers holding less than one year UAE Driving Licence  who- unless convertible DL is known to have driven the car during the accident"
-          })
+        })]
+      })
+    }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)("h2", {
+      "class": "line_30",
+      children: "KYC Detail"
+    }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)("table", {
+      "class": "countries_list",
+      children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsxs)("tbody", {
+        children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsxs)("tr", {
+          children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)("td", {
+            children: "Profession:"
+          }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)("td", {
+            "class": "fs15 fw700 text-right",
+            children: data === null || data === void 0 ? void 0 : (_data$car_quote_kyc = data.car_quote_kyc) === null || _data$car_quote_kyc === void 0 ? void 0 : _data$car_quote_kyc.profession
+          })]
+        }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsxs)("tr", {
+          children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)("td", {
+            children: "Name of Organization:"
+          }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)("td", {
+            "class": "fs15 fw700 text-right",
+            children: data === null || data === void 0 ? void 0 : (_data$car_quote_kyc2 = data.car_quote_kyc) === null || _data$car_quote_kyc2 === void 0 ? void 0 : _data$car_quote_kyc2.organization
+          })]
+        }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsxs)("tr", {
+          children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)("td", {
+            children: "Designation:"
+          }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)("td", {
+            "class": "fs15 fw700 text-right",
+            children: data === null || data === void 0 ? void 0 : (_data$car_quote_kyc3 = data.car_quote_kyc) === null || _data$car_quote_kyc3 === void 0 ? void 0 : _data$car_quote_kyc3.designation
+          })]
         })]
       })
     })]
@@ -13551,8 +13632,9 @@ var carQuoteKycStatus = {
           }
         },
         designation: {
-          type: 'text',
-          label: 'designation',
+          type: 'dropdown',
+          label: 'Designation',
+          source: ['Business Owner', 'CEO/Managing Director/Managing Partner', 'Human Resources (HR)', 'Administration/Operations/Secretarial/Assistant/Customer Service Executive', 'Sales/Business Development', 'Finance or Accounting', 'Consultant/Self Employed', 'Healthcare Professional: Doctor, Nurse, Pharmacist, Diagnostician etc', 'Teacher/Instructor/Coach', 'Real Estate Agent', 'Engineer/Architect/Contractor', 'Pilot', 'Chef', 'Technician/Technical Manager/Quality Controller/IT/Software Developer/Analyst', 'Lawyer', 'Government Official: Police, Municipality, Court etc', 'Driver', 'Marketing/Media/Advertising', 'Artist/Actor/Writer/Sportsperson', 'House Wife', 'Unemployed'],
           access: {
             read: ['advisor', 'pa', 'admin', 'invoicing'],
             write: ['advisor', 'admin'],
@@ -14082,9 +14164,6 @@ var ftcHistory = {
         }, {
           Header: "status",
           accessor: "status"
-        }, {
-          Header: "Created At",
-          accessor: "created_at"
         }],
         events: {
           applyFilter: function applyFilter(options) {
@@ -15874,7 +15953,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
 
 
 function ReviewSend(props) {
-  var _data$vehicle_detail_, _data$vehicle_detail_2, _data$vehicle_detail_3, _data$vehicle_detail_4, _data$vehicle_detail_5, _data$vehicle_detail_6, _data$vehicle_detail_7, _data$insurance_cover, _data$insurance_cover2, _data$insurance_cover3, _data$insurance_cover4, _data$insurance_cover5, _data$insurance_cover6, _data$insurance_cover7, _data$insurance_cover8, _data$insurance_cover9, _data$insurance_cover10, _data$insurance_cover11, _data$insurance_cover12, _data$insurance_cover13;
+  var _data$vehicle_detail_, _data$vehicle_detail_2, _data$vehicle_detail_3, _data$vehicle_detail_4, _data$vehicle_detail_5, _data$vehicle_detail_6, _data$vehicle_detail_7, _data$insurance_cover, _data$insurance_cover2, _data$insurance_cover3, _data$insurance_cover4, _data$insurance_cover5, _data$insurance_cover6, _data$insurance_cover7, _data$insurance_cover8, _data$insurance_cover9, _data$insurance_cover10, _data$insurance_cover11, _data$insurance_cover12, _data$insurance_cover13, _data$car_quote_kyc, _data$car_quote_kyc2, _data$car_quote_kyc3;
 
   var _useParams = (0,react_router_dom__WEBPACK_IMPORTED_MODULE_6__.useParams)(),
       id = _useParams.id;
@@ -15957,7 +16036,7 @@ function ReviewSend(props) {
   var data = props.data;
   return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxs)("div", {
     className: "offset-md-2 col-md-7 hidden-small",
-    children: [(data === null || data === void 0 ? void 0 : data.vehicle_detail_id) && (data === null || data === void 0 ? void 0 : data.insurance_coverage) && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("div", {
+    children: [(data === null || data === void 0 ? void 0 : data.vehicle_detail_id) && (data === null || data === void 0 ? void 0 : data.insurance_coverage) && (data === null || data === void 0 ? void 0 : data.car_quote_kyc) && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("div", {
       className: "pull-right",
       children: role === 'advisor' && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("button", {
         type: "submit",
@@ -16213,6 +16292,35 @@ function ReviewSend(props) {
             colSpan: "2",
             children: "Young/Novice Driver Clause: (10% of claim amount for drivers below the age of 25 or drivers holding less than one year UAE Driving Licence  who- unless convertible DL is known to have driven the car during the accident"
           })
+        })]
+      })
+    }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("h2", {
+      "class": "line_30",
+      children: "KYC Detail"
+    }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("table", {
+      "class": "countries_list",
+      children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxs)("tbody", {
+        children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxs)("tr", {
+          children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("td", {
+            children: "Profession:"
+          }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("td", {
+            "class": "fs15 fw700 text-right",
+            children: data === null || data === void 0 ? void 0 : (_data$car_quote_kyc = data.car_quote_kyc) === null || _data$car_quote_kyc === void 0 ? void 0 : _data$car_quote_kyc.profession
+          })]
+        }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxs)("tr", {
+          children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("td", {
+            children: "Name of Organization:"
+          }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("td", {
+            "class": "fs15 fw700 text-right",
+            children: data === null || data === void 0 ? void 0 : (_data$car_quote_kyc2 = data.car_quote_kyc) === null || _data$car_quote_kyc2 === void 0 ? void 0 : _data$car_quote_kyc2.organization
+          })]
+        }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxs)("tr", {
+          children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("td", {
+            children: "Designation:"
+          }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("td", {
+            "class": "fs15 fw700 text-right",
+            children: data === null || data === void 0 ? void 0 : (_data$car_quote_kyc3 = data.car_quote_kyc) === null || _data$car_quote_kyc3 === void 0 ? void 0 : _data$car_quote_kyc3.designation
+          })]
         })]
       })
     })]

@@ -73,10 +73,6 @@ const ftcHistory = {
                     {
                         Header: "status",
                         accessor: "status"
-                    },
-                    {
-                        Header: "Created At",
-                        accessor : "created_at"
                     }
                 ],
                 events: {

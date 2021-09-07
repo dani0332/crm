@@ -142,13 +142,24 @@ export default function FTCDetail({field}) {
                         <td>Geographical Area:</td>
                         <td class="fs15 fw700 text-right">{data?.insurance_coverage?.geographical_area}</td>
                     </tr>
-                    <tr>
-                        <td colSpan="2">A driver below 25 years of age must be declared</td>
-                    </tr>
-                    <tr>
-                        <td colSpan="2">Young/Novice Driver Clause: (10% of claim amount for drivers below the age of 25 or drivers holding less than one year UAE Driving Licence  who- unless convertible DL is known to have driven the car during the accident</td>
-                    </tr>
                 </tbody>
+            </table>
+            <h2 class="line_30">KYC Detail</h2>
+            <table class="countries_list">
+                <tbody>
+                    <tr>
+                        <td>Profession:</td>
+                        <td class="fs15 fw700 text-right">{data?.car_quote_kyc?.profession}</td>
+                    </tr>
+                    <tr>
+                        <td>Name of Organization:</td>
+                        <td class="fs15 fw700 text-right">{data?.car_quote_kyc?.organization}</td>
+                    </tr>
+                    <tr>
+                        <td>Designation:</td>
+                        <td class="fs15 fw700 text-right">{data?.car_quote_kyc?.designation}</td>
+                    </tr>
+                    </tbody>
             </table>
         </div>
     )

@@ -52,24 +52,43 @@ export default function File({field, controller}) {
         isDragAccept,
         isDragReject
       } = useDropzone({
-          accept: 'image/*',
+          accept: 'image/*,application/pdf',
           onDrop: async acceptedFiles => {
-
             setFiles( { ...files, loader: true } )
             const file = acceptedFiles[0]
             const data = new FormData()
             data.append('file', file)
             const response = await post(data)
-            const fileObj = Object.assign(file, {
-                preview: URL.createObjectURL(file),
-                response: response?.data
-            })
-            setFiles( { files: [fileObj], loader: false } )
+            const fileExt = file.name.split('.').pop();
+            if(fileExt !== 'pdf') {
+                const fileObj = Object.assign(file, {
+                    preview: URL.createObjectURL(file),
+                    response: response?.data
+                })
+                setFiles( { files: [fileObj], loader: false } )
+            }else{
+                setFiles( { files: [{ path: null, name: file.name,  response: response?.data }], loader: false } )
+            }
           }
         });
 
-  const thumbs = files.files.map(file => (
-    <li key={file.path}>
+  const thumbs = files.files.map(file => {
+
+    if(!file.path){
+        return <li>
+            <a>
+            <span className="image"><i className="fa fa-file-pdf-o" style={{fontSize: '3.5em'}}></i></span>
+            <span> {file.name}</span>
+            <span>
+                <span className="time"><a className="close-link" onClick={()=> {
+                    setFiles({ files:[],loader:false })
+                    controller.onChange(null);
+                }}><i className="fa fa-close"></i></a></span>
+            </span>
+            </a>
+        </li>
+    }
+    return <li key={file.path}>
         <a>
         <span className="image"><img src={file.preview} style={{ height:90, width:'auto' }}/></span>
         <span>{file.name}</span>
@@ -81,7 +100,7 @@ export default function File({field, controller}) {
         </span>
         </a>
     </li>
-  ));
+});
 
   const shouldShow = (field?.formState && field.formState === 'read' ) ? false : true
   let shouldShowPreview = false
@@ -107,11 +126,19 @@ export default function File({field, controller}) {
     }
       <ul className="list-unstyled msg_list">
         {thumbs}
-        { shouldShowPreview === true && field.value &&
+        { shouldShowPreview === true && field.value && field.value.split('.').pop() !=='pdf' &&
             <li>
              <a>
                 <span className="image"><img src={`https://myalfreddev.blob.core.windows.net/myrewards/${field.value}`} style={{height:90,width:'auto'}}/></span>
-                <span>{field.value}</span>
+                <span> {field.value}</span>
+             </a>
+            </li>
+        }
+        { shouldShowPreview === true && field.value && field.value.split('.').pop() ==='pdf' &&
+            <li>
+             <a>
+                <span className="image"><i className="fa fa-file-pdf-o" style={{fontSize: '3.5em'}}></i></span>
+                <span> {field.value}</span>
              </a>
             </li>
         }

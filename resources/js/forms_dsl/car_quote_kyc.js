@@ -34,8 +34,13 @@ const carQuoteKycStatus = {
                     rules: { required: true }
                 },
                 designation: {
-                    type:'text',
-                    label:'designation',
+                    type:'dropdown',
+                    label:'Designation',
+                    source: ['Business Owner' , 'CEO/Managing Director/Managing Partner', 'Human Resources (HR)', 'Administration/Operations/Secretarial/Assistant/Customer Service Executive',
+                            'Sales/Business Development','Finance or Accounting','Consultant/Self Employed','Healthcare Professional: Doctor, Nurse, Pharmacist, Diagnostician etc',
+                            'Teacher/Instructor/Coach','Real Estate Agent','Engineer/Architect/Contractor','Pilot','Chef','Technician/Technical Manager/Quality Controller/IT/Software Developer/Analyst',
+                            'Lawyer','Government Official: Police, Municipality, Court etc','Driver','Marketing/Media/Advertising','Artist/Actor/Writer/Sportsperson','House Wife','Unemployed'
+                        ],
                     access: {
                          read: [ 'advisor', 'pa', 'admin', 'invoicing'],
                          write: [  'advisor', 'admin' ],
