@@ -7,7 +7,6 @@
   $user = json_encode($user);
 ?>
 localStorage.setItem("session", JSON.stringify(<?php echo $user;?>));
-alert(localStorage.getItem("session"));
 </script>
 <p style="text-align: center;">Welcome to My Alfred CRM</p>
 @endsection
