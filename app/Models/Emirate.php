@@ -10,7 +10,7 @@ class Emirate extends BaseModel
 {
     use HasFactory;
     protected $table = 'emirates';
-    public function processGetDSL($filters = []) {
+    public function processGetDSL($filters) {
         return self::processGetBaseDSL($filters, 'emirates', ['code', 'id', 'text', 'text_ar']);
     }
 }

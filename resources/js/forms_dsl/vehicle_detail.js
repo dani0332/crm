@@ -1,45 +1,170 @@
-const vehicleDetail = {
 
-    readOnly:true,
-    db_table: 'car_quote_request',
-    mode: 'vehicle_detail',
-    title: 'Vehicle Detail',
-    subtitle: '',
-    fields: {
-        year_of_manufacture: {
-            type: 'text',
-            label: 'Year of Manufacture',
-            field: 'year_of_manufacture'
-        },
-        car_model_id: {
-            type: 'dropdown',
-            label: 'Car Model',
-            field: 'car_model_id',
-            transform(data) {
-                const values = data.map(function (item) {
-                    return  { value: item.id, label: item.text };
-                });
-                return values
+import { vehicleTransform } from "../transforms";
+var transform = require("node-json-transform").transform;
+
+let vehicleDetail = {
+
+    getForm() {
+        const yuu = {
+            db_table: 'car_quote_request',
+            title: 'Car Quote Request',
+            subtitle: '',
+            access: {
+                read: ['advisor', 'pa', 'admin', 'invoicing'],
+                write: [ 'advisor','admin'],
+                update: [ 'advisor','admin'],
+                delete: []
+           },
+            fields: {
+                Year_of_manufacture: {
+                    type: 'text',
+                    label: 'Year of Manufacture',
+                    field: 'Year_of_manufacture',
+                    rules:{ required: true },
+                    access: {
+                        read: ['advisor', 'pa', 'admin', 'invoicing'],
+                        write: [ 'admin'],
+                        update: [ 'admin'],
+                   },
+                },
+                car_model_id: {
+                    type: 'dropdown',
+                    label: 'Car Model',
+                    source: 'car_model',
+                    access: {
+                        read: ['advisor', 'pa', 'admin', 'invoicing'],
+                         write: [ 'admin'],
+                        update: [ 'admin'],
+                   },
+                    transform(item) {
+
+                        if (typeof item === 'object')
+                            return  { value: item?.id, label: item?.code };
+                        else{
+                            const items = item.map((u,i) => {
+                                return { value: 1 , label:'222'}
+                            })
+                            return items
+                        }
+                    },
+                },
+                car_make_id: {
+                    type: 'dropdown',
+                    label: 'Car Make',
+                    field: 'car_make_id',
+                    access: {
+                        read: ['advisor', 'pa', 'admin', 'invoicing'],
+                        write: [ 'admin'],
+                        update: [ 'admin'],
+                   },
+                    transform(item) {
+                        return  { value: item?.id, label: item?.text };
+                    },
+                },
+                emirate_of_registration_id:{
+                    type: 'dropdown',
+                    label: 'Emirate of Registration',
+                    access: {
+                        read: ['advisor', 'pa', 'admin', 'invoicing'],
+                        write: [ 'admin'],
+                        update: [ 'admin'],
+                   },
+                    transform(item) {
+                        return  { value: item?.id, label: item?.text };
+                    },
+                },
+                uae_license_held_for_id:{
+                    type: 'dropdown',
+                    label: 'UAE licence held for',
+                    access: {
+                        read: ['advisor', 'pa', 'admin', 'invoicing'],
+                        write: [ 'admin'],
+                        update: [ 'admin'],
+                   },
+                    transform(item) {
+                        return  { value: item?.id, label: item?.text };
+                    },
+                },
+                claim_history_id: {
+                    type: 'dropdown',
+                    label: 'Claim',
+                    form: 'claim_history',
+                    access: {
+                        read: ['advisor', 'pa', 'admin', 'invoicing'],
+                        write: [ 'admin'],
+                        update: [ 'admin'],
+                   }
+                },
+                uae_license_held_for_id: {
+                    type: 'dropdown',
+                    label: 'UAE licence held for',
+                    access: {
+                        read: ['advisor', 'pa', 'admin', 'invoicing'],
+                        write: [ 'admin'],
+                        update: [ 'admin'],
+                   },
+                   transform(item) {
+                        return  { value: item?.id, label: item?.text };
+                   },
+                },
+                vehicle_detail_id: {
+                    type: 'subform',
+                    form: 'vehicleSubform',
+                    label: 'Vehicle Information'
+                }
             },
-        },
-        car_make_id: {
-            type: 'dropdown',
-            label: 'Car Make',
-            field: 'car_make_id',
-            transform(data) {
-                const values = data.map(function (item) {
-                    return  { value: item.id, label: item.text };
-                });
-                return values
+            sections:[
+                {
+                    label: 'Car Quote Detail',
+                    fields: ['Year_of_manufacture', 'car_model_id', 'car_make_id',
+                    'emirate_of_registration_id','uae_license_held_for_id', 'claim_history_id', 'vehicle_detail_id']
+                }
+            ],
+            view:{
+                find:{
+                    basic: [],
+                    advanced: []
+                },
+                columns:[
+                    {
+                        Header: "Manufacture Year",
+                        accessor: "year_of_manufacture"
+                    }
+                ],
+                events: {
+                    applyFilter(options){
+                        const { mode, url , params: {id} } = options
+                        const queryMode = { mode }
+                        const queryParams = new URLSearchParams(queryMode);
+                        const generateUrl = `/${id}`
+                        return generateUrl
+                    },
+                    afterFetchData(options){
+                        const { resp , dispatch , history } = options
+                        dispatch({ type: 'VISIBLE_FORM', object: resp.data, formState: 'read' })
+                        return resp.data
+                    }
+                }
             },
+            postTransform(options){
+
+                const { params } = options
+                // if(state?.context === 'car_quote_snap'){
+                //     return { ...data, car_quote_id: id}
+                // }
+                console.log('-----postTransform-----')
+                console.log(params)
+                let { data } = options
+                data.car_quote_id = params.id
+                data.form = 'vehicle_detail_for_car_quote'
+                var result = transform(data, vehicleTransform);
+                console.log(result);
+                return result
+
+            }
         }
+        return yuu
     },
-    sections:[
-        {
-            label: 'Vehicle Detail',
-            fields: ['year_of_manufacture', 'car_model_id', 'car_make_id']
-        }
-    ]
 };
 
-export default vehicleDetail
+export default { ...vehicleDetail }

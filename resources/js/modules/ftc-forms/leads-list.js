@@ -5,6 +5,7 @@ import Table from "../../components/table";
 import TableFilter from "../../components/table-filter-form";
 import SubNaV from "../../components/sub-nav";
 import useFetch from 'use-http'
+import { useHistory } from "react-router-dom";
 
 
 const Styles = styled.div``;
@@ -12,6 +13,7 @@ const Styles = styled.div``;
 function LeadsList() {
 
   const {page, setPage_ } = useState(0);
+  const history = useHistory();
   const columns = React.useMemo(
     () => [
           {
@@ -47,7 +49,7 @@ const refOptions = useRef({});
 const nextPage = async () => {
 
     console.log('-age')
-    await get(`?page=${page}`)
+   // await get(`?page=${page}`)
     refOptions.current = {...refOptions.current, page:page + 1}
 }
 
@@ -82,12 +84,14 @@ const options = {
 
 const doSearch = async (obj) => {
 
-    console.log('--------doSearch----------')
-    console.log(obj)
-    console.log('--------doSearch----------')
-    options.current = { ...options.current, filter:obj }
-    const respose = await get(`form/car_quote_request/?filter=${JSON.stringify(obj)}&mode=listView`)
-    setData(respose)
+    // console.log('--------doSearch----------')
+    // console.log(obj)
+    // console.log('--------doSearch----------')
+    // options.current = { ...options.current, filter:obj }
+    // const respose = await get(`form/car_quote_request/?filter=${JSON.stringify(obj)}&mode=listView`)
+    // setData(respose)
+
+    history.push("/lead/5")
 
 }
 

@@ -12,6 +12,9 @@ const Nav = styled.div`
     .active{
             background-color:#ddd;
     }
+
+
+    
 }
 `
 

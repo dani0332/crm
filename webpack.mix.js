@@ -11,6 +11,12 @@ const mix = require('laravel-mix');
  |
  */
 
+mix.js('resources/js/app.js', 'public/js')
+    .react()
+    .postCss("resources/css/app.css", "build/css", [
+        require("tailwindcss"),
+    ]);
+
 // mix.js('resources/js/app.js', 'public/js')
 //     .react()
 //     .less('resources/less/app.less', 'public/build', {
@@ -25,13 +31,13 @@ const mix = require('laravel-mix');
 
 
 
-mix.js("resources/js/app.js", "public/js")
-.react()
-.postCss("resources/css/app.css", "public/css", [
-    require("tailwindcss"),
-])
-.less('resources/less/app.less', 'public/build', {
-        lessOptions: {
-            strictMath: true
-        }
-});
+// mix.js("resources/js/app.js", "public/js")
+// .react()
+// .postCss("resources/css/app.css", "public/css", [
+//     require("tailwindcss"),
+// ])
+// .less('resources/less/app.less', 'public/build', {
+//         lessOptions: {
+//             strictMath: true
+//         }
+// });
