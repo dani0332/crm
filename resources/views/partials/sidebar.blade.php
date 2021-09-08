@@ -163,9 +163,9 @@
                             @can('tm-insurance-type-list')
                                 <li><a href="{{ url('telemarketing/tminsurancetype') }}">TM Type of Insurance</a></li>
                             @endcan
-                            @can('tm-call-status-list')
+                            {{-- @can('tm-call-status-list')
                                 <li><a href="{{ url('telemarketing/tmcallstatus') }}">TM Call Status</a></li>
-                            @endcan
+                            @endcan --}}
                             @can('tm-lead-status-list')
                                 <li><a href="{{ url('telemarketing/tmleadstatus') }}">TM Lead Status</a></li>
                             @endcan

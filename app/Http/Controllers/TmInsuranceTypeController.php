@@ -23,7 +23,7 @@ class TmInsuranceTypeController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $data = TmInsuranceType::select('*')->where('is_deleted', 0)->orderBy('created_at','desc');
+            $data = TmInsuranceType::select('*')->where('is_deleted', 0)->orderBy('sort_order','asc');
             return Datatables::of($data)
                 ->addIndexColumn()
                 ->addColumn('action', function ($row) {

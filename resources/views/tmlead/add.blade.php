@@ -36,47 +36,7 @@
                             @endif
                         </div>
                         <div class="col">
-                            <span class="col-form-label col-md-6 col-sm-6">Lead Status <span class="required">*</span></span>
-                            <select class="form-control" id="tm_lead_statuses_id" name="tm_lead_statuses_id" data-toggle="tooltip" data-placement="top" title="Please select lead status">
-                                <option value=""></option>
-                                @foreach($tmLeadStatuses as $tmLeadStatus)
-                                    @if (old('tm_lead_statuses_id') == $tmLeadStatus->id)
-                                    <option value="{{ $tmLeadStatus->id }}" selected>{{ $tmLeadStatus->text }}</option>
-                                    @else
-                                    <option value="{{ $tmLeadStatus->id }}">{{ $tmLeadStatus->text }}</option>
-                                    @endif
-                                @endforeach
-                            </select>
-                            @if ($errors->has('tm_lead_statuses_id'))
-                                <span class="text-danger">{{ $errors->first('tm_lead_statuses_id') }}</span>
-                            @endif
-                        </div>
-                    </div>
-                    <div class="item form-group">
-                        <div class="col">
-                            <span class="col-form-label col-md-6 col-sm-6">Call Status <span class="required">*</span></span>
-                            <select class="form-control" id="tm_call_statuses_id" name="tm_call_statuses_id" data-toggle="tooltip" data-placement="top" title="Please select call status">
-                                <option value=""></option>
-                                @foreach($tmCallStatuses as $tmCallStatus)
-                                    @if (old('tm_call_statuses_id') == $tmCallStatus->id)
-                                    <option value="{{ $tmCallStatus->id }}" data-id="{{ $tmCallStatus->code }}" selected>{{ $tmCallStatus->text }}</option>
-                                    @else
-                                    <option value="{{ $tmCallStatus->id }}" data-id="{{ $tmCallStatus->code }}">{{ $tmCallStatus->text }}</option>
-                                    @endif
-                                @endforeach
-                            </select>
-                            @if ($errors->has('tm_call_statuses_id'))
-                                <span class="text-danger">{{ $errors->first('tm_call_statuses_id') }}</span>
-                            @endif
-                        </div>
-                        <div class="col">
-                            <div id="next_followup_date_field">
-                                <span class="col-form-label col-md-6 col-sm-6">Next Follow-up Date <span class="required">*</span></span>
-                                <input type="text" id="next_followup_date" name="next_followup_date" value="{{ old('next_followup_date') }}" class="form-control" data-toggle="tooltip" data-placement="top" title="Please select next follow-up date">
-                                @if ($errors->has('next_followup_date'))
-                                <span class="text-danger">{{ $errors->first('next_followup_date') }}</span>
-                                @endif
-                            </div>
+
                         </div>
                     </div>
                     <div class="item form-group">
@@ -134,28 +94,6 @@
                             @if ($errors->has('allocation_date'))
                                 <span class="text-danger">{{ $errors->first('allocation_date') }}</span>
                             @endif
-                        </div>
-                    </div>
-                    <div class="item form-group">
-                        <div class="col">
-                            <span class="col-form-label col-md-6 col-sm-6">Notes</span>
-                            <textarea id="notes" name="notes" rows="4" cols="50" class="form-control" data-toggle="tooltip" data-placement="top" title="Please enter notes">{{ old('notes') }}</textarea>
-                            @if ($errors->has('notes'))
-                                <span class="text-danger">{{ $errors->first('notes') }}</span>
-                            @endif
-                        </div>
-                        <div class="col">
-                            <span class="col-form-label col-md-6 col-sm-6">Assigned To</span>
-                            <select class="form-control" id="assigned_to_id" name="assigned_to_id" data-toggle="tooltip" data-placement="top" title="Please select user">
-                                <option value=""></option>
-                                @foreach($handlers as $handler)
-                                    @if (old('assigned_to_id') == $handler->id)
-                                    <option value="{{ $handler->id }}" selected>{{ $handler->name }}</option>
-                                    @else
-                                    <option value="{{ $handler->id }}">{{ $handler->name }}</option>
-                                    @endif
-                                @endforeach
-                            </select>
                         </div>
                     </div>
                     <div id="tm_car_fields">
@@ -279,7 +217,7 @@
                     <div class="row">
                     <div class="col-auto mr-auto"></div>
                         <div class="col-auto">
-                        <button type="submit" class="btn btn-warning btn-sm">Create & Add New</button> <button type="submit" class="btn btn-warning btn-sm" id="return_to_view">Create</button>
+                            <button type="submit" class="btn btn-warning btn-sm" id="return_to_view">Create</button>
                         </div>
                     </div>
                 </form>

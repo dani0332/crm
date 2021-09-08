@@ -4,9 +4,20 @@ $(document).ready(function () {
     $("#datepicker_2").datepicker({ dateFormat: "yy-mm-dd" });
     $("#transapp_start_date").datepicker({ dateFormat: "yy-mm-dd" });
     $("#transapp_stop_date").datepicker({ dateFormat: "yy-mm-dd" });
-    $("#enquiry_date").datepicker({ dateFormat: "yy-mm-dd" });
-    $("#allocation_date").datepicker({ dateFormat: "yy-mm-dd" });
-    $("#next_followup_date").datepicker({ dateFormat: "yy-mm-dd" });
+    $("#enquiry_date").datepicker({ dateFormat: "yy-mm-dd" }); // TM Leads
+    $("#allocation_date").datepicker({ dateFormat: "yy-mm-dd" }); // TM Leads
+    $("#next_followup_date").daterangepicker({ // TM Leads
+        timePicker: true,
+        singleDatePicker: true,
+        timePicker24Hour: true,
+        minDate:new Date(),
+        locale: {
+          format: 'YYYY-MM-DD HH:mm:ss'
+        }
+      }, function(start, end, label) {
+        var years = moment().diff(start, 'years');
+        console.log("You are " + years + " years old!");
+      });
     $('#search-valuation').validate({
         rules: {
             carmake: {
@@ -965,19 +976,55 @@ $(document).ready(function () {
             data: function (d) {
                 d.searchType = $("#searchType").val();
                 d.searchField = $("input[name=searchField]").val();
+                d.assigned_to_id = $("#assigned_to_id").val();
+                d.tm_insurance_types_id = $("#tm_insurance_types_id").val();
             },
         },
         columns: [
+            {
+                data: "id",
+                name: "id",
+                render: function (data, type, row, meta) {
+                    var isCurrentUserIsAdvisor = $("#isCurrentUserIsAdvisor").val();
+                    if(isCurrentUserIsAdvisor == 0) {
+                        return (
+                            '<input type="checkbox" id="tmLeadID" class="tmleadCheckbox" name="tmLeadID" value="'+data+'">'
+                        );
+                    }
+                },
+            },
             { data: 'id', name: 'id', render:function(data, type, row){
-                return "<a href='"+config.routes.tmlead_datatable_route+'/'+row.id +"'>" + row.cdb_id + "</a>"
+                return "<a href='"+config.routes.tmlead_datatable_route+'/'+row.id +"'>"+row.cdb_id+ "</a>"
             }},
             {data: 'customer_name', name: 'customer_name'},
+            {data: 'tm_insurance_types_text', name: 'tm_insurance_types_text'},
+            {data: 'tm_lead_types_text', name: 'tm_lead_types_text'},
+            {data: 'tm_lead_status_code', name: 'tm_lead_status_code'},
+            {data: 'next_followup_date', name: 'next_followup_date'},
             {data: 'handlers_name', name: 'handlers_name'},
-            {data: 'tm_lead_statuses_text', name: 'tm_lead_statuses_text'},
-            {data: 'tm_call_statuses_text', name: 'tm_call_statuses_text'},
             {data: 'created_at', name: 'created_at'},
             {data: 'updated_at', name: 'updated_at'},
-        ]
+        ],
+        createdRow: function (row, data, index) {
+
+            if(data.tm_lead_status_code == "NoAnswer" || data.tm_lead_status_code == "SwitchedOff" 
+            || data.tm_lead_status_code == "PipelineNoInfo" || data.tm_lead_status_code == "PipelineImmediate" 
+            || data.tm_lead_status_code == "PipelineFuture" || data.tm_lead_status_code == "DealingWithAnAdvisor") {
+
+                var d = new Date();
+                var currentTimestmap = d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2)
+                +" "+("0"+d.getHours()).slice(-2)+":"+("0"+d.getMinutes()).slice(-2)+":"+("0"+d.getSeconds()).slice(-2);
+
+                if(currentTimestmap > data.next_followup_date) {
+                    $('td', row).eq(5).css('color', 'red');
+                    $('td', row).eq(6).css('color', 'red');
+                }
+
+                console.log("currentTimestmap: "+currentTimestmap);
+                console.log('tm_lead_id: '+data.id);
+                console.log('next_followup_date: '+data.next_followup_date);
+            }
+        },
     });
 
     $("#search-tm-leads").submit(function (e) {
@@ -989,66 +1036,41 @@ $(document).ready(function () {
         }, 1000);
     });
 
-    $('.tmuploadlead-data-table').DataTable({
-        ordering: false,
-        info:     false,
-        searching:false,
-        bLengthChange: false,
-        serverSide: true,
-        ajax: config.routes.tmuploadlead_datatable_route,
-        columns: [
-            { data: 'id', name: 'id', render:function(data, type, row){
-                return "<a href='"+config.routes.tmuploadlead_datatable_route+'/'+row.id +"'>" + row.id + "</a>"
-            }},
-            {data: 'file_name', name: 'file_name'},
-            // {
-            //     data: "file_path",
-            //     name: "file_path",
-            //     render: function (data, type, row, meta) {
-            //         var fileSrc = config.image_path + data;
-            //         if(fileSrc != null) {
-            //             return (
-            //                 '<a href="'+fileSrc +'" target="_blank">'+row.file_name+'</a>'
-            //             );
-            //         }
-            //     },
-            // },
-            {data: 'total_records', name: 'total_records'},
-            {data: 'good', name: 'good'},
-            {data: 'cannot_upload', name: 'cannot_upload'},
-            {data: 'is_submitted', name: 'is_submitted'},
-            {data: 'user_name', name: 'user_name'},
-            {data: 'created_at', name: 'created_at'},
-        ]
-    });
-    // $("#upload-tm-leads").click(function (e) {
-    //     e.preventDefault();
-    //     $(".loader").show();
-    //     window.location.replace("tmuploadleads");
-    //     setTimeout(() => {
-    //         $(".loader").hide();
-    //     }, 100000);
-    // });
+    // TM: Select tm leads id and store in hidden field
+    $("#checkAllTmLeads").click(function() {
+        $('input:checkbox').not(this).prop('checked', this.checked);
 
-    // $('.tmlead-data-table').DataTable({
-    //     ordering: false,
-    //     info:     false,
-    //     searching:false,
-    //     bLengthChange: false,
-    //     serverSide: true,
-    //     ajax: config.routes.tmlead_datatable_route,
-    //     columns: [
-    //         { data: 'id', name: 'id', render:function(data, type, row){
-    //             return "<a href='"+config.routes.tmlead_datatable_route+'/'+row.id +"'>" + row.cdb_id + "</a>"
-    //         }},
-    //         {data: 'customer_name', name: 'customer_name'},
-    //         {data: 'handlers_name', name: 'handlers_name'},
-    //         {data: 'tm_lead_statuses_text', name: 'tm_lead_statuses_text'},
-    //         {data: 'tm_call_statuses_text', name: 'tm_call_statuses_text'},
-    //         {data: 'created_at', name: 'created_at'},
-    //         {data: 'updated_at', name: 'updated_at'},
-    //     ]
-    // });
+        var idsArray = $('#selectTmLeadId').val();
+        $('input:checkbox').each(function (i,item) {
+            idsArray = idsArray + $(item).val() + ',';
+        });
+        $('#selectTmLeadId').val(idsArray.replace(/^,|,$/g,''));
+    });
+
+    // TM: Select tm leads id and store in hidden field
+    $("#tmLeadsAssignToUser").click(function() {
+        var tmLeadIDs = [];
+        $.each($("input[name='tmLeadID']:checked"), function() {
+            tmLeadIDs .push($(this).val());
+        });
+        $('#selectTmLeadId').val(tmLeadIDs);
+        console.log("tmLeadIDs: " + tmLeadIDs );
+    });
+
+    // TM: On check main checkbox, display lead assignment panel
+    $("#tm-leads-assign-div").hide();
+    $("#checkAllTmLeads").click(function() {
+        if($(this).is(":checked")) {
+            $("#tm-leads-assign-div").show(300);
+        } else {
+            $("#tm-leads-assign-div").hide(200);
+        }
+    });
+
+    // TM: OnClick on phone number ignore redirection
+    $("#ignore-redirection").click(function() {
+        return false;
+    });
 
     // TM
     $("#tm_car_fields").hide();
@@ -1066,23 +1088,47 @@ $(document).ready(function () {
             $("#tm_car_fields").hide();
         }
     }
-
+    
     // TM
     $("#next_followup_date_field").hide();
     next_followup_date_field_visibility();
-    $('#tm_call_statuses_id').on('change',function(e) {
+    $('#tm_lead_statuses_id').on("change",function(e) {
         next_followup_date_field_visibility();
     });
     function next_followup_date_field_visibility() {
-        var tm_call_statuses_code = $("#tm_call_statuses_id option:selected").attr('data-id');
+        var tm_lead_status_code = $("#tm_lead_statuses_id option:selected").attr("data-id");
+        var no_answer_count = $("#no_answer_count").val();
 
-        if(tm_call_statuses_code == 'Callback' || tm_call_statuses_code == 'No Answer') {
+        if(( (tm_lead_status_code == "NoAnswer" || tm_lead_status_code == "SwitchedOff") 
+                && (typeof no_answer_count === "undefined" || no_answer_count < "3") ) 
+                    || (tm_lead_status_code == "PipelineNoInfo" || tm_lead_status_code == "PipelineImmediate"
+                    || tm_lead_status_code == "PipelineFuture" || tm_lead_status_code == "DealingWithAnAdvisor")) {
             $("#next_followup_date_field").show();
         }
         else {
             $("#next_followup_date_field").hide();
         }
     }
+
+    $('.tmuploadlead-data-table').DataTable({
+        ordering: false,
+        info:     false,
+        searching:false,
+        bLengthChange: false,
+        serverSide: true,
+        ajax: config.routes.tmuploadlead_datatable_route,
+        columns: [
+            { data: 'id', name: 'id', render:function(data, type, row){
+                return "<a href='"+config.routes.tmuploadlead_datatable_route+'/'+row.id +"'>" + row.id + "</a>"
+            }},
+            {data: 'file_name', name: 'file_name'},
+            {data: 'total_records', name: 'total_records'},
+            {data: 'good', name: 'good'},
+            {data: 'cannot_upload', name: 'cannot_upload'},
+            {data: 'user_name', name: 'user_name'},
+            {data: 'created_at', name: 'created_at'},
+        ]
+    });
 
     //select/unselect all checkboxes if this selected
     $("#select_all_checkboxes").click(function (e) {
@@ -1115,17 +1161,17 @@ $(document).ready(function () {
         });
     });
 
-    dateRangePickerChange("", "");
-    $(".applyBtn, .ranges li").click(function () {
-        $(".loader").show();
-        setTimeout(() => {
-            var date = $("#reportrange span").html();
-            var dateAsArray = date.split("-");
-            var startDate = moment(dateAsArray[0]).format("YYYY-MM-DD");
-            var endDate = moment(dateAsArray[1]).format("YYYY-MM-DD");
-            dateRangePickerChange(startDate, endDate);
-        }, 1000);
-    });
+    // dateRangePickerChange("", "");
+    // $(".applyBtn, .ranges li").click(function () {
+    //     $(".loader").show();
+    //     setTimeout(() => {
+    //         var date = $("#reportrange span").html();
+    //         var dateAsArray = date.split("-");
+    //         var startDate = moment(dateAsArray[0]).format("YYYY-MM-DD");
+    //         var endDate = moment(dateAsArray[1]).format("YYYY-MM-DD");
+    //         dateRangePickerChange(startDate, endDate);
+    //     }, 1000);
+    // });
 
     $("#return_to_view").click(function (e) {
         e.preventDefault();

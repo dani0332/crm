@@ -19,45 +19,21 @@ use App\Enums\tmInsuranceTypeCode;
                 @if(session()->has('success'))
                     <div class="alert alert-success">{{ session()->get('success') }}</div>
                 @endif
-                <form id="demo-form2" method='post' action="{{ route('tmleads.update', ['tmlead' => $tmlead->id]) }}" enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left">
+                <form id="demo-form2" method='post' action="" enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left">
+                {{-- <form id="demo-form2" method='post' action="{{ route('tmleads.update', ['tmlead' => $tmlead->id]) }}" enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left">--}}
                 {{csrf_field()}}
                 @method('PUT')
                     <div class="item form-group">
                         <div class="col">
-                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="CDB ID"><b>CDB ID</b></label>
+                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="ID"><b>ID</b></label>
                             <div class="col-md-6 col-sm-6">
                             <p class="label-align-center">{{ $tmlead->cdb_id }}</p>
                             </div>
                         </div>
                         <div class="col">
-
-                        </div>
-                    </div>
-                    <div class="item form-group">
-                        <div class="col">
                             <label class="col-form-label col-md-3 col-sm-3 label-align" for="Lead Type"><b>Lead Type</b></label>
                             <div class="col-md-6 col-sm-6">
                             <p class="label-align-center">{{ $tmlead->tmleadtype ? $tmlead->tmleadtype->text : '' }}</p>
-                            </div>
-                        </div>
-                        <div class="col">
-                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="Lead Status"><b>Lead Status</b></label>
-                            <div class="col-md-6 col-sm-6">
-                            <p class="label-align-center">{{ $tmlead->tmleadstatus ? $tmlead->tmleadstatus->text : '' }}</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="item form-group">
-                        <div class="col">
-                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="Call Status"><b>Call Status</b></label>
-                            <div class="col-md-6 col-sm-6">
-                            <p class="label-align-center">{{ $tmlead->tmcallstatus ? $tmlead->tmcallstatus->text : '' }}</p>
-                            </div>
-                        </div>
-                        <div class="col">
-                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="Next Follow-up Date"><b>Next Follow-up Date</b></label>
-                            <div class="col-md-6 col-sm-6">
-                            <p class="label-align-center">{{ $tmlead->next_followup_date }}</p>
                             </div>
                         </div>
                     </div>
@@ -71,7 +47,7 @@ use App\Enums\tmInsuranceTypeCode;
                         <div class="col">
                             <label class="col-form-label col-md-3 col-sm-3 label-align" for="Phone number"><b>Phone number</b></label>
                             <div class="col-md-6 col-sm-6">
-                            <p class="label-align-center"><a href="tel://{{ $tmlead->phone_number }}">{{ $tmlead->phone_number }}</a></p>
+                            <p class="label-align-center"><a href="tel:{{ $customerCorrectPhoneNo }}" id="ignore-redirection" style="text-decoration:underline;">{{ $customerCorrectPhoneNo }}</a></p>
                             </div>
                         </div>
                     </div>
@@ -105,31 +81,20 @@ use App\Enums\tmInsuranceTypeCode;
                     </div>
                     <div class="item form-group">
                         <div class="col">
-                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="Notes"><b>Notes</b></label>
-                            <div class="col-md-6 col-sm-6">
-                            <p class="label-align-center">{{ $tmlead->notes }}</p>
-                            </div>
-                        </div>
-                        <div class="col">
                             <label class="col-form-label col-md-3 col-sm-3 label-align" for="Assigned To"><b>Assigned To</b></label>
                             <div class="col-md-6 col-sm-6">
                             <p class="label-align-center">{{ $tmlead->assignedto ? $tmlead->assignedto->name : '' }}</p>
                             </div>
                         </div>
-                    </div>
-                    <div class="item form-group">
                         <div class="col">
                             <label class="col-form-label col-md-3 col-sm-3 label-align" for="Uploaded from File"><b>Uploaded from File</b></label>
                             <div class="col-md-6 col-sm-6">
                             <p class="label-align-center"><a href="/telemarketing/tmuploadlead/{{ $tmlead->tmuploadleads ? $tmlead->tmuploadleads->id : '' }}">{{ $tmlead->tmuploadleads ? $tmlead->tmuploadleads->file_name : '' }}</a></p>
                             </div>
                         </div>
-                        <div class="col">
-
-                        </div>
                     </div>
-                    @if ($tmlead->tminsurancetype->code)
-                    @if ($tmlead->tminsurancetype->code == tmInsuranceTypeCode::Car)
+                    @if ($tmInsuranceTypeCode)
+                    @if ($tmInsuranceTypeCode == tmInsuranceTypeCode::Car)
                     <div class="item form-group">
                         <div class="col">
                             <label class="col-form-label col-md-3 col-sm-3 label-align" for="Nationality"><b>Nationality</b></label>
@@ -220,10 +185,12 @@ use App\Enums\tmInsuranceTypeCode;
                     <div class="row">
                     <div class="col-auto mr-auto"></div>
                         <div class="col-auto">
-                            @can('tm-insurance-type-edit')
-                            <a id="texta" href="{{ route('tmleads.edit', ['tmlead' => $tmlead->id]) }}" class='btn btn-warning btn-sm'>Edit </a>
+                            @can('telemarketing-edit')
+                                @if($isLeadEditable == "1")
+                                    <a id="texta" href="{{ route('tmleads.edit', ['tmlead' => $tmlead->id]) }}" class='btn btn-warning btn-sm'>Edit </a>
+                                @endif
                             @endcan
-                            @can('tm-insurance-type-delete')
+                            @can('telemarketing-delete')
                             <a href="#" date-route="{{ route('tmleads.destroy', ['tmlead' => $tmlead->id]) }}" class='btn btn-warning btn-sm delete'>Delete</a>
                             @endcan
                         </div>
@@ -233,6 +200,70 @@ use App\Enums\tmInsuranceTypeCode;
         </div>
     </div>
 </div>
+
+<div class="row">
+    <div class="col-md-12 col-sm-12">
+        <div class="x_panel">
+            <div class="x_title">
+                <h2>Update TM Lead Status & Notes</h2>
+                <div class="clearfix"></div>
+            </div>
+            <div class="x_content">
+                <form method="post" action="{{ $tmlead->id }}/tmLeadUpdate" class="form-horizontal form-label-left" role="form" data-parsley-validate=""novalidate="" autocomplete="off">
+                {{csrf_field()}}
+                @method('GET')
+                    <div class="item form-group">
+                        <div class="col">
+                            <span class="col-form-label col-md-6 col-sm-6"><b>Lead Status</b> <span class="required">*</span></span>
+                            <select class="form-control" id="tm_lead_statuses_id" name="tm_lead_statuses_id" data-toggle="tooltip" data-placement="top" title="Please select lead status">
+                            <option value=""></option>
+                            @foreach($tmLeadStatuses as $tmLeadStatus)
+                                <option value="{{$tmLeadStatus->id}}" data-id="{{ $tmLeadStatus->code }}" 
+                                {{ $tmLeadStatus->id == old('tm_lead_statuses_id',$tmlead->tm_lead_statuses_id) ? 'selected' : ''}}>
+		                        {{ $tmLeadStatus->text }}
+                                </option>
+                            @endforeach
+                            </select>
+                            @if ($errors->has('tm_lead_statuses_id'))
+                                <span class="text-danger">{{ $errors->first('tm_lead_statuses_id') }}</span>
+                            @endif
+                        </div>
+                        <div class="col">
+                            <div id="next_followup_date_field">
+                                <span class="col-form-label col-md-6 col-sm-6"><b>Next Follow-up Date & Time</b> <span class="required">*</span></span>
+                                <input type="text" id="next_followup_date" name="next_followup_date" value="{{ old('next_followup_date', $tmlead->next_followup_date) }}" class="form-control" data-toggle="tooltip" data-placement="top" title="Please select next follow-up date & time">
+                                @if ($errors->has('next_followup_date'))
+                                    <span class="text-danger">{{ $errors->first('next_followup_date') }}</span>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                    <div class="item form-group">
+                        <div class="col">
+                            <span class="col-form-label col-md-6 col-sm-6"><b>Notes</b></span>
+                            <textarea id="notes" name="notes" rows="4" cols="50" class="form-control" data-toggle="tooltip" data-placement="top" title="Please enter notes">{{ old('notes', $tmlead->notes) }}</textarea>
+                        </div>
+                        <div class="col">
+
+                        </div>
+                    </div>
+                    <div class="ln_solid"></div>
+                    <div class="row">
+                    <div class="col-auto mr-auto"></div>
+                        <div class="col-auto">
+                            <input type="hidden" id="tmLeadId" name="tmLeadId" value="{{ $tmlead->id }}">
+                            <input type="hidden" id="no_answer_count" name="no_answer_count" value="{{ $tmlead->no_answer_count }}">
+                            @if($isLeadEditable == "1")
+                                <button type="submit" class="btn btn-warning btn-sm" id="return_to_view">Update</button>
+                            @endif
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
 @can('auditable')
     <div id="auditable">
         <button id='auditablebtn' class="btn btn-warning btn-sm auditablebtn" data-id="{{ $tmlead->id }}" data-model="App\Models\TmLead">

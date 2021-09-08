@@ -23,7 +23,7 @@ class TmLeadStatusController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $data = TmLeadStatus::select('*')->where('is_deleted', 0)->orderBy('created_at','desc');
+            $data = TmLeadStatus::select('*')->where('is_deleted', 0)->orderBy('sort_order','asc');
             return Datatables::of($data)
                 ->addIndexColumn()
                 ->addColumn('action', function ($row) {

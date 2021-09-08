@@ -141,7 +141,8 @@ Route::group(['middleware' =>  ['auth']], function() {
         Route::resource('tmleadstatus', TmLeadStatusController::class);
         Route::get('/car-model',[TmLeadController::class,'carModelBasedOnCarMake']);
         Route::resource('tmuploadlead', TmUploadLeadController::class);
-        Route::get('tmuploadlead/{tmUploadLeadId}/tmUploadLeadsProcess', [TmUploadLeadController::class,'tmUploadLeadsProcess'])->name('tmUploadLeadsProcess');
+        Route::get('tmleads/{tmLeadID}/tmLeadUpdate', [TmLeadController::class,'tmLeadUpdate'])->name('tmLeadUpdate');
+        Route::get('/tmLeadsAssign', [TmLeadController::class,'tmLeadsAssign']);
     });
 
     Route::get('/car-model',[ClaimController::class,'carModelBasedOnCarMake']);

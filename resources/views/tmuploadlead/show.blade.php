@@ -7,7 +7,6 @@
             <div class="x_title">
                 <h2>Upload TM Lead Detail</h2>
                 <ul class="nav navbar-right panel_toolbox">
-                    <li><a href="{{ $tmuploadlead->id }}/tmUploadLeadsProcess" class="btn btn-warning btn-sm" onclick="return confirm('Do you really want to upload leads?');" id="upload-tm-leads">Upload TM Leads</a></li>
                     <li><a href="{{ route('tmuploadlead.index') }}" class="btn btn-warning btn-sm">Upload TM Lead List</a></li>
                 </ul>
                 <div class="clearfix"></div>
@@ -23,7 +22,8 @@
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="File"><b>File</b></label>
                         <div class="col-md-6 col-sm-6 ">
-                            <p class="label-align-center"><a href="{{ \Config::get('constants.azure_storage_url').'myrewards/'.$tmuploadlead->file_path }}" target="_blank">{{$tmuploadlead->file_name}}</a></p>
+                            <p class="label-align-center">{{$tmuploadlead->file_name}}</p>
+                            {{-- <p class="label-align-center"><a href="{{ \Config::get('constants.azure_storage_url').'myrewards/'.$tmuploadlead->file_path }}" target="_blank">{{$tmuploadlead->file_name}}</a></p> --}}
                         </div>
                     </div>
                     <div class="item form-group">
@@ -45,19 +45,25 @@
                         </div>
                     </div>
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Is Submitted"><b>Is Submitted</b></label>
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Created At"><b>Created At</b></label>
                         <div class="col-md-6 col-sm-6 ">
-                            <p class="label-align-center">{{ $tmuploadlead->is_submitted }}</p>
+                            <p class="label-align-center">{{ $tmuploadlead->created_at }}</p>
+                        </div>
+                    </div>
+                    <div class="item form-group">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Submitted By"><b>Submitted By</b></label>
+                        <div class="col-md-6 col-sm-6 ">
+                            <p class="label-align-center">{{ $tmuploadlead->createdby->name }}</p>
                         </div>
                     </div>
                     <div class="ln_solid"></div>
                     <div class="row">
                     <div class="col-auto mr-auto"></div>
                         <div class="col-auto">
-                            @can('tm-upload-leads-edit')
+                           {{-- @can('tm-upload-leads-edit')
                             <a id="texta" href="{{ route('tmuploadlead.edit', ['tmuploadlead' => $tmuploadlead->id]) }}" class='btn btn-warning btn-sm'>Edit </a>
                             @endcan
-                            {{-- @can('tm-upload-leads-delete')
+                            @can('tm-upload-leads-delete')
                             <a href="#" date-route="{{ route('tmuploadlead.destroy', ['tmuploadlead' => $tmuploadlead->id]) }}" class='btn btn-warning btn-sm delete'>Delete</a>
                             @endcan --}}
                         </div>
