@@ -22,6 +22,7 @@ use App\Http\Controllers\CarRepairTypeController;
 use App\Http\Controllers\RentACarController;
 use App\Http\Controllers\ClaimsAttachmentsController;
 use App\Http\Controllers\AMLController;
+use App\Http\Controllers\BulkEmailProcessController;
 use App\Http\Controllers\FtcFormController;
 use App\Http\Controllers\FormController;
 use App\Http\Controllers\UploadResourceController;
@@ -146,6 +147,11 @@ Route::group(['middleware' =>  ['auth']], function() {
     Route::get('/car-model',[ClaimController::class,'carModelBasedOnCarMake']);
     Route::post('auditable', [AuditableController::class, 'loadAuditableComponent']);
 });
+
+
+
+Route::POST('/sendBulkWelcomeEmails', [BulkEmailProcessController::class,'ProcessBulkWelcomeEmails'])
+        ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
 
 
 /***** RestAPI */

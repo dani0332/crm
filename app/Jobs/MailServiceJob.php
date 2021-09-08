@@ -20,10 +20,7 @@ class MailServiceJob implements ShouldQueue
      */
     public function __construct($request)
     {
-        $this->request = $request;//json_decode($request);;
-        //dd($this->request['to']);exit;
-
-       // dd($this->request);exit;
+        $this->request = json_decode($request);;
     }
 
     /**
@@ -34,9 +31,8 @@ class MailServiceJob implements ShouldQueue
     public function handle()
     {
         try {
-
             $email = new MailerService($this->request);
-            Mail::to($this->request['to'])->send($email);
+            Mail::to($this->request->to)->send($email);
             return "Success";
         } catch (Exception $ex) {
             // Debug via $ex->getMessage();

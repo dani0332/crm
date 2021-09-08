@@ -13,16 +13,18 @@ class CreateTmLeadTypesTable extends Migration
      */
     public function up()
     {
-        Schema::create('tm_lead_types', function (Blueprint $table) {
-            $table->id();
-            $table->string('code','100');
-            $table->string('text','100');
-            $table->string('text_ar','100');
-            $table->integer('sort_order');
-            $table->boolean('is_active')->default('1');
-            $table->boolean('is_deleted')->default('0');
-            $table->timestamps();
-        });
+        if (!Schema::hasTable('tm_lead_types')) {
+            Schema::create('tm_lead_types', function (Blueprint $table) {
+                $table->id();
+                $table->string('code','100');
+                $table->string('text','100');
+                $table->string('text_ar','100');
+                $table->integer('sort_order');
+                $table->boolean('is_active')->default('1');
+                $table->boolean('is_deleted')->default('0');
+                $table->timestamps();
+            });
+        }
     }
 
     /**

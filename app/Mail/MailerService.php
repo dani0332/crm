@@ -29,8 +29,8 @@ class MailerService extends Mailable
     public function build()
     {
         return $this
-            ->subject($this->request['subject'])
+            ->subject($this->request->subject)
             ->from('alfred@insurancemarket.ae', 'Alfred')
-            ->view('email.'. $this->request['templateName'].'', collect($this->request['templateParams'])->toArray());
+            ->view($this->request->templateName.'', collect($this->request->templateParams)->toArray());
     }
 }
