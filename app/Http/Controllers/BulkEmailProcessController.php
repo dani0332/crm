@@ -30,13 +30,11 @@ class BulkEmailProcessController extends Controller
         $bulkEmailBatchLimit = Config::get('constants.BULK_WE_EMAIL_BATCH_LIMIT');
         $from = date($request->dateFrom);
         $to = date($request->dateTo);
-        $offset = 0;
-        $increment = 0;
         do{
             $customers = Customer::whereBetween('created_at', [$from, $to])
             ->where('has_reward_access', 1)
             ->where('is_we_sent', 0)
-            ->skip($offset)->take($bulkEmailBatchLimit)
+            ->skip(0)->take($bulkEmailBatchLimit)
             ->get();
             foreach ($customers as $customer) {
                 $request->to = $customer->email;
@@ -50,8 +48,6 @@ class BulkEmailProcessController extends Controller
                     $customer->save();
                 }
             }
-            $increment++;
-            $offset = $increment * $bulkEmailBatchLimit;
         } while(!isEmpty($customers));
     }
 }
