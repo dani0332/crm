@@ -41,6 +41,30 @@
                     </div>
                     <div class="item form-group">
                         <div class="col">
+                            <label class="col-form-label col-md-2 col-sm-2" for="tm_lead_types_id">Lead Type</label>
+                            <div class="col-md-6 col-sm-6">
+                                <select class="form-control" id="tm_lead_types_id" name="tm_lead_types_id">
+                                    <option value=""></option>
+                                    @foreach ($tmLeadTypes as $tmLeadType)
+                                        <option value="{{ $tmLeadType->id }}">{{ $tmLeadType->text }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <label class="col-form-label col-md-2 col-sm-2" for="tm_insurance_types_id">Insurance Type</label>
+                            <div class="col-md-6 col-sm-6">
+                                <select class="form-control" id="tm_insurance_types_id" name="tm_insurance_types_id">
+                                    <option value=""></option>
+                                    @foreach ($tmInsuranceTypes as $tmInsuranceType)
+                                        <option value="{{ $tmInsuranceType->id }}">{{ $tmInsuranceType->text }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="item form-group">
+                        <div class="col">
                             @if($isCurrentUserIsAdvisor == "0")
                             <label class="col-form-label col-md-2 col-sm-2" for="assigned_to_id">Lead Owner</label>
                             <div class="col-md-6 col-sm-6">
@@ -56,15 +80,7 @@
                             @endif
                         </div>
                         <div class="col">
-                            <label class="col-form-label col-md-2 col-sm-2" for="tm_insurance_types_id">Insurance Type</label>
-                            <div class="col-md-6 col-sm-6">
-                                <select class="form-control" id="tm_insurance_types_id" name="tm_insurance_types_id">
-                                    <option value=""></option>
-                                    @foreach ($tmInsuranceTypes as $tmInsuranceType)
-                                        <option value="{{ $tmInsuranceType->id }}">{{ $tmInsuranceType->text }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
+
                         </div>
                     </div>
                     <div class="item form-group">

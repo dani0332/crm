@@ -161,6 +161,7 @@ class TMLeadsService
         AND tm_leads.assigned_to_id = '$currentUserID' 
         AND tm_lead_statuses.code NOT IN ('NotContactablePE','CarSold','NotEligible','NotInterested','PurchasedBeforeFirstCall'
         ,'PurchasedFromCompetitor','WrongNumber','DONOTCALL','Duplicate','Recycled','Revived')
+        AND (tm_leads.next_followup_date IS NULL OR tm_leads.next_followup_date < NOW())
         ORDER BY tm_leads.next_followup_date IS NULL, tm_leads.next_followup_date , tm_leads.created_at  
         LIMIT 1"));
 

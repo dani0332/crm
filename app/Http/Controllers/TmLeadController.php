@@ -43,9 +43,10 @@ class TmLeadController extends Controller
         $handlers = User::select('users.*')
         ->leftjoin('model_has_roles','users.id','model_has_roles.model_id')
         ->leftjoin('roles','roles.id','model_has_roles.role_id')
-        ->whereIn('roles.name', ['TM_ADVISOR', 'TM_DEPUTY', 'TM_MANAGER'])->orderBy('roles.name', 'asc')->get();
+        ->whereIn('roles.name', ['TM_ADVISOR'])->orderBy('roles.name', 'asc')->get();
 
         $tmInsuranceTypes = TmInsuranceType::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
+        $tmLeadTypes = TmLeadType::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
 
         if(Auth::user()->hasRole('TM_ADVISOR')) {
             $isCurrentUserIsAdvisor = "1";
@@ -56,7 +57,8 @@ class TmLeadController extends Controller
 
         if ($request->ajax()) {
             $data = TmLead::select('tm_leads.*','tm_lead_statuses.code as tm_lead_status_code','handlers.name as handlers_name'
-            ,'tm_insurance_types.text as tm_insurance_types_text','tm_lead_types.text as tm_lead_types_text')
+            ,'tm_insurance_types.text as tm_insurance_types_text','tm_lead_types.text as tm_lead_types_text'
+            ,'tm_lead_statuses.text as tm_lead_status_text')
             ->leftjoin('tm_lead_types','tm_leads.tm_lead_types_id','tm_lead_types.id')
             ->leftjoin('tm_lead_statuses','tm_leads.tm_lead_statuses_id','tm_lead_statuses.id')
             ->leftjoin('users as handlers', 'tm_leads.assigned_to_id','handlers.id')
@@ -97,6 +99,9 @@ class TmLeadController extends Controller
             if(isset($request->tm_insurance_types_id) && !empty($request->tm_insurance_types_id)) {
                 $data->where('tm_leads.tm_insurance_types_id', $request->tm_insurance_types_id);
             }
+            if(isset($request->tm_lead_types_id) && !empty($request->tm_lead_types_id)) {
+                $data->where('tm_leads.tm_lead_types_id', $request->tm_lead_types_id);
+            }
 
             return Datatables::of($data)
                 ->addIndexColumn()
@@ -106,7 +111,7 @@ class TmLeadController extends Controller
                 ->rawColumns(['action'])
                 ->make(true);
         }
-        return view('tmlead.view',compact('handlers','isCurrentUserIsAdvisor','tmInsuranceTypes'));
+        return view('tmlead.view',compact("handlers","isCurrentUserIsAdvisor","tmInsuranceTypes","tmLeadTypes"));
     }
 
     /**
