@@ -979,6 +979,7 @@ $(document).ready(function () {
                 d.assigned_to_id = $("#assigned_to_id").val();
                 d.tm_insurance_types_id = $("#tm_insurance_types_id").val();
                 d.tm_lead_types_id = $("#tm_lead_types_id").val();
+                d.tm_lead_statuses_id = $("#tm_lead_statuses_id").val();
             },
         },
         columns: [

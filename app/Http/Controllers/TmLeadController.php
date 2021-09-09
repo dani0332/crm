@@ -47,6 +47,7 @@ class TmLeadController extends Controller
 
         $tmInsuranceTypes = TmInsuranceType::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
         $tmLeadTypes = TmLeadType::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
+        $tmLeadStatuses = TmLeadStatus::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
 
         if(Auth::user()->hasRole('TM_ADVISOR')) {
             $isCurrentUserIsAdvisor = "1";
@@ -63,11 +64,19 @@ class TmLeadController extends Controller
             ->leftjoin('tm_lead_statuses','tm_leads.tm_lead_statuses_id','tm_lead_statuses.id')
             ->leftjoin('users as handlers', 'tm_leads.assigned_to_id','handlers.id')
             ->leftjoin('tm_insurance_types', 'tm_leads.tm_insurance_types_id','tm_insurance_types.id')
-            ->where('tm_leads.is_deleted', 0)
-            ->orderBy('tm_leads.next_followup_date','asc');
+            ->whereRaw('tm_leads.is_deleted=0 AND (tm_leads.next_followup_date IS NULL OR tm_leads.next_followup_date < now())')
+            ->orderByRaw('tm_leads.next_followup_date IS NULL, tm_leads.next_followup_date, tm_leads.created_at');
 
             if(Auth::user()->hasRole('TM_ADVISOR')) {
                 $data->where('tm_leads.assigned_to_id', Auth::user()->id);
+            }
+
+            if(isset($request->tm_lead_statuses_id) && !empty($request->tm_lead_statuses_id)) {
+                $data->where('tm_leads.tm_lead_statuses_id', $request->tm_lead_statuses_id);
+            }
+            else {
+                $data->whereNotIn('tm_lead_statuses.code', ['NotContactablePE','CarSold','NotEligible','NotInterested','PurchasedBeforeFirstCall'
+                ,'PurchasedFromCompetitor','WrongNumber','DONOTCALL','Duplicate','Recycled','Revived']);
             }
 
             if (isset($request->searchType) && !empty($request->searchType)
@@ -111,7 +120,8 @@ class TmLeadController extends Controller
                 ->rawColumns(['action'])
                 ->make(true);
         }
-        return view('tmlead.view',compact("handlers","isCurrentUserIsAdvisor","tmInsuranceTypes","tmLeadTypes"));
+        return view('tmlead.view',compact("handlers","isCurrentUserIsAdvisor","tmInsuranceTypes"
+        ,"tmLeadTypes","tmLeadStatuses"));
     }
 
     /**

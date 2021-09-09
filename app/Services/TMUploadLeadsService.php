@@ -42,19 +42,6 @@ class TMUploadLeadsService
             $tmUploadLead->file_path = $filePath;
 
             $csvTmUploadLeads = new \ParseCsv\Csv();
-            $csvTmUploadLeads->loadFile($request->file('file_name'));
-            $countRows = $csvTmUploadLeads->getTotalDataRowCount();
-            $tmUploadLead->total_records = $countRows;
-            $tmUploadLead->good = $countRows;
-            $tmUploadLead->cannot_upload = "0";
-
-            if($type == "create") {
-                $tmUploadLead->created_by_id = Auth::user()->id;
-            }
-            if($type == "update") {
-                $tmUploadLead->modified_by_id = Auth::user()->id;
-            }
-            $tmUploadLead->save();
 
             $csvTmUploadLeads->auto($request->file('file_name'));
             $empty_field = "";
@@ -147,6 +134,21 @@ class TMUploadLeadsService
 
                 // Link record with TM Lead
             }
+
+            $csvTmUploadLeads->loadFile($request->file('file_name'));
+            $countRows = $csvTmUploadLeads->getTotalDataRowCount();
+            $tmUploadLead->total_records = $countRows;
+            $tmUploadLead->good = $countRows;
+            $tmUploadLead->cannot_upload = "0";
+
+            if($type == "create") {
+                $tmUploadLead->created_by_id = Auth::user()->id;
+            }
+            if($type == "update") {
+                $tmUploadLead->modified_by_id = Auth::user()->id;
+            }
+            $tmUploadLead->save();
+
             return $tmUploadLead->id;
         }
     }
