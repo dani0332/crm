@@ -152,17 +152,14 @@ class TMLeadsService
         return $assignedToUserIdNew;
     }
 
-    public function tmLeadsGetPrioritizeLead($currentUserID)
+    public function tmLeadsGetPrioritizeLead($currentUserID) //
     {
-        $prioritizeLeads = DB::select(DB::raw("SELECT tm_leads.id AS tmLeadId 
-        FROM tm_leads
-        LEFT JOIN tm_lead_statuses ON (tm_leads.tm_lead_statuses_id = tm_lead_statuses.id)
-        WHERE tm_leads.is_deleted=0 
-        AND tm_leads.assigned_to_id = '$currentUserID' 
-        AND tm_lead_statuses.code NOT IN ('NotContactablePE','CarSold','NotEligible','NotInterested','PurchasedBeforeFirstCall'
-        ,'PurchasedFromCompetitor','WrongNumber','DONOTCALL','Duplicate','Recycled','Revived')
-        ORDER BY tm_leads.next_followup_date IS NULL, tm_leads.next_followup_date , tm_leads.created_at  
-        LIMIT 1"));
+        $prioritizeLeads = TmLead::select('tm_leads.id as tmLeadId')
+        ->leftjoin('tm_lead_statuses','tm_leads.tm_lead_statuses_id','tm_lead_statuses.id')
+        ->whereNotIn('tm_lead_statuses.code', ['NotContactablePE','CarSold','NotEligible','NotInterested'
+        ,'PurchasedBeforeFirstCall','PurchasedFromCompetitor','WrongNumber','DONOTCALL','Duplicate','Recycled','Revived'])
+        ->whereRaw('tm_leads.is_deleted=0 AND (tm_leads.next_followup_date IS NULL OR tm_leads.next_followup_date < now()) AND tm_leads.assigned_to_id='.$currentUserID)
+        ->orderByRaw('tm_leads.next_followup_date IS NULL, tm_leads.next_followup_date, tm_leads.created_at')->limit(1)->get();
 
         if(!empty($prioritizeLeads)) {
             foreach($prioritizeLeads as $prioritizeLead)

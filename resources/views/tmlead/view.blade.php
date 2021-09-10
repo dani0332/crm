@@ -26,7 +26,7 @@
                             <label class="col-form-label col-md-2 col-sm-2" for="Search By">Search By</label>
                             <div class="col-md-6 col-sm-6">
                                 <select class="form-control" id="searchType" name="searchType">
-                                    <option value="cdbID">CDB ID</option>
+                                    <option value="cdbID">TM ID</option>
                                     <option value="emailAddress">Email Address</option>
                                     <option value="phoneNumber">Phone Number</option>
                                 </select>
@@ -36,6 +36,30 @@
                             <label class="col-form-label col-md-2 col-sm-2" for="Search Value">Search Value</label>
                             <div class="col-md-6 col-sm-6">
                                 <input type="text" class="form-control" id="searchField" name="searchField" placeholder="Type here...">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="item form-group">
+                        <div class="col">
+                            <label class="col-form-label col-md-2 col-sm-2" for="tm_lead_types_id">Lead Type</label>
+                            <div class="col-md-6 col-sm-6">
+                                <select class="form-control" id="tm_lead_types_id" name="tm_lead_types_id">
+                                    <option value=""></option>
+                                    @foreach ($tmLeadTypes as $tmLeadType)
+                                        <option value="{{ $tmLeadType->id }}">{{ $tmLeadType->text }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <label class="col-form-label col-md-2 col-sm-2" for="tm_insurance_types_id">Insurance Type</label>
+                            <div class="col-md-6 col-sm-6">
+                                <select class="form-control" id="tm_insurance_types_id" name="tm_insurance_types_id">
+                                    <option value=""></option>
+                                    @foreach ($tmInsuranceTypes as $tmInsuranceType)
+                                        <option value="{{ $tmInsuranceType->id }}">{{ $tmInsuranceType->text }}</option>
+                                    @endforeach
+                                </select>
                             </div>
                         </div>
                     </div>
@@ -56,12 +80,12 @@
                             @endif
                         </div>
                         <div class="col">
-                            <label class="col-form-label col-md-2 col-sm-2" for="tm_insurance_types_id">Insurance Type</label>
+                            <label class="col-form-label col-md-2 col-sm-2" for="tm_lead_statuses_id">Lead Status</label>
                             <div class="col-md-6 col-sm-6">
-                                <select class="form-control" id="tm_insurance_types_id" name="tm_insurance_types_id">
+                                <select class="form-control" id="tm_lead_statuses_id" name="tm_lead_statuses_id">
                                     <option value=""></option>
-                                    @foreach ($tmInsuranceTypes as $tmInsuranceType)
-                                        <option value="{{ $tmInsuranceType->id }}">{{ $tmInsuranceType->text }}</option>
+                                    @foreach ($tmLeadStatuses as $tmLeadStatus)
+                                        <option value="{{ $tmLeadStatus->id }}">{{ $tmLeadStatus->text }}</option>
                                     @endforeach
                                 </select>
                             </div>
@@ -123,7 +147,7 @@
                       <thead>
                         <tr>
                           <th>@if($isCurrentUserIsAdvisor == "0")<input type="checkbox" id="checkAllTmLeads" name="checkAllTmLeads" value="">@endif</th>
-                          <th>Id</th>
+                          <th>TM Id</th>
                           <th>Customer Name</th>
                           <th>Insurance Type</th>
                           <th>Lead Type</th>

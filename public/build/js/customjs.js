@@ -978,6 +978,8 @@ $(document).ready(function () {
                 d.searchField = $("input[name=searchField]").val();
                 d.assigned_to_id = $("#assigned_to_id").val();
                 d.tm_insurance_types_id = $("#tm_insurance_types_id").val();
+                d.tm_lead_types_id = $("#tm_lead_types_id").val();
+                d.tm_lead_statuses_id = $("#tm_lead_statuses_id").val();
             },
         },
         columns: [
@@ -999,7 +1001,7 @@ $(document).ready(function () {
             {data: 'customer_name', name: 'customer_name'},
             {data: 'tm_insurance_types_text', name: 'tm_insurance_types_text'},
             {data: 'tm_lead_types_text', name: 'tm_lead_types_text'},
-            {data: 'tm_lead_status_code', name: 'tm_lead_status_code'},
+            {data: 'tm_lead_status_text', name: 'tm_lead_status_text'},
             {data: 'next_followup_date', name: 'next_followup_date'},
             {data: 'handlers_name', name: 'handlers_name'},
             {data: 'created_at', name: 'created_at'},
