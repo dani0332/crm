@@ -6,6 +6,8 @@ $(document).ready(function () {
     $("#transapp_stop_date").datepicker({ dateFormat: "yy-mm-dd" });
     $("#enquiry_date").datepicker({ dateFormat: "yy-mm-dd" }); // TM Leads
     $("#allocation_date").datepicker({ dateFormat: "yy-mm-dd" }); // TM Leads
+    $("#tmLeadsStartDate").datepicker({ dateFormat: "yy-mm-dd" }); // TM Leads
+    $("#tmLeadsEndDate").datepicker({ dateFormat: "yy-mm-dd" }); // TM Leads
     $("#next_followup_date").daterangepicker({ // TM Leads
         timePicker: true,
         singleDatePicker: true,
@@ -965,7 +967,22 @@ $(document).ready(function () {
         ]
     });
 
+    var isCurrentUserIsAdvisor = $("#isCurrentUserIsAdvisor").val();
+    if(isCurrentUserIsAdvisor == 0) {
+        var Bfrtip = 'Bfrtip';
+    }
+    else {
+        var Bfrtip = '';
+    }
+
     var tmLeadsDatatable = $('.tmlead-data-table').DataTable({
+        dom: Bfrtip,
+        "buttons": [{
+            "extend": 'csv',
+            "text": '<i class="fa fa-download" style="color:orange;" id="tm-leads-export"></i>',
+            "titleAttr": 'Download CSV',                               
+            "action": newexportaction
+         }],
         ordering: false,
         info:     false,
         searching:false,
@@ -980,6 +997,8 @@ $(document).ready(function () {
                 d.tm_insurance_types_id = $("#tm_insurance_types_id").val();
                 d.tm_lead_types_id = $("#tm_lead_types_id").val();
                 d.tm_lead_statuses_id = $("#tm_lead_statuses_id").val();
+                d.tmLeadsStartDate = $("#tmLeadsStartDate").val();
+                d.tmLeadsEndDate = $("#tmLeadsEndDate").val();
             },
         },
         columns: [
@@ -1000,8 +1019,10 @@ $(document).ready(function () {
             }},
             {data: 'customer_name', name: 'customer_name'},
             {data: 'tm_insurance_types_text', name: 'tm_insurance_types_text'},
-            {data: 'tm_lead_types_text', name: 'tm_lead_types_text'},
             {data: 'tm_lead_status_text', name: 'tm_lead_status_text'},
+            {data: 'notes', name: 'notes'},
+            {data: 'enquiry_date', name: 'enquiry_date'},
+            {data: 'allocation_date', name: 'allocation_date'},
             {data: 'next_followup_date', name: 'next_followup_date'},
             {data: 'handlers_name', name: 'handlers_name'},
             {data: 'created_at', name: 'created_at'},
@@ -1018,8 +1039,7 @@ $(document).ready(function () {
                 +" "+("0"+d.getHours()).slice(-2)+":"+("0"+d.getMinutes()).slice(-2)+":"+("0"+d.getSeconds()).slice(-2);
 
                 if(currentTimestmap > data.next_followup_date) {
-                    $('td', row).eq(5).css('color', 'red');
-                    $('td', row).eq(6).css('color', 'red');
+                    $('td', row).eq(8).css('color', 'red');
                 }
 
                 console.log("currentTimestmap: "+currentTimestmap);
@@ -1029,16 +1049,108 @@ $(document).ready(function () {
         },
     });
 
+    // TM Leads: Expost data into csv
+    function newexportaction(e, dt, button, config) {
+        var self = this;
+        var oldStart = dt.settings()[0]._iDisplayStart;
+        dt.one('preXhr', function (e, s, data) {
+            data.start = 0;
+            data.length = 2147483647;
+            dt.one('preDraw', function (e, settings) {
+                if (button[0].className.indexOf('buttons-csv') >= 0) {
+
+                    $.fn.dataTable.ext.buttons.csvHtml5.available(dt, config) ?
+                        $.fn.dataTable.ext.buttons.csvHtml5.action.call(self, e, dt, button, config) :
+                        $.fn.dataTable.ext.buttons.csvFlash.action.call(self, e, dt, button, config);
+                }
+                dt.one('preXhr', function (e, s, data) {
+                    settings._iDisplayStart = oldStart;
+                    data.start = oldStart;
+                });
+                setTimeout(dt.ajax.reload, 0);
+                return false;
+            });
+        });
+        dt.ajax.reload();
+    };
+
+    // TM Leads: Search button trigger
+    $("#tm-leads-export").hide();
     $("#search-tm-leads").submit(function (e) {
         e.preventDefault();
         $(".loader").show();
-        tmLeadsDatatable.draw();
-        setTimeout(() => {
-            $(".loader").hide();
-        }, 1000);
+ 
+        var tmLeadsStartDate = $("#tmLeadsStartDate").val();
+        var tmLeadsEndDate = $("#tmLeadsEndDate").val();
+        var searchType = $("#searchType").val();
+
+        if(searchType == "createdAt" || searchType == "updatedAt" || searchType == "nextFollowupDate" 
+        || searchType == "enquiryDate" || searchType == "allocationDate") {
+
+            var date1 = new Date(tmLeadsStartDate);
+            var date2 = new Date(tmLeadsEndDate);
+
+            var time_difference = date2.getTime() - date1.getTime();
+            var daysDiff = time_difference / (1000 * 60 * 60 * 24);
+
+            if((tmLeadsStartDate == "") || (tmLeadsEndDate == "")) {
+                $("#result").html("Please select start & end dates");
+                $('#tmLeadsStartDate').css('border-color', 'red');
+                $('#tmLeadsEndDate').css('border-color', 'red');
+                $("#tm-leads-export").hide();
+
+                setTimeout(() => {
+                    $(".loader").hide();
+                }, 1000);
+                return false
+            }
+            else if(tmLeadsStartDate > tmLeadsEndDate) {
+                $("#result").html("Start date must be equal or less than end date");
+                $('#tmLeadsStartDate').css('border-color', 'red');
+                $('#tmLeadsEndDate').css('border-color', 'red');
+                $("#tm-leads-export").hide();
+
+                setTimeout(() => {
+                    $(".loader").hide();
+                }, 1000);
+                return false
+            }
+            else if(daysDiff > 30) {
+                $("#result").html("Allowed number of days between start and and dates are 30 days.");
+                $('#tmLeadsStartDate').css('border-color', 'red');
+                $('#tmLeadsEndDate').css('border-color', 'red');
+                $("#tm-leads-export").hide();
+
+                setTimeout(() => {
+                    $(".loader").hide();
+                }, 1000);
+                return false
+            }
+            else {
+                tmLeadsDatatable.draw();
+                $("#result").html("");
+                $('#tmLeadsStartDate').css('border-color', '');
+                $('#tmLeadsEndDate').css('border-color', '');
+                $("#tm-leads-export").show();
+                setTimeout(() => {
+                    $(".loader").hide();
+                }, 1000);
+            }
+        }
+        else {
+            tmLeadsDatatable.draw();
+            $("#result").html("");
+            $('#tmLeadsStartDate').css('border-color', '');
+            $('#tmLeadsEndDate').css('border-color', '');
+            $("#tm-leads-export").hide();
+            setTimeout(() => {
+                $(".loader").hide();
+            }, 1000);
+        }
+
     });
 
-    // TM: Select tm leads id and store in hidden field
+    // TM Leads: Select tm leads id and store in hidden field
     $("#checkAllTmLeads").click(function() {
         $('input:checkbox').not(this).prop('checked', this.checked);
 
@@ -1049,7 +1161,7 @@ $(document).ready(function () {
         $('#selectTmLeadId').val(idsArray.replace(/^,|,$/g,''));
     });
 
-    // TM: Select tm leads id and store in hidden field
+    // TM Leads: Select tm leads id and store in hidden field
     $("#tmLeadsAssignToUser").click(function() {
         var tmLeadIDs = [];
         $.each($("input[name='tmLeadID']:checked"), function() {
@@ -1059,7 +1171,7 @@ $(document).ready(function () {
         console.log("tmLeadIDs: " + tmLeadIDs );
     });
 
-    // TM: On check main checkbox, display lead assignment panel
+    // TM Leads: On check main checkbox, display lead assignment panel
     $("#tm-leads-assign-div").hide();
     $("#checkAllTmLeads").click(function() {
         if($(this).is(":checked")) {
@@ -1069,12 +1181,12 @@ $(document).ready(function () {
         }
     });
 
-    // TM: OnClick on phone number ignore redirection
+    // TM Leads: OnClick on phone number ignore redirection
     $("#ignore-redirection").click(function() {
         return false;
     });
 
-    // TM
+    // TM Leads: Display Car fields if insurance type Car is selected
     $("#tm_car_fields").hide();
     tm_type_of_insurance_fields_visibility();
     $('#tm_insurance_types_id').on('change',function(e) {
@@ -1091,7 +1203,7 @@ $(document).ready(function () {
         }
     }
     
-    // TM
+    // TM Leads: Display Followup date conditionally
     $("#next_followup_date_field").hide();
     next_followup_date_field_visibility();
     $('#tm_lead_statuses_id').on("change",function(e) {
@@ -1109,6 +1221,26 @@ $(document).ready(function () {
         }
         else {
             $("#next_followup_date_field").hide();
+        }
+    }
+
+    // TM Leads: Display date fields and search value field conditionally
+    $("#tmLeads-search-value-filter").show();
+    $("#tmLeads-search-start-end-dates-filters").hide();
+    $('#searchType').on("change",function(e) {
+        tmleads_search_start_end_dates_filters_visiblity();
+    });
+    function tmleads_search_start_end_dates_filters_visiblity() {
+        var searchTypeValue = $("#searchType").val();
+        console.log("searchTypeValue: "+searchTypeValue);
+        if(searchTypeValue == "createdAt" || searchTypeValue == "updatedAt" || searchTypeValue == "nextFollowupDate" 
+        || searchTypeValue == "enquiryDate" || searchTypeValue == "allocationDate") {
+            $("#tmLeads-search-start-end-dates-filters").show(300);
+            $("#tmLeads-search-value-filter").hide(300);
+        }
+        else {
+            $("#tmLeads-search-start-end-dates-filters").hide(300);
+            $("#tmLeads-search-value-filter").show(300);
         }
     }
 
