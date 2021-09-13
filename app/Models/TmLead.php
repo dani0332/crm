@@ -12,6 +12,7 @@ class TmLead extends Model implements AuditableContract
 {
     use HasFactory, Auditable;
     protected $table = 'tm_leads';
+    protected $guarded = [];
 
     public function getCreatedAtAttribute($table)
     {

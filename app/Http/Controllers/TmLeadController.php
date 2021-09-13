@@ -76,7 +76,7 @@ class TmLeadController extends Controller
             }
             else {
                 $data->whereNotIn('tm_lead_statuses.code', ['NotContactablePE','CarSold','NotEligible','NotInterested','PurchasedBeforeFirstCall'
-                ,'PurchasedFromCompetitor','WrongNumber','DONOTCALL','Duplicate','Recycled','Revived']);
+                ,'PurchasedFromCompetitor','WrongNumber','DONOTCALL','Duplicate','Recycled','Revived','RevivedByNewBusiness','RevivedByRenewals']);
             }
 
             if (isset($request->searchType) && !empty($request->searchType)

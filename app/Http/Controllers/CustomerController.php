@@ -7,6 +7,7 @@ use DataTables;
 use Illuminate\Http\Request;
 use Config;
 use App\Services\TransAppService;
+use App\Services\CustomerUploadService;
 
 class CustomerController extends Controller
 {
@@ -20,9 +21,10 @@ class CustomerController extends Controller
 
      */
 
-    public function __construct()
+    private $customerUploadCsvService;
+    public function __construct(CustomerUploadService $customerUploadCsvService)
     {
-
+        $this->customerUploadCsvService = $customerUploadCsvService;
         $this->middleware('permission:customers-list', ['only' => ['index', 'store']]);
     }
 
@@ -114,5 +116,26 @@ class CustomerController extends Controller
 
         return back()
             ->with('success', 'Customer has been Updated');
+    }
+
+    /**
+     * Store a newly uploaded customer
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @param \Illuminate\Http\Response
+     */
+    public function processCustomerCSV(Request $request) {
+
+        $this->validate($request, [
+            'file_name' => 'required|mimetypes:text/csv,text/plain,application/csv,text/comma-separated-values,text/anytext,application/octet-stream,application/txt,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet|max:2048',
+        ]);
+
+        $customerUploadID = $this->customerUploadCsvService->customerUploadRecordsCreate($request);
+
+        return redirect("customer-upload")->with('success', 'Upload customers records has been stored');
+    }
+
+    public function uploadCustomers() {
+        return view('customers.upload');
     }
 }
