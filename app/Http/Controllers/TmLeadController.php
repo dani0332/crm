@@ -81,6 +81,14 @@ class TmLeadController extends Controller
                 ,'PurchasedFromCompetitor','WrongNumber','DONOTCALL','Duplicate','Recycled','Revived','RevivedByNewBusiness','RevivedByRenewals']);
             }
 
+            if(isset($request->tm_lead_statuses_id) && !empty($request->tm_lead_statuses_id)) {
+                $data->where('tm_leads.tm_lead_statuses_id', $request->tm_lead_statuses_id);
+            }
+            else {
+                $data->whereNotIn('tm_lead_statuses.code', ['NotContactablePE','CarSold','NotEligible','NotInterested','PurchasedBeforeFirstCall'
+                ,'PurchasedFromCompetitor','WrongNumber','DONOTCALL','Duplicate','Recycled','Revived']);
+            }
+
             if (isset($request->searchType) && !empty($request->searchType)
             && isset($request->searchField) && !empty($request->searchField)) {
                 if($request->searchType == 'cdbID') {
@@ -135,6 +143,9 @@ class TmLeadController extends Controller
             }
             if(isset($request->tm_lead_types_id) && !empty($request->tm_lead_types_id)) {
                 $queryTmLeads->where('tm_leads.tm_lead_types_id', $request->tm_lead_types_id);
+            }
+            if(isset($request->tm_lead_types_id) && !empty($request->tm_lead_types_id)) {
+                $data->where('tm_leads.tm_lead_types_id', $request->tm_lead_types_id);
             }
 
             return Datatables::of($queryTmLeads)
@@ -223,7 +234,7 @@ class TmLeadController extends Controller
             $customerPhoneNo = substr($customerPhoneNo, 3);
             $customerCorrectPhoneNo = "0".$customerPhoneNo;
         }
-        else if(strlen($customerPhoneNo) == 13) { 
+        else if(strlen($customerPhoneNo) == 13) {
             $customerPhoneNo = substr($customerPhoneNo, 0, 4);
 
             if($customerPhoneNo == "9710") { // 9710563264418 13
@@ -234,7 +245,7 @@ class TmLeadController extends Controller
                 $customerCorrectPhoneNo = "0".$customerPhoneNo;
             }
         }
-        else if(strlen($customerPhoneNo) == 14) { 
+        else if(strlen($customerPhoneNo) == 14) {
             $customerPhoneNo = substr($customerPhoneNo, 0, 5);
 
             if($customerPhoneNo == "00971") { // 00971563264418 14
@@ -376,7 +387,7 @@ class TmLeadController extends Controller
             'notes' => 'max:500',
         ]);
 
-        if( (($tmLeadStatusCode == tmLeadStatusCode::NoAnswer || $tmLeadStatusCode == tmLeadStatusCode::SwitchedOff) && $request->no_answer_count < "3") 
+        if( (($tmLeadStatusCode == tmLeadStatusCode::NoAnswer || $tmLeadStatusCode == tmLeadStatusCode::SwitchedOff) && $request->no_answer_count < "3")
         || ($tmLeadStatusCode == tmLeadStatusCode::PipelineNoInfo || $tmLeadStatusCode == tmLeadStatusCode::PipelineImmediate
             || $tmLeadStatusCode == tmLeadStatusCode::PipelineFuture || $tmLeadStatusCode == tmLeadStatusCode::DealingWithAnAdvisor) ) {
             $this->validate($request,[

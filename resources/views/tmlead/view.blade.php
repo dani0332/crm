@@ -7,7 +7,7 @@
             <div class="x_title">
                 <h2>TM Leads</h2>
                 <ul class="nav navbar-right panel_toolbox">
-                    @can('telemarketing-create') 
+                    @can('telemarketing-create')
                     <li><a href="{{ url('telemarketing/tmleads/create') }}" class="btn btn-warning btn-sm">Create TM Lead</a></li>
                     @endcan
                 </ul>
@@ -102,12 +102,12 @@
                             </div>
                         </div>
                         <div class="col">
-                            <label class="col-form-label col-md-2 col-sm-2" for="tm_insurance_types_id">Insurance Type</label>
+                            <label class="col-form-label col-md-2 col-sm-2" for="tm_lead_statuses_id">Lead Status</label>
                             <div class="col-md-6 col-sm-6">
-                                <select class="form-control" id="tm_insurance_types_id" name="tm_insurance_types_id">
+                                <select class="form-control" id="tm_lead_statuses_id" name="tm_lead_statuses_id">
                                     <option value=""></option>
-                                    @foreach ($tmInsuranceTypes as $tmInsuranceType)
-                                        <option value="{{ $tmInsuranceType->id }}">{{ $tmInsuranceType->text }}</option>
+                                    @foreach ($tmLeadStatuses as $tmLeadStatus)
+                                        <option value="{{ $tmLeadStatus->id }}">{{ $tmLeadStatus->text }}</option>
                                     @endforeach
                                 </select>
                             </div>
