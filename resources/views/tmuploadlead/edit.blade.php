@@ -69,13 +69,13 @@
                                 <th>Max size</th></tr>
                             </thead>
                             <tbody>
-                                <tr><td style="text-align: center;">1</td><td>Customer Name</td><td style="width:450px;">Customer Name should only be in letters - no numbers allowed</td><td style="text-align: center;">Yes</td><td style="text-align: center;">50</td></tr>
+                            <tr><td style="text-align: center;">1</td><td>Customer Name</td><td style="width:450px;">Customer Name should only be in letters - no numbers allowed</td><td style="text-align: center;">Yes</td><td style="text-align: center;">50</td></tr>
                                 <tr><td style="text-align: center;">2</td><td>Phone No</td><td style="width:450px;">Customer Phone No </td><td style="text-align: center;">Yes</td><td style="text-align: center;">12</td></tr>
                                 <tr><td style="text-align: center;">3</td><td>Email Id</td><td>Customer Email Id</td><td style="text-align: center;">Yes</td><td style="text-align: center;">30</td></tr>
                                 <tr><td style="text-align: center;">4</td><td>Insurance Type</td><td>Insurance Type description of the lead, must be exact match with Insurance Type List</td><td style="text-align: center;">Yes</td><td style="text-align: center;">30</td></tr>
-                                <tr><td style="text-align: center;">5</td><td>Allocation Date</td><td>Allocation Date must in the format of YYYY-MM-DD </td><td style="text-align: center;">Yes</td><td style="text-align: center;">10</td></tr>
-                                <tr><td style="text-align: center;">6</td><td>Enquiry Date</td><td>Enquiry Date must in the format of YYYY-MM-DD </td><td style="text-align: center;">Yes</td><td style="text-align: center;">10</td></tr>
-                                <tr><td style="text-align: center;">7</td><td>DOB</td><td>DOB must in the format of YYYY-MM-DD </td><td style="text-align: center;">No</td><td style="text-align: center;">10</td></tr>
+                                <tr><td style="text-align: center;">5</td><td>Allocation Date</td><td>Allocation Date must in the format of YYYY-MM-DD (Ex:- 2019-12-14)</td><td style="text-align: center;">Yes</td><td style="text-align: center;">10</td></tr>
+                                <tr><td style="text-align: center;">6</td><td>Enquiry Date</td><td>Enquiry Date must in the format of YYYY-MM-DD (Ex:- 2019-12-14)</td><td style="text-align: center;">Yes</td><td style="text-align: center;">10</td></tr>
+                                <tr><td style="text-align: center;">7</td><td>DOB</td><td>DOB must in the format of YYYY-MM-DD (Ex:- 2019-12-14)</td><td style="text-align: center;">No</td><td style="text-align: center;">10</td></tr>
                                 <tr><td style="text-align: center;">8</td><td>Nationality</td><td>Nationality must be exact match with Nationality List</td><td style="text-align: center;">No</td><td style="text-align: center;">30</td></tr>
                                 <tr><td style="text-align: center;">9</td><td>Years of driving</td><td>Years of driving must be exact match with Years of driving List</td><td style="text-align: center;">No</td><td style="text-align: center;">30</td></tr>
                                 <tr><td style="text-align: center;">10</td><td>Car Make</td><td>Car Make must be exact match with Car Make List</td><td style="text-align: center;">No</td><td style="text-align: center;">30</td></tr>
@@ -85,6 +85,8 @@
                                 <tr><td style="text-align: center;">14</td><td>Car Value </td><td>Car value must be in decimal </td><td style="text-align: center;">No</td><td style="text-align: center;">10</td></tr>
                                 <tr><td style="text-align: center;">15</td><td>Notes</td><td>Additional Notes</td><td style="text-align: center;">No</td><td style="text-align: center;">500</td></tr>
                                 <tr><td style="text-align: center;">16</td><td>Assigned Advisor email</td><td>Advisor Email Id</td><td style="text-align: center;">No</td><td style="text-align: center;">30</td></tr>
+                                <tr><td style="text-align: center;">17</td><td>Followup Date</td><td>Followup Date must in the format of YYYY-MM-DD (Ex:- 2019-12-14)</td><td style="text-align: center;">No</td><td style="text-align: center;">10</td></tr>
+                                <tr><td style="text-align: center;">18</td><td>Followup Time</td><td>Followup Time must in the format of HH:MM:SS (Ex:- 18:38:36)</td><td style="text-align: center;">No</td><td style="text-align: center;">10</td></tr>
                             </tbody>
                             </table>
                         </div>

@@ -18,7 +18,7 @@ use App\Models\UAELicenseHeldFor;
 use App\Models\Emirate;
 use App\Models\CarTypeInsurance;
 use App\Models\TmLeadStatus;
-use App\Imports\TMLeadsImport;
+//use App\Imports\TMLeadsImport;
 use Auth;
 
 class TMLeadsImport implements ToModel
@@ -39,7 +39,7 @@ class TMLeadsImport implements ToModel
         $insuranceType = $row[3];
         $leadType = $row[4];
         $nationality = $row[5];
-        $dob = $row[6];
+        $dob = date("Y-m-d", strtotime($row[6]));
         $yearsOfDriving = $row[7];
         $carManufacturer = $row[8];
         $model = $row[9];
@@ -47,9 +47,19 @@ class TMLeadsImport implements ToModel
         $emiratesOfRegistration = $row[11];
         $carValue = $row[12];
         $notes = $row[13];
-        $enquiryDate = $row[14];
-        $createdDate = $row[15];
+        $enquiryDate = date("Y-m-d", strtotime($row[14]));
+        $createdDate = date("Y-m-d", strtotime($row[15]));
         $advisorEmail = $row[16];
+
+        if($row[17] != "" && $row[18] != "") {
+            $followpDate = date("Y-m-d", strtotime($row[17]));
+            $followpTime = date("H:i:s", strtotime($row[18]));
+            $followpDateTime = $followpDate." ".$followpTime;
+            $followpDateTimeFinal = date("Y-m-d H:i:s", strtotime($followpDateTime));
+        }
+        else {
+            $followpDateTimeFinal = NULL;
+        }
 
         if($customerName != "Customer Name") {
 
@@ -59,12 +69,12 @@ class TMLeadsImport implements ToModel
             else {
                 $tmInsuranceType = $insuranceType; // Non Motor Insurance
             }
-    
+
             $assignUserId = User::where('email', '=', $advisorEmail)->value('id');
 
             $tmLeadTypeId = TmLeadType::where('code', '=', $leadType)->value('id');
             $tmInsuranceTypeId = TmInsuranceType::where('text', '=', $tmInsuranceType)->value('id');
-    
+
             $tmLeadStatusCodeNewLead = tmLeadStatusCode::NewLead;
             $tmLeadStatusID = TmLeadStatus::where('code', '=', $tmLeadStatusCodeNewLead)->value('id');
 
@@ -136,6 +146,7 @@ class TMLeadsImport implements ToModel
                 "years_of_driving_id" => $yearsOfDrivingId,
                 "emirates_of_registration_id" => $emiratesOfRegistrationId,
                 "car_type_insurance_id" => $tmCarInsuranceTypeId,
+                "next_followup_date" => $followpDateTimeFinal,
                 //"tm_upload_leads_id" => $SSSSS,
             ]);
 

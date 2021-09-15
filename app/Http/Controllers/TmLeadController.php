@@ -63,8 +63,8 @@ class TmLeadController extends Controller
             ,'tm_leads.updated_at as updated_at','tm_leads.cdb_id as cdb_id'
             ,'tm_lead_statuses.code as tm_lead_status_code','handlers.name as handlers_name'
             ,'tm_insurance_types.text as tm_insurance_types_text','tm_lead_statuses.text as tm_lead_status_text')
-            ->rightjoin('tm_lead_statuses','tm_leads.tm_lead_statuses_id','tm_lead_statuses.id')
-            ->rightjoin('users as handlers', 'tm_leads.assigned_to_id','handlers.id')
+            ->leftjoin('tm_lead_statuses','tm_leads.tm_lead_statuses_id','tm_lead_statuses.id')
+            ->leftjoin('users as handlers', 'tm_leads.assigned_to_id','handlers.id')
             ->leftjoin('tm_insurance_types', 'tm_leads.tm_insurance_types_id','tm_insurance_types.id')
             ->whereRaw('tm_leads.is_deleted=0')
             ->orderByRaw('tm_leads.next_followup_date IS NULL, tm_leads.next_followup_date, tm_leads.created_at');
@@ -79,14 +79,6 @@ class TmLeadController extends Controller
             else {
                 $queryTmLeads->whereNotIn('tm_lead_statuses.code', ['NotContactablePE','CarSold','NotEligible','NotInterested','PurchasedBeforeFirstCall'
                 ,'PurchasedFromCompetitor','WrongNumber','DONOTCALL','Duplicate','Recycled','Revived','RevivedByNewBusiness','RevivedByRenewals']);
-            }
-
-            if(isset($request->tm_lead_statuses_id) && !empty($request->tm_lead_statuses_id)) {
-                $data->where('tm_leads.tm_lead_statuses_id', $request->tm_lead_statuses_id);
-            }
-            else {
-                $data->whereNotIn('tm_lead_statuses.code', ['NotContactablePE','CarSold','NotEligible','NotInterested','PurchasedBeforeFirstCall'
-                ,'PurchasedFromCompetitor','WrongNumber','DONOTCALL','Duplicate','Recycled','Revived']);
             }
 
             if (isset($request->searchType) && !empty($request->searchType)
