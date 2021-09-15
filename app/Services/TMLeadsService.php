@@ -35,7 +35,7 @@ class TMLeadsService
         $tmLead->email_address = strtolower(trim(ltrim(rtrim($request->email_address))));
         $tmLead->enquiry_date = $request->enquiry_date;
         $tmLead->allocation_date = $request->allocation_date;
-        
+
         if($type == "create") {
             $tmLead->created_by_id = Auth::user()->id;
             $tmLead->modified_by_id = Auth::user()->id;
@@ -93,7 +93,7 @@ class TMLeadsService
         $tmLead = TmLead::find($request->tmLeadId);
 
         if(($tmLeadStatusCode == tmLeadStatusCode::NoAnswer || $tmLeadStatusCode == tmLeadStatusCode::SwitchedOff)
-        && $request->no_answer_count < "3" && $request->next_followup_date != "" 
+        && $request->no_answer_count < "3" && $request->next_followup_date != ""
         && $request->next_followup_date != $tmLead->next_followup_date) {
             $no_answer_count = $tmLead->no_answer_count + 1;
             $tmLead->no_answer_count = $no_answer_count;
@@ -113,7 +113,7 @@ class TMLeadsService
 
             if( ($CurrentTmLeadStatusCode == tmLeadStatusCode::NoAnswer || $CurrentTmLeadStatusCode == tmLeadStatusCode::SwitchedOff
             || $CurrentTmLeadStatusCode == tmLeadStatusCode::PipelineNoInfo || $CurrentTmLeadStatusCode == tmLeadStatusCode::PipelineImmediate || $tmLeadStatusCode == tmLeadStatusCode::PipelineFuture
-            || $CurrentTmLeadStatusCode == tmLeadStatusCode::DealingWithAnAdvisor) 
+            || $CurrentTmLeadStatusCode == tmLeadStatusCode::DealingWithAnAdvisor)
             && ($tmLeadStatusCode != tmLeadStatusCode::NoAnswer && $tmLeadStatusCode != tmLeadStatusCode::SwitchedOff
             && $tmLeadStatusCode != tmLeadStatusCode::PipelineNoInfo && $tmLeadStatusCode != tmLeadStatusCode::PipelineImmediate && $tmLeadStatusCode != tmLeadStatusCode::PipelineFuture
             || $tmLeadStatusCode != tmLeadStatusCode::DealingWithAnAdvisor) ) {
@@ -123,8 +123,8 @@ class TMLeadsService
             $tmLead->tm_lead_statuses_id = $request->tm_lead_statuses_id;
         }
 
-        if($request->next_followup_date != "" 
-            && $request->next_followup_date != $tmLead->next_followup_date 
+        if($request->next_followup_date != ""
+            && $request->next_followup_date != $tmLead->next_followup_date
             && ($tmLeadStatusCode == tmLeadStatusCode::NoAnswer || $tmLeadStatusCode == tmLeadStatusCode::SwitchedOff
             || $tmLeadStatusCode == tmLeadStatusCode::PipelineNoInfo || $tmLeadStatusCode == tmLeadStatusCode::PipelineImmediate || $tmLeadStatusCode == tmLeadStatusCode::PipelineFuture
             || $tmLeadStatusCode == tmLeadStatusCode::DealingWithAnAdvisor)) {
@@ -157,14 +157,15 @@ class TMLeadsService
         $prioritizeLeads = TmLead::select('tm_leads.id as tmLeadId')
         ->leftjoin('tm_lead_statuses','tm_leads.tm_lead_statuses_id','tm_lead_statuses.id')
         ->whereNotIn('tm_lead_statuses.code', ['NotContactablePE','CarSold','NotEligible','NotInterested'
-        ,'PurchasedBeforeFirstCall','PurchasedFromCompetitor','WrongNumber','DONOTCALL','Duplicate','Recycled','Revived'])
+        ,'PurchasedBeforeFirstCall','PurchasedFromCompetitor','WrongNumber','DONOTCALL','Duplicate'
+        ,'Recycled','Revived','RevivedByNewBusiness','RevivedByRenewals'])
         ->whereRaw('tm_leads.is_deleted=0 AND (tm_leads.next_followup_date IS NULL OR tm_leads.next_followup_date < now()) AND tm_leads.assigned_to_id='.$currentUserID)
         ->orderByRaw('tm_leads.next_followup_date IS NULL, tm_leads.next_followup_date, tm_leads.created_at')->limit(1)->get();
 
         if(!empty($prioritizeLeads)) {
             foreach($prioritizeLeads as $prioritizeLead)
             {
-                $prioritizeLeadId = $prioritizeLead->tmLeadId; 
+                $prioritizeLeadId = $prioritizeLead->tmLeadId;
             }
         }
         else {

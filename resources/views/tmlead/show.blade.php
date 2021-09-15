@@ -20,7 +20,6 @@ use App\Enums\tmInsuranceTypeCode;
                     <div class="alert alert-success">{{ session()->get('success') }}</div>
                 @endif
                 <form id="demo-form2" method='post' action="" enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left">
-                {{-- <form id="demo-form2" method='post' action="{{ route('tmleads.update', ['tmlead' => $tmlead->id]) }}" enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left">--}}
                 {{csrf_field()}}
                 @method('PUT')
                     <div class="item form-group">
@@ -87,10 +86,7 @@ use App\Enums\tmInsuranceTypeCode;
                             </div>
                         </div>
                         <div class="col">
-                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="Uploaded from File"><b>Uploaded from File</b></label>
-                            <div class="col-md-6 col-sm-6">
-                            <p class="label-align-center"><a href="/telemarketing/tmuploadlead/{{ $tmlead->tmuploadleads ? $tmlead->tmuploadleads->id : '' }}">{{ $tmlead->tmuploadleads ? $tmlead->tmuploadleads->file_name : '' }}</a></p>
-                            </div>
+
                         </div>
                     </div>
                     @if ($tmInsuranceTypeCode)

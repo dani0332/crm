@@ -181,7 +181,8 @@ return [
         Yajra\DataTables\DataTablesServiceProvider::class,
         Spatie\Permission\PermissionServiceProvider::class,
         OwenIt\Auditing\AuditingServiceProvider::class,
-        Spatie\Fractal\FractalServiceProvider::class
+        Spatie\Fractal\FractalServiceProvider::class,
+        Maatwebsite\Excel\ExcelServiceProvider::class,
 
     ],
 
@@ -237,6 +238,7 @@ return [
         'View' => Illuminate\Support\Facades\View::class,
         'Socialite' => Laravel\Socialite\Facades\Socialite::class,
         'DataTables' => Yajra\DataTables\Facades\DataTables::class,
+        'Excel' => Maatwebsite\Excel\Facades\Excel::class,
 
     ],
 

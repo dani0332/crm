@@ -57,18 +57,28 @@ class TmLeadController extends Controller
         }
 
         if ($request->ajax()) {
-            $data = TmLead::select('tm_leads.*','tm_lead_statuses.code as tm_lead_status_code','handlers.name as handlers_name'
-            ,'tm_insurance_types.text as tm_insurance_types_text','tm_lead_types.text as tm_lead_types_text'
-            ,'tm_lead_statuses.text as tm_lead_status_text')
-            ->leftjoin('tm_lead_types','tm_leads.tm_lead_types_id','tm_lead_types.id')
-            ->leftjoin('tm_lead_statuses','tm_leads.tm_lead_statuses_id','tm_lead_statuses.id')
-            ->leftjoin('users as handlers', 'tm_leads.assigned_to_id','handlers.id')
+            $queryTmLeads = TmLead::select('tm_leads.id as id','tm_leads.customer_name as customer_name'
+            ,'tm_leads.notes as notes','tm_leads.enquiry_date as enquiry_date','tm_leads.allocation_date as allocation_date'
+            ,'tm_leads.next_followup_date as next_followup_date','tm_leads.created_at as created_at'
+            ,'tm_leads.updated_at as updated_at','tm_leads.cdb_id as cdb_id'
+            ,'tm_lead_statuses.code as tm_lead_status_code','handlers.name as handlers_name'
+            ,'tm_insurance_types.text as tm_insurance_types_text','tm_lead_statuses.text as tm_lead_status_text')
+            ->rightjoin('tm_lead_statuses','tm_leads.tm_lead_statuses_id','tm_lead_statuses.id')
+            ->rightjoin('users as handlers', 'tm_leads.assigned_to_id','handlers.id')
             ->leftjoin('tm_insurance_types', 'tm_leads.tm_insurance_types_id','tm_insurance_types.id')
-            ->whereRaw('tm_leads.is_deleted=0 AND (tm_leads.next_followup_date IS NULL OR tm_leads.next_followup_date < now())')
+            ->whereRaw('tm_leads.is_deleted=0')
             ->orderByRaw('tm_leads.next_followup_date IS NULL, tm_leads.next_followup_date, tm_leads.created_at');
 
             if(Auth::user()->hasRole('TM_ADVISOR')) {
-                $data->where('tm_leads.assigned_to_id', Auth::user()->id);
+                $queryTmLeads->where('tm_leads.assigned_to_id', Auth::user()->id);
+            }
+
+            if(isset($request->tm_lead_statuses_id) && !empty($request->tm_lead_statuses_id)) {
+                $queryTmLeads->where('tm_leads.tm_lead_statuses_id', $request->tm_lead_statuses_id);
+            }
+            else {
+                $queryTmLeads->whereNotIn('tm_lead_statuses.code', ['NotContactablePE','CarSold','NotEligible','NotInterested','PurchasedBeforeFirstCall'
+                ,'PurchasedFromCompetitor','WrongNumber','DONOTCALL','Duplicate','Recycled','Revived','RevivedByNewBusiness','RevivedByRenewals']);
             }
 
             if(isset($request->tm_lead_statuses_id) && !empty($request->tm_lead_statuses_id)) {
@@ -82,37 +92,63 @@ class TmLeadController extends Controller
             if (isset($request->searchType) && !empty($request->searchType)
             && isset($request->searchField) && !empty($request->searchField)) {
                 if($request->searchType == 'cdbID') {
-                    $data->where('tm_leads.cdb_id',$request->searchField);
+                    $queryTmLeads->where('tm_leads.cdb_id',$request->searchField);
                 }
                 else if($request->searchType == 'emailAddress') {
-                    $data->where('tm_leads.email_address',$request->searchField);
+                    $queryTmLeads->where('tm_leads.email_address',$request->searchField);
                 }
                 else if($request->searchType == 'phoneNumber') {
-                    $data->where('tm_leads.phone_number',$request->searchField);
+                    $queryTmLeads->where('tm_leads.phone_number',$request->searchField);
                 }
                 else {
-                    $data->where($request->searchType, $request->searchField);
+                    $queryTmLeads->where($request->searchType, $request->searchField);
+                }
+            }
+            if (isset($request->searchType) && !empty($request->searchType)
+            && isset($request->tmLeadsStartDate) && !empty($request->tmLeadsStartDate)
+            && isset($request->tmLeadsEndDate) && !empty($request->tmLeadsEndDate)) {
+
+                if($request->tmLeadsEndDate >= $request->tmLeadsStartDate) {
+                    if($request->searchType == 'createdAt') {
+                        $searchDateColumn = "created_at";
+                    }
+                    if($request->searchType == 'updatedAt') {
+                        $searchDateColumn = "updated_at";
+                    }
+                    if($request->searchType == 'nextFollowupDate') {
+                        $searchDateColumn = "next_followup_date";
+                    }
+                    if($request->searchType == 'enquiryDate') {
+                        $searchDateColumn = "enquiry_date";
+                    }
+                    if($request->searchType == 'allocationDate') {
+                        $searchDateColumn = "allocation_date";
+                    }
+                    $queryTmLeads->whereRaw('DATE(tm_leads.'.$searchDateColumn.') BETWEEN "'.$request->tmLeadsStartDate.'" AND "'.$request->tmLeadsEndDate.'"');
                 }
             }
             if(isset($request->assigned_to_id) && !empty($request->assigned_to_id)) {
                 if($request->assigned_to_id == "Unassigned") {
-                    $data->where('tm_leads.assigned_to_id', '=', '')->orWhereNull('tm_leads.assigned_to_id');
+                    $queryTmLeads->where('tm_leads.assigned_to_id', '=', '')->orWhereNull('tm_leads.assigned_to_id');
                 }
                 else if($request->assigned_to_id == "MyLeads") {
-                    $data->where('tm_leads.assigned_to_id', Auth::user()->id);
+                    $queryTmLeads->where('tm_leads.assigned_to_id', Auth::user()->id);
                 }
                 else {
-                    $data->where('tm_leads.assigned_to_id', $request->assigned_to_id);
+                    $queryTmLeads->where('tm_leads.assigned_to_id', $request->assigned_to_id);
                 }
             }
             if(isset($request->tm_insurance_types_id) && !empty($request->tm_insurance_types_id)) {
-                $data->where('tm_leads.tm_insurance_types_id', $request->tm_insurance_types_id);
+                $queryTmLeads->where('tm_leads.tm_insurance_types_id', $request->tm_insurance_types_id);
+            }
+            if(isset($request->tm_lead_types_id) && !empty($request->tm_lead_types_id)) {
+                $queryTmLeads->where('tm_leads.tm_lead_types_id', $request->tm_lead_types_id);
             }
             if(isset($request->tm_lead_types_id) && !empty($request->tm_lead_types_id)) {
                 $data->where('tm_leads.tm_lead_types_id', $request->tm_lead_types_id);
             }
 
-            return Datatables::of($data)
+            return Datatables::of($queryTmLeads)
                 ->addIndexColumn()
                 ->addColumn('action', function ($row) {
                     return view('tmlead.actions', compact('row'))->render();
@@ -198,7 +234,7 @@ class TmLeadController extends Controller
             $customerPhoneNo = substr($customerPhoneNo, 3);
             $customerCorrectPhoneNo = "0".$customerPhoneNo;
         }
-        else if(strlen($customerPhoneNo) == 13) { 
+        else if(strlen($customerPhoneNo) == 13) {
             $customerPhoneNo = substr($customerPhoneNo, 0, 4);
 
             if($customerPhoneNo == "9710") { // 9710563264418 13
@@ -209,7 +245,7 @@ class TmLeadController extends Controller
                 $customerCorrectPhoneNo = "0".$customerPhoneNo;
             }
         }
-        else if(strlen($customerPhoneNo) == 14) { 
+        else if(strlen($customerPhoneNo) == 14) {
             $customerPhoneNo = substr($customerPhoneNo, 0, 5);
 
             if($customerPhoneNo == "00971") { // 00971563264418 14
@@ -351,7 +387,7 @@ class TmLeadController extends Controller
             'notes' => 'max:500',
         ]);
 
-        if( (($tmLeadStatusCode == tmLeadStatusCode::NoAnswer || $tmLeadStatusCode == tmLeadStatusCode::SwitchedOff) && $request->no_answer_count < "3") 
+        if( (($tmLeadStatusCode == tmLeadStatusCode::NoAnswer || $tmLeadStatusCode == tmLeadStatusCode::SwitchedOff) && $request->no_answer_count < "3")
         || ($tmLeadStatusCode == tmLeadStatusCode::PipelineNoInfo || $tmLeadStatusCode == tmLeadStatusCode::PipelineImmediate
             || $tmLeadStatusCode == tmLeadStatusCode::PipelineFuture || $tmLeadStatusCode == tmLeadStatusCode::DealingWithAnAdvisor) ) {
             $this->validate($request,[

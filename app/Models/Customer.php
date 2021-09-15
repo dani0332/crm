@@ -11,6 +11,7 @@ class Customer extends Model implements AuditableContract
 {
     use HasFactory, Auditable;
     protected $table = 'customer';
+    protected $guarded = [];  
 
     public function nationality()
     {

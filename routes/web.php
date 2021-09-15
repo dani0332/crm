@@ -72,6 +72,9 @@ Route::middleware(['auth'])->get('/home', function() {
 Route::group(['middleware' =>  ['auth']], function() {
 
     Route::resource('customer', CustomerController::class);
+    Route::get('/customer-upload', [CustomerController::class, 'uploadCustomers']);
+    Route::post('/customer-process', [CustomerController::class, 'processCustomerCSV']);
+
     Route::get('/dashboard',[DashboardController::class, 'index'])->name('dashboard');
 
     Route::post('dashboard-stats', [DashboardController::class, 'dashboardStats']);
