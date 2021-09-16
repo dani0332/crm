@@ -25,7 +25,7 @@
                             <select class="form-control" id="tm_lead_types_id" name="tm_lead_types_id" data-toggle="tooltip" data-placement="top" title="Please select lead type">
                             <option value=""></option>
                             @foreach($tmLeadTypes as $tmLeadType)
-                                <option value="{{$tmLeadType->id}}" 
+                                <option value="{{$tmLeadType->id}}"
                                 {{ $tmLeadType->id == old('tm_lead_types_id',$tmlead->tm_lead_types_id) ? 'selected' : ''}}>
 		                        {{ $tmLeadType->text }}
                                 </option>
@@ -68,7 +68,7 @@
                             <select class="form-control" id="tm_insurance_types_id" name="tm_insurance_types_id" data-toggle="tooltip" data-placement="top" title="Please select insurance type">
                             <option value=""></option>
                             @foreach($tmInsuranceTypes as $tmInsuranceType)
-                                <option value="{{$tmInsuranceType->id}}" data-id="{{ $tmInsuranceType->code }}" 
+                                <option value="{{$tmInsuranceType->id}}" data-id="{{ $tmInsuranceType->code }}"
                                 {{ $tmInsuranceType->id == old('tm_insurance_types_id',$tmlead->tm_insurance_types_id) ? 'selected' : ''}}>
 		                        {{ $tmInsuranceType->text }}
                                 </option>
@@ -95,6 +95,17 @@
                             @endif
                         </div>
                     </div>
+                    <div id="tm_dob_field">
+                        <div class="item form-group">
+                            <div class="col">
+                                <span class="col-form-label col-md-6 col-sm-6">Date of Birth</span>
+                                <input type="text" id="dob" name="dob" value="{{ old('dob', $tmlead->dob) }}" class="form-control" data-toggle="tooltip" data-placement="top" title="Please select date of birth">
+                            </div>
+                            <div class="col">
+
+                            </div>
+                        </div>
+                    </div>
                     <div id="tm_car_fields">
                     <div class="item form-group">
                         <div class="col">
@@ -102,7 +113,7 @@
                             <select class="form-control" id="car_type_insurance_id" name="car_type_insurance_id" data-toggle="tooltip" data-placement="top" title="Please select car type of insurance">
                             <option value=""></option>
                             @foreach($carTypeInsurances as $carTypeInsurance)
-                                <option value="{{$carTypeInsurance->id}}" 
+                                <option value="{{$carTypeInsurance->id}}"
                                 {{ $carTypeInsurance->id == old('car_type_insurance_id',$tmlead->car_type_insurance_id) ? 'selected' : ''}}>
 		                        {{ $carTypeInsurance->text }}
                                 </option>
@@ -114,7 +125,7 @@
                             <select class="form-control" id="years_of_driving_id" name="years_of_driving_id" data-toggle="tooltip" data-placement="top" title="Please select years of driving">
                             <option value=""></option>
                             @foreach($yearsOfDrivings as $yearsOfDriving)
-                                <option value="{{$yearsOfDriving->id}}" 
+                                <option value="{{$yearsOfDriving->id}}"
                                 {{ $yearsOfDriving->id == old('years_of_driving_id',$tmlead->years_of_driving_id) ? 'selected' : ''}}>
 		                        {{ $yearsOfDriving->text }}
                                 </option>
@@ -128,7 +139,7 @@
                             <select class="form-control" id="car_make_id" name="car_make_id" data-toggle="tooltip" data-placement="top" title="Please select car make">
                             <option value=""></option>
                             @foreach($carMakes as $carMake)
-                                <option value="{{$carMake->id}}" data-id="{{ $carMake['code'] }}" 
+                                <option value="{{$carMake->id}}" data-id="{{ $carMake['code'] }}"
                                 {{ $carMake->id == old('car_make_id',$tmlead->car_make_id) ? 'selected' : ''}}>
                                 {{ $carMake->text }}
                                 </option>
@@ -140,7 +151,7 @@
                             <input type="hidden" value="{{ $tmlead->car_model_id }}" id="old_car_model_id" />
                             <select class="form-control" id="car_model_id" name="car_model_id" data-toggle="tooltip" data-placement="top" title="Please select car model">
                             @foreach($carModels as $carModel)
-                                <option value="{{$carModel->id}}" data-id="{{ $carModel['code'] }}" 
+                                <option value="{{$carModel->id}}" data-id="{{ $carModel['code'] }}"
                                 {{ $carModel->id == old('car_model_id',$tmlead->car_model_id) ? 'selected' : ''}}>
                                 {{ $carModel->text }}
                                 </option>
@@ -185,7 +196,7 @@
                             <select class="form-control" id="emirates_of_registration_id" name="emirates_of_registration_id" data-toggle="tooltip" data-placement="top" title="Please select emirates of registration">
                             <option value=""></option>
                             @foreach($emiratesOfRegistrations as $emiratesOfRegistration)
-                                <option value="{{$emiratesOfRegistration->id}}" 
+                                <option value="{{$emiratesOfRegistration->id}}"
                                 {{ $emiratesOfRegistration->id == old('emirates_of_registration_id',$tmlead->emirates_of_registration_id) ? 'selected' : ''}}>
 		                        {{ $emiratesOfRegistration->text }}
                                 </option>
@@ -203,7 +214,7 @@
                             <select class="form-control" id="nationality_id" name="nationality_id" data-toggle="tooltip" data-placement="top" title="Please select nationality">
                             <option value=""></option>
                             @foreach($nationalities as $nationality)
-                                <option value="{{$nationality->id}}" 
+                                <option value="{{$nationality->id}}"
                                 {{ $nationality->id == old('nationality_id',$tmlead->nationality_id) ? 'selected' : ''}}>
 		                        {{ $nationality->text }}
                                 </option>

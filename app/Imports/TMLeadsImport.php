@@ -2,7 +2,6 @@
 
 namespace App\Imports;
 
-use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Concerns\ToModel;
 use App\Enums\tmInsuranceTypeCode;
 use App\Enums\carTypeInsuranceCode;
@@ -18,7 +17,6 @@ use App\Models\UAELicenseHeldFor;
 use App\Models\Emirate;
 use App\Models\CarTypeInsurance;
 use App\Models\TmLeadStatus;
-//use App\Imports\TMLeadsImport;
 use Auth;
 
 class TMLeadsImport implements ToModel
@@ -88,7 +86,6 @@ class TMLeadsImport implements ToModel
                 $yearsOfDrivingId = UAELicenseHeldFor::where('code', '=', $yearsOfDriving)->value('id');
                 $emiratesOfRegistrationId = Emirate::where('code', '=', $emiratesOfRegistration)->value('id');
 
-                $dob = $dob;
                 $yearOfManufacture = $yearOfManufacture;
                 $carValue = $carValue;
                 $carModelId = $carModelId;
@@ -114,7 +111,6 @@ class TMLeadsImport implements ToModel
             }
 
             if($tmInsuranceTypeCode != tmInsuranceTypeCode::Car) {
-                $dob = NULL;
                 $yearOfManufacture = NULL;
                 $carValue = NULL;
                 $carModelId = NULL;
@@ -123,6 +119,14 @@ class TMLeadsImport implements ToModel
                 $yearsOfDrivingId = NULL;
                 $emiratesOfRegistrationId = NULL;
                 $tmCarInsuranceTypeId = NULL;
+            }
+
+            if($tmInsuranceTypeCode == tmInsuranceTypeCode::Car || $tmInsuranceTypeCode == tmInsuranceTypeCode::Bike
+            || $tmInsuranceTypeCode == tmInsuranceTypeCode::Life || $tmInsuranceTypeCode == tmInsuranceTypeCode::Health) {
+                $dob = $dob;
+            }
+            else {
+                $dob = NULL;
             }
 
             $newTmLead = new TmLead([

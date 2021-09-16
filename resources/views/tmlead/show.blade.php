@@ -86,7 +86,15 @@ use App\Enums\tmInsuranceTypeCode;
                             </div>
                         </div>
                         <div class="col">
-
+                            @if ($tmInsuranceTypeCode)
+                            @if ($tmInsuranceTypeCode == tmInsuranceTypeCode::Car || $tmInsuranceTypeCode == tmInsuranceTypeCode::Bike
+                            || $tmInsuranceTypeCode == tmInsuranceTypeCode::Life || $tmInsuranceTypeCode == tmInsuranceTypeCode::Health)
+                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="DOB"><b>DOB</b></label>
+                            <div class="col-md-6 col-sm-6">
+                            <p class="label-align-center">{{ $tmlead->dob }}</p>
+                            </div>
+                            @endif
+                            @endif
                         </div>
                     </div>
                     @if ($tmInsuranceTypeCode)
@@ -214,7 +222,7 @@ use App\Enums\tmInsuranceTypeCode;
                             <select class="form-control" id="tm_lead_statuses_id" name="tm_lead_statuses_id" data-toggle="tooltip" data-placement="top" title="Please select lead status">
                             <option value=""></option>
                             @foreach($tmLeadStatuses as $tmLeadStatus)
-                                <option value="{{$tmLeadStatus->id}}" data-id="{{ $tmLeadStatus->code }}" 
+                                <option value="{{$tmLeadStatus->id}}" data-id="{{ $tmLeadStatus->code }}"
                                 {{ $tmLeadStatus->id == old('tm_lead_statuses_id',$tmlead->tm_lead_statuses_id) ? 'selected' : ''}}>
 		                        {{ $tmLeadStatus->text }}
                                 </option>

@@ -1,3 +1,6 @@
+<?php
+$appName = Config::get('constants.APP_NAME');
+?>
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -7,7 +10,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="icon" type="image/png" href="{{ asset('image/favicon.ico') }}">
-    <title>@yield('title') | MyAlfredCrm</title>
+    <title>@yield('title') | <?php echo $appName; ?></title>
     <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
     <!-- Bootstrap -->
     <link href="{{ asset('vendors/bootstrap/dist/css/bootstrap.min.css') }}" rel="stylesheet">
@@ -153,7 +156,7 @@
         // global app configuration object
         var config = {
             routes: {
-                partner_datatable_route: "{{ route('partner.index') }}", 
+                partner_datatable_route: "{{ route('partner.index') }}",
                 user_datatable_route:"{{ route('users.index') }}",
                 role_datatable_route:"{{ route('roles.index') }}",
                 carquote_datatable_route:"{{ route('carquotes.index') }}",

@@ -7,10 +7,8 @@ use Illuminate\Http\Request;
 use DataTables;
 use Auth;
 use DB;
-use App\Enums\tmInsuranceTypeCode;
 use App\Enums\tmLeadStatusCode;
 use App\Services\TMLeadsService;
-use App\Models\TmCallStatus;
 use App\Models\TmInsuranceType;
 use App\Models\TmLeadStatus;
 use App\Models\Nationality;
@@ -75,10 +73,6 @@ class TmLeadController extends Controller
 
             if(isset($request->tm_lead_statuses_id) && !empty($request->tm_lead_statuses_id)) {
                 $queryTmLeads->where('tm_leads.tm_lead_statuses_id', $request->tm_lead_statuses_id);
-            }
-            else {
-                $queryTmLeads->whereNotIn('tm_lead_statuses.code', ['NotContactablePE','CarSold','NotEligible','NotInterested','PurchasedBeforeFirstCall'
-                ,'PurchasedFromCompetitor','WrongNumber','DONOTCALL','Duplicate','Recycled','Revived','RevivedByNewBusiness','RevivedByRenewals']);
             }
 
             if (isset($request->searchType) && !empty($request->searchType)

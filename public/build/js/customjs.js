@@ -8,6 +8,7 @@ $(document).ready(function() {
     $("#allocation_date").datepicker({ dateFormat: "yy-mm-dd" }); // TM Leads
     $("#tmLeadsStartDate").datepicker({ dateFormat: "yy-mm-dd" }); // TM Leads
     $("#tmLeadsEndDate").datepicker({ dateFormat: "yy-mm-dd" }); // TM Leads
+    $("#dob").datepicker({ dateFormat: "yy-mm-dd" }); // TM Leads
     $("#next_followup_date").daterangepicker({ // TM Leads
         timePicker: true,
         singleDatePicker: true,
@@ -1239,6 +1240,7 @@ $(document).ready(function() {
 
     // TM Leads: Display Car fields if insurance type Car is selected
     $("#tm_car_fields").hide();
+    $("#tm_dob_field").hide();
     tm_type_of_insurance_fields_visibility();
     $('#tm_insurance_types_id').on('change', function(e) {
         tm_type_of_insurance_fields_visibility();
@@ -1251,6 +1253,13 @@ $(document).ready(function() {
             $("#tm_car_fields").show();
         } else {
             $("#tm_car_fields").hide();
+        }
+
+        if (tm_insurance_types_id_code == 'Car' || tm_insurance_types_id_code == 'Bike'
+        || tm_insurance_types_id_code == 'Life' || tm_insurance_types_id_code == 'Health') {
+            $("#tm_dob_field").show();
+        } else {
+            $("#tm_dob_field").hide();
         }
     }
 
