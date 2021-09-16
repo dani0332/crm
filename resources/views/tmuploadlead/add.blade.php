@@ -47,7 +47,7 @@
                         Download Sample CSV <a href="https://myalfreddev.blob.core.windows.net/myrewards/4D621049-AB8F-2C0F-55B9-DB9DC74BD2C0_TestTeleLead.csv"><img src="https://i.ibb.co/cv5WptT/csv.png" alt="csv" border="0" /></a>
                     </div>
                     <div class="item form-group">
-                        <span class="required"><b>Imporant Note:</b> Please download the sample csv file and modify the data by following the recommendations for a successful import.</span>
+                        <span class="required"><b>Important Note:</b> Please download the sample csv file and modify the data according to the recommendations for a successful import.</span>
                     </div>
                     <div class="item form-group">
 
