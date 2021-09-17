@@ -41,5 +41,14 @@ return [
     ],
     'car_quote_kyc' => [
         'model' => CarQuoteKyc::class
+    ],
+    'kyc_logs' => [
+        'model' => KycLog::class
+    ],
+    'car_quote_aml_status' => [
+        'model' => CarQuoteAMLStatus::class
+    ],
+    'car_quote_aml_status_lookup' => [
+        'model' => CarQuoteAMLStatusLookup::class
     ]
 ];

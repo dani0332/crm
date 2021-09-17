@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use App\Models\BaseModel;
 use App\Models\CarQuote;
 use Auth;
-use App\Jobs\MailServiceJob;
+use App\Jobs\FTCMailServiceJob;
 
 class CarQuoteKYCStatus extends BaseModel
 {
@@ -46,23 +46,31 @@ class CarQuoteKYCStatus extends BaseModel
             if($status  == "1") { // request additional document
                 $carQuote = CarQuote::where(['id' => $request->input('car_quote_id', -1), 'pa_id' => Auth::user()->id])->get()->first();
                 if($carQuote) {
+
                     $templateParams = [
                         'notes' => $request->input('notes', ""),
                         "first_name" => $carQuote->first_name,
                         "last_name" => $carQuote->last_name,
                         "code" => $carQuote->code
                     ];
+
                     $advisorEmail = $carQuote->advisor_id()->get()->first()->email;
-                    $params = [
-                        'to' => $advisorEmail,
-                        'subject' => 'Required Additional Document - CDB-ID:'.$carQuote->code,
-                        'templateName' => 'notification',
-                        'templateParams' => $templateParams
-                    ];
-                    dispatch(new MailServiceJob($params));
+                    if($advisorEmail) {
+                        $params = [
+                            'to' => $advisorEmail,
+                            'subject' => 'Required Additional Document - CDB-ID:'.$carQuote->code,
+                            'templateName' => 'notification',
+                            'templateParams' => $templateParams
+                        ];
+                        dispatch(new FTCMailServiceJob($params));
+                    }
                 }
             }
-            parent::saveForm($request, false);
+            if($carQuote){
+                $carQuote->kyc_status_id = $status;
+                $carQuote->save();
+            }
+            parent::saveForm($request, $update);
         }else{
             return ['data' => false];
         }

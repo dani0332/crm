@@ -11,9 +11,6 @@ const {control, handleSubmit, formState: { errors } } = useForm();
 const onSubmit = data => search(cleanDeep(data))
 
   const { role , id} = session()
-  console.log('----filter-----')
-  console.log(filter)
-  console.log('----filter-----')
 
   return (
     <form onSubmit={handleSubmit(onSubmit)}>

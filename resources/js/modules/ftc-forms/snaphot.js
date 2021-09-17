@@ -1,4 +1,4 @@
-import React, {  useRef, useReducer, useState } from "react";
+import React, {  useRef, useReducer, useEffect } from "react";
 import styled from "styled-components";
 import SubNaV from "../../components/sub-nav";
 import { useParams } from "react-router-dom";
@@ -7,8 +7,11 @@ import { config } from "../../utils";
 import ReviewSend from "./review-send";
 import KycForm from "./kyc-form";
 import AssignUser from "./assign-user";
-import { session } from "../../utils";
+import { session, getLocalStorage } from "../../utils";
+import Overview from "./overview";
 const Styles = styled.div``;
+
+
 function LeadSnapShot(props) {
 
 let paramRef = useRef();
@@ -28,29 +31,36 @@ function reducer(state, action) {
         return  { form: 'ftcHistory',  view_mode: 'list',action_type: 'list' , context: 'car_quote_snap', filter: { car_quote_id: paramRef.current.id} }
       case 'email_template':
         return  { data: action.state, form: 'email_template' }
-      case 'kyc':
+      case 'overview':
+        return  { data: action.state, form: 'overview' }
+    case 'kyc':
         return  { data: action.state, form: 'kyc' }
       case 'assign':
         return  { data: action.state, form: 'assign' }
     }
 }
 
+useEffect(() => {
+    console.log('**************Snapshot--useEffect************')
+}, []);
+
 const { role, id, email } = session()
-const [form, dispatch] = useReducer(reducer, { form: 'leadAttachment', view_mode: 'list',action_type: 'list' ,  context: 'car_quote_snap'});
-
-// useEffect(() => {
-//     console.log('**************Snapshot--useEffect************')
-// }, [form.form]);
-
-
+const [form, dispatch] = useReducer(reducer, { form: 'overview', view_mode: 'list',action_type: 'list' ,  context: 'car_quote_snap'});
 console.log('**************Snapshot.js************')
 console.log(form)
 
 const leftNavList = [
     {
+        icon:'fa fa-file-text-o',
+        label:'Overview',
+        active: 1,
+        id: 8,
+        data: 'overview'
+    },
+    {
         icon:'fa fa-upload',
         label:'Upload Documents',
-        active: 1,
+        active: 0,
         id: 1,
         data: 'document'
     },
@@ -98,9 +108,6 @@ const leftNavList = [
  }
 ]
 
-//if(role === 'pa')
- //   leftNavList.push({icon:'fa fa-line-chart', label:'Assign', active: 0, id: 8, data: 'assign'})
-
 const onSelect = async (obj) => {
 
     const { data } = obj
@@ -128,6 +135,9 @@ switch(form?.form){
     case 'assign':
         formArr.push( <AssignUser filter={{ car_quote_id: paramRef.current.id }}  email={email} />)
         break
+    case 'overview':
+        formArr.push( <Overview filter={{ car_quote_id: paramRef.current.id }} />)
+        break
     default:
         formArr.push( <ManageListFormView form={form} />)
         break
@@ -142,11 +152,6 @@ return (
             <div className="col-md-10 col-sm-10 ">
                 <div className="">
                     {formArr}
-                    {/* {form?.form === 'email_template' ? (
-                        <ReviewSend dispatch={dispatch} data={form.data} />
-                    ):(
-                        <ManageListFormView form={form} />
-                    )} */}
                 </div>
             </div>
       </div>

@@ -47,6 +47,16 @@ export default function ReviewSend(props) {
 
 
     return(
+
+        <div className="row">
+        <div className="col-md-12">
+        <div className="x_panel">
+            <div className="x_title">
+                <h2>Review & Send <small>Preview FTC Email</small></h2>
+                <div className="clearfix"></div>
+            </div>
+            <div className="x_content">
+                <div className="clearfix"></div>
         <div className="offset-md-2 col-md-7 hidden-small">
             { data?.vehicle_detail_id && data?.insurance_coverage && data?.car_quote_kyc &&
             <div className="pull-right">
@@ -215,5 +225,7 @@ export default function ReviewSend(props) {
                     </tbody>
             </table>
         </div>
+            </div></div></div></div>
+
     )
 }
