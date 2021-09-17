@@ -130,9 +130,6 @@ class TmLeadController extends Controller
             if(isset($request->tm_lead_types_id) && !empty($request->tm_lead_types_id)) {
                 $queryTmLeads->where('tm_leads.tm_lead_types_id', $request->tm_lead_types_id);
             }
-            if(isset($request->tm_lead_types_id) && !empty($request->tm_lead_types_id)) {
-                $data->where('tm_leads.tm_lead_types_id', $request->tm_lead_types_id);
-            }
 
             return Datatables::of($queryTmLeads)
                 ->addIndexColumn()

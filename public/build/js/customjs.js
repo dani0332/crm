@@ -1099,6 +1099,11 @@ $(document).ready(function() {
                 console.log('next_followup_date: ' + data.next_followup_date);
             }
         },
+        drawCallback: function(settings) {
+            var api = new $.fn.dataTable.Api(settings);
+            console.log( "TotalTmLeadsss: ",api.rows().data().length );
+            $("#totalLeads").text("Total Leads: "+api.rows().data().length);
+        }
     });
 
     // TM Leads: Expost data into csv
