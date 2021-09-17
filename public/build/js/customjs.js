@@ -4,10 +4,14 @@ $(document).ready(function() {
     $("#datepicker_2").datepicker({ dateFormat: "yy-mm-dd" });
     $("#transapp_start_date").datepicker({ dateFormat: "yy-mm-dd" });
     $("#transapp_stop_date").datepicker({ dateFormat: "yy-mm-dd" });
-    $("#enquiry_date").datepicker({ dateFormat: "yy-mm-dd" }); // TM Leads
-    $("#allocation_date").datepicker({ dateFormat: "yy-mm-dd" }); // TM Leads
-    $("#tmLeadsStartDate").datepicker({ dateFormat: "yy-mm-dd" }); // TM Leads
-    $("#tmLeadsEndDate").datepicker({ dateFormat: "yy-mm-dd" }); // TM Leads
+
+    $("#enquiry_date, #allocation_date, #tmLeadsStartDate, #tmLeadsEndDate, #dob").datepicker({ // TM Leads
+        changeMonth: true,
+        changeYear: true,
+        dateFormat: "yy-mm-dd",
+        yearRange: "-20:+00"
+    });
+
     $("#next_followup_date").daterangepicker({ // TM Leads
         timePicker: true,
         singleDatePicker: true,
@@ -16,9 +20,6 @@ $(document).ready(function() {
         locale: {
             format: 'YYYY-MM-DD HH:mm:ss'
         }
-    }, function(start, end, label) {
-        var years = moment().diff(start, 'years');
-        console.log("You are " + years + " years old!");
     });
     $('#search-valuation').validate({
         rules: {
@@ -1102,6 +1103,11 @@ $(document).ready(function() {
                 console.log('next_followup_date: ' + data.next_followup_date);
             }
         },
+        drawCallback: function(settings) {
+            var api = new $.fn.dataTable.Api(settings);
+            console.log("TotalTmLeadsss: ", api.rows().data().length);
+            $("#totalLeads").text("Total Leads: " + api.rows().data().length);
+        }
     });
 
     // TM Leads: Expost data into csv
@@ -1222,6 +1228,18 @@ $(document).ready(function() {
         console.log("tmLeadIDs: " + tmLeadIDs);
     });
 
+    // TM: Selecting a single record should also enable manual allocation
+    $(document).on("change", "#tmLeadID", function() {
+        var countSelectedTmLeadIds = document.querySelectorAll('#tmLeadID:checked').length;
+        console.log(countSelectedTmLeadIds);
+        if (countSelectedTmLeadIds > 0) {
+            $("#tm-leads-assign-div").show(300);
+        } else {
+            $('#checkAllTmLeads').prop('checked', false);
+            $("#tm-leads-assign-div").hide(300);
+        }
+    });
+
     // TM Leads: On check main checkbox, display lead assignment panel
     $("#tm-leads-assign-div").hide();
     $("#checkAllTmLeads").click(function() {
@@ -1239,6 +1257,7 @@ $(document).ready(function() {
 
     // TM Leads: Display Car fields if insurance type Car is selected
     $("#tm_car_fields").hide();
+    $("#tm_dob_field").hide();
     tm_type_of_insurance_fields_visibility();
     $('#tm_insurance_types_id').on('change', function(e) {
         tm_type_of_insurance_fields_visibility();
@@ -1251,6 +1270,13 @@ $(document).ready(function() {
             $("#tm_car_fields").show();
         } else {
             $("#tm_car_fields").hide();
+        }
+
+        if (tm_insurance_types_id_code == 'Car' || tm_insurance_types_id_code == 'Bike' ||
+            tm_insurance_types_id_code == 'Life' || tm_insurance_types_id_code == 'Health') {
+            $("#tm_dob_field").show();
+        } else {
+            $("#tm_dob_field").hide();
         }
     }
 
@@ -1348,18 +1374,6 @@ $(document).ready(function() {
             },
         });
     });
-
-    // dateRangePickerChange("", "");
-    // $(".applyBtn, .ranges li").click(function () {
-    //     $(".loader").show();
-    //     setTimeout(() => {
-    //         var date = $("#reportrange span").html();
-    //         var dateAsArray = date.split("-");
-    //         var startDate = moment(dateAsArray[0]).format("YYYY-MM-DD");
-    //         var endDate = moment(dateAsArray[1]).format("YYYY-MM-DD");
-    //         dateRangePickerChange(startDate, endDate);
-    //     }, 1000);
-    // });
 
     $("#return_to_view").click(function(e) {
         e.preventDefault();

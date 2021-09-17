@@ -96,6 +96,17 @@
                             @endif
                         </div>
                     </div>
+                    <div id="tm_dob_field">
+                        <div class="item form-group">
+                            <div class="col">
+                                <span class="col-form-label col-md-6 col-sm-6">Date of Birth</span>
+                                <input type="text" id="dob" name="dob" value="{{ old('dob') }}" class="form-control" data-toggle="tooltip" data-placement="top" title="Please select date of birth">
+                            </div>
+                            <div class="col">
+
+                            </div>
+                        </div>
+                    </div>
                     <div id="tm_car_fields">
                     <div class="item form-group">
                         <div class="col">

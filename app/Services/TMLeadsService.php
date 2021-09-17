@@ -3,11 +3,7 @@
 namespace App\Services;
 use App\Models\TmLead;
 use App\Models\TmInsuranceType;
-use App\Models\TmCallStatus;
 use App\Models\TmLeadStatus;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Http;
-use Config;
 use Illuminate\Http\Request;
 use App\Enums\tmInsuranceTypeCode;
 use App\Enums\tmLeadStatusCode;
@@ -54,7 +50,6 @@ class TMLeadsService
         $tmLead->tm_insurance_types_id = $request->tm_insurance_types_id;
 
         if($tmInsuranceTypeCode == tmInsuranceTypeCode::Car) {
-            $tmLead->dob = $request->dob;
             $tmLead->year_of_manufacture = $request->year_of_manufacture;
             $tmLead->car_value = $request->car_value;
             $tmLead->car_model_id = $request->car_model_id;
@@ -66,7 +61,6 @@ class TMLeadsService
         }
 
         if($tmInsuranceTypeCode != tmInsuranceTypeCode::Car) {
-            $tmLead->dob = NULL;
             $tmLead->year_of_manufacture = NULL;
             $tmLead->car_value = NULL;
             $tmLead->car_model_id = NULL;
@@ -75,6 +69,13 @@ class TMLeadsService
             $tmLead->years_of_driving_id = NULL;
             $tmLead->emirates_of_registration_id = NULL;
             $tmLead->car_type_insurance_id = NULL;
+        }
+        if($tmInsuranceTypeCode == tmInsuranceTypeCode::Car || $tmInsuranceTypeCode == tmInsuranceTypeCode::Bike
+        || $tmInsuranceTypeCode == tmInsuranceTypeCode::Life || $tmInsuranceTypeCode == tmInsuranceTypeCode::Health) {
+            $tmLead->dob = $request->dob;
+        }
+        else {
+            $tmLead->dob = NULL;
         }
 
         $tmLead->save();

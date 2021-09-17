@@ -102,12 +102,12 @@
                             </div>
                         </div>
                         <div class="col">
-                            <label class="col-form-label col-md-2 col-sm-2" for="tm_lead_statuses_id">Lead Status</label>
+                            <label class="col-form-label col-md-2 col-sm-2" for="tm_insurance_types_id">Insurance Type</label>
                             <div class="col-md-6 col-sm-6">
-                                <select class="form-control" id="tm_lead_statuses_id" name="tm_lead_statuses_id">
+                                <select class="form-control" id="tm_insurance_types_id" name="tm_insurance_types_id">
                                     <option value=""></option>
-                                    @foreach ($tmLeadStatuses as $tmLeadStatus)
-                                        <option value="{{ $tmLeadStatus->id }}">{{ $tmLeadStatus->text }}</option>
+                                    @foreach ($tmInsuranceTypes as $tmInsuranceType)
+                                        <option value="{{ $tmInsuranceType->id }}">{{ $tmInsuranceType->text }}</option>
                                     @endforeach
                                 </select>
                             </div>
@@ -163,6 +163,7 @@
                 <input type="hidden" id="selectTmLeadId" name="selectTmLeadId" value="">
                 <input type="hidden" id="isCurrentUserIsAdvisor" name="isCurrentUserIsAdvisor" value="{{ $isCurrentUserIsAdvisor }}">
                 <table class="table table-striped jambo_table tmlead-data-table" style="width:100%">
+                    <label id="totalLeads" style="font-weight: bold;margin-left: 18px;"></label>
                       <thead>
                         <tr>
                           <th>@if($isCurrentUserIsAdvisor == "0")<input type="checkbox" id="checkAllTmLeads" name="checkAllTmLeads" value="">@endif</th>
