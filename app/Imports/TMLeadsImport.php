@@ -67,12 +67,10 @@ class TMLeadsImport implements ToModel
             else {
                 $tmInsuranceType = $insuranceType; // Non Motor Insurance
             }
-
             $assignUserId = User::where('email', '=', $advisorEmail)->value('id');
 
             $tmLeadTypeId = TmLeadType::where('code', '=', $leadType)->value('id');
             $tmInsuranceTypeId = TmInsuranceType::where('text', '=', $tmInsuranceType)->value('id');
-
             $tmLeadStatusCodeNewLead = tmLeadStatusCode::NewLead;
             $tmLeadStatusID = TmLeadStatus::where('code', '=', $tmLeadStatusCodeNewLead)->value('id');
 

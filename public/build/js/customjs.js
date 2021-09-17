@@ -6,7 +6,11 @@ $(document).ready(function() {
     $("#transapp_stop_date").datepicker({ dateFormat: "yy-mm-dd" });
 
     $("#enquiry_date, #allocation_date, #tmLeadsStartDate, #tmLeadsEndDate, #dob").datepicker({ // TM Leads
-        changeMonth: true,changeYear: true,dateFormat: "yy-mm-dd",yearRange: "-20:+00"});
+        changeMonth: true,
+        changeYear: true,
+        dateFormat: "yy-mm-dd",
+        yearRange: "-20:+00"
+    });
 
     $("#next_followup_date").daterangepicker({ // TM Leads
         timePicker: true,
@@ -1101,8 +1105,8 @@ $(document).ready(function() {
         },
         drawCallback: function(settings) {
             var api = new $.fn.dataTable.Api(settings);
-            console.log( "TotalTmLeadsss: ",api.rows().data().length );
-            $("#totalLeads").text("Total Leads: "+api.rows().data().length);
+            console.log("TotalTmLeadsss: ", api.rows().data().length);
+            $("#totalLeads").text("Total Leads: " + api.rows().data().length);
         }
     });
 
@@ -1228,10 +1232,9 @@ $(document).ready(function() {
     $(document).on("change", "#tmLeadID", function() {
         var countSelectedTmLeadIds = document.querySelectorAll('#tmLeadID:checked').length;
         console.log(countSelectedTmLeadIds);
-        if(countSelectedTmLeadIds > 0) {
+        if (countSelectedTmLeadIds > 0) {
             $("#tm-leads-assign-div").show(300);
-        }
-        else {
+        } else {
             $('#checkAllTmLeads').prop('checked', false);
             $("#tm-leads-assign-div").hide(300);
         }
@@ -1269,8 +1272,8 @@ $(document).ready(function() {
             $("#tm_car_fields").hide();
         }
 
-        if (tm_insurance_types_id_code == 'Car' || tm_insurance_types_id_code == 'Bike'
-        || tm_insurance_types_id_code == 'Life' || tm_insurance_types_id_code == 'Health') {
+        if (tm_insurance_types_id_code == 'Car' || tm_insurance_types_id_code == 'Bike' ||
+            tm_insurance_types_id_code == 'Life' || tm_insurance_types_id_code == 'Health') {
             $("#tm_dob_field").show();
         } else {
             $("#tm_dob_field").hide();

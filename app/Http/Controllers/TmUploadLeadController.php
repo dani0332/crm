@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use DataTables;
 use Config;
 use App\Services\TMUploadLeadsService;
+use App\Imports\TMLeadsImport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class TmUploadLeadController extends Controller
 {
