@@ -5,10 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\TmUploadLead;
 use Illuminate\Http\Request;
 use DataTables;
-use Config;
 use App\Services\TMUploadLeadsService;
 use App\Imports\TMLeadsImport;
-use Maatwebsite\Excel\Facades\Excel;
+use Auth;
 
 class TmUploadLeadController extends Controller
 {
@@ -66,9 +65,36 @@ class TmUploadLeadController extends Controller
             'file_name' => 'required|mimetypes:text/csv,text/plain,application/csv,text/comma-separated-values,text/anytext,application/octet-stream,application/txt|max:2048',
         ]);
 
-        $tmUploadLeadID = $this->teleMarketingUploadLeadsService->tmUploadLeadsCreateUpdate($request,"create",$tmUploadLeadID="");
+        if ($request->hasFile('file_name')) {
 
-        return redirect("telemarketing/tmuploadlead/".$tmUploadLeadID)->with('success', 'Upload TM Leads file has been stored');
+            $tmLeadsImport = new TMLeadsImport;
+            $fileNameOriginal = $request->file_name->getClientOriginalName();
+            $fileNameAzure = get_guid().'_'.$fileNameOriginal;
+            $filePathAzure = $request->file('file_name')->storeAs('/', $fileNameAzure, 'azure');
+
+            $tmLeadsImport->import(request()->file('file_name'));
+
+            //Excel::import($tmLeadsImport,request()->file('file_name'));
+            $countRows = $tmLeadsImport->getRowCount();
+            $countErrors = $tmLeadsImport->failures()->count();
+
+            $tmUploadLead = new TmUploadLead();
+            $tmUploadLead->file_name = $fileNameOriginal;
+            $tmUploadLead->file_path = $filePathAzure;
+            $tmUploadLead->total_records = $countRows;
+            $tmUploadLead->good = $countRows;
+            $tmUploadLead->cannot_upload = $countErrors;
+            $tmUploadLead->created_by_id = Auth::user()->id;
+            $tmUploadLead->save();
+
+            if ($tmLeadsImport->failures()->isNotEmpty()) {
+                return back()->withFailures($tmLeadsImport->failures());
+            }
+        }
+
+        //$tmUploadLeadID = $this->teleMarketingUploadLeadsService->tmUploadLeadsCreateUpdate($request,"create",$tmUploadLeadID="");
+
+        return redirect("telemarketing/tmuploadlead/".$tmUploadLead->id)->with('success', 'Upload TM Leads file has been stored');
     }
 
     /**
@@ -122,20 +148,5 @@ class TmUploadLeadController extends Controller
         $tmuploadlead->is_deleted = 1;
         $tmuploadlead->save();
         return redirect()->route("tmuploadlead.index")->with("message", "Upload TM Leads file has been deleted");
-    }
-
-    public function tmUploadLeadsProcess($tmUploadLeadId)
-    {
-        $tmUploadLeadFile = TmUploadLead::where('id', '=', $tmUploadLeadId)->value('file_path');
-        $tmUploadLeadFile = Config::get('constants.azure_storage_url').'myrewards/'.$tmUploadLeadFile;
-        $tmUploadLeadFile = file($tmUploadLeadFile);
-
-        //$csvTmUploadLeads = new \ParseCsv\Csv();
-        //$csvTmUploadLeads->parseFile($tmUploadLeadFile);
-        //$csvTmUploadLeads->loadFile($tmUploadLeadFile);
-        //$csvTmUploadLeads->auto($tmUploadLeadFile);
-
-        //dd($csvTmUploadLeads);
-        //return $csvTmUploadLeads;
     }
 }
