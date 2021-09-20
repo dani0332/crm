@@ -46,7 +46,7 @@ class CreateQuoteCustomers implements ShouldQueue
         Log::channel('daily')->info($getAllCustomers->count().' Customers fetched based on criteria in the CreateQuoteCustomers job');
         foreach($getAllCustomers as $customer) {
             Log::channel('daily')->info('Saving quote customer having Customer Id-> '.$customer->id.' , CDB Id ->'. $cdbId);
-            
+
             $customerExists = CreateQuoteCustomers::findQuoteCustomerById($customer->id);
             if($customerExists->first()) {
                 return;

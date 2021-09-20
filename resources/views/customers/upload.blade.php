@@ -13,6 +13,9 @@
                 @if(session()->has('success'))
                     <div class="alert alert-success">{{ session()->get('success') }}</div>
                 @endif
+                @if(session()->has('message'))
+                    <div class="alert alert-danger">{{ session()->get('message') }}</div>
+                @endif
                 <form id="demo-form2" method='post' action="{{ url('customer-process') }}" enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left" autocomplete="off">
                 {{csrf_field()}}
                     <div class="item form-group">
@@ -27,7 +30,7 @@
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="cdbId">CDB ID <span class="required">*</span></label>
                         <div class="col-md-6 col-sm-6">
-                            <input type="text" id="cdb_id" name="cdb_id" class="form-control form-control-sm" placeholder="CDB ID" />
+                            <input type="text" id="cdb_id" name="cdb_id" value="{{ old('cdb_id') }}" class="form-control form-control-sm" placeholder="CDB ID" />
                             @if ($errors->has('cdb_id'))
                                 <span class="text-danger">{{ $errors->first('cdb_id') }}</span>
                             @endif
@@ -36,7 +39,7 @@
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="myalfredExpiryDate">myAlfred Expiry Date <span class="required">*</span></label>
                         <div class="col-md-6 col-sm-6">
-                            <input type="date" id="myalfred_expiry_date" name="myalfred_expiry_date" class="form-control form-control-sm"  />
+                            <input type="date" id="myalfred_expiry_date"  value="{{ old('myalfred_expiry_date') }}"  name="myalfred_expiry_date" class="form-control form-control-sm"  />
                             @if ($errors->has('myalfred_expiry_date'))
                                 <span class="text-danger">{{ $errors->first('myalfred_expiry_date') }}</span>
                             @endif
