@@ -3,30 +3,32 @@
 namespace App\Services;
 
 use App\Imports\CustomersImport;
-use DateTime;
-use App\Http\Controllers\BulkEmailProcessController;
+use App\Jobs\RewardsBulkWEJob;
+use App\Jobs\CreateQuoteCustomers;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Config;
 
 class CustomerUploadService
 {
     public function customerUploadRecordsCreate(Request $request)
     {
-        if ($request->hasFile('file_name')) {
+        if ($request->hasFile('file_name')
+            && $request->has('cdb_id')) {
+            $dateTimeFormat = Config::get('contacts.cu_datetime_format');
             
-            $dateFrom = new DateTime();
-            $dateFrom = $dateFrom->format('Y-m-d H:i:s');
-            
-            Excel::import(new CustomersImport, $request->file('file_name')->getLinkTarget());
-            
-            $dateTo = new DateTime();
-            $dateTo = $dateTo->format('Y-m-d H:i:s');
+            $dateFrom = date($dateTimeFormat);
 
-            $request->dateFrom = $dateFrom;
-            $request->dateTo = $dateTo;
+            Excel::import(new CustomersImport($request->myalfred_expiry_date), $request->file('file_name'));
+            
+            $dateTo = date($dateTimeFormat);
 
-            $sendBulkEmail = new BulkEmailProcessController();
-            $sendBulkEmail->ProcessBulkWelcomeEmails($request);
+            // dispatch(new RewardsBulkWEJob(json_encode($request), $dateTo, $dateFrom));
+
+            Log::channel('daily')->info('Executing Job for creating quote customers having data ---> '.$dateFrom. '| Date To '. $dateTo);
+            dispatch(new CreateQuoteCustomers($dateFrom, $dateTo, $request->cdb_id));
+
         }
 
         return 1;

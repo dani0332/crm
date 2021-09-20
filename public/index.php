@@ -45,6 +45,7 @@ require __DIR__.'/../vendor/autoload.php';
 */
 
 $app = require_once __DIR__.'/../bootstrap/app.php';
+ini_set('memory_limit', '-1');
 
 $kernel = $app->make(Kernel::class);
 
