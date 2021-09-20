@@ -124,6 +124,11 @@ class CarQuote extends BaseModel
         return $this->hasOne(PaymentStatus::class, 'id', 'payment_status_id');
     }
 
+    public function kyc_status_id()
+    {
+        return $this->hasOne(KycStatus::class, 'id', 'kyc_status_id');
+    }
+
     public function quote_status_id()
     {
         return $this->hasOne(QuoteStatus::class, 'id', 'quote_status_id');
@@ -158,7 +163,7 @@ class CarQuote extends BaseModel
         if($this->isGetList)
             return [];
         else
-            return ["insurance_coverage.insurance_company_id", "insurance_coverage.insurance_plan_id", "insurance_coverage.vehicle_type_id", "uae_license_held_for_id", "car_make_id", "car_model_id", "emirate_of_registration_id", "claim_history_id",  "nationality_id", "vehicle_detail_id", "pa_id", "car_quote_kyc"];
+            return ["quote_status_id", "kyc_status_id", "insurance_coverage.insurance_company_id", "insurance_coverage.insurance_plan_id", "insurance_coverage.vehicle_type_id", "uae_license_held_for_id", "car_make_id", "car_model_id", "emirate_of_registration_id", "claim_history_id",  "nationality_id", "vehicle_detail_id", "pa_id", "car_quote_kyc"];
     }
 
     public $access = [
@@ -173,16 +178,16 @@ class CarQuote extends BaseModel
             "invoicing" => [ 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'created_at','car_value']
         ],
         "list" => [
-            "pa" => [ 'id','code', 'first_name', 'last_name',  'created_at', "pa_id"],
-            "advisor" => [ 'id','code', 'first_name', 'last_name',  'created_at', "pa_id"],
-            "admin" => [ 'id','code', 'first_name', 'last_name',  'created_at'],
-            "invoicing" => [ 'id','code', 'first_name', 'last_name',  'created_at' ]
+            "pa" => [ 'id','code', 'first_name', 'last_name',  'created_at', "pa_id", "kyc_status_id","quote_status_id","aml_status"],
+            "advisor" => [ 'id','code', 'first_name', 'last_name',  'created_at', "pa_id", "kyc_status_id","quote_status_id","aml_status"],
+            "admin" => [ 'id','code', 'first_name', 'last_name',  'created_at', "kyc_status_id","quote_status_id","aml_status"],
+            "invoicing" => [ 'id','code', 'first_name', 'last_name',  'created_at' , "kyc_status_id","quote_status_id","aml_status"]
         ],
         "detail" => [
-            "pa" => [ 'id','code', 'dob','first_name', 'last_name', 'email', 'mobile_no','Year_of_manufacture', 'created_at', "car_make_id", "car_model_id", "emirate_of_registration_id", "claim_history_id",  "nationality_id","uae_license_held_for_id", "pa_id"],
-            "advisor" => [ 'id','code','dob', 'first_name', 'last_name', 'email', 'mobile_no', 'Year_of_manufacture', 'created_at', "car_make_id", "car_model_id", "emirate_of_registration_id", "claim_history_id",  "nationality_id","uae_license_held_for_id", "pa_id"],
-            "admin" => [ 'id','code', 'dob','first_name', 'last_name', 'email', 'mobile_no', 'Year_of_manufacture', 'created_at', "car_make_id", "car_model_id", "emirate_of_registration_id", "claim_history_id",  "nationality_id","uae_license_held_for_id", "pa_id"],
-            "invoicing" => [ 'id','code','dob', 'first_name', 'last_name', 'email', 'mobile_no','Year_of_manufacture', 'created_at', "car_make_id", "car_model_id", "emirate_of_registration_id", "claim_history_id",  "nationality_id","uae_license_held_for_id", "pa_id"],
+            "pa" => [ 'id','code', 'dob','first_name', 'last_name', 'email', 'mobile_no','Year_of_manufacture',"kyc_status_id","quote_status_id", 'created_at', "car_make_id", "car_model_id", "emirate_of_registration_id", "claim_history_id",  "nationality_id","uae_license_held_for_id", "pa_id","aml_status"],
+            "advisor" => [ 'id','code','dob', 'first_name', 'last_name', 'email', 'mobile_no', 'Year_of_manufacture',"kyc_status_id","quote_status_id", 'created_at', "car_make_id", "car_model_id", "emirate_of_registration_id", "claim_history_id",  "nationality_id","uae_license_held_for_id", "pa_id","aml_status"],
+            "admin" => [ 'id','code', 'dob','first_name', 'last_name', 'email', 'mobile_no', 'Year_of_manufacture',"kyc_status_id","quote_status_id", 'created_at', "car_make_id", "car_model_id", "emirate_of_registration_id", "claim_history_id",  "nationality_id","uae_license_held_for_id", "pa_id","aml_status"],
+            "invoicing" => [ 'id','code','dob', 'first_name', 'last_name', 'email', 'mobile_no','Year_of_manufacture',"kyc_status_id","quote_status_id", 'created_at', "car_make_id", "car_model_id", "emirate_of_registration_id", "claim_history_id",  "nationality_id","uae_license_held_for_id", "pa_id","aml_status"],
         ]
     ];
 
@@ -208,14 +213,13 @@ class CarQuote extends BaseModel
                 }else{
                     $pa_id = $filters["pa_id"] == 0 ? NULL : Auth::user()->id;
                     $restrictFilter["pa_id"] = $pa_id;
-                    $restrictFilter["kyc_status"] = 1; // show only completed
+                    $restrictFilter["advisor_id"] = ["op" => "<>", "val" => ''];
+                    $restrictFilter["quote_status_id"] =  1; // show only completed
                 }
 
             }
-
             if(empty($restrictFilter))
                 return [];
-
             return parent::processGetBaseDSL($restrictFilter, false);
       }
     }

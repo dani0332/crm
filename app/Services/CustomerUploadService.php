@@ -3,8 +3,7 @@
 namespace App\Services;
 
 use App\Imports\CustomersImport;
-use DateTime;
-use App\Http\Controllers\BulkEmailProcessController;
+use App\Models\BusinessQuote;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Http\Request;
 
@@ -12,23 +11,14 @@ class CustomerUploadService
 {
     public function customerUploadRecordsCreate(Request $request)
     {
-        if ($request->hasFile('file_name')) {
-            
-            $dateFrom = new DateTime();
-            $dateFrom = $dateFrom->format('Y-m-d H:i:s');
-            
-            Excel::import(new CustomersImport, $request->file('file_name')->getLinkTarget());
-            
-            $dateTo = new DateTime();
-            $dateTo = $dateTo->format('Y-m-d H:i:s');
-
-            $request->dateFrom = $dateFrom;
-            $request->dateTo = $dateTo;
-
-            $sendBulkEmail = new BulkEmailProcessController();
-            $sendBulkEmail->ProcessBulkWelcomeEmails($request);
+        $businessQuote = BusinessQuote::where('code', '=', $request->cdb_id)->get();
+        if(!$businessQuote->isEmpty()){
+            if ($request->hasFile('file_name') && $request->has('cdb_id')) {
+                Excel::import(new CustomersImport($request->myalfred_expiry_date, $request->cdb_id), $request->file('file_name'));
+            }
+            return 1;
+        }else {
+            return 0;
         }
-
-        return 1;
     }
 }

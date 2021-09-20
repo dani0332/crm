@@ -15,6 +15,7 @@ class BaseModel extends Model implements AuditableContract
     use SoftDeletes;
 
     public $isGetList = false;
+    public $APIController = null;
 
     public function processGetBaseDSL($filters = [],  $table = true) {
 
@@ -47,7 +48,7 @@ class BaseModel extends Model implements AuditableContract
 
 
     }
-    public function saveForm($request, $update = false) {
+    public function saveForm($request, $update) {
 
         $role = strtolower(Auth::user()->usersroles[0]->name);
         $input = $request->all();
@@ -100,7 +101,7 @@ class BaseModel extends Model implements AuditableContract
 
     private function table($filters){
 
-        $role = 'advisor';
+        $role =  strtolower(Auth::user()->usersroles[0]->name);//'advisor';
         $collection = collect($this->access);
         $access = collect($collection->get('list'));
         if(!$access->has($role))
@@ -112,7 +113,10 @@ class BaseModel extends Model implements AuditableContract
             ->select($access->toArray())
             ->where(function($query) use($filters) {
                 foreach($filters as $key => $value) {
-                    $query->where($key,$value);
+                    if (is_array($value))
+                        $query->where($key,$value['op'],$value['val']);
+                    else
+                        $query->where($key,$value);
                 }
             })
             ->get();
@@ -121,7 +125,7 @@ class BaseModel extends Model implements AuditableContract
 
     private function relation($filters){
 
-        $role = 'advisor';
+        $role = strtolower(Auth::user()->usersroles[0]->name);//'advisor';
         $collection = collect($this->access);
         $access = collect($collection->get('list'));
         if(!$access->has($role))
@@ -130,21 +134,24 @@ class BaseModel extends Model implements AuditableContract
             $access = collect($collection->get('list')[$role]);
 
        if(!$this->isGetList && $collection->get('detail'))
-             $access = collect($collection->get('detail')[$role]);
+            $access = collect($collection->get('detail')[$role]);
 
-    //   DB::enableQueryLog();
+       //DB::enableQueryLog();
         $response =  self::with($this->relations())
         ->select($access->toArray())
         ->where(function($query) use($filters) {
             foreach($filters as $key => $value) {
-                $query->where($key,$value);
+                if (is_array($value))
+                    $query->where($key,$value['op'],$value['val']);
+                else
+                    $query->where($key,$value);
             }
         })
         ->get();
 
          //dd($response);exit;
-         //$query = DB::getQueryLog();
-       // dd($query);exit;
+        // $query = DB::getQueryLog();
+        //dd($query);exit;
         return $response;
     }
 }

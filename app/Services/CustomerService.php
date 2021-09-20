@@ -44,4 +44,12 @@ class CustomerService extends BaseService
         $customer->has_reward_access = true;
         $customer->save();
     }
+
+    public static function getAllCustomers($from, $to) {
+        $from = date($from);
+        $to = date($to);
+        return Customer::whereBetween('created_at', [$from, $to])
+            ->where([ 'has_alfred_access' => 1, 'has_reward_access' => 1 ])
+            ->get();
+    }
 }

@@ -2,8 +2,7 @@
 import { delay, takeEvery, put, select, fork, call } from 'redux-saga/effects'
 import { sendRequest } from './request'
 import { getFormObjForDraw } from '../forms_dsl'
-import { date } from 'yup'
-
+import { getFormHook }  from '../form-hooks'
 
 
 export const getVisibleForm = (state) => state.visibleForm
@@ -26,9 +25,18 @@ function* processRequest(obj) {
     request.body = JSON.stringify(body)
 
     try {
-        yield sendRequest(url, request)
+        const response = yield sendRequest(url, request)
         manageListDispatch({ type: 'showLoader', obj:{ loader: false} })
-       yield processVisibleFormStates( {...obj, formState: 'list' } )
+        if( response?.code === 500 || response?.code === 400 ) {
+            yield put({ type: 'MessageShow', obj:{ title: 'ERROR', message: 'Something wrong with your request. Please contact with administration.', type: 'danger'} })
+        }
+
+        const hook = yield getFormHook( { form: db_table } )
+        if(hook){
+            yield hook.afterSave({ response: response, initialForm, body })
+        }
+
+        yield processVisibleFormStates( {...obj, formState: 'list' } )
     }
     catch (error) {
         manageListDispatch({ type: 'showLoader', obj:{ loader: false} })
@@ -37,6 +45,7 @@ function* processRequest(obj) {
 }
 
 function* processGetRequest(obj) {
+
 
     const { request : { url, method = 'GET', ...rest } , reject, resolve } = obj
     const data = yield sendRequest(url,
@@ -60,6 +69,7 @@ function* processVisibleFormStates(obj) {
     console.log(initialForm?.override)
     console.log(override)
     console.log("**************processVisibleFormStates**WatchSaga.js****************")
+
 
     switch(formState){
 

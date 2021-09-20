@@ -77,11 +77,12 @@ class FormController extends ApiController
             $parentFormModel = $parentFormModelColl->get('model');
             $Model = '\\App\\Models\\'.$parentFormModel;
             $modelInstance = new $Model;
+            $modelInstance->APIController = $this;
             $writePermission = $modelInstance->access["write"];
             $collection = collect($writePermission);
             if(!$collection->contains($role))
-                return  $this->respondError('Access denied');
-            return $this->respondData($modelInstance->saveForm($request));
+                return  $this->respondError('Access denied', 400);
+            return $modelInstance->saveForm($request, false);
         } catch (Exception $e) {
             return $this->respondError($e->getMessage());
         }

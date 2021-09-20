@@ -1,7 +1,7 @@
 
 import { confirmAlert } from 'react-confirm-alert';
 import { dispatchPromise } from '../sagas';
-import { session } from '../utils';
+import { session,  setLocalStorage } from '../utils';
 
 const leadRequest = {
 
@@ -18,7 +18,7 @@ const leadRequest = {
             fields: {
                 first_name: {
                     type:'text',
-                    label:'First Name',
+                    label:'Firste  Name',
                     field:'first_name',
                     defaultValue:'',
                     rules: {required: true},
@@ -135,6 +135,8 @@ const leadRequest = {
                     onClick(options){
                         const { role , id } = session()
                         const { row , dispatch , history, initialForm , selectedRecord, form , manageListDispatch } = options
+                        setLocalStorage("car_request_snap", row)
+
                         if(role === 'pa' && !row.pa_id){
                             confirmAlert({
                                 title: `${row.first_name} ${row.last_name}`,

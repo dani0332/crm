@@ -120,7 +120,7 @@ class CustomerController extends Controller
 
     /**
      * Store a newly uploaded customer
-     * 
+     *
      * @param \Illuminate\Http\Request $request
      * @param \Illuminate\Http\Response
      */
@@ -128,9 +128,15 @@ class CustomerController extends Controller
 
         $this->validate($request, [
             'file_name' => 'required|mimetypes:text/csv,text/plain,application/csv,text/comma-separated-values,text/anytext,application/octet-stream,application/txt,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet|max:2048',
+            'cdb_id' => 'required',
+            'myalfred_expiry_date' => 'required'
         ]);
 
         $customerUploadID = $this->customerUploadCsvService->customerUploadRecordsCreate($request);
+
+        if($customerUploadID == 0){
+            return redirect("customer-upload")->with('message', "CDB Id : ".$request->cdb_id." doesn't exists in system.")->withInput();
+        }
 
         return redirect("customer-upload")->with('success', 'Upload customers records has been stored');
     }

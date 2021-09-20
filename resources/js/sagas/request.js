@@ -1,10 +1,17 @@
+import {  put } from 'redux-saga/effects'
+
 export function* sendRequest(url,request, options) {
 
     try {
         const response = yield fetch(url, request)
         if (!response.ok) {
-            options?.reject()
-            throw "Invalid request"
+            if(options?.reject  && typeof options.reject=== 'function') {
+                yield put({ type: 'MessageShow', obj:{ title: 'ERROR', message: 'Something wrong with your request. Please contact with administration.', type: 'danger'} })
+                options?.reject({ code: response.status })
+                return
+            }
+            else
+                throw { code: response.status }
         }
         const data = yield response.json()
         console.log(`**************${url}->data ******************`)
@@ -17,7 +24,9 @@ export function* sendRequest(url,request, options) {
 
     } catch (error) {
         if(options?.reject  && typeof options.reject=== 'function')
-            options.reject(data)
+            options.reject(error)
+        else
+            return error
         console.log(`**************${url}->Error ******************`)
         console.log(error)
         console.log(`**************${url}->Error ******************`)
