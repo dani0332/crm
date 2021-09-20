@@ -3,11 +3,10 @@ import styled from "styled-components";
 import SubNaV from "../../components/sub-nav";
 import { useParams } from "react-router-dom";
 import ManageListFormView from "../../components/list-view/manage-list-form-view";
-import { config } from "../../utils";
 import ReviewSend from "./review-send";
 import KycForm from "./kyc-form";
 import AssignUser from "./assign-user";
-import { session, getLocalStorage } from "../../utils";
+import { session } from "../../utils";
 import Overview from "./overview";
 const Styles = styled.div``;
 

@@ -3,6 +3,7 @@ import {useDropzone} from 'react-dropzone';
 import styled from "styled-components";
 import useFetch from 'use-http'
 import  { ScaleLoader } from "react-spinners";
+import Viewer from 'react-viewer';
 
 const getColor = (props) => {
     if (props.isDragAccept) {
@@ -39,6 +40,7 @@ export default function File({field, controller}) {
     console.log(field)
 
     const [files, setFiles] = useState({files: [], loader: false});
+    const [ visible, setVisible ] = React.useState(false);
     const { post } = useFetch('resource/store')
     useEffect(() => {
         controller.onChange(null);
@@ -102,6 +104,10 @@ export default function File({field, controller}) {
     </li>
 });
 
+ const showDocumentPreview = () => {
+    setVisible(true)
+ }
+
   const shouldShow = (field?.formState && field.formState === 'read' ) ? false : true
   let shouldShowPreview = false
   if(field?.formState && ( field.formState === 'read' || field.formState === 'edit' ) ){
@@ -124,11 +130,16 @@ export default function File({field, controller}) {
         <p>Drag 'n' drop some files here, or click to select files</p>
       </Container>
     }
+    <Viewer
+      visible={visible}
+      onClose={() => { setVisible(false); } }
+      images={[{src: `https://myalfreddev.blob.core.windows.net/myrewards/${field.value}`}]}
+    />
       <ul className="list-unstyled msg_list">
         {thumbs}
         { shouldShowPreview === true && field.value && field.value.split('.').pop() !=='pdf' &&
             <li>
-             <a>
+             <a style={{cursor:'pointer'}} onClick={showDocumentPreview} >
                 <span className="image"><img src={`https://myalfreddev.blob.core.windows.net/myrewards/${field.value}`} style={{height:90,width:'auto'}}/></span>
                 <span> {field.value}</span>
              </a>
@@ -136,7 +147,7 @@ export default function File({field, controller}) {
         }
         { shouldShowPreview === true && field.value && field.value.split('.').pop() ==='pdf' &&
             <li>
-             <a>
+             <a style={{cursor:'pointer'}} onClick={()=>window.open(`https://myalfreddev.blob.core.windows.net/myrewards/${field.value}`, '_blank')}>
                 <span className="image"><i className="fa fa-file-pdf-o" style={{fontSize: '3.5em'}}></i></span>
                 <span> {field.value}</span>
              </a>

@@ -13,6 +13,8 @@ import { dispatchPromise } from "../../sagas"
 function List(props) {
 //const { form, dispatch, manageListDispatch } = props
 const { form, dispatch } = props
+const Context = React.useContext(FormContext)
+const { initialForm } = Context
 
 console.log("*********list.js***********")
 console.log(form)
@@ -31,7 +33,6 @@ if( events && typeof events.applyFilter === 'function'){
 }
 
 const [table, setTable] = useState({columns:[] , data: [], loader: false})
-const { get, loading } = useFetch()
 const history = useHistory()
 
 useEffect( async() => {
@@ -41,12 +42,13 @@ useEffect( async() => {
         dispatch: dispatch,
         options: {
             type: 'SEND_REQUEST',
-            request: { url: objUrl }
+            request: { url: objUrl },
+            context: initialForm
         }
     }).then((response) => {
         if( events && typeof events.afterFetchData === 'function'){
             data = events.afterFetchData({ resp: response, url : objUrl, dispatch: dispatch, history: history })
-            setTable({ columns: object.view.columns, data: response?.data, loader: true })
+            setTable({ columns: object.view.columns, data: response?.data, loader: false })
         }else{
             setTable({ columns: object.view.columns, data: response?.data, loader: false })
         }
@@ -74,10 +76,17 @@ const doSearch = async (obj) => {
         dispatch: dispatch,
         options: {
             type: 'SEND_REQUEST',
-            request: { url: url }
+            request: { url: url },
+            context: initialForm
         }
     }).then((response) => {
-        setTable({ columns: object.view.columns, data: response?.data, loader: false })
+
+        if( events && typeof events.afterFetchData === 'function'){
+            events.afterFetchData({ resp: response, url : objUrl, dispatch: dispatch, history: history })
+            setTable({ columns: object.view.columns, data: response?.data, loader: false })
+        }else{
+            setTable({ columns: object.view.columns, data: response?.data, loader: false })
+        }
     }).catch(error => {
         setTable({ columns: object.view.columns, data: [], loader: false })
     });

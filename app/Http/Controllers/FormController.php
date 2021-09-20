@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Services\LeadsService;
 use App\Transformers\LeadsTransformer;
-use App\Jobs\MailServiceJob;
 use Auth;
 
 class FormController extends ApiController
