@@ -179,7 +179,7 @@ class TMLeadsImport implements ToModel, WithValidation, SkipsOnFailure, WithStar
 
     public function chunkSize(): int
     {
-        return 1000;
+        return 2000;
     }
 
     public function startRow(): int
