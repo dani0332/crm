@@ -8,6 +8,7 @@ use DataTables;
 use App\Services\TMUploadLeadsService;
 use App\Imports\TMLeadsImport;
 use Auth;
+use Maatwebsite\Excel\Facades\Excel;
 
 class TmUploadLeadController extends Controller
 {
@@ -74,21 +75,21 @@ class TmUploadLeadController extends Controller
 
             $tmLeadsImport->import(request()->file('file_name'));
 
-            //Excel::import($tmLeadsImport,request()->file('file_name'));
             $countRows = $tmLeadsImport->getRowCount();
             $countErrors = $tmLeadsImport->failures()->count();
+            //$totalRows = $countRows + $countErrors;
 
             $tmUploadLead = new TmUploadLead();
             $tmUploadLead->file_name = $fileNameOriginal;
             $tmUploadLead->file_path = $filePathAzure;
-            $tmUploadLead->total_records = $countRows;
+            //$tmUploadLead->total_records = $totalRows;
             $tmUploadLead->good = $countRows;
-            $tmUploadLead->cannot_upload = $countErrors;
+            //$tmUploadLead->cannot_upload = $countErrors;
             $tmUploadLead->created_by_id = Auth::user()->id;
             $tmUploadLead->save();
 
             if ($tmLeadsImport->failures()->isNotEmpty()) {
-                return back()->withFailures($tmLeadsImport->failures());
+                return redirect("telemarketing/tmuploadlead/".$tmUploadLead->id)->withFailures($tmLeadsImport->failures());
             }
         }
 

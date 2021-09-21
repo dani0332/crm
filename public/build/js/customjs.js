@@ -1336,9 +1336,9 @@ $(document).ready(function() {
                 }
             },
             { data: 'file_name', name: 'file_name' },
-            { data: 'total_records', name: 'total_records' },
+            // { data: 'total_records', name: 'total_records' },
             { data: 'good', name: 'good' },
-            { data: 'cannot_upload', name: 'cannot_upload' },
+            // { data: 'cannot_upload', name: 'cannot_upload' },
             { data: 'user_name', name: 'user_name' },
             { data: 'created_at', name: 'created_at' },
         ]

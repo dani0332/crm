@@ -190,28 +190,49 @@ class TMLeadsImport implements ToModel, WithValidation, SkipsOnFailure, WithStar
     public function rules(): array
     {
         return [
-            '*.0' => [
+            '*.0' => [ // Customer Name
+                'required',
+                'max:50',
+            ],
+            '*.1' => [ // Phone No
+                'required',
+                'max:12',
+            ],
+            '*.2' => [ // Email Id
+                'required',
+                'max:30',
+            ],
+            '*.4' => [ // Lead Type
                 'required',
             ],
-            '*.1' => [
+            '*.14' => [ // Enquiry Date
                 'required',
+                'date_format:d/m/Y',
             ],
-            '*.2' => [
+            '*.15' => [ // Created/Allocation Date
                 'required',
+                'date_format:d/m/Y',
             ],
-            '*.4' => [
-                'required',
-            ],
-            '*.14' => [
-                'required',
-            ],
-            '*.15' => [
-                'required',
-            ],
-            '*.12' => [
+            '*.12' => [ // Car Value
                 'nullable',
                 'numeric',
                 'between:0,999999.9999',
+            ],
+            '*.6' => [ // DOB
+                'nullable',
+                'date_format:d/m/Y',
+            ],
+            '*.17' => [ // Followup Date
+                'nullable',
+                'date_format:d/m/Y',
+            ],
+            '*.13' => [ // Notes
+                'nullable',
+                'max:500',
+            ],
+            '*.16' => [ // Advisor email
+                'nullable',
+                'max:30',
             ],
         ];
     }

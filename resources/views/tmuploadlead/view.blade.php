@@ -23,9 +23,9 @@
                         <tr>
                           <th>Id</th>
                           <th>File</th>
-                          <th>Total Records</th>
+                          {{-- <th>Total Records</th> --}}
                           <th>Good</th>
-                          <th>Cannot Upload</th>
+                          {{-- <th>Cannot Upload</th> --}}
                           <th>Submitted by</th>
                           <th>Created At</th>
                         </tr>
