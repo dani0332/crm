@@ -1,8 +1,8 @@
 <?php
 
 namespace App\Models;
-
 use App\Models\BaseModel;
+use Auth;
 
 class FtcDocument extends BaseModel
 {
@@ -19,8 +19,8 @@ class FtcDocument extends BaseModel
             "admin" => [ 'file_name' , 'document' ],
         ],
         "list" => [
-            "pa" => [ 'id' , 'file_name' ],
-            "invoicing" => [ 'id' , 'file_name' ],
+            "pa" => [ 'id' , 'file_name' , 'document'],
+            "invoicing" => [ 'id' , 'file_name' , 'document'],
             "advisor" => [ 'id' , 'file_name' , 'document'],
             "admin" => [ 'id' , 'file_name', 'document' ],
         ]
@@ -32,17 +32,7 @@ class FtcDocument extends BaseModel
     }
 
     public function relations() {
-
-        $role = 'advisor';
-        switch($role){
-            case 'pa':
-                return [];
-            case 'admin':
-            case 'advisor':
-                return ["document"];
-        }
-
-        return [];
+        return ["document"];
     }
 
     public function processGetDSL($filters, $request) {

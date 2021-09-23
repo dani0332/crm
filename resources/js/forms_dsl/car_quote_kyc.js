@@ -12,9 +12,9 @@ const carQuoteKycStatus = {
                 delete: [ 'admin' ]
             },
             fields: {
-                profession:{
+                designation:{
                     type: 'text',
-                    label:'Profession',
+                    label:'Designation',
                     source: 'kyc_statuses',
                     rules: { required: true },
                     access: {
@@ -33,9 +33,9 @@ const carQuoteKycStatus = {
                     },
                     rules: { required: true }
                 },
-                designation: {
+                profession: {
                     type:'dropdown',
-                    label:'Designation',
+                    label:'Profession',
                     source: ['Business Owner' , 'CEO/Managing Director/Managing Partner', 'Human Resources (HR)', 'Administration/Operations/Secretarial/Assistant/Customer Service Executive',
                             'Sales/Business Development','Finance or Accounting','Consultant/Self Employed','Healthcare Professional: Doctor, Nurse, Pharmacist, Diagnostician etc',
                             'Teacher/Instructor/Coach','Real Estate Agent','Engineer/Architect/Contractor','Pilot','Chef','Technician/Technical Manager/Quality Controller/IT/Software Developer/Analyst',

@@ -7,7 +7,7 @@ use App\Models\BaseModel;
 use App\Models\CarQuote;
 use App\Models\CarQuoteEmailUniqueLink;
 use Auth;
-use App\Jobs\MailServiceJob;
+use App\Jobs\FTCMailServiceJob;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 
@@ -77,7 +77,7 @@ class FTCHistory extends BaseModel
                             'templateName' => 'ftc_mail',
                             'templateParams' => $templateParams
                         ];
-                        dispatch(new MailServiceJob($params));
+                        dispatch(new FTCMailServiceJob($params));
                     }else{
 
                     }

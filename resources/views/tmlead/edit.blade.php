@@ -1,6 +1,14 @@
 @extends('layouts.app')
 @section('title','Edit TM Lead')
 @section('content')
+<?php
+if($isUserTmAdvisor == "1") {
+    $readonlyFieldCss = "pointer-events: none;background-color: #f6f6f6;";
+}
+else {
+    $readonlyFieldCss = "";
+}
+?>
 <div class="row">
     <div class="col-md-12 col-sm-12">
         <div class="x_panel">
@@ -22,7 +30,7 @@
                     <div class="item form-group">
                         <div class="col">
                             <span class="col-form-label col-md-6 col-sm-6">Lead Type <span class="required">*</span></span>
-                            <select class="form-control" id="tm_lead_types_id" name="tm_lead_types_id" data-toggle="tooltip" data-placement="top" title="Please select lead type">
+                            <select class="form-control" id="tm_lead_types_id" name="tm_lead_types_id" data-toggle="tooltip" data-placement="top" title="Please select lead type" style="{{ $readonlyFieldCss }}">
                             <option value=""></option>
                             @foreach($tmLeadTypes as $tmLeadType)
                                 <option value="{{$tmLeadType->id}}"
@@ -42,14 +50,14 @@
                     <div class="item form-group">
                         <div class="col">
                             <span class="col-form-label col-md-6 col-sm-6">Customer Name <span class="required">*</span></span>
-                            <input type="text" id="customer_name" name="customer_name" value="{{ old('customer_name', $tmlead->customer_name) }}" class="form-control" data-toggle="tooltip" data-placement="top" title="Please enter customer name">
+                            <input type="text" id="customer_name" name="customer_name" value="{{ old('customer_name', $tmlead->customer_name) }}" class="form-control" data-toggle="tooltip" data-placement="top" title="Please enter customer name" style="{{ $readonlyFieldCss }}">
                             @if ($errors->has('customer_name'))
                                 <span class="text-danger">{{ $errors->first('customer_name') }}</span>
                             @endif
                         </div>
                         <div class="col">
                             <span class="col-form-label col-md-6 col-sm-6">Phone number <span class="required">*</span></span>
-                            <input type="text" id="phone_number" name="phone_number" value="{{ old('phone_number', $tmlead->phone_number) }}" class="form-control" data-toggle="tooltip" data-placement="top" title="Please enter 11 digit phone number. Example: 0563264418">
+                            <input type="text" id="phone_number" name="phone_number" value="{{ old('phone_number', $tmlead->phone_number) }}" class="form-control" data-toggle="tooltip" data-placement="top" title="Please enter 11 digit phone number. Example: 0563264418" style="{{ $readonlyFieldCss }}">
                             @if ($errors->has('phone_number'))
                                 <span class="text-danger">{{ $errors->first('phone_number') }}</span>
                             @endif
@@ -58,7 +66,7 @@
                     <div class="item form-group">
                         <div class="col">
                             <span class="col-form-label col-md-6 col-sm-6">Email Address <span class="required">*</span></span>
-                            <input type="text" id="email_address" name="email_address" value="{{ old('email_address', $tmlead->email_address) }}" class="form-control" data-toggle="tooltip" data-placement="top" title="Please enter email address">
+                            <input type="text" id="email_address" name="email_address" value="{{ old('email_address', $tmlead->email_address) }}" class="form-control" data-toggle="tooltip" data-placement="top" title="Please enter email address" style="{{ $readonlyFieldCss }}">
                             @if ($errors->has('email_address'))
                                 <span class="text-danger">{{ $errors->first('email_address') }}</span>
                             @endif

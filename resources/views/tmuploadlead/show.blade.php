@@ -16,6 +16,36 @@
                 @if(session()->has('success'))
                     <div class="alert alert-success">{{ session()->get('success') }}</div>
                 @endif
+
+                @if (session()->has('failures'))
+                <div class="required"><b>Please correct below data and import it again separately, other data already imported.</b></div>
+                <br />
+                <table class="table table-danger">
+                    <tr>
+                        <th>Row</th>
+                        <th>Column</th>
+                        <th>Errors</th>
+                        <th>Value</th>
+                    </tr>
+                    @foreach (session()->get('failures') as $validation)
+                        <tr>
+                            <td>{{ $validation->row() }}</td>
+                            <td>{{ $validation->attribute()+1 }}</td>
+                            <td>
+                                <ul>
+                                    @foreach ($validation->errors() as $e)
+                                        <li>{{ $e }}</li>
+                                    @endforeach
+                                </ul>
+                            </td>
+                            <td>
+                                {{ $validation->values()[$validation->attribute()] }}
+                            </td>
+                        </tr>
+                    @endforeach
+                </table>
+                @endif
+
                 <form id="demo-form2" method='post' action="{{ route('tmuploadlead.update', ['tmuploadlead' => $tmuploadlead->id]) }}" enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left">
                 {{csrf_field()}}
                 @method('PUT')
@@ -26,24 +56,24 @@
                             {{-- <p class="label-align-center"><a href="{{ \Config::get('constants.azure_storage_url').'myrewards/'.$tmuploadlead->file_path }}" target="_blank">{{$tmuploadlead->file_name}}</a></p> --}}
                         </div>
                     </div>
-                    <div class="item form-group">
+                    {{-- <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="Total Records"><b>Total Records</b></label>
                         <div class="col-md-6 col-sm-6 ">
                             <p class="label-align-center">{{ $tmuploadlead->total_records }}</p>
                         </div>
-                    </div>
+                    </div> --}}
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="Good"><b>Good</b></label>
                         <div class="col-md-6 col-sm-6 ">
                             <p class="label-align-center">{{ $tmuploadlead->good }}</p>
                         </div>
                     </div>
-                    <div class="item form-group">
+                    {{-- <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="Cannot Upload"><b>Cannot Upload</b></label>
                         <div class="col-md-6 col-sm-6 ">
                             <p class="label-align-center">{{ $tmuploadlead->cannot_upload }}</p>
                         </div>
-                    </div>
+                    </div> --}}
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="Created At"><b>Created At</b></label>
                         <div class="col-md-6 col-sm-6 ">

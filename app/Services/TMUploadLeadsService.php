@@ -12,27 +12,36 @@ class TMUploadLeadsService
 {
     public function tmUploadLeadsCreateUpdate(Request $request, $type, $tmUploadLeadID)
     {
-        if ($request->hasFile('file_name')) {
+        // if ($request->hasFile('file_name')) {
 
-            //dd($request->file_name);
+        //     $tmLeadsImport = new TMLeadsImport;
+        //     $fileNameOriginal = $request->file_name->getClientOriginalName();
+        //     $fileNameAzure = get_guid().'_'.$fileNameOriginal;
+        //     $filePathAzure = $request->file('file_name')->storeAs('/', $fileNameAzure, 'azure');
 
-            $tmLeadsImport = new TMLeadsImport;
-            $fileNameOriginal = $request->file_name->getClientOriginalName();
-            $fileNameAzure = get_guid().'_'.$fileNameOriginal;
-            $filePathAzure = $request->file('file_name')->storeAs('/', $fileNameAzure, 'azure');
-            Excel::import($tmLeadsImport,request()->file('file_name'));
-            //Excel::import($tmLeadsImport, $request->file('file_name')->getRealPath());
-            $countRows = $tmLeadsImport->getRowCount() - 1;
+        //     $tmLeadsImport->import(request()->file('file_name'));
 
-            $tmUploadLead = new TmUploadLead();
-            $tmUploadLead->file_name = $fileNameOriginal;
-            $tmUploadLead->file_path = $filePathAzure;
-            $tmUploadLead->total_records = $countRows;
-            $tmUploadLead->good = $countRows;
-            $tmUploadLead->cannot_upload = "0";
-            $tmUploadLead->created_by_id = Auth::user()->id;
-            $tmUploadLead->save();
+        //     foreach ($tmLeadsImport->failures() as $failure) {
+        //          $failure->row(); // row that went wrong
+        //          $failure->attribute(); // either heading key (if using heading row concern) or column index
+        //          $failure->errors(); // Actual error messages from Laravel validator
+        //          $failure->values(); // The values of the row that has failed.
 
-        }
+        //     }
+
+        //         //Excel::import($tmLeadsImport,request()->file('file_name'));
+        //     $countRows = $tmLeadsImport->getRowCount();
+
+        //     $tmUploadLead = new TmUploadLead();
+        //     $tmUploadLead->file_name = $fileNameOriginal;
+        //     $tmUploadLead->file_path = $filePathAzure;
+        //     $tmUploadLead->total_records = $countRows;
+        //     $tmUploadLead->good = $countRows;
+        //     $tmUploadLead->cannot_upload = "0";
+        //     $tmUploadLead->created_by_id = Auth::user()->id;
+        //     $tmUploadLead->save();
+
+        // }
+
     }
 }

@@ -103,7 +103,7 @@ export default function KycAMLForm(props) {
            <div className="col-md-12">
                 <div className="x_panel">
                     <div className="x_title">
-                        <h2>AML Process <small>Verify AML Detail</small></h2>
+                         <a href="javascript:void(0)" onClick={viewDetail}>Verify AML Detail <i class="fa fa-angle-right"></i></a>
                         <div className="clearfix"></div>
                     </div>
                     <div className="x_content">
@@ -114,9 +114,6 @@ export default function KycAMLForm(props) {
                                 <tr>
                                     <td>Found Matches</td>
                                     <td className="fs15 fw700 text-right">{state?.matches}</td>
-                                </tr>
-                                <tr>
-                                    <td colspan="2" align="left" style={{paddingTop: 16}}><button type="button" className="btn btn-round btn-success" onClick={viewDetail}>Report To Compliance</button></td>
                                 </tr>
                             </tbody>
                         </table> }

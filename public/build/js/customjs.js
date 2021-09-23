@@ -5,12 +5,11 @@ $(document).ready(function() {
     $("#transapp_start_date").datepicker({ dateFormat: "yy-mm-dd" });
     $("#transapp_stop_date").datepicker({ dateFormat: "yy-mm-dd" });
 
-    $("#enquiry_date, #allocation_date, #tmLeadsStartDate, #tmLeadsEndDate, #dob").datepicker({ // TM Leads
-        changeMonth: true,
-        changeYear: true,
-        dateFormat: "yy-mm-dd",
-        yearRange: "-20:+00"
-    });
+    $("#enquiry_date, #allocation_date, #tmLeadsStartDate, #tmLeadsEndDate").datepicker({ // TM Leads
+        changeMonth: true,changeYear: true,dateFormat: "yy-mm-dd",yearRange: "-20:+00"});
+
+    $("#dob").datepicker({ // TM Leads
+        changeMonth: true,changeYear: true,dateFormat: "yy-mm-dd",yearRange: "-80:+00"});
 
     $("#next_followup_date").daterangepicker({ // TM Leads
         timePicker: true,
@@ -1105,8 +1104,9 @@ $(document).ready(function() {
         },
         drawCallback: function(settings) {
             var api = new $.fn.dataTable.Api(settings);
-            console.log("TotalTmLeadsss: ", api.rows().data().length);
-            $("#totalLeads").text("Total Leads: " + api.rows().data().length);
+            console.log("TotalTmLeadsss: ", settings._iRecordsTotal);
+            //console.log("TotalTmLeadsss: ",api.rows().data().length);
+            $("#totalLeads").text("Total Leads: "+settings._iRecordsTotal);
         }
     });
 
@@ -1336,9 +1336,9 @@ $(document).ready(function() {
                 }
             },
             { data: 'file_name', name: 'file_name' },
-            { data: 'total_records', name: 'total_records' },
+            // { data: 'total_records', name: 'total_records' },
             { data: 'good', name: 'good' },
-            { data: 'cannot_upload', name: 'cannot_upload' },
+            // { data: 'cannot_upload', name: 'cannot_upload' },
             { data: 'user_name', name: 'user_name' },
             { data: 'created_at', name: 'created_at' },
         ]

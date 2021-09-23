@@ -153,7 +153,7 @@ class TMLeadsService
         return $assignedToUserIdNew;
     }
 
-    public function tmLeadsGetPrioritizeLead($currentUserID) //
+    public function tmLeadsGetPrioritizeLead($currentUserID)
     {
         $prioritizeLeads = TmLead::select('tm_leads.id as tmLeadId')
         ->leftjoin('tm_lead_statuses','tm_leads.tm_lead_statuses_id','tm_lead_statuses.id')
@@ -163,6 +163,7 @@ class TMLeadsService
         ->whereRaw('tm_leads.is_deleted=0 AND (tm_leads.next_followup_date IS NULL OR tm_leads.next_followup_date < now()) AND tm_leads.assigned_to_id='.$currentUserID)
         ->orderByRaw('tm_leads.next_followup_date IS NULL, tm_leads.next_followup_date, tm_leads.created_at')->limit(1)->get();
 
+        $prioritizeLeadId = "";
         if(!empty($prioritizeLeads)) {
             foreach($prioritizeLeads as $prioritizeLead)
             {

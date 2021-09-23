@@ -1,4 +1,5 @@
 import {  put } from 'redux-saga/effects'
+import { getFormHook }  from '../form-hooks'
 
 export function* sendRequest(url,request, options) {
 
@@ -13,7 +14,11 @@ export function* sendRequest(url,request, options) {
             else
                 throw { code: response.status }
         }
+
         const data = yield response.json()
+        const hook = yield getFormHook( { form: options?.context?.form } )
+        if(hook && request?.method.toLowerCase() === 'get' )
+            yield hook.afterFetch({ response: data, initialForm: options?.context, url: url })
         console.log(`**************${url}->data ******************`)
         console.log(data)
         console.log(`**************${url}->data ******************`)

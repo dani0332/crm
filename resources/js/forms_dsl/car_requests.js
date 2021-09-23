@@ -2,7 +2,6 @@
 import { confirmAlert } from 'react-confirm-alert';
 import { dispatchPromise } from '../sagas';
 import { session,  setLocalStorage } from '../utils';
-
 const leadRequest = {
 
     getForm() {
@@ -131,6 +130,10 @@ const leadRequest = {
                             return { id: -66 }
                         else
                             return filter
+                    },
+                    afterFetchData(options){
+                        const { resp , dispatch , history } = options
+                        return resp.data
                     },
                     onClick(options){
                         const { role , id } = session()
