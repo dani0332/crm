@@ -95,7 +95,8 @@
                     <div class="row">
                     <div class="col-auto mr-auto"></div>
                         <div class="col-auto">
-                        <button type="submit" class="btn btn-warning btn-sm" id="return_to_view">Upload</button>
+                        <button type="submit" class="btn btn-warning btn-sm" id="tm-leads-upload-csv-button">Upload</button>
+                        <div id="tm-leads-upload-csv-button-text" class="required" style="font-weight:bold;"></div>
                         </div>
                     </div>
                 </form>
