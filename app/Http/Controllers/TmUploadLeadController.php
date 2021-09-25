@@ -80,7 +80,7 @@ class TmUploadLeadController extends Controller
             }
 
             $countRows = $tmLeadsImport->getRowCount();
-            $countErrors = $tmLeadsImport->failures()->count();
+            //$countErrors = $tmLeadsImport->failures()->count();
             //$totalRows = $countRows + $countErrors;
 
             $tmUploadLead = new TmUploadLead();

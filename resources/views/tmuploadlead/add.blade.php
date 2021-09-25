@@ -46,7 +46,7 @@
                             <li>Please ensure columns header and allocation same as per given in sample csv file.</li>
                             <li>Please ensure all required columns data filled in the csv file.</li>
                             <li>Please ensure all date columns format set as dd/mm/yyyy (Ex:- 16/06/2021).</li>
-                            <li>For Car Insurance, available 2 types: 1.) Car Insurance - TPL 2.) Car Insurance - Comp</li>
+                            <li>For Car Insurance, available 2 types:  1.) Car Insurance - TPL 2.) Car Insurance - Comp</li>
                         </ul></p>
                     </div>
                     <div class="item form-group">
