@@ -75,8 +75,12 @@ class TmUploadLeadController extends Controller
 
             $tmLeadsImport->import(request()->file('file_name'));
 
+            if($tmLeadsImport->failures()->count() > 100) {
+                return redirect("telemarketing/tmuploadlead")->with('message', 'Data is not valid in csv file, kindly follow the import instructions, correct the data and import it again.');
+            }
+
             $countRows = $tmLeadsImport->getRowCount();
-            $countErrors = $tmLeadsImport->failures()->count();
+            //$countErrors = $tmLeadsImport->failures()->count();
             //$totalRows = $countRows + $countErrors;
 
             $tmUploadLead = new TmUploadLead();

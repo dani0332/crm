@@ -1031,7 +1031,7 @@ $(document).ready(function() {
         dom: Bfrtip,
         "buttons": [{
             "extend": 'csv',
-            "text": '<i class="fa fa-download" style="color:orange;" id="tm-leads-export"></i>',
+            "text": '<i class="fa fa-download" style="color:orange;" id="tm-leads-export"></i><div id="tm-leads-export-text" class="required" style="font-weight:bold;"></div>',
             "titleAttr": 'Download CSV',
             "action": newexportaction
         }],
@@ -1134,6 +1134,17 @@ $(document).ready(function() {
         });
         dt.ajax.reload();
     };
+
+    $("#tm-leads-export").click(function(){
+        $("#tm-leads-export").hide();
+        $("#tm-leads-export-text").text("Please wait until csv file will be downloaded. More waiting time is depending on number of records.");
+        $('#tm-leads-export-text').show().delay(10000).fadeOut();
+    });
+
+    $("#tm-leads-upload-csv-button").click(function(){
+        $("#tm-leads-upload-csv-button").hide();
+        $("#tm-leads-upload-csv-button-text").text("Please wait until csv file will be uploaded. More waiting time is depending on number of records.");
+    });
 
     // TM Leads: Search button trigger
     $("#tm-leads-export").hide();

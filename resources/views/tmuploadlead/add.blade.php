@@ -36,17 +36,17 @@
                     </div>
                     <div class="item form-group">
                         <p><h4 class="required"><b>Import Instructions must be follow:</b></h4></p>
-                        <p><ul class="required">
+                        <p><ul class="required" style="font-weight:bold;">
                             <li>Please download the sample csv file and modify the data according to the recommendations for a successful import.</li>
                             <li>File must be a csv file with the following fields.</li>
                             <li>Please ensure there are no commas in file.</li>
                             <li>First line will be skipped while uploading.</li>
                             <li>Please ensure there are no spaces in start and end of columns data.</li>
-                            <li>Please ensure max allowed size is 2mb (2048kb).</li>
+                            <li>Please ensure max allowed size is 2mb (2048kb) & max numbers of 1000 to 2000 leads per csv file.</li>
                             <li>Please ensure columns header and allocation same as per given in sample csv file.</li>
                             <li>Please ensure all required columns data filled in the csv file.</li>
                             <li>Please ensure all date columns format set as dd/mm/yyyy (Ex:- 16/06/2021).</li>
-                            <li>For Car Insurance, available 2 types: 1.) Car Insurance - TPL 2.) Car Insurance - Comp</li>
+                            <li>For Car Insurance, available 2 types:  1.) Car Insurance - TPL 2.) Car Insurance - Comp</li>
                         </ul></p>
                     </div>
                     <div class="item form-group">
@@ -95,7 +95,8 @@
                     <div class="row">
                     <div class="col-auto mr-auto"></div>
                         <div class="col-auto">
-                        <button type="submit" class="btn btn-warning btn-sm" id="return_to_view">Upload</button>
+                        <button type="submit" class="btn btn-warning btn-sm" id="tm-leads-upload-csv-button">Upload</button>
+                        <div id="tm-leads-upload-csv-button-text" class="required" style="font-weight:bold;"></div>
                         </div>
                     </div>
                 </form>
