@@ -1020,15 +1020,8 @@ $(document).ready(function() {
         ]
     });
 
-    var isCurrentUserIsAdvisor = $("#isCurrentUserIsAdvisor").val();
-    if (isCurrentUserIsAdvisor == 0) {
-        var Bfrtip = 'Bfrtip';
-    } else {
-        var Bfrtip = '';
-    }
-
     var tmLeadsDatatable = $('.tmlead-data-table').DataTable({
-        dom: Bfrtip,
+        dom: 'Bfrtip',
         "buttons": [{
             "extend": 'csv',
             "text": '<i class="fa fa-download" style="color:orange;" id="tm-leads-export"></i><div id="tm-leads-export-text" class="required" style="font-weight:bold;"></div>',
@@ -1204,6 +1197,15 @@ $(document).ready(function() {
                 setTimeout(() => {
                     $(".loader").hide();
                 }, 1000);
+
+                // Hide Download CSV for advisors
+                var isCurrentUserIsAdvisor = $("#isCurrentUserIsAdvisor").val();
+                if (isCurrentUserIsAdvisor == 0) {
+                    $("a[title='Download CSV']").show();
+                } else {
+                    $("a[title='Download CSV']").hide();
+                }
+
             }
         } else {
             tmLeadsDatatable.draw();
@@ -1302,10 +1304,9 @@ $(document).ready(function() {
         var tm_lead_status_code = $("#tm_lead_statuses_id option:selected").attr("data-id");
         var no_answer_count = $("#no_answer_count").val();
 
-        if (((tm_lead_status_code == "NoAnswer" || tm_lead_status_code == "SwitchedOff") &&
-                (typeof no_answer_count === "undefined" || no_answer_count < "3")) ||
-            (tm_lead_status_code == "PipelineNoInfo" || tm_lead_status_code == "PipelineImmediate" ||
-                tm_lead_status_code == "PipelineFuture" || tm_lead_status_code == "DealingWithAnAdvisor")) {
+        if (tm_lead_status_code == "NoAnswer" || tm_lead_status_code == "SwitchedOff" ||
+            tm_lead_status_code == "PipelineNoInfo" || tm_lead_status_code == "PipelineImmediate" ||
+            tm_lead_status_code == "PipelineFuture" || tm_lead_status_code == "DealingWithAnAdvisor") {
             $("#next_followup_date_field").show();
         } else {
             $("#next_followup_date_field").hide();

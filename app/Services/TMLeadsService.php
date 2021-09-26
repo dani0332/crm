@@ -93,43 +93,40 @@ class TMLeadsService
 
         $tmLead = TmLead::find($request->tmLeadId);
 
-        if(($tmLeadStatusCode == tmLeadStatusCode::NoAnswer || $tmLeadStatusCode == tmLeadStatusCode::SwitchedOff)
-        && $request->no_answer_count < "3" && $request->next_followup_date != ""
-        && $request->next_followup_date != $tmLead->next_followup_date) {
-            $no_answer_count = $tmLead->no_answer_count + 1;
-            $tmLead->no_answer_count = $no_answer_count;
-            if($no_answer_count == 3) {
+        if($tmLeadStatusCode == tmLeadStatusCode::NoAnswer || $tmLeadStatusCode == tmLeadStatusCode::SwitchedOff)
+        {
+            if($request->no_answer_count < "3" && $request->next_followup_date != ""
+            && $request->next_followup_date != $tmLead->next_followup_date) {
+                $no_answer_count = $tmLead->no_answer_count + 1;
+                $tmLead->no_answer_count = $no_answer_count;
+                if($no_answer_count == 3) {
 
-                $tmLeadStatusEnum = tmLeadStatusCode::NotContactablePE;
-                $tmLeadStatusId = TmLeadStatus::where('code', '=', $tmLeadStatusEnum)->value('id');
-                $tmLead->tm_lead_statuses_id = $tmLeadStatusId;
-            }
-            else {
-                $tmLead->tm_lead_statuses_id = $request->tm_lead_statuses_id;
+                    $tmLeadStatusEnum = tmLeadStatusCode::NotContactablePE;
+                    $tmLeadStatusId = TmLeadStatus::where('code', '=', $tmLeadStatusEnum)->value('id');
+                    $tmLead->tm_lead_statuses_id = $tmLeadStatusId;
+                    $tmLead->next_followup_date = NULL;
+                }
+                else {
+                    $tmLead->tm_lead_statuses_id = $request->tm_lead_statuses_id;
+                    $tmLead->next_followup_date = $request->next_followup_date;
+                }
             }
         }
         else {
+            $tmLead->tm_lead_statuses_id = $request->tm_lead_statuses_id;
 
-            $CurrentTmLeadStatusCode = TmLeadStatus::where('id', '=', $tmLead->tm_lead_statuses_id)->value('code');
-
-            if( ($CurrentTmLeadStatusCode == tmLeadStatusCode::NoAnswer || $CurrentTmLeadStatusCode == tmLeadStatusCode::SwitchedOff
-            || $CurrentTmLeadStatusCode == tmLeadStatusCode::PipelineNoInfo || $CurrentTmLeadStatusCode == tmLeadStatusCode::PipelineImmediate || $tmLeadStatusCode == tmLeadStatusCode::PipelineFuture
-            || $CurrentTmLeadStatusCode == tmLeadStatusCode::DealingWithAnAdvisor)
-            && ($tmLeadStatusCode != tmLeadStatusCode::NoAnswer && $tmLeadStatusCode != tmLeadStatusCode::SwitchedOff
-            && $tmLeadStatusCode != tmLeadStatusCode::PipelineNoInfo && $tmLeadStatusCode != tmLeadStatusCode::PipelineImmediate && $tmLeadStatusCode != tmLeadStatusCode::PipelineFuture
-            || $tmLeadStatusCode != tmLeadStatusCode::DealingWithAnAdvisor) ) {
+            if($tmLeadStatusCode == tmLeadStatusCode::NotContactablePE || $tmLeadStatusCode == tmLeadStatusCode::CarSold
+            || $tmLeadStatusCode == tmLeadStatusCode::NotEligible || $tmLeadStatusCode == tmLeadStatusCode::NotInterested
+            || $tmLeadStatusCode == tmLeadStatusCode::PurchasedBeforeFirstCall || $tmLeadStatusCode == tmLeadStatusCode::PurchasedFromCompetitor
+            || $tmLeadStatusCode == tmLeadStatusCode::RevivedByNewBusiness || $tmLeadStatusCode == tmLeadStatusCode::RevivedByRenewals
+            || $tmLeadStatusCode == tmLeadStatusCode::WrongNumber || $tmLeadStatusCode == tmLeadStatusCode::DONOTCALL
+            || $tmLeadStatusCode == tmLeadStatusCode::Duplicate || $tmLeadStatusCode == tmLeadStatusCode::Revived
+            || $tmLeadStatusCode == tmLeadStatusCode::Recycled) {
                 $tmLead->next_followup_date = NULL;
             }
-
-            $tmLead->tm_lead_statuses_id = $request->tm_lead_statuses_id;
-        }
-
-        if($request->next_followup_date != ""
-            && $request->next_followup_date != $tmLead->next_followup_date
-            && ($tmLeadStatusCode == tmLeadStatusCode::NoAnswer || $tmLeadStatusCode == tmLeadStatusCode::SwitchedOff
-            || $tmLeadStatusCode == tmLeadStatusCode::PipelineNoInfo || $tmLeadStatusCode == tmLeadStatusCode::PipelineImmediate || $tmLeadStatusCode == tmLeadStatusCode::PipelineFuture
-            || $tmLeadStatusCode == tmLeadStatusCode::DealingWithAnAdvisor)) {
-            $tmLead->next_followup_date = $request->next_followup_date;
+            else {
+                $tmLead->next_followup_date = $request->next_followup_date;
+            }
         }
 
         $tmLead->notes = $request->notes;

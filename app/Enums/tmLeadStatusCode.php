@@ -26,7 +26,7 @@ final class tmLeadStatusCode extends Enum
     const RevivedByNewBusiness = "RevivedByNewBusiness";
     const RevivedByRenewals = "RevivedByRenewals";
     const WrongNumber = "WrongNumber";
-    const DONOTCALL = "DONOTCALLL";
+    const DONOTCALL = "DONOTCALL";
     const Duplicate = "Duplicate";
     const Revived = "Revived";
     const Recycled = "Recycled";
