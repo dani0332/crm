@@ -200,7 +200,7 @@ class TMLeadsImport implements ToModel, WithValidation, SkipsOnFailure, WithStar
             ],
             '*.2' => [ // Email Id
                 'required',
-                'max:30',
+                'max:50',
             ],
             '*.4' => [ // Lead Type
                 'required',
@@ -216,7 +216,7 @@ class TMLeadsImport implements ToModel, WithValidation, SkipsOnFailure, WithStar
             '*.12' => [ // Car Value
                 'nullable',
                 'numeric',
-                'between:0,999999.9999',
+                'between:0,9999999999.99',
             ],
             '*.6' => [ // DOB
                 'nullable',
