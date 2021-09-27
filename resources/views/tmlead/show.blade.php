@@ -248,7 +248,10 @@ use App\Enums\tmInsuranceTypeCode;
                             <textarea id="notes" name="notes" rows="4" cols="50" class="form-control" data-toggle="tooltip" data-placement="top" title="Please enter notes">{{ old('notes', $tmlead->notes) }}</textarea>
                         </div>
                         <div class="col">
-
+                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="No Answer/Switched Off Count"><b>No Answer/Switched Off (Count)</b></label>
+                            <div class="col-md-6 col-sm-6">
+                            <p class="label-align-center">{{ $tmlead->no_answer_count ? $tmlead->no_answer_count : '0' }}</p>
+                            </div>
                         </div>
                     </div>
                     <div class="ln_solid"></div>
@@ -257,9 +260,7 @@ use App\Enums\tmInsuranceTypeCode;
                         <div class="col-auto">
                             <input type="hidden" id="tmLeadId" name="tmLeadId" value="{{ $tmlead->id }}">
                             <input type="hidden" id="no_answer_count" name="no_answer_count" value="{{ $tmlead->no_answer_count }}">
-                            @if($isLeadEditable == "1")
-                                <button type="submit" class="btn btn-warning btn-sm" id="return_to_view">Update</button>
-                            @endif
+                            <button type="submit" class="btn btn-warning btn-sm" id="return_to_view">Update</button>
                         </div>
                     </div>
                 </form>
