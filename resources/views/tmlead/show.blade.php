@@ -258,6 +258,7 @@ use App\Enums\tmInsuranceTypeCode;
                     <div class="row">
                     <div class="col-auto mr-auto"></div>
                         <div class="col-auto">
+                            <input type="hidden" id="tmLeadEditFormNextFollowupDate" name="tmLeadEditFormNextFollowupDate" value="{{ $tmlead->next_followup_date }}">
                             <input type="hidden" id="tmLeadId" name="tmLeadId" value="{{ $tmlead->id }}">
                             <input type="hidden" id="no_answer_count" name="no_answer_count" value="{{ $tmlead->no_answer_count }}">
                             <button type="submit" class="btn btn-warning btn-sm" id="return_to_view">Update</button>
