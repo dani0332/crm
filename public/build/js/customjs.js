@@ -11,11 +11,27 @@ $(document).ready(function() {
     $("#dob").datepicker({ // TM Leads
         changeMonth: true,changeYear: true,dateFormat: "yy-mm-dd",yearRange: "-80:+00"});
 
+    var tmLeadEditFormNextFollowupDate = $('#tmLeadEditFormNextFollowupDate').val();
+    if(tmLeadEditFormNextFollowupDate != "") {
+        minDateTime = tmLeadEditFormNextFollowupDate;
+    }
+    else {
+        minDateTime = new Date();
+    }
+
+    console.log("indexOf: ", window.location.href.indexOf('tmleads'));
+    console.log("navigation: ", performance.navigation.type);
+    if (window.location.href.indexOf('tmleads') > -1) {
+        if(performance.navigation.type == 2) {
+            location.reload(true);
+        }
+    }
+
     $("#next_followup_date").daterangepicker({ // TM Leads
         timePicker: true,
         singleDatePicker: true,
         timePicker24Hour: true,
-        minDate: new Date(),
+        minDate: minDateTime,
         locale: {
             format: 'YYYY-MM-DD HH:mm:ss'
         }
