@@ -11069,8 +11069,7 @@ try {
 
 
 window.axios = __webpack_require__(/*! axios */ "./node_modules/axios/index.js");
-window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest'; //
-
+window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 /**
  * Echo exposes an expressive API for subscribing to channels and listening
  * for events that are broadcast by Laravel. Echo and event broadcasting
@@ -17341,10 +17340,10 @@ function KycAMLForm(props) {
     });
   };
 
-  var approveAml = function approveAml() {
+  var approveAml = function approveAml(status) {
     (0,react_confirm_alert__WEBPACK_IMPORTED_MODULE_2__.confirmAlert)({
-      title: 'Approve',
-      message: 'Are you sure to approve AML?',
+      title: status,
+      message: 'Are you sure to  ' + status + ' AML?',
       buttons: [{
         label: 'Yes',
         onClick: function () {
@@ -17361,14 +17360,14 @@ function KycAMLForm(props) {
                           url: "/form/car_quote_aml_status",
                           method: 'POST',
                           body: JSON.stringify({
-                            status: 'Approved',
+                            status: status,
                             car_quote_id: filter.car_quote_id
                           })
                         }
                       }
                     }).then(function (response) {
                       var storage = (0,_utils__WEBPACK_IMPORTED_MODULE_6__.getLocalStorage)('car_request_snap');
-                      storage.aml_status = "Approved";
+                      storage.aml_status = status;
                       (0,_utils__WEBPACK_IMPORTED_MODULE_6__.setLocalStorage)('car_request_snap', storage);
                       setState({
                         loader: false,
@@ -17405,7 +17404,7 @@ function KycAMLForm(props) {
       aml_status = _getLocalStorage.aml_status,
       kyc_status_id = _getLocalStorage.kyc_status_id;
 
-  if (aml_status && aml_status.toLowerCase() === 'approved') {
+  if (aml_status && aml_status.toLowerCase() === 'approved' || aml_status.toLowerCase() === 'rejected') {
     return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("div", {
       className: "row",
       children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("div", {
@@ -17433,9 +17432,9 @@ function KycAMLForm(props) {
               children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("tbody", {
                 children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("tr", {
                   children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("td", {
-                    children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("span", {
+                    children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsxs)("span", {
                       className: "badge badge-success",
-                      children: "AML has been Approved."
+                      children: ["AML has been ", aml_status, "."]
                     })
                   })
                 })
@@ -17477,18 +17476,44 @@ function KycAMLForm(props) {
             className: "clearfix"
           }), (state === null || state === void 0 ? void 0 : state.found) === 1 && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("table", {
             className: "countries_list",
-            style: {
-              width: "25%"
-            },
-            children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("tbody", {
-              children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsxs)("tr", {
+            children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsxs)("tbody", {
+              children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsxs)("tr", {
                 children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("td", {
                   children: "Found Matches"
                 }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("td", {
-                  className: "fs15 fw700 text-right",
-                  children: state === null || state === void 0 ? void 0 : state.matches
+                  className: "fs15 fw700 text-right"
                 })]
-              })
+              }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("tr", {
+                children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsxs)("td", {
+                  colspan: "2",
+                  align: "left",
+                  style: {
+                    paddingTop: 16
+                  },
+                  children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("button", {
+                    type: "button",
+                    "class": "btn btn-round btn-success btn-sm",
+                    onClick: viewDetail,
+                    children: "View Detail"
+                  }), kyc_status_id && kyc_status_id === 2 && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsxs)("span", {
+                    children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("button", {
+                      type: "button",
+                      "class": "btn btn-round btn-danger btn-sm",
+                      onClick: function onClick() {
+                        return approveAml('Rejected');
+                      },
+                      children: "Reject"
+                    }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("button", {
+                      type: "button",
+                      "class": "btn btn-round btn-primary btn-sm",
+                      onClick: function onClick() {
+                        return approveAml('Approved');
+                      },
+                      children: "Approve"
+                    })]
+                  })]
+                })
+              })]
             })
           }), (state === null || state === void 0 ? void 0 : state.found) === 2 && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("table", {
             className: "countries_list",
@@ -17509,7 +17534,9 @@ function KycAMLForm(props) {
                   children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("button", {
                     type: "button",
                     className: "btn btn-round btn-success",
-                    onClick: approveAml,
+                    onClick: function onClick() {
+                      return approveAml('Approved');
+                    },
                     children: "Approve AML"
                   })
                 })
