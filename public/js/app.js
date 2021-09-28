@@ -17280,6 +17280,8 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
 
 
 function KycAMLForm(props) {
+  var _getLocalStorage2;
+
   var filter = props.form.filter;
   var dispatch = (0,react_redux__WEBPACK_IMPORTED_MODULE_5__.useDispatch)();
 
@@ -17401,10 +17403,11 @@ function KycAMLForm(props) {
   };
 
   var _getLocalStorage = (0,_utils__WEBPACK_IMPORTED_MODULE_6__.getLocalStorage)('car_request_snap'),
-      aml_status = _getLocalStorage.aml_status,
       kyc_status_id = _getLocalStorage.kyc_status_id;
 
-  if (aml_status && aml_status.length > 2 && aml_status.toLowerCase() === 'approved' || aml_status.toLowerCase() === 'rejected') {
+  var amlStatus = ((_getLocalStorage2 = (0,_utils__WEBPACK_IMPORTED_MODULE_6__.getLocalStorage)('car_request_snap')) === null || _getLocalStorage2 === void 0 ? void 0 : _getLocalStorage2.aml_status) || "";
+
+  if (amlStatus != null && amlStatus.toLowerCase() === 'approved' || amlStatus.toLowerCase() === 'rejected') {
     return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("div", {
       className: "row",
       children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("div", {
@@ -17434,7 +17437,7 @@ function KycAMLForm(props) {
                   children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("td", {
                     children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsxs)("span", {
                       className: "badge badge-success",
-                      children: ["AML has been ", aml_status, "."]
+                      children: ["AML has been ", amlStatus, "."]
                     })
                   })
                 })

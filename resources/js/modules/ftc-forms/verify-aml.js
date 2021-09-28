@@ -71,8 +71,9 @@ export default function KycAMLForm(props) {
         window.open("/kyc/aml/1/details/"+filter.car_quote_id, '_blank');
     }
 
-    const { aml_status, kyc_status_id } = getLocalStorage('car_request_snap')
-    if(aml_status && aml_status.length > 2 &&  aml_status.toLowerCase() === 'approved' || aml_status.toLowerCase() === 'rejected') {
+    const { kyc_status_id } = getLocalStorage('car_request_snap')
+    const amlStatus = getLocalStorage('car_request_snap')?.aml_status || "";
+    if(amlStatus != null &&  amlStatus.toLowerCase() === 'approved' || amlStatus.toLowerCase() === 'rejected') {
         return(
             <div className="row">
                 <div className="col-md-12">
@@ -86,7 +87,7 @@ export default function KycAMLForm(props) {
                         <table className="countries_list" style={{width: "25%"}}>
                             <tbody>
                                 <tr>
-                                <td><span className="badge badge-success">AML has been {aml_status}.</span></td>
+                                <td><span className="badge badge-success">AML has been {amlStatus}.</span></td>
                                 </tr>
                             </tbody>
                         </table>
