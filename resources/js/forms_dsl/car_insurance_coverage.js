@@ -71,7 +71,7 @@ let insuranceDetail = {
                     type: 'text',
                     label: 'Excess',
                     access: {
-                        read: [ 'pa','advisor','admin', 'invoicing'],
+                        read: [ 'advisor','admin', 'invoicing' , 'pa'],
                         write: [ 'advisor' ,'admin'],
                         update: [ 'advisor' ,'admin'],
                     },
