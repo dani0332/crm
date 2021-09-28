@@ -121,7 +121,7 @@ class TMLeadsService
             || $tmLeadStatusCode == tmLeadStatusCode::RevivedByNewBusiness || $tmLeadStatusCode == tmLeadStatusCode::RevivedByRenewals
             || $tmLeadStatusCode == tmLeadStatusCode::WrongNumber || $tmLeadStatusCode == tmLeadStatusCode::DONOTCALL
             || $tmLeadStatusCode == tmLeadStatusCode::Duplicate || $tmLeadStatusCode == tmLeadStatusCode::Revived
-            || $tmLeadStatusCode == tmLeadStatusCode::Recycled) {
+            || $tmLeadStatusCode == tmLeadStatusCode::Recycled || ($tmLeadStatusCode == tmLeadStatusCode::NewLead && $tmLead->next_followup_date == "")) {
                 $tmLead->next_followup_date = NULL;
             }
             else {
