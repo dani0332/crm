@@ -17404,7 +17404,7 @@ function KycAMLForm(props) {
       aml_status = _getLocalStorage.aml_status,
       kyc_status_id = _getLocalStorage.kyc_status_id;
 
-  if (aml_status && aml_status.toLowerCase() === 'approved' || aml_status.toLowerCase() === 'rejected') {
+  if (aml_status && aml_status.length > 2 && aml_status.toLowerCase() === 'approved' || aml_status.toLowerCase() === 'rejected') {
     return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("div", {
       className: "row",
       children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("div", {

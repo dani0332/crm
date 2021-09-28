@@ -72,7 +72,7 @@ export default function KycAMLForm(props) {
     }
 
     const { aml_status, kyc_status_id } = getLocalStorage('car_request_snap')
-    if(aml_status &&  aml_status.toLowerCase() === 'approved' || aml_status.toLowerCase() === 'rejected') {
+    if(aml_status && aml_status.length > 2 &&  aml_status.toLowerCase() === 'approved' || aml_status.toLowerCase() === 'rejected') {
         return(
             <div className="row">
                 <div className="col-md-12">
