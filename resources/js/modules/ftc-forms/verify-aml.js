@@ -73,8 +73,9 @@ export default function KycAMLForm(props) {
         window.open("/kyc/aml/1/details/"+filter.car_quote_id, '_blank');
     }
 
-    const { kyc_status_id } = getLocalStorage('car_request_snap')
+    const { kyc_status_id, ...rest } = getLocalStorage('car_request_snap')
     const amlStatus = getLocalStorage('car_request_snap')?.aml_status || "";
+
     if(amlStatus != null &&  amlStatus.toLowerCase() === 'approved' || amlStatus.toLowerCase() === 'rejected') {
         return(
             <div className="row">
@@ -122,7 +123,7 @@ export default function KycAMLForm(props) {
                                     <td colspan="2" align="left" style={{paddingTop: 16}}>
 
                                         <button type="button" class="btn btn-round btn-success btn-sm" onClick={viewDetail}>View Detail</button>
-                                        { kyc_status_id && kyc_status_id === 2 && role === "pa" &&
+                                        { rest?.quote_status_id && rest?.quote_status_id === 11 && role === "pa" &&
                                         <span>
                                             <button type="button" class="btn btn-round btn-danger btn-sm" onClick={()=>approveAml('Rejected')}>Reject</button>
                                             <button type="button" class="btn btn-round btn-primary btn-sm" onClick={()=>approveAml('Approved')}>Approve</button>
@@ -138,10 +139,16 @@ export default function KycAMLForm(props) {
                                 <tr>
                                     <td>No Matches Found</td>
                                 </tr>
-                                { kyc_status_id && kyc_status_id === 2 && role === "pa" &&
+                                { rest?.quote_status_id && rest?.quote_status_id === 11 && role === "pa" &&
                                 <tr>
                                     <td  align="left" style={{paddingTop: 16}}><button type="button" className="btn btn-round btn-success" onClick={()=>approveAml('Approved')} >Approve AML</button></td>
                                 </tr>
+                                }
+
+                                { rest?.quote_status_id && rest?.quote_status_id !== 11 && role === "pa" &&
+                                    <tr>
+                                     <td  align="left" style={{paddingTop: 16}}><span className="badge badge-success">KYC has not cleared.</span></td>
+                                    </tr>
                                 }
                             </tbody>
                         </table> }
