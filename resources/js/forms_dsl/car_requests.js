@@ -97,7 +97,7 @@ const leadRequest = {
                             field:'pa_id',
                             source: [ { id: 0, text: 'Un Assigned Leads'}, { id: 1, text: 'Assigned Leads'} ],
                             access: {
-                                read: [ 'pa'],
+                                read: [ 'pa', 'invoicing'],
                                 write: [],
                                 update: [],
                            },
@@ -139,8 +139,9 @@ const leadRequest = {
                         const { role , id } = session()
                         const { row , dispatch , history, initialForm , selectedRecord, form , manageListDispatch } = options
                         setLocalStorage("car_request_snap", row)
+                        console.log(row)
 
-                        if(role === 'pa' && !row.pa_id){
+                        const showConfirmMsg = () => {
                             confirmAlert({
                                 title: `${row.first_name} ${row.last_name}`,
                                 message: 'Are you sure you want to assign this lead yourself?',
@@ -166,8 +167,14 @@ const leadRequest = {
                                 }
                             ]
                             });
-
-                        } else {
+                        }
+                        if(role === 'pa' && !row.pa_id) {
+                            showConfirmMsg()
+                        }
+                        else if(role === 'invoicing' && !row.invoicing){
+                             showConfirmMsg()
+                        }
+                        else {
                             dispatch({ type: 'VISIBLE_FORM', formState: 'reset' })
                             history.push("/lead/" + row.id)
                         }
@@ -175,14 +182,10 @@ const leadRequest = {
                 }
             },
             postTransform(options){
-
-                console.log('----------vehicle---trnaform-----')
-                //console.log(state)
                 const { data } = options
                 var result = transform(data, vehicleTransform);
                 console.log(result);
                 return result
-
             }
         }
         return form

@@ -113,10 +113,18 @@ class BaseModel extends Model implements AuditableContract
             ->select($access->toArray())
             ->where(function($query) use($filters) {
                 foreach($filters as $key => $value) {
-                    if (is_array($value))
-                        $query->where($key,$value['op'],$value['val']);
-                    else
+                    if (is_array($value)){
+                        switch($value['op']){
+                            case 'in':
+                                $query->whereIn($key,$value['val']);
+                                break;
+                            default:
+                                $query->where($key,$value['op'],$value['val']);
+                        }
+                    }
+                    else{
                         $query->where($key,$value);
+                    }
                 }
             })
             ->get();
@@ -141,10 +149,19 @@ class BaseModel extends Model implements AuditableContract
         ->select($access->toArray())
         ->where(function($query) use($filters) {
             foreach($filters as $key => $value) {
-                if (is_array($value))
-                    $query->where($key,$value['op'],$value['val']);
-                else
+
+                if (is_array($value)){
+                    switch($value['op']){
+                        case 'in':
+                            $query->whereIn($key,$value['val']);
+                            break;
+                        default:
+                            $query->where($key,$value['op'],$value['val']);
+                    }
+                }
+                else{
                     $query->where($key,$value);
+                }
             }
         })
         ->get();

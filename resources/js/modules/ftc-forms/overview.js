@@ -66,14 +66,14 @@ export default function Overview(props) {
                         <td>FTC status:</td>
                         <td class="fs15 fw700 text-right">{state.data?.quote_status_id?.text}</td>
                     </tr>
-                    <tr>
+                    {/* <tr>
                         <td>KYC status:</td>
                         <td class="fs15 fw700 text-right">{state?.data?.kyc_status_id?.text}</td>
                     </tr>
                     <tr>
                         <td>AML status:</td>
                         <td class="fs15 fw700 text-right">{ state.data?.aml_status ? state.data.aml_status : "Pending" }</td>
-                    </tr>
+                    </tr> */}
                     </tbody>
                 </table>
             </div>

@@ -3,6 +3,7 @@
 import React, { useEffect, useState  } from "react";
 import { confirmAlert } from 'react-confirm-alert'; // Import
 import 'react-confirm-alert/src/react-confirm-alert.css'; //
+import { session } from "../../utils";
 import  { ScaleLoader } from "react-spinners";
 import { dispatchPromise } from "../../sagas";
 import {  useDispatch } from 'react-redux';
@@ -12,6 +13,7 @@ export default function KycAMLForm(props) {
 
     const { form : { filter} } = props
     const dispatch = useDispatch()
+    const { role } = session()
     const [state, setState ] = useState({ loader : false , found: 0, matches: 0 });
 
     const verifyAml = () => {
@@ -104,7 +106,7 @@ export default function KycAMLForm(props) {
            <div className="col-md-12">
                 <div className="x_panel">
                     <div className="x_title">
-                    <a href="javascript:void(0)" onClick={viewDetail}>Verify AML Detail <i class="fa fa-angle-right"></i></a>
+                    <a href="javascript:void(0)" onClick={viewDetail} className="btn-link">Verify AML Detail <i class="fa fa-angle-right"></i></a>
                         <div className="clearfix"></div>
                     </div>
                     <div className="x_content">
@@ -120,7 +122,7 @@ export default function KycAMLForm(props) {
                                     <td colspan="2" align="left" style={{paddingTop: 16}}>
 
                                         <button type="button" class="btn btn-round btn-success btn-sm" onClick={viewDetail}>View Detail</button>
-                                        { kyc_status_id && kyc_status_id === 2 &&
+                                        { kyc_status_id && kyc_status_id === 2 && role === "pa" &&
                                         <span>
                                             <button type="button" class="btn btn-round btn-danger btn-sm" onClick={()=>approveAml('Rejected')}>Reject</button>
                                             <button type="button" class="btn btn-round btn-primary btn-sm" onClick={()=>approveAml('Approved')}>Approve</button>
@@ -136,7 +138,7 @@ export default function KycAMLForm(props) {
                                 <tr>
                                     <td>No Matches Found</td>
                                 </tr>
-                                { kyc_status_id && kyc_status_id === 2 &&
+                                { kyc_status_id && kyc_status_id === 2 && role === "pa" &&
                                 <tr>
                                     <td  align="left" style={{paddingTop: 16}}><button type="button" className="btn btn-round btn-success" onClick={()=>approveAml('Approved')} >Approve AML</button></td>
                                 </tr>

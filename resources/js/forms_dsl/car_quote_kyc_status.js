@@ -7,7 +7,7 @@ const carQuoteKycStatus = {
             subtitle: '',
             access: {
                 read: ['advisor', 'pa' , 'admin', 'invoicing'],
-                write: ['pa', 'admin', 'invoicing'],
+                write: ['pa', 'admin'],
                 update: [],
                 delete: [ 'admin' ]
             },

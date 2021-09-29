@@ -52,7 +52,7 @@ class FTCHistory extends BaseModel
                 if($request->input('status', '') == 'Resubmit for Approval') {
 
                     $carQuote->pa_id = null;
-                    $carQuote->quote_status_id = 7;//6;
+                    $carQuote->quote_status_id = 10; //FTC Resubmitted
                     $carQuote->save();
                 }
 
@@ -79,7 +79,7 @@ class FTCHistory extends BaseModel
                         ];
                         dispatch(new FTCMailServiceJob($params));
                     }else{
-
+                        return $this->APIController->respondData(["message" => "Something wrong"], 500);
                     }
                 }
             }

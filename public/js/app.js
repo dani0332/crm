@@ -14507,7 +14507,7 @@ var carQuoteKycStatus = {
       subtitle: '',
       access: {
         read: ['advisor', 'pa', 'admin', 'invoicing'],
-        write: ['pa', 'admin', 'invoicing'],
+        write: ['pa', 'admin'],
         update: [],
         "delete": ['admin']
       },
@@ -14733,7 +14733,7 @@ var leadRequest = {
               text: 'Assigned Leads'
             }],
             access: {
-              read: ['pa'],
+              read: ['pa', 'invoicing'],
               write: [],
               update: []
             }
@@ -14783,8 +14783,9 @@ var leadRequest = {
                 form = options.form,
                 manageListDispatch = options.manageListDispatch;
             (0,_utils__WEBPACK_IMPORTED_MODULE_3__.setLocalStorage)("car_request_snap", row);
+            console.log(row);
 
-            if (role === 'pa' && !row.pa_id) {
+            var showConfirmMsg = function showConfirmMsg() {
               (0,react_confirm_alert__WEBPACK_IMPORTED_MODULE_1__.confirmAlert)({
                 title: "".concat(row.first_name, " ").concat(row.last_name),
                 message: 'Are you sure you want to assign this lead yourself?',
@@ -14835,6 +14836,12 @@ var leadRequest = {
                   onClick: function onClick() {}
                 }]
               });
+            };
+
+            if (role === 'pa' && !row.pa_id) {
+              showConfirmMsg();
+            } else if (role === 'invoicing' && !row.invoicing) {
+              showConfirmMsg();
             } else {
               dispatch({
                 type: 'VISIBLE_FORM',
@@ -14846,8 +14853,6 @@ var leadRequest = {
         }
       },
       postTransform: function postTransform(options) {
-        console.log('----------vehicle---trnaform-----'); //console.log(state)
-
         var data = options.data;
         var result = transform(data, vehicleTransform);
         console.log(result);
@@ -14898,7 +14903,7 @@ var ftcHistory = {
         status: {
           type: 'dropdown',
           label: 'Status',
-          source: ['Declined', 'Discrepancy', 'Resubmit for Approval'],
+          source: ['Resubmit for Approval'],
           access: {
             read: ['advisor', 'pa', 'admin', 'invoicing'],
             write: ['advisor'],
@@ -14946,7 +14951,7 @@ var ftcHistory = {
             type: 'dropdown',
             label: 'Status',
             field: 'status',
-            source: ['Approved By Client', 'Declined by Client', 'FTC Sent', 'Resubmit for Approval']
+            source: ['FTC Sent', 'Resubmit for Approval']
           }],
           advanced: []
         },
@@ -16323,7 +16328,7 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
 
 
 function Overview(props) {
-  var _state$data, _state$data2, _state$data3, _state$data3$national, _state$data4, _state$data5, _state$data5$uae_lice, _state$data6, _state$data6$quote_st, _state$data7, _state$data7$kyc_stat, _state$data8;
+  var _state$data, _state$data2, _state$data3, _state$data3$national, _state$data4, _state$data5, _state$data5$uae_lice, _state$data6, _state$data6$quote_st;
 
   var dispatch = (0,react_redux__WEBPACK_IMPORTED_MODULE_3__.useDispatch)();
 
@@ -16422,29 +16427,15 @@ function Overview(props) {
               children: "Status"
             }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("table", {
               "class": "countries_list",
-              children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxs)("tbody", {
-                children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxs)("tr", {
+              children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("tbody", {
+                children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxs)("tr", {
                   children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("td", {
                     children: "FTC status:"
                   }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("td", {
                     "class": "fs15 fw700 text-right",
                     children: (_state$data6 = state.data) === null || _state$data6 === void 0 ? void 0 : (_state$data6$quote_st = _state$data6.quote_status_id) === null || _state$data6$quote_st === void 0 ? void 0 : _state$data6$quote_st.text
                   })]
-                }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxs)("tr", {
-                  children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("td", {
-                    children: "KYC status:"
-                  }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("td", {
-                    "class": "fs15 fw700 text-right",
-                    children: state === null || state === void 0 ? void 0 : (_state$data7 = state.data) === null || _state$data7 === void 0 ? void 0 : (_state$data7$kyc_stat = _state$data7.kyc_status_id) === null || _state$data7$kyc_stat === void 0 ? void 0 : _state$data7$kyc_stat.text
-                  })]
-                }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxs)("tr", {
-                  children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("td", {
-                    children: "AML status:"
-                  }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("td", {
-                    "class": "fs15 fw700 text-right",
-                    children: (_state$data8 = state.data) !== null && _state$data8 !== void 0 && _state$data8.aml_status ? state.data.aml_status : "Pending"
-                  })]
-                })]
+                })
               })
             })]
           })]
@@ -17244,11 +17235,11 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! react */ "./node_modules/react/index.js");
 /* harmony import */ var react_confirm_alert__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! react-confirm-alert */ "./node_modules/react-confirm-alert/lib/index.js");
 /* harmony import */ var react_confirm_alert_src_react_confirm_alert_css__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! react-confirm-alert/src/react-confirm-alert.css */ "./node_modules/react-confirm-alert/src/react-confirm-alert.css");
+/* harmony import */ var _utils__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../../utils */ "./resources/js/utils/index.js");
 /* harmony import */ var react_spinners__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! react-spinners */ "./node_modules/react-spinners/index.js");
 /* harmony import */ var react_spinners__WEBPACK_IMPORTED_MODULE_8___default = /*#__PURE__*/__webpack_require__.n(react_spinners__WEBPACK_IMPORTED_MODULE_8__);
-/* harmony import */ var _sagas__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../../sagas */ "./resources/js/sagas/index.js");
-/* harmony import */ var react_redux__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! react-redux */ "./node_modules/react-redux/es/index.js");
-/* harmony import */ var _utils__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ../../utils */ "./resources/js/utils/index.js");
+/* harmony import */ var _sagas__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../../sagas */ "./resources/js/sagas/index.js");
+/* harmony import */ var react_redux__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! react-redux */ "./node_modules/react-redux/es/index.js");
 /* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! react/jsx-runtime */ "./node_modules/react/jsx-runtime.js");
 
 
@@ -17279,11 +17270,15 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
 
 
 
+
 function KycAMLForm(props) {
   var _getLocalStorage2;
 
   var filter = props.form.filter;
-  var dispatch = (0,react_redux__WEBPACK_IMPORTED_MODULE_5__.useDispatch)();
+  var dispatch = (0,react_redux__WEBPACK_IMPORTED_MODULE_6__.useDispatch)();
+
+  var _session = (0,_utils__WEBPACK_IMPORTED_MODULE_4__.session)(),
+      role = _session.role;
 
   var _useState = (0,react__WEBPACK_IMPORTED_MODULE_1__.useState)({
     loader: false,
@@ -17300,7 +17295,7 @@ function KycAMLForm(props) {
       found: 0,
       matches: 0
     });
-    (0,_sagas__WEBPACK_IMPORTED_MODULE_4__.dispatchPromise)({
+    (0,_sagas__WEBPACK_IMPORTED_MODULE_5__.dispatchPromise)({
       dispatch: dispatch,
       options: {
         type: 'SEND_REQUEST',
@@ -17354,7 +17349,7 @@ function KycAMLForm(props) {
               while (1) {
                 switch (_context.prev = _context.next) {
                   case 0:
-                    (0,_sagas__WEBPACK_IMPORTED_MODULE_4__.dispatchPromise)({
+                    (0,_sagas__WEBPACK_IMPORTED_MODULE_5__.dispatchPromise)({
                       dispatch: dispatch,
                       options: {
                         type: 'SEND_REQUEST',
@@ -17368,9 +17363,9 @@ function KycAMLForm(props) {
                         }
                       }
                     }).then(function (response) {
-                      var storage = (0,_utils__WEBPACK_IMPORTED_MODULE_6__.getLocalStorage)('car_request_snap');
+                      var storage = (0,_utils__WEBPACK_IMPORTED_MODULE_4__.getLocalStorage)('car_request_snap');
                       storage.aml_status = status;
-                      (0,_utils__WEBPACK_IMPORTED_MODULE_6__.setLocalStorage)('car_request_snap', storage);
+                      (0,_utils__WEBPACK_IMPORTED_MODULE_4__.setLocalStorage)('car_request_snap', storage);
                       setState({
                         loader: false,
                         found: 3
@@ -17402,10 +17397,10 @@ function KycAMLForm(props) {
     window.open("/kyc/aml/1/details/" + filter.car_quote_id, '_blank');
   };
 
-  var _getLocalStorage = (0,_utils__WEBPACK_IMPORTED_MODULE_6__.getLocalStorage)('car_request_snap'),
+  var _getLocalStorage = (0,_utils__WEBPACK_IMPORTED_MODULE_4__.getLocalStorage)('car_request_snap'),
       kyc_status_id = _getLocalStorage.kyc_status_id;
 
-  var amlStatus = ((_getLocalStorage2 = (0,_utils__WEBPACK_IMPORTED_MODULE_6__.getLocalStorage)('car_request_snap')) === null || _getLocalStorage2 === void 0 ? void 0 : _getLocalStorage2.aml_status) || "";
+  var amlStatus = ((_getLocalStorage2 = (0,_utils__WEBPACK_IMPORTED_MODULE_4__.getLocalStorage)('car_request_snap')) === null || _getLocalStorage2 === void 0 ? void 0 : _getLocalStorage2.aml_status) || "";
 
   if (amlStatus != null && amlStatus.toLowerCase() === 'approved' || amlStatus.toLowerCase() === 'rejected') {
     return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("div", {
@@ -17467,6 +17462,7 @@ function KycAMLForm(props) {
           children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsxs)("a", {
             href: "javascript:void(0)",
             onClick: viewDetail,
+            className: "btn-link",
             children: ["Verify AML Detail ", /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("i", {
               "class": "fa fa-angle-right"
             })]
@@ -17498,7 +17494,7 @@ function KycAMLForm(props) {
                     "class": "btn btn-round btn-success btn-sm",
                     onClick: viewDetail,
                     children: "View Detail"
-                  }), kyc_status_id && kyc_status_id === 2 && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsxs)("span", {
+                  }), kyc_status_id && kyc_status_id === 2 && role === "pa" && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsxs)("span", {
                     children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("button", {
                       type: "button",
                       "class": "btn btn-round btn-danger btn-sm",
@@ -17528,7 +17524,7 @@ function KycAMLForm(props) {
                 children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("td", {
                   children: "No Matches Found"
                 })
-              }), kyc_status_id && kyc_status_id === 2 && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("tr", {
+              }), kyc_status_id && kyc_status_id === 2 && role === "pa" && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("tr", {
                 children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("td", {
                   align: "left",
                   style: {

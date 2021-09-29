@@ -172,22 +172,22 @@ class CarQuote extends BaseModel
         'update' => ['advisor'],
         'delete' => ['advisor'],
         'access' => [
-            "pa" => [ 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'created_at','car_value', "pa_id"],
+            "pa" => [ 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'created_at','car_value', "pa_id","invoicing"],
             "advisor" => [ 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'created_at','car_value' ],
             "admin" => [ 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'created_at','car_value' ],
-            "invoicing" => [ 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'created_at','car_value']
+            "invoicing" => [ 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'created_at','car_value','invoicing']
         ],
         "list" => [
-            "pa" => [ 'id','code', 'first_name', 'last_name',  'created_at', "pa_id", "kyc_status_id","quote_status_id","aml_status"],
-            "advisor" => [ 'id','code', 'first_name', 'last_name',  'created_at', "pa_id", "kyc_status_id","quote_status_id","aml_status"],
-            "admin" => [ 'id','code', 'first_name', 'last_name',  'created_at', "kyc_status_id","quote_status_id","aml_status"],
-            "invoicing" => [ 'id','code', 'first_name', 'last_name',  'created_at' , "kyc_status_id","quote_status_id","aml_status"]
+            "pa" => [ 'id','code', 'first_name', 'last_name',  'created_at', "pa_id", "kyc_status_id","quote_status_id","aml_status","invoicing"],
+            "advisor" => [ 'id','code', 'first_name', 'last_name',  'created_at', "pa_id", "kyc_status_id","quote_status_id","aml_status","invoicing"],
+            "admin" => [ 'id','code', 'first_name', 'last_name',  'created_at', "kyc_status_id","quote_status_id","aml_status","invoicing"],
+            "invoicing" => [ 'id','code', 'first_name', 'last_name',  'created_at' , "kyc_status_id","quote_status_id","aml_status","invoicing"]
         ],
         "detail" => [
-            "pa" => [ 'id','code', 'dob','first_name', 'last_name', 'email', 'mobile_no','Year_of_manufacture',"kyc_status_id","quote_status_id", 'created_at', "car_make_id", "car_model_id", "emirate_of_registration_id", "claim_history_id",  "nationality_id","uae_license_held_for_id", "pa_id","aml_status"],
-            "advisor" => [ 'id','code','dob', 'first_name', 'last_name', 'email', 'mobile_no', 'Year_of_manufacture',"kyc_status_id","quote_status_id", 'created_at', "car_make_id", "car_model_id", "emirate_of_registration_id", "claim_history_id",  "nationality_id","uae_license_held_for_id", "pa_id","aml_status"],
-            "admin" => [ 'id','code', 'dob','first_name', 'last_name', 'email', 'mobile_no', 'Year_of_manufacture',"kyc_status_id","quote_status_id", 'created_at', "car_make_id", "car_model_id", "emirate_of_registration_id", "claim_history_id",  "nationality_id","uae_license_held_for_id", "pa_id","aml_status"],
-            "invoicing" => [ 'id','code','dob', 'first_name', 'last_name', 'email', 'mobile_no','Year_of_manufacture',"kyc_status_id","quote_status_id", 'created_at', "car_make_id", "car_model_id", "emirate_of_registration_id", "claim_history_id",  "nationality_id","uae_license_held_for_id", "pa_id","aml_status"],
+            "pa" => [ 'id','code', 'dob','first_name', 'last_name', 'email', 'mobile_no','Year_of_manufacture',"kyc_status_id","quote_status_id", 'created_at', "car_make_id", "car_model_id", "emirate_of_registration_id", "claim_history_id",  "nationality_id","uae_license_held_for_id", "pa_id","aml_status","invoicing"],
+            "advisor" => [ 'id','code','dob', 'first_name', 'last_name', 'email', 'mobile_no', 'Year_of_manufacture',"kyc_status_id","quote_status_id", 'created_at', "car_make_id", "car_model_id", "emirate_of_registration_id", "claim_history_id",  "nationality_id","uae_license_held_for_id", "pa_id","aml_status","invoicing"],
+            "admin" => [ 'id','code', 'dob','first_name', 'last_name', 'email', 'mobile_no', 'Year_of_manufacture',"kyc_status_id","quote_status_id", 'created_at', "car_make_id", "car_model_id", "emirate_of_registration_id", "claim_history_id",  "nationality_id","uae_license_held_for_id", "pa_id","aml_status","invoicing"],
+            "invoicing" => [ 'id','code','dob', 'first_name', 'last_name', 'email', 'mobile_no','Year_of_manufacture',"kyc_status_id","quote_status_id", 'created_at', "car_make_id", "car_model_id", "emirate_of_registration_id", "claim_history_id",  "nationality_id","uae_license_held_for_id", "pa_id","aml_status","invoicing"],
         ]
     ];
 
@@ -214,10 +214,21 @@ class CarQuote extends BaseModel
                     $pa_id = $filters["pa_id"] == 0 ? NULL : Auth::user()->id;
                     $restrictFilter["pa_id"] = $pa_id;
                     $restrictFilter["advisor_id"] = ["op" => "<>", "val" => ''];
-                    $restrictFilter["quote_status_id"] =  1; // show only completed
+                    $restrictFilter["quote_status_id"] =  ["op" => "in", "val" => [9, 11, 12, 10, 15]];
                 }
-
             }
+
+            if(Auth::user()->hasRole('invoicing')) {
+                if(!array_key_exists('pa_id', $filters)){
+                    return [];
+                }else{
+                    $pa_id = $filters["pa_id"] == 0 ? NULL : Auth::user()->id;
+                    $restrictFilter["invoicing"] = $pa_id;
+                    $restrictFilter["advisor_id"] = ["op" => "<>", "val" => ''];
+                    $restrictFilter["quote_status_id"] =  ["op" => "in", "val" => [13]];
+                }
+            }
+
             if(empty($restrictFilter))
                 return [];
             return parent::processGetBaseDSL($restrictFilter, false);
@@ -229,7 +240,12 @@ class CarQuote extends BaseModel
         if( Auth::user()->hasRole('pa') && $request->has('action')) {
             $request->request->add(['pa_id' => Auth::user()->id]);
             parent::saveForm($request, true);
-        }else{
+        }
+        else if(Auth::user()->hasRole('invoicing') && $request->has('action')){
+            $request->request->add(['invoicing' => Auth::user()->id]);
+            parent::saveForm($request, true);
+        }
+        else{
             parent::saveForm($request, $update );
         }
     }
