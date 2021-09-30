@@ -159,7 +159,6 @@ class TMLeadsService
         ,'Recycled','Revived','RevivedByNewBusiness','RevivedByRenewals'])
         ->whereRaw('tm_leads.is_deleted=0 AND (tm_leads.next_followup_date IS NULL OR tm_leads.next_followup_date < now()) AND tm_leads.assigned_to_id='.$currentUserID)
         ->orderByRaw('tm_leads.next_followup_date IS NULL, tm_leads.next_followup_date, tm_leads.created_at')->limit(1)->get();
-
         $prioritizeLeadId = "";
         if(!empty($prioritizeLeads)) {
             foreach($prioritizeLeads as $prioritizeLead)
