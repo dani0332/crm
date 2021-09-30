@@ -16,4 +16,6 @@ final class quoteStatusCode extends Enum
     const rejected = "rejected";
     const approved = "approved";
     const approvalRequired = "approvalRequired";
+    const AMLScreeningCleared = "AMLScreeningCleared";
+    const AMLScreeningFailed = "AMLScreeningFailed";
 }

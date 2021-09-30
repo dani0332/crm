@@ -6,12 +6,7 @@ use App\Models\AML;
 use App\Models\QuoteType;
 use Illuminate\Http\Request;
 use DataTables;
-use Config;
-use DB;
-use Auth;
 use App\Enums\quoteTypeCode;
-use App\Enums\quoteStatusCode;
-use App\Enums\quoteBusinessTypeCode;
 use App\Services\CheckAmlService;
 use App\Services\QuoteStatusService;
 use App\Models\CarQuote;
@@ -52,26 +47,40 @@ class AMLController extends Controller
     public function index(Request $request)
     {
         $quoteTypes = QuoteType::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
+        $quoteStatuses = QuoteStatus::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
 
         if ($request->ajax()) {
-            $dataAml = AML::select('kyc_logs.*', 'quote_type.text as quote_type_text')
-            ->leftjoin('quote_type', 'quote_type.id', 'kyc_logs.quote_type_id')->orderBy('kyc_logs.created_at','desc');
+            $dataAml = [];
 
             if (isset($request->searchType) && !empty($request->searchType)
-            && isset($request->searchField) && !empty($request->searchField)) {
-                if($request->searchType == 'quoteRequestId') {
-                    $dataAml->where('kyc_logs.quote_request_id',$request->searchField);
+                && isset($request->searchField) && !empty($request->searchField)
+                && isset($request->quoteType) && !empty($request->quoteType)) {
+
+                $quoteTypeCode = QuoteType::where('id', '=', $request->quoteType)->value('code');
+                if($quoteTypeCode == quoteTypeCode::Car) { $quoteRequestTable = 'car_quote_request'; }
+                if($quoteTypeCode == quoteTypeCode::Home) { $quoteRequestTable = 'home_quote_request'; }
+                if($quoteTypeCode == quoteTypeCode::Health) { $quoteRequestTable = 'health_quote_request'; }
+                if($quoteTypeCode == quoteTypeCode::Life) { $quoteRequestTable = 'life_quote_request'; }
+                if($quoteTypeCode == quoteTypeCode::Business) { $quoteRequestTable = 'business_quote_request'; }
+                if($quoteTypeCode == quoteTypeCode::Bike) { $quoteRequestTable = 'bike_quote_request'; }
+                if($quoteTypeCode == quoteTypeCode::Yacht) { $quoteRequestTable = 'yacht_quote_request'; }
+                if($quoteTypeCode == quoteTypeCode::Travel) { $quoteRequestTable = 'travel_quote_request'; }
+
+                $dataAml = AML::select('kyc_logs.*', 'quote_type.text as quote_type_text', $quoteRequestTable.'.code as cdb_id')
+                ->leftjoin('quote_type', 'quote_type.id', 'kyc_logs.quote_type_id')
+                ->leftjoin($quoteRequestTable, $quoteRequestTable.'.id', 'kyc_logs.quote_request_id')
+                ->where('kyc_logs.quote_type_id', $request->quoteType)
+                ->orderBy('kyc_logs.created_at','desc');
+
+                if($request->searchType == 'cdbId') {
+                    $dataAml->where($quoteRequestTable.'.code',$request->searchField);
                 }
-                else if($request->searchType == 'id') {
+                if($request->searchType == 'id') {
                     $dataAml->where('kyc_logs.id',$request->searchField);
                 }
-                else {
-                    $dataAml->where($request->searchType, $request->searchField);
+                if($request->searchType == 'customerEmail') {
+                    $dataAml->where($quoteRequestTable.'.email',$request->searchField);
                 }
-            }
-
-            if(isset($request->quoteType) && !empty($request->quoteType)) {
-                $dataAml->where('kyc_logs.quote_type_id', $request->quoteType);
             }
 
             return DataTables::of($dataAml)
@@ -82,7 +91,7 @@ class AMLController extends Controller
                     ->rawColumns(['action'])
                     ->make(true);
         }
-        return view('aml.view',compact('quoteTypes'));
+        return view('aml.view',compact('quoteTypes','quoteStatuses'));
     }
 
     /**
@@ -266,7 +275,35 @@ class AMLController extends Controller
         else {
             return redirect()->back()->with('success', 'Quote Status is set to '.$updateQuoteStatusResp.'');
         }
-        
+
+    }
+
+    public function quoteUpdate(Request $request, $quoteTypeId, $quoteRequestId)
+    {
+        $this->validate($request,[
+            'first_name' => 'required|max:200',
+            'last_name' => 'required|max:200',
+        ]);
+
+        $quoteTypeCode = QuoteType::where('id', '=', $quoteTypeId)->value('code');
+
+        if($quoteTypeCode == quoteTypeCode::Car) { $updateQuote = CarQuote::find($quoteRequestId); }
+        if($quoteTypeCode == quoteTypeCode::Home) { $updateQuote = HomeQuote::find($quoteRequestId); }
+        if($quoteTypeCode == quoteTypeCode::Health) { $updateQuote = HealthQuote::find($quoteRequestId); }
+        if($quoteTypeCode == quoteTypeCode::Life) { $updateQuote = LifeQuote::find($quoteRequestId); }
+        if($quoteTypeCode == quoteTypeCode::Business) { $updateQuote = BusinessQuote::find($quoteRequestId); }
+        if($quoteTypeCode == quoteTypeCode::Bike) { $updateQuote = BikeQuote::find($quoteRequestId); }
+        if($quoteTypeCode == quoteTypeCode::Yacht) { $updateQuote = YachtQuote::find($quoteRequestId); }
+        if($quoteTypeCode == quoteTypeCode::Travel) { $updateQuote = TravelQuote::find($quoteRequestId); }
+
+        $quoteUpdate = $updateQuote;
+        $quoteUpdate->first_name = $request->first_name;
+        $quoteUpdate->last_name = $request->last_name;
+        $quoteUpdate->save();
+
+        $this->checkAmlService->checkAml($request->first_name,$request->last_name,$quoteRequestId,$quoteTypeId);
+
+        return redirect()->back()->with('success', 'Quote is updated');
     }
 
 }

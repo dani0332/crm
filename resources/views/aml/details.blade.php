@@ -13,12 +13,12 @@ use App\Enums\quoteBusinessTypeCode;
                 <h2>{{ $quoteTypeText }} Quote</h2>
                 <ul class="nav navbar-right panel_toolbox">
                     <li><a href="{{ route('aml.index') }}" class="btn btn-warning btn-sm">Home</a></li>
-                    @if($quoteStatusCode == quoteStatusCode::rejected || $quoteStatusCode == quoteStatusCode::approved)
+                    @if($quoteStatusCode == quoteStatusCode::AMLScreeningFailed || $quoteStatusCode == quoteStatusCode::AMLScreeningCleared)
                     <li><a href="#" class='btn btn-warning btn-sm' style="opacity: .4;cursor: default !important;pointer-events: none;">Reject</a></li>
                     <li><a href="#" class="btn btn-warning btn-sm" style="opacity: .4;cursor: default !important;pointer-events: none;">Approve</a></li>
                     @else
-                    <li><a href="{{ $quoteRequest->id }}/quoteStatusUpdate/{{ quoteStatusCode::rejected }}" class='btn btn-warning btn-sm' onclick="return confirm('Do you really want to reject this item?');">Reject</a></li>
-                    <li><a href="{{ $quoteRequest->id }}/quoteStatusUpdate/{{ quoteStatusCode::approved }}" class="btn btn-warning btn-sm" onclick="return confirm('Do you really want to approve this item?');">Approve</a></li>
+                    <li><a href="{{ $quoteRequest->id }}/quoteStatusUpdate/{{ quoteStatusCode::AMLScreeningFailed }}" class='btn btn-warning btn-sm' onclick="return confirm('Do you really want to reject this item?');">Reject</a></li>
+                    <li><a href="{{ $quoteRequest->id }}/quoteStatusUpdate/{{ quoteStatusCode::AMLScreeningCleared }}" class="btn btn-warning btn-sm" onclick="return confirm('Do you really want to approve this item?');">Approve</a></li>
                     @endif
                 </ul>
                 <div class="clearfix"></div>
@@ -31,8 +31,9 @@ use App\Enums\quoteBusinessTypeCode;
                 @if(session()->has('message'))
                     <div class="alert alert-danger">{{ session()->get('message') }}</div>
                 @endif
-                <form id="demo-form2" method="POST" enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left">
-                @method('POST')
+                <form id="demo-form2" method="POST" action="{{ $quoteRequest->id }}/quoteUpdate" enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left" autocomplete="off">
+                    {{csrf_field()}}
+                    @method('GET')
                     <div class="item form-group">
                         <div class="col">
                             <label class="col-form-label col-md-3 col-sm-3 label-align" for="Quote ID"><b> {{ $quoteTypeCode }} Quote ID</b></label>
@@ -60,15 +61,31 @@ use App\Enums\quoteBusinessTypeCode;
                     </div>
                     <div class="item form-group">
                         <div class="col">
-                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="First Name"><b> First Name</b></label>
+                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="First Name"><b> First Name</b> <span class="required">*</span></label>
                             <div class="col-md-6 col-sm-6">
-                            <p class="label-align-center">{{ $quoteRequest->first_name }}</p>
+                            <p class="label-align-center">
+                                <input type="text" id="first_name" name="first_name" value="{{ old('first_name', $quoteRequest->first_name) }}" class="form-control" data-toggle="tooltip" data-placement="top" title="Please enter first name">
+                                @if ($errors->has('first_name'))
+                                <span class="text-danger">{{ $errors->first('first_name') }}</span>
+                                @endif
+                            </p>
                             </div>
                         </div>
                         <div class="col">
-                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="Last Name"><b> Last Name</b></label>
+                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="Last Name"><b> Last Name</b> <span class="required">*</span></label>
                             <div class="col-md-6 col-sm-6">
-                            <p class="label-align-center">{{ $quoteRequest->last_name }}</p>
+                            <p class="label-align-center">
+                                <input type="text" id="last_name" name="last_name" value="{{ old('last_name', $quoteRequest->last_name) }}" class="form-control" data-toggle="tooltip" data-placement="top" title="Please enter last name">
+                                @if ($errors->has('last_name'))
+                                <span class="text-danger">{{ $errors->first('last_name') }}</span>
+                                @endif
+                            </p>
+                            <div style="text-align: right;">
+                                @if($quoteStatusCode == quoteStatusCode::AMLScreeningFailed || $quoteStatusCode == quoteStatusCode::AMLScreeningCleared)
+                                <button type="button" class="btn btn-warning btn-sm" id="return_to_view" style="opacity: .4;cursor: default !important;pointer-events: none;">Update</button></div>
+                                @else
+                                <button type="submit" class="btn btn-warning btn-sm" id="return_to_view">Update</button></div>
+                                @endif
                             </div>
                         </div>
                     </div>
@@ -750,6 +767,8 @@ use App\Enums\quoteBusinessTypeCode;
                         <th>ID</th>
                         <th>Input</th>
                         <th>Screenshot</th>
+                        <th>Match Found</th>
+                        <th>Results Found</th>
                         <th>Created At</th>
                         <th>Updated At</th>
                       </tr>
@@ -761,6 +780,8 @@ use App\Enums\quoteBusinessTypeCode;
                         <td><a href="/kyc/aml/{{$kycLog->id}}">{{ $kycLog->id }}</a></td>
                         <td>{{ $kycLog->input }}</td>
                         <td><a href="{{ $kycLog->screenshot }}" target="_blank"><img class="img-responsive" src="{{ $kycLog->screenshot }}" alt="screenshot" height="80px" width="80px"></a></td>
+                        <td>@if ($kycLog->results_found > 0) True @else False @endif </td>
+                        <td>{{ $kycLog->results_found }}</td>
                         <td>{{ $kycLog->created_at }}</td>
                         <td>{{ $kycLog->updated_at }}</td>
                       </tr>
