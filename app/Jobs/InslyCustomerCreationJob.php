@@ -8,6 +8,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use App\Services\CustomerService;
 use App\Services\InslyDataService;
+use Exception;
 use Illuminate\Support\Facades\Log;
 
 class InslyCustomerCreationJob implements ShouldQueue
@@ -43,7 +44,7 @@ class InslyCustomerCreationJob implements ShouldQueue
                 Log::channel('daily')->info('Initiating process for customer with email: '.$customer_email);
 
                 $customer = CustomerService::getCustomerByEmail($customer_email)->first();
-
+                $customerId = 0;
                 if($customer != '') { // If customer already exists in our database
                     Log::channel('daily')->info('Customer with email: '.$customer_email.' found in database');
 
@@ -61,13 +62,18 @@ class InslyCustomerCreationJob implements ShouldQueue
                     else{
                         list($first_name, $last_name) = explode(' ', $customer_name,2);
                     }
-                    $customerId = CustomerService::createCustomerAndGetId($first_name, $last_name, $customer_email);
-                    Log::channel('daily')->info('Customer created with ID: '.$customerId);
 
-                    CustomerService::setCustomerAccess($customerId); // enabling has_alfred_access and has_reward_access for newly created customer
+                    try{
+                        $customerId = CustomerService::createCustomerAndGetId($first_name, $last_name, $customer_email);
+                        CustomerService::setCustomerAccess($customerId); // enabling has_alfred_access and has_reward_access for newly created customer
+                    } catch(Exception $ex){
+                        Log::channel('daily')->info($ex->__toString());
+                        Log::channel('daily')->info('Failed to create customer with email: '.$customer_email);
+                    }
+
                 }
                 Log::channel('daily')->info('Initiating complete insly data insertion in database table');
-                InslyDataService::AddInslyRecordInDatabase($customer_name, $customer_email, $policy, false);
+                InslyDataService::AddInslyRecordInDatabase($customer_name, $customer_email, $policy, $customerId == 0 ? true : false);
 
                 Log::channel('daily')->info('Initiating update policy expiry update process');
                 CustomerService::updatePolicyExpiry($customer_email, $policy->policy_date_end);
