@@ -34,6 +34,7 @@ use App\Http\Controllers\HandlerController;
 use App\Http\Controllers\ReasonController;
 use App\Http\Controllers\StatusController;
 use App\Http\Controllers\PaymentModeController;
+use App\Http\Controllers\RenewalDataProcessingController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\VehicleDepreciationController;
 use App\Http\Controllers\TmInsuranceTypeController;
@@ -172,6 +173,9 @@ Route::group(['prefix' => 'form'], function()  {
 // Route::POST('/sendReviewEmail', [FormController::class,'sendReviewEmail'])
 //         ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);;
 
+
+
+
 Route::group(['prefix' => 'users'], function()use($router) {
     Route::GET('/me', [UserController::class,'me']);
 });
@@ -180,3 +184,6 @@ Route::group(['prefix' => 'resource'], function()use($router) {
     Route::POST('/store', [UploadResourceController::class,'store']);
 });
 });
+
+Route::POST('/processInslyRenewalData', [RenewalDataProcessingController::class,'FetchAndProcessInslyData'])
+        ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);

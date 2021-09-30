@@ -2,8 +2,11 @@
 
 namespace App\Console;
 
+use App\Console\Commands\DailyInslyDataCapture;
+use App\Console\Commands\InslyOldDataCapture;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
+use Illuminate\Support\Facades\Log;
 
 class Kernel extends ConsoleKernel
 {
@@ -13,7 +16,8 @@ class Kernel extends ConsoleKernel
      * @var array
      */
     protected $commands = [
-        //
+        DailyInslyDataCapture::class,
+        InslyOldDataCapture::class
     ];
 
     /**
@@ -24,7 +28,22 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        // $schedule->command('inspire')->hourly();
+        // $schedule->exec(str_replace('php.ini', 'php', php_ini_loaded_file()).' '.getcwd().'/artisan inslyDataCaputre:daily >> '.getcwd().'/storage/logs/cron.log 2>&1')
+        // ->days([Schedule::SUNDAY,Schedule::MONDAY,Schedule::TUESDAY,Schedule::WEDNESDAY,Schedule::THURSDAY])
+        // ->between('20:00', '07:00')
+        // ->hourly()
+        // ->runInBackground()
+        // ->withoutOverlapping();
+        // // ->emailOutputOnFailure('ahsan.ashfaq@afia.ae')
+        //echo(phpinfo());
+        $schedule
+        ->command('InslyOldDataCapture:all')
+        ->timezone('Asia/Dubai')
+        ->between('18:00', '07:00')
+        ->everyThirtyMinutes()
+        ->runInBackground()
+        ->onOneServer()
+        ->withoutOverlapping();
     }
 
     /**

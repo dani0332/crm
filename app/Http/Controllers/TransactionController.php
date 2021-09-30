@@ -17,6 +17,7 @@ use App\Services\CustomerService;
 use DB;
 use App\Services\TransAppService;
 use App\Services\ReasonService;
+use Illuminate\Support\Facades\Log;
 
 class TransactionController extends Controller
 {
@@ -46,7 +47,7 @@ class TransactionController extends Controller
      */
     public function index(Request $request)
     {
-
+        Log::channel('daily')->info('Entered into transaction');
         $transactors = User::select('users.*')
         ->leftjoin('model_has_roles','users.id','model_has_roles.model_id')
         ->leftjoin('roles','roles.id','model_has_roles.role_id')

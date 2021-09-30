@@ -15,7 +15,7 @@ const ftcHistory = {
                 status: {
                     type:'dropdown',
                     label:'Status',
-                    source: ['Declined' , 'Discrepancy', 'Resubmit for Approval'],
+                    source: ['Resubmit for Approval'],
                     access: {
                          read: [ 'advisor', 'pa', 'admin', 'invoicing'],
                          write: [ 'advisor'],
@@ -60,7 +60,7 @@ const ftcHistory = {
                         type:'dropdown',
                         label:'Status',
                         field:'status',
-                        source: [ 'Approved By Client', 'Declined by Client' , 'FTC Sent', 'Resubmit for Approval'],
+                        source: [ 'FTC Sent', 'Resubmit for Approval'],
                     }
                 ],
                     advanced: []

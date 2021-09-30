@@ -34,7 +34,8 @@ class CarQuoteAMLStatus extends BaseModel
             if(parent::saveForm($request, $update)) {
                 $carQuote = CarQuote::where(['id' => $request->input('car_quote_id', -1), 'pa_id' => Auth::user()->id])->get()->first();
                 if($carQuote) {
-                    $carQuote->aml_status = "Approved";
+                    $carQuote->aml_status = $request->input("status");
+                    $carQuote->quote_status_id = strtolower($request->input("status")) == "approved" ? 13 : 18;
                     $carQuote->save();
                     return $this->APIController->respond(["data" => null], 200);
                 }

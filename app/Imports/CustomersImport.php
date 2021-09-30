@@ -29,6 +29,7 @@ class CustomersImport implements OnEachRow, WithStartRow
     */
     public function onRow(Row $row)
     {
+        Log::channel('daily')->info('Entered in Excel Import per row');
         $row = $row->toArray();
 
         $email = $row[1];

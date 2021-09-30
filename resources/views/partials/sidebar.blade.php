@@ -149,7 +149,7 @@
             </li>
         </ul>
         @endcan
-        @if (Auth::user()->hasRole('advisor') ||  Auth::user()->hasRole('pa'))
+        @if (Auth::user()->hasRole('advisor') ||  Auth::user()->hasRole('pa') ||  Auth::user()->hasRole('invoicing'))
         <ul class="nav side-menu">
              <li><a href="{{ url('ftcform') }}"><i ></i> FTC Form </a>
          </ul>

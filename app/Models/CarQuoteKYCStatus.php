@@ -68,6 +68,20 @@ class CarQuoteKYCStatus extends BaseModel
             }
             if($carQuote){
                 $carQuote->kyc_status_id = $status;
+                $quoteStatusId = 0;
+                switch($status) {
+                    case '1':
+                    case '3': {
+                        $quoteStatusId = 12;
+                        $carQuote->pa_id = null;
+                    }
+                        break;
+                    case '2':
+                        $quoteStatusId = 11;
+                        break;
+                }
+
+                $carQuote->quote_status_id = $quoteStatusId;
                 $carQuote->save();
             }
             parent::saveForm($request, $update);

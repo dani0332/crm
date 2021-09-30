@@ -11069,8 +11069,7 @@ try {
 
 
 window.axios = __webpack_require__(/*! axios */ "./node_modules/axios/index.js");
-window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest'; //
-
+window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 /**
  * Echo exposes an expressive API for subscribing to channels and listening
  * for events that are broadcast by Laravel. Echo and event broadcasting
@@ -14508,7 +14507,7 @@ var carQuoteKycStatus = {
       subtitle: '',
       access: {
         read: ['advisor', 'pa', 'admin', 'invoicing'],
-        write: ['pa', 'admin', 'invoicing'],
+        write: ['pa', 'admin'],
         update: [],
         "delete": ['admin']
       },
@@ -14734,7 +14733,7 @@ var leadRequest = {
               text: 'Assigned Leads'
             }],
             access: {
-              read: ['pa'],
+              read: ['pa', 'invoicing'],
               write: [],
               update: []
             }
@@ -14784,8 +14783,9 @@ var leadRequest = {
                 form = options.form,
                 manageListDispatch = options.manageListDispatch;
             (0,_utils__WEBPACK_IMPORTED_MODULE_3__.setLocalStorage)("car_request_snap", row);
+            console.log(row);
 
-            if (role === 'pa' && !row.pa_id) {
+            var showConfirmMsg = function showConfirmMsg() {
               (0,react_confirm_alert__WEBPACK_IMPORTED_MODULE_1__.confirmAlert)({
                 title: "".concat(row.first_name, " ").concat(row.last_name),
                 message: 'Are you sure you want to assign this lead yourself?',
@@ -14836,6 +14836,12 @@ var leadRequest = {
                   onClick: function onClick() {}
                 }]
               });
+            };
+
+            if (role === 'pa' && !row.pa_id) {
+              showConfirmMsg();
+            } else if (role === 'invoicing' && !row.invoicing) {
+              showConfirmMsg();
             } else {
               dispatch({
                 type: 'VISIBLE_FORM',
@@ -14847,8 +14853,6 @@ var leadRequest = {
         }
       },
       postTransform: function postTransform(options) {
-        console.log('----------vehicle---trnaform-----'); //console.log(state)
-
         var data = options.data;
         var result = transform(data, vehicleTransform);
         console.log(result);
@@ -14899,7 +14903,7 @@ var ftcHistory = {
         status: {
           type: 'dropdown',
           label: 'Status',
-          source: ['Declined', 'Discrepancy', 'Resubmit for Approval'],
+          source: ['Resubmit for Approval'],
           access: {
             read: ['advisor', 'pa', 'admin', 'invoicing'],
             write: ['advisor'],
@@ -14947,7 +14951,7 @@ var ftcHistory = {
             type: 'dropdown',
             label: 'Status',
             field: 'status',
-            source: ['Approved By Client', 'Declined by Client', 'FTC Sent', 'Resubmit for Approval']
+            source: ['FTC Sent', 'Resubmit for Approval']
           }],
           advanced: []
         },
@@ -16324,7 +16328,7 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
 
 
 function Overview(props) {
-  var _state$data, _state$data2, _state$data3, _state$data3$national, _state$data4, _state$data5, _state$data5$uae_lice, _state$data6, _state$data6$quote_st, _state$data7, _state$data7$kyc_stat, _state$data8;
+  var _state$data, _state$data2, _state$data3, _state$data3$national, _state$data4, _state$data5, _state$data5$uae_lice, _state$data6, _state$data6$quote_st;
 
   var dispatch = (0,react_redux__WEBPACK_IMPORTED_MODULE_3__.useDispatch)();
 
@@ -16423,29 +16427,15 @@ function Overview(props) {
               children: "Status"
             }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("table", {
               "class": "countries_list",
-              children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxs)("tbody", {
-                children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxs)("tr", {
+              children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("tbody", {
+                children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxs)("tr", {
                   children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("td", {
                     children: "FTC status:"
                   }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("td", {
                     "class": "fs15 fw700 text-right",
                     children: (_state$data6 = state.data) === null || _state$data6 === void 0 ? void 0 : (_state$data6$quote_st = _state$data6.quote_status_id) === null || _state$data6$quote_st === void 0 ? void 0 : _state$data6$quote_st.text
                   })]
-                }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxs)("tr", {
-                  children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("td", {
-                    children: "KYC status:"
-                  }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("td", {
-                    "class": "fs15 fw700 text-right",
-                    children: state === null || state === void 0 ? void 0 : (_state$data7 = state.data) === null || _state$data7 === void 0 ? void 0 : (_state$data7$kyc_stat = _state$data7.kyc_status_id) === null || _state$data7$kyc_stat === void 0 ? void 0 : _state$data7$kyc_stat.text
-                  })]
-                }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxs)("tr", {
-                  children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("td", {
-                    children: "AML status:"
-                  }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("td", {
-                    "class": "fs15 fw700 text-right",
-                    children: (_state$data8 = state.data) !== null && _state$data8 !== void 0 && _state$data8.aml_status ? state.data.aml_status : "Pending"
-                  })]
-                })]
+                })
               })
             })]
           })]
@@ -17245,12 +17235,18 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! react */ "./node_modules/react/index.js");
 /* harmony import */ var react_confirm_alert__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! react-confirm-alert */ "./node_modules/react-confirm-alert/lib/index.js");
 /* harmony import */ var react_confirm_alert_src_react_confirm_alert_css__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! react-confirm-alert/src/react-confirm-alert.css */ "./node_modules/react-confirm-alert/src/react-confirm-alert.css");
+/* harmony import */ var _utils__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../../utils */ "./resources/js/utils/index.js");
 /* harmony import */ var react_spinners__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! react-spinners */ "./node_modules/react-spinners/index.js");
 /* harmony import */ var react_spinners__WEBPACK_IMPORTED_MODULE_8___default = /*#__PURE__*/__webpack_require__.n(react_spinners__WEBPACK_IMPORTED_MODULE_8__);
-/* harmony import */ var _sagas__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../../sagas */ "./resources/js/sagas/index.js");
-/* harmony import */ var react_redux__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! react-redux */ "./node_modules/react-redux/es/index.js");
-/* harmony import */ var _utils__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ../../utils */ "./resources/js/utils/index.js");
+/* harmony import */ var _sagas__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../../sagas */ "./resources/js/sagas/index.js");
+/* harmony import */ var react_redux__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! react-redux */ "./node_modules/react-redux/es/index.js");
 /* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! react/jsx-runtime */ "./node_modules/react/jsx-runtime.js");
+var _excluded = ["kyc_status_id"];
+
+function _objectWithoutProperties(source, excluded) { if (source == null) return {}; var target = _objectWithoutPropertiesLoose(source, excluded); var key, i; if (Object.getOwnPropertySymbols) { var sourceSymbolKeys = Object.getOwnPropertySymbols(source); for (i = 0; i < sourceSymbolKeys.length; i++) { key = sourceSymbolKeys[i]; if (excluded.indexOf(key) >= 0) continue; if (!Object.prototype.propertyIsEnumerable.call(source, key)) continue; target[key] = source[key]; } } return target; }
+
+function _objectWithoutPropertiesLoose(source, excluded) { if (source == null) return {}; var target = {}; var sourceKeys = Object.keys(source); var key, i; for (i = 0; i < sourceKeys.length; i++) { key = sourceKeys[i]; if (excluded.indexOf(key) >= 0) continue; target[key] = source[key]; } return target; }
+
 
 
 function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { Promise.resolve(value).then(_next, _throw); } }
@@ -17281,8 +17277,13 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
 
 
 function KycAMLForm(props) {
+  var _getLocalStorage2;
+
   var filter = props.form.filter;
-  var dispatch = (0,react_redux__WEBPACK_IMPORTED_MODULE_5__.useDispatch)();
+  var dispatch = (0,react_redux__WEBPACK_IMPORTED_MODULE_6__.useDispatch)();
+
+  var _session = (0,_utils__WEBPACK_IMPORTED_MODULE_4__.session)(),
+      role = _session.role;
 
   var _useState = (0,react__WEBPACK_IMPORTED_MODULE_1__.useState)({
     loader: false,
@@ -17299,7 +17300,7 @@ function KycAMLForm(props) {
       found: 0,
       matches: 0
     });
-    (0,_sagas__WEBPACK_IMPORTED_MODULE_4__.dispatchPromise)({
+    (0,_sagas__WEBPACK_IMPORTED_MODULE_5__.dispatchPromise)({
       dispatch: dispatch,
       options: {
         type: 'SEND_REQUEST',
@@ -17341,10 +17342,10 @@ function KycAMLForm(props) {
     });
   };
 
-  var approveAml = function approveAml() {
+  var approveAml = function approveAml(status) {
     (0,react_confirm_alert__WEBPACK_IMPORTED_MODULE_2__.confirmAlert)({
-      title: 'Approve',
-      message: 'Are you sure to approve AML?',
+      title: status,
+      message: 'Are you sure to  ' + status + ' AML?',
       buttons: [{
         label: 'Yes',
         onClick: function () {
@@ -17353,7 +17354,7 @@ function KycAMLForm(props) {
               while (1) {
                 switch (_context.prev = _context.next) {
                   case 0:
-                    (0,_sagas__WEBPACK_IMPORTED_MODULE_4__.dispatchPromise)({
+                    (0,_sagas__WEBPACK_IMPORTED_MODULE_5__.dispatchPromise)({
                       dispatch: dispatch,
                       options: {
                         type: 'SEND_REQUEST',
@@ -17361,15 +17362,15 @@ function KycAMLForm(props) {
                           url: "/form/car_quote_aml_status",
                           method: 'POST',
                           body: JSON.stringify({
-                            status: 'Approved',
+                            status: status,
                             car_quote_id: filter.car_quote_id
                           })
                         }
                       }
                     }).then(function (response) {
-                      var storage = (0,_utils__WEBPACK_IMPORTED_MODULE_6__.getLocalStorage)('car_request_snap');
-                      storage.aml_status = "Approved";
-                      (0,_utils__WEBPACK_IMPORTED_MODULE_6__.setLocalStorage)('car_request_snap', storage);
+                      var storage = (0,_utils__WEBPACK_IMPORTED_MODULE_4__.getLocalStorage)('car_request_snap');
+                      storage.aml_status = status;
+                      (0,_utils__WEBPACK_IMPORTED_MODULE_4__.setLocalStorage)('car_request_snap', storage);
                       setState({
                         loader: false,
                         found: 3
@@ -17401,11 +17402,13 @@ function KycAMLForm(props) {
     window.open("/kyc/aml/1/details/" + filter.car_quote_id, '_blank');
   };
 
-  var _getLocalStorage = (0,_utils__WEBPACK_IMPORTED_MODULE_6__.getLocalStorage)('car_request_snap'),
-      aml_status = _getLocalStorage.aml_status,
-      kyc_status_id = _getLocalStorage.kyc_status_id;
+  var _getLocalStorage = (0,_utils__WEBPACK_IMPORTED_MODULE_4__.getLocalStorage)('car_request_snap'),
+      kyc_status_id = _getLocalStorage.kyc_status_id,
+      rest = _objectWithoutProperties(_getLocalStorage, _excluded);
 
-  if (aml_status && aml_status.toLowerCase() === 'approved') {
+  var amlStatus = ((_getLocalStorage2 = (0,_utils__WEBPACK_IMPORTED_MODULE_4__.getLocalStorage)('car_request_snap')) === null || _getLocalStorage2 === void 0 ? void 0 : _getLocalStorage2.aml_status) || "";
+
+  if (amlStatus != null && amlStatus.toLowerCase() === 'approved' || amlStatus.toLowerCase() === 'rejected') {
     return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("div", {
       className: "row",
       children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("div", {
@@ -17433,9 +17436,9 @@ function KycAMLForm(props) {
               children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("tbody", {
                 children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("tr", {
                   children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("td", {
-                    children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("span", {
+                    children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsxs)("span", {
                       className: "badge badge-success",
-                      children: "AML has been Approved."
+                      children: ["AML has been ", amlStatus, "."]
                     })
                   })
                 })
@@ -17465,6 +17468,7 @@ function KycAMLForm(props) {
           children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsxs)("a", {
             href: "javascript:void(0)",
             onClick: viewDetail,
+            className: "btn-link",
             children: ["Verify AML Detail ", /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("i", {
               "class": "fa fa-angle-right"
             })]
@@ -17477,18 +17481,44 @@ function KycAMLForm(props) {
             className: "clearfix"
           }), (state === null || state === void 0 ? void 0 : state.found) === 1 && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("table", {
             className: "countries_list",
-            style: {
-              width: "25%"
-            },
-            children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("tbody", {
-              children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsxs)("tr", {
+            children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsxs)("tbody", {
+              children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsxs)("tr", {
                 children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("td", {
                   children: "Found Matches"
                 }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("td", {
-                  className: "fs15 fw700 text-right",
-                  children: state === null || state === void 0 ? void 0 : state.matches
+                  className: "fs15 fw700 text-right"
                 })]
-              })
+              }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("tr", {
+                children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsxs)("td", {
+                  colspan: "2",
+                  align: "left",
+                  style: {
+                    paddingTop: 16
+                  },
+                  children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("button", {
+                    type: "button",
+                    "class": "btn btn-round btn-success btn-sm",
+                    onClick: viewDetail,
+                    children: "View Detail"
+                  }), (rest === null || rest === void 0 ? void 0 : rest.quote_status_id) && (rest === null || rest === void 0 ? void 0 : rest.quote_status_id) === 11 && role === "pa" && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsxs)("span", {
+                    children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("button", {
+                      type: "button",
+                      "class": "btn btn-round btn-danger btn-sm",
+                      onClick: function onClick() {
+                        return approveAml('Rejected');
+                      },
+                      children: "Reject"
+                    }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("button", {
+                      type: "button",
+                      "class": "btn btn-round btn-primary btn-sm",
+                      onClick: function onClick() {
+                        return approveAml('Approved');
+                      },
+                      children: "Approve"
+                    })]
+                  })]
+                })
+              })]
             })
           }), (state === null || state === void 0 ? void 0 : state.found) === 2 && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("table", {
             className: "countries_list",
@@ -17500,7 +17530,7 @@ function KycAMLForm(props) {
                 children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("td", {
                   children: "No Matches Found"
                 })
-              }), kyc_status_id && kyc_status_id === 2 && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("tr", {
+              }), (rest === null || rest === void 0 ? void 0 : rest.quote_status_id) && (rest === null || rest === void 0 ? void 0 : rest.quote_status_id) === 11 && role === "pa" && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("tr", {
                 children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("td", {
                   align: "left",
                   style: {
@@ -17509,8 +17539,21 @@ function KycAMLForm(props) {
                   children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("button", {
                     type: "button",
                     className: "btn btn-round btn-success",
-                    onClick: approveAml,
+                    onClick: function onClick() {
+                      return approveAml('Approved');
+                    },
                     children: "Approve AML"
+                  })
+                })
+              }), (rest === null || rest === void 0 ? void 0 : rest.quote_status_id) && (rest === null || rest === void 0 ? void 0 : rest.quote_status_id) !== 11 && role === "pa" && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("tr", {
+                children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("td", {
+                  align: "left",
+                  style: {
+                    paddingTop: 16
+                  },
+                  children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("span", {
+                    className: "badge badge-success",
+                    children: "KYC has not cleared."
                   })
                 })
               })]
@@ -86632,8 +86675,8 @@ var DataTransform = function(data, map){
 
 			if(key == '') {
 				return;
-			} 
-			
+			}
+
 			var keys = key.split('.');
 			var target = obj;
 			for(var i = 0; i < keys.length; i++ ) {
@@ -86653,16 +86696,16 @@ var DataTransform = function(data, map){
 
 		transform : function(context) {
 			var useList = map.list != undefined;
-			var value; 
-			if (useList) { 
+			var value;
+			if (useList) {
 				value = this.getValue(data, map.list);
 			} else if (_.isArray(data) && !useList) {
 				value = data;
-			} else if (_.isObject(data) && !useList) { 
+			} else if (_.isObject(data) && !useList) {
 				value = [data];
 			}
 			var normalized = [];
-		
+
 			if(!_.isEmpty(value)) {
 				var list = useList ? this.getList() : value;
 				normalized = map.item ? _.map(list, _.bind(this.iterator, this, map.item)) : list;
@@ -86670,7 +86713,7 @@ var DataTransform = function(data, map){
 				normalized = this.each(normalized, context);
 				normalized = this.removeAll(normalized);
 			}
-			
+
 			if(!useList && _.isObject(data) && !_.isArray(data)){
 				return normalized[0];
 			}
@@ -86728,7 +86771,7 @@ var DataTransform = function(data, map){
 				_.each(data, function (value, index, collection) {
 					return map.each(value, index, collection, context);
 				});
-			}  
+			}
 			return data;
 		},
 
@@ -86753,7 +86796,7 @@ var DataTransform = function(data, map){
 				}
 				else {
 					obj[newkey] = "";
-				}	
+				}
 
 			}, this));
 			return obj;
@@ -122639,7 +122682,7 @@ function injectIntoDevTools(devToolsConfig) {
     scheduleRoot:  scheduleRoot ,
     setRefreshHandler:  setRefreshHandler ,
     // Enables DevTools to append owner stacks to error messages in DEV mode.
-    getCurrentFiber:  getCurrentFiberForDevTools 
+    getCurrentFiber:  getCurrentFiberForDevTools
   });
 }
 
@@ -123391,7 +123434,7 @@ Dropzone.propTypes = {
   onDropRejected: (prop_types__WEBPACK_IMPORTED_MODULE_1___default().func),
 
   /**
-   * Custom validation function 
+   * Custom validation function
    * @param {File} file
    * @returns {FileError|FileError[]}
    */
@@ -129060,7 +129103,7 @@ __webpack_require__.r(__webpack_exports__);
   selectorFactory, which has the signature:
 
     (dispatch, options) => (nextState, nextOwnProps) => nextFinalProps
-  
+
   connect passes its args to connectAdvanced as options, which will in turn pass them to
   selectorFactory each time a Connect component instance is instantiated or hot reloaded.
 
@@ -150819,7 +150862,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _style_loader_dist_runtime_injectStylesIntoStyleTag_js__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_style_loader_dist_runtime_injectStylesIntoStyleTag_js__WEBPACK_IMPORTED_MODULE_0__);
 /* harmony import */ var _css_loader_dist_cjs_js_ruleSet_1_rules_6_oneOf_1_use_1_postcss_loader_dist_cjs_js_ruleSet_1_rules_6_oneOf_1_use_2_react_confirm_alert_css__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! !!../../css-loader/dist/cjs.js??ruleSet[1].rules[6].oneOf[1].use[1]!../../postcss-loader/dist/cjs.js??ruleSet[1].rules[6].oneOf[1].use[2]!./react-confirm-alert.css */ "./node_modules/css-loader/dist/cjs.js??ruleSet[1].rules[6].oneOf[1].use[1]!./node_modules/postcss-loader/dist/cjs.js??ruleSet[1].rules[6].oneOf[1].use[2]!./node_modules/react-confirm-alert/src/react-confirm-alert.css");
 
-            
+
 
 var options = {};
 
@@ -150849,7 +150892,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _style_loader_dist_runtime_injectStylesIntoStyleTag_js__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_style_loader_dist_runtime_injectStylesIntoStyleTag_js__WEBPACK_IMPORTED_MODULE_0__);
 /* harmony import */ var _css_loader_dist_cjs_js_ruleSet_1_rules_6_oneOf_1_use_1_postcss_loader_dist_cjs_js_ruleSet_1_rules_6_oneOf_1_use_2_react_datepicker_css__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! !!../../css-loader/dist/cjs.js??ruleSet[1].rules[6].oneOf[1].use[1]!../../postcss-loader/dist/cjs.js??ruleSet[1].rules[6].oneOf[1].use[2]!./react-datepicker.css */ "./node_modules/css-loader/dist/cjs.js??ruleSet[1].rules[6].oneOf[1].use[1]!./node_modules/postcss-loader/dist/cjs.js??ruleSet[1].rules[6].oneOf[1].use[2]!./node_modules/react-datepicker/dist/react-datepicker.css");
 
-            
+
 
 var options = {};
 
@@ -150879,7 +150922,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _style_loader_dist_runtime_injectStylesIntoStyleTag_js__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_style_loader_dist_runtime_injectStylesIntoStyleTag_js__WEBPACK_IMPORTED_MODULE_0__);
 /* harmony import */ var _css_loader_dist_cjs_js_ruleSet_1_rules_6_oneOf_1_use_1_postcss_loader_dist_cjs_js_ruleSet_1_rules_6_oneOf_1_use_2_theme_css__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! !!../../css-loader/dist/cjs.js??ruleSet[1].rules[6].oneOf[1].use[1]!../../postcss-loader/dist/cjs.js??ruleSet[1].rules[6].oneOf[1].use[2]!./theme.css */ "./node_modules/css-loader/dist/cjs.js??ruleSet[1].rules[6].oneOf[1].use[1]!./node_modules/postcss-loader/dist/cjs.js??ruleSet[1].rules[6].oneOf[1].use[2]!./node_modules/react-notifications-component/dist/theme.css");
 
-            
+
 
 var options = {};
 
@@ -150909,7 +150952,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _style_loader_dist_runtime_injectStylesIntoStyleTag_js__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_style_loader_dist_runtime_injectStylesIntoStyleTag_js__WEBPACK_IMPORTED_MODULE_0__);
 /* harmony import */ var _css_loader_dist_cjs_js_ruleSet_1_rules_6_oneOf_1_use_1_postcss_loader_dist_cjs_js_ruleSet_1_rules_6_oneOf_1_use_2_react_tabs_css__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! !!../../css-loader/dist/cjs.js??ruleSet[1].rules[6].oneOf[1].use[1]!../../postcss-loader/dist/cjs.js??ruleSet[1].rules[6].oneOf[1].use[2]!./react-tabs.css */ "./node_modules/css-loader/dist/cjs.js??ruleSet[1].rules[6].oneOf[1].use[1]!./node_modules/postcss-loader/dist/cjs.js??ruleSet[1].rules[6].oneOf[1].use[2]!./node_modules/react-tabs/style/react-tabs.css");
 
-            
+
 
 var options = {};
 
@@ -157281,7 +157324,7 @@ function useFetch() {
                         _d = !(0,_utils__WEBPACK_IMPORTED_MODULE_6__.isFunction)(retryOn) && Array.isArray(retryOn) && retryOn.length < 1 && (newRes === null || newRes === void 0 ? void 0 : newRes.ok) === false
                             // otherwise only retry when is specified
                             || Array.isArray(retryOn) && retryOn.includes(newRes.status);
-                        if (_d) 
+                        if (_d)
                         // if we just have `retries` set with NO `retryOn` then
                         // automatically retry on fail until attempts run out
                         return [3 /*break*/, 12];
@@ -157319,7 +157362,7 @@ function useFetch() {
                         // if we just have `retries` set with NO `retryOn` then
                         // automatically retry on fail until attempts run out
                         _f = !(0,_utils__WEBPACK_IMPORTED_MODULE_6__.isFunction)(retryOn) && Array.isArray(retryOn) && retryOn.length < 1;
-                        if (_f) 
+                        if (_f)
                         // if we just have `retries` set with NO `retryOn` then
                         // automatically retry on fail until attempts run out
                         return [3 /*break*/, 20];
@@ -158364,7 +158407,7 @@ function printValue(value, quoteStrings) {
 /************************************************************************/
 /******/ 	// The module cache
 /******/ 	var __webpack_module_cache__ = {};
-/******/ 	
+/******/
 /******/ 	// The require function
 /******/ 	function __webpack_require__(moduleId) {
 /******/ 		// Check if module is in cache
@@ -158378,20 +158421,20 @@ function printValue(value, quoteStrings) {
 /******/ 			loaded: false,
 /******/ 			exports: {}
 /******/ 		};
-/******/ 	
+/******/
 /******/ 		// Execute the module function
 /******/ 		__webpack_modules__[moduleId].call(module.exports, module, module.exports, __webpack_require__);
-/******/ 	
+/******/
 /******/ 		// Flag the module as loaded
 /******/ 		module.loaded = true;
-/******/ 	
+/******/
 /******/ 		// Return the exports of the module
 /******/ 		return module.exports;
 /******/ 	}
-/******/ 	
+/******/
 /******/ 	// expose the modules object (__webpack_modules__)
 /******/ 	__webpack_require__.m = __webpack_modules__;
-/******/ 	
+/******/
 /************************************************************************/
 /******/ 	/* webpack/runtime/chunk loaded */
 /******/ 	(() => {
@@ -158423,7 +158466,7 @@ function printValue(value, quoteStrings) {
 /******/ 			return result;
 /******/ 		};
 /******/ 	})();
-/******/ 	
+/******/
 /******/ 	/* webpack/runtime/compat get default export */
 /******/ 	(() => {
 /******/ 		// getDefaultExport function for compatibility with non-harmony modules
@@ -158435,7 +158478,7 @@ function printValue(value, quoteStrings) {
 /******/ 			return getter;
 /******/ 		};
 /******/ 	})();
-/******/ 	
+/******/
 /******/ 	/* webpack/runtime/define property getters */
 /******/ 	(() => {
 /******/ 		// define getter functions for harmony exports
@@ -158447,7 +158490,7 @@ function printValue(value, quoteStrings) {
 /******/ 			}
 /******/ 		};
 /******/ 	})();
-/******/ 	
+/******/
 /******/ 	/* webpack/runtime/global */
 /******/ 	(() => {
 /******/ 		__webpack_require__.g = (function() {
@@ -158459,12 +158502,12 @@ function printValue(value, quoteStrings) {
 /******/ 			}
 /******/ 		})();
 /******/ 	})();
-/******/ 	
+/******/
 /******/ 	/* webpack/runtime/hasOwnProperty shorthand */
 /******/ 	(() => {
 /******/ 		__webpack_require__.o = (obj, prop) => (Object.prototype.hasOwnProperty.call(obj, prop))
 /******/ 	})();
-/******/ 	
+/******/
 /******/ 	/* webpack/runtime/make namespace object */
 /******/ 	(() => {
 /******/ 		// define __esModule on exports
@@ -158475,7 +158518,7 @@ function printValue(value, quoteStrings) {
 /******/ 			Object.defineProperty(exports, '__esModule', { value: true });
 /******/ 		};
 /******/ 	})();
-/******/ 	
+/******/
 /******/ 	/* webpack/runtime/node module decorator */
 /******/ 	(() => {
 /******/ 		__webpack_require__.nmd = (module) => {
@@ -158484,11 +158527,11 @@ function printValue(value, quoteStrings) {
 /******/ 			return module;
 /******/ 		};
 /******/ 	})();
-/******/ 	
+/******/
 /******/ 	/* webpack/runtime/jsonp chunk loading */
 /******/ 	(() => {
 /******/ 		// no baseURI
-/******/ 		
+/******/
 /******/ 		// object to store loaded and loading chunks
 /******/ 		// undefined = chunk not loaded, null = chunk preloaded/prefetched
 /******/ 		// [resolve, reject, Promise] = chunk loading, 0 = chunk loaded
@@ -158496,19 +158539,19 @@ function printValue(value, quoteStrings) {
 /******/ 			"/js/app": 0,
 /******/ 			"build/css/app": 0
 /******/ 		};
-/******/ 		
+/******/
 /******/ 		// no chunk on demand loading
-/******/ 		
+/******/
 /******/ 		// no prefetching
-/******/ 		
+/******/
 /******/ 		// no preloaded
-/******/ 		
+/******/
 /******/ 		// no HMR
-/******/ 		
+/******/
 /******/ 		// no HMR manifest
-/******/ 		
+/******/
 /******/ 		__webpack_require__.O.j = (chunkId) => (installedChunks[chunkId] === 0);
-/******/ 		
+/******/
 /******/ 		// install a JSONP callback for chunk loading
 /******/ 		var webpackJsonpCallback = (parentChunkLoadingFunction, data) => {
 /******/ 			var [chunkIds, moreModules, runtime] = data;
@@ -158531,20 +158574,20 @@ function printValue(value, quoteStrings) {
 /******/ 			}
 /******/ 			return __webpack_require__.O(result);
 /******/ 		}
-/******/ 		
+/******/
 /******/ 		var chunkLoadingGlobal = self["webpackChunk"] = self["webpackChunk"] || [];
 /******/ 		chunkLoadingGlobal.forEach(webpackJsonpCallback.bind(null, 0));
 /******/ 		chunkLoadingGlobal.push = webpackJsonpCallback.bind(null, chunkLoadingGlobal.push.bind(chunkLoadingGlobal));
 /******/ 	})();
-/******/ 	
+/******/
 /************************************************************************/
-/******/ 	
+/******/
 /******/ 	// startup
 /******/ 	// Load entry module and return exports
 /******/ 	// This entry module depends on other loaded chunks and execution need to be delayed
 /******/ 	__webpack_require__.O(undefined, ["build/css/app"], () => (__webpack_require__("./resources/js/app.js")))
 /******/ 	var __webpack_exports__ = __webpack_require__.O(undefined, ["build/css/app"], () => (__webpack_require__("./resources/css/app.css")))
 /******/ 	__webpack_exports__ = __webpack_require__.O(__webpack_exports__);
-/******/ 	
+/******/
 /******/ })()
 ;

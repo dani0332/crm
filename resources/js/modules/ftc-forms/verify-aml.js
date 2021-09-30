@@ -3,6 +3,7 @@
 import React, { useEffect, useState  } from "react";
 import { confirmAlert } from 'react-confirm-alert'; // Import
 import 'react-confirm-alert/src/react-confirm-alert.css'; //
+import { session } from "../../utils";
 import  { ScaleLoader } from "react-spinners";
 import { dispatchPromise } from "../../sagas";
 import {  useDispatch } from 'react-redux';
@@ -12,6 +13,7 @@ export default function KycAMLForm(props) {
 
     const { form : { filter} } = props
     const dispatch = useDispatch()
+    const { role } = session()
     const [state, setState ] = useState({ loader : false , found: 0, matches: 0 });
 
     const verifyAml = () => {
@@ -37,10 +39,10 @@ export default function KycAMLForm(props) {
 
     }
 
-    const approveAml = () => {
+    const approveAml = (status) => {
         confirmAlert({
-            title: 'Approve',
-            message: 'Are you sure to approve AML?',
+            title: status,
+            message: 'Are you sure to  '+status+' AML?',
             buttons: [
               {
                 label: 'Yes',
@@ -49,11 +51,11 @@ export default function KycAMLForm(props) {
                         dispatch: dispatch,
                         options: {
                             type: 'SEND_REQUEST',
-                            request: { url: `/form/car_quote_aml_status`, method: 'POST', body: JSON.stringify( { status: 'Approved', car_quote_id: filter.car_quote_id  } ) }
+                            request: { url: `/form/car_quote_aml_status`, method: 'POST', body: JSON.stringify( { status: status, car_quote_id: filter.car_quote_id  } ) }
                         }
                     }).then((response) => {
                         const storage = getLocalStorage('car_request_snap')
-                        storage.aml_status = "Approved"
+                        storage.aml_status = status
                         setLocalStorage('car_request_snap', storage)
                         setState({ loader: false, found: 3 })
                     }).catch(error => {});
@@ -71,8 +73,10 @@ export default function KycAMLForm(props) {
         window.open("/kyc/aml/1/details/"+filter.car_quote_id, '_blank');
     }
 
-    const { aml_status, kyc_status_id } = getLocalStorage('car_request_snap')
-    if(aml_status &&  aml_status.toLowerCase() === 'approved') {
+    const { kyc_status_id, ...rest } = getLocalStorage('car_request_snap')
+    const amlStatus = getLocalStorage('car_request_snap')?.aml_status || "";
+
+    if(amlStatus != null &&  amlStatus.toLowerCase() === 'approved' || amlStatus.toLowerCase() === 'rejected') {
         return(
             <div className="row">
                 <div className="col-md-12">
@@ -86,7 +90,7 @@ export default function KycAMLForm(props) {
                         <table className="countries_list" style={{width: "25%"}}>
                             <tbody>
                                 <tr>
-                                <td><span className="badge badge-success">AML has been Approved.</span></td>
+                                <td><span className="badge badge-success">AML has been {amlStatus}.</span></td>
                                 </tr>
                             </tbody>
                         </table>
@@ -103,17 +107,29 @@ export default function KycAMLForm(props) {
            <div className="col-md-12">
                 <div className="x_panel">
                     <div className="x_title">
-                         <a href="javascript:void(0)" onClick={viewDetail}>Verify AML Detail <i class="fa fa-angle-right"></i></a>
+                    <a href="javascript:void(0)" onClick={viewDetail} className="btn-link">Verify AML Detail <i class="fa fa-angle-right"></i></a>
                         <div className="clearfix"></div>
                     </div>
                     <div className="x_content">
                         <div className="clearfix"></div>
                         {state?.found === 1 &&
-                            <table className="countries_list" style={{width: "25%"}}>
+                            <table className="countries_list">
                             <tbody>
                                 <tr>
                                     <td>Found Matches</td>
-                                    <td className="fs15 fw700 text-right">{state?.matches}</td>
+                                    <td className="fs15 fw700 text-right"></td>
+                                </tr>
+                                <tr>
+                                    <td colspan="2" align="left" style={{paddingTop: 16}}>
+
+                                        <button type="button" class="btn btn-round btn-success btn-sm" onClick={viewDetail}>View Detail</button>
+                                        { rest?.quote_status_id && rest?.quote_status_id === 11 && role === "pa" &&
+                                        <span>
+                                            <button type="button" class="btn btn-round btn-danger btn-sm" onClick={()=>approveAml('Rejected')}>Reject</button>
+                                            <button type="button" class="btn btn-round btn-primary btn-sm" onClick={()=>approveAml('Approved')}>Approve</button>
+                                        </span>
+                                        }
+                                    </td>
                                 </tr>
                             </tbody>
                         </table> }
@@ -123,10 +139,16 @@ export default function KycAMLForm(props) {
                                 <tr>
                                     <td>No Matches Found</td>
                                 </tr>
-                                { kyc_status_id && kyc_status_id === 2 &&
+                                { rest?.quote_status_id && rest?.quote_status_id === 11 && role === "pa" &&
                                 <tr>
-                                    <td  align="left" style={{paddingTop: 16}}><button type="button" className="btn btn-round btn-success" onClick={approveAml} >Approve AML</button></td>
+                                    <td  align="left" style={{paddingTop: 16}}><button type="button" className="btn btn-round btn-success" onClick={()=>approveAml('Approved')} >Approve AML</button></td>
                                 </tr>
+                                }
+
+                                { rest?.quote_status_id && rest?.quote_status_id !== 11 && role === "pa" &&
+                                    <tr>
+                                     <td  align="left" style={{paddingTop: 16}}><span className="badge badge-success">KYC has not cleared.</span></td>
+                                    </tr>
                                 }
                             </tbody>
                         </table> }
