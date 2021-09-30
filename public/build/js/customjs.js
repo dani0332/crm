@@ -1345,11 +1345,12 @@ $(document).ready(function() {
 
     function next_followup_date_field_visibility() {
         var tm_lead_status_code = $("#tm_lead_statuses_id option:selected").attr("data-id");
-        var no_answer_count = $("#no_answer_count").val();
+        //var no_answer_count = $("#no_answer_count").val();
 
         if (tm_lead_status_code == "NoAnswer" || tm_lead_status_code == "SwitchedOff" ||
             tm_lead_status_code == "PipelineNoInfo" || tm_lead_status_code == "PipelineImmediate" ||
-            tm_lead_status_code == "PipelineFuture" || tm_lead_status_code == "DealingWithAnAdvisor") {
+            tm_lead_status_code == "PipelineFuture" || tm_lead_status_code == "DealingWithAnAdvisor"
+            || (tm_lead_status_code == "NewLead" && tmLeadEditFormNextFollowupDate != "")) {
             $("#next_followup_date_field").show();
         } else {
             $("#next_followup_date_field").hide();
