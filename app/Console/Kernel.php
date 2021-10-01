@@ -39,7 +39,7 @@ class Kernel extends ConsoleKernel
         $schedule
         ->command('InslyOldDataCapture:all')
         ->timezone('Asia/Dubai')
-        ->between('18:00', '07:00')
+        ->between('09:00', '07:00')
         ->everyThirtyMinutes()
         ->runInBackground()
         ->onOneServer()
