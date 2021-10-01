@@ -933,7 +933,7 @@ $(document).ready(function() {
                 data: 'quote_request_id',
                 name: 'quote_request_id',
                 render: function(data, type, row) {
-                    return "<a href='" + config.routes.aml_datatable_route + '/' + row.quote_type_id + '/details/' + row.quote_request_id + "'>" + row.quote_request_id + "</a>"
+                    return "<a href='" + config.routes.aml_datatable_route + '/' + row.quote_type_id + '/details/' + row.quote_request_id + "'>" + row.cdb_id + "</a>"
                 }
             },
             { data: "input", name: "input" },
@@ -955,13 +955,40 @@ $(document).ready(function() {
         ]
     });
 
+    $("#aml-search-fields").hide();
+    $('#quoteTypeValue').on("change", function(e) {
+        aml_search_filters_visiblity();
+    });
+    function aml_search_filters_visiblity() {
+        var quoteTypeValue = $("#quoteTypeValue").val();
+        if (quoteTypeValue != "") {
+            $("#aml-search-fields").show(300);
+        } else {
+            $("#aml-search-fields").hide(300);
+        }
+    }
+
     $("#searchAML").submit(function(e) {
         e.preventDefault();
-        $(".loader").show();
-        amlDatatable.draw();
-        setTimeout(() => {
-            $(".loader").hide();
-        }, 1000);
+        var searchField = $("#searchField").val();
+        if(searchField == "") {
+            $("#aml-search-filter-result").html("Please type required search");
+            $('#searchField').css('border-color', 'red');
+
+            setTimeout(() => {
+                $(".loader").hide();
+            }, 1000);
+            return false
+        }
+        else {
+            $("#aml-search-filter-result").html("");
+            $('#searchField').css('border-color', '');
+            $(".loader").show();
+            amlDatatable.draw();
+            setTimeout(() => {
+                $(".loader").hide();
+            }, 1000);
+        }
     });
 
     $('.tminsurancetype-data-table').DataTable({
@@ -1318,11 +1345,12 @@ $(document).ready(function() {
 
     function next_followup_date_field_visibility() {
         var tm_lead_status_code = $("#tm_lead_statuses_id option:selected").attr("data-id");
-        var no_answer_count = $("#no_answer_count").val();
+        //var no_answer_count = $("#no_answer_count").val();
 
         if (tm_lead_status_code == "NoAnswer" || tm_lead_status_code == "SwitchedOff" ||
             tm_lead_status_code == "PipelineNoInfo" || tm_lead_status_code == "PipelineImmediate" ||
-            tm_lead_status_code == "PipelineFuture" || tm_lead_status_code == "DealingWithAnAdvisor") {
+            tm_lead_status_code == "PipelineFuture" || tm_lead_status_code == "DealingWithAnAdvisor"
+            || (tm_lead_status_code == "NewLead" && tmLeadEditFormNextFollowupDate != "")) {
             $("#next_followup_date_field").show();
         } else {
             $("#next_followup_date_field").hide();

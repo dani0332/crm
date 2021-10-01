@@ -43,7 +43,7 @@ class CheckAmlService
 
         if($chAmlStatus == 201) { // Match is found
 
-            // Update Quote Status 
+            // Update Quote Status
             $quoteTypeCode = QuoteType::where('id', '=', $quoteTypeId)->value('code');
             $quoteStatusId = QuoteStatus::where('code', '=', 'approvalRequired')->value('id');
             if($quoteTypeCode && $quoteTypeCode != "") {
@@ -59,11 +59,12 @@ class CheckAmlService
 
                 $quoteStatusUpdate = $updateQuote;
                 $quoteStatusUpdate->quote_status_id = $quoteStatusId;
-                $quoteStatusUpdate->save();
+                //$quoteStatusUpdate->save(); // 30-Sep-2021 MS: Quote status will not update
             }
 
+            // 30-Sep-2021 MS: Email will not send
             // Send Email alert to Compliance team
-            CheckAmlService::sendAMLMatchedEmailComplianceTeam($emailAmlData,$emailL_sys,$amlUrl);
+            // CheckAmlService::sendAMLMatchedEmailComplianceTeam($emailAmlData,$emailL_sys,$amlUrl);
         }
         if($chAmlStatus != 201 && $chAmlStatus != 200) { // API failed
             $requestMessage = '';

@@ -9,14 +9,34 @@
                 <div class="clearfix"></div>
             </div>
             <div class="x_content">
-            <form method="POST" id="searchAML" class="form-horizontal form-label-left" role="form" data-parsley-validate="" novalidate="" autocomplete="off">
-            <div class="item form-group">
+                <form method="POST" id="searchAML" class="form-horizontal form-label-left" role="form" data-parsley-validate="" novalidate="" autocomplete="off">
+                    <div class="item form-group">
+                        <div class="col">
+                            <label class="col-form-label col-md-2 col-sm-2" for="Quote Type">Quote Type</label>
+                            <div class="col-md-6 col-sm-6">
+                                <div class="input-group">
+                                    <select class="form-control" id="quoteTypeValue" name="quoteType">
+                                        <option value="">Select</option>
+                                        @foreach ($quoteTypes as $quoteType)
+                                            <option value="{{ $quoteType->id }}">{{ $quoteType->text }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col">
+
+                        </div>
+                    </div>
+                    <div id="aml-search-fields">
+                    <div class="item form-group">
                         <div class="col">
                             <label class="col-form-label col-md-2 col-sm-2" for="Search By">Search By</label>
                             <div class="col-md-6 col-sm-6">
                                 <select class="form-control" id="searchType" name="searchType">
-                                    <option value="quoteRequestId">Quote Request ID</option>
-                                    <option value="id">ID</option>
+                                    <option value="cdbId">CDB ID</option>
+                                    <option value="customerEmail">Customer Email</option>
+                                    <option value="id">AML ID</option>
                                 </select>
                             </div>
                         </div>
@@ -24,25 +44,35 @@
                             <label class="col-form-label col-md-2 col-sm-2" for="Search Value">Search Value</label>
                             <div class="col-md-6 col-sm-6">
                                 <div class="input-group">
-                                    <input type="text" class="form-control" id="searchField" name="searchField" placeholder="Type here...">
+                                    <div><input type="text" class="form-control" id="searchField" name="searchField" placeholder="Type here..."></div>
+                                    <div id="aml-search-filter-result" class="required"></div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                <div class="item form-group">
-                    <div class="col">
-                        <label class="col-form-label col-md-2 col-sm-2" for="Quote Type">Quote Type</label>
-                        <div class="col-md-6 col-sm-6">
-                            <div class="input-group">
-                                <select class="form-control" id="quoteTypeValue" name="quoteType">
-                                    <option value="">Select</option>
-                                    @foreach ($quoteTypes as $quoteType)
-                                        <option value="{{ $quoteType->id }}">{{ $quoteType->text }}</option>
-                                    @endforeach
-                                </select>
+                    {{-- <div class="item form-group">
+                        <div class="col">
+                            <label class="col-form-label col-md-2 col-sm-2" for="Quote Status">Quote Status</label>
+                            <div class="col-md-6 col-sm-6">
+                                <div class="input-group">
+                                    <select class="form-control" id="quoteStatusValue" name="quoteStatus">
+                                        <option value="">Select</option>
+                                        @foreach ($quoteStatuses as $quoteStatus)
+                                            <option value="{{ $quoteStatus->id }}">{{ $quoteStatus->text }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
                             </div>
                         </div>
+                        <div class="col">
+
+                        </div>
+                    </div> --}}
                     </div>
+                    <div class="item form-group">
+                        <div class="col">
+
+                        </div>
                         <div class="col">
                             <ul class="nav navbar-right panel_toolbox">
                             <li><input type="submit" class="btn btn-warning btn-sm" value="Search"></li>
@@ -57,9 +87,9 @@
                 <table class="table table-striped jambo_table aml-data-table" style="width:100%">
                     <thead>
                         <tr>
-                        <th>ID</th>
+                        <th>Id</th>
                         <th>Quote Type</th>
-                        <th>Quote Request ID</th>
+                        <th>CDB Id</th>
                         <th>Input</th>
                         <th>Screenshot</th>
                         <th>Created At</th>
