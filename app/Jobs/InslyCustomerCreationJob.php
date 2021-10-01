@@ -50,7 +50,7 @@ class InslyCustomerCreationJob implements ShouldQueue
 
                     $customer->has_reward_access = true;
                     $customer->has_alfred_access = true;
-
+                    $customerId = $customer->id;
                     $customer->save();
                 } else { // If customer doesn't exist in our database
                     Log::channel('daily')->info('Customer with email: '.$customer_email.' not found in database');
