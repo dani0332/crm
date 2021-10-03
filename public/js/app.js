@@ -15001,6 +15001,136 @@ var ftcHistory = {
 
 /***/ }),
 
+/***/ "./resources/js/forms_dsl/ftc_quote_status_history.js":
+/*!************************************************************!*\
+  !*** ./resources/js/forms_dsl/ftc_quote_status_history.js ***!
+  \************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var moment__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! moment */ "./node_modules/moment/moment.js");
+/* harmony import */ var moment__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(moment__WEBPACK_IMPORTED_MODULE_0__);
+function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) { symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); } keys.push.apply(keys, symbols); } return keys; }
+
+function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys(Object(source), true).forEach(function (key) { _defineProperty(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
+
+var ftcQuoteStatusHistory = {
+  getForm: function getForm() {
+    var form = {
+      db_table: 'ftc_quote_status_history',
+      title: 'FTC Quote Status History',
+      subtitle: '',
+      access: {
+        read: ['pa', 'advisor', 'admin', 'invoicing'],
+        write: [],
+        update: [],
+        "delete": []
+      },
+      fields: {
+        quote_status_id: {
+          type: 'dropdown',
+          label: 'Status',
+          source: 'quote_status',
+          field: 'quote_status_id',
+          access: {
+            read: ['advisor', 'pa', 'admin', 'invoicing'],
+            write: [],
+            update: []
+          },
+          rules: {
+            required: true
+          }
+        },
+        notes: {
+          type: 'textarea',
+          label: 'Notes',
+          access: {
+            read: ['advisor', 'pa', 'admin', 'invoicing'],
+            write: [],
+            update: []
+          },
+          rules: {
+            required: true
+          }
+        },
+        created_by: {
+          type: 'text',
+          label: 'Created By'
+        },
+        created_at: {
+          type: 'text',
+          label: 'Created By'
+        }
+      },
+      sections: [{
+        label: 'FTC Quote Status History',
+        fields: ['quote_status_id', 'notes', 'created_by', 'created_at']
+      }],
+      view: {
+        label: 'FTC Quote Status History',
+        find: {
+          basic: [{
+            type: 'dropdown',
+            label: 'Status',
+            field: 'quote_status_id',
+            source: 'quote_status'
+          }],
+          advanced: []
+        },
+        columns: [{
+          Header: "ID",
+          accessor: "id"
+        }, {
+          Header: "Status",
+          accessor: function accessor(d) {
+            var _d$quote_status_id;
+
+            return "".concat(d === null || d === void 0 ? void 0 : (_d$quote_status_id = d.quote_status_id) === null || _d$quote_status_id === void 0 ? void 0 : _d$quote_status_id.text);
+          }
+        }, {
+          Header: "Created By",
+          accessor: "created_by"
+        }, {
+          Header: "Created At",
+          accessor: function accessor(d) {
+            return "".concat(moment__WEBPACK_IMPORTED_MODULE_0___default()(d === null || d === void 0 ? void 0 : d.created_at).format('MMMM Do YYYY, h:mm:ss a'));
+          }
+        }],
+        events: {
+          applyFilter: function applyFilter(options) {
+            var mode = options.mode,
+                url = options.url,
+                id = options.params.id;
+            var queryMode = {
+              mode: mode
+            };
+            var generateUrl = "/?filter={\"car_quote_id\":\"".concat(id, "\"}");
+            return generateUrl;
+          },
+          applyFilterAfterSearch: function applyFilterAfterSearch(options) {
+            var params = options.params,
+                filter = options.filter;
+            return _objectSpread(_objectSpread({}, filter), {}, {
+              car_quote_id: params.id
+            });
+          }
+        }
+      }
+    };
+    return form;
+  }
+};
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (ftcQuoteStatusHistory);
+
+/***/ }),
+
 /***/ "./resources/js/forms_dsl/index.js":
 /*!*****************************************!*\
   !*** ./resources/js/forms_dsl/index.js ***!
@@ -15027,6 +15157,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _ftc_history__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./ftc_history */ "./resources/js/forms_dsl/ftc_history.js");
 /* harmony import */ var _car_quote_kyc_status__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./car_quote_kyc_status */ "./resources/js/forms_dsl/car_quote_kyc_status.js");
 /* harmony import */ var _car_quote_kyc__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./car_quote_kyc */ "./resources/js/forms_dsl/car_quote_kyc.js");
+/* harmony import */ var _ftc_quote_status_history__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ./ftc_quote_status_history */ "./resources/js/forms_dsl/ftc_quote_status_history.js");
+
 
 
 
@@ -15062,6 +15194,9 @@ var getDSLForm = function getDSLForm(options) {
 
     case 'ftcHistory':
       return _ftc_history__WEBPACK_IMPORTED_MODULE_7__.default.getForm();
+
+    case 'ftcQuoteStatusHistory':
+      return _ftc_quote_status_history__WEBPACK_IMPORTED_MODULE_10__.default.getForm();
 
     case 'carQuoteKycStatus':
       return _car_quote_kyc_status__WEBPACK_IMPORTED_MODULE_8__.default.getForm();
@@ -16190,6 +16325,69 @@ function AssignUser(props) {
 
 /***/ }),
 
+/***/ "./resources/js/modules/ftc-forms/ftc-form.js":
+/*!****************************************************!*\
+  !*** ./resources/js/modules/ftc-forms/ftc-form.js ***!
+  \****************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (/* binding */ FtcForm)
+/* harmony export */ });
+/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! react */ "./node_modules/react/index.js");
+/* harmony import */ var react_confirm_alert_src_react_confirm_alert_css__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! react-confirm-alert/src/react-confirm-alert.css */ "./node_modules/react-confirm-alert/src/react-confirm-alert.css");
+/* harmony import */ var _components_list_view_manage_list_form_view__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../../components/list-view/manage-list-form-view */ "./resources/js/components/list-view/manage-list-form-view.js");
+/* harmony import */ var react_tabs__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! react-tabs */ "./node_modules/react-tabs/esm/index.js");
+/* harmony import */ var react_tabs_style_react_tabs_css__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! react-tabs/style/react-tabs.css */ "./node_modules/react-tabs/style/react-tabs.css");
+/* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! react/jsx-runtime */ "./node_modules/react/jsx-runtime.js");
+
+ // Import css
+
+
+
+
+
+
+function FtcForm(props) {
+  var filter = props.filter;
+  return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("div", {
+    className: "col-md-12",
+    children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxs)(react_tabs__WEBPACK_IMPORTED_MODULE_3__.Tabs, {
+      children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxs)(react_tabs__WEBPACK_IMPORTED_MODULE_3__.TabList, {
+        children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(react_tabs__WEBPACK_IMPORTED_MODULE_3__.Tab, {
+          children: "FTC Actions"
+        }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(react_tabs__WEBPACK_IMPORTED_MODULE_3__.Tab, {
+          children: "FTC History"
+        })]
+      }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(react_tabs__WEBPACK_IMPORTED_MODULE_3__.TabPanel, {
+        children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(_components_list_view_manage_list_form_view__WEBPACK_IMPORTED_MODULE_2__.default, {
+          form: {
+            form: 'ftcHistory',
+            view_mode: 'list',
+            action_type: 'list',
+            context: 'car_quote_snap',
+            filter: filter
+          }
+        })
+      }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(react_tabs__WEBPACK_IMPORTED_MODULE_3__.TabPanel, {
+        children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(_components_list_view_manage_list_form_view__WEBPACK_IMPORTED_MODULE_2__.default, {
+          form: {
+            form: 'ftcQuoteStatusHistory',
+            view_mode: 'list',
+            action_type: 'list',
+            context: 'car_quote_snap',
+            filter: filter
+          }
+        })
+      })]
+    })
+  });
+}
+
+/***/ }),
+
 /***/ "./resources/js/modules/ftc-forms/kyc-form.js":
 /*!****************************************************!*\
   !*** ./resources/js/modules/ftc-forms/kyc-form.js ***!
@@ -16895,16 +17093,17 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @babel/runtime/regenerator */ "./node_modules/@babel/runtime/regenerator/index.js");
 /* harmony import */ var _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0__);
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! react */ "./node_modules/react/index.js");
-/* harmony import */ var styled_components__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! styled-components */ "./node_modules/styled-components/dist/styled-components.browser.esm.js");
+/* harmony import */ var styled_components__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! styled-components */ "./node_modules/styled-components/dist/styled-components.browser.esm.js");
 /* harmony import */ var _components_sub_nav__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../../components/sub-nav */ "./resources/js/components/sub-nav.js");
-/* harmony import */ var react_router_dom__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! react-router-dom */ "./node_modules/react-router/esm/react-router.js");
+/* harmony import */ var react_router_dom__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! react-router-dom */ "./node_modules/react-router/esm/react-router.js");
 /* harmony import */ var _components_list_view_manage_list_form_view__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../../components/list-view/manage-list-form-view */ "./resources/js/components/list-view/manage-list-form-view.js");
 /* harmony import */ var _review_send__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./review-send */ "./resources/js/modules/ftc-forms/review-send.js");
 /* harmony import */ var _kyc_form__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./kyc-form */ "./resources/js/modules/ftc-forms/kyc-form.js");
-/* harmony import */ var _assign_user__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./assign-user */ "./resources/js/modules/ftc-forms/assign-user.js");
-/* harmony import */ var _utils__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ../../utils */ "./resources/js/utils/index.js");
-/* harmony import */ var _overview__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./overview */ "./resources/js/modules/ftc-forms/overview.js");
-/* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! react/jsx-runtime */ "./node_modules/react/jsx-runtime.js");
+/* harmony import */ var _ftc_form__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./ftc-form */ "./resources/js/modules/ftc-forms/ftc-form.js");
+/* harmony import */ var _assign_user__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./assign-user */ "./resources/js/modules/ftc-forms/assign-user.js");
+/* harmony import */ var _utils__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ../../utils */ "./resources/js/utils/index.js");
+/* harmony import */ var _overview__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./overview */ "./resources/js/modules/ftc-forms/overview.js");
+/* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! react/jsx-runtime */ "./node_modules/react/jsx-runtime.js");
 var _templateObject;
 
 
@@ -16939,11 +17138,12 @@ function _taggedTemplateLiteral(strings, raw) { if (!raw) { raw = strings.slice(
 
 
 
-var Styles = styled_components__WEBPACK_IMPORTED_MODULE_10__.default.div(_templateObject || (_templateObject = _taggedTemplateLiteral([""])));
+
+var Styles = styled_components__WEBPACK_IMPORTED_MODULE_11__.default.div(_templateObject || (_templateObject = _taggedTemplateLiteral([""])));
 
 function LeadSnapShot(props) {
   var paramRef = (0,react__WEBPACK_IMPORTED_MODULE_1__.useRef)();
-  paramRef.current = (0,react_router_dom__WEBPACK_IMPORTED_MODULE_11__.useParams)();
+  paramRef.current = (0,react_router_dom__WEBPACK_IMPORTED_MODULE_12__.useParams)();
 
   function reducer(state, action) {
     switch (action.type) {
@@ -17031,7 +17231,7 @@ function LeadSnapShot(props) {
     console.log('**************Snapshot--useEffect************');
   }, []);
 
-  var _session = (0,_utils__WEBPACK_IMPORTED_MODULE_7__.session)(),
+  var _session = (0,_utils__WEBPACK_IMPORTED_MODULE_8__.session)(),
       role = _session.role,
       id = _session.id,
       email = _session.email;
@@ -17080,7 +17280,7 @@ function LeadSnapShot(props) {
     data: 'insurance'
   }, {
     icon: 'fa fa-line-chart',
-    label: 'FTC History',
+    label: 'FTC',
     active: 0,
     id: 5,
     data: 'ftcHistory'
@@ -17157,14 +17357,22 @@ function LeadSnapShot(props) {
 
   switch (form === null || form === void 0 ? void 0 : form.form) {
     case 'email_template':
-      formArr.push( /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_9__.jsx)(_review_send__WEBPACK_IMPORTED_MODULE_4__.default, {
+      formArr.push( /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_10__.jsx)(_review_send__WEBPACK_IMPORTED_MODULE_4__.default, {
         dispatch: dispatch,
         data: form.data
       }));
       break;
 
+    case 'ftcHistory':
+      formArr.push( /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_10__.jsx)(_ftc_form__WEBPACK_IMPORTED_MODULE_6__.default, {
+        filter: {
+          car_quote_id: paramRef.current.id
+        }
+      }));
+      break;
+
     case 'kyc':
-      formArr.push( /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_9__.jsx)(_kyc_form__WEBPACK_IMPORTED_MODULE_5__.default, {
+      formArr.push( /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_10__.jsx)(_kyc_form__WEBPACK_IMPORTED_MODULE_5__.default, {
         filter: {
           car_quote_id: paramRef.current.id
         }
@@ -17172,7 +17380,7 @@ function LeadSnapShot(props) {
       break;
 
     case 'assign':
-      formArr.push( /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_9__.jsx)(_assign_user__WEBPACK_IMPORTED_MODULE_6__.default, {
+      formArr.push( /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_10__.jsx)(_assign_user__WEBPACK_IMPORTED_MODULE_7__.default, {
         filter: {
           car_quote_id: paramRef.current.id
         },
@@ -17181,7 +17389,7 @@ function LeadSnapShot(props) {
       break;
 
     case 'overview':
-      formArr.push( /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_9__.jsx)(_overview__WEBPACK_IMPORTED_MODULE_8__.default, {
+      formArr.push( /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_10__.jsx)(_overview__WEBPACK_IMPORTED_MODULE_9__.default, {
         filter: {
           car_quote_id: paramRef.current.id
         }
@@ -17189,24 +17397,24 @@ function LeadSnapShot(props) {
       break;
 
     default:
-      formArr.push( /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_9__.jsx)(_components_list_view_manage_list_form_view__WEBPACK_IMPORTED_MODULE_3__.default, {
+      formArr.push( /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_10__.jsx)(_components_list_view_manage_list_form_view__WEBPACK_IMPORTED_MODULE_3__.default, {
         form: form
       }));
       break;
   }
 
-  return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_9__.jsx)(Styles, {
-    children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_9__.jsxs)("div", {
+  return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_10__.jsx)(Styles, {
+    children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_10__.jsxs)("div", {
       className: "row x_panel",
-      children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_9__.jsx)("div", {
+      children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_10__.jsx)("div", {
         className: "col-md-2 col-sm-2",
-        children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_9__.jsx)(_components_sub_nav__WEBPACK_IMPORTED_MODULE_2__.default, {
+        children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_10__.jsx)(_components_sub_nav__WEBPACK_IMPORTED_MODULE_2__.default, {
           listNav: leftNavList,
           onSelect: onSelect
         })
-      }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_9__.jsx)("div", {
+      }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_10__.jsx)("div", {
         className: "col-md-10 col-sm-10 ",
-        children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_9__.jsx)("div", {
+        children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_10__.jsx)("div", {
           className: "",
           children: formArr
         })
@@ -17269,6 +17477,7 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
  // Import
 
  //
+
 
 
 
@@ -86675,8 +86884,8 @@ var DataTransform = function(data, map){
 
 			if(key == '') {
 				return;
-			}
-
+			} 
+			
 			var keys = key.split('.');
 			var target = obj;
 			for(var i = 0; i < keys.length; i++ ) {
@@ -86696,16 +86905,16 @@ var DataTransform = function(data, map){
 
 		transform : function(context) {
 			var useList = map.list != undefined;
-			var value;
-			if (useList) {
+			var value; 
+			if (useList) { 
 				value = this.getValue(data, map.list);
 			} else if (_.isArray(data) && !useList) {
 				value = data;
-			} else if (_.isObject(data) && !useList) {
+			} else if (_.isObject(data) && !useList) { 
 				value = [data];
 			}
 			var normalized = [];
-
+		
 			if(!_.isEmpty(value)) {
 				var list = useList ? this.getList() : value;
 				normalized = map.item ? _.map(list, _.bind(this.iterator, this, map.item)) : list;
@@ -86713,7 +86922,7 @@ var DataTransform = function(data, map){
 				normalized = this.each(normalized, context);
 				normalized = this.removeAll(normalized);
 			}
-
+			
 			if(!useList && _.isObject(data) && !_.isArray(data)){
 				return normalized[0];
 			}
@@ -86771,7 +86980,7 @@ var DataTransform = function(data, map){
 				_.each(data, function (value, index, collection) {
 					return map.each(value, index, collection, context);
 				});
-			}
+			}  
 			return data;
 		},
 
@@ -86796,7 +87005,7 @@ var DataTransform = function(data, map){
 				}
 				else {
 					obj[newkey] = "";
-				}
+				}	
 
 			}, this));
 			return obj;
@@ -122682,7 +122891,7 @@ function injectIntoDevTools(devToolsConfig) {
     scheduleRoot:  scheduleRoot ,
     setRefreshHandler:  setRefreshHandler ,
     // Enables DevTools to append owner stacks to error messages in DEV mode.
-    getCurrentFiber:  getCurrentFiberForDevTools
+    getCurrentFiber:  getCurrentFiberForDevTools 
   });
 }
 
@@ -123434,7 +123643,7 @@ Dropzone.propTypes = {
   onDropRejected: (prop_types__WEBPACK_IMPORTED_MODULE_1___default().func),
 
   /**
-   * Custom validation function
+   * Custom validation function 
    * @param {File} file
    * @returns {FileError|FileError[]}
    */
@@ -129103,7 +129312,7 @@ __webpack_require__.r(__webpack_exports__);
   selectorFactory, which has the signature:
 
     (dispatch, options) => (nextState, nextOwnProps) => nextFinalProps
-
+  
   connect passes its args to connectAdvanced as options, which will in turn pass them to
   selectorFactory each time a Connect component instance is instantiated or hot reloaded.
 
@@ -150862,7 +151071,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _style_loader_dist_runtime_injectStylesIntoStyleTag_js__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_style_loader_dist_runtime_injectStylesIntoStyleTag_js__WEBPACK_IMPORTED_MODULE_0__);
 /* harmony import */ var _css_loader_dist_cjs_js_ruleSet_1_rules_6_oneOf_1_use_1_postcss_loader_dist_cjs_js_ruleSet_1_rules_6_oneOf_1_use_2_react_confirm_alert_css__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! !!../../css-loader/dist/cjs.js??ruleSet[1].rules[6].oneOf[1].use[1]!../../postcss-loader/dist/cjs.js??ruleSet[1].rules[6].oneOf[1].use[2]!./react-confirm-alert.css */ "./node_modules/css-loader/dist/cjs.js??ruleSet[1].rules[6].oneOf[1].use[1]!./node_modules/postcss-loader/dist/cjs.js??ruleSet[1].rules[6].oneOf[1].use[2]!./node_modules/react-confirm-alert/src/react-confirm-alert.css");
 
-
+            
 
 var options = {};
 
@@ -150892,7 +151101,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _style_loader_dist_runtime_injectStylesIntoStyleTag_js__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_style_loader_dist_runtime_injectStylesIntoStyleTag_js__WEBPACK_IMPORTED_MODULE_0__);
 /* harmony import */ var _css_loader_dist_cjs_js_ruleSet_1_rules_6_oneOf_1_use_1_postcss_loader_dist_cjs_js_ruleSet_1_rules_6_oneOf_1_use_2_react_datepicker_css__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! !!../../css-loader/dist/cjs.js??ruleSet[1].rules[6].oneOf[1].use[1]!../../postcss-loader/dist/cjs.js??ruleSet[1].rules[6].oneOf[1].use[2]!./react-datepicker.css */ "./node_modules/css-loader/dist/cjs.js??ruleSet[1].rules[6].oneOf[1].use[1]!./node_modules/postcss-loader/dist/cjs.js??ruleSet[1].rules[6].oneOf[1].use[2]!./node_modules/react-datepicker/dist/react-datepicker.css");
 
-
+            
 
 var options = {};
 
@@ -150922,7 +151131,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _style_loader_dist_runtime_injectStylesIntoStyleTag_js__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_style_loader_dist_runtime_injectStylesIntoStyleTag_js__WEBPACK_IMPORTED_MODULE_0__);
 /* harmony import */ var _css_loader_dist_cjs_js_ruleSet_1_rules_6_oneOf_1_use_1_postcss_loader_dist_cjs_js_ruleSet_1_rules_6_oneOf_1_use_2_theme_css__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! !!../../css-loader/dist/cjs.js??ruleSet[1].rules[6].oneOf[1].use[1]!../../postcss-loader/dist/cjs.js??ruleSet[1].rules[6].oneOf[1].use[2]!./theme.css */ "./node_modules/css-loader/dist/cjs.js??ruleSet[1].rules[6].oneOf[1].use[1]!./node_modules/postcss-loader/dist/cjs.js??ruleSet[1].rules[6].oneOf[1].use[2]!./node_modules/react-notifications-component/dist/theme.css");
 
-
+            
 
 var options = {};
 
@@ -150952,7 +151161,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _style_loader_dist_runtime_injectStylesIntoStyleTag_js__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_style_loader_dist_runtime_injectStylesIntoStyleTag_js__WEBPACK_IMPORTED_MODULE_0__);
 /* harmony import */ var _css_loader_dist_cjs_js_ruleSet_1_rules_6_oneOf_1_use_1_postcss_loader_dist_cjs_js_ruleSet_1_rules_6_oneOf_1_use_2_react_tabs_css__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! !!../../css-loader/dist/cjs.js??ruleSet[1].rules[6].oneOf[1].use[1]!../../postcss-loader/dist/cjs.js??ruleSet[1].rules[6].oneOf[1].use[2]!./react-tabs.css */ "./node_modules/css-loader/dist/cjs.js??ruleSet[1].rules[6].oneOf[1].use[1]!./node_modules/postcss-loader/dist/cjs.js??ruleSet[1].rules[6].oneOf[1].use[2]!./node_modules/react-tabs/style/react-tabs.css");
 
-
+            
 
 var options = {};
 
@@ -157324,7 +157533,7 @@ function useFetch() {
                         _d = !(0,_utils__WEBPACK_IMPORTED_MODULE_6__.isFunction)(retryOn) && Array.isArray(retryOn) && retryOn.length < 1 && (newRes === null || newRes === void 0 ? void 0 : newRes.ok) === false
                             // otherwise only retry when is specified
                             || Array.isArray(retryOn) && retryOn.includes(newRes.status);
-                        if (_d)
+                        if (_d) 
                         // if we just have `retries` set with NO `retryOn` then
                         // automatically retry on fail until attempts run out
                         return [3 /*break*/, 12];
@@ -157362,7 +157571,7 @@ function useFetch() {
                         // if we just have `retries` set with NO `retryOn` then
                         // automatically retry on fail until attempts run out
                         _f = !(0,_utils__WEBPACK_IMPORTED_MODULE_6__.isFunction)(retryOn) && Array.isArray(retryOn) && retryOn.length < 1;
-                        if (_f)
+                        if (_f) 
                         // if we just have `retries` set with NO `retryOn` then
                         // automatically retry on fail until attempts run out
                         return [3 /*break*/, 20];
@@ -158407,7 +158616,7 @@ function printValue(value, quoteStrings) {
 /************************************************************************/
 /******/ 	// The module cache
 /******/ 	var __webpack_module_cache__ = {};
-/******/
+/******/ 	
 /******/ 	// The require function
 /******/ 	function __webpack_require__(moduleId) {
 /******/ 		// Check if module is in cache
@@ -158421,20 +158630,20 @@ function printValue(value, quoteStrings) {
 /******/ 			loaded: false,
 /******/ 			exports: {}
 /******/ 		};
-/******/
+/******/ 	
 /******/ 		// Execute the module function
 /******/ 		__webpack_modules__[moduleId].call(module.exports, module, module.exports, __webpack_require__);
-/******/
+/******/ 	
 /******/ 		// Flag the module as loaded
 /******/ 		module.loaded = true;
-/******/
+/******/ 	
 /******/ 		// Return the exports of the module
 /******/ 		return module.exports;
 /******/ 	}
-/******/
+/******/ 	
 /******/ 	// expose the modules object (__webpack_modules__)
 /******/ 	__webpack_require__.m = __webpack_modules__;
-/******/
+/******/ 	
 /************************************************************************/
 /******/ 	/* webpack/runtime/chunk loaded */
 /******/ 	(() => {
@@ -158466,7 +158675,7 @@ function printValue(value, quoteStrings) {
 /******/ 			return result;
 /******/ 		};
 /******/ 	})();
-/******/
+/******/ 	
 /******/ 	/* webpack/runtime/compat get default export */
 /******/ 	(() => {
 /******/ 		// getDefaultExport function for compatibility with non-harmony modules
@@ -158478,7 +158687,7 @@ function printValue(value, quoteStrings) {
 /******/ 			return getter;
 /******/ 		};
 /******/ 	})();
-/******/
+/******/ 	
 /******/ 	/* webpack/runtime/define property getters */
 /******/ 	(() => {
 /******/ 		// define getter functions for harmony exports
@@ -158490,7 +158699,7 @@ function printValue(value, quoteStrings) {
 /******/ 			}
 /******/ 		};
 /******/ 	})();
-/******/
+/******/ 	
 /******/ 	/* webpack/runtime/global */
 /******/ 	(() => {
 /******/ 		__webpack_require__.g = (function() {
@@ -158502,12 +158711,12 @@ function printValue(value, quoteStrings) {
 /******/ 			}
 /******/ 		})();
 /******/ 	})();
-/******/
+/******/ 	
 /******/ 	/* webpack/runtime/hasOwnProperty shorthand */
 /******/ 	(() => {
 /******/ 		__webpack_require__.o = (obj, prop) => (Object.prototype.hasOwnProperty.call(obj, prop))
 /******/ 	})();
-/******/
+/******/ 	
 /******/ 	/* webpack/runtime/make namespace object */
 /******/ 	(() => {
 /******/ 		// define __esModule on exports
@@ -158518,7 +158727,7 @@ function printValue(value, quoteStrings) {
 /******/ 			Object.defineProperty(exports, '__esModule', { value: true });
 /******/ 		};
 /******/ 	})();
-/******/
+/******/ 	
 /******/ 	/* webpack/runtime/node module decorator */
 /******/ 	(() => {
 /******/ 		__webpack_require__.nmd = (module) => {
@@ -158527,11 +158736,11 @@ function printValue(value, quoteStrings) {
 /******/ 			return module;
 /******/ 		};
 /******/ 	})();
-/******/
+/******/ 	
 /******/ 	/* webpack/runtime/jsonp chunk loading */
 /******/ 	(() => {
 /******/ 		// no baseURI
-/******/
+/******/ 		
 /******/ 		// object to store loaded and loading chunks
 /******/ 		// undefined = chunk not loaded, null = chunk preloaded/prefetched
 /******/ 		// [resolve, reject, Promise] = chunk loading, 0 = chunk loaded
@@ -158539,19 +158748,19 @@ function printValue(value, quoteStrings) {
 /******/ 			"/js/app": 0,
 /******/ 			"build/css/app": 0
 /******/ 		};
-/******/
+/******/ 		
 /******/ 		// no chunk on demand loading
-/******/
+/******/ 		
 /******/ 		// no prefetching
-/******/
+/******/ 		
 /******/ 		// no preloaded
-/******/
+/******/ 		
 /******/ 		// no HMR
-/******/
+/******/ 		
 /******/ 		// no HMR manifest
-/******/
+/******/ 		
 /******/ 		__webpack_require__.O.j = (chunkId) => (installedChunks[chunkId] === 0);
-/******/
+/******/ 		
 /******/ 		// install a JSONP callback for chunk loading
 /******/ 		var webpackJsonpCallback = (parentChunkLoadingFunction, data) => {
 /******/ 			var [chunkIds, moreModules, runtime] = data;
@@ -158574,20 +158783,20 @@ function printValue(value, quoteStrings) {
 /******/ 			}
 /******/ 			return __webpack_require__.O(result);
 /******/ 		}
-/******/
+/******/ 		
 /******/ 		var chunkLoadingGlobal = self["webpackChunk"] = self["webpackChunk"] || [];
 /******/ 		chunkLoadingGlobal.forEach(webpackJsonpCallback.bind(null, 0));
 /******/ 		chunkLoadingGlobal.push = webpackJsonpCallback.bind(null, chunkLoadingGlobal.push.bind(chunkLoadingGlobal));
 /******/ 	})();
-/******/
+/******/ 	
 /************************************************************************/
-/******/
+/******/ 	
 /******/ 	// startup
 /******/ 	// Load entry module and return exports
 /******/ 	// This entry module depends on other loaded chunks and execution need to be delayed
 /******/ 	__webpack_require__.O(undefined, ["build/css/app"], () => (__webpack_require__("./resources/js/app.js")))
 /******/ 	var __webpack_exports__ = __webpack_require__.O(undefined, ["build/css/app"], () => (__webpack_require__("./resources/css/app.css")))
 /******/ 	__webpack_exports__ = __webpack_require__.O(__webpack_exports__);
-/******/
+/******/ 	
 /******/ })()
 ;

@@ -5,6 +5,7 @@ import { useParams } from "react-router-dom";
 import ManageListFormView from "../../components/list-view/manage-list-form-view";
 import ReviewSend from "./review-send";
 import KycForm from "./kyc-form";
+import FtcForm from "./ftc-form";
 import AssignUser from "./assign-user";
 import { session } from "../../utils";
 import Overview from "./overview";
@@ -86,7 +87,7 @@ const leftNavList = [
  },
  {
     icon:'fa fa-line-chart',
-    label:'FTC History',
+    label:'FTC',
     active: 0,
     id: 5,
     data: 'ftcHistory'
@@ -127,6 +128,9 @@ const formArr = []
 switch(form?.form){
     case 'email_template':
         formArr.push(<ReviewSend dispatch={dispatch} data={form.data} />)
+        break
+    case 'ftcHistory':
+        formArr.push( <FtcForm filter={{ car_quote_id: paramRef.current.id }} />)
         break
     case 'kyc':
         formArr.push( <KycForm filter={{ car_quote_id: paramRef.current.id }} />)

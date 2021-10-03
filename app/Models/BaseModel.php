@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\DB;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 use Auth;
+use App\Models\FtcQuoteStatusHistory;
+
 class BaseModel extends Model implements AuditableContract
 {
 
@@ -35,7 +37,17 @@ class BaseModel extends Model implements AuditableContract
        });
        static::updating(function($model)
        {
-           $model->updated_by = Auth::user()->email;
+            $exploded = explode('\\', get_class($model));
+            $getModel = end($exploded);
+            if($getModel == "CarQuote"){
+                if($model->isDirty('quote_status_id')){
+                    $ftcModel = new FtcQuoteStatusHistory;
+                    $ftcModel->quote_status_id = $model->quote_status_id;
+                    $ftcModel->car_quote_id = $model->id;
+                    $ftcModel->save();
+                }
+            }
+            $model->updated_by = Auth::user()->email;
        });
     }
 
