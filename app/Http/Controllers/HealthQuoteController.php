@@ -6,6 +6,7 @@ use App\Models\HealthQuote;
 use Config;
 use DataTables;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class HealthQuoteController extends Controller
 {
@@ -32,6 +33,7 @@ class HealthQuoteController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
+            Log::channel('daily')->info('Inside HealthQuote Index');
             $data = HealthQuote::select('*')->orderBy('created_at','desc');
             return Datatables::of($data)
                 ->addIndexColumn()
