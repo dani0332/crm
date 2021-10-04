@@ -12,7 +12,7 @@
                 <div class="x_title">
                     <h2>{{ $quoteTypeText }} Quote</h2>
                     <ul class="nav navbar-right panel_toolbox">
-                        <li><a href="{{ route('aml.index') }}" class="btn btn-warning btn-sm">Home</a></li>
+                        <li><a href="{{ route('aml.index') }}" class="btn btn-warning btn-sm">All Quotes</a></li>
                         @if ($quoteStatusCode == quoteStatusCode::AMLScreeningFailed || $quoteStatusCode == quoteStatusCode::AMLScreeningCleared)
                             <li><a href="#" class='btn btn-danger btn-sm'
                                     style="opacity: .4;cursor: default !important;pointer-events: none;">Fail</a></li>
