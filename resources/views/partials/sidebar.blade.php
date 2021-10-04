@@ -162,7 +162,7 @@
                     <ul class="nav side-menu">
                         <li><a><i class="fa fa-desktop"></i> AML <span class="fa fa-chevron-down"></span></a>
                             <ul class="nav child_menu">
-                                <li><a href="{{ url('kyc/aml') }}">Home</a></li>
+                                <li><a href="{{ url('kyc/aml') }}">All Quotes</a></li>
                             </ul>
                         </li>
                     </ul>

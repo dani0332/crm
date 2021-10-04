@@ -14,17 +14,17 @@
                     <ul class="nav navbar-right panel_toolbox">
                         <li><a href="{{ route('aml.index') }}" class="btn btn-warning btn-sm">Home</a></li>
                         @if ($quoteStatusCode == quoteStatusCode::AMLScreeningFailed || $quoteStatusCode == quoteStatusCode::AMLScreeningCleared)
-                            <li><a href="#" class='btn btn-warning btn-sm'
-                                    style="opacity: .4;cursor: default !important;pointer-events: none;">Reject</a></li>
-                            <li><a href="#" class="btn btn-warning btn-sm"
-                                    style="opacity: .4;cursor: default !important;pointer-events: none;">Approve</a></li>
+                            <li><a href="#" class='btn btn-danger btn-sm'
+                                    style="opacity: .4;cursor: default !important;pointer-events: none;">Fail</a></li>
+                            <li><a href="#" class="btn btn-success btn-sm"
+                                    style="opacity: .4;cursor: default !important;pointer-events: none;">Pass</a></li>
                         @else
                             <li><a href="{{ $quoteRequest->id }}/quoteStatusUpdate/{{ quoteStatusCode::AMLScreeningFailed }}"
-                                    class='btn btn-warning btn-sm'
-                                    onclick="return confirm('Do you really want to reject this item?');">Reject</a></li>
+                                    class='btn btn-danger btn-sm'
+                                    onclick="return confirm('Do you want to update status to AML Screening Failed?');">Fail</a></li>
                             <li><a href="{{ $quoteRequest->id }}/quoteStatusUpdate/{{ quoteStatusCode::AMLScreeningCleared }}"
-                                    class="btn btn-warning btn-sm"
-                                    onclick="return confirm('Do you really want to approve this item?');">Approve</a></li>
+                                    class="btn btn-success btn-sm"
+                                    onclick="return confirm('Do you want to update status to AML Screening Cleared?');">Pass</a></li>
                         @endif
                     </ul>
                     <div class="clearfix"></div>
@@ -101,11 +101,11 @@
                                     </p>
                                     <div style="text-align: right;">
                                         @if ($quoteStatusCode == quoteStatusCode::AMLScreeningFailed || $quoteStatusCode == quoteStatusCode::AMLScreeningCleared)
-                                            <button type="button" class="btn btn-warning btn-sm" id="return_to_view"
+                                            <button type="button" class="btn btn-primary btn-sm" id="return_to_view"
                                                 style="opacity: .4;cursor: default !important;pointer-events: none;">Update</button>
                                     </div>
                                 @else
-                                    <button type="submit" class="btn btn-warning btn-sm" id="return_to_view">Update</button>
+                                    <button type="submit" class="btn btn-primary btn-sm" id="return_to_view">Update</button>
                                 </div>
                                 @endif
                             </div>
