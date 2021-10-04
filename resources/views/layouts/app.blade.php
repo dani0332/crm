@@ -3,7 +3,8 @@ $appName = Config::get('constants.APP_NAME');
 ?>
 <!DOCTYPE html>
 <html lang="en">
-  <head>
+
+<head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <!-- Meta, title, CSS, favicons, etc. -->
     <meta charset="utf-8">
@@ -15,7 +16,8 @@ $appName = Config::get('constants.APP_NAME');
     <!-- Bootstrap -->
     <link href="{{ asset('vendors/bootstrap/dist/css/bootstrap.min.css') }}" rel="stylesheet">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.1/css/bootstrap-select.css" />
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.1/css/bootstrap-select.css" />
 
     <!-- Font Awesome -->
     <link href="{{ asset('vendors/font-awesome/css/font-awesome.min.css') }}" rel="stylesheet">
@@ -32,59 +34,62 @@ $appName = Config::get('constants.APP_NAME');
     <link href="{{ asset('build/style.css') }}" rel="stylesheet">
     <link href="{{ asset('vendors/datatables.net-bs/css/dataTables.bootstrap.min.css') }}" rel="stylesheet">
     <link href="{{ asset('vendors/datatables.net-buttons-bs/css/buttons.bootstrap.min.css') }}" rel="stylesheet">
-    <link href="{{ asset('vendors/datatables.net-fixedheader-bs/css/fixedHeader.bootstrap.min.css') }}" rel="stylesheet">
-    <link href="{{ asset('vendors/datatables.net-responsive-bs/css/responsive.bootstrap.min.css') }}" rel="stylesheet">
+    <link href="{{ asset('vendors/datatables.net-fixedheader-bs/css/fixedHeader.bootstrap.min.css') }}"
+        rel="stylesheet">
+    <link href="{{ asset('vendors/datatables.net-responsive-bs/css/responsive.bootstrap.min.css') }}"
+        rel="stylesheet">
     <link href="{{ asset('vendors/datatables.net-scroller-bs/css/scroller.bootstrap.min.css') }}" rel="stylesheet">
-	  <link href="https://www.jquery-az.com/jquery/css/bootstrap-markdown-editor.css" rel="stylesheet">
+    <link href="https://www.jquery-az.com/jquery/css/bootstrap-markdown-editor.css" rel="stylesheet">
 
     <!-- iCheck -->
-	  <link href="{{ asset('vendors/iCheck/skins/flat/green.css') }}" rel="stylesheet">
-      <style>
-          .loader{
-                position: fixed;
-                left: 0px;
-                top: 0px;
-                width: 100%;
-                height: 100%;
-                z-index: 9999;
-                opacity: 0.7;
-                background: url('//upload.wikimedia.org/wikipedia/commons/thumb/e/e5/Phi_fenomeni.gif/50px-Phi_fenomeni.gif')
-                            50% 50% no-repeat rgb(249,249,249);
-                display: none;
-            }
-      </style>
-  </head>
+    <link href="{{ asset('vendors/iCheck/skins/flat/green.css') }}" rel="stylesheet">
+    <style>
+        .loader {
+            position: fixed;
+            left: 0px;
+            top: 0px;
+            width: 100%;
+            height: 100%;
+            z-index: 9999;
+            opacity: 0.7;
+            background: url('//upload.wikimedia.org/wikipedia/commons/thumb/e/e5/Phi_fenomeni.gif/50px-Phi_fenomeni.gif') 50% 50% no-repeat rgb(249, 249, 249);
+            display: none;
+        }
 
-    <body class="nav-md">
+    </style>
+</head>
+
+<body class="nav-md">
     <div class="loader">
     </div>
     <!-- Modal -->
-    <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+        aria-hidden="true">
         <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-            <h5 class="modal-title" id="exampleModalLabel">Confirmation</h5>
-            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                <span aria-hidden="true">&times;</span>
-            </button>
-            </div>
-            <div class="modal-body">
-            Are you sure you want to delete!
-            </div>
-            <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-            <form action="" id="delete-form" method='POST' style="margin-top: -2px;">
-                @csrf
-                @method('DELETE')
-                <button type='submit' type="button" class="btn btn-danger">Delete</button>
-            </form>
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Confirmation</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    Are you sure you want to delete!
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <form action="" id="delete-form" method='POST' style="margin-top: -2px;">
+                        @csrf
+                        @method('DELETE')
+                        <button type='submit' type="button" class="btn btn-danger">Delete</button>
+                    </form>
 
+                </div>
             </div>
-        </div>
         </div>
     </div>
     <div class="container body">
-      <div class="main_container">
+        <div class="main_container">
             @include('partials.sidebar')
             @include('partials.topnav')
             <div class="right_col" role="main">
@@ -95,13 +100,13 @@ $appName = Config::get('constants.APP_NAME');
 
             @include('partials.footer')
 
-      </div>
+        </div>
     </div>
     <!-- jQuery -->
     <script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
     <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
     <!-- Bootstrap -->
-   <script src="{{ asset('vendors/bootstrap/dist/js/bootstrap.bundle.min.js') }}"></script>
+    <script src="{{ asset('vendors/bootstrap/dist/js/bootstrap.bundle.min.js') }}"></script>
     <!-- FastClick -->
     <script src="{{ asset('vendors/fastclick/lib/fastclick.js') }}"></script>
     <!-- NProgress -->
@@ -149,7 +154,7 @@ $appName = Config::get('constants.APP_NAME');
     <script src="https://cdn.jsdelivr.net/jquery.validation/1.16.0/jquery.validate.min.js"></script>
 
     <!-- iCheck -->
-	  <script src="{{ asset('vendors/iCheck/icheck.min.js') }}"></script>
+    <script src="{{ asset('vendors/iCheck/icheck.min.js') }}"></script>
     <!-- Custom Theme Scripts -->
     <script src="{{ asset('build/js/custom.js') }}"></script>
     <script>
@@ -157,55 +162,58 @@ $appName = Config::get('constants.APP_NAME');
         var config = {
             routes: {
                 partner_datatable_route: "{{ route('partner.index') }}",
-                user_datatable_route:"{{ route('users.index') }}",
-                role_datatable_route:"{{ route('roles.index') }}",
-                carquote_datatable_route:"{{ route('carquotes.index') }}",
-                carquote_resubmitap_route:"{{ url('quotes/carquotes/resubmit_api') }}",
-                healthquote_datatable_route:"{{ route('healthquotes.index') }}",
-                reward_datatable_route:"{{ route('reward.index') }}",
-                reward_categories_datatable_route:"{{ route('reward-categories.index') }}",
-                reward_tags_datatable_route:"{{ route('reward-tags.index') }}",
-                claim_datatable_route:"{{ route('claims.index') }}",
-                typeofinsurance_datatable_route:"{{ route('typeofinsurance.index') }}",
-                vehicledepreciation_datatable_route:"{{ route('vehicledepreciation.index') }}",
-                subtypeofinsurance_datatable_route:"{{ route('subtypeofinsurance.index') }}",
-                claimsstatus_datatable_route:"{{ route('claimsstatus.index') }}",
-                carrepaircoverage_datatable_route:"{{ route('carrepaircoverage.index') }}",
-                carrepairtype_datatable_route:"{{ route('carrepairtype.index') }}",
-                rentacar_datatable_route:"{{ route('rentacar.index') }}",
-                customer_data_table_route:"{{ route('customer.index') }}",
-                load_auditable:"{{ url('auditable') }}",
-                load_dashboard_stats:"{{ url('dashboard-stats') }}",
-                insurancecompany_datatable_route:"{{ route('insurancecompany.index') }}",
-                handler_datatable_route:"{{ route('handler.index') }}",
-                reason_datatable_route:"{{ route('reason.index') }}",
-                status_datatable_route:"{{ route('status.index') }}",
-                paymentmode_datatable_route:"{{ route('paymentmode.index') }}",
-                transaction_datatable_route:"{{ route('transaction.index') }}",
-                re_issue_transaction_form:"{{ route('re_issue_transaction_form') }}",
-                aml_datatable_route:"{{ route('aml.index') }}",
+                user_datatable_route: "{{ route('users.index') }}",
+                role_datatable_route: "{{ route('roles.index') }}",
+                carquote_datatable_route: "{{ route('carquotes.index') }}",
+                carquote_resubmitap_route: "{{ url('quotes/carquotes/resubmit_api') }}",
+                healthquote_datatable_route: "{{ route('healthquotes.index') }}",
+                reward_datatable_route: "{{ route('reward.index') }}",
+                reward_categories_datatable_route: "{{ route('reward-categories.index') }}",
+                reward_tags_datatable_route: "{{ route('reward-tags.index') }}",
+                claim_datatable_route: "{{ route('claims.index') }}",
+                typeofinsurance_datatable_route: "{{ route('typeofinsurance.index') }}",
+                vehicledepreciation_datatable_route: "{{ route('vehicledepreciation.index') }}",
+                subtypeofinsurance_datatable_route: "{{ route('subtypeofinsurance.index') }}",
+                claimsstatus_datatable_route: "{{ route('claimsstatus.index') }}",
+                carrepaircoverage_datatable_route: "{{ route('carrepaircoverage.index') }}",
+                carrepairtype_datatable_route: "{{ route('carrepairtype.index') }}",
+                rentacar_datatable_route: "{{ route('rentacar.index') }}",
+                customer_data_table_route: "{{ route('customer.index') }}",
+                discount_base_data_table_route: "{{ route('base.index') }}",
+                load_auditable: "{{ url('auditable') }}",
+                load_dashboard_stats: "{{ url('dashboard-stats') }}",
+                insurancecompany_datatable_route: "{{ route('insurancecompany.index') }}",
+                handler_datatable_route: "{{ route('handler.index') }}",
+                reason_datatable_route: "{{ route('reason.index') }}",
+                status_datatable_route: "{{ route('status.index') }}",
+                paymentmode_datatable_route: "{{ route('paymentmode.index') }}",
+                transaction_datatable_route: "{{ route('transaction.index') }}",
+                re_issue_transaction_form: "{{ route('re_issue_transaction_form') }}",
+                aml_datatable_route: "{{ route('aml.index') }}",
                 valuation_api_route: "{{ Config::get('constants.valuation_api_route') }}",
-                tminsurancetype_datatable_route:"{{ route('tminsurancetype.index') }}",
-                tmcallstatus_datatable_route:"{{ route('tmcallstatus.index') }}",
-                tmleadstatus_datatable_route:"{{ route('tmleadstatus.index') }}",
-                tmlead_datatable_route:"{{ route('tmleads.index') }}",
-                tmuploadlead_datatable_route:"{{ route('tmuploadlead.index') }}"
+                tminsurancetype_datatable_route: "{{ route('tminsurancetype.index') }}",
+                tmcallstatus_datatable_route: "{{ route('tmcallstatus.index') }}",
+                tmleadstatus_datatable_route: "{{ route('tmleadstatus.index') }}",
+                tmlead_datatable_route: "{{ route('tmleads.index') }}",
+                tmuploadlead_datatable_route: "{{ route('tmuploadlead.index') }}",
+                age_discount_datatable_route: "{{ route('age.index') }}"
             },
-            _token:"{{ csrf_token() }}",
-            image_path:"{{ \Config::get('constants.azure_storage_url').'myrewards/' }}"
+            _token: "{{ csrf_token() }}",
+            image_path: "{{ \Config::get('constants.azure_storage_url') . 'myrewards/' }}"
         };
     </script>
     <script src="{{ asset('build/js/customjs.js') }}"></script>
 
     <script>
         $(document).ajaxError(function(event, jqxhr, settings, exception) {
-        if (exception == 'Unauthorized') {
-            alert('Session has expired.')
-            window.location = '/login';
-        }
+            if (exception == 'Unauthorized') {
+                alert('Session has expired.')
+                window.location = '/login';
+            }
         });
         $.fn.dataTable.ext.errMode = 'none'; // disable datatables error prompt
     </script>
 
-    </body>
+</body>
+
 </html>
