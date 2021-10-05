@@ -77,7 +77,7 @@
                                 <div class="col-md-6 col-sm-6">
                                     <p class="label-align-center">
                                         <input type="text" id="first_name" name="first_name"
-                                            value="{{ old('first_name', $quoteRequest->first_name) }}"
+                                            value="{{ old('first_name', ucwords(strtolower($quoteRequest->first_name))) }}"
                                             class="form-control" data-toggle="tooltip" data-placement="top"
                                             title="Please enter first name">
                                         @if ($errors->has('first_name'))
@@ -92,7 +92,7 @@
                                 <div class="col-md-6 col-sm-6">
                                     <p class="label-align-center">
                                         <input type="text" id="last_name" name="last_name"
-                                            value="{{ old('last_name', $quoteRequest->last_name) }}"
+                                            value="{{ old('last_name', ucwords(strtolower($quoteRequest->last_name))) }}"
                                             class="form-control" data-toggle="tooltip" data-placement="top"
                                             title="Please enter last name">
                                         @if ($errors->has('last_name'))

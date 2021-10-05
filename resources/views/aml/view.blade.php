@@ -50,24 +50,6 @@
                             </div>
                         </div>
                     </div>
-                    {{-- <div class="item form-group">
-                        <div class="col">
-                            <label class="col-form-label col-md-2 col-sm-2" for="Quote Status">Quote Status</label>
-                            <div class="col-md-6 col-sm-6">
-                                <div class="input-group">
-                                    <select class="form-control" id="quoteStatusValue" name="quoteStatus">
-                                        <option value="">Select</option>
-                                        @foreach ($quoteStatuses as $quoteStatus)
-                                            <option value="{{ $quoteStatus->id }}">{{ $quoteStatus->text }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col">
-
-                        </div>
-                    </div> --}}
                     </div>
                     <div class="item form-group">
                         <div class="col">
@@ -87,7 +69,7 @@
                 <table class="table table-striped jambo_table aml-data-table" style="width:100%">
                     <thead>
                         <tr>
-                        <th>Id</th>
+                        <th>AML Id</th>
                         <th>Quote Type</th>
                         <th>CDB Id</th>
                         <th>Input</th>

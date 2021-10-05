@@ -297,8 +297,8 @@ class AMLController extends Controller
         if($quoteTypeCode == quoteTypeCode::Travel) { $updateQuote = TravelQuote::find($quoteRequestId); }
 
         $quoteUpdate = $updateQuote;
-        $quoteUpdate->first_name = $request->first_name;
-        $quoteUpdate->last_name = $request->last_name;
+        $quoteUpdate->first_name = ucwords(strtolower($request->first_name));
+        $quoteUpdate->last_name = ucwords(strtolower($request->last_name));
         $quoteUpdate->save();
 
         $this->checkAmlService->checkAml($request->first_name,$request->last_name,$quoteRequestId,$quoteTypeId);
