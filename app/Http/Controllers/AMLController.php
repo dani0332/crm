@@ -6,6 +6,7 @@ use App\Models\AML;
 use App\Models\QuoteType;
 use Illuminate\Http\Request;
 use DataTables;
+use Auth;
 use App\Enums\quoteTypeCode;
 use App\Services\CheckAmlService;
 use App\Services\QuoteStatusService;
@@ -256,12 +257,38 @@ class AMLController extends Controller
             $quoteStatusCode = "";
         }
 
-        if($quoteTypeCode == quoteTypeCode::Business) {
-            return view("aml.details", compact("quoteTypeCode","quoteTypeText","quoteRequest","businessTypeCode"
-            ,"businessCoverTypeText","businessCommuModeText","kycLogs","quoteStatusCode","auditLogLine"));
+        if(Auth::user()->hasRole("COMPLIANCE")) {
+            $isCurrentUserFromCompliance = 1;
         }
         else {
-            return view("aml.details", compact("quoteTypeCode","quoteTypeText","quoteRequest","kycLogs","quoteStatusCode","auditLogLine"));
+            $isCurrentUserFromCompliance = 0;
+        }
+        if(Auth::user()->hasRole("pa") || Auth::user()->hasRole("AML")) {
+            $isCurrentUserFromPaAml = 1;
+        }
+        else {
+            $isCurrentUserFromPaAml = 0;
+        }
+
+        $getTotalResults = AML::where('quote_type_id', $quoteTypeId)
+        ->where('quote_request_id', $quoteRequestId)
+        ->sum('results_found');
+
+        if($getTotalResults > 0) {
+            $resultsFound = 1;
+        }
+        else {
+            $resultsFound = 0;
+        }
+
+        if($quoteTypeCode == quoteTypeCode::Business) {
+            return view("aml.details", compact("quoteTypeCode","quoteTypeText","quoteRequest","businessTypeCode"
+            ,"businessCoverTypeText","businessCommuModeText","kycLogs","quoteStatusCode","auditLogLine"
+            ,"isCurrentUserFromCompliance","isCurrentUserFromPaAml","resultsFound"));
+        }
+        else {
+            return view("aml.details", compact("quoteTypeCode","quoteTypeText","quoteRequest","kycLogs"
+            ,"quoteStatusCode","auditLogLine","isCurrentUserFromCompliance","isCurrentUserFromPaAml","resultsFound"));
         }
     }
 
