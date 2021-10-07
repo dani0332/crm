@@ -847,13 +847,6 @@
                         @endif
                     @endif
                 @endif
-                <div class="ln_solid"></div>
-                <div class="row">
-                    <div class="col-auto mr-auto"></div>
-                    <div class="col-auto">
-                        {{-- <button type="submit" class="btn btn-warning btn-sm">Resubmit</button> --}}
-                    </div>
-                </div>
                 </form>
             </div>
         </div>
@@ -872,7 +865,7 @@
                     <table id="datatable" class="table table-striped jambo_table" style="width:100%">
                         <thead>
                             <tr>
-                                <th>ID</th>
+                                <th>AML Id</th>
                                 <th>Input</th>
                                 <th>Screenshot</th>
                                 <th>Match Found</th>

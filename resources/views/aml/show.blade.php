@@ -68,7 +68,6 @@
                             </div>
                         </div>
                         <div class="col">
-
                         </div>
                     </div>
                     <div class="item form-group">
@@ -79,14 +78,6 @@
                             </div>
                         </div>
                         <div class="col">
-
-                        </div>
-                    </div>
-                    <div class="ln_solid"></div>
-                    <div class="row">
-                    <div class="col-auto mr-auto"></div>
-                        <div class="col-auto">
-                            {{--<button type="submit" class="btn btn-warning btn-sm">Resubmit</button>--}}
                         </div>
                     </div>
                 </form>
