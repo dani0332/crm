@@ -9,6 +9,7 @@ import ftcHistory from "./ftc_history";
 import carQuoteKycStatus from "./car_quote_kyc_status";
 import carQuoteKyc from "./car_quote_kyc";
 import ftcQuoteStatusHistory from "./ftc_quote_status_history";
+import ftcPayment from "./ftc_payment";
 
 const getDSLForm = (options) => {
     const { form } = options
@@ -27,6 +28,8 @@ const getDSLForm = (options) => {
             return insuranceDetail.getForm()
         case 'ftcHistory':
             return ftcHistory.getForm()
+        case 'ftcPayment':
+            return ftcPayment.getForm()
         case 'ftcQuoteStatusHistory' :
             return ftcQuoteStatusHistory.getForm()
         case 'carQuoteKycStatus':

@@ -137,6 +137,12 @@ class CarQuote extends BaseModel
     {
         return $this->hasOne(VehicleDetailCarQuote::class, 'car_quote_id', 'id');
     }
+
+    public function payment_detail()
+    {
+        return $this->hasOne(CarQuotePayment::class, 'car_quote_id', 'id');
+    }
+
     public function insurance_coverage()
     {
         return $this->hasOne(CarQuoteInsuranceCoverage::class, 'car_quote_id', 'id');
@@ -163,7 +169,7 @@ class CarQuote extends BaseModel
         if($this->isGetList)
             return [];
         else
-            return ["quote_status_id", "kyc_status_id", "insurance_coverage.insurance_company_id", "insurance_coverage.insurance_plan_id", "insurance_coverage.vehicle_type_id", "uae_license_held_for_id", "car_make_id", "car_model_id", "emirate_of_registration_id", "claim_history_id",  "nationality_id", "vehicle_detail_id", "pa_id", "car_quote_kyc"];
+            return ["payment_detail","quote_status_id", "kyc_status_id", "insurance_coverage.insurance_company_id", "insurance_coverage.insurance_plan_id", "insurance_coverage.vehicle_type_id", "uae_license_held_for_id", "car_make_id", "car_model_id", "emirate_of_registration_id", "claim_history_id",  "nationality_id", "vehicle_detail_id", "pa_id", "car_quote_kyc"];
     }
 
     public $access = [

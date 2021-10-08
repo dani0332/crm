@@ -16,6 +16,62 @@ const initialState = {
     sections:[]
 }
 
+function makeNullHideFields(state){
+
+    let data = {}
+    const { fields, selectedRecord } = state
+    Object.entries(fields).forEach(entry => {
+
+        const [key, value] = entry;
+        const getField = value
+        const recVal = selectedRecord?.[key]
+
+        if(recVal && getField?.if) {
+            const val = getField.if[recVal]
+            if(val?.fields){
+                const getCondFields = getField.if[recVal].fields
+                if(getCondFields.length > 0) {
+                    getCondFields.forEach(element => {
+
+                    });
+                }
+                console.log(getCondFields)
+            } else {
+                const getCondFields = getField.else
+                getCondFields.forEach(element => {
+                    data[element] = ""
+                });
+            }
+        }
+    });
+    return data
+
+}
+
+
+function conditionState(state, action) {
+
+    const { field: { name, value } } = action
+    const getField = state.fields[name]
+    if(getField?.if) {
+        const val = getField.if[value]
+        if(val?.fields){
+            const getCondFields = getField.if[value].fields
+            if(getCondFields.length > 0) {
+                getCondFields.forEach(element => {
+                        state.fields[element].offscreen = false
+                });
+            }
+            console.log(getCondFields)
+        } else {
+            const getCondFields = getField.else
+            getCondFields.forEach(element => {
+                state.fields[element].offscreen = true
+            });
+        }
+    }
+}
+
 function reducer(state, action) {
     switch (action.type) {
       case 'clear':
@@ -29,10 +85,26 @@ function reducer(state, action) {
           const getField = state.fields[name]
           getField.value = value
 
+          console.log('------draw-form-set-value-------')
           console.log(state)
-          if(state?.action_type === "edit" && state?.selectedRecord && state?.selectedRecord?.[name]){
+          console.log('------draw-form-set-value-------')
+
+          if(state?.action_type === "new") {
+            console.log('------draw-form.js---Adding---draw-form.js-------')
+            console.log(state)
+            console.log('------draw-form.js---Adding---draw-form.js-------')
+          }
+          if (state?.action_type === "edit" && state?.selectedRecord && state?.selectedRecord?.[name]) {
             console.log('------draw-form.js---Removing---draw-form.js-----------')
+            conditionState(state,action)
             state.selectedRecord[name] = value
+          }
+          else if (state?.action_type === "edit") {
+            console.log('------draw-form.js---Editing---draw-form.js-------')
+            console.log(state)
+            console.log(action)
+            conditionState(state,action)
+            console.log('------draw-form.js---Editing---draw-form.js-------')
           }
           return  {...state }
       }
@@ -54,18 +126,15 @@ const params = useParams()
 const { control ,handleSubmit ,formState: { errors }, reset, clearErrors } = useForm({shouldUnregister: true });
 const onSubmit = data => {
 
-    console.log("*****onSubmit-Data-draw-form.js*************")
-    console.log(data)
-    console.log({state, ...initialForm })
-
+    let getData =   {}
+    if(state?.action_type === "edit")
+        getData =   makeNullHideFields(state)
    if(typeof state?.postTransform === 'function') {
-
-        console.log("*****onSubmit-Transform-Data-draw-form.js*************Parmas")
+        console.log("*****onSubmit-Transform-Data-draw-form.js*************")
         let transformData = state?.postTransform({ data: data, state: {state, ...initialForm }, params: params})
-        console.log(transformData)
-        dispatch_({ type: 'VISIBLE_FORM_SAVE', selectedRecord: state?.selectedRecord, body: cleanDeep(transformData), initialForm: initialForm,  manageListDispatch: manageListDispatch })
+        dispatch_({ type: 'VISIBLE_FORM_SAVE', selectedRecord: state?.selectedRecord, body: { ...cleanDeep(transformData), ...getData }, initialForm: initialForm,  manageListDispatch: manageListDispatch })
     } else {
-        dispatch_({ type: 'VISIBLE_FORM_SAVE', selectedRecord: state?.selectedRecord, body: cleanDeep(data), initialForm: initialForm, manageListDispatch: manageListDispatch })
+        dispatch_({ type: 'VISIBLE_FORM_SAVE', selectedRecord: state?.selectedRecord, body: { ...cleanDeep(data), ...getData }, initialForm: initialForm, manageListDispatch: manageListDispatch })
    }
 
 };
@@ -149,6 +218,10 @@ return (
                     let fieldVal = null
                     if(state?.action_type === 'read' || state?.action_type === 'edit'){
                         fieldVal = (typeof dslField?.value === 'object') ? dslField.value.id : dslField?.value
+                    }
+
+                    if(state.fields[u]?.offscreen === true) {
+                        return (<div  key={i}></div>)
                     }
 
                     return (

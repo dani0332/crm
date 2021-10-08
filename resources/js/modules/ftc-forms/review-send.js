@@ -40,12 +40,7 @@ export default function ReviewSend(props) {
             ]
           });
     }
-
-
     const { data } = props
-
-
-
     return(
 
         <div className="row">
@@ -58,7 +53,7 @@ export default function ReviewSend(props) {
             <div className="x_content">
                 <div className="clearfix"></div>
         <div className="offset-md-2 col-md-7 hidden-small">
-            { data?.vehicle_detail_id && data?.insurance_coverage && data?.car_quote_kyc &&
+            { data?.vehicle_detail_id && data?.insurance_coverage &&
             <div className="pull-right">
              { role === 'advisor' && <button type="submit" className="btn btn-success" onClick={submit}>Review & Send</button> }
              </div>
@@ -224,6 +219,13 @@ export default function ReviewSend(props) {
                     </tr>
                     </tbody>
             </table>
+            {data?.payment_detail?.mode === "CC" && data?.payment_detail?.method === "payments.insurancemarket.ae" &&
+                <div className="col-md-12">
+                    <h2 class="line_30">Payments</h2>
+                    <p>Lastly, you may proceed with the credit card payment at https://payments.insurancemarket.ae and send me the 6-digit code to issue the policy. </p>
+                </div>
+            }
+
         </div>
             </div></div></div></div>
 
