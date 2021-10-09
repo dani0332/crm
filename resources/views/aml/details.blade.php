@@ -50,6 +50,9 @@
                     @if (session()->has('message'))
                         <div class="alert alert-danger">{{ session()->get('message') }}</div>
                     @endif
+                    @if ($resultsFound > 0 && $isCurrentUserFromPaAml == 1)
+                    <div class="required" style="text-align: center;"><p><b>As match found in AML screening, this quote is assigned to Compliance team for further scrutiny.</b></p></div>
+                    @endif
                     <form id="demo-form2" method="POST" action="{{ $quoteRequest->id }}/quoteUpdate"
                         enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left"
                         autocomplete="off">
