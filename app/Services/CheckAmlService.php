@@ -37,16 +37,8 @@ class CheckAmlService
 
         if($resultsFound > 0 && stripos($fullName, "test") === false) { // Match is found
 
-            $emailAmlData = '';
-            foreach ($dataArr as $key => $value) {
-                $emailAmlData .= $key . ': ' . $value;
-                $emailAmlData .= "<pre>";
-            }
-
             // Send Email alert to Compliance team
-
-            // Get quote type
-            $quoteTypeName = QuoteType::where('id', '=', $quoteTypeId)->value('text');
+            $quoteTypeName = QuoteType::where('id', '=', $quoteTypeId)->value('text'); // Get quote type text
 
             // Get CDB ID
             $quoteTypeCode = QuoteType::where('id', '=', $quoteTypeId)->value('code');
@@ -60,13 +52,18 @@ class CheckAmlService
             if($quoteTypeCode == quoteTypeCode::Travel) { $quoteCdbId = TravelQuote::where('id', '=', $quoteRequestId)->value('code'); }
 
             CheckAmlService::sendAMLMatchedEmailComplianceTeam($emailL_sys,$amlUrl,$resultsFound,$fullName,$quoteTypeName,$quoteCdbId);
-            //CheckAmlService::sendAMLMatchedEmailComplianceTeam($emailAmlData,$emailL_sys,$amlUrl,$resultsFound);
         }
         if($chAmlStatus != 201 && $chAmlStatus != 200) { // API failed
             $requestMessage = '';
             foreach ($chAmlMessage as $key1=>$value1) {
                 $requestMessage .= $key1.': '.$value1;
                 $requestMessage.= "<pre>";
+            }
+
+            $emailAmlData = '';
+            foreach ($dataArr as $key => $value) {
+                $emailAmlData .= $key . ': ' . $value;
+                $emailAmlData .= "<pre>";
             }
 
             // Send Error Email alert to engineering team
