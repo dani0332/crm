@@ -2,7 +2,16 @@
 namespace App\Services;
 
 use App\Models\User;
-use Illuminate\Support\Facades\DB;
+use App\Models\QuoteType;
+use App\Models\CarQuote;
+use App\Models\HealthQuote;
+use App\Models\HomeQuote;
+use App\Models\LifeQuote;
+use App\Models\BusinessQuote;
+use App\Models\BikeQuote;
+use App\Models\YachtQuote;
+use App\Models\TravelQuote;
+use App\Enums\quoteTypeCode;
 use Illuminate\Support\Facades\Http;
 use Config;
 
@@ -35,7 +44,23 @@ class CheckAmlService
             }
 
             // Send Email alert to Compliance team
-            CheckAmlService::sendAMLMatchedEmailComplianceTeam($emailAmlData,$emailL_sys,$amlUrl,$resultsFound);
+
+            // Get quote type
+            $quoteTypeName = QuoteType::where('id', '=', $quoteTypeId)->value('text');
+
+            // Get CDB ID
+            $quoteTypeCode = QuoteType::where('id', '=', $quoteTypeId)->value('code');
+            if($quoteTypeCode == quoteTypeCode::Car) { $quoteCdbId = CarQuote::where('id', '=', $quoteRequestId)->value('code'); }
+            if($quoteTypeCode == quoteTypeCode::Home) { $quoteCdbId = HomeQuote::where('id', '=', $quoteRequestId)->value('code'); }
+            if($quoteTypeCode == quoteTypeCode::Health) { $quoteCdbId = HealthQuote::where('id', '=', $quoteRequestId)->value('code'); }
+            if($quoteTypeCode == quoteTypeCode::Life) { $quoteCdbId = LifeQuote::where('id', '=', $quoteRequestId)->value('code'); }
+            if($quoteTypeCode == quoteTypeCode::Business) { $quoteCdbId = BusinessQuote::where('id', '=', $quoteRequestId)->value('code'); }
+            if($quoteTypeCode == quoteTypeCode::Bike) { $quoteCdbId = BikeQuote::where('id', '=', $quoteRequestId)->value('code'); }
+            if($quoteTypeCode == quoteTypeCode::Yacht) { $quoteCdbId = YachtQuote::where('id', '=', $quoteRequestId)->value('code'); }
+            if($quoteTypeCode == quoteTypeCode::Travel) { $quoteCdbId = TravelQuote::where('id', '=', $quoteRequestId)->value('code'); }
+
+            CheckAmlService::sendAMLMatchedEmailComplianceTeam($emailL_sys,$amlUrl,$resultsFound,$fullName,$quoteTypeName,$quoteCdbId);
+            //CheckAmlService::sendAMLMatchedEmailComplianceTeam($emailAmlData,$emailL_sys,$amlUrl,$resultsFound);
         }
         if($chAmlStatus != 201 && $chAmlStatus != 200) { // API failed
             $requestMessage = '';
@@ -50,7 +75,7 @@ class CheckAmlService
         return $chAmlStatus; // return http code
     }
     // Match found Email
-    public static function sendAMLMatchedEmailComplianceTeam($emailAmlData,$emailL_sys,$amlUrl,$resultsFound)
+    public static function sendAMLMatchedEmailComplianceTeam($emailL_sys,$amlUrl,$resultsFound,$fullName,$quoteTypeName,$quoteCdbId)
     {
         $recipients = User::select('users.email as user_email')
         ->leftjoin('model_has_roles','users.id','model_has_roles.model_id')
@@ -65,8 +90,10 @@ class CheckAmlService
         $emailSubject = $emailL_sys." IMCRM | New AML Match Found";
         MailService::sendEmail('AmlComplianceMail', [
             'amlUrl' => $amlUrl,
-            'emailAmlData' => $emailAmlData,
             'resultsFound' => $resultsFound,
+            'fullName' => $fullName,
+            'quoteTypeName' => $quoteTypeName,
+            'quoteCdbId' => $quoteCdbId,
         ], $emailSubject, $emailRecipients);
     }
     // Error Email
