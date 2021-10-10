@@ -231,7 +231,7 @@ class CarQuote extends BaseModel
                     $pa_id = $filters["pa_id"] == 0 ? NULL : Auth::user()->id;
                     $restrictFilter["invoicing"] = $pa_id;
                     $restrictFilter["advisor_id"] = ["op" => "<>", "val" => ''];
-                    $restrictFilter["quote_status_id"] =  ["op" => "in", "val" => [13]];
+                    $restrictFilter["quote_status_id"] =  ["op" => "in", "val" => [13, 15]];
                 }
             }
 
