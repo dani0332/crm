@@ -22,7 +22,7 @@
                                 class="btn btn-success btn-sm"
                                 onclick="return confirm('Do you want to update status to AML Screening Cleared?');">Pass</a></li>
                             @endif
-                            @if ($resultsFound == 0 && $isCurrentUserFromPaAml == 1)
+                            @if ($resultsFound == 0 && $isCurrentUserFromPaAml == 1 && $getAMLNumRows >= 2)
                                 <li><a href="#" class="btn btn-success btn-sm"
                                 style="opacity: .4;cursor: default !important;pointer-events: none;">Pass</a></li>
                             @endif
@@ -35,7 +35,7 @@
                                 class="btn btn-success btn-sm"
                                 onclick="return confirm('Do you want to update status to AML Screening Cleared?');">Pass</a></li>
                             @endif
-                            @if ($resultsFound == 0 && $isCurrentUserFromPaAml == 1)
+                            @if ($resultsFound == 0 && $isCurrentUserFromPaAml == 1 && $getAMLNumRows >= 2)
                                 <li><a href="{{ $quoteRequest->id }}/quoteStatusUpdate/{{ quoteStatusCode::AMLScreeningCleared }}"
                                 class="btn btn-success btn-sm"
                                 onclick="return confirm('Do you want to update status to AML Screening Cleared?');">Pass</a></li>
@@ -53,7 +53,7 @@
                         <div class="alert alert-danger">{{ session()->get('message') }}</div>
                     @endif
                     @if ($resultsFound > 0 && $isCurrentUserFromPaAml == 1 && $getAMLNumRows >= 2)
-                    <div class="required" style="text-align: center;"><p><b>As match found in AML screening, this quote is assigned to Compliance team for further scrutiny.</b></p></div>
+                    <div class="required" style="text-align: center;"><p><b>Matches found. Please check with Compliance.</b></p></div>
                     @endif
                     <form id="demo-form2" method="POST" action="{{ $quoteRequest->id }}/quoteUpdate"
                         enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left"
