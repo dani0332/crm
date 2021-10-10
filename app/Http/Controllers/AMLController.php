@@ -273,7 +273,6 @@ class AMLController extends Controller
         $getTotalResults = AML::where('quote_type_id', $quoteTypeId)
         ->where('quote_request_id', $quoteRequestId)
         ->sum('results_found');
-
         if($getTotalResults > 0) {
             $resultsFound = 1;
         }
@@ -281,14 +280,18 @@ class AMLController extends Controller
             $resultsFound = 0;
         }
 
+        $getAMLRows = AML::where('quote_type_id', '=', $quoteTypeId)
+        ->where('quote_request_id', $quoteRequestId)->get();
+        $getAMLNumRows = $getAMLRows->count();
+
         if($quoteTypeCode == quoteTypeCode::Business) {
             return view("aml.details", compact("quoteTypeCode","quoteTypeText","quoteRequest","businessTypeCode"
             ,"businessCoverTypeText","businessCommuModeText","kycLogs","quoteStatusCode","auditLogLine"
-            ,"isCurrentUserFromCompliance","isCurrentUserFromPaAml","resultsFound"));
+            ,"isCurrentUserFromCompliance","isCurrentUserFromPaAml","resultsFound","getAMLNumRows"));
         }
         else {
             return view("aml.details", compact("quoteTypeCode","quoteTypeText","quoteRequest","kycLogs"
-            ,"quoteStatusCode","auditLogLine","isCurrentUserFromCompliance","isCurrentUserFromPaAml","resultsFound"));
+            ,"quoteStatusCode","auditLogLine","isCurrentUserFromCompliance","isCurrentUserFromPaAml","resultsFound","getAMLNumRows"));
         }
     }
 
