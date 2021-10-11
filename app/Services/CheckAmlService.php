@@ -11,6 +11,7 @@ use App\Models\BusinessQuote;
 use App\Models\BikeQuote;
 use App\Models\YachtQuote;
 use App\Models\TravelQuote;
+use App\Models\AML;
 use App\Enums\quoteTypeCode;
 use Illuminate\Support\Facades\Http;
 use Config;
@@ -35,7 +36,11 @@ class CheckAmlService
         $fullName = $firstName." ".$lastName;
         $resultsFound = $chAmlMessage["resultsFound"];
 
-        if($resultsFound > 0 && stripos($fullName, "test") === false) { // Match is found
+        $getTotalResults = AML::where('quote_type_id', $quoteTypeId)
+        ->where('quote_request_id', $quoteRequestId)
+        ->sum('results_found');
+
+        if(($resultsFound > 0 || $getTotalResults > 0) && stripos($fullName, "test") === false) { // Match is found
 
             // Send Email alert to Compliance team
             $quoteTypeName = QuoteType::where('id', '=', $quoteTypeId)->value('text'); // Get quote type text
