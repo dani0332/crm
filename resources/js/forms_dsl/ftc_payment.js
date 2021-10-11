@@ -57,12 +57,12 @@ const ftcPayment = {
             },
             sections:[
                 {
-                    label: 'FTC Quote Status History',
+                    label: 'FTC Payment Method',
                     fields: ['mode', 'method', 'comment']
                 },
             ],
             view:{
-                label: 'FTC Quote Status History',
+                label: 'FTC Payment Method',
                 find:{
                     basic: [],
                     advanced: []
