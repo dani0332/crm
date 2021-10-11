@@ -15159,11 +15159,11 @@ var ftcPayment = {
         }
       },
       sections: [{
-        label: 'FTC Quote Status History',
+        label: 'FTC Payment Method',
         fields: ['mode', 'method', 'comment']
       }],
       view: {
-        label: 'FTC Quote Status History',
+        label: 'FTC Payment Method',
         find: {
           basic: [],
           advanced: []
@@ -15194,6 +15194,116 @@ var ftcPayment = {
   }
 };
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (ftcPayment);
+
+/***/ }),
+
+/***/ "./resources/js/forms_dsl/ftc_payment_history.js":
+/*!*******************************************************!*\
+  !*** ./resources/js/forms_dsl/ftc_payment_history.js ***!
+  \*******************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) { symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); } keys.push.apply(keys, symbols); } return keys; }
+
+function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys(Object(source), true).forEach(function (key) { _defineProperty(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
+var ftcPaymentHistory = {
+  getForm: function getForm() {
+    var form = {
+      db_table: 'car_quote_payment_history',
+      title: 'FTC Payment History',
+      subtitle: '',
+      access: {
+        read: ['pa', 'advisor', 'admin', 'invoicing'],
+        write: ['invoicing'],
+        update: ['invoicing'],
+        "delete": []
+      },
+      fields: {
+        status: {
+          type: 'dropdown',
+          label: 'Status',
+          source: ['Transaction Approved', 'Transaction Declined'],
+          access: {
+            read: ['advisor', 'pa', 'admin', 'invoicing'],
+            write: ['invoicing'],
+            update: ['invoicing']
+          },
+          rules: {
+            required: true
+          }
+        },
+        notes: {
+          type: 'textarea',
+          label: 'Notes',
+          access: {
+            read: ['advisor', 'pa', 'admin', 'invoicing'],
+            write: ['invoicing'],
+            update: ['invoicing']
+          },
+          rules: {
+            required: true
+          }
+        }
+      },
+      sections: [{
+        label: 'FTC Payment Method',
+        fields: ['status', 'notes']
+      }],
+      view: {
+        label: 'FTC Payment Method',
+        find: {
+          basic: [{
+            type: 'dropdown',
+            label: 'Status',
+            field: 'status',
+            source: ['Transaction Approved', 'Transaction Declined']
+          }],
+          advanced: []
+        },
+        columns: [{
+          Header: "ID",
+          accessor: "id"
+        }, {
+          Header: "Status",
+          accessor: "status"
+        }, {
+          Header: "Notes",
+          accessor: "notes"
+        }],
+        events: {
+          applyFilter: function applyFilter(options) {
+            var mode = options.mode,
+                url = options.url,
+                id = options.params.id;
+            var generateUrl = "/?filter={\"car_quote_id\":\"".concat(id, "\"}");
+            return generateUrl;
+          }
+        }
+      },
+      postTransform: function postTransform(options) {
+        var data = options.data,
+            state = options.state,
+            id = options.params.id;
+
+        if ((state === null || state === void 0 ? void 0 : state.context) === 'car_quote_snap') {
+          return _objectSpread(_objectSpread({}, data), {}, {
+            car_quote_id: id
+          });
+        }
+      }
+    };
+    return form;
+  }
+};
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (ftcPaymentHistory);
 
 /***/ }),
 
@@ -15355,6 +15465,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _car_quote_kyc__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./car_quote_kyc */ "./resources/js/forms_dsl/car_quote_kyc.js");
 /* harmony import */ var _ftc_quote_status_history__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ./ftc_quote_status_history */ "./resources/js/forms_dsl/ftc_quote_status_history.js");
 /* harmony import */ var _ftc_payment__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! ./ftc_payment */ "./resources/js/forms_dsl/ftc_payment.js");
+/* harmony import */ var _ftc_payment_history__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! ./ftc_payment_history */ "./resources/js/forms_dsl/ftc_payment_history.js");
+
 
 
 
@@ -15395,6 +15507,9 @@ var getDSLForm = function getDSLForm(options) {
 
     case 'ftcPayment':
       return _ftc_payment__WEBPACK_IMPORTED_MODULE_11__.default.getForm();
+
+    case 'ftcPaymentHistory':
+      return _ftc_payment_history__WEBPACK_IMPORTED_MODULE_12__.default.getForm();
 
     case 'ftcQuoteStatusHistory':
       return _ftc_quote_status_history__WEBPACK_IMPORTED_MODULE_10__.default.getForm();
@@ -16604,26 +16719,49 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var react_confirm_alert_src_react_confirm_alert_css__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! react-confirm-alert/src/react-confirm-alert.css */ "./node_modules/react-confirm-alert/src/react-confirm-alert.css");
 /* harmony import */ var _components_list_view_manage_list_form_view__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../../components/list-view/manage-list-form-view */ "./resources/js/components/list-view/manage-list-form-view.js");
 /* harmony import */ var react_tabs_style_react_tabs_css__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! react-tabs/style/react-tabs.css */ "./node_modules/react-tabs/style/react-tabs.css");
-/* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! react/jsx-runtime */ "./node_modules/react/jsx-runtime.js");
+/* harmony import */ var react_tabs__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! react-tabs */ "./node_modules/react-tabs/esm/index.js");
+/* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! react/jsx-runtime */ "./node_modules/react/jsx-runtime.js");
 
  // Import css
 
 
 
 
+
+
 function FtcPayment(props) {
   var filter = props.filter;
-  return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("div", {
+  return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("div", {
     className: "col-md-12",
-    children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)(_components_list_view_manage_list_form_view__WEBPACK_IMPORTED_MODULE_2__.default, {
-      form: {
-        form: 'ftcPayment',
-        view_mode: 'list',
-        action_type: 'list',
-        multi: false,
-        context: 'car_quote_snap',
-        filter: filter
-      }
+    children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxs)(react_tabs__WEBPACK_IMPORTED_MODULE_4__.Tabs, {
+      children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxs)(react_tabs__WEBPACK_IMPORTED_MODULE_4__.TabList, {
+        children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(react_tabs__WEBPACK_IMPORTED_MODULE_4__.Tab, {
+          children: "Payment Method"
+        }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(react_tabs__WEBPACK_IMPORTED_MODULE_4__.Tab, {
+          children: "Payment Actions"
+        })]
+      }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(react_tabs__WEBPACK_IMPORTED_MODULE_4__.TabPanel, {
+        children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(_components_list_view_manage_list_form_view__WEBPACK_IMPORTED_MODULE_2__.default, {
+          form: {
+            form: 'ftcPayment',
+            view_mode: 'list',
+            action_type: 'list',
+            multi: false,
+            context: 'car_quote_snap',
+            filter: filter
+          }
+        })
+      }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(react_tabs__WEBPACK_IMPORTED_MODULE_4__.TabPanel, {
+        children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(_components_list_view_manage_list_form_view__WEBPACK_IMPORTED_MODULE_2__.default, {
+          form: {
+            form: 'ftcPaymentHistory',
+            view_mode: 'list',
+            action_type: 'list',
+            context: 'car_quote_snap',
+            filter: filter
+          }
+        })
+      })]
     })
   });
 }
