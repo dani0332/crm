@@ -34,13 +34,14 @@ class CheckAmlService
         $chAmlMessage = $chAml->json();
 
         $fullName = $firstName." ".$lastName;
-        $resultsFound = $chAmlMessage["resultsFound"];
+        // $resultsFound = $chAmlMessage["resultsFound"];
 
-        $getTotalResults = AML::where('quote_type_id', $quoteTypeId)
-        ->where('quote_request_id', $quoteRequestId)
-        ->sum('results_found');
+        // $getTotalResults = AML::where('quote_type_id', $quoteTypeId)
+        // ->where('quote_request_id', $quoteRequestId)
+        // ->sum('results_found');
 
-        if(($resultsFound > 0 || $getTotalResults > 0) && stripos($fullName, "test") === false) { // Match is found
+        if($chAmlStatus == 201) {
+        //if(($resultsFound > 0 || $getTotalResults > 0) && stripos($fullName, "test") === false) { // Match is found
 
             // Send Email alert to Compliance team
             $quoteTypeName = QuoteType::where('id', '=', $quoteTypeId)->value('text'); // Get quote type text
@@ -56,7 +57,8 @@ class CheckAmlService
             if($quoteTypeCode == quoteTypeCode::Yacht) { $quoteCdbId = YachtQuote::where('id', '=', $quoteRequestId)->value('code'); }
             if($quoteTypeCode == quoteTypeCode::Travel) { $quoteCdbId = TravelQuote::where('id', '=', $quoteRequestId)->value('code'); }
 
-            CheckAmlService::sendAMLMatchedEmailComplianceTeam($emailL_sys,$amlUrl,$resultsFound,$fullName,$quoteTypeName,$quoteCdbId);
+            CheckAmlService::sendAMLMatchedEmailComplianceTeam($emailL_sys,$amlUrl,$fullName,$quoteTypeName,$quoteCdbId);
+            //CheckAmlService::sendAMLMatchedEmailComplianceTeam($emailL_sys,$amlUrl,$resultsFound,$fullName,$quoteTypeName,$quoteCdbId);
         }
         if($chAmlStatus != 201 && $chAmlStatus != 200) { // API failed
             $requestMessage = '';
@@ -77,7 +79,8 @@ class CheckAmlService
         return $chAmlStatus; // return http code
     }
     // Match found Email
-    public static function sendAMLMatchedEmailComplianceTeam($emailL_sys,$amlUrl,$resultsFound,$fullName,$quoteTypeName,$quoteCdbId)
+    public static function sendAMLMatchedEmailComplianceTeam($emailL_sys,$amlUrl,$fullName,$quoteTypeName,$quoteCdbId)
+    //public static function sendAMLMatchedEmailComplianceTeam($emailL_sys,$amlUrl,$resultsFound,$fullName,$quoteTypeName,$quoteCdbId)
     {
         $recipients = User::select('users.email as user_email')
         ->leftjoin('model_has_roles','users.id','model_has_roles.model_id')
@@ -92,7 +95,7 @@ class CheckAmlService
         $emailSubject = $emailL_sys." IMCRM | New AML Match Found";
         MailService::sendEmail('AmlComplianceMail', [
             'amlUrl' => $amlUrl,
-            'resultsFound' => $resultsFound,
+            //'resultsFound' => $resultsFound,
             'fullName' => $fullName,
             'quoteTypeName' => $quoteTypeName,
             'quoteCdbId' => $quoteCdbId,
