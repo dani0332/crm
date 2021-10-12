@@ -58,6 +58,7 @@ class CheckAmlService
 
             CheckAmlService::sendAMLMatchedEmailComplianceTeam($emailL_sys,$amlUrl,$resultsFound,$fullName,$quoteTypeName,$quoteCdbId);
         }
+
         if($chAmlStatus != 201 && $chAmlStatus != 200) { // API failed
             $requestMessage = '';
             foreach ($chAmlMessage as $key1=>$value1) {
@@ -76,6 +77,7 @@ class CheckAmlService
         }
         return $chAmlStatus; // return http code
     }
+
     // Match found Email
     public static function sendAMLMatchedEmailComplianceTeam($emailL_sys,$amlUrl,$resultsFound,$fullName,$quoteTypeName,$quoteCdbId)
     {
@@ -98,6 +100,7 @@ class CheckAmlService
             'quoteCdbId' => $quoteCdbId,
         ], $emailSubject, $emailRecipients);
     }
+
     // Error Email
     public static function sendAMLErrorEmailEngTeam($emailAmlData,$emailL_sys,$amlUrl,$chAmlStatus,$requestMessage)
     {
