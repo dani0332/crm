@@ -40,7 +40,8 @@ class CheckAmlService
         ->where('quote_request_id', $quoteRequestId)
         ->sum('results_found');
 
-        if(($resultsFound > 0 || $getTotalResults > 0) && stripos($fullName, "test") === false) { // Match is found
+        // Match is found
+        if(($resultsFound > 0 || $getTotalResults > 0) && stripos($fullName, "test") === false) {
 
             // Send Email alert to Compliance team
             $quoteTypeName = QuoteType::where('id', '=', $quoteTypeId)->value('text'); // Get quote type text
@@ -58,7 +59,9 @@ class CheckAmlService
 
             CheckAmlService::sendAMLMatchedEmailComplianceTeam($emailL_sys,$amlUrl,$resultsFound,$fullName,$quoteTypeName,$quoteCdbId);
         }
-        if($chAmlStatus != 201 && $chAmlStatus != 200) { // API failed
+
+        // API failed
+        if($chAmlStatus != 201 && $chAmlStatus != 200) {
             $requestMessage = '';
             foreach ($chAmlMessage as $key1=>$value1) {
                 $requestMessage .= $key1.': '.$value1;
@@ -76,6 +79,7 @@ class CheckAmlService
         }
         return $chAmlStatus; // return http code
     }
+
     // Match found Email
     public static function sendAMLMatchedEmailComplianceTeam($emailL_sys,$amlUrl,$resultsFound,$fullName,$quoteTypeName,$quoteCdbId)
     {
@@ -98,6 +102,7 @@ class CheckAmlService
             'quoteCdbId' => $quoteCdbId,
         ], $emailSubject, $emailRecipients);
     }
+
     // Error Email
     public static function sendAMLErrorEmailEngTeam($emailAmlData,$emailL_sys,$amlUrl,$chAmlStatus,$requestMessage)
     {
