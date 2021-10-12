@@ -298,8 +298,10 @@
                 <td align="left" style="font-size:0px;padding:10px 25px;word-break:break-word;">
 
       <div style="font-family:Open Sans, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';font-size:13px;line-height:1;text-align:left;color:#000000;"><p><i>Please note +5% VAT is applicable to all quotes for policies effective from January 2018 in compliance with UAE Federal VAT law.</i></p>
-            <p>Lastly, you may proceed with the credit card payment at </p>
-            <p><a href="https://payments.insurancemarket.ae">https://payments.insurancemarket.ae </a><br> Please send me the 6-digit code shown on screen to issue the policy.</p>
+            @if ($payment_detail && $payment_detail["mode"] === "CC" && $payment_detail["method"] === "payments.insurancemarket.ae" )
+                <p>Lastly, you may proceed with the credit card payment at </p>
+                <p><a href="https://payments.insurancemarket.ae">https://payments.insurancemarket.ae </a><br> Please send me the 6-digit code shown on screen to issue the policy.</p>
+            @endif
             <p>Please note that payments made using an <u>International Credit Card/Debit issued outside UAE may incur additional charges such as forex/exchange fee/service fee</u> depending on the terms of your bank.</p>
             <p>We look forward to hearing from you and to issuing your insurance documents as soon as possible.</p>
             <br>

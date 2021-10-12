@@ -161,6 +161,13 @@ export default function FTCDetail({field}) {
                     </tr>
                     </tbody>
             </table>
+            {data?.payment_detail?.mode === "CC" && data?.payment_detail?.method === "payments.insurancemarket.ae" &&
+                <div className="col-md-12">
+                    <h2 class="line_30">Payments</h2>
+                    <p>Lastly, you may proceed with the credit card payment at https://payments.insurancemarket.ae and send me the 6-digit code to issue the policy. </p>
+                </div>
+            }
+
         </div>
     )
 }

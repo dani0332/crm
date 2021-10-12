@@ -7,7 +7,7 @@
             <div class="x_title">
                 <h2>AML Detail</h2>
                 <ul class="nav navbar-right panel_toolbox">
-                    <li><a href="{{ route('aml.index') }}" class="btn btn-warning btn-sm">Home</a></li>
+                    <li><a href="{{ route('aml.index') }}" class="btn btn-warning btn-sm">All Quotes</a></li>
                 </ul>
                 <div class="clearfix"></div>
             </div>
@@ -20,7 +20,7 @@
                 @method('POST')
                     <div class="item form-group">
                         <div class="col">
-                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="ID"><b> ID</b></label>
+                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="ID"><b>AML Id</b></label>
                             <div class="col-md-6 col-sm-6">
                             <p class="label-align-center">{{ $aml->id }}</p>
                             </div>
@@ -36,7 +36,7 @@
                         <div class="col">
                             <label class="col-form-label col-md-3 col-sm-3 label-align" for="Quote Request ID"><b>Quote Request ID</b></label>
                             <div class="col-md-6 col-sm-6">
-                            <p class="label-align-center">{{ $aml->quote_request_id }}</p>
+                            <p class="label-align-center"><a href="{{ $aml->quote_type_id }}/details/{{ $aml->quote_request_id }}" style="text-decoration: underline;font-weight: bold;">{{ $aml->quote_request_id }}</a></p>
                             </div>
                         </div>
                         <div class="col">
@@ -68,7 +68,6 @@
                             </div>
                         </div>
                         <div class="col">
-
                         </div>
                     </div>
                     <div class="item form-group">
@@ -79,14 +78,6 @@
                             </div>
                         </div>
                         <div class="col">
-
-                        </div>
-                    </div>
-                    <div class="ln_solid"></div>
-                    <div class="row">
-                    <div class="col-auto mr-auto"></div>
-                        <div class="col-auto">
-                            {{--<button type="submit" class="btn btn-warning btn-sm">Resubmit</button>--}}
                         </div>
                     </div>
                 </form>

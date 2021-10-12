@@ -7,20 +7,10 @@ import { date } from "yup/lib/locale";
 
 export default function SelectField({field, controller}) {
 
-
-    console.log("********* -> Select-Render********->",field?.field)
-    console.log(field)
-
     const dispatch = useDispatch()
     const propsRef = useRef()
     const [data, setData] = useState({ data: [], loading: false, defaultValue:{}, isDisabled: false })
     useEffect(() => {
-
-        // console.log("---------------redraw------- ")
-        // console.log(field)
-        // console.log(propsRef?.current)
-        // console.log("---------------redraw------- ")
-
         if(field && propsRef?.current ){
             if(field?.random !== propsRef?.current.random){
                 propsRef.current = field

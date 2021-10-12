@@ -11244,6 +11244,12 @@ function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) { try
 
 function _asyncToGenerator(fn) { return function () { var self = this, args = arguments; return new Promise(function (resolve, reject) { var gen = fn.apply(self, args); function _next(value) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "next", value); } function _throw(err) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "throw", err); } _next(undefined); }); }; }
 
+function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) { symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); } keys.push.apply(keys, symbols); } return keys; }
+
+function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys(Object(source), true).forEach(function (key) { _defineProperty(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
 function _slicedToArray(arr, i) { return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _unsupportedIterableToArray(arr, i) || _nonIterableRest(); }
 
 function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
@@ -11255,12 +11261,6 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
 function _iterableToArrayLimit(arr, i) { var _i = arr == null ? null : typeof Symbol !== "undefined" && arr[Symbol.iterator] || arr["@@iterator"]; if (_i == null) return; var _arr = []; var _n = true; var _d = false; var _s, _e; try { for (_i = _i.call(arr); !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"] != null) _i["return"](); } finally { if (_d) throw _e; } } return _arr; }
 
 function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
-
-function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) { symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); } keys.push.apply(keys, symbols); } return keys; }
-
-function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys(Object(source), true).forEach(function (key) { _defineProperty(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
-
-function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
 
 
@@ -11280,6 +11280,70 @@ var initialState = {
   sections: []
 };
 
+function makeNullHideFields(state) {
+  var data = {};
+  var fields = state.fields,
+      selectedRecord = state.selectedRecord;
+  Object.entries(fields).forEach(function (entry) {
+    var _entry = _slicedToArray(entry, 2),
+        key = _entry[0],
+        value = _entry[1];
+
+    var getField = value;
+    var recVal = selectedRecord === null || selectedRecord === void 0 ? void 0 : selectedRecord[key];
+
+    if (recVal && getField !== null && getField !== void 0 && getField["if"]) {
+      var val = getField["if"][recVal];
+
+      if (val !== null && val !== void 0 && val.fields) {
+        var getCondFields = getField["if"][recVal].fields;
+
+        if (getCondFields.length > 0) {
+          getCondFields.forEach(function (element) {});
+        }
+
+        console.log(getCondFields);
+      } else {
+        var _getCondFields = getField["else"];
+
+        _getCondFields.forEach(function (element) {
+          data[element] = "";
+        });
+      }
+    }
+  });
+  return data;
+}
+
+function conditionState(state, action) {
+  var _action$field = action.field,
+      name = _action$field.name,
+      value = _action$field.value;
+  var getField = state.fields[name];
+
+  if (getField !== null && getField !== void 0 && getField["if"]) {
+    var val = getField["if"][value];
+
+    if (val !== null && val !== void 0 && val.fields) {
+      var getCondFields = getField["if"][value].fields;
+
+      if (getCondFields.length > 0) {
+        getCondFields.forEach(function (element) {
+          state.fields[element].offscreen = false;
+        });
+      }
+
+      console.log(getCondFields);
+    } else {
+      var _getCondFields2 = getField["else"];
+
+      _getCondFields2.forEach(function (element) {
+        state.fields[element].offscreen = true;
+      });
+    }
+  }
+}
+
 function reducer(state, action) {
   switch (action.type) {
     case 'clear':
@@ -11294,16 +11358,31 @@ function reducer(state, action) {
       {
         var _state$selectedRecord;
 
-        var _action$field = action.field,
-            name = _action$field.name,
-            value = _action$field.value;
+        var _action$field2 = action.field,
+            name = _action$field2.name,
+            value = _action$field2.value;
         var getField = state.fields[name];
         getField.value = value;
+        console.log('------draw-form-set-value-------');
         console.log(state);
+        console.log('------draw-form-set-value-------');
+
+        if ((state === null || state === void 0 ? void 0 : state.action_type) === "new") {
+          console.log('------draw-form.js---Adding---draw-form.js-------');
+          console.log(state);
+          console.log('------draw-form.js---Adding---draw-form.js-------');
+        }
 
         if ((state === null || state === void 0 ? void 0 : state.action_type) === "edit" && state !== null && state !== void 0 && state.selectedRecord && state !== null && state !== void 0 && (_state$selectedRecord = state.selectedRecord) !== null && _state$selectedRecord !== void 0 && _state$selectedRecord[name]) {
           console.log('------draw-form.js---Removing---draw-form.js-----------');
+          conditionState(state, action);
           state.selectedRecord[name] = value;
+        } else if ((state === null || state === void 0 ? void 0 : state.action_type) === "edit") {
+          console.log('------draw-form.js---Editing---draw-form.js-------');
+          console.log(state);
+          console.log(action);
+          conditionState(state, action);
+          console.log('------draw-form.js---Editing---draw-form.js-------');
         }
 
         return _objectSpread({}, state);
@@ -11341,14 +11420,11 @@ function DrawForm(props) {
       clearErrors = _useForm.clearErrors;
 
   var onSubmit = function onSubmit(data) {
-    console.log("*****onSubmit-Data-draw-form.js*************");
-    console.log(data);
-    console.log(_objectSpread({
-      state: state
-    }, initialForm));
+    var getData = {};
+    if ((state === null || state === void 0 ? void 0 : state.action_type) === "edit") getData = makeNullHideFields(state);
 
     if (typeof (state === null || state === void 0 ? void 0 : state.postTransform) === 'function') {
-      console.log("*****onSubmit-Transform-Data-draw-form.js*************Parmas");
+      console.log("*****onSubmit-Transform-Data-draw-form.js*************");
       var transformData = state === null || state === void 0 ? void 0 : state.postTransform({
         data: data,
         state: _objectSpread({
@@ -11356,11 +11432,10 @@ function DrawForm(props) {
         }, initialForm),
         params: params
       });
-      console.log(transformData);
       dispatch_({
         type: 'VISIBLE_FORM_SAVE',
         selectedRecord: state === null || state === void 0 ? void 0 : state.selectedRecord,
-        body: clean_deep__WEBPACK_IMPORTED_MODULE_6___default()(transformData),
+        body: _objectSpread(_objectSpread({}, clean_deep__WEBPACK_IMPORTED_MODULE_6___default()(transformData)), getData),
         initialForm: initialForm,
         manageListDispatch: manageListDispatch
       });
@@ -11368,7 +11443,7 @@ function DrawForm(props) {
       dispatch_({
         type: 'VISIBLE_FORM_SAVE',
         selectedRecord: state === null || state === void 0 ? void 0 : state.selectedRecord,
-        body: clean_deep__WEBPACK_IMPORTED_MODULE_6___default()(data),
+        body: _objectSpread(_objectSpread({}, clean_deep__WEBPACK_IMPORTED_MODULE_6___default()(data)), getData),
         initialForm: initialForm,
         manageListDispatch: manageListDispatch
       });
@@ -11449,7 +11524,7 @@ function DrawForm(props) {
           }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__.jsx)("div", {
             className: "x_content",
             children: section && section.fields.map(function (u, i) {
-              var _state$fields$u, _state$fields$u3, _state$selectedRecord2;
+              var _state$fields$u, _state$fields$u3, _state$selectedRecord2, _state$fields$u4;
 
               if ((_state$fields$u = state.fields[u]) !== null && _state$fields$u !== void 0 && _state$fields$u.access) {
                 var _state$fields$u2;
@@ -11488,6 +11563,10 @@ function DrawForm(props) {
 
               if ((state === null || state === void 0 ? void 0 : state.action_type) === 'read' || (state === null || state === void 0 ? void 0 : state.action_type) === 'edit') {
                 fieldVal = _typeof(dslField === null || dslField === void 0 ? void 0 : dslField.value) === 'object' ? dslField.value.id : dslField === null || dslField === void 0 ? void 0 : dslField.value;
+              }
+
+              if (((_state$fields$u4 = state.fields[u]) === null || _state$fields$u4 === void 0 ? void 0 : _state$fields$u4.offscreen) === true) {
+                return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__.jsx)("div", {}, i);
               }
 
               return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__.jsxs)("div", {
@@ -12208,7 +12287,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 function FTCDetail(_ref) {
-  var _data$insurance_cover, _data$insurance_cover2, _data$insurance_cover3, _data$insurance_cover4, _data$insurance_cover5, _data$insurance_cover6, _data$insurance_cover7, _data$insurance_cover8, _data$insurance_cover9, _data$insurance_cover10, _data$insurance_cover11, _data$car_quote_kyc, _data$car_quote_kyc2, _data$car_quote_kyc3;
+  var _data$insurance_cover, _data$insurance_cover2, _data$insurance_cover3, _data$insurance_cover4, _data$insurance_cover5, _data$insurance_cover6, _data$insurance_cover7, _data$insurance_cover8, _data$insurance_cover9, _data$insurance_cover10, _data$insurance_cover11, _data$car_quote_kyc, _data$car_quote_kyc2, _data$car_quote_kyc3, _data$payment_detail, _data$payment_detail2;
 
   var field = _ref.field;
   var data = JSON.parse(field === null || field === void 0 ? void 0 : field.value);
@@ -12483,6 +12562,14 @@ function FTCDetail(_ref) {
           })]
         })]
       })
+    }), (data === null || data === void 0 ? void 0 : (_data$payment_detail = data.payment_detail) === null || _data$payment_detail === void 0 ? void 0 : _data$payment_detail.mode) === "CC" && (data === null || data === void 0 ? void 0 : (_data$payment_detail2 = data.payment_detail) === null || _data$payment_detail2 === void 0 ? void 0 : _data$payment_detail2.method) === "payments.insurancemarket.ae" && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsxs)("div", {
+      className: "col-md-12",
+      children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)("h2", {
+        "class": "line_30",
+        children: "Payments"
+      }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)("p", {
+        children: "Lastly, you may proceed with the credit card payment at https://payments.insurancemarket.ae and send me the 6-digit code to issue the policy.\xA0"
+      })]
     })]
   });
 }
@@ -12623,8 +12710,6 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
 function SelectField(_ref) {
   var field = _ref.field,
       controller = _ref.controller;
-  console.log("********* -> Select-Render********->", field === null || field === void 0 ? void 0 : field.field);
-  console.log(field);
   var dispatch = (0,react_redux__WEBPACK_IMPORTED_MODULE_4__.useDispatch)();
   var propsRef = (0,react__WEBPACK_IMPORTED_MODULE_1__.useRef)();
 
@@ -12639,10 +12724,6 @@ function SelectField(_ref) {
       setData = _useState2[1];
 
   (0,react__WEBPACK_IMPORTED_MODULE_1__.useEffect)(function () {
-    // console.log("---------------redraw------- ")
-    // console.log(field)
-    // console.log(propsRef?.current)
-    // console.log("---------------redraw------- ")
     if (field && propsRef !== null && propsRef !== void 0 && propsRef.current) {
       if ((field === null || field === void 0 ? void 0 : field.random) !== (propsRef === null || propsRef === void 0 ? void 0 : propsRef.current.random)) {
         propsRef.current = field;
@@ -15001,6 +15082,361 @@ var ftcHistory = {
 
 /***/ }),
 
+/***/ "./resources/js/forms_dsl/ftc_payment.js":
+/*!***********************************************!*\
+  !*** ./resources/js/forms_dsl/ftc_payment.js ***!
+  \***********************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) { symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); } keys.push.apply(keys, symbols); } return keys; }
+
+function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys(Object(source), true).forEach(function (key) { _defineProperty(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
+var ftcPayment = {
+  getForm: function getForm() {
+    var form = {
+      db_table: 'car_quote_payment',
+      title: 'FTC Payment',
+      subtitle: '',
+      access: {
+        read: ['pa', 'advisor', 'admin', 'invoicing'],
+        write: ['advisor', 'admin'],
+        update: ['advisor', 'admin'],
+        "delete": []
+      },
+      fields: {
+        mode: {
+          type: 'dropdown',
+          label: 'Payment Mode',
+          source: ['CC', 'Non-CC'],
+          "if": {
+            'CC': {
+              fields: ['method']
+            }
+          },
+          "else": ['method'],
+          field: 'mode',
+          access: {
+            read: ['advisor', 'pa', 'admin', 'invoicing'],
+            write: ['advisor'],
+            update: ['advisor']
+          },
+          rules: {
+            required: true
+          }
+        },
+        method: {
+          type: 'dropdown',
+          label: 'Payment Method',
+          source: ['Spotii', 'payments.insurancemarket.ae '],
+          field: 'method',
+          offscreen: true,
+          access: {
+            read: ['advisor', 'pa', 'admin', 'invoicing'],
+            write: ['advisor'],
+            update: ['advisor']
+          },
+          rules: {
+            required: true
+          }
+        },
+        comment: {
+          type: 'textarea',
+          label: 'Comment',
+          access: {
+            read: ['advisor', 'pa', 'admin', 'invoicing'],
+            write: ['advisor'],
+            update: ['advisor']
+          },
+          rules: {}
+        }
+      },
+      sections: [{
+        label: 'FTC Payment Method',
+        fields: ['mode', 'method', 'comment']
+      }],
+      view: {
+        label: 'FTC Payment Method',
+        find: {
+          basic: [],
+          advanced: []
+        },
+        columns: [{
+          Header: "ID",
+          accessor: "id"
+        }],
+        events: {
+          applyFilter: function applyFilter(options) {
+            var mode = options.mode,
+                url = options.url,
+                id = options.params.id;
+            var generateUrl = "/?filter={\"car_quote_id\":\"".concat(id, "\"}");
+            return generateUrl;
+          }
+        }
+      },
+      postTransform: function postTransform(options) {
+        var params = options.params,
+            data = options.data;
+        return _objectSpread(_objectSpread({}, data), {}, {
+          car_quote_id: params.id
+        });
+      }
+    };
+    return form;
+  }
+};
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (ftcPayment);
+
+/***/ }),
+
+/***/ "./resources/js/forms_dsl/ftc_payment_history.js":
+/*!*******************************************************!*\
+  !*** ./resources/js/forms_dsl/ftc_payment_history.js ***!
+  \*******************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) { symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); } keys.push.apply(keys, symbols); } return keys; }
+
+function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys(Object(source), true).forEach(function (key) { _defineProperty(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
+var ftcPaymentHistory = {
+  getForm: function getForm() {
+    var form = {
+      db_table: 'car_quote_payment_history',
+      title: 'FTC Payment History',
+      subtitle: '',
+      access: {
+        read: ['pa', 'advisor', 'admin', 'invoicing'],
+        write: ['invoicing'],
+        update: ['invoicing'],
+        "delete": []
+      },
+      fields: {
+        status: {
+          type: 'dropdown',
+          label: 'Status',
+          source: ['Transaction Approved', 'Transaction Declined'],
+          access: {
+            read: ['advisor', 'pa', 'admin', 'invoicing'],
+            write: ['invoicing'],
+            update: ['invoicing']
+          },
+          rules: {
+            required: true
+          }
+        },
+        notes: {
+          type: 'textarea',
+          label: 'Notes',
+          access: {
+            read: ['advisor', 'pa', 'admin', 'invoicing'],
+            write: ['invoicing'],
+            update: ['invoicing']
+          },
+          rules: {
+            required: true
+          }
+        }
+      },
+      sections: [{
+        label: 'FTC Payment Method',
+        fields: ['status', 'notes']
+      }],
+      view: {
+        label: 'FTC Payment Method',
+        find: {
+          basic: [{
+            type: 'dropdown',
+            label: 'Status',
+            field: 'status',
+            source: ['Transaction Approved', 'Transaction Declined']
+          }],
+          advanced: []
+        },
+        columns: [{
+          Header: "ID",
+          accessor: "id"
+        }, {
+          Header: "Status",
+          accessor: "status"
+        }, {
+          Header: "Notes",
+          accessor: "notes"
+        }],
+        events: {
+          applyFilter: function applyFilter(options) {
+            var mode = options.mode,
+                url = options.url,
+                id = options.params.id;
+            var generateUrl = "/?filter={\"car_quote_id\":\"".concat(id, "\"}");
+            return generateUrl;
+          }
+        }
+      },
+      postTransform: function postTransform(options) {
+        var data = options.data,
+            state = options.state,
+            id = options.params.id;
+
+        if ((state === null || state === void 0 ? void 0 : state.context) === 'car_quote_snap') {
+          return _objectSpread(_objectSpread({}, data), {}, {
+            car_quote_id: id
+          });
+        }
+      }
+    };
+    return form;
+  }
+};
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (ftcPaymentHistory);
+
+/***/ }),
+
+/***/ "./resources/js/forms_dsl/ftc_quote_status_history.js":
+/*!************************************************************!*\
+  !*** ./resources/js/forms_dsl/ftc_quote_status_history.js ***!
+  \************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var moment__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! moment */ "./node_modules/moment/moment.js");
+/* harmony import */ var moment__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(moment__WEBPACK_IMPORTED_MODULE_0__);
+function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) { symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); } keys.push.apply(keys, symbols); } return keys; }
+
+function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys(Object(source), true).forEach(function (key) { _defineProperty(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
+
+var ftcQuoteStatusHistory = {
+  getForm: function getForm() {
+    var form = {
+      db_table: 'ftc_quote_status_history',
+      title: 'FTC Quote Status History',
+      subtitle: '',
+      access: {
+        read: ['pa', 'advisor', 'admin', 'invoicing'],
+        write: [],
+        update: [],
+        "delete": []
+      },
+      fields: {
+        quote_status_id: {
+          type: 'dropdown',
+          label: 'Status',
+          source: 'quote_status',
+          field: 'quote_status_id',
+          access: {
+            read: ['advisor', 'pa', 'admin', 'invoicing'],
+            write: [],
+            update: []
+          },
+          rules: {
+            required: true
+          }
+        },
+        notes: {
+          type: 'textarea',
+          label: 'Notes',
+          access: {
+            read: ['advisor', 'pa', 'admin', 'invoicing'],
+            write: [],
+            update: []
+          },
+          rules: {
+            required: true
+          }
+        },
+        created_by: {
+          type: 'text',
+          label: 'Created By'
+        },
+        created_at: {
+          type: 'text',
+          label: 'Created By'
+        }
+      },
+      sections: [{
+        label: 'FTC Quote Status History',
+        fields: ['quote_status_id', 'notes', 'created_by', 'created_at']
+      }],
+      view: {
+        label: 'FTC Quote Status History',
+        find: {
+          basic: [{
+            type: 'dropdown',
+            label: 'Status',
+            field: 'quote_status_id',
+            source: 'quote_status'
+          }],
+          advanced: []
+        },
+        columns: [{
+          Header: "ID",
+          accessor: "id"
+        }, {
+          Header: "Status",
+          accessor: function accessor(d) {
+            var _d$quote_status_id;
+
+            return "".concat(d === null || d === void 0 ? void 0 : (_d$quote_status_id = d.quote_status_id) === null || _d$quote_status_id === void 0 ? void 0 : _d$quote_status_id.text);
+          }
+        }, {
+          Header: "Created By",
+          accessor: "created_by"
+        }, {
+          Header: "Created At",
+          accessor: function accessor(d) {
+            return "".concat(moment__WEBPACK_IMPORTED_MODULE_0___default()(d === null || d === void 0 ? void 0 : d.created_at).format('MMMM Do YYYY, h:mm:ss a'));
+          }
+        }],
+        events: {
+          applyFilter: function applyFilter(options) {
+            var mode = options.mode,
+                url = options.url,
+                id = options.params.id;
+            var queryMode = {
+              mode: mode
+            };
+            var generateUrl = "/?filter={\"car_quote_id\":\"".concat(id, "\"}");
+            return generateUrl;
+          },
+          applyFilterAfterSearch: function applyFilterAfterSearch(options) {
+            var params = options.params,
+                filter = options.filter;
+            return _objectSpread(_objectSpread({}, filter), {}, {
+              car_quote_id: params.id
+            });
+          }
+        }
+      }
+    };
+    return form;
+  }
+};
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (ftcQuoteStatusHistory);
+
+/***/ }),
+
 /***/ "./resources/js/forms_dsl/index.js":
 /*!*****************************************!*\
   !*** ./resources/js/forms_dsl/index.js ***!
@@ -15027,6 +15463,12 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _ftc_history__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./ftc_history */ "./resources/js/forms_dsl/ftc_history.js");
 /* harmony import */ var _car_quote_kyc_status__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./car_quote_kyc_status */ "./resources/js/forms_dsl/car_quote_kyc_status.js");
 /* harmony import */ var _car_quote_kyc__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./car_quote_kyc */ "./resources/js/forms_dsl/car_quote_kyc.js");
+/* harmony import */ var _ftc_quote_status_history__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ./ftc_quote_status_history */ "./resources/js/forms_dsl/ftc_quote_status_history.js");
+/* harmony import */ var _ftc_payment__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! ./ftc_payment */ "./resources/js/forms_dsl/ftc_payment.js");
+/* harmony import */ var _ftc_payment_history__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! ./ftc_payment_history */ "./resources/js/forms_dsl/ftc_payment_history.js");
+
+
+
 
 
 
@@ -15062,6 +15504,15 @@ var getDSLForm = function getDSLForm(options) {
 
     case 'ftcHistory':
       return _ftc_history__WEBPACK_IMPORTED_MODULE_7__.default.getForm();
+
+    case 'ftcPayment':
+      return _ftc_payment__WEBPACK_IMPORTED_MODULE_11__.default.getForm();
+
+    case 'ftcPaymentHistory':
+      return _ftc_payment_history__WEBPACK_IMPORTED_MODULE_12__.default.getForm();
+
+    case 'ftcQuoteStatusHistory':
+      return _ftc_quote_status_history__WEBPACK_IMPORTED_MODULE_10__.default.getForm();
 
     case 'carQuoteKycStatus':
       return _car_quote_kyc_status__WEBPACK_IMPORTED_MODULE_8__.default.getForm();
@@ -16190,6 +16641,133 @@ function AssignUser(props) {
 
 /***/ }),
 
+/***/ "./resources/js/modules/ftc-forms/ftc-form.js":
+/*!****************************************************!*\
+  !*** ./resources/js/modules/ftc-forms/ftc-form.js ***!
+  \****************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (/* binding */ FtcForm)
+/* harmony export */ });
+/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! react */ "./node_modules/react/index.js");
+/* harmony import */ var react_confirm_alert_src_react_confirm_alert_css__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! react-confirm-alert/src/react-confirm-alert.css */ "./node_modules/react-confirm-alert/src/react-confirm-alert.css");
+/* harmony import */ var _components_list_view_manage_list_form_view__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../../components/list-view/manage-list-form-view */ "./resources/js/components/list-view/manage-list-form-view.js");
+/* harmony import */ var react_tabs__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! react-tabs */ "./node_modules/react-tabs/esm/index.js");
+/* harmony import */ var react_tabs_style_react_tabs_css__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! react-tabs/style/react-tabs.css */ "./node_modules/react-tabs/style/react-tabs.css");
+/* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! react/jsx-runtime */ "./node_modules/react/jsx-runtime.js");
+
+ // Import css
+
+
+
+
+
+
+function FtcForm(props) {
+  var filter = props.filter;
+  return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("div", {
+    className: "col-md-12",
+    children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxs)(react_tabs__WEBPACK_IMPORTED_MODULE_3__.Tabs, {
+      children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxs)(react_tabs__WEBPACK_IMPORTED_MODULE_3__.TabList, {
+        children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(react_tabs__WEBPACK_IMPORTED_MODULE_3__.Tab, {
+          children: "FTC Actions"
+        }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(react_tabs__WEBPACK_IMPORTED_MODULE_3__.Tab, {
+          children: "FTC History"
+        })]
+      }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(react_tabs__WEBPACK_IMPORTED_MODULE_3__.TabPanel, {
+        children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(_components_list_view_manage_list_form_view__WEBPACK_IMPORTED_MODULE_2__.default, {
+          form: {
+            form: 'ftcHistory',
+            view_mode: 'list',
+            action_type: 'list',
+            context: 'car_quote_snap',
+            filter: filter
+          }
+        })
+      }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(react_tabs__WEBPACK_IMPORTED_MODULE_3__.TabPanel, {
+        children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(_components_list_view_manage_list_form_view__WEBPACK_IMPORTED_MODULE_2__.default, {
+          form: {
+            form: 'ftcQuoteStatusHistory',
+            view_mode: 'list',
+            action_type: 'list',
+            context: 'car_quote_snap',
+            filter: filter
+          }
+        })
+      })]
+    })
+  });
+}
+
+/***/ }),
+
+/***/ "./resources/js/modules/ftc-forms/ftc-payment.js":
+/*!*******************************************************!*\
+  !*** ./resources/js/modules/ftc-forms/ftc-payment.js ***!
+  \*******************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (/* binding */ FtcPayment)
+/* harmony export */ });
+/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! react */ "./node_modules/react/index.js");
+/* harmony import */ var react_confirm_alert_src_react_confirm_alert_css__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! react-confirm-alert/src/react-confirm-alert.css */ "./node_modules/react-confirm-alert/src/react-confirm-alert.css");
+/* harmony import */ var _components_list_view_manage_list_form_view__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../../components/list-view/manage-list-form-view */ "./resources/js/components/list-view/manage-list-form-view.js");
+/* harmony import */ var react_tabs_style_react_tabs_css__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! react-tabs/style/react-tabs.css */ "./node_modules/react-tabs/style/react-tabs.css");
+/* harmony import */ var react_tabs__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! react-tabs */ "./node_modules/react-tabs/esm/index.js");
+/* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! react/jsx-runtime */ "./node_modules/react/jsx-runtime.js");
+
+ // Import css
+
+
+
+
+
+
+function FtcPayment(props) {
+  var filter = props.filter;
+  return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("div", {
+    className: "col-md-12",
+    children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxs)(react_tabs__WEBPACK_IMPORTED_MODULE_4__.Tabs, {
+      children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxs)(react_tabs__WEBPACK_IMPORTED_MODULE_4__.TabList, {
+        children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(react_tabs__WEBPACK_IMPORTED_MODULE_4__.Tab, {
+          children: "Payment Method"
+        }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(react_tabs__WEBPACK_IMPORTED_MODULE_4__.Tab, {
+          children: "Payment Actions"
+        })]
+      }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(react_tabs__WEBPACK_IMPORTED_MODULE_4__.TabPanel, {
+        children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(_components_list_view_manage_list_form_view__WEBPACK_IMPORTED_MODULE_2__.default, {
+          form: {
+            form: 'ftcPayment',
+            view_mode: 'list',
+            action_type: 'list',
+            multi: false,
+            context: 'car_quote_snap',
+            filter: filter
+          }
+        })
+      }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(react_tabs__WEBPACK_IMPORTED_MODULE_4__.TabPanel, {
+        children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(_components_list_view_manage_list_form_view__WEBPACK_IMPORTED_MODULE_2__.default, {
+          form: {
+            form: 'ftcPaymentHistory',
+            view_mode: 'list',
+            action_type: 'list',
+            context: 'car_quote_snap',
+            filter: filter
+          }
+        })
+      })]
+    })
+  });
+}
+
+/***/ }),
+
 /***/ "./resources/js/modules/ftc-forms/kyc-form.js":
 /*!****************************************************!*\
   !*** ./resources/js/modules/ftc-forms/kyc-form.js ***!
@@ -16482,7 +17060,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
 
 
 function ReviewSend(props) {
-  var _data$vehicle_detail_, _data$vehicle_detail_2, _data$vehicle_detail_3, _data$vehicle_detail_4, _data$vehicle_detail_5, _data$vehicle_detail_6, _data$vehicle_detail_7, _data$insurance_cover, _data$insurance_cover2, _data$insurance_cover3, _data$insurance_cover4, _data$insurance_cover5, _data$insurance_cover6, _data$insurance_cover7, _data$insurance_cover8, _data$insurance_cover9, _data$insurance_cover10, _data$insurance_cover11, _data$insurance_cover12, _data$insurance_cover13, _data$car_quote_kyc, _data$car_quote_kyc2, _data$car_quote_kyc3;
+  var _data$vehicle_detail_, _data$vehicle_detail_2, _data$vehicle_detail_3, _data$vehicle_detail_4, _data$vehicle_detail_5, _data$vehicle_detail_6, _data$vehicle_detail_7, _data$insurance_cover, _data$insurance_cover2, _data$insurance_cover3, _data$insurance_cover4, _data$insurance_cover5, _data$insurance_cover6, _data$insurance_cover7, _data$insurance_cover8, _data$insurance_cover9, _data$insurance_cover10, _data$insurance_cover11, _data$insurance_cover12, _data$insurance_cover13, _data$car_quote_kyc, _data$car_quote_kyc2, _data$car_quote_kyc3, _data$payment_detail, _data$payment_detail2;
 
   var _useParams = (0,react_router_dom__WEBPACK_IMPORTED_MODULE_6__.useParams)(),
       id = _useParams.id;
@@ -16584,7 +17162,7 @@ function ReviewSend(props) {
             className: "clearfix"
           }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxs)("div", {
             className: "offset-md-2 col-md-7 hidden-small",
-            children: [(data === null || data === void 0 ? void 0 : data.vehicle_detail_id) && (data === null || data === void 0 ? void 0 : data.insurance_coverage) && (data === null || data === void 0 ? void 0 : data.car_quote_kyc) && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("div", {
+            children: [(data === null || data === void 0 ? void 0 : data.vehicle_detail_id) && (data === null || data === void 0 ? void 0 : data.insurance_coverage) && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("div", {
               className: "pull-right",
               children: role === 'advisor' && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("button", {
                 type: "submit",
@@ -16871,6 +17449,14 @@ function ReviewSend(props) {
                   })]
                 })]
               })
+            }), (data === null || data === void 0 ? void 0 : (_data$payment_detail = data.payment_detail) === null || _data$payment_detail === void 0 ? void 0 : _data$payment_detail.mode) === "CC" && (data === null || data === void 0 ? void 0 : (_data$payment_detail2 = data.payment_detail) === null || _data$payment_detail2 === void 0 ? void 0 : _data$payment_detail2.method) === "payments.insurancemarket.ae" && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxs)("div", {
+              className: "col-md-12",
+              children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("h2", {
+                "class": "line_30",
+                children: "Payments"
+              }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("p", {
+                children: "Lastly, you may proceed with the credit card payment at https://payments.insurancemarket.ae and send me the 6-digit code to issue the policy.\xA0"
+              })]
             })]
           })]
         })]
@@ -16895,16 +17481,18 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @babel/runtime/regenerator */ "./node_modules/@babel/runtime/regenerator/index.js");
 /* harmony import */ var _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0__);
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! react */ "./node_modules/react/index.js");
-/* harmony import */ var styled_components__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! styled-components */ "./node_modules/styled-components/dist/styled-components.browser.esm.js");
+/* harmony import */ var styled_components__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! styled-components */ "./node_modules/styled-components/dist/styled-components.browser.esm.js");
 /* harmony import */ var _components_sub_nav__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../../components/sub-nav */ "./resources/js/components/sub-nav.js");
-/* harmony import */ var react_router_dom__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! react-router-dom */ "./node_modules/react-router/esm/react-router.js");
+/* harmony import */ var react_router_dom__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(/*! react-router-dom */ "./node_modules/react-router/esm/react-router.js");
 /* harmony import */ var _components_list_view_manage_list_form_view__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../../components/list-view/manage-list-form-view */ "./resources/js/components/list-view/manage-list-form-view.js");
 /* harmony import */ var _review_send__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./review-send */ "./resources/js/modules/ftc-forms/review-send.js");
 /* harmony import */ var _kyc_form__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./kyc-form */ "./resources/js/modules/ftc-forms/kyc-form.js");
-/* harmony import */ var _assign_user__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./assign-user */ "./resources/js/modules/ftc-forms/assign-user.js");
-/* harmony import */ var _utils__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ../../utils */ "./resources/js/utils/index.js");
-/* harmony import */ var _overview__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./overview */ "./resources/js/modules/ftc-forms/overview.js");
-/* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! react/jsx-runtime */ "./node_modules/react/jsx-runtime.js");
+/* harmony import */ var _ftc_form__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./ftc-form */ "./resources/js/modules/ftc-forms/ftc-form.js");
+/* harmony import */ var _assign_user__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./assign-user */ "./resources/js/modules/ftc-forms/assign-user.js");
+/* harmony import */ var _utils__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ../../utils */ "./resources/js/utils/index.js");
+/* harmony import */ var _overview__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./overview */ "./resources/js/modules/ftc-forms/overview.js");
+/* harmony import */ var _ftc_payment__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ./ftc-payment */ "./resources/js/modules/ftc-forms/ftc-payment.js");
+/* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! react/jsx-runtime */ "./node_modules/react/jsx-runtime.js");
 var _templateObject;
 
 
@@ -16939,11 +17527,13 @@ function _taggedTemplateLiteral(strings, raw) { if (!raw) { raw = strings.slice(
 
 
 
-var Styles = styled_components__WEBPACK_IMPORTED_MODULE_10__.default.div(_templateObject || (_templateObject = _taggedTemplateLiteral([""])));
+
+
+var Styles = styled_components__WEBPACK_IMPORTED_MODULE_12__.default.div(_templateObject || (_templateObject = _taggedTemplateLiteral([""])));
 
 function LeadSnapShot(props) {
   var paramRef = (0,react__WEBPACK_IMPORTED_MODULE_1__.useRef)();
-  paramRef.current = (0,react_router_dom__WEBPACK_IMPORTED_MODULE_11__.useParams)();
+  paramRef.current = (0,react_router_dom__WEBPACK_IMPORTED_MODULE_13__.useParams)();
 
   function reducer(state, action) {
     switch (action.type) {
@@ -17001,6 +17591,16 @@ function LeadSnapShot(props) {
           }
         };
 
+      case 'ftcPayment':
+        return {
+          form: 'ftcPayment',
+          view_mode: 'list',
+          action_type: 'list',
+          context: 'car_quote_snap',
+          multi: false,
+          filter: "/".concat(paramRef.current.id)
+        };
+
       case 'email_template':
         return {
           data: action.state,
@@ -17031,7 +17631,7 @@ function LeadSnapShot(props) {
     console.log('**************Snapshot--useEffect************');
   }, []);
 
-  var _session = (0,_utils__WEBPACK_IMPORTED_MODULE_7__.session)(),
+  var _session = (0,_utils__WEBPACK_IMPORTED_MODULE_8__.session)(),
       role = _session.role,
       id = _session.id,
       email = _session.email;
@@ -17080,7 +17680,7 @@ function LeadSnapShot(props) {
     data: 'insurance'
   }, {
     icon: 'fa fa-line-chart',
-    label: 'FTC History',
+    label: 'FTC',
     active: 0,
     id: 5,
     data: 'ftcHistory'
@@ -17096,6 +17696,12 @@ function LeadSnapShot(props) {
     active: 0,
     id: 7,
     data: 'kyc'
+  }, {
+    icon: 'fa fa-line-chart',
+    label: 'Payment',
+    active: 0,
+    id: 8,
+    data: 'ftcPayment'
   }];
 
   var onSelect = /*#__PURE__*/function () {
@@ -17157,14 +17763,30 @@ function LeadSnapShot(props) {
 
   switch (form === null || form === void 0 ? void 0 : form.form) {
     case 'email_template':
-      formArr.push( /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_9__.jsx)(_review_send__WEBPACK_IMPORTED_MODULE_4__.default, {
+      formArr.push( /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__.jsx)(_review_send__WEBPACK_IMPORTED_MODULE_4__.default, {
         dispatch: dispatch,
         data: form.data
       }));
       break;
 
+    case 'ftcHistory':
+      formArr.push( /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__.jsx)(_ftc_form__WEBPACK_IMPORTED_MODULE_6__.default, {
+        filter: {
+          car_quote_id: paramRef.current.id
+        }
+      }));
+      break;
+
+    case 'ftcPayment':
+      formArr.push( /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__.jsx)(_ftc_payment__WEBPACK_IMPORTED_MODULE_10__.default, {
+        filter: {
+          car_quote_id: paramRef.current.id
+        }
+      }));
+      break;
+
     case 'kyc':
-      formArr.push( /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_9__.jsx)(_kyc_form__WEBPACK_IMPORTED_MODULE_5__.default, {
+      formArr.push( /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__.jsx)(_kyc_form__WEBPACK_IMPORTED_MODULE_5__.default, {
         filter: {
           car_quote_id: paramRef.current.id
         }
@@ -17172,7 +17794,7 @@ function LeadSnapShot(props) {
       break;
 
     case 'assign':
-      formArr.push( /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_9__.jsx)(_assign_user__WEBPACK_IMPORTED_MODULE_6__.default, {
+      formArr.push( /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__.jsx)(_assign_user__WEBPACK_IMPORTED_MODULE_7__.default, {
         filter: {
           car_quote_id: paramRef.current.id
         },
@@ -17181,7 +17803,7 @@ function LeadSnapShot(props) {
       break;
 
     case 'overview':
-      formArr.push( /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_9__.jsx)(_overview__WEBPACK_IMPORTED_MODULE_8__.default, {
+      formArr.push( /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__.jsx)(_overview__WEBPACK_IMPORTED_MODULE_9__.default, {
         filter: {
           car_quote_id: paramRef.current.id
         }
@@ -17189,24 +17811,24 @@ function LeadSnapShot(props) {
       break;
 
     default:
-      formArr.push( /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_9__.jsx)(_components_list_view_manage_list_form_view__WEBPACK_IMPORTED_MODULE_3__.default, {
+      formArr.push( /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__.jsx)(_components_list_view_manage_list_form_view__WEBPACK_IMPORTED_MODULE_3__.default, {
         form: form
       }));
       break;
   }
 
-  return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_9__.jsx)(Styles, {
-    children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_9__.jsxs)("div", {
+  return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__.jsx)(Styles, {
+    children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__.jsxs)("div", {
       className: "row x_panel",
-      children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_9__.jsx)("div", {
+      children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__.jsx)("div", {
         className: "col-md-2 col-sm-2",
-        children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_9__.jsx)(_components_sub_nav__WEBPACK_IMPORTED_MODULE_2__.default, {
+        children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__.jsx)(_components_sub_nav__WEBPACK_IMPORTED_MODULE_2__.default, {
           listNav: leftNavList,
           onSelect: onSelect
         })
-      }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_9__.jsx)("div", {
+      }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__.jsx)("div", {
         className: "col-md-10 col-sm-10 ",
-        children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_9__.jsx)("div", {
+        children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__.jsx)("div", {
           className: "",
           children: formArr
         })
@@ -17269,6 +17891,7 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
  // Import
 
  //
+
 
 
 
@@ -17947,6 +18570,84 @@ function dispatchPromise(obj) {
 
 /***/ }),
 
+/***/ "./resources/js/sagas/prefill-conditional-fields.js":
+/*!**********************************************************!*\
+  !*** ./resources/js/sagas/prefill-conditional-fields.js ***!
+  \**********************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "fillConditionalFields": () => (/* binding */ fillConditionalFields)
+/* harmony export */ });
+/* harmony import */ var _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @babel/runtime/regenerator */ "./node_modules/@babel/runtime/regenerator/index.js");
+/* harmony import */ var _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0__);
+
+
+var _marked = /*#__PURE__*/_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().mark(fillConditionalFields);
+
+function _slicedToArray(arr, i) { return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _unsupportedIterableToArray(arr, i) || _nonIterableRest(); }
+
+function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
+
+function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
+
+function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+
+function _iterableToArrayLimit(arr, i) { var _i = arr == null ? null : typeof Symbol !== "undefined" && arr[Symbol.iterator] || arr["@@iterator"]; if (_i == null) return; var _arr = []; var _n = true; var _d = false; var _s, _e; try { for (_i = _i.call(arr); !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"] != null) _i["return"](); } finally { if (_d) throw _e; } } return _arr; }
+
+function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
+
+function fillConditionalFields(obj) {
+  var fields, selectedRecord;
+  return _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().wrap(function fillConditionalFields$(_context) {
+    while (1) {
+      switch (_context.prev = _context.next) {
+        case 0:
+          fields = obj.fields, selectedRecord = obj.selectedRecord;
+          Object.entries(fields).forEach(function (entry) {
+            var _entry = _slicedToArray(entry, 2),
+                key = _entry[0],
+                value = _entry[1];
+
+            var getField = value;
+            var recVal = selectedRecord === null || selectedRecord === void 0 ? void 0 : selectedRecord[key];
+
+            if (recVal && getField !== null && getField !== void 0 && getField["if"]) {
+              var val = getField["if"][recVal];
+
+              if (val !== null && val !== void 0 && val.fields) {
+                var getCondFields = getField["if"][recVal].fields;
+
+                if (getCondFields.length > 0) {
+                  getCondFields.forEach(function (element) {
+                    obj.fields[element].offscreen = false;
+                  });
+                }
+
+                console.log(getCondFields);
+              } else {
+                var _getCondFields = getField["else"];
+
+                _getCondFields.forEach(function (element) {
+                  obj.fields[element].offscreen = true;
+                  obj.fields[element].value = null;
+                });
+              }
+            }
+          });
+
+        case 2:
+        case "end":
+          return _context.stop();
+      }
+    }
+  }, _marked);
+}
+
+/***/ }),
+
 /***/ "./resources/js/sagas/request.js":
 /*!***************************************!*\
   !*** ./resources/js/sagas/request.js ***!
@@ -18109,6 +18810,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _request__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./request */ "./resources/js/sagas/request.js");
 /* harmony import */ var _forms_dsl__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../forms_dsl */ "./resources/js/forms_dsl/index.js");
 /* harmony import */ var _form_hooks__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../form-hooks */ "./resources/js/form-hooks/index.js");
+/* harmony import */ var _prefill_conditional_fields__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./prefill-conditional-fields */ "./resources/js/sagas/prefill-conditional-fields.js");
 var _excluded = ["url", "method"];
 
 function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
@@ -18136,6 +18838,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 
 
 
+
 var getVisibleForm = function getVisibleForm(state) {
   return state.visibleForm;
 };
@@ -18147,6 +18850,9 @@ function processRequest(obj) {
       switch (_context.prev = _context.next) {
         case 0:
           formState = obj.formState, selectedRecord = obj.selectedRecord, body = obj.body, manageListDispatch = obj.manageListDispatch, initialForm = obj.initialForm;
+          console.log("**************ProcessRequest**********");
+          console.log(selectedRecord);
+          console.log("**************ProcessRequest**********");
           formVisible = (0,_forms_dsl__WEBPACK_IMPORTED_MODULE_3__.getFormObjForDraw)(initialForm);
           db_table = formVisible.db_table;
           manageListDispatch({
@@ -18178,11 +18884,11 @@ function processRequest(obj) {
           }
 
           request.body = JSON.stringify(body);
-          _context.prev = 8;
-          _context.next = 11;
+          _context.prev = 11;
+          _context.next = 14;
           return (0,_request__WEBPACK_IMPORTED_MODULE_2__.sendRequest)(url, request);
 
-        case 11:
+        case 14:
           response = _context.sent;
           manageListDispatch({
             type: 'showLoader',
@@ -18192,11 +18898,11 @@ function processRequest(obj) {
           });
 
           if (!((response === null || response === void 0 ? void 0 : response.code) === 500 || (response === null || response === void 0 ? void 0 : response.code) === 400)) {
-            _context.next = 16;
+            _context.next = 19;
             break;
           }
 
-          _context.next = 16;
+          _context.next = 19;
           return (0,redux_saga_effects__WEBPACK_IMPORTED_MODULE_1__.put)({
             type: 'MessageShow',
             obj: {
@@ -18206,40 +18912,40 @@ function processRequest(obj) {
             }
           });
 
-        case 16:
-          _context.next = 18;
+        case 19:
+          _context.next = 21;
           return (0,_form_hooks__WEBPACK_IMPORTED_MODULE_4__.getFormHook)({
             form: db_table
           });
 
-        case 18:
+        case 21:
           hook = _context.sent;
 
           if (!hook) {
-            _context.next = 22;
+            _context.next = 25;
             break;
           }
 
-          _context.next = 22;
+          _context.next = 25;
           return hook.afterSave({
             response: response,
             initialForm: initialForm,
             body: body
           });
 
-        case 22:
-          _context.next = 24;
+        case 25:
+          _context.next = 27;
           return processVisibleFormStates(_objectSpread(_objectSpread({}, obj), {}, {
             formState: 'list'
           }));
 
-        case 24:
-          _context.next = 30;
+        case 27:
+          _context.next = 33;
           break;
 
-        case 26:
-          _context.prev = 26;
-          _context.t0 = _context["catch"](8);
+        case 29:
+          _context.prev = 29;
+          _context.t0 = _context["catch"](11);
           manageListDispatch({
             type: 'showLoader',
             obj: {
@@ -18251,12 +18957,12 @@ function processRequest(obj) {
             formState: 'list'
           });
 
-        case 30:
+        case 33:
         case "end":
           return _context.stop();
       }
     }
-  }, _marked, null, [[8, 26]]);
+  }, _marked, null, [[11, 29]]);
 }
 
 function processGetRequest(obj) {
@@ -18310,7 +19016,7 @@ function processVisibleFormStates(obj) {
           console.log(override);
           console.log("**************processVisibleFormStates**WatchSaga.js****************");
           _context3.t0 = formState;
-          _context3.next = _context3.t0 === 'list' ? 11 : _context3.t0 === 'cancel' ? 34 : _context3.t0 === 'delete' ? 38 : _context3.t0 === 'new' ? 66 : _context3.t0 === 'read' ? 70 : _context3.t0 === 'edit' ? 97 : _context3.t0 === 'reset' ? 121 : 126;
+          _context3.next = _context3.t0 === 'list' ? 11 : _context3.t0 === 'cancel' ? 49 : _context3.t0 === 'delete' ? 53 : _context3.t0 === 'new' ? 81 : _context3.t0 === 'read' ? 85 : _context3.t0 === 'edit' ? 120 : _context3.t0 === 'reset' ? 149 : 154;
           break;
 
         case 11:
@@ -18332,7 +19038,7 @@ function processVisibleFormStates(obj) {
           console.log("**************List-watch-saga.js******************");
 
           if (!((getForm === null || getForm === void 0 ? void 0 : getForm.multi) === false)) {
-            _context3.next = 31;
+            _context3.next = 46;
             break;
           }
 
@@ -18365,49 +19071,63 @@ function processVisibleFormStates(obj) {
           data = _context3.sent;
           initialFormState = (0,_forms_dsl__WEBPACK_IMPORTED_MODULE_3__.getFormObjForDraw)(initialForm);
 
-          if (data) {
-            rec = {};
-            if (Array.isArray(data.data) && data.data.length > 0) rec = data.data[0];else rec = data.data;
-            _obj = _objectSpread(_objectSpread({}, initialFormState), {}, {
-              view_mode: 'form',
-              data: rec,
-              selectedRecord: rec,
-              readOnly: true,
-              action_type: 'read'
-            });
-            manageListDispatch({
-              type: 'showLoader',
-              obj: {
-                loader: false
-              }
-            });
-            manageListDispatch({
-              type: 'read',
-              obj: _obj
-            });
-          } else {
-            _obj2 = _objectSpread(_objectSpread({}, initialFormState), {}, {
-              view_mode: 'form',
-              selectedRecord: null,
-              readOnly: true,
-              action_type: 'read'
-            });
-            manageListDispatch({
-              type: 'showLoader',
-              obj: {
-                loader: false
-              }
-            });
-            manageListDispatch({
-              type: 'read',
-              obj: _obj2
-            });
+          if (!data) {
+            _context3.next = 41;
+            break;
           }
 
-          _context3.next = 33;
+          rec = {};
+          if (Array.isArray(data.data) && data.data.length > 0) rec = data.data[0];else rec = data.data;
+          _obj = _objectSpread(_objectSpread({}, initialFormState), {}, {
+            view_mode: 'form',
+            data: rec,
+            selectedRecord: rec,
+            readOnly: true,
+            action_type: 'read'
+          });
+          manageListDispatch({
+            type: 'showLoader',
+            obj: {
+              loader: false
+            }
+          });
+          console.log("**************Read-Data-multi-false-1******************");
+          console.log(_obj);
+          console.log("**************Read-Data-multi-false-1******************");
+          _context3.next = 38;
+          return (0,_prefill_conditional_fields__WEBPACK_IMPORTED_MODULE_5__.fillConditionalFields)(_obj);
+
+        case 38:
+          manageListDispatch({
+            type: 'read',
+            obj: _obj
+          });
+          _context3.next = 44;
           break;
 
-        case 31:
+        case 41:
+          _obj2 = _objectSpread(_objectSpread({}, initialFormState), {}, {
+            view_mode: 'form',
+            selectedRecord: null,
+            readOnly: true,
+            action_type: 'read'
+          });
+          manageListDispatch({
+            type: 'showLoader',
+            obj: {
+              loader: false
+            }
+          });
+          manageListDispatch({
+            type: 'read',
+            obj: _obj2
+          });
+
+        case 44:
+          _context3.next = 48;
+          break;
+
+        case 46:
           manageListDispatch({
             type: 'showLoader',
             obj: {
@@ -18419,10 +19139,10 @@ function processVisibleFormStates(obj) {
             obj: getForm
           });
 
-        case 33:
-          return _context3.abrupt("break", 126);
+        case 48:
+          return _context3.abrupt("break", 154);
 
-        case 34:
+        case 49:
           _initialReducerState = (0,_forms_dsl__WEBPACK_IMPORTED_MODULE_3__.getFormObjForDraw)(initialForm);
           _obj3 = _objectSpread(_objectSpread(_objectSpread({}, _initialReducerState), initialForm), {}, {
             view_mode: 'list',
@@ -18432,9 +19152,9 @@ function processVisibleFormStates(obj) {
             type: 'list',
             obj: _obj3
           });
-          return _context3.abrupt("break", 126);
+          return _context3.abrupt("break", 154);
 
-        case 38:
+        case 53:
           console.log("***********delete***********");
           console.log(selectedRecord);
           console.log(initialForm);
@@ -18452,7 +19172,7 @@ function processVisibleFormStates(obj) {
           _db_table = formVisible.db_table;
 
           if (selectedRecord) {
-            _context3.next = 53;
+            _context3.next = 68;
             break;
           }
 
@@ -18477,20 +19197,20 @@ function processVisibleFormStates(obj) {
           });
           return _context3.abrupt("return");
 
-        case 53:
+        case 68:
           console.log("**************Delete-watch-saga.js******************");
           _objUrl = "/form/".concat(_db_table, "/").concat(selectedRecord.id);
-          _context3.next = 57;
+          _context3.next = 72;
           return fetch(_objUrl, {
             method: "Delete"
           });
 
-        case 57:
+        case 72:
           resp = _context3.sent;
-          _context3.next = 60;
+          _context3.next = 75;
           return resp.json();
 
-        case 60:
+        case 75:
           _data = _context3.sent;
           _initialReducerState2 = (0,_forms_dsl__WEBPACK_IMPORTED_MODULE_3__.getFormObjForDraw)(initialForm);
           _getForm = _objectSpread(_objectSpread(_objectSpread({}, _initialReducerState2), initialForm), {}, {
@@ -18506,9 +19226,9 @@ function processVisibleFormStates(obj) {
             type: 'list',
             obj: _getForm
           });
-          return _context3.abrupt("break", 126);
+          return _context3.abrupt("break", 154);
 
-        case 66:
+        case 81:
           _initialReducerState3 = (0,_forms_dsl__WEBPACK_IMPORTED_MODULE_3__.getFormObjForDraw)(initialForm);
           objNew = _objectSpread(_objectSpread(_objectSpread({}, _initialReducerState3), initialForm), {}, {
             view_mode: 'form',
@@ -18519,9 +19239,9 @@ function processVisibleFormStates(obj) {
             type: 'new',
             obj: objNew
           });
-          return _context3.abrupt("break", 126);
+          return _context3.abrupt("break", 154);
 
-        case 70:
+        case 85:
           manageListDispatch({
             type: 'showLoader',
             obj: {
@@ -18533,7 +19253,7 @@ function processVisibleFormStates(obj) {
           _db_table2 = _formVisible.db_table;
 
           if (selectedRecord) {
-            _context3.next = 80;
+            _context3.next = 98;
             break;
           }
 
@@ -18555,26 +19275,29 @@ function processVisibleFormStates(obj) {
               loader: false
             }
           });
+          console.log("**************Read-Data!selectedRecord******************");
+          console.log(_obj5);
+          console.log("**************Read-Data!selectedRecord******************");
           manageListDispatch({
             type: 'read',
             obj: _obj5
           });
-          _context3.next = 96;
+          _context3.next = 119;
           break;
 
-        case 80:
+        case 98:
           _objUrl2 = "/form/".concat(_db_table2, "/").concat(selectedRecord.id);
-          _context3.next = 83;
+          _context3.next = 101;
           return fetch(_objUrl2, {
             method: "GET"
           });
 
-        case 83:
+        case 101:
           _resp = _context3.sent;
-          _context3.next = 86;
+          _context3.next = 104;
           return _resp.json();
 
-        case 86:
+        case 104:
           _data2 = _context3.sent;
           _newState2 = _objectSpread(_objectSpread({}, _formVisible), {}, {
             data: _data2.data
@@ -18599,15 +19322,22 @@ function processVisibleFormStates(obj) {
               loader: false
             }
           });
+          console.log("**************Read-Data******************");
+          console.log(_obj6);
+          console.log("**************Read-Data******************");
+          _context3.next = 118;
+          return (0,_prefill_conditional_fields__WEBPACK_IMPORTED_MODULE_5__.fillConditionalFields)(_obj6);
+
+        case 118:
           manageListDispatch({
             type: 'read',
             obj: _obj6
           });
 
-        case 96:
-          return _context3.abrupt("break", 126);
+        case 119:
+          return _context3.abrupt("break", 154);
 
-        case 97:
+        case 120:
           manageListDispatch({
             type: 'showLoader',
             obj: {
@@ -18621,7 +19351,7 @@ function processVisibleFormStates(obj) {
           _db_table3 = _formVisible2.db_table;
 
           if (selectedRecord) {
-            _context3.next = 108;
+            _context3.next = 131;
             break;
           }
 
@@ -18647,20 +19377,20 @@ function processVisibleFormStates(obj) {
           });
           return _context3.abrupt("return");
 
-        case 108:
+        case 131:
           console.log("**************Edit-watch-saga.js******************");
           _objUrl3 = "/form/".concat(_db_table3, "/").concat(selectedRecord.id);
-          _context3.next = 112;
+          _context3.next = 135;
           return fetch(_objUrl3, {
             method: "GET"
           });
 
-        case 112:
+        case 135:
           _resp2 = _context3.sent;
-          _context3.next = 115;
+          _context3.next = 138;
           return _resp2.json();
 
-        case 115:
+        case 138:
           _data3 = _context3.sent;
           _newState3 = _objectSpread(_objectSpread({}, _formVisible2), {}, {
             data: _data3.data
@@ -18678,24 +19408,31 @@ function processVisibleFormStates(obj) {
               loader: false
             }
           });
+          console.log("**************Edit-Data******************");
+          console.log(_obj7);
+          console.log("**************Edit-Data******************");
+          _context3.next = 147;
+          return (0,_prefill_conditional_fields__WEBPACK_IMPORTED_MODULE_5__.fillConditionalFields)(_obj7);
+
+        case 147:
           manageListDispatch({
             type: 'edit',
             obj: _obj7
           });
-          return _context3.abrupt("break", 126);
+          return _context3.abrupt("break", 154);
 
-        case 121:
+        case 149:
           console.log("**************Reset-watch-saga.js******************");
           console.log("**************Rest-watch-saga.js******************");
-          _context3.next = 125;
+          _context3.next = 153;
           return (0,redux_saga_effects__WEBPACK_IMPORTED_MODULE_1__.put)({
             type: 'reset'
           });
 
-        case 125:
-          return _context3.abrupt("break", 126);
+        case 153:
+          return _context3.abrupt("break", 154);
 
-        case 126:
+        case 154:
         case "end":
           return _context3.stop();
       }
@@ -86675,8 +87412,8 @@ var DataTransform = function(data, map){
 
 			if(key == '') {
 				return;
-			}
-
+			} 
+			
 			var keys = key.split('.');
 			var target = obj;
 			for(var i = 0; i < keys.length; i++ ) {
@@ -86696,16 +87433,16 @@ var DataTransform = function(data, map){
 
 		transform : function(context) {
 			var useList = map.list != undefined;
-			var value;
-			if (useList) {
+			var value; 
+			if (useList) { 
 				value = this.getValue(data, map.list);
 			} else if (_.isArray(data) && !useList) {
 				value = data;
-			} else if (_.isObject(data) && !useList) {
+			} else if (_.isObject(data) && !useList) { 
 				value = [data];
 			}
 			var normalized = [];
-
+		
 			if(!_.isEmpty(value)) {
 				var list = useList ? this.getList() : value;
 				normalized = map.item ? _.map(list, _.bind(this.iterator, this, map.item)) : list;
@@ -86713,7 +87450,7 @@ var DataTransform = function(data, map){
 				normalized = this.each(normalized, context);
 				normalized = this.removeAll(normalized);
 			}
-
+			
 			if(!useList && _.isObject(data) && !_.isArray(data)){
 				return normalized[0];
 			}
@@ -86771,7 +87508,7 @@ var DataTransform = function(data, map){
 				_.each(data, function (value, index, collection) {
 					return map.each(value, index, collection, context);
 				});
-			}
+			}  
 			return data;
 		},
 
@@ -86796,7 +87533,7 @@ var DataTransform = function(data, map){
 				}
 				else {
 					obj[newkey] = "";
-				}
+				}	
 
 			}, this));
 			return obj;
@@ -122682,7 +123419,7 @@ function injectIntoDevTools(devToolsConfig) {
     scheduleRoot:  scheduleRoot ,
     setRefreshHandler:  setRefreshHandler ,
     // Enables DevTools to append owner stacks to error messages in DEV mode.
-    getCurrentFiber:  getCurrentFiberForDevTools
+    getCurrentFiber:  getCurrentFiberForDevTools 
   });
 }
 
@@ -123434,7 +124171,7 @@ Dropzone.propTypes = {
   onDropRejected: (prop_types__WEBPACK_IMPORTED_MODULE_1___default().func),
 
   /**
-   * Custom validation function
+   * Custom validation function 
    * @param {File} file
    * @returns {FileError|FileError[]}
    */
@@ -129103,7 +129840,7 @@ __webpack_require__.r(__webpack_exports__);
   selectorFactory, which has the signature:
 
     (dispatch, options) => (nextState, nextOwnProps) => nextFinalProps
-
+  
   connect passes its args to connectAdvanced as options, which will in turn pass them to
   selectorFactory each time a Connect component instance is instantiated or hot reloaded.
 
@@ -150862,7 +151599,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _style_loader_dist_runtime_injectStylesIntoStyleTag_js__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_style_loader_dist_runtime_injectStylesIntoStyleTag_js__WEBPACK_IMPORTED_MODULE_0__);
 /* harmony import */ var _css_loader_dist_cjs_js_ruleSet_1_rules_6_oneOf_1_use_1_postcss_loader_dist_cjs_js_ruleSet_1_rules_6_oneOf_1_use_2_react_confirm_alert_css__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! !!../../css-loader/dist/cjs.js??ruleSet[1].rules[6].oneOf[1].use[1]!../../postcss-loader/dist/cjs.js??ruleSet[1].rules[6].oneOf[1].use[2]!./react-confirm-alert.css */ "./node_modules/css-loader/dist/cjs.js??ruleSet[1].rules[6].oneOf[1].use[1]!./node_modules/postcss-loader/dist/cjs.js??ruleSet[1].rules[6].oneOf[1].use[2]!./node_modules/react-confirm-alert/src/react-confirm-alert.css");
 
-
+            
 
 var options = {};
 
@@ -150892,7 +151629,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _style_loader_dist_runtime_injectStylesIntoStyleTag_js__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_style_loader_dist_runtime_injectStylesIntoStyleTag_js__WEBPACK_IMPORTED_MODULE_0__);
 /* harmony import */ var _css_loader_dist_cjs_js_ruleSet_1_rules_6_oneOf_1_use_1_postcss_loader_dist_cjs_js_ruleSet_1_rules_6_oneOf_1_use_2_react_datepicker_css__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! !!../../css-loader/dist/cjs.js??ruleSet[1].rules[6].oneOf[1].use[1]!../../postcss-loader/dist/cjs.js??ruleSet[1].rules[6].oneOf[1].use[2]!./react-datepicker.css */ "./node_modules/css-loader/dist/cjs.js??ruleSet[1].rules[6].oneOf[1].use[1]!./node_modules/postcss-loader/dist/cjs.js??ruleSet[1].rules[6].oneOf[1].use[2]!./node_modules/react-datepicker/dist/react-datepicker.css");
 
-
+            
 
 var options = {};
 
@@ -150922,7 +151659,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _style_loader_dist_runtime_injectStylesIntoStyleTag_js__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_style_loader_dist_runtime_injectStylesIntoStyleTag_js__WEBPACK_IMPORTED_MODULE_0__);
 /* harmony import */ var _css_loader_dist_cjs_js_ruleSet_1_rules_6_oneOf_1_use_1_postcss_loader_dist_cjs_js_ruleSet_1_rules_6_oneOf_1_use_2_theme_css__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! !!../../css-loader/dist/cjs.js??ruleSet[1].rules[6].oneOf[1].use[1]!../../postcss-loader/dist/cjs.js??ruleSet[1].rules[6].oneOf[1].use[2]!./theme.css */ "./node_modules/css-loader/dist/cjs.js??ruleSet[1].rules[6].oneOf[1].use[1]!./node_modules/postcss-loader/dist/cjs.js??ruleSet[1].rules[6].oneOf[1].use[2]!./node_modules/react-notifications-component/dist/theme.css");
 
-
+            
 
 var options = {};
 
@@ -150952,7 +151689,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _style_loader_dist_runtime_injectStylesIntoStyleTag_js__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_style_loader_dist_runtime_injectStylesIntoStyleTag_js__WEBPACK_IMPORTED_MODULE_0__);
 /* harmony import */ var _css_loader_dist_cjs_js_ruleSet_1_rules_6_oneOf_1_use_1_postcss_loader_dist_cjs_js_ruleSet_1_rules_6_oneOf_1_use_2_react_tabs_css__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! !!../../css-loader/dist/cjs.js??ruleSet[1].rules[6].oneOf[1].use[1]!../../postcss-loader/dist/cjs.js??ruleSet[1].rules[6].oneOf[1].use[2]!./react-tabs.css */ "./node_modules/css-loader/dist/cjs.js??ruleSet[1].rules[6].oneOf[1].use[1]!./node_modules/postcss-loader/dist/cjs.js??ruleSet[1].rules[6].oneOf[1].use[2]!./node_modules/react-tabs/style/react-tabs.css");
 
-
+            
 
 var options = {};
 
@@ -157324,7 +158061,7 @@ function useFetch() {
                         _d = !(0,_utils__WEBPACK_IMPORTED_MODULE_6__.isFunction)(retryOn) && Array.isArray(retryOn) && retryOn.length < 1 && (newRes === null || newRes === void 0 ? void 0 : newRes.ok) === false
                             // otherwise only retry when is specified
                             || Array.isArray(retryOn) && retryOn.includes(newRes.status);
-                        if (_d)
+                        if (_d) 
                         // if we just have `retries` set with NO `retryOn` then
                         // automatically retry on fail until attempts run out
                         return [3 /*break*/, 12];
@@ -157362,7 +158099,7 @@ function useFetch() {
                         // if we just have `retries` set with NO `retryOn` then
                         // automatically retry on fail until attempts run out
                         _f = !(0,_utils__WEBPACK_IMPORTED_MODULE_6__.isFunction)(retryOn) && Array.isArray(retryOn) && retryOn.length < 1;
-                        if (_f)
+                        if (_f) 
                         // if we just have `retries` set with NO `retryOn` then
                         // automatically retry on fail until attempts run out
                         return [3 /*break*/, 20];
@@ -158407,7 +159144,7 @@ function printValue(value, quoteStrings) {
 /************************************************************************/
 /******/ 	// The module cache
 /******/ 	var __webpack_module_cache__ = {};
-/******/
+/******/ 	
 /******/ 	// The require function
 /******/ 	function __webpack_require__(moduleId) {
 /******/ 		// Check if module is in cache
@@ -158421,20 +159158,20 @@ function printValue(value, quoteStrings) {
 /******/ 			loaded: false,
 /******/ 			exports: {}
 /******/ 		};
-/******/
+/******/ 	
 /******/ 		// Execute the module function
 /******/ 		__webpack_modules__[moduleId].call(module.exports, module, module.exports, __webpack_require__);
-/******/
+/******/ 	
 /******/ 		// Flag the module as loaded
 /******/ 		module.loaded = true;
-/******/
+/******/ 	
 /******/ 		// Return the exports of the module
 /******/ 		return module.exports;
 /******/ 	}
-/******/
+/******/ 	
 /******/ 	// expose the modules object (__webpack_modules__)
 /******/ 	__webpack_require__.m = __webpack_modules__;
-/******/
+/******/ 	
 /************************************************************************/
 /******/ 	/* webpack/runtime/chunk loaded */
 /******/ 	(() => {
@@ -158466,7 +159203,7 @@ function printValue(value, quoteStrings) {
 /******/ 			return result;
 /******/ 		};
 /******/ 	})();
-/******/
+/******/ 	
 /******/ 	/* webpack/runtime/compat get default export */
 /******/ 	(() => {
 /******/ 		// getDefaultExport function for compatibility with non-harmony modules
@@ -158478,7 +159215,7 @@ function printValue(value, quoteStrings) {
 /******/ 			return getter;
 /******/ 		};
 /******/ 	})();
-/******/
+/******/ 	
 /******/ 	/* webpack/runtime/define property getters */
 /******/ 	(() => {
 /******/ 		// define getter functions for harmony exports
@@ -158490,7 +159227,7 @@ function printValue(value, quoteStrings) {
 /******/ 			}
 /******/ 		};
 /******/ 	})();
-/******/
+/******/ 	
 /******/ 	/* webpack/runtime/global */
 /******/ 	(() => {
 /******/ 		__webpack_require__.g = (function() {
@@ -158502,12 +159239,12 @@ function printValue(value, quoteStrings) {
 /******/ 			}
 /******/ 		})();
 /******/ 	})();
-/******/
+/******/ 	
 /******/ 	/* webpack/runtime/hasOwnProperty shorthand */
 /******/ 	(() => {
 /******/ 		__webpack_require__.o = (obj, prop) => (Object.prototype.hasOwnProperty.call(obj, prop))
 /******/ 	})();
-/******/
+/******/ 	
 /******/ 	/* webpack/runtime/make namespace object */
 /******/ 	(() => {
 /******/ 		// define __esModule on exports
@@ -158518,7 +159255,7 @@ function printValue(value, quoteStrings) {
 /******/ 			Object.defineProperty(exports, '__esModule', { value: true });
 /******/ 		};
 /******/ 	})();
-/******/
+/******/ 	
 /******/ 	/* webpack/runtime/node module decorator */
 /******/ 	(() => {
 /******/ 		__webpack_require__.nmd = (module) => {
@@ -158527,11 +159264,11 @@ function printValue(value, quoteStrings) {
 /******/ 			return module;
 /******/ 		};
 /******/ 	})();
-/******/
+/******/ 	
 /******/ 	/* webpack/runtime/jsonp chunk loading */
 /******/ 	(() => {
 /******/ 		// no baseURI
-/******/
+/******/ 		
 /******/ 		// object to store loaded and loading chunks
 /******/ 		// undefined = chunk not loaded, null = chunk preloaded/prefetched
 /******/ 		// [resolve, reject, Promise] = chunk loading, 0 = chunk loaded
@@ -158539,19 +159276,19 @@ function printValue(value, quoteStrings) {
 /******/ 			"/js/app": 0,
 /******/ 			"build/css/app": 0
 /******/ 		};
-/******/
+/******/ 		
 /******/ 		// no chunk on demand loading
-/******/
+/******/ 		
 /******/ 		// no prefetching
-/******/
+/******/ 		
 /******/ 		// no preloaded
-/******/
+/******/ 		
 /******/ 		// no HMR
-/******/
+/******/ 		
 /******/ 		// no HMR manifest
-/******/
+/******/ 		
 /******/ 		__webpack_require__.O.j = (chunkId) => (installedChunks[chunkId] === 0);
-/******/
+/******/ 		
 /******/ 		// install a JSONP callback for chunk loading
 /******/ 		var webpackJsonpCallback = (parentChunkLoadingFunction, data) => {
 /******/ 			var [chunkIds, moreModules, runtime] = data;
@@ -158574,20 +159311,20 @@ function printValue(value, quoteStrings) {
 /******/ 			}
 /******/ 			return __webpack_require__.O(result);
 /******/ 		}
-/******/
+/******/ 		
 /******/ 		var chunkLoadingGlobal = self["webpackChunk"] = self["webpackChunk"] || [];
 /******/ 		chunkLoadingGlobal.forEach(webpackJsonpCallback.bind(null, 0));
 /******/ 		chunkLoadingGlobal.push = webpackJsonpCallback.bind(null, chunkLoadingGlobal.push.bind(chunkLoadingGlobal));
 /******/ 	})();
-/******/
+/******/ 	
 /************************************************************************/
-/******/
+/******/ 	
 /******/ 	// startup
 /******/ 	// Load entry module and return exports
 /******/ 	// This entry module depends on other loaded chunks and execution need to be delayed
 /******/ 	__webpack_require__.O(undefined, ["build/css/app"], () => (__webpack_require__("./resources/js/app.js")))
 /******/ 	var __webpack_exports__ = __webpack_require__.O(undefined, ["build/css/app"], () => (__webpack_require__("./resources/css/app.css")))
 /******/ 	__webpack_exports__ = __webpack_require__.O(__webpack_exports__);
-/******/
+/******/ 	
 /******/ })()
 ;

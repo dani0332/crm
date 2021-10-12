@@ -27,6 +27,15 @@ return [
     'ftc_history' => [
         'model' => FTCHistory::class
     ],
+    'car_quote_payment' => [
+        'model' => CarQuotePayment::class
+    ],
+    'ftc_quote_status_history' => [
+        'model' => FtcQuoteStatusHistory::class
+    ],
+    'car_quote_payment_history' => [
+        'model' => CarQuotePaymentHistory::class
+    ],
     'car_quote_vehicle_detail' => [
         'model' => VehicleDetailCarQuote::class
     ],
@@ -35,6 +44,9 @@ return [
     ],
     'kyc_statuses' => [
         'model' => KycStatus::class
+    ],
+    'quote_status' => [
+        'model' => QuoteStatus::class
     ],
     'users' => [
         'model' => User::class

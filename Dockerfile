@@ -1,4 +1,4 @@
-FROM php:7.3-fpm
+FROM php:7.4-fpm
 LABEL maintainer="dev@chialab.io"
 
 # Download script to install PHP extensions and dependencies
@@ -29,9 +29,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get update -q \
       soap \
       xsl \
       zip \
-      sockets \
-      pdo_sqlsrv \
-      sqlsrv
+      sockets
 
 RUN apt-get update && \
     apt-get clean
