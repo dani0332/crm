@@ -44,7 +44,7 @@ class CheckAmlService
         // Match is found
         if(($resultsFound > 0 || $getTotalResults > 0) && stripos($fullName, "test") === false) {
 
-            // Send Email alert to Compliance team
+            // Send Email alert to Compliance team only
             $quoteTypeName = QuoteType::where('id', '=', $quoteTypeId)->value('text'); // Get quote type text
 
             // Get CDB ID
