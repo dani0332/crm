@@ -15,6 +15,7 @@ use App\Models\AML;
 use App\Enums\quoteTypeCode;
 use Illuminate\Support\Facades\Http;
 use Config;
+use Illuminate\Support\Facades\Mail;
 
 class CheckAmlService
 {
@@ -43,7 +44,7 @@ class CheckAmlService
         // Match is found
         if(($resultsFound > 0 || $getTotalResults > 0) && stripos($fullName, "test") === false) {
 
-            // Send Email alert to Compliance team
+            // Send Email alert to Compliance team only
             $quoteTypeName = QuoteType::where('id', '=', $quoteTypeId)->value('text'); // Get quote type text
 
             // Get CDB ID
@@ -93,15 +94,39 @@ class CheckAmlService
             $emailRecipients[] = $recipient->user_email;
         }
 
-        $emailSubject = $emailL_sys." IMCRM | New AML Match Found";
-        MailService::sendEmail('AmlComplianceMail', [
+        if($emailL_sys == "PRODUCTION") {
+            $emailSubject = "IMCRM | New AML Matches Found for CDB ID : ".$quoteCdbId;
+        }
+        else {
+            $emailSubject = $emailL_sys." | IMCRM | New AML Matches Found for CDB ID : ".$quoteCdbId;
+        }
+
+        CheckAmlService::sendEmailAML('AmlComplianceMail', [
             'amlUrl' => $amlUrl,
             'resultsFound' => $resultsFound,
             'fullName' => $fullName,
             'quoteTypeName' => $quoteTypeName,
             'quoteCdbId' => $quoteCdbId,
-        ], $emailSubject, $emailRecipients);
+        ], $emailSubject, $emailRecipients,$emailL_sys);
     }
+
+    public static function sendEmailAML($templateName, $templateParams, $emailSubject, $emailRecipients, $emailL_sys)
+	{
+        if($emailL_sys == "PRODUCTION") {
+            $fromEmail = Config::get('constants.MAIL_FROM_ADDRESS');
+            $fromName = Config::get('constants.MAIL_FROM_NAME');
+        }
+        else {
+            $fromEmail = Config::get('constants.MAIL_FROM_ADDRESS');
+            $fromName = Config::get('constants.MAIL_FROM_NAME');
+        }
+
+		Mail::send(['html' => $templateName], $templateParams,
+            function ($message) use ($emailSubject, $emailRecipients, $fromName, $fromEmail) {
+                $message->to($emailRecipients)->subject($emailSubject);
+                $message->from($fromEmail, $fromName);
+        });
+	}
 
     // Error Email
     public static function sendAMLErrorEmailEngTeam($emailAmlData,$emailL_sys,$amlUrl,$chAmlStatus,$requestMessage)
