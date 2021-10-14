@@ -36,6 +36,7 @@ use App\Http\Controllers\HandlerController;
 use App\Http\Controllers\ReasonController;
 use App\Http\Controllers\StatusController;
 use App\Http\Controllers\PaymentModeController;
+use App\Http\Controllers\QuoteController;
 use App\Http\Controllers\RenewalDataProcessingController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\VehicleDepreciationController;
@@ -99,6 +100,10 @@ Route::group(['middleware' =>  ['auth']], function () {
         Route::resource('carquotes', CarQuoteController::class);
         Route::get('carquotes/car_resubmit/{id}', [CarQuoteController::class, 'car_resubmit_capi'])->name('car_resubmit_capi');
         Route::resource('healthquotes', HealthQuoteController::class);
+        Route::get('health', [QuoteController::class, 'genericQuoteCreate']);
+        Route::get('life', [QuoteController::class, 'genericQuoteCreate']);
+        Route::get('bike', [QuoteController::class, 'genericQuoteCreate']);
+        Route::get('save', [QuoteController::class, 'genericQuoteSave']);
     });
 
     Route::group(['prefix' => 'transapp'], function () {
