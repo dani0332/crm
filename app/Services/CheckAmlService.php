@@ -15,6 +15,7 @@ use App\Models\AML;
 use App\Enums\quoteTypeCode;
 use Illuminate\Support\Facades\Http;
 use Config;
+use Illuminate\Support\Facades\Mail;
 
 class CheckAmlService
 {
@@ -34,16 +35,16 @@ class CheckAmlService
         $chAmlMessage = $chAml->json();
 
         $fullName = $firstName." ".$lastName;
-        // $resultsFound = $chAmlMessage["resultsFound"];
+        $resultsFound = $chAmlMessage["resultsFound"];
 
-        // $getTotalResults = AML::where('quote_type_id', $quoteTypeId)
-        // ->where('quote_request_id', $quoteRequestId)
-        // ->sum('results_found');
+        $getTotalResults = AML::where('quote_type_id', $quoteTypeId)
+        ->where('quote_request_id', $quoteRequestId)
+        ->sum('results_found');
 
-        if($chAmlStatus == 201) {
-        //if(($resultsFound > 0 || $getTotalResults > 0) && stripos($fullName, "test") === false) { // Match is found
+        // Match is found
+        if(($resultsFound > 0 || $getTotalResults > 0) && stripos($fullName, "test") === false) {
 
-            // Send Email alert to Compliance team
+            // Send Email alert to Compliance team only
             $quoteTypeName = QuoteType::where('id', '=', $quoteTypeId)->value('text'); // Get quote type text
 
             // Get CDB ID
@@ -57,10 +58,11 @@ class CheckAmlService
             if($quoteTypeCode == quoteTypeCode::Yacht) { $quoteCdbId = YachtQuote::where('id', '=', $quoteRequestId)->value('code'); }
             if($quoteTypeCode == quoteTypeCode::Travel) { $quoteCdbId = TravelQuote::where('id', '=', $quoteRequestId)->value('code'); }
 
-            CheckAmlService::sendAMLMatchedEmailComplianceTeam($emailL_sys,$amlUrl,$fullName,$quoteTypeName,$quoteCdbId);
-            //CheckAmlService::sendAMLMatchedEmailComplianceTeam($emailL_sys,$amlUrl,$resultsFound,$fullName,$quoteTypeName,$quoteCdbId);
+            CheckAmlService::sendAMLMatchedEmailComplianceTeam($emailL_sys,$amlUrl,$resultsFound,$fullName,$quoteTypeName,$quoteCdbId);
         }
-        if($chAmlStatus != 201 && $chAmlStatus != 200) { // API failed
+
+        // API failed
+        if($chAmlStatus != 201 && $chAmlStatus != 200) {
             $requestMessage = '';
             foreach ($chAmlMessage as $key1=>$value1) {
                 $requestMessage .= $key1.': '.$value1;
@@ -78,9 +80,9 @@ class CheckAmlService
         }
         return $chAmlStatus; // return http code
     }
+
     // Match found Email
-    public static function sendAMLMatchedEmailComplianceTeam($emailL_sys,$amlUrl,$fullName,$quoteTypeName,$quoteCdbId)
-    //public static function sendAMLMatchedEmailComplianceTeam($emailL_sys,$amlUrl,$resultsFound,$fullName,$quoteTypeName,$quoteCdbId)
+    public static function sendAMLMatchedEmailComplianceTeam($emailL_sys,$amlUrl,$resultsFound,$fullName,$quoteTypeName,$quoteCdbId)
     {
         $recipients = User::select('users.email as user_email')
         ->leftjoin('model_has_roles','users.id','model_has_roles.model_id')
@@ -92,15 +94,40 @@ class CheckAmlService
             $emailRecipients[] = $recipient->user_email;
         }
 
-        $emailSubject = $emailL_sys." IMCRM | New AML Match Found";
-        MailService::sendEmail('AmlComplianceMail', [
+        if($emailL_sys == "PRODUCTION") {
+            $emailSubject = "IMCRM | New AML Matches Found for CDB ID : ".$quoteCdbId;
+        }
+        else {
+            $emailSubject = $emailL_sys." | IMCRM | New AML Matches Found for CDB ID : ".$quoteCdbId;
+        }
+
+        CheckAmlService::sendEmailAML('AmlComplianceMail', [
             'amlUrl' => $amlUrl,
-            //'resultsFound' => $resultsFound,
+            'resultsFound' => $resultsFound,
             'fullName' => $fullName,
             'quoteTypeName' => $quoteTypeName,
             'quoteCdbId' => $quoteCdbId,
-        ], $emailSubject, $emailRecipients);
+        ], $emailSubject, $emailRecipients,$emailL_sys);
     }
+
+    public static function sendEmailAML($templateName, $templateParams, $emailSubject, $emailRecipients, $emailL_sys)
+	{
+        if($emailL_sys == "PRODUCTION") {
+            $fromEmail = Config::get('constants.MAIL_FROM_ADDRESS');
+            $fromName = Config::get('constants.MAIL_FROM_NAME');
+        }
+        else {
+            $fromEmail = Config::get('constants.MAIL_FROM_ADDRESS');
+            $fromName = Config::get('constants.MAIL_FROM_NAME');
+        }
+
+		Mail::send(['html' => $templateName], $templateParams,
+            function ($message) use ($emailSubject, $emailRecipients, $fromName, $fromEmail) {
+                $message->to($emailRecipients)->subject($emailSubject);
+                $message->from($fromEmail, $fromName);
+        });
+	}
+
     // Error Email
     public static function sendAMLErrorEmailEngTeam($emailAmlData,$emailL_sys,$amlUrl,$chAmlStatus,$requestMessage)
     {
