@@ -1511,7 +1511,7 @@ $(document).ready(function() {
         });
     });
     dateRangePickerChange("", "");
-    $(".applyBtn, .ranges li").click(function() {
+    $(".x_panel transparent > .applyBtn, .ranges li").click(function() {
         $(".loader").show();
         setTimeout(() => {
             var date = $("#reportrange span").html();
