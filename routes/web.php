@@ -25,6 +25,7 @@ use App\Http\Controllers\ClaimsAttachmentsController;
 use App\Http\Controllers\AMLController;
 use App\Http\Controllers\BaseDiscountController;
 use App\Http\Controllers\BulkEmailProcessController;
+use App\Http\Controllers\CRUDController;
 use App\Http\Controllers\FtcFormController;
 use App\Http\Controllers\FormController;
 use App\Http\Controllers\UploadResourceController;
@@ -36,7 +37,6 @@ use App\Http\Controllers\HandlerController;
 use App\Http\Controllers\ReasonController;
 use App\Http\Controllers\StatusController;
 use App\Http\Controllers\PaymentModeController;
-use App\Http\Controllers\QuoteController;
 use App\Http\Controllers\RenewalDataProcessingController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\VehicleDepreciationController;
@@ -100,10 +100,10 @@ Route::group(['middleware' =>  ['auth']], function () {
         Route::resource('carquotes', CarQuoteController::class);
         Route::get('carquotes/car_resubmit/{id}', [CarQuoteController::class, 'car_resubmit_capi'])->name('car_resubmit_capi');
         Route::resource('healthquotes', HealthQuoteController::class);
-        Route::get('health', [QuoteController::class, 'genericQuoteCreate']);
-        Route::get('life', [QuoteController::class, 'genericQuoteCreate']);
-        Route::get('bike', [QuoteController::class, 'genericQuoteCreate']);
-        Route::get('save', [QuoteController::class, 'genericQuoteSave']);
+        Route::resource('health', CRUDController::class);
+        Route::resource('life', CRUDController::class);
+        Route::resource('bike', CRUDController::class);
+        Route::resource('pet', CRUDController::class);
     });
 
     Route::group(['prefix' => 'transapp'], function () {
