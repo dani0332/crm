@@ -33,6 +33,9 @@ return [
     'ftc_quote_status_history' => [
         'model' => FtcQuoteStatusHistory::class
     ],
+    'payment_modes' => [
+        'model' => FTCPaymentMode::class
+    ],
     'car_quote_payment_history' => [
         'model' => CarQuotePaymentHistory::class
     ],

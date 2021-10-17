@@ -9,9 +9,18 @@ export function* fillConditionalFields(obj) {
         const recVal = selectedRecord?.[key]
 
         if(recVal && getField?.if) {
-            const val = getField.if[recVal]
+            let selectedVal = {}
+            if (typeof getField?.transform === 'function') {
+                selectedVal = getField?.transform(recVal)
+            } else if (typeof recVal === 'object'){
+                selectedVal = { ...recVal , selected: recVal?.text }
+            } else{
+                selectedVal = { selected: recVal }
+            }
+
+            const val = getField.if[selectedVal?.selected]
             if(val?.fields){
-                const getCondFields = getField.if[recVal].fields
+                const getCondFields = val.fields
                 if(getCondFields.length > 0) {
                     getCondFields.forEach(element => {
                         obj.fields[element].offscreen = false
