@@ -13,17 +13,29 @@ const ftcPayment = {
                 delete: []
             },
             fields: {
-                mode: {
+                mode_id: {
                     type:'dropdown',
                     label:'Payment Mode',
-                    source: ['CC', 'Non-CC'],
+                    source: "payment_modes",
                     if: {
                         'CC': {
                             fields: [ 'method' ]
                         }
                     },
                     else: [ 'method' ],
-                    field:'mode',
+                    field:'mode_id',
+                    transform(item, condition = false) {
+                        if(condition)
+                            return { value: { id: item?.value, name: item?.label } , selected: item?.label };
+                        if( Array.isArray(item) ){
+                            const items = item.map((u,i) => {
+                                return { value: u?.id , label:u?.name}
+                            })
+                            return items
+                        }
+                        else
+                            return  { value: item?.id, label: item?.name, selected: item?.name };
+                   },
                     access: {
                          read: [ 'advisor', 'pa', 'admin', 'invoicing'],
                          write: [ 'advisor'],
@@ -58,7 +70,7 @@ const ftcPayment = {
             sections:[
                 {
                     label: 'FTC Payment Method',
-                    fields: ['mode', 'method', 'comment']
+                    fields: ['mode_id', 'method', 'comment']
                 },
             ],
             view:{

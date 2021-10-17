@@ -27,15 +27,19 @@ function makeNullHideFields(state){
         const recVal = selectedRecord?.[key]
 
         if(recVal && getField?.if) {
-            const val = getField.if[recVal]
+
+            let getVal = recVal
+            if(typeof getField?.transform === 'function')
+                getVal  =   getField?.transform(recVal)
+
+            const val = getField.if[getVal?.selected]
             if(val?.fields){
-                const getCondFields = getField.if[recVal].fields
+                const getCondFields = val.fields
                 if(getCondFields.length > 0) {
                     getCondFields.forEach(element => {
 
                     });
                 }
-                console.log(getCondFields)
             } else {
                 const getCondFields = getField.else
                 getCondFields.forEach(element => {
@@ -51,12 +55,14 @@ function makeNullHideFields(state){
 
 function conditionState(state, action) {
 
-    const { field: { name, value } } = action
+    const { field: { name, value, selected } } = action
     const getField = state.fields[name]
     if(getField?.if) {
-        const val = getField.if[value]
+
+        const calcVal = selected//(typeof value === 'object') ? value?.selected : value
+        const val = getField.if[calcVal]
         if(val?.fields){
-            const getCondFields = getField.if[value].fields
+            const getCondFields = getField.if[calcVal].fields
             if(getCondFields.length > 0) {
                 getCondFields.forEach(element => {
                         state.fields[element].offscreen = false
@@ -84,11 +90,6 @@ function reducer(state, action) {
         const { field: { name, value } } = action
           const getField = state.fields[name]
           getField.value = value
-
-          console.log('------draw-form-set-value-------')
-          console.log(state)
-          console.log('------draw-form-set-value-------')
-
           if(state?.action_type === "new") {
             console.log('------draw-form.js---Adding---draw-form.js-------')
             console.log(state)
@@ -129,6 +130,12 @@ const onSubmit = data => {
     let getData =   {}
     if(state?.action_type === "edit")
         getData =   makeNullHideFields(state)
+
+    console.log('------------getData----------')
+    console.log(getData)
+    console.log(data)
+    console.log('------------getData----------')
+
    if(typeof state?.postTransform === 'function') {
         console.log("*****onSubmit-Transform-Data-draw-form.js*************")
         let transformData = state?.postTransform({ data: data, state: {state, ...initialForm }, params: params})

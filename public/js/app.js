@@ -11293,16 +11293,18 @@ function makeNullHideFields(state) {
     var recVal = selectedRecord === null || selectedRecord === void 0 ? void 0 : selectedRecord[key];
 
     if (recVal && getField !== null && getField !== void 0 && getField["if"]) {
-      var val = getField["if"][recVal];
+      var _getVal;
+
+      var getVal = recVal;
+      if (typeof (getField === null || getField === void 0 ? void 0 : getField.transform) === 'function') getVal = getField === null || getField === void 0 ? void 0 : getField.transform(recVal);
+      var val = getField["if"][(_getVal = getVal) === null || _getVal === void 0 ? void 0 : _getVal.selected];
 
       if (val !== null && val !== void 0 && val.fields) {
-        var getCondFields = getField["if"][recVal].fields;
+        var getCondFields = val.fields;
 
         if (getCondFields.length > 0) {
           getCondFields.forEach(function (element) {});
         }
-
-        console.log(getCondFields);
       } else {
         var _getCondFields = getField["else"];
 
@@ -11318,14 +11320,17 @@ function makeNullHideFields(state) {
 function conditionState(state, action) {
   var _action$field = action.field,
       name = _action$field.name,
-      value = _action$field.value;
+      value = _action$field.value,
+      selected = _action$field.selected;
   var getField = state.fields[name];
 
   if (getField !== null && getField !== void 0 && getField["if"]) {
-    var val = getField["if"][value];
+    var calcVal = selected; //(typeof value === 'object') ? value?.selected : value
+
+    var val = getField["if"][calcVal];
 
     if (val !== null && val !== void 0 && val.fields) {
-      var getCondFields = getField["if"][value].fields;
+      var getCondFields = getField["if"][calcVal].fields;
 
       if (getCondFields.length > 0) {
         getCondFields.forEach(function (element) {
@@ -11363,9 +11368,6 @@ function reducer(state, action) {
             value = _action$field2.value;
         var getField = state.fields[name];
         getField.value = value;
-        console.log('------draw-form-set-value-------');
-        console.log(state);
-        console.log('------draw-form-set-value-------');
 
         if ((state === null || state === void 0 ? void 0 : state.action_type) === "new") {
           console.log('------draw-form.js---Adding---draw-form.js-------');
@@ -11422,6 +11424,10 @@ function DrawForm(props) {
   var onSubmit = function onSubmit(data) {
     var getData = {};
     if ((state === null || state === void 0 ? void 0 : state.action_type) === "edit") getData = makeNullHideFields(state);
+    console.log('------------getData----------');
+    console.log(getData);
+    console.log(data);
+    console.log('------------getData----------');
 
     if (typeof (state === null || state === void 0 ? void 0 : state.postTransform) === 'function') {
       console.log("*****onSubmit-Transform-Data-draw-form.js*************");
@@ -12733,9 +12739,12 @@ function SelectField(_ref) {
       propsRef.current = field;
       redraw(field);
     }
-  }, [field]);
+  }, [field, field === null || field === void 0 ? void 0 : field.value]);
 
   var redraw = function redraw(field) {
+    console.log('---**********redraw-************----');
+    console.log(field);
+
     if ((field === null || field === void 0 ? void 0 : field.formState) === 'read' || (field === null || field === void 0 ? void 0 : field.formState) === 'edit') {
       var defaultValue = {};
 
@@ -12752,6 +12761,8 @@ function SelectField(_ref) {
         }
       }
 
+      console.log(defaultValue);
+      console.log('---**********redraw-************----');
       setData({
         data: [],
         isDisabled: field.formState === 'read' ? true : false,
@@ -12795,19 +12806,21 @@ function SelectField(_ref) {
   };
 
   var onChange = function onChange(selectedOptions) {
-    console.log('---**********select.js-onChange-************----');
-    console.log(selectedOptions);
-    console.log('---**********select.js-onChange-************----');
-
     if (typeof (field === null || field === void 0 ? void 0 : field.dispatch) === 'function') {
-      if (field !== null && field !== void 0 && field["if"]) // For condition fields
+      if (field !== null && field !== void 0 && field["if"]) {
+        // For condition fields
+        var selectOp = selectedOptions;
+        if (typeof (field === null || field === void 0 ? void 0 : field.transform) === 'function') selectOp = field.transform(selectedOptions, true);else selectOp = {
+          value: selectedOptions,
+          selected: selectedOptions === null || selectedOptions === void 0 ? void 0 : selectedOptions.label
+        };
         field.dispatch({
           type: 'setValue',
-          field: {
-            name: field.field,
-            value: selectedOptions === null || selectedOptions === void 0 ? void 0 : selectedOptions.value
-          }
+          field: _objectSpread({
+            name: field.field
+          }, selectOp)
         });
+      }
     }
 
     controller.onChange(selectedOptions.value);
@@ -12880,22 +12893,18 @@ function SelectField(_ref) {
                   isDisabled: false,
                   loading: false
                 }));
-              })["catch"](function (error) {
-                setData(_objectSpread(_objectSpread({}, data), {}, {
-                  data: [],
-                  isDisabled: false,
-                  loading: false
-                }));
+              })["catch"](function (error) {//setData({ ...data, data: [], isDisabled : false, loading: false })
               });
-              _context.next = 19;
+              _context.next = 20;
               break;
 
             case 12:
               if (!(field.formState === 'edit' && data.data.length < 1)) {
-                _context.next = 18;
+                _context.next = 19;
                 break;
               }
 
+              console.log('---2-----');
               setData(_objectSpread(_objectSpread({}, data), {}, {
                 loading: true
               }));
@@ -12909,25 +12918,20 @@ function SelectField(_ref) {
                   }
                 }
               }).then(function (response) {
-                setData(_objectSpread(_objectSpread({}, data), {}, {
-                  data: response.data,
-                  isDisabled: false,
-                  loading: false
-                }));
+                console.log('---**********select.js-edit222-************----');
+                console.log(response);
+                console.log('---**********select.js-edit-************----'); // setData({ ...data,data: response.data, isDisabled : false,  loading: false })
               })["catch"](function (error) {
-                setData(_objectSpread(_objectSpread({}, data), {}, {
-                  data: [],
-                  isDisabled: false,
-                  loading: false
-                }));
+                console.log('---**********select.js-err-************----');
+                console.log(error); //setData({ ...data, data: [], isDisabled : false, loading: false })
               });
-              _context.next = 19;
+              _context.next = 20;
               break;
 
-            case 18:
+            case 19:
               return _context.abrupt("return");
 
-            case 19:
+            case 20:
             case "end":
               return _context.stop();
           }
@@ -12956,6 +12960,11 @@ function SelectField(_ref) {
     value = options;
   }
 
+  console.log('---**********SelectAmjad-************----');
+  console.log(field);
+  console.log(value);
+  console.log(data);
+  console.log('---**********SelectAmjad-************----');
   return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)(react_select__WEBPACK_IMPORTED_MODULE_7__.default, {
     options: value,
     value: data === null || data === void 0 ? void 0 : data.defaultValue,
@@ -15112,17 +15121,41 @@ var ftcPayment = {
         "delete": []
       },
       fields: {
-        mode: {
+        mode_id: {
           type: 'dropdown',
           label: 'Payment Mode',
-          source: ['CC', 'Non-CC'],
+          source: "payment_modes",
           "if": {
             'CC': {
               fields: ['method']
             }
           },
           "else": ['method'],
-          field: 'mode',
+          field: 'mode_id',
+          transform: function transform(item) {
+            var condition = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
+            if (condition) return {
+              value: {
+                id: item === null || item === void 0 ? void 0 : item.value,
+                name: item === null || item === void 0 ? void 0 : item.label
+              },
+              selected: item === null || item === void 0 ? void 0 : item.label
+            };
+
+            if (Array.isArray(item)) {
+              var items = item.map(function (u, i) {
+                return {
+                  value: u === null || u === void 0 ? void 0 : u.id,
+                  label: u === null || u === void 0 ? void 0 : u.name
+                };
+              });
+              return items;
+            } else return {
+              value: item === null || item === void 0 ? void 0 : item.id,
+              label: item === null || item === void 0 ? void 0 : item.name,
+              selected: item === null || item === void 0 ? void 0 : item.name
+            };
+          },
           access: {
             read: ['advisor', 'pa', 'admin', 'invoicing'],
             write: ['advisor'],
@@ -15160,7 +15193,7 @@ var ftcPayment = {
       },
       sections: [{
         label: 'FTC Payment Method',
-        fields: ['mode', 'method', 'comment']
+        fields: ['mode_id', 'method', 'comment']
       }],
       view: {
         label: 'FTC Payment Method',
@@ -16720,7 +16753,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _components_list_view_manage_list_form_view__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../../components/list-view/manage-list-form-view */ "./resources/js/components/list-view/manage-list-form-view.js");
 /* harmony import */ var react_tabs_style_react_tabs_css__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! react-tabs/style/react-tabs.css */ "./node_modules/react-tabs/style/react-tabs.css");
 /* harmony import */ var react_tabs__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! react-tabs */ "./node_modules/react-tabs/esm/index.js");
-/* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! react/jsx-runtime */ "./node_modules/react/jsx-runtime.js");
+/* harmony import */ var _utils__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../../utils */ "./resources/js/utils/index.js");
+/* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! react/jsx-runtime */ "./node_modules/react/jsx-runtime.js");
 
  // Import css
 
@@ -16729,19 +16763,30 @@ __webpack_require__.r(__webpack_exports__);
 
 
 
+
+
+var _session = (0,_utils__WEBPACK_IMPORTED_MODULE_5__.session)(),
+    role = _session.role,
+    id = _session.id;
+
 function FtcPayment(props) {
   var filter = props.filter;
-  return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("div", {
+
+  var viewDetail = function viewDetail() {
+    window.open("/transapp/transaction/create?carQuote=" + filter.car_quote_id, '_blank');
+  };
+
+  return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("div", {
     className: "col-md-12",
-    children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxs)(react_tabs__WEBPACK_IMPORTED_MODULE_4__.Tabs, {
-      children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxs)(react_tabs__WEBPACK_IMPORTED_MODULE_4__.TabList, {
-        children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(react_tabs__WEBPACK_IMPORTED_MODULE_4__.Tab, {
+    children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxs)(react_tabs__WEBPACK_IMPORTED_MODULE_4__.Tabs, {
+      children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxs)(react_tabs__WEBPACK_IMPORTED_MODULE_4__.TabList, {
+        children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)(react_tabs__WEBPACK_IMPORTED_MODULE_4__.Tab, {
           children: "Payment Method"
-        }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(react_tabs__WEBPACK_IMPORTED_MODULE_4__.Tab, {
+        }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)(react_tabs__WEBPACK_IMPORTED_MODULE_4__.Tab, {
           children: "Payment Actions"
         })]
-      }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(react_tabs__WEBPACK_IMPORTED_MODULE_4__.TabPanel, {
-        children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(_components_list_view_manage_list_form_view__WEBPACK_IMPORTED_MODULE_2__.default, {
+      }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)(react_tabs__WEBPACK_IMPORTED_MODULE_4__.TabPanel, {
+        children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)(_components_list_view_manage_list_form_view__WEBPACK_IMPORTED_MODULE_2__.default, {
           form: {
             form: 'ftcPayment',
             view_mode: 'list',
@@ -16751,8 +16796,20 @@ function FtcPayment(props) {
             filter: filter
           }
         })
-      }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(react_tabs__WEBPACK_IMPORTED_MODULE_4__.TabPanel, {
-        children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(_components_list_view_manage_list_form_view__WEBPACK_IMPORTED_MODULE_2__.default, {
+      }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxs)(react_tabs__WEBPACK_IMPORTED_MODULE_4__.TabPanel, {
+        children: [role && role === "invoicing" && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxs)("a", {
+          style: {
+            display: "inline",
+            cursor: "pointer"
+          },
+          onClick: viewDetail,
+          children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("i", {
+            style: {
+              paddingTop: 2
+            },
+            className: "fa fa-inbox"
+          }), " Create Transaction"]
+        }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)(_components_list_view_manage_list_form_view__WEBPACK_IMPORTED_MODULE_2__.default, {
           form: {
             form: 'ftcPaymentHistory',
             view_mode: 'list',
@@ -16760,7 +16817,7 @@ function FtcPayment(props) {
             context: 'car_quote_snap',
             filter: filter
           }
-        })
+        })]
       })]
     })
   });
@@ -17700,7 +17757,7 @@ function LeadSnapShot(props) {
     icon: 'fa fa-line-chart',
     label: 'Payment',
     active: 0,
-    id: 8,
+    id: 9,
     data: 'ftcPayment'
   }];
 
@@ -18587,6 +18644,14 @@ __webpack_require__.r(__webpack_exports__);
 
 var _marked = /*#__PURE__*/_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().mark(fillConditionalFields);
 
+function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) { symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); } keys.push.apply(keys, symbols); } return keys; }
+
+function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys(Object(source), true).forEach(function (key) { _defineProperty(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
+function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
+
 function _slicedToArray(arr, i) { return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _unsupportedIterableToArray(arr, i) || _nonIterableRest(); }
 
 function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
@@ -18615,10 +18680,26 @@ function fillConditionalFields(obj) {
             var recVal = selectedRecord === null || selectedRecord === void 0 ? void 0 : selectedRecord[key];
 
             if (recVal && getField !== null && getField !== void 0 && getField["if"]) {
-              var val = getField["if"][recVal];
+              var _selectedVal;
+
+              var selectedVal = {};
+
+              if (typeof (getField === null || getField === void 0 ? void 0 : getField.transform) === 'function') {
+                selectedVal = getField === null || getField === void 0 ? void 0 : getField.transform(recVal);
+              } else if (_typeof(recVal) === 'object') {
+                selectedVal = _objectSpread(_objectSpread({}, recVal), {}, {
+                  selected: recVal === null || recVal === void 0 ? void 0 : recVal.text
+                });
+              } else {
+                selectedVal = {
+                  selected: recVal
+                };
+              }
+
+              var val = getField["if"][(_selectedVal = selectedVal) === null || _selectedVal === void 0 ? void 0 : _selectedVal.selected];
 
               if (val !== null && val !== void 0 && val.fields) {
-                var getCondFields = getField["if"][recVal].fields;
+                var getCondFields = val.fields;
 
                 if (getCondFields.length > 0) {
                   getCondFields.forEach(function (element) {
