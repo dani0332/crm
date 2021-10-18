@@ -16,6 +16,7 @@ use App\Enums\quoteTypeCode;
 use Illuminate\Support\Facades\Http;
 use Config;
 use Illuminate\Support\Facades\Mail;
+use Auth;
 
 class CheckAmlService
 {
@@ -101,7 +102,7 @@ class CheckAmlService
             $emailSubject = $emailL_sys." | IMCRM | New AML Matches Found for CDB ID : ".$quoteCdbId;
         }
 
-        CheckAmlService::sendEmailAML('AmlComplianceMail', [
+        CheckAmlService::amlComplianceMail('AmlComplianceMail', [
             'amlUrl' => $amlUrl,
             'resultsFound' => $resultsFound,
             'fullName' => $fullName,
@@ -110,7 +111,7 @@ class CheckAmlService
         ], $emailSubject, $emailRecipients,$emailL_sys);
     }
 
-    public static function sendEmailAML($templateName, $templateParams, $emailSubject, $emailRecipients, $emailL_sys)
+    public static function amlComplianceMail($templateName, $templateParams, $emailSubject, $emailRecipients, $emailL_sys)
 	{
         if($emailL_sys == "PRODUCTION") {
             $fromEmail = Config::get('constants.MAIL_FROM_ADDRESS');
@@ -123,7 +124,74 @@ class CheckAmlService
 
 		Mail::send(['html' => $templateName], $templateParams,
             function ($message) use ($emailSubject, $emailRecipients, $fromName, $fromEmail) {
-                $message->to($emailRecipients)->subject($emailSubject);
+                $message->to($emailRecipients)->cc(Auth::user()->email)->subject($emailSubject);
+                $message->from($fromEmail, $fromName);
+        });
+	}
+
+    public static function sendAMLQuoteStatusChangeNotification($quoteTypeId, $quoteRequestId, $quoteStatusText, $quoteCdbId, $quoteTypeText, $quotePaID, $clientFullName)
+	{
+        $complianceUsersEmails = User::select('users.email as user_email')
+        ->leftjoin('model_has_roles','users.id','model_has_roles.model_id')
+        ->leftjoin('roles','model_has_roles.role_id','roles.id')
+        ->whereIn('roles.name', array("COMPLIANCE"))->get();
+
+        $complianceEmailRecipients = array();
+        foreach($complianceUsersEmails as $complianceUsersEmail) {
+            $complianceEmailRecipients[] = $complianceUsersEmail->user_email;
+        }
+
+        if($quotePaID != "") {
+            // TO will be quotePaID
+            $paUserEmailId = User::where('id', '=', $quotePaID)->value('email');
+            $toRecipient = $paUserEmailId;
+
+            // CC will be all users compliance
+            $ccRecipients = $complianceEmailRecipients;
+        }
+        else {
+            // TO will be currentUserID
+            $currentUserEmailId = User::where('id', '=', Auth::user()->id)->value('email');
+            $toRecipient = $currentUserEmailId;
+            // CC will be all users compliance
+            $ccRecipients = $complianceEmailRecipients;
+
+        }
+
+        $emailL_sys = Config::get('constants.emailL_sys');
+        if($emailL_sys == "PRODUCTION") {
+            $emailSubject = "IMCRM | Compliance Update on CDB ID : ".$quoteCdbId;
+        }
+        else {
+            $emailSubject = $emailL_sys." | IMCRM | Compliance Update on CDB ID : ".$quoteCdbId;
+        }
+
+        $appUrl = env('APP_URL');
+        $amlUrl = $appUrl.'/kyc/aml/'.$quoteTypeId.'/details/'.$quoteRequestId;
+
+        CheckAmlService::amlQuoteStatusUpdateMail('AmlQuoteStatusUpdateMail', [
+            'amlUrl' => $amlUrl,
+            'amlQuoteStatus' => $quoteStatusText,
+            'clientFullName' => $clientFullName,
+            'quoteTypeName' => $quoteTypeText,
+            'quoteCdbId' => $quoteCdbId,
+        ], $emailSubject, $toRecipient, $ccRecipients, $emailL_sys);
+	}
+
+    public static function amlQuoteStatusUpdateMail($templateName, $templateParams, $emailSubject, $toRecipient, $ccRecipients, $emailL_sys)
+	{
+        if($emailL_sys == "PRODUCTION") {
+            $fromEmail = Config::get('constants.MAIL_FROM_ADDRESS');
+            $fromName = Config::get('constants.MAIL_FROM_NAME');
+        }
+        else {
+            $fromEmail = Config::get('constants.MAIL_FROM_ADDRESS');
+            $fromName = Config::get('constants.MAIL_FROM_NAME');
+        }
+
+		Mail::send(['html' => $templateName], $templateParams,
+            function ($message) use ($emailSubject, $toRecipient, $ccRecipients, $fromName, $fromEmail) {
+                $message->to($toRecipient)->cc($ccRecipients)->subject($emailSubject);
                 $message->from($fromEmail, $fromName);
         });
 	}
