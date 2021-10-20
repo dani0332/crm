@@ -1,7 +1,6 @@
 import React, {useState, useEffect} from 'react';
 import {useDropzone} from 'react-dropzone';
 import styled from "styled-components";
-import useFetch from 'use-http'
 import  { ScaleLoader } from "react-spinners";
 import Viewer from 'react-viewer';
 
@@ -41,7 +40,6 @@ export default function File({field, controller}) {
 
     const [files, setFiles] = useState({files: [], loader: false});
     const [ visible, setVisible ] = React.useState(false);
-    const { post } = useFetch('resource/store')
     useEffect(() => {
         controller.onChange(null);
     },[])
@@ -60,7 +58,12 @@ export default function File({field, controller}) {
             const file = acceptedFiles[0]
             const data = new FormData()
             data.append('file', file)
-            const response = await post(data)
+            const uploadFile = await fetch('/resource/store', {
+                method: 'POST',
+                body: data
+              })
+
+            const response = await uploadFile.json()
             const fileExt = file.name.split('.').pop();
             if(fileExt !== 'pdf') {
                 const fileObj = Object.assign(file, {

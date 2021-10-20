@@ -69,6 +69,11 @@ const carQuoteKycStatus = {
                     }
                 ],
                 events: {
+
+                    applyFilterAfterSearch(options){
+                        const { params, filter } = options
+                        return { ...filter, car_quote_id: params.id }
+                    },
                     applyFilter(options){
                         const { mode, url , params: { id } } = options
                         const queryMode = { mode }

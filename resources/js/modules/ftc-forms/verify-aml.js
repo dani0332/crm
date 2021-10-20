@@ -125,8 +125,8 @@ export default function KycAMLForm(props) {
                                         <button type="button" class="btn btn-round btn-success btn-sm" onClick={viewDetail}>View Detail</button>
                                         { rest?.quote_status_id && rest?.quote_status_id === 11 && role === "pa" &&
                                         <span>
-                                            <button type="button" class="btn btn-round btn-danger btn-sm" onClick={()=>approveAml('Rejected')}>Reject</button>
-                                            <button type="button" class="btn btn-round btn-primary btn-sm" onClick={()=>approveAml('Approved')}>Approve</button>
+                                            <button type="button" class="btn btn-round btn-danger btn-sm" onClick={()=>approveAml('Rejected')}>AML Failed</button>
+                                            <button type="button" class="btn btn-round btn-primary btn-sm" onClick={()=>approveAml('Approved')}>AML Cleared</button>
                                         </span>
                                         }
                                     </td>
@@ -141,7 +141,7 @@ export default function KycAMLForm(props) {
                                 </tr>
                                 { rest?.quote_status_id && rest?.quote_status_id === 11 && role === "pa" &&
                                 <tr>
-                                    <td  align="left" style={{paddingTop: 16}}><button type="button" className="btn btn-round btn-success" onClick={()=>approveAml('Approved')} >Approve AML</button></td>
+                                    <td  align="left" style={{paddingTop: 16}}><button type="button" className="btn btn-round btn-success" onClick={()=>approveAml('Approved')} >AML Check Cleared</button></td>
                                 </tr>
                                 }
 

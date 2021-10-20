@@ -43,6 +43,17 @@ class FTCHistory extends BaseModel
         return self::processGetBaseDSL($filters, false);
     }
 
+    private function prefixAED($value){
+
+        $sumInsured = "";
+        if(isset($value)) {
+            $sumInsured = $value;
+            if(is_numeric($value))
+                $sumInsured = 'AED '.$value;
+        }
+        return $sumInsured;
+    }
+
     public function saveForm($request, $update = false) {
 
         if( Auth::user()->hasRole('advisor') ) {
@@ -69,7 +80,12 @@ class FTCHistory extends BaseModel
                         $results = $getQuote->processGetBaseDSL(["id" => $request->input('car_quote_id')] , false);
                         $row = $results[0];
                         $row['generateLink'] = [ 'hash' => $carQuoteEmailLink->hash, 'quote' => $carQuote->id];
+
                         $templateParams = collect($row)->toArray();
+                        $templateParams["insurance_coverage"]["sum_insured"] = $this->prefixAED($templateParams["insurance_coverage"]["sum_insured"]);
+                        $templateParams["insurance_coverage"]["excess"] = $this->prefixAED($templateParams["insurance_coverage"]["excess"]);
+                        $templateParams["insurance_coverage"]["premium_price"] = $this->prefixAED($templateParams["insurance_coverage"]["premium_price"]);
+                        $templateParams["insurance_coverage"]["ancillary_excess"] = $this->prefixAED($templateParams["insurance_coverage"]["ancillary_excess"]);
 
                         $params = [
                             'to' => $carQuote->email,

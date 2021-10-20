@@ -11962,13 +11962,12 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0__);
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! react */ "./node_modules/react/index.js");
 /* harmony import */ var react_dropzone__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! react-dropzone */ "./node_modules/react-dropzone/dist/es/index.js");
-/* harmony import */ var styled_components__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! styled-components */ "./node_modules/styled-components/dist/styled-components.browser.esm.js");
-/* harmony import */ var use_http__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! use-http */ "./node_modules/use-http/dist/esm/index.js");
-/* harmony import */ var react_spinners__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! react-spinners */ "./node_modules/react-spinners/index.js");
-/* harmony import */ var react_spinners__WEBPACK_IMPORTED_MODULE_7___default = /*#__PURE__*/__webpack_require__.n(react_spinners__WEBPACK_IMPORTED_MODULE_7__);
-/* harmony import */ var react_viewer__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! react-viewer */ "./node_modules/react-viewer/dist/index.js");
-/* harmony import */ var react_viewer__WEBPACK_IMPORTED_MODULE_4___default = /*#__PURE__*/__webpack_require__.n(react_viewer__WEBPACK_IMPORTED_MODULE_4__);
-/* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! react/jsx-runtime */ "./node_modules/react/jsx-runtime.js");
+/* harmony import */ var styled_components__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! styled-components */ "./node_modules/styled-components/dist/styled-components.browser.esm.js");
+/* harmony import */ var react_spinners__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! react-spinners */ "./node_modules/react-spinners/index.js");
+/* harmony import */ var react_spinners__WEBPACK_IMPORTED_MODULE_6___default = /*#__PURE__*/__webpack_require__.n(react_spinners__WEBPACK_IMPORTED_MODULE_6__);
+/* harmony import */ var react_viewer__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! react-viewer */ "./node_modules/react-viewer/dist/index.js");
+/* harmony import */ var react_viewer__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(react_viewer__WEBPACK_IMPORTED_MODULE_3__);
+/* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! react/jsx-runtime */ "./node_modules/react/jsx-runtime.js");
 var _templateObject;
 
 
@@ -12005,7 +12004,6 @@ function _taggedTemplateLiteral(strings, raw) { if (!raw) { raw = strings.slice(
 
 
 
-
 var getColor = function getColor(props) {
   if (props.isDragAccept) {
     return '#00e676';
@@ -12022,7 +12020,7 @@ var getColor = function getColor(props) {
   return '#eeeeee';
 };
 
-var Container = styled_components__WEBPACK_IMPORTED_MODULE_6__.default.div(_templateObject || (_templateObject = _taggedTemplateLiteral(["\n  flex: 1;\n  display: flex;\n  flex-direction: column;\n  align-items: center;\n  padding: 20px;\n  border-width: 2px;\n  border-radius: 2px;\n  border-color: ", ";\n  border-style: dashed;\n  background-color: #fafafa;\n  color: #bdbdbd;\n  outline: none;\n  transition: border .24s ease-in-out;\n"])), function (props) {
+var Container = styled_components__WEBPACK_IMPORTED_MODULE_5__.default.div(_templateObject || (_templateObject = _taggedTemplateLiteral(["\n  flex: 1;\n  display: flex;\n  flex-direction: column;\n  align-items: center;\n  padding: 20px;\n  border-width: 2px;\n  border-radius: 2px;\n  border-color: ", ";\n  border-style: dashed;\n  background-color: #fafafa;\n  color: #bdbdbd;\n  outline: none;\n  transition: border .24s ease-in-out;\n"])), function (props) {
   return getColor(props);
 });
 function File(_ref) {
@@ -12044,9 +12042,6 @@ function File(_ref) {
       visible = _React$useState2[0],
       setVisible = _React$useState2[1];
 
-  var _useFetch = (0,use_http__WEBPACK_IMPORTED_MODULE_3__.default)('resource/store'),
-      post = _useFetch.post;
-
   (0,react__WEBPACK_IMPORTED_MODULE_1__.useEffect)(function () {
     controller.onChange(null);
   }, []);
@@ -12055,7 +12050,7 @@ function File(_ref) {
     accept: 'image/*,application/pdf',
     onDrop: function () {
       var _onDrop = _asyncToGenerator( /*#__PURE__*/_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().mark(function _callee(acceptedFiles) {
-        var file, data, response, fileExt, fileObj;
+        var file, data, uploadFile, response, fileExt, fileObj;
         return _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
@@ -12067,9 +12062,17 @@ function File(_ref) {
                 data = new FormData();
                 data.append('file', file);
                 _context.next = 6;
-                return post(data);
+                return fetch('/resource/store', {
+                  method: 'POST',
+                  body: data
+                });
 
               case 6:
+                uploadFile = _context.sent;
+                _context.next = 9;
+                return uploadFile.json();
+
+              case 9:
                 response = _context.sent;
                 fileExt = file.name.split('.').pop();
 
@@ -12093,7 +12096,7 @@ function File(_ref) {
                   });
                 }
 
-              case 9:
+              case 12:
               case "end":
                 return _context.stop();
             }
@@ -12116,22 +12119,22 @@ function File(_ref) {
 
   var thumbs = files.files.map(function (file) {
     if (!file.path) {
-      return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("li", {
-        children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxs)("a", {
-          children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("span", {
+      return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("li", {
+        children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxs)("a", {
+          children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("span", {
             className: "image",
-            children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("i", {
+            children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("i", {
               className: "fa fa-file-pdf-o",
               style: {
                 fontSize: '3.5em'
               }
             })
-          }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxs)("span", {
+          }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxs)("span", {
             children: [" ", file.name]
-          }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("span", {
-            children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("span", {
+          }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("span", {
+            children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("span", {
               className: "time",
-              children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("a", {
+              children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("a", {
                 className: "close-link",
                 onClick: function onClick() {
                   setFiles({
@@ -12140,7 +12143,7 @@ function File(_ref) {
                   });
                   controller.onChange(null);
                 },
-                children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("i", {
+                children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("i", {
                   className: "fa fa-close"
                 })
               })
@@ -12150,23 +12153,23 @@ function File(_ref) {
       });
     }
 
-    return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("li", {
-      children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxs)("a", {
-        children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("span", {
+    return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("li", {
+      children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxs)("a", {
+        children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("span", {
           className: "image",
-          children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("img", {
+          children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("img", {
             src: file.preview,
             style: {
               height: 90,
               width: 'auto'
             }
           })
-        }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("span", {
+        }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("span", {
           children: file.name
-        }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("span", {
-          children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("span", {
+        }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("span", {
+          children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("span", {
             className: "time",
-            children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("a", {
+            children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("a", {
               className: "close-link",
               onClick: function onClick() {
                 setFiles({
@@ -12175,7 +12178,7 @@ function File(_ref) {
                 });
                 controller.onChange(null);
               },
-              children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("i", {
+              children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("i", {
                 className: "fa fa-close"
               })
             })
@@ -12203,24 +12206,24 @@ function File(_ref) {
     shouldShowPreview = false;
   }
 
-  return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxs)("div", {
+  return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxs)("div", {
     className: "container",
-    children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("div", {
+    children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("div", {
       className: "sweet-loading",
-      children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(react_spinners__WEBPACK_IMPORTED_MODULE_7__.ScaleLoader, {
+      children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)(react_spinners__WEBPACK_IMPORTED_MODULE_6__.ScaleLoader, {
         color: '#000000',
         loading: files.loader,
         size: 150
       })
-    }), shouldShow === true && files.loader === false && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxs)(Container, _objectSpread(_objectSpread({}, getRootProps({
+    }), shouldShow === true && files.loader === false && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxs)(Container, _objectSpread(_objectSpread({}, getRootProps({
       isDragActive: isDragActive,
       isDragAccept: isDragAccept,
       isDragReject: isDragReject
     })), {}, {
-      children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("input", _objectSpread({}, getInputProps())), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("p", {
+      children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("input", _objectSpread({}, getInputProps())), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("p", {
         children: "Drag 'n' drop some files here, or click to select files"
       })]
-    })), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)((react_viewer__WEBPACK_IMPORTED_MODULE_4___default()), {
+    })), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)((react_viewer__WEBPACK_IMPORTED_MODULE_3___default()), {
       visible: visible,
       onClose: function onClose() {
         setVisible(false);
@@ -12228,44 +12231,44 @@ function File(_ref) {
       images: [{
         src: "https://myalfreddev.blob.core.windows.net/myrewards/".concat(field.value)
       }]
-    }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxs)("ul", {
+    }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxs)("ul", {
       className: "list-unstyled msg_list",
-      children: [thumbs, shouldShowPreview === true && field.value && field.value.split('.').pop() !== 'pdf' && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("li", {
-        children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxs)("a", {
+      children: [thumbs, shouldShowPreview === true && field.value && field.value.split('.').pop() !== 'pdf' && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("li", {
+        children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxs)("a", {
           style: {
             cursor: 'pointer'
           },
           onClick: showDocumentPreview,
-          children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("span", {
+          children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("span", {
             className: "image",
-            children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("img", {
+            children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("img", {
               src: "https://myalfreddev.blob.core.windows.net/myrewards/".concat(field.value),
               style: {
                 height: 90,
                 width: 'auto'
               }
             })
-          }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxs)("span", {
+          }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxs)("span", {
             children: [" ", field.value]
           })]
         })
-      }), shouldShowPreview === true && field.value && field.value.split('.').pop() === 'pdf' && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("li", {
-        children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxs)("a", {
+      }), shouldShowPreview === true && field.value && field.value.split('.').pop() === 'pdf' && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("li", {
+        children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxs)("a", {
           style: {
             cursor: 'pointer'
           },
           onClick: function onClick() {
             return window.open("https://myalfreddev.blob.core.windows.net/myrewards/".concat(field.value), '_blank');
           },
-          children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("span", {
+          children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("span", {
             className: "image",
-            children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("i", {
+            children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("i", {
               className: "fa fa-file-pdf-o",
               style: {
                 fontSize: '3.5em'
               }
             })
-          }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxs)("span", {
+          }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxs)("span", {
             children: [" ", field.value]
           })]
         })
@@ -14286,6 +14289,18 @@ var insuranceDetail = {
             required: true
           }
         },
+        sum_insured: {
+          type: 'text',
+          label: 'Sum Insured',
+          access: {
+            read: ['advisor', 'admin', 'invoicing', 'pa'],
+            write: ['advisor', 'admin'],
+            update: ['advisor', 'admin']
+          },
+          rules: {
+            required: true
+          }
+        },
         premium_price: {
           type: 'text',
           label: 'Premium/Price',
@@ -14362,7 +14377,7 @@ var insuranceDetail = {
         repair_type: {
           type: 'dropdown',
           label: 'Repair Type',
-          source: ['Agency', 'NON Agency'],
+          source: ['Agency', 'NON Agency', 'Not Applicable'],
           access: {
             read: ['pa', 'advisor', 'admin', 'invoicing'],
             write: ['advisor', 'admin'],
@@ -14400,7 +14415,7 @@ var insuranceDetail = {
       sections: [{
         label: 'Insurance Coverage Information',
         //fields: ['start_date', 'insurance_company_id']
-        fields: ['start_date', 'insurance_company_id', 'insurance_plan_id', 'vehicle_type_id', 'excess', 'premium_price', 'ancillary_excess', 'personal_accident_benefit', 'breakdown_recovery', 'off_road_cover', 'rend_a_car', 'repair_type', 'financed_by', 'geographical_area']
+        fields: ['start_date', 'insurance_company_id', 'insurance_plan_id', 'vehicle_type_id', 'excess', 'sum_insured', 'premium_price', 'ancillary_excess', 'personal_accident_benefit', 'breakdown_recovery', 'off_road_cover', 'rend_a_car', 'repair_type', 'financed_by', 'geographical_area']
       }],
       view: {
         find: {
@@ -14663,6 +14678,13 @@ var carQuoteKycStatus = {
           }
         }],
         events: {
+          applyFilterAfterSearch: function applyFilterAfterSearch(options) {
+            var params = options.params,
+                filter = options.filter;
+            return _objectSpread(_objectSpread({}, filter), {}, {
+              car_quote_id: params.id
+            });
+          },
           applyFilter: function applyFilter(options) {
             var mode = options.mode,
                 url = options.url,
@@ -18187,14 +18209,14 @@ function KycAMLForm(props) {
                       onClick: function onClick() {
                         return approveAml('Rejected');
                       },
-                      children: "Reject"
+                      children: "AML Failed"
                     }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("button", {
                       type: "button",
                       "class": "btn btn-round btn-primary btn-sm",
                       onClick: function onClick() {
                         return approveAml('Approved');
                       },
-                      children: "Approve"
+                      children: "AML Cleared"
                     })]
                   })]
                 })
@@ -18222,7 +18244,7 @@ function KycAMLForm(props) {
                     onClick: function onClick() {
                       return approveAml('Approved');
                     },
-                    children: "Approve AML"
+                    children: "AML Check Cleared"
                   })
                 })
               }), (rest === null || rest === void 0 ? void 0 : rest.quote_status_id) && (rest === null || rest === void 0 ? void 0 : rest.quote_status_id) !== 11 && role === "pa" && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("tr", {

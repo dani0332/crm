@@ -24,7 +24,7 @@ class KycStatus extends BaseModel
             "pa" => ['id','code', 'text' ],
             "advisor" => [ 'id','code', 'text'],
             "admin" => [ 'id','code', 'text'],
-            "invoicing" => [ 'code', 'text' ]
+            "invoicing" => ['id', 'code', 'text' ]
         ]
     ];
     public function processGetDSL($filters) {
