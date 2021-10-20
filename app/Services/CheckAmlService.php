@@ -160,10 +160,10 @@ class CheckAmlService
 
         $emailL_sys = Config::get('constants.emailL_sys');
         if($emailL_sys == "PRODUCTION") {
-            $emailSubject = "IMCRM | Compliance Update on CDB ID : ".$quoteCdbId;
+            $emailSubject = "IMCRM | New AML Matches Found for CDB ID : ".$quoteCdbId;
         }
         else {
-            $emailSubject = $emailL_sys." | IMCRM | Compliance Update on CDB ID : ".$quoteCdbId;
+            $emailSubject = $emailL_sys." | IMCRM | New AML Matches Found for CDB ID : ".$quoteCdbId;
         }
 
         $appUrl = env('APP_URL');

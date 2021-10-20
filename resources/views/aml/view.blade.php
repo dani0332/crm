@@ -68,14 +68,14 @@
                         </div>
                         <div class="item form-group">
                             <div class="col">
-                                <label class="col-form-label col-md-2 col-sm-2" for="Start Date">Start Date</label>
+                                <label class="col-form-label col-md-2 col-sm-2" for="Start Date">Created Start Date</label>
                                 <div class="col-md-6 col-sm-6">
                                     <input type="text" class="form-control" id="amlCreatedStartDate" name="amlCreatedStartDate">
                                 </div>
                                 <span id="amlCreatedStartDateMsg" style="color:red;"> </span>
                             </div>
                             <div class="col">
-                                <label class="col-form-label col-md-2 col-sm-2" for="End Date">End Date</label>
+                                <label class="col-form-label col-md-2 col-sm-2" for="End Date">Created End Date</label>
                                 <div class="col-md-6 col-sm-6">
                                     <input type="text" class="form-control" id="amlCreatedEndDate" name="amlCreatedEndDate">
                                 </div>
