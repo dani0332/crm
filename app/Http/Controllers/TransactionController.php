@@ -13,6 +13,7 @@ use Auth;
 use DataTables;
 use Illuminate\Http\Request;
 use App\Models\User;
+use App\Models\CarQuote;
 use App\Services\CustomerService;
 use DB;
 use App\Services\TransAppService;
@@ -35,7 +36,7 @@ class TransactionController extends Controller
         $this->customerService = $cusService;
         $this->reasonService = $reasService;
         $this->middleware('permission:transapp-list|transapp-create|transapp-edit|transapp-delete', ['only' => ['index', 'store']]);
-        $this->middleware('permission:transapp-create', ['only' => ['create', 'store']]);
+       // $this->middleware('permission:transapp-create', ['only' => ['create', 'store']]);
         $this->middleware('permission:transapp-edit', ['only' => ['edit', 'update']]);
         $this->middleware('permission:transapp-delete', ['only' => ['destroy']]);
     }
@@ -128,16 +129,26 @@ class TransactionController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function create()
+    public function create(Request $request)
     {
+
+        $carQuote = [];
+        if($request->has("carQuote")){
+            $carQuote = CarQuote::with(["insurance_coverage" ,"advisor_id", "payment_detail"])->where("id",$request->input("carQuote"))->first();
+            if($carQuote)
+                $carQuote = $carQuote->toArray();
+        }
+
+
         $handlers = User::select('users.*')
         ->leftjoin('model_has_roles','users.id','model_has_roles.model_id')
         ->leftjoin('roles','roles.id','model_has_roles.role_id')
-        ->whereIn('roles.name', ['TRANSAPP_ADVISOR', 'TRANSAPP_APPROVER', 'TRANSAPP_ADMIN'])->orderBy('roles.name', 'asc')->get();
+        ->whereIn('roles.name', ['TRANSAPP_ADVISOR', 'TRANSAPP_APPROVER', 'TRANSAPP_ADMIN', 'advisor', 'invoicing'])
+        ->orderBy('roles.name', 'asc')->get();
         $insurancecompanies = InsuranceCompany::where('is_active', '=', 1)->where('is_deleted', 0)->orderBy('created_at', 'desc')->get();
         $typeofinsurances = TypeOfInsurance::where('is_active', '=', 1)->where('is_deleted', 0)->orderBy('created_at', 'desc')->get();
         $paymentmodes = PaymentMode::where('is_active', '=', 1)->where('is_deleted', 0)->orderBy('created_at', 'desc')->get();
-        return view('transaction.add', compact('insurancecompanies', 'handlers', 'paymentmodes','typeofinsurances'));
+        return view('transaction.add', compact('insurancecompanies', 'handlers', 'paymentmodes','typeofinsurances', 'carQuote'));
     }
 
     /**

@@ -18,12 +18,19 @@
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="Insurance Company Company">Insurance Company<span class="required">*</span></label>
                         <div class="col-md-6 col-sm-6">
-                            <select class="form-control" id="insurance_company" name="insurance_company">
+                            <select class="form-control" id="insurance_company" name="insurance_company" {{ isset($carQuote['insurance_coverage']["id"] ) ? 'readonly' : '' }}>
                                 <option value="">Select</option>
                                 @foreach ($insurancecompanies as $insurancecompany )
                                     <option {{ old('insurance_company') == $insurancecompany->id ? "selected":""  }} value="{{ $insurancecompany->id }}">{{ $insurancecompany->name }}</option>
+                                    @if ( isset($carQuote['insurance_coverage']['id']) && $carQuote['insurance_coverage']['id'] == $insurancecompany->id )
+                                        <option   selected="selected"   value="{{ $insurancecompany->id }}">{{ $insurancecompany->name }}</option>
+                                    @endif
                                 @endforeach
                             </select>
+
+                            @if (isset($carQuote['insurance_coverage']))
+                                <input type="hidden" name="car_quote_id" value="{{$carQuote['id']}}" />
+                            @endif
                             <small class="text-muted">Please select Insurance Company Name</small><br/>
                             @if ($errors->has('insurance_company'))
                                 <span class="text-danger">{{ $errors->first('insurance_company') }}</span>
@@ -33,7 +40,7 @@
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="First Name">First Name <span class="required">*</span></label>
                         <div class="col-md-6 col-sm-6">
-                            <input type="text" id="first_name" name="first_name" class="form-control" value="{{ old('first_name') }}"/>
+                            <input type="text" id="first_name" {{ isset($carQuote['first_name'] ) ? 'readonly' : '' }} name="first_name" class="form-control" value="{{ $carQuote['first_name'] ?? old('first_name') }}"/>
                             <small class="text-muted">Please enter Customer First Name</small><br/>
                             @if ($errors->has('first_name'))
                                 <span class="text-danger">{{ $errors->first('first_name') }}</span>
@@ -43,7 +50,7 @@
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="Last Name">Last Name <span class="required">*</span></label>
                         <div class="col-md-6 col-sm-6">
-                            <input type="text" id="last_name" name="last_name" class="form-control" value="{{ old('last_name') }}"/>
+                            <input type="text" id="last_name" {{ isset($carQuote['last_name'] ) ? 'readonly' : '' }}  name="last_name" class="form-control"  value="{{ $carQuote['last_name'] ?? old('last_name') }}"/>
                             <small class="text-muted">Please enter Customer Last Name</small><br/>
                             @if ($errors->has('last_name'))
                                 <span class="text-danger">{{ $errors->first('last_name') }}</span>
@@ -53,7 +60,7 @@
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="email">Email <span class="required">*</span></label>
                         <div class="col-md-6 col-sm-6">
-                            <input type="text" id="email" type="email" name="email" class="form-control" value="{{ old('email') }}"/>
+                            <input type="text" id="email" type="email" {{ isset($carQuote['email'] ) ? 'readonly' : '' }} name="email" class="form-control" value="{{ $carQuote['email'] ?? old('email') }}"/>
                             <small class="text-muted">Please enter Customer Email</small><br/>
                             @if ($errors->has('email'))
                                 <span class="text-danger">{{ $errors->first('email') }}</span>
@@ -67,11 +74,11 @@
                         <input type="text" value="{{ Auth::user()->name }}" class="form-control" readonly/>
                         <input type="hidden" id="assigned_to_id" name="assigned_to_id" value="{{ Auth::user()->id }}" />
                         @else
-                            <select class="form-control" id='assigned_to_id' name='assigned_to_id'>
+                            <select class="form-control" id='assigned_to_id' name='assigned_to_id' {{ isset($carQuote['advisor_id']["id"] ) ? 'readonly' : '' }}>
                             <option value=''>Please select Advisor</option>
                             @foreach($handlers as $handler)
-                                @if (old('assigned_to_id') == $handler->id || $handler->id == Auth::user()->id)
-                                    <option value="{{ $handler->id }}" selected>{{ $handler->name }}</option>
+                                @if (old('assigned_to_id') == $handler->id || $handler->id == Auth::user()->id || ( isset($carQuote["advisor_id"]["id"]) && $carQuote["advisor_id"]["id"] == $handler->id ) )
+                                    <option value="{{ $handler->id }}" selected="selected"  >{{ $handler->name }}</option>
                                 @else
                                     <option value="{{ $handler->id }}">{{ $handler->name }}</option>
                                 @endif
@@ -83,14 +90,18 @@
                                 <span class="text-danger">{{ $errors->first('assigned_to_id') }}</span>
                             @endif
                         </div>
-                    </div>
+                    </div> ]
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="Mode of payment">Mode of payment<span class="required">*</span></label>
                         <div class="col-md-6 col-sm-6">
-                            <select class="form-control" id="paymentmode" name="paymentmode">
+                            <select class="form-control" id="paymentmode" name="paymentmode" {{ isset($carQuote['payment_detail']["mode_id"] ) ? 'readonly' : '' }}>
                                 <option value="">Select</option>
                                 @foreach ($paymentmodes as $paymentmode )
                                     <option {{ old('paymentmode') == $paymentmode->id ? "selected":""  }} value="{{ $paymentmode->id }}">{{ $paymentmode->name }}</option>
+
+                                    @if (isset($carQuote['payment_detail']['mode_id']) && $carQuote['payment_detail']['mode_id'] == $paymentmode->id )
+                                        <option  selected="selected"   value="{{ $paymentmode->id }}">{{ $paymentmode->name }}</option>
+                                    @endif
                                 @endforeach
                             </select>
                             <small class="text-muted">Please select Mode Of Payment</small><br/>

@@ -175,7 +175,7 @@ class CarQuote extends BaseModel
     public $access = [
 
         'write' => ['advisor'],
-        'update' => ['advisor'],
+        'update' => ['advisor','invoicing', 'pa'],
         'delete' => ['advisor'],
         'access' => [
             "pa" => [ 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'created_at','car_value', "pa_id","invoicing"],
@@ -231,7 +231,7 @@ class CarQuote extends BaseModel
                     $pa_id = $filters["pa_id"] == 0 ? NULL : Auth::user()->id;
                     $restrictFilter["invoicing"] = $pa_id;
                     $restrictFilter["advisor_id"] = ["op" => "<>", "val" => ''];
-                    $restrictFilter["quote_status_id"] =  ["op" => "in", "val" => [13, 15]];
+                    $restrictFilter["quote_status_id"] =  ["op" => "in", "val" => [13, 14, 15]];
                 }
             }
 
@@ -245,14 +245,14 @@ class CarQuote extends BaseModel
 
         if( Auth::user()->hasRole('pa') && $request->has('action')) {
             $request->request->add(['pa_id' => Auth::user()->id]);
-            parent::saveForm($request, true);
+            return parent::saveForm($request, true);
         }
         else if(Auth::user()->hasRole('invoicing') && $request->has('action')){
             $request->request->add(['invoicing' => Auth::user()->id]);
-            parent::saveForm($request, true);
+            return parent::saveForm($request, true);
         }
         else{
-            parent::saveForm($request, $update );
+            return parent::saveForm($request, $update );
         }
     }
 }
