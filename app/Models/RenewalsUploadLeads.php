@@ -8,11 +8,10 @@ use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 use Config;
 
-class HomeQuote extends Model implements AuditableContract
+class RenewalsUploadLeads extends Model implements AuditableContract
 {
     use HasFactory, Auditable;
-    protected $table = 'home_quote_request';
-    protected $guarded = [];
+    protected $table = 'renewals_upload_leads';
 
     public function getCreatedAtAttribute($table)
     {
@@ -23,5 +22,9 @@ class HomeQuote extends Model implements AuditableContract
     {
         $date_time_format = Config::get('constants.datetime_format');
         return $this->asDateTime($table)->timezone(config('app.timezone'))->format($date_time_format);
+    }
+    public function createdby()
+    {
+        return $this->belongsTo(User::class,'created_by_id','id');
     }
 }

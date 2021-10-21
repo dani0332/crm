@@ -20,7 +20,7 @@ use Auth;
 
 class CheckAmlService
 {
-    public function checkAml($firstName,$lastName,$quoteRequestId,$quoteTypeId)
+    public static function checkAml($firstName,$lastName,$quoteRequestId,$quoteTypeId,$isEmailSendingEnabled)
     {
         $amlSearchEndPoint = Config::get('constants.AML_SEARCH_API_ENDPOINT');
 
@@ -59,7 +59,9 @@ class CheckAmlService
             if($quoteTypeCode == quoteTypeCode::Yacht) { $quoteCdbId = YachtQuote::where('id', '=', $quoteRequestId)->value('code'); }
             if($quoteTypeCode == quoteTypeCode::Travel) { $quoteCdbId = TravelQuote::where('id', '=', $quoteRequestId)->value('code'); }
 
-            CheckAmlService::sendAMLMatchedEmailComplianceTeam($emailL_sys,$amlUrl,$resultsFound,$fullName,$quoteTypeName,$quoteCdbId);
+            if ($isEmailSendingEnabled == true) {
+                CheckAmlService::sendAMLMatchedEmailComplianceTeam($emailL_sys,$amlUrl,$resultsFound,$fullName,$quoteTypeName,$quoteCdbId);
+            }
         }
 
         // API failed

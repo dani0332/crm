@@ -121,8 +121,19 @@
                         <li><a><i class="fa fa-user"></i> Customers <span class="fa fa-chevron-down"></span></a>
                             <ul class="nav child_menu">
                                 <li><a href="{{ url('customer') }}">Search</a></li>
-                                <li><a href="{{ url('customer-upload') }}">Upload</a></li>
+                                @can('customers-upload')
+                                    <li><a href="{{ url('customer-upload') }}">Upload</a></li>
+                                @endcan
                             </ul>
+                        </li>
+                    </ul>
+                @endcan
+                @can('renewals-upload')
+                    <ul class="nav side-menu">
+                        <li><a><i class="fa fa-quote-left"></i> Renewals <span class="fa fa-chevron-down"></span></a>
+                        <ul class="nav child_menu">
+                            <li><a href="{{ url('renewals-upload') }}">Upload</a></li>
+                        </ul>
                         </li>
                     </ul>
                 @endcan

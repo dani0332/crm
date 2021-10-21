@@ -12,6 +12,7 @@ class BikeQuote extends Model implements AuditableContract
 {
     use HasFactory, Auditable;
     protected $table = 'bike_quote_request';
+    protected $guarded = [];
 
     public function getCreatedAtAttribute($table)
     {
