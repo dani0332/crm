@@ -217,7 +217,7 @@
                                                                                             <li>Insurance Company: {{$insurance_coverage['insurance_company_id']['name'] ?? ''}}</li>
                                                                                             <li>Sum Insured: {{$insurance_coverage['sum_insured'] ?? ''}}</li>
                                                                                             <li>Excess: {{$insurance_coverage['excess'] ?? ''}}</li>
-                                                                                            <li>Premium/Price: {{$insurance_coverage['premium_price'] ?? ''}} (excl. VAT)</li>
+                                                                                            <li>Premium/Price: {{$insurance_coverage['premium_price'] ?? ''}} ((incl. 5% VAT)</li>
                                                                                             <li>Ancillary Excess:{{$insurance_coverage['ancillary_excess'] ?? ''}} (Applicable only to HPV or subjected to specific make & model)</li>
                                                                                             <li>Repair type: {{$insurance_coverage['repair_type'] ?? ''}}</li>
                                                                                             <li>Financed by (if any): {{$insurance_coverage['financed_by'] ?? ''}}</li>

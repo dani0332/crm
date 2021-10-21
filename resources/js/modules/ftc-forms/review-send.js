@@ -5,6 +5,7 @@ import { useParams } from "react-router-dom";
 import { confirmAlert } from 'react-confirm-alert'; // Import
 import 'react-confirm-alert/src/react-confirm-alert.css'; // Import css
 import { session } from "../../utils";
+import moment from "moment";
 
 export default function ReviewSend(props) {
 
@@ -71,7 +72,7 @@ export default function ReviewSend(props) {
                     </tr>
                     <tr>
                         <td>Date of Birth:</td>
-                        <td class="fs15 fw700 text-right">-</td>
+                        <td class="fs15 fw700 text-right">{moment(data?.dob).format('YYYY/MM/DD').toString()}</td>
                     </tr>
                     <tr>
                         <td>UAE Years driving:</td>
@@ -83,7 +84,7 @@ export default function ReviewSend(props) {
                     </tr>
                     <tr>
                         <td>Date of first registration:</td>
-                        <td class="fs15 fw700 text-right">-</td>
+                        <td class="fs15 fw700 text-right">{moment(data?.date_first_registration).format('YYYY/MM/DD').toString()}</td>
                     </tr>
                     <tr>
                         <td>Model:</td>
@@ -103,7 +104,7 @@ export default function ReviewSend(props) {
                     </tr>
                     <tr>
                         <td>Specs:</td>
-                        <td class="fs15 fw700 text-right">-</td>
+                        <td class="fs15 fw700 text-right">{data?.vehicle_detail_id?.specs}</td>
                     </tr>
                     <tr>
                         <td>Engine Capacity:</td>
@@ -115,7 +116,7 @@ export default function ReviewSend(props) {
                     </tr>
                     <tr>
                         <td>Current Cover:</td>
-                        <td class="fs15 fw700 text-right">-</td>
+                        <td class="fs15 fw700 text-right">{data?.vehicle_detail_id?.current_cover}</td>
                     </tr>
                     <tr>
                         <td>Chassis Number:</td>
@@ -152,7 +153,7 @@ export default function ReviewSend(props) {
                     </tr>
                     <tr>
                         <td>Sum Insured:</td>
-                        <td class="fs15 fw700 text-right">-</td>
+                        <td class="fs15 fw700 text-right">{data?.insurance_coverage?.sum_insured}</td>
                     </tr>
                     <tr>
                         <td>Excess:</td>
