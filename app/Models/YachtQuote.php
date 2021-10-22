@@ -12,6 +12,7 @@ class YachtQuote extends Model implements AuditableContract
 {
     use HasFactory, Auditable;
     protected $table = 'yacht_quote_request';
+    protected $guarded = [];
 
     public function getCreatedAtAttribute($table)
     {

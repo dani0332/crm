@@ -15,7 +15,7 @@ class CarQuote extends BaseModel
     protected $casts = [
         'dob' => 'datetime',
     ];
-
+    protected $guarded = [];
 
 
     public function uaeLicenseHeldFor()
@@ -137,6 +137,12 @@ class CarQuote extends BaseModel
     {
         return $this->hasOne(VehicleDetailCarQuote::class, 'car_quote_id', 'id');
     }
+
+    public function payment_detail()
+    {
+        return $this->hasOne(CarQuotePayment::class, 'car_quote_id', 'id');
+    }
+
     public function insurance_coverage()
     {
         return $this->hasOne(CarQuoteInsuranceCoverage::class, 'car_quote_id', 'id');
@@ -163,13 +169,13 @@ class CarQuote extends BaseModel
         if($this->isGetList)
             return [];
         else
-            return ["quote_status_id", "kyc_status_id", "insurance_coverage.insurance_company_id", "insurance_coverage.insurance_plan_id", "insurance_coverage.vehicle_type_id", "uae_license_held_for_id", "car_make_id", "car_model_id", "emirate_of_registration_id", "claim_history_id",  "nationality_id", "vehicle_detail_id", "pa_id", "car_quote_kyc"];
+            return ["payment_detail","quote_status_id", "kyc_status_id", "insurance_coverage.insurance_company_id", "insurance_coverage.insurance_plan_id", "insurance_coverage.vehicle_type_id", "uae_license_held_for_id", "car_make_id", "car_model_id", "emirate_of_registration_id", "claim_history_id",  "nationality_id", "vehicle_detail_id", "pa_id", "car_quote_kyc"];
     }
 
     public $access = [
 
         'write' => ['advisor'],
-        'update' => ['advisor'],
+        'update' => ['advisor','invoicing', 'pa'],
         'delete' => ['advisor'],
         'access' => [
             "pa" => [ 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'created_at','car_value', "pa_id","invoicing"],
@@ -225,7 +231,7 @@ class CarQuote extends BaseModel
                     $pa_id = $filters["pa_id"] == 0 ? NULL : Auth::user()->id;
                     $restrictFilter["invoicing"] = $pa_id;
                     $restrictFilter["advisor_id"] = ["op" => "<>", "val" => ''];
-                    $restrictFilter["quote_status_id"] =  ["op" => "in", "val" => [13]];
+                    $restrictFilter["quote_status_id"] =  ["op" => "in", "val" => [13, 14, 15]];
                 }
             }
 
@@ -239,14 +245,14 @@ class CarQuote extends BaseModel
 
         if( Auth::user()->hasRole('pa') && $request->has('action')) {
             $request->request->add(['pa_id' => Auth::user()->id]);
-            parent::saveForm($request, true);
+            return parent::saveForm($request, true);
         }
         else if(Auth::user()->hasRole('invoicing') && $request->has('action')){
             $request->request->add(['invoicing' => Auth::user()->id]);
-            parent::saveForm($request, true);
+            return parent::saveForm($request, true);
         }
         else{
-            parent::saveForm($request, $update );
+            return parent::saveForm($request, $update );
         }
     }
 }

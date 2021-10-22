@@ -32,11 +32,17 @@ class FormController extends ApiController
     {
         try {
            // sleep(1);
+            $role = strtolower(Auth::user()->usersroles[0]->name);
             $parentFormModelColl = collect(config('form-models')[$request->form]);
             $parentFormModel = $parentFormModelColl->get('model');
             $Model = '\\App\\Models\\'.$parentFormModel;
             $modelInstance = new $Model;
-            return $this->respondData($modelInstance->saveForm($request, true));
+            $modelInstance->APIController = $this;
+            // $updatePermission = $modelInstance->access["update"];
+            // $collection = collect($updatePermission);
+            // if(!$collection->contains($role))
+            //     return  $this->respondError('Access denied', 400);
+            return $modelInstance->saveForm($request, true);
         } catch (Exception $e) {
             return $this->respondError($e->getMessage());
         }

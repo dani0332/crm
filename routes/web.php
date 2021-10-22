@@ -45,6 +45,7 @@ use App\Http\Controllers\TmCallStatusController;
 use App\Http\Controllers\TmLeadStatusController;
 use App\Http\Controllers\TmLeadController;
 use App\Http\Controllers\TmUploadLeadController;
+use App\Http\Controllers\RenewalsUploadController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -78,6 +79,10 @@ Route::group(['middleware' =>  ['auth']], function () {
     Route::resource('customer', CustomerController::class);
     Route::get('/customer-upload', [CustomerController::class, 'uploadCustomers']);
     Route::post('/customer-process', [CustomerController::class, 'processCustomerCSV']);
+
+    Route::resource('renewals', RenewalsUploadController::class);
+    Route::get('/renewals-upload', [RenewalsUploadController::class, 'uploadRenewals']);
+    Route::post('/renewals-process', [RenewalsUploadController::class, 'processRenewalsCSV']);
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 

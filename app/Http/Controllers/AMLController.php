@@ -6,6 +6,7 @@ use App\Models\AML;
 use App\Models\QuoteType;
 use Illuminate\Http\Request;
 use DataTables;
+use Auth;
 use App\Enums\quoteTypeCode;
 use App\Services\CheckAmlService;
 use App\Services\QuoteStatusService;
@@ -52,9 +53,7 @@ class AMLController extends Controller
         if ($request->ajax()) {
             $dataAml = [];
 
-            if (isset($request->searchType) && !empty($request->searchType)
-                && isset($request->searchField) && !empty($request->searchField)
-                && isset($request->quoteType) && !empty($request->quoteType)) {
+            if (isset($request->quoteType) && !empty($request->quoteType)) {
 
                 $quoteTypeCode = QuoteType::where('id', '=', $request->quoteType)->value('code');
                 if($quoteTypeCode == quoteTypeCode::Car) { $quoteRequestTable = 'car_quote_request'; }
@@ -72,14 +71,29 @@ class AMLController extends Controller
                 ->where('kyc_logs.quote_type_id', $request->quoteType)
                 ->orderBy('kyc_logs.created_at','desc');
 
-                if($request->searchType == 'cdbId') {
-                    $dataAml->where($quoteRequestTable.'.code',$request->searchField);
+                if (isset($request->searchType) && !empty($request->searchType) &&
+                    isset($request->searchField) && !empty($request->searchField)) {
+                    if($request->searchType == 'cdbId') {
+                        $dataAml->where($quoteRequestTable.'.code',$request->searchField);
+                    }
+                    if($request->searchType == 'id') {
+                        $dataAml->where('kyc_logs.id',$request->searchField);
+                    }
+                    if($request->searchType == 'customerEmail') {
+                        $dataAml->where($quoteRequestTable.'.email',$request->searchField);
+                    }
                 }
-                if($request->searchType == 'id') {
-                    $dataAml->where('kyc_logs.id',$request->searchField);
+                if (isset($request->matchFound)) {
+                    if($request->matchFound == "False") {
+                        $dataAml->where('kyc_logs.results_found', '=', '0');
+                    }
+                    if($request->matchFound == "True") {
+                        $dataAml->where('kyc_logs.results_found', '>', '0');
+                    }
                 }
-                if($request->searchType == 'customerEmail') {
-                    $dataAml->where($quoteRequestTable.'.email',$request->searchField);
+                if (isset($request->amlCreatedStartDate) && !empty($request->amlCreatedStartDate) &&
+                    isset($request->amlCreatedEndDate) && !empty($request->amlCreatedEndDate)) {
+                        $dataAml->whereRaw('DATE(kyc_logs.created_at) BETWEEN "'.$request->amlCreatedStartDate.'" AND "'.$request->amlCreatedEndDate.'"');
                 }
             }
 
@@ -256,12 +270,42 @@ class AMLController extends Controller
             $quoteStatusCode = "";
         }
 
-        if($quoteTypeCode == quoteTypeCode::Business) {
-            return view("aml.details", compact("quoteTypeCode","quoteTypeText","quoteRequest","businessTypeCode"
-            ,"businessCoverTypeText","businessCommuModeText","kycLogs","quoteStatusCode","auditLogLine"));
+        if(Auth::user()->hasRole("COMPLIANCE")) {
+            $isCurrentUserFromCompliance = 1;
         }
         else {
-            return view("aml.details", compact("quoteTypeCode","quoteTypeText","quoteRequest","kycLogs","quoteStatusCode","auditLogLine"));
+            $isCurrentUserFromCompliance = 0;
+        }
+        if(Auth::user()->hasRole("pa") || Auth::user()->hasRole("AML")) {
+            $isCurrentUserFromPaAml = 1;
+        }
+        else {
+            $isCurrentUserFromPaAml = 0;
+        }
+
+        $getTotalResults = AML::where('quote_type_id', $quoteTypeId)
+        ->where('quote_request_id', $quoteRequestId)
+        ->sum('results_found');
+        if($getTotalResults > 0) {
+            $resultsFound = 1;
+        }
+        else {
+            $resultsFound = 0;
+        }
+
+        $getAMLRows = AML::where('quote_type_id', '=', $quoteTypeId)
+        ->where('quote_request_id', $quoteRequestId)->get();
+        $getAMLNumRows = $getAMLRows->count();
+
+        if($quoteTypeCode == quoteTypeCode::Business) {
+            return view("aml.details", compact("quoteTypeCode","quoteTypeText","quoteRequest","businessTypeCode"
+            ,"businessCoverTypeText","businessCommuModeText","kycLogs","quoteStatusCode","auditLogLine"
+            ,"isCurrentUserFromCompliance","isCurrentUserFromPaAml","resultsFound","getAMLNumRows", "quoteTypeId"));
+        }
+        else {
+            return view("aml.details", compact("quoteTypeCode","quoteTypeText","quoteRequest","kycLogs"
+            ,"quoteStatusCode","auditLogLine","isCurrentUserFromCompliance","isCurrentUserFromPaAml"
+            ,"resultsFound","getAMLNumRows", "quoteTypeId"));
         }
     }
 
@@ -273,7 +317,15 @@ class AMLController extends Controller
             return redirect()->back()->with('message', 'Quote Status is not updated');
         }
         else {
-            return redirect()->back()->with('success', 'Quote Status is set to '.$updateQuoteStatusResp.'');
+            $quoteStatusText = $updateQuoteStatusResp[0];
+            $quoteCdbId = $updateQuoteStatusResp[1];
+            $quoteTypeText = $updateQuoteStatusResp[2];
+            $quotePaID = $updateQuoteStatusResp[3];
+            $clientFullName = $updateQuoteStatusResp[4];
+            if(Auth::user()->hasRole("COMPLIANCE")) {
+                $this->checkAmlService->sendAMLQuoteStatusChangeNotification($quoteTypeId, $quoteRequestId, $quoteStatusText, $quoteCdbId, $quoteTypeText, $quotePaID, $clientFullName);
+            }
+            return redirect()->back()->with('success', 'Quote Status is set to '.$quoteStatusText.'');
         }
 
     }
@@ -297,11 +349,19 @@ class AMLController extends Controller
         if($quoteTypeCode == quoteTypeCode::Travel) { $updateQuote = TravelQuote::find($quoteRequestId); }
 
         $quoteUpdate = $updateQuote;
-        $quoteUpdate->first_name = $request->first_name;
-        $quoteUpdate->last_name = $request->last_name;
+        $firstName = ucwords(strtolower($request->first_name));
+        $lastName = ucwords(strtolower($request->last_name));
+        $quoteUpdate->first_name = $firstName;
+        $quoteUpdate->last_name = $lastName;
+
+        // Check current user role is pa/AML > If yes > update pa_id - current_user_id
+        if(Auth::user()->hasRole("AML") || Auth::user()->hasRole("pa")) {
+            $quoteUpdate->pa_id = Auth::user()->id;
+        }
+
         $quoteUpdate->save();
 
-        $this->checkAmlService->checkAml($request->first_name,$request->last_name,$quoteRequestId,$quoteTypeId);
+        $this->checkAmlService->checkAml($firstName,$lastName,$quoteRequestId,$quoteTypeId, true);
 
         return redirect()->back()->with('success', 'Quote is updated');
     }

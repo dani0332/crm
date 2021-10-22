@@ -12,6 +12,7 @@ class HealthQuote extends Model implements AuditableContract
 {
     use HasFactory, Auditable;
     protected $table = 'health_quote_request';
+    protected $guarded = [];
 
     public function emirate()
     {

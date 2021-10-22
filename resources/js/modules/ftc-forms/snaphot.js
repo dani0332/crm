@@ -9,6 +9,7 @@ import FtcForm from "./ftc-form";
 import AssignUser from "./assign-user";
 import { session } from "../../utils";
 import Overview from "./overview";
+import FtcPayment from "./ftc-payment";
 const Styles = styled.div``;
 
 
@@ -29,11 +30,14 @@ function reducer(state, action) {
         return  { form: 'carInsuranceDetail',  view_mode: 'list',action_type: 'list' , context: 'car_quote_snap', multi: false, filter: { car_quote_id: paramRef.current.id} }
       case 'ftcHistory':
         return  { form: 'ftcHistory',  view_mode: 'list',action_type: 'list' , context: 'car_quote_snap', filter: { car_quote_id: paramRef.current.id} }
+      case 'ftcPayment':
+        return  { form: 'ftcPayment',  view_mode: 'list',action_type: 'list' , context: 'car_quote_snap',  multi: false, filter: `/${paramRef.current.id}` }
+
       case 'email_template':
         return  { data: action.state, form: 'email_template' }
       case 'overview':
         return  { data: action.state, form: 'overview' }
-    case 'kyc':
+      case 'kyc':
         return  { data: action.state, form: 'kyc' }
       case 'assign':
         return  { data: action.state, form: 'assign' }
@@ -105,6 +109,13 @@ const leftNavList = [
     active: 0,
     id: 7,
     data: 'kyc'
+ },
+ {
+    icon:'fa fa-line-chart',
+    label:'Payment',
+    active: 0,
+    id: 9,
+    data: 'ftcPayment'
  }
 ]
 
@@ -131,6 +142,9 @@ switch(form?.form){
         break
     case 'ftcHistory':
         formArr.push( <FtcForm filter={{ car_quote_id: paramRef.current.id }} />)
+        break
+    case 'ftcPayment':
+        formArr.push( <FtcPayment filter={{ car_quote_id: paramRef.current.id }} />)
         break
     case 'kyc':
         formArr.push( <KycForm filter={{ car_quote_id: paramRef.current.id }} />)

@@ -20,7 +20,7 @@
                 @method('POST')
                     <div class="item form-group">
                         <div class="col">
-                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="ID"><b> ID</b></label>
+                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="ID"><b>AML Id</b></label>
                             <div class="col-md-6 col-sm-6">
                             <p class="label-align-center">{{ $aml->id }}</p>
                             </div>
@@ -68,7 +68,6 @@
                             </div>
                         </div>
                         <div class="col">
-
                         </div>
                     </div>
                     <div class="item form-group">
@@ -79,14 +78,6 @@
                             </div>
                         </div>
                         <div class="col">
-
-                        </div>
-                    </div>
-                    <div class="ln_solid"></div>
-                    <div class="row">
-                    <div class="col-auto mr-auto"></div>
-                        <div class="col-auto">
-                            {{--<button type="submit" class="btn btn-warning btn-sm">Resubmit</button>--}}
                         </div>
                     </div>
                 </form>
