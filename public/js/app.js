@@ -12963,6 +12963,11 @@ function SelectField(_ref) {
     value = options;
   }
 
+  console.log('---**********SelectAmjad-************----');
+  console.log(field);
+  console.log(value);
+  console.log(data);
+  console.log('---**********SelectAmjad-************----');
   return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)(react_select__WEBPACK_IMPORTED_MODULE_7__.default, {
     options: value,
     value: data === null || data === void 0 ? void 0 : data.defaultValue,

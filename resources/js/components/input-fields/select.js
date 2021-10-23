@@ -152,6 +152,12 @@ export default function SelectField({field, controller}) {
         value = options
     }
 
+    console.log('---**********SelectAmjad-************----')
+    console.log(field)
+    console.log(value)
+    console.log(data)
+    console.log('---**********SelectAmjad-************----')
+
     return (
             <Select
                 options={value}
