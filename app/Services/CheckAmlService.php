@@ -20,7 +20,7 @@ use Auth;
 
 class CheckAmlService
 {
-    public static function checkAml($firstName,$lastName,$quoteRequestId,$quoteTypeId,$isEmailSendingEnabled)
+    public function checkAml($firstName,$lastName,$quoteRequestId,$quoteTypeId,$isEmailSendingEnabled)
     {
         $amlSearchEndPoint = Config::get('constants.AML_SEARCH_API_ENDPOINT');
 
@@ -60,7 +60,8 @@ class CheckAmlService
             if($quoteTypeCode == quoteTypeCode::Travel) { $quoteCdbId = TravelQuote::where('id', '=', $quoteRequestId)->value('code'); }
 
             if ($isEmailSendingEnabled == true) {
-                CheckAmlService::sendAMLMatchedEmailComplianceTeam($emailL_sys,$amlUrl,$resultsFound,$fullName,$quoteTypeName,$quoteCdbId);
+                $checkAmlService = new CheckAmlService();
+                $checkAmlService->sendAMLMatchedEmailComplianceTeam($emailL_sys,$amlUrl,$resultsFound,$fullName,$quoteTypeName,$quoteCdbId);
             }
         }
 
@@ -79,13 +80,14 @@ class CheckAmlService
             }
 
             // Send Error Email alert to engineering team
-            CheckAmlService::sendAMLErrorEmailEngTeam($emailAmlData,$emailL_sys,$amlUrl,$chAmlStatus,$requestMessage);
+            $checkAmlService = new CheckAmlService();
+            $checkAmlService->sendAMLErrorEmailEngTeam($emailAmlData,$emailL_sys,$amlUrl,$chAmlStatus,$requestMessage);
         }
         return $chAmlStatus; // return http code
     }
 
     // Match found Email
-    public static function sendAMLMatchedEmailComplianceTeam($emailL_sys,$amlUrl,$resultsFound,$fullName,$quoteTypeName,$quoteCdbId)
+    public function sendAMLMatchedEmailComplianceTeam($emailL_sys,$amlUrl,$resultsFound,$fullName,$quoteTypeName,$quoteCdbId)
     {
         $recipients = User::select('users.email as user_email')
         ->leftjoin('model_has_roles','users.id','model_has_roles.model_id')
@@ -104,7 +106,8 @@ class CheckAmlService
             $emailSubject = $emailL_sys." | IMCRM | New AML Matches Found for CDB ID : ".$quoteCdbId;
         }
 
-        CheckAmlService::amlComplianceMail('AmlComplianceMail', [
+        $checkAmlService = new CheckAmlService();
+        $checkAmlService->amlComplianceMail('AmlComplianceMail', [
             'amlUrl' => $amlUrl,
             'resultsFound' => $resultsFound,
             'fullName' => $fullName,
@@ -113,7 +116,7 @@ class CheckAmlService
         ], $emailSubject, $emailRecipients,$emailL_sys);
     }
 
-    public static function amlComplianceMail($templateName, $templateParams, $emailSubject, $emailRecipients, $emailL_sys)
+    public function amlComplianceMail($templateName, $templateParams, $emailSubject, $emailRecipients, $emailL_sys)
 	{
         if($emailL_sys == "PRODUCTION") {
             $fromEmail = Config::get('constants.MAIL_FROM_ADDRESS');
@@ -131,7 +134,7 @@ class CheckAmlService
         });
 	}
 
-    public static function sendAMLQuoteStatusChangeNotification($quoteTypeId, $quoteRequestId, $quoteStatusText, $quoteCdbId, $quoteTypeText, $quotePaID, $clientFullName)
+    public function sendAMLQuoteStatusChangeNotification($quoteTypeId, $quoteRequestId, $quoteStatusText, $quoteCdbId, $quoteTypeText, $quotePaID, $clientFullName)
 	{
         $complianceUsersEmails = User::select('users.email as user_email')
         ->leftjoin('model_has_roles','users.id','model_has_roles.model_id')
@@ -155,9 +158,9 @@ class CheckAmlService
             // TO will be currentUserID
             $currentUserEmailId = User::where('id', '=', Auth::user()->id)->value('email');
             $toRecipient = $currentUserEmailId;
+
             // CC will be all users compliance
             $ccRecipients = $complianceEmailRecipients;
-
         }
 
         $emailL_sys = Config::get('constants.emailL_sys');
@@ -171,7 +174,8 @@ class CheckAmlService
         $appUrl = env('APP_URL');
         $amlUrl = $appUrl.'/kyc/aml/'.$quoteTypeId.'/details/'.$quoteRequestId;
 
-        CheckAmlService::amlQuoteStatusUpdateMail('AmlQuoteStatusUpdateMail', [
+        $checkAmlService = new CheckAmlService();
+        $checkAmlService->amlQuoteStatusUpdateMail('AmlQuoteStatusUpdateMail', [
             'amlUrl' => $amlUrl,
             'amlQuoteStatus' => $quoteStatusText,
             'clientFullName' => $clientFullName,
@@ -180,7 +184,7 @@ class CheckAmlService
         ], $emailSubject, $toRecipient, $ccRecipients, $emailL_sys);
 	}
 
-    public static function amlQuoteStatusUpdateMail($templateName, $templateParams, $emailSubject, $toRecipient, $ccRecipients, $emailL_sys)
+    public function amlQuoteStatusUpdateMail($templateName, $templateParams, $emailSubject, $toRecipient, $ccRecipients, $emailL_sys)
 	{
         if($emailL_sys == "PRODUCTION") {
             $fromEmail = Config::get('constants.MAIL_FROM_ADDRESS');
@@ -199,7 +203,7 @@ class CheckAmlService
 	}
 
     // Error Email
-    public static function sendAMLErrorEmailEngTeam($emailAmlData,$emailL_sys,$amlUrl,$chAmlStatus,$requestMessage)
+    public function sendAMLErrorEmailEngTeam($emailAmlData,$emailL_sys,$amlUrl,$chAmlStatus,$requestMessage)
     {
         $errorEmailRecipients = Config::get('constants.ERROR_EMAIL_RECIPIENTS');
         $errorEmailRecipients = explode(',', $errorEmailRecipients);
