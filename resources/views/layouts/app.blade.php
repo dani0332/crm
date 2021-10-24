@@ -41,6 +41,7 @@ $appName = Config::get('constants.APP_NAME');
     <link href="{{ asset('vendors/datatables.net-scroller-bs/css/scroller.bootstrap.min.css') }}" rel="stylesheet">
     <link href="https://www.jquery-az.com/jquery/css/bootstrap-markdown-editor.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="{{ asset('css/crm.css') }}" rel="stylesheet">
 
     <!-- iCheck -->
     <link href="{{ asset('vendors/iCheck/skins/flat/green.css') }}" rel="stylesheet">

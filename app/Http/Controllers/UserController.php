@@ -78,7 +78,8 @@ class UserController extends Controller
     public function create()
     {
         $roles = Role::pluck('name', 'name')->all();
-        return view('user.add', compact('roles'));
+        $teams = Team::orderBy('name', 'asc')->get();
+        return view('user.add', compact('roles', 'teams'));
     }
     /**
      * Store a newly created resource in storage.
@@ -93,13 +94,19 @@ class UserController extends Controller
             'email' => 'required|email|unique:users',
             'roles' => 'required',
             'password' => 'required',
+            'team' => 'required',
         ]);
-
         $user = new User();
         $user->name = $request->name;
         $user->email = $request->email;
         $user->password = bcrypt($request->password);
         $user->save();
+
+        $userTeam = new UserTeams();
+        $userTeam->team_id = $request->team;
+        $userTeam->user_id = $user->id;
+        $userTeam->save();
+
         $user->assignRole($request->input('roles'));
         if (isset($request->return_to_view))
             return redirect("admin/users/" . $user->id)->with('success', 'User has been stored');
@@ -152,11 +159,16 @@ class UserController extends Controller
         $this->validate($request, [
             'name' => 'required|max:120',
             'roles' => 'required',
+            'team' => 'required'
         ]);
         $user->name = $request->name;
         $user->email = $request->email;
         $user->password = bcrypt($request->password);
         $user->save();
+
+        $userTeam = UserTeams::where('user_id', '=', $user->id)->firstOrFail();
+        $userTeam->team_id = $request->team;
+        $userTeam->save();
 
         DB::table('model_has_roles')->where('model_id', $user->id)->delete();
         $user->assignRole($request->input('roles'));

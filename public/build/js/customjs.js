@@ -12,6 +12,10 @@ $(document).ready(function() {
         width: '100%',
         allowClear: true
     });
+    $('.select-roles').select2({
+        width: '100%',
+        allowClear: true
+    });
     $("#enquiry_date, #allocation_date, #tmLeadsStartDate, #tmLeadsEndDate").datepicker({ // TM Leads
         changeMonth: true,
         changeYear: true,
