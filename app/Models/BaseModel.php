@@ -95,17 +95,19 @@ class BaseModel extends Model implements AuditableContract
 
             $form_id = $request->form_id;
             $model = self::find($form_id);
+
             foreach($access as $key) {
-                if($request->$key)
-                    $model->$key = $request->$key;
+                if($request->has($key)){
+                    $model->$key = $request->input($key);
+                }
             }
             return $model->save();
-
         }else{
 
             foreach($access as $key) {
-                if($request->$key)
-                    $this->$key = $request->$key;
+                if($request->has($key)){
+                    $this->$key = $request->input($key);
+                }
             }
             return $this->save();
         }

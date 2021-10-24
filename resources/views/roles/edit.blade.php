@@ -1,6 +1,34 @@
 @extends('layouts.app')
 @section('title','Edit Role')
 @section('content')
+
+<style>
+    .js-example-basic-multiple{
+        width: 100% !important;
+    }
+    .select2-container--default .select2-selection--multiple .select2-selection__choice__remove{
+        color: white !important;
+        top: 8px !important;
+        border: none !important;
+        left: 2px !important;
+    }
+    .select2-container--default .select2-selection--multiple .select2-selection__choice__remove:hover{
+        color: white !important;
+        background-color: #3498db !important
+    }
+    .select2-container--default .select2-selection--multiple .select2-selection__choice{
+        background-color: #3498db !important;
+        color: white !important;
+        padding: 8px 20px 8px 22px !important;
+        font-family: calibri !important;
+        font-size: 13px !important;
+        font-weight: 600 !important;
+
+    }
+    .select2-container--default .select2-search--inline .select2-search__field{
+        width: 100% !important;
+    }
+</style>
 <div class="row">
     <div class="col-md-12 col-sm-12">
         <div class="x_panel">
@@ -31,17 +59,20 @@
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="name">Permission <span class="required">*</span></label>
                         <div class="col-md-6 col-sm-6">
-                            @foreach($permission->chunk(4) as $chunk)
-                                <div class="row">
-                                    <div class="col-md-12">
-                                        @foreach($chunk as $item)
-                                            <span class="badge badge-pill" style="margin:5px;font-size:13px;"> {{ $item->name }} <input {{ in_array($item->id, $rolePermissions) ? 'checked' : '' }} type="checkbox" class="flat" value="{{ $item->id }}" name='permission[]' /></span>
-                                        @endforeach
-                                    </div>
-                                </div>
-                                <hr />
+
+                        <select name="permission[]" multiple="multiple" style="margin-bottom:15px;"
+                                            class="form-control js-example-basic-multiple select_multiple">
+                            @foreach($permission->chunk(6) as $chunk)
+                                @foreach($chunk as $skey=>$item)
+                                <option value="{{$item->id }}"}} @if(in_array($item->id, $rolePermissions)) selected="selected" @endif>
+                                {{ $item->name }}
+                                </option>
+                                @endforeach
                             @endforeach
+                        </select>
                         </div>
+
+
                     </div>
                     <div id='redirect_to_view_div'></div>
                     <div class="ln_solid"></div>

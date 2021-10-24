@@ -5,7 +5,13 @@ $(document).ready(function() {
     $("#transapp_start_date").datepicker({ dateFormat: "yy-mm-dd" });
     $("#transapp_stop_date").datepicker({ dateFormat: "yy-mm-dd" });
     $('#dtBasicExample').DataTable();
-  $('.dataTables_length').addClass('bs-select');
+    $('.dataTables_length').addClass('bs-select');
+
+    $('.js-example-basic-multiple').select2({
+        placeholder: 'Select Permissions to assign against role',
+        width: '100%',
+        allowClear: true
+    });
     $("#enquiry_date, #allocation_date, #tmLeadsStartDate, #tmLeadsEndDate").datepicker({ // TM Leads
         changeMonth: true,
         changeYear: true,
@@ -1513,7 +1519,7 @@ $(document).ready(function() {
         });
     });
     dateRangePickerChange("", "");
-    $(".applyBtn, .ranges li").click(function() {
+    $(".x_panel transparent > .applyBtn, .ranges li").click(function() {
         $(".loader").show();
         setTimeout(() => {
             var date = $("#reportrange span").html();

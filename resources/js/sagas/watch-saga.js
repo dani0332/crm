@@ -3,6 +3,7 @@ import { delay, takeEvery, put, select, fork, call } from 'redux-saga/effects'
 import { sendRequest } from './request'
 import { getFormObjForDraw } from '../forms_dsl'
 import { getFormHook }  from '../form-hooks'
+import { fillConditionalFields } from './prefill-conditional-fields'
 
 
 export const getVisibleForm = (state) => state.visibleForm
@@ -10,6 +11,11 @@ export const getVisibleForm = (state) => state.visibleForm
 function* processRequest(obj) {
 
     const { formState, selectedRecord, body,   manageListDispatch, initialForm } = obj
+
+    console.log("**************ProcessRequest**********")
+    console.log(selectedRecord)
+    console.log("**************ProcessRequest**********")
+
     const formVisible   = getFormObjForDraw(initialForm)
     const {  db_table } = formVisible
     manageListDispatch({ type: 'showLoader', obj:{ loader: true} })
@@ -104,6 +110,10 @@ function* processVisibleFormStates(obj) {
                         rec =   data.data
                     const obj = { ...initialFormState, view_mode: 'form',  data: rec , selectedRecord: rec, readOnly: true, action_type: 'read' }
                     manageListDispatch({ type: 'showLoader', obj:{ loader: false} })
+                    console.log("**************Read-Data-multi-false-1******************")
+                    console.log(obj)
+                    console.log("**************Read-Data-multi-false-1******************")
+                    yield fillConditionalFields(obj)
                     manageListDispatch({ type: 'read', obj })
                 }else{
                     const obj = { ...initialFormState, view_mode: 'form' , selectedRecord: null, readOnly: true, action_type: 'read' }
@@ -171,6 +181,11 @@ function* processVisibleFormStates(obj) {
                 const obj = { ...newState, view_mode: 'form', record: {}, readOnly: true, action_type: 'read', ...initialForm?.override, session:session }
                 //yield put({ type: 'read', obj })
                 manageListDispatch({ type: 'showLoader', obj:{ loader: false} })
+
+                console.log("**************Read-Data!selectedRecord******************")
+                console.log(obj)
+               console.log("**************Read-Data!selectedRecord******************")
+
                 manageListDispatch({ type: 'read', obj })
 
             }else{
@@ -187,6 +202,12 @@ function* processVisibleFormStates(obj) {
                 console.log("**************Read-watch-saga.js******************")
                // yield put({ type: 'read', obj })
                manageListDispatch({ type: 'showLoader', obj:{ loader: false} })
+
+               console.log("**************Read-Data******************")
+               console.log(obj)
+               console.log("**************Read-Data******************")
+                yield fillConditionalFields(obj)
+
                manageListDispatch({ type: 'read', obj })
             }
         }
@@ -213,6 +234,12 @@ function* processVisibleFormStates(obj) {
             const newState = { ...formVisible, data: data.data }
             const obj = { ...newState, view_mode: 'form', selectedRecord: selectedRecord, readOnly: false, action_type: 'edit',  session:session  }
             manageListDispatch({ type: 'showLoader', obj:{ loader: false} })
+
+            console.log("**************Edit-Data******************")
+            console.log(obj)
+            console.log("**************Edit-Data******************")
+            yield fillConditionalFields(obj)
+
             manageListDispatch({ type: 'edit', obj })
         }
         break

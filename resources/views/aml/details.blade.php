@@ -15,12 +15,14 @@
                         <li><a href="{{ route('aml.index') }}" class="btn btn-warning btn-sm">All Quotes</a></li>
                         @if ($quoteStatusCode == quoteStatusCode::AMLScreeningFailed || $quoteStatusCode == quoteStatusCode::AMLScreeningCleared)
                             @if ($resultsFound > 0 && $isCurrentUserFromCompliance == 1)
-                                <li><a href="#" class='btn btn-danger btn-sm'
-                                style="opacity: .4;cursor: default !important;pointer-events: none;">Fail</a></li>
-                                <li><a href="#" class="btn btn-success btn-sm"
-                                style="opacity: .4;cursor: default !important;pointer-events: none;">Pass</a></li>
+                                <li><a href="{{ $quoteRequest->id }}/quoteStatusUpdate/{{ quoteStatusCode::AMLScreeningFailed }}"
+                                class='btn btn-danger btn-sm'
+                                onclick="return confirm('Do you want to update status to AML Screening Failed?');">Fail</a></li>
+                                <li><a href="{{ $quoteRequest->id }}/quoteStatusUpdate/{{ quoteStatusCode::AMLScreeningCleared }}"
+                                class="btn btn-success btn-sm"
+                                onclick="return confirm('Do you want to update status to AML Screening Cleared?');">Pass</a></li>
                             @endif
-                            @if ($resultsFound == 0 && $isCurrentUserFromPaAml == 1)
+                            @if ($resultsFound == 0 && $isCurrentUserFromPaAml == 1 && $getAMLNumRows >= 2)
                                 <li><a href="#" class="btn btn-success btn-sm"
                                 style="opacity: .4;cursor: default !important;pointer-events: none;">Pass</a></li>
                             @endif
@@ -33,7 +35,7 @@
                                 class="btn btn-success btn-sm"
                                 onclick="return confirm('Do you want to update status to AML Screening Cleared?');">Pass</a></li>
                             @endif
-                            @if ($resultsFound == 0 && $isCurrentUserFromPaAml == 1)
+                            @if ($resultsFound == 0 && $isCurrentUserFromPaAml == 1 && $getAMLNumRows >= 2)
                                 <li><a href="{{ $quoteRequest->id }}/quoteStatusUpdate/{{ quoteStatusCode::AMLScreeningCleared }}"
                                 class="btn btn-success btn-sm"
                                 onclick="return confirm('Do you want to update status to AML Screening Cleared?');">Pass</a></li>
@@ -49,6 +51,9 @@
                     @endif
                     @if (session()->has('message'))
                         <div class="alert alert-danger">{{ session()->get('message') }}</div>
+                    @endif
+                    @if ($resultsFound > 0 && $isCurrentUserFromPaAml == 1 && $getAMLNumRows >= 2)
+                    <div class="required" style="text-align: center;"><p><b>Matches found. Please check with Compliance.</b></p></div>
                     @endif
                     <form id="demo-form2" method="POST" action="{{ $quoteRequest->id }}/quoteUpdate"
                         enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left"
@@ -100,8 +105,7 @@
                                 </div>
                             </div>
                             <div class="col">
-                                <label class="col-form-label col-md-3 col-sm-3 label-align" for="Last Name"><b> Last
-                                        Name</b> <span class="required">*</span></label>
+                                <label class="col-form-label col-md-3 col-sm-3 label-align" for="Last Name"><b>Last Name</b> <span class="required">*</span></label>
                                 <div class="col-md-6 col-sm-6">
                                     <p class="label-align-center">
                                         <input type="text" id="last_name" name="last_name"
@@ -112,15 +116,7 @@
                                             <span class="text-danger">{{ $errors->first('last_name') }}</span>
                                         @endif
                                     </p>
-                                    <div style="text-align: right;">
-                                        @if ($quoteStatusCode == quoteStatusCode::AMLScreeningFailed || $quoteStatusCode == quoteStatusCode::AMLScreeningCleared)
-                                            <button type="button" class="btn btn-primary btn-sm" id="return_to_view"
-                                                style="opacity: .4;cursor: default !important;pointer-events: none;">Update</button>
-                                    </div>
-                                @else
-                                    <button type="submit" class="btn btn-primary btn-sm" id="return_to_view">Update</button>
-                                </div>
-                                @endif
+                                    <div style="text-align: right;"><button type="submit" class="btn btn-primary btn-sm" id="return_to_view">Update & Verify</button></div>
                             </div>
                         </div>
                 </div>
@@ -908,7 +904,7 @@
             </div>
         </div>
     </div>
-    @can('auditable')
+    @can('aml-audit')
         <div id="auditable">
             <button id='auditablebtn' class="btn btn-warning btn-sm auditablebtn" data-id="{{ $quoteRequest->id }}"
                 data-model="App\Models\{{ $auditLogLine }}">
