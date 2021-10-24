@@ -4,9 +4,9 @@ namespace App\Models;
 
 use App\Models\BaseModel;
 
-class GenericQuoteModel extends BaseModel
+class GenericModel extends BaseModel
 {
-    public $quoteType;
+    public $modelType;
     public $properties = [];
     public $skipProperties = [];
 }

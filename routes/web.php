@@ -102,8 +102,9 @@ Route::group(['middleware' =>  ['auth']], function () {
         Route::resource('healthquotes', HealthQuoteController::class);
         Route::resource('health', CRUDController::class);
         Route::resource('life', CRUDController::class);
-        Route::resource('bike', CRUDController::class);
-        Route::resource('pet', CRUDController::class);
+        Route::resource('teams', CRUDController::class);
+        Route::post('save', [CRUDController::class, 'store'])->name('saveQuote');
+        Route::post('update', [CRUDController::class, 'update'])->name('updateQuote');
     });
 
     Route::group(['prefix' => 'transapp'], function () {
@@ -126,7 +127,7 @@ Route::group(['middleware' =>  ['auth']], function () {
         Route::get('calculatevaluation', [ValuationController::class, 'calculateValuation'])->name('calculatevaluation');
         Route::resource('vehicledepreciation', VehicleDepreciationController::class);
     });
-    Route::get('/valuation/car-models', [ValuationController::class, 'carModelBasedOnCarMake']);
+    Route::get('/valuation/car-models', [ValuationController::class, 'carModelBasedOnCa `   rMake']);
     Route::get('/valuation/car-model-detail', [ValuationController::class, 'carTrimBasedOnCarModel']);
 
     Route::group(['prefix' => 'claim'], function () {
@@ -143,7 +144,7 @@ Route::group(['middleware' =>  ['auth']], function () {
     Route::group(['prefix' => 'kyc'], function () {
         Route::resource('aml', AMLController::class);
         Route::get('aml/{quoteTypeId}/details/{quoteRequestId}', [AMLController::class, 'amlQuoteDetails']);
-        Route::get('aml/{quoteTypeId}/details/{quoteRequestId}/quoteStatusUpdate/{quoteTypeCode}', [AMLController::class, 'quoteStatusUpdate'])->name('quoteStatusUpdate');
+        Route::get('aml/{quoteTypeId}/details/{quotUpdat eRequestId}/quoteStatusUpdate/{quoteTypeCode}', [AMLController::class, 'quoteStatusUpdate'])->name('quoteStatusUpdate');
         Route::get('aml/{quoteTypeId}/details/{quoteRequestId}/quoteUpdate', [AMLController::class, 'quoteUpdate'])->name('quoteUpdate');
     });
 

@@ -4,7 +4,8 @@ $(document).ready(function() {
     $("#datepicker_2").datepicker({ dateFormat: "yy-mm-dd" });
     $("#transapp_start_date").datepicker({ dateFormat: "yy-mm-dd" });
     $("#transapp_stop_date").datepicker({ dateFormat: "yy-mm-dd" });
-
+    $('#dtBasicExample').DataTable();
+  $('.dataTables_length').addClass('bs-select');
     $("#enquiry_date, #allocation_date, #tmLeadsStartDate, #tmLeadsEndDate").datepicker({ // TM Leads
         changeMonth: true,
         changeYear: true,
@@ -320,6 +321,7 @@ $(document).ready(function() {
             { data: "name", name: "name" },
             { data: "email", name: "email" },
             { data: "roles", name: "roles" },
+            { data: "teamName", name: "teamName" },
             { data: 'created_at', name: 'created_at' },
             { data: 'updated_at', name: 'updated_at' },
         ],

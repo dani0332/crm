@@ -214,6 +214,9 @@
                                 @can('role-list')
                                     <li><a href="{{ url('admin/roles') }}">Roles</a></li>
                                 @endcan
+                                @can('teams-list')
+                                    <li><a href="{{ url('quotes/teams') }}">Teams</a></li>
+                                @endcan
                             </ul>
                         </li>
                     </ul>

@@ -56,6 +56,7 @@
                         <th>Name</th>
                         <th>Email</th>
                         <th>Roles</th>
+                        <th>Team Name</th>
                         <th>Created At</th>
                         <th>Updated At</th>
                     </tr>

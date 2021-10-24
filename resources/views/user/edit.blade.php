@@ -59,6 +59,22 @@
                             @endif
                         </div>
                     </div>
+
+                    <div class="item form-group">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="roles">Team <span class="required">*</span></label>
+                        <div class="col-md-6 col-sm-6 ">
+                            <select name="userTeamId" class="form-control">
+                                @foreach ($teams as $team)
+                                    <option value="{{ $team->id }}"
+                                    {{ $team->id == old('userTeamId',$userTeamId) ? 'selected' : '' }}
+                                    >{{ $team->name }}</option>
+                                @endforeach
+                            </select>
+                            @if ($errors->has('userTeamId'))
+                                <span class="text-danger">{{ $errors->first('userTeamId') }}</span>
+                            @endif
+                        </div>
+                    </div>
                     <div id='redirect_to_view_div'></div>
                     <div class="ln_solid"></div>
                     <div class="row">

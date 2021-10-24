@@ -2,18 +2,26 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\GenericQuoteModel;
+use App\Models\GenericModel;
 use Illuminate\Http\Request;
-use App\Models\HealthQuote;
-use Config;
+use App\Services\DropdownSourceService;
+use App\Services\HealthQuoteService;
+use App\Services\CRUDService;
 use DataTables;
-
 class CRUDController extends Controller
 {
-    protected $genericQuote;
-    public function __construct()
+    protected $genericModel;
+    protected $healthQuoteService;
+    protected $dropdownSourceService;
+    protected $crudService;
+    public function __construct(Request $request)
     {
-        $this->genericQuote = new GenericQuoteModel();
+        $this->genericModel = new GenericModel();
+        $this->healthQuoteService = new HealthQuoteService();
+        $this->crudService = new CRUDService();
+        $this->dropdownSourceService = new DropdownSourceService();
+        $this->setModelType($request);
+        $this->fillModelByModelType($this->genericModel->modelType);
     }
 
     /**
@@ -23,21 +31,16 @@ class CRUDController extends Controller
      */
     public function index(Request $request)
     {
-        if(strpos($request->fullUrl(), 'health')) {
-            $this->genericQuote->quoteType = 'Health';
-            if ($request->ajax()) {
-                $data = HealthQuote::select('*')->orderBy('created_at','desc');
-                return Datatables::of($data)
-                    ->addIndexColumn()
-                    ->make(true);
-            }
-            return view('shared.add', compact('quote'));
+        $model = $this->genericModel;
+        $data = $this->crudService->getGridData($this->genericModel->modelType);
+
+        if ($request->ajax()) {
+            return DataTables::of($data)
+            ->addIndexColumn()
+            ->make(true);
+            return view('shared.view', compact('model'));
         }
-        if(strpos($request->fullUrl(), 'life')) $this->genericQuote->quoteType = 'Life';
-        if(strpos($request->fullUrl(), 'bike')) $this->genericQuote->quoteType = 'Bike';
-
-
-
+        return view('shared.view', compact('model'));
     }
 
     /**
@@ -47,12 +50,20 @@ class CRUDController extends Controller
      */
     public function create(Request $request)
     {
-        if(strpos($request->fullUrl(), 'health')) $this->genericQuote->quoteType = 'Health';
-        if(strpos($request->fullUrl(), 'life')) $this->genericQuote->quoteType = 'Life';
-        if(strpos($request->fullUrl(), 'bike')) $this->genericQuote->quoteType = 'Bike';
-        $this->fillQuoteModel($this->genericQuote->quoteType);
-        $quote = $this->genericQuote;
-        return view('shared.add', compact('quote'));
+        $this->fillModelByModelType($this->genericModel->modelType);
+        $model = $this->genericModel;
+        $dropdownSource = [];
+        $customTitles = [];
+        foreach($model->properties as $property => $value) {
+            if(str_contains($value, 'title')){
+                $customTitles[$property] = $this->crudService->getCustomTitleByModelType($this->genericModel->modelType, $property);
+            }
+            if(str_contains($value, 'select')){
+                $data = $this->dropdownSourceService->getDropdownSource($property);
+                $dropdownSource[$property] = $data;
+            }
+        }
+        return view('shared.add', compact('model', 'dropdownSource', 'customTitles'));
     }
 
     /**
@@ -71,10 +82,8 @@ class CRUDController extends Controller
             }
         }
         $this->validate($request,$validateArray);
-
-        if(json_decode($request->quoteType, true)){
-            dd("All");
-        }
+        $this->crudService->saveModelByType(json_decode($request->modelType, true), $request);
+        return redirect()->back()->with('success', json_decode($request->modelType, true).' has been stored');
     }
 
     /**
@@ -85,18 +94,33 @@ class CRUDController extends Controller
      */
     public function show($id)
     {
-        //
+        $record = $this->crudService->getEntity($this->genericModel->modelType, $id);
+        $model = $this->genericModel;
+        return view('shared.show', compact(['record', 'model']));
     }
 
     /**
      * Show the form for editing the specified resource.
      *
      * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\Response        klm[jo]
      */
     public function edit($id)
     {
-        //
+        $record = $this->crudService->getEntity($this->genericModel->modelType, $id);
+        $model = $this->genericModel;
+        $dropdownSource = [];
+        $customTitles = [];
+        foreach($model->properties as $property => $value) {
+            if(str_contains($value, 'title')){
+                $customTitles[$property] = $this->crudService->getCustomTitleByModelType($this->genericModel->modelType, $property);
+            }
+            if(str_contains($value, 'select')){
+                $data = $this->dropdownSourceService->getDropdownSource($property);
+                $dropdownSource[$property] = $data;
+            }
+        }
+        return view('shared.edit', compact(['record', 'model', 'dropdownSource', 'customTitles']));
     }
 
     /**
@@ -108,7 +132,16 @@ class CRUDController extends Controller
      */
     public function update(Request $request, $id)
     {
-        //
+        $modelPropertiesList = json_decode($request->all()['model'], true);
+        $validateArray = [];
+        foreach($modelPropertiesList as $property => $value) {
+            if(strpos($value, 'required')){
+                $validateArray[$property] = 'required';
+            }
+        }
+        $this->validate($request,$validateArray);
+        $this->crudService->updateModelByType(json_decode($request->modelType, true), $request, $id);
+        return redirect()->back()->with('success', json_decode($request->modelType, true).' has been stored');
     }
 
     /**
@@ -122,33 +155,28 @@ class CRUDController extends Controller
         //
     }
 
-    private function fillQuoteModel ($quoteType)
+    private function setModelType(Request $request){
+        if(strpos($request->fullUrl(), 'health')) $this->genericModel->modelType = 'Health';
+        if(strpos($request->fullUrl(), 'life')) $this->genericModel->modelType = 'Life';
+        if(strpos($request->fullUrl(), 'teams')) $this->genericModel->modelType = 'Teams';
+    }
+
+    private function fillModelByModelType ($modelType)
     {
-        switch ($quoteType) {
+        switch ($modelType) {
             case 'Life':
-                $this->genericQuote->properties = array (
-                    "car_value" => "input|number|required",
-                    "car_insurance" => "input|text",
-                    "special_type" => "input|date"
-                );
                 break;
             case 'Health':
-                $this->genericQuote->properties = array (
-                    "Health_value" => "input|number|required",
-                    "car_insurance" => "input|text",
-                    "special_type" => "input|date"
-                );
+                $this->genericModel->properties = $this->healthQuoteService->fillModelProperties();
+                $this->genericModel->skipProperties = $this->healthQuoteService->fillModelSkipProperties();
                 break;
-            case 'Bike':
-                $this->genericQuote->properties = array (
-                    "Bike_value" => "input|number|required",
-                    "car_insurance" => "input|text",
-                    "special_type" => "input|date"
-                );
+            case 'Teams':
+                $this->genericModel->properties = $this->teamService->fillModelProperties();
+                $this->genericModel->skipProperties = $this->teamService->fillModelSkipProperties();
                 break;
             default:
-                # code...
                 break;
         }
     }
+
 }

@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Team;
 use App\Models\User;
+use App\Models\UserTeams;
 use DataTables;
 use DB;
 use Illuminate\Http\Request;
@@ -32,6 +34,7 @@ class UserController extends Controller
                                         ,u1.name
                                         ,u1.email
                                         ,u2.roles
+                                        ,teams.name as teamName
                                         ,u1.created_at
                                         ,u1.updated_at
                                     FROM users u1
@@ -42,7 +45,9 @@ class UserController extends Controller
                                         INNER JOIN model_has_roles ON model_has_roles.model_id = users.id
                                         INNER JOIN roles ON roles.id = model_has_roles.role_id
                                         GROUP BY users.name, users.id
-                                        ) u2 ON u2.id = u1.id");
+                                        ) u2 ON u2.id = u1.id
+                                    LEFT JOIN user_team ON user_team.user_id = u2.id
+                                    LEFT JOIN teams ON teams.id = user_team.team_id");
             $filteredData = $users;
             if(!empty($request->email)){
                 $collection = collect($filteredData);
@@ -107,7 +112,15 @@ class UserController extends Controller
      */
     public function show(User $user)
     {
-        return view('user.show', compact('user'));
+        $teamNameQuery = DB::select("SELECT name
+                                FROM teams t
+                                INNER JOIN user_team ut ON ut.team_id = t.id
+                                WHERE ut.user_id = ". $user->id);
+        $teamName = '';
+        if(count($teamNameQuery) > 0){
+            $teamName = $teamNameQuery[0]->name;
+        }
+        return view('user.show', compact('user', 'teamName'));
     }
     /**
      * Show the form for editing the specified resource.
@@ -119,7 +132,13 @@ class UserController extends Controller
     {
         $roles = Role::pluck('name', 'name')->all();
         $userRole = $user->roles->pluck('name', 'name')->all();
-        return view('user.edit', compact('user', 'roles', 'userRole'));
+        $teams = Team::orderBy('name', 'asc')->get();
+        $userTeamQuery = UserTeams::where('user_id', $user->id)->get();
+        $userTeamId = 0;
+        if(count($userTeamQuery) > 0){
+            $userTeamId = $userTeamQuery[0]->team_id;
+        }
+        return view('user.edit', compact('user', 'roles', 'userRole', 'teams', 'userTeamId'));
     }
     /**
      * Update the specified resource in storage.
