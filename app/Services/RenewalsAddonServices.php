@@ -43,7 +43,7 @@ class RenewalsAddonServices
 
     function getUserInfo($email)
     {
-        return User::where('email', '=', $email)->get()->first();
+        return User::where('email', '=', $email)->value('id');
     }
 
     function updateBikeQuoteRequestCode($id)
