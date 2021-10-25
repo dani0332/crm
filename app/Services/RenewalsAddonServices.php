@@ -118,7 +118,7 @@ class RenewalsAddonServices
         return $updateQuote;
     }
 
-    function getQuoteTypeId($type) 
+    function getQuoteType($type) 
     {
         return QuoteType::where('code','=',$type)->get()->first();
     }
