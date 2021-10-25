@@ -17,14 +17,14 @@ class CarQuoteInsuranceCoverage extends BaseModel
         'access' => [
             "pa" => [ ],
             "invoicing" => [],
-            "advisor" => [ 'car_quote_id','start_date', 'insurance_company_id', 'insurance_plan_id','excess','ancillary_excess','premium_price','personal_accident_benefit','breakdown_recovery','off_road_cover','rend_a_car','geographical_area','vehicle_type_id','repair_type','financed_by'],
-            "admin" => [ 'car_quote_id','start_date', 'insurance_company_id', 'insurance_plan_id','excess','ancillary_excess','premium_price','personal_accident_benefit','breakdown_recovery','off_road_cover','rend_a_car','geographical_area','vehicle_type_id','repair_type','financed_by'],
+            "advisor" => [ 'car_quote_id','start_date', 'insurance_company_id', 'insurance_plan_id','excess','sum_insured','ancillary_excess','premium_price','personal_accident_benefit','breakdown_recovery','off_road_cover','rend_a_car','geographical_area','vehicle_type_id','repair_type','financed_by'],
+            "admin" => [ 'car_quote_id','start_date', 'insurance_company_id', 'insurance_plan_id','excess','sum_insured','ancillary_excess','premium_price','personal_accident_benefit','breakdown_recovery','off_road_cover','rend_a_car','geographical_area','vehicle_type_id','repair_type','financed_by'],
         ],
         "list" => [
-            "pa" => ['id','start_date', 'insurance_company_id','insurance_plan_id', 'excess', 'ancillary_excess','premium_price','personal_accident_benefit','breakdown_recovery','off_road_cover','rend_a_car','geographical_area','vehicle_type_id','repair_type','financed_by'],
-            "invoicing" => ['id','start_date', 'insurance_company_id','insurance_plan_id', 'excess', 'ancillary_excess','premium_price','personal_accident_benefit','breakdown_recovery','off_road_cover','rend_a_car','geographical_area','vehicle_type_id','repair_type','financed_by'],
-            "advisor" => ['id','start_date', 'insurance_company_id','insurance_plan_id', 'excess', 'ancillary_excess','premium_price','personal_accident_benefit','breakdown_recovery','off_road_cover','rend_a_car','geographical_area','vehicle_type_id','repair_type','financed_by'],
-            "admin" => ['id','start_date', 'insurance_company_id','insurance_plan_id', 'excess', 'ancillary_excess','premium_price','personal_accident_benefit','breakdown_recovery','off_road_cover','rend_a_car','geographical_area','vehicle_type_id','repair_type','financed_by']
+            "pa" => ['id','start_date', 'insurance_company_id','insurance_plan_id', 'excess','sum_insured', 'ancillary_excess','premium_price','personal_accident_benefit','breakdown_recovery','off_road_cover','rend_a_car','geographical_area','vehicle_type_id','repair_type','financed_by'],
+            "invoicing" => ['id','start_date', 'insurance_company_id','insurance_plan_id', 'excess','sum_insured', 'ancillary_excess','premium_price','personal_accident_benefit','breakdown_recovery','off_road_cover','rend_a_car','geographical_area','vehicle_type_id','repair_type','financed_by'],
+            "advisor" => ['id','start_date', 'insurance_company_id','insurance_plan_id', 'excess','sum_insured', 'ancillary_excess','premium_price','personal_accident_benefit','breakdown_recovery','off_road_cover','rend_a_car','geographical_area','vehicle_type_id','repair_type','financed_by'],
+            "admin" => ['id','start_date', 'insurance_company_id','insurance_plan_id', 'excess','sum_insured', 'ancillary_excess','premium_price','personal_accident_benefit','breakdown_recovery','off_road_cover','rend_a_car','geographical_area','vehicle_type_id','repair_type','financed_by']
         ]
     ];
 

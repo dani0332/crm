@@ -300,11 +300,12 @@ class AMLController extends Controller
         if($quoteTypeCode == quoteTypeCode::Business) {
             return view("aml.details", compact("quoteTypeCode","quoteTypeText","quoteRequest","businessTypeCode"
             ,"businessCoverTypeText","businessCommuModeText","kycLogs","quoteStatusCode","auditLogLine"
-            ,"isCurrentUserFromCompliance","isCurrentUserFromPaAml","resultsFound","getAMLNumRows"));
+            ,"isCurrentUserFromCompliance","isCurrentUserFromPaAml","resultsFound","getAMLNumRows", "quoteTypeId"));
         }
         else {
             return view("aml.details", compact("quoteTypeCode","quoteTypeText","quoteRequest","kycLogs"
-            ,"quoteStatusCode","auditLogLine","isCurrentUserFromCompliance","isCurrentUserFromPaAml","resultsFound","getAMLNumRows"));
+            ,"quoteStatusCode","auditLogLine","isCurrentUserFromCompliance","isCurrentUserFromPaAml"
+            ,"resultsFound","getAMLNumRows", "quoteTypeId"));
         }
     }
 
@@ -360,7 +361,7 @@ class AMLController extends Controller
 
         $quoteUpdate->save();
 
-        $this->checkAmlService->checkAml($firstName,$lastName,$quoteRequestId,$quoteTypeId);
+        $this->checkAmlService->checkAml($firstName,$lastName,$quoteRequestId,$quoteTypeId, true);
 
         return redirect()->back()->with('success', 'Quote is updated');
     }

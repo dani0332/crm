@@ -35,12 +35,13 @@ function* processRequest(obj) {
         manageListDispatch({ type: 'showLoader', obj:{ loader: false} })
         if( response?.code === 500 || response?.code === 400 )
             yield put({ type: 'MessageShow', obj:{ title: 'ERROR', message: 'Something wrong with your request. Please contact with administration.', type: 'danger'} })
-        const hook = yield getFormHook( { form: db_table } )
-        if(hook)
-            yield hook.afterSave({ response: response, initialForm, body })
+        // const hook = yield getFormHook( { form: db_table } )
+        // if(hook)
+        //     yield hook.afterSave({ response: response, initialForm, body })
         yield processVisibleFormStates( {...obj, formState: 'list' } )
     }
     catch (error) {
+
         manageListDispatch({ type: 'showLoader', obj:{ loader: false} })
         processVisibleFormStates( {obj: obj, formState: 'list' } )
     }

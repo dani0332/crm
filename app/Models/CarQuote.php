@@ -15,7 +15,7 @@ class CarQuote extends BaseModel
     protected $casts = [
         'dob' => 'datetime',
     ];
-
+    protected $guarded = [];
 
 
     public function uaeLicenseHeldFor()

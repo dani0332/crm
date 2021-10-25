@@ -1060,8 +1060,9 @@ $(document).ready(function() {
     $("#searchAML").submit(function(e) {
         var amlCreatedStartDate = $("#amlCreatedStartDate").val();
         var amlCreatedEndDate = $("#amlCreatedEndDate").val();
+        var searchType = $("#searchType").val();
 
-        if ((amlCreatedStartDate == "") || (amlCreatedEndDate == "")) {
+        if ( searchType == "" && (amlCreatedStartDate == "" || amlCreatedEndDate == "") ) {
             $("#amlCreatedStartDateMsg").html("Please select start & end dates");
             $('#amlCreatedStartDate').css('border-color', 'red');
             $('#amlCreatedEndDate').css('border-color', 'red');
@@ -1102,6 +1103,10 @@ $(document).ready(function() {
             }
         }
         else {
+            $("#amlCreatedStartDateMsg").html("");
+            $("#amlCreatedEndDateMsg").html("");
+            $('#amlCreatedStartDate').css('border-color', '');
+            $('#amlCreatedEndDate').css('border-color', '');
             e.preventDefault();
             $(".loader").show();
             amlDatatable.draw();

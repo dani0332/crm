@@ -12,6 +12,7 @@ class HomeQuote extends Model implements AuditableContract
 {
     use HasFactory, Auditable;
     protected $table = 'home_quote_request';
+    protected $guarded = [];
 
     public function getCreatedAtAttribute($table)
     {

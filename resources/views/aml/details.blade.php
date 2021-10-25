@@ -856,6 +856,21 @@
                         @endif
                     @endif
                 @endif
+                    <div class="item form-group">
+                        <div class="col">
+                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="Previous Quote Id">
+                                <b> Previous Quote Id</b>
+                            </label>
+                            <div class="col-md-6 col-sm-6">
+                                <p class="label-align-center">
+                                    <a href="{{ $quoteRequest->previous_quote_id }}" style="text-decoration: underline;font-weight: bold;">
+                                        {{ $quoteRequest->previous_quote_id }}
+                                    </a>
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col"></div>
+                    </div>
                 </form>
             </div>
         </div>

@@ -8,56 +8,48 @@
             <div class="clearfix"></div>
         </div>
         <div class="x_content">
-        <form method="POST" id="search-customer" class="form-horizontal form-label-left"  role="form"  data-parsley-validate=""novalidate="">
+        <br />
+        @if(session()->has('success'))
+            <div class="alert alert-success">{{ session()->get('success') }}</div>
+        @endif
+        <form method="POST" id="search-customer" class="form-horizontal form-label-left" role="form" data-parsley-validate=""novalidate="">
             <div class="item form-group">
-                <label class="col-form-label col-md-2 col-sm-2 " for="searchtype">Search By
-                </label>
-                <div class="col-md-6 col-sm-6 ">
+                <label class="col-form-label col-md-2 col-sm-2" for="searchtype">Search By</label>
+                <div class="col-md-6 col-sm-6">
                     <select class="form-control" name="searchtype" id="search_type">
                         <option value="email">Email</option>
                     </select>
                 </div>
             </div>
-
             <div class="item form-group">
-                <label class="col-form-label col-md-2 col-sm-2 " for="searchfield">Search Value
-                </label>
-                <div class="col-md-6 col-sm-6 ">
+                <label class="col-form-label col-md-2 col-sm-2" for="searchfield">Search Value</label>
+                <div class="col-md-6 col-sm-6">
                     <div class="input-group">
                         <input type="text" class="form-control" name="searchfield" id="searchfield" placeholder="search ..">
                     </div>
                 </div>
             </div>
             <div class="item form-group">
-                <label class="col-form-label col-md-2 col-sm-2 " for="first-name">
-                </label>
-                <div class="col-md-6 col-sm-6 ">
-                    <div class="input-group">
-                        <button type="submit" class="btn btn-warning">Search</button>
-                    </div>
+                <div class="col">
+
+                </div>
+                <div class="col">
+                    <ul class="nav navbar-right panel_toolbox">
+                    <li><input type="submit" class="btn btn-warning btn-sm" value="Search"></li>
+                    <li><input type="reset" class="btn btn-warning btn-sm" value="Reset"></li>
+                    </ul>
                 </div>
             </div>
-
         </form>
         </div>
     </div>
         <div class="x_panel">
             <div class="x_title">
                 <h2>Customers</h2>
-
-                {{-- <ul class="nav navbar-right panel_toolbox">
-                    <li><button id="resubmit_api_carquote" class="btn btn-success btn-sm">ReSubmit Api</button></li>
-                </ul> --}}
                 <div class="clearfix"></div>
             </div>
             <div class="x_content">
-                {{-- <div id="success_message" class="alert alert-success" style="display:none"></div>
-                <div id="error_message" class="alert alert-danger" style="display:none"></div> --}}
-                <br />
-
-
-                <br/>
-                <table  class="table table-striped jambo_table customer-data-table" style="width:100%">
+                <table class="table table-striped jambo_table customer-data-table" style="width:100%">
                       <thead>
                         <tr>
                           <th>id</th>
@@ -72,10 +64,7 @@
                         </tr>
                       </thead>
 
-
                       <tbody>
-
-
 
                       </tbody>
                     </table>
