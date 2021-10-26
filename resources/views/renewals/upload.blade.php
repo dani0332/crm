@@ -75,10 +75,10 @@
                     </div>
                     <div class="item form-group">
                         <div class="col-md-3">
-                            Download Sample CSV <a href="https://myalfreddev.blob.core.windows.net/myrewards/597F9ADF-F08F-4292-72B8-8546399012DD_test.csv"><img src="https://i.ibb.co/cv5WptT/csv.png" alt="csv" border="0" /></a>
+                            Download Sample CSV <a href="https://myalfreddev.blob.core.windows.net/myrewards/861A9EF7-37A4-2DAC-646F-127EC51D73BA_sampleRenewals.csv"><img src="https://i.ibb.co/cv5WptT/csv.png" alt="csv" border="0" /></a>
                         </div>
                         <div class="col-md-3">
-                            Download Sample XLSX <a href="https://myalfreddev.blob.core.windows.net/myrewards/81205DF5-E2A5-4626-D5DD-13656D4D9E2C_test-new.xlsx"><img src="https://img.icons8.com/color/40/000000/ms-excel.png" alt="xlsx" border="0" /></a>
+                            Download Sample XLSX <a href="https://myalfreddev.blob.core.windows.net/myrewards/7F781868-0124-F309-5390-D7AE1DF79412_sample1.xlsx"><img src="https://img.icons8.com/color/40/000000/ms-excel.png" alt="xlsx" border="0" /></a>
                         </div>
                     </div>
                     <div class="item form-group">
@@ -105,9 +105,9 @@
                                 <tr><td style="text-align: center;">5</td><td>Product</td><td>Quotation asked against the insurance line</td><td style="text-align: center;">Yes</td><td style="text-align: center;">100</td></tr>
                                 <tr><td style="text-align: center;">6</td><td>Product Type</td><td>Type of Insurance | Comprehensive or Third Party Only</td><td style="text-align: center;">No</td><td style="text-align: center;">50</td></tr>
                                 <tr><td style="text-align: center;">7</td><td>Sales Channel</td><td>Source of the quotation</td><td style="text-align: center;">Yes</td><td style="text-align: center;">100</td></tr>
-                                <tr><td style="text-align: center;">8</td><td>Customer mobile</td><td>Customer Mobile Number - only numeric data</td><td style="text-align: center;">Optional</td><td style="text-align: center;">15</td></tr>
-                                <tr><td style="text-align: center;">9</td><td>Advisor</td><td>Advisor Email</td><td style="text-align: center;">Optional</td><td style="text-align: center;">100</td></tr>
-                                <tr><td style="text-align: center;">10</td><td>Previous Advisor</td><td>Previosuly assigned Advisor Email</td><td style="text-align: center;">Optional</td><td style="text-align: center;">100</td></tr>
+                                <tr><td style="text-align: center;">8</td><td>Customer mobile</td><td>Customer Mobile Number - only numeric data</td><td style="text-align: center;">No</td><td style="text-align: center;">15</td></tr>
+                                <tr><td style="text-align: center;">9</td><td>Advisor</td><td>Advisor Email</td><td style="text-align: center;">No</td><td style="text-align: center;">100</td></tr>
+                                <tr><td style="text-align: center;">10</td><td>Previous Advisor</td><td>Previosuly assigned Advisor Email</td><td style="text-align: center;">No</td><td style="text-align: center;">100</td></tr>
                                 <tr><td style="text-align: center;">11</td><td>Policy</td><td>Policy number assigned</td><td style="text-align: center;">Yes</td><td style="text-align: center;">25</td></tr>
                                 <tr><td style="text-align: center;">12</td><td>Batch</td><td>Batch number assigned</td><td style="text-align: center;">No</td><td style="text-align: center;">25</td></tr>
                                 <tr><td style="text-align: center;">13</td><td>Start Date</td><td>Start Date of the insurance - Format should be DD/MM/YYYY</td><td style="text-align: center;">No</td><td style="text-align: center;">10</td></tr>
@@ -115,9 +115,9 @@
                                 <tr><td style="text-align: center;">15</td><td>Object</td><td>Information against the quotation</td><td style="text-align: center;">No</td><td style="text-align: center;">200</td></tr>
                                 <tr><td style="text-align: center;">16</td><td>Gross Premium</td><td>Premium amount</td><td style="text-align: center;">No</td><td style="text-align: center;">25</td></tr>
                                 <tr><td style="text-align: center;">17</td><td>Notes</td><td>Any other Information</td><td style="text-align: center;">No</td><td style="text-align: center;">200</td></tr>
-                                <tr><td style="text-align: center;">18</td><td>Make</td><td>Car Make Information - should match CDB</td><td style="text-align: center;">Optional</td><td style="text-align: center;">25</td></tr>
-                                <tr><td style="text-align: center;">19</td><td>Model</td><td>Car Model Information - should match CDB</td><td style="text-align: center;">Optional</td><td style="text-align: center;">25</td></tr>
-                                <tr><td style="text-align: center;">20</td><td>Year</td><td>Vehicle Year of manufacture</td><td style="text-align: center;">Optional</td><td style="text-align: center;">4</td></tr>
+                                <tr><td style="text-align: center;">18</td><td>Make</td><td>Car Make Information</td><td style="text-align: center;">No</td><td style="text-align: center;">25</td></tr>
+                                <tr><td style="text-align: center;">19</td><td>Model</td><td>Car Model Information</td><td style="text-align: center;">No</td><td style="text-align: center;">25</td></tr>
+                                <tr><td style="text-align: center;">20</td><td>Year</td><td>Vehicle Year of manufacture</td><td style="text-align: center;">No</td><td style="text-align: center;">4</td></tr>
                             </tbody>
                             </table>
                         </div>
@@ -127,7 +127,7 @@
                     <div class="row">
                     <div class="col-auto mr-auto"></div>
                         <div class="col-auto">
-                        <button type="submit" class="btn btn-warning btn-sm" id="return_to_view">Create</button>
+                        <button type="submit" class="btn btn-warning btn-sm" id="return_to_view">Upload</button>
                         </div>
                     </div>
                 </form>
