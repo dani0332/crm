@@ -1,89 +1,78 @@
-import React, {  useRef, useState } from "react";
-import styled from "styled-components";
-import makeData from "./makeData";
-import Table from "../../components/table";
-import TableFilter from "../../components/table-filter-form";
-import SubNaV from "../../components/sub-nav";
-import useFetch from 'use-http'
-import { useHistory } from "react-router-dom";
-
+import React, { useRef, useState } from 'react';
+import styled from 'styled-components';
+import Table from '../../components/table';
+import TableFilter from '../../components/table-filter-form';
+import { useHistory } from 'react-router-dom';
 
 const Styles = styled.div``;
 
 function LeadsList() {
-
-  const {page, setPage_ } = useState(0);
+  const { page } = useState(0);
   const history = useHistory();
   const columns = React.useMemo(
     () => [
-          {
-            Header: "CDB ID",
-            accessor: "code",
-            canSort:true
-          },
+      {
+        Header: 'CDB ID',
+        accessor: 'code',
+        canSort: true,
+      },
 
-          {
-            Header: "Client Name",
-            accessor: d => `${d.first_name} ${d.last_name}`
-          },
-          {
-            Header: "Email",
-            accessor: "email"
-          },
-          {
-            Header: "Contact Number",
-            accessor: "mobile_no"
-          },
-          {
-            Header: "Created on",
-            accessor: "created_at"
-          },
-        ],
-    []
-);
+      {
+        Header: 'Client Name',
+        accessor: d => `${d.first_name} ${d.last_name}`,
+      },
+      {
+        Header: 'Email',
+        accessor: 'email',
+      },
+      {
+        Header: 'Contact Number',
+        accessor: 'mobile_no',
+      },
+      {
+        Header: 'Created on',
+        accessor: 'created_at',
+      },
+    ],
+    [],
+  );
 
-const [data, setData] = useState({data:[]})
-const { get, loading, error } = useFetch()
-const refOptions = useRef({});
+  const [data] = useState({ data: [] });
+  const refOptions = useRef({});
 
-const nextPage = async () => {
+  const nextPage = async () => {
+    console.log('-age');
+    // await get(`?page=${page}`)
+    refOptions.current = { ...refOptions.current, page: page + 1 };
+  };
 
-    console.log('-age')
-   // await get(`?page=${page}`)
-    refOptions.current = {...refOptions.current, page:page + 1}
-}
+  const prevPage = () => {
+    console.log('--------data prev----------');
+  };
 
-const prevPage = () => {
-    console.log('--------data prev----------')
+  const setPage = () => {
+    console.log('--------data prev----------');
+  };
 
-}
-
-const setPage = (page) => {
-    console.log('--------data prev----------')
-
-}
-
-const options = {
-    url:'',
+  const options = {
+    url: '',
     filter: [
-        {
-            type:'text',
-            label:'CDB ID',
-            field:'code',
-            validation:{}
-        },
-        // {
-        //     type:'text',
-        //     label:'Email',
-        //     field:'email',
-        //     validation:{}
-        // }
-    ]
-};
+      {
+        type: 'text',
+        label: 'CDB ID',
+        field: 'code',
+        validation: {},
+      },
+      // {
+      //     type:'text',
+      //     label:'Email',
+      //     field:'email',
+      //     validation:{}
+      // }
+    ],
+  };
 
-
-const doSearch = async (obj) => {
-
+  const doSearch = async () => {
     // console.log('--------doSearch----------')
     // console.log(obj)
     // console.log('--------doSearch----------')
@@ -91,31 +80,42 @@ const doSearch = async (obj) => {
     // const respose = await get(`form/car_quote_request/?filter=${JSON.stringify(obj)}&mode=listView`)
     // setData(respose)
 
-    history.push("/lead/5")
+    history.push('/lead/5');
+  };
 
-}
-
-
-return (
+  return (
     <Styles>
-      <div className="row x_panel">
-            <div className="col-md-12 col-sm-12 ">
-                <div className="">
-                    <div className="x_title">
-                        <h2>Leads <small>Information</small></h2>
-                        <ul className="nav navbar-right panel_toolbox">
-                        <li><i className="fa fa-plus" style={{ paddingTop: 3 }}></i>
-                            <a style={{display: 'inline'}}>New Lead</a>
-                        </li>
-                        </ul>
-                        <div className="clearfix"></div>
-                    </div>
-                    <div className="x_content">
-                    <TableFilter filter={options.filter} url={options.url} search={doSearch} />
-                    </div>
-                    <Table columns={columns} data={data.data} nextPage={nextPage}  prevPage={prevPage} setPage={setPage}/>
-                </div>
+      <div className='row x_panel'>
+        <div className='col-md-12 col-sm-12 '>
+          <div className=''>
+            <div className='x_title'>
+              <h2>
+                Leads <small>Information</small>
+              </h2>
+              <ul className='nav navbar-right panel_toolbox'>
+                <li>
+                  <i className='fa fa-plus' style={{ paddingTop: 3 }}></i>
+                  <a style={{ display: 'inline' }}>New Lead</a>
+                </li>
+              </ul>
+              <div className='clearfix'></div>
             </div>
+            <div className='x_content'>
+              <TableFilter
+                filter={options.filter}
+                url={options.url}
+                search={doSearch}
+              />
+            </div>
+            <Table
+              columns={columns}
+              data={data.data}
+              nextPage={nextPage}
+              prevPage={prevPage}
+              setPage={setPage}
+            />
+          </div>
+        </div>
       </div>
     </Styles>
   );

@@ -7,11 +7,16 @@
         "watch-poll": "mix watch -- --watch-options-poll=1000",
         "hot": "mix watch --hot",
         "prod": "npm run production",
-        "production": "mix --production"
+        "production": "mix --production",
+        "prettier": "prettier --write \"resources/**/*.{ts,tsx,js,jsx}\"",
+        "lint": "eslint --ext .ts,.tsx,.js,.jsx --cache --ignore-path .eslintignore .",
+        "lint:fix": "eslint --ext .ts,.tsx,.js,.jsx --cache --fix --ignore-path .eslintignore ."
     },
     "devDependencies": {
+        "@babel/eslint-parser": "^7.15.8",
+        "@babel/eslint-plugin": "^7.14.5",
         "@babel/plugin-proposal-optional-chaining": "^7.14.5",
-        "@babel/preset-react": "^7.13.13",
+        "@babel/preset-react": "^7.14.5",
         "@tailwindcss/forms": "^0.3.1",
         "@tailwindcss/typography": "^0.4.0",
         "alpinejs": "^2.7.3",
@@ -23,6 +28,7 @@
         "eslint-plugin-prettier": "^4.0.0",
         "eslint-plugin-react": "^7.26.1",
         "eslint-plugin-react-hooks": "^4.2.0",
+        "eslint-plugin-unused-imports": "^1.1.5",
         "husky": "4.2.3",
         "jquery": "^3.6",
         "laravel-mix": "^6.0.6",
@@ -72,5 +78,17 @@
         "unique-string": "^3.0.0",
         "use-http": "^1.0.21",
         "yup": "^0.32.9"
+    },
+    "husky": {
+        "hooks": {
+            "pre-commit": "lint-staged",
+            "pre-push": "yarn lint"
+        }
+    },
+    "lint-staged": {
+        "*.{js,jsx,ts,tsx}": [
+            "eslint --cache --fix",
+            "prettier --write"
+        ]
     }
 }

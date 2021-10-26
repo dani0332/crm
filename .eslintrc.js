@@ -5,8 +5,12 @@ module.exports = {
     es6: true, // for ESLint to be aware of ES6 global variables (this automatically enables ES6 syntax)
     jest: true, // for ESLint to be aware of Jest global variables
   },
-  // parser: '@typescript-eslint/parser', // TypeScript (if not Vue)
+  parser: '@babel/eslint-parser',
   parserOptions: {
+    requireConfigFile: false,
+    babelOptions: {
+      presets: ['@babel/preset-react'],
+    },
     ecmaFeatures: {
       jsx: true, // React, React Native
     },
@@ -15,30 +19,28 @@ module.exports = {
   extends: [
     'eslint:recommended', // always (set of rules recommended by ESLint team)
     'plugin:react/recommended', // React, React Native // Uses the recommended rules from @eslint-plugin-react
-    // 'plugin:@typescript-eslint/recommended', // TypeScript // Uses the recommended rules from @typescript-eslint/eslint-plugin,
     'plugin:prettier/recommended',
-    // "plugin:cypress/recommended"
-    // 'prettier', // always
   ],
   rules: {
     'prettier/prettier': 'error', // always
-    'react/jsx-uses-react': 'off', // React (only if using React version 17+)
+    // 'react/jsx-uses-react': 'off', // React (only if using React version 17+)
+    // 'react/jsx-uses-vars':'off',
     'react/react-in-jsx-scope': 'off', // React(only if using React version 17+)
     'react-hooks/rules-of-hooks': 'error', // React (if using hooks)
     'react-hooks/exhaustive-deps': 'off', // React (if using hooks)
-    // '@typescript-eslint/explicit-module-boundary-types': 'off',
-    // '@typescript-eslint/explicit-function-return-type': 'off',
-    // '@typescript-eslint/no-var-requires': 0,
-    // '@typescript-eslint/no-explicit-any': 'off',
     'react/prop-types': 'off',
     'react/no-unescaped-entities': 0,
-    'linebreak-style': ['error', 'unix'], 
+    'linebreak-style': ['error', 'unix'],
+    'no-unused-vars': 'off',
+    'unused-imports/no-unused-imports': 'error',
+    'unused-imports/no-unused-vars': 'error',
+    'require-yield': 'off',
   },
   plugins: [
     'react', // React, React Native
     'react-hooks', // React, React Native
-    // '@typescript-eslint', // TypeScript
     'prettier', // always
+    'unused-imports',
   ],
   settings: {
     react: {

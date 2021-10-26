@@ -3,6 +3,6 @@
 **/package.json
 **/yarn.lock
 **/package-lock.json
-**/.eslintrc.js
+# **/.eslintrc.js
 **/tsconfig.json
 /out
