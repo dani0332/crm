@@ -47,11 +47,8 @@
                                     <li><a href="{{ url('quotes/carquotes') }}">Car Quotes</a></li>
                                 @endcan
                                 @can('health-quotes-list')
-                                    <li><a href="{{ url('quotes/healthquotes') }}">Health Quotes</a></li>
+                                    <li><a href="{{ url('quotes/health') }}">Health Quotes</a></li>
                                 @endcan
-                                <li><a href="{{ url('quotes/life') }}">Life Quote</a></li>
-                                <li><a href="{{ url('quotes/health') }}">Health Quote</a></li>
-                                <li><a href="{{ url('quotes/bike') }}">Bike Quote</a></li>
                             </ul>
                         </li>
                     </ul>
