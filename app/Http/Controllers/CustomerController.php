@@ -1,31 +1,22 @@
 <?php
 namespace App\Http\Controllers;
 
+use DataTables;
+use Config;
+use Illuminate\Http\Request;
 use App\Models\Customer;
 use App\Models\Nationality;
-use DataTables;
-use Illuminate\Http\Request;
-use Config;
 use App\Services\TransAppService;
 use App\Services\CustomerUploadService;
 
 class CustomerController extends Controller
 {
-    /**
-
-     * Display a listing of the resource.
-
-     *
-
-     * @return \Illuminate\Http\Response
-
-     */
-
-    private $customerUploadCsvService;
-    public function __construct(CustomerUploadService $customerUploadCsvService)
+    private $customerUploadFileService;
+    public function __construct(CustomerUploadService $customerUploadFileService)
     {
-        $this->customerUploadCsvService = $customerUploadCsvService;
+        $this->customerUploadFileService = $customerUploadFileService;
         $this->middleware('permission:customers-list', ['only' => ['index', 'store']]);
+        $this->middleware('permission:customers-edit', ['only' => ['edit','update']]);
     }
 
     /**
@@ -104,18 +95,17 @@ class CustomerController extends Controller
         $customer->has_reward_access = $request->has_reward_access == 'on' ? 1 : 0;
         $customer->save();
 
-
         if($sendWelcomeEmail && Config::get('constants.ENABLE_TRANSAPP_WE') == '1' && !$customer->is_we_sent) {
             TransAppService::sendWelcomeEmail($customer->id);
             $customer->is_we_sent = true;
             $customer->save();
         }
 
-        if(isset($request->return_to_view))
+        if(isset($request->return_to_view)) {
             return redirect("customer");
+        }
 
-        return back()
-            ->with('success', 'Customer has been Updated');
+        return back()->with('success', 'Customer has been Updated');
     }
 
     /**
@@ -132,7 +122,7 @@ class CustomerController extends Controller
             'myalfred_expiry_date' => 'required'
         ]);
 
-        $customerUploadID = $this->customerUploadCsvService->customerUploadRecordsCreate($request);
+        $customerUploadID = $this->customerUploadFileService->customerUploadRecordsCreate($request);
 
         if($customerUploadID == 0){
             return redirect("customer-upload")->with('message', "CDB Id : ".$request->cdb_id." doesn't exists in system.")->withInput();

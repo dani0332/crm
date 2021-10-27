@@ -12,6 +12,7 @@ class TravelQuote extends Model implements AuditableContract
 {
     use HasFactory, Auditable;
     protected $table = 'travel_quote_request';
+    protected $guarded = [];
 
     public function getCreatedAtAttribute($table)
     {

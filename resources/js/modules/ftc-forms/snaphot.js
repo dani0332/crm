@@ -114,7 +114,7 @@ const leftNavList = [
     icon:'fa fa-line-chart',
     label:'Payment',
     active: 0,
-    id: 8,
+    id: 9,
     data: 'ftcPayment'
  }
 ]

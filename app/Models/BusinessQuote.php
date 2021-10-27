@@ -12,6 +12,7 @@ class BusinessQuote extends Model implements AuditableContract
 {
     use HasFactory, Auditable;
     protected $table = 'business_quote_request';
+    protected $guarded = [];
 
     public function getCreatedAtAttribute($table)
     {

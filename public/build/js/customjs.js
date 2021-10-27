@@ -16,7 +16,8 @@ $(document).ready(function() {
         width: '100%',
         allowClear: true
     });
-    $("#enquiry_date, #allocation_date, #tmLeadsStartDate, #tmLeadsEndDate").datepicker({ // TM Leads
+    // TM Leads, AML
+    $("#enquiry_date, #allocation_date, #tmLeadsStartDate, #tmLeadsEndDate, #amlCreatedStartDate, #amlCreatedEndDate").datepicker({
         changeMonth: true,
         changeYear: true,
         dateFormat: "yy-mm-dd",
@@ -1011,6 +1012,9 @@ $(document).ready(function() {
                 d.searchType = $("#searchType").val();
                 d.searchField = $("input[name=searchField]").val();
                 d.quoteType = $("#quoteTypeValue").val();
+                d.matchFound = $("#matchFound").val();
+                d.amlCreatedStartDate = $("#amlCreatedStartDate").val();
+                d.amlCreatedEndDate = $("#amlCreatedEndDate").val();
             },
         },
         columns: [{
@@ -1047,6 +1051,7 @@ $(document).ready(function() {
         ]
     });
 
+    $("#aml-search-submit").hide();
     $("#aml-search-fields").hide();
     $('#quoteTypeValue').on("change", function(e) {
         aml_search_filters_visiblity();
@@ -1054,27 +1059,67 @@ $(document).ready(function() {
 
     function aml_search_filters_visiblity() {
         var quoteTypeValue = $("#quoteTypeValue").val();
+        console.log("quoteTypeValue1: ",quoteTypeValue);
         if (quoteTypeValue != "") {
             $("#aml-search-fields").show(300);
+            $("#aml-search-submit").show(300);
         } else {
             $("#aml-search-fields").hide(300);
+            $("#aml-search-submit").hide(300);
         }
     }
 
     $("#searchAML").submit(function(e) {
-        e.preventDefault();
-        var searchField = $("#searchField").val();
-        if (searchField == "") {
-            $("#aml-search-filter-result").html("Please type required search");
-            $('#searchField').css('border-color', 'red');
+        var amlCreatedStartDate = $("#amlCreatedStartDate").val();
+        var amlCreatedEndDate = $("#amlCreatedEndDate").val();
+        var searchType = $("#searchType").val();
 
-            setTimeout(() => {
-                $(".loader").hide();
-            }, 1000);
+        if ( searchType == "" && (amlCreatedStartDate == "" || amlCreatedEndDate == "") ) {
+            $("#amlCreatedStartDateMsg").html("Please select start & end dates");
+            $('#amlCreatedStartDate').css('border-color', 'red');
+            $('#amlCreatedEndDate').css('border-color', 'red');
             return false
-        } else {
-            $("#aml-search-filter-result").html("");
-            $('#searchField').css('border-color', '');
+        }
+        else if(amlCreatedStartDate != "" && amlCreatedEndDate != "") {
+            var amlCreatedStartDateSet = new Date(amlCreatedStartDate);
+            var amlCreatedEndDateSet = new Date(amlCreatedEndDate);
+
+            var amlCreatedStartEndTimeDifference = amlCreatedEndDateSet.getTime() - amlCreatedStartDateSet.getTime();
+            var amlCreatedStartEndDaysDiff = amlCreatedStartEndTimeDifference / (1000 * 60 * 60 * 24);
+
+            if (amlCreatedStartEndDaysDiff > 30) {
+                $("#amlCreatedStartDateMsg").html("Allowed no. of days between start & end dates are 30 days.");
+                $('#amlCreatedStartDate').css('border-color', 'red');
+                $('#amlCreatedEndDate').css('border-color', 'red');
+                $("#amlCreatedEndDateMsg").html("");
+                return false;
+            }
+            else if (amlCreatedStartDate > amlCreatedEndDate) {
+                $("#amlCreatedStartDateMsg").html("Start date must be equal or less than end date");
+                $('#amlCreatedStartDate').css('border-color', 'red');
+                $('#amlCreatedEndDate').css('border-color', 'red');
+                $("#amlCreatedEndDateMsg").html("");
+                return false;
+            }
+            else {
+                $("#amlCreatedStartDateMsg").html("");
+                $("#amlCreatedEndDateMsg").html("");
+                $('#amlCreatedStartDate').css('border-color', '');
+                $('#amlCreatedEndDate').css('border-color', '');
+                e.preventDefault();
+                $(".loader").show();
+                amlDatatable.draw();
+                setTimeout(() => {
+                    $(".loader").hide();
+                }, 1000);
+            }
+        }
+        else {
+            $("#amlCreatedStartDateMsg").html("");
+            $("#amlCreatedEndDateMsg").html("");
+            $('#amlCreatedStartDate').css('border-color', '');
+            $('#amlCreatedEndDate').css('border-color', '');
+            e.preventDefault();
             $(".loader").show();
             amlDatatable.draw();
             setTimeout(() => {
