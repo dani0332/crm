@@ -57,7 +57,9 @@ class CarQuoteService extends BaseService
             "id" => "readonly|none",
             "first_name" => "input|text|title|required",
             "last_name" => "input|text|required",
+            "dob" => "input|date|required",
             "car_make_id" => "select|title|required",
+            "additional_notes" => "textarea|required",
         );
     }
 
