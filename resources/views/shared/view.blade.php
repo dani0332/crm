@@ -6,14 +6,23 @@
 <style>
     div.dt-buttons {
     position: relative;
-    float: right;
+    float: left;
 }
 td{
     word-wrap: break-word;
 }
 </style>
 <script>
+    document.addEventListener('DOMContentLoaded',function () {
+
+    });
 $(document).ready(function() {
+    String.prototype.replaceAll = function(search, replacement) {
+    var target = this;
+    return target.replace(new RegExp(search, 'g'), replacement);
+    };
+
+
     function convertObjectToArray(obj) {
     return Object.keys(obj).map(key => ({
         name: key,
@@ -22,6 +31,7 @@ $(document).ready(function() {
     }
     var model = JSON.parse('<?php echo json_encode(get_object_vars($model)) ?>');
     var modelPropertiesArray = convertObjectToArray(model.properties);
+
     var dataTableColumns = [];
     for(var i=0; i < modelPropertiesArray.length ;i++){
         if(modelPropertiesArray[i].name == 'id'){
@@ -37,7 +47,6 @@ $(document).ready(function() {
         else{
             dataTableColumns.push({ data: modelPropertiesArray[i].name, name: modelPropertiesArray[i].name});
         }
-
     }
     var vehicleTypeDataTable = $("#dtBasicExample").DataTable({
         ordering: false,
@@ -47,7 +56,12 @@ $(document).ready(function() {
         bLengthChange: false,
         serverSide: true,
         ajax: {
-            url: '/quotes/'+ model.modelType.toLowerCase()
+            url: '/quotes/'+ model.modelType.toLowerCase(),
+            data: function(d) {
+                model.searchProperties.forEach(element => {
+                    d[element] = $('#' + element).val();
+                });
+            }
         },
         columns: dataTableColumns,
         buttons: [{
@@ -56,9 +70,45 @@ $(document).ready(function() {
             title: model.modelType+ ' Listing',
             action: newexportaction
         }],
+        initComplete: function(settings){
+        var api = new $.fn.dataTable.Api( settings );
+
+        var columns = vehicleTypeDataTable.settings().init().columns;
+        vehicleTypeDataTable.columns().every(function(index) {
+            if(columns[index].name != 'id'){
+            if(model.skipProperties['list'].indexOf(columns[index].name) > -1 ){
+                console.log(model.skipProperties['list']);
+                api.columns([index]).visible(false);
+            }
+        }
+        })
+    }
 
     });
+    vehicleTypeDataTable.on( 'draw', function () {
+        var rows = $('#dtBasicExample tr');
+        for (let index = 1; index < rows.length; index++) {
+            var columns = $(rows[index]).children();
+            for (let i = 1; i < columns.length; i++) {
+                const element = columns[i];
+                if($(element).text() == '1'){
+                    $(element).text('True');
+                }
+                else if ($(element).text() == '0'){
+                    $(element).text('False');
+                }
+            }
 
+        }
+    });
+    $("#searchTable").submit(function(e) {
+        e.preventDefault();
+        $(".loader").show();
+        vehicleTypeDataTable.draw();
+        setTimeout(() => {
+            $(".loader").hide();
+        }, 1000);
+    });
     function newexportaction(e, dt, button, config) {
          var self = this;
          var oldStart = dt.settings()[0]._iDisplayStart;
@@ -114,11 +164,70 @@ $(document).ready(function() {
                 <div class="clearfix"></div>
             </div>
             <div class="x_content">
+                <form method="POST" id="searchTable" class="form-horizontal form-label-left" role="form" data-parsley-validate="" novalidate="" autocomplete="off">
+                    @foreach($model->properties as $property => $value)
+                        @foreach ($model->searchProperties as $searchProperty)
+                            @if ($searchProperty == $property)
+                                <div @if(count($model->properties) <6) class="col-md-12" @else class="col-md-6" @endif>
+                                    @if(strpos($value, 'input') !== false )
+                                        <span class="col-form-label col-md-6 col-sm-6" for="name">
+                                            @if(strpos($value, 'title'))
+                                                {{ strtoupper($customTitles[$property])}}
+                                            @else
+                                                {{str_replace("_"," ",strtoupper($property))}}
+                                            @endif
+                                        </span>
+                                        <input
+                                            @if(explode("|", $value)[1] != 'date')
+                                                type={{ explode("|", $value)[1]  }}
+                                                @endif id={{$property}}
+                                            name={{$property}}
+                                        class="form-control">
+                                        @if ($errors->has($property))
+                                            <span class="text-danger">{{ $errors->first($property) }}</span>
+                                        @endif
+                                    @endif
+                                    @if(strpos($value, 'select') !== false)
+                                        <span class="col-form-label col-md-6 col-sm-6" for="name">
+                                            @if(strpos($value, 'title'))
+                                                {{ strtoupper($customTitles[$property]) }}
+                                            @else
+                                                {{str_replace("_"," ",strtoupper($property))}}
+                                            @endif
+                                            @if(strpos($value, "required") == true)
+                                            <span class='required'>*</span>
+                                            @endif
+                                        </span>
+                                        <select @if(strpos($value, 'multiple')) multiple="multiple" class="form-control select2 select-roles" @else class="form-control" @endif id="{{$property}}" name="{{$property}}">
+                                            <option value="">{{"Please select ".str_replace("_"," ",$property) }}</option>
+                                            @foreach($dropdownSource[$property] as $item)
+                                                <option value="{{$item->id}}">
+                                                {{ $item->text ?? $item->name }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                        @if ($errors->has($property))
+                                        <span class="text-danger">{{ $errors->first($property) }}</span>
+                                        @endif
+                                    @endif
+                                </div>
+                            @endif
+                        @endforeach
+                   @endforeach
+                   <div class="col-md-12" style="margin-top: 25px;">
+                    <div class="col">
+                        <ul class="nav navbar-right panel_toolbox">
+                        <li><input type="submit" class="btn btn-warning btn-sm"></li>
+                        <li><input type="reset" class="btn btn-warning btn-sm"></li>
+                        </ul>
+                    </div>
+                </div>
+                 </form>
                 <table id="dtBasicExample" class="table table-striped jambo_table" style="table-layout: fixed;" width="100%">
                     <thead>
                         <tr>
                             @foreach($model->properties as $property => $value)
-                                <th>{{str_replace("_"," ",strtoupper($property))}}</th>
+                            <th>{{str_replace("_"," ",strtoupper($property))}}</th>
                             @endforeach
                         </tr>
                     </thead>

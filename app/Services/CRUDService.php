@@ -21,9 +21,9 @@ class CRUDService extends BaseService
         $this->teamService = new TeamService();
     }
 
-	public function getGridData($modelType){
+	public function getGridData(GenericModel $model){
         $data = '';
-        switch ($modelType) {
+        switch ($model->modelType) {
             case 'Life':
                 $data = LifeQuote::select('*');
                 break;

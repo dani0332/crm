@@ -62,8 +62,8 @@ class HealthQuoteService extends BaseService
             "details" => "input|text",
             "mobile_no" => "input|title|number|required",
             "source" => "input|text|title",
-            "marital_status_id" => "select|title|required",
             "dob" => 'input|date|required',
+            "marital_status_id" => "select|title|required",
             "cover_for_id" => "select|title|required",
             "nationality_id" => "select|title|required",
             "has_dental" => "input|checkbox|title",
@@ -112,7 +112,14 @@ class HealthQuoteService extends BaseService
         return $title;
     }
 
-    public static function fillModelSkipProperties() {
-        return ["preference1"];
+    public function fillModelSkipProperties() {
+        return [
+            "create" => "id",
+            "list" => "marital_status_id,email,cover_for_id,nationality_id,emirate_of_your_visa_id",
+        ];
+    }
+
+    public function fillModelSearchProperties(){
+        return ["email", 'first_name', 'last_name', 'nationality_id'];
     }
 }

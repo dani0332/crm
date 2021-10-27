@@ -7,19 +7,22 @@ use Illuminate\Http\Request;
 use App\Services\DropdownSourceService;
 use App\Services\HealthQuoteService;
 use App\Services\CRUDService;
+use App\Services\TeamService;
 use DataTables;
 class CRUDController extends Controller
 {
     protected $genericModel;
     protected $healthQuoteService;
+    protected $teamService;
     protected $dropdownSourceService;
     protected $crudService;
-    public function __construct(Request $request)
+    public function __construct(Request $request, HealthQuoteService $healthService, TeamService $teamService, CRUDService $crudService, DropdownSourceService $dropdownSourceService)
     {
         $this->genericModel = new GenericModel();
-        $this->healthQuoteService = new HealthQuoteService();
-        $this->crudService = new CRUDService();
-        $this->dropdownSourceService = new DropdownSourceService();
+        $this->healthQuoteService = $healthService;
+        $this->teamService = $teamService;
+        $this->crudService = $crudService;
+        $this->dropdownSourceService = $dropdownSourceService;
         $this->setModelType($request);
         $this->fillModelByModelType($this->genericModel->modelType);
     }
@@ -32,15 +35,33 @@ class CRUDController extends Controller
     public function index(Request $request)
     {
         $model = $this->genericModel;
-        $data = $this->crudService->getGridData($this->genericModel->modelType);
+        $gridData = $this->crudService->getGridData($this->genericModel);
+
+        $customTitles = [];
+        $dropdownSource = [];
+
+        foreach($model->properties as $property => $value) {
+            if(str_contains($value, 'title')){
+                $customTitles[$property] = $this->crudService->getCustomTitleByModelType($this->genericModel->modelType, $property);
+            }
+            if(str_contains($value, 'select')){
+                $dropdownValue = $this->dropdownSourceService->getDropdownSource($property);
+                $dropdownSource[$property] = $dropdownValue;
+            }
+        }
 
         if ($request->ajax()) {
-            return DataTables::of($data)
+            foreach ($model->searchProperties as $item) {
+                if(!empty($request[$item])){
+                    $gridData = $gridData->where($item, '=', $request[$item]);
+                }
+            }
+            return DataTables::of($gridData)
             ->addIndexColumn()
             ->make(true);
-            return view('shared.view', compact('model'));
+            return view('shared.view', compact('model','dropdownSource', 'customTitles'));
         }
-        return view('shared.view', compact('model'));
+        return view('shared.view', compact('model','dropdownSource', 'customTitles'));
     }
 
     /**
@@ -169,6 +190,7 @@ class CRUDController extends Controller
             case 'Health':
                 $this->genericModel->properties = $this->healthQuoteService->fillModelProperties();
                 $this->genericModel->skipProperties = $this->healthQuoteService->fillModelSkipProperties();
+                $this->genericModel->searchProperties = $this->healthQuoteService->fillModelSearchProperties();
                 break;
             case 'Teams':
                 $this->genericModel->properties = $this->teamService->fillModelProperties();
@@ -177,6 +199,19 @@ class CRUDController extends Controller
             default:
                 break;
         }
+    }
+
+    public function getDropdownSourceNameForDisplay($modelType, $propertyName, $recordId){
+
+        $data = $this->dropdownSourceService->getDropdownSource($propertyName);
+        $recordName = '';
+        $record = $this->crudService->getEntity($modelType, $recordId);
+        foreach ($data as $item) {
+            if($item->id == $record[$propertyName]){
+                $recordName = $item->text ?? $item->name;
+            }
+        }
+        return $recordName;
     }
 
 }

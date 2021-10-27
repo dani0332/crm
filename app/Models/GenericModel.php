@@ -9,4 +9,5 @@ class GenericModel extends BaseModel
     public $modelType;
     public $properties = [];
     public $skipProperties = [];
+    public $searchProperties = [];
 }

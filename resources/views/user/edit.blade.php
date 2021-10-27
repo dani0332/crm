@@ -68,7 +68,7 @@
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="roles">Team <span class="required">*</span></label>
                         <div class="col-md-6 col-sm-6 ">
-                            <select name="team" class="form-control">
+                            <select name="team" class="form-control select2 select-roles" multiple="multiple" >
                                 @foreach ($teams as $team)
                                     <option value="{{ $team->id }}"
                                     {{ $team->id == old('team',$userTeamId) ? 'selected' : '' }}

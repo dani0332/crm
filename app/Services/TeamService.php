@@ -28,6 +28,7 @@ class TeamService extends BaseService
         return array (
             "id" => "readonly|none",
             "name" => "input|text|required|title",
+            "team_users" => "select|multiple|title|required",
         );
     }
 
@@ -37,6 +38,8 @@ class TeamService extends BaseService
             case 'name':
                 $title = "Team Name";
                 break;
+            case 'team_users':
+                $title = 'Team Users';
             default:
                 break;
         }

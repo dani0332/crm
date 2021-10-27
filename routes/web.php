@@ -105,6 +105,7 @@ Route::group(['middleware' =>  ['auth']], function () {
         Route::resource('teams', CRUDController::class);
         Route::post('save', [CRUDController::class, 'store'])->name('saveQuote');
         Route::post('update', [CRUDController::class, 'update'])->name('updateQuote');
+        Route::get('getvalues/{modelType}/{propertyName}/{recordId}', [CRUDController::class, 'getDropdownSourceNameForDisplay']);
     });
 
     Route::group(['prefix' => 'transapp'], function () {
