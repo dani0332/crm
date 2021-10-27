@@ -21,7 +21,11 @@
                     @endif
                     @foreach($model->properties as $property => $value)
                         <div class="item form-group">
+                            @if(strpos($value, 'title'))
+                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="Status Description"><b>{{ strtoupper($customTitles[$property])}}</b></label>
+                            @else
                             <label class="col-form-label col-md-3 col-sm-3 label-align" for="Status Description"><b>{{str_replace("_"," ",strtoupper($property))}}</b></label>
+                            @endif
                             <div class="col-md-6 col-sm-6">
                                 <p class="label-align-center">{{ $record[$property] }}</p>
                             </div>

@@ -6,6 +6,7 @@ use App\Models\GenericModel;
 use Illuminate\Http\Request;
 use App\Services\DropdownSourceService;
 use App\Services\HealthQuoteService;
+use App\Services\CarQuoteService;
 use App\Services\CRUDService;
 use App\Services\TeamService;
 use DataTables;
@@ -15,14 +16,17 @@ class CRUDController extends Controller
     protected $healthQuoteService;
     protected $teamService;
     protected $dropdownSourceService;
+    protected $carQuoteService;
     protected $crudService;
-    public function __construct(Request $request, HealthQuoteService $healthService, TeamService $teamService, CRUDService $crudService, DropdownSourceService $dropdownSourceService)
+    public function __construct(Request $request, HealthQuoteService $healthService, TeamService $teamService, CRUDService $crudService, DropdownSourceService $dropdownSourceService,
+    CarQuoteService $carQuoteService)
     {
         $this->genericModel = new GenericModel();
         $this->healthQuoteService = $healthService;
         $this->teamService = $teamService;
         $this->crudService = $crudService;
         $this->dropdownSourceService = $dropdownSourceService;
+        $this->carQuoteService = $carQuoteService;
         $this->setModelType($request);
         $this->fillModelByModelType($this->genericModel->modelType);
     }
@@ -117,7 +121,14 @@ class CRUDController extends Controller
     {
         $record = $this->crudService->getEntity($this->genericModel->modelType, $id);
         $model = $this->genericModel;
-        return view('shared.show', compact(['record', 'model']));
+        $customTitles = [];
+
+        foreach($model->properties as $property => $value) {
+            if(str_contains($value, 'title')){
+                $customTitles[$property] = $this->crudService->getCustomTitleByModelType($this->genericModel->modelType, $property);
+            }
+        }
+        return view('shared.show', compact(['record', 'model', 'customTitles']));
     }
 
     /**
@@ -180,12 +191,16 @@ class CRUDController extends Controller
         if(strpos($request->fullUrl(), 'health')) $this->genericModel->modelType = 'Health';
         if(strpos($request->fullUrl(), 'life')) $this->genericModel->modelType = 'Life';
         if(strpos($request->fullUrl(), 'teams')) $this->genericModel->modelType = 'Teams';
+        if(strpos($request->fullUrl(), 'car')) $this->genericModel->modelType = 'Car';
     }
 
     private function fillModelByModelType ($modelType)
     {
         switch ($modelType) {
-            case 'Life':
+            case 'Car':
+                $this->genericModel->properties = $this->carQuoteService->fillModelProperties();
+                $this->genericModel->skipProperties = $this->carQuoteService->fillModelSkipProperties();
+                $this->genericModel->searchProperties = $this->carQuoteService->fillModelSearchProperties();
                 break;
             case 'Health':
                 $this->genericModel->properties = $this->healthQuoteService->fillModelProperties();

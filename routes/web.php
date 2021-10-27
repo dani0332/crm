@@ -106,7 +106,7 @@ Route::group(['middleware' =>  ['auth']], function () {
         Route::get('carquotes/car_resubmit/{id}', [CarQuoteController::class, 'car_resubmit_capi'])->name('car_resubmit_capi');
         Route::resource('healthquotes', HealthQuoteController::class);
         Route::resource('health', CRUDController::class);
-        Route::resource('life', CRUDController::class);
+        Route::resource('car', CRUDController::class);
         Route::resource('teams', CRUDController::class);
         Route::post('save', [CRUDController::class, 'store'])->name('saveQuote');
         Route::post('update', [CRUDController::class, 'update'])->name('updateQuote');

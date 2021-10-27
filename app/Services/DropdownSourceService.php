@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\CarMake;
 use App\Models\Emirate;
 use App\Models\HealthCoverFor;
 use App\Models\LeadStatus;
@@ -33,6 +34,9 @@ class DropdownSourceService extends BaseService
                 break;
             case 'team_users':
                 $data = User::select('id','name')->get();
+                break;
+            case 'car_make_id':
+                $data = CarMake::select('id','text')->get();
                 break;
             default:
                 break;

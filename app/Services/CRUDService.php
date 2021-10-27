@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\CarQuote;
 use App\Models\GenericModel;
 use App\Models\HealthQuote;
 use App\Models\LifeQuote;
@@ -13,19 +14,21 @@ use Illuminate\Http\Request;
 class CRUDService extends BaseService
 {
     protected $healthQuoteService;
+    protected $carQuoteService;
     protected $teamService;
     protected $request;
-    public function __construct()
+    public function __construct(HealthQuoteService $healthQuoteService, TeamService $teamService, CarQuoteService $carQuoteService)
     {
-        $this->healthQuoteService = new HealthQuoteService();
-        $this->teamService = new TeamService();
+        $this->healthQuoteService = $healthQuoteService;
+        $this->teamService = $teamService;
+        $this->carQuoteService = $carQuoteService;
     }
 
 	public function getGridData(GenericModel $model){
         $data = '';
         switch ($model->modelType) {
-            case 'Life':
-                $data = LifeQuote::select('*');
+            case 'Car':
+                $data = CarQuote::select('*');
                 break;
             case 'Health':
                 $data = HealthQuote::select('*')->orderBy('created_at','desc');
@@ -43,7 +46,8 @@ class CRUDService extends BaseService
     public function getCustomTitleByModelType($modelType, $propertyName){
         $title = '';
         switch ($modelType) {
-            case 'Life':
+            case 'Car':
+                $title = $this->carQuoteService->getCustomTitleByProperty($propertyName);
                 break;
             case 'Health':
                 $title = $this->healthQuoteService->getCustomTitleByProperty($propertyName);
@@ -59,8 +63,8 @@ class CRUDService extends BaseService
 
     public function saveModelByType($modelType, Request $request){
         switch ($modelType) {
-            case 'Life':
-                LifeQuoteService::saveLifeQuote($request);
+            case 'Car':
+                $this->carQuoteService->saveCarQuote($request);
                 break;
             case 'Health':
                 $this->healthQuoteService->saveHealthQuote($request);
@@ -75,8 +79,8 @@ class CRUDService extends BaseService
 
     public function updateModelByType($modelType, Request $request, $id){
         switch ($modelType) {
-            case 'Life':
-                LifeQuoteService::saveLifeQuote($request);
+            case 'Car':
+                $this->carQuoteService->updateCarQuote($request, $id);
                 break;
             case 'Health':
                 $this->healthQuoteService->updateHealthQuote($request, $id);
@@ -93,8 +97,8 @@ class CRUDService extends BaseService
     {
         $data = '';
         switch ($modelType) {
-            case 'Life':
-                $data = LifeQuote::find($id);
+            case 'Car':
+                $data = CarQuote::find($id);
                 break;
             case 'Health':
                 $data = HealthQuote::find($id);
