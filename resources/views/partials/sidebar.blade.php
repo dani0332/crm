@@ -47,8 +47,11 @@
                                     <li><a href="{{ url('quotes/carquotes') }}">Car Quotes</a></li>
                                 @endcan
                                 @can('health-quotes-list')
-                                <li><a href="{{ url('quotes/health') }}">Health Quote</a></li>
+                                    <li><a href="{{ url('quotes/healthquotes') }}">Health Quotes</a></li>
                                 @endcan
+                                <li><a href="{{ url('quotes/life') }}">Life Quote</a></li>
+                                <li><a href="{{ url('quotes/health') }}">Health Quote</a></li>
+                                <li><a href="{{ url('quotes/bike') }}">Bike Quote</a></li>
                             </ul>
                         </li>
                     </ul>
@@ -83,10 +86,8 @@
                         <li><a><i class="fa fa-desktop"></i> Trans App <span class="fa fa-chevron-down"></span></a>
                             <ul class="nav child_menu">
                                 @can('transapp-create')
-                                    <li><a href="{{ route('home') }}">Search Transaction</a></li>
-
-                                    <li><a href="{{ route('transaction.create') }}">Create Transaction</a></li>
-
+                                <li><a href="{{ route('home') }}">Search Transaction</a></li>
+                                @endcan
                                 @can('transapp-edit')
                                     <li class="sub_menu"><a href="{{ route('reissue_view') }}">Cancel & Re-Issue
                                             Transaction</a></li>
