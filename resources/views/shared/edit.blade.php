@@ -38,6 +38,7 @@
                         autocomplete="off">
                         {{ csrf_field() }}
                         @method('PUT')
+
                         <input type="hidden" name="model" value={{ json_encode($model->properties) }} />
                         <input type="hidden" name="modelType" value={{ json_encode($model->modelType) }} />
                         @php
@@ -80,14 +81,29 @@
                                             <span class='required'>*</span>
                                             @endif
                                         </span>
-                                        <select @if(strpos($value, 'multiple')) multiple="multiple" class="form-control select2 select-roles" @else class="form-control" @endif id="{{$property}}" name="{{$property}}">
+                                        <select @if(strpos($value, 'multiple')) multiple="multiple" name="{{$property.'[]'}}" class="form-control select2 select-roles" @else name="{{$property}}" class="form-control" @endif id="{{$property}}" >
                                             <option value="">{{"Please select ".str_replace("_"," ",$property) }}</option>
+                                            @if (strpos($value, 'customTable') !== false)
+                                                @foreach($customLists[$property] as $selectedItem)
+                                                    @foreach($dropdownSource[$property] as $item)
+                                                        @if ($selectedItem->id == $item->id)
+                                                            <option value="{{$item->id}}" selected="selected">
+                                                            {{ $item->text ?? $item->name }}
+                                                            </option>
+                                                        @else
+                                                            <option value="{{$item->id}}">
+                                                            {{ $item->text ?? $item->name }}
+                                                            </option>
+                                                        @endif
+                                                    @endforeach
+                                                @endforeach
+                                            @else
                                             @foreach($dropdownSource[$property] as $item)
-                                                <option value="{{$item->id}}"
-                                                {{ $item->id == old($item->id, $record[$property]) ? 'selected' : ''}}>
-                                                {{ $item->text ?? $item->name }}
-                                                </option>
+                                                <option value="{{$item->id}}" {{ $item->id == old($item->id, $record[$property]) ? 'selected' : ''}}>{{ $item->text ?? $item->name }}</option>
                                             @endforeach
+
+                                            @endif
+
                                         </select>
                                         @if ($errors->has($property))
                                         <span class="text-danger">{{ $errors->first($property) }}</span>

@@ -8,6 +8,7 @@ use App\Services\DropdownSourceService;
 use App\Services\HealthQuoteService;
 use App\Services\CarQuoteService;
 use App\Services\CRUDService;
+use App\Services\LeadStatusService;
 use App\Services\TeamService;
 use DataTables;
 class CRUDController extends Controller
@@ -18,8 +19,9 @@ class CRUDController extends Controller
     protected $dropdownSourceService;
     protected $carQuoteService;
     protected $crudService;
+    protected $leadStatusService;
     public function __construct(Request $request, HealthQuoteService $healthService, TeamService $teamService, CRUDService $crudService, DropdownSourceService $dropdownSourceService,
-    CarQuoteService $carQuoteService)
+    CarQuoteService $carQuoteService, LeadStatusService $leadStatusService)
     {
         $this->genericModel = new GenericModel();
         $this->healthQuoteService = $healthService;
@@ -27,6 +29,7 @@ class CRUDController extends Controller
         $this->crudService = $crudService;
         $this->dropdownSourceService = $dropdownSourceService;
         $this->carQuoteService = $carQuoteService;
+        $this->leadStatusService = $leadStatusService;
         $this->setModelType($request);
         $this->fillModelByModelType($this->genericModel->modelType);
     }
@@ -122,13 +125,16 @@ class CRUDController extends Controller
         $record = $this->crudService->getEntity($this->genericModel->modelType, $id);
         $model = $this->genericModel;
         $customTitles = [];
-
+        $customTableList = [];
         foreach($model->properties as $property => $value) {
             if(str_contains($value, 'title')){
                 $customTitles[$property] = $this->crudService->getCustomTitleByModelType($this->genericModel->modelType, $property);
             }
+            if(str_contains($value, 'customTable')){
+                $customTableList[$property] = $this->dropdownSourceService->getOnlySelectedItemName($property, $id);
+            }
         }
-        return view('shared.show', compact(['record', 'model', 'customTitles']));
+        return view('shared.show', compact(['record', 'model', 'customTitles', 'customTableList']));
     }
 
     /**
@@ -143,6 +149,7 @@ class CRUDController extends Controller
         $model = $this->genericModel;
         $dropdownSource = [];
         $customTitles = [];
+        $customLists = [];
         foreach($model->properties as $property => $value) {
             if(str_contains($value, 'title')){
                 $customTitles[$property] = $this->crudService->getCustomTitleByModelType($this->genericModel->modelType, $property);
@@ -151,8 +158,13 @@ class CRUDController extends Controller
                 $data = $this->dropdownSourceService->getDropdownSource($property);
                 $dropdownSource[$property] = $data;
             }
+            if(str_contains($value, 'customTable')){
+                $data = $this->dropdownSourceService->getCustomDropdownList($property, $record->id);
+                $customLists[$property] = $data;
+            }
         }
-        return view('shared.edit', compact(['record', 'model', 'dropdownSource', 'customTitles']));
+        #dd($customLists);
+        return view('shared.edit', compact(['record', 'model', 'dropdownSource', 'customTitles', 'customLists']));
     }
 
     /**
@@ -192,6 +204,7 @@ class CRUDController extends Controller
         if(strpos($request->fullUrl(), 'life')) $this->genericModel->modelType = 'Life';
         if(strpos($request->fullUrl(), 'teams')) $this->genericModel->modelType = 'Teams';
         if(strpos($request->fullUrl(), 'car')) $this->genericModel->modelType = 'Car';
+        if(strpos($request->fullUrl(), 'leadstatus')) $this->genericModel->modelType = 'LeadStatus';
     }
 
     private function fillModelByModelType ($modelType)
@@ -210,6 +223,11 @@ class CRUDController extends Controller
             case 'Teams':
                 $this->genericModel->properties = $this->teamService->fillModelProperties();
                 $this->genericModel->skipProperties = $this->teamService->fillModelSkipProperties();
+                break;
+            case 'LeadStatus':
+                $this->genericModel->properties = $this->leadStatusService->fillModelProperties();
+                $this->genericModel->skipProperties = $this->leadStatusService->fillModelSkipProperties();
+                $this->genericModel->searchProperties = $this->leadStatusService->fillModelSearchProperties();
                 break;
             default:
                 break;

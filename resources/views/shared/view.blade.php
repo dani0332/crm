@@ -109,6 +109,18 @@ $(document).ready(function() {
             $(".loader").hide();
         }, 1000);
     });
+    $('#reset-btn-generic').click(function(e){
+        $(':input','#searchTable')
+        .not(':button, :submit, :reset, :hidden')
+        .val('')
+        .prop('checked', false)
+        .prop('selected', false);
+        $(".loader").show();
+        vehicleTypeDataTable.draw();
+        setTimeout(() => {
+            $(".loader").hide();
+        }, 1000);
+    });
     function newexportaction(e, dt, button, config) {
          var self = this;
          var oldStart = dt.settings()[0]._iDisplayStart;
@@ -218,7 +230,7 @@ $(document).ready(function() {
                     <div class="col">
                         <ul class="nav navbar-right panel_toolbox">
                         <li><input type="submit" class="btn btn-warning btn-sm"></li>
-                        <li><input type="reset" class="btn btn-warning btn-sm"></li>
+                        <li><input type="reset" id="reset-btn-generic" class="btn btn-warning btn-sm"></li>
                         </ul>
                     </div>
                 </div>

@@ -58,6 +58,7 @@ class CarQuoteService extends BaseService
             "first_name" => "input|text|title|required",
             "last_name" => "input|text|required",
             "car_make_id" => "select|title|required",
+            "car_model_id" => "select|title|required|dependent|car_make_id"
         );
     }
 
@@ -70,8 +71,8 @@ class CarQuoteService extends BaseService
             case 'car_make_id':
                 $title = "Car Make";
                 break;
-            case 'nationality_id':
-                $title = "Nationality";
+            case 'car_model_id':
+                $title = "Car Model";
                 break;
             case 'mobile_no':
                 $title = "Mobile Number";

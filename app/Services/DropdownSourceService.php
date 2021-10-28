@@ -3,15 +3,55 @@
 namespace App\Services;
 
 use App\Models\CarMake;
+use App\Models\CarModel;
 use App\Models\Emirate;
 use App\Models\HealthCoverFor;
 use App\Models\LeadStatus;
 use App\Models\MartialStatus;
 use App\Models\Nationality;
 use App\Models\User;
+use DB;
 
 class DropdownSourceService extends BaseService
 {
+
+    public function getCustomDropdownList($type, $id){
+        $data = '';
+        switch ($type) {
+            case 'team_managers':
+                $data = DB::select("select u.id, u.name from users u
+                inner join team_managers tm on tm.manager_id = u.id
+                where tm.team_id =".$id);
+                break;
+            case 'team_users':
+                $data = DB::select("select u.id, u.name from users u
+                inner join user_team ut on ut.user_id = u.id
+                where ut.team_id =".$id);
+                break;
+            default:
+                break;
+        }
+        return $data;
+    }
+
+    public function getOnlySelectedItemName($type, $id){
+        $data = '';
+        switch ($type) {
+            case 'team_managers':
+                $data = DB::select("select group_concat(u.name) as names from users u
+                inner join team_managers tm on tm.manager_id = u.id
+                where tm.team_id =".$id);
+                break;
+            case 'team_users':
+                $data = DB::select("select group_concat(u.name) as names from users u
+                inner join user_team ut on ut.user_id = u.id
+                where ut.team_id =".$id);
+                break;
+            default:
+                break;
+        }
+        return $data;
+    }
 
 	public function getDropdownSource($type)
 	{
@@ -38,9 +78,22 @@ class DropdownSourceService extends BaseService
             case 'car_make_id':
                 $data = CarMake::select('id','text')->get();
                 break;
+            case 'car_model_id':
+                $data = [];
+                break;
+            case 'team_managers':
+                $data = User::select('users.id','users.name')
+                ->join('model_has_roles', 'model_has_roles.model_id', '=', 'users.id')
+                ->join('roles', 'roles.id', '=', 'model_has_roles.role_id')
+                ->where('roles.name', '=','Manager')->get();
+                break;
             default:
                 break;
         }
         return $data;
 	}
+
+    public function getCarModel($makeCode){
+        return CarModel::select('id','text')->where('code', $makeCode)->get();
+    }
 }

@@ -108,6 +108,7 @@ Route::group(['middleware' =>  ['auth']], function () {
         Route::resource('health', CRUDController::class);
         Route::resource('car', CRUDController::class);
         Route::resource('teams', CRUDController::class);
+        Route::resource('leadstatus', CRUDController::class);
         Route::post('save', [CRUDController::class, 'store'])->name('saveQuote');
         Route::post('update', [CRUDController::class, 'update'])->name('updateQuote');
         Route::get('getvalues/{modelType}/{propertyName}/{recordId}', [CRUDController::class, 'getDropdownSourceNameForDisplay']);
