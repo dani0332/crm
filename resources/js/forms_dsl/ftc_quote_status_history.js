@@ -7,7 +7,7 @@ const ftcQuoteStatusHistory = {
             title: 'FTC Quote Status History',
             subtitle: '',
             access: {
-                read: ['pa', 'advisor' , 'admin', 'invoicing'],
+                read: ['pa', 'advisor' , 'admin', 'invoicing','production_approval_manager'],
                 write: [],
                 update: [],
                 delete: []
@@ -19,7 +19,7 @@ const ftcQuoteStatusHistory = {
                     source: 'quote_status',
                     field:'quote_status_id',
                     access: {
-                         read: [ 'advisor', 'pa', 'admin', 'invoicing'],
+                         read: [ 'advisor', 'pa', 'admin', 'invoicing','production_approval_manager'],
                          write: [ ],
                          update: [],
                     },
@@ -29,7 +29,7 @@ const ftcQuoteStatusHistory = {
                     type:'textarea',
                     label:'Notes',
                     access: {
-                         read: [ 'advisor', 'pa', 'admin', 'invoicing'],
+                         read: [ 'advisor', 'pa', 'admin', 'invoicing','production_approval_manager'],
                          write: [  ],
                          update: [  ],
                     },
@@ -71,6 +71,10 @@ const ftcQuoteStatusHistory = {
                     {
                         Header: "Status",
                         accessor: d => `${d?.quote_status_id?.text}`
+                    },
+                    {
+                        Header: "Notes",
+                        accessor: d => `${ (d?.notes && d?.notes.length > 20) ? d?.notes.substring(0.19) + '...' : d?.notes }`
                     },
                     {
                         Header: "Created By",

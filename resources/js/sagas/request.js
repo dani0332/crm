@@ -8,11 +8,11 @@ export function* sendRequest(url,request, options) {
         if (!response.ok) {
             if(options?.reject  && typeof options.reject=== 'function') {
                 yield put({ type: 'MessageShow', obj:{ title: 'ERROR', message: 'Something wrong with your request. Please contact with administration.', type: 'danger'} })
-                options?.reject({ code: response.status })
+                options?.reject({ code: response.status , response:  response})
                 return
             }
             else
-                throw { code: response.status }
+                throw { code: response.status, response:  response }
         }
 
         const data = yield response.json()

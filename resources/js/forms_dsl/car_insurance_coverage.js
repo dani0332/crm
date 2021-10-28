@@ -7,7 +7,7 @@ let insuranceDetail = {
             title: 'Insurance Coverage Information',
             subtitle: '',
             access: {
-                read: [ 'pa','advisor' , 'admin', 'invoicing'],
+                read: [ 'pa','advisor' , 'admin', 'invoicing','production_approval_manager'],
                 write: [ 'advisor' ,'admin'],
                 update: [ 'advisor' ,'admin'],
                 delete: []
@@ -17,7 +17,7 @@ let insuranceDetail = {
                     type: 'datePicker',
                     label: 'Policy start date',
                     access: {
-                        read: [ 'pa','advisor','admin', 'invoicing'],
+                        read: [ 'pa','advisor','admin', 'invoicing','production_approval_manager'],
                         write: [ 'advisor' ,'admin'],
                         update: [ 'advisor' ,'admin'],
                     },
@@ -29,7 +29,7 @@ let insuranceDetail = {
                     source: 'insurance_companies',
                     rules: { required: true },
                     access: {
-                        read: [ 'pa','advisor','admin', 'invoicing'],
+                        read: [ 'pa','advisor','admin', 'invoicing','production_approval_manager'],
                         write: [ 'advisor' ,'admin'],
                         update: [ 'advisor' ,'admin'],
                     },
@@ -50,7 +50,7 @@ let insuranceDetail = {
                     label: 'Insurance Plan',
                     source: 'car_quote_insurance_plan',
                     access: {
-                        read: [ 'pa','advisor','admin', 'invoicing'],
+                        read: [ 'pa','advisor','admin', 'invoicing','production_approval_manager'],
                         write: [ 'advisor' ,'admin'],
                         update: [ 'advisor' ,'admin'],
                     },
@@ -61,7 +61,7 @@ let insuranceDetail = {
                     label: 'Vehicle Type',
                     source: 'vehicle_type',
                     access: {
-                        read: [ 'pa','advisor','admin', 'invoicing'],
+                        read: [ 'pa','advisor','admin', 'invoicing','production_approval_manager'],
                         write: [ 'advisor' ,'admin'],
                         update: [ 'advisor' ,'admin'],
                     },
@@ -71,7 +71,7 @@ let insuranceDetail = {
                     type: 'text',
                     label: 'Excess',
                     access: {
-                        read: [ 'advisor','admin', 'invoicing' , 'pa'],
+                        read: [ 'advisor','admin', 'invoicing' , 'pa','production_approval_manager'],
                         write: [ 'advisor' ,'admin'],
                         update: [ 'advisor' ,'admin'],
                     },
@@ -81,7 +81,7 @@ let insuranceDetail = {
                     type: 'text',
                     label: 'Sum Insured',
                     access: {
-                        read: [ 'advisor','admin', 'invoicing' , 'pa'],
+                        read: [ 'advisor','admin', 'invoicing' , 'pa','production_approval_manager'],
                         write: [ 'advisor' ,'admin'],
                         update: [ 'advisor' ,'admin'],
                     },
@@ -91,7 +91,7 @@ let insuranceDetail = {
                     type: 'text',
                     label: 'Premium/Price',
                     access: {
-                        read: [ 'pa','advisor','admin', 'invoicing'],
+                        read: [ 'pa','advisor','admin', 'invoicing','production_approval_manager'],
                         write: [ 'advisor' ,'admin'],
                         update: [ 'advisor' ,'admin'],
                     },
@@ -101,7 +101,7 @@ let insuranceDetail = {
                     type: 'text',
                     label: 'Ancillary Excess',
                     access: {
-                        read: [ 'pa','advisor','admin', 'invoicing'],
+                        read: [ 'pa','advisor','admin', 'invoicing','production_approval_manager'],
                         write: [ 'advisor' ,'admin'],
                         update: [ 'advisor' ,'admin'],
                     },
@@ -111,7 +111,7 @@ let insuranceDetail = {
                     type: 'dropdown',
                     label: 'Personal Accident Benefit',
                     access: {
-                        read: [ 'pa','advisor','admin', 'invoicing'],
+                        read: [ 'pa','advisor','admin', 'invoicing','production_approval_manager'],
                         write: [ 'advisor' ,'admin'],
                         update: [ 'advisor' ,'admin'],
                     },
@@ -122,7 +122,7 @@ let insuranceDetail = {
                     label: 'Breakdown recovery',
                     source: ['INCLUDED',  'NOT INCLUDED'],
                     access: {
-                        read: [ 'pa','advisor','admin', 'invoicing'],
+                        read: [ 'pa','advisor','admin', 'invoicing','production_approval_manager'],
                         write: [ 'advisor' ,'admin'],
                         update: [ 'advisor' ,'admin'],
                     },
@@ -133,7 +133,7 @@ let insuranceDetail = {
                     label: 'Off-road cover (for 4X4 only)',
                     source: ['INCLUDED',  'NOT INCLUDED'],
                     access: {
-                        read: [ 'pa','advisor','admin', 'invoicing'],
+                        read: [ 'pa','advisor','admin', 'invoicing','production_approval_manager'],
                         write: [ 'advisor' ,'admin'],
                         update: [ 'advisor' ,'admin'],
                     },
@@ -144,7 +144,7 @@ let insuranceDetail = {
                     label: 'Rent a Car',
                     source: ['INCLUDED',  'NOT INCLUDED'],
                     access: {
-                        read: [ 'pa','advisor','admin', 'invoicing'],
+                        read: [ 'pa','advisor','admin', 'invoicing','production_approval_manager'],
                         write: [ 'advisor' ,'admin'],
                         update: [ 'advisor' ,'admin'],
                     },
@@ -155,7 +155,7 @@ let insuranceDetail = {
                     label: 'Repair Type',
                     source: ['Agency',  'NON Agency', 'Not Applicable'],
                     access: {
-                        read: [ 'pa','advisor','admin', 'invoicing'],
+                        read: [ 'pa','advisor','admin', 'invoicing','production_approval_manager'],
                         write: [ 'advisor' ,'admin'],
                         update: [ 'advisor' ,'admin'],
                     },
@@ -165,7 +165,7 @@ let insuranceDetail = {
                     type: 'text',
                     label: 'Financed By',
                     access: {
-                        read: [ 'pa','advisor','admin', 'invoicing'],
+                        read: [ 'pa','advisor','admin', 'invoicing','production_approval_manager'],
                         write: [ 'advisor' ,'admin'],
                         update: [ 'advisor' ,'admin'],
                     },
@@ -175,7 +175,7 @@ let insuranceDetail = {
                     type: 'text',
                     label: 'Geographical Area',
                     access: {
-                        read: [ 'pa','advisor','admin', 'invoicing'],
+                        read: [ 'pa','advisor','admin', 'invoicing','production_approval_manager'],
                         write: [ 'advisor' ,'admin'],
                         update: [ 'advisor' ,'admin'],
                     },

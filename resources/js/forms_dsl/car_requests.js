@@ -9,7 +9,7 @@ const leadRequest = {
             db_table: 'car_quote_request',
             title: 'Leads Request',
             access: {
-                read: [ 'pa','advisor' , 'admin', 'invoicing'],
+                read: [ 'pa','advisor' , 'admin', 'invoicing', 'production_approval_manager','production_approval_manager'],
                 write: [ ],
                 update: [ ],
                 delete: [ 'advisor' , 'admin' ]
@@ -17,12 +17,12 @@ const leadRequest = {
             fields: {
                 first_name: {
                     type:'text',
-                    label:'Firste  Name',
+                    label:'First  Name',
                     field:'first_name',
                     defaultValue:'',
                     rules: {required: true},
                     access: {
-                         read: [ 'pa', 'advisor', 'admin', 'invoicing'],
+                         read: [ 'pa', 'advisor', 'admin', 'invoicing', 'production_approval_manager','production_approval_manager'],
                          write: [ 'admin'],
                          update: [ 'advisor', 'admin'],
                     },
@@ -50,7 +50,7 @@ const leadRequest = {
                     label: 'Car Model',
                     source: 'car_model',
                     access: {
-                        read: ['advisor', 'pa', 'admin', 'invoicing'],
+                        read: ['advisor', 'pa', 'admin', 'invoicing', 'production_approval_manager','production_approval_manager'],
                          write: ['advisor', 'admin'],
                         update: ['advisor', 'admin'],
                    },
@@ -97,7 +97,7 @@ const leadRequest = {
                             field:'pa_id',
                             source: [ { id: 0, text: 'Un Assigned Leads'}, { id: 1, text: 'Assigned Leads'} ],
                             access: {
-                                read: [ 'pa', 'invoicing'],
+                                read: [ 'pa', 'invoicing','production_approval_manager'],
                                 write: [],
                                 update: [],
                            },

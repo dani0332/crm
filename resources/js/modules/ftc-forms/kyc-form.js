@@ -11,7 +11,7 @@ export default function KycForm(props) {
     const override = {
         title: 'KYC documents',
         access: {
-            read: ['pa', 'advisor' , 'admin', 'invoicing'],
+            read: ['pa', 'advisor' , 'admin', 'invoicing', 'production_approval_manager'],
             write: [],
             update: [],
             delete: []

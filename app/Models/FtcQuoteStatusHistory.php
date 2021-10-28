@@ -17,12 +17,14 @@ class FtcQuoteStatusHistory extends BaseModel
         'delete' => [''],
         'access' => [
             "pa" => [],
+            "production_approval_manager" => [],
             "invoicing" => [ ],
             "advisor" => [ ],
             "admin" => [ ],
         ],
         "list" => [
             "pa" => ['id' , 'quote_status_id' , 'notes', 'created_by','created_at' ],
+            "production_approval_manager" => ['id' , 'quote_status_id' , 'notes', 'created_by','created_at' ],
             "invoicing" => ['id' , 'quote_status_id' , 'notes', 'created_by','created_at' ],
             "advisor" => ['id' , 'quote_status_id' , 'notes', 'created_by' ,'created_at'],
             "admin" => ['id' , 'quote_status_id' , 'notes', 'created_by','created_at' ]

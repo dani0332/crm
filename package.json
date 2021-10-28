@@ -37,6 +37,7 @@
     "dependencies": {
         "@hookform/resolvers": "^2.6.0",
         "@smakss/random-string": "^1.2.1",
+        "@szhsin/react-menu": "^2.1.0",
         "clean-deep": "^3.4.0",
         "immutable": "^4.0.0-rc.14",
         "is-lite": "^0.8.0",

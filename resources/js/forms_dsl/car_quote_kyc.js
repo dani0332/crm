@@ -6,7 +6,7 @@ const carQuoteKycStatus = {
             title: 'KYC',
             subtitle: '',
             access: {
-                read: ['advisor', 'pa' , 'admin', 'invoicing'],
+                read: ['advisor', 'pa' , 'admin', 'invoicing','production_approval_manager'],
                 write: ['advisor', 'admin'],
                 update: ['advisor', 'admin'],
                 delete: [ 'admin' ]
@@ -18,7 +18,7 @@ const carQuoteKycStatus = {
                     source: 'kyc_statuses',
                     rules: { required: true },
                     access: {
-                        read: ['advisor', 'pa','advisor','admin', 'invoicing'],
+                        read: ['advisor', 'pa','admin', 'invoicing','production_approval_manager'],
                         write: ['advisor', 'admin'],
                         update: ['advisor', 'admin'],
                     }
@@ -27,7 +27,7 @@ const carQuoteKycStatus = {
                     type:'text',
                     label:'Organization',
                     access: {
-                         read: [ 'advisor', 'pa', 'admin', 'invoicing'],
+                         read: [ 'advisor', 'pa', 'admin', 'invoicing','production_approval_manager'],
                          write: [  'advisor', 'admin' ],
                          update: [  'advisor', 'admin' ],
                     },
@@ -42,7 +42,7 @@ const carQuoteKycStatus = {
                             'Lawyer','Government Official: Police, Municipality, Court etc','Driver','Marketing/Media/Advertising','Artist/Actor/Writer/Sportsperson','House Wife','Unemployed'
                         ],
                     access: {
-                         read: [ 'advisor', 'pa', 'admin', 'invoicing'],
+                         read: [ 'advisor', 'pa', 'admin', 'invoicing','production_approval_manager'],
                          write: [  'advisor', 'admin' ],
                          update: [  'advisor', 'admin' ],
                     },

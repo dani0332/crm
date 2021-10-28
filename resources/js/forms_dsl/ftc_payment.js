@@ -7,7 +7,7 @@ const ftcPayment = {
             title: 'FTC Payment',
             subtitle: '',
             access: {
-                read: ['pa', 'advisor' , 'admin', 'invoicing'],
+                read: ['pa', 'advisor' , 'admin', 'invoicing','production_approval_manager'],
                 write: ['advisor' , 'admin'],
                 update: ['advisor', 'admin'],
                 delete: []
@@ -37,7 +37,7 @@ const ftcPayment = {
                             return  { value: item?.id, label: item?.name, selected: item?.name };
                    },
                     access: {
-                         read: [ 'advisor', 'pa', 'admin', 'invoicing'],
+                         read: [ 'advisor', 'pa', 'admin', 'invoicing','production_approval_manager'],
                          write: [ 'advisor'],
                          update: ['advisor'],
                     },
@@ -50,7 +50,7 @@ const ftcPayment = {
                     field:'method',
                     offscreen: true,
                     access: {
-                         read: [ 'advisor', 'pa', 'admin', 'invoicing'],
+                         read: [ 'advisor', 'pa', 'admin', 'invoicing','production_approval_manager'],
                          write: ['advisor' ],
                          update: [ 'advisor' ],
                     },
@@ -60,7 +60,7 @@ const ftcPayment = {
                     type:'textarea',
                     label:'Comment',
                     access: {
-                         read: [ 'advisor', 'pa', 'admin', 'invoicing'],
+                         read: [ 'advisor', 'pa', 'admin', 'invoicing','production_approval_manager'],
                          write: ['advisor' ],
                          update: ['advisor'],
                     },

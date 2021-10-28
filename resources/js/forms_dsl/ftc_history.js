@@ -6,7 +6,7 @@ const ftcHistory = {
             title: 'FTC History',
             subtitle: '',
             access: {
-                read: ['pa', 'advisor' , 'admin', 'invoicing'],
+                read: ['pa', 'advisor' , 'admin', 'invoicing','production_approval_manager'],
                 write: ['advisor' , 'admin'],
                 update: ['advisor', 'admin'],
                 delete: [ 'advisor' , 'admin', 'admin' ]
@@ -17,7 +17,7 @@ const ftcHistory = {
                     label:'Status',
                     source: ['Resubmit for Approval'],
                     access: {
-                         read: [ 'advisor', 'pa', 'admin', 'invoicing'],
+                         read: [ 'advisor', 'pa', 'admin', 'invoicing','production_approval_manager'],
                          write: [ 'advisor'],
                          update: [ ],
                     },
@@ -27,7 +27,7 @@ const ftcHistory = {
                     type:'textarea',
                     label:'Notes',
                     access: {
-                        read: [ 'advisor', 'pa' ],
+                        read: [ 'advisor', 'pa' ,'production_approval_manager'],
                         write: [ 'advisor'],
                         update: [ 'advisor' ],
                    },
