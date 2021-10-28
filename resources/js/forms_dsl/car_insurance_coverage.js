@@ -226,4 +226,4 @@ let insuranceDetail = {
     },
 };
 
-export default { ...insuranceDetail }
+export default { ...insuranceDetail };

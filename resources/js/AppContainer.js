@@ -1,9 +1,9 @@
-import React, {  useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { Route, Router, Switch } from 'react-router-dom';
 import history from './modules/history';
 import theme from './modules/theme';
-import styled, { ThemeProvider } from 'styled-components';
-import { useSelector } from 'react-redux'
+import { ThemeProvider } from 'styled-components';
+import { useSelector } from 'react-redux';
 import ManageListFormView from './components/list-view/manage-list-form-view';
 import LeadSnapShot from './modules/ftc-forms/snaphot';
 import ReactNotification from 'react-notifications-component';
@@ -56,4 +56,3 @@ function AppContainer() {
 }
 
 export default AppContainer;
-

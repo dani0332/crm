@@ -1,8 +1,8 @@
-
 import { confirmAlert } from 'react-confirm-alert';
 import { dispatchPromise } from '../sagas';
-import { session,  setLocalStorage } from '../utils';
-const leadRequest = {
+import { vehicleTransform } from '../transforms';
+import { session, setLocalStorage } from '../utils';
+var transform = require('node-json-transform').transform;
 
     getForm() {
         const form = {
@@ -72,24 +72,60 @@ const leadRequest = {
                     label: 'Vehicle Information'
                 },
             },
-            sections:[
-                {
-                    label: 'Leads Information',
-                    fields: ['first_name', 'car_model_id', 'last_name', 'email', 'vehicle_detail_subform' , 'mobile_no']
-                }
-            ],
-            view:{
-                find:{
-                    basic: [
-                        {
-                            type:'text',
-                            label:'CDB ID',
-                            field:'code',
-                            access: {
-                                read: [ 'advisor'],
-                                write: [],
-                                update: [],
-                           },
+          ],
+          advanced: [],
+        },
+        columns: [
+          {
+            Header: 'CDB ID',
+            accessor: 'code',
+          },
+          {
+            Header: 'Client Name',
+            accessor: d => `${d.first_name} ${d.last_name}`,
+          },
+          {
+            Header: 'Created on',
+            accessor: 'created_at',
+          },
+        ],
+        events: {
+          // applyFilter(options){
+          //     const generateUrl = `/?filter={"id":-66}`
+          //     return generateUrl
+          // },
+          applyFilterAfterSearch(options) {
+            const { filter } = options;
+            if (Object.keys(filter).length === 0) return { id: -66 };
+            else return filter;
+          },
+          afterFetchData(options) {
+            const { resp } = options;
+            return resp.data;
+          },
+          onClick(options) {
+            const { role } = session();
+            const { row, dispatch, history } = options;
+            setLocalStorage('car_request_snap', row);
+            console.log(row);
+
+            const showConfirmMsg = () => {
+              confirmAlert({
+                title: `${row.first_name} ${row.last_name}`,
+                message: 'Are you sure you want to assign this lead yourself?',
+                buttons: [
+                  {
+                    label: 'Yes',
+                    onClick: async () => {
+                      dispatchPromise({
+                        dispatch: dispatch,
+                        options: {
+                          type: 'SEND_REQUEST',
+                          request: {
+                            url: `/form/car_quote_request/${row.id}`,
+                            method: 'PUT',
+                            body: JSON.stringify({ action: 'assign' }),
+                          },
                         },
                         {
                             type:'dropdown',
@@ -114,81 +150,33 @@ const leadRequest = {
                         Header: "Client Name",
                         accessor: d => `${d.first_name} ${d.last_name}`
                     },
-                    {
-                        Header: "Created on",
-                        accessor: "created_at"
-                    }
+                  },
+                  {
+                    label: 'No',
+                    onClick: () => {},
+                  },
                 ],
-                events: {
-                    // applyFilter(options){
-                    //     const generateUrl = `/?filter={"id":-66}`
-                    //     return generateUrl
-                    // },
-                    applyFilterAfterSearch(options){
-                        const { params, filter } = options
-                        if(Object.keys(filter).length === 0)
-                            return { id: -66 }
-                        else
-                            return filter
-                    },
-                    afterFetchData(options){
-                        const { resp , dispatch , history } = options
-                        return resp.data
-                    },
-                    onClick(options){
-                        const { role , id } = session()
-                        const { row , dispatch , history, initialForm , selectedRecord, form , manageListDispatch } = options
-                        setLocalStorage("car_request_snap", row)
-                        console.log(row)
-
-                        const showConfirmMsg = () => {
-                            confirmAlert({
-                                title: `${row.first_name} ${row.last_name}`,
-                                message: 'Are you sure you want to assign this lead yourself?',
-                                buttons: [
-                                {
-                                    label: 'Yes',
-                                    onClick: async () => {
-                                        dispatchPromise({
-                                            dispatch: dispatch,
-                                            options: {
-                                                type: 'SEND_REQUEST',
-                                                request: { url: `/form/car_quote_request/${row.id}`, method: 'PUT', body: JSON.stringify( { action: 'assign' } ) }
-                                            }
-                                        }).then((response) => {
-                                            dispatch({ type: 'VISIBLE_FORM', formState: 'reset' })
-                                            history.push("/lead/" + row.id)
-                                        }).catch(error => {});
-                                }
-                                },
-                                {
-                                    label: 'No',
-                                    onClick: () => {}
-                                }
-                            ]
-                            });
-                        }
-                        if(role === 'pa' && !row.pa_id) {
-                            showConfirmMsg()
-                        }
-                        else if(role === 'invoicing' && !row.invoicing){
-                             showConfirmMsg()
-                        }
-                        else {
-                            dispatch({ type: 'VISIBLE_FORM', formState: 'reset' })
-                            history.push("/lead/" + row.id)
-                        }
-                    }
-                }
-            },
-            postTransform(options){
-                const { data } = options
-                var result = transform(data, vehicleTransform);
-                console.log(result);
-                return result
+              });
+            };
+            if (role === 'pa' && !row.pa_id) {
+              showConfirmMsg();
+            } else if (role === 'invoicing' && !row.invoicing) {
+              showConfirmMsg();
+            } else {
+              dispatch({ type: 'VISIBLE_FORM', formState: 'reset' });
+              history.push('/lead/' + row.id);
             }
-        }
-        return form
-    }
+          },
+        },
+      },
+      postTransform(options) {
+        const { data } = options;
+        var result = transform(data, vehicleTransform);
+        console.log(result);
+        return result;
+      },
+    };
+    return form;
+  },
 };
-export default leadRequest
+export default leadRequest;

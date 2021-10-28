@@ -1,4 +1,4 @@
-import FTCDetail from "../components/input-fields/ftc-detail";
+import FTCDetail from '../components/input-fields/ftc-detail';
 const ftcHistory = {
     getForm() {
         const form = {
@@ -98,4 +98,4 @@ const ftcHistory = {
         return form
     }
 };
-export default ftcHistory
+export default ftcHistory;

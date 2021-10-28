@@ -1,3 +1,5 @@
+
+
 import leadAttachment from "./lead_attachment";
 import ftcDetail from "./lead_ftc_detail";
 import policyHolderDetail from "./policy_holder";
@@ -45,10 +47,17 @@ const getDSLForm = (options) => {
     }
 }
 
-const getFormObjForDraw = (obj) => {
-    const { form  } = obj
-    let formObj = getDSLForm( { form })
-    return formObj
-}
+const getFormObjForDraw = obj => {
+  const { form } = obj;
+  let formObj = getDSLForm({ form });
+  return formObj;
+};
 
-export  { getFormObjForDraw, getDSLForm, leadAttachment, ftcDetail, policyHolderDetail, vehicleDetail }
+export {
+  getFormObjForDraw,
+  getDSLForm,
+  leadAttachment,
+  ftcDetail,
+  policyHolderDetail,
+  vehicleDetail,
+};

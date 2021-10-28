@@ -1,5 +1,3 @@
-
-
 const ftcPayment = {
     getForm() {
         const form = {
@@ -101,4 +99,4 @@ const ftcPayment = {
         return form
     }
 };
-export default ftcPayment
+export default ftcPayment;

@@ -1,4 +1,4 @@
-import moment from "moment";
+import moment from 'moment';
 
 const ftcQuoteStatusHistory = {
     getForm() {
@@ -102,4 +102,4 @@ const ftcQuoteStatusHistory = {
         return form
     }
 };
-export default ftcQuoteStatusHistory
+export default ftcQuoteStatusHistory;

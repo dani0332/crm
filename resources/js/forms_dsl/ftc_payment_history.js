@@ -1,5 +1,3 @@
-
-
 const ftcPaymentHistory = {
     getForm() {
         const form = {
@@ -83,7 +81,9 @@ const ftcPaymentHistory = {
                 }
             }
         }
-        return form
-    }
+      },
+    };
+    return form;
+  },
 };
-export default ftcPaymentHistory
+export default ftcPaymentHistory;

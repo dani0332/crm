@@ -1,4 +1,3 @@
-
 const carQuoteKycStatus = {
     getForm() {
         const form = {
@@ -93,4 +92,4 @@ const carQuoteKycStatus = {
         return form
   }
 };
-export default carQuoteKycStatus
+export default carQuoteKycStatus;

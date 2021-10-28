@@ -1,4 +1,3 @@
-
 const leadAttachment = {
     getForm() {
         const form = {
@@ -95,4 +94,4 @@ const leadAttachment = {
         return form
     }
 };
-export default leadAttachment
+export default leadAttachment;
