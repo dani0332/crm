@@ -133,6 +133,7 @@
                         <li><a><i class="fa fa-quote-left"></i> Renewals <span class="fa fa-chevron-down"></span></a>
                         <ul class="nav child_menu">
                             <li><a href="{{ url('renewals-upload') }}">Upload</a></li>
+                            <li><a href="{{ url('renewals-list') }}">Uploaded Leads</a></li>
                         </ul>
                         </li>
                     </ul>
