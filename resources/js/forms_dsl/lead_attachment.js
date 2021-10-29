@@ -6,7 +6,7 @@ const leadAttachment = {
             title: 'Document Attachment',
             subtitle: 'document need for insurance purpose',
             access: {
-                read: ['pa', 'advisor' , 'admin', 'invoicing'],
+                read: ['pa', 'advisor' , 'admin', 'invoicing','production_approval_manager'],
                 write: [ 'advisor' ,'admin'],
                 update: ['advisor' , 'admin'],
                 delete: ['advisor','admin']
@@ -18,7 +18,7 @@ const leadAttachment = {
                     field:'document',
                     source: "car_quote_documents",
                     access: {
-                         read: [ 'advisor', 'pa', 'admin', 'invoicing'],
+                         read: [ 'advisor', 'pa', 'admin', 'invoicing','production_approval_manager'],
                          write: ['advisor',  'admin'],
                          update: [ 'advisor','admin'],
                     },
@@ -30,7 +30,7 @@ const leadAttachment = {
                     label:'Upload Document',
                     field:'file_name',
                     access: {
-                        read: ['advisor', 'pa', 'admin', 'invoicing'],
+                        read: ['advisor', 'pa', 'admin', 'invoicing','production_approval_manager'],
                         write: [ 'advisor', 'admin'],
                         update: [ 'advisor','admin'],
                    },

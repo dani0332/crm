@@ -1583,6 +1583,24 @@ $(document).ready(function() {
             $("form").submit();
         }, 500);
     });
+
+    var renewalsLeadsUpload = $(".renewals-leads-data-table").DataTable({
+        ordering: false,
+        info: false,
+        searching: false,
+        bLengthChange: false,
+        ajax: config.routes.renewals_leads_datatable_route,
+        columns: [
+            { data: "id", name: "id" },
+            { data: "file_name", name: "file_name" },
+            { data: "file_path", name: "file_path" },
+            { data: "total_records", name: "total_records" },
+            { data: "good", name: "good" },
+            { data: "cannot_upload", name: "cannot_upload" },
+            { data: "created_at", name: "created_at" },
+            { data: "updated_at", name: "updated_at" },
+        ],
+    });
 });
 $('#car_make_value').on('change', function(e) {
     var make_code = $("#car_make_value option:selected").attr('data-id');

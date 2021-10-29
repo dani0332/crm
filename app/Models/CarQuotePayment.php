@@ -16,12 +16,14 @@ class CarQuotePayment extends BaseModel
         'delete' => [ 'advisor'],
         'access' => [
             "pa" => [],
+            "production_approval_manager" => [],
             "advisor" => [ 'car_quote_id', 'mode_id', 'method', 'comment' ],
             "admin" => [ 'car_quote_id', 'mode_id', 'method', 'comment'],
             "invoicing" => []
         ],
         "list" => [
             "pa" => ['id', 'car_quote_id' , 'mode_id', 'method', 'comment'],
+            "production_approval_manager" => ['id', 'car_quote_id' , 'mode_id', 'method', 'comment'],
             "advisor" => [ 'id', 'car_quote_id' , 'mode_id', 'method', 'comment'],
             "admin" => ['id', 'car_quote_id' , 'mode_id', 'method', 'comment'],
             "invoicing" => ['id', 'car_quote_id' , 'mode_id', 'method', 'comment']

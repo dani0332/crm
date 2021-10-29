@@ -7,7 +7,7 @@ let vehicleSubform = {
             db_table: 'car_quote_request',
             title: 'Vehicle Detail Subform',
             access: {
-                read: ['advisor', 'pa', 'admin', 'invoicing'],
+                read: ['advisor', 'pa', 'admin', 'invoicing','production_approval_manager'],
                 write: [ 'advisor','admin'],
                 update: [ 'advisor','admin'],
                 delete: ['advisor','admin' ]
@@ -19,7 +19,7 @@ let vehicleSubform = {
                     label: 'Engine Capacity',
                     rules: { required: true },
                     access: {
-                        read: ['advisor', 'pa', 'admin', 'invoicing'],
+                        read: ['advisor', 'pa', 'admin', 'invoicing','production_approval_manager'],
                         write: [ 'advisor','admin'],
                         update: [ 'advisor','admin'],
                    },
@@ -29,7 +29,7 @@ let vehicleSubform = {
                     label: 'Cylinders',
                     rules: { required: true },
                     access: {
-                        read: ['advisor', 'pa', 'admin', 'invoicing'],
+                        read: ['advisor', 'pa', 'admin', 'invoicing','production_approval_manager'],
                         write: [ 'advisor','admin'],
                         update: [ 'advisor','admin'],
                    },
@@ -39,7 +39,7 @@ let vehicleSubform = {
                     label: 'Chassis Number',
                     rules: { required: true },
                     access: {
-                        read: ['advisor', 'pa', 'admin', 'invoicing'],
+                        read: ['advisor', 'pa', 'admin', 'invoicing','production_approval_manager'],
                         write: [ 'advisor','admin'],
                         update: [ 'advisor','admin'],
                    }
@@ -49,7 +49,7 @@ let vehicleSubform = {
                     label: 'Engine Number',
                     rules: { required: true },
                     access: {
-                        read: ['advisor', 'pa', 'admin', 'invoicing'],
+                        read: ['advisor', 'pa', 'admin', 'invoicing','production_approval_manager'],
                         write: [ 'advisor','admin'],
                         update: [ 'advisor','admin'],
                         access: {
@@ -64,7 +64,7 @@ let vehicleSubform = {
                     label: 'Date of first registration',
                     field: 'date_first_registration',
                     access: {
-                        read: ['advisor', 'pa', 'admin', 'invoicing'],
+                        read: ['advisor', 'pa', 'admin', 'invoicing','production_approval_manager'],
                         write: [ 'advisor','admin'],
                         update: ['advisor', 'admin'],
                    },
@@ -74,7 +74,7 @@ let vehicleSubform = {
                     label: 'Color of the vehicle',
                     rules: { required: true },
                     access: {
-                        read: ['advisor', 'pa', 'admin', 'invoicing'],
+                        read: ['advisor', 'pa', 'admin', 'invoicing','production_approval_manager'],
                         write: [ 'advisor','admin'],
                         update: [ 'advisor','admin'],
                    }
@@ -84,7 +84,7 @@ let vehicleSubform = {
                     label: 'Seating Capacity',
                     rules: { required: true },
                     access: {
-                        read: ['advisor', 'pa', 'admin', 'invoicing'],
+                        read: ['advisor', 'pa', 'admin', 'invoicing','production_approval_manager'],
                         write: [ 'advisor','admin'],
                         update: [ 'advisor','admin'],
                    },
@@ -95,18 +95,18 @@ let vehicleSubform = {
                     label: 'Spec',
                     rules: { required: true },
                     access: {
-                        read: ['advisor', 'pa', 'admin', 'invoicing'],
+                        read: ['advisor', 'pa', 'admin', 'invoicing','production_approval_manager'],
                         write: [ 'advisor','admin'],
                         update: [ 'advisor','admin'],
                    },
                 },
                 current_cover:{
                     type: 'dropdown',
-                    source: ['Comprehensive', 'TPL', 'Lapse in Insurance'],
+                    source: ['Comprehensive', 'TPL', 'Lapse in Insurance','production_approval_manager'],
                     label: 'Current Cover',
                     rules: { required: true },
                     access: {
-                        read: ['advisor', 'pa', 'admin', 'invoicing'],
+                        read: ['advisor', 'pa', 'admin', 'invoicing','production_approval_manager'],
                         write: [ 'advisor','admin'],
                         update: [ 'advisor','admin'],
                    },
@@ -117,7 +117,7 @@ let vehicleSubform = {
                     label: 'Vehicle Modified',
                     rules: { required: true },
                     access: {
-                        read: ['advisor', 'pa', 'admin', 'invoicing'],
+                        read: ['advisor', 'pa', 'admin', 'invoicing','production_approval_manager'],
                         write: [ 'advisor','admin'],
                         update: [ 'advisor','admin'],
                    },

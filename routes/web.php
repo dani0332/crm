@@ -81,6 +81,7 @@ Route::group(['middleware' =>  ['auth']], function () {
     Route::post('/customer-process', [CustomerController::class, 'processCustomerCSV']);
 
     Route::resource('renewals', RenewalsUploadController::class);
+    Route::get('/renewals-list', [RenewalsUploadController::class, 'index']);
     Route::get('/renewals-upload', [RenewalsUploadController::class, 'uploadRenewals']);
     Route::post('/renewals-process', [RenewalsUploadController::class, 'processRenewalsCSV']);
 

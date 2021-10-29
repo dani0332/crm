@@ -114,29 +114,6 @@ export default function SelectField({field, controller}) {
                 //setData({ ...data, data: [], isDisabled : false, loading: false })
             });
         }
-        else if(field.formState === 'edit' && data.data.length < 1){
-
-            console.log('---2-----')
-            setData({ ...data, loading: true })
-            const url = `/form/${field.source}`
-            dispatchPromise({
-                dispatch: dispatch,
-                options: {
-                    type: 'SEND_REQUEST',
-                    request: { url: url }
-                }
-            }).then((response) => {
-
-                console.log('---**********select.js-edit222-************----')
-                console.log(response)
-                console.log('---**********select.js-edit-************----')
-               // setData({ ...data,data: response.data, isDisabled : false,  loading: false })
-            }).catch(error => {
-                console.log('---**********select.js-err-************----')
-                console.log(error)
-                //setData({ ...data, data: [], isDisabled : false, loading: false })
-            });
-        }
         else { return }
     }
 

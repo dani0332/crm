@@ -6,8 +6,8 @@ const carQuoteKycStatus = {
             title: 'KYC Status',
             subtitle: '',
             access: {
-                read: ['advisor', 'pa' , 'admin', 'invoicing'],
-                write: ['pa', 'admin'],
+                read: ['advisor', 'pa' , 'admin', 'invoicing','production_approval_manager'],
+                write: ['pa', 'admin','production_approval_manager'],
                 update: [],
                 delete: [ 'admin' ]
             },
@@ -19,7 +19,7 @@ const carQuoteKycStatus = {
                     source: 'kyc_statuses',
                     rules: { required: true },
                     access: {
-                        read: ['advisor', 'pa','advisor','admin', 'invoicing'],
+                        read: ['advisor', 'pa','advisor','admin', 'invoicing','production_approval_manager'],
                         write: [ 'pa','admin'],
                         update: ['pa', 'admin'],
                     }
@@ -28,7 +28,7 @@ const carQuoteKycStatus = {
                     type:'textarea',
                     label:'Notes',
                     access: {
-                         read: [ 'advisor', 'pa', 'admin', 'invoicing'],
+                         read: [ 'advisor', 'pa', 'admin', 'invoicing','production_approval_manager'],
                          write: [   'pa', 'admin', 'invoicing' ],
                          update: [   'pa', 'admin', 'invoicing' ],
                     },

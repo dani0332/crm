@@ -33,8 +33,24 @@ function* processRequest(obj) {
     try {
         const response = yield sendRequest(url, request)
         manageListDispatch({ type: 'showLoader', obj:{ loader: false} })
-        if( response?.code === 500 || response?.code === 400 )
-            yield put({ type: 'MessageShow', obj:{ title: 'ERROR', message: 'Something wrong with your request. Please contact with administration.', type: 'danger'} })
+        if( response?.code === 500 || response?.code === 400 ){
+
+
+            console.log('------------response---------------')
+
+            let showMsg = { title: 'ERROR', message: 'Something wrong with your request. Please contact with administration'}
+            if(response?.response){
+                const obj = yield response.response.json()
+                const data = obj.data
+                console.log(data)
+                showMsg.title =  (data?.title ) ? data.title : showMsg.title
+                showMsg.message =  (data?.message ) ? data.message : showMsg.message
+            }
+
+            //console.log(data)
+            console.log('------------response---------------')
+            yield put({ type: 'MessageShow', obj:{ title: showMsg.title, message: showMsg.message, type: 'danger'} })
+        }
         // const hook = yield getFormHook( { form: db_table } )
         // if(hook)
         //     yield hook.afterSave({ response: response, initialForm, body })

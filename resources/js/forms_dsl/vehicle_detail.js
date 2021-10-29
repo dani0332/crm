@@ -10,7 +10,7 @@ let vehicleDetail = {
             title: 'Car Quote Request',
             subtitle: '',
             access: {
-                read: ['advisor', 'pa', 'admin', 'invoicing'],
+                read: ['advisor', 'pa', 'admin', 'invoicing','production_approval_manager'],
                 write: [ 'advisor','admin'],
                 update: [ 'advisor','admin'],
                 delete: []
@@ -22,7 +22,7 @@ let vehicleDetail = {
                     field: 'Year_of_manufacture',
                     rules:{ required: true },
                     access: {
-                        read: ['advisor', 'pa', 'admin', 'invoicing'],
+                        read: ['advisor', 'pa', 'admin', 'invoicing','production_approval_manager'],
                         write: [ 'admin'],
                         update: [ 'admin'],
                    },
@@ -32,7 +32,7 @@ let vehicleDetail = {
                     label: 'Car Model',
                     source: 'car_model',
                     access: {
-                        read: ['advisor', 'pa', 'admin', 'invoicing'],
+                        read: ['advisor', 'pa', 'admin', 'invoicing','production_approval_manager'],
                          write: [ 'admin'],
                         update: [ 'admin'],
                    },
@@ -53,7 +53,7 @@ let vehicleDetail = {
                     label: 'Car Make',
                     field: 'car_make_id',
                     access: {
-                        read: ['advisor', 'pa', 'admin', 'invoicing'],
+                        read: ['advisor', 'pa', 'admin', 'invoicing','production_approval_manager'],
                         write: [ 'admin'],
                         update: [ 'admin'],
                    },
@@ -65,7 +65,7 @@ let vehicleDetail = {
                     type: 'dropdown',
                     label: 'Emirate of Registration',
                     access: {
-                        read: ['advisor', 'pa', 'admin', 'invoicing'],
+                        read: ['advisor', 'pa', 'admin', 'invoicing','production_approval_manager'],
                         write: [ 'admin'],
                         update: [ 'admin'],
                    },
@@ -77,7 +77,7 @@ let vehicleDetail = {
                     type: 'dropdown',
                     label: 'UAE licence held for',
                     access: {
-                        read: ['advisor', 'pa', 'admin', 'invoicing'],
+                        read: ['advisor', 'pa', 'admin', 'invoicing','production_approval_manager'],
                         write: [ 'admin'],
                         update: [ 'admin'],
                    },
@@ -90,7 +90,7 @@ let vehicleDetail = {
                     label: 'Claim',
                     form: 'claim_history',
                     access: {
-                        read: ['advisor', 'pa', 'admin', 'invoicing'],
+                        read: ['advisor', 'pa', 'admin', 'invoicing','production_approval_manager'],
                         write: [ 'admin'],
                         update: [ 'admin'],
                    }
@@ -99,7 +99,7 @@ let vehicleDetail = {
                     type: 'dropdown',
                     label: 'UAE licence held for',
                     access: {
-                        read: ['advisor', 'pa', 'admin', 'invoicing'],
+                        read: ['advisor', 'pa', 'admin', 'invoicing',,'production_approval_manager'],
                         write: [ 'admin'],
                         update: [ 'admin'],
                    },

@@ -7,7 +7,7 @@ const ftcPaymentHistory = {
             title: 'FTC Payment History',
             subtitle: '',
             access: {
-                read: ['pa', 'advisor' , 'admin', 'invoicing'],
+                read: ['pa', 'advisor' , 'admin', 'invoicing','production_approval_manager'],
                 write: ['invoicing' ],
                 update: ['invoicing'],
                 delete: []
@@ -18,7 +18,7 @@ const ftcPaymentHistory = {
                     label:'Status',
                     source: ['Transaction Approved','Transaction Declined'],
                     access: {
-                         read: [ 'advisor', 'pa', 'admin', 'invoicing'],
+                         read: [ 'advisor', 'pa', 'admin', 'invoicing','production_approval_manager'],
                          write: [ 'invoicing'],
                          update: ['invoicing' ],
                     },
@@ -28,7 +28,7 @@ const ftcPaymentHistory = {
                     type:'textarea',
                     label:'Notes',
                     access: {
-                         read: [ 'advisor', 'pa', 'admin', 'invoicing'],
+                         read: [ 'advisor', 'pa', 'admin', 'invoicing','production_approval_manager'],
                          write: [ 'invoicing' ],
                          update: [ 'invoicing' ],
                     },

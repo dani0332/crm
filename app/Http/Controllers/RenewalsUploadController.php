@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use DataTables;
 use Illuminate\Http\Request;
 use App\Services\RenewalsUploadService;
 use App\Imports\RenewalsImport;
@@ -58,5 +59,29 @@ class RenewalsUploadController extends Controller
 
     public function uploadRenewals() {
         return view('renewals.upload');
+    }
+
+    /**
+     * Display a listing of the resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function index(Request $request)
+    {
+        $data =[];
+        $data = RenewalsUploadLeads::select(
+            'id', 'file_name', 'file_path', 'total_records', 'good', 'cannot_upload', 'created_at', 'updated_at'
+            )->orderBy('created_at','desc')->get();
+        
+        if ($request->ajax()) {
+            return DataTables::of($data)
+                ->addIndexColumn()
+                ->addColumn('action', function ($row) {
+                    return view('renewals.actions', compact('row'))->render();
+                })
+                ->rawColumns(['action'])
+                ->make(true);
+        }
+        return view('renewals.view');
     }
 }

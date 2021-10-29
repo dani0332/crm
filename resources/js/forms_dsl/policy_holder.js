@@ -6,7 +6,7 @@ const policyHolderDetail = {
             multi: false,
             subtitle: '',
             access: {
-                read: ['advisor', 'pa', 'admin', 'invoicing'],
+                read: ['advisor', 'pa', 'admin', 'invoicing','production_approval_manager'],
                 write: [ 'admin'],
                 update: ['admin'],
                 delete: ['admin' ]

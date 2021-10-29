@@ -15,12 +15,14 @@ class VehicleDetailCarQuote extends BaseModel
         'delete' => ['advisor'],
         'access' => [
             "pa" => [ ],
+            "production_approval_manager" => [ ],
             "invoicing" => [ ],
             "advisor" => ['car_quote_id','engine_capacity' , 'cylinder' , 'chassis_number', 'engine_number', 'vehicle_color', 'seating_capacity','vehicle_modified', 'specs', 'current_cover', 'date_first_registration'  ],
             "admin" => ['car_quote_id','engine_capacity' , 'cylinder' , 'chassis_number', 'engine_number', 'vehicle_color', 'seating_capacity','vehicle_modified', 'specs', 'current_cover', 'date_first_registration' ],
         ],
         "list" => [
             "pa" => [  'engine_capacity' , 'cylinder' , 'chassis_number', 'engine_number', 'vehicle_color', 'seating_capacity','vehicle_modified','specs', 'current_cover', 'date_first_registration' ],
+            "production_approval_manager" => [  'engine_capacity' , 'cylinder' , 'chassis_number', 'engine_number', 'vehicle_color', 'seating_capacity','vehicle_modified','specs', 'current_cover', 'date_first_registration' ],
             "invoicing" => [  'engine_capacity' , 'cylinder' , 'chassis_number', 'engine_number', 'vehicle_color', 'seating_capacity','vehicle_modified','specs', 'current_cover' , 'date_first_registration'],
             "advisor" => [ 'engine_capacity' , 'cylinder' , 'chassis_number', 'engine_number', 'vehicle_color', 'seating_capacity','vehicle_modified','specs', 'current_cover', 'date_first_registration'],
             "admin" => [  'engine_capacity' , 'cylinder' , 'chassis_number', 'engine_number', 'vehicle_color', 'seating_capacity','vehicle_modified','specs', 'current_cover', 'date_first_registration' ],

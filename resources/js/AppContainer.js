@@ -9,6 +9,8 @@ import LeadSnapShot from './modules/ftc-forms/snaphot';
 import ReactNotification from 'react-notifications-component';
 import { store as ReactNotify } from "react-notifications-component";
 import 'react-notifications-component/dist/theme.css'
+import { session } from "./utils";
+const { role , id } = session();
 
 function AppContainer() {
 
@@ -33,6 +35,7 @@ function AppContainer() {
      },[message])
 
 
+    const COMP =  (role === 'production_approval_manager') ? <ManageListFormView form={{ context:'root', form: 'teams', view_mode: 'list', action_type: 'list' }} /> : <ManageListFormView form={{ context:'root', form: 'leadRequest', view_mode: 'list',action_type: 'list' }} />
 
     return (
         <Router history={history}>
@@ -40,7 +43,8 @@ function AppContainer() {
             <ThemeProvider theme={theme}>
                 <Switch>
                     <Route path="/ftcform">
-                        <ManageListFormView form={{ context:'root', form: 'leadRequest', view_mode: 'list',action_type: 'list' }} />
+                         {/* <ManageListFormView form={{ context:'root', form: 'teams', view_mode: 'list', action_type: 'list' }} /> */}
+                         {COMP}
                     </Route>
                     <Route path="/lead/:id">
                         <LeadSnapShot />
