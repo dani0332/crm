@@ -7,58 +7,67 @@ import { fillConditionalFields } from './prefill-conditional-fields';
 export const getVisibleForm = state => state.visibleForm;
 
 function* processRequest(obj) {
+  const { selectedRecord, body, manageListDispatch, initialForm } = obj;
 
-    const { formState, selectedRecord, body,   manageListDispatch, initialForm } = obj
+  console.log('**************ProcessRequest**********');
+  console.log(selectedRecord);
+  console.log('**************ProcessRequest**********');
 
-    console.log("**************ProcessRequest**********")
-    console.log(selectedRecord)
-    console.log("**************ProcessRequest**********")
+  const formVisible = getFormObjForDraw(initialForm);
+  const { db_table } = formVisible;
+  manageListDispatch({ type: 'showLoader', obj: { loader: true } });
+  let url = ``;
+  let request = {};
+  if (selectedRecord && selectedRecord?.id) {
+    // update request
+    url = `/form/${db_table}/${selectedRecord.id}`;
+    request = {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+    };
+  } else {
+    url = `/form/${db_table}`;
+    request = {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    };
+  }
+  request.body = JSON.stringify(body);
 
-    const formVisible   = getFormObjForDraw(initialForm)
-    const {  db_table } = formVisible
-    manageListDispatch({ type: 'showLoader', obj:{ loader: true} })
-    let url = ``
-    let request = {}
-    if(selectedRecord && selectedRecord?.id) { // update request
-      url = `/form/${db_table}/${selectedRecord.id}`
-      request = {method: 'PUT', headers: {'Content-Type': 'application/json'} }
-    }else{
-      url = `/form/${db_table}`
-      request = {method: 'POST', headers: {'Content-Type': 'application/json'} }
+  try {
+    const response = yield sendRequest(url, request);
+    manageListDispatch({ type: 'showLoader', obj: { loader: false } });
+    if (response?.code === 500 || response?.code === 400) {
+      console.log('------------response---------------');
+
+      let showMsg = {
+        title: 'ERROR',
+        message:
+          'Something wrong with your request. Please contact with administration',
+      };
+      if (response?.response) {
+        const obj = yield response.response.json();
+        const data = obj.data;
+        console.log(data);
+        showMsg.title = data?.title ? data.title : showMsg.title;
+        showMsg.message = data?.message ? data.message : showMsg.message;
+      }
+
+      //console.log(data)
+      console.log('------------response---------------');
+      yield put({
+        type: 'MessageShow',
+        obj: { title: showMsg.title, message: showMsg.message, type: 'danger' },
+      });
     }
-    request.body = JSON.stringify(body)
-
-    try {
-        const response = yield sendRequest(url, request)
-        manageListDispatch({ type: 'showLoader', obj:{ loader: false} })
-        if( response?.code === 500 || response?.code === 400 ){
-
-
-            console.log('------------response---------------')
-
-            let showMsg = { title: 'ERROR', message: 'Something wrong with your request. Please contact with administration'}
-            if(response?.response){
-                const obj = yield response.response.json()
-                const data = obj.data
-                console.log(data)
-                showMsg.title =  (data?.title ) ? data.title : showMsg.title
-                showMsg.message =  (data?.message ) ? data.message : showMsg.message
-            }
-
-            //console.log(data)
-            console.log('------------response---------------')
-            yield put({ type: 'MessageShow', obj:{ title: showMsg.title, message: showMsg.message, type: 'danger'} })
-        }
-        // const hook = yield getFormHook( { form: db_table } )
-        // if(hook)
-        //     yield hook.afterSave({ response: response, initialForm, body })
-        yield processVisibleFormStates( {...obj, formState: 'list' } )
-    }
-    catch (error) {
-
-        manageListDispatch({ type: 'showLoader', obj:{ loader: false} })
-        processVisibleFormStates( {obj: obj, formState: 'list' } )
-    }
+    // const hook = yield getFormHook( { form: db_table } )
+    // if(hook)
+    //     yield hook.afterSave({ response: response, initialForm, body })
+    yield processVisibleFormStates({ ...obj, formState: 'list' });
+  } catch (error) {
+    manageListDispatch({ type: 'showLoader', obj: { loader: false } });
+    processVisibleFormStates({ obj: obj, formState: 'list' });
+  }
 }
 
 function* processGetRequest(obj) {

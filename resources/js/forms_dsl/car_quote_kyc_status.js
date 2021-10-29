@@ -1,95 +1,117 @@
 const carQuoteKycStatus = {
-    getForm() {
-        const form = {
-            db_table: 'car_quote_kyc_status',
-            title: 'KYC Status',
-            subtitle: '',
-            access: {
-                read: ['advisor', 'pa' , 'admin', 'invoicing','production_approval_manager'],
-                write: ['pa', 'admin','production_approval_manager'],
-                update: [],
-                delete: [ 'admin' ]
-            },
-            fields: {
-                status:{
-                    type:'dropdown',
-                    label:'Choose Status',
-                    field:'status',
-                    source: 'kyc_statuses',
-                    rules: { required: true },
-                    access: {
-                        read: ['advisor', 'pa','advisor','admin', 'invoicing','production_approval_manager'],
-                        write: [ 'pa','admin'],
-                        update: ['pa', 'admin'],
-                    }
-                },
-                notes: {
-                    type:'textarea',
-                    label:'Notes',
-                    access: {
-                         read: [ 'advisor', 'pa', 'admin', 'invoicing','production_approval_manager'],
-                         write: [   'pa', 'admin', 'invoicing' ],
-                         update: [   'pa', 'admin', 'invoicing' ],
-                    },
-                    rules: { required: true }
-                }
-            },
-            sections:[
-                {
-                    label: 'KYC Status',
-                    fields: [ 'status', 'notes' ]
-                },
+  getForm() {
+    const form = {
+      db_table: 'car_quote_kyc_status',
+      title: 'KYC Status',
+      subtitle: '',
+      access: {
+        read: [
+          'advisor',
+          'pa',
+          'admin',
+          'invoicing',
+          'production_approval_manager',
+        ],
+        write: ['pa', 'admin', 'production_approval_manager'],
+        update: [],
+        delete: ['admin'],
+      },
+      fields: {
+        status: {
+          type: 'dropdown',
+          label: 'Choose Status',
+          field: 'status',
+          source: 'kyc_statuses',
+          rules: { required: true },
+          access: {
+            read: [
+              'advisor',
+              'pa',
+              'advisor',
+              'admin',
+              'invoicing',
+              'production_approval_manager',
             ],
-            view: {
-                label: 'KYC Status',
-                find:{
-                    basic: [
-                    {
-                        type:'dropdown',
-                        label:'Choose Status',
-                        field:'status',
-                        source: "kyc_statuses"
-                    }
-                ],
-                    advanced: []
-                },
-                columns:[
-                    {
-                        Header: "ID",
-                        accessor: "id"
-                    },
-                    {
-                        Header: "status",
-                        accessor: d => `${d?.status?.text}`
-                    },
-                    {
-                        Header: "Notes",
-                        accessor : d => `${d?.notes?.substring(0, 80)}...`
-                    }
-                ],
-                events: {
-
-                    applyFilterAfterSearch(options){
-                        const { params, filter } = options
-                        return { ...filter, car_quote_id: params.id }
-                    },
-                    applyFilter(options){
-                        const { mode, url , params: { id } } = options
-                        const queryMode = { mode }
-                        const queryParams = new URLSearchParams(queryMode);
-                        const generateUrl = `/?filter={"car_quote_id":"${id}"}`
-                        return generateUrl
-                    }
-                }
+            write: ['pa', 'admin'],
+            update: ['pa', 'admin'],
+          },
+        },
+        notes: {
+          type: 'textarea',
+          label: 'Notes',
+          access: {
+            read: [
+              'advisor',
+              'pa',
+              'admin',
+              'invoicing',
+              'production_approval_manager',
+            ],
+            write: ['pa', 'admin', 'invoicing'],
+            update: ['pa', 'admin', 'invoicing'],
+          },
+          rules: { required: true },
+        },
+      },
+      sections: [
+        {
+          label: 'KYC Status',
+          fields: ['status', 'notes'],
+        },
+      ],
+      view: {
+        label: 'KYC Status',
+        find: {
+          basic: [
+            {
+              type: 'dropdown',
+              label: 'Choose Status',
+              field: 'status',
+              source: 'kyc_statuses',
             },
-            postTransform(options){
-                const { data, state , params : { id }} = options
-                if(state?.context === 'car_quote_snap'){
-                    return { ...data, car_quote_id: id}
-                }
-            }
-    }
-        return form
-  }
+          ],
+          advanced: [],
+        },
+        columns: [
+          {
+            Header: 'ID',
+            accessor: 'id',
+          },
+          {
+            Header: 'status',
+            accessor: d => `${d?.status?.text}`,
+          },
+          {
+            Header: 'Notes',
+            accessor: d => `${d?.notes?.substring(0, 80)}...`,
+          },
+        ],
+        events: {
+          applyFilterAfterSearch(options) {
+            const { params, filter } = options;
+            return { ...filter, car_quote_id: params.id };
+          },
+          applyFilter(options) {
+            const {
+              params: { id },
+            } = options;
+            const generateUrl = `/?filter={"car_quote_id":"${id}"}`;
+            return generateUrl;
+          },
+        },
+      },
+      postTransform(options) {
+        const {
+          data,
+          state,
+          params: { id },
+        } = options;
+        if (state?.context === 'car_quote_snap') {
+          return { ...data, car_quote_id: id };
+        }
+      },
+    };
+    return form;
+  },
 };
 export default carQuoteKycStatus;

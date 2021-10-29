@@ -111,40 +111,44 @@ export default function SelectField({ field, controller }) {
         });
       }
     }
-    const onFocus = async () => {
-        if(typeof field?.source !== 'string') {
-            const options = field.source && field.source.map((u,i) => {
-                return  { id: typeof u === 'object' ? u.id : u, text: typeof u === 'object' ? u.text : u }
-            })
 
-            let defaultValue = {}
-            if(field?.value) {
-                if (typeof field?.transform === 'function') {
-                    defaultValue =  field?.transform(field?.value)
-                } else {
-                    defaultValue = { value: typeof field?.value === 'object' ? field.value.id : field.value, label: typeof field?.value === 'object' ? field.value?.text : field.value }
-                }
-            }
-            setData({ ...data, data: options, isDisabled : false, defaultValue: defaultValue, loading: false })
-            return
-        }
+    controller.onChange(selectedOptions.value);
+    setData({ ...data, defaultValue: selectedOptions });
+  };
+  const onFocus = async () => {
+    if (typeof field?.source !== 'string') {
+      const options =
+        field.source &&
+        field.source.map(u => {
+          return {
+            id: typeof u === 'object' ? u.id : u,
+            text: typeof u === 'object' ? u.text : u,
+          };
+        });
 
-        if(data.data.length < 1) {
-            setData({ ...data, loading: true })
-            const url = `/form/${field.source}`
-            dispatchPromise({
-                dispatch: dispatch,
-                options: {
-                    type: 'SEND_REQUEST',
-                    request: { url: url }
-                }
-            }).then((response) => {
-                setData({ ...data,  data: response.data, isDisabled : false, loading: false })
-            }).catch(error => {
-                //setData({ ...data, data: [], isDisabled : false, loading: false })
-            });
+      let defaultValue = {};
+      if (field?.value) {
+        if (typeof field?.transform === 'function') {
+          defaultValue = field?.transform(field?.value);
+        } else {
+          defaultValue = {
+            value:
+              typeof field?.value === 'object' ? field.value.id : field.value,
+            label:
+              typeof field?.value === 'object'
+                ? field.value?.text
+                : field.value,
+          };
         }
-        else { return }
+      }
+      setData({
+        ...data,
+        data: options,
+        isDisabled: false,
+        defaultValue: defaultValue,
+        loading: false,
+      });
+      return;
     }
 
     if (data.data.length < 1) {
@@ -169,31 +173,6 @@ export default function SelectField({ field, controller }) {
           console.log(error);
           //setData({ ...data, data: [], isDisabled : false, loading: false })
         });
-      // temporary ignored the eslint error below,
-      // lets first figure out the impact of below condition and then refactor the code accordingly
-      // eslint-disable-next-line no-dupe-else-if
-    } else if (field.formState === 'edit' && data.data.length < 1) {
-      console.log('---2-----');
-      setData({ ...data, loading: true });
-      const url = `/form/${field.source}`;
-      dispatchPromise({
-        dispatch: dispatch,
-        options: {
-          type: 'SEND_REQUEST',
-          request: { url: url },
-        },
-      })
-        .then(response => {
-          console.log('---**********select.js-edit222-************----');
-          console.log(response);
-          console.log('---**********select.js-edit-************----');
-          // setData({ ...data,data: response.data, isDisabled : false,  loading: false })
-        })
-        .catch(error => {
-          console.log('---**********select.js-err-************----');
-          console.log(error);
-          //setData({ ...data, data: [], isDisabled : false, loading: false })
-        });
     } else {
       return;
     }
@@ -211,11 +190,11 @@ export default function SelectField({ field, controller }) {
     value = options;
   }
 
-  console.log('---**********SelectAmjad-************----')
-  console.log(field)
-  console.log(value)
-  console.log(data)
-  console.log('---**********SelectAmjad-************----')
+  console.log('---**********SelectAmjad-************----');
+  console.log(field);
+  console.log(value);
+  console.log(data);
+  console.log('---**********SelectAmjad-************----');
 
   return (
     <Select

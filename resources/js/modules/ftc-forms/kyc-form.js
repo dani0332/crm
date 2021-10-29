@@ -6,16 +6,22 @@ import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
 import 'react-tabs/style/react-tabs.css';
 
 export default function KycForm(props) {
-    const override = {
-        title: 'KYC documents',
-        access: {
-            read: ['pa', 'advisor' , 'admin', 'invoicing', 'production_approval_manager'],
-            write: [],
-            update: [],
-            delete: []
-        }
-    }
-    const filter = props.filter
+  const override = {
+    title: 'KYC documents',
+    access: {
+      read: [
+        'pa',
+        'advisor',
+        'admin',
+        'invoicing',
+        'production_approval_manager',
+      ],
+      write: [],
+      update: [],
+      delete: [],
+    },
+  };
+  const filter = props.filter;
 
   return (
     <div className='col-md-12'>
