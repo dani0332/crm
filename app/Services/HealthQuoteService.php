@@ -3,6 +3,7 @@
 namespace App\Services;
 use App\Models\HealthQuote;
 use Illuminate\Http\Request;
+use DB;
 
 class HealthQuoteService extends BaseService
 {
@@ -27,6 +28,36 @@ class HealthQuoteService extends BaseService
         $healthQuote->emirate_of_your_visa_id = $request->emirate_of_your_visa_id;
         $healthQuote->save();
 	}
+
+    public function getGridData(){
+        return DB::select("
+                            SELECT hqr.id
+                            ,hqr.first_name
+                            ,hqr.last_name
+                            ,hqr.email
+                            ,hqr.mobile_no
+                            ,hqr.preference
+                            ,hqr.details
+                            ,hqr.source
+                            ,hqr.dob
+                            ,hqr.has_dental
+                            ,hqr.has_home
+                            ,hqr.has_worldwide_cover
+                            ,hqr.marital_status_id
+                            ,ms.TEXT AS marital_status_id_text
+                            ,hqr.cover_for_id
+                            ,hcf.TEXT AS cover_for_id_text
+                            ,hqr.nationality_id
+                            ,n.TEXT AS nationality_id_text
+                            ,hqr.emirate_of_your_visa_id
+                            ,e.TEXT AS emirate_of_your_visa_id_text
+                        FROM health_quote_request hqr
+                        INNER JOIN marital_status ms ON ms.id = hqr.marital_status_id
+                        INNER JOIN health_cover_for hcf ON hcf.id = hqr.cover_for_id
+                        INNER JOIN nationality n ON n.id = hqr.nationality_id
+                        INNER JOIN emirates e ON e.id = hqr.emirate_of_your_visa_id
+                        ");
+    }
 
     public function updateHealthQuote(Request $request, $id)
 	{
@@ -115,7 +146,7 @@ class HealthQuoteService extends BaseService
     public function fillModelSkipProperties() {
         return [
             "create" => "id",
-            "list" => "marital_status_id,email,cover_for_id,nationality_id,emirate_of_your_visa_id",
+            "list" => "email,cover_for_id,has_dental,has_worldwide_cover,has_home,details,preference",
         ];
     }
 

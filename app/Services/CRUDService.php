@@ -8,10 +8,10 @@ use App\Models\HealthQuote;
 use App\Models\LeadStatus;
 use App\Models\LifeQuote;
 use App\Models\Team;
+use App\Models\TravelQuote;
 use App\Services\TeamService;
 use App\Services\HealthQuoteService;
 use Illuminate\Http\Request;
-use DB;
 
 class CRUDService extends BaseService
 {
@@ -20,12 +20,15 @@ class CRUDService extends BaseService
     protected $teamService;
     protected $request;
     protected $leadStatusService;
-    public function __construct(HealthQuoteService $healthQuoteService, TeamService $teamService, CarQuoteService $carQuoteService, LeadStatusService $leadStatusService)
+    protected $travelQuoteService;
+    public function __construct(HealthQuoteService $healthQuoteService, TeamService $teamService, CarQuoteService $carQuoteService,
+    LeadStatusService $leadStatusService, TravelQuoteService $travelQuoteService)
     {
         $this->healthQuoteService = $healthQuoteService;
         $this->teamService = $teamService;
         $this->carQuoteService = $carQuoteService;
         $this->leadStatusService = $leadStatusService;
+        $this->travelQuoteService = $travelQuoteService;
     }
 
 	public function getGridData(GenericModel $model){
@@ -35,18 +38,13 @@ class CRUDService extends BaseService
                 $data = CarQuote::select('*');
                 break;
             case 'Health':
-                $data = HealthQuote::select('*')->orderBy('created_at','desc');
+                $data = $this->healthQuoteService->getGridData();
+                break;
+            case 'Travel':
+                $data = $this->travelQuoteService->getGridData();
                 break;
             case 'Teams':
-                $data = DB::select("
-                                    SELECT t.id, t.name AS name
-                                    ,group_concat(u.name) AS team_users
-                                FROM teams t
-                                LEFT JOIN user_team ut ON ut.team_id = t.id
-                                LEFT JOIN users u ON u.id = ut.user_id
-                                GROUP BY t.name
-                                    ,t.id
-                                ");
+                $data = $this->teamService->getGridData();
                 break;
             case 'LeadStatus':
                 $data = LeadStatus::select('*')->get();
@@ -66,6 +64,9 @@ class CRUDService extends BaseService
                 break;
             case 'Health':
                 $title = $this->healthQuoteService->getCustomTitleByProperty($propertyName);
+                break;
+            case 'Travel':
+                $title = $this->travelQuoteService->getCustomTitleByProperty($propertyName);
                 break;
             case 'Teams':
                 $title = $this->teamService->getCustomTitleByProperty($propertyName);
@@ -87,6 +88,9 @@ class CRUDService extends BaseService
             case 'Health':
                 $this->healthQuoteService->saveHealthQuote($request);
                 break;
+            case 'Travel':
+                $this->travelQuoteService->saveTravelQuote($request);
+                break;
             case 'Teams':
                 $this->teamService->saveTeam($request);
                 break;
@@ -105,6 +109,9 @@ class CRUDService extends BaseService
                 break;
             case 'Health':
                 $this->healthQuoteService->updateHealthQuote($request, $id);
+                break;
+            case 'Travel':
+                $this->travelQuoteService->updateTravelQuote($request, $id);
                 break;
             case 'Teams':
                 $this->teamService->updateTeam($request, $id);
@@ -126,6 +133,9 @@ class CRUDService extends BaseService
                 break;
             case 'Health':
                 $data = HealthQuote::find($id);
+                break;
+            case 'Travel':
+                $data = TravelQuote::find($id);
                 break;
             case 'Teams':
                 $data = Team::find($id);

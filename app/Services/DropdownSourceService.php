@@ -9,6 +9,8 @@ use App\Models\HealthCoverFor;
 use App\Models\LeadStatus;
 use App\Models\MartialStatus;
 use App\Models\Nationality;
+use App\Models\Regions;
+use App\Models\TravelCoverFor;
 use App\Models\User;
 use DB;
 
@@ -80,6 +82,12 @@ class DropdownSourceService extends BaseService
                 break;
             case 'car_model_id':
                 $data = [];
+                break;
+            case 'region_cover_for_id':
+                $data = Regions::select('id','text')->get();
+                break;
+            case 'travel_cover_for_id':
+                $data = TravelCoverFor::select('id','text')->get();
                 break;
             case 'team_managers':
                 $data = User::select('users.id','users.name')

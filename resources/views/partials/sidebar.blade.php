@@ -52,6 +52,9 @@
                                 @can('health-quotes-list')
                                     <li><a href="{{ url('quotes/health') }}">Health Quotes</a></li>
                                 @endcan
+                                @can('health-quotes-list')
+                                    <li><a href="{{ url('quotes/travel') }}">Travel Quotes</a></li>
+                                @endcan
 
                             </ul>
                         </li>

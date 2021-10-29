@@ -107,6 +107,7 @@ Route::group(['middleware' =>  ['auth']], function () {
         Route::resource('healthquotes', HealthQuoteController::class);
         Route::resource('health', CRUDController::class);
         Route::resource('car', CRUDController::class);
+        Route::resource('travel', CRUDController::class);
         Route::resource('teams', CRUDController::class);
         Route::resource('leadstatus', CRUDController::class);
         Route::post('save', [CRUDController::class, 'store'])->name('saveQuote');

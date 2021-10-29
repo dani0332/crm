@@ -45,7 +45,11 @@ $(document).ready(function() {
             });
         }
         else{
-            dataTableColumns.push({ data: modelPropertiesArray[i].name, name: modelPropertiesArray[i].name});
+            if(modelPropertiesArray[i].value.indexOf('select') > -1){
+                dataTableColumns.push({ data: modelPropertiesArray[i].name + '_text', name: modelPropertiesArray[i].name});
+            }else{
+                dataTableColumns.push({ data: modelPropertiesArray[i].name, name: modelPropertiesArray[i].name});
+            }
         }
     }
     var vehicleTypeDataTable = $("#dtBasicExample").DataTable({

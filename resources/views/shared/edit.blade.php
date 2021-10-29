@@ -109,6 +109,25 @@
                                         <span class="text-danger">{{ $errors->first($property) }}</span>
                                         @endif
                                     @endif
+                                    @if(strpos($value, 'textarea') !== false )
+                                        <span class="col-form-label col-md-6 col-sm-6" for="name">
+                                            @if(strpos($value, 'title'))
+                                                {{ strtoupper($customTitles[$property])}}
+                                            @else
+                                                {{str_replace("_"," ",strtoupper($property))}}
+                                            @endif
+                                            @if(strpos($value, "required") == true)
+                                            <span class='required'>*</span>
+                                            @endif
+                                        </span>
+                                        <textarea
+                                            id={{$property}}
+                                            name={{$property}}
+                                        class="form-control">{{ old($property, $record[$property]) }}</textarea>
+                                        @if ($errors->has($property))
+                                            <span class="text-danger">{{ $errors->first($property) }}</span>
+                                        @endif
+                                    @endif
                                 </div>
                             @endif
                             @php

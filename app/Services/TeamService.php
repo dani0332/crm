@@ -6,11 +6,12 @@ use App\Models\TeamManagers;
 use App\Models\User;
 use App\Models\UserTeams;
 use Illuminate\Http\Request;
+use DB;
 
 class TeamService extends BaseService
 {
 
-	public static function saveTeam(Request $request)
+	public function saveTeam(Request $request)
 	{
         $team = new Team();
         $team->name = $request->name;
@@ -32,7 +33,19 @@ class TeamService extends BaseService
 
 	}
 
-    public static function updateTeam(Request $request, $id)
+    public function getGridData(){
+        return DB::select("
+                        SELECT t.id, t.name AS name
+                        ,group_concat(u.name) AS team_users
+                    FROM teams t
+                    LEFT JOIN user_team ut ON ut.team_id = t.id
+                    LEFT JOIN users u ON u.id = ut.user_id
+                    GROUP BY t.name
+                        ,t.id
+                ");
+    }
+
+    public function updateTeam(Request $request, $id)
 	{
         $team = Team::find($id);
         $team->name = $request->name;
@@ -59,7 +72,7 @@ class TeamService extends BaseService
             return redirect("quote/teams/" . $team->id)->with('success', 'Team has been updated');
 	}
 
-    public static function fillModelProperties() {
+    public function fillModelProperties() {
         return array (
             "id" => "readonly|none",
             "name" => "input|text|required|title",
@@ -68,7 +81,7 @@ class TeamService extends BaseService
         );
     }
 
-    public static function getCustomTitleByProperty($propertyName){
+    public function getCustomTitleByProperty($propertyName){
         $title = "";
         switch ($propertyName) {
             case 'name':
@@ -86,7 +99,7 @@ class TeamService extends BaseService
         return $title;
     }
 
-    public static function fillModelSkipProperties() {
+    public function fillModelSkipProperties() {
         return [
             'create' => '',
             'list' => 'team_managers',

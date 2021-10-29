@@ -10,6 +10,7 @@ use App\Services\CarQuoteService;
 use App\Services\CRUDService;
 use App\Services\LeadStatusService;
 use App\Services\TeamService;
+use App\Services\TravelQuoteService;
 use DataTables;
 class CRUDController extends Controller
 {
@@ -20,8 +21,9 @@ class CRUDController extends Controller
     protected $carQuoteService;
     protected $crudService;
     protected $leadStatusService;
+    protected $travelQuoteService;
     public function __construct(Request $request, HealthQuoteService $healthService, TeamService $teamService, CRUDService $crudService, DropdownSourceService $dropdownSourceService,
-    CarQuoteService $carQuoteService, LeadStatusService $leadStatusService)
+    CarQuoteService $carQuoteService, LeadStatusService $leadStatusService, TravelQuoteService $travelQuoteService)
     {
         $this->genericModel = new GenericModel();
         $this->healthQuoteService = $healthService;
@@ -30,6 +32,7 @@ class CRUDController extends Controller
         $this->dropdownSourceService = $dropdownSourceService;
         $this->carQuoteService = $carQuoteService;
         $this->leadStatusService = $leadStatusService;
+        $this->travelQuoteService = $travelQuoteService;
         $this->setModelType($request);
         $this->fillModelByModelType($this->genericModel->modelType);
     }
@@ -201,7 +204,7 @@ class CRUDController extends Controller
 
     private function setModelType(Request $request){
         if(strpos($request->fullUrl(), 'health')) $this->genericModel->modelType = 'Health';
-        if(strpos($request->fullUrl(), 'life')) $this->genericModel->modelType = 'Life';
+        if(strpos($request->fullUrl(), 'travel')) $this->genericModel->modelType = 'Travel';
         if(strpos($request->fullUrl(), 'teams')) $this->genericModel->modelType = 'Teams';
         if(strpos($request->fullUrl(), 'car')) $this->genericModel->modelType = 'Car';
         if(strpos($request->fullUrl(), 'leadstatus')) $this->genericModel->modelType = 'LeadStatus';
@@ -219,6 +222,10 @@ class CRUDController extends Controller
                 $this->genericModel->properties = $this->healthQuoteService->fillModelProperties();
                 $this->genericModel->skipProperties = $this->healthQuoteService->fillModelSkipProperties();
                 $this->genericModel->searchProperties = $this->healthQuoteService->fillModelSearchProperties();
+                break;
+            case 'Travel':
+                $this->genericModel->properties = $this->travelQuoteService->fillModelProperties();
+                $this->genericModel->skipProperties = $this->travelQuoteService->fillModelSkipProperties();
                 break;
             case 'Teams':
                 $this->genericModel->properties = $this->teamService->fillModelProperties();
