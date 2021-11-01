@@ -100,6 +100,36 @@
                                 </div>
                                 </div>
                                 @endif
+                                @if(strpos($value, 'static') !== false )
+                                <div @if(count($model->properties) < 6) class="col-md-12" @else class="col-md-6" @endif>
+                                <div class="col">
+                                    <span class="col-form-label col-md-6 col-sm-6" for="name">
+                                        @if(strpos($value, 'title'))
+                                            {{ strtoupper($customTitles[$property])}}
+                                        @else
+                                            {{str_replace("_"," ",strtoupper($property))}}
+                                        @endif
+                                        @if(strpos($value, "required") == true)
+                                        <span class='required'>*</span>
+                                        @endif
+                                    </span>
+                                    @php
+                                        $propertyLastIndex = explode('|', $model->properties[$property]);
+                                        $staticOptionString = end($propertyLastIndex);
+                                        $staticOptions = explode(',', $staticOptionString);
+                                    @endphp
+
+                                    <select @if(strpos($value, 'multiple')) name="{{$property.'[]'}}" multiple="multiple" class="form-control select2 select-roles" @else class="form-control" name="{{$property}}" @endif id="{{$property}}" >
+                                        @foreach($staticOptions as $item)
+                                         <option value="{{ $item }}">{{ $item }}</option>
+                                        @endforeach
+                                    </select>
+                                    @if ($errors->has($property))
+                                    <span class="text-danger">{{ $errors->first($property) }}</span>
+                                    @endif
+                                </div>
+                                </div>
+                                @endif
                             @endif
                             @php
                             $index++

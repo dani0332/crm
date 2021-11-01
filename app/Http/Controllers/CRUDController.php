@@ -9,6 +9,7 @@ use App\Services\HealthQuoteService;
 use App\Services\CarQuoteService;
 use App\Services\CRUDService;
 use App\Services\LeadStatusService;
+use App\Services\LifeQuoteService;
 use App\Services\TeamService;
 use App\Services\TravelQuoteService;
 use DataTables;
@@ -22,8 +23,9 @@ class CRUDController extends Controller
     protected $crudService;
     protected $leadStatusService;
     protected $travelQuoteService;
+    protected $lifeQuoteService;
     public function __construct(Request $request, HealthQuoteService $healthService, TeamService $teamService, CRUDService $crudService, DropdownSourceService $dropdownSourceService,
-    CarQuoteService $carQuoteService, LeadStatusService $leadStatusService, TravelQuoteService $travelQuoteService)
+    CarQuoteService $carQuoteService, LeadStatusService $leadStatusService, TravelQuoteService $travelQuoteService, LifeQuoteService $lifeQuoteService)
     {
         $this->genericModel = new GenericModel();
         $this->healthQuoteService = $healthService;
@@ -33,6 +35,7 @@ class CRUDController extends Controller
         $this->carQuoteService = $carQuoteService;
         $this->leadStatusService = $leadStatusService;
         $this->travelQuoteService = $travelQuoteService;
+        $this->lifeQuoteService = $lifeQuoteService;
         $this->setModelType($request);
         $this->fillModelByModelType($this->genericModel->modelType);
     }
@@ -45,7 +48,7 @@ class CRUDController extends Controller
     public function index(Request $request)
     {
         $model = $this->genericModel;
-        $gridData = $this->crudService->getGridData($this->genericModel);
+        $gridData = $this->crudService->getGridData($this->genericModel, $request);
 
         $customTitles = [];
         $dropdownSource = [];
@@ -61,11 +64,6 @@ class CRUDController extends Controller
         }
 
         if ($request->ajax()) {
-            foreach ($model->searchProperties as $item) {
-                if(!empty($request[$item])){
-                    $gridData = $gridData->where($item, '=', $request[$item]);
-                }
-            }
             return DataTables::of($gridData)
             ->addIndexColumn()
             ->make(true);
@@ -207,6 +205,7 @@ class CRUDController extends Controller
         if(strpos($request->fullUrl(), 'travel')) $this->genericModel->modelType = 'Travel';
         if(strpos($request->fullUrl(), 'teams')) $this->genericModel->modelType = 'Teams';
         if(strpos($request->fullUrl(), 'car')) $this->genericModel->modelType = 'Car';
+        if(strpos($request->fullUrl(), 'life')) $this->genericModel->modelType = 'Life';
         if(strpos($request->fullUrl(), 'leadstatus')) $this->genericModel->modelType = 'LeadStatus';
     }
 
@@ -226,6 +225,12 @@ class CRUDController extends Controller
             case 'Travel':
                 $this->genericModel->properties = $this->travelQuoteService->fillModelProperties();
                 $this->genericModel->skipProperties = $this->travelQuoteService->fillModelSkipProperties();
+                $this->genericModel->searchProperties = $this->travelQuoteService->fillModelSearchProperties();
+                break;
+            case 'Life':
+                $this->genericModel->properties = $this->lifeQuoteService->fillModelProperties();
+                $this->genericModel->skipProperties = $this->lifeQuoteService->fillModelSkipProperties();
+                $this->genericModel->searchProperties = $this->lifeQuoteService->fillModelSearchProperties();
                 break;
             case 'Teams':
                 $this->genericModel->properties = $this->teamService->fillModelProperties();

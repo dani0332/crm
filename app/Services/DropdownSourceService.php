@@ -4,9 +4,14 @@ namespace App\Services;
 
 use App\Models\CarMake;
 use App\Models\CarModel;
+use App\Models\CurrencyType;
 use App\Models\Emirate;
 use App\Models\HealthCoverFor;
 use App\Models\LeadStatus;
+use App\Models\LifeChildren;
+use App\Models\LifeInsuranceTenure;
+use App\Models\LifeNumberOfYears;
+use App\Models\LifePurposeOfInsurance;
 use App\Models\MartialStatus;
 use App\Models\Nationality;
 use App\Models\Regions;
@@ -88,6 +93,21 @@ class DropdownSourceService extends BaseService
                 break;
             case 'travel_cover_for_id':
                 $data = TravelCoverFor::select('id','text')->get();
+                break;
+            case 'sum_insured_currency_id':
+                $data = CurrencyType::select('id','text')->get();
+                break;
+            case 'purpose_of_insurance_id':
+                $data = LifePurposeOfInsurance::select('id','text')->get();
+                break;
+            case 'children_id':
+                $data = LifeChildren::select('id','text')->get();
+                break;
+            case 'tenure_of_insurance_id':
+                $data = LifeInsuranceTenure::select('id','text')->get();
+                break;
+            case 'number_of_years_id':
+                $data = LifeNumberOfYears::select('id','text')->get();
                 break;
             case 'team_managers':
                 $data = User::select('users.id','users.name')

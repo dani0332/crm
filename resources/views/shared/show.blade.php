@@ -26,24 +26,37 @@
                             @else
                                 <label class="col-form-label col-md-3 col-sm-3 label-align" for="Status Description"><b>{{str_replace("_"," ",strtoupper($property))}}</b></label>
                             @endif
-                            @if(str_contains($value, 'customTable'))
-
+                            @if(str_contains($value, 'select'))
+                                @if(str_contains($value, 'customTable'))
                                 <div class="col-md-6 col-sm-6">
                                     <p class="label-align-center">{{ $customTableList[$property][0]->names }}</p>
                                 </div>
+                                @else
+                                    <div class="col-md-6 col-sm-6">
+                                        @php
+                                            $propertyName = $property.'_text';
+                                        @endphp
+                                        <p class="label-align-center">{{ $record[0]->$propertyName}}</p>
+                                    </div>
+                                @endif
                             @else
+                                @if(str_contains($value, 'customTable'))
                                 <div class="col-md-6 col-sm-6">
-                                    <p class="label-align-center">{{ $record[$property] }}</p>
+                                    <p class="label-align-center">{{ $customTableList[$property][0]->names }}</p>
                                 </div>
+                                @else
+                                    <div class="col-md-6 col-sm-6">
+                                        <p class="label-align-center">{{ $record[0]->$property }}</p>
+                                    </div>
+                                @endif
                             @endif
-
                         </div>
                     @endforeach
                     <div class="ln_solid"></div>
                     <div class="row">
                         <div class="col-auto mr-auto"></div>
                         <div class="col-auto">
-                            <a id="texta" href="{{ url('quotes/'.strtolower($model->modelType).'/'.$record->id.'/edit') }}" class='btn btn-warning btn-sm'>Edit</a>
+                            <a id="texta" href="{{ url('quotes/'.strtolower($model->modelType).'/'.$record[0]->id.'/edit') }}" class='btn btn-warning btn-sm'>Edit</a>
                         </div>
                     </div>
                 </div>

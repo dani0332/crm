@@ -8,6 +8,31 @@ use DB;
 class TravelQuoteService extends BaseService
 {
 
+    protected $query;
+
+    public function __construct()
+    {
+        $this->query = "
+                        SELECT tqr.id
+                        ,tqr.days_cover_for
+                        ,tqr.details
+                        ,tqr.destination
+                        ,tqr.travel_cover_for_id
+                        ,tcf.TEXT AS travel_cover_for_id_text
+                        ,tqr.first_name
+                        ,tqr.last_name
+                        ,tqr.email
+                        ,tqr.mobile_no
+                        ,tqr.nationality_id
+                        ,n.TEXT AS nationality_id_text
+                        ,tqr.region_cover_for_id
+                        ,r.TEXT AS region_cover_for_id_text
+                    FROM central_afia.travel_quote_request tqr
+                    INNER JOIN travel_cover_for tcf ON tcf.id = tqr.travel_cover_for_id
+                    INNER JOIN nationality n ON n.id = tqr.nationality_id
+                    INNER JOIN region r ON r.id = tqr.region_cover_for_id";
+    }
+
 	public function saveTravelQuote(Request $request)
 	{
         $travelQuote = new TravelQuote();
@@ -25,27 +50,40 @@ class TravelQuoteService extends BaseService
         $travelQuote->save();
 	}
 
-    public function getGridData(){
-        return DB::select("
-                            SELECT tqr.id
-                            ,tqr.days_cover_for
-                            ,tqr.details
-                            ,tqr.destination
-                            ,tqr.travel_cover_for_id
-                            ,tcf.TEXT AS travel_cover_for_id_text
-                            ,tqr.first_name
-                            ,tqr.last_name
-                            ,tqr.email
-                            ,tqr.mobile_no
-                            ,tqr.nationality_id
-                            ,n.TEXT AS nationality_id_text
-                            ,tqr.region_cover_for_id
-                            ,r.TEXT AS region_cover_for_id_text
-                        FROM central_afia.travel_quote_request tqr
-                        INNER JOIN travel_cover_for tcf ON tcf.id = tqr.travel_cover_for_id
-                        INNER JOIN nationality n ON n.id = tqr.nationality_id
-                        INNER JOIN region r ON r.id = tqr.region_cover_for_id
-                    ");
+    public function getGridData($searchProperties, $request){
+        $count = 0;
+        if ($request->ajax()) {
+            foreach ($searchProperties as $item) {
+                if(!empty($request[$item])){
+                    $suffix = '';
+                    switch ($item) {
+                        case 'travel_cover_for':
+                            $suffix = 'tcf';
+                            break;
+                        case 'region':
+                            $suffix = 'r';
+                            break;
+                        case 'nationality':
+                            $suffix = 'n';
+                            break;
+                        default:
+                            $suffix = 'tqr';
+                            break;
+                    }
+                    if($count == 0){
+                        $this->query = $this->query.' where '.$suffix.'.'.$item.'='."'".$request[$item]."'";
+                    }else{
+                        $this->query = $this->query.' and '.$suffix.'.'.$item.'='."'".$request[$item]."'";
+                    }
+                    $count++;
+                }
+            }
+        }
+        return DB::select($this->query);
+    }
+
+    public function getEntity($id){
+        return DB::select($this->query.' where tqr.id = '. $id);
     }
 
     public function updateTravelQuote(Request $request, $id)
@@ -75,7 +113,7 @@ class TravelQuoteService extends BaseService
             "last_name" => "input|text|required",
             "mobile_no" => "input|text|title|required",
             "email" => "input|email|required",
-            "mobile_no" => "input|title|number|required",
+            "mobile_no" => "input|number|title|required",
             "days_cover_for" => "input|number|title|required",
             "destination" => "input|text|required",
             "nationality_id" => "select|title|required",

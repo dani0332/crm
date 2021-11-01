@@ -21,38 +21,57 @@ class CRUDService extends BaseService
     protected $request;
     protected $leadStatusService;
     protected $travelQuoteService;
+    protected $lifeQuoteService;
     public function __construct(HealthQuoteService $healthQuoteService, TeamService $teamService, CarQuoteService $carQuoteService,
-    LeadStatusService $leadStatusService, TravelQuoteService $travelQuoteService)
+    LeadStatusService $leadStatusService, TravelQuoteService $travelQuoteService, LifeQuoteService $lifeQuoteService)
     {
         $this->healthQuoteService = $healthQuoteService;
         $this->teamService = $teamService;
         $this->carQuoteService = $carQuoteService;
         $this->leadStatusService = $leadStatusService;
+        $this->lifeQuoteService = $lifeQuoteService;
         $this->travelQuoteService = $travelQuoteService;
     }
 
-	public function getGridData(GenericModel $model){
-        $data = '';
+	public function getGridData(GenericModel $model, Request $request){
+        $gridData = '';
         switch ($model->modelType) {
             case 'Car':
-                $data = CarQuote::select('*');
+                $gridData = CarQuote::select('*');
+                if ($request->ajax()) {
+                    foreach ($model->searchProperties as $item) {
+                        if(!empty($request[$item])){
+                            $gridData = $gridData->where($item, '=', $request[$item]);
+                        }
+                    }
+                }
                 break;
             case 'Health':
-                $data = $this->healthQuoteService->getGridData();
+                $gridData = $this->healthQuoteService->getGridData($model->searchProperties, $request);
                 break;
             case 'Travel':
-                $data = $this->travelQuoteService->getGridData();
+                $gridData = $this->travelQuoteService->getGridData($model->searchProperties, $request);
+                break;
+            case 'Life':
+                $gridData = $this->lifeQuoteService->getGridData($model->searchProperties, $request);
                 break;
             case 'Teams':
-                $data = $this->teamService->getGridData();
+                $gridData = $this->teamService->getGridData();
                 break;
             case 'LeadStatus':
-                $data = LeadStatus::select('*')->get();
+                $gridData = LeadStatus::select('*');
+                if ($request->ajax()) {
+                    foreach ($model->searchProperties as $item) {
+                        if(!empty($request[$item])){
+                            $gridData = $gridData->where($item, '=', $request[$item]);
+                        }
+                    }
+                }
                 break;
             default:
                 break;
         }
-        return $data;
+        return $gridData;
     }
 
 
@@ -67,6 +86,9 @@ class CRUDService extends BaseService
                 break;
             case 'Travel':
                 $title = $this->travelQuoteService->getCustomTitleByProperty($propertyName);
+                break;
+            case 'Life':
+                $title = $this->lifeQuoteService->getCustomTitleByProperty($propertyName);
                 break;
             case 'Teams':
                 $title = $this->teamService->getCustomTitleByProperty($propertyName);
@@ -132,10 +154,13 @@ class CRUDService extends BaseService
                 $data = CarQuote::find($id);
                 break;
             case 'Health':
-                $data = HealthQuote::find($id);
+                $data = $this->healthQuoteService->getEntity($id);
                 break;
             case 'Travel':
-                $data = TravelQuote::find($id);
+                $data = $this->travelQuoteService->getEntity($id);
+                break;
+            case 'Life':
+                $data = $this->lifeQuoteService->getEntity($id);
                 break;
             case 'Teams':
                 $data = Team::find($id);

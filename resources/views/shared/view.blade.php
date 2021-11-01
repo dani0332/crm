@@ -33,22 +33,27 @@ $(document).ready(function() {
     var modelPropertiesArray = convertObjectToArray(model.properties);
 
     var dataTableColumns = [];
+    var skipPropertiesArray = model.skipProperties['list'].split(',');
     for(var i=0; i < modelPropertiesArray.length ;i++){
-        if(modelPropertiesArray[i].name == 'id'){
-            dataTableColumns.push({
-                data: modelPropertiesArray[i].name,
-                name: 'id',
-                render: function(data, type, row) {
-                    var url = '/quotes/'+ model.modelType.toLowerCase();
-                    return "<a href='" + url + '/' + row.id + "'>" + row.id + "</a>"
+
+        if(!skipPropertiesArray.includes(modelPropertiesArray[i].name)){
+            console.log(modelPropertiesArray[i].name);
+            if(modelPropertiesArray[i].name == 'id'){
+                dataTableColumns.push({
+                    data: modelPropertiesArray[i].name,
+                    name: 'id',
+                    render: function(data, type, row) {
+                        var url = '/quotes/'+ model.modelType.toLowerCase();
+                        return "<a href='" + url + '/' + row.id + "'>" + row.id + "</a>"
+                    }
+                });
+            }
+            else{
+                if(modelPropertiesArray[i].value.indexOf('select') > -1){
+                    dataTableColumns.push({ data: modelPropertiesArray[i].name + '_text', name: modelPropertiesArray[i].name});
+                }else{
+                    dataTableColumns.push({ data: modelPropertiesArray[i].name, name: modelPropertiesArray[i].name});
                 }
-            });
-        }
-        else{
-            if(modelPropertiesArray[i].value.indexOf('select') > -1){
-                dataTableColumns.push({ data: modelPropertiesArray[i].name + '_text', name: modelPropertiesArray[i].name});
-            }else{
-                dataTableColumns.push({ data: modelPropertiesArray[i].name, name: modelPropertiesArray[i].name});
             }
         }
     }
@@ -73,21 +78,7 @@ $(document).ready(function() {
             text: '<i class="fa fa-file-excel-o" style="color:green;" ></i><div style="font-weight:bold;">Export to Excel</div>',
             title: model.modelType+ ' Listing',
             action: newexportaction
-        }],
-        initComplete: function(settings){
-        var api = new $.fn.dataTable.Api( settings );
-
-        var columns = vehicleTypeDataTable.settings().init().columns;
-        vehicleTypeDataTable.columns().every(function(index) {
-            if(columns[index].name != 'id'){
-            if(model.skipProperties['list'].indexOf(columns[index].name) > -1 ){
-                console.log(model.skipProperties['list']);
-                api.columns([index]).visible(false);
-            }
-        }
-        })
-    }
-
+        }]
     });
     vehicleTypeDataTable.on( 'draw', function () {
         var rows = $('#dtBasicExample tr');
@@ -180,13 +171,14 @@ $(document).ready(function() {
                 <div class="clearfix"></div>
             </div>
             <div class="x_content">
+                @if (count($model->searchProperties) > 0)
                 <form method="POST" id="searchTable" class="form-horizontal form-label-left" role="form" data-parsley-validate="" novalidate="" autocomplete="off">
                     @foreach($model->properties as $property => $value)
                         @foreach ($model->searchProperties as $searchProperty)
                             @if ($searchProperty == $property)
                                 <div @if(count($model->properties) <6) class="col-md-12" @else class="col-md-6" @endif>
                                     @if(strpos($value, 'input') !== false )
-                                        <span class="col-form-label col-md-6 col-sm-6" for="name">
+                                        <span style="font-size: 11px;" class="col-form-label col-md-6 col-sm-6" for="name">
                                             @if(strpos($value, 'title'))
                                                 {{ strtoupper($customTitles[$property])}}
                                             @else
@@ -204,7 +196,7 @@ $(document).ready(function() {
                                         @endif
                                     @endif
                                     @if(strpos($value, 'select') !== false)
-                                        <span class="col-form-label col-md-6 col-sm-6" for="name">
+                                        <span style="font-size: 11px;" class="col-form-label col-md-6 col-sm-6" for="name">
                                             @if(strpos($value, 'title'))
                                                 {{ strtoupper($customTitles[$property]) }}
                                             @else
@@ -239,11 +231,15 @@ $(document).ready(function() {
                     </div>
                 </div>
                  </form>
+                @endif
+
                 <table id="dtBasicExample" class="table table-striped jambo_table" style="table-layout: fixed;" width="100%">
                     <thead>
                         <tr>
                             @foreach($model->properties as $property => $value)
-                            <th>{{str_replace("_"," ",strtoupper($property))}}</th>
+                                @if(!in_array($property, explode(',', $model->skipProperties['list'])))
+                                    <th>{{str_replace("_"," ",strtoupper($property))}}</th>
+                                @endif
                             @endforeach
                         </tr>
                     </thead>
