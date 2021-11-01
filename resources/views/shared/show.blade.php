@@ -43,4 +43,41 @@
         </div>
     </div>
 
+    @if($model->modelType == "Car")
+    <div class="row">
+        <div class="col-md-12 col-sm-12">
+            <div class="x_panel">
+                <div class="x_title">
+                    <h2>Available Plans</h2>
+                    <div class="clearfix"></div>
+                </div>
+                <div class="x_content">
+                    <br />
+                    <table id="datatable" class="table table-striped jambo_table" style="width:100%">
+                        <thead>
+                            <tr>
+                                <th>Plan Name</th>
+                                <th>Provider Name</th>
+                                <th>Repair Type</th>
+                                <th>Actual Premium</th>
+                                <th>Discount Premium</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach ($listQuotePlans as $key => $quotePlan)
+                                <tr>
+                                    <td><a href="{{ $record->id }}/plan_details/{{ $quotePlan->id }}" target="_blank">{{ ucwords($quotePlan->name) }}</td>
+                                    <td>{{ $quotePlan->providerName }}</td>
+                                    <td>{{ $quotePlan->repairType }}</td>
+                                    <td>{{ $quotePlan->actualPremium }}</td>
+                                    <td>{{ $quotePlan->discountPremium }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+@endif
 @endsection
