@@ -1,27 +1,25 @@
 // Imports: Dependencies
-import { all, fork, takeEvery, put } from 'redux-saga/effects';
-import { watchEveryRequest } from './watch-saga'
+import { all, fork, takeEvery } from 'redux-saga/effects';
+import { watchEveryRequest } from './watch-saga';
 
-export function* monitor(obj) {
-  yield takeEvery('*', (obj) => {
-    console.log('--------------monitor---------------')
-    console.log(obj?.type)
-    console.log('--------------monitor---------------')
-  })
+export function* monitor() {
+  yield takeEvery('*', obj => {
+    console.log('--------------monitor---------------');
+    console.log(obj?.type);
+    console.log('--------------monitor---------------');
+  });
 }
 
 // Redux Saga: Root Saga
 export function* rootSaga() {
-  yield all([
-    fork(watchEveryRequest),
-  ]);
-};
+  yield all([fork(watchEveryRequest)]);
+}
 
 export function dispatchPromise(obj) {
   return new Promise((resolve, reject) => {
-    const { dispatch, options } = obj
-    options.resolve = resolve
-    options.reject = reject
-    dispatch(options)
+    const { dispatch, options } = obj;
+    options.resolve = resolve;
+    options.reject = reject;
+    dispatch(options);
   });
 }

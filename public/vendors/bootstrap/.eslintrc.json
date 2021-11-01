@@ -1,6 +1,6 @@
 {
   "root": true,
-  "parser": "babel-eslint",
+  "parser": "@babel/eslint-plugin",
   "env": {
     "browser": true,
     "es6": true
