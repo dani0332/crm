@@ -108,7 +108,7 @@
                                 <tr><td style="text-align: center;">8</td><td>Customer mobile</td><td>Customer Mobile Number - only numeric data</td><td style="text-align: center;">No</td><td style="text-align: center;">15</td></tr>
                                 <tr><td style="text-align: center;">9</td><td>Advisor</td><td>Advisor Email</td><td style="text-align: center;">No</td><td style="text-align: center;">100</td></tr>
                                 <tr><td style="text-align: center;">10</td><td>Previous Advisor</td><td>Previosuly assigned Advisor Email</td><td style="text-align: center;">No</td><td style="text-align: center;">100</td></tr>
-                                <tr><td style="text-align: center;">11</td><td>Policy</td><td>Policy number assigned</td><td style="text-align: center;">Yes</td><td style="text-align: center;">25</td></tr>
+                                <tr><td style="text-align: center;">11</td><td>Policy</td><td>Policy number assigned</td><td style="text-align: center;">Yes</td><td style="text-align: center;">100</td></tr>
                                 <tr><td style="text-align: center;">12</td><td>Batch</td><td>Batch number assigned</td><td style="text-align: center;">No</td><td style="text-align: center;">25</td></tr>
                                 <tr><td style="text-align: center;">13</td><td>Start Date</td><td>Start Date of the insurance - Format should be DD/MM/YYYY</td><td style="text-align: center;">No</td><td style="text-align: center;">10</td></tr>
                                 <tr><td style="text-align: center;">14</td><td>End Date</td><td>End Date of the insurance - Format should be DD/MM/YYYY</td><td style="text-align: center;">Yes</td><td style="text-align: center;">10</td></tr>
