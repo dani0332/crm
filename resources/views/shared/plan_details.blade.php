@@ -1,17 +1,51 @@
-@extends('layouts.app')
-@section('title', 'Plan Details')
-@section('content')
+
+    <script>
+        var triggerTabList = [].slice.call(document.querySelectorAll('#myTab a'));
+        triggerTabList.forEach(function (triggerEl) {
+        var tabTrigger = new bootstrap.Tab(triggerEl);
+
+            triggerEl.addEventListener('click', function (event) {
+                event.preventDefault();
+                tabTrigger.show();
+                console.log("1234");
+            });
+        });
+    </script>
+    <ul class="nav nav-tabs" id="myTab" role="tablist">
+        <li class="nav-item">
+          <a class="nav-link active" id="home-tab" data-toggle="tab" href="#home" role="tab" aria-controls="home" aria-selected="true">Home</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" id="profile-tab" data-toggle="tab" href="#profile" role="tab" aria-controls="profile" aria-selected="false">Profile</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" id="messages-tab" data-toggle="tab" href="#messages" role="tab" aria-controls="messages" aria-selected="false">Messages</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" id="settings-tab" data-toggle="tab" href="#settings" role="tab" aria-controls="settings" aria-selected="false">Settings</a>
+        </li>
+      </ul>
+
+      <!-- Tab panes -->
+      <div class="tab-content">
+        <div class="tab-pane active" id="home" role="tabpanel" aria-labelledby="home-tab">111</div>
+        <div class="tab-pane" id="profile" role="tabpanel" aria-labelledby="profile-tab">222</div>
+        <div class="tab-pane" id="messages" role="tabpanel" aria-labelledby="messages-tab">333</div>
+        <div class="tab-pane" id="settings" role="tabpanel" aria-labelledby="settings-tab">444</div>
+      </div>
+
     <div class="row">
         <div class="col-md-12 col-sm-12 admin-detail">
             <div class="x_panel">
                 <div class="x_title">
                     <h2>Plan Details - {{ ucwords($listQuotePlanName) }}</h2>
-                    <ul class="nav navbar-right panel_toolbox">
+                    {{-- <ul class="nav navbar-right panel_toolbox">
                         <li><a href="{{ url()->previous() }}" class="btn btn-warning btn-sm">Go Back</a></li>
-                    </ul>
+                    </ul> --}}
                     <div class="clearfix"></div>
                 </div>
                 <div class="x_content">
+
                     <table cellpadding="3" cellspacing="3">
                         <tr><td style="width: 150px;">Provider Code:</td> <td>{{ $providerCode }}</td></tr>
                         <tr><td>Provider Name:</td> <td>{{ $providerName }}</td></tr>
@@ -132,4 +166,3 @@
             </div>
         </div>
     </div>
-@endsection

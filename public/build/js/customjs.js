@@ -1537,6 +1537,13 @@ $(document).ready(function() {
         ]
     });
 
+    // Car Quote Plan Modal Popup
+    $('.quotePlanModalPopup').on('click',function() {
+        $('.modal-body').load($(this).attr("testurl"),function() {
+            $('#quotePlanModal').modal({show:true});
+        });
+    });
+
     //select/unselect all checkboxes if this selected
     $("#select_all_checkboxes").click(function(e) {
         var isChecked = e.target.checked;

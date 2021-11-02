@@ -48,33 +48,18 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
 
-    <script>
-        $(".ttest").on('click', function () {
-            //$('#demoModal').removeData('bs.modal');
-            $('#demoModal').modal({remote: $(this).attr('testurl')  });
-            $('#demoModal').modal('show');
-        });
-    </script>
-    <div class="modal fade" id="demoModal" tabindex="-1" role="dialog" aria-
-    labelledby="demoModalLabel" aria-hidden="true">
-        <div class="modal-dialog" role="document">
+    <div class="modal fade" id="quotePlanModal" tabindex="-1" role="dialog" aria-labelledby="quotePlanModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
             <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="demoModalLabel">Modal Example -
-                     Websolutionstuff</h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-
-                        label="Close">
+                <div class="modal-header" style="border-bottom: none; height: 0px;">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                             <span aria-hidden="true">&times;</span>
                         </button>
                 </div>
-                <div class="modal-body">
-                        Welcome, Websolutionstuff !!
-                </div>
+                <div class="modal-body"> </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-
-                    dismiss="modal">Close</button>
-                        <button type="button" class="btn btn-primary">Save
-                        changes</button>
+                        {{-- <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-primary">Save changes</button> --}}
                 </div>
             </div>
         </div>
@@ -96,17 +81,19 @@
                                 <th>Repair Type</th>
                                 <th>Actual Premium</th>
                                 <th>Discount Premium</th>
+                                <th> </th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach ($listQuotePlans as $key => $quotePlan)
                                 <tr>
-                                    <td><button type="button" testurl="{{ $record->id }}/plan_details/{{ $quotePlan->id }}" class="btn btn-primary m-2 ttest" data-toggle="modal" data-target="#demoModal">Click Here</button></td>
-                                    <td><a href="{{ $record->id }}/plan_details/{{ $quotePlan->id }}" target="_blank">{{ ucwords($quotePlan->name) }}</td>
+                                    <td>{{ ucwords($quotePlan->name) }}</td>
+                                    {{-- <td><a href="{{ $record->id }}/plan_details/{{ $quotePlan->id }}" target="_blank">{{ ucwords($quotePlan->name) }}</td> --}}
                                     <td>{{ $quotePlan->providerName }}</td>
                                     <td>{{ $quotePlan->repairType }}</td>
                                     <td>{{ $quotePlan->actualPremium }}</td>
                                     <td>{{ $quotePlan->discountPremium }}</td>
+                                    <td><a testurl="{{ $record->id }}/plan_details/{{ $quotePlan->id }}" class="btn btn-primary btn-sm m-2 quotePlanModalPopup" data-toggle="modal" data-target="#quotePlanModal">Details</a></td>
                                 </tr>
                             @endforeach
                         </tbody>
