@@ -82,15 +82,25 @@ $(document).ready(function() {
     });
     vehicleTypeDataTable.on( 'draw', function () {
         var rows = $('#dtBasicExample tr');
+        var headerRowColumns = $(rows[0]).children();
+        var checkboxIndexes = [];
+        for (let i = 0; i < headerRowColumns.length; i++) {
+            const element = headerRowColumns[i];
+            if($(element).data('type') == 'checkbox' || $(element).data('type') == 'static'){
+                checkboxIndexes.push(i);
+            }
+        }
         for (let index = 1; index < rows.length; index++) {
             var columns = $(rows[index]).children();
-            for (let i = 1; i < columns.length; i++) {
-                const element = columns[i];
-                if($(element).text() == '1'){
-                    $(element).text('True');
-                }
-                else if ($(element).text() == '0'){
-                    $(element).text('False');
+            for (let i = 0; i < columns.length; i++) {
+                if(checkboxIndexes.includes(i)){
+                    const element = columns[i];
+                    if($(element).text() == '1'){
+                        $(element).text('True');
+                    }
+                    else if ($(element).text() == '0'){
+                        $(element).text('False');
+                    }
                 }
             }
 
@@ -238,7 +248,14 @@ $(document).ready(function() {
                         <tr>
                             @foreach($model->properties as $property => $value)
                                 @if(!in_array($property, explode(',', $model->skipProperties['list'])))
-                                    <th>{{str_replace("_"," ",strtoupper($property))}}</th>
+                                    @if(str_contains('checkbox', $value))
+                                        <th data-type="checkbox" >{{str_replace("_"," ",strtoupper($property))}}</th>
+                                    @endif
+                                    @if(str_contains('static', $value))
+                                        <th data-type="static" >{{str_replace("_"," ",strtoupper($property))}}</th>
+                                    @else
+                                        <th data-type="{{explode('|',$value)[1]}}" >{{str_replace("_"," ",strtoupper($property))}}</th>
+                                    @endif
                                 @endif
                             @endforeach
                         </tr>

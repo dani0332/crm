@@ -187,7 +187,7 @@ class HealthQuoteService extends BaseService
     public function fillModelSkipProperties() {
         return [
             "create" => "id",
-            "list" => "email,cover_for_id,has_dental,has_worldwide_cover,has_home,details,preference",
+            "list" => "email,cover_for_id,has_worldwide_cover,has_home,details,preference",
         ];
     }
 

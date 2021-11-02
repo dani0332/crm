@@ -6,7 +6,7 @@
 <script>
     $(document).ready(function() {
     var model = JSON.parse('<?php echo json_encode(get_object_vars($model)) ?>');
-    var record = JSON.parse('<?php echo json_encode($record) ?>');
+    var record = JSON.parse('<?php echo json_encode($record[0]) ?>');
     Object.keys(model.properties).forEach(element => {
         if(model.properties[element].indexOf('date') > -1){
             $("#"+ element).val($("#"+ element).val().split(' ')[0]);
@@ -33,7 +33,7 @@
                         <div class="alert alert-danger">{{ session()->get('message') }}</div>
                     @endif
                     <form id="demo-form2" method='post'
-                        action="{{ route(strtolower($model->modelType).'.update', $record) }}"
+                        action="{{ route(strtolower($model->modelType).'.update', $record[0]->id) }}"
                         enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left"
                         autocomplete="off">
                         {{ csrf_field() }}
@@ -64,7 +64,7 @@
                                                 type={{ explode("|", $value)[1]  }}
                                                 @endif id={{$property}}
                                             name={{$property}}
-                                            value="{{ old($property, $record[$property]) }}"
+                                            value="{{ old($property, $record[0]->$property) }}"
                                         class="form-control">
                                         @if ($errors->has($property))
                                             <span class="text-danger">{{ $errors->first($property) }}</span>
@@ -99,7 +99,7 @@
                                                 @endforeach
                                             @else
                                             @foreach($dropdownSource[$property] as $item)
-                                                <option value="{{$item->id}}" {{ $item->id == old($item->id, $record[$property]) ? 'selected' : ''}}>{{ $item->text ?? $item->name }}</option>
+                                                <option value="{{$item->id}}" {{ $item->id == old($item->id, $record[0]->$property) ? 'selected' : ''}}>{{ $item->text ?? $item->name }}</option>
                                             @endforeach
 
                                             @endif
@@ -123,7 +123,7 @@
                                         <textarea
                                             id={{$property}}
                                             name={{$property}}
-                                        class="form-control">{{ old($property, $record[$property]) }}</textarea>
+                                        class="form-control">{{ old($property, $record[0]->$property) }}</textarea>
                                         @if ($errors->has($property))
                                             <span class="text-danger">{{ $errors->first($property) }}</span>
                                         @endif
@@ -151,7 +151,7 @@
                                         </label>
                                     </div>
                                     <div class="col-md-3">
-                                        <input type="checkbox" {{ $record[$property] ? 'checked' : '' }} style="float: right;" id="name" name={{$property}}>                                        </div>
+                                        <input type="checkbox" {{ $record[0]->$property ? 'checked' : '' }} style="float: right;" id="name" name={{$property}}>                                        </div>
                                 </div>
                                 <br />
                                 @if ($errors->has($property))

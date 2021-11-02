@@ -143,8 +143,8 @@ class LifeQuoteService extends BaseService
             "children_id" => "select|title|required",
             "tenure_of_insurance_id" => "select|title|required",
             "number_of_years_id" => "select|title|required",
-            "gender" => "static|required|Male,Female",
-            "is_smoker" => "static|title|required|Yes,No",
+            "gender" => "|static|required|Male,Female",
+            "is_smoker" => "|static|title|required|Yes,No",
             "others_info" => "textarea",
         );
     }
@@ -191,7 +191,7 @@ class LifeQuoteService extends BaseService
     public function fillModelSkipProperties() {
         return [
             "create" => "id",
-            "list" => "email,mobile_no",
+            "list" => "email,mobile_no,others_info",
         ];
     }
 
