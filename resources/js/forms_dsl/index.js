@@ -11,6 +11,7 @@ import carQuoteKyc from './car_quote_kyc';
 import ftcQuoteStatusHistory from './ftc_quote_status_history';
 import ftcPayment from './ftc_payment';
 import ftcPaymentHistory from './ftc_payment_history';
+import carQuotePolicy from './car_quote_policy';
 import teams from './teams';
 
 const getDSLForm = options => {
@@ -32,6 +33,8 @@ const getDSLForm = options => {
       return ftcHistory.getForm();
     case 'ftcPayment':
       return ftcPayment.getForm();
+    case 'carQuotePolicy': 
+        return carQuotePolicy.getForm();
     case 'ftcPaymentHistory':
       return ftcPaymentHistory.getForm();
     case 'ftcQuoteStatusHistory':

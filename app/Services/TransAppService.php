@@ -7,6 +7,7 @@ use Auth;
 use DB;
 use App\Models\Transaction;
 use App\Models\CarQuote;
+use App\Models\CarQuotePolicy;
 use App\Models\CarQuotePaymentHistory;
 use Illuminate\Support\Facades\Mail;
 use Config;
@@ -48,6 +49,10 @@ class TransAppService extends BaseService
                     $newPayment->notes = "Automate on transaction creations with Transaction ID = ".$transaction->id;
                     $newPayment->car_quote_id = $request->input("car_quote_id");
                     $newPayment->save();
+
+                    $createPolicy = CarQuotePolicy();
+                    $createPolicy->car_quote_id = $request->input("car_quote_id");
+                    $createPolicy->save();
                 }
             }
         }

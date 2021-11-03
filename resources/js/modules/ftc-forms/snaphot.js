@@ -70,6 +70,15 @@ function LeadSnapShot() {
           multi: false,
           filter: `/${paramRef.current.id}`,
         };
+        case 'carQuotePolicy':
+        return {
+          form: 'carQuotePolicy',
+          view_mode: 'list',
+          action_type: 'list',
+          context: 'car_quote_snap',
+          multi: false,
+          filter: { car_quote_id: paramRef.current.id },
+        };
 
       case 'email_template':
         return { data: action.state, form: 'email_template' };
@@ -160,6 +169,14 @@ function LeadSnapShot() {
       id: 9,
       data: 'ftcPayment',
     },
+    {
+      icon: 'fa fa-line-chart',
+      label: 'Policy Detail',
+      active: 0,
+      id: 11,
+      data: 'carQuotePolicy',
+    },
+
   ];
 
   const onSelect = async obj => {
