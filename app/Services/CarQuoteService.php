@@ -56,7 +56,7 @@ class CarQuoteService extends BaseService
     public function fillModelProperties() {
         return array (
             "id" => "readonly|none",
-            "first_name" => "input|text|title|required",
+            "first_name" => "input|text|required",
             "last_name" => "input|text|required",
             "dob" => "input|date|required",
             "car_make_id" => "select|title|required",
@@ -67,9 +67,6 @@ class CarQuoteService extends BaseService
     public function getCustomTitleByProperty($propertyName){
         $title = "";
         switch ($propertyName) {
-            case 'first_name':
-                $title = "My Name";
-                break;
             case 'car_make_id':
                 $title = "Car Make";
                 break;

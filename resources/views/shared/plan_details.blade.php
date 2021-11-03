@@ -1,7 +1,7 @@
 
     <div class="row">
         <div class="col-md-12 col-sm-12 admin-detail">
-            <div class="x_panel">
+            <div class="x_panel" style="border: none">
                 <div class="x_title" style="text-align: center;">
                     <div class="h5">{{ ucwords($listQuotePlanName) }}</div>
                     {{-- <ul class="nav navbar-right panel_toolbox">
@@ -20,13 +20,10 @@
                             <a class="nav-link" id="addons-tab" data-toggle="tab" href="#addons" role="tab" aria-controls="addons" aria-selected="false">Addons</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" id="benefits-inclusion-tab" data-toggle="tab" href="#benefits-inclusion" role="tab" aria-controls="benefits-inclusion" aria-selected="false">Inclusion</a>
+                            <a class="nav-link" id="benefits-inclusion-tab" data-toggle="tab" href="#benefits-inclusion" role="tab" aria-controls="benefits-inclusion" aria-selected="false">Inclusions</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" id="benefits-exclusion-tab" data-toggle="tab" href="#benefits-exclusion" role="tab" aria-controls="benefits-exclusion" aria-selected="false">Exclusion</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" id="features-tab" data-toggle="tab" href="#features" role="tab" aria-controls="features" aria-selected="false">Features</a>
+                            <a class="nav-link" id="benefits-exclusion-tab" data-toggle="tab" href="#benefits-exclusion" role="tab" aria-controls="benefits-exclusion" aria-selected="false">Exclusions</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" id="rsa-tab" data-toggle="tab" href="#rsa" role="tab" aria-controls="rsa" aria-selected="false">Road Side Assistance</a>
@@ -45,6 +42,22 @@
                                 <tr><td>Actual Premium:</td> <td>{{ $actualPremium }}</td></tr>
                                 <tr><td>Discount Premium:</td> <td>{{ $discountPremium }}</td></tr>
                             </table>
+                            <br /><br />
+                            <p>
+                                <strong>Features</strong>
+                                <table cellpadding="3" cellspacing="3">
+                                    <tr>
+                                        <td>
+                                            <table cellpadding="3" cellspacing="3">
+                                                @foreach ($listQuotePlanBenefitsFeatures as $key => $listQuotePlanBenefitsFeature)
+                                                    <tr><td style="width: 300px;">{{ ucwords($listQuotePlanBenefitsFeature->text) }}</td>
+                                                        <td>{{ ucwords($listQuotePlanBenefitsFeature->value) }}</td></tr>
+                                                @endforeach
+                                            </table>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </p>
                         </div>
                         <div class="tab-pane fade" id="addons" role="tabpanel" aria-labelledby="addons-tab">
                             <table cellpadding="3" cellspacing="3">
@@ -52,14 +65,25 @@
                                     <td>
                                         <table cellpadding="3" cellspacing="3">
                                             @foreach ($listQuotePlanAddons as $key => $listQuotePlanAddon)
-                                                <tr><td style="width: 150px;">{{ ucwords($listQuotePlanAddon->text) }}</td></tr>
+                                                <tr><td style="width: 430px;height: 30px;">{{ ucwords($listQuotePlanAddon->text) }}</td></tr>
                                             @endforeach
                                         </table>
                                     </td>
                                     <td>
                                         <table cellpadding="3" cellspacing="3">
                                             @foreach ($listQuotePlanAddonValues as $key => $listQuotePlanAddonValue)
-                                                <tr><td style="width: 350px;">{{ ucwords($listQuotePlanAddonValue) }}</td></tr>
+                                                <tr><td style="width: 430px;height: 30px;">{{ ucwords($listQuotePlanAddonValue) }}</td></tr>
+                                            @endforeach
+                                        </table>
+                                    </td>
+                                    <td>
+                                        <table cellpadding="3" cellspacing="3">
+                                            @foreach ($listQuotePlanAddonPrices as $key => $listQuotePlanAddonPrice)
+                                                @if($listQuotePlanAddonPrice == 0)
+                                                <tr><td style="width: 430px;height: 30px;">Free</td></tr>
+                                                @else
+                                                <tr><td style="width: 430px;height: 30px;">AED {{ ucwords($listQuotePlanAddonPrice) }}</td></tr>
+                                                @endif
                                             @endforeach
                                         </table>
                                     </td>
@@ -88,20 +112,6 @@
                                             @foreach ($listQuotePlanBenefitsExclusions as $key => $listQuotePlanBenefitsExclusion)
                                                 <tr><td style="width: 300px;">{{ ucwords($listQuotePlanBenefitsExclusion->text) }}</td>
                                                     <td>{{ ucwords($listQuotePlanBenefitsExclusion->value) }}</td></tr>
-                                            @endforeach
-                                        </table>
-                                    </td>
-                                </tr>
-                            </table>
-                        </div>
-                        <div class="tab-pane fade" id="features" role="tabpanel" aria-labelledby="features-tab">
-                            <table cellpadding="3" cellspacing="3">
-                                <tr>
-                                    <td>
-                                        <table cellpadding="3" cellspacing="3">
-                                            @foreach ($listQuotePlanBenefitsFeatures as $key => $listQuotePlanBenefitsFeature)
-                                                <tr><td style="width: 300px;">{{ ucwords($listQuotePlanBenefitsFeature->text) }}</td>
-                                                    <td>{{ ucwords($listQuotePlanBenefitsFeature->value) }}</td></tr>
                                             @endforeach
                                         </table>
                                     </td>
@@ -138,7 +148,6 @@
                         </div>
                     </div>
 
-                    <div class="ln_solid"></div>
                     <div class="row">
                         <div class="col-auto mr-auto"></div>
                         <div class="col-auto">

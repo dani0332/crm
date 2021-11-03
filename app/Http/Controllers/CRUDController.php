@@ -262,20 +262,21 @@ class CRUDController extends Controller
                 foreach($listQuotePlanAddonss as $listQuotePlanAddon) {
                     $listQuotePlanAddons[] = $listQuotePlanAddon; // Get Addons Names
 
-                    foreach($listQuotePlanAddon->carAddonOption as $listQuotePlanAddonValuess) {
-                        $listQuotePlanAddonValues[] = $listQuotePlanAddonValuess->value;
+                    foreach($listQuotePlanAddon->carAddonOption as $listQuotePlanAddonsOptions) {
+                        $listQuotePlanAddonValues[] = $listQuotePlanAddonsOptions->value;
+                        $listQuotePlanAddonPrices[] = $listQuotePlanAddonsOptions->price;
+                        //echo "<pre>"; print_r($listQuotePlanAddonPrices);
                     }
                 }
-
-                //echo "<pre>"; print_r($listQuotePlanBenefitsFeaturess);
+                //echo "<pre>"; print_r($listQuotePlanAddonPrices);
             }
         }
 
-        //echo "<pre>"; print_r($listQuotePlan);
+        //echo "<pre>"; print_r($listQuotePlanAddonPrices);
         return view('shared.plan_details', compact(['listQuotePlanName','providerCode','providerName','repairType'
         ,'actualPremium','discountPremium','listQuotePlanAddons','listQuotePlanAddonValues','listQuotePlanBenefitsInclusions'
         ,'listQuotePlanBenefitsExclusions','listQuotePlanBenefitsFeatures','listQuotePlanBenefitsRsas'
-        ,'listQuotePlanBenefitsPolicyDetails']));
+        ,'listQuotePlanBenefitsPolicyDetails','listQuotePlanAddonPrices']));
     }
 
 }
