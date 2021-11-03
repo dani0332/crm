@@ -11,8 +11,6 @@
                 {{-- <div id="success_message" class="alert alert-success" style="display:none"></div>
                 <div id="error_message" class="alert alert-danger" style="display:none"></div> --}}
                 <br />
-
-
                 <br/>
                 <table  class="table table-striped jambo_table sanction-list-downloads-table" style="width:100%">
                       <thead>
@@ -26,12 +24,7 @@
                           <th>Updated At</th>
                         </tr>
                       </thead>
-
-
                       <tbody>
-
-
-
                       </tbody>
                     </table>
             </div>

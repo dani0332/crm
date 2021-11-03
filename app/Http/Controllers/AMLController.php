@@ -367,7 +367,7 @@ class AMLController extends Controller
         return redirect()->back()->with('success', 'Quote is updated');
     }
 
-    public function history(Request $request) {
+    public function sanctionListHistory(Request $request) {
         $data = [];
         $data = SanctionListDownloads::select('id', 'file_name', 'file_path', 'source', 'total_records', 'created_at', 'updated_at')->orderBy('created_at','desc')->get();
 
