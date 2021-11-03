@@ -127,7 +127,7 @@
                                         <td>{{ $quotePlan->actualPremium }}</td>
                                         <td>{{ $quotePlan->vatPremium }}</td>
                                         <td>{{ $quotePlan->discountPremium }}</td>
-                                        <td><a testurl="{{ $record->id }}/plan_details/{{ $quotePlan->id }}" class="btn btn-primary btn-sm m-2 quotePlanModalPopup" data-toggle="modal" data-target="#quotePlanModal">Plan Details</a></td>
+                                        <td><a testurl="{{ $record[0]->id }}/plan_details/{{ $quotePlan->id }}" class="btn btn-primary btn-sm m-2 quotePlanModalPopup" data-toggle="modal" data-target="#quotePlanModal">Plan Details</a></td>
                                     </tr>
                                 @endforeach
                             </tbody>

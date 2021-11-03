@@ -121,6 +121,8 @@ class DropdownSourceService extends BaseService
             case 'business_type_of_insurance_id':
                 $data = BusinessInsuranceType::select('id','text')->get();
                 break;
+            case 'currently_insured_with':
+                //$data = BusinessInsuranceType::select('id','text')->get();
             case 'team_managers':
                 $data = User::select('users.id','users.name')
                 ->join('model_has_roles', 'model_has_roles.model_id', '=', 'users.id')

@@ -3,11 +3,50 @@
 namespace App\Services;
 use App\Models\CarQuote;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Config;
+use Config;
+use DB;
 
 class CarQuoteService extends BaseService
 {
+    protected $query;
+    public function __construct()
+    {
+        $this->query = "
+                        SELECT cqr.id
+                        ,cqr.first_name
+                        ,cqr.last_name
+                        ,cqr.email
+                        ,cqr.mobile_no
+                        ,cqr.dob
+                        ,cqr.car_value
+                        ,cqr.additional_notes
+                        ,cqr.nationality_id
+                        ,cqr.year_of_manufacture
+                        ,n.TEXT AS nationality_id_text
+                        ,cqr.uae_license_held_for_id
+                        ,ulhf.TEXT AS uae_license_held_for_id_text
+                        ,cqr.car_make_id
+                        ,cmake.TEXT AS car_make_id_text
+                        ,cqr.car_model_id
+                        ,cmodel.TEXT AS car_model_id_text
+                        ,cqr.emirate_of_registration_id
+                        ,e.TEXT AS emirate_of_registration_id_text
+                        ,ip.id AS currently_insured_with
+                        ,ip.TEXT AS currently_insured_with_text
+                        ,cqr.car_type_insurance_id
+                        ,cti.TEXT AS car_type_insurance_id_text
+                        ,cqr.claim_history_id
+                        ,ch.TEXT AS claim_history_id_text
+                    FROM car_quote_request cqr
+                    INNER JOIN nationality n ON n.id = cqr.nationality_id
+                    INNER JOIN uae_license_held_for ulhf ON ulhf.id = cqr.uae_license_held_for_id
+                    INNER JOIN car_make cmake ON cmake.id = cqr.car_make_id
+                    INNER JOIN car_model cmodel ON cmodel.id = cqr.car_model_id
+                    INNER JOIN emirates e ON e.id = cqr.emirate_of_registration_id
+                    INNER JOIN insurance_provider ip ON ip.TEXT = cqr.currently_insured_with
+                    INNER JOIN car_type_insurance cti ON cti.id = cqr.car_type_insurance_id
+                    INNER JOIN claim_history ch ON ch.id = cqr.claim_history_id";
+    }
 	public function saveCarQuote(Request $request)
 	{
         $carQuote = new CarQuote();
@@ -53,6 +92,10 @@ class CarQuoteService extends BaseService
             return redirect("quote/health/" . $carQuote->id)->with('success', 'Health Quote has been updated');
 	}
 
+    public function getEntity($id){
+        return DB::select($this->query.' where cqr.id = '. $id);
+    }
+
     public function fillModelProperties() {
         return array (
             "id" => "readonly|none",
@@ -65,14 +108,12 @@ class CarQuoteService extends BaseService
             "uae_license_held_for_id" => "select|title|required",
             "car_make_id" => "select|title|required",
             "car_model_id" => "select|title|required",
-            "year_of_manufacture" => "select|required",
+            "year_of_manufacture" => "|static|required|2022,2021,2020,2019,2018,2017,2016,2015,2014,2013,2012,2011,2010,2009,2008,2007,2006,2005,2004,2003,2002,2001,2000,1999,1998 or older",
             "emirate_of_registration_id" => "select|title|required",
             "currently_insured_with" => "select|required",
             "car_value" => "number|required",
             "car_type_insurance_id" => "select|title|required",
             "claim_history_id" => "select|title|required",
-            "source" => "select|title|required",
-            "reviver_name" => "select|title|required",
             "additional_notes" => "textarea|required",
         );
     }
@@ -119,20 +160,66 @@ class CarQuoteService extends BaseService
         return $title;
     }
 
+    public function getGridData($searchProperties, $request){
+        $count = 0;
+        if ($request->ajax()) {
+            foreach ($searchProperties as $item) {
+                if(!empty($request[$item])){
+                    $suffix = '';
+                    switch ($item) {
+                        case 'uae_license_held_for':
+                            $suffix = 'ulhf';
+                            break;
+                        case 'car_make':
+                            $suffix = 'cmake';
+                            break;
+                        case 'car_model':
+                            $suffix = 'cmodel';
+                            break;
+                        case 'nationality':
+                            $suffix = 'n';
+                            break;
+                        case 'emirates':
+                            $suffix = 'e';
+                            break;
+                        case 'insurance_provider':
+                            $suffix = 'ip';
+                            break;
+                        case 'claim_history':
+                            $suffix = 'ch';
+                            break;
+                        case 'car_type_insurance':
+                            $suffix = 'cti';
+                            break;
+                        default:
+                            $suffix = 'cqr';
+                            break;
+                    }
+                    if($count == 0){
+                        $this->query = $this->query.' where '.$suffix.'.'.$item.'='."'".$request[$item]."'";
+                    }else{
+                        $this->query = $this->query.' and '.$suffix.'.'.$item.'='."'".$request[$item]."'";
+                    }
+                    $count++;
+                }
+            }
+        }
+
+        return DB::select($this->query);
+    }
+
     public function fillModelSkipProperties() {
         return [
             "create" => "id",
-            "list" => "",
+            "list" => "additional_notes,email",
         ];
     }
 
     public function fillModelSearchProperties(){
-        return [];
+        return ["first_name","last_name","email","mobile_no","nationality_id"];
     }
 
     public function getQuotePlans($id) {
-
-        //$quoteUuId = "vOBEwgDJZsCMvB0u";
         $quoteUuId = CarQuote::where('id', '=', $id)->value('uuid');
 
         $plansApiEndPoint = Config::get('constants.KEN_PLANS_API_ENDPOINT');

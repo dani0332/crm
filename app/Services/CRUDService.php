@@ -43,14 +43,7 @@ class CRUDService extends BaseService
         $gridData = '';
         switch ($model->modelType) {
             case 'Car':
-                $gridData = CarQuote::select('*');
-                if ($request->ajax()) {
-                    foreach ($model->searchProperties as $item) {
-                        if(!empty($request[$item])){
-                            $gridData = $gridData->where($item, '=', $request[$item]);
-                        }
-                    }
-                }
+                $gridData = $this->carQuoteService->getGridData($model->searchProperties, $request);
                 break;
             case 'Health':
                 $gridData = $this->healthQuoteService->getGridData($model->searchProperties, $request);
@@ -189,7 +182,7 @@ class CRUDService extends BaseService
         $data = '';
         switch ($modelType) {
             case 'Car':
-                $data = CarQuote::find($id);
+                $data = $this->carQuoteService->getEntity($id);
                 break;
             case 'Health':
                 $data = $this->healthQuoteService->getEntity($id);
