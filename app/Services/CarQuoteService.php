@@ -58,8 +58,21 @@ class CarQuoteService extends BaseService
             "id" => "readonly|none",
             "first_name" => "input|text|required",
             "last_name" => "input|text|required",
-            "dob" => "input|date|required",
+            "email" => "input|email|required",
+            "mobile_no" => "input|title|number|required",
+            "dob" => "input|title|date|required",
+            "nationality_id" => "select|title|required",
+            "uae_license_held_for_id" => "select|title|required",
             "car_make_id" => "select|title|required",
+            "car_model_id" => "select|title|required",
+            "year_of_manufacture" => "select|required",
+            "emirate_of_registration_id" => "select|title|required",
+            "currently_insured_with" => "select|required",
+            "car_value" => "number|required",
+            "car_type_insurance_id" => "select|title|required",
+            "claim_history_id" => "select|title|required",
+            "source" => "select|title|required",
+            "reviver_name" => "select|title|required",
             "additional_notes" => "textarea|required",
         );
     }
@@ -67,8 +80,17 @@ class CarQuoteService extends BaseService
     public function getCustomTitleByProperty($propertyName){
         $title = "";
         switch ($propertyName) {
+            case 'dob':
+                $title = "Date of Birth";
+                break;
+            case 'uae_license_held_for_id':
+                $title = "UAE licence held for";
+                break;
             case 'car_make_id':
                 $title = "Car Make";
+                break;
+            case 'car_model_id':
+                $title = "Car Model";
                 break;
             case 'nationality_id':
                 $title = "Nationality";
@@ -76,23 +98,20 @@ class CarQuoteService extends BaseService
             case 'mobile_no':
                 $title = "Mobile Number";
                 break;
-            case 'has_dental':
-                $title = "Dental";
+            case 'emirate_of_registration_id':
+                $title = "Emirate Of Registration";
                 break;
-            case 'has_worldwide_cover':
-                $title = "WorldWide Cover";
+            case 'car_type_insurance_id':
+                $title = "Type Of Insurance";
                 break;
-            case 'has_home':
-                $title = "Home Country Cover";
+            case 'claim_history_id':
+                $title = "Claim History";
                 break;
             case 'source':
                 $title = "Lead Source";
                 break;
-            case 'emirate_of_your_visa_id':
-                $title = "Emirate of your visa";
-                break;
-            case 'dob':
-                $title = "Date of Birth";
+            case 'reviver_name':
+                $title = "Reviver Name";
                 break;
             default:
                 break;
@@ -113,6 +132,7 @@ class CarQuoteService extends BaseService
 
     public function getQuotePlans($id) {
 
+        //$quoteUuId = "vOBEwgDJZsCMvB0u";
         $quoteUuId = CarQuote::where('id', '=', $id)->value('uuid');
 
         $plansApiEndPoint = Config::get('constants.KEN_PLANS_API_ENDPOINT');
