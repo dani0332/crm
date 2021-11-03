@@ -4,13 +4,13 @@ namespace App\Services;
 use App\Models\HealthQuote;
 use Illuminate\Http\Request;
 use DB;
-
 class HealthQuoteService extends BaseService
 {
     protected $query;
-
-    public function __construct()
+    protected $crudService;
+    public function __construct(CRUDService $crudService)
     {
+        $this->crudService = $crudService;
         $this->query = "
                     SELECT hqr.id
                     ,hqr.first_name
@@ -45,23 +45,24 @@ class HealthQuoteService extends BaseService
 
 	public function saveHealthQuote(Request $request)
 	{
-        $healthQuote = new HealthQuote();
-        $healthQuote->first_name = $request->first_name;
-        $healthQuote->last_name = $request->last_name;
-        $healthQuote->email = $request->email;
-        $healthQuote->details = $request->details;
-        $healthQuote->mobile_no = $request->mobile_no;
-        $healthQuote->preference = $request->preference;
-        $healthQuote->source = $request->source;
-        $healthQuote->marital_status_id = $request->marital_status_id;
-        $healthQuote->dob = $request->dob;
-        $healthQuote->cover_for_id = $request->cover_for_id;
-        $healthQuote->nationality_id = $request->nationality_id;
-        $healthQuote->has_dental = $request->has_dental == 'on' ? 1 : 0;
-        $healthQuote->has_worldwide_cover = $request->has_worldwide_cover == 'on' ? 1 : 0;
-        $healthQuote->has_home = $request->has_home == 'on' ? 1 : 0;
-        $healthQuote->emirate_of_your_visa_id = $request->emirate_of_your_visa_id;
-        $healthQuote->save();
+        $dataArr = array(
+            "firstName" => $request->first_name,
+            "lastName" => $request->last_name,
+            "email" => $request->email,
+            "details" => $request->details,
+            "mobileNo" => $request->mobile_no,
+            "preference" => $request->preference,
+            "source" => $request->source,
+            "maritalStatusId" => $request->marital_status_id,
+            "dob" => $request->dob,
+            "coverForId" => $request->cover_for_id,
+            "nationalityId" => $request->nationality_id,
+            "hasDental" => $request->has_dental == 'on' ? true : false,
+            "hasWorldwideCover" => $request->has_worldwide_cover == 'on' ?  true : false,
+            "hasHome" => $request->has_home == 'on' ? true : false,
+            "emirateOfYourVisaId" => $request->emirate_of_your_visa_id,
+        );
+        #return $this->crudService->sendCAPIRequest('/api/v1-save-health-quote', $dataArr);
 	}
 
     public function getGridData($searchProperties, $request){
@@ -114,9 +115,9 @@ class HealthQuoteService extends BaseService
         $healthQuote->dob = $request->dob;
         $healthQuote->cover_for_id = $request->cover_for_id;
         $healthQuote->nationality_id = $request->nationality_id;
-        $healthQuote->has_dental = $request->has_dental == 'on' ? 1 : 0;
-        $healthQuote->has_worldwide_cover = $request->has_worldwide_cover == 'on' ? 1 : 0;
-        $healthQuote->has_home = $request->has_home == 'on' ? 1 : 0;
+        $healthQuote->has_dental = $request->has_dental == 'on' ? true : false;
+        $healthQuote->has_worldwide_cover = $request->has_worldwide_cover == 'on' ? true : false;
+        $healthQuote->has_home = $request->has_home == 'on' ? true : false;
         $healthQuote->emirate_of_your_visa_id = $request->emirate_of_your_visa_id;
         $healthQuote->save();
 

@@ -9,9 +9,10 @@ class TravelQuoteService extends BaseService
 {
 
     protected $query;
-
-    public function __construct()
+    protected $crudService;
+    public function __construct(CRUDService $crudService)
     {
+        $this->crudService = $crudService;
         $this->query = "
                         SELECT tqr.id
                         ,tqr.days_cover_for
@@ -48,6 +49,20 @@ class TravelQuoteService extends BaseService
         $travelQuote->region_cover_for_id = $request->region_cover_for_id;
         $travelQuote->details = $request->details;
         $travelQuote->save();
+
+        $dataArr = array(
+            "firstName" => $request->first_name,
+            "lastName" => $request->last_name,
+            "email" => $request->email,
+            "details" => $request->details,
+            "mobileNo" => $request->mobile_no,
+            "travelCoverForId" => $request->travel_cover_for_id,
+            "nationalityId" => $request->nationality_id,
+            "daysCoverFor" => $request->days_cover_for,
+            "destination" => $request->destination,
+            "regionCoverForId" => $request->region_cover_for_i,
+        );
+        #return $this->crudService->sendCAPIRequest('/api/v1-save-travel-quote', $dataArr);
 	}
 
     public function getGridData($searchProperties, $request){
