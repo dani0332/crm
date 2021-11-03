@@ -22,6 +22,7 @@ use App\Models\BusinessQuoteType;
 use App\Models\BusinessCoverType;
 use App\Models\CommunicationMode;
 use App\Models\QuoteStatus;
+use App\Models\SanctionListDownloads;
 
 class AMLController extends Controller
 {
@@ -364,6 +365,22 @@ class AMLController extends Controller
         $this->checkAmlService->checkAml($firstName,$lastName,$quoteRequestId,$quoteTypeId, true);
 
         return redirect()->back()->with('success', 'Quote is updated');
+    }
+
+    public function history(Request $request) {
+        $data = [];
+        $data = SanctionListDownloads::select('id', 'file_name', 'file_path', 'source', 'total_records', 'created_at', 'updated_at')->orderBy('created_at','desc')->get();
+
+        if($request->ajax()) {
+            return DataTables::of($data)
+                ->addIndexColumn()
+                ->addColumn('action', function ($row) {
+                    return view('aml.actions', compact('row'))->render();
+                })
+                ->rawColumns(['action'])
+                ->make(true);
+        }
+        return view('aml.history');
     }
 
 }
