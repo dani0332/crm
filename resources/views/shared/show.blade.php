@@ -64,4 +64,78 @@
         </div>
     </div>
 
+    @if($model->modelType == "Car")
+
+    <div class="modal fade" id="quotePlanModal" name="quotePlanModal" tabindex="-1" role="dialog" aria-labelledby="quotePlanModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+            <div class="modal-content" style="height: 40vw;">
+                <div class="modal-header" style="border-bottom: none;">
+                    <h5 class="modal-title" id="quotePlanModalLabel"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-grid-3x3-gap-fill" viewBox="0 0 16 16" style="vertical-align: unset;">
+                        <path d="M1 2a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2zm5 0a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V2zm5 0a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1V2zM1 7a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V7zm5 0a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7zm5 0a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1V7zM1 12a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1v-2zm5 0a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1v-2zm5 0a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1v-2z"/>
+                      </svg> <strong>Plan Details</strong></h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                </div>
+                <div class="quote-plan-modal-body"> </div>
+                <div class="modal-footer" style="border: none">
+                        {{-- <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-primary">Save changes</button> --}}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <form method="post" action="#{{-- {{ $record->id }}/quotePlansGenerate--}}" class="form-horizontal form-label-left" role="form" data-parsley-validate=""novalidate="" autocomplete="off">
+        {{csrf_field()}}
+        @method('GET')
+        <div class="row">
+            <div class="col-md-12 col-sm-12">
+                <div class="x_panel">
+                    <div class="x_title">
+                        <h2>Available Plans</h2>
+                        <div class="clearfix"></div>
+                    </div>
+                    <div class="x_content">
+                        <div class="row">
+                            <div class="col-auto mr-auto"></div>
+                            <div class="col-auto">
+                                <input type="hidden" id="selectquotePlanId" name="selectquotePlanId" value="">
+                                <button type="submit" id="quotePlansGenerateButton" name="quotePlansGenerateButton" class="btn btn-warning btn-sm">Generate Quote</button>
+                            </div>
+                        </div>
+                        <table id="datatable" class="table table-striped jambo_table" style="width:100%">
+                            <thead>
+                                <tr>
+                                    <th>Provider Name</th>
+                                    <th>Plan Name</th>
+                                    <th>Repair Type</th>
+                                    <th>Actual Premium</th>
+                                    <th>VAT Premium</th>
+                                    <th>Discount Premium</th>
+                                    <th> </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach ($listQuotePlans as $key => $quotePlan)
+                                    <tr>
+                                        <td><span><input type="checkbox" id="quotePlanId" name="quotePlanId" value="{{ $quotePlan->id }}" style="height: unset !important;"></span>
+                                            <span>{{ ucwords($quotePlan->providerName) }}</span></td>
+                                        {{-- <td><a href="{{ $record->id }}/plan_details/{{ $quotePlan->id }}" target="_blank">{{ ucwords($quotePlan->name) }}</td> --}}
+                                        <td>{{ ucwords($quotePlan->name) }}</td>
+                                        <td>{{ $quotePlan->repairType }}</td>
+                                        <td>{{ $quotePlan->actualPremium }}</td>
+                                        <td>{{ $quotePlan->vatPremium }}</td>
+                                        <td>{{ $quotePlan->discountPremium }}</td>
+                                        <td><a testurl="{{ $record->id }}/plan_details/{{ $quotePlan->id }}" class="btn btn-primary btn-sm m-2 quotePlanModalPopup" data-toggle="modal" data-target="#quotePlanModal">Plan Details</a></td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+@endif
 @endsection

@@ -1537,6 +1537,32 @@ $(document).ready(function() {
         ]
     });
 
+    // Car Quote Plan Modal Popup
+    $('.quotePlanModalPopup').on('click',function() {
+        $('.quote-plan-modal-body').load($(this).attr("testurl"),function() {
+            $('#quotePlanModal').modal({show:true});
+        });
+    });
+
+    $("#quotePlansGenerateButton").hide(300);
+    $(document).on("change", "#quotePlanId", function() {
+        var countSelectedQuotePlanIds = document.querySelectorAll('#quotePlanId:checked').length;
+
+        if (countSelectedQuotePlanIds > 0) {
+            $("#quotePlansGenerateButton").show(300);
+        } else {
+            $("#quotePlansGenerateButton").hide(300);
+        }
+    });
+    $("#quotePlansGenerateButton").click(function() {
+        var quotePlanIDs = [];
+        $.each($("input[name='quotePlanId']:checked"), function() {
+            quotePlanIDs.push($(this).val());
+        });
+        $('#selectquotePlanId').val(quotePlanIDs);
+        console.log("quotePlanIDs: " + quotePlanIDs);
+    });
+
     //select/unselect all checkboxes if this selected
     $("#select_all_checkboxes").click(function(e) {
         var isChecked = e.target.checked;

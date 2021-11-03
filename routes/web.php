@@ -116,6 +116,7 @@ Route::group(['middleware' =>  ['auth']], function () {
         Route::post('save', [CRUDController::class, 'store'])->name('saveQuote');
         Route::post('update', [CRUDController::class, 'update'])->name('updateQuote');
         Route::get('getvalues/{modelType}/{propertyName}/{recordId}', [CRUDController::class, 'getDropdownSourceNameForDisplay']);
+        Route::get('car/{quoteId}/plan_details/{planId}', [CRUDController::class, 'plan_details'])->name('plan_details');
     });
 
     Route::group(['prefix' => 'transapp'], function () {
@@ -155,7 +156,7 @@ Route::group(['middleware' =>  ['auth']], function () {
     Route::group(['prefix' => 'kyc'], function () {
         Route::resource('aml', AMLController::class);
         Route::get('aml/{quoteTypeId}/details/{quoteRequestId}', [AMLController::class, 'amlQuoteDetails']);
-        Route::get('aml/{quoteTypeId}/details/{quotUpdat eRequestId}/quoteStatusUpdate/{quoteTypeCode}', [AMLController::class, 'quoteStatusUpdate'])->name('quoteStatusUpdate');
+        Route::get('aml/{quoteTypeId}/details/{quoteRequestId}/quoteStatusUpdate/{quoteTypeCode}', [AMLController::class, 'quoteStatusUpdate'])->name('quoteStatusUpdate');
         Route::get('aml/{quoteTypeId}/details/{quoteRequestId}/quoteUpdate', [AMLController::class, 'quoteUpdate'])->name('quoteUpdate');
     });
 

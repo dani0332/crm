@@ -147,7 +147,15 @@ class CRUDController extends Controller
                 $customTableList[$property] = $this->dropdownSourceService->getOnlySelectedItemName($property, $id);
             }
         }
-        return view('shared.show', compact(['record', 'model', 'customTitles', 'customTableList']));
+
+        if($this->genericModel->modelType == "Car") { // Car plans to display on detail view
+            $quotePlans = $this->carQuoteService->getQuotePlans($id);
+            $listQuotePlans = $quotePlans->quotes->plans;
+            return view('shared.show', compact(['record', 'model', 'customTitles', 'listQuotePlans', 'customTableList']));
+        }
+        else {
+            return view('shared.show', compact(['record', 'model', 'customTitles', 'customTableList']));
+        }
     }
 
     /**
@@ -176,7 +184,6 @@ class CRUDController extends Controller
                 $customLists[$property] = $data;
             }
         }
-        #dd($customLists);
         return view('shared.edit', compact(['record', 'model', 'dropdownSource', 'customTitles', 'customLists']));
     }
 
@@ -281,6 +288,43 @@ class CRUDController extends Controller
             }
         }
         return $recordName;
+    }
+
+    public function plan_details($quoteId, $planId){
+
+        $quotePlans = $this->carQuoteService->getQuotePlans($quoteId);
+        $listQuotePlans = $quotePlans->quotes->plans;
+
+        foreach($listQuotePlans as $listQuotePlan) { // Main
+
+            if($listQuotePlan->id == $planId) {
+                $listQuotePlanName = $listQuotePlan->name;
+                $providerCode = $listQuotePlan->providerCode;
+                $providerName = $listQuotePlan->providerName;
+                $repairType = $listQuotePlan->repairType;
+                $actualPremium = $listQuotePlan->actualPremium;
+                $discountPremium = $listQuotePlan->discountPremium;
+                $listQuotePlanAddonss = $listQuotePlan->addons;
+                $listQuotePlanBenefitsInclusions = $listQuotePlan->benefits->inclusion;
+                $listQuotePlanBenefitsExclusions = $listQuotePlan->benefits->exclusion;
+                $listQuotePlanBenefitsFeatures = $listQuotePlan->benefits->feature;
+                $listQuotePlanBenefitsRsas = $listQuotePlan->benefits->roadSideAssistance;
+                $listQuotePlanBenefitsPolicyDetails = $listQuotePlan->benefits->policyDetail;
+
+                foreach($listQuotePlanAddonss as $listQuotePlanAddon) {
+                    $listQuotePlanAddons[] = $listQuotePlanAddon; // Get Addons Names
+
+                    foreach($listQuotePlanAddon->carAddonOption as $listQuotePlanAddonsOptions) {
+                        $listQuotePlanAddonValues[] = $listQuotePlanAddonsOptions->value;
+                        $listQuotePlanAddonPrices[] = $listQuotePlanAddonsOptions->price;
+                    }
+                }
+            }
+        }
+        return view('shared.plan_details', compact(['listQuotePlanName','providerCode','providerName','repairType'
+        ,'actualPremium','discountPremium','listQuotePlanAddons','listQuotePlanAddonValues','listQuotePlanBenefitsInclusions'
+        ,'listQuotePlanBenefitsExclusions','listQuotePlanBenefitsFeatures','listQuotePlanBenefitsRsas'
+        ,'listQuotePlanBenefitsPolicyDetails','listQuotePlanAddonPrices']));
     }
 
 }
