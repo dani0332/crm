@@ -7,6 +7,8 @@ use App\Models\CarModel;
 use App\Models\CurrencyType;
 use App\Models\Emirate;
 use App\Models\HealthCoverFor;
+use App\Models\HomeAccomodationType;
+use App\Models\HomePossessionType;
 use App\Models\LeadStatus;
 use App\Models\LifeChildren;
 use App\Models\LifeInsuranceTenure;
@@ -108,6 +110,12 @@ class DropdownSourceService extends BaseService
                 break;
             case 'number_of_years_id':
                 $data = LifeNumberOfYears::select('id','text')->get();
+                break;
+            case 'iam_possesion_type_id':
+                $data = HomePossessionType::select('id','text')->get();
+                break;
+            case 'ilivein_accommodation_type_id':
+                $data = HomeAccomodationType::select('id','text')->get();
                 break;
             case 'team_managers':
                 $data = User::select('users.id','users.name')

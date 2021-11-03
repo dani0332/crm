@@ -5,13 +5,65 @@
 
 <script>
     $(document).ready(function() {
-    var model = JSON.parse('<?php echo json_encode(get_object_vars($model)) ?>');
-    var record = JSON.parse('<?php echo json_encode($record[0]) ?>');
-    Object.keys(model.properties).forEach(element => {
-        if(model.properties[element].indexOf('date') > -1){
-            $("#"+ element).val($("#"+ element).val().split(' ')[0]);
+        var model = JSON.parse('<?php echo json_encode(get_object_vars($model)) ?>');
+        var modelPropertiesArray = convertObjectToArray(model.properties);
+        var record = JSON.parse('<?php echo json_encode($record[0]) ?>');
+        String.prototype.replaceAll = function(search, replacement) {
+            var target = this;
+            return target.replace(new RegExp(search, 'g'), replacement);
+            };
+
+
+            function convertObjectToArray(obj) {
+            return Object.keys(obj).map(key => ({
+                name: key,
+                value: obj[key],
+                }));
+            }
+
+        if(model.modelType == "Home") {
+            $('#has_personal_belongings_div,#personal_belongings_aed_div,#has_building_div,#building_aed_div,#contents_aed_div').each(function(){
+                if($(this).find('input').length > 0 && $(this).find('input').val() == ''){
+                    $(this).hide();
+                }
+                if($(this).find('input').attr('type') == 'checkbox' > 0 && $(this).find('input').val() == 'off'){
+                    $(this).hide();
+                }
+
+            });
+            $('#iam_possesion_type_id').on('change',function(){
+                debugger;
+                if($("#iam_possesion_type_id option:selected").text() == 'A landlord'){
+                    $('#has_building_div').show();
+                }
+                else{
+                    $('#has_building_div').hide();
+                }
+            });
+
+            $('#has_personal_belongings').on('change',function(){
+                debugger;
+                this.checked ? $('#personal_belongings_aed_div').show() : $('#personal_belongings_aed_div').hide();
+            });
+            $('#has_building').on('change',function(){
+                debugger;
+                this.checked ? $('#building_aed_div').show() : $('#building_aed_div').hide();
+            });
+            $('#has_contents').on('change',function(){
+                debugger;
+                if(this.checked){
+                    if($("#iam_possesion_type_id option:selected").text() == 'A landlord'){
+                        $('#has_building_div').show();
+                    }
+                    $('#contents_aed_div').show();
+                    $('#has_personal_belongings_div').show();
+                }
+                else{
+                    $('#contents_aed_div').hide();
+                    $('#has_personal_belongings_div').hide();
+                }
+            });
         }
-    });
 });
 </script>
     <div class="row">
@@ -47,7 +99,7 @@
                         @foreach($model->properties as $property => $value)
                             @if($index == 0 || strpos($value, 'checkbox'))
                             @else
-                                <div @if(count($model->properties) <6) class="col-md-12" @else class="col-md-6" @endif>
+                                <div @if(count($model->properties) <6) class="col-md-12" @else class="col-md-6" @endif id={{$property.'_div'}}>
                                     @if(strpos($value, 'input') !== false )
                                         <span class="col-form-label col-md-6 col-sm-6" for="name">
                                             @if(strpos($value, 'title'))
@@ -138,7 +190,7 @@
                         @foreach ($model->properties as $property => $value)
                             @if (strpos($value, 'checkbox'))
 
-                                <div class="col-md-2">
+                                <div class="col-md-2" id={{$property.'_div'}}>
                                     <div class="col-md-9">
                                         <label for="middle-name" style="margin-top: 8px;">
                                             <b>
@@ -151,7 +203,7 @@
                                         </label>
                                     </div>
                                     <div class="col-md-3">
-                                        <input type="checkbox" {{ $record[0]->$property ? 'checked' : '' }} style="float: right;" id="name" name={{$property}}>                                        </div>
+                                        <input type="checkbox" {{ $record[0]->$property ? 'checked' : '' }} style="float: right;" id={{$property}} name={{$property}}>                                        </div>
                                 </div>
                                 <br />
                                 @if ($errors->has($property))

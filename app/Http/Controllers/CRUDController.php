@@ -8,6 +8,7 @@ use App\Services\DropdownSourceService;
 use App\Services\HealthQuoteService;
 use App\Services\CarQuoteService;
 use App\Services\CRUDService;
+use App\Services\HomeQuoteService;
 use App\Services\LeadStatusService;
 use App\Services\LifeQuoteService;
 use App\Services\TeamService;
@@ -24,8 +25,9 @@ class CRUDController extends Controller
     protected $leadStatusService;
     protected $travelQuoteService;
     protected $lifeQuoteService;
+    protected $homeQuoteService;
     public function __construct(Request $request, HealthQuoteService $healthService, TeamService $teamService, CRUDService $crudService, DropdownSourceService $dropdownSourceService,
-    CarQuoteService $carQuoteService, LeadStatusService $leadStatusService, TravelQuoteService $travelQuoteService, LifeQuoteService $lifeQuoteService)
+    CarQuoteService $carQuoteService, LeadStatusService $leadStatusService, TravelQuoteService $travelQuoteService, LifeQuoteService $lifeQuoteService, HomeQuoteService $homeQuoteService)
     {
         $this->genericModel = new GenericModel();
         $this->healthQuoteService = $healthService;
@@ -36,6 +38,7 @@ class CRUDController extends Controller
         $this->leadStatusService = $leadStatusService;
         $this->travelQuoteService = $travelQuoteService;
         $this->lifeQuoteService = $lifeQuoteService;
+        $this->homeQuoteService = $homeQuoteService;
         $this->setModelType($request);
         $this->fillModelByModelType($this->genericModel->modelType);
     }
@@ -206,6 +209,7 @@ class CRUDController extends Controller
         if(strpos($request->fullUrl(), 'teams')) $this->genericModel->modelType = 'Teams';
         if(strpos($request->fullUrl(), 'car')) $this->genericModel->modelType = 'Car';
         if(strpos($request->fullUrl(), 'life')) $this->genericModel->modelType = 'Life';
+        if(strpos($request->fullUrl(), 'home')) $this->genericModel->modelType = 'Home';
         if(strpos($request->fullUrl(), 'leadstatus')) $this->genericModel->modelType = 'LeadStatus';
     }
 
@@ -231,6 +235,11 @@ class CRUDController extends Controller
                 $this->genericModel->properties = $this->lifeQuoteService->fillModelProperties();
                 $this->genericModel->skipProperties = $this->lifeQuoteService->fillModelSkipProperties();
                 $this->genericModel->searchProperties = $this->lifeQuoteService->fillModelSearchProperties();
+                break;
+            case 'Home':
+                $this->genericModel->properties = $this->homeQuoteService->fillModelProperties();
+                $this->genericModel->skipProperties = $this->homeQuoteService->fillModelSkipProperties();
+                $this->genericModel->searchProperties = $this->homeQuoteService->fillModelSearchProperties();
                 break;
             case 'Teams':
                 $this->genericModel->properties = $this->teamService->fillModelProperties();
