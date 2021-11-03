@@ -33,8 +33,8 @@ const getDSLForm = options => {
       return ftcHistory.getForm();
     case 'ftcPayment':
       return ftcPayment.getForm();
-    case 'carQuotePolicy': 
-        return carQuotePolicy.getForm();
+    case 'carQuotePolicy':
+      return carQuotePolicy.getForm();
     case 'ftcPaymentHistory':
       return ftcPaymentHistory.getForm();
     case 'ftcQuoteStatusHistory':

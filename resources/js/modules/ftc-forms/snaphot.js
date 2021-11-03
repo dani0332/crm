@@ -70,7 +70,7 @@ function LeadSnapShot() {
           multi: false,
           filter: `/${paramRef.current.id}`,
         };
-        case 'carQuotePolicy':
+      case 'carQuotePolicy':
         return {
           form: 'carQuotePolicy',
           view_mode: 'list',
@@ -176,7 +176,6 @@ function LeadSnapShot() {
       id: 11,
       data: 'carQuotePolicy',
     },
-
   ];
 
   const onSelect = async obj => {
