@@ -20,7 +20,18 @@
         var modelPropertiesArray = convertObjectToArray(model.properties);
         if(model.modelType == "Home") {
             $('#has_personal_belongings_div,#personal_belongings_aed_div,#has_building_div,#building_aed_div,#contents_aed_div').each(function(){
-                $(this).hide();
+                debugger;
+                if($('#'+$(this).attr('id').replace('_div', '')).attr('type') == 'checkbox'){
+                    if(!$('#'+$(this).attr('id').replace('_div', '')).is(':checked')) {
+                        $(this).hide();
+                    }
+                }
+                else{
+                    if($('#'+$(this).attr('id').replace('_div', '')).val() == '') {
+                        $(this).hide();
+                    }
+                }
+
             });
             $('#iam_possesion_type_id').on('change',function(){
                 debugger;
@@ -39,7 +50,6 @@
                 this.checked ? $('#building_aed_div').show() : $('#building_aed_div').hide();
             });
             $('#has_contents').on('change',function(){
-                debugger;
                 if(this.checked){
                     if($("#iam_possesion_type_id option:selected").text() == 'A landlord'){
                         $('#has_building_div').show();
@@ -212,15 +222,16 @@
                                             @if(strpos($value, "required") == true)
                                             <span class='required' style="float: left;margin-top: 8px;margin-left: 1px;">*</span>
                                             @endif
+                                            @if ($errors->has($property))
+                                                <span style="float: left" class="text-danger">{{ $errors->first($property) }}</span>
+                                            @endif
                                         </div>
                                         <div class="col-md-2">
                                             <input type={{ explode("|", $value)[1]  }} {{ old($property) ? 'checked' : '' }} style="float: right;" id={{$property}} name={{$property}}>
                                         </div>
                                     </div>
                                     <br />
-                                    @if ($errors->has($property))
-                                        <span class="text-danger">{{ $errors->first($property) }}</span>
-                                    @endif
+
                                 @endif
                             @endforeach
                         <div style="clear: both;"></div>

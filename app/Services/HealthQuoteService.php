@@ -4,13 +4,12 @@ namespace App\Services;
 use App\Models\HealthQuote;
 use Illuminate\Http\Request;
 use DB;
+use Config;
 class HealthQuoteService extends BaseService
 {
     protected $query;
-    protected $crudService;
-    public function __construct(CRUDService $crudService)
+    public function __construct()
     {
-        $this->crudService = $crudService;
         $this->query = "
                     SELECT hqr.id
                     ,hqr.first_name
@@ -62,8 +61,35 @@ class HealthQuoteService extends BaseService
             "hasHome" => $request->has_home == 'on' ? true : false,
             "emirateOfYourVisaId" => $request->emirate_of_your_visa_id,
         );
-        #return $this->crudService->sendCAPIRequest('/api/v1-save-health-quote', $dataArr);
+        return $this->sendCAPIRequest('/api/v1-save-health-quote', $dataArr);
 	}
+
+    public function sendCAPIRequest($endpoint, $data){
+        $apiEndPoint = Config::get('constants.CENTRAL_API_ENDPOINT').$endpoint;
+        $apiToken = Config::get('constants.CENTRAL_API_TOKEN');
+        $apiTimeout = Config::get('constants.CENTRAL_API_TIMEOUT');
+
+        $client = new \GuzzleHttp\Client();
+        $capiRequest = $client->post(
+            $apiEndPoint,
+            [
+                'headers' => ['Content-Type' => 'application/json', 'Accept' => 'application/json', 'x-api-token' => $apiToken],
+                'body' => json_encode($data),
+                'timeout' => $apiTimeout,
+            ]
+        );
+
+        $getStatusCode = $capiRequest->getStatusCode();
+
+        if($getStatusCode == 200) {
+            $getContents = $capiRequest->getBody();
+            $getdecodeContents = json_decode($getContents);
+            return $getdecodeContents;
+        }
+        else {
+            return "API failed";
+        }
+    }
 
     public function getGridData($searchProperties, $request){
         $count = 0;

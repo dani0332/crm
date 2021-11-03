@@ -242,19 +242,15 @@ $(document).ready(function() {
                 </div>
                  </form>
                 @endif
-
                 <table id="dtBasicExample" class="table table-striped jambo_table" style="table-layout: fixed;" width="100%">
                     <thead>
                         <tr>
                             @foreach($model->properties as $property => $value)
                                 @if(!in_array($property, explode(',', $model->skipProperties['list'])))
-                                    @if(str_contains('checkbox', $value))
-                                        <th data-type="checkbox" >{{str_replace("_"," ",strtoupper($property))}}</th>
-                                    @endif
-                                    @if(str_contains('static', $value))
-                                        <th data-type="static" >{{str_replace("_"," ",strtoupper($property))}}</th>
+                                    @if(strpos($value, 'title'))
+                                        <th>{{ $customTitles[$property]}}</th>
                                     @else
-                                        <th data-type="{{explode('|',$value)[1]}}" >{{str_replace("_"," ",strtoupper($property))}}</th>
+                                        <th data-type="{{explode('|',$value)[1]}}" >{{str_replace("_"," ",ucwords($property))}}</th>
                                     @endif
                                 @endif
                             @endforeach

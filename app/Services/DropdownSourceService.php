@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\BusinessInsuranceType;
 use App\Models\CarMake;
 use App\Models\CarModel;
 use App\Models\CurrencyType;
@@ -116,6 +117,9 @@ class DropdownSourceService extends BaseService
                 break;
             case 'ilivein_accommodation_type_id':
                 $data = HomeAccomodationType::select('id','text')->get();
+                break;
+            case 'business_type_of_insurance_id':
+                $data = BusinessInsuranceType::select('id','text')->get();
                 break;
             case 'team_managers':
                 $data = User::select('users.id','users.name')

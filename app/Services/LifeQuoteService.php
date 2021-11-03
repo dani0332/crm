@@ -47,6 +47,26 @@ class LifeQuoteService extends BaseService
     }
 	public function saveLifeQuote(Request $request)
 	{
+        $dataArr = array(
+            "firstName" => $request->first_name,
+            "lastName" => $request->last_name,
+            "email" => $request->email,
+            "address" => $request->address,
+            "mobileNo" => $request->mobile_no,
+            "dob" => $request->dob,
+            "sumInsuredValue" => $request->sum_insured_value,
+            "sumInsuredCurrencyId" => $request->sum_insured_currency_id,
+            "maritalStatusId" => $request->marital_status_id,
+            "purposeOfInsuranceId" => $request->purpose_of_insurance_id,
+            "childrenId" => $request->children_id,
+            "tenureOfInsuranceId" => $request->tenure_of_insurance_id,
+            "numberOfYearsId" => $request->number_of_years_id,
+            "isSmoker" => $request->is_smoker == 'Yes' ?  true : false,
+            "gender" => $request->gender,
+            "othersInfo" => $request->others_info,
+        );
+        return $this->sendCAPIRequest('/api/v1-save-home-quote', $dataArr);
+
         $lifeQuote = new LifeQuote();
         $lifeQuote->first_name = $request->first_name;
         $lifeQuote->last_name = $request->last_name;
@@ -133,13 +153,13 @@ class LifeQuoteService extends BaseService
             "id" => "readonly|none",
             "first_name" => "input|text|required",
             "last_name" => "input|text|required",
-            "mobile_no" => "input|text|title|required",
+            "mobile_no" => "input|number|title|required",
             "email" => "input|email|required",
-            "mobile_no" => "input|number|title||required",
             "dob" => "input|date|title|required",
             "sum_insured_value" => "input|number|title||required",
             "sum_insured_currency_id" => "select|title|required",
             "purpose_of_insurance_id" => "select|title|required",
+            "marital_status_id" => "select|title|required",
             "children_id" => "select|title|required",
             "tenure_of_insurance_id" => "select|title|required",
             "number_of_years_id" => "select|title|required",
@@ -182,6 +202,9 @@ class LifeQuoteService extends BaseService
             case 'sum_insured_value':
                 $title = "Sum Insured Value";
                 break;
+            case 'marital_status_id':
+                $title = "Marital Status";
+                break;
             default:
                 break;
         }
@@ -197,5 +220,32 @@ class LifeQuoteService extends BaseService
 
     public function fillModelSearchProperties(){
         return ["email", 'first_name', 'last_name', 'nationality_id', 'region_cover_for_id', 'travel_cover_for_id'];
+    }
+
+    public function sendCAPIRequest($endpoint, $data){
+        $apiEndPoint = Config::get('constants.CENTRAL_API_ENDPOINT').$endpoint;
+        $apiToken = Config::get('constants.CENTRAL_API_TOKEN');
+        $apiTimeout = Config::get('constants.CENTRAL_API_TIMEOUT');
+
+        $client = new \GuzzleHttp\Client();
+        $capiRequest = $client->post(
+            $apiEndPoint,
+            [
+                'headers' => ['Content-Type' => 'application/json', 'Accept' => 'application/json', 'x-api-token' => $apiToken],
+                'body' => json_encode($data),
+                'timeout' => $apiTimeout,
+            ]
+        );
+
+        $getStatusCode = $capiRequest->getStatusCode();
+
+        if($getStatusCode == 200) {
+            $getContents = $capiRequest->getBody();
+            $getdecodeContents = json_decode($getContents);
+            return $getdecodeContents;
+        }
+        else {
+            return "API failed";
+        }
     }
 }

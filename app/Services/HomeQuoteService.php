@@ -4,7 +4,7 @@ namespace App\Services;
 use App\Models\HomeQuote;
 use Illuminate\Http\Request;
 use DB;
-
+use Config;
 class HomeQuoteService extends BaseService
 {
     protected $query;
@@ -39,23 +39,23 @@ class HomeQuoteService extends BaseService
 
 	public function saveHomeQuote(Request $request)
 	{
-        $homeQuote = new HomeQuote();
-        $homeQuote->first_name = $request->first_name;
-        $homeQuote->last_name = $request->last_name;
-        $homeQuote->email = $request->email;
-        $homeQuote->details = $request->details;
-        $homeQuote->mobile_no = $request->mobile_no;
-        $homeQuote->preference = $request->preference;
-        $homeQuote->source = $request->source;
-        $homeQuote->marital_status_id = $request->marital_status_id;
-        $homeQuote->dob = $request->dob;
-        $homeQuote->cover_for_id = $request->cover_for_id;
-        $homeQuote->nationality_id = $request->nationality_id;
-        $homeQuote->has_dental = $request->has_dental == 'on' ? 1 : 0;
-        $homeQuote->has_worldwide_cover = $request->has_worldwide_cover == 'on' ? 1 : 0;
-        $homeQuote->has_home = $request->has_home == 'on' ? 1 : 0;
-        $homeQuote->emirate_of_your_visa_id = $request->emirate_of_your_visa_id;
-        $homeQuote->save();
+        $dataArr = array(
+            "firstName" => $request->first_name,
+            "lastName" => $request->last_name,
+            "email" => $request->email,
+            "address" => $request->address,
+            "mobileNo" => $request->mobile_no,
+            "contentsAed" => $request->contents_aed,
+            "iamPossesionTypeId" => $request->iam_possesion_type_id,
+            "iliveinAccommodationTypeId" => $request->ilivein_accommodation_type_id,
+            "personalBelongingsAed" => $request->personal_belongings_aed,
+            "buildingAed" => $request->building_aed,
+            "hasContents" => $request->has_contents == 'on' ?  true : false,
+            "nationalityId" => $request->nationality_id,
+            "hasBuilding" => $request->has_building == 'on' ? true : false,
+            "hasPersonalBelongings" => $request->has_personal_belongings == 'on' ?  true : false,
+        );
+        return $this->sendCAPIRequest('/api/v1-save-home-quote', $dataArr);
 	}
 
     public function getGridData($searchProperties, $request){
@@ -93,18 +93,17 @@ class HomeQuoteService extends BaseService
         $homeQuote->first_name = $request->first_name;
         $homeQuote->last_name = $request->last_name;
         $homeQuote->email = $request->email;
-        $homeQuote->details = $request->details;
+        $homeQuote->address = $request->address;
         $homeQuote->mobile_no = $request->mobile_no;
-        $homeQuote->preference = $request->preference;
-        $homeQuote->source = $request->source;
-        $homeQuote->marital_status_id = $request->marital_status_id;
-        $homeQuote->dob = $request->dob;
-        $homeQuote->cover_for_id = $request->cover_for_id;
+        $homeQuote->contents_aed = $request->contents_aed;
+        $homeQuote->iam_possesion_type_id = $request->iam_possesion_type_id;
+        $homeQuote->ilivein_accommodation_type_id = $request->ilivein_accommodation_type_id;
+        $homeQuote->personal_belongings_aed = $request->personal_belongings_aed;
+        $homeQuote->building_aed = $request->building_aed;
+        $homeQuote->has_contents = $request->has_contents == 'on' ?  true : false;
         $homeQuote->nationality_id = $request->nationality_id;
-        $homeQuote->has_dental = $request->has_dental == 'on' ? 1 : 0;
-        $homeQuote->has_worldwide_cover = $request->has_worldwide_cover == 'on' ? 1 : 0;
-        $homeQuote->has_home = $request->has_home == 'on' ? 1 : 0;
-        $homeQuote->emirate_of_your_visa_id = $request->emirate_of_your_visa_id;
+        $homeQuote->has_building = $request->has_building == 'on' ? true : false;
+        $homeQuote->has_personal_belongings = $request->has_personal_belongings == 'on' ?  true : false;
         $homeQuote->save();
 
         if (isset($request->return_to_view))
@@ -157,5 +156,79 @@ class HomeQuoteService extends BaseService
 
     public function fillModelSearchProperties(){
         return ["email", 'first_name', 'last_name', 'iam_possesion_type_id', 'ilivein_accommodation_type_id'];
+    }
+
+    public function getValidationArray($modelPropertiesList, $request){
+        $validationArray = [];
+        foreach ($modelPropertiesList as $propertyName => $propertyValue) {
+
+            if($propertyName == 'contents_aed' || $propertyName ==  'personal_belongings_aed' || $propertyName == 'building_aed' || $propertyName == 'has_contents' || $propertyName == 'has_personal_belongings' || $propertyName == 'has_building'){
+                if($request['iam_possesion_type_id'] == null){
+                    $validationArray['has_contents'] = 'required';
+                }
+                if($request['iam_possesion_type_id'] == "1"){
+                    if($request['has_building'] == null) {
+                        $validationArray['has_contents'] = 'required';
+                    }
+                    if($request['has_contents'] == null) {
+                        $validationArray['has_building'] = 'required';
+                    }
+                    if($request['has_contents'] == 'on'){
+                        $validationArray['contents_aed'] = 'required';
+                    }
+                    if($request['has_building'] == 'on'){
+                        $validationArray['building_aed'] = 'required';
+                    }
+                    if($request['has_personal_belongings'] == 'on'){
+                        $validationArray['personal_belongings_aed'] = 'required';
+                    }
+                }
+
+                if($request['iam_possesion_type_id'] == "2"){
+                    $validationArray['has_contents'] = 'required';
+                    if($request['has_contents'] == 'on'){
+                        $validationArray['contents_aed'] = 'required';
+                    }
+
+                    if($request['has_personal_belongings'] == 'on'){
+                        $validationArray['personal_belongings_aed'] = 'required';
+                    }
+                }
+            }
+            else{
+                if($propertyName != 'id'){
+                $validationArray[$propertyName] = 'required';
+                }
+            }
+
+        }
+        return $validationArray;
+    }
+
+    public function sendCAPIRequest($endpoint, $data){
+        $apiEndPoint = Config::get('constants.CENTRAL_API_ENDPOINT').$endpoint;
+        $apiToken = Config::get('constants.CENTRAL_API_TOKEN');
+        $apiTimeout = Config::get('constants.CENTRAL_API_TIMEOUT');
+
+        $client = new \GuzzleHttp\Client();
+        $capiRequest = $client->post(
+            $apiEndPoint,
+            [
+                'headers' => ['Content-Type' => 'application/json', 'Accept' => 'application/json', 'x-api-token' => $apiToken],
+                'body' => json_encode($data),
+                'timeout' => $apiTimeout,
+            ]
+        );
+
+        $getStatusCode = $capiRequest->getStatusCode();
+
+        if($getStatusCode == 200) {
+            $getContents = $capiRequest->getBody();
+            $getdecodeContents = json_decode($getContents);
+            return $getdecodeContents;
+        }
+        else {
+            return "API failed";
+        }
     }
 }

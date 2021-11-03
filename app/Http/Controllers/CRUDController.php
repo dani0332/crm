@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\GenericModel;
+use App\Services\BusinessQuoteService;
 use Illuminate\Http\Request;
 use App\Services\DropdownSourceService;
 use App\Services\HealthQuoteService;
@@ -26,8 +27,10 @@ class CRUDController extends Controller
     protected $travelQuoteService;
     protected $lifeQuoteService;
     protected $homeQuoteService;
+    protected $businessQuoteService;
     public function __construct(Request $request, HealthQuoteService $healthService, TeamService $teamService, CRUDService $crudService, DropdownSourceService $dropdownSourceService,
-    CarQuoteService $carQuoteService, LeadStatusService $leadStatusService, TravelQuoteService $travelQuoteService, LifeQuoteService $lifeQuoteService, HomeQuoteService $homeQuoteService)
+    CarQuoteService $carQuoteService, LeadStatusService $leadStatusService, TravelQuoteService $travelQuoteService, LifeQuoteService $lifeQuoteService, HomeQuoteService $homeQuoteService,
+    BusinessQuoteService $businessQuoteService)
     {
         $this->genericModel = new GenericModel();
         $this->healthQuoteService = $healthService;
@@ -39,6 +42,7 @@ class CRUDController extends Controller
         $this->travelQuoteService = $travelQuoteService;
         $this->lifeQuoteService = $lifeQuoteService;
         $this->homeQuoteService = $homeQuoteService;
+        $this->businessQuoteService = $businessQuoteService;
         $this->setModelType($request);
         $this->fillModelByModelType($this->genericModel->modelType);
     }
@@ -107,15 +111,20 @@ class CRUDController extends Controller
     public function store(Request $request)
     {
         $modelPropertiesList = json_decode($request->all()['model'], true);
+        $modelType = json_decode($request->modelType, true);
         $validateArray = [];
-        foreach($modelPropertiesList as $property => $value) {
-            if(strpos($value, 'required')){
-                $validateArray[$property] = 'required';
+        if($modelType == 'Home'){
+            $validateArray = $this->homeQuoteService->getValidationArray($modelPropertiesList, $request);
+        }else{
+            foreach($modelPropertiesList as $property => $value) {
+                if(strpos($value, 'required') && $property != 'id'){
+                    $validateArray[$property] = 'required';
+                }
             }
         }
         $this->validate($request,$validateArray);
-        $this->crudService->saveModelByType(json_decode($request->modelType, true), $request);
-        return redirect()->back()->with('success', json_decode($request->modelType, true).' has been stored');
+        $this->crudService->saveModelByType($modelType, $request);
+        return redirect()->back()->with('success', $modelType.' has been stored');
     }
 
     /**
@@ -210,6 +219,7 @@ class CRUDController extends Controller
         if(strpos($request->fullUrl(), 'car')) $this->genericModel->modelType = 'Car';
         if(strpos($request->fullUrl(), 'life')) $this->genericModel->modelType = 'Life';
         if(strpos($request->fullUrl(), 'home')) $this->genericModel->modelType = 'Home';
+        if(strpos($request->fullUrl(), 'business')) $this->genericModel->modelType = 'Business';
         if(strpos($request->fullUrl(), 'leadstatus')) $this->genericModel->modelType = 'LeadStatus';
     }
 
@@ -240,6 +250,11 @@ class CRUDController extends Controller
                 $this->genericModel->properties = $this->homeQuoteService->fillModelProperties();
                 $this->genericModel->skipProperties = $this->homeQuoteService->fillModelSkipProperties();
                 $this->genericModel->searchProperties = $this->homeQuoteService->fillModelSearchProperties();
+                break;
+            case 'Business':
+                $this->genericModel->properties = $this->businessQuoteService->fillModelProperties();
+                $this->genericModel->skipProperties = $this->businessQuoteService->fillModelSkipProperties();
+                $this->genericModel->searchProperties = $this->businessQuoteService->fillModelSearchProperties();
                 break;
             case 'Teams':
                 $this->genericModel->properties = $this->teamService->fillModelProperties();

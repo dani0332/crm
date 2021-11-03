@@ -25,8 +25,9 @@ class CRUDService extends BaseService
     protected $travelQuoteService;
     protected $lifeQuoteService;
     protected $homeQuoteService;
+    protected $businessQuoteService;
     public function __construct(HealthQuoteService $healthQuoteService, TeamService $teamService, CarQuoteService $carQuoteService,
-    LeadStatusService $leadStatusService, TravelQuoteService $travelQuoteService, LifeQuoteService $lifeQuoteService, HomeQuoteService $homeQuoteService)
+    LeadStatusService $leadStatusService, TravelQuoteService $travelQuoteService, LifeQuoteService $lifeQuoteService, HomeQuoteService $homeQuoteService, BusinessQuoteService $businessQuoteService)
     {
         $this->healthQuoteService = $healthQuoteService;
         $this->teamService = $teamService;
@@ -35,6 +36,7 @@ class CRUDService extends BaseService
         $this->lifeQuoteService = $lifeQuoteService;
         $this->travelQuoteService = $travelQuoteService;
         $this->homeQuoteService = $homeQuoteService;
+        $this->businessQuoteService = $businessQuoteService;
     }
 
 	public function getGridData(GenericModel $model, Request $request){
@@ -61,6 +63,9 @@ class CRUDService extends BaseService
                 break;
             case 'Home':
                 $gridData = $this->homeQuoteService->getGridData($model->searchProperties, $request);
+                break;
+            case 'Business':
+                $gridData = $this->businessQuoteService->getGridData($model->searchProperties, $request);
                 break;
             case 'Teams':
                 $gridData = $this->teamService->getGridData();
@@ -100,6 +105,9 @@ class CRUDService extends BaseService
             case 'Home':
                 $title = $this->homeQuoteService->getCustomTitleByProperty($propertyName);
                 break;
+            case 'Business':
+                $title = $this->businessQuoteService->getCustomTitleByProperty($propertyName);
+                break;
             case 'Teams':
                 $title = $this->teamService->getCustomTitleByProperty($propertyName);
                 break;
@@ -112,32 +120,7 @@ class CRUDService extends BaseService
         return $title;
     }
 
-    public function sendCAPIRequest($endpoint, $data){
-        $apiEndPoint = Config::get('constants.CENTRAL_API_ENDPOINT').$endpoint;
-        $apiToken = Config::get('constants.CENTRAL_API_TOKEN');
-        $apiTimeout = Config::get('constants.CENTRAL_API_TIMEOUT');
 
-        $client = new \GuzzleHttp\Client();
-        $capiRequest = $client->post(
-            $apiEndPoint,
-            [
-                'headers' => ['Content-Type' => 'application/json', 'Accept' => 'application/json', 'x-api-token' => $apiToken],
-                'body' => json_encode($data),
-                'timeout' => $apiTimeout,
-            ]
-        );
-
-        $getStatusCode = $capiRequest->getStatusCode();
-
-        if($getStatusCode == 200) {
-            $getContents = $capiRequest->getBody();
-            $getdecodeContents = json_decode($getContents);
-            return $getdecodeContents;
-        }
-        else {
-            return "API failed";
-        }
-    }
 
     public function saveModelByType($modelType, Request $request){
         switch ($modelType) {
@@ -158,6 +141,9 @@ class CRUDService extends BaseService
                 break;
             case 'Home':
                 $this->homeQuoteService->saveHomeQuote($request);
+                break;
+            case 'Business':
+                $this->businessQuoteService->saveBusinessQuote($request);
                 break;
             case 'LeadStatus':
                 $this->leadStatusService->saveLeadStatus($request);
@@ -187,6 +173,9 @@ class CRUDService extends BaseService
             case 'Home':
                 $this->homeQuoteService->updateHomeQuote($request, $id);
                 break;
+            case 'Business':
+                $this->businessQuoteService->updateBusinessQuote($request, $id);
+                break;
             case 'LeadStatus':
                 $this->leadStatusService->updateLeadStatus($request, $id);
                 break;
@@ -213,6 +202,9 @@ class CRUDService extends BaseService
                 break;
             case 'Home':
                 $data = $this->homeQuoteService->getEntity($id);
+                break;
+            case 'Business':
+                $data = $this->businessQuoteService->getEntity($id);
                 break;
             case 'Teams':
                 $data = Team::find($id);
