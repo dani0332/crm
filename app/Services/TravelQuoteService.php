@@ -155,7 +155,6 @@ class TravelQuoteService extends BaseService
             "id" => "readonly|none",
             "first_name" => "input|text|required",
             "last_name" => "input|text|required",
-            "mobile_no" => "input|text|title|required",
             "email" => "input|email|required",
             "mobile_no" => "input|number|title|required",
             "days_cover_for" => "input|number|title|required",

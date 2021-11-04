@@ -251,7 +251,7 @@ class CarQuoteService extends BaseService
             [
                 'headers' => ['Content-Type' => 'application/json', 'Accept' => 'application/json', 'x-api-token' => $plansApiToken],
                 'body' => json_encode($plansDataArr),
-                'timeout' => $plansApiTimeout,
+                'timeout' => 180,
             ]
         );
 

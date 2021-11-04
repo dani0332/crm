@@ -35,13 +35,15 @@ class CRUDService extends BaseService
         $this->quoteTypes = ['home', 'health', 'life', 'business', 'travel', 'car'];
     }
 	public function getGridData(GenericModel $model, Request $request){
-        return $this->{in_array(strtolower($model->modelType), $this->quoteTypes) ? strtolower($model->modelType).'QuoteService' : strtolower($model->modelType).'Service'}
+        $lowerCaseModelType = strtolower($model->modelType);
+        return $this->{in_array($lowerCaseModelType, $this->quoteTypes) ? $lowerCaseModelType.'QuoteService' : $lowerCaseModelType.'Service'}
         ->getGridData($model->searchProperties, $request);
     }
 
 
     public function getCustomTitleByModelType($modelType, $propertyName){
-        return $this->{in_array(strtolower($modelType), $this->quoteTypes) ? strtolower($modelType).'QuoteService' : strtolower($modelType).'Service'}
+        $lowerCaseModelType = strtolower($modelType);
+        return $this->{in_array($lowerCaseModelType, $this->quoteTypes) ? $lowerCaseModelType.'QuoteService' : $lowerCaseModelType.'Service'}
         ->getCustomTitleByProperty($propertyName);
     }
 
@@ -53,17 +55,25 @@ class CRUDService extends BaseService
     }
 
     public function saveModelByType($modelType, Request $request){
-        $this->{in_array(strtolower($modelType), $this->quoteTypes) ? strtolower($modelType).'QuoteService' : strtolower($modelType).'Service'}
-        ->{in_array($modelType, $this->quoteTypes) ? 'save'.ucwords($modelType).'Quote' : 'save'.ucwords($modelType)}($request);
+        $lowerCaseModelType = strtolower($modelType);
+        $this->{in_array($lowerCaseModelType, $this->quoteTypes) ? $lowerCaseModelType.'QuoteService' : $lowerCaseModelType.'Service'}
+        ->{in_array($lowerCaseModelType, $this->quoteTypes) ? 'save'.ucwords($modelType).'Quote' : 'save'.ucwords($modelType)}($request);
     }
 
     public function updateModelByType($modelType, Request $request, $id){
-        $this->{in_array(strtolower($modelType), $this->quoteTypes) ? strtolower($modelType).'QuoteService' : strtolower($modelType).'Service'}
-        ->{in_array(strtolower($modelType), $this->quoteTypes) ? 'update'.ucwords($modelType).'Quote' : 'update'.ucwords($modelType)}($request, $id);
+        $lowerCaseModelType = strtolower($modelType);
+        $this->
+        {
+            in_array($lowerCaseModelType, $this->quoteTypes) ? $lowerCaseModelType.'QuoteService' : $lowerCaseModelType.'Service'
+        }
+        ->{
+            in_array($lowerCaseModelType, $this->quoteTypes) ? 'update'.ucwords($modelType).'Quote' : 'update'.ucwords($modelType)}($request, $id
+        );
     }
 
     public function getEntity($modelType, $id){
-        return $this->{in_array(strtolower($modelType), $this->quoteTypes) ? strtolower($modelType).'QuoteService' : strtolower($modelType).'Service'}
+        $lowerCaseModelType = strtolower($modelType);
+        return $this->{in_array($lowerCaseModelType, $this->quoteTypes) ? $lowerCaseModelType.'QuoteService' : $lowerCaseModelType.'Service'}
         ->getEntity($id);
     }
 }

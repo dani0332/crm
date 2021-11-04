@@ -165,26 +165,6 @@
                                 </div>
                                 @endif
                                 @endif
-                                @if(strpos($value, 'textarea') !== false )
-                                <div @if(count($model->properties) < 6) class="col-md-12" @else class="col-md-6" @endif id={{$property.'_div'}}>
-                                <div class="col">
-                                    <span class="col-form-label col-md-6 col-sm-6" for="name">
-                                        @if(strpos($value, 'title'))
-                                            {{ strtoupper($customTitles[$property])}}
-                                        @else
-                                            {{str_replace("_"," ",strtoupper($property))}}
-                                        @endif
-                                        @if(strpos($value, "required") == true)
-                                        <span class='required'>*</span>
-                                        @endif
-                                    </span>
-                                    <textarea id={{$property}} name={{$property}} value="{{ old($property) }}" class="form-control"></textarea>
-                                    @if ($errors->has($property))
-                                        <span class="text-danger">{{ $errors->first($property) }}</span>
-                                    @endif
-                                </div>
-                                </div>
-                                @endif
                                 @if(strpos($value, 'static') !== false )
                                 <div @if(count($model->properties) < 6) class="col-md-12" @else class="col-md-6" @endif id={{$property.'_div'}}>
                                 <div class="col">
