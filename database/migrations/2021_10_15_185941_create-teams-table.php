@@ -18,10 +18,13 @@ class CreateTeamsTable extends Migration
 
             $table->string('name');
 
-            $table->unsignedBigInteger('manager_id');
-            $table->index('manager_id');
-            $table->foreign('manager_id')->references('id')->on('users');
+            $table->bigInteger('lead_id')->nullable(false)->unsigned();
+            $table->index('lead_id');
+            $table->foreign('lead_id')->references('id')->on('users');
 
+            $table->bigInteger('user_id')->nullable(false)->unsigned();
+            $table->index('user_id');
+            $table->foreign('user_id')->references('id')->on('users');
         });
     }
 
