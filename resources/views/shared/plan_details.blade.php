@@ -80,9 +80,11 @@
                                         <table cellpadding="3" cellspacing="3">
                                             @foreach ($listQuotePlanAddonPrices as $key => $listQuotePlanAddonPrice)
                                                 @if($listQuotePlanAddonPrice == 0)
-                                                <tr><td style="width: 430px;height: 30px;">Free</td></tr>
+                                                <tr><td style="width: 230px;height: 30px;">Free</td>
+                                                    <td><input type="checkbox" checked style="height: unset !important;" disabled></td></td></tr>
                                                 @else
-                                                <tr><td style="width: 430px;height: 30px;">AED {{ ucwords($listQuotePlanAddonPrice) }}</td></tr>
+                                                <tr><td style="width: 230px;height: 30px;">AED {{ ucwords($listQuotePlanAddonPrice) }}</td>
+                                                    <td><input type="checkbox" style="height: unset !important;" disabled></td></tr>
                                                 @endif
                                             @endforeach
                                         </table>
