@@ -12,40 +12,43 @@ class CarQuoteService extends BaseService
     public function __construct()
     {
         $this->query = "
-                        SELECT cqr.id
-                        ,cqr.first_name
-                        ,cqr.last_name
-                        ,cqr.email
-                        ,cqr.mobile_no
-                        ,cqr.dob
-                        ,cqr.car_value
-                        ,cqr.additional_notes
-                        ,cqr.nationality_id
-                        ,cqr.year_of_manufacture
-                        ,n.TEXT AS nationality_id_text
-                        ,cqr.uae_license_held_for_id
-                        ,ulhf.TEXT AS uae_license_held_for_id_text
-                        ,cqr.car_make_id
-                        ,cmake.TEXT AS car_make_id_text
-                        ,cqr.car_model_id
-                        ,cmodel.TEXT AS car_model_id_text
-                        ,cqr.emirate_of_registration_id
-                        ,e.TEXT AS emirate_of_registration_id_text
-                        ,ip.id AS currently_insured_with
-                        ,ip.TEXT AS currently_insured_with_text
-                        ,cqr.car_type_insurance_id
-                        ,cti.TEXT AS car_type_insurance_id_text
-                        ,cqr.claim_history_id
-                        ,ch.TEXT AS claim_history_id_text
-                    FROM car_quote_request cqr
-                    INNER JOIN nationality n ON n.id = cqr.nationality_id
-                    INNER JOIN uae_license_held_for ulhf ON ulhf.id = cqr.uae_license_held_for_id
-                    INNER JOIN car_make cmake ON cmake.id = cqr.car_make_id
-                    INNER JOIN car_model cmodel ON cmodel.id = cqr.car_model_id
-                    INNER JOIN emirates e ON e.id = cqr.emirate_of_registration_id
-                    INNER JOIN insurance_provider ip ON ip.TEXT = cqr.currently_insured_with
-                    INNER JOIN car_type_insurance cti ON cti.id = cqr.car_type_insurance_id
-                    INNER JOIN claim_history ch ON ch.id = cqr.claim_history_id";
+        SELECT cqr.id
+        ,cqr.first_name
+        ,cqr.last_name
+        ,cqr.email
+        ,cqr.mobile_no
+        ,cqr.dob
+        ,cqr.car_value
+        ,cqr.additional_notes
+        ,cqr.nationality_id
+        ,cqr.year_of_manufacture
+        ,n.TEXT AS nationality_id_text
+        ,cqr.uae_license_held_for_id
+        ,ulhf.TEXT AS uae_license_held_for_id_text
+        ,cqr.car_make_id
+        ,cmake.TEXT AS car_make_id_text
+        ,cqr.car_model_id
+        ,cmodel.TEXT AS car_model_id_text
+        ,cqr.emirate_of_registration_id
+        ,e.TEXT AS emirate_of_registration_id_text
+        ,ip.id AS currently_insured_with
+        ,ip.TEXT AS currently_insured_with_text
+        ,cqr.car_type_insurance_id
+        ,cti.TEXT AS car_type_insurance_id_text
+        ,cqr.claim_history_id
+        ,ch.TEXT AS claim_history_id_text
+        ,cqr.advisor_id
+        ,u.name as advisor_id_text
+    FROM car_quote_request cqr
+    LEFT OUTER JOIN nationality n ON n.id = cqr.nationality_id
+    LEFT OUTER JOIN uae_license_held_for ulhf ON ulhf.id = cqr.uae_license_held_for_id
+    LEFT OUTER JOIN car_make cmake ON cmake.id = cqr.car_make_id
+    LEFT OUTER JOIN car_model cmodel ON cmodel.id = cqr.car_model_id
+    LEFT OUTER JOIN emirates e ON e.id = cqr.emirate_of_registration_id
+    LEFT OUTER JOIN insurance_provider ip ON ip.TEXT = cqr.currently_insured_with
+    LEFT OUTER JOIN car_type_insurance cti ON cti.id = cqr.car_type_insurance_id
+    LEFT OUTER JOIN claim_history ch ON ch.id = cqr.claim_history_id
+    LEFT OUTER JOIN users u on u.id = cqr.advisor_id";
     }
 	public function saveCarQuote(Request $request)
 	{
@@ -118,6 +121,7 @@ class CarQuoteService extends BaseService
             "car_value" => "number|required",
             "car_type_insurance_id" => "select|title|required",
             "claim_history_id" => "select|title|required",
+            "advisor_id" => "select|title|required",
             "additional_notes" => "textarea|required",
         );
     }
@@ -158,6 +162,9 @@ class CarQuoteService extends BaseService
             case 'reviver_name':
                 $title = "Reviver Name";
                 break;
+            case 'advisor_id':
+                $title = "Advisor";
+                break;
             default:
                 break;
         }
@@ -195,6 +202,9 @@ class CarQuoteService extends BaseService
                         case 'car_type_insurance':
                             $suffix = 'cti';
                             break;
+                        case 'advisor':
+                            $suffix = 'u';
+                            break;
                         default:
                             $suffix = 'cqr';
                             break;
@@ -214,7 +224,7 @@ class CarQuoteService extends BaseService
 
     public function fillModelSkipProperties() {
         return [
-            "create" => "id",
+            "create" => "id,advisor_id",
             "list" => "additional_notes,email",
         ];
     }

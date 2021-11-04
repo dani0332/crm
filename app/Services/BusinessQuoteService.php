@@ -13,17 +13,20 @@ class BusinessQuoteService extends BaseService
     public function __construct()
     {
         $this->query = "
-                    SELECT bqr.id
-                        ,bqr.first_name
-                        ,bqr.last_name
-                        ,bqr.email
-                        ,bqr.mobile_no
-                        ,bqr.company_name
-                        ,bqr.brief_details
-                        ,bqr.business_type_of_insurance_id
-                        ,bti.TEXT AS business_type_of_insurance_id_text
-                    FROM central_afia.business_quote_request bqr
-                    LEFT OUTER JOIN business_type_of_insurance bti ON bti.id = bqr.business_type_of_insurance_id";
+                            SELECT bqr.id
+                            ,bqr.first_name
+                            ,bqr.last_name
+                            ,bqr.email
+                            ,bqr.mobile_no
+                            ,bqr.company_name
+                            ,bqr.brief_details
+                            ,bqr.business_type_of_insurance_id
+                            ,bti.TEXT AS business_type_of_insurance_id_text
+                            ,bqr.advisor_id
+                            ,u.name as advisor_id_text
+                        FROM central_afia.business_quote_request bqr
+                        LEFT OUTER JOIN business_type_of_insurance bti ON bti.id = bqr.business_type_of_insurance_id
+                        LEFT OUTER JOIN users u ON u.id = bqr.advisor_id";
     }
 
     public function getEntity($id){
@@ -58,6 +61,9 @@ class BusinessQuoteService extends BaseService
                     switch ($item) {
                         case 'business_type_of_insurance':
                             $suffix = 'bti';
+                            break;
+                        case 'advisor':
+                            $suffix = 'u';
                             break;
                         default:
                             $suffix = 'bqr';
@@ -124,7 +130,7 @@ class BusinessQuoteService extends BaseService
 
     public function fillModelSkipProperties() {
         return [
-            "create" => "id",
+            "create" => "id,advisor_id",
             "list" => "email",
         ];
     }

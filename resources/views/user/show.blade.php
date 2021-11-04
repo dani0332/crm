@@ -35,7 +35,7 @@
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="Roles"><b>Roles</b></label>
                         <div class="col-md-6 col-sm-6">
                             @foreach($user->usersroles as $userrole)
-                                <button type="button" class="btn btn-disabled">{{ $userrole->name }}</button>
+                                <label class="label-align-center"><b>{{ $userrole->name }}</b></label>
                             @endforeach
                         </div>
                     </div>

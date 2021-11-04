@@ -297,9 +297,9 @@ $(document).ready(function() {
                                 <tr>
                                     @if($isCurrentUserIsAdvisor == "1")<th style="width: 15px;"><input type="checkbox" id="checkAllTmLeads" name="checkAllTmLeads" value=""></th>@endif
                                     @foreach($model->properties as $property => $value)
-                                        @if(!in_array($property, explode(',', $model->skipProperties['list'])))
-                                        <th data-type="{{explode('|',$value)[1]}}" >{{str_replace("_"," ",ucwords($property))}}</th>
-                                        @endif
+                                            @if(!in_array($property, explode(',', $model->skipProperties['list'])))
+                                            <th data-type="{{explode('|',$value)[1]}}" >{{str_replace("_"," ",ucwords($property))}}</th>
+                                            @endif
                                     @endforeach
                                 </tr>
                             </thead>

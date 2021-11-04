@@ -112,6 +112,9 @@ class DropdownSourceService extends BaseService
             case 'number_of_years_id':
                 $data = LifeNumberOfYears::select('id','text')->get();
                 break;
+            case 'advisor_id':
+                $data = User::select('id','name')->get();
+                break;
             case 'iam_possesion_type_id':
                 $data = HomePossessionType::select('id','text')->get();
                 break;

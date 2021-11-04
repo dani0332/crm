@@ -53,7 +53,7 @@
                                             class="form-control select2 select-roles">
                             @foreach(array_chunk($roles, 6) as $chunk)
                                 @foreach($chunk as $skey=>$item)
-                                <option value="{{$item }}"}} @if(in_array($item, $userRole)) selected="selected" @endif>
+                                <option value="{{$item }}" @if(in_array($item, $userRole)) selected="selected" @endif>
                                 {{ $item }}
                                 </option>
                                 @endforeach
@@ -68,11 +68,13 @@
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="roles">Team <span class="required">*</span></label>
                         <div class="col-md-6 col-sm-6 ">
-                            <select name="team" class="form-control select2 select-roles" multiple="multiple" >
+                            <select name="team[]" class="form-control select2 select-roles" multiple="multiple" >
                                 @foreach ($teams as $team)
-                                    <option value="{{ $team->id }}"
-                                    {{ $team->id == old('team',$userTeamId) ? 'selected' : '' }}
-                                    >{{ $team->name }}</option>
+                                    @if (in_array($team->id, $selectedTeams))
+                                        <option value="{{ $team->id }}" selected="selected">{{ $team->name }}</option>
+                                    @else
+                                        <option value="{{ $team->id }}">{{ $team->name }}</option>
+                                    @endif
                                 @endforeach
                             </select>
                             @if ($errors->has('team'))

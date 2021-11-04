@@ -108,6 +108,7 @@ Route::group(['middleware' =>  ['auth']], function () {
         Route::resource('health', CRUDController::class);
         Route::resource('car', CRUDController::class);
         Route::resource('life', CRUDController::class);
+        Route::resource('home', CRUDController::class);
         Route::resource('business', CRUDController::class);
         Route::resource('travel', CRUDController::class);
         Route::resource('teams', CRUDController::class);

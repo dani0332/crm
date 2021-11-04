@@ -11,31 +11,34 @@ class HealthQuoteService extends BaseService
     public function __construct()
     {
         $this->query = "
-                    SELECT hqr.id
-                    ,hqr.first_name
-                    ,hqr.last_name
-                    ,hqr.email
-                    ,hqr.mobile_no
-                    ,hqr.preference
-                    ,hqr.details
-                    ,hqr.source
-                    ,hqr.dob
-                    ,hqr.has_dental
-                    ,hqr.has_home
-                    ,hqr.has_worldwide_cover
-                    ,hqr.marital_status_id
-                    ,ms.TEXT AS marital_status_id_text
-                    ,hqr.cover_for_id
-                    ,hcf.TEXT AS cover_for_id_text
-                    ,hqr.nationality_id
-                    ,n.TEXT AS nationality_id_text
-                    ,hqr.emirate_of_your_visa_id
-                    ,e.TEXT AS emirate_of_your_visa_id_text
-                FROM health_quote_request hqr
-                INNER JOIN marital_status ms ON ms.id = hqr.marital_status_id
-                INNER JOIN health_cover_for hcf ON hcf.id = hqr.cover_for_id
-                INNER JOIN nationality n ON n.id = hqr.nationality_id
-                INNER JOIN emirates e ON e.id = hqr.emirate_of_your_visa_id";
+        SELECT hqr.id
+        ,hqr.first_name
+        ,hqr.last_name
+        ,hqr.email
+        ,hqr.mobile_no
+        ,hqr.preference
+        ,hqr.details
+        ,hqr.source
+        ,hqr.dob
+        ,hqr.has_dental
+        ,hqr.has_home
+        ,hqr.has_worldwide_cover
+        ,hqr.marital_status_id
+        ,ms.TEXT AS marital_status_id_text
+        ,hqr.cover_for_id
+        ,hcf.TEXT AS cover_for_id_text
+        ,hqr.nationality_id
+        ,n.TEXT AS nationality_id_text
+        ,hqr.emirate_of_your_visa_id
+        ,e.TEXT AS emirate_of_your_visa_id_text
+        ,hqr.advisor_id
+        ,u.name as advisor_id_text
+    FROM health_quote_request hqr
+    LEFT OUTER JOIN marital_status ms ON ms.id = hqr.marital_status_id
+    LEFT OUTER JOIN health_cover_for hcf ON hcf.id = hqr.cover_for_id
+    LEFT OUTER JOIN nationality n ON n.id = hqr.nationality_id
+    LEFT OUTER JOIN emirates e ON e.id = hqr.emirate_of_your_visa_id
+    LEFT OUTER JOIN users u on u.id = hqr.advisor_id";
     }
 
     public function getEntity($id){
@@ -114,6 +117,9 @@ class HealthQuoteService extends BaseService
                         case 'emirates':
                             $suffix = 'e';
                             break;
+                        case 'advisor':
+                            $suffix = 'u';
+                            break;
                         default:
                             $suffix = 'hqr';
                             break;
@@ -123,7 +129,7 @@ class HealthQuoteService extends BaseService
                 }
             }
         }
-
+        #dd($this->query);
         return DB::select($this->query);
     }
 
@@ -165,6 +171,7 @@ class HealthQuoteService extends BaseService
             "marital_status_id" => "select|title|required",
             "cover_for_id" => "select|title|required",
             "nationality_id" => "select|title|required",
+            "advisor_id" => "select|title|required",
             "has_dental" => "input|checkbox|title",
             "has_worldwide_cover" => "input|checkbox|title",
             "has_home" => "input|checkbox|title",
@@ -196,6 +203,9 @@ class HealthQuoteService extends BaseService
             case 'has_home':
                 $title = "Home Country Cover";
                 break;
+            case 'advisor_id':
+                $title = "Advisor";
+                break;
             case 'source':
                 $title = "Lead Source";
                 break;
@@ -213,12 +223,12 @@ class HealthQuoteService extends BaseService
 
     public function fillModelSkipProperties() {
         return [
-            "create" => "id",
+            "create" => "id,advisor_id",
             "list" => "email,cover_for_id,has_worldwide_cover,has_home,details,preference",
         ];
     }
 
     public function fillModelSearchProperties(){
-        return ["email", 'first_name', 'last_name', 'nationality_id'];
+        return ["email", 'first_name', 'last_name', 'nationality_id','advisor_id'];
     }
 }
