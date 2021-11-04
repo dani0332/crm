@@ -30,7 +30,7 @@ class CarQuoteAMLStatus extends BaseModel
 
     public function saveForm($request, $update) {
 
-        if( Auth::user()->hasRole('pa') ) {
+        if( Auth::user()->hasRole('pa')  || Auth::user()->hasRole('production_approval_manager')) {
             if(parent::saveForm($request, $update)) {
                 $carQuote = CarQuote::where(['id' => $request->input('car_quote_id', -1), 'pa_id' => Auth::user()->id])->get()->first();
                 if($carQuote) {

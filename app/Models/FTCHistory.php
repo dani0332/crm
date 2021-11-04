@@ -23,12 +23,14 @@ class FTCHistory extends BaseModel
         'delete' => ['advisor'],
         'access' => [
             "pa" => [],
+            "production_approval_manager" => [],
             "invoicing" => [ ],
             "advisor" => ['car_quote_id', 'status', 'data'],
             "admin" => [ 'car_quote_id', 'status', 'data'],
         ],
         "list" => [
             "pa" => ['id' , 'status' , 'data', 'created_at' ],
+            "production_approval_manager" => ['id' , 'status' , 'data', 'created_at' ],
             "invoicing" => ['id' , 'status' , 'data', 'created_at' ],
             "advisor" => [ 'id' , 'status', 'data' , 'created_at'],
             "admin" => ['id' , 'status' , 'data' , 'created_at']

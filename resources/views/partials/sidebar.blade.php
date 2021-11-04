@@ -147,6 +147,7 @@
                         <li><a><i class="fa fa-quote-left"></i> Renewals <span class="fa fa-chevron-down"></span></a>
                         <ul class="nav child_menu">
                             <li><a href="{{ url('renewals-upload') }}">Upload</a></li>
+                            <li><a href="{{ url('renewals-list') }}">Uploaded Leads</a></li>
                         </ul>
                         </li>
                     </ul>
@@ -188,11 +189,12 @@
                         <li><a><i class="fa fa-desktop"></i> AML <span class="fa fa-chevron-down"></span></a>
                             <ul class="nav child_menu">
                                 <li><a href="{{ url('kyc/aml') }}">All Quotes</a></li>
+                                <li><a href="{{ url('kyc/aml/download/history') }}">Downloaded Sanction Lists</a></li>
                             </ul>
                         </li>
                     </ul>
                 @endcan
-                @if (Auth::user()->hasRole('advisor') || Auth::user()->hasRole('pa') || Auth::user()->hasRole('invoicing'))
+                @if (Auth::user()->hasRole('advisor') || Auth::user()->hasRole('pa') || Auth::user()->hasRole('invoicing') || Auth::user()->hasRole('production_approval_manager'))
                     <ul class="nav side-menu">
                         <li><a href="{{ url('ftcform') }}"><i></i> FTC Form </a>
                     </ul>

@@ -17,12 +17,14 @@ class CarQuoteKyc extends BaseModel
         'delete' => [ 'admin'],
         'access' => [
             "pa" => [],
+            "production_approval_manager" => [],
             "advisor" => [ 'car_quote_id', 'profession', 'organization', 'designation'],
             "admin" => [ 'car_quote_id', 'profession', 'organization' , 'designation'],
             "invoicing" => []
         ],
         "list" => [
             "pa" => ['id', 'car_quote_id' , 'profession', 'organization', 'designation'],
+            "production_approval_manager" => ['id', 'car_quote_id' , 'profession', 'organization', 'designation'],
             "advisor" => [ 'id','car_quote_id' , 'profession', 'organization', 'designation'],
             "admin" => ['id', 'car_quote_id' , 'profession', 'organization', 'designation'],
             "invoicing" => ['id','car_quote_id' , 'profession', 'organization', 'designation']

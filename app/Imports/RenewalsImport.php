@@ -246,8 +246,8 @@ class RenewalsImport implements OnEachRow, WithStartRow, WithValidation, SkipsOn
                 if(!$value) {
                     $onFailure('Policy is required');
                 }
-                if(strlen($value) > 25) {
-                    $onFailure('Policy should not exceed length of 25 characters');
+                if(strlen($value) > 100) {
+                    $onFailure('Policy should not exceed length of 100 characters');
                 }
             },
             // Batch

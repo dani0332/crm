@@ -48,6 +48,9 @@ return [
     'kyc_statuses' => [
         'model' => KycStatus::class
     ],
+    'teams' => [
+        'model' => Teams::class
+    ],
     'quote_status' => [
         'model' => QuoteStatus::class
     ],

@@ -15,12 +15,14 @@ class KycLog extends BaseModel
         'delete' => ['admin'],
         'access' => [
             "pa" => [],
+            "production_approval_manager" => [],
             "advisor" => [],
             "admin" => [],
             "invoicing" => []
         ],
         "list" => [
             "pa" => [ 'id','results', 'quote_request_id', 'results_found' ],
+            "production_approval_manager" => [ 'id','results', 'quote_request_id', 'results_found' ],
             "advisor" => [ 'id','results', 'quote_request_id', 'results_found' ],
             "admin" => [ 'id','results', 'quote_request_id', 'results_found' ],
             "invoicing" => [ 'id','results', 'quote_request_id', 'results_found' ]

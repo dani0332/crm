@@ -11,6 +11,7 @@ use Laravel\Sanctum\HasApiTokens;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 use Spatie\Permission\Traits\HasRoles;
+use Auth;
 
 class User extends Authenticatable implements AuditableContract
 {
@@ -80,6 +81,18 @@ class User extends Authenticatable implements AuditableContract
     }
 
     public function processGetDSL($filters = []) {
+
+        if(Auth::user()->hasRole('production_approval_manager')) {
+
+            $users =  User::select(['id', 'name'])->whereHas(
+                'roles', function($q){
+                    $q->where('name', 'pa');
+                }
+            )
+            ->get();
+            return $users;
+        }
+
 
         return self::with( array('usersroles' => function($query) {
             $query->where('name','admin');
