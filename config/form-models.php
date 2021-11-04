@@ -71,5 +71,8 @@ return [
     ],
     'car_quote_aml_status_lookup' => [
         'model' => CarQuoteAMLStatusLookup::class
-    ]
+    ],
+    'type_of_insurances' => [
+        'model' => CarTypeInsurance::class
+    ],
 ];

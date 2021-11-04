@@ -17,6 +17,22 @@ const carQuotePolicy = {
         delete: [],
       },
       fields: {
+        customer: {
+          type: 'text',
+          label: 'Customer',
+          access: {
+            read: [
+              'advisor',
+              'pa',
+              'admin',
+              'invoicing',
+              'production_approval_manager',
+            ],
+          },
+          transform(item) {
+            return `${item?.first_name}  ${item?.last_name}`;
+          },
+        },
         quote_number: {
           type: 'text',
           label: 'Quote Number',
@@ -108,11 +124,9 @@ const carQuotePolicy = {
             ],
           },
         },
-        insurance_company_id: {
-          type: 'dropdown',
-          label: 'Insurance Company',
-          source: 'insurance_companies',
-          rules: { required: true },
+        amount_paid: {
+          type: 'text',
+          label: 'Amound Paid',
           access: {
             read: [
               'pa',
@@ -121,8 +135,56 @@ const carQuotePolicy = {
               'invoicing',
               'production_approval_manager',
             ],
-            write: [],
-            update: [],
+          },
+        },
+        payment_mode_id: {
+          type: 'dropdown',
+          label: 'Payment Mode',
+          source: 'payment_modes',
+          access: {
+            read: [
+              'pa',
+              'advisor',
+              'admin',
+              'invoicing',
+              'production_approval_manager',
+            ],
+          },
+          transform(item) {
+            if (Array.isArray(item)) {
+              const items = item.map(u => {
+                return { value: u?.id, label: u?.name };
+              });
+              return items;
+            } else return { value: item?.id, label: item?.name };
+          },
+        },
+        typeofinsurance: {
+          type: 'dropdown',
+          label: 'Type of Insurance',
+          source: 'type_of_insurances',
+          access: {
+            read: [
+              'pa',
+              'advisor',
+              'admin',
+              'invoicing',
+              'production_approval_manager',
+            ],
+          },
+        },
+        insurance_company_id: {
+          type: 'dropdown',
+          label: 'Insurance Company',
+          source: 'insurance_companies',
+          access: {
+            read: [
+              'pa',
+              'advisor',
+              'admin',
+              'invoicing',
+              'production_approval_manager',
+            ],
           },
           transform(item) {
             if (Array.isArray(item)) {
@@ -137,7 +199,14 @@ const carQuotePolicy = {
       sections: [
         {
           label: 'Transcation',
-          fields: ['approval_code', 'insurance_company_id'],
+          fields: [
+            'customer',
+            'approval_code',
+            'amount_paid',
+            'payment_mode_id',
+            'typeofinsurance',
+            'insurance_company_id',
+          ],
         },
         {
           label: 'Car Quote Policy Record',

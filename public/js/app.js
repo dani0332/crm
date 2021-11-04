@@ -22789,18 +22789,6 @@ reference element's position.
             }
           };
 
-          react__WEBPACK_IMPORTED_MODULE_0__.useEffect(
-            function () {
-              // console.log('-------------inputValue--------')
-              // console.log(value)
-              // console.log(field?.value)
-              // console.log(field)
-              // console.log('-------------inputValue---------')
-              //controller.onChange(field.value === undefined || null ? "" : field.value)
-              //setValue(field.value === undefined || null ? "" : field.value)
-            },
-            [field === null || field === void 0 ? void 0 : field.value],
-          );
           var shouldDisable = false;
 
           if (
@@ -22812,11 +22800,18 @@ reference element's position.
             shouldDisable = true;
           }
 
+          var finalVal = value;
+          if (
+            typeof (field === null || field === void 0
+              ? void 0
+              : field.transform) === 'function'
+          )
+            finalVal = field.transform(value, field);
           return /*#__PURE__*/ (0,
           react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)('input', {
             className: 'form-control',
             disabled: shouldDisable,
-            value: value,
+            value: finalVal,
             onChange: onChange,
           });
         }
@@ -27049,6 +27044,33 @@ reference element's position.
                 delete: [],
               },
               fields: {
+                customer: {
+                  type: 'text',
+                  label: 'Customer',
+                  access: {
+                    read: [
+                      'advisor',
+                      'pa',
+                      'admin',
+                      'invoicing',
+                      'production_approval_manager',
+                    ],
+                  },
+                  transform: function transform(item) {
+                    return ''
+                      .concat(
+                        item === null || item === void 0
+                          ? void 0
+                          : item.first_name,
+                        '  ',
+                      )
+                      .concat(
+                        item === null || item === void 0
+                          ? void 0
+                          : item.last_name,
+                      );
+                  },
+                },
                 quote_number: {
                   type: 'text',
                   label: 'Quote Number',
@@ -27143,13 +27165,9 @@ reference element's position.
                     ],
                   },
                 },
-                insurance_company_id: {
-                  type: 'dropdown',
-                  label: 'Insurance Company',
-                  source: 'insurance_companies',
-                  rules: {
-                    required: true,
-                  },
+                amount_paid: {
+                  type: 'text',
+                  label: 'Amound Paid',
                   access: {
                     read: [
                       'pa',
@@ -27158,8 +27176,65 @@ reference element's position.
                       'invoicing',
                       'production_approval_manager',
                     ],
-                    write: [],
-                    update: [],
+                  },
+                },
+                payment_mode_id: {
+                  type: 'dropdown',
+                  label: 'Payment Mode',
+                  source: 'payment_modes',
+                  access: {
+                    read: [
+                      'pa',
+                      'advisor',
+                      'admin',
+                      'invoicing',
+                      'production_approval_manager',
+                    ],
+                  },
+                  transform: function transform(item) {
+                    if (Array.isArray(item)) {
+                      var items = item.map(function (u) {
+                        return {
+                          value: u === null || u === void 0 ? void 0 : u.id,
+                          label: u === null || u === void 0 ? void 0 : u.name,
+                        };
+                      });
+                      return items;
+                    } else
+                      return {
+                        value:
+                          item === null || item === void 0 ? void 0 : item.id,
+                        label:
+                          item === null || item === void 0 ? void 0 : item.name,
+                      };
+                  },
+                },
+                typeofinsurance: {
+                  type: 'dropdown',
+                  label: 'Type of Insurance',
+                  source: 'type_of_insurances',
+                  access: {
+                    read: [
+                      'pa',
+                      'advisor',
+                      'admin',
+                      'invoicing',
+                      'production_approval_manager',
+                    ],
+                  },
+                },
+                insurance_company_id: {
+                  type: 'dropdown',
+                  label: 'Insurance Company',
+                  source: 'insurance_companies',
+                  access: {
+                    read: [
+                      'pa',
+                      'advisor',
+                      'admin',
+                      'invoicing',
+                      'production_approval_manager',
+                    ],
                   },
                   transform: function transform(item) {
                     if (Array.isArray(item)) {
@@ -27183,7 +27258,14 @@ reference element's position.
               sections: [
                 {
                   label: 'Transcation',
-                  fields: ['approval_code', 'insurance_company_id'],
+                  fields: [
+                    'customer',
+                    'approval_code',
+                    'amount_paid',
+                    'payment_mode_id',
+                    'typeofinsurance',
+                    'insurance_company_id',
+                  ],
                 },
                 {
                   label: 'Car Quote Policy Record',
