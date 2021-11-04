@@ -44,14 +44,16 @@ class TransAppService extends BaseService
                 $carQuoteObj->quote_status_id = 15;// Transaction Approved
                 $carQuoteObj->pa_id = null;
                 if($carQuoteObj->save()){
+
                     $newPayment = new CarQuotePaymentHistory();
                     $newPayment->status = "Transaction Approved";
                     $newPayment->notes = "Automate on transaction creations with Transaction ID = ".$transaction->id;
                     $newPayment->car_quote_id = $request->input("car_quote_id");
                     $newPayment->save();
 
-                    $createPolicy = CarQuotePolicy();
+                    $createPolicy = new CarQuotePolicy();
                     $createPolicy->car_quote_id = $request->input("car_quote_id");
+                    $createPolicy->transactions_id = $transaction->id;
                     $createPolicy->save();
                 }
             }

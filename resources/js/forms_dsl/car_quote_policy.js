@@ -79,7 +79,6 @@ const carQuotePolicy = {
             write: ['advisor', 'admin'],
             update: ['advisor', 'admin'],
           },
-          // rules: { required: true }
         },
         end_date: {
           type: 'datePicker',
@@ -95,10 +94,51 @@ const carQuotePolicy = {
             write: ['advisor', 'admin'],
             update: ['advisor', 'admin'],
           },
-          // rules: { required: true }
+        },
+        approval_code: {
+          type: 'text',
+          label: 'Approval Code',
+          access: {
+            read: [
+              'pa',
+              'advisor',
+              'admin',
+              'invoicing',
+              'production_approval_manager',
+            ],
+          },
+        },
+        insurance_company_id: {
+          type: 'dropdown',
+          label: 'Insurance Company',
+          source: 'insurance_companies',
+          rules: { required: true },
+          access: {
+            read: [
+              'pa',
+              'advisor',
+              'admin',
+              'invoicing',
+              'production_approval_manager',
+            ],
+            write: [],
+            update: [],
+          },
+          transform(item) {
+            if (Array.isArray(item)) {
+              const items = item.map(u => {
+                return { value: u?.id, label: u?.name };
+              });
+              return items;
+            } else return { value: item?.id, label: item?.name };
+          },
         },
       },
       sections: [
+        {
+          label: 'Transcation',
+          fields: ['approval_code', 'insurance_company_id'],
+        },
         {
           label: 'Car Quote Policy Record',
           fields: [
