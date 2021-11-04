@@ -205,6 +205,10 @@ class HomeQuoteService extends BaseService
         return $validationArray;
     }
 
+    public function getEntityPlain($id){
+        return HomeQuote::find($id);
+    }
+
     public function sendCAPIRequest($endpoint, $data){
         $apiEndPoint = Config::get('constants.CENTRAL_API_ENDPOINT').$endpoint;
         $apiToken = Config::get('constants.CENTRAL_API_TOKEN');

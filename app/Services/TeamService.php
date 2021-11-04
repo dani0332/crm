@@ -10,42 +10,70 @@ use DB;
 
 class TeamService extends BaseService
 {
+    protected $query;
+    public function __construct()
+    {
+        $this->query = "SELECT t.id, t.name AS name
+                        ,group_concat(u.name) AS team_users
+                        ,group_concat(u.name) AS team_users_text
+                        FROM teams t
+                        LEFT JOIN user_team ut ON ut.team_id = t.id
+                        LEFT JOIN users u ON u.id = ut.user_id ";
+    }
 
-	public function saveTeam(Request $request)
+    public function getEntity($id){
+        return DB::select($this->query.' where t.id = '. $id.' GROUP BY t.name,t.id');
+    }
+
+    public function getEntityPlain($id){
+        return Team::find($id);
+    }
+
+	public function saveTeams(Request $request)
 	{
         $team = new Team();
         $team->name = $request->name;
         $team->save();
-        dd($request->team_users);
         foreach ($request->team_users as $team_user) {
+            $user = User::find($team_user);
             $userTeam = new UserTeams();
             $userTeam->team_id = $team->id;
-            $userTeam->user_id = $team_user;
+            $userTeam->user_id = $user->id;
             $userTeam->save();
         }
 
         foreach ($request->team_managers as $team_manager) {
+            $user = User::find($team_manager);
             $teamManager = new TeamManagers();
             $teamManager->team_id = $team->id;
-            $teamManager->manager_id = $team_manager;
+            $teamManager->manager_id = $user->id;
             $teamManager->save();
         }
 
+        if (isset($request->return_to_view))
+            return redirect("/quotes/teams/" . $team->id)->with('success', 'Team has been created');
+
 	}
 
-    public function getGridData(){
-        return DB::select("
-                        SELECT t.id, t.name AS name
-                        ,group_concat(u.name) AS team_users
-                    FROM teams t
-                    LEFT JOIN user_team ut ON ut.team_id = t.id
-                    LEFT JOIN users u ON u.id = ut.user_id
-                    GROUP BY t.name
-                        ,t.id
-                ");
+    public function getGridData($searchProperties, $request){
+
+        $count = 0;
+        if ($request->ajax()) {
+            foreach ($searchProperties as $item) {
+                if(!empty($request[$item])){
+                    $suffix = 't';
+                    $this->query = $this->query. $count > 0 ? ' and' : ' where '.$suffix.'.'.$item.'='."'".$request[$item]."'";
+
+                    $count++;
+                }
+            }
+        }
+        $this->query = $this->query .' GROUP BY t.name,t.id';
+        return DB::select($this->query);
     }
 
-    public function updateTeam(Request $request, $id)
+
+    public function updateTeams(Request $request, $id)
 	{
         $team = Team::find($id);
         $team->name = $request->name;
@@ -69,7 +97,7 @@ class TeamService extends BaseService
             $teamManager->save();
         }
         if (isset($request->return_to_view))
-            return redirect("quote/teams/" . $team->id)->with('success', 'Team has been updated');
+            return redirect("/quotes/teams/" . $team->id)->with('success', 'Team has been updated');
 	}
 
     public function fillModelProperties() {
@@ -104,5 +132,9 @@ class TeamService extends BaseService
             'create' => '',
             'list' => 'team_managers',
         ];
+    }
+
+    public function fillModelSearchProperties(){
+        return ["name"];
     }
 }

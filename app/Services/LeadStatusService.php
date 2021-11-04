@@ -4,10 +4,14 @@ namespace App\Services;
 
 use App\Models\LeadStatus;
 use Illuminate\Http\Request;
-
+use DB;
 class LeadStatusService extends BaseService
 {
-
+    protected $query;
+    public function __construct()
+    {
+        $this->query = "select ls.id, ls.name from lead_status ls";
+    }
 	public function saveLeadStatus(Request $request)
 	{
         $leadStatus = new LeadStatus();
@@ -24,6 +28,29 @@ class LeadStatusService extends BaseService
         if (isset($request->return_to_view))
             return redirect("quote/teams/" . $leadStatus->id)->with('success', 'Lead Status has been updated');
 	}
+
+    public function getGridData($searchProperties, $request){
+        $count = 0;
+        if ($request->ajax()) {
+            foreach ($searchProperties as $item) {
+                if(!empty($request[$item])){
+                    $suffix = 'ls';
+                    $this->query = $this->query. $count > 0 ? ' and' : ' where '.$suffix.'.'.$item.'='."'".$request[$item]."'";
+                    $count++;
+                }
+            }
+        }
+
+        return DB::select($this->query);
+    }
+
+    public function getEntity($id){
+        return DB::select($this->query.' where ls.id = '. $id);
+    }
+
+    public function getEntityPlain($id){
+        return LeadStatus::find($id);
+    }
 
     public function fillModelProperties() {
         return array (

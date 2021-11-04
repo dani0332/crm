@@ -126,6 +126,10 @@ class TravelQuoteService extends BaseService
         return DB::select($this->query.' where tqr.id = '. $id);
     }
 
+    public function getEntityPlain($id){
+        return TravelQuote::find($id);
+    }
+
     public function updateTravelQuote(Request $request, $id)
 	{
         $travelQuote = TravelQuote::find($id);

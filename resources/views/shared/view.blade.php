@@ -17,6 +17,7 @@ td{
 
     });
 $(document).ready(function() {
+    var quoteTypes = ['home', 'health', 'life', 'business', 'travel'];
     String.prototype.replaceAll = function(search, replacement) {
     var target = this;
     return target.replace(new RegExp(search, 'g'), replacement);
@@ -31,7 +32,7 @@ $(document).ready(function() {
     }
     var model = JSON.parse('<?php echo json_encode(get_object_vars($model)) ?>');
     var modelPropertiesArray = convertObjectToArray(model.properties);
-
+    $('#modelType').val(model.modelType);
     var dataTableColumns = [];
     var skipPropertiesArray = model.skipProperties['list'].split(',');
     for(var i=0; i < modelPropertiesArray.length ;i++){
@@ -39,6 +40,18 @@ $(document).ready(function() {
         if(!skipPropertiesArray.includes(modelPropertiesArray[i].name)){
             console.log(modelPropertiesArray[i].name);
             if(modelPropertiesArray[i].name == 'id'){
+                var isCurrentUserIsAdvisor = $("#isCurrentUserIsAdvisor").val();
+                if (isCurrentUserIsAdvisor === "1") {
+                        dataTableColumns.push({
+                        data: "id",
+                        name: "id",
+                        render: function(data, type, row, meta) {
+                            return (
+                                    '<input type="checkbox" id="tmLeadID" class="tmleadCheckbox" name="tmLeadID" value="' + data + '">'
+                                );
+                        },
+                    });
+                }
                 dataTableColumns.push({
                     data: modelPropertiesArray[i].name,
                     name: 'id',
@@ -130,11 +143,9 @@ $(document).ready(function() {
          var self = this;
          var oldStart = dt.settings()[0]._iDisplayStart;
          dt.one('preXhr', function (e, s, data) {
-             // Just this once, load all data from the server...
              data.start = 0;
              data.length = 2147483647;
              dt.one('preDraw', function (e, settings) {
-                 // Call the original action function
                  if (button[0].className.indexOf('buttons-copy') >= 0) {
                      $.fn.dataTable.ext.buttons.copyHtml5.action.call(self, e, dt, button, config);
                  } else if (button[0].className.indexOf('buttons-excel') >= 0) {
@@ -153,18 +164,13 @@ $(document).ready(function() {
                      $.fn.dataTable.ext.buttons.print.action(e, dt, button, config);
                  }
                  dt.one('preXhr', function (e, s, data) {
-                     // DataTables thinks the first item displayed is index 0, but we're not drawing that.
-                     // Set the property to what it was before exporting.
                      settings._iDisplayStart = oldStart;
                      data.start = oldStart;
                  });
-                 // Reload the grid with the original page. Otherwise, API functions like table.cell(this) don't work properly.
                  setTimeout(dt.ajax.reload, 0);
-                 // Prevent rendering of the full data to the DOM
                  return false;
              });
          });
-         // Requery the server with the new one-time export settings
          dt.ajax.reload();
      }
 
@@ -181,6 +187,12 @@ $(document).ready(function() {
                 <div class="clearfix"></div>
             </div>
             <div class="x_content">
+                @if(session()->has('message'))
+                    <div class="alert alert-danger">{{ session()->get('message') }}</div>
+                @endif
+                @if(session()->has('success'))
+                    <div class="alert alert-success">{{ session()->get('success') }}</div>
+                @endif
                 @if (count($model->searchProperties) > 0)
                 <form method="POST" id="searchTable" class="form-horizontal form-label-left" role="form" data-parsley-validate="" novalidate="" autocomplete="off">
                     @foreach($model->properties as $property => $value)
@@ -242,23 +254,59 @@ $(document).ready(function() {
                 </div>
                  </form>
                 @endif
-                <table id="dtBasicExample" class="table table-striped jambo_table" style="table-layout: fixed;" width="100%">
-                    <thead>
-                        <tr>
-                            @foreach($model->properties as $property => $value)
-                                @if(!in_array($property, explode(',', $model->skipProperties['list'])))
-                                    @if(strpos($value, 'title'))
-                                        <th>{{ $customTitles[$property]}}</th>
-                                    @else
+
+                <form method="post" action="manualLeadAssign" class="form-horizontal form-label-left" role="form" data-parsley-validate=""novalidate="" autocomplete="off">
+                    {{csrf_field()}}
+                    @method('GET')
+                    <div class="row" id="tm-leads-assign-div">
+                        <div class="col-md-12 col-sm-12">
+                            <div class="x_panel">
+                                <div class="x_title">
+                                    <h2>Assign Leads</h2>
+                                    <div class="clearfix"></div>
+                                </div>
+                                <div class="x_content" id="form-to-show">
+                                    <div class="item form-group">
+                                        <label class="col-form-label col-md-2 col-sm-2" for="Assign To">Assign To</label>
+                                        <div class="col-md-6 col-sm-6">
+                                            <select class="form-control" id="assigned_to_id_new" name="assigned_to_id_new">
+                                                @foreach ($advisors as $handler)
+                                                    <option value="{{ $handler->id }}">{{ $handler->name }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="item form-group">
+                                        <label class="col-form-label col-md-2 col-sm-2" for="first-name"> </label>
+                                        <div class="col-md-6 col-sm-6">
+                                            <div class="input-group">
+                                                <button type="submit" id="tmLeadsAssignToUser" name="tmLeadsAssignToUser" class="btn btn-warning btn-sm">Assign</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <input type="hidden" id="modelType" name="modelType" value="">
+                    <input type="hidden" id="displayTmLeadsDownloadCsvIcon" name="displayTmLeadsDownloadCsvIcon" value="">
+                    <input type="hidden" id="selectTmLeadId" name="selectTmLeadId" value="">
+                    <input type="hidden" id="isCurrentUserIsAdvisor" name="isCurrentUserIsAdvisor" value="{{ $isCurrentUserIsAdvisor }}">
+                        <table id="dtBasicExample" class="table table-striped jambo_table" style="table-layout: fixed;" width="100%">
+                            <thead>
+                                <tr>
+                                    @if($isCurrentUserIsAdvisor == "1")<th style="width: 15px;"><input type="checkbox" id="checkAllTmLeads" name="checkAllTmLeads" value=""></th>@endif
+                                    @foreach($model->properties as $property => $value)
+                                        @if(!in_array($property, explode(',', $model->skipProperties['list'])))
                                         <th data-type="{{explode('|',$value)[1]}}" >{{str_replace("_"," ",ucwords($property))}}</th>
-                                    @endif
-                                @endif
-                            @endforeach
-                        </tr>
-                    </thead>
-                    <tbody>
-                    </tbody>
-                </table>
+                                        @endif
+                                    @endforeach
+                                </tr>
+                            </thead>
+                            <tbody>
+                            </tbody>
+                        </table>
+                    </form>
             </div>
         </div>
     </div>

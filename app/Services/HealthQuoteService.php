@@ -42,6 +42,10 @@ class HealthQuoteService extends BaseService
         return DB::select($this->query.' where hqr.id = '. $id);
     }
 
+    public function getEntityPlain($id){
+        return HealthQuote::find($id);
+    }
+
 	public function saveHealthQuote(Request $request)
 	{
         $dataArr = array(
@@ -114,11 +118,7 @@ class HealthQuoteService extends BaseService
                             $suffix = 'hqr';
                             break;
                     }
-                    if($count == 0){
-                        $this->query = $this->query.' where '.$suffix.'.'.$item.'='."'".$request[$item]."'";
-                    }else{
-                        $this->query = $this->query.' and '.$suffix.'.'.$item.'='."'".$request[$item]."'";
-                    }
+                    $this->query = $this->query. $count > 0 ? ' and' : ' where '.$suffix.'.'.$item.'='."'".$request[$item]."'";
                     $count++;
                 }
             }

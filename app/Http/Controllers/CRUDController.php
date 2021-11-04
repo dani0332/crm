@@ -14,7 +14,11 @@ use App\Services\LeadStatusService;
 use App\Services\LifeQuoteService;
 use App\Services\TeamService;
 use App\Services\TravelQuoteService;
+use App\Services\UserService;
 use DataTables;
+use Auth;
+use Illuminate\Support\Facades\Redirect;
+
 class CRUDController extends Controller
 {
     protected $genericModel;
@@ -28,9 +32,10 @@ class CRUDController extends Controller
     protected $lifeQuoteService;
     protected $homeQuoteService;
     protected $businessQuoteService;
+    protected $userService;
     public function __construct(Request $request, HealthQuoteService $healthService, TeamService $teamService, CRUDService $crudService, DropdownSourceService $dropdownSourceService,
     CarQuoteService $carQuoteService, LeadStatusService $leadStatusService, TravelQuoteService $travelQuoteService, LifeQuoteService $lifeQuoteService, HomeQuoteService $homeQuoteService,
-    BusinessQuoteService $businessQuoteService)
+    BusinessQuoteService $businessQuoteService, UserService $userService)
     {
         $this->genericModel = new GenericModel();
         $this->healthQuoteService = $healthService;
@@ -43,6 +48,7 @@ class CRUDController extends Controller
         $this->lifeQuoteService = $lifeQuoteService;
         $this->homeQuoteService = $homeQuoteService;
         $this->businessQuoteService = $businessQuoteService;
+        $this->userService = $userService;
         $this->setModelType($request);
         $this->fillModelByModelType($this->genericModel->modelType);
     }
@@ -56,15 +62,20 @@ class CRUDController extends Controller
     {
         $model = $this->genericModel;
         $gridData = $this->crudService->getGridData($this->genericModel, $request);
-
+        $advisors = $this->crudService->getAdvisorsByModelType($this->genericModel->modelType);
         $customTitles = [];
         $dropdownSource = [];
 
+        if (Auth::user()->hasRole( strtoupper($this->genericModel->modelType).'_ADVISOR')) {
+            $isCurrentUserIsAdvisor = "1";
+        } else {
+            $isCurrentUserIsAdvisor = "0";
+        }
         foreach($model->properties as $property => $value) {
             if(str_contains($value, 'title')){
                 $customTitles[$property] = $this->crudService->getCustomTitleByModelType($this->genericModel->modelType, $property);
             }
-            if(str_contains($value, 'select')){
+            if(str_contains($value, 'select')) {
                 $dropdownValue = $this->dropdownSourceService->getDropdownSource($property);
                 $dropdownSource[$property] = $dropdownValue;
             }
@@ -74,9 +85,9 @@ class CRUDController extends Controller
             return DataTables::of($gridData)
             ->addIndexColumn()
             ->make(true);
-            return view('shared.view', compact('model','dropdownSource', 'customTitles'));
+            return view('shared.view', compact('model','dropdownSource', 'customTitles', 'advisors', 'isCurrentUserIsAdvisor'));
         }
-        return view('shared.view', compact('model','dropdownSource', 'customTitles'));
+        return view('shared.view', compact('model','dropdownSource', 'customTitles', 'advisors', 'isCurrentUserIsAdvisor'));
     }
 
     /**
@@ -180,7 +191,7 @@ class CRUDController extends Controller
                 $dropdownSource[$property] = $data;
             }
             if(str_contains($value, 'customTable')){
-                $data = $this->dropdownSourceService->getCustomDropdownList($property, $record->id);
+                $data = $this->dropdownSourceService->getCustomDropdownList($property, $record[0]->id);
                 $customLists[$property] = $data;
             }
         }
@@ -205,7 +216,7 @@ class CRUDController extends Controller
         }
         $this->validate($request,$validateArray);
         $this->crudService->updateModelByType(json_decode($request->modelType, true), $request, $id);
-        return redirect()->back()->with('success', json_decode($request->modelType, true).' has been stored');
+        return redirect('/quotes/'. strtolower(str_replace('"', '',$request->modelType)) .'/' . $id)->with('success', json_decode($request->modelType, true).' has been stored');
     }
 
     /**
@@ -266,6 +277,7 @@ class CRUDController extends Controller
             case 'Teams':
                 $this->genericModel->properties = $this->teamService->fillModelProperties();
                 $this->genericModel->skipProperties = $this->teamService->fillModelSkipProperties();
+                $this->genericModel->searchProperties = $this->teamService->fillModelSearchProperties();
                 break;
             case 'LeadStatus':
                 $this->genericModel->properties = $this->leadStatusService->fillModelProperties();
@@ -325,6 +337,22 @@ class CRUDController extends Controller
         ,'actualPremium','discountPremium','listQuotePlanAddons','listQuotePlanAddonValues','listQuotePlanBenefitsInclusions'
         ,'listQuotePlanBenefitsExclusions','listQuotePlanBenefitsFeatures','listQuotePlanBenefitsRsas'
         ,'listQuotePlanBenefitsPolicyDetails','listQuotePlanAddonPrices']));
+    }
+
+    public function manualLeadAssign(Request $request)
+    {
+        $assignedToUserIdNew = $request->assigned_to_id_new;
+        $leadsIds = $request->selectTmLeadId;
+        $leadsIds = array_map('intval', explode(',', $leadsIds));
+        foreach($leadsIds as $tmLeadsId) {
+            $updateTmLead = $this->{ strtolower($request->modelType).'QuoteService'}->getEntityPlain($tmLeadsId);
+            $userId = (int)$assignedToUserIdNew;
+            $updateTmLead->advisor_id = $userId;
+            $updateTmLead->save();
+        }
+
+        $assignedUserName = $this->userService->getUserNameById($assignedToUserIdNew);
+        return Redirect::back()->with('success', $request->modelType.' Leads has been Assigned To ' . $assignedUserName);
     }
 
 }

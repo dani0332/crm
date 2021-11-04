@@ -96,6 +96,10 @@ class CarQuoteService extends BaseService
         return DB::select($this->query.' where cqr.id = '. $id);
     }
 
+    public function getEntityPlain($id){
+        return CarQuote::find($id);
+    }
+
     public function fillModelProperties() {
         return array (
             "id" => "readonly|none",

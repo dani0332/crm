@@ -109,7 +109,6 @@ Route::group(['middleware' =>  ['auth']], function () {
         Route::resource('car', CRUDController::class);
         Route::resource('life', CRUDController::class);
         Route::resource('business', CRUDController::class);
-        Route::resource('home', CRUDController::class);
         Route::resource('travel', CRUDController::class);
         Route::resource('teams', CRUDController::class);
         Route::resource('leadstatus', CRUDController::class);
@@ -117,6 +116,7 @@ Route::group(['middleware' =>  ['auth']], function () {
         Route::post('update', [CRUDController::class, 'update'])->name('updateQuote');
         Route::get('getvalues/{modelType}/{propertyName}/{recordId}', [CRUDController::class, 'getDropdownSourceNameForDisplay']);
         Route::get('car/{quoteId}/plan_details/{planId}', [CRUDController::class, 'plan_details'])->name('plan_details');
+        Route::get('manualLeadAssign', [CRUDController::class, 'manualLeadAssign'])->name('manualLeadAssign');
     });
 
     Route::group(['prefix' => 'transapp'], function () {

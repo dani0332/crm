@@ -86,6 +86,10 @@ class LifeQuoteService extends BaseService
         return DB::select($this->query.' where lqr.id = '. $id);
     }
 
+    public function getEntityPlain($id){
+        return LifeQuote::find($id);
+    }
+
     public function getGridData($searchProperties, $request){
         $count = 0;
         if ($request->ajax()) {

@@ -30,6 +30,10 @@ class BusinessQuoteService extends BaseService
         return DB::select($this->query.' where bqr.id = '. $id);
     }
 
+    public function getEntityPlain($id){
+        return BusinessQuote::find($id);
+    }
+
 	public function saveBusinessQuote(Request $request)
 	{
         $dataArr = array(
