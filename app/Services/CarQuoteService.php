@@ -247,9 +247,9 @@ class CarQuoteService extends BaseService
 
         $client = new \GuzzleHttp\Client();
         $kenRequest = $client->post(
-            $plansApiEndPoint,
+            'https://staging-api-afia.azure-api.net/kenuat/api/v1/get-car-quote-plans',
             [
-                'headers' => ['Content-Type' => 'application/json', 'Accept' => 'application/json', 'x-api-token' => $plansApiToken],
+                'headers' => ['Content-Type' => 'application/json', 'Accept' => 'application/json', 'x-api-token' => '8613e99d37494293b1e030305f6b6147'],
                 'body' => json_encode($plansDataArr),
                 'timeout' => 180,
             ]
