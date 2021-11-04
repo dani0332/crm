@@ -1538,7 +1538,8 @@ $(document).ready(function() {
     });
 
     // Car Quote Plan Modal Popup
-    $('.quotePlanModalPopup').on('click',function() {
+    $('.quotePlanModalPopup').on('click',function(e) {
+        e.preventDefault();
         $('.quote-plan-modal-body').load($(this).attr("testurl"),function() {
             $('#quotePlanModal').modal({show:true});
         });
