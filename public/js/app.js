@@ -33719,7 +33719,7 @@ reference element's position.
           );
         /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_1__ =
           __webpack_require__(/*! react */ './node_modules/react/index.js');
-        /* harmony import */ var styled_components__WEBPACK_IMPORTED_MODULE_12__ =
+        /* harmony import */ var styled_components__WEBPACK_IMPORTED_MODULE_13__ =
           __webpack_require__(
             /*! styled-components */ './node_modules/styled-components/dist/styled-components.browser.esm.js',
           );
@@ -33727,7 +33727,7 @@ reference element's position.
           __webpack_require__(
             /*! ../../components/sub-nav */ './resources/js/components/sub-nav.js',
           );
-        /* harmony import */ var react_router_dom__WEBPACK_IMPORTED_MODULE_13__ =
+        /* harmony import */ var react_router_dom__WEBPACK_IMPORTED_MODULE_14__ =
           __webpack_require__(
             /*! react-router-dom */ './node_modules/react-router/esm/react-router.js',
           );
@@ -33763,7 +33763,11 @@ reference element's position.
           __webpack_require__(
             /*! ./ftc-payment */ './resources/js/modules/ftc-forms/ftc-payment.js',
           );
-        /* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__ =
+        /* harmony import */ var react_confirm_alert__WEBPACK_IMPORTED_MODULE_11__ =
+          __webpack_require__(
+            /*! react-confirm-alert */ './node_modules/react-confirm-alert/lib/index.js',
+          );
+        /* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_12__ =
           __webpack_require__(
             /*! react/jsx-runtime */ './node_modules/react/jsx-runtime.js',
           );
@@ -33906,14 +33910,14 @@ reference element's position.
         }
 
         var Styles =
-          styled_components__WEBPACK_IMPORTED_MODULE_12__.default.div(
+          styled_components__WEBPACK_IMPORTED_MODULE_13__.default.div(
             _templateObject || (_templateObject = _taggedTemplateLiteral([''])),
           );
 
         function LeadSnapShot() {
           var paramRef = (0, react__WEBPACK_IMPORTED_MODULE_1__.useRef)();
           paramRef.current = (0,
-          react_router_dom__WEBPACK_IMPORTED_MODULE_13__.useParams)();
+          react_router_dom__WEBPACK_IMPORTED_MODULE_14__.useParams)();
 
           function reducer(state, action) {
             switch (action.type) {
@@ -34118,7 +34122,13 @@ reference element's position.
             var _ref = _asyncToGenerator(
               /*#__PURE__*/ _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().mark(
                 function _callee(obj) {
-                  var data, response, _data;
+                  var data,
+                    response,
+                    _data,
+                    _data2$data,
+                    _data2$data$quote_sta,
+                    _response,
+                    _data2;
 
                   return _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().wrap(
                     function _callee$(_context) {
@@ -34159,15 +34169,62 @@ reference element's position.
                                   ? void 0
                                   : _data.data,
                             });
-                            _context.next = 12;
+                            _context.next = 18;
                             break;
 
                           case 11:
-                            dispatch({
-                              type: data,
-                            });
+                            _context.next = 13;
+                            return fetch(
+                              '/form/car_quote_request/'.concat(
+                                paramRef.current.id,
+                              ),
+                              {
+                                method: 'GET',
+                                headers: {
+                                  'Content-Type': 'application/json',
+                                },
+                              },
+                            );
 
-                          case 12:
+                          case 13:
+                            _response = _context.sent;
+                            _context.next = 16;
+                            return _response.json();
+
+                          case 16:
+                            _data2 = _context.sent;
+
+                            if (
+                              (_data2 === null || _data2 === void 0
+                                ? void 0
+                                : (_data2$data = _data2.data) === null ||
+                                  _data2$data === void 0
+                                ? void 0
+                                : (_data2$data$quote_sta =
+                                    _data2$data.quote_status_id) === null ||
+                                  _data2$data$quote_sta === void 0
+                                ? void 0
+                                : _data2$data$quote_sta.id) !== 15
+                            ) {
+                              (0,
+                              react_confirm_alert__WEBPACK_IMPORTED_MODULE_11__.confirmAlert)(
+                                {
+                                  title: 'Error',
+                                  message: 'Car Quote status is not approved.',
+                                  buttons: [
+                                    {
+                                      label: 'OK',
+                                    },
+                                  ],
+                                },
+                              );
+                            } else {
+                              dispatch({
+                                type: 'carQuotePolicy',
+                              });
+                            }
+
+                          case 18:
                           case 'end':
                             return _context.stop();
                         }
@@ -34190,7 +34247,7 @@ reference element's position.
             case 'email_template':
               formArr.push(
                 /*#__PURE__*/ (0,
-                react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__.jsx)(
+                react_jsx_runtime__WEBPACK_IMPORTED_MODULE_12__.jsx)(
                   _review_send__WEBPACK_IMPORTED_MODULE_4__.default,
                   {
                     dispatch: dispatch,
@@ -34203,7 +34260,7 @@ reference element's position.
             case 'ftcHistory':
               formArr.push(
                 /*#__PURE__*/ (0,
-                react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__.jsx)(
+                react_jsx_runtime__WEBPACK_IMPORTED_MODULE_12__.jsx)(
                   _ftc_form__WEBPACK_IMPORTED_MODULE_6__.default,
                   {
                     filter: {
@@ -34217,7 +34274,7 @@ reference element's position.
             case 'ftcPayment':
               formArr.push(
                 /*#__PURE__*/ (0,
-                react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__.jsx)(
+                react_jsx_runtime__WEBPACK_IMPORTED_MODULE_12__.jsx)(
                   _ftc_payment__WEBPACK_IMPORTED_MODULE_10__.default,
                   {
                     filter: {
@@ -34231,7 +34288,7 @@ reference element's position.
             case 'kyc':
               formArr.push(
                 /*#__PURE__*/ (0,
-                react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__.jsx)(
+                react_jsx_runtime__WEBPACK_IMPORTED_MODULE_12__.jsx)(
                   _kyc_form__WEBPACK_IMPORTED_MODULE_5__.default,
                   {
                     filter: {
@@ -34245,7 +34302,7 @@ reference element's position.
             case 'assign':
               formArr.push(
                 /*#__PURE__*/ (0,
-                react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__.jsx)(
+                react_jsx_runtime__WEBPACK_IMPORTED_MODULE_12__.jsx)(
                   _assign_user__WEBPACK_IMPORTED_MODULE_7__.default,
                   {
                     filter: {
@@ -34260,7 +34317,7 @@ reference element's position.
             case 'overview':
               formArr.push(
                 /*#__PURE__*/ (0,
-                react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__.jsx)(
+                react_jsx_runtime__WEBPACK_IMPORTED_MODULE_12__.jsx)(
                   _overview__WEBPACK_IMPORTED_MODULE_9__.default,
                   {
                     filter: {
@@ -34274,7 +34331,7 @@ reference element's position.
             default:
               formArr.push(
                 /*#__PURE__*/ (0,
-                react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__.jsx)(
+                react_jsx_runtime__WEBPACK_IMPORTED_MODULE_12__.jsx)(
                   _components_list_view_manage_list_form_view__WEBPACK_IMPORTED_MODULE_3__.default,
                   {
                     form: form,
@@ -34285,16 +34342,16 @@ reference element's position.
           }
 
           return /*#__PURE__*/ (0,
-          react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__.jsx)(Styles, {
+          react_jsx_runtime__WEBPACK_IMPORTED_MODULE_12__.jsx)(Styles, {
             children: /*#__PURE__*/ (0,
-            react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__.jsxs)('div', {
+            react_jsx_runtime__WEBPACK_IMPORTED_MODULE_12__.jsxs)('div', {
               className: 'row x_panel',
               children: [
                 /*#__PURE__*/ (0,
-                react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__.jsx)('div', {
+                react_jsx_runtime__WEBPACK_IMPORTED_MODULE_12__.jsx)('div', {
                   className: 'col-md-2 col-sm-2',
                   children: /*#__PURE__*/ (0,
-                  react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__.jsx)(
+                  react_jsx_runtime__WEBPACK_IMPORTED_MODULE_12__.jsx)(
                     _components_sub_nav__WEBPACK_IMPORTED_MODULE_2__.default,
                     {
                       listNav: leftNavList,
@@ -34303,10 +34360,10 @@ reference element's position.
                   ),
                 }),
                 /*#__PURE__*/ (0,
-                react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__.jsx)('div', {
+                react_jsx_runtime__WEBPACK_IMPORTED_MODULE_12__.jsx)('div', {
                   className: 'col-md-10 col-sm-10 ',
                   children: /*#__PURE__*/ (0,
-                  react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__.jsx)('div', {
+                  react_jsx_runtime__WEBPACK_IMPORTED_MODULE_12__.jsx)('div', {
                     className: '',
                     children: formArr,
                   }),

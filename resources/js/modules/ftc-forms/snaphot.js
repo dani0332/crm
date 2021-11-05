@@ -10,6 +10,7 @@ import AssignUser from './assign-user';
 import { session } from '../../utils';
 import Overview from './overview';
 import FtcPayment from './ftc-payment';
+import { confirmAlert } from 'react-confirm-alert';
 const Styles = styled.div``;
 
 function LeadSnapShot() {
@@ -193,7 +194,29 @@ function LeadSnapShot() {
       const data = await response.json();
       dispatch({ type: 'email_template', state: data?.data });
     } else {
-      dispatch({ type: data });
+      const response = await fetch(
+        `/form/car_quote_request/${paramRef.current.id}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        },
+      );
+      const data = await response.json();
+      if (data?.data?.quote_status_id?.id !== 15) {
+        confirmAlert({
+          title: 'Error',
+          message: 'Car Quote status is not approved.',
+          buttons: [
+            {
+              label: 'OK',
+            },
+          ],
+        });
+      } else {
+        dispatch({ type: 'carQuotePolicy' });
+      }
     }
   };
   const formArr = [];
