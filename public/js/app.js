@@ -17167,8 +17167,8 @@ var carQuotePolicy = {
       subtitle: '',
       access: {
         read: ['pa', 'advisor', 'admin', 'invoicing', 'production_approval_manager'],
-        write: ['advisor', 'admin'],
-        update: ['advisor', 'admin'],
+        write: ['pa', 'admin'],
+        update: ['pa', 'admin'],
         "delete": []
       },
       fields: {
@@ -17187,8 +17187,8 @@ var carQuotePolicy = {
           label: 'Quote Number',
           access: {
             read: ['advisor', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
-            write: ['advisor'],
-            update: ['advisor']
+            write: ['pa'],
+            update: ['pa']
           },
           rules: {
             required: true
@@ -17199,8 +17199,8 @@ var carQuotePolicy = {
           label: 'Policy Number',
           access: {
             read: ['advisor', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
-            write: ['advisor'],
-            update: ['advisor']
+            write: ['pa'],
+            update: ['pa']
           },
           rules: {
             required: true
@@ -17211,8 +17211,8 @@ var carQuotePolicy = {
           label: 'Policy Issue Date',
           access: {
             read: ['pa', 'advisor', 'admin', 'invoicing', 'production_approval_manager'],
-            write: ['advisor', 'admin'],
-            update: ['advisor', 'admin']
+            write: ['pa', 'admin'],
+            update: ['pa', 'admin']
           } // rules: { required: true }
 
         },
@@ -17221,8 +17221,8 @@ var carQuotePolicy = {
           label: 'Policy Start Date',
           access: {
             read: ['pa', 'advisor', 'admin', 'invoicing', 'production_approval_manager'],
-            write: ['advisor', 'admin'],
-            update: ['advisor', 'admin']
+            write: ['pa', 'admin'],
+            update: ['pa', 'admin']
           }
         },
         end_date: {
@@ -17230,8 +17230,8 @@ var carQuotePolicy = {
           label: 'Policy End Date',
           access: {
             read: ['pa', 'advisor', 'admin', 'invoicing', 'production_approval_manager'],
-            write: ['advisor', 'admin'],
-            update: ['advisor', 'admin']
+            write: ['pa', 'admin'],
+            update: ['pa', 'admin']
           }
         },
         approval_code: {
