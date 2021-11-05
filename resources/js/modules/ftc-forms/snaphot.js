@@ -193,7 +193,6 @@ function LeadSnapShot() {
       );
       const data = await response.json();
       dispatch({ type: 'email_template', state: data?.data });
-
     } else if (data === 'carQuotePolicy') {
       const response = await fetch(
         `/form/car_quote_request/${paramRef.current.id}`,
@@ -218,7 +217,7 @@ function LeadSnapShot() {
       } else {
         dispatch({ type: 'carQuotePolicy' });
       }
-    }else{
+    } else {
       dispatch({ type: data });
     }
   };
