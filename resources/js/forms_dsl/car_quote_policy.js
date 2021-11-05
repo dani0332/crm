@@ -198,7 +198,7 @@ const carQuotePolicy = {
       },
       sections: [
         {
-          label: 'Transcation',
+          label: 'Car Quote Policy Record',
           fields: [
             'customer',
             'approval_code',
@@ -206,11 +206,6 @@ const carQuotePolicy = {
             'payment_mode_id',
             'typeofinsurance',
             'insurance_company_id',
-          ],
-        },
-        {
-          label: 'Car Quote Policy Record',
-          fields: [
             'quote_number',
             'policy_number',
             'issue_date',
