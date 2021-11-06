@@ -26,7 +26,7 @@ class Transaction extends Model implements AuditableContract
 
     public function customer()
     {
-        return $this->hasOne(Customer::class, 'customer_id', 'id');
+        return $this->hasOne(Customer::class, 'id', 'customer_id');
     }
 
     public function assignedto()
@@ -37,6 +37,19 @@ class Transaction extends Model implements AuditableContract
     {
         return $this->belongsTo(TypeOfInsurance::class,'type_of_insurance_id','id');
     }
+
+
+    public function insurance_company_id()
+    {
+        return $this->hasOne(InsuranceCompany::class, 'id', 'insurance_company_id');
+    }
+
+    public function payment_mode_id()
+    {
+        return $this->hasOne(PaymentMode::class, 'id', 'payment_mode_id');
+    }
+
+    
     public function createdby()
     {
         return $this->belongsTo(User::class,'created_by_id','id');

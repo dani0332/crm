@@ -217,7 +217,7 @@ function DrawForm(props) {
                         if (formState === 'new') getAccess = access?.write;
                         if (formState === 'edit') getAccess = access?.update;
                         if (formState === 'read') getAccess = access?.read;
-                        if (!getAccess.includes(role)) {
+                        if (!getAccess || !getAccess.includes(role)) {
                           return <div></div>;
                         }
                       }
