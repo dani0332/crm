@@ -30,6 +30,9 @@ return [
     'car_quote_payment' => [
         'model' => CarQuotePayment::class
     ],
+    'car_quote_policy' => [
+        'model' => CarQuotePolicy::class
+    ],
     'ftc_quote_status_history' => [
         'model' => FtcQuoteStatusHistory::class
     ],
@@ -48,6 +51,9 @@ return [
     'kyc_statuses' => [
         'model' => KycStatus::class
     ],
+    'teams' => [
+        'model' => Teams::class
+    ],
     'quote_status' => [
         'model' => QuoteStatus::class
     ],
@@ -65,5 +71,8 @@ return [
     ],
     'car_quote_aml_status_lookup' => [
         'model' => CarQuoteAMLStatusLookup::class
-    ]
+    ],
+    'type_of_insurances' => [
+        'model' => CarTypeInsurance::class
+    ],
 ];

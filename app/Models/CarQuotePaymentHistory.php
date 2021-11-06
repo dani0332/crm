@@ -19,12 +19,14 @@ class CarQuotePaymentHistory extends BaseModel
         'delete' => ['invoicing'],
         'access' => [
             "pa" => [],
+            "production_approval_manager" => [],
             "advisor" => [],
             "admin" => [],
             "invoicing" => [ 'car_quote_id', 'status', 'notes' ]
         ],
         "list" => [
             "pa" => ['id', 'car_quote_id', 'status', 'notes'],
+            "production_approval_manager" => ['id', 'car_quote_id', 'status', 'notes'],
             "advisor" => [ 'id', 'car_quote_id', 'status', 'notes'],
             "admin" => ['id', 'car_quote_id', 'status', 'notes'],
             "invoicing" => ['id', 'car_quote_id', 'status', 'notes' ]
@@ -33,7 +35,7 @@ class CarQuotePaymentHistory extends BaseModel
 
     public function processGetDSL($filters, $request) {
         return self::processGetBaseDSL($filters);
-     }
+    }
 
      public function saveForm($request, $update = false) {
 

@@ -82,6 +82,7 @@ Route::group(['middleware' =>  ['auth']], function () {
     Route::post('/customer-process', [CustomerController::class, 'processCustomerCSV']);
 
     Route::resource('renewals', RenewalsUploadController::class);
+    Route::get('/renewals-list', [RenewalsUploadController::class, 'index']);
     Route::get('/renewals-upload', [RenewalsUploadController::class, 'uploadRenewals']);
     Route::post('/renewals-process', [RenewalsUploadController::class, 'processRenewalsCSV']);
 
@@ -153,7 +154,9 @@ Route::group(['middleware' =>  ['auth']], function () {
         Route::get('aml/{quoteTypeId}/details/{quoteRequestId}', [AMLController::class, 'amlQuoteDetails']);
         Route::get('aml/{quoteTypeId}/details/{quoteRequestId}/quoteStatusUpdate/{quoteTypeCode}', [AMLController::class, 'quoteStatusUpdate'])->name('quoteStatusUpdate');
         Route::get('aml/{quoteTypeId}/details/{quoteRequestId}/quoteUpdate', [AMLController::class, 'quoteUpdate'])->name('quoteUpdate');
+        Route::get('aml/download/history', [AMLController::class, 'sanctionListHistory'])->name('sanctionListHistory');
     });
+
 
     Route::group(['prefix' => 'discount'], function () {
         Route::resource('base', BaseDiscountController::class);
