@@ -31,9 +31,16 @@ class FTCMailerService extends Mailable
     {
         $fromEmail = Config::get('constants.MAIL_FROM_ADDRESS');
         $fromName = Config::get('constants.MAIL_FROM_NAME');
-        return $this
+        $email = $this
             ->subject($this->request['subject'])
             ->from($fromEmail, $fromName)
             ->view('email.'. $this->request['templateName'].'', collect($this->request['templateParams'])->toArray());
+
+        $attachment =   collect($this->request['templateParams']['attachment'])->toArray();
+        foreach($attachment as $filePath){
+            $email->attach($filePath);
+        }
+
+        return $email;
     }
 }

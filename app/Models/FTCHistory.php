@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use App\Models\BaseModel;
 use App\Models\CarQuote;
+use App\Models\FtcDocument;
 use App\Models\CarQuoteEmailUniqueLink;
 use Auth;
 use App\Jobs\FTCMailServiceJob;
@@ -95,6 +96,14 @@ class FTCHistory extends BaseModel
                             'templateName' => 'ftc_mail',
                             'templateParams' => $templateParams
                         ];
+
+                        $attachment = FtcDocument::where(['car_quote_id' => $carQuote->id, 'document' => 9])->get();
+                        if(sizeof($attachment) > 0){
+                            $params['templateParams']['attachment'] = [];
+                            foreach ($attachment as $model) {
+                                $params['templateParams']['attachment'][] = $model->file_name;
+                            }
+                        }
                         dispatch(new FTCMailServiceJob($params));
                     }else{
                         return $this->APIController->respondData(["message" => "Something wrong"], 500);
