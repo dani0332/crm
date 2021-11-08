@@ -159,13 +159,16 @@ class CRUDController extends Controller
             }
         }
 
+        $quoteAttr = $this->{ strtolower($this->genericModel->modelType).'QuoteService'}->getEntityPlain($id);
+        $quoteAttrUuId = $quoteAttr->uuid;
+
         if($this->genericModel->modelType == "Car") { // Car plans to display on detail view
             $quotePlans = $this->carQuoteService->getQuotePlans($id);
             $listQuotePlans = $quotePlans->quotes->plans;
-            return view('shared.show', compact(['record', 'model', 'customTitles', 'listQuotePlans', 'customTableList']));
+            return view('shared.show', compact(['record', 'model', 'customTitles', 'listQuotePlans', 'customTableList','quoteAttrUuId']));
         }
         else {
-            return view('shared.show', compact(['record', 'model', 'customTitles', 'customTableList']));
+            return view('shared.show', compact(['record', 'model', 'customTitles', 'customTableList','quoteAttrUuId']));
         }
     }
 

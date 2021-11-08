@@ -86,7 +86,7 @@
         </div>
     </div>
 
-    <form method="post" action="#{{-- {{ $record->id }}/quotePlansGenerate--}}" class="form-horizontal form-label-left" role="form" data-parsley-validate=""novalidate="" autocomplete="off">
+    <form method="post" action="#{{--{{ $record[0]->id }}/quotePlansGenerate--}}" class="form-horizontal form-label-left" role="form" data-parsley-validate=""novalidate="" autocomplete="off">
         {{csrf_field()}}
         @method('GET')
         <div class="row">
@@ -101,7 +101,8 @@
                             <div class="col-auto mr-auto"></div>
                             <div class="col-auto">
                                 <input type="hidden" id="selectquotePlanId" name="selectquotePlanId" value="">
-                                <button type="submit" id="quotePlansGenerateButton" name="quotePlansGenerateButton" class="btn btn-warning btn-sm">Generate Quote</button>
+                                <input type="hidden" id="selectquoteUuId" name="selectquoteUuId" value="{{ $quoteAttrUuId }}">
+                                <button type="button" id="quotePlansGenerateButton" name="quotePlansGenerateButton" class="btn btn-warning btn-sm">Generate Quote</button>
                             </div>
                         </div>
                         <table id="datatable" class="table table-striped jambo_table" style="width:100%">
@@ -111,8 +112,7 @@
                                     <th>Plan Name</th>
                                     <th>Repair Type</th>
                                     <th>Actual Premium</th>
-                                    <th>VAT Premium</th>
-                                    <th>Discount Premium</th>
+                                    <th>Premium with VAT</th>
                                     <th> </th>
                                 </tr>
                             </thead>
@@ -125,8 +125,7 @@
                                         <td>{{ ucwords($quotePlan->name) }}</td>
                                         <td>{{ $quotePlan->repairType }}</td>
                                         <td>{{ $quotePlan->actualPremium }}</td>
-                                        <td>{{ $quotePlan->vatPremium }}</td>
-                                        <td>{{ $quotePlan->discountPremium }}</td>
+                                        <td>{{ $quotePlan->actualPremium + $quotePlan->vatPremium }}</td>
                                         <td><a testurl="{{ $record[0]->id }}/plan_details/{{ $quotePlan->id }}" class="btn btn-primary btn-sm m-2 quotePlanModalPopup" data-toggle="modal" data-target="#quotePlanModal">Plan Details</a></td>
                                     </tr>
                                 @endforeach

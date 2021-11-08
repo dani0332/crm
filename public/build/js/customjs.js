@@ -1561,6 +1561,10 @@ $(document).ready(function() {
             quotePlanIDs.push($(this).val());
         });
         $('#selectquotePlanId').val(quotePlanIDs);
+        //var selectquoteUuId = 'vOBEwgDJZsCMvB0u';
+        var selectquoteUuId = $('#selectquoteUuId').val();
+        var url = "https://ecom-ma.alfred.ae/car-insurance/view/quote/"+selectquoteUuId+"?plan="+quotePlanIDs;
+        window.open(url, '_blank');
         console.log("quotePlanIDs: " + quotePlanIDs);
     });
 
