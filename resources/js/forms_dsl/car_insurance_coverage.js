@@ -47,6 +47,8 @@ let insuranceDetail = {
               'invoicing',
               'production_approval_manager',
             ],
+            write: ['advisor', 'admin'],
+            update: ['advisor', 'admin'],
           },
           transform(item) {
             if (Array.isArray(item)) {

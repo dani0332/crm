@@ -16677,7 +16677,9 @@ var insuranceDetail = {
             required: true
           },
           access: {
-            read: ['pa', 'advisor', 'admin', 'invoicing', 'production_approval_manager']
+            read: ['pa', 'advisor', 'admin', 'invoicing', 'production_approval_manager'],
+            write: ['advisor', 'admin'],
+            update: ['advisor', 'admin']
           },
           transform: function transform(item) {
             if (Array.isArray(item)) {
