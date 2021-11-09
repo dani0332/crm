@@ -1,6 +1,11 @@
 @extends('layouts.app')
 @section('title', $model->modelType.' Detail')
 @section('content')
+<style>
+#quote-plans table.dataTable thead .sorting_asc:after {
+    content: none !important;
+}
+</style>
     <div class="row">
         <div class="col-md-12 col-sm-12 admin-detail">
             <div class="x_panel">
@@ -86,7 +91,7 @@
         </div>
     </div>
 
-    <form method="post" action="#{{--{{ $record[0]->id }}/quotePlansGenerate--}}" class="form-horizontal form-label-left" role="form" data-parsley-validate=""novalidate="" autocomplete="off">
+    <form method="post" action="#" class="form-horizontal form-label-left" role="form" data-parsley-validate=""novalidate="" autocomplete="off">
         {{csrf_field()}}
         @method('GET')
         <div class="row">
@@ -105,32 +110,34 @@
                                 <button type="button" id="quotePlansGenerateButton" name="quotePlansGenerateButton" class="btn btn-warning btn-sm">Generate Quote</button>
                             </div>
                         </div>
-                        <table id="datatable" class="table table-striped jambo_table" style="width:100%">
-                            <thead>
-                                <tr>
-                                    <th>Provider Name</th>
-                                    <th>Plan Name</th>
-                                    <th>Repair Type</th>
-                                    <th>Actual Premium</th>
-                                    <th>Premium with VAT</th>
-                                    <th> </th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach ($listQuotePlans as $key => $quotePlan)
+                        <div id="quote-plans">
+                            <table id="datatable" class="table table-striped jambo_table" style="width:100%">
+                                <thead>
                                     <tr>
-                                        <td><span><input type="checkbox" id="quotePlanId" name="quotePlanId" value="{{ $quotePlan->id }}" style="height: unset !important;"></span>
-                                            <span>{{ ucwords($quotePlan->providerName) }}</span></td>
-                                        {{-- <td><a href="{{ $record->id }}/plan_details/{{ $quotePlan->id }}" target="_blank">{{ ucwords($quotePlan->name) }}</td> --}}
-                                        <td>{{ ucwords($quotePlan->name) }}</td>
-                                        <td>{{ $quotePlan->repairType }}</td>
-                                        <td>{{ $quotePlan->actualPremium }}</td>
-                                        <td>{{ $quotePlan->actualPremium + $quotePlan->vatPremium }}</td>
-                                        <td><a testurl="{{ $record[0]->id }}/plan_details/{{ $quotePlan->id }}" class="btn btn-primary btn-sm m-2 quotePlanModalPopup" data-toggle="modal" data-target="#quotePlanModal">Plan Details</a></td>
+                                        <th> </th>
+                                        <th>Provider Name</th>
+                                        <th>Plan Name</th>
+                                        <th>Repair Type</th>
+                                        <th>Actual Premium</th>
+                                        <th>Premium with VAT</th>
+                                        <th>Action</th>
                                     </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    @foreach ($listQuotePlans as $key => $quotePlan)
+                                        <tr>
+                                            <td><input type="checkbox" class="flat" id="quotePlanId" name="quotePlanId" value="{{ $quotePlan->id }}" style="height: unset !important;"></td>
+                                            <td>{{ ucwords($quotePlan->providerName) }}</td>
+                                            <td>{{ ucwords($quotePlan->name) }}</td>
+                                            <td>{{ $quotePlan->repairType }}</td>
+                                            <td>{{ $quotePlan->actualPremium }}</td>
+                                            <td>{{ $quotePlan->actualPremium + $quotePlan->vatPremium }}</td>
+                                            <td><a href="#" testurl="{{ $record[0]->id }}/plan_details/{{ $quotePlan->id }}" data-toggle="modal" data-target="#quotePlanModal" class="quotePlanModalPopup">View</a></td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>

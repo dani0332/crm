@@ -1546,15 +1546,23 @@ $(document).ready(function() {
     });
 
     $("#quotePlansGenerateButton").hide(300);
-    $(document).on("change", "#quotePlanId", function() {
+    $(document).on('ifChecked', '#quotePlanId', function() {
         var countSelectedQuotePlanIds = document.querySelectorAll('#quotePlanId:checked').length;
-
         if (countSelectedQuotePlanIds > 0) {
             $("#quotePlansGenerateButton").show(300);
         } else {
             $("#quotePlansGenerateButton").hide(300);
         }
     });
+    $(document).on('ifUnchecked', '#quotePlanId', function() {
+        var countSelectedQuotePlanIds = document.querySelectorAll('#quotePlanId:checked').length;
+        if (countSelectedQuotePlanIds > 0) {
+            $("#quotePlansGenerateButton").show(300);
+        } else {
+            $("#quotePlansGenerateButton").hide(300);
+        }
+    });
+
     $("#quotePlansGenerateButton").click(function() {
         var quotePlanIDs = [];
         $.each($("input[name='quotePlanId']:checked"), function() {
