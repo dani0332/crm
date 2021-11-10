@@ -37,8 +37,9 @@
                     <div class="item form-group">
                         <p><h4>Required file format</h4></p>
                         <p><ul>
-                            <li>File must be a xlsx file with the following fields.</li>
+                            <li>File must be a xls file with the following fields.</li>
                             <li>Please ensure max allowed size is 2mb (2048kb)</li>
+                            <li>File name should always be => <strong>UAESanctionlist.xls</strong></li>
                         </ul></p>
                     </div>
                     <div class="item form-group">

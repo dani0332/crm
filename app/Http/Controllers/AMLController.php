@@ -385,11 +385,11 @@ class AMLController extends Controller
 
     public function uaeSanctionListUpload(Request $request) {
         $this->validate($request, [
-            'file_name' => 'required|mimetypes:text/anytext,application/octet-stream,application/txt,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet|max:2048',
+            'file_name' => 'required|mimetypes:application/vnd.ms-excel,text/anytext,application/octet-stream,application/txt,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet|max:2048',
         ]);
 
         $fileNameOriginal = $request->file_name->getClientOriginalName();
-        $fileNameAzure = get_guid().'_'.$fileNameOriginal;
+        $fileNameAzure = date('d-m-Y').'_'.$fileNameOriginal;
         $filePathAzure = $request->file('file_name')->storeAs('/', $fileNameAzure, 'azure2');
 
         return redirect('/kyc/aml/upload/uae')->with('success', 'UAE Sanction list uploaded successfully');
