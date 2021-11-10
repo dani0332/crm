@@ -92,7 +92,7 @@ class FTCHistory extends BaseModel
 
                         $params = [
                             'to' => $carQuote->email,
-                            'subject' => 'Required Additional Document - CDB-ID:'.$carQuote->code,
+                            'subject' => $carQuote->first_name.' '.$carQuote->last_name. '`s Car Insurance',
                             'templateName' => 'ftc_mail',
                             'templateParams' => $templateParams
                         ];
