@@ -1525,6 +1525,38 @@ $(document).ready(function() {
         ]
     });
 
+    $('.rewardsliders-data-table').DataTable({
+        ordering: false,
+        info: false,
+        searching: false,
+        bLengthChange: false,
+        serverSide: true,
+        ajax: config.routes.reward_sliders_datatable_route,
+        columns: [{
+                data: 'id',
+                name: 'id',
+                render: function(data, type, row) {
+                    return "<a href='" + config.routes.reward_sliders_datatable_route + '/' + row.id + "'>" + row.id + "</a>"
+                }
+            },
+            {
+                data: "image",
+                name: "image",
+                render: function(data, type, row, meta) {
+                    var imgsrc = config.image_path + data;
+                    return (
+                        '<img class="img-responsive" src="' + imgsrc + '" alt="image" height="40px" width="40px">'
+                    );
+                },
+            },
+            { data: 'link', name: 'link' },
+            { data: 'sort_order', name: 'sort_order' },
+            { data: 'is_active', name: 'is_active' },
+            { data: 'created_at', name: 'created_at' },
+            { data: 'updated_at', name: 'updated_at' },
+        ]
+    });
+
     //select/unselect all checkboxes if this selected
     $("#select_all_checkboxes").click(function(e) {
         var isChecked = e.target.checked;

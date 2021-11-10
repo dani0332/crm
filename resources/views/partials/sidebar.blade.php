@@ -35,6 +35,9 @@
                                 @can('reward-tags-list')
                                     <li><a href="{{ url('rewards/reward-tags') }}">Reward Tags</a></li>
                                 @endcan
+                                @can('reward-sliders-list')
+                                <li><a href="{{ url('rewards/reward-sliders') }}">Reward Slider</a></li>
+                            @endcan
                             </ul>
                         </li>
                     </ul>
