@@ -17471,6 +17471,24 @@ var leadRequest = {
               update: []
             }
           }, {
+            type: 'text',
+            label: 'Customer email',
+            field: 'email',
+            access: {
+              read: ['advisor'],
+              write: [],
+              update: []
+            }
+          }, {
+            type: 'text',
+            label: 'Phone number',
+            field: 'mobile_no',
+            access: {
+              read: ['advisor'],
+              write: [],
+              update: []
+            }
+          }, {
             type: 'dropdown',
             label: 'Lead List',
             field: 'pa_id',
@@ -17493,13 +17511,37 @@ var leadRequest = {
           Header: 'CDB ID',
           accessor: 'code'
         }, {
-          Header: 'Client Name',
+          Header: 'Created on',
+          accessor: 'created_at'
+        }, {
+          Header: 'Customer Name',
           accessor: function accessor(d) {
             return "".concat(d.first_name, " ").concat(d.last_name);
           }
         }, {
-          Header: 'Created on',
-          accessor: 'created_at'
+          Header: 'Lead Status',
+          accessor: function accessor(d) {
+            var _d$quote_status_id;
+
+            return "".concat((_d$quote_status_id = d.quote_status_id) === null || _d$quote_status_id === void 0 ? void 0 : _d$quote_status_id.text);
+          }
+        }, {
+          Header: 'Production Agent',
+          accessor: function accessor(d) {
+            var _d$pa_id;
+
+            return "".concat(d === null || d === void 0 ? void 0 : (_d$pa_id = d.pa_id) === null || _d$pa_id === void 0 ? void 0 : _d$pa_id.name);
+          }
+        }, {
+          Header: 'Payment Agent',
+          accessor: function accessor(d) {
+            var _d$invoicing;
+
+            return "".concat(d === null || d === void 0 ? void 0 : (_d$invoicing = d.invoicing) === null || _d$invoicing === void 0 ? void 0 : _d$invoicing.name);
+          }
+        }, {
+          Header: 'Last Modified',
+          accessor: 'updated_at'
         }],
         events: {
           // applyFilter(options){

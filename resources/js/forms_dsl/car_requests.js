@@ -117,6 +117,26 @@ const leadRequest = {
               },
             },
             {
+              type: 'text',
+              label: 'Customer email',
+              field: 'email',
+              access: {
+                read: ['advisor'],
+                write: [],
+                update: [],
+              },
+            },
+            {
+              type: 'text',
+              label: 'Phone number',
+              field: 'mobile_no',
+              access: {
+                read: ['advisor'],
+                write: [],
+                update: [],
+              },
+            },
+            {
               type: 'dropdown',
               label: 'Lead List',
               field: 'pa_id',
@@ -139,12 +159,27 @@ const leadRequest = {
             accessor: 'code',
           },
           {
-            Header: 'Client Name',
-            accessor: d => `${d.first_name} ${d.last_name}`,
-          },
-          {
             Header: 'Created on',
             accessor: 'created_at',
+          },
+          {
+            Header: 'Customer Name',
+            accessor: d => `${d.first_name} ${d.last_name}`,
+          },{
+            Header: 'Lead Status',
+            accessor: d => `${d.quote_status_id?.text}`,
+          },
+          {
+            Header: 'Production Agent',
+            accessor: d => `${d?.pa_id?.name}`,
+          },
+          {
+            Header: 'Payment Agent',
+            accessor: d => `${d?.invoicing?.name}`,
+          },
+          {
+            Header: 'Last Modified',
+            accessor: 'updated_at',
           },
         ],
         events: {
