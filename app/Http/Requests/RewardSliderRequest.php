@@ -24,23 +24,10 @@ class RewardSliderRequest extends FormRequest
      */
     public function rules()
     {
-        switch ($this->method()) {
-            case 'POST':
-                return [
-                    'image' => 'required|image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
-                    'link' => 'required|max:1000',
-                    'sort_order' => 'required|integer',
-                ];
-                break;
-            case 'PUT':
-                return [
-                    'image' => 'image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
-                    'link' => 'required|max:1000',
-                    'sort_order' => 'required|integer',
-                ];
-            default:
-                break;
-        }
-
+        return [
+                'image' => ($this->method() == 'POST' ? 'required|': '') . 'image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
+                'link' => ($this->method() == 'POST' ? 'required|': '') .'max:1000',
+                'sort_order' => ($this->method() == 'POST' ? 'required|': '') .'integer'
+        ];
     }
 }
