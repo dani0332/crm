@@ -14412,16 +14412,18 @@ function DatePickerField(_ref) {
       controller = _ref.controller;
 
   var _useState = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(null),
-      _useState2 = _slicedToArray(_useState, 1),
-      startDate = _useState2[0];
+      _useState2 = _slicedToArray(_useState, 2),
+      startDate = _useState2[0],
+      setStartDate = _useState2[1];
 
   (0,react__WEBPACK_IMPORTED_MODULE_0__.useEffect)(function () {
     controller.onChange(null);
   }, []);
 
   var onChange = function onChange(date) {
-    var formatDate = moment__WEBPACK_IMPORTED_MODULE_1___default()(date).format('YYYY/MM/DD').toString();
-    controller.onChange(formatDate);
+    var formatDate = moment__WEBPACK_IMPORTED_MODULE_1___default()(date).format('yyyy-MM-DD').toString();
+    controller === null || controller === void 0 ? void 0 : controller.onChange(formatDate);
+    setStartDate(date);
 
     if (typeof (field === null || field === void 0 ? void 0 : field.dispatch) === 'function') {
       field.dispatch({
@@ -14443,7 +14445,7 @@ function DatePickerField(_ref) {
   return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__.jsx)((react_datepicker__WEBPACK_IMPORTED_MODULE_4___default()), {
     disabled: shouldDisable,
     className: "form-control",
-    dateFormat: "yyyy/MM/dd",
+    dateFormat: "yyyy-MM-dd",
     selected: startDate ? startDate : field !== null && field !== void 0 && field.value ? new Date(field.value) : null,
     onChange: onChange
   });
@@ -15330,7 +15332,7 @@ function SelectField(_ref) {
 
   var onFocus = /*#__PURE__*/function () {
     var _ref2 = _asyncToGenerator( /*#__PURE__*/_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().mark(function _callee() {
-      var options, defaultValue, _field$value3, url;
+      var options, defaultValue, _field$value3, filter, queryParamObj, params, url;
 
       return _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().wrap(function _callee$(_context) {
         while (1) {
@@ -15370,14 +15372,28 @@ function SelectField(_ref) {
 
             case 6:
               if (!(data.data.length < 1)) {
-                _context.next = 12;
+                _context.next = 14;
                 break;
               }
 
               setData(_objectSpread(_objectSpread({}, data), {}, {
                 loading: true
               }));
-              url = "/form/".concat(field.source);
+              filter = '';
+
+              if (_typeof(field === null || field === void 0 ? void 0 : field.filter) === 'object') {
+                queryParamObj = {
+                  filter: JSON.stringify(field === null || field === void 0 ? void 0 : field.filter)
+                };
+                params = new URLSearchParams(queryParamObj);
+                filter = "/?".concat(params.toString());
+              } else if (typeof (field === null || field === void 0 ? void 0 : field.filter) === 'string') {
+                filter = "".concat(field === null || field === void 0 ? void 0 : field.filter);
+              } else {
+                filter = "";
+              }
+
+              url = "/form/".concat(field.source).concat(filter);
               (0,_sagas__WEBPACK_IMPORTED_MODULE_2__.dispatchPromise)({
                 dispatch: dispatch,
                 options: {
@@ -15395,13 +15411,13 @@ function SelectField(_ref) {
               })["catch"](function (error) {
                 console.log(error); //setData({ ...data, data: [], isDisabled : false, loading: false })
               });
-              _context.next = 13;
+              _context.next = 15;
               break;
 
-            case 12:
+            case 14:
               return _context.abrupt("return");
 
-            case 13:
+            case 15:
             case "end":
               return _context.stop();
           }
@@ -17383,7 +17399,7 @@ var leadRequest = {
   getForm: function getForm() {
     var form = {
       db_table: 'car_quote_request',
-      title: 'Leads Request',
+      title: 'Lead Listing',
       access: {
         read: ['pa', 'advisor', 'admin', 'invoicing', 'production_approval_manager', 'production_approval_manager'],
         write: [],
@@ -17490,6 +17506,43 @@ var leadRequest = {
             }
           }, {
             type: 'dropdown',
+            label: 'Lead Status',
+            field: 'quote_status_id',
+            source: 'quote_status',
+            access: {
+              read: ['advisor'],
+              write: [],
+              update: []
+            }
+          }, {
+            type: 'dropdown',
+            label: 'Production Agent',
+            field: 'pa_id',
+            source: 'users',
+            filter: {
+              name: 'pa'
+            },
+            access: {
+              read: ['advisor'],
+              write: [],
+              update: []
+            },
+            transform: function transform(item) {
+              if (Array.isArray(item)) {
+                var items = item.map(function (u) {
+                  return {
+                    value: u === null || u === void 0 ? void 0 : u.id,
+                    label: u === null || u === void 0 ? void 0 : u.name
+                  };
+                });
+                return items;
+              } else return {
+                value: item === null || item === void 0 ? void 0 : item.id,
+                label: item === null || item === void 0 ? void 0 : item.name
+              };
+            }
+          }, {
+            type: 'dropdown',
             label: 'Lead List',
             field: 'pa_id',
             source: [{
@@ -17504,6 +17557,16 @@ var leadRequest = {
               write: [],
               update: []
             }
+          }, {
+            type: 'datePicker',
+            label: 'Created At',
+            field: 'created_at',
+            access: {
+              read: ['pa', 'advisor', 'admin', 'invoicing', 'production_approval_manager'],
+              write: ['advisor', 'admin'],
+              update: ['advisor', 'admin']
+            } // rules: { required: true }
+
           }],
           advanced: []
         },

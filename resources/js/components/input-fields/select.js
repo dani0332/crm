@@ -153,7 +153,19 @@ export default function SelectField({ field, controller }) {
 
     if (data.data.length < 1) {
       setData({ ...data, loading: true });
-      const url = `/form/${field.source}`;
+
+      let filter = '';
+      if (typeof field?.filter === 'object') {
+        let queryParamObj = { filter: JSON.stringify(field?.filter) };
+        const params = new URLSearchParams(queryParamObj);
+        filter = `/?${params.toString()}`;
+      } else if (typeof field?.filter === 'string') {
+        filter = `${field?.filter}`;
+      } else {
+        filter = ``;
+      }
+
+      const url = `/form/${field.source}${filter}`;
       dispatchPromise({
         dispatch: dispatch,
         options: {

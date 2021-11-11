@@ -7,7 +7,7 @@ const leadRequest = {
   getForm() {
     const form = {
       db_table: 'car_quote_request',
-      title: 'Leads Request',
+      title: 'Lead Listing',
       access: {
         read: [
           'pa',
@@ -138,6 +138,37 @@ const leadRequest = {
             },
             {
               type: 'dropdown',
+              label: 'Lead Status',
+              field: 'quote_status_id',
+              source: 'quote_status',
+              access: {
+                read: ['advisor'],
+                write: [],
+                update: [],
+              },
+            },
+            {
+              type: 'dropdown',
+              label: 'Production Agent',
+              field: 'pa_id',
+              source: 'users',
+              filter: { name : 'pa'},
+              access: {
+                read: ['advisor'],
+                write: [],
+                update: [],
+              },
+              transform(item) {
+                if (Array.isArray(item)) {
+                  const items = item.map(u => {
+                    return { value: u?.id, label: u?.name };
+                  });
+                  return items;
+                } else return { value: item?.id, label: item?.name };
+              },
+            },
+            {
+              type: 'dropdown',
               label: 'Lead List',
               field: 'pa_id',
               source: [
@@ -149,6 +180,23 @@ const leadRequest = {
                 write: [],
                 update: [],
               },
+            },
+             {
+              type: 'datePicker',
+              label: 'Created At',
+              field: 'created_at',
+              access: {
+                read: [
+                  'pa',
+                  'advisor',
+                  'admin',
+                  'invoicing',
+                  'production_approval_manager',
+                ],
+                write: ['advisor', 'admin'],
+                update: ['advisor', 'admin'],
+              },
+              // rules: { required: true }
             },
           ],
           advanced: [],

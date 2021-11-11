@@ -82,6 +82,8 @@ class User extends Authenticatable implements AuditableContract
 
     public function processGetDSL($filters = []) {
 
+
+        
         if(Auth::user()->hasRole('production_approval_manager')) {
 
             $users =  User::select(['id', 'name'])->whereHas(
@@ -91,6 +93,21 @@ class User extends Authenticatable implements AuditableContract
             )
             ->get();
             return $users;
+        }
+
+        if(Auth::user()->hasRole('advisor')) {
+
+            $users =  User::select(['id', 'name'])->whereHas(
+                'roles', function($q) use($filters) {
+                    foreach($filters as $key => $value) {
+                        $q->where($key,$value);
+                    }
+                }
+            )
+            ->get();
+
+            return $users;
+
         }
 
 
