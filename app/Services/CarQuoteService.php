@@ -226,6 +226,7 @@ class CarQuoteService extends BaseService
             }
         }
 
+        $this->query .= ' ORDER BY cqr.created_at DESC';
         return DB::select($this->query);
     }
 

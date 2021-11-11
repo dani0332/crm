@@ -49,11 +49,11 @@
                     <ul class="nav side-menu">
                         <li><a><i class="fa fa-quote-left"></i> Personal Quotes <span class="fa fa-chevron-down"></span></a>
                             <ul class="nav child_menu">
-                                @can('car-quotes-list')
+                                {{-- @can('car-quotes-list')
                                     <li><a href="{{ url('quotes/carquotes') }}">Car Quotes</a></li>
-                                @endcan
+                                @endcan --}}
                                 @can('car-quotes-list')
-                                    <li><a href="{{ url('quotes/car') }}">New Car Quotes</a></li>
+                                    <li><a href="{{ url('quotes/car') }}">Car Quotes</a></li>
                                 @endcan
                                 @can('health-quotes-list')
                                     <li><a href="{{ url('quotes/health') }}">Health Quotes</a></li>

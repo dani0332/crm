@@ -1546,21 +1546,33 @@ $(document).ready(function () {
     });
 
     $("#quotePlansGenerateButton").hide(300);
-    $(document).on("change", "#quotePlanId", function () {
+    $(document).on('ifChecked', '#quotePlanId', function() {
         var countSelectedQuotePlanIds = document.querySelectorAll('#quotePlanId:checked').length;
-
         if (countSelectedQuotePlanIds > 0) {
             $("#quotePlansGenerateButton").show(300);
         } else {
             $("#quotePlansGenerateButton").hide(300);
         }
     });
-    $("#quotePlansGenerateButton").click(function () {
+    $(document).on('ifUnchecked', '#quotePlanId', function() {
+        var countSelectedQuotePlanIds = document.querySelectorAll('#quotePlanId:checked').length;
+        if (countSelectedQuotePlanIds > 0) {
+            $("#quotePlansGenerateButton").show(300);
+        } else {
+            $("#quotePlansGenerateButton").hide(300);
+        }
+    });
+
+    $("#quotePlansGenerateButton").click(function() {
         var quotePlanIDs = [];
         $.each($("input[name='quotePlanId']:checked"), function () {
             quotePlanIDs.push($(this).val());
         });
         $('#selectquotePlanId').val(quotePlanIDs);
+        //var selectquoteUuId = 'vOBEwgDJZsCMvB0u';
+        var selectquoteUuId = $('#selectquoteUuId').val();
+        var url = "https://ecom-ma.alfred.ae/car-insurance/view/quote/"+selectquoteUuId+"?plan="+quotePlanIDs;
+        window.open(url, '_blank');
         console.log("quotePlanIDs: " + quotePlanIDs);
     });
 
