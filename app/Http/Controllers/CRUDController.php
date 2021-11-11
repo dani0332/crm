@@ -33,7 +33,6 @@ class CRUDController extends Controller
     protected $homeQuoteService;
     protected $businessQuoteService;
     protected $userService;
-    protected $quoteTypes;
     public function __construct(
         HealthQuoteService $healthService,
         TeamService $teamsService,
@@ -61,7 +60,6 @@ class CRUDController extends Controller
         $this->userService = $userService;
         $this->setModelType(request());
         $this->fillModelByModelType(ucwords($this->genericModel->modelType));
-        $this->quoteTypes = 'Health,Car,Travel,Life,Home,Business';
     }
 
     /**
@@ -253,7 +251,8 @@ class CRUDController extends Controller
 
     private function fillModelByModelType($modelType)
     {
-        $serviceType = str_contains($this->quoteTypes, $modelType) ? strtolower($modelType) . 'QuoteService' : lcfirst(ucwords($modelType)) . 'Service';
+        $quoteTypes = 'Health,Car,Travel,Life,Home,Business';
+        $serviceType = str_contains($quoteTypes, ucwords($modelType)) ? strtolower($modelType) . 'QuoteService' : lcfirst(ucwords($modelType)) . 'Service';
         $this->genericModel->properties = $this->{$serviceType}->fillModelProperties();
         $this->genericModel->skipProperties = $this->{$serviceType}->fillModelSkipProperties();
         $this->genericModel->searchProperties = $this->{$serviceType}->fillModelSearchProperties();
