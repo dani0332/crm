@@ -1,4 +1,4 @@
-$(document).ready(function() {
+$(document).ready(function () {
     $(".selectpicker").selectpicker();
     $("#datepicker").datepicker({ dateFormat: "yy-mm-dd" });
     $("#datepicker_2").datepicker({ dateFormat: "yy-mm-dd" });
@@ -72,18 +72,18 @@ $(document).ready(function() {
             },
         },
         errorElement: 'span',
-        errorPlacement: function(error, element) {
+        errorPlacement: function (error, element) {
             error.addClass('invalid-feedback').attr('style', 'font-size: 17px');
             element.closest('.form-group').append(error);
         },
-        highlight: function(element, errorClass, validClass) {
+        highlight: function (element, errorClass, validClass) {
             $(element).addClass('is-invalid');
         },
-        unhighlight: function(element, errorClass, validClass) {
+        unhighlight: function (element, errorClass, validClass) {
             $(element).removeClass('is-invalid');
         }
     });
-    $('#calculateValuation').click(function() {
+    $('#calculateValuation').click(function () {
         if ($('#search-valuation').valid()) {
             var carMake = $('#car_make_value option:selected').val();
             var carModel = $('#car_model_value option:selected').val();
@@ -93,13 +93,13 @@ $(document).ready(function() {
                 url: config.routes.valuation_api_route + 'get-vehicle-value',
                 type: "post",
                 data: { carModelDetailId: carTrim, yearOfManufacture: yom },
-                success: function(response) {
+                success: function (response) {
                     $('#carValue').text(Number(response.carValue).toFixed(2));
                     $('#uLimit').text(Number(response.carValueUpperLimit).toFixed(2));
                     $('#lLimit').text(Number(response.carValueLowerLimit).toFixed(2));
                     $('#result').show();
                 },
-                error: function(jqXHR, textStatus, errorThrown) {
+                error: function (jqXHR, textStatus, errorThrown) {
                     if (jqXHR.responseJSON.msg == 'Car Trim Not found') {
                         $('#error').show();
                         $('#error').text('Cannot calculate depreciation without trim');
@@ -113,7 +113,7 @@ $(document).ready(function() {
             });
         }
     });
-    $('#reset').click(function() {
+    $('#reset').click(function () {
         $('#result').hide();
         $('#carValue').text('');
         $('#uLimit').text('');
@@ -127,7 +127,7 @@ $(document).ready(function() {
         fullscreen: false,
         // imageUpload: true, // Activate the option
         // uploadPath: 'upload.php',
-        onPreview: function(content, callback) {
+        onPreview: function (content, callback) {
             callback(marked(content));
         },
     });
@@ -137,7 +137,7 @@ $(document).ready(function() {
         fullscreen: false,
         // imageUpload: true, // Activate the option
         // uploadPath: 'upload.php',
-        onPreview: function(content, callback) {
+        onPreview: function (content, callback) {
             callback(marked(content));
         },
     });
@@ -147,7 +147,7 @@ $(document).ready(function() {
         fullscreen: false,
         // imageUpload: true, // Activate the option
         // uploadPath: 'upload.php',
-        onPreview: function(content, callback) {
+        onPreview: function (content, callback) {
             callback(marked(content));
         },
     });
@@ -157,7 +157,7 @@ $(document).ready(function() {
         fullscreen: false,
         // imageUpload: true, // Activate the option
         // uploadPath: 'upload.php',
-        onPreview: function(content, callback) {
+        onPreview: function (content, callback) {
             callback(marked(content));
         },
     });
@@ -177,37 +177,37 @@ $(document).ready(function() {
         bLengthChange: false,
         ajax: config.routes.partner_datatable_route,
         columns: [{
-                data: "id",
-                name: "id",
-                render: function(data, type, row) {
-                    return (
-                        "<a href='" +
-                        config.routes.partner_datatable_route +
-                        "/" +
-                        row.id +
-                        "'>" +
-                        row.id +
-                        "</a>"
-                    );
-                },
+            data: "id",
+            name: "id",
+            render: function (data, type, row) {
+                return (
+                    "<a href='" +
+                    config.routes.partner_datatable_route +
+                    "/" +
+                    row.id +
+                    "'>" +
+                    row.id +
+                    "</a>"
+                );
             },
-            { data: "name", name: "name" },
-            { data: "name_ar", name: "name_ar" },
-            {
-                data: "logo_image",
-                name: "logo_image",
-                render: function(data, type, row, meta) {
-                    var imgsrc = config.image_path + data; // here data should be in base64 string
-                    return (
-                        '<img class="img-responsive" src="' +
-                        imgsrc +
-                        '" alt="logo_image" height="40px" width="40px">'
-                    );
-                },
+        },
+        { data: "name", name: "name" },
+        { data: "name_ar", name: "name_ar" },
+        {
+            data: "logo_image",
+            name: "logo_image",
+            render: function (data, type, row, meta) {
+                var imgsrc = config.image_path + data; // here data should be in base64 string
+                return (
+                    '<img class="img-responsive" src="' +
+                    imgsrc +
+                    '" alt="logo_image" height="40px" width="40px">'
+                );
             },
-            { data: "is_active", name: "is_active" },
-            { data: "created_at", name: "created_at" },
-            { data: "updated_at", name: "updated_at" },
+        },
+        { data: "is_active", name: "is_active" },
+        { data: "created_at", name: "created_at" },
+        { data: "updated_at", name: "updated_at" },
         ],
     });
 
@@ -218,26 +218,26 @@ $(document).ready(function() {
         bLengthChange: false,
         ajax: config.routes.reward_categories_datatable_route,
         columns: [{
-                data: "id",
-                name: "id",
-                render: function(data, type, row) {
-                    return (
-                        "<a href='" +
-                        config.routes.reward_categories_datatable_route +
-                        "/" +
-                        row.id +
-                        "'>" +
-                        row.id +
-                        "</a>"
-                    );
-                },
+            data: "id",
+            name: "id",
+            render: function (data, type, row) {
+                return (
+                    "<a href='" +
+                    config.routes.reward_categories_datatable_route +
+                    "/" +
+                    row.id +
+                    "'>" +
+                    row.id +
+                    "</a>"
+                );
             },
-            { data: "text", name: "text" },
-            { data: "text_ar", name: "text_ar" },
-            { data: "sort_order", name: "sort_order" },
-            { data: "is_active", name: "is_active" },
-            { data: "created_at", name: "created_at" },
-            { data: "updated_at", name: "updated_at" },
+        },
+        { data: "text", name: "text" },
+        { data: "text_ar", name: "text_ar" },
+        { data: "sort_order", name: "sort_order" },
+        { data: "is_active", name: "is_active" },
+        { data: "created_at", name: "created_at" },
+        { data: "updated_at", name: "updated_at" },
         ],
     });
 
@@ -248,26 +248,26 @@ $(document).ready(function() {
         bLengthChange: false,
         ajax: config.routes.reward_tags_datatable_route,
         columns: [{
-                data: "id",
-                name: "id",
-                render: function(data, type, row) {
-                    return (
-                        "<a href='" +
-                        config.routes.reward_tags_datatable_route +
-                        "/" +
-                        row.id +
-                        "'>" +
-                        row.id +
-                        "</a>"
-                    );
-                },
+            data: "id",
+            name: "id",
+            render: function (data, type, row) {
+                return (
+                    "<a href='" +
+                    config.routes.reward_tags_datatable_route +
+                    "/" +
+                    row.id +
+                    "'>" +
+                    row.id +
+                    "</a>"
+                );
             },
-            { data: "text", name: "text" },
-            { data: "text_ar", name: "text_ar" },
-            { data: "sort_order", name: "sort_order" },
-            { data: "is_active", name: "is_active" },
-            { data: "created_at", name: "created_at" },
-            { data: "updated_at", name: "updated_at" },
+        },
+        { data: "text", name: "text" },
+        { data: "text_ar", name: "text_ar" },
+        { data: "sort_order", name: "sort_order" },
+        { data: "is_active", name: "is_active" },
+        { data: "created_at", name: "created_at" },
+        { data: "updated_at", name: "updated_at" },
         ],
     });
 
@@ -278,26 +278,26 @@ $(document).ready(function() {
         bLengthChange: false,
         ajax: config.routes.reward_datatable_route,
         columns: [{
-                data: "id",
-                name: "id",
-                render: function(data, type, row) {
-                    return (
-                        "<a href='" +
-                        config.routes.reward_datatable_route +
-                        "/" +
-                        row.id +
-                        "'>" +
-                        row.id +
-                        "</a>"
-                    );
-                },
+            data: "id",
+            name: "id",
+            render: function (data, type, row) {
+                return (
+                    "<a href='" +
+                    config.routes.reward_datatable_route +
+                    "/" +
+                    row.id +
+                    "'>" +
+                    row.id +
+                    "</a>"
+                );
             },
-            { data: "coupon_code", name: "coupon_code" },
-            { data: "partner", name: "partner" },
-            { data: "discount", name: "discount" },
-            { data: "start_date", name: "start_date" },
-            { data: "end_date", name: "end_date" },
-            { data: "is_active", name: "is_active" },
+        },
+        { data: "coupon_code", name: "coupon_code" },
+        { data: "partner", name: "partner" },
+        { data: "discount", name: "discount" },
+        { data: "start_date", name: "start_date" },
+        { data: "end_date", name: "end_date" },
+        { data: "is_active", name: "is_active" },
         ],
     });
 
@@ -309,32 +309,32 @@ $(document).ready(function() {
         serverSide: true,
         ajax: {
             url: config.routes.user_datatable_route,
-            data: function(d) {
+            data: function (d) {
                 d.email = $("#users_email").val();
                 d.name = $("#users_name").val();
             }
         },
         columns: [{
-                data: "id",
-                name: "id",
-                render: function(data, type, row) {
-                    return (
-                        "<a href='" +
-                        config.routes.user_datatable_route +
-                        "/" +
-                        row.id +
-                        "'>" +
-                        row.id +
-                        "</a>"
-                    );
-                },
+            data: "id",
+            name: "id",
+            render: function (data, type, row) {
+                return (
+                    "<a href='" +
+                    config.routes.user_datatable_route +
+                    "/" +
+                    row.id +
+                    "'>" +
+                    row.id +
+                    "</a>"
+                );
             },
-            { data: "name", name: "name" },
-            { data: "email", name: "email" },
-            { data: "roles", name: "roles" },
-            { data: "teamName", name: "teamName" },
-            { data: 'created_at', name: 'created_at' },
-            { data: 'updated_at', name: 'updated_at' },
+        },
+        { data: "name", name: "name" },
+        { data: "email", name: "email" },
+        { data: "roles", name: "roles" },
+        { data: "teamName", name: "teamName" },
+        { data: 'created_at', name: 'created_at' },
+        { data: 'updated_at', name: 'updated_at' },
         ],
     });
 
@@ -346,23 +346,23 @@ $(document).ready(function() {
         serverSide: true,
         ajax: config.routes.role_datatable_route,
         columns: [{
-                data: "id",
-                name: "id",
-                render: function(data, type, row) {
-                    return (
-                        "<a href='" +
-                        config.routes.role_datatable_route +
-                        "/" +
-                        row.id +
-                        "'>" +
-                        row.id +
-                        "</a>"
-                    );
-                },
+            data: "id",
+            name: "id",
+            render: function (data, type, row) {
+                return (
+                    "<a href='" +
+                    config.routes.role_datatable_route +
+                    "/" +
+                    row.id +
+                    "'>" +
+                    row.id +
+                    "</a>"
+                );
             },
-            { data: "name", name: "name" },
-            { data: 'created_at', name: 'created_at' },
-            { data: 'updated_at', name: 'updated_at' },
+        },
+        { data: "name", name: "name" },
+        { data: 'created_at', name: 'created_at' },
+        { data: 'updated_at', name: 'updated_at' },
         ],
     });
 
@@ -374,18 +374,18 @@ $(document).ready(function() {
         serverSide: true,
         ajax: config.routes.insurancecompany_datatable_route,
         columns: [{
-                data: 'id',
-                name: 'id',
-                render: function(data, type, row) {
-                    return "<a href='" + config.routes.insurancecompany_datatable_route + '/' + row.id + "'>" + row.id + "</a>"
-                }
-            },
-            { data: "name", name: "name" },
-            { data: "is_active", name: "is_active" },
-            { data: "created_by", name: "created_by" },
-            { data: "updated_by", name: "updated_by" },
-            { data: "created_at", name: "created_at" },
-            { data: "updated_at", name: "updated_at" },
+            data: 'id',
+            name: 'id',
+            render: function (data, type, row) {
+                return "<a href='" + config.routes.insurancecompany_datatable_route + '/' + row.id + "'>" + row.id + "</a>"
+            }
+        },
+        { data: "name", name: "name" },
+        { data: "is_active", name: "is_active" },
+        { data: "created_by", name: "created_by" },
+        { data: "updated_by", name: "updated_by" },
+        { data: "created_at", name: "created_at" },
+        { data: "updated_at", name: "updated_at" },
         ],
     });
 
@@ -397,18 +397,18 @@ $(document).ready(function() {
         serverSide: true,
         ajax: config.routes.handler_datatable_route,
         columns: [{
-                data: 'id',
-                name: 'id',
-                render: function(data, type, row) {
-                    return "<a href='" + config.routes.handler_datatable_route + '/' + row.id + "'>" + row.id + "</a>"
-                }
-            },
-            { data: "name", name: "name" },
-            { data: "is_active", name: "is_active" },
-            { data: "created_by", name: "created_by" },
-            { data: "updated_by", name: "updated_by" },
-            { data: "created_at", name: "created_at" },
-            { data: "updated_at", name: "updated_at" },
+            data: 'id',
+            name: 'id',
+            render: function (data, type, row) {
+                return "<a href='" + config.routes.handler_datatable_route + '/' + row.id + "'>" + row.id + "</a>"
+            }
+        },
+        { data: "name", name: "name" },
+        { data: "is_active", name: "is_active" },
+        { data: "created_by", name: "created_by" },
+        { data: "updated_by", name: "updated_by" },
+        { data: "created_at", name: "created_at" },
+        { data: "updated_at", name: "updated_at" },
         ],
     });
 
@@ -420,18 +420,18 @@ $(document).ready(function() {
         serverSide: true,
         ajax: config.routes.status_datatable_route,
         columns: [{
-                data: 'id',
-                name: 'id',
-                render: function(data, type, row) {
-                    return "<a href='" + config.routes.status_datatable_route + '/' + row.id + "'>" + row.id + "</a>"
-                }
-            },
-            { data: "name", name: "name" },
-            { data: "is_active", name: "is_active" },
-            { data: "created_by", name: "created_by" },
-            { data: "updated_by", name: "updated_by" },
-            { data: "created_at", name: "created_at" },
-            { data: "updated_at", name: "updated_at" },
+            data: 'id',
+            name: 'id',
+            render: function (data, type, row) {
+                return "<a href='" + config.routes.status_datatable_route + '/' + row.id + "'>" + row.id + "</a>"
+            }
+        },
+        { data: "name", name: "name" },
+        { data: "is_active", name: "is_active" },
+        { data: "created_by", name: "created_by" },
+        { data: "updated_by", name: "updated_by" },
+        { data: "created_at", name: "created_at" },
+        { data: "updated_at", name: "updated_at" },
         ],
     });
 
@@ -443,7 +443,7 @@ $(document).ready(function() {
         serverSide: true,
         ajax: {
             url: config.routes.transaction_datatable_route,
-            data: function(d) {
+            data: function (d) {
                 d.transapp_start_date = $("#transapp_start_date").val();
                 d.transapp_stop_date = $("#transapp_stop_date").val();
                 d.transactor = $("#transactor_value").val();
@@ -471,7 +471,7 @@ $(document).ready(function() {
         ]
     });
 
-    $("#search-transactions").submit(function(e) {
+    $("#search-transactions").submit(function (e) {
         e.preventDefault();
         $(".loader").show();
         transactionsDatatable.draw();
@@ -480,7 +480,7 @@ $(document).ready(function() {
         }, 1000);
     });
 
-    $("#search-users").submit(function(e) {
+    $("#search-users").submit(function (e) {
         e.preventDefault();
         $(".loader").show();
         usersDataTable.draw();
@@ -497,18 +497,18 @@ $(document).ready(function() {
         serverSide: true,
         ajax: config.routes.reason_datatable_route,
         columns: [{
-                data: 'id',
-                name: 'id',
-                render: function(data, type, row) {
-                    return "<a href='" + config.routes.reason_datatable_route + '/' + row.id + "'>" + row.id + "</a>"
-                }
-            },
-            { data: "name", name: "name" },
-            { data: "is_active", name: "is_active" },
-            { data: "created_by", name: "created_by" },
-            { data: "updated_by", name: "updated_by" },
-            { data: "created_at", name: "created_at" },
-            { data: "updated_at", name: "updated_at" },
+            data: 'id',
+            name: 'id',
+            render: function (data, type, row) {
+                return "<a href='" + config.routes.reason_datatable_route + '/' + row.id + "'>" + row.id + "</a>"
+            }
+        },
+        { data: "name", name: "name" },
+        { data: "is_active", name: "is_active" },
+        { data: "created_by", name: "created_by" },
+        { data: "updated_by", name: "updated_by" },
+        { data: "created_at", name: "created_at" },
+        { data: "updated_at", name: "updated_at" },
         ],
     });
 
@@ -520,18 +520,18 @@ $(document).ready(function() {
         serverSide: true,
         ajax: config.routes.paymentmode_datatable_route,
         columns: [{
-                data: 'id',
-                name: 'id',
-                render: function(data, type, row) {
-                    return "<a href='" + config.routes.paymentmode_datatable_route + '/' + row.id + "'>" + row.id + "</a>"
-                }
-            },
-            { data: "name", name: "name" },
-            { data: "is_active", name: "is_active" },
-            { data: "created_by", name: "created_by" },
-            { data: "updated_by", name: "updated_by" },
-            { data: "created_at", name: "created_at" },
-            { data: "updated_at", name: "updated_at" },
+            data: 'id',
+            name: 'id',
+            render: function (data, type, row) {
+                return "<a href='" + config.routes.paymentmode_datatable_route + '/' + row.id + "'>" + row.id + "</a>"
+            }
+        },
+        { data: "name", name: "name" },
+        { data: "is_active", name: "is_active" },
+        { data: "created_by", name: "created_by" },
+        { data: "updated_by", name: "updated_by" },
+        { data: "created_at", name: "created_at" },
+        { data: "updated_at", name: "updated_at" },
         ],
     });
 
@@ -543,7 +543,7 @@ $(document).ready(function() {
         serverSide: true,
         ajax: {
             url: config.routes.carquote_datatable_route,
-            data: function(d) {
+            data: function (d) {
                 d.searchtype = $("#search_type").val();
                 d.searchfield = $("input[name=searchfield]").val();
                 d.quotestatus = $("#quote_status_value").val();
@@ -551,22 +551,22 @@ $(document).ready(function() {
             },
         },
         columns: [{
-                data: 'id',
-                name: 'id',
-                render: function(data, type, row) {
-                    return "<a href='" + config.routes.carquote_datatable_route + '/' + row.id + "'>" + row.id + "</a>"
-                }
-            },
-            { data: "car_value", name: "car_value" },
-            { data: "is_synced", name: "is_synced" },
-            { data: "device", name: "device" },
-            { data: "code", name: "code" },
-            { data: "created_at", name: "created_at" },
-            { data: "updated_at", name: "updated_at" },
+            data: 'id',
+            name: 'id',
+            render: function (data, type, row) {
+                return "<a href='" + config.routes.carquote_datatable_route + '/' + row.id + "'>" + row.id + "</a>"
+            }
+        },
+        { data: "car_value", name: "car_value" },
+        { data: "is_synced", name: "is_synced" },
+        { data: "device", name: "device" },
+        { data: "code", name: "code" },
+        { data: "created_at", name: "created_at" },
+        { data: "updated_at", name: "updated_at" },
         ],
     });
 
-    $("#search-car-quote").submit(function(e) {
+    $("#search-car-quote").submit(function (e) {
         e.preventDefault();
         $(".loader").show();
         carquoteDatatable.draw();
@@ -575,13 +575,13 @@ $(document).ready(function() {
         }, 1000);
     });
 
-    $("#resubmit_api_carquote").click(function() {
+    $("#resubmit_api_carquote").click(function () {
         $(".loader").show();
         $("#resubmit_api_carquote").attr("disabled", true);
         var data_id = $(this).attr("data-id");
         var carQuotes = [];
         if (data_id != "") carQuotes.push(data_id);
-        $(".multicheckbox").each(function(index) {
+        $(".multicheckbox").each(function (index) {
             if ($(this).prop("checked")) {
                 var id = $(this).attr("data-id");
                 carQuotes.push(id);
@@ -592,7 +592,7 @@ $(document).ready(function() {
                 url: config.routes.carquote_resubmitap_route,
                 type: "post",
                 data: { car_quotes: carQuotes, _token: config._token },
-                success: function(response) {
+                success: function (response) {
                     $(".loader").hide();
                     $("#success_message").show();
                     $("#success_message")
@@ -601,16 +601,16 @@ $(document).ready(function() {
 
                     $(".carquote-data-table").DataTable().ajax.reload();
 
-                    setTimeout(function() {
+                    setTimeout(function () {
                         $("#resubmit_api_carquote").attr("disabled", false);
                         $("#success_message").fadeOut("slow");
                     }, 3000);
                 },
-                error: function(jqXHR, textStatus, errorThrown) {
+                error: function (jqXHR, textStatus, errorThrown) {
                     $(".loader").hide();
                     $("#error_message").show();
                     $("#error_message").fadeIn().html(errorThrown);
-                    setTimeout(function() {
+                    setTimeout(function () {
                         $("#resubmit_api_carquote").attr("disabled", false);
                         $("#error_message").fadeOut("slow");
                     }, 3000);
@@ -620,7 +620,7 @@ $(document).ready(function() {
             $(".loader").hide();
             $("#error_message").show();
             $("#error_message").fadeIn().html("Please select atleast one row");
-            setTimeout(function() {
+            setTimeout(function () {
                 $("#resubmit_api_carquote").attr("disabled", false);
                 $("#error_message").fadeOut("slow");
             }, 3000);
@@ -635,18 +635,18 @@ $(document).ready(function() {
         serverSide: true,
         ajax: config.routes.healthquote_datatable_route,
         columns: [{
-                data: 'id',
-                name: 'id',
-                render: function(data, type, row) {
-                    return "<a href='" + config.routes.healthquote_datatable_route + '/' + row.id + "'>" + row.id + "</a>"
-                }
-            },
-            { data: "preference", name: "preference" },
-            { data: "is_synced", name: "is_synced" },
-            { data: "device", name: "device" },
-            { data: "code", name: "code" },
-            { data: "created_at", name: "created_at" },
-            { data: "updated_at", name: "updated_at" },
+            data: 'id',
+            name: 'id',
+            render: function (data, type, row) {
+                return "<a href='" + config.routes.healthquote_datatable_route + '/' + row.id + "'>" + row.id + "</a>"
+            }
+        },
+        { data: "preference", name: "preference" },
+        { data: "is_synced", name: "is_synced" },
+        { data: "device", name: "device" },
+        { data: "code", name: "code" },
+        { data: "created_at", name: "created_at" },
+        { data: "updated_at", name: "updated_at" },
         ],
     });
 
@@ -658,7 +658,7 @@ $(document).ready(function() {
         serverSide: true,
         ajax: {
             url: config.routes.claim_datatable_route,
-            data: function(d) {
+            data: function (d) {
                 d.searchtype = $("#search_type").val();
                 d.searchfield = $("input[name=searchfield]").val();
                 d.claimstatus = $("#claim_status_value").val();
@@ -667,26 +667,26 @@ $(document).ready(function() {
             },
         },
         columns: [{
-                data: 'id',
-                name: 'id',
-                render: function(data, type, row) {
-                    return "<a href='" + config.routes.claim_datatable_route + '/' + row.id + "'>" + row.id + "</a>"
-                }
-            },
-            { data: 'ticket_number', name: 'ticket_number' },
-            { data: 'policy_number', name: 'policy_number' },
-            { data: 'first_name', name: 'first_name' },
-            { data: 'last_name', name: 'last_name' },
-            { data: 'email_address', name: 'email_address' },
-            { data: 'phone_number', name: 'phone_number' },
-            { data: 'type_of_insurance_text', name: 'type_of_insurance_text' },
-            { data: 'claims_status_text', name: 'claims_status_text' },
-            { data: 'created_at', name: 'created_at' },
-            { data: 'updated_at', name: 'updated_at' },
+            data: 'id',
+            name: 'id',
+            render: function (data, type, row) {
+                return "<a href='" + config.routes.claim_datatable_route + '/' + row.id + "'>" + row.id + "</a>"
+            }
+        },
+        { data: 'ticket_number', name: 'ticket_number' },
+        { data: 'policy_number', name: 'policy_number' },
+        { data: 'first_name', name: 'first_name' },
+        { data: 'last_name', name: 'last_name' },
+        { data: 'email_address', name: 'email_address' },
+        { data: 'phone_number', name: 'phone_number' },
+        { data: 'type_of_insurance_text', name: 'type_of_insurance_text' },
+        { data: 'claims_status_text', name: 'claims_status_text' },
+        { data: 'created_at', name: 'created_at' },
+        { data: 'updated_at', name: 'updated_at' },
         ]
     });
 
-    $("#search-claims").submit(function(e) {
+    $("#search-claims").submit(function (e) {
         e.preventDefault();
         $(".loader").show();
         claimsDatatable.draw();
@@ -703,18 +703,18 @@ $(document).ready(function() {
         serverSide: true,
         ajax: config.routes.typeofinsurance_datatable_route,
         columns: [{
-                data: 'id',
-                name: 'id',
-                render: function(data, type, row) {
-                    return "<a href='" + config.routes.typeofinsurance_datatable_route + '/' + row.id + "'>" + row.id + "</a>"
-                }
-            },
-            { data: 'text', name: 'text' },
-            { data: 'text_ar', name: 'text_ar' },
-            { data: 'sort_order', name: 'sort_order' },
-            { data: 'is_active', name: 'is_active' },
-            { data: 'created_at', name: 'created_at' },
-            { data: 'updated_at', name: 'updated_at' },
+            data: 'id',
+            name: 'id',
+            render: function (data, type, row) {
+                return "<a href='" + config.routes.typeofinsurance_datatable_route + '/' + row.id + "'>" + row.id + "</a>"
+            }
+        },
+        { data: 'text', name: 'text' },
+        { data: 'text_ar', name: 'text_ar' },
+        { data: 'sort_order', name: 'sort_order' },
+        { data: 'is_active', name: 'is_active' },
+        { data: 'created_at', name: 'created_at' },
+        { data: 'updated_at', name: 'updated_at' },
         ]
     });
 
@@ -726,26 +726,26 @@ $(document).ready(function() {
         serverSide: true,
         ajax: config.routes.vehicledepreciation_datatable_route,
         columns: [{
-                data: 'id',
-                name: 'id',
-                render: function(data, type, row) {
-                    return "<a href='" + config.routes.vehicledepreciation_datatable_route + '/' + row.id + "'>" + row.id + "</a>"
-                }
-            },
-            { data: 'car_make_text', name: 'car_make_text' },
-            { data: 'car_model_text', name: 'car_model_text' },
-            { data: 'first_year', name: 'first_year' },
-            { data: 'second_year', name: 'first_year' },
-            { data: 'third_year', name: 'first_year' },
-            { data: 'fourth_year', name: 'first_year' },
-            { data: 'fifth_year', name: 'first_year' },
-            { data: 'sixth_year', name: 'first_year' },
-            { data: 'seventh_year', name: 'first_year' },
-            { data: 'eighth_year', name: 'first_year' },
-            { data: 'ninth_year', name: 'first_year' },
-            { data: 'tenth_year', name: 'first_year' },
-            { data: 'upper_limit', name: 'first_year' },
-            { data: 'lower_limit', name: 'first_year' },
+            data: 'id',
+            name: 'id',
+            render: function (data, type, row) {
+                return "<a href='" + config.routes.vehicledepreciation_datatable_route + '/' + row.id + "'>" + row.id + "</a>"
+            }
+        },
+        { data: 'car_make_text', name: 'car_make_text' },
+        { data: 'car_model_text', name: 'car_model_text' },
+        { data: 'first_year', name: 'first_year' },
+        { data: 'second_year', name: 'first_year' },
+        { data: 'third_year', name: 'first_year' },
+        { data: 'fourth_year', name: 'first_year' },
+        { data: 'fifth_year', name: 'first_year' },
+        { data: 'sixth_year', name: 'first_year' },
+        { data: 'seventh_year', name: 'first_year' },
+        { data: 'eighth_year', name: 'first_year' },
+        { data: 'ninth_year', name: 'first_year' },
+        { data: 'tenth_year', name: 'first_year' },
+        { data: 'upper_limit', name: 'first_year' },
+        { data: 'lower_limit', name: 'first_year' },
         ]
     });
 
@@ -757,18 +757,18 @@ $(document).ready(function() {
         serverSide: true,
         ajax: config.routes.subtypeofinsurance_datatable_route,
         columns: [{
-                data: 'id',
-                name: 'id',
-                render: function(data, type, row) {
-                    return "<a href='" + config.routes.subtypeofinsurance_datatable_route + '/' + row.id + "'>" + row.id + "</a>"
-                }
-            },
-            { data: 'text', name: 'text' },
-            { data: 'text_ar', name: 'text_ar' },
-            { data: 'sort_order', name: 'sort_order' },
-            { data: 'is_active', name: 'is_active' },
-            { data: 'created_at', name: 'created_at' },
-            { data: 'updated_at', name: 'updated_at' },
+            data: 'id',
+            name: 'id',
+            render: function (data, type, row) {
+                return "<a href='" + config.routes.subtypeofinsurance_datatable_route + '/' + row.id + "'>" + row.id + "</a>"
+            }
+        },
+        { data: 'text', name: 'text' },
+        { data: 'text_ar', name: 'text_ar' },
+        { data: 'sort_order', name: 'sort_order' },
+        { data: 'is_active', name: 'is_active' },
+        { data: 'created_at', name: 'created_at' },
+        { data: 'updated_at', name: 'updated_at' },
         ]
     });
 
@@ -780,18 +780,18 @@ $(document).ready(function() {
         serverSide: true,
         ajax: config.routes.claimsstatus_datatable_route,
         columns: [{
-                data: 'id',
-                name: 'id',
-                render: function(data, type, row) {
-                    return "<a href='" + config.routes.claimsstatus_datatable_route + '/' + row.id + "'>" + row.id + "</a>"
-                }
-            },
-            { data: 'text', name: 'text' },
-            { data: 'text_ar', name: 'text_ar' },
-            { data: 'sort_order', name: 'sort_order' },
-            { data: 'is_active', name: 'is_active' },
-            { data: 'created_at', name: 'created_at' },
-            { data: 'updated_at', name: 'updated_at' },
+            data: 'id',
+            name: 'id',
+            render: function (data, type, row) {
+                return "<a href='" + config.routes.claimsstatus_datatable_route + '/' + row.id + "'>" + row.id + "</a>"
+            }
+        },
+        { data: 'text', name: 'text' },
+        { data: 'text_ar', name: 'text_ar' },
+        { data: 'sort_order', name: 'sort_order' },
+        { data: 'is_active', name: 'is_active' },
+        { data: 'created_at', name: 'created_at' },
+        { data: 'updated_at', name: 'updated_at' },
         ]
     });
 
@@ -803,18 +803,18 @@ $(document).ready(function() {
         serverSide: true,
         ajax: config.routes.carrepaircoverage_datatable_route,
         columns: [{
-                data: 'id',
-                name: 'id',
-                render: function(data, type, row) {
-                    return "<a href='" + config.routes.carrepaircoverage_datatable_route + '/' + row.id + "'>" + row.id + "</a>"
-                }
-            },
-            { data: 'text', name: 'text' },
-            { data: 'text_ar', name: 'text_ar' },
-            { data: 'sort_order', name: 'sort_order' },
-            { data: 'is_active', name: 'is_active' },
-            { data: 'created_at', name: 'created_at' },
-            { data: 'updated_at', name: 'updated_at' },
+            data: 'id',
+            name: 'id',
+            render: function (data, type, row) {
+                return "<a href='" + config.routes.carrepaircoverage_datatable_route + '/' + row.id + "'>" + row.id + "</a>"
+            }
+        },
+        { data: 'text', name: 'text' },
+        { data: 'text_ar', name: 'text_ar' },
+        { data: 'sort_order', name: 'sort_order' },
+        { data: 'is_active', name: 'is_active' },
+        { data: 'created_at', name: 'created_at' },
+        { data: 'updated_at', name: 'updated_at' },
         ]
     });
 
@@ -826,26 +826,26 @@ $(document).ready(function() {
         serverSide: true,
         ajax: config.routes.carrepairtype_datatable_route,
         columns: [{
-                data: 'id',
-                name: 'id',
-                render: function(data, type, row) {
-                    return "<a href='" + config.routes.carrepairtype_datatable_route + '/' + row.id + "'>" + row.id + "</a>"
-                }
-            },
-            { data: 'text', name: 'text' },
-            { data: 'text_ar', name: 'text_ar' },
-            { data: 'sort_order', name: 'sort_order' },
-            { data: 'is_active', name: 'is_active' },
-            { data: 'created_at', name: 'created_at' },
-            { data: 'updated_at', name: 'updated_at' },
+            data: 'id',
+            name: 'id',
+            render: function (data, type, row) {
+                return "<a href='" + config.routes.carrepairtype_datatable_route + '/' + row.id + "'>" + row.id + "</a>"
+            }
+        },
+        { data: 'text', name: 'text' },
+        { data: 'text_ar', name: 'text_ar' },
+        { data: 'sort_order', name: 'sort_order' },
+        { data: 'is_active', name: 'is_active' },
+        { data: 'created_at', name: 'created_at' },
+        { data: 'updated_at', name: 'updated_at' },
         ]
     });
 
-    $('#car_make_id').on('change', function(e) {
+    $('#car_make_id').on('change', function (e) {
         var make_code = $("#car_make_id option:selected").attr('data-id');
-        $.get('/car-model?make_code=' + make_code, function(data) {
+        $.get('/car-model?make_code=' + make_code, function (data) {
             var carmodel = $('#car_model_id').empty();
-            $.each(data, function(create, carmodelObj) {
+            $.each(data, function (create, carmodelObj) {
                 var option = $('<option/>', { id: create, value: carmodelObj });
                 carmodel.append('<option data-id="' + carmodelObj.code + '" value="' + carmodelObj.id + '">' + carmodelObj.text + '</option>');
             });
@@ -855,9 +855,9 @@ $(document).ready(function() {
     // Claims-EditView: Populate models of selected car make
     var make_code = $("#car_make_id option:selected").attr('data-id');
     var old_car_model_id = $("#old_car_model_id").val();
-    $.get('/car-model?make_code=' + make_code, function(data) {
+    $.get('/car-model?make_code=' + make_code, function (data) {
         var carmodel = $('#car_model_id').empty();
-        $.each(data, function(create, carmodelObj) {
+        $.each(data, function (create, carmodelObj) {
             var option = $('<option/>', { id: create, value: carmodelObj });
             if (old_car_model_id == carmodelObj.id)
                 carmodel.append('<option selected data-id="' + carmodelObj.code + '" value="' + carmodelObj.id + '">' + carmodelObj.text + '</option>');
@@ -869,7 +869,7 @@ $(document).ready(function() {
     $("#sub_type_of_insurance").hide();
     $("#car_fields").hide();
     type_of_insurance_fields_visibility();
-    $('#type_of_insurances_id').on('change', function(e) {
+    $('#type_of_insurances_id').on('change', function (e) {
         type_of_insurance_fields_visibility();
     });
 
@@ -895,26 +895,26 @@ $(document).ready(function() {
         serverSide: true,
         ajax: {
             url: config.routes.customer_data_table_route,
-            data: function(d) {
+            data: function (d) {
                 d.searchtype = $("#search_type").val();
                 d.searchfield = $("#searchfield").val();
             },
         },
         columns: [{
-                data: 'id',
-                name: 'id',
-                render: function(data, type, row) {
-                    return "<a href='" + config.routes.customer_data_table_route + '/' + row.id + "'>" + row.id + "</a>"
-                }
-            },
-            { data: "first_name", name: "first_name" },
-            { data: "email", name: "email" },
-            { data: "mobile_no", name: "mobile_no" },
-            { data: "gender", name: "gender" },
-            { data: "has_alfred_access", name: "has_alfred_access" },
-            { data: "dob", name: "dob", orderable: false, searchable: false },
-            { data: "created_at", name: "created_at" },
-            { data: "updated_at", name: "updated_at" },
+            data: 'id',
+            name: 'id',
+            render: function (data, type, row) {
+                return "<a href='" + config.routes.customer_data_table_route + '/' + row.id + "'>" + row.id + "</a>"
+            }
+        },
+        { data: "first_name", name: "first_name" },
+        { data: "email", name: "email" },
+        { data: "mobile_no", name: "mobile_no" },
+        { data: "gender", name: "gender" },
+        { data: "has_alfred_access", name: "has_alfred_access" },
+        { data: "dob", name: "dob", orderable: false, searchable: false },
+        { data: "created_at", name: "created_at" },
+        { data: "updated_at", name: "updated_at" },
         ],
     });
 
@@ -926,25 +926,25 @@ $(document).ready(function() {
         serverSide: true,
         ajax: {
             url: config.routes.discount_base_data_table_route,
-            data: function(d) {
+            data: function (d) {
                 d.vehicle_type = $("#vehicle_type").val();
             },
         },
         columns: [{
-                data: 'id',
-                name: 'id',
-                render: function(data, type, row) {
-                    return "<a href='" + config.routes.discount_base_data_table_route + '/' + row.id + "'>" + row.id + "</a>"
-                }
-            },
-            { data: "value_start", name: "value_start" },
-            { data: "value_end", name: "value_end" },
-            { data: "vehicle_type_text", name: "vehicle_type_text" },
-            { data: "comprehensive_discount", name: "comprehensive_discount" },
-            { data: "agency_discount", name: "agency_discount" },
-            { data: "is_active", name: "is_active", orderable: false, searchable: false },
-            { data: "created_at", name: "created_at" },
-            { data: "updated_at", name: "updated_at" },
+            data: 'id',
+            name: 'id',
+            render: function (data, type, row) {
+                return "<a href='" + config.routes.discount_base_data_table_route + '/' + row.id + "'>" + row.id + "</a>"
+            }
+        },
+        { data: "value_start", name: "value_start" },
+        { data: "value_end", name: "value_end" },
+        { data: "vehicle_type_text", name: "vehicle_type_text" },
+        { data: "comprehensive_discount", name: "comprehensive_discount" },
+        { data: "agency_discount", name: "agency_discount" },
+        { data: "is_active", name: "is_active", orderable: false, searchable: false },
+        { data: "created_at", name: "created_at" },
+        { data: "updated_at", name: "updated_at" },
         ],
     });
 
@@ -958,21 +958,21 @@ $(document).ready(function() {
             url: config.routes.age_discount_datatable_route,
         },
         columns: [{
-                data: 'id',
-                name: 'id',
-                render: function(data, type, row) {
-                    return "<a href='" + config.routes.age_discount_datatable_route + '/' + row.id + "'>" + row.id + "</a>"
-                }
-            },
-            { data: "age_start", name: "age_start" },
-            { data: "age_end", name: "age_end" },
-            { data: "discount", name: "discount" },
-            { data: "created_at", name: "created_at" },
-            { data: "updated_at", name: "updated_at" },
+            data: 'id',
+            name: 'id',
+            render: function (data, type, row) {
+                return "<a href='" + config.routes.age_discount_datatable_route + '/' + row.id + "'>" + row.id + "</a>"
+            }
+        },
+        { data: "age_start", name: "age_start" },
+        { data: "age_end", name: "age_end" },
+        { data: "discount", name: "discount" },
+        { data: "created_at", name: "created_at" },
+        { data: "updated_at", name: "updated_at" },
         ],
     });
 
-    $("#search-customer").submit(function(e) {
+    $("#search-customer").submit(function (e) {
         e.preventDefault();
         $(".loader").show();
         customerDataTable.draw();
@@ -981,7 +981,7 @@ $(document).ready(function() {
         }, 1000);
     });
 
-    $("#search-vehicleTypes").submit(function(e) {
+    $("#search-vehicleTypes").submit(function (e) {
         e.preventDefault();
         $(".loader").show();
         vehicleTypeDataTable.draw();
@@ -990,7 +990,7 @@ $(document).ready(function() {
         }, 1000);
     });
 
-    $("#search-vehicleTypes-reset").click(function(e) {
+    $("#search-vehicleTypes-reset").click(function (e) {
         e.preventDefault();
         $(".loader").show();
         $("#vehicle_type").val($("#vehicle_type option:first").val());
@@ -1008,7 +1008,7 @@ $(document).ready(function() {
         serverSide: true,
         ajax: {
             url: config.routes.aml_datatable_route,
-            data: function(d) {
+            data: function (d) {
                 d.searchType = $("#searchType").val();
                 d.searchField = $("input[name=searchField]").val();
                 d.quoteType = $("#quoteTypeValue").val();
@@ -1018,48 +1018,48 @@ $(document).ready(function() {
             },
         },
         columns: [{
-                data: 'id',
-                name: 'id',
-                render: function(data, type, row) {
-                    return "<a href='" + config.routes.aml_datatable_route + '/' + row.id + "'>" + row.id + "</a>"
+            data: 'id',
+            name: 'id',
+            render: function (data, type, row) {
+                return "<a href='" + config.routes.aml_datatable_route + '/' + row.id + "'>" + row.id + "</a>"
+            }
+        },
+        { data: "quote_type_text", name: "quote_type_text" },
+        {
+            data: 'quote_request_id',
+            name: 'quote_request_id',
+            render: function (data, type, row) {
+                return "<a href='" + config.routes.aml_datatable_route + '/' + row.quote_type_id + '/details/' + row.quote_request_id + "'>" + row.cdb_id + "</a>"
+            }
+        },
+        { data: "input", name: "input" },
+        {
+            data: "screenshot",
+            name: "screenshot",
+            render: function (data, type, row, meta) {
+                var imgSrc = data;
+                if (imgSrc != null) {
+                    return (
+                        '<a href="' + imgSrc + '" target="_blank">' +
+                        '<img class="img-responsive" src="' + imgSrc + '" alt="screenshot" height="80px" width="80px"></a>'
+                    );
                 }
             },
-            { data: "quote_type_text", name: "quote_type_text" },
-            {
-                data: 'quote_request_id',
-                name: 'quote_request_id',
-                render: function(data, type, row) {
-                    return "<a href='" + config.routes.aml_datatable_route + '/' + row.quote_type_id + '/details/' + row.quote_request_id + "'>" + row.cdb_id + "</a>"
-                }
-            },
-            { data: "input", name: "input" },
-            {
-                data: "screenshot",
-                name: "screenshot",
-                render: function(data, type, row, meta) {
-                    var imgSrc = data;
-                    if (imgSrc != null) {
-                        return (
-                            '<a href="' + imgSrc + '" target="_blank">' +
-                            '<img class="img-responsive" src="' + imgSrc + '" alt="screenshot" height="80px" width="80px"></a>'
-                        );
-                    }
-                },
-            },
-            { data: "created_at", name: "created_at" },
-            { data: "updated_at", name: "updated_at" },
+        },
+        { data: "created_at", name: "created_at" },
+        { data: "updated_at", name: "updated_at" },
         ]
     });
 
     $("#aml-search-submit").hide();
     $("#aml-search-fields").hide();
-    $('#quoteTypeValue').on("change", function(e) {
+    $('#quoteTypeValue').on("change", function (e) {
         aml_search_filters_visiblity();
     });
 
     function aml_search_filters_visiblity() {
         var quoteTypeValue = $("#quoteTypeValue").val();
-        console.log("quoteTypeValue1: ",quoteTypeValue);
+        console.log("quoteTypeValue1: ", quoteTypeValue);
         if (quoteTypeValue != "") {
             $("#aml-search-fields").show(300);
             $("#aml-search-submit").show(300);
@@ -1069,18 +1069,18 @@ $(document).ready(function() {
         }
     }
 
-    $("#searchAML").submit(function(e) {
+    $("#searchAML").submit(function (e) {
         var amlCreatedStartDate = $("#amlCreatedStartDate").val();
         var amlCreatedEndDate = $("#amlCreatedEndDate").val();
         var searchType = $("#searchType").val();
 
-        if ( searchType == "" && (amlCreatedStartDate == "" || amlCreatedEndDate == "") ) {
+        if (searchType == "" && (amlCreatedStartDate == "" || amlCreatedEndDate == "")) {
             $("#amlCreatedStartDateMsg").html("Please select start & end dates");
             $('#amlCreatedStartDate').css('border-color', 'red');
             $('#amlCreatedEndDate').css('border-color', 'red');
             return false
         }
-        else if(amlCreatedStartDate != "" && amlCreatedEndDate != "") {
+        else if (amlCreatedStartDate != "" && amlCreatedEndDate != "") {
             var amlCreatedStartDateSet = new Date(amlCreatedStartDate);
             var amlCreatedEndDateSet = new Date(amlCreatedEndDate);
 
@@ -1136,19 +1136,19 @@ $(document).ready(function() {
         serverSide: true,
         ajax: config.routes.tminsurancetype_datatable_route,
         columns: [{
-                data: 'id',
-                name: 'id',
-                render: function(data, type, row) {
-                    return "<a href='" + config.routes.tminsurancetype_datatable_route + '/' + row.id + "'>" + row.id + "</a>"
-                }
-            },
-            { data: 'code', name: 'code' },
-            { data: 'text', name: 'text' },
-            { data: 'text_ar', name: 'text_ar' },
-            { data: 'sort_order', name: 'sort_order' },
-            { data: 'is_active', name: 'is_active' },
-            { data: 'created_at', name: 'created_at' },
-            { data: 'updated_at', name: 'updated_at' },
+            data: 'id',
+            name: 'id',
+            render: function (data, type, row) {
+                return "<a href='" + config.routes.tminsurancetype_datatable_route + '/' + row.id + "'>" + row.id + "</a>"
+            }
+        },
+        { data: 'code', name: 'code' },
+        { data: 'text', name: 'text' },
+        { data: 'text_ar', name: 'text_ar' },
+        { data: 'sort_order', name: 'sort_order' },
+        { data: 'is_active', name: 'is_active' },
+        { data: 'created_at', name: 'created_at' },
+        { data: 'updated_at', name: 'updated_at' },
         ]
     });
 
@@ -1160,19 +1160,19 @@ $(document).ready(function() {
         serverSide: true,
         ajax: config.routes.tmcallstatus_datatable_route,
         columns: [{
-                data: 'id',
-                name: 'id',
-                render: function(data, type, row) {
-                    return "<a href='" + config.routes.tmcallstatus_datatable_route + '/' + row.id + "'>" + row.id + "</a>"
-                }
-            },
-            { data: 'code', name: 'code' },
-            { data: 'text', name: 'text' },
-            { data: 'text_ar', name: 'text_ar' },
-            { data: 'sort_order', name: 'sort_order' },
-            { data: 'is_active', name: 'is_active' },
-            { data: 'created_at', name: 'created_at' },
-            { data: 'updated_at', name: 'updated_at' },
+            data: 'id',
+            name: 'id',
+            render: function (data, type, row) {
+                return "<a href='" + config.routes.tmcallstatus_datatable_route + '/' + row.id + "'>" + row.id + "</a>"
+            }
+        },
+        { data: 'code', name: 'code' },
+        { data: 'text', name: 'text' },
+        { data: 'text_ar', name: 'text_ar' },
+        { data: 'sort_order', name: 'sort_order' },
+        { data: 'is_active', name: 'is_active' },
+        { data: 'created_at', name: 'created_at' },
+        { data: 'updated_at', name: 'updated_at' },
         ]
     });
 
@@ -1184,19 +1184,19 @@ $(document).ready(function() {
         serverSide: true,
         ajax: config.routes.tmleadstatus_datatable_route,
         columns: [{
-                data: 'id',
-                name: 'id',
-                render: function(data, type, row) {
-                    return "<a href='" + config.routes.tmleadstatus_datatable_route + '/' + row.id + "'>" + row.id + "</a>"
-                }
-            },
-            { data: 'code', name: 'code' },
-            { data: 'text', name: 'text' },
-            { data: 'text_ar', name: 'text_ar' },
-            { data: 'sort_order', name: 'sort_order' },
-            { data: 'is_active', name: 'is_active' },
-            { data: 'created_at', name: 'created_at' },
-            { data: 'updated_at', name: 'updated_at' },
+            data: 'id',
+            name: 'id',
+            render: function (data, type, row) {
+                return "<a href='" + config.routes.tmleadstatus_datatable_route + '/' + row.id + "'>" + row.id + "</a>"
+            }
+        },
+        { data: 'code', name: 'code' },
+        { data: 'text', name: 'text' },
+        { data: 'text_ar', name: 'text_ar' },
+        { data: 'sort_order', name: 'sort_order' },
+        { data: 'is_active', name: 'is_active' },
+        { data: 'created_at', name: 'created_at' },
+        { data: 'updated_at', name: 'updated_at' },
         ]
     });
 
@@ -1215,7 +1215,7 @@ $(document).ready(function() {
         serverSide: true,
         ajax: {
             url: config.routes.tmlead_datatable_route,
-            data: function(d) {
+            data: function (d) {
                 d.searchType = $("#searchType").val();
                 d.searchField = $("input[name=searchField]").val();
                 d.assigned_to_id = $("#assigned_to_id").val();
@@ -1227,36 +1227,36 @@ $(document).ready(function() {
             },
         },
         columns: [{
-                data: "id",
-                name: "id",
-                render: function(data, type, row, meta) {
-                    var isCurrentUserIsAdvisor = $("#isCurrentUserIsAdvisor").val();
-                    if (isCurrentUserIsAdvisor == 0) {
-                        return (
-                            '<input type="checkbox" id="tmLeadID" class="tmleadCheckbox" name="tmLeadID" value="' + data + '">'
-                        );
-                    }
-                },
-            },
-            {
-                data: 'id',
-                name: 'id',
-                render: function(data, type, row) {
-                    return "<a href='" + config.routes.tmlead_datatable_route + '/' + row.id + "'>" + row.cdb_id + "</a>"
+            data: "id",
+            name: "id",
+            render: function (data, type, row, meta) {
+                var isCurrentUserIsAdvisor = $("#isCurrentUserIsAdvisor").val();
+                if (isCurrentUserIsAdvisor == 0) {
+                    return (
+                        '<input type="checkbox" id="tmLeadID" class="tmleadCheckbox" name="tmLeadID" value="' + data + '">'
+                    );
                 }
             },
-            { data: 'customer_name', name: 'customer_name' },
-            { data: 'tm_insurance_types_text', name: 'tm_insurance_types_text' },
-            { data: 'tm_lead_status_text', name: 'tm_lead_status_text' },
-            { data: 'notes', name: 'notes' },
-            { data: 'enquiry_date', name: 'enquiry_date' },
-            { data: 'allocation_date', name: 'allocation_date' },
-            { data: 'next_followup_date', name: 'next_followup_date' },
-            { data: 'handlers_name', name: 'handlers_name' },
-            { data: 'created_at', name: 'created_at' },
-            { data: 'updated_at', name: 'updated_at' },
+        },
+        {
+            data: 'id',
+            name: 'id',
+            render: function (data, type, row) {
+                return "<a href='" + config.routes.tmlead_datatable_route + '/' + row.id + "'>" + row.cdb_id + "</a>"
+            }
+        },
+        { data: 'customer_name', name: 'customer_name' },
+        { data: 'tm_insurance_types_text', name: 'tm_insurance_types_text' },
+        { data: 'tm_lead_status_text', name: 'tm_lead_status_text' },
+        { data: 'notes', name: 'notes' },
+        { data: 'enquiry_date', name: 'enquiry_date' },
+        { data: 'allocation_date', name: 'allocation_date' },
+        { data: 'next_followup_date', name: 'next_followup_date' },
+        { data: 'handlers_name', name: 'handlers_name' },
+        { data: 'created_at', name: 'created_at' },
+        { data: 'updated_at', name: 'updated_at' },
         ],
-        createdRow: function(row, data, index) {
+        createdRow: function (row, data, index) {
 
             if (data.tm_lead_status_code == "NoAnswer" || data.tm_lead_status_code == "SwitchedOff" ||
                 data.tm_lead_status_code == "PipelineNoInfo" || data.tm_lead_status_code == "PipelineImmediate" ||
@@ -1275,7 +1275,7 @@ $(document).ready(function() {
                 console.log('next_followup_date: ' + data.next_followup_date);
             }
         },
-        drawCallback: function(settings) {
+        drawCallback: function (settings) {
             var api = new $.fn.dataTable.Api(settings);
             console.log("TotalTmLeadsss: ", settings._iRecordsTotal);
             //console.log("TotalTmLeadsss: ",api.rows().data().length);
@@ -1287,17 +1287,17 @@ $(document).ready(function() {
     function newexportaction(e, dt, button, config) {
         var self = this;
         var oldStart = dt.settings()[0]._iDisplayStart;
-        dt.one('preXhr', function(e, s, data) {
+        dt.one('preXhr', function (e, s, data) {
             data.start = 0;
             data.length = 2147483647;
-            dt.one('preDraw', function(e, settings) {
+            dt.one('preDraw', function (e, settings) {
                 if (button[0].className.indexOf('buttons-csv') >= 0) {
 
                     $.fn.dataTable.ext.buttons.csvHtml5.available(dt, config) ?
                         $.fn.dataTable.ext.buttons.csvHtml5.action.call(self, e, dt, button, config) :
                         $.fn.dataTable.ext.buttons.csvFlash.action.call(self, e, dt, button, config);
                 }
-                dt.one('preXhr', function(e, s, data) {
+                dt.one('preXhr', function (e, s, data) {
                     settings._iDisplayStart = oldStart;
                     data.start = oldStart;
                 });
@@ -1308,20 +1308,20 @@ $(document).ready(function() {
         dt.ajax.reload();
     };
 
-    $("#tm-leads-export").click(function() {
+    $("#tm-leads-export").click(function () {
         $("#tm-leads-export").hide();
         $("#tm-leads-export-text").text("Please wait until csv file will be downloaded. More waiting time is depending on number of records.");
         $('#tm-leads-export-text').show().delay(10000).fadeOut();
     });
 
-    $("#tm-leads-upload-csv-button").click(function() {
+    $("#tm-leads-upload-csv-button").click(function () {
         $("#tm-leads-upload-csv-button").hide();
         $("#tm-leads-upload-csv-button-text").text("Please wait until csv file will be uploaded. More waiting time is depending on number of records.");
     });
 
     // TM Leads: Search button trigger
     $("#tm-leads-export").hide();
-    $("#search-tm-leads").submit(function(e) {
+    $("#search-tm-leads").submit(function (e) {
         e.preventDefault();
         $(".loader").show();
 
@@ -1401,20 +1401,20 @@ $(document).ready(function() {
     });
 
     // TM Leads: Select tm leads id and store in hidden field
-    $("#checkAllTmLeads").click(function() {
+    $("#checkAllTmLeads").click(function () {
         $('input:checkbox').not(this).prop('checked', this.checked);
 
         var idsArray = $('#selectTmLeadId').val();
-        $('input:checkbox').each(function(i, item) {
+        $('input:checkbox').each(function (i, item) {
             idsArray = idsArray + $(item).val() + ',';
         });
         $('#selectTmLeadId').val(idsArray.replace(/^,|,$/g, ''));
     });
 
     // TM Leads: Select tm leads id and store in hidden field
-    $("#tmLeadsAssignToUser").click(function() {
+    $("#tmLeadsAssignToUser").click(function () {
         var tmLeadIDs = [];
-        $.each($("input[name='tmLeadID']:checked"), function() {
+        $.each($("input[name='tmLeadID']:checked"), function () {
             tmLeadIDs.push($(this).val());
         });
         $('#selectTmLeadId').val(tmLeadIDs);
@@ -1422,7 +1422,7 @@ $(document).ready(function() {
     });
 
     // TM: Selecting a single record should also enable manual allocation
-    $(document).on("change", "#tmLeadID", function() {
+    $(document).on("change", "#tmLeadID", function () {
         var countSelectedTmLeadIds = document.querySelectorAll('#tmLeadID:checked').length;
         console.log(countSelectedTmLeadIds);
         if (countSelectedTmLeadIds > 0) {
@@ -1435,7 +1435,7 @@ $(document).ready(function() {
 
     // TM Leads: On check main checkbox, display lead assignment panel
     $("#tm-leads-assign-div").hide();
-    $("#checkAllTmLeads").click(function() {
+    $("#checkAllTmLeads").click(function () {
         if ($(this).is(":checked")) {
             $("#tm-leads-assign-div").show(300);
         } else {
@@ -1444,7 +1444,7 @@ $(document).ready(function() {
     });
 
     // TM Leads: OnClick on phone number ignore redirection
-    $("#ignore-redirection").click(function() {
+    $("#ignore-redirection").click(function () {
         return false;
     });
 
@@ -1452,7 +1452,7 @@ $(document).ready(function() {
     $("#tm_car_fields").hide();
     $("#tm_dob_field").hide();
     tm_type_of_insurance_fields_visibility();
-    $('#tm_insurance_types_id').on('change', function(e) {
+    $('#tm_insurance_types_id').on('change', function (e) {
         tm_type_of_insurance_fields_visibility();
     });
 
@@ -1476,7 +1476,7 @@ $(document).ready(function() {
     // TM Leads: Display Followup date conditionally
     $("#next_followup_date_field").hide();
     next_followup_date_field_visibility();
-    $('#tm_lead_statuses_id').on("change", function(e) {
+    $('#tm_lead_statuses_id').on("change", function (e) {
         next_followup_date_field_visibility();
     });
 
@@ -1497,7 +1497,7 @@ $(document).ready(function() {
     // TM Leads: Display date fields and search value field conditionally
     $("#tmLeads-search-value-filter").show();
     $("#tmLeads-search-start-end-dates-filters").hide();
-    $('#searchType').on("change", function(e) {
+    $('#searchType').on("change", function (e) {
         tmleads_search_start_end_dates_filters_visiblity();
     });
 
@@ -1522,31 +1522,31 @@ $(document).ready(function() {
         serverSide: true,
         ajax: config.routes.tmuploadlead_datatable_route,
         columns: [{
-                data: 'id',
-                name: 'id',
-                render: function(data, type, row) {
-                    return "<a href='" + config.routes.tmuploadlead_datatable_route + '/' + row.id + "'>" + row.id + "</a>"
-                }
-            },
-            { data: 'file_name', name: 'file_name' },
-            // { data: 'total_records', name: 'total_records' },
-            { data: 'good', name: 'good' },
-            // { data: 'cannot_upload', name: 'cannot_upload' },
-            { data: 'user_name', name: 'user_name' },
-            { data: 'created_at', name: 'created_at' },
+            data: 'id',
+            name: 'id',
+            render: function (data, type, row) {
+                return "<a href='" + config.routes.tmuploadlead_datatable_route + '/' + row.id + "'>" + row.id + "</a>"
+            }
+        },
+        { data: 'file_name', name: 'file_name' },
+        // { data: 'total_records', name: 'total_records' },
+        { data: 'good', name: 'good' },
+        // { data: 'cannot_upload', name: 'cannot_upload' },
+        { data: 'user_name', name: 'user_name' },
+        { data: 'created_at', name: 'created_at' },
         ]
     });
 
     // Car Quote Plan Modal Popup
-    $('.quotePlanModalPopup').on('click',function(e) {
+    $('.quotePlanModalPopup').on('click', function (e) {
         e.preventDefault();
-        $('.quote-plan-modal-body').load($(this).attr("testurl"),function() {
-            $('#quotePlanModal').modal({show:true});
+        $('.quote-plan-modal-body').load($(this).attr("testurl"), function () {
+            $('#quotePlanModal').modal({ show: true });
         });
     });
 
     $("#quotePlansGenerateButton").hide(300);
-    $(document).on("change", "#quotePlanId", function() {
+    $(document).on("change", "#quotePlanId", function () {
         var countSelectedQuotePlanIds = document.querySelectorAll('#quotePlanId:checked').length;
 
         if (countSelectedQuotePlanIds > 0) {
@@ -1555,9 +1555,9 @@ $(document).ready(function() {
             $("#quotePlansGenerateButton").hide(300);
         }
     });
-    $("#quotePlansGenerateButton").click(function() {
+    $("#quotePlansGenerateButton").click(function () {
         var quotePlanIDs = [];
-        $.each($("input[name='quotePlanId']:checked"), function() {
+        $.each($("input[name='quotePlanId']:checked"), function () {
             quotePlanIDs.push($(this).val());
         });
         $('#selectquotePlanId').val(quotePlanIDs);
@@ -1565,21 +1565,21 @@ $(document).ready(function() {
     });
 
     //select/unselect all checkboxes if this selected
-    $("#select_all_checkboxes").click(function(e) {
+    $("#select_all_checkboxes").click(function (e) {
         var isChecked = e.target.checked;
 
         if (isChecked === true) {
-            $(".multicheckbox").each(function(index) {
+            $(".multicheckbox").each(function (index) {
                 $(this).prop("checked", true);
             });
         } else {
-            $(".multicheckbox").each(function(index) {
+            $(".multicheckbox").each(function (index) {
                 $(this).prop("checked", false);
             });
         }
     });
 
-    $(".auditablebtn").click(function() {
+    $(".auditablebtn").click(function () {
         var auditableId = $(this).attr("data-id");
         var auditableType = $(this).attr("data-model");
         $(this).attr("disabled", true);
@@ -1588,14 +1588,14 @@ $(document).ready(function() {
             url: config.routes.load_auditable,
             method: "POST",
             data: { auditableId, auditableType, _token: config._token },
-            success: function(data) {
+            success: function (data) {
                 $("#auditable").html(data);
                 $(".auditablebtn").hide();
             },
         });
     });
     dateRangePickerChange("", "");
-    $(".x_panel transparent > .applyBtn, .ranges li").click(function() {
+    $(".x_panel transparent > .applyBtn, .ranges li").click(function () {
         $(".loader").show();
         setTimeout(() => {
             var date = $("#reportrange span").html();
@@ -1605,20 +1605,20 @@ $(document).ready(function() {
             dateRangePickerChange(startDate, endDate);
         }, 1000);
     });
-    $("#return_to_view").click(function(e) {
+    $("#return_to_view").click(function (e) {
         e.preventDefault();
         var input = '<input name="return_to_view" type="hidden" value="1"/>';
         $("#redirect_to_view_div").html(input);
-        setTimeout(function() {
+        setTimeout(function () {
             $("form").submit();
         }, 500);
     });
 
-    $(".active_reward").click(function(e) {
+    $(".active_reward").click(function (e) {
         e.preventDefault();
         var input = '<input name="active_reward" type="hidden" value="1"/>';
         $("#active_reward").html(input);
-        setTimeout(function() {
+        setTimeout(function () {
             $("form").submit();
         }, 500);
     });
@@ -1657,35 +1657,87 @@ $(document).ready(function() {
             { data: "updated_at", name: "updated_at" },
         ],
     });
+
+    var searchLeadsTable = $(".leadSearch-data-table").DataTable({
+        ordering: false,
+        info: false,
+        searching: false,
+        bLengthChange: false,
+        serverSide: true,
+        ajax: {
+            url: config.routes.searchLeadsDataTable,
+            data: function (d) {
+                d.leadType = $("#leadType").val();
+                d.cdbID = $("#cdbID").val();
+                d.email = $("#email").val();
+                d.phnNumber = $("#phnNumber").val();
+            },
+        },
+        columns: [{
+            data: 'id',
+            name: 'id',
+            render: function (data, type, row) {
+                if (row.access) {
+                    return "<a href='" + config.routes.searchLeadsDataTable + '/' + row.id + "'>" + row.id + "</a>"
+                } else {
+                    return row.id
+                }
+            }
+        },
+
+
+        { data: "created_at", name: "created_at" },
+        { data: "first_name", name: "first_name" },
+        { data: "last_name", name: "last_name" },
+        { data: "advisor_name", name: "advisor_name" },
+        ],
+    });
+    $("#search-leads").submit(function (e) {
+        e.preventDefault();
+        $(".loader").show();
+        searchLeadsTable.draw();
+        setTimeout(() => {
+            $(".loader").hide();
+        }, 1000);
+
+    });
+    // $("#search-leads").reset(function (e) {
+    //     $(".loader").show();
+    //     searchLeadsTable.draw();
+    //     setTimeout(() => {
+    //         $(".loader").hide();
+    //     }, 1000);
+
+    // });
 });
-$('#car_make_value').on('change', function(e) {
+$('#car_make_value').on('change', function (e) {
     var make_code = $("#car_make_value option:selected").attr('data-id');
-    $.get('/valuation/car-models?make_code=' + make_code, function(data) {
+    $.get('/valuation/car-models?make_code=' + make_code, function (data) {
         var carmodel = $('#car_model_value').empty();
         carmodel.append('<option value="">Select</option>');
-        $.each(data, function(create, carmodelObj) {
+        $.each(data, function (create, carmodelObj) {
             var option = $('<option/>', { id: create, value: carmodelObj });
             carmodel.append('<option value="' + carmodelObj.id + '">' + carmodelObj.text + '</option>');
         });
     });
 });
-$('#car_model_value').on('change', function(e) {
+$('#car_model_value').on('change', function (e) {
     var modelId = $("#car_model_value option:selected").val();
-    $.get('/valuation/car-model-detail?modelId=' + modelId, function(data) {
+    $.get('/valuation/car-model-detail?modelId=' + modelId, function (data) {
         var cartrim = $('#car_trim_value').empty();
         cartrim.append('<option value="">Select</option>');
         if (data.length == 0) {
             cartrim.append('<option value="">No Trim Available</option>');
             $('#car_trim_value option:eq(1)').prop('selected', true);
         }
-        $.each(data, function(create, cartrimObj) {
+        $.each(data, function (create, cartrimObj) {
             var option = $('<option/>', { id: create, value: cartrimObj });
             cartrim.append('<option value="' + cartrimObj.id + '">' + cartrimObj.text + '</option>');
         });
     });
 });
 
-$(document).on('click', '.delete', function() {
+$(document).on('click', '.delete', function () {
     var route = $(this).attr('date-route');
     $('#delete-form').attr('action', route);
     $('#exampleModal').modal('show');
@@ -1697,7 +1749,7 @@ function dateRangePickerChange(startDate, endDate) {
         url: config.routes.load_dashboard_stats,
         method: "POST",
         data: { startDate, endDate, _token: config._token },
-        success: function(data) {
+        success: function (data) {
             console.log("request " + data);
             $(".customer-count").html(data.totalCustomers);
             $(".carquote-count").html(data.totalCarQuotes);

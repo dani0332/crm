@@ -80,22 +80,48 @@ class User extends Authenticatable implements AuditableContract
         return $this->asDateTime($table)->timezone(config('app.timezone'))->format($date_time_format);
     }
 
-    public function processGetDSL($filters = []) {
 
-        if(Auth::user()->hasRole('production_approval_manager')) {
+
+    public function getTeamUserIds()
+    {
+        $isManager = $this->hasRole('MANAGER');
+        if ($isManager) {
+            $team_members = UserTeams::where('manager_id', $this->id)->get();
+            $user_ids = $team_members->pluck('user_id');
+            $users = User::whereIn('id', $user_ids)->get();
+            $userIds = $users->pluck('id');
+            return $userIds->implode(',');
+        } else {
+            return 0;
+        }
+    }
+
+    public function getUserTeams($userId)
+    {
+        $userTeams = UserTeams::where('user_id', $userId)->get();
+        $teamIds = $userTeams->pluck('team_id');
+        $teams = Team::whereIn('id', $teamIds)->get();
+        return $teams->pluck('name');
+    }
+
+    public function processGetDSL($filters = [])
+    {
+
+        if (Auth::user()->hasRole('production_approval_manager')) {
 
             $users =  User::select(['id', 'name'])->whereHas(
-                'roles', function($q){
+                'roles',
+                function ($q) {
                     $q->where('name', 'pa');
                 }
             )
-            ->get();
+                ->get();
             return $users;
         }
 
 
-        return self::with( array('usersroles' => function($query) {
-            $query->where('name','admin');
+        return self::with(array('usersroles' => function ($query) {
+            $query->where('name', 'admin');
         }))->get();
 
         // return User::whereHas(

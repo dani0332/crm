@@ -1,10 +1,13 @@
 <?php
 
 namespace App\Services;
+
 use App\Models\TravelQuote;
 use Illuminate\Http\Request;
 use DB;
 use Config;
+use Auth;
+
 class TravelQuoteService extends BaseService
 {
 
@@ -32,8 +35,8 @@ class TravelQuoteService extends BaseService
                     INNER JOIN region r ON r.id = tqr.region_cover_for_id";
     }
 
-	public function saveTravelQuote(Request $request)
-	{
+    public function saveTravelQuote(Request $request)
+    {
         $travelQuote = new TravelQuote();
         $travelQuote->first_name = $request->first_name;
         $travelQuote->last_name = $request->last_name;
@@ -61,10 +64,45 @@ class TravelQuoteService extends BaseService
             "regionCoverForId" => $request->region_cover_for_i,
         );
         return $this->sendCAPIRequest('/api/v1-save-travel-quote', $dataArr);
-	}
+    }
 
-    public function sendCAPIRequest($endpoint, $data){
-        $apiEndPoint = Config::get('constants.CENTRAL_API_ENDPOINT').$endpoint;
+    public function getLeads($CDBID, $email, $mobile_no, $lead_type)
+    {
+        $isAdvisor = Auth::user()->hasRole(strtoupper($lead_type) . '_ADVISOR');
+        $query = "SELECT hqr.id
+                            ,hqr.first_name
+                            ,hqr.last_name
+                            ,hqr.created_at
+                            ,u.name AS advisor_name
+                            ,'Travel' as lead_type
+                        FROM travel_quote_request hqr
+                        LEFT OUTER JOIN users u ON u.id = hqr.advisor_id";
+        $count = 0;
+        if (!empty($CDBID)) {
+            $query .= ' where hqr.id = ' . $CDBID;
+            $count++;
+        }
+        if (!empty($email)) {
+            $query .= ' ' . $count == 0 ? ' where' . ' hqr.email = ' . $email : ' and' . ' hqr.email = ' . $email;
+            $count++;
+        }
+        if (!empty($mobile_no)) {
+            $query .= ' ' . $count == 0 ? ' where' . ' hqr.email = ' . $mobile_no : ' and' . ' hqr.email = ' . $mobile_no;
+            $count++;
+        }
+        if ($isAdvisor) {
+            $query .= ' ' . $count == 0 ? ' where' . ' hqr.advisor_id = ' . Auth::user()->id : ' and' . ' hqr.advisor_id = ' . Auth::user()->id;
+            $count++;
+        }
+        return DB::select($query);
+    }
+    public function getLeadsForAssignment()
+    {
+        return TravelQuote::orderBy('created_at', 'desc')->get();
+    }
+    public function sendCAPIRequest($endpoint, $data)
+    {
+        $apiEndPoint = Config::get('constants.CENTRAL_API_ENDPOINT') . $endpoint;
         $apiToken = Config::get('constants.CENTRAL_API_TOKEN');
         $apiTimeout = Config::get('constants.CENTRAL_API_TIMEOUT');
 
@@ -80,21 +118,21 @@ class TravelQuoteService extends BaseService
 
         $getStatusCode = $capiRequest->getStatusCode();
 
-        if($getStatusCode == 200) {
+        if ($getStatusCode == 200) {
             $getContents = $capiRequest->getBody();
             $getdecodeContents = json_decode($getContents);
             return $getdecodeContents;
-        }
-        else {
+        } else {
             return "API failed";
         }
     }
 
-    public function getGridData($searchProperties, $request){
+    public function getGridData($searchProperties, $request)
+    {
         $count = 0;
         if ($request->ajax()) {
             foreach ($searchProperties as $item) {
-                if(!empty($request[$item])){
+                if (!empty($request[$item])) {
                     $suffix = '';
                     switch ($item) {
                         case 'travel_cover_for':
@@ -110,10 +148,10 @@ class TravelQuoteService extends BaseService
                             $suffix = 'tqr';
                             break;
                     }
-                    if($count == 0){
-                        $this->query = $this->query.' where '.$suffix.'.'.$item.'='."'".$request[$item]."'";
-                    }else{
-                        $this->query = $this->query.' and '.$suffix.'.'.$item.'='."'".$request[$item]."'";
+                    if ($count == 0) {
+                        $this->query = $this->query . ' where ' . $suffix . '.' . $item . '=' . "'" . $request[$item] . "'";
+                    } else {
+                        $this->query = $this->query . ' and ' . $suffix . '.' . $item . '=' . "'" . $request[$item] . "'";
                     }
                     $count++;
                 }
@@ -122,16 +160,18 @@ class TravelQuoteService extends BaseService
         return DB::select($this->query);
     }
 
-    public function getEntity($id){
-        return DB::select($this->query.' where tqr.id = '. $id);
+    public function getEntity($id)
+    {
+        return DB::select($this->query . ' where tqr.id = ' . $id);
     }
 
-    public function getEntityPlain($id){
+    public function getEntityPlain($id)
+    {
         return TravelQuote::find($id);
     }
 
     public function updateTravelQuote(Request $request, $id)
-	{
+    {
         $travelQuote = TravelQuote::find($id);
         $travelQuote->first_name = $request->first_name;
         $travelQuote->last_name = $request->last_name;
@@ -148,10 +188,11 @@ class TravelQuoteService extends BaseService
 
         if (isset($request->return_to_view))
             return redirect("quote/travel/" . $travelQuote->id)->with('success', 'Travel Quote has been updated');
-	}
+    }
 
-    public function fillModelProperties() {
-        return array (
+    public function fillModelProperties()
+    {
+        return array(
             "id" => "readonly|none",
             "first_name" => "input|text|required",
             "last_name" => "input|text|required",
@@ -166,7 +207,8 @@ class TravelQuoteService extends BaseService
         );
     }
 
-    public function getCustomTitleByProperty($propertyName){
+    public function getCustomTitleByProperty($propertyName)
+    {
         $title = "";
         switch ($propertyName) {
             case 'days_cover_for':
@@ -190,14 +232,16 @@ class TravelQuoteService extends BaseService
         return $title;
     }
 
-    public function fillModelSkipProperties() {
+    public function fillModelSkipProperties()
+    {
         return [
             "create" => "id",
             "list" => "email,mobile_no",
         ];
     }
 
-    public function fillModelSearchProperties(){
+    public function fillModelSearchProperties()
+    {
         return ["email", 'first_name', 'last_name', 'nationality_id', 'region_cover_for_id', 'travel_cover_for_id'];
     }
 }

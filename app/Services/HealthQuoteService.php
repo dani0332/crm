@@ -1,10 +1,13 @@
 <?php
 
 namespace App\Services;
+
 use App\Models\HealthQuote;
 use Illuminate\Http\Request;
 use DB;
+use Illuminate\Support\Facades\Auth;
 use Config;
+
 class HealthQuoteService extends BaseService
 {
     protected $query;
@@ -41,16 +44,21 @@ class HealthQuoteService extends BaseService
     LEFT OUTER JOIN users u on u.id = hqr.advisor_id";
     }
 
-    public function getEntity($id){
-        return DB::select($this->query.' where hqr.id = '. $id);
+    public function getEntity($id)
+    {
+        return DB::select($this->query . ' where hqr.id = ' . $id);
     }
 
-    public function getEntityPlain($id){
+    public function getEntityPlain($id)
+    {
         return HealthQuote::find($id);
     }
-
-	public function saveHealthQuote(Request $request)
-	{
+    public function getLeadsForAssignment()
+    {
+        return HealthQuote::orderBy('created_at', 'desc')->get();
+    }
+    public function saveHealthQuote(Request $request)
+    {
         $dataArr = array(
             "firstName" => $request->first_name,
             "lastName" => $request->last_name,
@@ -69,10 +77,11 @@ class HealthQuoteService extends BaseService
             "emirateOfYourVisaId" => $request->emirate_of_your_visa_id,
         );
         return $this->sendCAPIRequest('/api/v1-save-health-quote', $dataArr);
-	}
+    }
 
-    public function sendCAPIRequest($endpoint, $data){
-        $apiEndPoint = Config::get('constants.CENTRAL_API_ENDPOINT').$endpoint;
+    public function sendCAPIRequest($endpoint, $data)
+    {
+        $apiEndPoint = Config::get('constants.CENTRAL_API_ENDPOINT') . $endpoint;
         $apiToken = Config::get('constants.CENTRAL_API_TOKEN');
         $apiTimeout = Config::get('constants.CENTRAL_API_TIMEOUT');
 
@@ -88,21 +97,21 @@ class HealthQuoteService extends BaseService
 
         $getStatusCode = $capiRequest->getStatusCode();
 
-        if($getStatusCode == 200) {
+        if ($getStatusCode == 200) {
             $getContents = $capiRequest->getBody();
             $getdecodeContents = json_decode($getContents);
             return $getdecodeContents;
-        }
-        else {
+        } else {
             return "API failed";
         }
     }
 
-    public function getGridData($searchProperties, $request){
+    public function getGridData($searchProperties, $request)
+    {
         $count = 0;
         if ($request->ajax()) {
             foreach ($searchProperties as $item) {
-                if(!empty($request[$item])){
+                if (!empty($request[$item])) {
                     $suffix = '';
                     switch ($item) {
                         case 'marital_status_id':
@@ -124,7 +133,7 @@ class HealthQuoteService extends BaseService
                             $suffix = 'hqr';
                             break;
                     }
-                    $this->query = $this->query. $count > 0 ? ' and' : ' where '.$suffix.'.'.$item.'='."'".$request[$item]."'";
+                    $this->query = $this->query . $count > 0 ? ' and' : ' where ' . $suffix . '.' . $item . '=' . "'" . $request[$item] . "'";
                     $count++;
                 }
             }
@@ -134,7 +143,7 @@ class HealthQuoteService extends BaseService
     }
 
     public function updateHealthQuote(Request $request, $id)
-	{
+    {
         $healthQuote = HealthQuote::find($id);
         $healthQuote->first_name = $request->first_name;
         $healthQuote->last_name = $request->last_name;
@@ -155,10 +164,46 @@ class HealthQuoteService extends BaseService
 
         if (isset($request->return_to_view))
             return redirect("quote/health/" . $healthQuote->id)->with('success', 'Health Quote has been updated');
-	}
+    }
 
-    public function fillModelProperties() {
-        return array (
+    public function getLeads($CDBID, $email, $mobile_no, $lead_type)
+    {
+        $isAdvisor = Auth::user()->hasRole(strtoupper($lead_type) . '_ADVISOR');
+        $isManager = Auth::user()->hasRole('MANAGER');
+        if ($isManager) {
+            $userIds = Auth::user()->getTeamUserIds();
+        }
+        $query = "SELECT hqr.id
+                            ,hqr.first_name
+                            ,hqr.last_name
+                            ,hqr.created_at
+                            ,u.name AS advisor_name
+                            ,'Health' as lead_type
+                        FROM health_quote_request hqr
+                        LEFT OUTER JOIN users u ON u.id = hqr.advisor_id";
+        $count = 0;
+        if (!empty($CDBID)) {
+            $query .= ' where hqr.id = ' . $CDBID;
+            $count++;
+        }
+        if (!empty($email)) {
+            $query .= ' ' . $count == 0 ? ' where' . ' hqr.email = ' . $email : ' and' . ' hqr.email = ' . $email;
+            $count++;
+        }
+        if (!empty($mobile_no)) {
+            $query .= ' ' . $count == 0 ? ' where' . ' hqr.email = ' . $mobile_no : ' and' . ' hqr.email = ' . $mobile_no;
+            $count++;
+        }
+        if ($isAdvisor) {
+            $query .= ' ' . $count == 0 ? ' where' . ' hqr.advisor_id = ' . Auth::user()->id : ' and' . ' hqr.advisor_id = ' . Auth::user()->id;
+            $count++;
+        }
+        return DB::select($query);
+    }
+
+    public function fillModelProperties()
+    {
+        return array(
             "id" => "readonly|none",
             "first_name" => "input|text|required",
             "last_name" => "input|text|required",
@@ -179,7 +224,8 @@ class HealthQuoteService extends BaseService
         );
     }
 
-    public function getCustomTitleByProperty($propertyName){
+    public function getCustomTitleByProperty($propertyName)
+    {
         $title = "";
         switch ($propertyName) {
             case 'marital_status_id':
@@ -221,14 +267,16 @@ class HealthQuoteService extends BaseService
         return $title;
     }
 
-    public function fillModelSkipProperties() {
+    public function fillModelSkipProperties()
+    {
         return [
             "create" => "id,advisor_id",
             "list" => "email,cover_for_id,has_worldwide_cover,has_home,details,preference",
         ];
     }
 
-    public function fillModelSearchProperties(){
-        return ["email", 'first_name', 'last_name', 'nationality_id','advisor_id'];
+    public function fillModelSearchProperties()
+    {
+        return ["email", 'first_name', 'last_name', 'nationality_id', 'advisor_id'];
     }
 }

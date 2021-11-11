@@ -202,6 +202,8 @@ $appName = Config::get('constants.APP_NAME');
                 age_discount_datatable_route: "{{ route('age.index') }}",
                 renewals_leads_datatable_route: "{{ route('renewals.index') }}",
                 sanction_list_downloads_datatable_route: "{{ url('kyc/aml/download/history') }}",
+                searchLeadsDataTable: "{{ route('leadsearch.index') }}",
+                leadassignmentDataTable: "{{ route('leadassignment.index') }}",
             },
             _token: "{{ csrf_token() }}",
             image_path: "{{ \Config::get('constants.azure_storage_url') . 'myrewards/' }}"

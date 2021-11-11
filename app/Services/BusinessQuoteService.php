@@ -1,10 +1,12 @@
 <?php
 
 namespace App\Services;
+
 use App\Models\BusinessQuote;
 use Illuminate\Http\Request;
 use DB;
 use Config;
+use Auth;
 
 class BusinessQuoteService extends BaseService
 {
@@ -29,16 +31,54 @@ class BusinessQuoteService extends BaseService
                         LEFT OUTER JOIN users u ON u.id = bqr.advisor_id";
     }
 
-    public function getEntity($id){
-        return DB::select($this->query.' where bqr.id = '. $id);
+    public function getEntity($id)
+    {
+        return DB::select($this->query . ' where bqr.id = ' . $id);
     }
 
-    public function getEntityPlain($id){
+    public function getLeads($CDBID, $email, $mobile_no, $lead_type)
+    {
+        $isAdvisor = Auth::user()->hasRole(strtoupper($lead_type) . '_ADVISOR');
+        $query = "SELECT hqr.id
+                            ,hqr.first_name
+                            ,hqr.last_name
+                            ,hqr.created_at
+                            ,u.name AS advisor_name
+                            ,'Business' as lead_type
+                        FROM business_quote_request hqr
+                        LEFT OUTER JOIN users u ON u.id = hqr.advisor_id";
+        $count = 0;
+        if (!empty($CDBID)) {
+            $query .= ' where hqr.id = ' . $CDBID;
+            $count++;
+        }
+        if (!empty($email)) {
+            $query .= ' ' . $count == 0 ? ' where' . ' hqr.email = ' . $email : ' and' . ' hqr.email = ' . $email;
+            $count++;
+        }
+        if (!empty($mobile_no)) {
+            $query .= ' ' . $count == 0 ? ' where' . ' hqr.email = ' . $mobile_no : ' and' . ' hqr.email = ' . $mobile_no;
+            $count++;
+        }
+        if ($isAdvisor) {
+            $query .= ' ' . $count == 0 ? ' where' . ' hqr.advisor_id = ' . Auth::user()->id : ' and' . ' hqr.advisor_id = ' . Auth::user()->id;
+            $count++;
+        }
+        return DB::select($query);
+    }
+
+    public function getEntityPlain($id)
+    {
         return BusinessQuote::find($id);
     }
 
-	public function saveBusinessQuote(Request $request)
-	{
+    public function getLeadsForAssignment()
+    {
+        return BusinessQuote::orderBy('created_at', 'desc')->get();
+    }
+
+    public function saveBusinessQuote(Request $request)
+    {
         $dataArr = array(
             "firstName" => $request->first_name,
             "lastName" => $request->last_name,
@@ -50,13 +90,14 @@ class BusinessQuoteService extends BaseService
             "businessTypeOfInsuranceId" => $request->business_type_of_insurance_id,
         );
         return $this->sendCAPIRequest('/api/v1-save-business-quote', $dataArr);
-	}
+    }
 
-    public function getGridData($searchProperties, $request){
+    public function getGridData($searchProperties, $request)
+    {
         $count = 0;
         if ($request->ajax()) {
             foreach ($searchProperties as $item) {
-                if(!empty($request[$item])){
+                if (!empty($request[$item])) {
                     $suffix = '';
                     switch ($item) {
                         case 'business_type_of_insurance':
@@ -69,10 +110,10 @@ class BusinessQuoteService extends BaseService
                             $suffix = 'bqr';
                             break;
                     }
-                    if($count == 0){
-                        $this->query = $this->query.' where '.$suffix.'.'.$item.'='."'".$request[$item]."'";
-                    }else{
-                        $this->query = $this->query.' and '.$suffix.'.'.$item.'='."'".$request[$item]."'";
+                    if ($count == 0) {
+                        $this->query = $this->query . ' where ' . $suffix . '.' . $item . '=' . "'" . $request[$item] . "'";
+                    } else {
+                        $this->query = $this->query . ' and ' . $suffix . '.' . $item . '=' . "'" . $request[$item] . "'";
                     }
                     $count++;
                 }
@@ -82,7 +123,7 @@ class BusinessQuoteService extends BaseService
     }
 
     public function updateBusinessQuote(Request $request, $id)
-	{
+    {
         $businessQuote = BusinessQuote::find($id);
         $businessQuote->first_name = $request->first_name;
         $businessQuote->last_name = $request->last_name;
@@ -95,10 +136,11 @@ class BusinessQuoteService extends BaseService
 
         if (isset($request->return_to_view))
             return redirect("quote/business/" . $businessQuote->id)->with('success', 'Business Quote has been updated');
-	}
+    }
 
-    public function fillModelProperties() {
-        return array (
+    public function fillModelProperties()
+    {
+        return array(
             "id" => "readonly|none",
             "first_name" => "input|text|required",
             "last_name" => "input|text|required",
@@ -110,7 +152,8 @@ class BusinessQuoteService extends BaseService
         );
     }
 
-    public function getCustomTitleByProperty($propertyName){
+    public function getCustomTitleByProperty($propertyName)
+    {
         $title = "";
         switch ($propertyName) {
             case 'business_type_of_insurance_id':
@@ -128,19 +171,22 @@ class BusinessQuoteService extends BaseService
         return $title;
     }
 
-    public function fillModelSkipProperties() {
+    public function fillModelSkipProperties()
+    {
         return [
             "create" => "id,advisor_id",
             "list" => "email",
         ];
     }
 
-    public function fillModelSearchProperties(){
+    public function fillModelSearchProperties()
+    {
         return ["email", 'first_name', 'last_name', 'iam_possesion_type_id', 'ilivein_accommodation_type_id'];
     }
 
-    public function sendCAPIRequest($endpoint, $data){
-        $apiEndPoint = Config::get('constants.CENTRAL_API_ENDPOINT').$endpoint;
+    public function sendCAPIRequest($endpoint, $data)
+    {
+        $apiEndPoint = Config::get('constants.CENTRAL_API_ENDPOINT') . $endpoint;
         $apiToken = Config::get('constants.CENTRAL_API_TOKEN');
         $apiTimeout = Config::get('constants.CENTRAL_API_TIMEOUT');
 
@@ -156,12 +202,11 @@ class BusinessQuoteService extends BaseService
 
         $getStatusCode = $capiRequest->getStatusCode();
 
-        if($getStatusCode == 200) {
+        if ($getStatusCode == 200) {
             $getContents = $capiRequest->getBody();
             $getdecodeContents = json_decode($getContents);
             return $getdecodeContents;
-        }
-        else {
+        } else {
             return "API failed";
         }
     }
