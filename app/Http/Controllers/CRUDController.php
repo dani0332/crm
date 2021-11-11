@@ -162,8 +162,9 @@ class CRUDController extends Controller
                 $customTableList[$property] = $this->dropdownSourceService->getOnlySelectedItemName($property, $id);
             }
         }
-
-        $quoteAttr = $this->{ strtolower($this->genericModel->modelType).'QuoteService'}->getEntityPlain($id);
+        $quoteTypes = 'Health,Car,Travel,Life,Home,Business';
+        $serviceType = str_contains($quoteTypes, ucwords($model->modelType)) ? strtolower($model->modelType) . 'QuoteService' : lcfirst(ucwords($model->modelType)) . 'Service';
+        $quoteAttr = $this->{ $serviceType}->getEntityPlain($id);
         $quoteAttrUuId = $quoteAttr->uuid;
 
         if($this->genericModel->modelType == "Car") { // Car plans to display on detail view
