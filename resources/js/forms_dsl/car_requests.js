@@ -235,11 +235,11 @@ const leadRequest = {
           //     const generateUrl = `/?filter={"id":-66}`
           //     return generateUrl
           // },
-          applyFilterAfterSearch(options) {
-            const { filter } = options;
-            if (Object.keys(filter).length === 0) return { id: -66 };
-            else return filter;
-          },
+          // applyFilterAfterSearch(options) {
+          //   const { filter } = options;
+          //   if (Object.keys(filter).length === 0) return { id: -66 };
+          //   else return filter;
+          // },
           afterFetchData(options) {
             const { resp } = options;
             return resp.data;

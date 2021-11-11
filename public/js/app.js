@@ -17611,12 +17611,11 @@ var leadRequest = {
           //     const generateUrl = `/?filter={"id":-66}`
           //     return generateUrl
           // },
-          applyFilterAfterSearch: function applyFilterAfterSearch(options) {
-            var filter = options.filter;
-            if (Object.keys(filter).length === 0) return {
-              id: -66
-            };else return filter;
-          },
+          // applyFilterAfterSearch(options) {
+          //   const { filter } = options;
+          //   if (Object.keys(filter).length === 0) return { id: -66 };
+          //   else return filter;
+          // },
           afterFetchData: function afterFetchData(options) {
             var resp = options.resp;
             return resp.data;
