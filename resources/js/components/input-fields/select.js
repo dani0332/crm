@@ -102,7 +102,7 @@ export default function SelectField({ field, controller }) {
           selectOp = field.transform(selectedOptions, true);
         else
           selectOp = {
-            value: selectedOptions,
+            value: { ...selectedOptions, text: selectedOptions.label },
             selected: selectedOptions?.label,
           };
         field.dispatch({

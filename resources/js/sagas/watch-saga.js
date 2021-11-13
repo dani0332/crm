@@ -154,6 +154,10 @@ function* processVisibleFormStates(obj) {
             if (Array.isArray(data.data) && data.data.length > 0)
               rec = data.data[0];
             else rec = data.data;
+
+            if(typeof initialReducerState.view?.events?.transformAfterFetchFromServer === 'function' ) {
+              rec = initialReducerState.view.events.transformAfterFetchFromServer({formState,getForm },  rec)
+            }
             const obj = {
               ...initialFormState,
               view_mode: 'form',
@@ -163,13 +167,6 @@ function* processVisibleFormStates(obj) {
               action_type: 'read',
             };
             manageListDispatch({ type: 'showLoader', obj: { loader: false } });
-            console.log(
-              '**************Read-Data-multi-false-1******************',
-            );
-            console.log(obj);
-            console.log(
-              '**************Read-Data-multi-false-1******************',
-            );
             yield fillConditionalFields(obj);
             manageListDispatch({ type: 'read', obj });
           } else {
