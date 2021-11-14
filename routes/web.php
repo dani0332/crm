@@ -34,6 +34,8 @@ use App\Http\Controllers\ValuationController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\InsuranceCompanyController;
 use App\Http\Controllers\HandlerController;
+use App\Http\Controllers\LeadAssignmentController;
+use App\Http\Controllers\LeadSearchController;
 use App\Http\Controllers\ReasonController;
 use App\Http\Controllers\StatusController;
 use App\Http\Controllers\PaymentModeController;
@@ -75,8 +77,28 @@ Route::middleware(['auth'])->get('/home', function () {
     return view('home');
 });
 
-Route::group(['middleware' =>  ['auth']], function () {
 
+Route::group(['middleware' =>  ['auth']], function () {
+    Route::resource('leadsearch', LeadSearchController::class)->names([
+        'index' => 'leadsearch.index',
+        'create' => 'leadsearch.create',
+        'store' => 'leadsearch.store',
+        'show' => 'leadsearch.show',
+        'edit' => 'leadsearch.edit',
+        'update' => 'leadsearch.update',
+        'destroy' => 'leadsearch.destroy',
+    ]);
+    Route::resource('leadassignment', LeadAssignmentController::class)->names([
+        'index' => 'leadassignment.index',
+        'create' => 'leadassignment.create',
+        'store' => 'leadassignment.store',
+        'show' => 'leadassignment.show',
+        'edit' => 'leadassignment.edit',
+        'update' => 'leadassignment.update',
+        'destroy' => 'leadassignment.destroy',
+    ]);
+    Route::post('manualLeadAssign', [LeadAssignmentController::class, 'manualLeadAssign'])->name('manualAssignment');
+    Route::get('getAdvisors', [LeadAssignmentController::class, 'getAdvisors'])->name('getAdvisors');
     Route::resource('customer', CustomerController::class);
     Route::get('/customer-upload', [CustomerController::class, 'uploadCustomers']);
     Route::post('/customer-process', [CustomerController::class, 'processCustomerCSV']);

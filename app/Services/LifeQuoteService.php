@@ -1,9 +1,11 @@
 <?php
 
 namespace App\Services;
+
 use App\Models\LifeQuote;
 use Illuminate\Http\Request;
 use DB;
+use Auth;
 
 class LifeQuoteService extends BaseService
 {
@@ -45,8 +47,8 @@ class LifeQuoteService extends BaseService
                     INNER JOIN life_number_of_year liy ON liy.id = lqr.number_of_years_id
                     INNER JOIN nationality n ON n.id = lqr.nationality_id";
     }
-	public function saveLifeQuote(Request $request)
-	{
+    public function saveLifeQuote(Request $request)
+    {
         $dataArr = array(
             "firstName" => $request->first_name,
             "lastName" => $request->last_name,
@@ -80,21 +82,27 @@ class LifeQuoteService extends BaseService
         $lifeQuote->region_cover_for_id = $request->region_cover_for_id;
         $lifeQuote->details = $request->details;
         $lifeQuote->save();
-	}
-
-    public function getEntity($id){
-        return DB::select($this->query.' where lqr.id = '. $id);
     }
 
-    public function getEntityPlain($id){
+    public function getEntity($id)
+    {
+        return DB::select($this->query . ' where lqr.id = ' . $id);
+    }
+
+    public function getEntityPlain($id)
+    {
         return LifeQuote::find($id);
     }
-
-    public function getGridData($searchProperties, $request){
+    public function getLeadsForAssignment()
+    {
+        return LifeQuote::orderBy('created_at', 'desc')->get();
+    }
+    public function getGridData($searchProperties, $request)
+    {
         $count = 0;
         if ($request->ajax()) {
             foreach ($searchProperties as $item) {
-                if(!empty($request[$item])){
+                if (!empty($request[$item])) {
                     $suffix = '';
                     switch ($item) {
                         case 'sum_insured_currency_id':
@@ -122,10 +130,10 @@ class LifeQuoteService extends BaseService
                             $suffix = 'lqr';
                             break;
                     }
-                    if($count == 0){
-                        $this->query = $this->query.' where '.$suffix.'.'.$item.'='."'".$request[$item]."'";
-                    }else{
-                        $this->query = $this->query.' and '.$suffix.'.'.$item.'='."'".$request[$item]."'";
+                    if ($count == 0) {
+                        $this->query = $this->query . ' where ' . $suffix . '.' . $item . '=' . "'" . $request[$item] . "'";
+                    } else {
+                        $this->query = $this->query . ' and ' . $suffix . '.' . $item . '=' . "'" . $request[$item] . "'";
                     }
                     $count++;
                 }
@@ -136,7 +144,7 @@ class LifeQuoteService extends BaseService
     }
 
     public function updateLifeQuote(Request $request, $id)
-	{
+    {
         $lifeQuote = LifeQuote::find($id);
         $lifeQuote->first_name = $request->first_name;
         $lifeQuote->last_name = $request->last_name;
@@ -150,10 +158,42 @@ class LifeQuoteService extends BaseService
 
         if (isset($request->return_to_view))
             return redirect("quote/life/" . $lifeQuote->id)->with('success', 'Life Quote has been updated');
-	}
+    }
 
-    public function fillModelProperties() {
-        return array (
+    public function getLeads($CDBID, $email, $mobile_no, $lead_type)
+    {
+        $isAdvisor = Auth::user()->hasRole(strtoupper($lead_type) . '_ADVISOR');
+        $query = "SELECT hqr.id
+                            ,hqr.first_name
+                            ,hqr.last_name
+                            ,hqr.created_at
+                            ,u.name AS advisor_name
+                            ,'Life' as lead_type
+                        FROM life_quote_request hqr
+                        LEFT OUTER JOIN users u ON u.id = hqr.advisor_id";
+        $count = 0;
+        if (!empty($CDBID)) {
+            $query .= ' where hqr.id = ' . $CDBID;
+            $count++;
+        }
+        if (!empty($email)) {
+            $query .= ' ' . $count == 0 ? ' where' . ' hqr.email = ' . $email : ' and' . ' hqr.email = ' . $email;
+            $count++;
+        }
+        if (!empty($mobile_no)) {
+            $query .= ' ' . $count == 0 ? ' where' . ' hqr.email = ' . $mobile_no : ' and' . ' hqr.email = ' . $mobile_no;
+            $count++;
+        }
+        if ($isAdvisor) {
+            $query .= ' ' . $count == 0 ? ' where' . ' hqr.advisor_id = ' . Auth::user()->id : ' and' . ' hqr.advisor_id = ' . Auth::user()->id;
+            $count++;
+        }
+        return DB::select($query);
+    }
+
+    public function fillModelProperties()
+    {
+        return array(
             "id" => "readonly|none",
             "first_name" => "input|text|required",
             "last_name" => "input|text|required",
@@ -173,7 +213,8 @@ class LifeQuoteService extends BaseService
         );
     }
 
-    public function getCustomTitleByProperty($propertyName){
+    public function getCustomTitleByProperty($propertyName)
+    {
         $title = "";
         switch ($propertyName) {
             case 'purpose_of_insurance_id':
@@ -215,19 +256,22 @@ class LifeQuoteService extends BaseService
         return $title;
     }
 
-    public function fillModelSkipProperties() {
+    public function fillModelSkipProperties()
+    {
         return [
             "create" => "id",
             "list" => "email,mobile_no,others_info",
         ];
     }
 
-    public function fillModelSearchProperties(){
+    public function fillModelSearchProperties()
+    {
         return ["email", 'first_name', 'last_name', 'nationality_id', 'region_cover_for_id', 'travel_cover_for_id'];
     }
 
-    public function sendCAPIRequest($endpoint, $data){
-        $apiEndPoint = Config::get('constants.CENTRAL_API_ENDPOINT').$endpoint;
+    public function sendCAPIRequest($endpoint, $data)
+    {
+        $apiEndPoint = Config::get('constants.CENTRAL_API_ENDPOINT') . $endpoint;
         $apiToken = Config::get('constants.CENTRAL_API_TOKEN');
         $apiTimeout = Config::get('constants.CENTRAL_API_TIMEOUT');
 
@@ -243,12 +287,11 @@ class LifeQuoteService extends BaseService
 
         $getStatusCode = $capiRequest->getStatusCode();
 
-        if($getStatusCode == 200) {
+        if ($getStatusCode == 200) {
             $getContents = $capiRequest->getBody();
             $getdecodeContents = json_decode($getContents);
             return $getdecodeContents;
-        }
-        else {
+        } else {
             return "API failed";
         }
     }

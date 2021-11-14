@@ -1,10 +1,12 @@
 <?php
 
 namespace App\Services;
+
 use App\Models\CarQuote;
 use Illuminate\Http\Request;
 use Config;
 use DB;
+use Auth;
 
 class CarQuoteService extends BaseService
 {
@@ -50,8 +52,8 @@ class CarQuoteService extends BaseService
             LEFT OUTER JOIN claim_history ch ON ch.id = cqr.claim_history_id
             LEFT OUTER JOIN users u on u.id = cqr.advisor_id";
     }
-	public function saveCarQuote(Request $request)
-	{
+    public function saveCarQuote(Request $request)
+    {
         $carQuote = new CarQuote();
         $carQuote->first_name = $request->first_name;
         $carQuote->last_name = $request->last_name;
@@ -69,10 +71,10 @@ class CarQuoteService extends BaseService
         $carQuote->has_home = $request->has_home == 'on' ? 1 : 0;
         $carQuote->emirate_of_your_visa_id = $request->emirate_of_your_visa_id;
         $carQuote->save();
-	}
+    }
 
     public function updateCarQuote(Request $request, $id)
-	{
+    {
         $carQuote = CarQuote::find($id);
         $carQuote->first_name = $request->first_name;
         $carQuote->last_name = $request->last_name;
@@ -93,18 +95,21 @@ class CarQuoteService extends BaseService
 
         if (isset($request->return_to_view))
             return redirect("quote/health/" . $carQuote->id)->with('success', 'Health Quote has been updated');
-	}
-
-    public function getEntity($id){
-        return DB::select($this->query.' where cqr.id = '. $id);
     }
 
-    public function getEntityPlain($id){
+    public function getEntity($id)
+    {
+        return DB::select($this->query . ' where cqr.id = ' . $id);
+    }
+
+    public function getEntityPlain($id)
+    {
         return CarQuote::find($id);
     }
 
-    public function fillModelProperties() {
-        return array (
+    public function fillModelProperties()
+    {
+        return array(
             "id" => "readonly|none",
             "first_name" => "input|text|required",
             "last_name" => "input|text|required",
@@ -126,7 +131,8 @@ class CarQuoteService extends BaseService
         );
     }
 
-    public function getCustomTitleByProperty($propertyName){
+    public function getCustomTitleByProperty($propertyName)
+    {
         $title = "";
         switch ($propertyName) {
             case 'dob':
@@ -171,11 +177,12 @@ class CarQuoteService extends BaseService
         return $title;
     }
 
-    public function getGridData($searchProperties, $request){
+    public function getGridData($searchProperties, $request)
+    {
         $count = 0;
         if ($request->ajax()) {
             foreach ($searchProperties as $item) {
-                if(!empty($request[$item])){
+                if (!empty($request[$item])) {
                     $suffix = '';
                     switch ($item) {
                         case 'uae_license_held_for':
@@ -209,10 +216,10 @@ class CarQuoteService extends BaseService
                             $suffix = 'cqr';
                             break;
                     }
-                    if($count == 0){
-                        $this->query = $this->query.' where '.$suffix.'.'.$item.'='."'".$request[$item]."'";
-                    }else{
-                        $this->query = $this->query.' and '.$suffix.'.'.$item.'='."'".$request[$item]."'";
+                    if ($count == 0) {
+                        $this->query = $this->query . ' where ' . $suffix . '.' . $item . '=' . "'" . $request[$item] . "'";
+                    } else {
+                        $this->query = $this->query . ' and ' . $suffix . '.' . $item . '=' . "'" . $request[$item] . "'";
                     }
                     $count++;
                 }
@@ -223,18 +230,52 @@ class CarQuoteService extends BaseService
         return DB::select($this->query);
     }
 
-    public function fillModelSkipProperties() {
+    public function getLeads($CDBID, $email, $mobile_no, $lead_type)
+    {
+        $isAdvisor = Auth::user()->hasRole(strtoupper($lead_type) . '_ADVISOR');
+        $query = "SELECT hqr.id
+                            ,hqr.first_name
+                            ,hqr.last_name
+                            ,hqr.created_at
+                            ,u.name AS advisor_name
+                            ,'Car' as lead_type
+                        FROM car_quote_request hqr
+                        LEFT OUTER JOIN users u ON u.id = hqr.advisor_id";
+        $count = 0;
+        if (!empty($CDBID)) {
+            $query .= ' where hqr.id = ' . $CDBID;
+            $count++;
+        }
+        if (!empty($email)) {
+            $query .= ' ' . $count == 0 ? ' where' . ' hqr.email = ' . $email : ' and' . ' hqr.email = ' . $email;
+            $count++;
+        }
+        if (!empty($mobile_no)) {
+            $query .= ' ' . $count == 0 ? ' where' . ' hqr.email = ' . $mobile_no : ' and' . ' hqr.email = ' . $mobile_no;
+            $count++;
+        }
+        if ($isAdvisor) {
+            $query .= ' ' . $count == 0 ? ' where' . ' hqr.advisor_id = ' . Auth::user()->id : ' and' . ' hqr.advisor_id = ' . Auth::user()->id;
+            $count++;
+        }
+        return DB::select($query);
+    }
+
+    public function fillModelSkipProperties()
+    {
         return [
             "create" => "id,advisor_id",
             "list" => "additional_notes,email,mobile_no,first_name,last_name,currently_insured_with",
         ];
     }
 
-    public function fillModelSearchProperties(){
-        return ["first_name","last_name","email","mobile_no","nationality_id"];
+    public function fillModelSearchProperties()
+    {
+        return ["first_name", "last_name", "email", "mobile_no", "nationality_id"];
     }
 
-    public function getQuotePlans($id) {
+    public function getQuotePlans($id)
+    {
         $quoteUuId = CarQuote::where('id', '=', $id)->value('uuid');
 
         $plansApiEndPoint = Config::get('constants.KEN_PLANS_API_ENDPOINT');
@@ -258,12 +299,11 @@ class CarQuoteService extends BaseService
 
         $getStatusCode = $kenRequest->getStatusCode();
 
-        if($getStatusCode == 200) {
+        if ($getStatusCode == 200) {
             $getContents = $kenRequest->getBody();
             $getdecodeContents = json_decode($getContents);
             return $getdecodeContents;
-        }
-        else {
+        } else {
             return "API failed";
         }
     }

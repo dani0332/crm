@@ -12,13 +12,16 @@
         <div id="sidebar-menu" class="main_menu_side hidden-print main_menu">
             <div class="menu_section">
                 <ul class="nav side-menu">
-                    <li> <a href="{{ url('home') }}"><i class="fa fa-home"></i> Home</a></li>
+                    <li> <a href="{{ url('/leadsearch') }}"><i class="fa fa-home"></i> Home</a></li>
                 </ul>
                 @can('crm-admin')
                     <ul class="nav side-menu">
                         <li> <a><i class="fa fa-dashboard"></i> Dashboard <span class="fa fa-chevron-down"></span></a>
                             <ul class="nav child_menu">
                                 <li><a href="{{ url('dashboard') }}">Over All Dashboard</a></li>
+                                @hasrole('MANAGER')
+                                    <li><a href="{{ url('/leadassignment') }}">Lead Assignment</a></li>
+                                @endhasrole
                             </ul>
                     </ul>
                 @endcan
@@ -62,10 +65,10 @@
                                     <li><a href="{{ url('quotes/life') }}">Life Quotes</a></li>
                                 @endcan
                                 @can('home-quotes-list')
-                                <li><a href="{{ url('quotes/home') }}">Home Quotes</a></li>
+                                    <li><a href="{{ url('quotes/home') }}">Home Quotes</a></li>
                                 @endcan
                                 @can('business-quotes-list')
-                                <li><a href="{{ url('quotes/business') }}">Business Quotes</a></li>
+                                    <li><a href="{{ url('quotes/business') }}">Business Quotes</a></li>
                                 @endcan
                             </ul>
                         </li>
@@ -101,7 +104,7 @@
                         <li><a><i class="fa fa-desktop"></i> Trans App <span class="fa fa-chevron-down"></span></a>
                             <ul class="nav child_menu">
                                 @can('transapp-create')
-                                <li><a href="{{ route('home') }}">Search Transaction</a></li>
+                                    <li><a href="{{ route('home') }}">Search Transaction</a></li>
                                 @endcan
                                 @can('transapp-edit')
                                     <li class="sub_menu"><a href="{{ route('reissue_view') }}">Cancel & Re-Issue
@@ -148,10 +151,10 @@
                 @can('renewals-upload')
                     <ul class="nav side-menu">
                         <li><a><i class="fa fa-quote-left"></i> Renewals <span class="fa fa-chevron-down"></span></a>
-                        <ul class="nav child_menu">
-                            <li><a href="{{ url('renewals-upload') }}">Upload</a></li>
-                            <li><a href="{{ url('renewals-list') }}">Uploaded Leads</a></li>
-                        </ul>
+                            <ul class="nav child_menu">
+                                <li><a href="{{ url('renewals-upload') }}">Upload</a></li>
+                                <li><a href="{{ url('renewals-list') }}">Uploaded Leads</a></li>
+                            </ul>
                         </li>
                     </ul>
                 @endcan
