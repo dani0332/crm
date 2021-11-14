@@ -105,7 +105,6 @@
                         <div class="row">
                             <div class="col-auto mr-auto"></div>
                             <div class="col-auto">
-                                <input type="hidden" id="selectquotePlanId" name="selectquotePlanId" value="">
                                 <input type="hidden" id="selectquoteUuId" name="selectquoteUuId" value="{{ $quoteAttrUuId }}">
                                 <button type="button" id="quotePlansGenerateButton" name="quotePlansGenerateButton" class="btn btn-warning btn-sm">Generate Quote</button>
                             </div>
@@ -114,7 +113,6 @@
                             <table id="datatable" class="table table-striped jambo_table" style="width:100%">
                                 <thead>
                                     <tr>
-                                        <th> </th>
                                         <th>Provider Name</th>
                                         <th>Plan Name</th>
                                         <th>Repair Type</th>
@@ -126,7 +124,6 @@
                                 <tbody>
                                     @foreach ($listQuotePlans as $key => $quotePlan)
                                         <tr>
-                                            <td><input type="checkbox" class="flat" id="quotePlanId" name="quotePlanId" value="{{ $quotePlan->id }}" style="height: unset !important;"></td>
                                             <td>{{ ucwords($quotePlan->providerName) }}</td>
                                             <td>{{ ucwords($quotePlan->name) }}</td>
                                             <td>{{ $quotePlan->repairType }}</td>
