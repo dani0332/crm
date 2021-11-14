@@ -18,25 +18,20 @@ export default function InputField({ field, controller }) {
     }
   };
 
-  React.useEffect(() => {
-    // console.log('-------------inputValue--------')
-    // console.log(value)
-    // console.log(field?.value)
-    // console.log(field)
-    // console.log('-------------inputValue---------')
-    //controller.onChange(field.value === undefined || null ? "" : field.value)
-    //setValue(field.value === undefined || null ? "" : field.value)
-  }, [field?.value]);
-
   let shouldDisable = false;
   if (field?.formState && field.formState === 'read') {
     shouldDisable = true;
   }
+
+  let finalVal = value;
+  if (typeof field?.transform === 'function')
+    finalVal = field.transform(value, field);
+
   return (
     <input
       className='form-control'
       disabled={shouldDisable}
-      value={value}
+      value={finalVal}
       onChange={onChange}
     />
   );
