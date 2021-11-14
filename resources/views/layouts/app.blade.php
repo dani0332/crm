@@ -202,7 +202,8 @@ $appName = Config::get('constants.APP_NAME');
                 reward_sliders_datatable_route: "{{ route('reward-sliders.index') }}",
             },
             _token: "{{ csrf_token() }}",
-            image_path: "{{ \Config::get('constants.azure_storage_url') . 'myrewards/' }}"
+            image_path: "{{ \Config::get('constants.azure_storage_url') . 'myrewards/' }}",
+            image_path_rewards_slider: "{{ \Config::get('constants.azure_storage_url') . 'myrewards/rewards-slider/' }}"
         };
     </script>
     <script src="{{ asset('build/js/customjs.js') }}"></script>

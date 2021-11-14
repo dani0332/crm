@@ -1543,7 +1543,7 @@ $(document).ready(function() {
                 data: "image",
                 name: "image",
                 render: function(data, type, row, meta) {
-                    var imgsrc = config.image_path + data;
+                    var imgsrc = config.image_path_rewards_slider + data;
                     return (
                         '<img class="img-responsive" src="' + imgsrc + '" alt="image" height="40px" width="40px">'
                     );

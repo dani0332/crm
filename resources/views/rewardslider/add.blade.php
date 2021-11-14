@@ -40,7 +40,7 @@
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="sort_order">Sort Order <span class="required">*</span></label>
                         <div class="col-md-6 col-sm-6">
-                            <input type="number" id="text_ar" name="sort_order" value="{{ old('sort_order') }}" class="form-control" data-toggle="tooltip" data-placement="top" title="Please enter sort order">
+                            <input type="number" id="sort_order" name="sort_order" value="{{ old('sort_order') }}" class="form-control" data-toggle="tooltip" data-placement="top" title="Please enter sort order">
                             @if ($errors->has('sort_order'))
                                 <span class="text-danger">{{ $errors->first('sort_order') }}</span>
                             @endif
@@ -50,7 +50,7 @@
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="is_active">Is Active</label>
                         <div class="col-md-6 col-sm-6">
                             <div class="checkbox">
-                                <input type="checkbox" class="flat" id='is_active' name='is_active'>
+                                <input type="checkbox" class="flat" id='is_active' name='is_active' value="on" {{(old('is_active') == "on") ? 'checked': ''}}>
                             </div>
                         </div>
                     </div>
@@ -59,7 +59,7 @@
                     <div class="row">
                     <div class="col-auto mr-auto"></div>
                         <div class="col-auto">
-                        <button type="submit" class="btn btn-warning btn-sm">Create & Continue</button> <button type="submit" class="btn btn-warning btn-sm" id="return_to_view" >Create</button>
+                            <button type="submit" class="btn btn-warning btn-sm" id="return_to_view" onClick="this.disabled=true;">Create</button>
                         </div>
                     </div>
                 </form>

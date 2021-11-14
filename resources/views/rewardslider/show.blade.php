@@ -19,7 +19,7 @@
                 <div class="item form-group">
                     <label class="col-form-label col-md-3 col-sm-3 label-align" for="image"><b>Image</b></label>
                     <div class="col-md-6 col-sm-6 ">
-                        <p class="label-align-center"><img src="{{ \Config::get('constants.azure_storage_url').'myrewards/'.$rewardSlider->image }}" style='width:200px;' /></p>
+                        <p class="label-align-center"><img src="{{ \Config::get('constants.azure_storage_url').'myrewards/rewards-slider/'.$rewardSlider->image }}" style='width:200px;' /></p>
                     </div>
                 </div>
                 <div class="item form-group">
@@ -58,6 +58,9 @@
                     <div class="col-auto">
                         @can('reward-sliders-edit')
                         <a id="texta" href="{{ route('reward-sliders.edit', ['reward_slider' => $rewardSlider->id]) }}" class='btn btn-warning btn-sm'>Edit </a>
+                        @endcan
+                        @can('reward-sliders-delete')
+                        <a href="#" date-route="{{ route('reward-sliders.destroy', ['reward_slider' => $rewardSlider->id]) }}" class='btn btn-warning btn-sm delete'>Delete</a>
                         @endcan
                     </div>
                 </div>

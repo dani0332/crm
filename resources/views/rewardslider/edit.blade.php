@@ -23,7 +23,7 @@
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="image">Image <span class="required">*</span></label>
                         <div class="col-md-6 col-sm-6">
                             <input type="file" id="image" name="image"><br />
-                            <img src="{{ \Config::get('constants.azure_storage_url').'myrewards/'.$rewardSlider->image }}" style='width:200px;' /> <br /><br />
+                            <img src="{{ \Config::get('constants.azure_storage_url').'myrewards/rewards-slider/'.$rewardSlider->image }}" style='width:200px;' /> <br /><br />
                             @if ($errors->has('image'))
                                 <span class="text-danger">{{ $errors->first('image') }}</span>
                             @endif
@@ -32,7 +32,7 @@
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="text_ar">Link <span class="required">*</span></label>
                         <div class="col-md-6 col-sm-6">
-                            <input type="text" id="link" name="link" value="{{ $rewardSlider->link }}" class="form-control">
+                            <input type="text" id="link" name="link" value="{{ old('link', $rewardSlider->link) }}" class="form-control">
                             @if ($errors->has('link'))
                                 <span class="text-danger">{{ $errors->first('link') }}</span>
                             @endif
@@ -41,7 +41,7 @@
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="sort_order">Sort Order <span class="required">*</span></label>
                         <div class="col-md-6 col-sm-6">
-                            <input type="number" id="text_ar" name="sort_order" value="{{ $rewardSlider->sort_order }}"  class="form-control">
+                            <input type="number" id="sort_order" name="sort_order" value="{{ old('sort_order', $rewardSlider->sort_order) }}"  class="form-control">
                             @if ($errors->has('sort_order'))
                                 <span class="text-danger">{{ $errors->first('sort_order') }}</span>
                             @endif
@@ -51,7 +51,11 @@
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="is_active">Is Active</label>
                         <div class="col-md-6 col-sm-6">
                         <div class="checkbox">
-                            <input type="checkbox" {{ $rewardSlider->is_active ? 'checked' : '' }} class="flat" id='is_active' name='is_active'>
+                            @if ($rewardSlider->is_active === 1)
+                            <input type="checkbox" id='is_active' name="is_active" class="flat" checked>
+                            @else
+                            <input type="checkbox" id='is_active' name="is_active" class="flat" {{ old("is_active") ? "checked" : "" }} >
+                            @endif
                         </div>
                         </div>
                     </div>
@@ -60,7 +64,7 @@
                     <div class="row">
                         <div class="col-auto mr-auto"></div>
                         <div class="col-auto">
-                            <button type="submit" class="btn btn-warning btn-sm">Update & Continue</button> <button type="submit" class="btn btn-warning btn-sm" id="return_to_view" >Update</button>
+                            <button type="submit" class="btn btn-warning btn-sm" id="return_to_view" onClick="this.disabled=true;">Update</button>
                         </div>
                     </div>
                 </form>

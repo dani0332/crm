@@ -57,7 +57,7 @@ class RewardSliderController extends Controller
         $rewardSlider = new RewardSlider();
         if ($request->file()) {
             $fileName = time() . '_' . $request->image->getClientOriginalName();
-            $filePath = $request->file('image')->storeAs('/', $fileName, 'azure');
+            $filePath = $request->file('image')->storeAs('/rewards-slider/', $fileName, 'azure');
             $rewardSlider->image = $fileName;
         }
         $rewardSlider->link = $request->link;
@@ -104,7 +104,7 @@ class RewardSliderController extends Controller
     {
         if ($request->file()) {
             $fileName = time() . '_' . $request->image->getClientOriginalName();
-            $filePath = $request->file('image')->storeAs('/', $fileName, 'azure');
+            $filePath = $request->file('image')->storeAs('/rewards-slider/', $fileName, 'azure');
             $rewardSlider->image = $fileName;
         }
         $rewardSlider->link = $request->link;
@@ -126,6 +126,7 @@ class RewardSliderController extends Controller
      */
     public function destroy(RewardSlider $rewardSlider)
     {
-        //
+        $rewardSlider->delete();
+        return redirect()->route('reward-sliders.index')->with('message','Rewards Slider has been deleted');
     }
 }
