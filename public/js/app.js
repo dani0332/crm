@@ -21348,13 +21348,6 @@ function KycAMLForm(props) {
                 })
               })
             })
-          }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("div", {
-            children: (state === null || state === void 0 ? void 0 : state.loader) === false && (state === null || state === void 0 ? void 0 : state.found) === 0 && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsxs)("button", {
-              type: "button",
-              className: "btn btn-round btn-success",
-              onClick: verifyAml,
-              children: [' ', "Verify AML"]
-            })
           })]
         })]
       })
