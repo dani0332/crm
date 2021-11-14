@@ -18072,10 +18072,16 @@ var ftcPaymentHistory = {
           Header: 'Status',
           accessor: 'status'
         }, {
-          Header: 'Notes',
+          Header: 'Approval Code',
           accessor: 'notes'
         }],
         events: {
+          onClick: function onClick(options) {
+            var row = options.row,
+                dispatch = options.dispatch,
+                history = options.history;
+            window.open('/transapp/showtransaction?approval_code=' + row.notes, '_blank');
+          },
           applyFilter: function applyFilter(options) {
             var id = options.params.id;
             var generateUrl = "/?filter={\"car_quote_id\":\"".concat(id, "\"}");
