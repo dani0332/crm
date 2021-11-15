@@ -60,7 +60,8 @@ return [
             'prefix'    => null,
         ],
 
-        'azure2' => [
+        // RYU Container for Azure
+        'azureForRyu' => [
             'driver'    => 'azure',
             'name'      => env('AZURE_RYU_STORAGE_NAME'),
             'key'       => env('AZURE_RYU_STORAGE_KEY'),
