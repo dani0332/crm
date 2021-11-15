@@ -168,6 +168,10 @@ function* processVisibleFormStates(obj) {
             };
             manageListDispatch({ type: 'showLoader', obj: { loader: false } });
             yield fillConditionalFields(obj);
+            let beforeRead = obj
+            if(typeof initialFormState.view?.events?.transformBeforeOpenReadMode === 'function' ) {
+              beforeRead = initialFormState.view.events.transformBeforeOpenReadMode(obj)
+            }
             manageListDispatch({ type: 'read', obj });
           } else {
             const obj = {
@@ -268,16 +272,8 @@ function* processVisibleFormStates(obj) {
           };
           //yield put({ type: 'read', obj })
           manageListDispatch({ type: 'showLoader', obj: { loader: false } });
-
-          console.log(
-            '**************Read-Data!selectedRecord******************',
-          );
-          console.log(obj);
-          console.log(
-            '**************Read-Data!selectedRecord******************',
-          );
-
           manageListDispatch({ type: 'read', obj });
+
         } else {
           let objUrl = `/form/${db_table}/${selectedRecord.id}`;
           const resp = yield fetch(objUrl, { method: 'GET' });
@@ -292,12 +288,12 @@ function* processVisibleFormStates(obj) {
             ...initialForm?.override,
             session: session,
           };
-          console.log('**************Read-watch-saga.js*****************');
-          console.log(obj);
-          console.log(formVisible);
-          console.log(selectedRecord);
-          console.log('**************Read-watch-saga.js******************');
-          // yield put({ type: 'read', obj })
+          // console.log('**************Read-watch-saga.js*****************');
+          // console.log(obj);
+          // console.log(formVisible);
+          // console.log(selectedRecord);
+          // console.log('**************Read-watch-saga.js******************');
+
           manageListDispatch({ type: 'showLoader', obj: { loader: false } });
 
           console.log('**************Read-Data******************');
@@ -305,7 +301,16 @@ function* processVisibleFormStates(obj) {
           console.log('**************Read-Data******************');
           yield fillConditionalFields(obj);
 
-          manageListDispatch({ type: 'read', obj });
+          let beforeRead = obj
+          if(typeof formVisible.view?.events?.transformBeforeOpenReadMode === 'function' ) {
+            beforeRead = formVisible.view.events.transformBeforeOpenReadMode(obj)
+          }
+
+          console.log('**************Before-Read-Data******************');
+          console.log(beforeRead);
+          console.log('**************Before-Read-Data******************');
+
+          manageListDispatch({ type: 'read', beforeRead });
         }
       }
       break;
@@ -351,7 +356,12 @@ function* processVisibleFormStates(obj) {
         console.log('**************Edit-Data******************');
         yield fillConditionalFields(obj);
 
-        manageListDispatch({ type: 'edit', obj });
+        let beforeEdit = obj
+        if(typeof formVisible.view?.events?.transformBeforeOpenEditMode === 'function' ) {
+          beforeEdit = formVisible.view.events.transformBeforeOpenEditMode(obj)
+        }
+
+        manageListDispatch({ type: 'edit', beforeEdit });
       }
       break;
 

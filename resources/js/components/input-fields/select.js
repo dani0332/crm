@@ -26,8 +26,8 @@ export default function SelectField({ field, controller }) {
   }, [field, field?.value]);
 
   const redraw = field => {
-    console.log('---**********redraw-************----');
-    console.log(field);
+    // console.log('---**********redraw-************----');
+    // console.log(field);
 
     if (field?.formState === 'read' || field?.formState === 'edit') {
       let defaultValue = {};
@@ -46,8 +46,8 @@ export default function SelectField({ field, controller }) {
         }
       }
 
-      console.log(defaultValue);
-      console.log('---**********redraw-************----');
+      // console.log(defaultValue);
+      // console.log('---**********redraw-************----');
       setData({
         data: [],
         isDisabled: field.formState === 'read' ? true : false,
@@ -202,11 +202,11 @@ export default function SelectField({ field, controller }) {
     value = options;
   }
 
-  console.log('---**********SelectAmjad-************----');
-  console.log(field);
-  console.log(value);
-  console.log(data);
-  console.log('---**********SelectAmjad-************----');
+  // console.log('---**********SelectRender-************----');
+  // console.log(field);
+  // console.log(value);
+  // console.log(data);
+  // console.log('---**********SelectRender-************----');
 
   return (
     <Select
