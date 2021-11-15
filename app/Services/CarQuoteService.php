@@ -295,11 +295,11 @@ class CarQuoteService extends BaseService
         try {
 
             $kenRequest = $client->post(
-                'https://staging-api-afia.azure-api.net/kenuat/api/v1/get-car-quote-plans',
+                $plansApiEndPoint,
                 [
-                    'headers' => ['Content-Type' => 'application/json', 'Accept' => 'application/json', 'x-api-token' => '8613e99d37494293b1e030305f6b6147'],
+                    'headers' => ['Content-Type' => 'application/json', 'Accept' => 'application/json', 'x-api-token' => $plansApiToken],
                     'body' => json_encode($plansDataArr),
-                    'timeout' => 180,
+                    'timeout' => $plansApiTimeout,
                 ]
             );
 
@@ -310,10 +310,9 @@ class CarQuoteService extends BaseService
                 $getdecodeContents = json_decode($getContents);
                 return $getdecodeContents;
             }
-        }
-        catch (ClientException $e) {
+        } catch (ClientException $e) {
             $response = $e->getResponse();
-            $responseBodyAsString = "API Failed - ".$response->getBody()->getContents();
+            $responseBodyAsString = "API Failed - " . $response->getBody()->getContents();
             return $responseBodyAsString;
         }
     }
