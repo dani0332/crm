@@ -7,6 +7,9 @@ use Illuminate\Http\Request;
 use Config;
 use DB;
 use Auth;
+use Exception;
+use GuzzleHttp\Psr7\Message;
+use GuzzleHttp\Exception\ClientException;
 
 class CarQuoteService extends BaseService
 {
@@ -288,23 +291,30 @@ class CarQuoteService extends BaseService
         );
 
         $client = new \GuzzleHttp\Client();
-        $kenRequest = $client->post(
-            'https://staging-api-afia.azure-api.net/kenuat/api/v1/get-car-quote-plans',
-            [
-                'headers' => ['Content-Type' => 'application/json', 'Accept' => 'application/json', 'x-api-token' => '8613e99d37494293b1e030305f6b6147'],
-                'body' => json_encode($plansDataArr),
-                'timeout' => 180,
-            ]
-        );
 
-        $getStatusCode = $kenRequest->getStatusCode();
+        try {
 
-        if ($getStatusCode == 200) {
-            $getContents = $kenRequest->getBody();
-            $getdecodeContents = json_decode($getContents);
-            return $getdecodeContents;
-        } else {
-            return "API failed";
+            $kenRequest = $client->post(
+                'https://staging-api-afia.azure-api.net/kenuat/api/v1/get-car-quote-plans',
+                [
+                    'headers' => ['Content-Type' => 'application/json', 'Accept' => 'application/json', 'x-api-token' => '8613e99d37494293b1e030305f6b6147'],
+                    'body' => json_encode($plansDataArr),
+                    'timeout' => 180,
+                ]
+            );
+
+            $getStatusCode = $kenRequest->getStatusCode();
+
+            if ($getStatusCode == 200) {
+                $getContents = $kenRequest->getBody();
+                $getdecodeContents = json_decode($getContents);
+                return $getdecodeContents;
+            }
+        }
+        catch (ClientException $e) {
+            $response = $e->getResponse();
+            $responseBodyAsString = "API Failed - ".$response->getBody()->getContents();
+            return $responseBodyAsString;
         }
     }
 }

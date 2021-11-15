@@ -101,6 +101,7 @@
                         <h2>Available Plans</h2>
                         <div class="clearfix"></div>
                     </div>
+                    @if(gettype($listQuotePlans) != 'string')
                     <div class="x_content">
                         <div class="row">
                             <div class="col-auto mr-auto"></div>
@@ -135,6 +136,9 @@
                                 </tbody>
                             </table>
                         </div>
+                        @else
+                        <h4>{{ $listQuotePlans }}</h4>
+                        @endif
                     </div>
                 </div>
             </div>
