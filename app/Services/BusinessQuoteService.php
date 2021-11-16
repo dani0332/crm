@@ -60,10 +60,6 @@ class BusinessQuoteService extends BaseService
             $query .= ' ' . $count == 0 ? ' where' . ' hqr.email = ' . $mobile_no : ' and' . ' hqr.email = ' . $mobile_no;
             $count++;
         }
-        if ($isAdvisor) {
-            $query .= ' ' . $count == 0 ? ' where' . ' hqr.advisor_id = ' . Auth::user()->id : ' and' . ' hqr.advisor_id = ' . Auth::user()->id;
-            $count++;
-        }
         return DB::select($query);
     }
 
