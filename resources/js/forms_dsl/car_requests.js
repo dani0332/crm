@@ -152,7 +152,7 @@ const leadRequest = {
               label: 'Production Agent',
               field: 'pa_id',
               source: 'users',
-              filter: { name : 'pa'},
+              filter: { name: 'pa' },
               access: {
                 read: ['advisor'],
                 write: [],
@@ -176,25 +176,19 @@ const leadRequest = {
                 { id: 1, text: 'Assigned Leads' },
               ],
               access: {
-                read: ['pa', 'invoicing', 'production_approval_manager'],
+                read: ['pa', 'invoicing'],
                 write: [],
                 update: [],
               },
             },
-             {
+            {
               type: 'datePicker',
               label: 'Created At',
               field: 'created_at',
               access: {
-                read: [
-                  'pa',
-                  'advisor',
-                  'admin',
-                  'invoicing',
-                  'production_approval_manager',
-                ],
-                write: ['advisor', 'admin'],
-                update: ['advisor', 'admin'],
+                read: ['advisor'],
+                write: [],
+                update: [],
               },
               // rules: { required: true }
             },
@@ -213,7 +207,8 @@ const leadRequest = {
           {
             Header: 'Customer Name',
             accessor: d => `${d.first_name} ${d.last_name}`,
-          },{
+          },
+          {
             Header: 'Lead Status',
             accessor: d => `${d.quote_status_id?.text}`,
           },
