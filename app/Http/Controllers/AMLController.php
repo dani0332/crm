@@ -393,6 +393,7 @@ class AMLController extends Controller
         $fileNameAzure = date('d-m-Y').'_'.$fileNameOriginal;
         $request->file('file_name')->storeAs('/', $fileNameAzure, 'azureForRyu');
 
+        dd($fileNameAzure);
         $newUpload = UAEAMLListUploads::where('id', '=', 1)->get()->first();
         $newUpload->file_name = $fileNameAzure;
         $newUpload->is_updated = true;
