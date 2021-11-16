@@ -21,16 +21,12 @@ class RewardSliderController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index(Request $request)
+    public function index(Request $request, RewardSlider $rewardSlider)
     {
         if ($request->ajax()) {
-            $rewardSliders = RewardSlider::select('*')->orderBy('sort_order','asc');
-            return Datatables::of($rewardSliders)
+
+            return Datatables::of($rewardSlider->orderBy('sort_order','asc')->limit(10)->get())
                 ->addIndexColumn()
-                ->addColumn('action', function ($row) {
-                    return view('rewardslider.actions', compact('row'))->render();
-                })
-                ->rawColumns(['action'])
                 ->make(true);
         }
         return view('rewardslider.view');
