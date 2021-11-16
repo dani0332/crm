@@ -76,6 +76,7 @@ class HealthQuoteService extends BaseService
             "hasHome" => $request->has_home == 'on' ? true : false,
             "emirateOfYourVisaId" => $request->emirate_of_your_visa_id,
         );
+        if(Auth::user()->hasRole("HEALTH_ADVISOR")) $dataArr['advisorId'] = Auth::users()->id;
         return $this->sendCAPIRequest('/api/v1-save-health-quote', $dataArr);
     }
 

@@ -45,9 +45,9 @@ class CRUDController extends Controller
         HomeQuoteService $homeQuoteService,
         BusinessQuoteService $businessQuoteService,
         UserService $userService,
-        GenericModel $genericModel
+        Request $request
     ) {
-
+        $this->genericModel = new GenericModel();
         $this->healthQuoteService = $healthService;
         $this->teamsService = $teamsService;
         $this->crudService = $crudService;
@@ -59,8 +59,8 @@ class CRUDController extends Controller
         $this->homeQuoteService = $homeQuoteService;
         $this->businessQuoteService = $businessQuoteService;
         $this->userService = $userService;
-        $this->setModelType(request());
-        $this->fillModelByModelType(ucwords($genericModel->modelType));
+        $this->setModelType($request);
+        $this->fillModelByModelType(ucwords($this->genericModel->modelType), $request);
     }
 
     /**
@@ -68,21 +68,22 @@ class CRUDController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index(Request $request, GenericModel $genericModel)
+    public function index(Request $request)
     {
-        $gridData = $this->crudService->getGridData($genericModel, $request);
-        $advisors = $this->crudService->getAdvisorsByModelType($genericModel->modelType);
+        $gridData = $this->crudService->getGridData($this->genericModel, $request);
+        $advisors = $this->crudService->getAdvisorsByModelType($this->genericModel->modelType);
         $isManagerORDeputy = Auth::user()->hasAnyRole(['MANAGER', 'DEPUTY']);
-        foreach ($genericModel->properties as $property => $value) {
+        $dropdownSource = $customTitles = [];
+        foreach ($this->genericModel->properties as $property => $value) {
             if (str_contains($value, 'title')) {
-                $customTitles[$property] = $this->crudService->getCustomTitleByModelType($genericModel->modelType, $property);
+                $customTitles[$property] = $this->crudService->getCustomTitleByModelType($this->genericModel->modelType, $property);
             }
             if (str_contains($value, 'select')) {
                 $dropdownValue = $this->dropdownSourceService->getDropdownSource($property);
                 $dropdownSource[$property] = $dropdownValue;
             }
         }
-
+        $model = $this->genericModel;
         if ($request->ajax()) {
             return DataTables::of($gridData)
                 ->addIndexColumn()
@@ -97,19 +98,19 @@ class CRUDController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function create(Request $request, GenericModel $genericModel)
+    public function create(Request $request)
     {
-        $dropdownSource = [];
-        $customTitles = [];
-        foreach ($genericModel->properties as $property => $value) {
+        $customTitles = $dropdownSource = [];
+        foreach ($this->genericModel->properties as $property => $value) {
             if (str_contains($value, 'title')) {
-                $customTitles[$property] = $this->crudService->getCustomTitleByModelType($genericModel->modelType, $property);
+                $customTitles[$property] = $this->crudService->getCustomTitleByModelType($this->genericModel->modelType, $property);
             }
             if (str_contains($value, 'select')) {
                 $data = $this->dropdownSourceService->getDropdownSource($property);
                 $dropdownSource[$property] = $data;
             }
         }
+        $model = $this->genericModel;
         return view('shared.add', compact('model', 'dropdownSource', 'customTitles'));
     }
 
@@ -148,6 +149,7 @@ class CRUDController extends Controller
     {
         $record = $this->crudService->getEntity($this->genericModel->modelType, $id);
         $model = $this->genericModel;
+        $customTitles = $customTableList = [];
         foreach ($model->properties as $property => $value) {
             if (str_contains($value, 'title')) {
                 $customTitles[$property] = $this->crudService->getCustomTitleByModelType($this->genericModel->modelType, $property);
@@ -251,8 +253,10 @@ class CRUDController extends Controller
         if (strpos($request->fullUrl(), 'leadstatus')) $this->genericModel->modelType = 'LeadStatus';
     }
 
-    private function fillModelByModelType($modelType)
+    private function fillModelByModelType($type, Request $request)
     {
+        $requestModelType = json_decode($request->modelType, true);
+        $modelType = $requestModelType ?? $type;
         $quoteTypes = 'Health,Car,Travel,Life,Home,Business';
         $serviceType = str_contains($quoteTypes, ucwords($modelType)) ? strtolower($modelType) . 'QuoteService' : lcfirst(ucwords($modelType)) . 'Service';
         $this->genericModel->properties = $this->{$serviceType}->fillModelProperties();

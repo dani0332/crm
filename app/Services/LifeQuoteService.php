@@ -67,6 +67,7 @@ class LifeQuoteService extends BaseService
             "gender" => $request->gender,
             "othersInfo" => $request->others_info,
         );
+        if(Auth::user()->hasRole("LIFE_ADVISOR")) $dataArr['advisorId'] = Auth::users()->id;
         return $this->sendCAPIRequest('/api/v1-save-home-quote', $dataArr);
 
         $lifeQuote = new LifeQuote();

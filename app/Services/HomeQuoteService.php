@@ -59,6 +59,7 @@ class HomeQuoteService extends BaseService
             "hasBuilding" => $request->has_building == 'on' ? true : false,
             "hasPersonalBelongings" => $request->has_personal_belongings == 'on' ?  true : false,
         );
+        if(Auth::user()->hasRole("HOME_ADVISOR")) $dataArr['advisorId'] = Auth::users()->id;
         return $this->sendCAPIRequest('/api/v1-save-home-quote', $dataArr);
     }
 

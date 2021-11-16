@@ -63,6 +63,9 @@ class TravelQuoteService extends BaseService
             "destination" => $request->destination,
             "regionCoverForId" => $request->region_cover_for_i,
         );
+        if(Auth::user()->hasRole("TRAVEL_ADVISOR")){
+            $dataArr['advisorId'] = Auth::user()->id;
+        }
         return $this->sendCAPIRequest('/api/v1-save-travel-quote', $dataArr);
     }
 

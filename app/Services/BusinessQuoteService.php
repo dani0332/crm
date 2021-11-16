@@ -89,6 +89,7 @@ class BusinessQuoteService extends BaseService
             "briefDetails" => $request->brief_details,
             "businessTypeOfInsuranceId" => $request->business_type_of_insurance_id,
         );
+        if(Auth::user()->hasRole("BUSINESS_ADVISOR")) $dataArr['advisorId'] = Auth::users()->id;
         return $this->sendCAPIRequest('/api/v1-save-business-quote', $dataArr);
     }
 
