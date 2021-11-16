@@ -16890,17 +16890,17 @@ var insuranceDetail = {
 
             var code = form === null || form === void 0 ? void 0 : (_form$data = form.data) === null || _form$data === void 0 ? void 0 : (_form$data$car_quote_ = _form$data.car_quote_id) === null || _form$data$car_quote_ === void 0 ? void 0 : (_form$data$car_quote_2 = _form$data$car_quote_.quote_status_id) === null || _form$data$car_quote_2 === void 0 ? void 0 : _form$data$car_quote_2.code;
 
-            if (code && code !== 'ftc_pending') {
-              var access = {
-                read: ['pa', 'advisor', 'admin', 'invoicing', 'production_approval_manager'],
-                write: [],
-                update: [],
-                "delete": []
-              };
-              form.access = access;
+            if (code && code === 'ftc_pending') {
               return form;
             }
 
+            var access = {
+              read: ['pa', 'advisor', 'admin', 'invoicing', 'production_approval_manager'],
+              write: [],
+              update: [],
+              "delete": []
+            };
+            form.access = access;
             return form;
           },
           transformBeforeOpenEditMode: function transformBeforeOpenEditMode(form) {
@@ -19471,17 +19471,17 @@ var vehicleDetail = {
 
             var code = form === null || form === void 0 ? void 0 : (_form$data = form.data) === null || _form$data === void 0 ? void 0 : (_form$data$quote_stat = _form$data.quote_status_id) === null || _form$data$quote_stat === void 0 ? void 0 : _form$data$quote_stat.code;
 
-            if (code && code !== 'ftc_pending') {
-              var access = {
-                read: ['pa', 'advisor', 'admin', 'invoicing', 'production_approval_manager'],
-                write: [],
-                update: [],
-                "delete": []
-              };
-              form.access = access;
+            if (code && code === 'ftc_pending') {
               return form;
             }
 
+            var access = {
+              read: ['pa', 'advisor', 'admin', 'invoicing', 'production_approval_manager'],
+              write: [],
+              update: [],
+              "delete": []
+            };
+            form.access = access;
             return form;
           },
           applyFilter: function applyFilter(options) {

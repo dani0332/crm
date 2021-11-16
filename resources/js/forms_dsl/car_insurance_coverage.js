@@ -312,23 +312,23 @@ let insuranceDetail = {
           transformBeforeOpenReadMode(form){
 
             const code  = form?.data?.car_quote_id?.quote_status_id?.code;
-            if(code && code !== 'ftc_pending') {
-                const access = {
-                  read: [
-                    'pa',
-                    'advisor',
-                    'admin',
-                    'invoicing',
-                    'production_approval_manager',
-                  ],
-                  write: [],
-                  update: [],
-                  delete: [],
-                };
-
-                form.access = access
-                return form
+            if(code  && code === 'ftc_pending') {
+              return form
             }
+
+            const access = {
+              read: [
+                'pa',
+                'advisor',
+                'admin',
+                'invoicing',
+                'production_approval_manager',
+              ],
+              write: [],
+              update: [],
+              delete: [],
+            };
+            form.access = access
             return form
           },
           transformBeforeOpenEditMode(form) {

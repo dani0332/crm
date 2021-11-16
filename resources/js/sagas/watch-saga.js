@@ -173,6 +173,7 @@ function* processVisibleFormStates(obj) {
             if(initialFormState.view?.events?.transformBeforeOpenReadMode && typeof initialFormState.view.events.transformBeforeOpenReadMode === 'function' ) {
               beforeSendRead = initialFormState.view.events.transformBeforeOpenReadMode(obj)
             }
+
             manageListDispatch({ type: 'read', obj: beforeSendRead });
           } else {
             const obj = {
