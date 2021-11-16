@@ -10,6 +10,7 @@ class UAEAMLListUploads extends Model
 {
     use HasFactory;
     protected $table = 'uae_aml_list_uploads';
+    protected $guarded = [];
 
     public function getCreatedAtAttribute($table)
     {
