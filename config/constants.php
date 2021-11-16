@@ -3,7 +3,7 @@
 return [
     'social_driver' => 'google',
     'azure_storage_url' => env('AZURE_STORAGE_URL' ,''),
-    'emailL_sys' => env('EMAIL_SYS' , 'DEVELOPMENT'),
+    'emailL_sys' => env('EMAIL_SYS'),
     'central_api_endpoint' => env('CENTRAL_API_ENDPOINT' , ''),
     'central_api_token'=>env('CENTRAL_API_TOKEN' , ''),
     'datetime_format'=>env('DATETIME_FORMAT' , ''),
@@ -22,5 +22,7 @@ return [
     'INSLY_API_RENEWAL_PASSWORD' => env('INSLY_API_RENEWAL_PASSWORD'),
     'INSLY_API_RENEWAL_URI' => env('INSLY_API_RENEWAL_URI'),
     'APP_NAME' => env('APP_NAME'),
-    'INSLY_REQUEST_TIMEOUT_IN_SECONDS' => env('INSLY_REQUEST_TIMEOUT_IN_SECONDS')
+    'INSLY_REQUEST_TIMEOUT_IN_SECONDS' => env('INSLY_REQUEST_TIMEOUT_IN_SECONDS'),
+    'MAIL_FROM_ADDRESS_AML' => env('MAIL_FROM_ADDRESS_AML'),
+    'MAIL_FROM_NAME_AML' => env('MAIL_FROM_NAME_AML')
 ];
