@@ -391,7 +391,7 @@ class AMLController extends Controller
 
         $fileNameOriginal = $request->file_name->getClientOriginalName();
         $fileNameAzure = date('d-m-Y').'_'.$fileNameOriginal;
-        $filePathAzure = $request->file('file_name')->storeAs('/', $fileNameAzure, 'azureForRyu');
+        $request->file('file_name')->storeAs('/', $fileNameAzure, 'azureForRyu');
 
         $newUpload = UAEAMLListUploads::where('id', '=', 1)->get()->first();
         $newUpload->file_name = $fileNameAzure;
