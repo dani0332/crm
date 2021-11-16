@@ -6,6 +6,7 @@ use App\Http\Requests\RewardSliderRequest;
 use App\Models\RewardSlider;
 use Illuminate\Http\Request;
 use DataTables;
+use Arr;
 
 class RewardSliderController extends Controller
 {
@@ -21,11 +22,11 @@ class RewardSliderController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index(Request $request, RewardSlider $rewardSlider)
+    public function index(Request $request, RewardSlider $rewardSlider, Datatables $datatables)
     {
         if ($request->ajax()) {
 
-            return Datatables::of($rewardSlider->orderBy('sort_order','asc')->limit(10)->get())
+            return $datatables::of($rewardSlider::query()->orderBy('sort_order','asc'))
                 ->addIndexColumn()
                 ->make(true);
         }
@@ -48,18 +49,22 @@ class RewardSliderController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(RewardSliderRequest $request)
+    public function store(RewardSliderRequest $request, RewardSlider $rewardSlider)
     {
-        $rewardSlider = new RewardSlider();
         if ($request->file()) {
             $fileName = time() . '_' . $request->image->getClientOriginalName();
             $filePath = $request->file('image')->storeAs('/rewards-slider/', $fileName, 'azure');
             $rewardSlider->image = $fileName;
         }
-        $rewardSlider->link = $request->link;
-        $rewardSlider->sort_order = $request->sort_order;
-        $rewardSlider->is_active = $request->is_active == 'on' ? 1 : 0;
-        $rewardSlider->save();
+        // $rewardSlider->link = $request->link;
+        // $rewardSlider->sort_order = $request->sort_order;
+        // $rewardSlider->is_active = $request->is_active == 'on' ? 1 : 0;
+        // $rewardSlider->save();
+
+        //dd(Arr::except($request->validated(), ['image']));
+        //dd($request->validated() + [ 'image' => $fileName] );
+
+        $rewardSlider->create(Arr::except($request->validated(), ['image']) + [ 'image' => $fileName]);
 
         if(isset($request->return_to_view)) {
             return redirect("rewards/reward-sliders/".$rewardSlider->id)->with('success', 'Rewards Slider image has been stored');

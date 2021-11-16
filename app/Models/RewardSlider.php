@@ -25,4 +25,9 @@ class RewardSlider extends Model implements AuditableContract
         $date_time_format = Config::get('constants.datetime_format');
         return $this->asDateTime($table)->timezone(config('app.timezone'))->format($date_time_format);
     }
+
+    public function setIsActiveAttribute($value)
+    {
+        $this->attributes['is_active'] = $value == 'on' ? 1 : 0;
+    }
 }
