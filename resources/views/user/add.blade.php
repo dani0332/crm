@@ -45,16 +45,41 @@
                             @endif
                         </div>
                     </div>
+
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="roles">Role <span class="required">*</span></label>
                         <div class="col-md-6 col-sm-6 ">
-                            <select name="roles[]" multiple class="form-control">
-                                @foreach ($roles as $role )
-                                    <option value="{{ $role }}">{{ $role }}</option>
+                            <select name="roles[]" multiple="multiple" style="margin-bottom:15px;"
+                                            class="form-control select2 select-roles">
+                            @foreach(array_chunk($roles, 6) as $chunk)
+                                @foreach($chunk as $skey=>$item)
+                                <option value="{{$item }}"}}>
+                                {{ $item }}
+                                </option>
                                 @endforeach
-                            </select>
+                            @endforeach
+                        </select>
                             @if ($errors->has('roles'))
                                 <span class="text-danger">{{ $errors->first('roles') }}</span>
+                            @endif
+                        </div>
+                    </div>
+
+                    <div class="item form-group">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="roles">Team <span class="required">*</span></label>
+                        <div class="col-md-6 col-sm-6 ">
+                            <select name="team[]" class="form-control select2 select-roles" multiple="multiple">
+                                @foreach ($teams as $team)
+
+                                @if (old('team') == $team->id)
+                                <option value="{{ $team->id }}" selected>{{ $team->name }}</option>
+                                @else
+                                <option value="{{ $team->id }}">{{ $team->name }}</option>
+                                @endif
+                                @endforeach
+                            </select>
+                            @if ($errors->has('team'))
+                                <span class="text-danger">{{ $errors->first('team') }}</span>
                             @endif
                         </div>
                     </div>

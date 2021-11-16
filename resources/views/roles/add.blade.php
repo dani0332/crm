@@ -27,19 +27,20 @@
                             @endif
                         </div>
                     </div>
+
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="name">Permission <span class="required">*</span></label>
                         <div class="col-md-6 col-sm-6">
-                            @foreach($permission->chunk(4) as $chunk)
-                                <div class="row">
-                                    <div class="col-md-12">
-                                        @foreach($chunk as $item)
-                                            <span class="badge badge-pill" style="margin:5px;font-size:13px;">{{ $item->name }} <input type="checkbox" class="flat" value="{{ $item->id }}" name='permission[]' /></span>
-                                        @endforeach
-                                    </div>
-                                </div>
-                                <hr />
+                        <select name="permission[]" multiple="multiple" style="margin-bottom:15px;"
+                                            class="form-control select2 js-example-basic-multiple select_multiple">
+                            @foreach($permission->chunk(6) as $chunk)
+                                @foreach($chunk as $skey=>$item)
+                                <option value="{{$item->id }}"}}>
+                                {{ $item->name }}
+                                </option>
+                                @endforeach
                             @endforeach
+                        </select>
                         </div>
                     </div>
                     <div id='redirect_to_view_div'></div>
