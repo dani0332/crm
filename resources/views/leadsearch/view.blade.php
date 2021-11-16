@@ -26,17 +26,13 @@
                         name: 'id',
                         render: function(data, type, row) {
                             if(teamUserIds.includes(row.advisor_id) || row.advisor_id == userId){
-
-                                return "<a href='" + config.routes.searchLeadsDataTable + '/' + row
-                                .id + "'>" + row.id + "</a>"
+                                return "<a href='/quotes/"+$("#leadType").val()+"/"+row.id+"'>" + row.id + "</a>"
                             }else{
                                 return "You don’t have access to view this lead"
                             }
 
                         }
                     },
-
-
                     {
                         data: "created_at",
                         name: "created_at"

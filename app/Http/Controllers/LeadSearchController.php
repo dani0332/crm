@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\LeadSearch;
+use App\Models\UserTeams;
 use App\Services\CRUDService;
 use Illuminate\Http\Request;
 use DataTables;
+use Illuminate\Support\Facades\Auth;
 
 use function PHPUnit\Framework\isEmpty;
 
@@ -23,15 +25,18 @@ class LeadSearchController extends Controller
      */
     public function index(Request $request)
     {
+        $leadType = $request->leadType ?? '';
+        // $teamId = UserTeams::where('user_id', Auth::user()->id)->get()->pluck('team_id');
+        // $teamUsers = UserTeams::where('team_id', $teamId)->get()->pluck('user_id');
         if ($request->ajax()) {
-            if (isset($request->leadType) && !empty($request->leadType)) {
-                $quoteResults = $this->crudService->getLeads($request->cdbID, $request->email, $request->phnNumber, $request->leadType);
+            if (isset($leadType) && !empty($leadType)) {
+                $quoteResults = $this->crudService->getLeads($request->cdbID, $request->email, $request->phnNumber, $leadType);
                 return DataTables::of($quoteResults)
                     ->addIndexColumn()
                     ->make(true);
             }
         }
-        return view('leadsearch.view');
+        return view('leadsearch.view', compact('leadType'));
     }
 
     /**
