@@ -38,12 +38,8 @@ class CheckAmlService
         $fullName = $firstName." ".$lastName;
         $resultsFound = $chAmlMessage["resultsFound"];
 
-        $getTotalResults = AML::where('quote_type_id', $quoteTypeId)
-        ->where('quote_request_id', $quoteRequestId)
-        ->sum('results_found');
-
         // Match is found
-        if(($resultsFound > 0 || $getTotalResults > 0) && stripos($fullName, "test") === false) {
+        if($resultsFound > 0) {
 
             // Send Email alert to Compliance team only
             $quoteTypeName = QuoteType::where('id', '=', $quoteTypeId)->value('text'); // Get quote type text

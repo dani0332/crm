@@ -35,7 +35,7 @@ class CarQuotePaymentHistory extends BaseModel
 
     public function processGetDSL($filters, $request) {
         return self::processGetBaseDSL($filters);
-     }
+    }
 
      public function saveForm($request, $update = false) {
 

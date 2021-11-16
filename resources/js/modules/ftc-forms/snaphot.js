@@ -10,6 +10,7 @@ import AssignUser from './assign-user';
 import { session } from '../../utils';
 import Overview from './overview';
 import FtcPayment from './ftc-payment';
+import { confirmAlert } from 'react-confirm-alert';
 const Styles = styled.div``;
 
 function LeadSnapShot() {
@@ -69,6 +70,15 @@ function LeadSnapShot() {
           context: 'car_quote_snap',
           multi: false,
           filter: `/${paramRef.current.id}`,
+        };
+      case 'carQuotePolicy':
+        return {
+          form: 'carQuotePolicy',
+          view_mode: 'list',
+          action_type: 'list',
+          context: 'car_quote_snap',
+          multi: false,
+          filter: { car_quote_id: paramRef.current.id },
         };
 
       case 'email_template':
@@ -160,6 +170,13 @@ function LeadSnapShot() {
       id: 9,
       data: 'ftcPayment',
     },
+    {
+      icon: 'fa fa-line-chart',
+      label: 'Policy Detail',
+      active: 0,
+      id: 11,
+      data: 'carQuotePolicy',
+    },
   ];
 
   const onSelect = async obj => {
@@ -176,6 +193,30 @@ function LeadSnapShot() {
       );
       const data = await response.json();
       dispatch({ type: 'email_template', state: data?.data });
+    } else if (data === 'carQuotePolicy') {
+      const response = await fetch(
+        `/form/car_quote_request/${paramRef.current.id}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        },
+      );
+      const data = await response.json();
+      if (data?.data?.quote_status_id?.id !== 15) {
+        confirmAlert({
+          title: 'Error',
+          message: 'Car Quote status is not approved.',
+          buttons: [
+            {
+              label: 'OK',
+            },
+          ],
+        });
+      } else {
+        dispatch({ type: 'carQuotePolicy' });
+      }
     } else {
       dispatch({ type: data });
     }

@@ -6,10 +6,10 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Config;
 
-class RenewalsDump extends Model
+class UAEAMLListUploads extends Model
 {
     use HasFactory;
-    protected $table = 'renewals_dump';
+    protected $table = 'uae_aml_list_uploads';
     protected $guarded = [];
 
     public function getCreatedAtAttribute($table)
