@@ -25,6 +25,7 @@ use App\Http\Controllers\ClaimsAttachmentsController;
 use App\Http\Controllers\AMLController;
 use App\Http\Controllers\BaseDiscountController;
 use App\Http\Controllers\BulkEmailProcessController;
+use App\Http\Controllers\CRUDController;
 use App\Http\Controllers\FtcFormController;
 use App\Http\Controllers\FormController;
 use App\Http\Controllers\UploadResourceController;
@@ -33,6 +34,8 @@ use App\Http\Controllers\ValuationController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\InsuranceCompanyController;
 use App\Http\Controllers\HandlerController;
+use App\Http\Controllers\LeadAssignmentController;
+use App\Http\Controllers\LeadSearchController;
 use App\Http\Controllers\ReasonController;
 use App\Http\Controllers\StatusController;
 use App\Http\Controllers\PaymentModeController;
@@ -74,8 +77,28 @@ Route::middleware(['auth'])->get('/home', function () {
     return view('home');
 });
 
-Route::group(['middleware' =>  ['auth']], function () {
 
+Route::group(['middleware' =>  ['auth']], function () {
+    Route::resource('leadsearch', LeadSearchController::class)->names([
+        'index' => 'leadsearch.index',
+        'create' => 'leadsearch.create',
+        'store' => 'leadsearch.store',
+        'show' => 'leadsearch.show',
+        'edit' => 'leadsearch.edit',
+        'update' => 'leadsearch.update',
+        'destroy' => 'leadsearch.destroy',
+    ]);
+    Route::resource('leadassignment', LeadAssignmentController::class)->names([
+        'index' => 'leadassignment.index',
+        'create' => 'leadassignment.create',
+        'store' => 'leadassignment.store',
+        'show' => 'leadassignment.show',
+        'edit' => 'leadassignment.edit',
+        'update' => 'leadassignment.update',
+        'destroy' => 'leadassignment.destroy',
+    ]);
+    Route::post('manualLeadAssign', [LeadAssignmentController::class, 'manualLeadAssign'])->name('manualAssignment');
+    Route::get('getAdvisors', [LeadAssignmentController::class, 'getAdvisors'])->name('getAdvisors');
     Route::resource('customer', CustomerController::class);
     Route::get('/customer-upload', [CustomerController::class, 'uploadCustomers']);
     Route::post('/customer-process', [CustomerController::class, 'processCustomerCSV']);
@@ -105,6 +128,19 @@ Route::group(['middleware' =>  ['auth']], function () {
         Route::resource('carquotes', CarQuoteController::class);
         Route::get('carquotes/car_resubmit/{id}', [CarQuoteController::class, 'car_resubmit_capi'])->name('car_resubmit_capi');
         Route::resource('healthquotes', HealthQuoteController::class);
+        Route::resource('health', CRUDController::class);
+        Route::resource('car', CRUDController::class);
+        Route::resource('life', CRUDController::class);
+        Route::resource('home', CRUDController::class);
+        Route::resource('business', CRUDController::class);
+        Route::resource('travel', CRUDController::class);
+        Route::resource('teams', CRUDController::class);
+        Route::resource('leadstatus', CRUDController::class);
+        Route::post('save', [CRUDController::class, 'store'])->name('saveQuote');
+        Route::post('update', [CRUDController::class, 'update'])->name('updateQuote');
+        Route::get('getvalues/{modelType}/{propertyName}/{recordId}', [CRUDController::class, 'getDropdownSourceNameForDisplay']);
+        Route::get('car/{quoteId}/plan_details/{planId}', [CRUDController::class, 'plan_details'])->name('plan_details');
+        Route::get('manualLeadAssign', [CRUDController::class, 'manualLeadAssign'])->name('manualLeadAssign');
     });
 
     Route::group(['prefix' => 'transapp'], function () {
@@ -127,7 +163,7 @@ Route::group(['middleware' =>  ['auth']], function () {
         Route::get('calculatevaluation', [ValuationController::class, 'calculateValuation'])->name('calculatevaluation');
         Route::resource('vehicledepreciation', VehicleDepreciationController::class);
     });
-    Route::get('/valuation/car-models', [ValuationController::class, 'carModelBasedOnCarMake']);
+    Route::get('/valuation/car-models', [ValuationController::class, 'carModelBasedOnCa `   rMake']);
     Route::get('/valuation/car-model-detail', [ValuationController::class, 'carTrimBasedOnCarModel']);
 
     Route::group(['prefix' => 'claim'], function () {
