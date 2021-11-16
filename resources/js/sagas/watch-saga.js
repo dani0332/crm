@@ -169,7 +169,8 @@ function* processVisibleFormStates(obj) {
             manageListDispatch({ type: 'showLoader', obj: { loader: false } });
             yield fillConditionalFields(obj);
             let beforeSendRead = obj
-            if(typeof initialFormState.view?.events?.transformBeforeOpenReadMode === 'function' ) {
+
+            if(initialFormState.view?.events?.transformBeforeOpenReadMode && typeof initialFormState.view.events.transformBeforeOpenReadMode === 'function' ) {
               beforeSendRead = initialFormState.view.events.transformBeforeOpenReadMode(obj)
             }
             manageListDispatch({ type: 'read', obj: beforeSendRead });
@@ -184,7 +185,7 @@ function* processVisibleFormStates(obj) {
             manageListDispatch({ type: 'showLoader', obj: { loader: false } });
 
             let beforeSendRead = obj
-            if(typeof initialFormState.view?.events?.transformBeforeOpenReadMode === 'function' ) {
+            if(initialFormState.view?.events?.transformBeforeOpenReadMode && typeof initialFormState.view.events.transformBeforeOpenReadMode === 'function' ) {
               beforeSendRead = initialFormState.view.events.transformBeforeOpenReadMode(obj)
             }
             manageListDispatch({ type: 'read', obj: beforeSendRead });
@@ -300,22 +301,14 @@ function* processVisibleFormStates(obj) {
           // console.log('**************Read-watch-saga.js******************');
 
           manageListDispatch({ type: 'showLoader', obj: { loader: false } });
-
-          console.log('**************Read-Data******************');
-          console.log(obj);
-          console.log('**************Read-Data******************');
           yield fillConditionalFields(obj);
 
-          let beforeRead = obj
-          if(typeof formVisible.view?.events?.transformBeforeOpenReadMode === 'function' ) {
-            beforeRead = formVisible.view.events.transformBeforeOpenReadMode(obj)
+          let beforeSendRead = obj
+          if(formVisible.view?.events?.transformBeforeOpenReadMode && typeof formVisible.view.events.transformBeforeOpenReadMode === 'function' ) {
+            beforeSendRead = initialFormState.view.events.transformBeforeOpenReadMode(obj)
           }
 
-          console.log('**************Before-Read-Data******************');
-          console.log(beforeRead);
-          console.log('**************Before-Read-Data******************');
-
-          manageListDispatch({ type: 'read', beforeRead });
+          manageListDispatch({ type: 'read', obj: beforeSendRead });
         }
       }
       break;
@@ -361,12 +354,7 @@ function* processVisibleFormStates(obj) {
         console.log('**************Edit-Data******************');
         yield fillConditionalFields(obj);
 
-        let beforeEdit = obj
-        if(typeof formVisible.view?.events?.transformBeforeOpenEditMode === 'function' ) {
-          beforeEdit = formVisible.view.events.transformBeforeOpenEditMode(obj)
-        }
-
-        manageListDispatch({ type: 'edit', beforeEdit });
+        manageListDispatch({ type: 'edit', obj });
       }
       break;
 

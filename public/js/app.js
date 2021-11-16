@@ -22209,7 +22209,7 @@ function processGetRequest(obj) {
 }
 
 function processVisibleFormStates(obj) {
-  var formState, selectedRecord, manageListDispatch, initialForm, override, session, initialReducerState, getForm, db_table, filter, queryParamObj, params, objUrl, data, initialFormState, _initialReducerState$, _initialReducerState$2, _initialFormState$vie, _initialFormState$vie2, rec, _obj2, beforeSendRead, _initialFormState$vie3, _initialFormState$vie4, _obj3, _beforeSendRead, _initialReducerState, _obj4, formVisible, newState, _obj5, _initialReducerState2, _getForm, _initialReducerState3, objNew, _formVisible, _db_table, _newState, _obj6, _formVisible$view, _formVisible$view$eve, _objUrl, resp, _data, _newState2, _obj7, beforeRead, _formVisible2$view, _formVisible2$view$ev, _formVisible2, _db_table2, _newState4, _obj9, _objUrl2, _resp, _data2, _newState3, _obj8, beforeEdit;
+  var formState, selectedRecord, manageListDispatch, initialForm, override, session, initialReducerState, getForm, db_table, filter, queryParamObj, params, objUrl, data, _initialFormState, _initialReducerState$, _initialReducerState$2, _initialFormState$vie, _initialFormState$vie2, rec, _obj2, beforeSendRead, _initialFormState$vie3, _initialFormState$vie4, _obj3, _beforeSendRead, _initialReducerState, _obj4, formVisible, newState, _obj5, _initialReducerState2, _getForm, _initialReducerState3, objNew, _formVisible, _db_table, _newState, _obj6, _formVisible$view, _formVisible$view$eve, _objUrl, resp, _data, _newState2, _obj7, _beforeSendRead2, _formVisible2, _db_table2, _newState4, _obj9, _objUrl2, _resp, _data2, _newState3, _obj8;
 
   return _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().wrap(function processVisibleFormStates$(_context3) {
     while (1) {
@@ -22228,7 +22228,7 @@ function processVisibleFormStates(obj) {
           console.log(override);
           console.log('**************processVisibleFormStates**WatchSaga.js****************');
           _context3.t0 = formState;
-          _context3.next = _context3.t0 === 'list' ? 11 : _context3.t0 === 'cancel' ? 51 : _context3.t0 === 'delete' ? 55 : _context3.t0 === 'new' ? 75 : _context3.t0 === 'read' ? 79 : _context3.t0 === 'edit' ? 111 : _context3.t0 === 'reset' ? 142 : 147;
+          _context3.next = _context3.t0 === 'list' ? 11 : _context3.t0 === 'cancel' ? 51 : _context3.t0 === 'delete' ? 55 : _context3.t0 === 'new' ? 75 : _context3.t0 === 'read' ? 79 : _context3.t0 === 'edit' ? 105 : _context3.t0 === 'reset' ? 134 : 139;
           break;
 
         case 11:
@@ -22281,7 +22281,7 @@ function processVisibleFormStates(obj) {
 
         case 26:
           data = _context3.sent;
-          initialFormState = (0,_forms_dsl__WEBPACK_IMPORTED_MODULE_3__.getFormObjForDraw)(initialForm);
+          _initialFormState = (0,_forms_dsl__WEBPACK_IMPORTED_MODULE_3__.getFormObjForDraw)(initialForm);
 
           if (!data) {
             _context3.next = 41;
@@ -22298,7 +22298,7 @@ function processVisibleFormStates(obj) {
             }, rec);
           }
 
-          _obj2 = _objectSpread(_objectSpread({}, initialFormState), {}, {
+          _obj2 = _objectSpread(_objectSpread({}, _initialFormState), {}, {
             view_mode: 'form',
             data: rec,
             selectedRecord: rec,
@@ -22317,8 +22317,8 @@ function processVisibleFormStates(obj) {
         case 36:
           beforeSendRead = _obj2;
 
-          if (typeof ((_initialFormState$vie = initialFormState.view) === null || _initialFormState$vie === void 0 ? void 0 : (_initialFormState$vie2 = _initialFormState$vie.events) === null || _initialFormState$vie2 === void 0 ? void 0 : _initialFormState$vie2.transformBeforeOpenReadMode) === 'function') {
-            beforeSendRead = initialFormState.view.events.transformBeforeOpenReadMode(_obj2);
+          if ((_initialFormState$vie = _initialFormState.view) !== null && _initialFormState$vie !== void 0 && (_initialFormState$vie2 = _initialFormState$vie.events) !== null && _initialFormState$vie2 !== void 0 && _initialFormState$vie2.transformBeforeOpenReadMode && typeof _initialFormState.view.events.transformBeforeOpenReadMode === 'function') {
+            beforeSendRead = _initialFormState.view.events.transformBeforeOpenReadMode(_obj2);
           }
 
           manageListDispatch({
@@ -22329,7 +22329,7 @@ function processVisibleFormStates(obj) {
           break;
 
         case 41:
-          _obj3 = _objectSpread(_objectSpread({}, initialFormState), {}, {
+          _obj3 = _objectSpread(_objectSpread({}, _initialFormState), {}, {
             view_mode: 'form',
             selectedRecord: null,
             readOnly: true,
@@ -22343,8 +22343,8 @@ function processVisibleFormStates(obj) {
           });
           _beforeSendRead = _obj3;
 
-          if (typeof ((_initialFormState$vie3 = initialFormState.view) === null || _initialFormState$vie3 === void 0 ? void 0 : (_initialFormState$vie4 = _initialFormState$vie3.events) === null || _initialFormState$vie4 === void 0 ? void 0 : _initialFormState$vie4.transformBeforeOpenReadMode) === 'function') {
-            _beforeSendRead = initialFormState.view.events.transformBeforeOpenReadMode(_obj3);
+          if ((_initialFormState$vie3 = _initialFormState.view) !== null && _initialFormState$vie3 !== void 0 && (_initialFormState$vie4 = _initialFormState$vie3.events) !== null && _initialFormState$vie4 !== void 0 && _initialFormState$vie4.transformBeforeOpenReadMode && typeof _initialFormState.view.events.transformBeforeOpenReadMode === 'function') {
+            _beforeSendRead = _initialFormState.view.events.transformBeforeOpenReadMode(_obj3);
           }
 
           manageListDispatch({
@@ -22369,7 +22369,7 @@ function processVisibleFormStates(obj) {
           });
 
         case 50:
-          return _context3.abrupt("break", 147);
+          return _context3.abrupt("break", 139);
 
         case 51:
           _initialReducerState = (0,_forms_dsl__WEBPACK_IMPORTED_MODULE_3__.getFormObjForDraw)(initialForm);
@@ -22381,7 +22381,7 @@ function processVisibleFormStates(obj) {
             type: 'list',
             obj: _obj4
           });
-          return _context3.abrupt("break", 147);
+          return _context3.abrupt("break", 139);
 
         case 55:
           console.log('***********delete***********');
@@ -22444,7 +22444,7 @@ function processVisibleFormStates(obj) {
             type: 'list',
             obj: _getForm
           });
-          return _context3.abrupt("break", 147);
+          return _context3.abrupt("break", 139);
 
         case 75:
           _initialReducerState3 = (0,_forms_dsl__WEBPACK_IMPORTED_MODULE_3__.getFormObjForDraw)(initialForm);
@@ -22457,7 +22457,7 @@ function processVisibleFormStates(obj) {
             type: 'new',
             obj: objNew
           });
-          return _context3.abrupt("break", 147);
+          return _context3.abrupt("break", 139);
 
         case 79:
           manageListDispatch({
@@ -22497,7 +22497,7 @@ function processVisibleFormStates(obj) {
             type: 'read',
             obj: _obj6
           });
-          _context3.next = 110;
+          _context3.next = 104;
           break;
 
         case 89:
@@ -22536,31 +22536,25 @@ function processVisibleFormStates(obj) {
               loader: false
             }
           });
-          console.log('**************Read-Data******************');
-          console.log(_obj7);
-          console.log('**************Read-Data******************');
-          _context3.next = 104;
+          _context3.next = 101;
           return (0,_prefill_conditional_fields__WEBPACK_IMPORTED_MODULE_4__.fillConditionalFields)(_obj7);
 
-        case 104:
-          beforeRead = _obj7;
+        case 101:
+          _beforeSendRead2 = _obj7;
 
-          if (typeof ((_formVisible$view = _formVisible.view) === null || _formVisible$view === void 0 ? void 0 : (_formVisible$view$eve = _formVisible$view.events) === null || _formVisible$view$eve === void 0 ? void 0 : _formVisible$view$eve.transformBeforeOpenReadMode) === 'function') {
-            beforeRead = _formVisible.view.events.transformBeforeOpenReadMode(_obj7);
+          if ((_formVisible$view = _formVisible.view) !== null && _formVisible$view !== void 0 && (_formVisible$view$eve = _formVisible$view.events) !== null && _formVisible$view$eve !== void 0 && _formVisible$view$eve.transformBeforeOpenReadMode && typeof _formVisible.view.events.transformBeforeOpenReadMode === 'function') {
+            _beforeSendRead2 = initialFormState.view.events.transformBeforeOpenReadMode(_obj7);
           }
 
-          console.log('**************Before-Read-Data******************');
-          console.log(beforeRead);
-          console.log('**************Before-Read-Data******************');
           manageListDispatch({
             type: 'read',
-            beforeRead: beforeRead
+            obj: _beforeSendRead2
           });
 
-        case 110:
-          return _context3.abrupt("break", 147);
+        case 104:
+          return _context3.abrupt("break", 139);
 
-        case 111:
+        case 105:
           manageListDispatch({
             type: 'showLoader',
             obj: {
@@ -22574,7 +22568,7 @@ function processVisibleFormStates(obj) {
           _db_table2 = _formVisible2.db_table;
 
           if (selectedRecord) {
-            _context3.next = 122;
+            _context3.next = 116;
             break;
           }
 
@@ -22600,20 +22594,20 @@ function processVisibleFormStates(obj) {
           });
           return _context3.abrupt("return");
 
-        case 122:
+        case 116:
           console.log('**************Edit-watch-saga.js******************');
           _objUrl2 = "/form/".concat(_db_table2, "/").concat(selectedRecord.id);
-          _context3.next = 126;
+          _context3.next = 120;
           return fetch(_objUrl2, {
             method: 'GET'
           });
 
-        case 126:
+        case 120:
           _resp = _context3.sent;
-          _context3.next = 129;
+          _context3.next = 123;
           return _resp.json();
 
-        case 129:
+        case 123:
           _data2 = _context3.sent;
           _newState3 = _objectSpread(_objectSpread({}, _formVisible2), {}, {
             data: _data2.data
@@ -22634,34 +22628,28 @@ function processVisibleFormStates(obj) {
           console.log('**************Edit-Data******************');
           console.log(_obj8);
           console.log('**************Edit-Data******************');
-          _context3.next = 138;
+          _context3.next = 132;
           return (0,_prefill_conditional_fields__WEBPACK_IMPORTED_MODULE_4__.fillConditionalFields)(_obj8);
 
-        case 138:
-          beforeEdit = _obj8;
-
-          if (typeof ((_formVisible2$view = _formVisible2.view) === null || _formVisible2$view === void 0 ? void 0 : (_formVisible2$view$ev = _formVisible2$view.events) === null || _formVisible2$view$ev === void 0 ? void 0 : _formVisible2$view$ev.transformBeforeOpenEditMode) === 'function') {
-            beforeEdit = _formVisible2.view.events.transformBeforeOpenEditMode(_obj8);
-          }
-
+        case 132:
           manageListDispatch({
             type: 'edit',
-            beforeEdit: beforeEdit
+            obj: _obj8
           });
-          return _context3.abrupt("break", 147);
+          return _context3.abrupt("break", 139);
 
-        case 142:
+        case 134:
           console.log('**************Reset-watch-saga.js******************');
           console.log('**************Rest-watch-saga.js******************');
-          _context3.next = 146;
+          _context3.next = 138;
           return (0,redux_saga_effects__WEBPACK_IMPORTED_MODULE_1__.put)({
             type: 'reset'
           });
 
-        case 146:
-          return _context3.abrupt("break", 147);
+        case 138:
+          return _context3.abrupt("break", 139);
 
-        case 147:
+        case 139:
         case "end":
           return _context3.stop();
       }
