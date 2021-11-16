@@ -168,11 +168,11 @@ function* processVisibleFormStates(obj) {
             };
             manageListDispatch({ type: 'showLoader', obj: { loader: false } });
             yield fillConditionalFields(obj);
-            let beforeRead = obj
+            let beforeSendRead = obj
             if(typeof initialFormState.view?.events?.transformBeforeOpenReadMode === 'function' ) {
-              beforeRead = initialFormState.view.events.transformBeforeOpenReadMode(obj)
+              beforeSendRead = initialFormState.view.events.transformBeforeOpenReadMode(obj)
             }
-            manageListDispatch({ type: 'read', obj });
+            manageListDispatch({ type: 'read', obj: beforeSendRead });
           } else {
             const obj = {
               ...initialFormState,
@@ -182,7 +182,12 @@ function* processVisibleFormStates(obj) {
               action_type: 'read',
             };
             manageListDispatch({ type: 'showLoader', obj: { loader: false } });
-            manageListDispatch({ type: 'read', obj });
+
+            let beforeSendRead = obj
+            if(typeof initialFormState.view?.events?.transformBeforeOpenReadMode === 'function' ) {
+              beforeSendRead = initialFormState.view.events.transformBeforeOpenReadMode(obj)
+            }
+            manageListDispatch({ type: 'read', obj: beforeSendRead });
           }
         } else {
           manageListDispatch({ type: 'showLoader', obj: { loader: false } });

@@ -310,9 +310,25 @@ let insuranceDetail = {
         ],
         events: {
           transformBeforeOpenReadMode(form){
-            console.log('-------------transformBeforeOpenEditMode---------------')
-            console.log(form)
-            console.log('-------------transformBeforeOpenEditMode---------------')
+      
+              if(form?.data?.car_quote_id?.quote_status_id?.code !== 'ftc_pending') {
+                const access = {
+                  read: [
+                    'pa',
+                    'advisor',
+                    'admin',
+                    'invoicing',
+                    'production_approval_manager',
+                  ],
+                  write: [],
+                  update: [],
+                  delete: [],
+                };
+
+                form.access = access
+                return form
+            }
+            return form
           },
           transformBeforeOpenEditMode(form) {
             console.log('-------------transformBeforeOpenEditMode---------------')

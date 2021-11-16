@@ -15239,9 +15239,8 @@ function SelectField(_ref) {
   }, [field, field === null || field === void 0 ? void 0 : field.value]);
 
   var redraw = function redraw(field) {
-    console.log('---**********redraw-************----');
-    console.log(field);
-
+    // console.log('---**********redraw-************----');
+    // console.log(field);
     if ((field === null || field === void 0 ? void 0 : field.formState) === 'read' || (field === null || field === void 0 ? void 0 : field.formState) === 'edit') {
       var defaultValue = {};
 
@@ -15256,10 +15255,10 @@ function SelectField(_ref) {
             label: _typeof(field === null || field === void 0 ? void 0 : field.value) === 'object' ? (_field$value = field.value) === null || _field$value === void 0 ? void 0 : _field$value.text : field === null || field === void 0 ? void 0 : field.value
           };
         }
-      }
+      } // console.log(defaultValue);
+      // console.log('---**********redraw-************----');
 
-      console.log(defaultValue);
-      console.log('---**********redraw-************----');
+
       setData({
         data: [],
         isDisabled: field.formState === 'read' ? true : false,
@@ -15442,13 +15441,13 @@ function SelectField(_ref) {
       };
     });
     value = options;
-  }
+  } // console.log('---**********SelectRender-************----');
+  // console.log(field);
+  // console.log(value);
+  // console.log(data);
+  // console.log('---**********SelectRender-************----');
 
-  console.log('---**********SelectAmjad-************----');
-  console.log(field);
-  console.log(value);
-  console.log(data);
-  console.log('---**********SelectAmjad-************----');
+
   return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(react_select__WEBPACK_IMPORTED_MODULE_6__.default, {
     options: value,
     value: data === null || data === void 0 ? void 0 : data.defaultValue,
@@ -16886,6 +16885,30 @@ var insuranceDetail = {
           accessor: 'year_of_manufacture'
         }],
         events: {
+          transformBeforeOpenReadMode: function transformBeforeOpenReadMode(form) {
+            var _form$data, _form$data$car_quote_, _form$data$car_quote_2;
+
+            if ((form === null || form === void 0 ? void 0 : (_form$data = form.data) === null || _form$data === void 0 ? void 0 : (_form$data$car_quote_ = _form$data.car_quote_id) === null || _form$data$car_quote_ === void 0 ? void 0 : (_form$data$car_quote_2 = _form$data$car_quote_.quote_status_id) === null || _form$data$car_quote_2 === void 0 ? void 0 : _form$data$car_quote_2.code) !== 'ftc_pending') {
+              var access = {
+                read: ['pa', 'advisor', 'admin', 'invoicing', 'production_approval_manager'],
+                write: [],
+                update: [],
+                "delete": []
+              };
+              form.access = access;
+              return form;
+            }
+
+            return form;
+          },
+          transformBeforeOpenEditMode: function transformBeforeOpenEditMode(form) {
+            console.log('-------------transformBeforeOpenEditMode---------------');
+            console.log(form);
+            console.log('-------------transformBeforeOpenEditMode---------------'); // if(form?.getForm?.context === 'car_quote_snap' && form?.formState === 'list' && form?.getForm?.multi === false) {
+            //     return { ...data, mode_id: { id: data?.mode_id?.id, text: data?.mode_id?.name}}
+            // }
+            // return data
+          },
           applyFilter: function applyFilter(options) {
             var id = options.params.id;
             var generateUrl = "/?filter={\"car_quote_id\":\"".concat(id, "\"}");
@@ -19441,6 +19464,22 @@ var vehicleDetail = {
           accessor: 'year_of_manufacture'
         }],
         events: {
+          transformBeforeOpenReadMode: function transformBeforeOpenReadMode(form) {
+            var _form$data, _form$data$quote_stat;
+
+            if ((form === null || form === void 0 ? void 0 : (_form$data = form.data) === null || _form$data === void 0 ? void 0 : (_form$data$quote_stat = _form$data.quote_status_id) === null || _form$data$quote_stat === void 0 ? void 0 : _form$data$quote_stat.code) !== 'ftc_pending') {
+              var access = {
+                read: ['pa', 'advisor', 'admin', 'invoicing', 'production_approval_manager'],
+                write: [],
+                update: [],
+                "delete": []
+              };
+              form.access = access;
+              return form;
+            }
+
+            return form;
+          },
           applyFilter: function applyFilter(options) {
             var id = options.params.id;
             var generateUrl = "/".concat(id);
@@ -21801,8 +21840,9 @@ function fillConditionalFields(obj) {
               }
             }
           });
+          return _context.abrupt("return", obj);
 
-        case 2:
+        case 3:
         case "end":
           return _context.stop();
       }
@@ -22165,7 +22205,7 @@ function processGetRequest(obj) {
 }
 
 function processVisibleFormStates(obj) {
-  var formState, selectedRecord, manageListDispatch, initialForm, override, session, initialReducerState, getForm, db_table, filter, queryParamObj, params, objUrl, data, initialFormState, _initialReducerState$, _initialReducerState$2, rec, _obj2, _obj3, _initialReducerState, _obj4, formVisible, newState, _obj5, _initialReducerState2, _getForm, _initialReducerState3, objNew, _formVisible, _db_table, _newState, _obj6, _objUrl, resp, _data, _newState2, _obj7, _formVisible2, _db_table2, _newState4, _obj9, _objUrl2, _resp, _data2, _newState3, _obj8;
+  var formState, selectedRecord, manageListDispatch, initialForm, override, session, initialReducerState, getForm, db_table, filter, queryParamObj, params, objUrl, data, initialFormState, _initialReducerState$, _initialReducerState$2, _initialFormState$vie, _initialFormState$vie2, rec, _obj2, beforeSendRead, _initialFormState$vie3, _initialFormState$vie4, _obj3, _beforeSendRead, _initialReducerState, _obj4, formVisible, newState, _obj5, _initialReducerState2, _getForm, _initialReducerState3, objNew, _formVisible, _db_table, _newState, _obj6, _formVisible$view, _formVisible$view$eve, _objUrl, resp, _data, _newState2, _obj7, beforeRead, _formVisible2$view, _formVisible2$view$ev, _formVisible2, _db_table2, _newState4, _obj9, _objUrl2, _resp, _data2, _newState3, _obj8, beforeEdit;
 
   return _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().wrap(function processVisibleFormStates$(_context3) {
     while (1) {
@@ -22184,7 +22224,7 @@ function processVisibleFormStates(obj) {
           console.log(override);
           console.log('**************processVisibleFormStates**WatchSaga.js****************');
           _context3.t0 = formState;
-          _context3.next = _context3.t0 === 'list' ? 11 : _context3.t0 === 'cancel' ? 47 : _context3.t0 === 'delete' ? 51 : _context3.t0 === 'new' ? 71 : _context3.t0 === 'read' ? 75 : _context3.t0 === 'edit' ? 110 : _context3.t0 === 'reset' ? 139 : 144;
+          _context3.next = _context3.t0 === 'list' ? 11 : _context3.t0 === 'cancel' ? 51 : _context3.t0 === 'delete' ? 55 : _context3.t0 === 'new' ? 75 : _context3.t0 === 'read' ? 79 : _context3.t0 === 'edit' ? 111 : _context3.t0 === 'reset' ? 142 : 147;
           break;
 
         case 11:
@@ -22206,7 +22246,7 @@ function processVisibleFormStates(obj) {
           console.log('**************List-watch-saga.js******************');
 
           if (!((getForm === null || getForm === void 0 ? void 0 : getForm.multi) === false)) {
-            _context3.next = 44;
+            _context3.next = 48;
             break;
           }
 
@@ -22240,7 +22280,7 @@ function processVisibleFormStates(obj) {
           initialFormState = (0,_forms_dsl__WEBPACK_IMPORTED_MODULE_3__.getFormObjForDraw)(initialForm);
 
           if (!data) {
-            _context3.next = 39;
+            _context3.next = 41;
             break;
           }
 
@@ -22271,14 +22311,20 @@ function processVisibleFormStates(obj) {
           return (0,_prefill_conditional_fields__WEBPACK_IMPORTED_MODULE_4__.fillConditionalFields)(_obj2);
 
         case 36:
+          beforeSendRead = _obj2;
+
+          if (typeof ((_initialFormState$vie = initialFormState.view) === null || _initialFormState$vie === void 0 ? void 0 : (_initialFormState$vie2 = _initialFormState$vie.events) === null || _initialFormState$vie2 === void 0 ? void 0 : _initialFormState$vie2.transformBeforeOpenReadMode) === 'function') {
+            beforeSendRead = initialFormState.view.events.transformBeforeOpenReadMode(_obj2);
+          }
+
           manageListDispatch({
             type: 'read',
-            obj: _obj2
+            obj: beforeSendRead
           });
-          _context3.next = 42;
+          _context3.next = 46;
           break;
 
-        case 39:
+        case 41:
           _obj3 = _objectSpread(_objectSpread({}, initialFormState), {}, {
             view_mode: 'form',
             selectedRecord: null,
@@ -22291,16 +22337,22 @@ function processVisibleFormStates(obj) {
               loader: false
             }
           });
+          _beforeSendRead = _obj3;
+
+          if (typeof ((_initialFormState$vie3 = initialFormState.view) === null || _initialFormState$vie3 === void 0 ? void 0 : (_initialFormState$vie4 = _initialFormState$vie3.events) === null || _initialFormState$vie4 === void 0 ? void 0 : _initialFormState$vie4.transformBeforeOpenReadMode) === 'function') {
+            _beforeSendRead = initialFormState.view.events.transformBeforeOpenReadMode(_obj3);
+          }
+
           manageListDispatch({
             type: 'read',
-            obj: _obj3
+            obj: _beforeSendRead
           });
 
-        case 42:
-          _context3.next = 46;
+        case 46:
+          _context3.next = 50;
           break;
 
-        case 44:
+        case 48:
           manageListDispatch({
             type: 'showLoader',
             obj: {
@@ -22312,10 +22364,10 @@ function processVisibleFormStates(obj) {
             obj: getForm
           });
 
-        case 46:
-          return _context3.abrupt("break", 144);
+        case 50:
+          return _context3.abrupt("break", 147);
 
-        case 47:
+        case 51:
           _initialReducerState = (0,_forms_dsl__WEBPACK_IMPORTED_MODULE_3__.getFormObjForDraw)(initialForm);
           _obj4 = _objectSpread(_objectSpread(_objectSpread({}, _initialReducerState), initialForm), {}, {
             view_mode: 'list',
@@ -22325,9 +22377,9 @@ function processVisibleFormStates(obj) {
             type: 'list',
             obj: _obj4
           });
-          return _context3.abrupt("break", 144);
+          return _context3.abrupt("break", 147);
 
-        case 51:
+        case 55:
           console.log('***********delete***********');
           console.log(selectedRecord);
           console.log(initialForm);
@@ -22344,7 +22396,7 @@ function processVisibleFormStates(obj) {
           console.log(formVisible); // const { db_table } = formVisible;
 
           if (selectedRecord) {
-            _context3.next = 65;
+            _context3.next = 69;
             break;
           }
 
@@ -22369,7 +22421,7 @@ function processVisibleFormStates(obj) {
           });
           return _context3.abrupt("return");
 
-        case 65:
+        case 69:
           console.log('**************Delete-watch-saga.js******************'); // let objUrl = `/form/${db_table}/${selectedRecord.id}`;
           // const resp = yield fetch(objUrl, { method: 'Delete' });
           // const data = yield resp.json();
@@ -22388,9 +22440,9 @@ function processVisibleFormStates(obj) {
             type: 'list',
             obj: _getForm
           });
-          return _context3.abrupt("break", 144);
+          return _context3.abrupt("break", 147);
 
-        case 71:
+        case 75:
           _initialReducerState3 = (0,_forms_dsl__WEBPACK_IMPORTED_MODULE_3__.getFormObjForDraw)(initialForm);
           objNew = _objectSpread(_objectSpread(_objectSpread({}, _initialReducerState3), initialForm), {}, {
             view_mode: 'form',
@@ -22401,9 +22453,9 @@ function processVisibleFormStates(obj) {
             type: 'new',
             obj: objNew
           });
-          return _context3.abrupt("break", 144);
+          return _context3.abrupt("break", 147);
 
-        case 75:
+        case 79:
           manageListDispatch({
             type: 'showLoader',
             obj: {
@@ -22415,7 +22467,7 @@ function processVisibleFormStates(obj) {
           _db_table = _formVisible.db_table;
 
           if (selectedRecord) {
-            _context3.next = 88;
+            _context3.next = 89;
             break;
           }
 
@@ -22437,29 +22489,26 @@ function processVisibleFormStates(obj) {
               loader: false
             }
           });
-          console.log('**************Read-Data!selectedRecord******************');
-          console.log(_obj6);
-          console.log('**************Read-Data!selectedRecord******************');
           manageListDispatch({
             type: 'read',
             obj: _obj6
           });
-          _context3.next = 109;
+          _context3.next = 110;
           break;
 
-        case 88:
+        case 89:
           _objUrl = "/form/".concat(_db_table, "/").concat(selectedRecord.id);
-          _context3.next = 91;
+          _context3.next = 92;
           return fetch(_objUrl, {
             method: 'GET'
           });
 
-        case 91:
+        case 92:
           resp = _context3.sent;
-          _context3.next = 94;
+          _context3.next = 95;
           return resp.json();
 
-        case 94:
+        case 95:
           _data = _context3.sent;
           _newState2 = _objectSpread(_objectSpread({}, _formVisible), {}, {
             data: _data.data
@@ -22471,12 +22520,11 @@ function processVisibleFormStates(obj) {
             action_type: 'read'
           }, initialForm === null || initialForm === void 0 ? void 0 : initialForm.override), {}, {
             session: session
-          });
-          console.log('**************Read-watch-saga.js*****************');
-          console.log(_obj7);
-          console.log(_formVisible);
-          console.log(selectedRecord);
-          console.log('**************Read-watch-saga.js******************'); // yield put({ type: 'read', obj })
+          }); // console.log('**************Read-watch-saga.js*****************');
+          // console.log(obj);
+          // console.log(formVisible);
+          // console.log(selectedRecord);
+          // console.log('**************Read-watch-saga.js******************');
 
           manageListDispatch({
             type: 'showLoader',
@@ -22487,19 +22535,28 @@ function processVisibleFormStates(obj) {
           console.log('**************Read-Data******************');
           console.log(_obj7);
           console.log('**************Read-Data******************');
-          _context3.next = 108;
+          _context3.next = 104;
           return (0,_prefill_conditional_fields__WEBPACK_IMPORTED_MODULE_4__.fillConditionalFields)(_obj7);
 
-        case 108:
+        case 104:
+          beforeRead = _obj7;
+
+          if (typeof ((_formVisible$view = _formVisible.view) === null || _formVisible$view === void 0 ? void 0 : (_formVisible$view$eve = _formVisible$view.events) === null || _formVisible$view$eve === void 0 ? void 0 : _formVisible$view$eve.transformBeforeOpenReadMode) === 'function') {
+            beforeRead = _formVisible.view.events.transformBeforeOpenReadMode(_obj7);
+          }
+
+          console.log('**************Before-Read-Data******************');
+          console.log(beforeRead);
+          console.log('**************Before-Read-Data******************');
           manageListDispatch({
             type: 'read',
-            obj: _obj7
+            beforeRead: beforeRead
           });
 
-        case 109:
-          return _context3.abrupt("break", 144);
-
         case 110:
+          return _context3.abrupt("break", 147);
+
+        case 111:
           manageListDispatch({
             type: 'showLoader',
             obj: {
@@ -22513,7 +22570,7 @@ function processVisibleFormStates(obj) {
           _db_table2 = _formVisible2.db_table;
 
           if (selectedRecord) {
-            _context3.next = 121;
+            _context3.next = 122;
             break;
           }
 
@@ -22539,20 +22596,20 @@ function processVisibleFormStates(obj) {
           });
           return _context3.abrupt("return");
 
-        case 121:
+        case 122:
           console.log('**************Edit-watch-saga.js******************');
           _objUrl2 = "/form/".concat(_db_table2, "/").concat(selectedRecord.id);
-          _context3.next = 125;
+          _context3.next = 126;
           return fetch(_objUrl2, {
             method: 'GET'
           });
 
-        case 125:
+        case 126:
           _resp = _context3.sent;
-          _context3.next = 128;
+          _context3.next = 129;
           return _resp.json();
 
-        case 128:
+        case 129:
           _data2 = _context3.sent;
           _newState3 = _objectSpread(_objectSpread({}, _formVisible2), {}, {
             data: _data2.data
@@ -22573,28 +22630,34 @@ function processVisibleFormStates(obj) {
           console.log('**************Edit-Data******************');
           console.log(_obj8);
           console.log('**************Edit-Data******************');
-          _context3.next = 137;
+          _context3.next = 138;
           return (0,_prefill_conditional_fields__WEBPACK_IMPORTED_MODULE_4__.fillConditionalFields)(_obj8);
 
-        case 137:
+        case 138:
+          beforeEdit = _obj8;
+
+          if (typeof ((_formVisible2$view = _formVisible2.view) === null || _formVisible2$view === void 0 ? void 0 : (_formVisible2$view$ev = _formVisible2$view.events) === null || _formVisible2$view$ev === void 0 ? void 0 : _formVisible2$view$ev.transformBeforeOpenEditMode) === 'function') {
+            beforeEdit = _formVisible2.view.events.transformBeforeOpenEditMode(_obj8);
+          }
+
           manageListDispatch({
             type: 'edit',
-            obj: _obj8
+            beforeEdit: beforeEdit
           });
-          return _context3.abrupt("break", 144);
+          return _context3.abrupt("break", 147);
 
-        case 139:
+        case 142:
           console.log('**************Reset-watch-saga.js******************');
           console.log('**************Rest-watch-saga.js******************');
-          _context3.next = 143;
+          _context3.next = 146;
           return (0,redux_saga_effects__WEBPACK_IMPORTED_MODULE_1__.put)({
             type: 'reset'
           });
 
-        case 143:
-          return _context3.abrupt("break", 144);
+        case 146:
+          return _context3.abrupt("break", 147);
 
-        case 144:
+        case 147:
         case "end":
           return _context3.stop();
       }

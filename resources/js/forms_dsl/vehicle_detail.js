@@ -166,6 +166,27 @@ let vehicleDetail = {
           },
         ],
         events: {
+
+          transformBeforeOpenReadMode(form){
+            if(form?.data?.quote_status_id?.code !== 'ftc_pending') {
+              const access = {
+                read: [
+                  'pa',
+                  'advisor',
+                  'admin',
+                  'invoicing',
+                  'production_approval_manager',
+                ],
+                write: [],
+                update: [],
+                delete: [],
+              };
+
+              form.access = access
+              return form
+          }
+          return form
+        },
           applyFilter(options) {
             const {
               params: { id },

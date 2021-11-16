@@ -1,4 +1,7 @@
 export function* fillConditionalFields(obj) {
+
+
+
   const { fields, selectedRecord } = obj;
   Object.entries(fields).forEach(entry => {
     const [key, value] = entry;
@@ -32,4 +35,6 @@ export function* fillConditionalFields(obj) {
       }
     }
   });
+
+  return obj;
 }
