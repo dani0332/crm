@@ -78,6 +78,7 @@ class TravelQuoteService extends BaseService
                             ,hqr.created_at
                             ,u.name AS advisor_name
                             ,'Travel' as lead_type
+                            ,u.id as advisor_id
                         FROM travel_quote_request hqr
                         LEFT OUTER JOIN users u ON u.id = hqr.advisor_id";
         $count = 0;

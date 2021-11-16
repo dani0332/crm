@@ -4,7 +4,7 @@
     <script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
     <script>
         var userId = JSON.parse('<?php echo json_encode(Auth::user()->id); ?>');
-        var id = JSON.parse('<?php echo json_encode(Auth::user()->getTeamUserIds()); ?>');
+        var teamUserIds = JSON.parse('<?php echo json_encode(Auth::user()->getTeamUserIds()); ?>');
         $(document).ready(function() {
             var searchLeadsTable = $(".leadSearch-data-table").DataTable({
                 ordering: false,
@@ -25,8 +25,13 @@
                         data: 'id',
                         name: 'id',
                         render: function(data, type, row) {
-                            return "<a href='" + config.routes.searchLeadsDataTable + '/' + row
+                            if(teamUserIds.includes(row.advisor_id) || row.advisor_id == userId){
+
+                                return "<a href='" + config.routes.searchLeadsDataTable + '/' + row
                                 .id + "'>" + row.id + "</a>"
+                            }else{
+                                return "You don’t have access to view this lead"
+                            }
 
                         }
                     },

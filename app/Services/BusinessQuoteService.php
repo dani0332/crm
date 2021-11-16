@@ -45,6 +45,7 @@ class BusinessQuoteService extends BaseService
                             ,hqr.created_at
                             ,u.name AS advisor_name
                             ,'Business' as lead_type
+                            ,u.id as advisor_id
                         FROM business_quote_request hqr
                         LEFT OUTER JOIN users u ON u.id = hqr.advisor_id";
         $count = 0;
