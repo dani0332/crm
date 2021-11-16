@@ -183,6 +183,8 @@ Route::group(['middleware' =>  ['auth']], function () {
         Route::get('aml/{quoteTypeId}/details/{quoteRequestId}/quoteStatusUpdate/{quoteTypeCode}', [AMLController::class, 'quoteStatusUpdate'])->name('quoteStatusUpdate');
         Route::get('aml/{quoteTypeId}/details/{quoteRequestId}/quoteUpdate', [AMLController::class, 'quoteUpdate'])->name('quoteUpdate');
         Route::get('aml/download/history', [AMLController::class, 'sanctionListHistory'])->name('sanctionListHistory');
+        Route::get('aml/upload/uae', [AMLController::class, 'uploadUaeSanctionList'])->name('uploadUaeSanctionList');
+        Route::post('aml/upload/uae-list', [AMLController::class, 'uaeSanctionListUpload'])->name('uaeSanctionListUpload');
     });
 
 

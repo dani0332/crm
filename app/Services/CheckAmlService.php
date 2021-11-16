@@ -115,8 +115,8 @@ class CheckAmlService
     public function amlComplianceMail($templateName, $templateParams, $emailSubject, $emailRecipients, $emailL_sys)
 	{
         if($emailL_sys == "PRODUCTION") {
-            $fromEmail = Config::get('constants.MAIL_FROM_ADDRESS');
-            $fromName = Config::get('constants.MAIL_FROM_NAME');
+            $fromEmail = Config::get('constants.MAIL_FROM_ADDRESS_AML');
+            $fromName = Config::get('constants.MAIL_FROM_NAME_AML');
         }
         else {
             $fromEmail = Config::get('constants.MAIL_FROM_ADDRESS');
@@ -183,8 +183,8 @@ class CheckAmlService
     public function amlQuoteStatusUpdateMail($templateName, $templateParams, $emailSubject, $toRecipient, $ccRecipients, $emailL_sys)
 	{
         if($emailL_sys == "PRODUCTION") {
-            $fromEmail = Config::get('constants.MAIL_FROM_ADDRESS');
-            $fromName = Config::get('constants.MAIL_FROM_NAME');
+            $fromEmail = Config::get('constants.MAIL_FROM_ADDRESS_AML');
+            $fromName = Config::get('constants.MAIL_FROM_NAME_AML');
         }
         else {
             $fromEmail = Config::get('constants.MAIL_FROM_ADDRESS');
