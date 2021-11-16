@@ -310,8 +310,9 @@ let insuranceDetail = {
         ],
         events: {
           transformBeforeOpenReadMode(form){
-      
-              if(form?.data?.car_quote_id?.quote_status_id?.code !== 'ftc_pending') {
+
+            const code  = form?.data?.car_quote_id?.quote_status_id?.code;
+            if(code && code !== 'ftc_pending') {
                 const access = {
                   read: [
                     'pa',

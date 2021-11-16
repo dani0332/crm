@@ -168,7 +168,9 @@ let vehicleDetail = {
         events: {
 
           transformBeforeOpenReadMode(form){
-            if(form?.data?.quote_status_id?.code !== 'ftc_pending') {
+
+            const code  = form?.data?.quote_status_id?.code;
+            if(code && code!== 'ftc_pending') {
               const access = {
                 read: [
                   'pa',

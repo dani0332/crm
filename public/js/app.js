@@ -16888,7 +16888,9 @@ var insuranceDetail = {
           transformBeforeOpenReadMode: function transformBeforeOpenReadMode(form) {
             var _form$data, _form$data$car_quote_, _form$data$car_quote_2;
 
-            if ((form === null || form === void 0 ? void 0 : (_form$data = form.data) === null || _form$data === void 0 ? void 0 : (_form$data$car_quote_ = _form$data.car_quote_id) === null || _form$data$car_quote_ === void 0 ? void 0 : (_form$data$car_quote_2 = _form$data$car_quote_.quote_status_id) === null || _form$data$car_quote_2 === void 0 ? void 0 : _form$data$car_quote_2.code) !== 'ftc_pending') {
+            var code = form === null || form === void 0 ? void 0 : (_form$data = form.data) === null || _form$data === void 0 ? void 0 : (_form$data$car_quote_ = _form$data.car_quote_id) === null || _form$data$car_quote_ === void 0 ? void 0 : (_form$data$car_quote_2 = _form$data$car_quote_.quote_status_id) === null || _form$data$car_quote_2 === void 0 ? void 0 : _form$data$car_quote_2.code;
+
+            if (code && code !== 'ftc_pending') {
               var access = {
                 read: ['pa', 'advisor', 'admin', 'invoicing', 'production_approval_manager'],
                 write: [],
@@ -19467,7 +19469,9 @@ var vehicleDetail = {
           transformBeforeOpenReadMode: function transformBeforeOpenReadMode(form) {
             var _form$data, _form$data$quote_stat;
 
-            if ((form === null || form === void 0 ? void 0 : (_form$data = form.data) === null || _form$data === void 0 ? void 0 : (_form$data$quote_stat = _form$data.quote_status_id) === null || _form$data$quote_stat === void 0 ? void 0 : _form$data$quote_stat.code) !== 'ftc_pending') {
+            var code = form === null || form === void 0 ? void 0 : (_form$data = form.data) === null || _form$data === void 0 ? void 0 : (_form$data$quote_stat = _form$data.quote_status_id) === null || _form$data$quote_stat === void 0 ? void 0 : _form$data$quote_stat.code;
+
+            if (code && code !== 'ftc_pending') {
               var access = {
                 read: ['pa', 'advisor', 'admin', 'invoicing', 'production_approval_manager'],
                 write: [],
