@@ -59,6 +59,16 @@ return [
             'url'       => env('AZURE_STORAGE_URL'),
             'prefix'    => null,
         ],
+
+        // RYU Container for Azure
+        'azureForRyu' => [
+            'driver'    => 'azure',
+            'name'      => env('AZURE_RYU_STORAGE_NAME'),
+            'key'       => env('AZURE_RYU_STORAGE_KEY'),
+            'container' => env('AZURE_RYU_STORAGE_CONTAINER'),
+            'url'       => env('AZURE_RYU_STORAGE_URL'),
+            'prefix'    => null,
+        ],
     ],
 
     /*

@@ -176,6 +176,7 @@
                             <ul class="nav child_menu">
                                 <li><a href="{{ url('kyc/aml') }}">All Quotes</a></li>
                                 <li><a href="{{ url('kyc/aml/download/history') }}">Downloaded Sanction Lists</a></li>
+                                <li><a href="{{ url('kyc/aml/upload/uae') }}">Upload UAE List</a></li>
                             </ul>
                         </li>
                     </ul>

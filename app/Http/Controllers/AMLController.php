@@ -23,6 +23,7 @@ use App\Models\BusinessCoverType;
 use App\Models\CommunicationMode;
 use App\Models\QuoteStatus;
 use App\Models\SanctionListDownloads;
+use App\Models\UAEAMLListUploads;
 
 class AMLController extends Controller
 {
@@ -381,6 +382,38 @@ class AMLController extends Controller
                 ->make(true);
         }
         return view('aml.history');
+    }
+
+    public function uaeSanctionListUpload(Request $request) {
+        $this->validate($request, [
+            'file_name' => 'required|mimetypes:application/vnd.ms-excel,text/anytext,application/octet-stream,application/txt,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet|max:2048',
+        ]);
+
+        $getUAEUploadRecord = UAEAMLListUploads::where('id', '=', 1)->get()->first();
+
+        if ($getUAEUploadRecord == null) {
+            $newUAEUploadRecord = new UAEAMLListUploads([
+                "id" => 1,
+                "file_name" => '16-11-2021_UAESanctionlist.xls',
+                "is_updated" => false
+            ]);
+            $newUAEUploadRecord->save();
+        }
+
+        $fileNameOriginal = $request->file_name->getClientOriginalName();
+        $fileNameAzure = date('d-m-Y').'_'.$fileNameOriginal;
+        $request->file('file_name')->storeAs('/', $fileNameAzure, 'azureForRyu');
+
+        $newUpload = UAEAMLListUploads::where('id', '=', 1)->get()->first();
+        $newUpload->file_name = $fileNameAzure;
+        $newUpload->is_updated = true;
+        $newUpload->save();
+
+        return redirect('/kyc/aml/upload/uae')->with('success', 'UAE Sanction list uploaded successfully');
+    }
+
+    public function uploadUaeSanctionList() {
+        return view('aml.upload');
     }
 
 }
