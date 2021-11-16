@@ -18,7 +18,7 @@ use Illuminate\Support\Facades\Redirect;
 
 class LeadAssignmentController extends Controller
 {
-    protected $QuoteTypes = 'home,health,life,business,travel,car';
+    protected $quotTypes;
     protected $userService;
     protected $healthQuoteService;
     protected $carQuoteService;
@@ -47,6 +47,7 @@ class LeadAssignmentController extends Controller
         $this->businessQuoteService = $businessQuoteService;
         $this->userService = $userService;
         $this->crudService = $crudService;
+        $this->quotTypes = 'home,health,life,business,travel,car';
     }
     /**
      * Display a listing of the resource.
@@ -61,7 +62,7 @@ class LeadAssignmentController extends Controller
         $assignToUsers = User::whereIn('id', explode(',', $userId))->get();
         $gridData = $advisors = $insuranceTypes = [];
         foreach ($userTeams as $teamName) {
-            if (str_contains($this->QuoteTypes, strtolower($teamName))) {
+            if (str_contains($this->quotTypes, strtolower($teamName))) {
                 array_push($insuranceTypes, $teamName);
             }
         }
