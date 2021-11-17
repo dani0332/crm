@@ -26,8 +26,6 @@ class LeadSearchController extends Controller
     public function index(Request $request)
     {
         $leadType = $request->leadType ?? '';
-        // $teamId = UserTeams::where('user_id', Auth::user()->id)->get()->pluck('team_id');
-        // $teamUsers = UserTeams::where('team_id', $teamId)->get()->pluck('user_id');
         if ($request->ajax()) {
             if (isset($leadType) && !empty($leadType)) {
                 $quoteResults = $this->crudService->getLeads($request->cdbID, $request->email, $request->phnNumber, $leadType);
