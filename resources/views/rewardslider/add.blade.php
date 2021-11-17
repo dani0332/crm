@@ -50,7 +50,7 @@
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="is_active">Is Active</label>
                         <div class="col-md-6 col-sm-6">
                             <div class="checkbox">
-                                <input type="checkbox" class="flat" id='is_active' name='is_active' value="on" {{(old('is_active') == "on") ? 'checked': ''}}>
+                                <input type="checkbox" class="flat" id='is_active' name='is_active' value="1" {{(old('is_active') == "1") ? 'checked': ''}}>
                             </div>
                         </div>
                     </div>

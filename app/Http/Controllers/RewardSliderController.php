@@ -44,7 +44,6 @@ class RewardSliderController extends Controller
      */
     public function store(RewardSliderRequest $request, RewardSlider $rewardSlider)
     {
-        return $request->is_active;
         if ($request->file()) {
             $fileName = time() . '_' . $request->image->getClientOriginalName();
             $filePath = $request->file('image')->storeAs('/rewards-slider/', $fileName, 'azure');
@@ -95,10 +94,12 @@ class RewardSliderController extends Controller
             $filePath = $request->file('image')->storeAs('/rewards-slider/', $fileName, 'azure');
             $rewardSlider->image = $fileName;
         }
-        $rewardSlider->link = $request->link;
-        $rewardSlider->sort_order = $request->sort_order;
-        $rewardSlider->is_active = $request->is_active == 'on' ? 1 : 0;
-        $rewardSlider->save();
+        else {
+            $fileName = $rewardSlider->image;
+        }
+
+        //dd($request->validated());
+        $rewardSlider->update(Arr::except($request->validated(), ['image']) + [ 'image' => $fileName]);
 
         if(isset($request->return_to_view)) {
             return redirect("rewards/reward-sliders/".$rewardSlider->id)->with('success', 'Rewards Slider image has been updated');

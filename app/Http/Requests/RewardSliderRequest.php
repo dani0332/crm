@@ -27,7 +27,8 @@ class RewardSliderRequest extends FormRequest
         return [
                 'image' => ($this->method() == 'POST' ? 'required|': '') . 'image|mimes:jpeg,png,jpg,gif,svg,webp|max:1024',
                 'link' => ($this->method() == 'POST' ? 'required|': '') .'url|max:1000',
-                'sort_order' => ($this->method() == 'POST' ? 'required|': '') .'integer'
+                'sort_order' => ($this->method() == 'POST' ? 'required|': '') .'integer',
+                'is_active' => 'string'
         ];
     }
 }
