@@ -22,11 +22,11 @@ class CarQuoteInsuranceCoverage extends BaseModel
             "admin" => [ 'car_quote_id','start_date', 'insurance_company_id', 'insurance_plan_id','excess','sum_insured','ancillary_excess','premium_price','personal_accident_benefit','breakdown_recovery','off_road_cover','rend_a_car','geographical_area','vehicle_type_id','repair_type','financed_by'],
         ],
         "list" => [
-            "pa" => ['id','start_date', 'insurance_company_id','insurance_plan_id', 'excess','sum_insured', 'ancillary_excess','premium_price','personal_accident_benefit','breakdown_recovery','off_road_cover','rend_a_car','geographical_area','vehicle_type_id','repair_type','financed_by'],
-            "production_approval_manager" => ['id','start_date', 'insurance_company_id','insurance_plan_id', 'excess','sum_insured', 'ancillary_excess','premium_price','personal_accident_benefit','breakdown_recovery','off_road_cover','rend_a_car','geographical_area','vehicle_type_id','repair_type','financed_by'],
-            "invoicing" => ['id','start_date', 'insurance_company_id','insurance_plan_id', 'excess','sum_insured', 'ancillary_excess','premium_price','personal_accident_benefit','breakdown_recovery','off_road_cover','rend_a_car','geographical_area','vehicle_type_id','repair_type','financed_by'],
-            "advisor" => ['id','start_date', 'insurance_company_id','insurance_plan_id', 'excess','sum_insured', 'ancillary_excess','premium_price','personal_accident_benefit','breakdown_recovery','off_road_cover','rend_a_car','geographical_area','vehicle_type_id','repair_type','financed_by'],
-            "admin" => ['id','start_date', 'insurance_company_id','insurance_plan_id', 'excess','sum_insured', 'ancillary_excess','premium_price','personal_accident_benefit','breakdown_recovery','off_road_cover','rend_a_car','geographical_area','vehicle_type_id','repair_type','financed_by']
+            "pa" => ['id','car_quote_id','start_date', 'insurance_company_id','insurance_plan_id', 'excess','sum_insured', 'ancillary_excess','premium_price','personal_accident_benefit','breakdown_recovery','off_road_cover','rend_a_car','geographical_area','vehicle_type_id','repair_type','financed_by'],
+            "production_approval_manager" => ['id','car_quote_id','start_date', 'insurance_company_id','insurance_plan_id', 'excess','sum_insured', 'ancillary_excess','premium_price','personal_accident_benefit','breakdown_recovery','off_road_cover','rend_a_car','geographical_area','vehicle_type_id','repair_type','financed_by'],
+            "invoicing" => ['id', 'car_quote_id','start_date', 'insurance_company_id','insurance_plan_id', 'excess','sum_insured', 'ancillary_excess','premium_price','personal_accident_benefit','breakdown_recovery','off_road_cover','rend_a_car','geographical_area','vehicle_type_id','repair_type','financed_by'],
+            "advisor" => ['id', 'car_quote_id','start_date', 'insurance_company_id','insurance_plan_id', 'excess','sum_insured', 'ancillary_excess','premium_price','personal_accident_benefit','breakdown_recovery','off_road_cover','rend_a_car','geographical_area','vehicle_type_id','repair_type','financed_by'],
+            "admin" => ['id', 'car_quote_id','start_date', 'insurance_company_id','insurance_plan_id', 'excess','sum_insured', 'ancillary_excess','premium_price','personal_accident_benefit','breakdown_recovery','off_road_cover','rend_a_car','geographical_area','vehicle_type_id','repair_type','financed_by']
         ]
     ];
 
@@ -46,12 +46,17 @@ class CarQuoteInsuranceCoverage extends BaseModel
         return $this->hasOne(VehicleType::class, 'id', 'vehicle_type_id');
     }
 
+    public function car_quote_id()
+    {
+        return $this->hasOne(CarQuote::class, 'id', 'car_quote_id')->select(['id','quote_status_id']);
+    }
+    
     public function relations() {
 
         if($this->isGetList)
-            return ['insurance_company_id' , 'insurance_plan_id', 'vehicle_type_id'];
+            return ['insurance_company_id' , 'insurance_plan_id', 'vehicle_type_id', 'car_quote_id.quote_status_id'];
         else
-            return ['insurance_company_id' , 'insurance_plan_id', 'vehicle_type_id'];
+            return ['insurance_company_id' , 'insurance_plan_id', 'vehicle_type_id', 'car_quote_id.quote_status_id'];
     }
 
     public function processGetDSL($filters) {

@@ -155,6 +155,10 @@ class CarQuote extends BaseModel
     {
         return $this->hasOne(User::class, 'id', 'pa_id')->select(['id', 'email','name']);
     }
+    public function invoicing()
+    {
+        return $this->hasOne(User::class, 'id', 'invoicing')->select(['id', 'email','name']);
+    }
 
     public function advisor_id()
     {
@@ -167,7 +171,7 @@ class CarQuote extends BaseModel
     public function relations() {
 
         if($this->isGetList)
-            return [];
+            return ["pa_id","invoicing", "quote_status_id"];
         else
             return ["payment_detail","quote_status_id", "kyc_status_id", "insurance_coverage.insurance_company_id", "insurance_coverage.insurance_plan_id", "insurance_coverage.vehicle_type_id", "uae_license_held_for_id", "car_make_id", "car_model_id", "emirate_of_registration_id", "claim_history_id",  "nationality_id", "vehicle_detail_id", "pa_id", "car_quote_kyc"];
     }
@@ -187,7 +191,7 @@ class CarQuote extends BaseModel
         "list" => [
             "pa" => [ 'id','code', 'first_name', 'last_name',  'created_at', "pa_id", "kyc_status_id","quote_status_id","aml_status","invoicing"],
             "production_approval_manager" => [ 'id','code', 'first_name', 'last_name',  'created_at', "pa_id", "kyc_status_id","quote_status_id","aml_status","invoicing"],
-            "advisor" => [ 'id','code', 'first_name', 'last_name',  'created_at', "pa_id", "kyc_status_id","quote_status_id","aml_status","invoicing"],
+            "advisor" => [ 'id','code', 'first_name', 'last_name', 'updated_at', 'created_at', "pa_id", "kyc_status_id","quote_status_id","aml_status","invoicing"],
             "admin" => [ 'id','code', 'first_name', 'last_name',  'created_at', "kyc_status_id","quote_status_id","aml_status","invoicing"],
             "invoicing" => [ 'id','code', 'first_name', 'last_name',  'created_at' , "kyc_status_id","quote_status_id","aml_status","invoicing"]
         ],
@@ -208,11 +212,11 @@ class CarQuote extends BaseModel
             $restrictFilter = [];
 
             if(Auth::user()->hasRole('advisor')) {
-                if(!array_key_exists('code', $filters)){
-                    return [];
-                }else{
-                    $restrictFilter["code"] = $filters["code"];
+                if(empty($filters)){
                     $restrictFilter["advisor_id"] = Auth::user()->id;
+                }else{
+                    $restrictFilter["advisor_id"] = Auth::user()->id;
+                    $restrictFilter = array_merge($restrictFilter,$filters);
                 }
             }
 

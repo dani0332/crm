@@ -203,7 +203,7 @@
                 @endcan
                 @if (Auth::user()->hasRole('advisor') || Auth::user()->hasRole('pa') || Auth::user()->hasRole('invoicing') || Auth::user()->hasRole('production_approval_manager'))
                     <ul class="nav side-menu">
-                        <li><a href="{{ url('ftcform') }}"><i></i> FTC Form </a>
+                        <li><a href="{{ url('ftcform') }}"><i></i> Policy Issuance </a>
                     </ul>
                 @endif
                 @can('telemarketing-list')
