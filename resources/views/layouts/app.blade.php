@@ -40,6 +40,8 @@ $appName = Config::get('constants.APP_NAME');
         rel="stylesheet">
     <link href="{{ asset('vendors/datatables.net-scroller-bs/css/scroller.bootstrap.min.css') }}" rel="stylesheet">
     <link href="https://www.jquery-az.com/jquery/css/bootstrap-markdown-editor.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="{{ asset('css/crm.css') }}" rel="stylesheet">
 
     <!-- iCheck -->
     <link href="{{ asset('vendors/iCheck/skins/flat/green.css') }}" rel="stylesheet">
@@ -152,6 +154,7 @@ $appName = Config::get('constants.APP_NAME');
     <script src="{{ asset('vendors/datatables.net-responsive-bs/js/responsive.bootstrap.js') }}"></script>
     <script src="{{ asset('vendors/datatables.net-scroller/js/dataTables.scroller.min.js') }}"></script>
     <script src="https://cdn.jsdelivr.net/jquery.validation/1.16.0/jquery.validate.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
 
     <!-- iCheck -->
     <script src="{{ asset('vendors/iCheck/icheck.min.js') }}"></script>

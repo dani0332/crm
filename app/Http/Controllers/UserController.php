@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Team;
 use App\Models\User;
+use App\Models\UserTeams;
 use DataTables;
 use DB;
 use Illuminate\Http\Request;
@@ -32,6 +34,7 @@ class UserController extends Controller
                                         ,u1.name
                                         ,u1.email
                                         ,u2.roles
+                                        ,GROUP_CONCAT(teams.name) as teamName
                                         ,u1.created_at
                                         ,u1.updated_at
                                     FROM users u1
@@ -42,7 +45,15 @@ class UserController extends Controller
                                         INNER JOIN model_has_roles ON model_has_roles.model_id = users.id
                                         INNER JOIN roles ON roles.id = model_has_roles.role_id
                                         GROUP BY users.name, users.id
-                                        ) u2 ON u2.id = u1.id");
+                                        ) u2 ON u2.id = u1.id
+                                    LEFT JOIN user_team ON user_team.user_id = u2.id
+                                    LEFT JOIN teams ON teams.id = user_team.team_id
+                                    GROUP BY u1.id
+                                            ,u1.name
+                                            ,u1.email
+                                            ,u2.roles
+                                            ,u1.created_at
+                                            ,u1.updated_at");
             $filteredData = $users;
             if(!empty($request->email)){
                 $collection = collect($filteredData);
@@ -73,7 +84,8 @@ class UserController extends Controller
     public function create()
     {
         $roles = Role::pluck('name', 'name')->all();
-        return view('user.add', compact('roles'));
+        $teams = Team::orderBy('name', 'asc')->get();
+        return view('user.add', compact('roles', 'teams'));
     }
     /**
      * Store a newly created resource in storage.
@@ -88,13 +100,21 @@ class UserController extends Controller
             'email' => 'required|email|unique:users',
             'roles' => 'required',
             'password' => 'required',
+            'team' => 'required',
         ]);
-
         $user = new User();
         $user->name = $request->name;
         $user->email = $request->email;
         $user->password = bcrypt($request->password);
         $user->save();
+
+        foreach ($request->team as $teamId) {
+            $userTeam = new UserTeams();
+            $userTeam->team_id = $teamId;
+            $userTeam->user_id = $user->id;
+            $userTeam->save();
+        }
+
         $user->assignRole($request->input('roles'));
         if (isset($request->return_to_view))
             return redirect("admin/users/" . $user->id)->with('success', 'User has been stored');
@@ -107,7 +127,12 @@ class UserController extends Controller
      */
     public function show(User $user)
     {
-        return view('user.show', compact('user'));
+        $teamQuery = DB::select("SELECT group_concat(name) as name
+                                FROM teams t
+                                INNER JOIN user_team ut ON ut.team_id = t.id
+                                WHERE ut.user_id = ". $user->id);
+        $teamName = $teamQuery[0]->name;
+        return view('user.show', compact('user', 'teamName'));
     }
     /**
      * Show the form for editing the specified resource.
@@ -119,7 +144,13 @@ class UserController extends Controller
     {
         $roles = Role::pluck('name', 'name')->all();
         $userRole = $user->roles->pluck('name', 'name')->all();
-        return view('user.edit', compact('user', 'roles', 'userRole'));
+        $teams = Team::orderBy('name', 'asc')->get();
+        $userTeamQuery = UserTeams::where('user_id', $user->id)->get();
+        $selectedTeams = [];
+        foreach ($userTeamQuery as $team) {
+            array_push($selectedTeams, $team->team_id);
+        }
+        return view('user.edit', compact('user', 'roles', 'userRole', 'teams', 'selectedTeams'));
     }
     /**
      * Update the specified resource in storage.
@@ -133,12 +164,20 @@ class UserController extends Controller
         $this->validate($request, [
             'name' => 'required|max:120',
             'roles' => 'required',
+            'team' => 'required'
         ]);
         $user->name = $request->name;
         $user->email = $request->email;
         $user->password = bcrypt($request->password);
         $user->save();
 
+        DB::table('user_team')->where('user_id', $user->id)->delete();
+        foreach ($request->team as $teamId) {
+            $userTeam = new UserTeams();
+            $userTeam->team_id = $teamId;
+            $userTeam->user_id = $user->id;
+            $userTeam->save();
+        }
         DB::table('model_has_roles')->where('model_id', $user->id)->delete();
         $user->assignRole($request->input('roles'));
         if (isset($request->return_to_view))
