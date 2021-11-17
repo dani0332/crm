@@ -184,7 +184,7 @@ class CarQuote extends BaseModel
         'access' => [
             "pa" => [ 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'created_at','car_value', "pa_id","invoicing"],
             "production_approval_manager" => [ 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'created_at','car_value', "pa_id","invoicing"],
-            "advisor" => [ 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'created_at','car_value' ],
+            "advisor" => [ 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'created_at','car_value', 'dob', 'nationality_id' ],
             "admin" => [ 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'created_at','car_value' ],
             "invoicing" => [ 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'created_at','car_value','invoicing']
         ],

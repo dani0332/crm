@@ -13,9 +13,9 @@ const policyHolderDetail = {
           'invoicing',
           'production_approval_manager',
         ],
-        write: ['admin'],
-        update: ['admin'],
-        delete: ['admin'],
+        write: ['advisor'],
+        update: ['advisor'],
+        delete: [],
       },
       fields: {
         first_name: {
@@ -48,22 +48,24 @@ const policyHolderDetail = {
         nationality_id: {
           type: 'dropdown',
           label: 'Nationality',
-          field: 'nationality_id',
-          form: 'nationality',
-          transform(item) {
-            // const values = data.map(function (item) {
-            //     return  { value: item.id, label: item.code };
-            // });
-            return { value: item?.id, label: item?.code };
-            // return values
-          },
+          source: 'nationality'
         },
         dob: {
           type: 'datePicker',
           label: 'Birth Date',
-          field: 'dob',
-          value: '12/12/2009',
-        },
+          access: {
+            read: [
+              'pa',
+              'advisor',
+              'admin',
+              'invoicing',
+              'production_approval_manager',
+            ],
+            write: ['advisor', 'admin'],
+            update: ['advisor', 'admin'],
+          },
+          // rules: { required: true }
+        }
       },
       sections: [
         {
@@ -127,6 +129,29 @@ const policyHolderDetail = {
           },
         ],
         events: {
+
+          transformBeforeOpenReadMode(form){
+
+            const code  = form?.data?.quote_status_id?.code;
+            if(code  && code === 'ftc_pending') {
+              return form
+            }
+            const access = {
+              read: [
+                'pa',
+                'advisor',
+                'admin',
+                'invoicing',
+                'production_approval_manager',
+              ],
+              write: [],
+              update: [],
+              delete: [],
+            };
+            form.access = access
+            return form
+          },
+
           applyFilter(options) {
             const {
               mode,

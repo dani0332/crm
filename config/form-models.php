@@ -75,4 +75,7 @@ return [
     'type_of_insurances' => [
         'model' => CarTypeInsurance::class
     ],
+    'nationality' => [
+        'model' => Nationality::class
+    ],
 ];
