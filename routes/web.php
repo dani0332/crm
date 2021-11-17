@@ -95,7 +95,7 @@ Route::group(['middleware' =>  ['auth']], function () {
         Route::resource('reward-categories', RewardCategoryController::class);
         Route::resource('reward-tags', RewardTagController::class);
         Route::resource('reward.reward-translation', RewardTranslationController::class);
-        Route::resource('reward-sliders', RewardSliderController::class);
+        Route::resource('reward-sliders', RewardSliderController::class)->middleware('permission:reward-sliders-list|reward-sliders-create|reward-sliders-edit|reward-sliders-delete');
     });
 
     Route::group(['prefix' => 'admin'], function () {

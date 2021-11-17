@@ -10,13 +10,6 @@ use Arr;
 
 class RewardSliderController extends Controller
 {
-    public function __construct()
-    {
-        $this->middleware('permission:reward-sliders-list|reward-sliders-create|reward-sliders-edit|reward-sliders-delete', ['only' => ['index', 'store']]);
-        $this->middleware('permission:reward-sliders-create', ['only' => ['create', 'store']]);
-        $this->middleware('permission:reward-sliders-edit', ['only' => ['edit', 'update']]);
-        $this->middleware('permission:reward-sliders-delete', ['only' => ['destroy']]);
-    }
     /**
      * Display a listing of the resource.
      *
@@ -51,18 +44,12 @@ class RewardSliderController extends Controller
      */
     public function store(RewardSliderRequest $request, RewardSlider $rewardSlider)
     {
+        return $request->is_active;
         if ($request->file()) {
             $fileName = time() . '_' . $request->image->getClientOriginalName();
             $filePath = $request->file('image')->storeAs('/rewards-slider/', $fileName, 'azure');
             $rewardSlider->image = $fileName;
         }
-        // $rewardSlider->link = $request->link;
-        // $rewardSlider->sort_order = $request->sort_order;
-        // $rewardSlider->is_active = $request->is_active == 'on' ? 1 : 0;
-        // $rewardSlider->save();
-
-        //dd(Arr::except($request->validated(), ['image']));
-        //dd($request->validated() + [ 'image' => $fileName] );
 
         $rewardSlider->create(Arr::except($request->validated(), ['image']) + [ 'image' => $fileName]);
 
