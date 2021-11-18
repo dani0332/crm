@@ -92,7 +92,7 @@
                         </div>
                     </div> ]
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Mode of payment">Mode of payment<span class="required">*</span></label>
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Mode of payment">Internal Payment Modes<span class="required">*</span></label>
                         <div class="col-md-6 col-sm-6">
                             <select class="form-control" id="paymentmode" name="paymentmode" {{ isset($carQuote['payment_detail']["mode_id"] ) ? 'readonly' : '' }}>
                                 <option value="">Select</option>

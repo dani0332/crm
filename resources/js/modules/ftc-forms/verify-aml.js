@@ -237,7 +237,7 @@ export default function KycAMLForm(props) {
                 </tbody>
               </table>
             )}
-            <div>
+            {/* <div>
               {state?.loader === false && state?.found === 0 && (
                 <button
                   type='button'
@@ -248,7 +248,7 @@ export default function KycAMLForm(props) {
                   Verify AML
                 </button>
               )}
-            </div>
+            </div> */}
           </div>
         </div>
       </div>

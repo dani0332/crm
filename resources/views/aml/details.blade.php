@@ -13,33 +13,26 @@
                     <h2>{{ $quoteTypeText }} Quote</h2>
                     <ul class="nav navbar-right panel_toolbox">
                         <li><a href="{{ route('aml.index') }}" class="btn btn-warning btn-sm">All Quotes</a></li>
-                        @if ($quoteStatusCode == quoteStatusCode::AMLScreeningFailed || $quoteStatusCode == quoteStatusCode::AMLScreeningCleared)
-                            @if ($resultsFound > 0 && $isCurrentUserFromCompliance == 1)
-                                <li><a href="{{ $quoteRequest->id }}/quoteStatusUpdate/{{ quoteStatusCode::AMLScreeningFailed }}"
-                                class='btn btn-danger btn-sm'
-                                onclick="return confirm('Do you want to update status to AML Screening Failed?');">Fail</a></li>
-                                <li><a href="{{ $quoteRequest->id }}/quoteStatusUpdate/{{ quoteStatusCode::AMLScreeningCleared }}"
-                                class="btn btn-success btn-sm"
-                                onclick="return confirm('Do you want to update status to AML Screening Cleared?');">Pass</a></li>
-                            @endif
-                            @if ($resultsFound == 0 && $isCurrentUserFromPaAml == 1 && $getAMLNumRows >= 2)
-                                <li><a href="#" class="btn btn-success btn-sm"
-                                style="opacity: .4;cursor: default !important;pointer-events: none;">Pass</a></li>
-                            @endif
-                        @else
-                            @if ($resultsFound > 0 && $isCurrentUserFromCompliance == 1)
-                                <li><a href="{{ $quoteRequest->id }}/quoteStatusUpdate/{{ quoteStatusCode::AMLScreeningFailed }}"
-                                class='btn btn-danger btn-sm'
-                                onclick="return confirm('Do you want to update status to AML Screening Failed?');">Fail</a></li>
-                                <li><a href="{{ $quoteRequest->id }}/quoteStatusUpdate/{{ quoteStatusCode::AMLScreeningCleared }}"
-                                class="btn btn-success btn-sm"
-                                onclick="return confirm('Do you want to update status to AML Screening Cleared?');">Pass</a></li>
-                            @endif
-                            @if ($resultsFound == 0 && $isCurrentUserFromPaAml == 1 && $getAMLNumRows >= 2)
-                                <li><a href="{{ $quoteRequest->id }}/quoteStatusUpdate/{{ quoteStatusCode::AMLScreeningCleared }}"
-                                class="btn btn-success btn-sm"
-                                onclick="return confirm('Do you want to update status to AML Screening Cleared?');">Pass</a></li>
-                            @endif
+                        @if ($isCurrentUserFromPaAml == 1 && $firstAmlLogResults > 0 && $latestAmlLogResults == 0)
+                            <li><a href="{{ $quoteRequest->id }}/quoteStatusUpdate/{{ quoteStatusCode::AMLScreeningCleared }}"
+                            class="btn btn-success btn-sm"
+                            onclick="return confirm('Do you want to update status to AML Screening Cleared?');">Pass</a></li>
+                        @endif
+                        @if ($isCurrentUserFromCompliance == 1 && $firstAmlLogResults == 0 && $latestAmlLogResults > 0 && $getAMLNumRows >= 2)
+                            <li><a href="{{ $quoteRequest->id }}/quoteStatusUpdate/{{ quoteStatusCode::AMLScreeningFailed }}"
+                            class='btn btn-danger btn-sm'
+                            onclick="return confirm('Do you want to update status to AML Screening Failed?');">Fail</a></li>
+                            <li><a href="{{ $quoteRequest->id }}/quoteStatusUpdate/{{ quoteStatusCode::AMLScreeningCleared }}"
+                            class="btn btn-success btn-sm"
+                            onclick="return confirm('Do you want to update status to AML Screening Cleared?');">Pass</a></li>
+                        @endif
+                        @if ($isCurrentUserFromCompliance == 1 && $firstAmlLogResults > 0 && $latestAmlLogResults > 0 && $getAMLNumRows >= 2)
+                            <li><a href="{{ $quoteRequest->id }}/quoteStatusUpdate/{{ quoteStatusCode::AMLScreeningFailed }}"
+                            class='btn btn-danger btn-sm'
+                            onclick="return confirm('Do you want to update status to AML Screening Failed?');">Fail</a></li>
+                            <li><a href="{{ $quoteRequest->id }}/quoteStatusUpdate/{{ quoteStatusCode::AMLScreeningCleared }}"
+                            class="btn btn-success btn-sm"
+                            onclick="return confirm('Do you want to update status to AML Screening Cleared?');">Pass</a></li>
                         @endif
                     </ul>
                     <div class="clearfix"></div>
@@ -52,8 +45,11 @@
                     @if (session()->has('message'))
                         <div class="alert alert-danger">{{ session()->get('message') }}</div>
                     @endif
-                    @if ($resultsFound > 0 && $isCurrentUserFromPaAml == 1 && $getAMLNumRows >= 2)
-                    <div class="required" style="text-align: center;"><p><b>Matches found. Please check with Compliance.</b></p></div>
+                    @if ($isCurrentUserFromPaAml == 1 && $firstAmlLogResults == 0 && $latestAmlLogResults > 0 && $getAMLNumRows >= 2)
+                        <div class="required" style="text-align: center;"><p><b>Matches found. Please check with Compliance.</b></p></div>
+                    @endif
+                    @if ($isCurrentUserFromPaAml == 1 && $firstAmlLogResults > 0 && $latestAmlLogResults > 0 && $getAMLNumRows >= 2)
+                        <div class="required" style="text-align: center;"><p><b>Matches found. Please check with Compliance.</b></p></div>
                     @endif
                     <form id="demo-form2" method="POST" action="{{ $quoteRequest->id }}/quoteUpdate"
                         enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left"
