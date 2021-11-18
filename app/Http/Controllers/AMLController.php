@@ -293,15 +293,20 @@ class AMLController extends Controller
         ->where('quote_request_id', $quoteRequestId)->latest()->first();
         $latestAmlLogResults = $getLatestAmlLog->results_found;
 
+        $getAMLRows = AML::where('quote_type_id', '=', $quoteTypeId)
+        ->where('quote_request_id', $quoteRequestId)->get();
+        $getAMLNumRows = $getAMLRows->count();
+
         if($quoteTypeCode == quoteTypeCode::Business) {
             return view("aml.details", compact("quoteTypeCode","quoteTypeText","quoteRequest","businessTypeCode"
             ,"businessCoverTypeText","businessCommuModeText","kycLogs","quoteStatusCode","auditLogLine"
-            ,"isCurrentUserFromCompliance","isCurrentUserFromPaAml","firstAmlLogResults","latestAmlLogResults", "quoteTypeId"));
+            ,"isCurrentUserFromCompliance","isCurrentUserFromPaAml","firstAmlLogResults","latestAmlLogResults"
+            , "quoteTypeId", "getAMLNumRows"));
         }
         else {
             return view("aml.details", compact("quoteTypeCode","quoteTypeText","quoteRequest","kycLogs"
             ,"quoteStatusCode","auditLogLine","isCurrentUserFromCompliance","isCurrentUserFromPaAml"
-            ,"firstAmlLogResults","latestAmlLogResults", "quoteTypeId"));
+            ,"firstAmlLogResults","latestAmlLogResults", "quoteTypeId", "getAMLNumRows"));
         }
     }
 
