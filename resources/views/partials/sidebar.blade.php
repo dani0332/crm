@@ -106,6 +106,9 @@
                                 @can('transapp-create')
                                     <li><a href="{{ route('home') }}">Search Transaction</a></li>
                                 @endcan
+                                @can('transapp-create')
+                                <li><a href="{{ route('transaction.create') }}">Create Transaction</a></li>
+                                @endcan
                                 @can('transapp-edit')
                                     <li class="sub_menu"><a href="{{ route('reissue_view') }}">Cancel & Re-Issue
                                             Transaction</a></li>
