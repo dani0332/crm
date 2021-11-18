@@ -125,8 +125,6 @@ class AMLController extends Controller
 
     public function amlQuoteDetails($quoteTypeId, $quoteRequestId)
     {
-        //return $this->checkAmlService->checkAml("Saddam","Hussain",$quoteRequestId,$quoteTypeId);
-
         $quoteType = QuoteType::where('id', '=', $quoteTypeId)->get(array('code','text'));
         $quoteTypeCode = $quoteType[0]->code;
         $quoteTypeText = $quoteType[0]->text;
@@ -294,8 +292,6 @@ class AMLController extends Controller
         $getLatestAmlLog = AML::where('quote_type_id', $quoteTypeId)
         ->where('quote_request_id', $quoteRequestId)->latest()->first();
         $latestAmlLogResults = $getLatestAmlLog->results_found;
-
-        //dd($isCurrentUserFromPaAml, $firstAmlLogResults, $latestAmlLogResults);
 
         if($quoteTypeCode == quoteTypeCode::Business) {
             return view("aml.details", compact("quoteTypeCode","quoteTypeText","quoteRequest","businessTypeCode"
