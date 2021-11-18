@@ -21,7 +21,7 @@ const ftcHistory = {
         status: {
           type: 'dropdown',
           label: 'Status',
-          source: ['Resubmit for Approval'],
+          source: [{id: "resubmitForApproval", text: "Resubmit for Approval"}, {id : "ftc_pending", text: "FTC Pending"}],
           access: {
             read: [
               'advisor',

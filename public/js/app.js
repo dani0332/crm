@@ -17773,7 +17773,13 @@ var ftcHistory = {
         status: {
           type: 'dropdown',
           label: 'Status',
-          source: ['Resubmit for Approval'],
+          source: [{
+            id: "resubmitForApproval",
+            text: "Resubmit for Approval"
+          }, {
+            id: "ftc_pending",
+            text: "FTC Pending"
+          }],
           access: {
             read: ['advisor', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
             write: ['advisor'],
@@ -19346,8 +19352,6 @@ function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { va
 
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
-function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
-
 
 
 var transform = __webpack_require__(/*! node-json-transform */ "./node_modules/node-json-transform/index.js").transform;
@@ -19374,8 +19378,8 @@ var vehicleDetail = {
           },
           access: {
             read: ['advisor', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
-            write: ['admin'],
-            update: ['admin']
+            write: [],
+            update: []
           }
         },
         car_model_id: {
@@ -19384,38 +19388,18 @@ var vehicleDetail = {
           source: 'car_model',
           access: {
             read: ['advisor', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
-            write: ['admin'],
-            update: ['admin']
-          },
-          transform: function transform(item) {
-            if (_typeof(item) === 'object') return {
-              value: item === null || item === void 0 ? void 0 : item.id,
-              label: item === null || item === void 0 ? void 0 : item.code
-            };else {
-              var items = item.map(function () {
-                return {
-                  value: 1,
-                  label: '222'
-                };
-              });
-              return items;
-            }
+            write: [],
+            update: []
           }
         },
         car_make_id: {
           type: 'dropdown',
           label: 'Car Make',
-          field: 'car_make_id',
+          source: 'car_make',
           access: {
             read: ['advisor', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
-            write: ['admin'],
-            update: ['admin']
-          },
-          transform: function transform(item) {
-            return {
-              value: item === null || item === void 0 ? void 0 : item.id,
-              label: item === null || item === void 0 ? void 0 : item.text
-            };
+            write: [],
+            update: []
           }
         },
         emirate_of_registration_id: {
@@ -19423,8 +19407,8 @@ var vehicleDetail = {
           label: 'Emirate of Registration',
           access: {
             read: ['advisor', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
-            write: ['admin'],
-            update: ['admin']
+            write: [],
+            update: []
           },
           transform: function transform(item) {
             return {
@@ -19438,8 +19422,8 @@ var vehicleDetail = {
           label: 'UAE licence held for',
           access: {
             read: ['advisor', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
-            write: ['admin'],
-            update: ['admin']
+            write: [],
+            update: []
           },
           transform: function transform(item) {
             return {
@@ -19454,8 +19438,8 @@ var vehicleDetail = {
           form: 'claim_history',
           access: {
             read: ['advisor', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
-            write: ['admin'],
-            update: ['admin']
+            write: [],
+            update: []
           }
         },
         vehicle_detail_id: {

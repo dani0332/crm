@@ -9,6 +9,9 @@ return [
     'car_model' => [
         'model' => CarModel::class,
     ],
+    'car_make' => [
+        'model' => CarMake::class,
+    ],
     'car_quote_ftc_documents' => [
         'model' => FtcDocument::class
     ],

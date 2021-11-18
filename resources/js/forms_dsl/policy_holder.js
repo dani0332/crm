@@ -131,7 +131,6 @@ const policyHolderDetail = {
         events: {
 
           transformBeforeOpenReadMode(form){
-
             const code  = form?.data?.quote_status_id?.code;
             if(code  && code === 'ftc_pending') {
               return form
