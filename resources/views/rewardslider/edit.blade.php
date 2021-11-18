@@ -50,12 +50,10 @@
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="is_active">Is Active</label>
                         <div class="col-md-6 col-sm-6">
-                        <div class="checkbox" id="is_active_rewards_slider">
                             <select class="form-control" id='is_active' name="is_active">
                                 <option value="0" {{ $rewardSlider->is_active == 0 ? 'selected="selected"' : '' }}>False</option>
                                 <option value="1" {{ $rewardSlider->is_active == 1 ? 'selected="selected"' : '' }}>True</option>
                             </select>
-                        </div>
                         </div>
                     </div>
                     <div id='redirect_to_view_div'></div>
