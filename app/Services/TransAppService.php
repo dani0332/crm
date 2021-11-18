@@ -47,7 +47,7 @@ class TransAppService extends BaseService
 
                     $newPayment = new CarQuotePaymentHistory();
                     $newPayment->status = "Transaction Approved";
-                    $newPayment->notes = "Automate on transaction creations with Transaction ID = ".$transaction->id;
+                    $newPayment->notes = $approvalCode;
                     $newPayment->car_quote_id = $request->input("car_quote_id");
                     $newPayment->save();
 

@@ -13,13 +13,13 @@ class CarQuotePolicy extends BaseModel
     use HasFactory;
     protected $table = 'car_quote_policy';
     public $access = [
-        'write'  => ['advisor'],
-        'update' => ['advisor'],
-        'delete' => [ 'advisor'],
+        'write'  => ['pa'],
+        'update' => ['pa'],
+        'delete' => ['admin'],
         'access' => [
-            "pa" => [],
+            "advisor" => [],
             "production_approval_manager" => [],
-            "advisor" => [ 'car_quote_id', 'transactions_id', 'quote_number', 'policy_number', 'issue_date', 'start_date', 'end_date' ],
+            "pa" => [ 'car_quote_id', 'transactions_id', 'quote_number', 'policy_number', 'issue_date', 'start_date', 'end_date' ],
             "admin" => [ 'car_quote_id' , 'transactions_id', 'quote_number', 'policy_number', 'issue_date', 'start_date', 'end_date' ],
             "invoicing" => []
         ],

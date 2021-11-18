@@ -109,6 +109,9 @@
                                 @can('transapp-create')
                                     <li><a href="{{ route('home') }}">Search Transaction</a></li>
                                 @endcan
+                                @can('transapp-create')
+                                <li><a href="{{ route('transaction.create') }}">Create Transaction</a></li>
+                                @endcan
                                 @can('transapp-edit')
                                     <li class="sub_menu"><a href="{{ route('reissue_view') }}">Cancel & Re-Issue
                                             Transaction</a></li>
@@ -206,7 +209,7 @@
                 @endcan
                 @if (Auth::user()->hasRole('advisor') || Auth::user()->hasRole('pa') || Auth::user()->hasRole('invoicing') || Auth::user()->hasRole('production_approval_manager'))
                     <ul class="nav side-menu">
-                        <li><a href="{{ url('ftcform') }}"><i></i> FTC Form </a>
+                        <li><a href="{{ url('ftcform') }}"><i></i> Policy Issuance </a>
                     </ul>
                 @endif
                 @can('telemarketing-list')
