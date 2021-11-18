@@ -80,11 +80,18 @@ const ftcPaymentHistory = {
             accessor: 'status',
           },
           {
-            Header: 'Notes',
+            Header: 'Approval Code',
             accessor: 'notes',
           },
         ],
         events: {
+          onClick(options) {
+            const { row, dispatch, history } = options;
+            window.open(
+              '/transapp/showtransaction?approval_code=' + row.notes,
+              '_blank',
+            );
+          },
           applyFilter(options) {
             const {
               params: { id },

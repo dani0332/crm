@@ -81,6 +81,15 @@ function LeadSnapShot() {
           filter: { car_quote_id: paramRef.current.id },
         };
 
+        case 'ftcQuoteStatusHistory':
+        return {
+          form: 'ftcQuoteStatusHistory',
+          view_mode: 'list',
+          action_type: 'list',
+          context: 'car_quote_snap',
+          filter: { car_quote_id: paramRef.current.id },
+        };
+
       case 'email_template':
         return { data: action.state, form: 'email_template' };
       case 'overview':
@@ -115,53 +124,32 @@ function LeadSnapShot() {
       data: 'overview',
     },
     {
-      icon: 'fa fa-upload',
-      label: 'Upload Documents',
-      active: 0,
-      id: 1,
-      data: 'document',
-    },
-    {
       icon: 'fa fa-file-text-o',
-      label: 'Policy Holder Detail',
+      label: 'Customer Details',
       active: 0,
       id: 2,
       data: 'policy',
     },
     {
       icon: 'fa fa-line-chart',
-      label: 'Vehicle Detail',
+      label: 'Vehicle Details',
       active: 0,
       id: 3,
       data: 'vehicle',
     },
     {
+      icon: 'fa fa-upload',
+      label: 'Upload Document',
+      active: 0,
+      id: 1,
+      data: 'document',
+    },
+    {
       icon: 'fa fa-line-chart',
-      label: 'Insurance Coverage Information',
+      label: 'Insurance Coverage',
       active: 0,
       id: 4,
       data: 'insurance',
-    },
-    {
-      icon: 'fa fa-line-chart',
-      label: 'FTC',
-      active: 0,
-      id: 5,
-      data: 'ftcHistory',
-    },
-    {
-      icon: 'fa fa-line-chart',
-      label: 'Review & Send',
-      active: 0,
-      id: 6,
-      data: 'email_template',
-    },
-    {
-      icon: 'fa fa-line-chart',
-      label: 'KYC',
-      active: 0,
-      id: 7,
-      data: 'kyc',
     },
     {
       icon: 'fa fa-line-chart',
@@ -172,10 +160,38 @@ function LeadSnapShot() {
     },
     {
       icon: 'fa fa-line-chart',
-      label: 'Policy Detail',
+      label: 'Review & Send',
+      active: 0,
+      id: 6,
+      data: 'email_template',
+    },
+    {
+      icon: 'fa fa-line-chart',
+      label: 'KYC & AML',
+      active: 0,
+      id: 7,
+      data: 'kyc',
+    },
+    {
+      icon: 'fa fa-line-chart',
+      label: 'FTC Status',
+      active: 0,
+      id: 5,
+      data: 'ftcHistory',
+    },
+    {
+      icon: 'fa fa-line-chart',
+      label: 'Policy Details',
       active: 0,
       id: 11,
       data: 'carQuotePolicy',
+    },
+    {
+      icon: 'fa fa-line-chart',
+      label: 'Statuses History',
+      active: 0,
+      id: 19,
+      data: 'ftcQuoteStatusHistory',
     },
   ];
 
@@ -226,9 +242,9 @@ function LeadSnapShot() {
     case 'email_template':
       formArr.push(<ReviewSend dispatch={dispatch} data={form.data} />);
       break;
-    case 'ftcHistory':
-      formArr.push(<FtcForm filter={{ car_quote_id: paramRef.current.id }} />);
-      break;
+    // case 'ftcHistory':
+    //   formArr.push(<FtcForm filter={{ car_quote_id: paramRef.current.id }} />);
+    //   break;
     case 'ftcPayment':
       formArr.push(
         <FtcPayment filter={{ car_quote_id: paramRef.current.id }} />,
