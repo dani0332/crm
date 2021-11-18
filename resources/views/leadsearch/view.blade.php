@@ -4,6 +4,7 @@
     <script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
     <script>
         var userId = JSON.parse('<?php echo json_encode(Auth::user()->id); ?>');
+        var isAdmin = JSON.parse('<?php echo json_encode(Auth::user()->hasRole("ADMIN")); ?>');
         var teamUserIds = JSON.parse('<?php echo json_encode(Auth::user()->getTeamUserIds()); ?>');
         $(document).ready(function() {
             var searchLeadsTable = $(".leadSearch-data-table").DataTable({
@@ -25,12 +26,11 @@
                         data: 'id',
                         name: 'id',
                         render: function(data, type, row) {
-                            if(teamUserIds.includes(row.advisor_id) || row.advisor_id == userId){
+                            if(teamUserIds.includes(row.advisor_id) || row.advisor_id == userId || isAdmin){
                                 return "<a href='/quotes/"+$("#leadType").val()+"/"+row.id+"'>" + row.id + "</a>"
                             }else{
                                 return "You don’t have access to view this lead"
                             }
-
                         }
                     },
                     {
@@ -48,6 +48,10 @@
                     {
                         data: "advisor_name",
                         name: "advisor_name"
+                    },
+                    {
+                        data: "lead_status",
+                        name: "lead_status"
                     },
                 ],
             });
@@ -134,13 +138,13 @@
                                 <th>Created At</th>
                                 <th>First Name</th>
                                 <th>Last Name</th>
-
                                 <th>Assigned To</th>
+                                <th>Lead Status</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr class="odd">
-                                <td valign="top" colspan="5" class="dataTables_empty">No data available in table</td>
+                                <td valign="top" colspan="6" class="dataTables_empty">No data available in table</td>
                             </tr>
                         </tbody>
                     </table>
