@@ -98,7 +98,6 @@ class RewardSliderController extends Controller
             $fileName = $rewardSlider->image;
         }
 
-        //dd($request->validated());
         $rewardSlider->update(Arr::except($request->validated(), ['image']) + [ 'image' => $fileName]);
 
         if(isset($request->return_to_view)) {
