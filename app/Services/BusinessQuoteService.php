@@ -16,6 +16,7 @@ class BusinessQuoteService extends BaseService
     {
         $this->query = "
                             SELECT bqr.id
+                            ,bqr.uuid
                             ,bqr.first_name
                             ,bqr.last_name
                             ,bqr.email
@@ -33,13 +34,13 @@ class BusinessQuoteService extends BaseService
 
     public function getEntity($id)
     {
-        return DB::select($this->query . ' where bqr.id = ' . $id);
+        return DB::select($this->query . ' where bqr.uuid = "' . $id.'"');
     }
 
     public function getLeads($CDBID, $email, $mobile_no, $lead_type)
     {
-        $isAdvisor = Auth::user()->hasRole(strtoupper($lead_type) . '_ADVISOR');
         $query = "SELECT hqr.id
+                        ,hqr.uuid
                         ,hqr.first_name
                         ,hqr.last_name
                         ,hqr.created_at
@@ -69,7 +70,7 @@ class BusinessQuoteService extends BaseService
 
     public function getEntityPlain($id)
     {
-        return BusinessQuote::find($id);
+        return BusinessQuote::where('uuid', $id);
     }
 
     public function getLeadsForAssignment()

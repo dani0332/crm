@@ -16,6 +16,7 @@ class HomeQuoteService extends BaseService
     {
         $this->query = "
                 SELECT hqr.id
+                ,hqr.uuid
                 ,hqr.first_name
                 ,hqr.last_name
                 ,hqr.email
@@ -38,7 +39,7 @@ class HomeQuoteService extends BaseService
 
     public function getEntity($id)
     {
-        return DB::select($this->query . ' where hqr.id = ' . $id);
+        return DB::select($this->query . ' where hqr.uuid =  "' . $id.'"');
     }
 
     public function saveHomeQuote(Request $request)
@@ -102,6 +103,7 @@ class HomeQuoteService extends BaseService
     {
         $isAdvisor = Auth::user()->hasRole(strtoupper($lead_type) . '_ADVISOR');
         $query = "SELECT hqr.id
+                            ,hqr.uuid
                             ,hqr.first_name
                             ,hqr.last_name
                             ,hqr.created_at
@@ -252,7 +254,7 @@ class HomeQuoteService extends BaseService
 
     public function getEntityPlain($id)
     {
-        return HomeQuote::find($id);
+        return HomeQuote::where('uuid', $id);
     }
 
     public function sendCAPIRequest($endpoint, $data)

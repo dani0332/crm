@@ -15,6 +15,7 @@ class HealthQuoteService extends BaseService
     {
         $this->query = "
         SELECT hqr.id
+        ,hqr.uuid
         ,hqr.first_name
         ,hqr.last_name
         ,hqr.email
@@ -46,12 +47,12 @@ class HealthQuoteService extends BaseService
 
     public function getEntity($id)
     {
-        return DB::select($this->query . ' where hqr.id = ' . $id);
+        return DB::select($this->query . ' where hqr.uuid =  "' . $id.'"');
     }
 
     public function getEntityPlain($id)
     {
-        return HealthQuote::find($id);
+        return HealthQuote::where('uuid', $id);
     }
     public function getLeadsForAssignment()
     {
@@ -175,6 +176,7 @@ class HealthQuoteService extends BaseService
             $userIds = Auth::user()->getTeamUserIds();
         }
         $query = "SELECT hqr.id
+                            ,hqr.uuid
                             ,hqr.first_name
                             ,hqr.last_name
                             ,hqr.created_at

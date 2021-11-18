@@ -58,7 +58,7 @@
                             name: 'id',
                             render: function(data, type, row) {
                                 var url = '/quotes/' + model.modelType.toLowerCase();
-                                return "<a href='" + url + '/' + row.id + "'>" + row.id + "</a>"
+                                return "<a href='" + url + '/' + row.uuid + "'>" + row.id + "</a>"
                             }
                         });
                     } else {

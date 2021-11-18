@@ -15,6 +15,7 @@ class LifeQuoteService extends BaseService
     {
         $this->query = "
                         SELECT lqr.id
+                        ,lqr.uuid
                         ,lqr.first_name
                         ,lqr.last_name
                         ,lqr.email
@@ -87,12 +88,12 @@ class LifeQuoteService extends BaseService
 
     public function getEntity($id)
     {
-        return DB::select($this->query . ' where lqr.id = ' . $id);
+        return DB::select($this->query . ' where lqr.uuid =  "' . $id.'"');
     }
 
     public function getEntityPlain($id)
     {
-        return LifeQuote::find($id);
+        return LifeQuote::where('uuid', $id);
     }
     public function getLeadsForAssignment()
     {
@@ -165,6 +166,7 @@ class LifeQuoteService extends BaseService
     {
         $isAdvisor = Auth::user()->hasRole(strtoupper($lead_type) . '_ADVISOR');
         $query = "SELECT hqr.id
+                            ,hqr.uuid
                             ,hqr.first_name
                             ,hqr.last_name
                             ,hqr.created_at
