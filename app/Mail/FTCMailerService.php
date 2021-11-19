@@ -29,7 +29,7 @@ class FTCMailerService extends Mailable
      */
     public function build()
     {
-        $fromEmail = Config::get('constants.MAIL_FROM_ADDRESS');
+        $fromEmail = Config::get('constants.MAIL_NOTIFICATION_FTC');
         $fromName = Config::get('constants.MAIL_FROM_NAME');
         $email = $this
             ->subject($this->request['subject'])
