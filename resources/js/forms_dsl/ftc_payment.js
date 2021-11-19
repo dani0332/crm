@@ -63,7 +63,6 @@ const ftcPayment = {
           type: 'dropdown',
           label: 'Payment Method',
           source: ['Spotii', 'payments.insurancemarket.ae '],
-          field: 'method',
           offscreen: true,
           access: {
             read: [
@@ -131,6 +130,7 @@ const ftcPayment = {
       },
       postTransform(options) {
         const { params, data } = options;
+        console.log({ params, data })
         return { ...data, car_quote_id: params.id };
       },
     };
