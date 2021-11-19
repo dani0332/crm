@@ -148,6 +148,7 @@ class CRUDController extends Controller
     public function show($id)
     {
         $record = $this->crudService->getEntity($this->genericModel->modelType, $id);
+        if(!$record) abort(404);
         $model = $this->genericModel;
         $customTitles = $customTableList = [];
         foreach ($model->properties as $property => $value) {
@@ -160,8 +161,6 @@ class CRUDController extends Controller
         }
         $quoteTypes = 'Health,Car,Travel,Life,Home,Business';
         $serviceType = str_contains($quoteTypes, ucwords($model->modelType)) ? strtolower($model->modelType) . 'QuoteService' : lcfirst(ucwords($model->modelType)) . 'Service';
-        $quoteAttr = $this->{$serviceType}->getEntityPlain($id);
-        $quoteAttrUuId = $quoteAttr->uuid;
 
         if ($this->genericModel->modelType == "Car") { // Car plans to display on detail view
 
@@ -174,9 +173,9 @@ class CRUDController extends Controller
                 $listQuotePlans = $quotePlans;
             }
 
-            return view('shared.show', compact(['record', 'model', 'customTitles', 'listQuotePlans', 'customTableList', 'quoteAttrUuId']));
+            return view('shared.show', compact(['record', 'model', 'customTitles', 'listQuotePlans', 'customTableList']));
         } else {
-            return view('shared.show', compact(['record', 'model', 'customTitles', 'customTableList', 'quoteAttrUuId']));
+            return view('shared.show', compact(['record', 'model', 'customTitles', 'customTableList']));
         }
     }
 

@@ -16,6 +16,7 @@ class TravelQuoteService extends BaseService
     {
         $this->query = "
                         SELECT tqr.id
+                        ,tqr.uuid
                         ,tqr.days_cover_for
                         ,tqr.details
                         ,tqr.destination
@@ -73,14 +74,18 @@ class TravelQuoteService extends BaseService
     {
         $isAdvisor = Auth::user()->hasRole(strtoupper($lead_type) . '_ADVISOR');
         $query = "SELECT hqr.id
+                            ,hqr.uuid
                             ,hqr.first_name
                             ,hqr.last_name
                             ,hqr.created_at
                             ,u.name AS advisor_name
                             ,'Travel' as lead_type
                             ,u.id as advisor_id
+                            ,qs.text as lead_status
                         FROM travel_quote_request hqr
-                        LEFT OUTER JOIN users u ON u.id = hqr.advisor_id";
+                        LEFT OUTER JOIN users u ON u.id = hqr.advisor_id
+                        LEFT OUTER JOIN quote_status qs ON qs.id = hqr.quote_status_id
+                        ORDER BY u.name";
         $count = 0;
         if (!empty($CDBID)) {
             $query .= ' where hqr.id = ' . $CDBID;
@@ -162,12 +167,12 @@ class TravelQuoteService extends BaseService
 
     public function getEntity($id)
     {
-        return DB::select($this->query . ' where tqr.id = ' . $id);
+        return DB::select($this->query . ' where tqr.uuid =  "' . $id.'"');
     }
 
     public function getEntityPlain($id)
     {
-        return TravelQuote::find($id);
+        return TravelQuote::where('uuid', $id);
     }
 
     public function updateTravelQuote(Request $request, $id)
