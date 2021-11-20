@@ -81,12 +81,6 @@ class LeadAssignmentController extends Controller
                         })->all();
                     }
                 }
-
-
-
-
-
-
                 return DataTables::of(collect($mergedGridData)->sortBy('advisor_name')->toArray())
                     ->addIndexColumn()
                     ->make(true);

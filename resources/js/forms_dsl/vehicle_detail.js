@@ -33,8 +33,8 @@ let vehicleDetail = {
               'invoicing',
               'production_approval_manager',
             ],
-            write: ['admin'],
-            update: ['admin'],
+            write: [],
+            update: [],
           },
         },
         car_model_id: {
@@ -49,24 +49,14 @@ let vehicleDetail = {
               'invoicing',
               'production_approval_manager',
             ],
-            write: ['admin'],
-            update: ['admin'],
-          },
-          transform(item) {
-            if (typeof item === 'object')
-              return { value: item?.id, label: item?.code };
-            else {
-              const items = item.map(() => {
-                return { value: 1, label: '222' };
-              });
-              return items;
-            }
+            write: [],
+            update: [],
           },
         },
         car_make_id: {
           type: 'dropdown',
           label: 'Car Make',
-          field: 'car_make_id',
+          source: 'car_make',
           access: {
             read: [
               'advisor',
@@ -75,12 +65,9 @@ let vehicleDetail = {
               'invoicing',
               'production_approval_manager',
             ],
-            write: ['admin'],
-            update: ['admin'],
-          },
-          transform(item) {
-            return { value: item?.id, label: item?.text };
-          },
+            write: [],
+            update: [],
+          }
         },
         emirate_of_registration_id: {
           type: 'dropdown',
@@ -93,8 +80,8 @@ let vehicleDetail = {
               'invoicing',
               'production_approval_manager',
             ],
-            write: ['admin'],
-            update: ['admin'],
+            write: [],
+            update: [],
           },
           transform(item) {
             return { value: item?.id, label: item?.text };
@@ -111,8 +98,8 @@ let vehicleDetail = {
               'invoicing',
               'production_approval_manager',
             ],
-            write: ['admin'],
-            update: ['admin'],
+            write: [],
+            update: [],
           },
           transform(item) {
             return { value: item?.id, label: item?.text };
@@ -130,8 +117,8 @@ let vehicleDetail = {
               'invoicing',
               'production_approval_manager',
             ],
-            write: ['admin'],
-            update: ['admin'],
+            write: [],
+            update: [],
           },
         },
         vehicle_detail_id: {
