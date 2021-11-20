@@ -1554,7 +1554,8 @@ $(document).ready(function () {
     });
 
     var rewardSliderEditStartDateTime = $('#rewardSliderEditStartDateTime').val();
-    if (rewardSliderEditStartDateTime != "") {
+
+    if (rewardSliderEditStartDateTime != "" && typeof rewardSliderEditStartDateTime !== "undefined") {
         minRewardSliderStartDateTime = rewardSliderEditStartDateTime;
     } else {
         minRewardSliderStartDateTime = new Date();
