@@ -1544,11 +1544,54 @@ $(document).ready(function () {
                 },
             },
             { data: 'link', name: 'link' },
+            { data: 'start_datetime', name: 'start_datetime' },
+            { data: 'end_datetime', name: 'end_datetime' },
             { data: 'sort_order', name: 'sort_order' },
             { data: 'is_active', name: 'is_active' },
             { data: 'created_at', name: 'created_at' },
             { data: 'updated_at', name: 'updated_at' },
         ]
+    });
+
+    var rewardSliderEditStartDateTime = $('#rewardSliderEditStartDateTime').val();
+    if (rewardSliderEditStartDateTime != "") {
+        minRewardSliderStartDateTime = rewardSliderEditStartDateTime;
+    } else {
+        minRewardSliderStartDateTime = new Date();
+    }
+
+    $("#rewards_slider_start_end #start_datetime").daterangepicker({ // Rewards Slider start date & time
+        timePicker: true,
+        singleDatePicker: true,
+        timePicker24Hour: true,
+        minDate: minRewardSliderStartDateTime,
+        locale: {
+            format: 'YYYY-MM-DD HH:mm:ss'
+        }
+    });
+
+    var rewardSliderEditEndDateTime = $('#rewards_slider_start_end #rewardSliderEditEndDateTime').val();
+    var rsdt = new Date();
+    var rewardSliderEditCurrentDateTime = rsdt.getFullYear() + "-" + ("0" + (rsdt.getMonth() + 1)).slice(-2) + "-" + ("0" + rsdt.getDate()).slice(-2) +
+        " " + ("0" + rsdt.getHours()).slice(-2) + ":" + ("0" + rsdt.getMinutes()).slice(-2) + ":" + ("0" + rsdt.getSeconds()).slice(-2);
+
+    console.log("rewardSliderEditCurrentDateTime: ",rewardSliderEditCurrentDateTime);
+    console.log("rewardSliderEditEndDateTime: ",rewardSliderEditEndDateTime);
+
+    if (rewardSliderEditEndDateTime != "" && rewardSliderEditEndDateTime < rewardSliderEditCurrentDateTime) {
+        minRewardSliderEndDateTime = rewardSliderEditEndDateTime;
+    } else {
+        minRewardSliderEndDateTime = new Date();
+    }
+
+    $("#rewards_slider_start_end #end_datetime").daterangepicker({ // Rewards Slider end date & time
+        timePicker: true,
+        singleDatePicker: true,
+        timePicker24Hour: true,
+        minDate: minRewardSliderEndDateTime,
+        locale: {
+            format: 'YYYY-MM-DD HH:mm:ss'
+        }
     });
 
     //select/unselect all checkboxes if this selected

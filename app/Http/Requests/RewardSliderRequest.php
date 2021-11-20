@@ -28,7 +28,9 @@ class RewardSliderRequest extends FormRequest
                 'image' => ($this->method() == 'POST' ? 'required|': '') . 'image|mimes:jpeg,png,jpg,gif,svg,webp|max:1024',
                 'link' => ($this->method() == 'POST' ? 'required|': '') .'url|max:1000',
                 'sort_order' => ($this->method() == 'POST' ? 'required|': '') .'integer',
-                'is_active' => 'string'
+                'is_active' => 'string',
+                'start_datetime' => 'required|date_format:Y-m-d H:i:s',
+                'end_datetime' => 'required|date_format:Y-m-d H:i:s'
         ];
     }
 }

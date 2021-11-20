@@ -19,7 +19,7 @@ class RewardSliderController extends Controller
     {
         if ($request->ajax()) {
 
-            return $datatables::of($rewardSlider::query()->orderBy('sort_order','asc'))
+            return $datatables::of($rewardSlider::query()->orderBy('start_datetime','desc'))
                 ->addIndexColumn()
                 ->make(true);
         }
@@ -50,10 +50,10 @@ class RewardSliderController extends Controller
             $rewardSlider->image = $fileName;
         }
 
-        $rewardSlider->create(Arr::except($request->validated(), ['image']) + [ 'image' => $fileName]);
+        $rewardSliderId = $rewardSlider->create(Arr::except($request->validated(), ['image']) + ['image' => $fileName])->id;
 
         if(isset($request->return_to_view)) {
-            return redirect("rewards/reward-sliders/".$rewardSlider->id)->with('success', 'Rewards Slider image has been stored');
+            return redirect("rewards/reward-sliders/".$rewardSliderId)->with('success', 'Rewards Slider image has been stored');
         }
         return redirect()->back()->with('success', 'Rewards Slider image has been stored');
     }

@@ -24,6 +24,8 @@
                           <th>Id</th>
                           <th>Image</th>
                           <th>Link</th>
+                          <th>Start Date & Time</th>
+                          <th>End Date & Time</th>
                           <th>Sort Order</th>
                           <th>Is Active</th>
                           <th>Created At</th>
