@@ -172,6 +172,7 @@ class UserController extends Controller
         $user->email = $request->email;
         $user->password = bcrypt($request->password);
         $user->save();
+
         if($request->manager == 0 || $request->manager == '') {
             UserTeams::where('user_id',$user->id)->update(
                 ['team_id'=>$request->team ]
