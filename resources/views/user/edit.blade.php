@@ -105,9 +105,7 @@
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="roles">Manager</label>
                         <div class="col-md-6 col-sm-6 ">
                             <select name="manager" id=user-manager-select class="form-control select2">
-                                @if ($selectedManager == null)
-                                    <option selected="selected" value="0" >None</option>
-                                @endif
+                                <option @if($selectedManager == null) selected="selected" @endif value="0" >None</option>
                                 @foreach ($managers as $manager)
                                 <option value="{{ $manager->id }}" @if ($manager->id == $selectedManager) selected="selected" @endif>{{ $manager->name }}</option>
                                 @endforeach

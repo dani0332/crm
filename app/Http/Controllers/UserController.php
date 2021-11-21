@@ -172,9 +172,18 @@ class UserController extends Controller
         $user->email = $request->email;
         $user->password = bcrypt($request->password);
         $user->save();
-        UserTeams::where('user_id',$user->id)->update(
-            ['team_id'=>$request->team, 'manager_id'=> $request->manager ]
-        );
+
+        if($request->manager == 0 || $request->manager == '') {
+            UserTeams::where('user_id',$user->id)->update(
+                ['team_id'=>$request->team ]
+            );
+        }
+        else {
+            UserTeams::where('user_id',$user->id)->update(
+                ['team_id'=>$request->team, 'manager_id'=> $request->manager ]
+            );
+        }
+
         $user->assignRole($request->input('roles'));
         if (isset($request->return_to_view))
             return redirect("admin/users/" . $user->id)->with('success', 'User has been updated');

@@ -18,7 +18,7 @@
                             class="btn btn-success btn-sm"
                             onclick="return confirm('Do you want to update status to AML Screening Cleared?');">Pass</a></li>
                         @endif
-                        @if ($isCurrentUserFromCompliance == 1 && $firstAmlLogResults == 0 && $latestAmlLogResults > 0)
+                        @if ($isCurrentUserFromCompliance == 1 && $firstAmlLogResults == 0 && $latestAmlLogResults > 0 && $getAMLNumRows >= 2)
                             <li><a href="{{ $quoteRequest->id }}/quoteStatusUpdate/{{ quoteStatusCode::AMLScreeningFailed }}"
                             class='btn btn-danger btn-sm'
                             onclick="return confirm('Do you want to update status to AML Screening Failed?');">Fail</a></li>
@@ -26,7 +26,7 @@
                             class="btn btn-success btn-sm"
                             onclick="return confirm('Do you want to update status to AML Screening Cleared?');">Pass</a></li>
                         @endif
-                        @if ($isCurrentUserFromCompliance == 1 && $firstAmlLogResults > 0 && $latestAmlLogResults > 0)
+                        @if ($isCurrentUserFromCompliance == 1 && $firstAmlLogResults > 0 && $latestAmlLogResults > 0 && $getAMLNumRows >= 2)
                             <li><a href="{{ $quoteRequest->id }}/quoteStatusUpdate/{{ quoteStatusCode::AMLScreeningFailed }}"
                             class='btn btn-danger btn-sm'
                             onclick="return confirm('Do you want to update status to AML Screening Failed?');">Fail</a></li>
@@ -45,10 +45,10 @@
                     @if (session()->has('message'))
                         <div class="alert alert-danger">{{ session()->get('message') }}</div>
                     @endif
-                    @if ($isCurrentUserFromPaAml == 1 && $firstAmlLogResults == 0 && $latestAmlLogResults > 0)
+                    @if ($isCurrentUserFromPaAml == 1 && $firstAmlLogResults == 0 && $latestAmlLogResults > 0 && $getAMLNumRows >= 2)
                         <div class="required" style="text-align: center;"><p><b>Matches found. Please check with Compliance.</b></p></div>
                     @endif
-                    @if ($isCurrentUserFromPaAml == 1 && $firstAmlLogResults > 0 && $latestAmlLogResults > 0)
+                    @if ($isCurrentUserFromPaAml == 1 && $firstAmlLogResults > 0 && $latestAmlLogResults > 0 && $getAMLNumRows >= 2)
                         <div class="required" style="text-align: center;"><p><b>Matches found. Please check with Compliance.</b></p></div>
                     @endif
                     <form id="demo-form2" method="POST" action="{{ $quoteRequest->id }}/quoteUpdate"
