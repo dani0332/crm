@@ -117,7 +117,6 @@ class MyLeadsController extends Controller
             $leadType.'Quotes.quoteStatus',
             $leadType.'Quotes.'.$leadType.'QuoteRequestDetail',
             $leadType.'Quotes.'.$leadType.'QuoteRequestDetail.assignedBy']);
-        dd($quotes->first()->toSql());
         $resultSet = collect([]);
         foreach ($quotes->{$leadType.'Quotes'} as $item) {
             $dataObject = [
