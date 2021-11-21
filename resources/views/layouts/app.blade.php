@@ -204,6 +204,7 @@ $appName = Config::get('constants.APP_NAME');
                 sanction_list_downloads_datatable_route: "{{ url('kyc/aml/download/history') }}",
                 searchLeadsDataTable: "{{ route('leadsearch.index') }}",
                 leadassignmentDataTable: "{{ route('leadassignment.index') }}",
+                myleadsDataTable: "{{ route('myleads.index') }}",
             },
             _token: "{{ csrf_token() }}",
             image_path: "{{ \Config::get('constants.azure_storage_url') . 'myrewards/' }}"

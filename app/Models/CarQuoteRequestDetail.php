@@ -8,10 +8,10 @@ use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 use Config;
 
-class BikeQuote extends Model implements AuditableContract
+class CarQuoteRequestDetail extends Model implements AuditableContract
 {
     use HasFactory, Auditable;
-    protected $table = 'bike_quote_request';
+    protected $table = 'car_quote_request_detail';
     protected $guarded = [];
 
     public function getCreatedAtAttribute($table)
@@ -24,12 +24,13 @@ class BikeQuote extends Model implements AuditableContract
         $date_time_format = Config::get('constants.datetime_format');
         return $this->asDateTime($table)->timezone(config('app.timezone'))->format($date_time_format);
     }
-    public function quoteStatus()
+    public function getAdvisorAssignedDateAttribute($table)
     {
-        return $this->hasOne(QuoteStatus::class, 'id', 'quote_status_id');
+        $date_time_format = Config::get('constants.datetime_format');
+        return $this->asDateTime($table)->timezone(config('app.timezone'))->format($date_time_format);
     }
-    public function bikeQuoteRequestDetail()
+    public function assignedBy()
     {
-        return $this->hasOne(BikeQuoteRequestDetail::class, 'bike_quote_request_id', 'id');
+        return $this->hasOne(User::class, 'id', 'advisor_assigned_by_id');
     }
 }

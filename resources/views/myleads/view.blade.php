@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Lead Search')
+@section('title', 'My Leads')
 @section('content')
     <script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
     <script>
@@ -7,55 +7,58 @@
         var isAdmin = JSON.parse('<?php echo json_encode(Auth::user()->hasRole('ADMIN')); ?>');
         var teamUserIds = JSON.parse('<?php echo json_encode(Auth::user()->getTeamUserIds()); ?>');
         $(document).ready(function() {
-            var searchLeadsTable = $(".leadSearch-data-table").DataTable({
+            $("#myLeadsType").prop("selectedIndex", 0);
+            var myleadsTable = $(".leadSearch-data-table").DataTable({
                 ordering: false,
                 info: false,
                 searching: false,
                 bLengthChange: false,
                 serverSide: true,
                 ajax: {
-                    url: config.routes.searchLeadsDataTable,
+                    url: config.routes.myleadsDataTable,
                     data: function(d) {
-                        d.leadType = $("#leadType").val();
-                        d.cdbID = $("#cdbID").val();
-                        d.email = $("#email").val();
-                        d.phnNumber = $("#phnNumber").val();
+                        d.leadType = $("#myLeadsType").val();
                     },
                 },
                 columns: [{
                         data: 'id',
                         name: 'id',
                         render: function(data, type, row) {
-                            if (teamUserIds.includes(row.advisor_id) || row.advisor_id == userId ||
-                                isAdmin) {
-                                return "<a href='/quotes/" + $("#leadType").val() + "/" + row.uuid +
-                                    "'>" + row.id + "</a>"
-                            } else {
-                                return "You don’t have access to view this lead"
-                            }
+                            return "<a href='" + config.routes.myleadsDataTable + '/' + row.uuid + "&"+ $("#myLeadsType").val() +"'>" + row.id + "</a>"
                         }
                     },
                     {
-                        data: "created_at",
-                        name: "created_at"
+                        data: "clientName",
+                        name: "clientName"
                     },
                     {
-                        data: "first_name",
-                        name: "first_name"
+                        data: "leadStatus",
+                        name: "leadStatus"
                     },
                     {
-                        data: "last_name",
-                        name: "last_name"
+                        data: "createdAt",
+                        name: "createdAt"
                     },
                     {
-                        data: "advisor_name",
-                        name: "advisor_name"
+                        data: "assignedDate",
+                        name: "assignedDate"
                     },
                     {
-                        data: "lead_status",
-                        name: "lead_status"
+                        data: "assignedBy",
+                        name: "assignedBy"
                     },
+                    {
+                        data: 'leadSource',
+                        name: 'leadSource'
+                    }
                 ],
+            });
+
+            $("#my-leads-form").submit(function(e) {
+                e.preventDefault();
+                $(".loader").show();
+                myleadsTable.draw();
+                $(".loader").hide();
             });
         });
     </script>
@@ -63,7 +66,7 @@
         <div class="col-md-12 col-sm-12 ">
             <div class="x_panel">
                 <div class="x_title">
-                    <h2>Search Leads</h2>
+                    <h2>My Leads</h2>
                     <div class="clearfix"></div>
                 </div>
                 <div class="x_content">
@@ -74,51 +77,26 @@
                         <div class="alert alert-success">{{ session()->get('success') }}</div>
                     @endif
 
-                    <form method="POST" id="search-leads" class="form-horizontal form-label-left" role="form"
+                    <form method="POST" id="my-leads-form" class="form-horizontal form-label-left" role="form"
                         data-parsley-validate="" novalidate="" autocomplete="off">
                         {{ csrf_field() }}
                         @method('POST')
                         <div class="item form-group">
                             <div class="col">
-                                <label class="col-form-label col-md-2 col-sm-2" for="Search By">CDB ID </label>
-                                <div class="col-md-6 col-sm-6">
-                                    <input type="text" class="form-control" id="cdbID" name="cdbID">
-                                </div>
-                            </div>
-                            <div class="col">
-                                <div>
-                                    <label class="col-form-label col-md-2 col-sm-2" for="Search Value">Customer
-                                        Email</label>
-                                    <div class="col-md-6 col-sm-6">
-                                        <input type="text" class="form-control" id="email" name="email">
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="item form-group">
-                            <div class="col">
-                                <label class="col-form-label col-md-2 col-sm-2" for="Start Date">Customer Phone
-                                    Number</label>
-                                <div class="col-md-6 col-sm-6">
-                                    <input class="form-control" type="number" max="10" id="phnNumber" name="phnNumber">
-                                </div>
-                            </div>
-                            <div class="col">
                                 <label class="col-form-label col-md-2 col-sm-2" for="Start Date">Lead Type <span
                                         class="required">*</span></label>
                                 <div class="col-md-6 col-sm-6">
-                                    <select class="form-control" id="leadType" name="leadType">
-                                        <option value="">Please Select Lead Type</option>
-                                        <option value="home">Home</option>
-                                        <option value="health">Health</option>
-                                        <option value="life">Life</option>
-                                        <option value="business">Business</option>
-                                        <option value="travel">Travel</option>
+                                    <select class="form-control" id="myLeadsType" name="leadType">
+                                        @foreach ($leadTypes as $item)
+                                            <option  value="{{$item}}">{{$item}}</option>
+                                        @endforeach
                                     </select>
                                     @if ($errors->has('leadType'))
                                         <span class="text-danger">{{ $errors->first('leadType') }}</span>
                                     @endif
                                 </div>
+                            </div>
+                            <div class="col">
                             </div>
                         </div>
                         <div class="item form-group">
@@ -137,11 +115,12 @@
                         <thead>
                             <tr>
                                 <th>id</th>
-                                <th>Created At</th>
-                                <th>First Name</th>
-                                <th>Last Name</th>
-                                <th>Assigned To</th>
+                                <th>Client Name</th>
                                 <th>Lead Status</th>
+                                <th>Created Date</th>
+                                <th>Assigned Date</th>
+                                <th>Assigned By</th>
+                                <th>Lead Source</th>
                             </tr>
                         </thead>
                         <tbody>
