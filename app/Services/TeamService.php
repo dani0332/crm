@@ -7,6 +7,8 @@ use App\Models\UserTeams;
 use Illuminate\Http\Request;
 use DB;
 
+use function PHPUnit\Framework\isEmpty;
+
 class TeamService extends BaseService
 {
     protected $query;
@@ -25,8 +27,8 @@ class TeamService extends BaseService
 
 	public function saveTeams(Request $request)
 	{
-        $existingTeam = Team::where('name', $request->name)->get();
-        if($existingTeam){
+        $existingTeam = Team::where('name', $request->name)->first();
+        if($existingTeam != null){
             return "Error: name already exists";
         }
         $team = new Team();
