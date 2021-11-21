@@ -12,11 +12,11 @@ class TeamService extends BaseService
     protected $query;
     public function __construct()
     {
-        $this->query = "SELECT t.id, t.name AS name FROM teams t ";
+        $this->query = "SELECT t.id, t.uuid, t.name AS name FROM teams t ";
     }
 
     public function getEntity($id){
-        return DB::select($this->query.' where t.id = '. $id.' GROUP BY t.name,t.id');
+        return DB::select($this->query.' where t.uuid = "'. $id.'" GROUP BY t.name,t.id,t.uuid');
     }
 
     public function getEntityPlain($id){
@@ -25,13 +25,14 @@ class TeamService extends BaseService
 
 	public function saveTeams(Request $request)
 	{
+        $existingTeam = Team::where('name', $request->name)->get();
+        if($existingTeam){
+            return "Error: name already exists";
+        }
         $team = new Team();
         $team->name = $request->name;
         $team->save();
-
-        if (isset($request->return_to_view))
-            return redirect("/quotes/teams/" . $team->id)->with('success', 'Team has been created');
-
+        return Team::find($team->id)->uuid;
 	}
 
     public function getGridData($searchProperties, $request){
@@ -47,18 +48,18 @@ class TeamService extends BaseService
                 }
             }
         }
-        $this->query = $this->query .' GROUP BY t.name,t.id ORDER BY t.id DESC ';
+        $this->query = $this->query .' GROUP BY t.name,t.id,t.uuid ORDER BY t.id DESC ';
         return DB::select($this->query);
     }
 
 
     public function updateTeams(Request $request, $id)
 	{
-        $team = Team::find($id);
-        $team->name = $request->name;
-        $team->save();
+        Team::where('uuid',$id)->update(
+            ['name'=>$request->name]
+        );
         if (isset($request->return_to_view))
-            return redirect("/quotes/teams/" . $team->id)->with('success', 'Team has been updated');
+            return redirect("/quotes/teams/" . $id)->with('success', 'Team has been updated');
 	}
 
     public function fillModelProperties() {

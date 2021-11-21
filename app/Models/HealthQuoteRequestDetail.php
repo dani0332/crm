@@ -31,6 +31,6 @@ class HealthQuoteRequestDetail extends Model implements AuditableContract
     }
     public function assignedBy()
     {
-        return $this->hasOne(User::class, 'id', 'advisor_assigned_by_id');
+        return $this->hasOne(User::class, 'advisor_assigned_by_id', 'id');
     }
 }

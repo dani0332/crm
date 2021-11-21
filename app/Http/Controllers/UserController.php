@@ -148,7 +148,7 @@ class UserController extends Controller
         $teams = Team::orderBy('name', 'asc')->get();
 
         $userTeam = UserTeams::where('user_id', $user->id)->get()->first();
-        $managerIds = UserTeams::where('team_id', $userTeam->team_id)->where('manager_id', null)->get()->pluck('user_id');
+        $managerIds = UserTeams::where('team_id', $userTeam->team_id)->where('manager_id', null)->where('user_id', '!=', $user->id)->get()->pluck('user_id');
         $managers = User::whereIn('id', $managerIds)->get();
         $selectedTeam = $userTeam->team_id;
         $selectedManager = $userTeam->manager_id;
@@ -173,17 +173,11 @@ class UserController extends Controller
         $user->password = bcrypt($request->password);
         $user->save();
 
-        if($request->manager == 0 || $request->manager == '') {
-            UserTeams::where('user_id',$user->id)->update(
-                ['team_id'=>$request->team ]
-            );
-        }
-        else {
-            UserTeams::where('user_id',$user->id)->update(
-                ['team_id'=>$request->team, 'manager_id'=> $request->manager ]
-            );
-        }
-
+        UserTeams::where('user_id',$user->id)->update(
+            ['team_id'=>$request->team,
+            'manager_id'=> $request->manager == 0 || $request->manager == '' ? null : $request->manager ]
+        );
+        DB::table('model_has_roles')->where('model_id', $user->id)->delete();
         $user->assignRole($request->input('roles'));
         if (isset($request->return_to_view))
             return redirect("admin/users/" . $user->id)->with('success', 'User has been updated');
