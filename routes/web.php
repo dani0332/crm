@@ -89,7 +89,7 @@ Route::group(['middleware' =>  ['auth']], function () {
         'edit' => 'leadsearch.edit',
         'update' => 'leadsearch.update',
         'destroy' => 'leadsearch.destroy',
-    ]);
+    ])->middleware('CheckRole:ADMIN,MANAGER,HEALTH_ADVISOR,BUSINESS_ADVISOR,TRAVEL_ADVISOR,LIFE_ADIVSOR,HOME_ADVISOR,CAR_ADVISOR');
     Route::resource('leadassignment', LeadAssignmentController::class)->names([
         'index' => 'leadassignment.index',
         'create' => 'leadassignment.create',
