@@ -1610,23 +1610,6 @@ $(document).ready(function () {
         ],
     });
 
-    var sanctionListDownloads = $(".sanction-list-downloads-table").DataTable({
-        ordering: false,
-        info: false,
-        searching: false,
-        bLengthChange: false,
-        ajax: config.routes.sanction_list_downloads_datatable_route,
-        columns: [
-            { data: "id", name: "id" },
-            { data: "file_name", name: "file_name" },
-            { data: "file_path", name: "file_path" },
-            { data: "source", name: "source" },
-            { data: "total_records", name: "total_records" },
-            { data: "created_at", name: "created_at" },
-            { data: "updated_at", name: "updated_at" },
-        ],
-    });
-
     var searchLeadsTable = $(".leadSearch-data-table").DataTable({
         ordering: false,
         info: false,

@@ -7,6 +7,7 @@ use App\Models\QuoteType;
 use Illuminate\Http\Request;
 use DataTables;
 use Auth;
+use Config;
 use App\Enums\quoteTypeCode;
 use App\Services\CheckAmlService;
 use App\Services\QuoteStatusService;
@@ -370,6 +371,7 @@ class AMLController extends Controller
     public function sanctionListHistory(Request $request) {
         $data = [];
         $data = SanctionListDownloads::select('id', 'file_name', 'file_path', 'source', 'total_records', 'created_at', 'updated_at')->orderBy('created_at','desc')->get();
+        $url = env('AZURE_RYU_STORAGE_URL').'aml-uploads';
 
         if($request->ajax()) {
             return DataTables::of($data)
@@ -380,7 +382,7 @@ class AMLController extends Controller
                 ->rawColumns(['action'])
                 ->make(true);
         }
-        return view('aml.history', compact('data'));
+        return view('aml.history', compact('data', 'url'));
     }
 
     public function uaeSanctionListUpload(Request $request) {
