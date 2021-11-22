@@ -40,13 +40,13 @@ class LifeQuoteService extends BaseService
                         ,lqr.nationality_id
                         ,n.TEXT AS nationality_id_text
                     FROM life_quote_request lqr
-                    INNER JOIN currency_type ct ON ct.id = lqr.sum_insured_currency_id
-                    INNER JOIN marital_status ms ON ms.id = lqr.marital_status_id
-                    INNER JOIN life_insurance_purpose lip ON lip.id = lqr.purpose_of_insurance_id
-                    INNER JOIN life_children lc ON lc.id = lqr.children_id
-                    INNER JOIN life_insurance_tenure lit ON lit.id = lqr.tenure_of_insurance_id
-                    INNER JOIN life_number_of_year liy ON liy.id = lqr.number_of_years_id
-                    INNER JOIN nationality n ON n.id = lqr.nationality_id";
+                    LEFT OUTER JOIN currency_type ct ON ct.id = lqr.sum_insured_currency_id
+                    LEFT OUTER JOIN marital_status ms ON ms.id = lqr.marital_status_id
+                    LEFT OUTER JOIN life_insurance_purpose lip ON lip.id = lqr.purpose_of_insurance_id
+                    LEFT OUTER JOIN life_children lc ON lc.id = lqr.children_id
+                    LEFT OUTER JOIN life_insurance_tenure lit ON lit.id = lqr.tenure_of_insurance_id
+                    LEFT OUTER JOIN life_number_of_year liy ON liy.id = lqr.number_of_years_id
+                    LEFT OUTER JOIN nationality n ON n.id = lqr.nationality_id";
     }
     public function saveLifeQuote(Request $request)
     {

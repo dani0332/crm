@@ -31,9 +31,9 @@ class TravelQuoteService extends BaseService
                         ,tqr.region_cover_for_id
                         ,r.TEXT AS region_cover_for_id_text
                     FROM travel_quote_request tqr
-                    INNER JOIN travel_cover_for tcf ON tcf.id = tqr.travel_cover_for_id
-                    INNER JOIN nationality n ON n.id = tqr.nationality_id
-                    INNER JOIN region r ON r.id = tqr.region_cover_for_id";
+                    LEFT OUTER JOIN travel_cover_for tcf ON tcf.id = tqr.travel_cover_for_id
+                    LEFT OUTER JOIN nationality n ON n.id = tqr.nationality_id
+                    LEFT OUTER JOIN region r ON r.id = tqr.region_cover_for_id";
     }
 
     public function saveTravelQuote(Request $request)
