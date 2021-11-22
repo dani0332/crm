@@ -29,5 +29,5 @@ return [
     'KEN_PLANS_API_TIMEOUT' => env('KEN_PLANS_API_TIMEOUT'),
     'MAIL_FROM_ADDRESS_AML' => env('MAIL_FROM_ADDRESS_AML'),
     'MAIL_FROM_NAME_AML' => env('MAIL_FROM_NAME_AML'),
-    'MAIL_NOTIFICATION_FTC' => 'imcrm@alert.insurancemarket.ae'
+    'MAIL_NOTIFICATION_FTC' => env('MAIL_FROM_ADDRESS'),
 ];
