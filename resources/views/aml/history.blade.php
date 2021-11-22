@@ -54,21 +54,6 @@
                         </tr>
                       </thead>
                       <tbody>
-                        @foreach($data as $key => $amlHistory)
-                        <tr>
-                          <td>{{ $amlHistory->id }}</td>
-                          <td>
-                            <a href="{{ \Config::get('constants.azure_ryu_storage_url').'aml-uae'.$amlHistory->file_name }}" target="_blank">
-                              {{ $amlHistory->file_name }}
-                            </a>
-                          </td>
-                          <td>{{ $amlHistory->file_path }}</td>
-                          <td>{{ $amlHistory->source }}</td>
-                          <td>{{ $amlHistory->total_records }}</td>
-                          <td>{{ $amlHistory->created_at }}</td>
-                          <td>{{ $amlHistory->updated_at }}</td>
-                        </tr>
-                        @endforeach
                       </tbody>
                     </table>
             </div>
