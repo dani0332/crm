@@ -81,7 +81,7 @@ Route::middleware(['auth'])->get('/home', function () {
 
 
 Route::group(['middleware' =>  ['auth']], function () {
-    Route::resource('myleads', MyLeadsController::class)->middleware('CheckRole:MANAGER,HEALTH_ADVISOR,BUSINESS_ADVISOR,TRAVEL_ADVISOR,LIFE_ADIVSOR,HOME_ADVISOR,CAR_ADVISOR');
+    Route::resource('myleads', MyLeadsController::class)->middleware('CheckRole:ADMIN,MANAGER,HEALTH_ADVISOR,BUSINESS_ADVISOR,TRAVEL_ADVISOR,LIFE_ADIVSOR,HOME_ADVISOR,CAR_ADVISOR');
     Route::resource('leadsearch', LeadSearchController::class)->names([
         'index' => 'leadsearch.index',
         'create' => 'leadsearch.create',
@@ -90,7 +90,7 @@ Route::group(['middleware' =>  ['auth']], function () {
         'edit' => 'leadsearch.edit',
         'update' => 'leadsearch.update',
         'destroy' => 'leadsearch.destroy',
-    ]);
+    ])->middleware('CheckRole:ADMIN,MANAGER,HEALTH_ADVISOR,BUSINESS_ADVISOR,TRAVEL_ADVISOR,LIFE_ADIVSOR,HOME_ADVISOR,CAR_ADVISOR');
     Route::resource('leadassignment', LeadAssignmentController::class)->names([
         'index' => 'leadassignment.index',
         'create' => 'leadassignment.create',
