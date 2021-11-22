@@ -7,7 +7,6 @@ use App\Models\QuoteType;
 use Illuminate\Http\Request;
 use DataTables;
 use Auth;
-use Config;
 use App\Enums\quoteTypeCode;
 use App\Services\CheckAmlService;
 use App\Services\QuoteStatusService;
