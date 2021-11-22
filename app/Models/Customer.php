@@ -12,7 +12,7 @@ class Customer extends Model implements AuditableContract
 {
     use HasFactory, Auditable;
     protected $table = 'customer';
-    protected $guarded = [];  
+    protected $guarded = [];
 
     public function nationality()
     {
@@ -22,6 +22,36 @@ class Customer extends Model implements AuditableContract
     public function Rewards()
     {
         return $this->belongsToMany(Reward::class, 'reward_customer_viewed', 'reward_id', 'customer_id');
+    }
+
+    public function carQuotes()
+    {
+        return $this->hasMany(CarQuote::class, 'customer_id', 'id');
+    }
+    public function bikeQuotes()
+    {
+        return $this->hasMany(BikeQuote::class, 'customer_id', 'id');
+    }
+    public function businessQuotes()
+    {
+        return $this->hasMany(BusinessQuote::class, 'customer_id', 'id');
+    }
+
+    public function travelQuotes()
+    {
+        return $this->hasMany(TravelQuote::class, 'customer_id', 'id');
+    }
+    public function lifeQuotes()
+    {
+        return $this->hasMany(LifeQuote::class, 'customer_id', 'id');
+    }
+    public function homeQuotes()
+    {
+        return $this->hasMany(HomeQuote::class, 'customer_id', 'id');
+    }
+    public function healthQuotes()
+    {
+        return $this->hasMany(HealthQuote::class, 'customer_id', 'id');
     }
 
     public function getCreatedAtAttribute($table)

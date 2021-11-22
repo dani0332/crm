@@ -8,11 +8,12 @@ use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 use Config;
 
-class BikeQuote extends Model implements AuditableContract
+class RewardSlider extends Model implements AuditableContract
 {
     use HasFactory, Auditable;
-    protected $table = 'bike_quote_request';
-    protected $guarded = [];
+
+    protected $table = 'myrewards_slider';
+    protected $fillable = ['image', 'link', 'sort_order', 'is_active', 'start_datetime', 'end_datetime'];
 
     public function getCreatedAtAttribute($table)
     {
@@ -23,13 +24,5 @@ class BikeQuote extends Model implements AuditableContract
     {
         $date_time_format = Config::get('constants.datetime_format');
         return $this->asDateTime($table)->timezone(config('app.timezone'))->format($date_time_format);
-    }
-    public function quoteStatus()
-    {
-        return $this->hasOne(QuoteStatus::class, 'id', 'quote_status_id');
-    }
-    public function bikeQuoteRequestDetail()
-    {
-        return $this->hasOne(BikeQuoteRequestDetail::class, 'bike_quote_request_id', 'id');
     }
 }

@@ -85,7 +85,7 @@
                         <div class="alert alert-danger">{{ session()->get('message') }}</div>
                     @endif
                     <form id="demo-form2" method='post'
-                        action="{{ route(strtolower($model->modelType).'.update', $record[0]->id) }}"
+                        action="{{ route(strtolower($model->modelType).'.update', $record[0]->uuid) }}"
                         enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left"
                         autocomplete="off">
                         {{ csrf_field() }}
@@ -116,6 +116,7 @@
                                                 type={{ explode("|", $value)[1]  }}
                                                 @endif id={{$property}}
                                             name={{$property}}
+                                            @if(Auth::user()->hasRole(strtoupper($model->modelType).'_ADVISOR') && ($property == 'email' || $property == 'mobile_no')) disabled="disabled" @endif
                                             value="{{ old($property, $record[0]->$property) }}"
                                         class="form-control">
                                         @if ($errors->has($property))

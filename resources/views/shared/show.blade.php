@@ -62,7 +62,7 @@
                         <div class="col-auto mr-auto"></div>
                         <div class="col-auto">
                             @if (Auth::user()->hasRole('ADMIN') || Auth::user()->hasRole($model->modelType.'_MANAGER') || Auth::user()->hasRole($model->modelType.'_DEPUTY') ||Auth::user()->hasRole($model->modelType.'_ADVISOR'))
-                            <a id="texta" href="{{ url('quotes/'.strtolower($model->modelType).'/'.$record[0]->id.'/edit') }}" class='btn btn-warning btn-sm'>Edit</a>
+                            <a id="texta" href="{{ url('quotes/'.strtolower($model->modelType).'/'.$record[0]->uuid.'/edit') }}" class='btn btn-warning btn-sm'>Edit</a>
                             @endif
                         </div>
                     </div>
@@ -132,7 +132,7 @@
                                             <td>{{ $quotePlan->repairType }}</td>
                                             <td>{{ $quotePlan->actualPremium }}</td>
                                             <td>{{ $quotePlan->actualPremium + $quotePlan->vatPremium }}</td>
-                                            <td><a href="#" testurl="{{ $record[0]->id }}/plan_details/{{ $quotePlan->id }}" data-toggle="modal" data-target="#quotePlanModal" class="quotePlanModalPopup">View</a></td>
+                                            <td><a href="#" planDetailUrl="{{ $record[0]->uuid }}/plan_details/{{ $quotePlan->id }}" data-toggle="modal" data-target="#quotePlanModal" class="quotePlanModalPopup">View</a></td>
                                         </tr>
                                     @endforeach
                                 </tbody>

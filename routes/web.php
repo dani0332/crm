@@ -36,6 +36,7 @@ use App\Http\Controllers\InsuranceCompanyController;
 use App\Http\Controllers\HandlerController;
 use App\Http\Controllers\LeadAssignmentController;
 use App\Http\Controllers\LeadSearchController;
+use App\Http\Controllers\MyLeadsController;
 use App\Http\Controllers\ReasonController;
 use App\Http\Controllers\StatusController;
 use App\Http\Controllers\PaymentModeController;
@@ -49,6 +50,7 @@ use App\Http\Controllers\TmLeadStatusController;
 use App\Http\Controllers\TmLeadController;
 use App\Http\Controllers\TmUploadLeadController;
 use App\Http\Controllers\RenewalsUploadController;
+use App\Http\Controllers\RewardSliderController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -79,6 +81,7 @@ Route::middleware(['auth'])->get('/home', function () {
 
 
 Route::group(['middleware' =>  ['auth']], function () {
+    Route::resource('myleads', MyLeadsController::class)->middleware('CheckRole:ADMIN,MANAGER,HEALTH_ADVISOR,BUSINESS_ADVISOR,TRAVEL_ADVISOR,LIFE_ADIVSOR,HOME_ADVISOR,CAR_ADVISOR');
     Route::resource('leadsearch', LeadSearchController::class)->names([
         'index' => 'leadsearch.index',
         'create' => 'leadsearch.create',
@@ -87,7 +90,7 @@ Route::group(['middleware' =>  ['auth']], function () {
         'edit' => 'leadsearch.edit',
         'update' => 'leadsearch.update',
         'destroy' => 'leadsearch.destroy',
-    ]);
+    ])->middleware('CheckRole:ADMIN,MANAGER,HEALTH_ADVISOR,BUSINESS_ADVISOR,TRAVEL_ADVISOR,LIFE_ADIVSOR,HOME_ADVISOR,CAR_ADVISOR');
     Route::resource('leadassignment', LeadAssignmentController::class)->names([
         'index' => 'leadassignment.index',
         'create' => 'leadassignment.create',
@@ -118,6 +121,7 @@ Route::group(['middleware' =>  ['auth']], function () {
         Route::resource('reward-categories', RewardCategoryController::class);
         Route::resource('reward-tags', RewardTagController::class);
         Route::resource('reward.reward-translation', RewardTranslationController::class);
+        Route::resource('reward-sliders', RewardSliderController::class)->middleware('permission:reward-sliders-list|reward-sliders-create|reward-sliders-edit|reward-sliders-delete');
     });
 
     Route::group(['prefix' => 'admin'], function () {

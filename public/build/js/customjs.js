@@ -1519,18 +1519,80 @@ $(document).ready(function () {
         ]
     });
 
-    // Car Quote Plan Modal Popup
-    $('.quotePlanModalPopup').on('click', function (e) {
-        e.preventDefault();
-        $('.quote-plan-modal-body').load($(this).attr("testurl"), function () {
-            $('#quotePlanModal').modal({ show: true });
-        });
+    $('.rewardsliders-data-table').DataTable({
+        ordering: false,
+        info: false,
+        searching: false,
+        bLengthChange: false,
+        serverSide: true,
+        ajax: config.routes.reward_sliders_datatable_route,
+        columns: [{
+                data: 'id',
+                name: 'id',
+                render: function(data, type, row) {
+                    return "<a href='" + config.routes.reward_sliders_datatable_route + '/' + row.id + "'>" + row.id + "</a>"
+                }
+            },
+            {
+                data: "image",
+                name: "image",
+                render: function(data, type, row, meta) {
+                    var imgsrc = config.image_path_rewards_slider + data;
+                    return (
+                        '<img class="img-responsive" src="' + imgsrc + '" alt="image" height="40px" width="40px">'
+                    );
+                },
+            },
+            { data: 'link', name: 'link' },
+            { data: 'start_datetime', name: 'start_datetime' },
+            { data: 'end_datetime', name: 'end_datetime' },
+            { data: 'sort_order', name: 'sort_order' },
+            { data: 'is_active', name: 'is_active' },
+            { data: 'created_at', name: 'created_at' },
+            { data: 'updated_at', name: 'updated_at' },
+        ]
     });
 
-    $("#quotePlansGenerateButton").click(function() {
-        var selectquoteUuId = $('#selectquoteUuId').val();
-        var url = "https://ecom-ma.alfred.ae/car-insurance/view/quote/"+selectquoteUuId;
-        window.open(url, '_blank');
+    var rewardSliderEditStartDateTime = $('#rewardSliderEditStartDateTime').val();
+
+    if (rewardSliderEditStartDateTime != "" && typeof rewardSliderEditStartDateTime !== "undefined") {
+        minRewardSliderStartDateTime = rewardSliderEditStartDateTime;
+    } else {
+        minRewardSliderStartDateTime = new Date();
+    }
+
+    $("#rewards_slider_start_end #start_datetime").daterangepicker({ // Rewards Slider start date & time
+        timePicker: true,
+        singleDatePicker: true,
+        timePicker24Hour: true,
+        minDate: minRewardSliderStartDateTime,
+        locale: {
+            format: 'YYYY-MM-DD HH:mm:ss'
+        }
+    });
+
+    var rewardSliderEditEndDateTime = $('#rewards_slider_start_end #rewardSliderEditEndDateTime').val();
+    var rsdt = new Date();
+    var rewardSliderEditCurrentDateTime = rsdt.getFullYear() + "-" + ("0" + (rsdt.getMonth() + 1)).slice(-2) + "-" + ("0" + rsdt.getDate()).slice(-2) +
+        " " + ("0" + rsdt.getHours()).slice(-2) + ":" + ("0" + rsdt.getMinutes()).slice(-2) + ":" + ("0" + rsdt.getSeconds()).slice(-2);
+
+    console.log("rewardSliderEditCurrentDateTime: ",rewardSliderEditCurrentDateTime);
+    console.log("rewardSliderEditEndDateTime: ",rewardSliderEditEndDateTime);
+
+    if (rewardSliderEditEndDateTime != "" && rewardSliderEditEndDateTime < rewardSliderEditCurrentDateTime) {
+        minRewardSliderEndDateTime = rewardSliderEditEndDateTime;
+    } else {
+        minRewardSliderEndDateTime = new Date();
+    }
+
+    $("#rewards_slider_start_end #end_datetime").daterangepicker({ // Rewards Slider end date & time
+        timePicker: true,
+        singleDatePicker: true,
+        timePicker24Hour: true,
+        minDate: minRewardSliderEndDateTime,
+        locale: {
+            format: 'YYYY-MM-DD HH:mm:ss'
+        }
     });
 
     //select/unselect all checkboxes if this selected
@@ -1546,6 +1608,19 @@ $(document).ready(function () {
                 $(this).prop("checked", false);
             });
         }
+    });
+
+    $('.quotePlanModalPopup').on('click', function (e) {
+        e.preventDefault();
+        $('.quote-plan-modal-body').load($(this).attr("planDetailUrl"), function () {
+            $('#quotePlanModal').modal({ show: true });
+        });
+    });
+
+    $("#quotePlansGenerateButton").click(function() {
+        var selectquoteUuId = $('#selectquoteUuId').val();
+        var url = "https://ecom-ma.alfred.ae/car-insurance/view/quote/"+selectquoteUuId;
+        window.open(url, '_blank');
     });
 
     $(".auditablebtn").click(function () {
@@ -1605,23 +1680,6 @@ $(document).ready(function () {
             { data: "total_records", name: "total_records" },
             { data: "good", name: "good" },
             { data: "cannot_upload", name: "cannot_upload" },
-            { data: "created_at", name: "created_at" },
-            { data: "updated_at", name: "updated_at" },
-        ],
-    });
-
-    var sanctionListDownloads = $(".sanction-list-downloads-table").DataTable({
-        ordering: false,
-        info: false,
-        searching: false,
-        bLengthChange: false,
-        ajax: config.routes.sanction_list_downloads_datatable_route,
-        columns: [
-            { data: "id", name: "id" },
-            { data: "file_name", name: "file_name" },
-            { data: "file_path", name: "file_path" },
-            { data: "source", name: "source" },
-            { data: "total_records", name: "total_records" },
             { data: "created_at", name: "created_at" },
             { data: "updated_at", name: "updated_at" },
         ],

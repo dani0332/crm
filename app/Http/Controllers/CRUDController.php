@@ -135,8 +135,14 @@ class CRUDController extends Controller
             }
         }
         $this->validate($request, $validateArray);
-        $this->crudService->saveModelByType($modelType, $request);
-        return redirect()->back()->with('success', $modelType . ' has been stored');
+        $recordUUID = $this->crudService->saveModelByType($modelType, $request);
+        if(str_contains($recordUUID, 'Error')) {
+            return Redirect::back()->with('message', $modelType . ' '. explode(':', $recordUUID)[1])->withInput();
+        }
+        else{
+            return redirect('/quotes/' . strtolower($modelType) . '/' . $recordUUID)->with('success', $modelType . ' has been stored');
+        }
+
     }
 
     /**
@@ -220,9 +226,11 @@ class CRUDController extends Controller
         $modelPropertiesList = json_decode($request->all()['model'], true);
         $validateArray = [];
         foreach ($modelPropertiesList as $property => $value) {
-            if (strpos($value, 'required')) {
+            if (strpos($value, 'required') && ($property !== "email" && $property !== "mobile_no"))
+            {
                 $validateArray[$property] = 'required';
             }
+
         }
         $this->validate($request, $validateArray);
         $this->crudService->updateModelByType(json_decode($request->modelType, true), $request, $id);
