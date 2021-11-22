@@ -32,7 +32,7 @@ class HomeQuoteService extends BaseService
                 ,hat.TEXT AS ilivein_accommodation_type_id_text
                 ,hqr.iam_possesion_type_id
                 ,hpt.TEXT AS iam_possesion_type_id_text
-            FROM central_afia.home_quote_request hqr
+            FROM home_quote_request hqr
             INNER JOIN home_accommodation_type hat ON hat.id = hqr.ilivein_accommodation_type_id
             INNER JOIN home_possession_type hpt ON hpt.id = hqr.iam_possesion_type_id";
     }

@@ -30,7 +30,7 @@ class TravelQuoteService extends BaseService
                         ,n.TEXT AS nationality_id_text
                         ,tqr.region_cover_for_id
                         ,r.TEXT AS region_cover_for_id_text
-                    FROM central_afia.travel_quote_request tqr
+                    FROM travel_quote_request tqr
                     INNER JOIN travel_cover_for tcf ON tcf.id = tqr.travel_cover_for_id
                     INNER JOIN nationality n ON n.id = tqr.nationality_id
                     INNER JOIN region r ON r.id = tqr.region_cover_for_id";

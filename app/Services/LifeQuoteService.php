@@ -39,7 +39,7 @@ class LifeQuoteService extends BaseService
                         ,liy.TEXT AS number_of_years_id_text
                         ,lqr.nationality_id
                         ,n.TEXT AS nationality_id_text
-                    FROM central_afia.life_quote_request lqr
+                    FROM life_quote_request lqr
                     INNER JOIN currency_type ct ON ct.id = lqr.sum_insured_currency_id
                     INNER JOIN marital_status ms ON ms.id = lqr.marital_status_id
                     INNER JOIN life_insurance_purpose lip ON lip.id = lqr.purpose_of_insurance_id

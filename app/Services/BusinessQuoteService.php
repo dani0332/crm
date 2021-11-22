@@ -27,7 +27,7 @@ class BusinessQuoteService extends BaseService
                             ,bti.TEXT AS business_type_of_insurance_id_text
                             ,bqr.advisor_id
                             ,u.name as advisor_id_text
-                        FROM central_afia.business_quote_request bqr
+                        FROM business_quote_request bqr
                         LEFT OUTER JOIN business_type_of_insurance bti ON bti.id = bqr.business_type_of_insurance_id
                         LEFT OUTER JOIN users u ON u.id = bqr.advisor_id";
     }
