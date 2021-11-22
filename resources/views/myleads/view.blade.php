@@ -24,7 +24,7 @@
                         data: 'id',
                         name: 'id',
                         render: function(data, type, row) {
-                            return "<a href='" + config.routes.myleadsDataTable + '/' + row.uuid + "&"+ $("#myLeadsType").val() +"'>" + row.id + "</a>"
+                            return "<a href='/quotes/" + $("#myLeadsType").val().toLowerCase() + '/' + row.uuid + "'>" + row.id + "</a>"
                         }
                     },
                     {
@@ -125,7 +125,7 @@
                         </thead>
                         <tbody>
                             <tr class="odd">
-                                <td valign="top" colspan="6" class="dataTables_empty">No data available in table</td>
+                                <td valign="top" colspan="7" class="dataTables_empty">No data available in table</td>
                             </tr>
                         </tbody>
                     </table>

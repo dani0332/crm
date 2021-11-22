@@ -1610,6 +1610,19 @@ $(document).ready(function () {
         }
     });
 
+    $('.quotePlanModalPopup').on('click', function (e) {
+        e.preventDefault();
+        $('.quote-plan-modal-body').load($(this).attr("planDetailUrl"), function () {
+            $('#quotePlanModal').modal({ show: true });
+        });
+    });
+
+    $("#quotePlansGenerateButton").click(function() {
+        var selectquoteUuId = $('#selectquoteUuId').val();
+        var url = "https://ecom-ma.alfred.ae/car-insurance/view/quote/"+selectquoteUuId;
+        window.open(url, '_blank');
+    });
+
     $(".auditablebtn").click(function () {
         var auditableId = $(this).attr("data-id");
         var auditableType = $(this).attr("data-model");

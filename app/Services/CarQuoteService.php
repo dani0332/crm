@@ -17,7 +17,9 @@ class CarQuoteService extends BaseService
     public function __construct()
     {
         $this->query = "
-            SELECT cqr.id
+            SELECT
+                cqr.uuid
+                ,cqr.id
                 ,cqr.first_name
                 ,cqr.last_name
                 ,cqr.email
@@ -107,7 +109,7 @@ class CarQuoteService extends BaseService
 
     public function getEntityPlain($id)
     {
-        return CarQuote::find($id);
+        return CarQuote::where('uuid', $id);
     }
 
     public function fillModelProperties()
@@ -279,7 +281,7 @@ class CarQuoteService extends BaseService
 
     public function getQuotePlans($id)
     {
-        $quoteUuId = CarQuote::where('id', '=', $id)->value('uuid');
+        $quoteUuId = CarQuote::where('uuid', '=', $id)->value('uuid');
 
         $plansApiEndPoint = Config::get('constants.KEN_PLANS_API_ENDPOINT');
         $plansApiToken = Config::get('constants.KEN_PLANS_API_TOKEN');

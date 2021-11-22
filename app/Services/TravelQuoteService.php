@@ -30,10 +30,10 @@ class TravelQuoteService extends BaseService
                         ,n.TEXT AS nationality_id_text
                         ,tqr.region_cover_for_id
                         ,r.TEXT AS region_cover_for_id_text
-                    FROM central_afia.travel_quote_request tqr
-                    INNER JOIN travel_cover_for tcf ON tcf.id = tqr.travel_cover_for_id
-                    INNER JOIN nationality n ON n.id = tqr.nationality_id
-                    INNER JOIN region r ON r.id = tqr.region_cover_for_id";
+                    FROM travel_quote_request tqr
+                    LEFT OUTER JOIN travel_cover_for tcf ON tcf.id = tqr.travel_cover_for_id
+                    LEFT OUTER JOIN nationality n ON n.id = tqr.nationality_id
+                    LEFT OUTER JOIN region r ON r.id = tqr.region_cover_for_id";
     }
 
     public function saveTravelQuote(Request $request)
@@ -162,22 +162,22 @@ class TravelQuoteService extends BaseService
 
     public function updateTravelQuote(Request $request, $id)
     {
-
-        TravelQuote::where('uuid',$id)->update(
-            [
-                'first_name'=>$request->first_name,
-                'last_name'=>$request->last_name,
-                'email'=>$request->email,
-                'details'=>$request->details,
-                'mobile_no'=>$request->mobile_no,
-                'travel_cover_for_id'=>$request->travel_cover_for_id,
-                'nationality_id'=>$request->nationality_id,
-                'days_cover_for'=>$request->days_cover_for,
-                'destination'=>$request->destination,
-                'region_cover_for_id'=>$request->region_cover_for_id,
-                'details'=>$request->details,
-            ]
-        );
+        $updateArray = [
+            'first_name'=>$request->first_name,
+            'last_name'=>$request->last_name,
+            'details'=>$request->details,
+            'travel_cover_for_id'=>$request->travel_cover_for_id,
+            'nationality_id'=>$request->nationality_id,
+            'days_cover_for'=>$request->days_cover_for,
+            'destination'=>$request->destination,
+            'region_cover_for_id'=>$request->region_cover_for_id,
+            'details'=>$request->details,
+        ];
+        if(!Auth::user()->hasRole('TRAVEL_ADVISOR')){
+            $updateArray['email'] = $request->email;
+            $updateArray['mobile_no'] = $request->mobile_no;
+        }
+        TravelQuote::where('uuid',$id)->update($updateArray);
         if (isset($request->return_to_view))
             return redirect("quote/travel/" . $id)->with('success', 'Travel Quote has been updated');
     }

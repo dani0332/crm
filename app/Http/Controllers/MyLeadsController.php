@@ -110,26 +110,30 @@ class MyLeadsController extends Controller
 
     private function getMyLeadsByType($leadType)
     {
-        $quotes = Customer::with([
+        $customersWithRelation = Customer::with([
             $leadType.'Quotes' => function($q) {
                 $q->where('advisor_id', '=', Auth::user()->id);
             },
             $leadType.'Quotes.quoteStatus',
             $leadType.'Quotes.'.$leadType.'QuoteRequestDetail',
-            $leadType.'Quotes.'.$leadType.'QuoteRequestDetail.assignedBy']);
+            $leadType.'Quotes.'.$leadType.'QuoteRequestDetail.assignedBy'])->get();
         $resultSet = collect([]);
-        foreach ($quotes->{$leadType.'Quotes'} as $item) {
-            $dataObject = [
-                'id' => $item->id,
-                'uuid' => $item->uuid,
-                'clientName' => $item->first_name. ' ' .$item->last_name,
-                'leadStatus' => $item->quoteStatus != null ? $item->quoteStatus->first()->text : '',
-                'createdAt' => $item->created_at,
-                'assignedDate' => $item->{$leadType.'QuoteRequestDetail'}->assignedBy != null ? $item->{$leadType.'QuoteRequestDetail'}->advisor_assigned_date : '',
-                'assignedBy' => $item->{$leadType.'QuoteRequestDetail'}->assignedBy != null ? $item->{$leadType.'QuoteRequestDetail'}->assignedBy->name : '',
-                'leadSource' => $item->source,
-            ];
-            $resultSet->push($dataObject);
+        foreach ($customersWithRelation as $customerWithRelation) {
+            if($customerWithRelation->{$leadType.'Quotes'}->count() > 0){
+                foreach ($customerWithRelation->{$leadType.'Quotes'} as $item) {
+                    $dataObject = [
+                        'id' => $item->id,
+                        'uuid' => $item->uuid,
+                        'clientName' => $item->first_name. ' ' .$item->last_name,
+                        'leadStatus' => $item->quoteStatus != null ? $item->quoteStatus->first()->text : '',
+                        'createdAt' => date($item->created_at) ,
+                        'assignedDate' => $item->{$leadType.'QuoteRequestDetail'} != null && $item->{$leadType.'QuoteRequestDetail'}->assignedBy != null ? $item->{$leadType.'QuoteRequestDetail'}->advisor_assigned_date : '',
+                        'assignedBy' => $item->{$leadType.'QuoteRequestDetail'} != null && $item->{$leadType.'QuoteRequestDetail'}->assignedBy != null ? $item->{$leadType.'QuoteRequestDetail'}->assignedBy->name : '',
+                        'leadSource' => $item->source,
+                    ];
+                    $resultSet->push($dataObject);
+                }
+            }
         }
         return $resultSet;
     }
