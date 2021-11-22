@@ -81,6 +81,9 @@
                     @if (session()->has('success'))
                         <div class="alert alert-success">{{ session()->get('success') }}</div>
                     @endif
+                    @if (session()->has('message'))
+                        <div class="alert alert-danger">{{ session()->get('message') }}</div>
+                    @endif
                     <form id="demo-form2" autocomplete="off" action="{{ route('saveQuote') }}" method='post' enctype="multipart/form-data"
                         data-parsley-validate class="form-horizontal form-label-left" autocomplete="off">
                         {{ csrf_field() }}

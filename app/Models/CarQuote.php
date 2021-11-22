@@ -86,6 +86,11 @@ class CarQuote extends BaseModel
         return $this->hasOne(CarMake::class, 'id', 'car_make_id')->select(['id', 'code','text']);;
     }
 
+    public function carQuoteRequestDetail()
+    {
+        return $this->hasOne(CarQuoteRequestDetail::class, 'car_quote_request_id', 'id');
+    }
+
     public function car_model_id()
     {
         return $this->hasOne(CarModel::class, 'id', 'car_model_id')->select(['id', 'code','text']);;

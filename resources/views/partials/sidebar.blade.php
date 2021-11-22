@@ -22,6 +22,10 @@
                                 @hasrole('MANAGER')
                                     <li><a href="{{ url('/leadassignment') }}">Lead Assignment</a></li>
                                 @endhasrole
+
+                                @if (Auth::user()->hasAnyRole(['MANAGER','CAR_ADVISOR', 'BUSINESS_ADVISOR', 'HEALTH_ADVISOR','HOME_ADVISOR','LIFE_ADVISOR','TRAVEL_ADVISOR']))
+                                    <li><a href="{{ url('/myleads') }}">My Leads</a></li>
+                                @endif
                             </ul>
                     </ul>
                 @endcan

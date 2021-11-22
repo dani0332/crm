@@ -102,7 +102,7 @@ class CarQuoteService extends BaseService
 
     public function getEntity($id)
     {
-        return DB::select($this->query . ' where cqr.id = ' . $id);
+        return DB::select($this->query . ' where cqr.uuid = "' . $id . '"');
     }
 
     public function getEntityPlain($id)
