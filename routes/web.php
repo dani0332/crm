@@ -80,7 +80,7 @@ Route::middleware(['auth'])->get('/home', function () {
 
 
 Route::group(['middleware' =>  ['auth']], function () {
-    Route::resource('myleads', MyLeadsController::class)->middleware('CheckRole:MANAGER,HEALTH_ADVISOR,BUSINESS_ADVISOR,TRAVEL_ADVISOR,LIFE_ADIVSOR,HOME_ADVISOR,CAR_ADVISOR');
+    Route::resource('myleads', MyLeadsController::class);
     Route::resource('leadsearch', LeadSearchController::class)->names([
         'index' => 'leadsearch.index',
         'create' => 'leadsearch.create',
