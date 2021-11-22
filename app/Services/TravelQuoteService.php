@@ -16,6 +16,7 @@ class TravelQuoteService extends BaseService
     {
         $this->query = "
                         SELECT tqr.id
+                        ,tqr.uuid
                         ,tqr.days_cover_for
                         ,tqr.details
                         ,tqr.destination
@@ -37,20 +38,6 @@ class TravelQuoteService extends BaseService
 
     public function saveTravelQuote(Request $request)
     {
-        $travelQuote = new TravelQuote();
-        $travelQuote->first_name = $request->first_name;
-        $travelQuote->last_name = $request->last_name;
-        $travelQuote->email = $request->email;
-        $travelQuote->details = $request->details;
-        $travelQuote->mobile_no = $request->mobile_no;
-        $travelQuote->travel_cover_for_id = $request->travel_cover_for_id;
-        $travelQuote->nationality_id = $request->nationality_id;
-        $travelQuote->days_cover_for = $request->days_cover_for;
-        $travelQuote->destination = $request->destination;
-        $travelQuote->region_cover_for_id = $request->region_cover_for_id;
-        $travelQuote->details = $request->details;
-        $travelQuote->save();
-
         $dataArr = array(
             "firstName" => $request->first_name,
             "lastName" => $request->last_name,
@@ -71,16 +58,19 @@ class TravelQuoteService extends BaseService
 
     public function getLeads($CDBID, $email, $mobile_no, $lead_type)
     {
-        $isAdvisor = Auth::user()->hasRole(strtoupper($lead_type) . '_ADVISOR');
         $query = "SELECT hqr.id
+                            ,hqr.uuid
                             ,hqr.first_name
                             ,hqr.last_name
                             ,hqr.created_at
                             ,u.name AS advisor_name
                             ,'Travel' as lead_type
                             ,u.id as advisor_id
+                            ,qs.text as lead_status
                         FROM travel_quote_request hqr
-                        LEFT OUTER JOIN users u ON u.id = hqr.advisor_id";
+                        LEFT OUTER JOIN users u ON u.id = hqr.advisor_id
+                        LEFT OUTER JOIN quote_status qs ON qs.id = hqr.quote_status_id
+                        ORDER BY u.name";
         $count = 0;
         if (!empty($CDBID)) {
             $query .= ' where hqr.id = ' . $CDBID;
@@ -162,32 +152,34 @@ class TravelQuoteService extends BaseService
 
     public function getEntity($id)
     {
-        return DB::select($this->query . ' where tqr.id = ' . $id);
+        return DB::select($this->query . ' where tqr.uuid =  "' . $id.'"');
     }
 
     public function getEntityPlain($id)
     {
-        return TravelQuote::find($id);
+        return TravelQuote::where('uuid', $id);
     }
 
     public function updateTravelQuote(Request $request, $id)
     {
-        $travelQuote = TravelQuote::find($id);
-        $travelQuote->first_name = $request->first_name;
-        $travelQuote->last_name = $request->last_name;
-        $travelQuote->email = $request->email;
-        $travelQuote->details = $request->details;
-        $travelQuote->mobile_no = $request->mobile_no;
-        $travelQuote->travel_cover_for_id = $request->travel_cover_for_id;
-        $travelQuote->nationality_id = $request->nationality_id;
-        $travelQuote->days_cover_for = $request->days_cover_for;
-        $travelQuote->destination = $request->destination;
-        $travelQuote->region_cover_for_id = $request->region_cover_for_id;
-        $travelQuote->details = $request->details;
-        $travelQuote->save();
 
+        TravelQuote::where('uuid',$id)->update(
+            [
+                'first_name'=>$request->first_name,
+                'last_name'=>$request->last_name,
+                'email'=>$request->email,
+                'details'=>$request->details,
+                'mobile_no'=>$request->mobile_no,
+                'travel_cover_for_id'=>$request->travel_cover_for_id,
+                'nationality_id'=>$request->nationality_id,
+                'days_cover_for'=>$request->days_cover_for,
+                'destination'=>$request->destination,
+                'region_cover_for_id'=>$request->region_cover_for_id,
+                'details'=>$request->details,
+            ]
+        );
         if (isset($request->return_to_view))
-            return redirect("quote/travel/" . $travelQuote->id)->with('success', 'Travel Quote has been updated');
+            return redirect("quote/travel/" . $id)->with('success', 'Travel Quote has been updated');
     }
 
     public function fillModelProperties()

@@ -5,12 +5,14 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use App\Models\BaseModel;
 use App\Models\CarQuote;
+use App\Models\FtcDocument;
+use App\Models\QuoteStatus;
 use App\Models\CarQuoteEmailUniqueLink;
 use Auth;
 use App\Jobs\FTCMailServiceJob;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
-
+use LookUpModel;
 
 class FTCHistory extends BaseModel
 {
@@ -62,10 +64,10 @@ class FTCHistory extends BaseModel
             $carQuote = CarQuote::where(['id' => $request->input('car_quote_id', -1), 'advisor_id' => Auth::user()->id])->get()->first();
             if($carQuote) {
 
-                if($request->input('status', '') == 'Resubmit for Approval') {
+                if($request->input('status', '') == 'resubmitForApproval' || $request->input('status', '') == 'ftc_pending') {
 
                     $carQuote->pa_id = null;
-                    $carQuote->quote_status_id = 10; //FTC Resubmitted
+                    $carQuote->quote_status_id = LookUpModel::getLookModel('QuoteStatus', ['code', '=', $request->input('status')]);
                     $carQuote->save();
                 }
 
@@ -91,10 +93,18 @@ class FTCHistory extends BaseModel
 
                         $params = [
                             'to' => $carQuote->email,
-                            'subject' => 'Required Additional Document - CDB-ID:'.$carQuote->code,
+                            'subject' => $carQuote->first_name.' '.$carQuote->last_name. '`s Car Insurance',
                             'templateName' => 'ftc_mail',
                             'templateParams' => $templateParams
                         ];
+
+                        $attachment = FtcDocument::where(['car_quote_id' => $carQuote->id, 'document' => 9])->get();
+                        if(sizeof($attachment) > 0){
+                            $params['templateParams']['attachment'] = [];
+                            foreach ($attachment as $model) {
+                                $params['templateParams']['attachment'][] = $model->file_name;
+                            }
+                        }
                         dispatch(new FTCMailServiceJob($params));
                     }else{
                         return $this->APIController->respondData(["message" => "Something wrong"], 500);

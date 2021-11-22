@@ -10,7 +10,32 @@ class CarMake extends BaseModel
 {
     use HasFactory;
     protected $table = 'car_make';
+
+    public $access = [
+
+        'write' => ['advisor'],
+        'update' => ['advisor'],
+        'delete' => ['advisor'],
+        'access' => [
+            "pa" => [ 'code', 'text'],
+            "advisor" => [ 'code', 'text'],
+            "admin" => [ 'code', 'text' ],
+            "invoicing" => [ 'code', 'text']
+
+        ],
+        "list" => [
+            "pa" => ['id','code', 'text' ],
+            "advisor" => [ 'id','code', 'text'],
+            "admin" => [ 'id','code', 'text'],
+            "invoicing" => [ 'code', 'text']
+        ]
+    ];
+
+    public function relations() {
+        return [];
+    }
+
     public function processGetDSL($filters) {
-        return self::processGetBaseDSL($filters, 'car_make', ['code', 'id', 'text', 'is_active']);
+        return self::processGetBaseDSL($filters, false);
     }
 }

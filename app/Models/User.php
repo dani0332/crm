@@ -80,8 +80,6 @@ class User extends Authenticatable implements AuditableContract
         return $this->asDateTime($table)->timezone(config('app.timezone'))->format($date_time_format);
     }
 
-
-
     public function getTeamUserIds()
     {
         $isManager = $this->hasRole('MANAGER');
@@ -117,6 +115,21 @@ class User extends Authenticatable implements AuditableContract
             )
                 ->get();
             return $users;
+        }
+
+        if(Auth::user()->hasRole('advisor')) {
+
+            $users =  User::select(['id', 'name'])->whereHas(
+                'roles', function($q) use($filters) {
+                    foreach($filters as $key => $value) {
+                        $q->where($key,$value);
+                    }
+                }
+            )
+            ->get();
+
+            return $users;
+
         }
 
 

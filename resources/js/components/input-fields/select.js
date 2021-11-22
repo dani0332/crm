@@ -26,8 +26,8 @@ export default function SelectField({ field, controller }) {
   }, [field, field?.value]);
 
   const redraw = field => {
-    console.log('---**********redraw-************----');
-    console.log(field);
+    // console.log('---**********redraw-************----');
+    // console.log(field);
 
     if (field?.formState === 'read' || field?.formState === 'edit') {
       let defaultValue = {};
@@ -46,8 +46,8 @@ export default function SelectField({ field, controller }) {
         }
       }
 
-      console.log(defaultValue);
-      console.log('---**********redraw-************----');
+      // console.log(defaultValue);
+      // console.log('---**********redraw-************----');
       setData({
         data: [],
         isDisabled: field.formState === 'read' ? true : false,
@@ -102,7 +102,7 @@ export default function SelectField({ field, controller }) {
           selectOp = field.transform(selectedOptions, true);
         else
           selectOp = {
-            value: selectedOptions,
+            value: { ...selectedOptions, text: selectedOptions.label },
             selected: selectedOptions?.label,
           };
         field.dispatch({
@@ -153,7 +153,19 @@ export default function SelectField({ field, controller }) {
 
     if (data.data.length < 1) {
       setData({ ...data, loading: true });
-      const url = `/form/${field.source}`;
+
+      let filter = '';
+      if (typeof field?.filter === 'object') {
+        let queryParamObj = { filter: JSON.stringify(field?.filter) };
+        const params = new URLSearchParams(queryParamObj);
+        filter = `/?${params.toString()}`;
+      } else if (typeof field?.filter === 'string') {
+        filter = `${field?.filter}`;
+      } else {
+        filter = ``;
+      }
+
+      const url = `/form/${field.source}${filter}`;
       dispatchPromise({
         dispatch: dispatch,
         options: {
@@ -190,11 +202,11 @@ export default function SelectField({ field, controller }) {
     value = options;
   }
 
-  console.log('---**********SelectAmjad-************----');
-  console.log(field);
-  console.log(value);
-  console.log(data);
-  console.log('---**********SelectAmjad-************----');
+  // console.log('---**********SelectRender-************----');
+  // console.log(field);
+  // console.log(value);
+  // console.log(data);
+  // console.log('---**********SelectRender-************----');
 
   return (
     <Select

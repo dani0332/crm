@@ -16,6 +16,7 @@ class BusinessQuoteService extends BaseService
     {
         $this->query = "
                             SELECT bqr.id
+                            ,bqr.uuid
                             ,bqr.first_name
                             ,bqr.last_name
                             ,bqr.email
@@ -33,21 +34,24 @@ class BusinessQuoteService extends BaseService
 
     public function getEntity($id)
     {
-        return DB::select($this->query . ' where bqr.id = ' . $id);
+        return DB::select($this->query . ' where bqr.uuid = "' . $id.'"');
     }
 
     public function getLeads($CDBID, $email, $mobile_no, $lead_type)
     {
-        $isAdvisor = Auth::user()->hasRole(strtoupper($lead_type) . '_ADVISOR');
         $query = "SELECT hqr.id
-                            ,hqr.first_name
-                            ,hqr.last_name
-                            ,hqr.created_at
-                            ,u.name AS advisor_name
-                            ,'Business' as lead_type
-                            ,u.id as advisor_id
-                        FROM business_quote_request hqr
-                        LEFT OUTER JOIN users u ON u.id = hqr.advisor_id";
+                        ,hqr.uuid
+                        ,hqr.first_name
+                        ,hqr.last_name
+                        ,hqr.created_at
+                        ,u.name AS advisor_name
+                        ,'Business' as lead_type
+                        ,u.id as advisor_id
+                        ,qs.text as lead_status
+                    FROM business_quote_request hqr
+                    LEFT OUTER JOIN users u ON u.id = hqr.advisor_id
+                    LEFT OUTER JOIN quote_status qs ON qs.id = hqr.quote_status_id
+                    ORDER BY u.name";
         $count = 0;
         if (!empty($CDBID)) {
             $query .= ' where hqr.id = ' . $CDBID;
@@ -66,7 +70,7 @@ class BusinessQuoteService extends BaseService
 
     public function getEntityPlain($id)
     {
-        return BusinessQuote::find($id);
+        return BusinessQuote::where('uuid', $id);
     }
 
     public function getLeadsForAssignment()
