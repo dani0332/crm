@@ -116,6 +116,7 @@
                                                 type={{ explode("|", $value)[1]  }}
                                                 @endif id={{$property}}
                                             name={{$property}}
+                                            @if(Auth::user()->hasRole(strtoupper($model->modelType).'_ADVISOR') && ($property == 'email' || $property == 'mobile_no')) disabled="disabled" @endif
                                             value="{{ old($property, $record[0]->$property) }}"
                                         class="form-control">
                                         @if ($errors->has($property))

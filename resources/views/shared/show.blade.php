@@ -132,7 +132,7 @@
                                             <td>{{ $quotePlan->repairType }}</td>
                                             <td>{{ $quotePlan->actualPremium }}</td>
                                             <td>{{ $quotePlan->actualPremium + $quotePlan->vatPremium }}</td>
-                                            <td><a href="#" testurl="{{ $record[0]->id }}/plan_details/{{ $quotePlan->id }}" data-toggle="modal" data-target="#quotePlanModal" class="quotePlanModalPopup">View</a></td>
+                                            <td><a href="#" testurl="{{ $record[0]->uuid }}/plan_details/{{ $quotePlan->id }}" data-toggle="modal" data-target="#quotePlanModal" class="quotePlanModalPopup">View</a></td>
                                         </tr>
                                     @endforeach
                                 </tbody>

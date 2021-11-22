@@ -226,9 +226,11 @@ class CRUDController extends Controller
         $modelPropertiesList = json_decode($request->all()['model'], true);
         $validateArray = [];
         foreach ($modelPropertiesList as $property => $value) {
-            if (strpos($value, 'required')) {
+            if (strpos($value, 'required') && ($property !== "email" && $property !== "mobile_no"))
+            {
                 $validateArray[$property] = 'required';
             }
+
         }
         $this->validate($request, $validateArray);
         $this->crudService->updateModelByType(json_decode($request->modelType, true), $request, $id);

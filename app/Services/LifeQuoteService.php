@@ -70,20 +70,6 @@ class LifeQuoteService extends BaseService
         );
         if(Auth::user()->hasRole("LIFE_ADVISOR")) $dataArr['advisorId'] = Auth::users()->id;
         return $this->sendCAPIRequest('/api/v1-save-home-quote', $dataArr);
-
-        $lifeQuote = new LifeQuote();
-        $lifeQuote->first_name = $request->first_name;
-        $lifeQuote->last_name = $request->last_name;
-        $lifeQuote->email = $request->email;
-        $lifeQuote->details = $request->details;
-        $lifeQuote->mobile_no = $request->mobile_no;
-        $lifeQuote->travel_cover_for_id = $request->travel_cover_for_id;
-        $lifeQuote->nationality_id = $request->nationality_id;
-        $lifeQuote->days_cover_for = $request->days_cover_for;
-        $lifeQuote->destination = $request->destination;
-        $lifeQuote->region_cover_for_id = $request->region_cover_for_id;
-        $lifeQuote->details = $request->details;
-        $lifeQuote->save();
     }
 
     public function getEntity($id)
@@ -147,16 +133,19 @@ class LifeQuoteService extends BaseService
 
     public function updateLifeQuote(Request $request, $id)
     {
-        $lifeQuote = LifeQuote::find($id);
-        $lifeQuote->first_name = $request->first_name;
-        $lifeQuote->last_name = $request->last_name;
-        $lifeQuote->email = $request->email;
-        $lifeQuote->details = $request->details;
-        $lifeQuote->mobile_no = $request->mobile_no;
-        $lifeQuote->dob = $request->dob;
-        $lifeQuote->gender = $request->gender == 'Male' ? 'M' : 'F';
-        $lifeQuote->is_smoker = $request->is_smoker == 'Yes' ? '1' : '0';
-        $lifeQuote->save();
+        $updateArray = [
+            'first_name'=>$request->first_name,
+            'last_name'=>$request->last_name,
+            'details'=>$request->details,
+            'dob'=>$request->dob,
+            'gender'=>$request->gender == 'Male' ? 'M' : 'F',
+            'is_smoker'=>$request->is_smoker == 'Yes' ? '1' : '0',
+        ];
+        if(!Auth::user()->hasRole('LIFE_ADVISOR')){
+            $updateArray['email'] = $request->email;
+            $updateArray['mobile_no'] = $request->mobile_no;
+        }
+        LifeQuote::where('uuid',$id)->update($updateArray);
 
         if (isset($request->return_to_view))
             return redirect("quote/life/" . $lifeQuote->id)->with('success', 'Life Quote has been updated');

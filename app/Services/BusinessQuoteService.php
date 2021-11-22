@@ -129,8 +129,10 @@ class BusinessQuoteService extends BaseService
         $businessQuote = BusinessQuote::find($id);
         $businessQuote->first_name = $request->first_name;
         $businessQuote->last_name = $request->last_name;
-        $businessQuote->email = $request->email;
-        $businessQuote->mobile_no = $request->mobile_no;
+        if(!Auth::user()->hasRole('BUSINESS_ADVISOR')){
+            $businessQuote->email = $request->email;
+            $businessQuote->mobile_no = $request->mobile_no;
+        }
         $businessQuote->company_name = $request->company_name;
         $businessQuote->brief_details = $request->brief_details;
         $businessQuote->business_type_of_insurance_id = $request->business_type_of_insurance_id;
