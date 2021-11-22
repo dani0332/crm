@@ -381,7 +381,7 @@ class AMLController extends Controller
                 ->rawColumns(['action'])
                 ->make(true);
         }
-        return view('aml.history');
+        return view('aml.history', compact('data'));
     }
 
     public function uaeSanctionListUpload(Request $request) {
