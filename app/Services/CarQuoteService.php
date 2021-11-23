@@ -7,8 +7,6 @@ use Illuminate\Http\Request;
 use Config;
 use DB;
 use Auth;
-use Exception;
-use GuzzleHttp\Psr7\Message;
 use GuzzleHttp\Exception\ClientException;
 
 class CarQuoteService extends BaseService
@@ -221,11 +219,7 @@ class CarQuoteService extends BaseService
                             $suffix = 'cqr';
                             break;
                     }
-                    if ($count == 0) {
-                        $this->query = $this->query . ' where ' . $suffix . '.' . $item . '=' . "'" . $request[$item] . "'";
-                    } else {
-                        $this->query = $this->query . ' and ' . $suffix . '.' . $item . '=' . "'" . $request[$item] . "'";
-                    }
+                    $this->query = $this->query . ($count == 0 ? ' where ' : ' and ') . $suffix . '.' . $item . '=' . "'" . $request[$item] . "'";
                     $count++;
                 }
             }
@@ -252,15 +246,15 @@ class CarQuoteService extends BaseService
             $count++;
         }
         if (!empty($email)) {
-            $query .= ' ' . $count == 0 ? ' where' . ' hqr.email = ' . $email : ' and' . ' hqr.email = ' . $email;
+            $query .= ($count == 0 ? ' where ' : ' and ') . ' hqr.email = ' . $email;
             $count++;
         }
         if (!empty($mobile_no)) {
-            $query .= ' ' . $count == 0 ? ' where' . ' hqr.email = ' . $mobile_no : ' and' . ' hqr.email = ' . $mobile_no;
+            $query .= ($count == 0 ? ' where ' : ' and '). ' hqr.mobile_no = ' . $mobile_no;
             $count++;
         }
         if ($isAdvisor) {
-            $query .= ' ' . $count == 0 ? ' where' . ' hqr.advisor_id = ' . Auth::user()->id : ' and' . ' hqr.advisor_id = ' . Auth::user()->id;
+            $query .= ($count == 0 ? ' where ' : ' and '). ' hqr.advisor_id = ' . Auth::user()->id;
             $count++;
         }
         return DB::select($query);

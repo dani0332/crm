@@ -94,7 +94,7 @@
                 columns: dataTableColumns,
                 buttons: [{
                     extend: 'excel',
-                    text: '<i class="fa fa-file-excel-o" style="color:green;" ></i><div style="font-weight:bold;">Export to Excel</div>',
+                    text: '<i class="fa fa-file-excel-o" style="color:green;" ></i><div style="font-weight:bold;">Export</div>',
                     title: model.modelType + ' Listing',
                     action: newexportaction
                 }]
@@ -197,7 +197,7 @@
                     <ul class="nav navbar-right panel_toolbox">
                         @if (Auth::user()->hasRole('ADMIN') || Auth::user()->hasRole($model->modelType.'_MANAGER') || Auth::user()->hasRole($model->modelType.'_DEPUTY') ||Auth::user()->hasRole($model->modelType.'_ADVISOR'))
                         <li><a href="{{ url('quotes/' . strtolower($model->modelType) . '/create') }}"
-                             class="btn btn-warning btn-sm">Create {{ $model->modelType }}</a></li>
+                             class="btn btn-warning btn-sm">Create Lead</a></li>
                         @endif
 
                     </ul>
@@ -267,7 +267,7 @@
                 <div class="col-md-12" style="margin-top: 25px;">
                     <div class="col">
                         <ul class="nav navbar-right panel_toolbox">
-                            <li><input type="submit" class="btn btn-warning btn-sm"></li>
+                            <li><input type="submit" value="Search" class="btn btn-warning btn-sm"></li>
                             <li><input type="reset" id="reset-btn-generic" class="btn btn-warning btn-sm"></li>
                         </ul>
                     </div>

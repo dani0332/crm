@@ -14,8 +14,7 @@ class TravelQuoteService extends BaseService
     protected $query;
     public function __construct()
     {
-        $this->query = "
-                        SELECT tqr.id
+        $this->query = "SELECT tqr.id
                         ,tqr.uuid
                         ,tqr.days_cover_for
                         ,tqr.details
@@ -77,11 +76,11 @@ class TravelQuoteService extends BaseService
             $count++;
         }
         if (!empty($email)) {
-            $query .= ' ' . $count == 0 ? ' where' . ' hqr.email = ' . $email : ' and' . ' hqr.email = ' . $email;
+            $query .= ($count == 0 ? ' where ' : ' and '). ' hqr.email = ' . $email;
             $count++;
         }
         if (!empty($mobile_no)) {
-            $query .= ' ' . $count == 0 ? ' where' . ' hqr.email = ' . $mobile_no : ' and' . ' hqr.email = ' . $mobile_no;
+            $query .= ($count == 0 ? ' where ' : ' and '). ' hqr.mobile_no = ' . $mobile_no;
             $count++;
         }
         return DB::select($query);

@@ -2,12 +2,8 @@
 
 namespace App\Services;
 use App\Models\Team;
-use App\Models\User;
-use App\Models\UserTeams;
 use Illuminate\Http\Request;
 use DB;
-
-use function PHPUnit\Framework\isEmpty;
 
 class TeamService extends BaseService
 {
@@ -45,7 +41,6 @@ class TeamService extends BaseService
                 if(!empty($request[$item])){
                     $suffix = 't';
                     $this->query = $this->query. $count > 0 ? ' and' : ' where '.$suffix.'.'.$item.'='."'".$request[$item]."'";
-
                     $count++;
                 }
             }

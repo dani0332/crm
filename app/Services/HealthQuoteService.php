@@ -135,7 +135,7 @@ class HealthQuoteService extends BaseService
                             $suffix = 'hqr';
                             break;
                     }
-                    $this->query = $this->query . $count > 0 ? ' and' : ' where ' . $suffix . '.' . $item . '=' . "'" . $request[$item] . "'";
+                    $this->query = $this->query . ($count == 0 ? ' where ' : ' and ') . $suffix . '.' . $item . '=' . "'" . $request[$item] . "'";
                     $count++;
                 }
             }
@@ -168,7 +168,7 @@ class HealthQuoteService extends BaseService
         HealthQuote::where('uuid',$id)->update($updateArray);
 
         if (isset($request->return_to_view))
-            return redirect("quote/health/" . $healthQuote->id)->with('success', 'Health Quote has been updated');
+            return redirect("quote/health/" . $id)->with('success', 'Health Quote has been updated');
     }
 
     public function getLeads($CDBID, $email, $mobile_no, $lead_type)
@@ -197,11 +197,11 @@ class HealthQuoteService extends BaseService
             $count++;
         }
         if (!empty($email)) {
-            $query .= ' ' . $count == 0 ? ' where' . ' hqr.email = ' . $email : ' and' . ' hqr.email = ' . $email;
+            $query .= ($count == 0 ? ' where' : ' and '). ' hqr.email = ' . $email;
             $count++;
         }
         if (!empty($mobile_no)) {
-            $query .= ' ' . $count == 0 ? ' where' . ' hqr.email = ' . $mobile_no : ' and' . ' hqr.email = ' . $mobile_no;
+            $query .= ($count == 0 ? ' where' : ' and '). ' hqr.mobile_no = ' . $mobile_no;
             $count++;
         }
         return DB::select($query);
