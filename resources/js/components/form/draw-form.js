@@ -124,11 +124,8 @@ function DrawForm(props) {
     formState: { errors },
   } = useForm({ shouldUnregister: true });
   const onSubmit = data => {
-    let getData = {};
-    if (state?.action_type === 'edit') getData = makeNullHideFields(state);
-
-    console.log('------------getData----------');
-    console.log(getData);
+    
+    console.log('------------getData----------')
     console.log(data);
     console.log('------------getData----------');
 
@@ -142,7 +139,7 @@ function DrawForm(props) {
       dispatch_({
         type: 'VISIBLE_FORM_SAVE',
         selectedRecord: state?.selectedRecord,
-        body: { ...cleanDeep(transformData), ...getData },
+        body: { ...cleanDeep(transformData) },
         initialForm: initialForm,
         manageListDispatch: manageListDispatch,
       });

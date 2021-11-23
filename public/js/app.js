@@ -13925,10 +13925,7 @@ function DrawForm(props) {
       errors = _useForm.formState.errors;
 
   var onSubmit = function onSubmit(data) {
-    var getData = {};
-    if ((state === null || state === void 0 ? void 0 : state.action_type) === 'edit') getData = makeNullHideFields(state);
     console.log('------------getData----------');
-    console.log(getData);
     console.log(data);
     console.log('------------getData----------');
 
@@ -13944,7 +13941,7 @@ function DrawForm(props) {
       dispatch_({
         type: 'VISIBLE_FORM_SAVE',
         selectedRecord: state === null || state === void 0 ? void 0 : state.selectedRecord,
-        body: _objectSpread(_objectSpread({}, clean_deep__WEBPACK_IMPORTED_MODULE_6___default()(transformData)), getData),
+        body: _objectSpread({}, clean_deep__WEBPACK_IMPORTED_MODULE_6___default()(transformData)),
         initialForm: initialForm,
         manageListDispatch: manageListDispatch
       });
@@ -17951,7 +17948,6 @@ var ftcPayment = {
           type: 'dropdown',
           label: 'Payment Method',
           source: ['Spotii', 'payments.insurancemarket.ae '],
-          field: 'method',
           offscreen: true,
           access: {
             read: ['advisor', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
@@ -18014,6 +18010,10 @@ var ftcPayment = {
       postTransform: function postTransform(options) {
         var params = options.params,
             data = options.data;
+        console.log({
+          params: params,
+          data: data
+        });
         return _objectSpread(_objectSpread({}, data), {}, {
           car_quote_id: params.id
         });

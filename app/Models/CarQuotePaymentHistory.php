@@ -8,6 +8,7 @@ use App\Models\BaseModel;
 use Auth;
 use Illuminate\Support\Str;
 use App\Jobs\FTCMailServiceJob;
+use LookUpModel;
 
 class CarQuotePaymentHistory extends BaseModel
 {
@@ -41,23 +42,22 @@ class CarQuotePaymentHistory extends BaseModel
 
         try{
             if( Auth::user()->hasRole('invoicing') && $request->has('status')) {
+
                 $carQuote = CarQuote::with(["advisor_id"])->where(['id' => $request->input('car_quote_id', -1), 'invoicing' => Auth::user()->id])->first();
                 $statusVal = Str::replace(' ', '', $request->input('status'));
+
                 if($carQuote &&  ( $statusVal === 'TransactionApproved' ||  $statusVal === 'TransactionDeclined')) {
+                    $row = $carQuote->toArray();
+                    $paymentStatus =  $statusVal === 'TransactionApproved' ? "Approved" : "Declined";
+                    $params = [
+                        'to' => $row['advisor_id']["email"],
+                        'subject' => 'Payment Status is updated to '.$paymentStatus.' - CDB-ID:'.$carQuote->code,
+                        'templateName' => 'notification',
+                        'templateParams' => $row
+                    ];
 
-                    if($statusVal === 'TransactionDeclined') {
-
-                        $row = $carQuote->toArray();
-                        $params = [
-                            'to' => $row['advisor_id']["email"],
-                            'subject' => 'Transaction Declined - CDB-ID:'.$carQuote->code,
-                            'templateName' => 'notification',
-                            'templateParams' => $row
-                        ];
-                        dispatch(new FTCMailServiceJob($params));
-                    }
-
-                    $carQuote->quote_status_id =  $statusVal === 'TransactionApproved' ? 15 : 14;
+                    dispatch(new FTCMailServiceJob($params));
+                    $carQuote->quote_status_id =  $statusVal === 'TransactionApproved' ?  LookUpModel::getLookModel('QuoteStatus', ['code', '=', 'transaction_approved']) : LookUpModel::getLookModel('QuoteStatus', ['code', '=', 'transaction_declined']);
                     $carQuote->save();
                 }
                 return parent::saveForm($request, $update);
