@@ -1553,19 +1553,11 @@ $(document).ready(function () {
         ]
     });
 
-    var rewardSliderEditStartDateTime = $('#rewardSliderEditStartDateTime').val();
-
-    if (rewardSliderEditStartDateTime != "" && typeof rewardSliderEditStartDateTime !== "undefined") {
-        minRewardSliderStartDateTime = rewardSliderEditStartDateTime;
-    } else {
-        minRewardSliderStartDateTime = new Date();
-    }
-
     $("#rewards_slider_start_end #start_datetime").daterangepicker({ // Rewards Slider start date & time
         timePicker: true,
         singleDatePicker: true,
         timePicker24Hour: true,
-        minDate: minRewardSliderStartDateTime,
+        minDate: new Date(),
         locale: {
             format: 'YYYY-MM-DD HH:mm:ss'
         }
