@@ -13,8 +13,7 @@ class LifeQuoteService extends BaseService
 
     public function __construct()
     {
-        $this->query = "
-                        SELECT lqr.id
+        $this->query = "SELECT lqr.id
                         ,lqr.uuid
                         ,lqr.first_name
                         ,lqr.last_name
@@ -118,11 +117,7 @@ class LifeQuoteService extends BaseService
                             $suffix = 'lqr';
                             break;
                     }
-                    if ($count == 0) {
-                        $this->query = $this->query . ' where ' . $suffix . '.' . $item . '=' . "'" . $request[$item] . "'";
-                    } else {
-                        $this->query = $this->query . ' and ' . $suffix . '.' . $item . '=' . "'" . $request[$item] . "'";
-                    }
+                    $this->query = $this->query . ($count == 0 ? ' where ' : ' and ') . $suffix . '.' . $item . '=' . "'" . $request[$item] . "'";
                     $count++;
                 }
             }
@@ -173,11 +168,11 @@ class LifeQuoteService extends BaseService
             $count++;
         }
         if (!empty($email)) {
-            $query .= ' ' . $count == 0 ? ' where' . ' hqr.email = ' . $email : ' and' . ' hqr.email = ' . $email;
+            $query .= ($count == 0 ? ' where' : ' and '). ' hqr.email = ' . $email;
             $count++;
         }
         if (!empty($mobile_no)) {
-            $query .= ' ' . $count == 0 ? ' where' . ' hqr.email = ' . $mobile_no : ' and' . ' hqr.email = ' . $mobile_no;
+            $query .= ($count == 0 ? ' where' : ' and '). ' hqr.mobile_no = ' . $mobile_no;
             $count++;
         }
         return DB::select($query);
