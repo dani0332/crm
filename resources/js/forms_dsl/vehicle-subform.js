@@ -102,6 +102,38 @@ let vehicleSubform = {
             update: ['advisor', 'admin'],
           },
         },
+        car_value: {
+          type: 'text',
+          label: 'Car Value',
+          rules: { required: true },
+          access: {
+            read: [
+              'advisor',
+              'pa',
+              'admin',
+              'invoicing',
+              'production_approval_manager',
+            ],
+            write: ['advisor'],
+            update: ['advisor'],
+          },
+        },
+        currently_insured_with:{
+          type: 'text',
+          label: 'Cyurrently With (Insurer Name)',
+          rules: { required: true },
+          access: {
+            read: [
+              'advisor',
+              'pa',
+              'admin',
+              'invoicing',
+              'production_approval_manager',
+            ],
+            write: ['advisor'],
+            update: ['advisor'],
+          },
+        },
         vehicle_color: {
           type: 'text',
           label: 'Color of the vehicle',
@@ -156,8 +188,7 @@ let vehicleSubform = {
           source: [
             'Comprehensive',
             'TPL',
-            'Lapse in Insurance',
-            'production_approval_manager',
+            'Lapse in Insurance'
           ],
           label: 'Current Cover',
           rules: { required: true },
@@ -200,6 +231,8 @@ let vehicleSubform = {
             'chassis_number',
             'engine_number',
             'date_first_registration',
+            'car_value',
+            'currently_insured_with',
             'vehicle_color',
             'seating_capacity',
             'specs',

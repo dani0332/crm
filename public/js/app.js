@@ -19249,6 +19249,30 @@ var vehicleSubform = {
             update: ['advisor', 'admin']
           }
         },
+        car_value: {
+          type: 'text',
+          label: 'Car Value',
+          rules: {
+            required: true
+          },
+          access: {
+            read: ['advisor', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
+            write: ['advisor'],
+            update: ['advisor']
+          }
+        },
+        currently_insured_with: {
+          type: 'text',
+          label: 'Cyurrently With (Insurer Name)',
+          rules: {
+            required: true
+          },
+          access: {
+            read: ['advisor', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
+            write: ['advisor'],
+            update: ['advisor']
+          }
+        },
         vehicle_color: {
           type: 'text',
           label: 'Color of the vehicle',
@@ -19288,7 +19312,7 @@ var vehicleSubform = {
         },
         current_cover: {
           type: 'dropdown',
-          source: ['Comprehensive', 'TPL', 'Lapse in Insurance', 'production_approval_manager'],
+          source: ['Comprehensive', 'TPL', 'Lapse in Insurance'],
           label: 'Current Cover',
           rules: {
             required: true
@@ -19315,7 +19339,7 @@ var vehicleSubform = {
       },
       sections: [{
         label: 'Add Vehicle Detail',
-        fields: ['engine_capacity', 'cylinder', 'chassis_number', 'engine_number', 'date_first_registration', 'vehicle_color', 'seating_capacity', 'specs', 'current_cover', 'vehicle_modified']
+        fields: ['engine_capacity', 'cylinder', 'chassis_number', 'engine_number', 'date_first_registration', 'car_value', 'currently_insured_with', 'vehicle_color', 'seating_capacity', 'specs', 'current_cover', 'vehicle_modified']
       }],
       view: {
         find: {
@@ -22757,6 +22781,8 @@ var vehicleTransform = {
       vehicle_modified: 'vehicle_modified',
       specs: 'specs',
       current_cover: 'current_cover',
+      car_value: 'car_value',
+      currently_insured_with: 'currently_insured_with',
       date_first_registration: 'date_first_registration'
     }
   }
