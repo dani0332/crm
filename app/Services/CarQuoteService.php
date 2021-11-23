@@ -7,8 +7,6 @@ use Illuminate\Http\Request;
 use Config;
 use DB;
 use Auth;
-use Exception;
-use GuzzleHttp\Psr7\Message;
 use GuzzleHttp\Exception\ClientException;
 
 class CarQuoteService extends BaseService
@@ -17,7 +15,9 @@ class CarQuoteService extends BaseService
     public function __construct()
     {
         $this->query = "
-            SELECT cqr.id
+            SELECT
+                cqr.uuid
+                ,cqr.id
                 ,cqr.first_name
                 ,cqr.last_name
                 ,cqr.email
@@ -102,12 +102,12 @@ class CarQuoteService extends BaseService
 
     public function getEntity($id)
     {
-        return DB::select($this->query . ' where cqr.id = ' . $id);
+        return DB::select($this->query . ' where cqr.uuid = "' . $id . '"');
     }
 
     public function getEntityPlain($id)
     {
-        return CarQuote::find($id);
+        return CarQuote::where('uuid', $id);
     }
 
     public function fillModelProperties()
@@ -219,11 +219,7 @@ class CarQuoteService extends BaseService
                             $suffix = 'cqr';
                             break;
                     }
-                    if ($count == 0) {
-                        $this->query = $this->query . ' where ' . $suffix . '.' . $item . '=' . "'" . $request[$item] . "'";
-                    } else {
-                        $this->query = $this->query . ' and ' . $suffix . '.' . $item . '=' . "'" . $request[$item] . "'";
-                    }
+                    $this->query = $this->query . ($count == 0 ? ' where ' : ' and ') . $suffix . '.' . $item . '=' . "'" . $request[$item] . "'";
                     $count++;
                 }
             }
@@ -250,15 +246,15 @@ class CarQuoteService extends BaseService
             $count++;
         }
         if (!empty($email)) {
-            $query .= ' ' . $count == 0 ? ' where' . ' hqr.email = ' . $email : ' and' . ' hqr.email = ' . $email;
+            $query .= ($count == 0 ? ' where ' : ' and ') . ' hqr.email = ' . $email;
             $count++;
         }
         if (!empty($mobile_no)) {
-            $query .= ' ' . $count == 0 ? ' where' . ' hqr.email = ' . $mobile_no : ' and' . ' hqr.email = ' . $mobile_no;
+            $query .= ($count == 0 ? ' where ' : ' and '). ' hqr.mobile_no = ' . $mobile_no;
             $count++;
         }
         if ($isAdvisor) {
-            $query .= ' ' . $count == 0 ? ' where' . ' hqr.advisor_id = ' . Auth::user()->id : ' and' . ' hqr.advisor_id = ' . Auth::user()->id;
+            $query .= ($count == 0 ? ' where ' : ' and '). ' hqr.advisor_id = ' . Auth::user()->id;
             $count++;
         }
         return DB::select($query);
@@ -279,7 +275,7 @@ class CarQuoteService extends BaseService
 
     public function getQuotePlans($id)
     {
-        $quoteUuId = CarQuote::where('id', '=', $id)->value('uuid');
+        $quoteUuId = CarQuote::where('uuid', '=', $id)->value('uuid');
 
         $plansApiEndPoint = Config::get('constants.KEN_PLANS_API_ENDPOINT');
         $plansApiToken = Config::get('constants.KEN_PLANS_API_TOKEN');

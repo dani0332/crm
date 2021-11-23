@@ -16,6 +16,7 @@ class BusinessQuoteService extends BaseService
     {
         $this->query = "
                             SELECT bqr.id
+                            ,bqr.uuid
                             ,bqr.first_name
                             ,bqr.last_name
                             ,bqr.email
@@ -26,39 +27,42 @@ class BusinessQuoteService extends BaseService
                             ,bti.TEXT AS business_type_of_insurance_id_text
                             ,bqr.advisor_id
                             ,u.name as advisor_id_text
-                        FROM central_afia.business_quote_request bqr
+                        FROM business_quote_request bqr
                         LEFT OUTER JOIN business_type_of_insurance bti ON bti.id = bqr.business_type_of_insurance_id
                         LEFT OUTER JOIN users u ON u.id = bqr.advisor_id";
     }
 
     public function getEntity($id)
     {
-        return DB::select($this->query . ' where bqr.id = ' . $id);
+        return DB::select($this->query . ' where bqr.uuid = "' . $id.'"');
     }
 
     public function getLeads($CDBID, $email, $mobile_no, $lead_type)
     {
-        $isAdvisor = Auth::user()->hasRole(strtoupper($lead_type) . '_ADVISOR');
         $query = "SELECT hqr.id
-                            ,hqr.first_name
-                            ,hqr.last_name
-                            ,hqr.created_at
-                            ,u.name AS advisor_name
-                            ,'Business' as lead_type
-                            ,u.id as advisor_id
-                        FROM business_quote_request hqr
-                        LEFT OUTER JOIN users u ON u.id = hqr.advisor_id";
+                        ,hqr.uuid
+                        ,hqr.first_name
+                        ,hqr.last_name
+                        ,hqr.created_at
+                        ,u.name AS advisor_name
+                        ,'Business' as lead_type
+                        ,u.id as advisor_id
+                        ,qs.text as lead_status
+                    FROM business_quote_request hqr
+                    LEFT OUTER JOIN users u ON u.id = hqr.advisor_id
+                    LEFT OUTER JOIN quote_status qs ON qs.id = hqr.quote_status_id
+                    ORDER BY u.name";
         $count = 0;
         if (!empty($CDBID)) {
             $query .= ' where hqr.id = ' . $CDBID;
             $count++;
         }
         if (!empty($email)) {
-            $query .= ' ' . $count == 0 ? ' where' . ' hqr.email = ' . $email : ' and' . ' hqr.email = ' . $email;
+            $query .= ($count == 0 ? ' where' : ' and') . ' hqr.email = ' . $email;
             $count++;
         }
         if (!empty($mobile_no)) {
-            $query .= ' ' . $count == 0 ? ' where' . ' hqr.email = ' . $mobile_no : ' and' . ' hqr.email = ' . $mobile_no;
+            $query .= ($count == 0 ? ' where' : ' and') . ' hqr.mobile_no = ' . $mobile_no;
             $count++;
         }
         return DB::select($query);
@@ -66,7 +70,7 @@ class BusinessQuoteService extends BaseService
 
     public function getEntityPlain($id)
     {
-        return BusinessQuote::find($id);
+        return BusinessQuote::where('uuid', $id);
     }
 
     public function getLeadsForAssignment()
@@ -108,11 +112,7 @@ class BusinessQuoteService extends BaseService
                             $suffix = 'bqr';
                             break;
                     }
-                    if ($count == 0) {
-                        $this->query = $this->query . ' where ' . $suffix . '.' . $item . '=' . "'" . $request[$item] . "'";
-                    } else {
-                        $this->query = $this->query . ' and ' . $suffix . '.' . $item . '=' . "'" . $request[$item] . "'";
-                    }
+                    $this->query = $this->query . ($count == 0 ? ' where ' : ' and ') . $suffix . '.' . $item . '=' . "'" . $request[$item] . "'";
                     $count++;
                 }
             }
@@ -125,8 +125,10 @@ class BusinessQuoteService extends BaseService
         $businessQuote = BusinessQuote::find($id);
         $businessQuote->first_name = $request->first_name;
         $businessQuote->last_name = $request->last_name;
-        $businessQuote->email = $request->email;
-        $businessQuote->mobile_no = $request->mobile_no;
+        if(!Auth::user()->hasRole('BUSINESS_ADVISOR')){
+            $businessQuote->email = $request->email;
+            $businessQuote->mobile_no = $request->mobile_no;
+        }
         $businessQuote->company_name = $request->company_name;
         $businessQuote->brief_details = $request->brief_details;
         $businessQuote->business_type_of_insurance_id = $request->business_type_of_insurance_id;

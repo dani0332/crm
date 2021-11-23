@@ -24,4 +24,12 @@ class TravelQuote extends Model implements AuditableContract
         $date_time_format = Config::get('constants.datetime_format');
         return $this->asDateTime($table)->timezone(config('app.timezone'))->format($date_time_format);
     }
+    public function quoteStatus()
+    {
+        return $this->hasOne(QuoteStatus::class, 'id', 'quote_status_id');
+    }
+    public function travelQuoteRequestDetail()
+    {
+        return $this->hasOne(TravelQuoteRequestDetail::class, 'travel_quote_request_id', 'id');
+    }
 }

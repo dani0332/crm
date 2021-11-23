@@ -13,8 +13,8 @@ class LifeQuoteService extends BaseService
 
     public function __construct()
     {
-        $this->query = "
-                        SELECT lqr.id
+        $this->query = "SELECT lqr.id
+                        ,lqr.uuid
                         ,lqr.first_name
                         ,lqr.last_name
                         ,lqr.email
@@ -38,14 +38,14 @@ class LifeQuoteService extends BaseService
                         ,liy.TEXT AS number_of_years_id_text
                         ,lqr.nationality_id
                         ,n.TEXT AS nationality_id_text
-                    FROM central_afia.life_quote_request lqr
-                    INNER JOIN currency_type ct ON ct.id = lqr.sum_insured_currency_id
-                    INNER JOIN marital_status ms ON ms.id = lqr.marital_status_id
-                    INNER JOIN life_insurance_purpose lip ON lip.id = lqr.purpose_of_insurance_id
-                    INNER JOIN life_children lc ON lc.id = lqr.children_id
-                    INNER JOIN life_insurance_tenure lit ON lit.id = lqr.tenure_of_insurance_id
-                    INNER JOIN life_number_of_year liy ON liy.id = lqr.number_of_years_id
-                    INNER JOIN nationality n ON n.id = lqr.nationality_id";
+                    FROM life_quote_request lqr
+                    LEFT OUTER JOIN currency_type ct ON ct.id = lqr.sum_insured_currency_id
+                    LEFT OUTER JOIN marital_status ms ON ms.id = lqr.marital_status_id
+                    LEFT OUTER JOIN life_insurance_purpose lip ON lip.id = lqr.purpose_of_insurance_id
+                    LEFT OUTER JOIN life_children lc ON lc.id = lqr.children_id
+                    LEFT OUTER JOIN life_insurance_tenure lit ON lit.id = lqr.tenure_of_insurance_id
+                    LEFT OUTER JOIN life_number_of_year liy ON liy.id = lqr.number_of_years_id
+                    LEFT OUTER JOIN nationality n ON n.id = lqr.nationality_id";
     }
     public function saveLifeQuote(Request $request)
     {
@@ -69,30 +69,16 @@ class LifeQuoteService extends BaseService
         );
         if(Auth::user()->hasRole("LIFE_ADVISOR")) $dataArr['advisorId'] = Auth::users()->id;
         return $this->sendCAPIRequest('/api/v1-save-home-quote', $dataArr);
-
-        $lifeQuote = new LifeQuote();
-        $lifeQuote->first_name = $request->first_name;
-        $lifeQuote->last_name = $request->last_name;
-        $lifeQuote->email = $request->email;
-        $lifeQuote->details = $request->details;
-        $lifeQuote->mobile_no = $request->mobile_no;
-        $lifeQuote->travel_cover_for_id = $request->travel_cover_for_id;
-        $lifeQuote->nationality_id = $request->nationality_id;
-        $lifeQuote->days_cover_for = $request->days_cover_for;
-        $lifeQuote->destination = $request->destination;
-        $lifeQuote->region_cover_for_id = $request->region_cover_for_id;
-        $lifeQuote->details = $request->details;
-        $lifeQuote->save();
     }
 
     public function getEntity($id)
     {
-        return DB::select($this->query . ' where lqr.id = ' . $id);
+        return DB::select($this->query . ' where lqr.uuid =  "' . $id.'"');
     }
 
     public function getEntityPlain($id)
     {
-        return LifeQuote::find($id);
+        return LifeQuote::where('uuid', $id);
     }
     public function getLeadsForAssignment()
     {
@@ -131,11 +117,7 @@ class LifeQuoteService extends BaseService
                             $suffix = 'lqr';
                             break;
                     }
-                    if ($count == 0) {
-                        $this->query = $this->query . ' where ' . $suffix . '.' . $item . '=' . "'" . $request[$item] . "'";
-                    } else {
-                        $this->query = $this->query . ' and ' . $suffix . '.' . $item . '=' . "'" . $request[$item] . "'";
-                    }
+                    $this->query = $this->query . ($count == 0 ? ' where ' : ' and ') . $suffix . '.' . $item . '=' . "'" . $request[$item] . "'";
                     $count++;
                 }
             }
@@ -146,16 +128,19 @@ class LifeQuoteService extends BaseService
 
     public function updateLifeQuote(Request $request, $id)
     {
-        $lifeQuote = LifeQuote::find($id);
-        $lifeQuote->first_name = $request->first_name;
-        $lifeQuote->last_name = $request->last_name;
-        $lifeQuote->email = $request->email;
-        $lifeQuote->details = $request->details;
-        $lifeQuote->mobile_no = $request->mobile_no;
-        $lifeQuote->dob = $request->dob;
-        $lifeQuote->gender = $request->gender == 'Male' ? 'M' : 'F';
-        $lifeQuote->is_smoker = $request->is_smoker == 'Yes' ? '1' : '0';
-        $lifeQuote->save();
+        $updateArray = [
+            'first_name'=>$request->first_name,
+            'last_name'=>$request->last_name,
+            'details'=>$request->details,
+            'dob'=>$request->dob,
+            'gender'=>$request->gender == 'Male' ? 'M' : 'F',
+            'is_smoker'=>$request->is_smoker == 'Yes' ? '1' : '0',
+        ];
+        if(!Auth::user()->hasRole('LIFE_ADVISOR')){
+            $updateArray['email'] = $request->email;
+            $updateArray['mobile_no'] = $request->mobile_no;
+        }
+        LifeQuote::where('uuid',$id)->update($updateArray);
 
         if (isset($request->return_to_view))
             return redirect("quote/life/" . $lifeQuote->id)->with('success', 'Life Quote has been updated');
@@ -165,25 +150,29 @@ class LifeQuoteService extends BaseService
     {
         $isAdvisor = Auth::user()->hasRole(strtoupper($lead_type) . '_ADVISOR');
         $query = "SELECT hqr.id
+                            ,hqr.uuid
                             ,hqr.first_name
                             ,hqr.last_name
                             ,hqr.created_at
                             ,u.name AS advisor_name
                             ,'Life' as lead_type
                             ,u.id as advisor_id
+                            ,qs.text as lead_status
                         FROM life_quote_request hqr
-                        LEFT OUTER JOIN users u ON u.id = hqr.advisor_id";
+                        LEFT OUTER JOIN users u ON u.id = hqr.advisor_id
+                        LEFT OUTER JOIN quote_status qs ON qs.id = hqr.quote_status_id
+                        ORDER BY u.name";
         $count = 0;
         if (!empty($CDBID)) {
             $query .= ' where hqr.id = ' . $CDBID;
             $count++;
         }
         if (!empty($email)) {
-            $query .= ' ' . $count == 0 ? ' where' . ' hqr.email = ' . $email : ' and' . ' hqr.email = ' . $email;
+            $query .= ($count == 0 ? ' where' : ' and '). ' hqr.email = ' . $email;
             $count++;
         }
         if (!empty($mobile_no)) {
-            $query .= ' ' . $count == 0 ? ' where' . ' hqr.email = ' . $mobile_no : ' and' . ' hqr.email = ' . $mobile_no;
+            $query .= ($count == 0 ? ' where' : ' and '). ' hqr.mobile_no = ' . $mobile_no;
             $count++;
         }
         return DB::select($query);

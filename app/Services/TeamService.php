@@ -2,8 +2,6 @@
 
 namespace App\Services;
 use App\Models\Team;
-use App\Models\User;
-use App\Models\UserTeams;
 use Illuminate\Http\Request;
 use DB;
 
@@ -12,16 +10,11 @@ class TeamService extends BaseService
     protected $query;
     public function __construct()
     {
-        $this->query = "SELECT t.id, t.name AS name
-                        ,group_concat(u.name) AS team_users
-                        ,group_concat(u.name) AS team_users_text
-                        FROM teams t
-                        LEFT JOIN user_team ut ON ut.team_id = t.id
-                        LEFT JOIN users u ON u.id = ut.user_id ";
+        $this->query = "SELECT t.id, t.uuid, t.name AS name FROM teams t ";
     }
 
     public function getEntity($id){
-        return DB::select($this->query.' where t.id = '. $id.' GROUP BY t.name,t.id');
+        return DB::select($this->query.' where t.uuid = "'. $id.'" GROUP BY t.name,t.id,t.uuid');
     }
 
     public function getEntityPlain($id){
@@ -30,20 +23,14 @@ class TeamService extends BaseService
 
 	public function saveTeams(Request $request)
 	{
+        $existingTeam = Team::where('name', $request->name)->first();
+        if($existingTeam != null){
+            return "Error: name already exists";
+        }
         $team = new Team();
         $team->name = $request->name;
         $team->save();
-        foreach ($request->team_users as $team_user) {
-            $user = User::find($team_user);
-            $userTeam = new UserTeams();
-            $userTeam->team_id = $team->id;
-            $userTeam->user_id = $user->id;
-            $userTeam->save();
-        }
-
-        if (isset($request->return_to_view))
-            return redirect("/quotes/teams/" . $team->id)->with('success', 'Team has been created');
-
+        return Team::find($team->id)->uuid;
 	}
 
     public function getGridData($searchProperties, $request){
@@ -54,40 +41,28 @@ class TeamService extends BaseService
                 if(!empty($request[$item])){
                     $suffix = 't';
                     $this->query = $this->query. $count > 0 ? ' and' : ' where '.$suffix.'.'.$item.'='."'".$request[$item]."'";
-
                     $count++;
                 }
             }
         }
-        $this->query = $this->query .' GROUP BY t.name,t.id';
+        $this->query = $this->query .' GROUP BY t.name,t.id,t.uuid ORDER BY t.id DESC ';
         return DB::select($this->query);
     }
 
 
     public function updateTeams(Request $request, $id)
 	{
-        $team = Team::find($id);
-        $team->name = $request->name;
-        $team->save();
-
-        UserTeams::where('team_id', '=', $id)->delete();
-        foreach ($request->team_users as $team_user) {
-            $user = User::find($team_user);
-            $userTeam = new UserTeams();
-            $userTeam->team_id = $team->id;
-            $userTeam->user_id = $user->id;
-            $userTeam->save();
-        }
-
+        Team::where('uuid',$id)->update(
+            ['name'=>$request->name]
+        );
         if (isset($request->return_to_view))
-            return redirect("/quotes/teams/" . $team->id)->with('success', 'Team has been updated');
+            return redirect("/quotes/teams/" . $id)->with('success', 'Team has been updated');
 	}
 
     public function fillModelProperties() {
         return array (
             "id" => "readonly|none",
             "name" => "input|text|required|title",
-            "team_users" => "select|multiple|title|required|customTable",
         );
     }
 
@@ -96,9 +71,6 @@ class TeamService extends BaseService
         switch ($propertyName) {
             case 'name':
                 $title = "Team Name";
-                break;
-            case 'team_users':
-                $title = 'Team Users';
                 break;
             default:
                 break;

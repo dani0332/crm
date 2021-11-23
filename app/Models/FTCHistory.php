@@ -6,12 +6,13 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use App\Models\BaseModel;
 use App\Models\CarQuote;
 use App\Models\FtcDocument;
+use App\Models\QuoteStatus;
 use App\Models\CarQuoteEmailUniqueLink;
 use Auth;
 use App\Jobs\FTCMailServiceJob;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
-
+use LookUpModel;
 
 class FTCHistory extends BaseModel
 {
@@ -63,11 +64,33 @@ class FTCHistory extends BaseModel
             $carQuote = CarQuote::where(['id' => $request->input('car_quote_id', -1), 'advisor_id' => Auth::user()->id])->get()->first();
             if($carQuote) {
 
-                if($request->input('status', '') == 'Resubmit for Approval') {
-
+                if($request->input('status', '') == 'resubmitForApproval' || $request->input('status', '') == 'ftc_pending') {
+                    
+                    $paEmail = null;
+                    if($carQuote->pa_id()->first())
+                        $paEmail =$carQuote->pa_id()->first()->email;
                     $carQuote->pa_id = null;
-                    $carQuote->quote_status_id = 10; //FTC Resubmitted
+                    $carQuote->quote_status_id = LookUpModel::getLookModel('QuoteStatus', ['code', '=', $request->input('status')]);
                     $carQuote->save();
+
+                    if($request->input('status') == 'resubmitForApproval' ) {
+                        if($paEmail) {
+                            $templateParams = [
+                                'notes' => $request->input('notes', ""),
+                                "first_name" => $carQuote->first_name,
+                                "last_name" => $carQuote->last_name,
+                                "code" => $carQuote->code
+                            ];
+
+                            $params = [
+                                'to' => $paEmail,
+                                'subject' => 'Resubmit for approval - CDB-ID:'.$carQuote->code,
+                                'templateName' => 'notification',
+                                'templateParams' => $templateParams
+                            ];
+                            dispatch(new FTCMailServiceJob($params));
+                        }
+                    }
                 }
 
                 if($request->input('status', '') == 'FTC Sent') {
@@ -101,7 +124,7 @@ class FTCHistory extends BaseModel
                         if(sizeof($attachment) > 0){
                             $params['templateParams']['attachment'] = [];
                             foreach ($attachment as $model) {
-                                $params['templateParams']['attachment'][] = $model->file_name;
+                                $params['templateParams']['attachment'][] = 'https://myalfreddev.blob.core.windows.net/myrewards/'.$model->file_name;
                             }
                         }
                         dispatch(new FTCMailServiceJob($params));

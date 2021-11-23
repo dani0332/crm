@@ -34,7 +34,7 @@ class UserController extends Controller
                                         ,u1.name
                                         ,u1.email
                                         ,u2.roles
-                                        ,GROUP_CONCAT(teams.name) as teamName
+                                        ,teams.name as teamName
                                         ,u1.created_at
                                         ,u1.updated_at
                                     FROM users u1
@@ -52,6 +52,7 @@ class UserController extends Controller
                                             ,u1.name
                                             ,u1.email
                                             ,u2.roles
+                                            ,teams.name
                                             ,u1.created_at
                                             ,u1.updated_at");
             $filteredData = $users;
@@ -108,12 +109,12 @@ class UserController extends Controller
         $user->password = bcrypt($request->password);
         $user->save();
 
-        foreach ($request->team as $teamId) {
-            $userTeam = new UserTeams();
-            $userTeam->team_id = $teamId;
-            $userTeam->user_id = $user->id;
-            $userTeam->save();
-        }
+
+        $userTeam = new UserTeams();
+        $userTeam->team_id = $request->team;
+        $userTeam->user_id = $user->id;
+        if($request->manager != "0") $userTeam->manager_id = $request->manager;
+        $userTeam->save();
 
         $user->assignRole($request->input('roles'));
         if (isset($request->return_to_view))
@@ -145,12 +146,13 @@ class UserController extends Controller
         $roles = Role::pluck('name', 'name')->all();
         $userRole = $user->roles->pluck('name', 'name')->all();
         $teams = Team::orderBy('name', 'asc')->get();
-        $userTeamQuery = UserTeams::where('user_id', $user->id)->get();
-        $selectedTeams = [];
-        foreach ($userTeamQuery as $team) {
-            array_push($selectedTeams, $team->team_id);
-        }
-        return view('user.edit', compact('user', 'roles', 'userRole', 'teams', 'selectedTeams'));
+
+        $userTeam = UserTeams::where('user_id', $user->id)->get()->first();
+        $managerIds = UserTeams::where('team_id', $userTeam->team_id)->where('manager_id', null)->where('user_id', '!=', $user->id)->get()->pluck('user_id');
+        $managers = User::whereIn('id', $managerIds)->get();
+        $selectedTeam = $userTeam->team_id;
+        $selectedManager = $userTeam->manager_id;
+        return view('user.edit', compact('user', 'roles', 'userRole', 'teams', 'selectedTeam', 'managers', 'selectedManager'));
     }
     /**
      * Update the specified resource in storage.
@@ -171,13 +173,10 @@ class UserController extends Controller
         $user->password = bcrypt($request->password);
         $user->save();
 
-        DB::table('user_team')->where('user_id', $user->id)->delete();
-        foreach ($request->team as $teamId) {
-            $userTeam = new UserTeams();
-            $userTeam->team_id = $teamId;
-            $userTeam->user_id = $user->id;
-            $userTeam->save();
-        }
+        UserTeams::where('user_id',$user->id)->update(
+            ['team_id'=>$request->team,
+            'manager_id'=> $request->manager == 0 || $request->manager == '' ? null : $request->manager ]
+        );
         DB::table('model_has_roles')->where('model_id', $user->id)->delete();
         $user->assignRole($request->input('roles'));
         if (isset($request->return_to_view))
@@ -197,5 +196,12 @@ class UserController extends Controller
 
     public function me(Request $request){
         return ['name' => Auth::user()->name, 'email' => Auth::user()->email, 'id' => Auth::user()->id, 'role'=> strtolower(Auth::user()->usersroles[0]->name)];
+    }
+
+    public function getTeamManagers(Request $request){
+        $teamId = $request->query()['teamId'];
+        $managerIds = UserTeams::where('team_id', $teamId)->where('manager_id', null)->get()->pluck('user_id');
+        $managers = User::whereIn('id', $managerIds)->get();
+        return $managers;
     }
 }

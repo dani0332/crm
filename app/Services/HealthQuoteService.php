@@ -15,6 +15,7 @@ class HealthQuoteService extends BaseService
     {
         $this->query = "
         SELECT hqr.id
+        ,hqr.uuid
         ,hqr.first_name
         ,hqr.last_name
         ,hqr.email
@@ -46,12 +47,12 @@ class HealthQuoteService extends BaseService
 
     public function getEntity($id)
     {
-        return DB::select($this->query . ' where hqr.id = ' . $id);
+        return DB::select($this->query . ' where hqr.uuid =  "' . $id.'"');
     }
 
     public function getEntityPlain($id)
     {
-        return HealthQuote::find($id);
+        return HealthQuote::where('uuid', $id);
     }
     public function getLeadsForAssignment()
     {
@@ -134,7 +135,7 @@ class HealthQuoteService extends BaseService
                             $suffix = 'hqr';
                             break;
                     }
-                    $this->query = $this->query . $count > 0 ? ' and' : ' where ' . $suffix . '.' . $item . '=' . "'" . $request[$item] . "'";
+                    $this->query = $this->query . ($count == 0 ? ' where ' : ' and ') . $suffix . '.' . $item . '=' . "'" . $request[$item] . "'";
                     $count++;
                 }
             }
@@ -145,26 +146,29 @@ class HealthQuoteService extends BaseService
 
     public function updateHealthQuote(Request $request, $id)
     {
-        $healthQuote = HealthQuote::find($id);
-        $healthQuote->first_name = $request->first_name;
-        $healthQuote->last_name = $request->last_name;
-        $healthQuote->email = $request->email;
-        $healthQuote->details = $request->details;
-        $healthQuote->mobile_no = $request->mobile_no;
-        $healthQuote->preference = $request->preference;
-        $healthQuote->source = $request->source;
-        $healthQuote->marital_status_id = $request->marital_status_id;
-        $healthQuote->dob = $request->dob;
-        $healthQuote->cover_for_id = $request->cover_for_id;
-        $healthQuote->nationality_id = $request->nationality_id;
-        $healthQuote->has_dental = $request->has_dental == 'on' ? true : false;
-        $healthQuote->has_worldwide_cover = $request->has_worldwide_cover == 'on' ? true : false;
-        $healthQuote->has_home = $request->has_home == 'on' ? true : false;
-        $healthQuote->emirate_of_your_visa_id = $request->emirate_of_your_visa_id;
-        $healthQuote->save();
+        $updateArray = [
+            'first_name'=>$request->first_name,
+            'last_name'=>$request->last_name,
+            'details'=>$request->details,
+            'preference' => $request->preference,
+            'source' => $request->source,
+            'marital_status_id' => $request->marital_status_id,
+            'dob' => $request->dob,
+            'cover_for_id' => $request->cover_for_id,
+            'nationality_id' => $request->nationality_id,
+            'has_dental' => $request->has_dental == 'on' ? true : false,
+            'has_worldwide_cover' => $request->has_worldwide_cover == 'on' ? true : false,
+            'has_home' => $request->has_home == 'on' ? true : false,
+            'emirate_of_your_visa_id' => $request->emirate_of_your_visa_id,
+        ];
+        if(!Auth::user()->hasRole('HOME_ADVISOR')){
+            $updateArray['email'] = $request->email;
+            $updateArray['mobile_no'] = $request->mobile_no;
+        }
+        HealthQuote::where('uuid',$id)->update($updateArray);
 
         if (isset($request->return_to_view))
-            return redirect("quote/health/" . $healthQuote->id)->with('success', 'Health Quote has been updated');
+            return redirect("quote/health/" . $id)->with('success', 'Health Quote has been updated');
     }
 
     public function getLeads($CDBID, $email, $mobile_no, $lead_type)
@@ -175,25 +179,29 @@ class HealthQuoteService extends BaseService
             $userIds = Auth::user()->getTeamUserIds();
         }
         $query = "SELECT hqr.id
+                            ,hqr.uuid
                             ,hqr.first_name
                             ,hqr.last_name
                             ,hqr.created_at
                             ,u.name AS advisor_name
                             ,'Health' as lead_type
                             ,u.id as advisor_id
+                            ,qs.text as lead_status
                         FROM health_quote_request hqr
-                        LEFT OUTER JOIN users u ON u.id = hqr.advisor_id";
+                        LEFT OUTER JOIN users u ON u.id = hqr.advisor_id
+                        LEFT OUTER JOIN quote_status qs ON qs.id = hqr.quote_status_id
+                        ORDER BY u.name";
         $count = 0;
         if (!empty($CDBID)) {
             $query .= ' where hqr.id = ' . $CDBID;
             $count++;
         }
         if (!empty($email)) {
-            $query .= ' ' . $count == 0 ? ' where' . ' hqr.email = ' . $email : ' and' . ' hqr.email = ' . $email;
+            $query .= ($count == 0 ? ' where' : ' and '). ' hqr.email = ' . $email;
             $count++;
         }
         if (!empty($mobile_no)) {
-            $query .= ' ' . $count == 0 ? ' where' . ' hqr.email = ' . $mobile_no : ' and' . ' hqr.email = ' . $mobile_no;
+            $query .= ($count == 0 ? ' where' : ' and '). ' hqr.mobile_no = ' . $mobile_no;
             $count++;
         }
         return DB::select($query);

@@ -311,8 +311,11 @@ let insuranceDetail = {
         events: {
           transformBeforeOpenReadMode(form){
 
+            if(form?.data.length < 1)
+              return form
+
             const code  = form?.data?.car_quote_id?.quote_status_id?.code;
-            if(code  && code === 'ftc_pending') {
+            if(code && code === 'ftc_pending') {
               return form
             }
 

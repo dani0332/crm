@@ -68,17 +68,17 @@ class CRUDService extends BaseService
 
     public function getAdvisorsByModelType($modelType)
     {
-        return User::select('users.*')
-            ->leftjoin('model_has_roles', 'users.id', 'model_has_roles.model_id')
-            ->leftjoin('roles', 'roles.id', 'model_has_roles.role_id')
-            ->whereIn('roles.name', [strtoupper($modelType) . '_ADVISOR'])->orderBy('roles.name', 'asc')->get();
+
+        return User::whereHas('roles', function ($query) use ($modelType) {
+                $query->whereIn('name', [strtoupper($modelType) . '_ADVISOR']);
+            })->get();
     }
 
     public function saveModelByType($modelType, Request $request)
     {
         $lowerCaseModelType = strtolower($modelType);
 
-        $this->{in_array($lowerCaseModelType, $this->quoteTypes) ? $lowerCaseModelType . 'QuoteService' : $lowerCaseModelType . 'Service'}
+        return $this->{in_array($lowerCaseModelType, $this->quoteTypes) ? $lowerCaseModelType . 'QuoteService' : $lowerCaseModelType . 'Service'}
             ->{in_array($lowerCaseModelType, $this->quoteTypes) ? 'save' . ucwords($modelType) . 'Quote' : 'save' . ucwords($modelType)}($request);
     }
 

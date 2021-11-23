@@ -61,7 +61,9 @@
                     <div class="row">
                         <div class="col-auto mr-auto"></div>
                         <div class="col-auto">
-                            <a id="texta" href="{{ url('quotes/'.strtolower($model->modelType).'/'.$record[0]->id.'/edit') }}" class='btn btn-warning btn-sm'>Edit</a>
+                            @if (Auth::user()->hasRole('ADMIN') || Auth::user()->hasRole($model->modelType.'_MANAGER') || Auth::user()->hasRole($model->modelType.'_DEPUTY') ||Auth::user()->hasRole($model->modelType.'_ADVISOR'))
+                            <a id="texta" href="{{ url('quotes/'.strtolower($model->modelType).'/'.$record[0]->uuid.'/edit') }}" class='btn btn-warning btn-sm'>Edit</a>
+                            @endif
                         </div>
                     </div>
                 </div>
@@ -106,7 +108,7 @@
                         <div class="row">
                             <div class="col-auto mr-auto"></div>
                             <div class="col-auto">
-                                <input type="hidden" id="selectquoteUuId" name="selectquoteUuId" value="{{ $quoteAttrUuId }}">
+                                <input type="hidden" id="selectquoteUuId" name="selectquoteUuId" value="{{ $record[0]->uuid }}">
                                 <button type="button" id="quotePlansGenerateButton" name="quotePlansGenerateButton" class="btn btn-warning btn-sm">Generate Quote</button>
                             </div>
                         </div>
@@ -130,7 +132,7 @@
                                             <td>{{ $quotePlan->repairType }}</td>
                                             <td>{{ $quotePlan->actualPremium }}</td>
                                             <td>{{ $quotePlan->actualPremium + $quotePlan->vatPremium }}</td>
-                                            <td><a href="#" testurl="{{ $record[0]->id }}/plan_details/{{ $quotePlan->id }}" data-toggle="modal" data-target="#quotePlanModal" class="quotePlanModalPopup">View</a></td>
+                                            <td><a href="#" planDetailUrl="{{ $record[0]->uuid }}/plan_details/{{ $quotePlan->id }}" data-toggle="modal" data-target="#quotePlanModal" class="quotePlanModalPopup">View</a></td>
                                         </tr>
                                     @endforeach
                                 </tbody>

@@ -67,8 +67,8 @@ class LeadAssignmentController extends Controller
             }
         }
         if (isset($request->leadType) && !empty($request->leadType)) {
-            array_push($gridData, $this->crudService->getLeads('', '', '', strtolower($request->leadType)));
-            $mergedGridData = array_merge(...$gridData);
+
+            $mergedGridData = $this->crudService->getLeads('', '', '', strtolower($request->leadType));
             if ($request->ajax()) {
                 foreach ($mergedGridData as $rowItem) {
                     if (!empty($request->assignedToId)) {
@@ -81,12 +81,6 @@ class LeadAssignmentController extends Controller
                         })->all();
                     }
                 }
-
-
-
-
-
-
                 return DataTables::of(collect($mergedGridData)->sortBy('advisor_name')->toArray())
                     ->addIndexColumn()
                     ->make(true);
