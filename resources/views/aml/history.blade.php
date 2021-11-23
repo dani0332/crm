@@ -24,6 +24,14 @@
                 { data: "file_path", name: "file_path" },
                 { data: "source", name: "source" },
                 { data: "total_records", name: "total_records" },
+                { data: "is_processed", name: "is_processed", 
+                  render: function(data, type, row) {
+                    if (row.is_processed == 1) {
+                      return "True";
+                    }
+                    return "False";
+                  }
+                },
                 { data: "created_at", name: "created_at" },
                 { data: "updated_at", name: "updated_at" },
             ],
@@ -49,6 +57,7 @@
                           <th>File Path</th>
                           <th>Source</th>
                           <th>Total Records</th>
+                          <th>Is Processed</th>
                           <th>Created At</th>
                           <th>Updated At</th>
                         </tr>
