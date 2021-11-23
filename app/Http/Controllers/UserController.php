@@ -148,10 +148,13 @@ class UserController extends Controller
         $teams = Team::orderBy('name', 'asc')->get();
 
         $userTeam = UserTeams::where('user_id', $user->id)->get()->first();
-        $managerIds = UserTeams::where('team_id', $userTeam->team_id)->where('manager_id', null)->where('user_id', '!=', $user->id)->get()->pluck('user_id');
-        $managers = User::whereIn('id', $managerIds)->get();
-        $selectedTeam = $userTeam->team_id;
-        $selectedManager = $userTeam->manager_id;
+        $managers = [];
+        if($userTeam != null && $userTeam->team_id != null){
+            $managerIds = UserTeams::where('team_id', $userTeam->team_id)->where('manager_id', null)->where('user_id', '!=', $user->id)->get()->pluck('user_id');
+            $managers = User::whereIn('id', $managerIds)->get();
+        }
+        $selectedTeam = $userTeam ? $userTeam->team_id : 0;
+        $selectedManager = $userTeam ? $userTeam->manager_id : 0;
         return view('user.edit', compact('user', 'roles', 'userRole', 'teams', 'selectedTeam', 'managers', 'selectedManager'));
     }
     /**
@@ -161,7 +164,7 @@ class UserController extends Controller
      * @param  \App\User  $user
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, User $user)
+        public function update(Request $request, User $user)
     {
         $this->validate($request, [
             'name' => 'required|max:120',
@@ -172,11 +175,11 @@ class UserController extends Controller
         $user->email = $request->email;
         $user->password = bcrypt($request->password);
         $user->save();
-
-        UserTeams::where('user_id',$user->id)->update(
-            ['team_id'=>$request->team,
-            'manager_id'=> $request->manager == 0 || $request->manager == '' ? null : $request->manager ]
-        );
+        $userTeamDataArray = [ 'team_id' => $request->team];
+        if($request->manager != 0 && $request->manager != '') {
+            $userTeamDataArray['manager_id'] = $request->manager;
+        }
+        UserTeams::updateOrCreate(['user_id' => $user->id] , $userTeamDataArray);
         DB::table('model_has_roles')->where('model_id', $user->id)->delete();
         $user->assignRole($request->input('roles'));
         if (isset($request->return_to_view))

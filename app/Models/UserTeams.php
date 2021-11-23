@@ -11,4 +11,5 @@ class UserTeams extends Model implements AuditableContract
 {
     use HasFactory, Auditable;
     protected $table = 'user_team';
+    protected $fillable = ['user_id', 'team_id', 'manager_id'];
 }
