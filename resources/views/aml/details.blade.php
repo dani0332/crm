@@ -18,15 +18,12 @@
                             class="btn btn-success btn-sm"
                             onclick="return confirm('Do you want to update status to AML Screening Cleared?');">Pass</a></li>
                         @endif
-                        @if ($isCurrentUserFromCompliance == 1 && $firstAmlLogResults == 0 && $latestAmlLogResults > 0 && $getAMLNumRows >= 2)
-                            <li><a href="{{ $quoteRequest->id }}/quoteStatusUpdate/{{ quoteStatusCode::AMLScreeningFailed }}"
-                            class='btn btn-danger btn-sm'
-                            onclick="return confirm('Do you want to update status to AML Screening Failed?');">Fail</a></li>
+                        @if ($isCurrentUserFromPaAml == 1 && $firstAmlLogResults == 0 && $latestAmlLogResults == 0 && $getAMLNumRows >= 2)
                             <li><a href="{{ $quoteRequest->id }}/quoteStatusUpdate/{{ quoteStatusCode::AMLScreeningCleared }}"
                             class="btn btn-success btn-sm"
                             onclick="return confirm('Do you want to update status to AML Screening Cleared?');">Pass</a></li>
                         @endif
-                        @if ($isCurrentUserFromCompliance == 1 && $firstAmlLogResults > 0 && $latestAmlLogResults > 0 && $getAMLNumRows >= 2)
+                        @if ($isCurrentUserFromCompliance == 1)
                             <li><a href="{{ $quoteRequest->id }}/quoteStatusUpdate/{{ quoteStatusCode::AMLScreeningFailed }}"
                             class='btn btn-danger btn-sm'
                             onclick="return confirm('Do you want to update status to AML Screening Failed?');">Fail</a></li>
