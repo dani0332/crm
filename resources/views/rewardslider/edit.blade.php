@@ -32,7 +32,7 @@
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="text_ar">Link <span class="required">*</span></label>
                         <div class="col-md-6 col-sm-6">
-                            <input type="text" id="link" name="link" value="{{ old('link', $rewardSlider->link) }}" class="form-control">
+                            <input type="text" id="link" name="link" value="{{ old('link', $rewardSlider->link) }}" class="form-control" data-placement="top" title="Please enter link for redirection">
                             @if ($errors->has('link'))
                                 <span class="text-danger">{{ $errors->first('link') }}</span>
                             @endif
@@ -72,7 +72,7 @@
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="is_active">Is Active</label>
                         <div class="col-md-6 col-sm-6">
-                            <select class="form-control" id='is_active' name="is_active">
+                            <select class="form-control" id='is_active' name="is_active" data-toggle="tooltip" data-placement="top" title="Please select active false/true">
                                 <option value="0" {{ $rewardSlider->is_active == 0 ? 'selected="selected"' : '' }}>False</option>
                                 <option value="1" {{ $rewardSlider->is_active == 1 ? 'selected="selected"' : '' }}>True</option>
                             </select>
