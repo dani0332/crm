@@ -43,7 +43,7 @@ class LeadStatusService extends BaseService
             foreach ($searchProperties as $item) {
                 if(!empty($request[$item])){
                     $suffix = 'ls';
-                    $this->query = $this->query. $count > 0 ? ' and' : ' where '.$suffix.'.'.$item.'='."'".$request[$item]."'";
+                    $this->query = $this->query. ($count > 0 ? ' and' : ' where ').$suffix.'.'.$item.'='."'".$request[$item]."'";
                     $count++;
                 }
             }

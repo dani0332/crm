@@ -193,11 +193,11 @@
         <div class="col-md-12 col-sm-12 ">
             <div class="x_panel">
                 <div class="x_title">
-                    <h2>{{ $model->modelType }} List</h2>
+                    <h2>{{ str_contains(strtolower($model->modelType), 'team') ? 'Team' : (str_contains(strtolower($model->modelType), 'leadstatus') ? 'Lead Status' : $model->modelType) }} List</h2>
                     <ul class="nav navbar-right panel_toolbox">
                         @if (Auth::user()->hasRole('ADMIN') || Auth::user()->hasRole($model->modelType.'_MANAGER') || Auth::user()->hasRole($model->modelType.'_DEPUTY') ||Auth::user()->hasRole($model->modelType.'_ADVISOR'))
                         <li><a href="{{ url('quotes/' . strtolower($model->modelType) . '/create') }}"
-                             class="btn btn-warning btn-sm">Create Lead</a></li>
+                             class="btn btn-warning btn-sm">Create {{ str_contains(strtolower($model->modelType), 'team') ? 'Team' : (str_contains(strtolower($model->modelType), 'leadstatus') ? 'Lead Status' : 'Lead') }}</a></li>
                         @endif
 
                     </ul>

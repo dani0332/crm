@@ -25,6 +25,7 @@ class RoleController extends Controller
      */
     public function index(Request $request)
     {
+        $date_time_format = config('constants.datetime_format');
         if ($request->ajax()) {
             $data = Role::select('*')->orderBy('created_at','desc');
             return Datatables::of($data)
@@ -33,6 +34,12 @@ class RoleController extends Controller
                     return view('roles.actions', compact('row'))->render();
                 })
                 ->rawColumns(['action'])
+                ->editColumn('created_at', function ($q) use($date_time_format){
+                    return date($date_time_format, strtotime($q->created_at));
+                })
+                ->editColumn('updated_at', function ($q) use($date_time_format){
+                    return date($date_time_format, strtotime($q->updated_at));
+                })
                 ->make(true);
         }
         return view('roles.view');

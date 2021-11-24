@@ -41,6 +41,9 @@
                                 @endforeach
                             @endforeach
                         </select>
+                        @if ($errors->has('permission'))
+                            <span class="text-danger">{{ $errors->first('permission') }}</span>
+                        @endif
                         </div>
                     </div>
                     <div id='redirect_to_view_div'></div>
