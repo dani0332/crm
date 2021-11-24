@@ -86,8 +86,7 @@
                 </div>
                 <div class="quote-plan-modal-body"> </div>
                 <div class="modal-footer" style="border: none">
-                        {{-- <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                        <button type="button" class="btn btn-primary">Save changes</button> --}}
+
                 </div>
             </div>
         </div>
@@ -105,10 +104,11 @@
                     </div>
                     @if(gettype($listQuotePlans) != 'string')
                     <div class="x_content">
+                        <div class="alert alert-success" id="quotePlansGenerateMsg" style="display: none">Copied!</div>
                         <div class="row">
                             <div class="col-auto mr-auto"></div>
                             <div class="col-auto">
-                                <input type="hidden" id="selectquoteUuId" name="selectquoteUuId" value="{{ $record[0]->uuid }}">
+                                <input type="hidden" id="quotePlansGenerateUrl" name="quotePlansGenerateUrl" value="{{ $ecomCarInsuranceQuoteUrl.$record[0]->uuid }}">
                                 <button type="button" id="quotePlansGenerateButton" name="quotePlansGenerateButton" class="btn btn-warning btn-sm">Generate Quote</button>
                             </div>
                         </div>

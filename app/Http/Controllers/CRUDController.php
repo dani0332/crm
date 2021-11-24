@@ -18,6 +18,7 @@ use App\Services\UserService;
 use DataTables;
 use Auth;
 use Illuminate\Support\Facades\Redirect;
+use Config;
 
 class CRUDController extends Controller
 {
@@ -179,7 +180,9 @@ class CRUDController extends Controller
                 $listQuotePlans = $quotePlans;
             }
 
-            return view('shared.show', compact(['record', 'model', 'customTitles', 'listQuotePlans', 'customTableList']));
+            $ecomCarInsuranceQuoteUrl = Config::get('constants.ECOM_CAR_INSURANCE_QUOTE_URL');
+
+            return view('shared.show', compact(['record', 'model', 'customTitles', 'listQuotePlans', 'customTableList','ecomCarInsuranceQuoteUrl']));
         } else {
             return view('shared.show', compact(['record', 'model', 'customTitles', 'customTableList']));
         }
