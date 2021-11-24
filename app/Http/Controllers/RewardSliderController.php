@@ -18,7 +18,7 @@ class RewardSliderController extends Controller
     public function index(Request $request, RewardSlider $rewardSlider, Datatables $datatables)
     {
         if ($request->ajax()) {
-            return $datatables::of($rewardSlider::query()->orderBy('start_datetime','desc'))
+            return $datatables::of($rewardSlider::query()->orderBy('start_date','desc'))
                 ->addIndexColumn()
                 ->make(true);
         }

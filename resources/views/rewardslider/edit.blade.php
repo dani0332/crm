@@ -40,22 +40,22 @@
                     </div>
                     <div id="rewards_slider_start_end">
                         <div class="item form-group">
-                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="start_datetime">Start Date & Time<span class="required">*</span></label>
+                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="start_date">Start Date & Time<span class="required">*</span></label>
                             <div class="col-md-6 col-sm-6">
-                                <input type="hidden" id="rewardSliderEditStartDateTime" name="rewardSliderEditStartDateTime" value="{{ $rewardSlider->start_datetime }}">
-                                <input type="text" id="start_datetime" name="start_datetime" value="{{ old('start_datetime', $rewardSlider->start_datetime) }}" class="form-control" data-toggle="tooltip" data-placement="top" title="Please select start date & time">
-                                @if ($errors->has('start_datetime'))
-                                    <span class="text-danger">{{ $errors->first('start_datetime') }}</span>
+                                <input type="hidden" id="rewardSliderEditStartDateTime" name="rewardSliderEditStartDateTime" value="{{ $rewardSlider->start_date }}">
+                                <input type="text" id="start_date" name="start_date" value="{{ old('start_date', $rewardSlider->start_date) }}" class="form-control" data-toggle="tooltip" data-placement="top" title="Please select start date & time">
+                                @if ($errors->has('start_date'))
+                                    <span class="text-danger">{{ $errors->first('start_date') }}</span>
                                 @endif
                             </div>
                         </div>
                         <div class="item form-group">
-                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="end_datetime">End Date & Time<span class="required">*</span></label>
+                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="end_date">End Date & Time<span class="required">*</span></label>
                             <div class="col-md-6 col-sm-6">
-                                <input type="hidden" id="rewardSliderEditEndDateTime" name="rewardSliderEditEndDateTime" value="{{ $rewardSlider->end_datetime }}">
-                                <input type="text" id="end_datetime" name="end_datetime" value="{{ old('end_datetime', $rewardSlider->end_datetime) }}" class="form-control" data-toggle="tooltip" data-placement="top" title="Please select end date & time">
-                                @if ($errors->has('end_datetime'))
-                                    <span class="text-danger">{{ $errors->first('end_datetime') }}</span>
+                                <input type="hidden" id="rewardSliderEditEndDateTime" name="rewardSliderEditEndDateTime" value="{{ $rewardSlider->end_date }}">
+                                <input type="text" id="end_date" name="end_date" value="{{ old('end_date', $rewardSlider->end_date) }}" class="form-control" data-toggle="tooltip" data-placement="top" title="Please select end date & time">
+                                @if ($errors->has('end_date'))
+                                    <span class="text-danger">{{ $errors->first('end_date') }}</span>
                                 @endif
                             </div>
                         </div>
