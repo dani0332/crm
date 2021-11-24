@@ -7,14 +7,13 @@ use App\Services\LeadsService;
 use App\Transformers\LeadsTransformer;
 use Auth;
 
+
 class FormController extends ApiController
 {
 
     public function index(Request $request)
     {
         try {
-
-            //sleep(1);
             $parentFormModelColl = collect(config('form-models')[$request->form]);
             $filters = $request->query('filter') ? json_decode($request->query('filter'), true) : [];
             $parentFormModel = $parentFormModelColl->get('model');

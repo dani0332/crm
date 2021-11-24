@@ -1,6 +1,71 @@
 @extends('layouts.app')
 @section('title', 'Add '.$model->modelType )
 @section('content')
+<script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
+<script>
+    $(document).ready(function(){
+        String.prototype.replaceAll = function(search, replacement) {
+        var target = this;
+        return target.replace(new RegExp(search, 'g'), replacement);
+        };
+
+
+        function convertObjectToArray(obj) {
+        return Object.keys(obj).map(key => ({
+            name: key,
+            value: obj[key],
+            }));
+        }
+        var model = JSON.parse('<?php echo json_encode(get_object_vars($model)) ?>');
+        var modelPropertiesArray = convertObjectToArray(model.properties);
+        if(model.modelType == "Home") {
+            $('#has_personal_belongings_div,#personal_belongings_aed_div,#has_building_div,#building_aed_div,#contents_aed_div').each(function(){
+                debugger;
+                if($('#'+$(this).attr('id').replace('_div', '')).attr('type') == 'checkbox'){
+                    if(!$('#'+$(this).attr('id').replace('_div', '')).is(':checked')) {
+                        $(this).hide();
+                    }
+                }
+                else{
+                    if($('#'+$(this).attr('id').replace('_div', '')).val() == '') {
+                        $(this).hide();
+                    }
+                }
+
+            });
+            $('#iam_possesion_type_id').on('change',function(){
+                debugger;
+                if($("#iam_possesion_type_id option:selected").text() == 'A landlord'){
+                    $('#has_building_div').show();
+                }
+                else{
+                    $('#has_building_div').hide();
+                }
+            });
+
+            $('#has_personal_belongings').on('change',function(){
+                this.checked ? $('#personal_belongings_aed_div').show() : $('#personal_belongings_aed_div').hide();
+            });
+            $('#has_building').on('change',function(){
+                this.checked ? $('#building_aed_div').show() : $('#building_aed_div').hide();
+            });
+            $('#has_contents').on('change',function(){
+                if(this.checked){
+                    if($("#iam_possesion_type_id option:selected").text() == 'A landlord'){
+                        $('#has_building_div').show();
+                    }
+                    $('#contents_aed_div').show();
+                    $('#has_personal_belongings_div').show();
+                }
+                else{
+                    $('#contents_aed_div').hide();
+                    $('#has_personal_belongings_div').hide();
+                }
+            });
+        }
+    });
+
+</script>
     <div class="row">
         <div class="col-md-12 col-sm-12">
             <div class="x_panel">
@@ -16,7 +81,10 @@
                     @if (session()->has('success'))
                         <div class="alert alert-success">{{ session()->get('success') }}</div>
                     @endif
-                    <form id="demo-form2" action="{{ route('saveQuote') }}" method='post' enctype="multipart/form-data"
+                    @if (session()->has('message'))
+                        <div class="alert alert-danger">{{ session()->get('message') }}</div>
+                    @endif
+                    <form id="demo-form2" autocomplete="off" action="{{ route('saveQuote') }}" method='post' enctype="multipart/form-data"
                         data-parsley-validate class="form-horizontal form-label-left" autocomplete="off">
                         {{ csrf_field() }}
                         <input type="hidden" name="model" value={{ json_encode($model->properties) }} />
@@ -31,7 +99,7 @@
                             @else
                                 @if(!str_contains($model->skipProperties['create'], $property))
                                 @if(strpos($value, 'input') !== false )
-                                <div @if(count($model->properties) < 6) class="col-md-12" @else class="col-md-6" @endif>
+                                <div @if(count($model->properties) < 6) class="col-md-12" @else class="col-md-6" @endif id={{$property.'_div'}}>
                                 <div class="col">
                                     <span class="col-form-label col-md-6 col-sm-6" for="name">
                                         @if(strpos($value, 'title'))
@@ -51,7 +119,7 @@
                                 </div>
                                 @endif
                                 @if(strpos($value, 'select') !== false)
-                                <div @if(count($model->properties) <6) class="col-md-12" @else class="col-md-6" @endif>
+                                <div @if(count($model->properties) <6) class="col-md-12" @else class="col-md-6" @endif id={{$property.'_div'}}>
                                 <div class="col">
                                     <span class="col-form-label col-md-6 col-sm-6" for="name">
                                         @if(strpos($value, 'title'))
@@ -100,6 +168,36 @@
                                 </div>
                                 @endif
                                 @endif
+                                @if(strpos($value, 'static') !== false )
+                                <div @if(count($model->properties) < 6) class="col-md-12" @else class="col-md-6" @endif id={{$property.'_div'}}>
+                                <div class="col">
+                                    <span class="col-form-label col-md-6 col-sm-6" for="name">
+                                        @if(strpos($value, 'title'))
+                                            {{ strtoupper($customTitles[$property])}}
+                                        @else
+                                            {{str_replace("_"," ",strtoupper($property))}}
+                                        @endif
+                                        @if(strpos($value, "required") == true)
+                                        <span class='required'>*</span>
+                                        @endif
+                                    </span>
+                                    @php
+                                        $propertyLastIndex = explode('|', $model->properties[$property]);
+                                        $staticOptionString = end($propertyLastIndex);
+                                        $staticOptions = explode(',', $staticOptionString);
+                                    @endphp
+
+                                    <select @if(strpos($value, 'multiple')) name="{{$property.'[]'}}" multiple="multiple" class="form-control select2 select-roles" @else class="form-control" name="{{$property}}" @endif id="{{$property}}" >
+                                        @foreach($staticOptions as $item)
+                                         <option value="{{ $item }}">{{ $item }}</option>
+                                        @endforeach
+                                    </select>
+                                    @if ($errors->has($property))
+                                    <span class="text-danger">{{ $errors->first($property) }}</span>
+                                    @endif
+                                </div>
+                                </div>
+                                @endif
                             @endif
                             @php
                             $index++
@@ -112,9 +210,9 @@
                             @foreach ($model->properties as $property => $value)
                                 @if (strpos($value, 'checkbox'))
 
-                                    <div class="col-md-2">
-                                        <div class="col-md-6">
-                                            <label for="middle-name" style="margin-top: 8px;">
+                                    <div class="col-md-3" id={{$property.'_div'}}>
+                                        <div class="col-md-8">
+                                            <label for="middle-name" style="margin-top: 8px;float: left">
                                                 <b>
                                                     @if(strpos($value, 'title'))
                                                         {{ strtoupper($customTitles[$property])}}
@@ -122,16 +220,21 @@
                                                         {{str_replace("_"," ",strtoupper($property))}}
                                                     @endif
                                                 </b>
+
                                             </label>
+                                            @if(strpos($value, "required") == true)
+                                            <span class='required' style="float: left;margin-top: 8px;margin-left: 1px;">*</span>
+                                            @endif
+                                            @if ($errors->has($property))
+                                                <span style="float: left" class="text-danger">{{ $errors->first($property) }}</span>
+                                            @endif
                                         </div>
-                                        <div class="col-md-3">
-                                            <input type={{ explode("|", $value)[1]  }} {{ old($property) ? 'checked' : '' }} style="float: right;" id="name" name={{$property}}>
+                                        <div class="col-md-2">
+                                            <input type={{ explode("|", $value)[1]  }} {{ old($property) ? 'checked' : '' }} style="float: right;" id={{$property}} name={{$property}}>
                                         </div>
                                     </div>
                                     <br />
-                                    @if ($errors->has($property))
-                                        <span class="text-danger">{{ $errors->first($property) }}</span>
-                                    @endif
+
                                 @endif
                             @endforeach
                         <div style="clear: both;"></div>

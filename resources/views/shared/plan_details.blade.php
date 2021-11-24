@@ -4,9 +4,6 @@
             <div class="x_panel" style="border: none">
                 <div class="x_title" style="text-align: center;">
                     <div class="h5">{{ ucwords($listQuotePlanName) }}</div>
-                    {{-- <ul class="nav navbar-right panel_toolbox">
-                        <li><a href="{{ url()->previous() }}" class="btn btn-warning btn-sm">Go Back</a></li>
-                    </ul> --}}
                     <div class="clearfix"></div>
                 </div>
 

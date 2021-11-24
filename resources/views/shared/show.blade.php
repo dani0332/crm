@@ -1,6 +1,11 @@
 @extends('layouts.app')
 @section('title', $model->modelType.' Detail')
 @section('content')
+<style>
+#quote-plans table.dataTable thead .sorting_asc:after {
+    content: none !important;
+}
+</style>
     <div class="row">
         <div class="col-md-12 col-sm-12 admin-detail">
             <div class="x_panel">
@@ -22,20 +27,43 @@
                     @foreach($model->properties as $property => $value)
                         <div class="item form-group">
                             @if(strpos($value, 'title'))
-                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="Status Description"><b>{{ strtoupper($customTitles[$property])}}</b></label>
+                                <label class="col-form-label col-md-3 col-sm-3 label-align" for="Status Description"><b>{{ strtoupper($customTitles[$property])}}</b></label>
                             @else
-                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="Status Description"><b>{{str_replace("_"," ",strtoupper($property))}}</b></label>
+                                <label class="col-form-label col-md-3 col-sm-3 label-align" for="Status Description"><b>{{str_replace("_"," ",strtoupper($property))}}</b></label>
                             @endif
-                            <div class="col-md-6 col-sm-6">
-                                <p class="label-align-center">{{ $record[$property] }}</p>
-                            </div>
+                            @if(str_contains($value, 'select'))
+                                @if(str_contains($value, 'customTable'))
+                                <div class="col-md-6 col-sm-6">
+                                    <p class="label-align-center">{{ $customTableList[$property][0]->names }}</p>
+                                </div>
+                                @else
+                                    <div class="col-md-6 col-sm-6">
+                                        @php
+                                            $propertyName = $property.'_text';
+                                        @endphp
+                                        <p class="label-align-center">{{ $record[0]->$propertyName}}</p>
+                                    </div>
+                                @endif
+                            @else
+                                @if(str_contains($value, 'customTable'))
+                                <div class="col-md-6 col-sm-6">
+                                    <p class="label-align-center">{{ $customTableList[$property][0]->names }}</p>
+                                </div>
+                                @else
+                                    <div class="col-md-6 col-sm-6">
+                                        <p class="label-align-center">{{ $record[0]->$property }}</p>
+                                    </div>
+                                @endif
+                            @endif
                         </div>
                     @endforeach
                     <div class="ln_solid"></div>
                     <div class="row">
                         <div class="col-auto mr-auto"></div>
                         <div class="col-auto">
-                            <a id="texta" href="{{ url('quotes/'.strtolower($model->modelType).'/'.$record->id.'/edit') }}" class='btn btn-warning btn-sm'>Edit</a>
+                            @if (Auth::user()->hasRole('ADMIN') || Auth::user()->hasRole($model->modelType.'_MANAGER') || Auth::user()->hasRole($model->modelType.'_DEPUTY') ||Auth::user()->hasRole($model->modelType.'_ADVISOR'))
+                            <a id="texta" href="{{ url('quotes/'.strtolower($model->modelType).'/'.$record[0]->uuid.'/edit') }}" class='btn btn-warning btn-sm'>Edit</a>
+                            @endif
                         </div>
                     </div>
                 </div>
@@ -65,7 +93,7 @@
         </div>
     </div>
 
-    <form method="post" action="#{{-- {{ $record->id }}/quotePlansGenerate--}}" class="form-horizontal form-label-left" role="form" data-parsley-validate=""novalidate="" autocomplete="off">
+    <form method="post" action="#" class="form-horizontal form-label-left" role="form" data-parsley-validate=""novalidate="" autocomplete="off">
         {{csrf_field()}}
         @method('GET')
         <div class="row">
@@ -75,42 +103,44 @@
                         <h2>Available Plans</h2>
                         <div class="clearfix"></div>
                     </div>
+                    @if(gettype($listQuotePlans) != 'string')
                     <div class="x_content">
                         <div class="row">
                             <div class="col-auto mr-auto"></div>
                             <div class="col-auto">
-                                <input type="hidden" id="selectquotePlanId" name="selectquotePlanId" value="">
-                                <button type="submit" id="quotePlansGenerateButton" name="quotePlansGenerateButton" class="btn btn-warning btn-sm">Generate Quote</button>
+                                <input type="hidden" id="selectquoteUuId" name="selectquoteUuId" value="{{ $record[0]->uuid }}">
+                                <button type="button" id="quotePlansGenerateButton" name="quotePlansGenerateButton" class="btn btn-warning btn-sm">Generate Quote</button>
                             </div>
                         </div>
-                        <table id="datatable" class="table table-striped jambo_table" style="width:100%">
-                            <thead>
-                                <tr>
-                                    <th>Provider Name</th>
-                                    <th>Plan Name</th>
-                                    <th>Repair Type</th>
-                                    <th>Actual Premium</th>
-                                    <th>VAT Premium</th>
-                                    <th>Discount Premium</th>
-                                    <th> </th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach ($listQuotePlans as $key => $quotePlan)
+                        <div id="quote-plans">
+                            <table id="datatable" class="table table-striped jambo_table" style="width:100%">
+                                <thead>
                                     <tr>
-                                        <td><span><input type="checkbox" id="quotePlanId" name="quotePlanId" value="{{ $quotePlan->id }}" style="height: unset !important;"></span>
-                                            <span>{{ ucwords($quotePlan->providerName) }}</span></td>
-                                        {{-- <td><a href="{{ $record->id }}/plan_details/{{ $quotePlan->id }}" target="_blank">{{ ucwords($quotePlan->name) }}</td> --}}
-                                        <td>{{ ucwords($quotePlan->name) }}</td>
-                                        <td>{{ $quotePlan->repairType }}</td>
-                                        <td>{{ $quotePlan->actualPremium }}</td>
-                                        <td>{{ $quotePlan->vatPremium }}</td>
-                                        <td>{{ $quotePlan->discountPremium }}</td>
-                                        <td><a testurl="{{ $record->id }}/plan_details/{{ $quotePlan->id }}" class="btn btn-primary btn-sm m-2 quotePlanModalPopup" data-toggle="modal" data-target="#quotePlanModal">Plan Details</a></td>
+                                        <th>Provider Name</th>
+                                        <th>Plan Name</th>
+                                        <th>Repair Type</th>
+                                        <th>Actual Premium</th>
+                                        <th>Premium with VAT</th>
+                                        <th>Action</th>
                                     </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    @foreach ($listQuotePlans as $key => $quotePlan)
+                                        <tr>
+                                            <td>{{ ucwords($quotePlan->providerName) }}</td>
+                                            <td>{{ ucwords($quotePlan->name) }}</td>
+                                            <td>{{ $quotePlan->repairType }}</td>
+                                            <td>{{ $quotePlan->actualPremium }}</td>
+                                            <td>{{ $quotePlan->actualPremium + $quotePlan->vatPremium }}</td>
+                                            <td><a href="#" planDetailUrl="{{ $record[0]->uuid }}/plan_details/{{ $quotePlan->id }}" data-toggle="modal" data-target="#quotePlanModal" class="quotePlanModalPopup">View</a></td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                        @else
+                        <h4>{{ $listQuotePlans }}</h4>
+                        @endif
                     </div>
                 </div>
             </div>

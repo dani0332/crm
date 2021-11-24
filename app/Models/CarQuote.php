@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\BaseModel;
 use Auth;
+use App\Jobs\FTCMailServiceJob;
+use LookUpModel;
 
 class CarQuote extends BaseModel
 {
@@ -86,6 +88,11 @@ class CarQuote extends BaseModel
         return $this->hasOne(CarMake::class, 'id', 'car_make_id')->select(['id', 'code','text']);;
     }
 
+    public function carQuoteRequestDetail()
+    {
+        return $this->hasOne(CarQuoteRequestDetail::class, 'car_quote_request_id', 'id');
+    }
+
     public function car_model_id()
     {
         return $this->hasOne(CarModel::class, 'id', 'car_model_id')->select(['id', 'code','text']);;
@@ -155,6 +162,10 @@ class CarQuote extends BaseModel
     {
         return $this->hasOne(User::class, 'id', 'pa_id')->select(['id', 'email','name']);
     }
+    public function invoicing()
+    {
+        return $this->hasOne(User::class, 'id', 'invoicing')->select(['id', 'email','name']);
+    }
 
     public function advisor_id()
     {
@@ -167,7 +178,7 @@ class CarQuote extends BaseModel
     public function relations() {
 
         if($this->isGetList)
-            return [];
+            return ["pa_id","invoicing", "quote_status_id"];
         else
             return ["payment_detail","quote_status_id", "kyc_status_id", "insurance_coverage.insurance_company_id", "insurance_coverage.insurance_plan_id", "insurance_coverage.vehicle_type_id", "uae_license_held_for_id", "car_make_id", "car_model_id", "emirate_of_registration_id", "claim_history_id",  "nationality_id", "vehicle_detail_id", "pa_id", "car_quote_kyc"];
     }
@@ -180,16 +191,16 @@ class CarQuote extends BaseModel
         'access' => [
             "pa" => [ 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'created_at','car_value', "pa_id","invoicing"],
             "production_approval_manager" => [ 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'created_at','car_value', "pa_id","invoicing"],
-            "advisor" => [ 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'created_at','car_value' ],
+            "advisor" => [ 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'created_at','car_value', 'dob', 'nationality_id' ],
             "admin" => [ 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'created_at','car_value' ],
             "invoicing" => [ 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'created_at','car_value','invoicing']
         ],
         "list" => [
             "pa" => [ 'id','code', 'first_name', 'last_name',  'created_at', "pa_id", "kyc_status_id","quote_status_id","aml_status","invoicing"],
             "production_approval_manager" => [ 'id','code', 'first_name', 'last_name',  'created_at', "pa_id", "kyc_status_id","quote_status_id","aml_status","invoicing"],
-            "advisor" => [ 'id','code', 'first_name', 'last_name',  'created_at', "pa_id", "kyc_status_id","quote_status_id","aml_status","invoicing"],
+            "advisor" => [ 'id','code', 'first_name', 'last_name', 'updated_at', 'created_at', "pa_id", "kyc_status_id","quote_status_id","aml_status","invoicing"],
             "admin" => [ 'id','code', 'first_name', 'last_name',  'created_at', "kyc_status_id","quote_status_id","aml_status","invoicing"],
-            "invoicing" => [ 'id','code', 'first_name', 'last_name',  'created_at' , "kyc_status_id","quote_status_id","aml_status","invoicing"]
+            "invoicing" => [ 'id','code', 'first_name', 'last_name',"pa_id",  'created_at' , "kyc_status_id","quote_status_id","aml_status","invoicing"]
         ],
         "detail" => [
             "pa" => [ 'id','code', 'dob','first_name', 'last_name', 'email', 'mobile_no','Year_of_manufacture',"kyc_status_id","quote_status_id", 'created_at', "car_make_id", "car_model_id", "emirate_of_registration_id", "claim_history_id",  "nationality_id","uae_license_held_for_id", "pa_id","aml_status","invoicing"],
@@ -208,11 +219,11 @@ class CarQuote extends BaseModel
             $restrictFilter = [];
 
             if(Auth::user()->hasRole('advisor')) {
-                if(!array_key_exists('code', $filters)){
-                    return [];
-                }else{
-                    $restrictFilter["code"] = $filters["code"];
+                if(empty($filters)){
                     $restrictFilter["advisor_id"] = Auth::user()->id;
+                }else{
+                    $restrictFilter["advisor_id"] = Auth::user()->id;
+                    $restrictFilter = array_merge($restrictFilter,$filters);
                 }
             }
 
@@ -220,10 +231,18 @@ class CarQuote extends BaseModel
                 if(!array_key_exists('pa_id', $filters)){
                     return [];
                 }else{
+
+                    $valuesIn = [];
+                    array_push($valuesIn,  LookUpModel::getLookModel('QuoteStatus', ['code', '=', 'ftc_accepted']));
+                    array_push($valuesIn,  LookUpModel::getLookModel('QuoteStatus', ['code', '=', 'kyc_cleared']));
+                    array_push($valuesIn,  LookUpModel::getLookModel('QuoteStatus', ['code', '=', 'missing_documents_requested']));
+                    array_push($valuesIn,  LookUpModel::getLookModel('QuoteStatus', ['code', '=', 'ftc_resubmitted']));
+                    array_push($valuesIn,  LookUpModel::getLookModel('QuoteStatus', ['code', '=', 'transaction_approved']));
+
                     $pa_id = $filters["pa_id"] == 0 ? NULL : Auth::user()->id;
                     $restrictFilter["pa_id"] = $pa_id;
                     $restrictFilter["advisor_id"] = ["op" => "<>", "val" => ''];
-                    $restrictFilter["quote_status_id"] =  ["op" => "in", "val" => [9, 11, 12, 10, 15]];
+                    $restrictFilter["quote_status_id"] =  ["op" => "in", "val" => $valuesIn];
                 }
             }
 
@@ -231,10 +250,17 @@ class CarQuote extends BaseModel
                 if(!array_key_exists('pa_id', $filters)){
                     return [];
                 }else{
+
+                    $valuesIn = [];
+                    array_push($valuesIn,  LookUpModel::getLookModel('QuoteStatus', ['code', '=', 'AMLScreeningCleared']));
+                    array_push($valuesIn,  LookUpModel::getLookModel('QuoteStatus', ['code', '=', 'transaction_declined']));
+                    array_push($valuesIn,  LookUpModel::getLookModel('QuoteStatus', ['code', '=', 'transaction_approved']));
+
+
                     $pa_id = $filters["pa_id"] == 0 ? NULL : Auth::user()->id;
                     $restrictFilter["invoicing"] = $pa_id;
                     $restrictFilter["advisor_id"] = ["op" => "<>", "val" => ''];
-                    $restrictFilter["quote_status_id"] =  ["op" => "in", "val" => [13, 14, 15]];
+                    $restrictFilter["quote_status_id"] =  ["op" => "in", "val" => $valuesIn];
                 }
             }
 
@@ -248,10 +274,53 @@ class CarQuote extends BaseModel
 
         if( Auth::user()->hasRole('pa') && $request->has('action')) {
             $request->request->add(['pa_id' => Auth::user()->id]);
+
+            $carQuote = CarQuote::where(['id' => $request->form_id])->whereNull('pa_id')->first();
+            if($carQuote) {
+                $templateParams = [
+                    'notes' => "Your approval request has been assigned to a Production team member",
+                    "first_name" => $carQuote->first_name,
+                    "last_name" => $carQuote->last_name,
+                    "code" => $carQuote->code
+                ];
+
+                $advisorEmail = $carQuote->advisor_id()->get()->first()->email;
+                if($advisorEmail) {
+                    $params = [
+                        'to' => $advisorEmail,
+                        'subject' => 'Your approval request has been assigned to a Production team - CDB-ID:'.$carQuote->code,
+                        'templateName' => 'notification',
+                        'templateParams' => $templateParams
+                    ];
+                    dispatch(new FTCMailServiceJob($params));
+                }
+            }
             return parent::saveForm($request, true);
         }
         else if(Auth::user()->hasRole('invoicing') && $request->has('action')){
             $request->request->add(['invoicing' => Auth::user()->id]);
+
+            $carQuote = CarQuote::where(['id' => $request->form_id])->whereNull('invoicing')->first();
+            if($carQuote) {
+                $templateParams = [
+                    'notes' => "Lead has been assigned to a Payment team member",
+                    "first_name" => $carQuote->first_name,
+                    "last_name" => $carQuote->last_name,
+                    "code" => $carQuote->code
+                ];
+
+                $advisorEmail = $carQuote->advisor_id()->get()->first()->email;
+                if($advisorEmail) {
+                    $params = [
+                        'to' => $advisorEmail,
+                        'subject' => 'Lead has been assigned to a Payment team member - CDB-ID:'.$carQuote->code,
+                        'templateName' => 'notification',
+                        'templateParams' => $templateParams
+                    ];
+                    dispatch(new FTCMailServiceJob($params));
+                }
+            }
+            
             return parent::saveForm($request, true);
         }
         else{

@@ -7,6 +7,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 use Config;
+use Illuminate\Support\Arr;
 
 class FTCMailerService extends Mailable
 {
@@ -29,11 +30,19 @@ class FTCMailerService extends Mailable
      */
     public function build()
     {
-        $fromEmail = Config::get('constants.MAIL_FROM_ADDRESS');
+        $fromEmail = Config::get('constants.MAIL_NOTIFICATION_FTC');
         $fromName = Config::get('constants.MAIL_FROM_NAME');
-        return $this
+        $email = $this
             ->subject($this->request['subject'])
             ->from($fromEmail, $fromName)
             ->view('email.'. $this->request['templateName'].'', collect($this->request['templateParams'])->toArray());
+
+        if(Arr::has($this->request['templateParams'], 'attachment')){
+            $attachment =   collect($this->request['templateParams']['attachment'])->toArray();
+            foreach($attachment as $filePath){
+                $email->attach($filePath);
+            }
+        }
+        return $email;
     }
 }

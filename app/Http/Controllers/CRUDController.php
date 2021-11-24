@@ -3,32 +3,64 @@
 namespace App\Http\Controllers;
 
 use App\Models\GenericModel;
+use App\Services\BusinessQuoteService;
 use Illuminate\Http\Request;
 use App\Services\DropdownSourceService;
 use App\Services\HealthQuoteService;
 use App\Services\CarQuoteService;
 use App\Services\CRUDService;
+use App\Services\HomeQuoteService;
+use App\Services\LeadStatusService;
+use App\Services\LifeQuoteService;
 use App\Services\TeamService;
+use App\Services\TravelQuoteService;
+use App\Services\UserService;
 use DataTables;
+use Auth;
+use Illuminate\Support\Facades\Redirect;
+
 class CRUDController extends Controller
 {
     protected $genericModel;
     protected $healthQuoteService;
-    protected $teamService;
+    protected $teamsService;
     protected $dropdownSourceService;
     protected $carQuoteService;
     protected $crudService;
-    public function __construct(Request $request, HealthQuoteService $healthService, TeamService $teamService, CRUDService $crudService, DropdownSourceService $dropdownSourceService,
-    CarQuoteService $carQuoteService)
-    {
+    protected $leadStatusService;
+    protected $travelQuoteService;
+    protected $lifeQuoteService;
+    protected $homeQuoteService;
+    protected $businessQuoteService;
+    protected $userService;
+    public function __construct(
+        HealthQuoteService $healthService,
+        TeamService $teamsService,
+        CRUDService $crudService,
+        DropdownSourceService $dropdownSourceService,
+        CarQuoteService $carQuoteService,
+        LeadStatusService $leadStatusService,
+        TravelQuoteService $travelQuoteService,
+        LifeQuoteService $lifeQuoteService,
+        HomeQuoteService $homeQuoteService,
+        BusinessQuoteService $businessQuoteService,
+        UserService $userService,
+        Request $request
+    ) {
         $this->genericModel = new GenericModel();
         $this->healthQuoteService = $healthService;
-        $this->teamService = $teamService;
+        $this->teamsService = $teamsService;
         $this->crudService = $crudService;
         $this->dropdownSourceService = $dropdownSourceService;
         $this->carQuoteService = $carQuoteService;
+        $this->leadStatusService = $leadStatusService;
+        $this->travelQuoteService = $travelQuoteService;
+        $this->lifeQuoteService = $lifeQuoteService;
+        $this->homeQuoteService = $homeQuoteService;
+        $this->businessQuoteService = $businessQuoteService;
+        $this->userService = $userService;
         $this->setModelType($request);
-        $this->fillModelByModelType($this->genericModel->modelType);
+        $this->fillModelByModelType(ucwords($this->genericModel->modelType), $request);
     }
 
     /**
@@ -38,34 +70,27 @@ class CRUDController extends Controller
      */
     public function index(Request $request)
     {
-        $model = $this->genericModel;
-        $gridData = $this->crudService->getGridData($this->genericModel);
-
-        $customTitles = [];
-        $dropdownSource = [];
-
-        foreach($model->properties as $property => $value) {
-            if(str_contains($value, 'title')){
+        $gridData = $this->crudService->getGridData($this->genericModel, $request);
+        $advisors = $this->crudService->getAdvisorsByModelType($this->genericModel->modelType);
+        $isManagerORDeputy = Auth::user()->hasAnyRole(['MANAGER', 'DEPUTY']);
+        $dropdownSource = $customTitles = [];
+        foreach ($this->genericModel->properties as $property => $value) {
+            if (str_contains($value, 'title')) {
                 $customTitles[$property] = $this->crudService->getCustomTitleByModelType($this->genericModel->modelType, $property);
             }
-            if(str_contains($value, 'select')){
+            if (str_contains($value, 'select')) {
                 $dropdownValue = $this->dropdownSourceService->getDropdownSource($property);
                 $dropdownSource[$property] = $dropdownValue;
             }
         }
-
+        $model = $this->genericModel;
         if ($request->ajax()) {
-            foreach ($model->searchProperties as $item) {
-                if(!empty($request[$item])){
-                    $gridData = $gridData->where($item, '=', $request[$item]);
-                }
-            }
             return DataTables::of($gridData)
-            ->addIndexColumn()
-            ->make(true);
-            return view('shared.view', compact('model','dropdownSource', 'customTitles'));
+                ->addIndexColumn()
+                ->make(true);
+            return view('shared.view', compact('model', 'dropdownSource', 'customTitles', 'advisors', 'isManagerORDeputy'));
         }
-        return view('shared.view', compact('model','dropdownSource', 'customTitles'));
+        return view('shared.view', compact('model', 'dropdownSource', 'customTitles', 'advisors', 'isManagerORDeputy'));
     }
 
     /**
@@ -75,19 +100,17 @@ class CRUDController extends Controller
      */
     public function create(Request $request)
     {
-        $this->fillModelByModelType($this->genericModel->modelType);
-        $model = $this->genericModel;
-        $dropdownSource = [];
-        $customTitles = [];
-        foreach($model->properties as $property => $value) {
-            if(str_contains($value, 'title')){
+        $customTitles = $dropdownSource = [];
+        foreach ($this->genericModel->properties as $property => $value) {
+            if (str_contains($value, 'title')) {
                 $customTitles[$property] = $this->crudService->getCustomTitleByModelType($this->genericModel->modelType, $property);
             }
-            if(str_contains($value, 'select')){
+            if (str_contains($value, 'select')) {
                 $data = $this->dropdownSourceService->getDropdownSource($property);
                 $dropdownSource[$property] = $data;
             }
         }
+        $model = $this->genericModel;
         return view('shared.add', compact('model', 'dropdownSource', 'customTitles'));
     }
 
@@ -99,16 +122,27 @@ class CRUDController extends Controller
      */
     public function store(Request $request)
     {
-        $modelPropertiesList = json_decode($request->all()['model'], true);
+        $modelPropertiesList = json_decode($request->get('model'), true);
+        $modelType = json_decode($request->modelType, true);
         $validateArray = [];
-        foreach($modelPropertiesList as $property => $value) {
-            if(strpos($value, 'required')){
-                $validateArray[$property] = 'required';
+        if ($modelType == 'Home') {
+            $validateArray = $this->homeQuoteService->getValidationArray($modelPropertiesList, $request);
+        } else {
+            foreach ($modelPropertiesList as $property => $value) {
+                if (strpos($value, 'required') && $property != 'id') {
+                    $validateArray[$property] = 'required';
+                }
             }
         }
-        $this->validate($request,$validateArray);
-        $this->crudService->saveModelByType(json_decode($request->modelType, true), $request);
-        return redirect()->back()->with('success', json_decode($request->modelType, true).' has been stored');
+        $this->validate($request, $validateArray);
+        $recordUUID = $this->crudService->saveModelByType($modelType, $request);
+        if(str_contains($recordUUID, 'Error')) {
+            return Redirect::back()->with('message', $modelType . ' '. explode(':', $recordUUID)[1])->withInput();
+        }
+        else{
+            return redirect('/quotes/' . strtolower($modelType) . '/' . $recordUUID)->with('success', $modelType . ' has been stored');
+        }
+
     }
 
     /**
@@ -120,23 +154,34 @@ class CRUDController extends Controller
     public function show($id)
     {
         $record = $this->crudService->getEntity($this->genericModel->modelType, $id);
+        if(!$record) abort(404);
         $model = $this->genericModel;
-        $customTitles = [];
-
-        foreach($model->properties as $property => $value) {
-            if(str_contains($value, 'title')){
+        $customTitles = $customTableList = [];
+        foreach ($model->properties as $property => $value) {
+            if (str_contains($value, 'title')) {
                 $customTitles[$property] = $this->crudService->getCustomTitleByModelType($this->genericModel->modelType, $property);
             }
+            if (str_contains($value, 'customTable')) {
+                $customTableList[$property] = $this->dropdownSourceService->getOnlySelectedItemName($property, $id);
+            }
         }
+        $quoteTypes = 'Health,Car,Travel,Life,Home,Business';
+        $serviceType = str_contains($quoteTypes, ucwords($model->modelType)) ? strtolower($model->modelType) . 'QuoteService' : lcfirst(ucwords($model->modelType)) . 'Service';
 
-        if($this->genericModel->modelType == "Car") { // Car plans to display on detail view
+        if ($this->genericModel->modelType == "Car") { // Car plans to display on detail view
+
+            $listQuotePlans = '';
             $quotePlans = $this->carQuoteService->getQuotePlans($id);
-            $listQuotePlans = $quotePlans->quotes->plans;
-            //echo "<pre>"; print_r($listQuotePlans); exit;
-            return view('shared.show', compact(['record', 'model', 'customTitles', 'listQuotePlans']));
-        }
-        else {
-            return view('shared.show', compact(['record', 'model', 'customTitles']));
+
+            if (gettype($quotePlans) != 'string') {
+                $listQuotePlans = $quotePlans->quotes->plans;
+            } else {
+                $listQuotePlans = $quotePlans;
+            }
+
+            return view('shared.show', compact(['record', 'model', 'customTitles', 'listQuotePlans', 'customTableList']));
+        } else {
+            return view('shared.show', compact(['record', 'model', 'customTitles', 'customTableList']));
         }
     }
 
@@ -152,16 +197,21 @@ class CRUDController extends Controller
         $model = $this->genericModel;
         $dropdownSource = [];
         $customTitles = [];
-        foreach($model->properties as $property => $value) {
-            if(str_contains($value, 'title')){
+        $customLists = [];
+        foreach ($model->properties as $property => $value) {
+            if (str_contains($value, 'title')) {
                 $customTitles[$property] = $this->crudService->getCustomTitleByModelType($this->genericModel->modelType, $property);
             }
-            if(str_contains($value, 'select')){
+            if (str_contains($value, 'select')) {
                 $data = $this->dropdownSourceService->getDropdownSource($property);
                 $dropdownSource[$property] = $data;
             }
+            if (str_contains($value, 'customTable')) {
+                $data = $this->dropdownSourceService->getCustomDropdownList($property, $record[0]->id);
+                $customLists[$property] = $data;
+            }
         }
-        return view('shared.edit', compact(['record', 'model', 'dropdownSource', 'customTitles']));
+        return view('shared.edit', compact(['record', 'model', 'dropdownSource', 'customTitles', 'customLists']));
     }
 
     /**
@@ -175,14 +225,16 @@ class CRUDController extends Controller
     {
         $modelPropertiesList = json_decode($request->all()['model'], true);
         $validateArray = [];
-        foreach($modelPropertiesList as $property => $value) {
-            if(strpos($value, 'required')){
+        foreach ($modelPropertiesList as $property => $value) {
+            if (strpos($value, 'required') && ($property !== "email" && $property !== "mobile_no"))
+            {
                 $validateArray[$property] = 'required';
             }
+
         }
-        $this->validate($request,$validateArray);
+        $this->validate($request, $validateArray);
         $this->crudService->updateModelByType(json_decode($request->modelType, true), $request, $id);
-        return redirect()->back()->with('success', json_decode($request->modelType, true).' has been stored');
+        return redirect('/quotes/' . strtolower(str_replace('"', '', $request->modelType)) . '/' . $id)->with('success', json_decode($request->modelType, true) . ' has been stored');
     }
 
     /**
@@ -196,87 +248,97 @@ class CRUDController extends Controller
         //
     }
 
-    private function setModelType(Request $request){
-        if(strpos($request->fullUrl(), 'health')) $this->genericModel->modelType = 'Health';
-        if(strpos($request->fullUrl(), 'life')) $this->genericModel->modelType = 'Life';
-        if(strpos($request->fullUrl(), 'teams')) $this->genericModel->modelType = 'Teams';
-        if(strpos($request->fullUrl(), 'car')) $this->genericModel->modelType = 'Car';
-    }
-
-    private function fillModelByModelType ($modelType)
+    private function setModelType(Request $request)
     {
-        switch ($modelType) {
-            case 'Car':
-                $this->genericModel->properties = $this->carQuoteService->fillModelProperties();
-                $this->genericModel->skipProperties = $this->carQuoteService->fillModelSkipProperties();
-                $this->genericModel->searchProperties = $this->carQuoteService->fillModelSearchProperties();
-                break;
-            case 'Health':
-                $this->genericModel->properties = $this->healthQuoteService->fillModelProperties();
-                $this->genericModel->skipProperties = $this->healthQuoteService->fillModelSkipProperties();
-                $this->genericModel->searchProperties = $this->healthQuoteService->fillModelSearchProperties();
-                break;
-            case 'Teams':
-                $this->genericModel->properties = $this->teamService->fillModelProperties();
-                $this->genericModel->skipProperties = $this->teamService->fillModelSkipProperties();
-                break;
-            default:
-                break;
-        }
+        if (strpos($request->fullUrl(), 'health')) $this->genericModel->modelType = 'Health';
+        if (strpos($request->fullUrl(), 'travel')) $this->genericModel->modelType = 'Travel';
+        if (strpos($request->fullUrl(), 'teams')) $this->genericModel->modelType = 'Teams';
+        if (strpos($request->fullUrl(), 'car')) $this->genericModel->modelType = 'Car';
+        if (strpos($request->fullUrl(), 'life')) $this->genericModel->modelType = 'Life';
+        if (strpos($request->fullUrl(), 'home')) $this->genericModel->modelType = 'Home';
+        if (strpos($request->fullUrl(), 'business')) $this->genericModel->modelType = 'Business';
+        if (strpos($request->fullUrl(), 'leadstatus')) $this->genericModel->modelType = 'LeadStatus';
     }
 
-    public function getDropdownSourceNameForDisplay($modelType, $propertyName, $recordId){
+    private function fillModelByModelType($type, Request $request)
+    {
+        $requestModelType = json_decode($request->modelType, true);
+        $modelType = $requestModelType ?? $type;
+        $quoteTypes = 'Health,Car,Travel,Life,Home,Business';
+        $serviceType = str_contains($quoteTypes, ucwords($modelType)) ? strtolower($modelType) . 'QuoteService' : lcfirst(ucwords($modelType)) . 'Service';
+        $this->genericModel->properties = $this->{$serviceType}->fillModelProperties();
+        $this->genericModel->skipProperties = $this->{$serviceType}->fillModelSkipProperties();
+        $this->genericModel->searchProperties = $this->{$serviceType}->fillModelSearchProperties();
+    }
+
+    public function getDropdownSourceNameForDisplay($modelType, $propertyName, $recordId)
+    {
 
         $data = $this->dropdownSourceService->getDropdownSource($propertyName);
         $recordName = '';
         $record = $this->crudService->getEntity($modelType, $recordId);
         foreach ($data as $item) {
-            if($item->id == $record[$propertyName]){
+            if ($item->id == $record[$propertyName]) {
                 $recordName = $item->text ?? $item->name;
             }
         }
         return $recordName;
     }
 
-    public function plan_details($quoteId, $planId){
-
+    public function plan_details($quoteId, $planId)
+    {
         $quotePlans = $this->carQuoteService->getQuotePlans($quoteId);
-        $listQuotePlans = $quotePlans->quotes->plans;
 
-        foreach($listQuotePlans as $listQuotePlan) { // Main
+        if (gettype($quotePlans) != 'string') {
+            $listQuotePlans = $quotePlans->quotes->plans;
+            foreach ($listQuotePlans as $listQuotePlan) { // Main
 
-            if($listQuotePlan->id == $planId) {
-                $listQuotePlanName = $listQuotePlan->name;
-                $providerCode = $listQuotePlan->providerCode;
-                $providerName = $listQuotePlan->providerName;
-                $repairType = $listQuotePlan->repairType;
-                $actualPremium = $listQuotePlan->actualPremium;
-                $discountPremium = $listQuotePlan->discountPremium;
-                $listQuotePlanAddonss = $listQuotePlan->addons;
-                $listQuotePlanBenefitsInclusions = $listQuotePlan->benefits->inclusion;
-                $listQuotePlanBenefitsExclusions = $listQuotePlan->benefits->exclusion;
-                $listQuotePlanBenefitsFeatures = $listQuotePlan->benefits->feature;
-                $listQuotePlanBenefitsRsas = $listQuotePlan->benefits->roadSideAssistance;
-                $listQuotePlanBenefitsPolicyDetails = $listQuotePlan->benefits->policyDetail;
+                if ($listQuotePlan->id == $planId) {
+                    $listQuotePlanName = $listQuotePlan->name;
+                    $providerCode = $listQuotePlan->providerCode;
+                    $providerName = $listQuotePlan->providerName;
+                    $repairType = $listQuotePlan->repairType;
+                    $actualPremium = $listQuotePlan->actualPremium;
+                    $discountPremium = $listQuotePlan->discountPremium;
+                    $listQuotePlanAddonss = $listQuotePlan->addons;
+                    $listQuotePlanBenefitsInclusions = $listQuotePlan->benefits->inclusion;
+                    $listQuotePlanBenefitsExclusions = $listQuotePlan->benefits->exclusion;
+                    $listQuotePlanBenefitsFeatures = $listQuotePlan->benefits->feature;
+                    $listQuotePlanBenefitsRsas = $listQuotePlan->benefits->roadSideAssistance;
+                    $listQuotePlanBenefitsPolicyDetails = $listQuotePlan->benefits->policyDetail;
 
-                foreach($listQuotePlanAddonss as $listQuotePlanAddon) {
-                    $listQuotePlanAddons[] = $listQuotePlanAddon; // Get Addons Names
+                    foreach ($listQuotePlanAddonss as $listQuotePlanAddon) {
+                        $listQuotePlanAddons[] = $listQuotePlanAddon; // Get Addons Names
 
-                    foreach($listQuotePlanAddon->carAddonOption as $listQuotePlanAddonsOptions) {
-                        $listQuotePlanAddonValues[] = $listQuotePlanAddonsOptions->value;
-                        $listQuotePlanAddonPrices[] = $listQuotePlanAddonsOptions->price;
-                        //echo "<pre>"; print_r($listQuotePlanAddonPrices);
+                        foreach ($listQuotePlanAddon->carAddonOption as $listQuotePlanAddonsOptions) {
+                            $listQuotePlanAddonValues[] = $listQuotePlanAddonsOptions->value;
+                            $listQuotePlanAddonPrices[] = $listQuotePlanAddonsOptions->price;
+                        }
                     }
                 }
-                //echo "<pre>"; print_r($listQuotePlanAddonPrices);
             }
+            return view('shared.plan_details', compact([
+                'listQuotePlanName', 'providerCode', 'providerName', 'repairType',
+                'actualPremium', 'discountPremium', 'listQuotePlanAddons', 'listQuotePlanAddonValues', 'listQuotePlanBenefitsInclusions',
+                'listQuotePlanBenefitsExclusions', 'listQuotePlanBenefitsFeatures', 'listQuotePlanBenefitsRsas',
+                'listQuotePlanBenefitsPolicyDetails', 'listQuotePlanAddonPrices'
+            ]));
         }
-
-        //echo "<pre>"; print_r($listQuotePlanAddonPrices);
-        return view('shared.plan_details', compact(['listQuotePlanName','providerCode','providerName','repairType'
-        ,'actualPremium','discountPremium','listQuotePlanAddons','listQuotePlanAddonValues','listQuotePlanBenefitsInclusions'
-        ,'listQuotePlanBenefitsExclusions','listQuotePlanBenefitsFeatures','listQuotePlanBenefitsRsas'
-        ,'listQuotePlanBenefitsPolicyDetails','listQuotePlanAddonPrices']));
     }
 
+    public function manualLeadAssign(Request $request)
+    {
+        $assignedToUserIdNew = $request->assigned_to_id_new;
+        $leadsIds = $request->selectTmLeadId;
+        $leadsIds = array_map('intval', explode(',', $leadsIds));
+        foreach ($leadsIds as $tmLeadsId) {
+            $updateTmLead = $this->{strtolower($request->modelType) . 'QuoteService'}->getEntityPlain($tmLeadsId);
+            $userId = (int)$assignedToUserIdNew;
+            $updateTmLead->advisor_id = $userId;
+            $updateTmLead->save();
+        }
+
+        $assignedUserName = $this->userService->getUserNameById($assignedToUserIdNew);
+        return Redirect::back()->with('success', $request->modelType . ' Leads has been Assigned To ' . $assignedUserName);
+    }
 }

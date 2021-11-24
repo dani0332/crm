@@ -2,11 +2,8 @@
 
 namespace App\Services;
 
-use App\Models\CarQuote;
 use App\Models\GenericModel;
-use App\Models\HealthQuote;
-use App\Models\LifeQuote;
-use App\Models\Team;
+use App\Models\User;
 use App\Services\TeamService;
 use App\Services\HealthQuoteService;
 use Illuminate\Http\Request;
@@ -15,102 +12,89 @@ class CRUDService extends BaseService
 {
     protected $healthQuoteService;
     protected $carQuoteService;
-    protected $teamService;
+    protected $teamsService;
     protected $request;
-    public function __construct(HealthQuoteService $healthQuoteService, TeamService $teamService, CarQuoteService $carQuoteService)
-    {
+    protected $leadstatusService;
+    protected $travelQuoteService;
+    protected $lifeQuoteService;
+    protected $homeQuoteService;
+    protected $businessQuoteService;
+    protected $quoteTypes;
+    public function __construct(
+        HealthQuoteService $healthQuoteService,
+        TeamService $teamsService,
+        CarQuoteService $carQuoteService,
+        LeadStatusService $leadstatusService,
+        TravelQuoteService $travelQuoteService,
+        LifeQuoteService $lifeQuoteService,
+        HomeQuoteService $homeQuoteService,
+        BusinessQuoteService $businessQuoteService
+    ) {
         $this->healthQuoteService = $healthQuoteService;
-        $this->teamService = $teamService;
         $this->carQuoteService = $carQuoteService;
+        $this->teamsService = $teamsService;
+        $this->leadstatusService = $leadstatusService;
+        $this->travelQuoteService = $travelQuoteService;
+        $this->lifeQuoteService = $lifeQuoteService;
+        $this->homeQuoteService = $homeQuoteService;
+        $this->businessQuoteService = $businessQuoteService;
+        $this->quoteTypes = ['home', 'health', 'life', 'business', 'travel', 'car'];
+    }
+    public function getGridData(GenericModel $model, Request $request)
+    {
+        $lowerCaseModelType = strtolower($model->modelType);
+
+        return $this->{in_array($lowerCaseModelType, $this->quoteTypes) ? $lowerCaseModelType . 'QuoteService' : $lowerCaseModelType . 'Service'}
+            ->getGridData($model->searchProperties, $request);
     }
 
-	public function getGridData(GenericModel $model){
-        $data = '';
-        switch ($model->modelType) {
-            case 'Car':
-                $data = CarQuote::select('*');
-                break;
-            case 'Health':
-                $data = HealthQuote::select('*')->orderBy('created_at','desc');
-                break;
-            case 'Teams':
-                $data = Team::select('*')->get();
-                break;
-            default:
-                break;
-        }
-        return $data;
+    public function getLeads($CDBID, $email, $mobile_no, $leadType)
+    {
+        return $this->{$leadType . 'QuoteService'}->getLeads($CDBID, $email, $mobile_no, $leadType);
     }
 
-
-    public function getCustomTitleByModelType($modelType, $propertyName){
-        $title = '';
-        switch ($modelType) {
-            case 'Car':
-                $title = $this->carQuoteService->getCustomTitleByProperty($propertyName);
-                break;
-            case 'Health':
-                $title = $this->healthQuoteService->getCustomTitleByProperty($propertyName);
-                break;
-            case 'Teams':
-                $title = $this->teamService->getCustomTitleByProperty($propertyName);
-                break;
-            default:
-                break;
-        }
-        return $title;
+    public function getLeadAssignmentRecords($teamName)
+    {
+        return $this->{$teamName . 'QuoteService'}->getLeadsForAssignment();
     }
 
-    public function saveModelByType($modelType, Request $request){
-        switch ($modelType) {
-            case 'Car':
-                $this->carQuoteService->saveCarQuote($request);
-                break;
-            case 'Health':
-                $this->healthQuoteService->saveHealthQuote($request);
-                break;
-            case 'Teams':
-                $this->teamService->saveTeam($request);
-                break;
-            default:
-                break;
-        }
+    public function getCustomTitleByModelType($modelType, $propertyName)
+    {
+        $lowerCaseModelType = strtolower($modelType);
+
+        return $this->{in_array($lowerCaseModelType, $this->quoteTypes) ? $lowerCaseModelType . 'QuoteService' : $lowerCaseModelType . 'Service'}
+            ->getCustomTitleByProperty($propertyName);
     }
 
-    public function updateModelByType($modelType, Request $request, $id){
-        switch ($modelType) {
-            case 'Car':
-                $this->carQuoteService->updateCarQuote($request, $id);
-                break;
-            case 'Health':
-                $this->healthQuoteService->updateHealthQuote($request, $id);
-                break;
-            case 'Teams':
-                $this->teamService->updateTeam($request, $id);
-                break;
-            default:
-                break;
-        }
+    public function getAdvisorsByModelType($modelType)
+    {
+
+        return User::whereHas('roles', function ($query) use ($modelType) {
+                $query->whereIn('name', [strtoupper($modelType) . '_ADVISOR']);
+            })->get();
+    }
+
+    public function saveModelByType($modelType, Request $request)
+    {
+        $lowerCaseModelType = strtolower($modelType);
+
+        return $this->{in_array($lowerCaseModelType, $this->quoteTypes) ? $lowerCaseModelType . 'QuoteService' : $lowerCaseModelType . 'Service'}
+            ->{in_array($lowerCaseModelType, $this->quoteTypes) ? 'save' . ucwords($modelType) . 'Quote' : 'save' . ucwords($modelType)}($request);
+    }
+
+    public function updateModelByType($modelType, Request $request, $id)
+    {
+        $lowerCaseModelType = strtolower($modelType);
+
+        $this->{in_array($lowerCaseModelType, $this->quoteTypes) ? $lowerCaseModelType . 'QuoteService' : $lowerCaseModelType . 'Service'}
+            ->{in_array($lowerCaseModelType, $this->quoteTypes) ? 'update' . ucwords($modelType) . 'Quote' : 'update' . ucwords($modelType)}($request, $id);
     }
 
     public function getEntity($modelType, $id)
     {
-        $data = '';
-        switch ($modelType) {
-            case 'Car':
-                $data = CarQuote::find($id);
-                break;
-            case 'Health':
-                $data = HealthQuote::find($id);
-                break;
-            case 'Teams':
-                $data = Team::find($id);
-                break;
-            default:
-                break;
-        }
-        return $data;
+        $lowerCaseModelType = strtolower($modelType);
+
+        return $this->{in_array($lowerCaseModelType, $this->quoteTypes) ? $lowerCaseModelType . 'QuoteService' : $lowerCaseModelType . 'Service'}
+            ->getEntity($id);
     }
-
-
 }

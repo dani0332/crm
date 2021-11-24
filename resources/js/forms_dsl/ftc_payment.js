@@ -20,32 +20,32 @@ const ftcPayment = {
         mode_id: {
           type: 'dropdown',
           label: 'Payment Mode',
-          source: 'payment_modes',
+          source: [{ id : 24, text: "Credit Card Payment"}, { id: 25 ,text: "Non-credit Card Payment"}],
           if: {
-            CC: {
+            24: {
               fields: ['method'],
             },
           },
           else: ['method'],
           field: 'mode_id',
-          transform(item, condition = false) {
-            if (condition)
-              return {
-                value: { id: item?.value, name: item?.label },
-                selected: item?.label,
-              };
-            if (Array.isArray(item)) {
-              const items = item.map(u => {
-                return { value: u?.id, label: u?.name };
-              });
-              return items;
-            } else
-              return {
-                value: item?.id,
-                label: item?.name,
-                selected: item?.name,
-              };
-          },
+          // transform(item, condition = false) {
+          //   if (condition)
+          //     return {
+          //       value: { id: item?.value, name: item?.label },
+          //       selected: item?.label,
+          //     };
+          //   if (Array.isArray(item)) {
+          //     const items = item.map(u => {
+          //       return { value: u?.id, label: u?.name };
+          //     });
+          //     return items;
+          //   } else
+          //     return {
+          //       value: item?.id,
+          //       label: item?.name,
+          //       selected: item?.name,
+          //     };
+          // },
           access: {
             read: [
               'advisor',
@@ -63,7 +63,6 @@ const ftcPayment = {
           type: 'dropdown',
           label: 'Payment Method',
           source: ['Spotii', 'payments.insurancemarket.ae '],
-          field: 'method',
           offscreen: true,
           access: {
             read: [
@@ -114,6 +113,12 @@ const ftcPayment = {
           },
         ],
         events: {
+          transformAfterFetchFromServer(form, data){
+              if(form?.getForm?.context === 'car_quote_snap' && form?.formState === 'list' && form?.getForm?.multi === false) {
+                  return { ...data, mode_id: { id: data?.mode_id?.id, text: data?.mode_id?.name}}
+              }
+              return data
+          },
           applyFilter(options) {
             const {
               params: { id },
@@ -125,6 +130,7 @@ const ftcPayment = {
       },
       postTransform(options) {
         const { params, data } = options;
+        console.log({ params, data })
         return { ...data, car_quote_id: params.id };
       },
     };

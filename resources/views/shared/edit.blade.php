@@ -5,13 +5,65 @@
 
 <script>
     $(document).ready(function() {
-    var model = JSON.parse('<?php echo json_encode(get_object_vars($model)) ?>');
-    var record = JSON.parse('<?php echo json_encode($record) ?>');
-    Object.keys(model.properties).forEach(element => {
-        if(model.properties[element].indexOf('date') > -1){
-            $("#"+ element).val($("#"+ element).val().split(' ')[0]);
+        var model = JSON.parse('<?php echo json_encode(get_object_vars($model)) ?>');
+        var modelPropertiesArray = convertObjectToArray(model.properties);
+        var record = JSON.parse('<?php echo json_encode($record[0]) ?>');
+        String.prototype.replaceAll = function(search, replacement) {
+            var target = this;
+            return target.replace(new RegExp(search, 'g'), replacement);
+            };
+
+
+            function convertObjectToArray(obj) {
+            return Object.keys(obj).map(key => ({
+                name: key,
+                value: obj[key],
+                }));
+            }
+
+        if(model.modelType == "Home") {
+            $('#has_personal_belongings_div,#personal_belongings_aed_div,#has_building_div,#building_aed_div,#contents_aed_div').each(function(){
+                if($(this).find('input').length > 0 && $(this).find('input').val() == ''){
+                    $(this).hide();
+                }
+                if($(this).find('input').attr('type') == 'checkbox' > 0 && $(this).find('input').val() == 'off'){
+                    $(this).hide();
+                }
+
+            });
+            $('#iam_possesion_type_id').on('change',function(){
+                debugger;
+                if($("#iam_possesion_type_id option:selected").text() == 'A landlord'){
+                    $('#has_building_div').show();
+                }
+                else{
+                    $('#has_building_div').hide();
+                }
+            });
+
+            $('#has_personal_belongings').on('change',function(){
+                debugger;
+                this.checked ? $('#personal_belongings_aed_div').show() : $('#personal_belongings_aed_div').hide();
+            });
+            $('#has_building').on('change',function(){
+                debugger;
+                this.checked ? $('#building_aed_div').show() : $('#building_aed_div').hide();
+            });
+            $('#has_contents').on('change',function(){
+                debugger;
+                if(this.checked){
+                    if($("#iam_possesion_type_id option:selected").text() == 'A landlord'){
+                        $('#has_building_div').show();
+                    }
+                    $('#contents_aed_div').show();
+                    $('#has_personal_belongings_div').show();
+                }
+                else{
+                    $('#contents_aed_div').hide();
+                    $('#has_personal_belongings_div').hide();
+                }
+            });
         }
-    });
 });
 </script>
     <div class="row">
@@ -33,11 +85,12 @@
                         <div class="alert alert-danger">{{ session()->get('message') }}</div>
                     @endif
                     <form id="demo-form2" method='post'
-                        action="{{ route(strtolower($model->modelType).'.update', $record) }}"
+                        action="{{ route(strtolower($model->modelType).'.update', $record[0]->uuid) }}"
                         enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left"
                         autocomplete="off">
                         {{ csrf_field() }}
                         @method('PUT')
+
                         <input type="hidden" name="model" value={{ json_encode($model->properties) }} />
                         <input type="hidden" name="modelType" value={{ json_encode($model->modelType) }} />
                         @php
@@ -46,7 +99,7 @@
                         @foreach($model->properties as $property => $value)
                             @if($index == 0 || strpos($value, 'checkbox'))
                             @else
-                                <div @if(count($model->properties) <6) class="col-md-12" @else class="col-md-6" @endif>
+                                <div @if(count($model->properties) <6) class="col-md-12" @else class="col-md-6" @endif id={{$property.'_div'}}>
                                     @if(strpos($value, 'input') !== false )
                                         <span class="col-form-label col-md-6 col-sm-6" for="name">
                                             @if(strpos($value, 'title'))
@@ -63,7 +116,8 @@
                                                 type={{ explode("|", $value)[1]  }}
                                                 @endif id={{$property}}
                                             name={{$property}}
-                                            value="{{ old($property, $record[$property]) }}"
+                                            @if(Auth::user()->hasRole(strtoupper($model->modelType).'_ADVISOR') && ($property == 'email' || $property == 'mobile_no')) disabled="disabled" @endif
+                                            value="{{ old($property, $record[0]->$property) }}"
                                         class="form-control">
                                         @if ($errors->has($property))
                                             <span class="text-danger">{{ $errors->first($property) }}</span>
@@ -80,17 +134,51 @@
                                             <span class='required'>*</span>
                                             @endif
                                         </span>
-                                        <select @if(strpos($value, 'multiple')) multiple="multiple" class="form-control select2 select-roles" @else class="form-control" @endif id="{{$property}}" name="{{$property}}">
+                                        <select @if(strpos($value, 'multiple')) multiple="multiple" name="{{$property.'[]'}}" class="form-control select2 select-roles" @else name="{{$property}}" class="form-control" @endif id="{{$property}}" >
                                             <option value="">{{"Please select ".str_replace("_"," ",$property) }}</option>
+                                            @if (strpos($value, 'customTable') !== false)
+                                                @foreach($customLists[$property] as $selectedItem)
+                                                    @foreach($dropdownSource[$property] as $item)
+                                                        @if ($selectedItem->id == $item->id)
+                                                            <option value="{{$item->id}}" selected="selected">
+                                                            {{ $item->text ?? $item->name }}
+                                                            </option>
+                                                        @else
+                                                            <option value="{{$item->id}}">
+                                                            {{ $item->text ?? $item->name }}
+                                                            </option>
+                                                        @endif
+                                                    @endforeach
+                                                @endforeach
+                                            @else
                                             @foreach($dropdownSource[$property] as $item)
-                                                <option value="{{$item->id}}"
-                                                {{ $item->id == old($item->id, $record[$property]) ? 'selected' : ''}}>
-                                                {{ $item->text ?? $item->name }}
-                                                </option>
+                                                <option value="{{$item->id}}" {{ $item->id == old($item->id, $record[0]->$property) ? 'selected' : ''}}>{{ $item->text ?? $item->name }}</option>
                                             @endforeach
+
+                                            @endif
+
                                         </select>
                                         @if ($errors->has($property))
                                         <span class="text-danger">{{ $errors->first($property) }}</span>
+                                        @endif
+                                    @endif
+                                    @if(strpos($value, 'textarea') !== false )
+                                        <span class="col-form-label col-md-6 col-sm-6" for="name">
+                                            @if(strpos($value, 'title'))
+                                                {{ strtoupper($customTitles[$property])}}
+                                            @else
+                                                {{str_replace("_"," ",strtoupper($property))}}
+                                            @endif
+                                            @if(strpos($value, "required") == true)
+                                            <span class='required'>*</span>
+                                            @endif
+                                        </span>
+                                        <textarea
+                                            id={{$property}}
+                                            name={{$property}}
+                                        class="form-control">{{ old($property, $record[0]->$property) }}</textarea>
+                                        @if ($errors->has($property))
+                                            <span class="text-danger">{{ $errors->first($property) }}</span>
                                         @endif
                                     @endif
                                 </div>
@@ -103,7 +191,7 @@
                         @foreach ($model->properties as $property => $value)
                             @if (strpos($value, 'checkbox'))
 
-                                <div class="col-md-2">
+                                <div class="col-md-2" id={{$property.'_div'}}>
                                     <div class="col-md-9">
                                         <label for="middle-name" style="margin-top: 8px;">
                                             <b>
@@ -116,7 +204,7 @@
                                         </label>
                                     </div>
                                     <div class="col-md-3">
-                                        <input type="checkbox" {{ $record[$property] ? 'checked' : '' }} style="float: right;" id="name" name={{$property}}>                                        </div>
+                                        <input type="checkbox" {{ $record[0]->$property ? 'checked' : '' }} style="float: right;" id={{$property}} name={{$property}}>                                        </div>
                                 </div>
                                 <br />
                                 @if ($errors->has($property))

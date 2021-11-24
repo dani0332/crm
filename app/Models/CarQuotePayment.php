@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\BaseModel;
 use Auth;
+use App\Jobs\FTCMailServiceJob;
+use LookUpModel;
 class CarQuotePayment extends BaseModel
 {
     use HasFactory;
@@ -49,8 +51,27 @@ class CarQuotePayment extends BaseModel
             if( Auth::user()->hasRole('advisor')) {
                 $carQuote = CarQuote::where(['id' => $request->input('car_quote_id', -1)])->first();
                 if($carQuote) {
-                    if(parent::saveForm($request, $update)){
-                        $carQuote->quote_status_id =  13; // AML cleared
+
+                    if(parent::saveForm($request, $update)) {
+
+                        $advisorEmail = $carQuote->advisor_id()->first()->email;
+                        $templateParams = [
+                            'notes' => $request->input('comment', ""),
+                            "first_name" => $carQuote->first_name,
+                            "last_name" => $carQuote->last_name,
+                            "code" => $carQuote->code
+                        ];
+                        if($advisorEmail) {
+                            $params = [
+                                'to' => $advisorEmail,
+                                'subject' => 'Policy issued and recorded in the system - CDB-ID:'.$carQuote->code,
+                                'templateName' => 'notification',
+                                'templateParams' => $templateParams
+                            ];
+                            dispatch(new FTCMailServiceJob($params));
+                        }
+                        
+                        $carQuote->quote_status_id =  LookUpModel::getLookModel('QuoteStatus', ['code', '=', 'AMLScreeningCleared']);
                         return $carQuote->save();
                     }
                 }

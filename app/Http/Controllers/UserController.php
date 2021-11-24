@@ -47,7 +47,14 @@ class UserController extends Controller
                                         GROUP BY users.name, users.id
                                         ) u2 ON u2.id = u1.id
                                     LEFT JOIN user_team ON user_team.user_id = u2.id
-                                    LEFT JOIN teams ON teams.id = user_team.team_id");
+                                    LEFT JOIN teams ON teams.id = user_team.team_id
+                                    GROUP BY u1.id
+                                            ,u1.name
+                                            ,u1.email
+                                            ,u2.roles
+                                            ,teams.name
+                                            ,u1.created_at
+                                            ,u1.updated_at");
             $filteredData = $users;
             if(!empty($request->email)){
                 $collection = collect($filteredData);
@@ -102,9 +109,11 @@ class UserController extends Controller
         $user->password = bcrypt($request->password);
         $user->save();
 
+
         $userTeam = new UserTeams();
         $userTeam->team_id = $request->team;
         $userTeam->user_id = $user->id;
+        if($request->manager != "0") $userTeam->manager_id = $request->manager;
         $userTeam->save();
 
         $user->assignRole($request->input('roles'));
@@ -119,14 +128,11 @@ class UserController extends Controller
      */
     public function show(User $user)
     {
-        $teamNameQuery = DB::select("SELECT name
+        $teamQuery = DB::select("SELECT group_concat(name) as name
                                 FROM teams t
                                 INNER JOIN user_team ut ON ut.team_id = t.id
                                 WHERE ut.user_id = ". $user->id);
-        $teamName = '';
-        if(count($teamNameQuery) > 0){
-            $teamName = $teamNameQuery[0]->name;
-        }
+        $teamName = $teamQuery[0]->name;
         return view('user.show', compact('user', 'teamName'));
     }
     /**
@@ -140,12 +146,16 @@ class UserController extends Controller
         $roles = Role::pluck('name', 'name')->all();
         $userRole = $user->roles->pluck('name', 'name')->all();
         $teams = Team::orderBy('name', 'asc')->get();
-        $userTeamQuery = UserTeams::where('user_id', $user->id)->get();
-        $userTeamId = 0;
-        if(count($userTeamQuery) > 0){
-            $userTeamId = $userTeamQuery[0]->team_id;
+
+        $userTeam = UserTeams::where('user_id', $user->id)->get()->first();
+        $managers = [];
+        if($userTeam != null && $userTeam->team_id != null){
+            $managerIds = UserTeams::where('team_id', $userTeam->team_id)->where('manager_id', null)->where('user_id', '!=', $user->id)->get()->pluck('user_id');
+            $managers = User::whereIn('id', $managerIds)->get();
         }
-        return view('user.edit', compact('user', 'roles', 'userRole', 'teams', 'userTeamId'));
+        $selectedTeam = $userTeam ? $userTeam->team_id : 0;
+        $selectedManager = $userTeam ? $userTeam->manager_id : 0;
+        return view('user.edit', compact('user', 'roles', 'userRole', 'teams', 'selectedTeam', 'managers', 'selectedManager'));
     }
     /**
      * Update the specified resource in storage.
@@ -154,7 +164,7 @@ class UserController extends Controller
      * @param  \App\User  $user
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, User $user)
+        public function update(Request $request, User $user)
     {
         $this->validate($request, [
             'name' => 'required|max:120',
@@ -165,11 +175,11 @@ class UserController extends Controller
         $user->email = $request->email;
         $user->password = bcrypt($request->password);
         $user->save();
-
-        $userTeam = UserTeams::where('user_id', '=', $user->id)->firstOrFail();
-        $userTeam->team_id = $request->team;
-        $userTeam->save();
-
+        $userTeamDataArray = [ 'team_id' => $request->team];
+        if($request->manager != 0 && $request->manager != '') {
+            $userTeamDataArray['manager_id'] = $request->manager;
+        }
+        UserTeams::updateOrCreate(['user_id' => $user->id] , $userTeamDataArray);
         DB::table('model_has_roles')->where('model_id', $user->id)->delete();
         $user->assignRole($request->input('roles'));
         if (isset($request->return_to_view))
@@ -189,5 +199,12 @@ class UserController extends Controller
 
     public function me(Request $request){
         return ['name' => Auth::user()->name, 'email' => Auth::user()->email, 'id' => Auth::user()->id, 'role'=> strtolower(Auth::user()->usersroles[0]->name)];
+    }
+
+    public function getTeamManagers(Request $request){
+        $teamId = $request->query()['teamId'];
+        $managerIds = UserTeams::where('team_id', $teamId)->where('manager_id', null)->get()->pluck('user_id');
+        $managers = User::whereIn('id', $managerIds)->get();
+        return $managers;
     }
 }

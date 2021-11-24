@@ -13747,8 +13747,6 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _draw_subform__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./draw-subform */ "./resources/js/components/form/draw-subform.js");
 /* harmony import */ var _smakss_random_string__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! @smakss/random-string */ "./node_modules/@smakss/random-string/index.mjs");
 /* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! react/jsx-runtime */ "./node_modules/react/jsx-runtime.js");
-function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
-
 
 
 function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { Promise.resolve(value).then(_next, _throw); } }
@@ -13760,6 +13758,8 @@ function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (O
 function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys(Object(source), true).forEach(function (key) { _defineProperty(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
 
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
+function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
 
 function _slicedToArray(arr, i) { return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _unsupportedIterableToArray(arr, i) || _nonIterableRest(); }
 
@@ -13808,7 +13808,7 @@ function makeNullHideFields(state) {
 
       var getVal = recVal;
       if (typeof (getField === null || getField === void 0 ? void 0 : getField.transform) === 'function') getVal = getField === null || getField === void 0 ? void 0 : getField.transform(recVal);
-      var val = getField["if"][(_getVal = getVal) === null || _getVal === void 0 ? void 0 : _getVal.selected];
+      var val = getField["if"][(_getVal = getVal) === null || _getVal === void 0 ? void 0 : _getVal.selected] ? getField["if"][getVal.selected] : getField["if"][getVal.value];
 
       if (val !== null && val !== void 0 && val.fields) {
         var getCondFields = val.fields;
@@ -13831,12 +13831,12 @@ function makeNullHideFields(state) {
 function conditionState(state, action) {
   var _action$field = action.field,
       name = _action$field.name,
-      selected = _action$field.selected;
+      selected = _action$field.selected,
+      value = _action$field.value;
   var getField = state.fields[name];
 
   if (getField !== null && getField !== void 0 && getField["if"]) {
-    var calcVal = selected; //(typeof value === 'object') ? value?.selected : value
-
+    var calcVal = _typeof(value) === 'object' ? value === null || value === void 0 ? void 0 : value.value : selected;
     var val = getField["if"][calcVal];
 
     if (val !== null && val !== void 0 && val.fields) {
@@ -13847,8 +13847,6 @@ function conditionState(state, action) {
           state.fields[element].offscreen = false;
         });
       }
-
-      console.log(getCondFields);
     } else {
       var _getCondFields2 = getField["else"];
 
@@ -13886,17 +13884,15 @@ function reducer(state, action) {
         }
 
         if ((state === null || state === void 0 ? void 0 : state.action_type) === 'edit' && state !== null && state !== void 0 && state.selectedRecord && state !== null && state !== void 0 && (_state$selectedRecord = state.selectedRecord) !== null && _state$selectedRecord !== void 0 && _state$selectedRecord[name]) {
-          console.log('------draw-form.js---Removing---draw-form.js-----------');
           conditionState(state, action);
           state.selectedRecord[name] = value;
         } else if ((state === null || state === void 0 ? void 0 : state.action_type) === 'edit') {
-          console.log('------draw-form.js---Editing---draw-form.js-------');
-          console.log(state);
-          console.log(action);
           conditionState(state, action);
-          console.log('------draw-form.js---Editing---draw-form.js-------');
         }
 
+        console.log('------Return-------');
+        console.log(state);
+        console.log('------Return-------');
         return _objectSpread({}, state);
       }
 
@@ -13929,10 +13925,7 @@ function DrawForm(props) {
       errors = _useForm.formState.errors;
 
   var onSubmit = function onSubmit(data) {
-    var getData = {};
-    if ((state === null || state === void 0 ? void 0 : state.action_type) === 'edit') getData = makeNullHideFields(state);
     console.log('------------getData----------');
-    console.log(getData);
     console.log(data);
     console.log('------------getData----------');
 
@@ -13948,7 +13941,7 @@ function DrawForm(props) {
       dispatch_({
         type: 'VISIBLE_FORM_SAVE',
         selectedRecord: state === null || state === void 0 ? void 0 : state.selectedRecord,
-        body: _objectSpread(_objectSpread({}, clean_deep__WEBPACK_IMPORTED_MODULE_6___default()(transformData)), getData),
+        body: _objectSpread({}, clean_deep__WEBPACK_IMPORTED_MODULE_6___default()(transformData)),
         initialForm: initialForm,
         manageListDispatch: manageListDispatch
       });
@@ -14412,16 +14405,18 @@ function DatePickerField(_ref) {
       controller = _ref.controller;
 
   var _useState = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(null),
-      _useState2 = _slicedToArray(_useState, 1),
-      startDate = _useState2[0];
+      _useState2 = _slicedToArray(_useState, 2),
+      startDate = _useState2[0],
+      setStartDate = _useState2[1];
 
   (0,react__WEBPACK_IMPORTED_MODULE_0__.useEffect)(function () {
     controller.onChange(null);
   }, []);
 
   var onChange = function onChange(date) {
-    var formatDate = moment__WEBPACK_IMPORTED_MODULE_1___default()(date).format('YYYY/MM/DD').toString();
-    controller.onChange(formatDate);
+    var formatDate = moment__WEBPACK_IMPORTED_MODULE_1___default()(date).format('yyyy-MM-DD').toString();
+    controller === null || controller === void 0 ? void 0 : controller.onChange(formatDate);
+    setStartDate(date);
 
     if (typeof (field === null || field === void 0 ? void 0 : field.dispatch) === 'function') {
       field.dispatch({
@@ -14443,7 +14438,7 @@ function DatePickerField(_ref) {
   return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__.jsx)((react_datepicker__WEBPACK_IMPORTED_MODULE_4___default()), {
     disabled: shouldDisable,
     className: "form-control",
-    dateFormat: "yyyy/MM/dd",
+    dateFormat: "yyyy-MM-dd",
     selected: startDate ? startDate : field !== null && field !== void 0 && field.value ? new Date(field.value) : null,
     onChange: onChange
   });
@@ -15241,9 +15236,8 @@ function SelectField(_ref) {
   }, [field, field === null || field === void 0 ? void 0 : field.value]);
 
   var redraw = function redraw(field) {
-    console.log('---**********redraw-************----');
-    console.log(field);
-
+    // console.log('---**********redraw-************----');
+    // console.log(field);
     if ((field === null || field === void 0 ? void 0 : field.formState) === 'read' || (field === null || field === void 0 ? void 0 : field.formState) === 'edit') {
       var defaultValue = {};
 
@@ -15258,10 +15252,10 @@ function SelectField(_ref) {
             label: _typeof(field === null || field === void 0 ? void 0 : field.value) === 'object' ? (_field$value = field.value) === null || _field$value === void 0 ? void 0 : _field$value.text : field === null || field === void 0 ? void 0 : field.value
           };
         }
-      }
+      } // console.log(defaultValue);
+      // console.log('---**********redraw-************----');
 
-      console.log(defaultValue);
-      console.log('---**********redraw-************----');
+
       setData({
         data: [],
         isDisabled: field.formState === 'read' ? true : false,
@@ -15310,7 +15304,9 @@ function SelectField(_ref) {
         // For condition fields
         var selectOp = selectedOptions;
         if (typeof (field === null || field === void 0 ? void 0 : field.transform) === 'function') selectOp = field.transform(selectedOptions, true);else selectOp = {
-          value: selectedOptions,
+          value: _objectSpread(_objectSpread({}, selectedOptions), {}, {
+            text: selectedOptions.label
+          }),
           selected: selectedOptions === null || selectedOptions === void 0 ? void 0 : selectedOptions.label
         };
         field.dispatch({
@@ -15330,7 +15326,7 @@ function SelectField(_ref) {
 
   var onFocus = /*#__PURE__*/function () {
     var _ref2 = _asyncToGenerator( /*#__PURE__*/_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().mark(function _callee() {
-      var options, defaultValue, _field$value3, url;
+      var options, defaultValue, _field$value3, filter, queryParamObj, params, url;
 
       return _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().wrap(function _callee$(_context) {
         while (1) {
@@ -15370,14 +15366,28 @@ function SelectField(_ref) {
 
             case 6:
               if (!(data.data.length < 1)) {
-                _context.next = 12;
+                _context.next = 14;
                 break;
               }
 
               setData(_objectSpread(_objectSpread({}, data), {}, {
                 loading: true
               }));
-              url = "/form/".concat(field.source);
+              filter = '';
+
+              if (_typeof(field === null || field === void 0 ? void 0 : field.filter) === 'object') {
+                queryParamObj = {
+                  filter: JSON.stringify(field === null || field === void 0 ? void 0 : field.filter)
+                };
+                params = new URLSearchParams(queryParamObj);
+                filter = "/?".concat(params.toString());
+              } else if (typeof (field === null || field === void 0 ? void 0 : field.filter) === 'string') {
+                filter = "".concat(field === null || field === void 0 ? void 0 : field.filter);
+              } else {
+                filter = "";
+              }
+
+              url = "/form/".concat(field.source).concat(filter);
               (0,_sagas__WEBPACK_IMPORTED_MODULE_2__.dispatchPromise)({
                 dispatch: dispatch,
                 options: {
@@ -15395,13 +15405,13 @@ function SelectField(_ref) {
               })["catch"](function (error) {
                 console.log(error); //setData({ ...data, data: [], isDisabled : false, loading: false })
               });
-              _context.next = 13;
+              _context.next = 15;
               break;
 
-            case 12:
+            case 14:
               return _context.abrupt("return");
 
-            case 13:
+            case 15:
             case "end":
               return _context.stop();
           }
@@ -15428,13 +15438,13 @@ function SelectField(_ref) {
       };
     });
     value = options;
-  }
+  } // console.log('---**********SelectRender-************----');
+  // console.log(field);
+  // console.log(value);
+  // console.log(data);
+  // console.log('---**********SelectRender-************----');
 
-  console.log('---**********SelectAmjad-************----');
-  console.log(field);
-  console.log(value);
-  console.log(data);
-  console.log('---**********SelectAmjad-************----');
+
   return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(react_select__WEBPACK_IMPORTED_MODULE_6__.default, {
     options: value,
     value: data === null || data === void 0 ? void 0 : data.defaultValue,
@@ -16677,7 +16687,9 @@ var insuranceDetail = {
             required: true
           },
           access: {
-            read: ['pa', 'advisor', 'admin', 'invoicing', 'production_approval_manager']
+            read: ['pa', 'advisor', 'admin', 'invoicing', 'production_approval_manager'],
+            write: ['advisor', 'admin'],
+            update: ['advisor', 'admin']
           },
           transform: function transform(item) {
             if (Array.isArray(item)) {
@@ -16870,6 +16882,33 @@ var insuranceDetail = {
           accessor: 'year_of_manufacture'
         }],
         events: {
+          transformBeforeOpenReadMode: function transformBeforeOpenReadMode(form) {
+            var _form$data, _form$data$car_quote_, _form$data$car_quote_2;
+
+            if ((form === null || form === void 0 ? void 0 : form.data.length) < 1) return form;
+            var code = form === null || form === void 0 ? void 0 : (_form$data = form.data) === null || _form$data === void 0 ? void 0 : (_form$data$car_quote_ = _form$data.car_quote_id) === null || _form$data$car_quote_ === void 0 ? void 0 : (_form$data$car_quote_2 = _form$data$car_quote_.quote_status_id) === null || _form$data$car_quote_2 === void 0 ? void 0 : _form$data$car_quote_2.code;
+
+            if (code && code === 'ftc_pending') {
+              return form;
+            }
+
+            var access = {
+              read: ['pa', 'advisor', 'admin', 'invoicing', 'production_approval_manager'],
+              write: [],
+              update: [],
+              "delete": []
+            };
+            form.access = access;
+            return form;
+          },
+          transformBeforeOpenEditMode: function transformBeforeOpenEditMode(form) {
+            console.log('-------------transformBeforeOpenEditMode---------------');
+            console.log(form);
+            console.log('-------------transformBeforeOpenEditMode---------------'); // if(form?.getForm?.context === 'car_quote_snap' && form?.formState === 'list' && form?.getForm?.multi === false) {
+            //     return { ...data, mode_id: { id: data?.mode_id?.id, text: data?.mode_id?.name}}
+            // }
+            // return data
+          },
           applyFilter: function applyFilter(options) {
             var id = options.params.id;
             var generateUrl = "/?filter={\"car_quote_id\":\"".concat(id, "\"}");
@@ -17381,7 +17420,7 @@ var leadRequest = {
   getForm: function getForm() {
     var form = {
       db_table: 'car_quote_request',
-      title: 'Leads Request',
+      title: 'Lead Listing',
       access: {
         read: ['pa', 'advisor', 'admin', 'invoicing', 'production_approval_manager', 'production_approval_manager'],
         write: [],
@@ -17469,6 +17508,61 @@ var leadRequest = {
               update: []
             }
           }, {
+            type: 'text',
+            label: 'Customer email',
+            field: 'email',
+            access: {
+              read: ['advisor'],
+              write: [],
+              update: []
+            }
+          }, {
+            type: 'text',
+            label: 'Phone number',
+            field: 'mobile_no',
+            access: {
+              read: ['advisor'],
+              write: [],
+              update: []
+            }
+          }, {
+            type: 'dropdown',
+            label: 'Lead Status',
+            field: 'quote_status_id',
+            source: 'quote_status',
+            access: {
+              read: ['advisor'],
+              write: [],
+              update: []
+            }
+          }, {
+            type: 'dropdown',
+            label: 'Production Agent',
+            field: 'pa_id',
+            source: 'users',
+            filter: {
+              name: 'pa'
+            },
+            access: {
+              read: ['advisor'],
+              write: [],
+              update: []
+            },
+            transform: function transform(item) {
+              if (Array.isArray(item)) {
+                var items = item.map(function (u) {
+                  return {
+                    value: u === null || u === void 0 ? void 0 : u.id,
+                    label: u === null || u === void 0 ? void 0 : u.name
+                  };
+                });
+                return items;
+              } else return {
+                value: item === null || item === void 0 ? void 0 : item.id,
+                label: item === null || item === void 0 ? void 0 : item.name
+              };
+            }
+          }, {
             type: 'dropdown',
             label: 'Lead List',
             field: 'pa_id',
@@ -17480,10 +17574,20 @@ var leadRequest = {
               text: 'Assigned Leads'
             }],
             access: {
-              read: ['pa', 'invoicing', 'production_approval_manager'],
+              read: ['pa', 'invoicing'],
               write: [],
               update: []
             }
+          }, {
+            type: 'datePicker',
+            label: 'Created At',
+            field: 'created_at',
+            access: {
+              read: ['advisor'],
+              write: [],
+              update: []
+            } // rules: { required: true }
+
           }],
           advanced: []
         },
@@ -17491,25 +17595,48 @@ var leadRequest = {
           Header: 'CDB ID',
           accessor: 'code'
         }, {
-          Header: 'Client Name',
+          Header: 'Created on',
+          accessor: 'created_at'
+        }, {
+          Header: 'Customer Name',
           accessor: function accessor(d) {
             return "".concat(d.first_name, " ").concat(d.last_name);
           }
         }, {
-          Header: 'Created on',
-          accessor: 'created_at'
+          Header: 'Lead Status',
+          accessor: function accessor(d) {
+            var _d$quote_status_id;
+
+            return "".concat((_d$quote_status_id = d.quote_status_id) === null || _d$quote_status_id === void 0 ? void 0 : _d$quote_status_id.text);
+          }
+        }, {
+          Header: 'Production Agent',
+          accessor: function accessor(d) {
+            var _d$pa_id;
+
+            return "".concat(d === null || d === void 0 ? void 0 : (_d$pa_id = d.pa_id) === null || _d$pa_id === void 0 ? void 0 : _d$pa_id.name);
+          }
+        }, {
+          Header: 'Payment Agent',
+          accessor: function accessor(d) {
+            var _d$invoicing;
+
+            return "".concat(d === null || d === void 0 ? void 0 : (_d$invoicing = d.invoicing) === null || _d$invoicing === void 0 ? void 0 : _d$invoicing.name);
+          }
+        }, {
+          Header: 'Last Modified',
+          accessor: 'updated_at'
         }],
         events: {
           // applyFilter(options){
           //     const generateUrl = `/?filter={"id":-66}`
           //     return generateUrl
           // },
-          applyFilterAfterSearch: function applyFilterAfterSearch(options) {
-            var filter = options.filter;
-            if (Object.keys(filter).length === 0) return {
-              id: -66
-            };else return filter;
-          },
+          // applyFilterAfterSearch(options) {
+          //   const { filter } = options;
+          //   if (Object.keys(filter).length === 0) return { id: -66 };
+          //   else return filter;
+          // },
           afterFetchData: function afterFetchData(options) {
             var resp = options.resp;
             return resp.data;
@@ -17644,7 +17771,13 @@ var ftcHistory = {
         status: {
           type: 'dropdown',
           label: 'Status',
-          source: ['Resubmit for Approval'],
+          source: [{
+            id: "resubmitForApproval",
+            text: "Resubmit for Approval"
+          }, {
+            id: "ftc_pending",
+            text: "FTC Pending"
+          }],
           access: {
             read: ['advisor', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
             write: ['advisor'],
@@ -17770,38 +17903,38 @@ var ftcPayment = {
         mode_id: {
           type: 'dropdown',
           label: 'Payment Mode',
-          source: 'payment_modes',
+          source: [{
+            id: 24,
+            text: "Credit Card Payment"
+          }, {
+            id: 25,
+            text: "Non-credit Card Payment"
+          }],
           "if": {
-            CC: {
+            24: {
               fields: ['method']
             }
           },
           "else": ['method'],
           field: 'mode_id',
-          transform: function transform(item) {
-            var condition = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
-            if (condition) return {
-              value: {
-                id: item === null || item === void 0 ? void 0 : item.value,
-                name: item === null || item === void 0 ? void 0 : item.label
-              },
-              selected: item === null || item === void 0 ? void 0 : item.label
-            };
-
-            if (Array.isArray(item)) {
-              var items = item.map(function (u) {
-                return {
-                  value: u === null || u === void 0 ? void 0 : u.id,
-                  label: u === null || u === void 0 ? void 0 : u.name
-                };
-              });
-              return items;
-            } else return {
-              value: item === null || item === void 0 ? void 0 : item.id,
-              label: item === null || item === void 0 ? void 0 : item.name,
-              selected: item === null || item === void 0 ? void 0 : item.name
-            };
-          },
+          // transform(item, condition = false) {
+          //   if (condition)
+          //     return {
+          //       value: { id: item?.value, name: item?.label },
+          //       selected: item?.label,
+          //     };
+          //   if (Array.isArray(item)) {
+          //     const items = item.map(u => {
+          //       return { value: u?.id, label: u?.name };
+          //     });
+          //     return items;
+          //   } else
+          //     return {
+          //       value: item?.id,
+          //       label: item?.name,
+          //       selected: item?.name,
+          //     };
+          // },
           access: {
             read: ['advisor', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
             write: ['advisor'],
@@ -17815,7 +17948,6 @@ var ftcPayment = {
           type: 'dropdown',
           label: 'Payment Method',
           source: ['Spotii', 'payments.insurancemarket.ae '],
-          field: 'method',
           offscreen: true,
           access: {
             read: ['advisor', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
@@ -17852,6 +17984,22 @@ var ftcPayment = {
           accessor: 'id'
         }],
         events: {
+          transformAfterFetchFromServer: function transformAfterFetchFromServer(form, data) {
+            var _form$getForm, _form$getForm2;
+
+            if ((form === null || form === void 0 ? void 0 : (_form$getForm = form.getForm) === null || _form$getForm === void 0 ? void 0 : _form$getForm.context) === 'car_quote_snap' && (form === null || form === void 0 ? void 0 : form.formState) === 'list' && (form === null || form === void 0 ? void 0 : (_form$getForm2 = form.getForm) === null || _form$getForm2 === void 0 ? void 0 : _form$getForm2.multi) === false) {
+              var _data$mode_id, _data$mode_id2;
+
+              return _objectSpread(_objectSpread({}, data), {}, {
+                mode_id: {
+                  id: data === null || data === void 0 ? void 0 : (_data$mode_id = data.mode_id) === null || _data$mode_id === void 0 ? void 0 : _data$mode_id.id,
+                  text: data === null || data === void 0 ? void 0 : (_data$mode_id2 = data.mode_id) === null || _data$mode_id2 === void 0 ? void 0 : _data$mode_id2.name
+                }
+              });
+            }
+
+            return data;
+          },
           applyFilter: function applyFilter(options) {
             var id = options.params.id;
             var generateUrl = "/?filter={\"car_quote_id\":\"".concat(id, "\"}");
@@ -17862,6 +18010,10 @@ var ftcPayment = {
       postTransform: function postTransform(options) {
         var params = options.params,
             data = options.data;
+        console.log({
+          params: params,
+          data: data
+        });
         return _objectSpread(_objectSpread({}, data), {}, {
           car_quote_id: params.id
         });
@@ -17952,10 +18104,16 @@ var ftcPaymentHistory = {
           Header: 'Status',
           accessor: 'status'
         }, {
-          Header: 'Notes',
+          Header: 'Approval Code',
           accessor: 'notes'
         }],
         events: {
+          onClick: function onClick(options) {
+            var row = options.row,
+                dispatch = options.dispatch,
+                history = options.history;
+            window.open('/transapp/showtransaction?approval_code=' + row.notes, '_blank');
+          },
           applyFilter: function applyFilter(options) {
             var id = options.params.id;
             var generateUrl = "/?filter={\"car_quote_id\":\"".concat(id, "\"}");
@@ -18582,9 +18740,9 @@ var policyHolderDetail = {
       subtitle: '',
       access: {
         read: ['advisor', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
-        write: ['admin'],
-        update: ['admin'],
-        "delete": ['admin']
+        write: ['advisor'],
+        update: ['advisor'],
+        "delete": []
       },
       fields: {
         first_name: {
@@ -18623,23 +18781,17 @@ var policyHolderDetail = {
         nationality_id: {
           type: 'dropdown',
           label: 'Nationality',
-          field: 'nationality_id',
-          form: 'nationality',
-          transform: function transform(item) {
-            // const values = data.map(function (item) {
-            //     return  { value: item.id, label: item.code };
-            // });
-            return {
-              value: item === null || item === void 0 ? void 0 : item.id,
-              label: item === null || item === void 0 ? void 0 : item.code
-            }; // return values
-          }
+          source: 'nationality'
         },
         dob: {
           type: 'datePicker',
           label: 'Birth Date',
-          field: 'dob',
-          value: '12/12/2009'
+          access: {
+            read: ['pa', 'advisor', 'admin', 'invoicing', 'production_approval_manager'],
+            write: ['advisor', 'admin'],
+            update: ['advisor', 'admin']
+          } // rules: { required: true }
+
         }
       },
       sections: [{
@@ -18685,6 +18837,24 @@ var policyHolderDetail = {
           accessor: 'mobile_no'
         }],
         events: {
+          transformBeforeOpenReadMode: function transformBeforeOpenReadMode(form) {
+            var _form$data, _form$data$quote_stat;
+
+            var code = form === null || form === void 0 ? void 0 : (_form$data = form.data) === null || _form$data === void 0 ? void 0 : (_form$data$quote_stat = _form$data.quote_status_id) === null || _form$data$quote_stat === void 0 ? void 0 : _form$data$quote_stat.code;
+
+            if (code && code === 'ftc_pending') {
+              return form;
+            }
+
+            var access = {
+              read: ['pa', 'advisor', 'admin', 'invoicing', 'production_approval_manager'],
+              write: [],
+              update: [],
+              "delete": []
+            };
+            form.access = access;
+            return form;
+          },
           applyFilter: function applyFilter(options) {
             var mode = options.mode,
                 id = options.params.id;
@@ -19183,8 +19353,6 @@ function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { va
 
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
-function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
-
 
 
 var transform = __webpack_require__(/*! node-json-transform */ "./node_modules/node-json-transform/index.js").transform;
@@ -19211,8 +19379,8 @@ var vehicleDetail = {
           },
           access: {
             read: ['advisor', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
-            write: ['admin'],
-            update: ['admin']
+            write: [],
+            update: []
           }
         },
         car_model_id: {
@@ -19221,38 +19389,18 @@ var vehicleDetail = {
           source: 'car_model',
           access: {
             read: ['advisor', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
-            write: ['admin'],
-            update: ['admin']
-          },
-          transform: function transform(item) {
-            if (_typeof(item) === 'object') return {
-              value: item === null || item === void 0 ? void 0 : item.id,
-              label: item === null || item === void 0 ? void 0 : item.code
-            };else {
-              var items = item.map(function () {
-                return {
-                  value: 1,
-                  label: '222'
-                };
-              });
-              return items;
-            }
+            write: [],
+            update: []
           }
         },
         car_make_id: {
           type: 'dropdown',
           label: 'Car Make',
-          field: 'car_make_id',
+          source: 'car_make',
           access: {
             read: ['advisor', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
-            write: ['admin'],
-            update: ['admin']
-          },
-          transform: function transform(item) {
-            return {
-              value: item === null || item === void 0 ? void 0 : item.id,
-              label: item === null || item === void 0 ? void 0 : item.text
-            };
+            write: [],
+            update: []
           }
         },
         emirate_of_registration_id: {
@@ -19260,8 +19408,8 @@ var vehicleDetail = {
           label: 'Emirate of Registration',
           access: {
             read: ['advisor', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
-            write: ['admin'],
-            update: ['admin']
+            write: [],
+            update: []
           },
           transform: function transform(item) {
             return {
@@ -19275,8 +19423,8 @@ var vehicleDetail = {
           label: 'UAE licence held for',
           access: {
             read: ['advisor', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
-            write: ['admin'],
-            update: ['admin']
+            write: [],
+            update: []
           },
           transform: function transform(item) {
             return {
@@ -19291,8 +19439,8 @@ var vehicleDetail = {
           form: 'claim_history',
           access: {
             read: ['advisor', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
-            write: ['admin'],
-            update: ['admin']
+            write: [],
+            update: []
           }
         },
         vehicle_detail_id: {
@@ -19315,6 +19463,24 @@ var vehicleDetail = {
           accessor: 'year_of_manufacture'
         }],
         events: {
+          transformBeforeOpenReadMode: function transformBeforeOpenReadMode(form) {
+            var _form$data, _form$data$quote_stat;
+
+            var code = form === null || form === void 0 ? void 0 : (_form$data = form.data) === null || _form$data === void 0 ? void 0 : (_form$data$quote_stat = _form$data.quote_status_id) === null || _form$data$quote_stat === void 0 ? void 0 : _form$data$quote_stat.code;
+
+            if (code && code === 'ftc_pending') {
+              return form;
+            }
+
+            var access = {
+              read: ['pa', 'advisor', 'admin', 'invoicing', 'production_approval_manager'],
+              write: [],
+              update: [],
+              "delete": []
+            };
+            form.access = access;
+            return form;
+          },
           applyFilter: function applyFilter(options) {
             var id = options.params.id;
             var generateUrl = "/".concat(id);
@@ -20574,6 +20740,17 @@ function LeadSnapShot() {
           }
         };
 
+      case 'ftcQuoteStatusHistory':
+        return {
+          form: 'ftcQuoteStatusHistory',
+          view_mode: 'list',
+          action_type: 'list',
+          context: 'car_quote_snap',
+          filter: {
+            car_quote_id: paramRef.current.id
+          }
+        };
+
       case 'email_template':
         return {
           data: action.state,
@@ -20626,47 +20803,29 @@ function LeadSnapShot() {
     id: 8,
     data: 'overview'
   }, {
-    icon: 'fa fa-upload',
-    label: 'Upload Documents',
-    active: 0,
-    id: 1,
-    data: 'document'
-  }, {
     icon: 'fa fa-file-text-o',
-    label: 'Policy Holder Detail',
+    label: 'Customer Details',
     active: 0,
     id: 2,
     data: 'policy'
   }, {
     icon: 'fa fa-line-chart',
-    label: 'Vehicle Detail',
+    label: 'Vehicle Details',
     active: 0,
     id: 3,
     data: 'vehicle'
   }, {
+    icon: 'fa fa-upload',
+    label: 'Upload Document',
+    active: 0,
+    id: 1,
+    data: 'document'
+  }, {
     icon: 'fa fa-line-chart',
-    label: 'Insurance Coverage Information',
+    label: 'Insurance Coverage',
     active: 0,
     id: 4,
     data: 'insurance'
-  }, {
-    icon: 'fa fa-line-chart',
-    label: 'FTC',
-    active: 0,
-    id: 5,
-    data: 'ftcHistory'
-  }, {
-    icon: 'fa fa-line-chart',
-    label: 'Review & Send',
-    active: 0,
-    id: 6,
-    data: 'email_template'
-  }, {
-    icon: 'fa fa-line-chart',
-    label: 'KYC',
-    active: 0,
-    id: 7,
-    data: 'kyc'
   }, {
     icon: 'fa fa-line-chart',
     label: 'Payment',
@@ -20675,10 +20834,34 @@ function LeadSnapShot() {
     data: 'ftcPayment'
   }, {
     icon: 'fa fa-line-chart',
-    label: 'Policy Detail',
+    label: 'Review & Send',
+    active: 0,
+    id: 6,
+    data: 'email_template'
+  }, {
+    icon: 'fa fa-line-chart',
+    label: 'KYC & AML',
+    active: 0,
+    id: 7,
+    data: 'kyc'
+  }, {
+    icon: 'fa fa-line-chart',
+    label: 'FTC Status',
+    active: 0,
+    id: 5,
+    data: 'ftcHistory'
+  }, {
+    icon: 'fa fa-line-chart',
+    label: 'Policy Details',
     active: 0,
     id: 11,
     data: 'carQuotePolicy'
+  }, {
+    icon: 'fa fa-line-chart',
+    label: 'Statuses History',
+    active: 0,
+    id: 19,
+    data: 'ftcQuoteStatusHistory'
   }];
 
   var onSelect = /*#__PURE__*/function () {
@@ -20784,14 +20967,9 @@ function LeadSnapShot() {
         data: form.data
       }));
       break;
-
-    case 'ftcHistory':
-      formArr.push( /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_12__.jsx)(_ftc_form__WEBPACK_IMPORTED_MODULE_6__.default, {
-        filter: {
-          car_quote_id: paramRef.current.id
-        }
-      }));
-      break;
+    // case 'ftcHistory':
+    //   formArr.push(<FtcForm filter={{ car_quote_id: paramRef.current.id }} />);
+    //   break;
 
     case 'ftcPayment':
       formArr.push( /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_12__.jsx)(_ftc_payment__WEBPACK_IMPORTED_MODULE_10__.default, {
@@ -21209,13 +21387,6 @@ function KycAMLForm(props) {
                   })
                 })
               })
-            })
-          }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("div", {
-            children: (state === null || state === void 0 ? void 0 : state.loader) === false && (state === null || state === void 0 ? void 0 : state.found) === 0 && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsxs)("button", {
-              type: "button",
-              className: "btn btn-round btn-success",
-              onClick: verifyAml,
-              children: [' ', "Verify AML"]
             })
           })]
         })]
@@ -21648,7 +21819,7 @@ function fillConditionalFields(obj) {
                 };
               }
 
-              var val = getField["if"][(_selectedVal = selectedVal) === null || _selectedVal === void 0 ? void 0 : _selectedVal.selected];
+              var val = getField["if"][(_selectedVal = selectedVal) === null || _selectedVal === void 0 ? void 0 : _selectedVal.selected] ? getField["if"][selectedVal.selected] : getField["if"][selectedVal.id];
 
               if (val !== null && val !== void 0 && val.fields) {
                 var getCondFields = val.fields;
@@ -21670,8 +21841,9 @@ function fillConditionalFields(obj) {
               }
             }
           });
+          return _context.abrupt("return", obj);
 
-        case 2:
+        case 3:
         case "end":
           return _context.stop();
       }
@@ -22034,7 +22206,7 @@ function processGetRequest(obj) {
 }
 
 function processVisibleFormStates(obj) {
-  var formState, selectedRecord, manageListDispatch, initialForm, override, session, initialReducerState, getForm, db_table, filter, queryParamObj, params, objUrl, data, initialFormState, rec, _obj2, _obj3, _initialReducerState, _obj4, formVisible, newState, _obj5, _initialReducerState2, _getForm, _initialReducerState3, objNew, _formVisible, _db_table, _newState, _obj6, _objUrl, resp, _data, _newState2, _obj7, _formVisible2, _db_table2, _newState4, _obj9, _objUrl2, _resp, _data2, _newState3, _obj8;
+  var formState, selectedRecord, manageListDispatch, initialForm, override, session, initialReducerState, getForm, db_table, filter, queryParamObj, params, objUrl, data, _initialFormState, _initialReducerState$, _initialReducerState$2, _initialFormState$vie, _initialFormState$vie2, rec, _obj2, beforeSendRead, _initialFormState$vie3, _initialFormState$vie4, _obj3, _beforeSendRead, _initialReducerState, _obj4, formVisible, newState, _obj5, _initialReducerState2, _getForm, _initialReducerState3, objNew, _formVisible, _db_table, _newState, _obj6, _formVisible$view, _formVisible$view$eve, _objUrl, resp, _data, _newState2, _obj7, _beforeSendRead2, _formVisible2, _db_table2, _newState4, _obj9, _objUrl2, _resp, _data2, _newState3, _obj8;
 
   return _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().wrap(function processVisibleFormStates$(_context3) {
     while (1) {
@@ -22053,7 +22225,7 @@ function processVisibleFormStates(obj) {
           console.log(override);
           console.log('**************processVisibleFormStates**WatchSaga.js****************');
           _context3.t0 = formState;
-          _context3.next = _context3.t0 === 'list' ? 11 : _context3.t0 === 'cancel' ? 49 : _context3.t0 === 'delete' ? 53 : _context3.t0 === 'new' ? 73 : _context3.t0 === 'read' ? 77 : _context3.t0 === 'edit' ? 112 : _context3.t0 === 'reset' ? 141 : 146;
+          _context3.next = _context3.t0 === 'list' ? 11 : _context3.t0 === 'cancel' ? 51 : _context3.t0 === 'delete' ? 55 : _context3.t0 === 'new' ? 75 : _context3.t0 === 'read' ? 79 : _context3.t0 === 'edit' ? 105 : _context3.t0 === 'reset' ? 134 : 139;
           break;
 
         case 11:
@@ -22075,7 +22247,7 @@ function processVisibleFormStates(obj) {
           console.log('**************List-watch-saga.js******************');
 
           if (!((getForm === null || getForm === void 0 ? void 0 : getForm.multi) === false)) {
-            _context3.next = 46;
+            _context3.next = 48;
             break;
           }
 
@@ -22106,7 +22278,7 @@ function processVisibleFormStates(obj) {
 
         case 26:
           data = _context3.sent;
-          initialFormState = (0,_forms_dsl__WEBPACK_IMPORTED_MODULE_3__.getFormObjForDraw)(initialForm);
+          _initialFormState = (0,_forms_dsl__WEBPACK_IMPORTED_MODULE_3__.getFormObjForDraw)(initialForm);
 
           if (!data) {
             _context3.next = 41;
@@ -22115,7 +22287,15 @@ function processVisibleFormStates(obj) {
 
           rec = {};
           if (Array.isArray(data.data) && data.data.length > 0) rec = data.data[0];else rec = data.data;
-          _obj2 = _objectSpread(_objectSpread({}, initialFormState), {}, {
+
+          if (typeof ((_initialReducerState$ = initialReducerState.view) === null || _initialReducerState$ === void 0 ? void 0 : (_initialReducerState$2 = _initialReducerState$.events) === null || _initialReducerState$2 === void 0 ? void 0 : _initialReducerState$2.transformAfterFetchFromServer) === 'function') {
+            rec = initialReducerState.view.events.transformAfterFetchFromServer({
+              formState: formState,
+              getForm: getForm
+            }, rec);
+          }
+
+          _obj2 = _objectSpread(_objectSpread({}, _initialFormState), {}, {
             view_mode: 'form',
             data: rec,
             selectedRecord: rec,
@@ -22128,22 +22308,25 @@ function processVisibleFormStates(obj) {
               loader: false
             }
           });
-          console.log('**************Read-Data-multi-false-1******************');
-          console.log(_obj2);
-          console.log('**************Read-Data-multi-false-1******************');
-          _context3.next = 38;
+          _context3.next = 36;
           return (0,_prefill_conditional_fields__WEBPACK_IMPORTED_MODULE_4__.fillConditionalFields)(_obj2);
 
-        case 38:
+        case 36:
+          beforeSendRead = _obj2;
+
+          if ((_initialFormState$vie = _initialFormState.view) !== null && _initialFormState$vie !== void 0 && (_initialFormState$vie2 = _initialFormState$vie.events) !== null && _initialFormState$vie2 !== void 0 && _initialFormState$vie2.transformBeforeOpenReadMode && typeof _initialFormState.view.events.transformBeforeOpenReadMode === 'function') {
+            beforeSendRead = _initialFormState.view.events.transformBeforeOpenReadMode(_obj2);
+          }
+
           manageListDispatch({
             type: 'read',
-            obj: _obj2
+            obj: beforeSendRead
           });
-          _context3.next = 44;
+          _context3.next = 46;
           break;
 
         case 41:
-          _obj3 = _objectSpread(_objectSpread({}, initialFormState), {}, {
+          _obj3 = _objectSpread(_objectSpread({}, _initialFormState), {}, {
             view_mode: 'form',
             selectedRecord: null,
             readOnly: true,
@@ -22155,16 +22338,22 @@ function processVisibleFormStates(obj) {
               loader: false
             }
           });
+          _beforeSendRead = _obj3;
+
+          if ((_initialFormState$vie3 = _initialFormState.view) !== null && _initialFormState$vie3 !== void 0 && (_initialFormState$vie4 = _initialFormState$vie3.events) !== null && _initialFormState$vie4 !== void 0 && _initialFormState$vie4.transformBeforeOpenReadMode && typeof _initialFormState.view.events.transformBeforeOpenReadMode === 'function') {
+            _beforeSendRead = _initialFormState.view.events.transformBeforeOpenReadMode(_obj3);
+          }
+
           manageListDispatch({
             type: 'read',
-            obj: _obj3
+            obj: _beforeSendRead
           });
 
-        case 44:
-          _context3.next = 48;
+        case 46:
+          _context3.next = 50;
           break;
 
-        case 46:
+        case 48:
           manageListDispatch({
             type: 'showLoader',
             obj: {
@@ -22176,10 +22365,10 @@ function processVisibleFormStates(obj) {
             obj: getForm
           });
 
-        case 48:
-          return _context3.abrupt("break", 146);
+        case 50:
+          return _context3.abrupt("break", 139);
 
-        case 49:
+        case 51:
           _initialReducerState = (0,_forms_dsl__WEBPACK_IMPORTED_MODULE_3__.getFormObjForDraw)(initialForm);
           _obj4 = _objectSpread(_objectSpread(_objectSpread({}, _initialReducerState), initialForm), {}, {
             view_mode: 'list',
@@ -22189,9 +22378,9 @@ function processVisibleFormStates(obj) {
             type: 'list',
             obj: _obj4
           });
-          return _context3.abrupt("break", 146);
+          return _context3.abrupt("break", 139);
 
-        case 53:
+        case 55:
           console.log('***********delete***********');
           console.log(selectedRecord);
           console.log(initialForm);
@@ -22208,7 +22397,7 @@ function processVisibleFormStates(obj) {
           console.log(formVisible); // const { db_table } = formVisible;
 
           if (selectedRecord) {
-            _context3.next = 67;
+            _context3.next = 69;
             break;
           }
 
@@ -22233,7 +22422,7 @@ function processVisibleFormStates(obj) {
           });
           return _context3.abrupt("return");
 
-        case 67:
+        case 69:
           console.log('**************Delete-watch-saga.js******************'); // let objUrl = `/form/${db_table}/${selectedRecord.id}`;
           // const resp = yield fetch(objUrl, { method: 'Delete' });
           // const data = yield resp.json();
@@ -22252,9 +22441,9 @@ function processVisibleFormStates(obj) {
             type: 'list',
             obj: _getForm
           });
-          return _context3.abrupt("break", 146);
+          return _context3.abrupt("break", 139);
 
-        case 73:
+        case 75:
           _initialReducerState3 = (0,_forms_dsl__WEBPACK_IMPORTED_MODULE_3__.getFormObjForDraw)(initialForm);
           objNew = _objectSpread(_objectSpread(_objectSpread({}, _initialReducerState3), initialForm), {}, {
             view_mode: 'form',
@@ -22265,9 +22454,9 @@ function processVisibleFormStates(obj) {
             type: 'new',
             obj: objNew
           });
-          return _context3.abrupt("break", 146);
+          return _context3.abrupt("break", 139);
 
-        case 77:
+        case 79:
           manageListDispatch({
             type: 'showLoader',
             obj: {
@@ -22279,7 +22468,7 @@ function processVisibleFormStates(obj) {
           _db_table = _formVisible.db_table;
 
           if (selectedRecord) {
-            _context3.next = 90;
+            _context3.next = 89;
             break;
           }
 
@@ -22301,29 +22490,26 @@ function processVisibleFormStates(obj) {
               loader: false
             }
           });
-          console.log('**************Read-Data!selectedRecord******************');
-          console.log(_obj6);
-          console.log('**************Read-Data!selectedRecord******************');
           manageListDispatch({
             type: 'read',
             obj: _obj6
           });
-          _context3.next = 111;
+          _context3.next = 104;
           break;
 
-        case 90:
+        case 89:
           _objUrl = "/form/".concat(_db_table, "/").concat(selectedRecord.id);
-          _context3.next = 93;
+          _context3.next = 92;
           return fetch(_objUrl, {
             method: 'GET'
           });
 
-        case 93:
+        case 92:
           resp = _context3.sent;
-          _context3.next = 96;
+          _context3.next = 95;
           return resp.json();
 
-        case 96:
+        case 95:
           _data = _context3.sent;
           _newState2 = _objectSpread(_objectSpread({}, _formVisible), {}, {
             data: _data.data
@@ -22335,12 +22521,11 @@ function processVisibleFormStates(obj) {
             action_type: 'read'
           }, initialForm === null || initialForm === void 0 ? void 0 : initialForm.override), {}, {
             session: session
-          });
-          console.log('**************Read-watch-saga.js*****************');
-          console.log(_obj7);
-          console.log(_formVisible);
-          console.log(selectedRecord);
-          console.log('**************Read-watch-saga.js******************'); // yield put({ type: 'read', obj })
+          }); // console.log('**************Read-watch-saga.js*****************');
+          // console.log(obj);
+          // console.log(formVisible);
+          // console.log(selectedRecord);
+          // console.log('**************Read-watch-saga.js******************');
 
           manageListDispatch({
             type: 'showLoader',
@@ -22348,22 +22533,25 @@ function processVisibleFormStates(obj) {
               loader: false
             }
           });
-          console.log('**************Read-Data******************');
-          console.log(_obj7);
-          console.log('**************Read-Data******************');
-          _context3.next = 110;
+          _context3.next = 101;
           return (0,_prefill_conditional_fields__WEBPACK_IMPORTED_MODULE_4__.fillConditionalFields)(_obj7);
 
-        case 110:
+        case 101:
+          _beforeSendRead2 = _obj7;
+
+          if ((_formVisible$view = _formVisible.view) !== null && _formVisible$view !== void 0 && (_formVisible$view$eve = _formVisible$view.events) !== null && _formVisible$view$eve !== void 0 && _formVisible$view$eve.transformBeforeOpenReadMode && typeof _formVisible.view.events.transformBeforeOpenReadMode === 'function') {
+            _beforeSendRead2 = initialFormState.view.events.transformBeforeOpenReadMode(_obj7);
+          }
+
           manageListDispatch({
             type: 'read',
-            obj: _obj7
+            obj: _beforeSendRead2
           });
 
-        case 111:
-          return _context3.abrupt("break", 146);
+        case 104:
+          return _context3.abrupt("break", 139);
 
-        case 112:
+        case 105:
           manageListDispatch({
             type: 'showLoader',
             obj: {
@@ -22377,7 +22565,7 @@ function processVisibleFormStates(obj) {
           _db_table2 = _formVisible2.db_table;
 
           if (selectedRecord) {
-            _context3.next = 123;
+            _context3.next = 116;
             break;
           }
 
@@ -22403,20 +22591,20 @@ function processVisibleFormStates(obj) {
           });
           return _context3.abrupt("return");
 
-        case 123:
+        case 116:
           console.log('**************Edit-watch-saga.js******************');
           _objUrl2 = "/form/".concat(_db_table2, "/").concat(selectedRecord.id);
-          _context3.next = 127;
+          _context3.next = 120;
           return fetch(_objUrl2, {
             method: 'GET'
           });
 
-        case 127:
+        case 120:
           _resp = _context3.sent;
-          _context3.next = 130;
+          _context3.next = 123;
           return _resp.json();
 
-        case 130:
+        case 123:
           _data2 = _context3.sent;
           _newState3 = _objectSpread(_objectSpread({}, _formVisible2), {}, {
             data: _data2.data
@@ -22437,28 +22625,28 @@ function processVisibleFormStates(obj) {
           console.log('**************Edit-Data******************');
           console.log(_obj8);
           console.log('**************Edit-Data******************');
-          _context3.next = 139;
+          _context3.next = 132;
           return (0,_prefill_conditional_fields__WEBPACK_IMPORTED_MODULE_4__.fillConditionalFields)(_obj8);
 
-        case 139:
+        case 132:
           manageListDispatch({
             type: 'edit',
             obj: _obj8
           });
-          return _context3.abrupt("break", 146);
+          return _context3.abrupt("break", 139);
 
-        case 141:
+        case 134:
           console.log('**************Reset-watch-saga.js******************');
           console.log('**************Rest-watch-saga.js******************');
-          _context3.next = 145;
+          _context3.next = 138;
           return (0,redux_saga_effects__WEBPACK_IMPORTED_MODULE_1__.put)({
             type: 'reset'
           });
 
-        case 145:
-          return _context3.abrupt("break", 146);
+        case 138:
+          return _context3.abrupt("break", 139);
 
-        case 146:
+        case 139:
         case "end":
           return _context3.stop();
       }

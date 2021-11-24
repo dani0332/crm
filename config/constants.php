@@ -4,8 +4,9 @@ return [
     'social_driver' => 'google',
     'azure_storage_url' => env('AZURE_STORAGE_URL' ,''),
     'emailL_sys' => env('EMAIL_SYS' , 'DEVELOPMENT'),
-    'central_api_endpoint' => env('CENTRAL_API_ENDPOINT' , ''),
-    'central_api_token'=>env('CENTRAL_API_TOKEN' , ''),
+    'CENTRAL_API_ENDPOINT' => env('CENTRAL_API_ENDPOINT' , ''),
+    'CENTRAL_API_TOKEN'=>env('CENTRAL_API_TOKEN' , ''),
+    'CENTRAL_API_TIMEOUT'=>env('CENTRAL_API_TIMEOUT' , ''),
     'datetime_format'=>env('DATETIME_FORMAT' , ''),
     'CLAIMS_UPLOAD_MIME_TYPES'=>env('CLAIMS_UPLOAD_MIME_TYPES' , ''),
     'valuation_api_route' => env('VALUATION_API_URL'),
@@ -25,5 +26,8 @@ return [
     'INSLY_REQUEST_TIMEOUT_IN_SECONDS' => env('INSLY_REQUEST_TIMEOUT_IN_SECONDS'),
     'KEN_PLANS_API_ENDPOINT' => env('KEN_PLANS_API_ENDPOINT'),
     'KEN_PLANS_API_TOKEN' => env('KEN_PLANS_API_TOKEN'),
-    'KEN_PLANS_API_TIMEOUT' => env('KEN_PLANS_API_TIMEOUT')
+    'KEN_PLANS_API_TIMEOUT' => env('KEN_PLANS_API_TIMEOUT'),
+    'MAIL_FROM_ADDRESS_AML' => env('MAIL_FROM_ADDRESS_AML'),
+    'MAIL_FROM_NAME_AML' => env('MAIL_FROM_NAME_AML'),
+    'MAIL_NOTIFICATION_FTC' => env('MAIL_FROM_ADDRESS'),
 ];

@@ -7,7 +7,7 @@ const leadRequest = {
   getForm() {
     const form = {
       db_table: 'car_quote_request',
-      title: 'Leads Request',
+      title: 'Lead Listing',
       access: {
         read: [
           'pa',
@@ -117,6 +117,57 @@ const leadRequest = {
               },
             },
             {
+              type: 'text',
+              label: 'Customer email',
+              field: 'email',
+              access: {
+                read: ['advisor'],
+                write: [],
+                update: [],
+              },
+            },
+            {
+              type: 'text',
+              label: 'Phone number',
+              field: 'mobile_no',
+              access: {
+                read: ['advisor'],
+                write: [],
+                update: [],
+              },
+            },
+            {
+              type: 'dropdown',
+              label: 'Lead Status',
+              field: 'quote_status_id',
+              source: 'quote_status',
+              access: {
+                read: ['advisor'],
+                write: [],
+                update: [],
+              },
+            },
+            {
+              type: 'dropdown',
+              label: 'Production Agent',
+              field: 'pa_id',
+              source: 'users',
+              filter: { name: 'pa' },
+              access: {
+                read: ['advisor'],
+                write: [],
+                update: [],
+              },
+              transform(item) {
+                if (Array.isArray(item)) {
+                  const items = item.map(u => {
+                    return { value: u?.id, label: u?.name };
+                  });
+                  return items;
+                } else return { value: item?.id, label: item?.name };
+              },
+            },
+            {
               type: 'dropdown',
               label: 'Lead List',
               field: 'pa_id',
@@ -125,10 +176,21 @@ const leadRequest = {
                 { id: 1, text: 'Assigned Leads' },
               ],
               access: {
-                read: ['pa', 'invoicing', 'production_approval_manager'],
+                read: ['pa', 'invoicing'],
                 write: [],
                 update: [],
               },
+            },
+            {
+              type: 'datePicker',
+              label: 'Created At',
+              field: 'created_at',
+              access: {
+                read: ['advisor'],
+                write: [],
+                update: [],
+              },
+              // rules: { required: true }
             },
           ],
           advanced: [],
@@ -139,12 +201,28 @@ const leadRequest = {
             accessor: 'code',
           },
           {
-            Header: 'Client Name',
+            Header: 'Created on',
+            accessor: 'created_at',
+          },
+          {
+            Header: 'Customer Name',
             accessor: d => `${d.first_name} ${d.last_name}`,
           },
           {
-            Header: 'Created on',
-            accessor: 'created_at',
+            Header: 'Lead Status',
+            accessor: d => `${d.quote_status_id?.text}`,
+          },
+          {
+            Header: 'Production Agent',
+            accessor: d => `${d?.pa_id?.name}`,
+          },
+          {
+            Header: 'Payment Agent',
+            accessor: d => `${d?.invoicing?.name}`,
+          },
+          {
+            Header: 'Last Modified',
+            accessor: 'updated_at',
           },
         ],
         events: {
@@ -152,11 +230,11 @@ const leadRequest = {
           //     const generateUrl = `/?filter={"id":-66}`
           //     return generateUrl
           // },
-          applyFilterAfterSearch(options) {
-            const { filter } = options;
-            if (Object.keys(filter).length === 0) return { id: -66 };
-            else return filter;
-          },
+          // applyFilterAfterSearch(options) {
+          //   const { filter } = options;
+          //   if (Object.keys(filter).length === 0) return { id: -66 };
+          //   else return filter;
+          // },
           afterFetchData(options) {
             const { resp } = options;
             return resp.data;

@@ -47,6 +47,8 @@ let insuranceDetail = {
               'invoicing',
               'production_approval_manager',
             ],
+            write: ['advisor', 'admin'],
+            update: ['advisor', 'admin'],
           },
           transform(item) {
             if (Array.isArray(item)) {
@@ -307,6 +309,40 @@ let insuranceDetail = {
           },
         ],
         events: {
+          transformBeforeOpenReadMode(form){
+
+            if(form?.data.length < 1)
+              return form
+
+            const code  = form?.data?.car_quote_id?.quote_status_id?.code;
+            if(code && code === 'ftc_pending') {
+              return form
+            }
+
+            const access = {
+              read: [
+                'pa',
+                'advisor',
+                'admin',
+                'invoicing',
+                'production_approval_manager',
+              ],
+              write: [],
+              update: [],
+              delete: [],
+            };
+            form.access = access
+            return form
+          },
+          transformBeforeOpenEditMode(form) {
+            console.log('-------------transformBeforeOpenEditMode---------------')
+            console.log(form)
+            console.log('-------------transformBeforeOpenEditMode---------------')
+            // if(form?.getForm?.context === 'car_quote_snap' && form?.formState === 'list' && form?.getForm?.multi === false) {
+            //     return { ...data, mode_id: { id: data?.mode_id?.id, text: data?.mode_id?.name}}
+            // }
+            // return data
+          },
           applyFilter(options) {
             const {
               params: { id },

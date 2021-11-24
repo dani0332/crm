@@ -1,6 +1,29 @@
 @extends('layouts.app')
 @section('title','Add User')
 @section('content')
+<script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
+<script>
+    $(document).ready(function(){
+        $("#user-team-select").on('change', function(){
+            $(".loader").show();
+            $.ajax({
+                    url: '/getTeamManagers?teamId=' + this.value,
+                    type: "get",
+                    success: function(response) {
+                        $('#user-manager-select').find('option').remove().end().append('<option value="0" selected="selected">None</option>');
+                        for (let index = 0; index < response.length; index++) {
+                            const element = response[index];
+                            $('#user-manager-select').append($("<option></option>").attr("value", element.id).text(element.name));
+                        }
+                        $('.select-manager').removeAttr('disabled');
+                        $(".loader").hide();
+                    },
+                });
+
+        });
+    });
+
+</script>
 <div class="row">
     <div class="col-md-12 col-sm-12 ">
         <div class="x_panel">
@@ -68,8 +91,7 @@
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="roles">Team <span class="required">*</span></label>
                         <div class="col-md-6 col-sm-6 ">
-                            <select name="team" class="form-control">
-                                <option value="" >Select Team</option>
+                            <select name="team" id="user-team-select" class="form-control">
                                 @foreach ($teams as $team)
 
                                 @if (old('team') == $team->id)
@@ -83,6 +105,17 @@
                                 <span class="text-danger">{{ $errors->first('team') }}</span>
                             @endif
                         </div>
+                    </div>
+                    <div class="item form-group">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="roles">Manager</label>
+                            <div class="col-md-6 col-sm-6 ">
+                                <select disabled="disabled" id='user-manager-select' name="manager" class="form-control select2 select-manager">
+                                    <option value="0" selected="selected" >None</option>
+                                </select>
+                                @if ($errors->has('manager'))
+                                    <span class="text-danger">{{ $errors->first('manager') }}</span>
+                                @endif
+                            </div>
                     </div>
                     <div id='redirect_to_view_div'></div>
                     <div class="ln_solid"></div>

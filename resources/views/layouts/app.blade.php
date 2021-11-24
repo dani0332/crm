@@ -202,9 +202,14 @@ $appName = Config::get('constants.APP_NAME');
                 age_discount_datatable_route: "{{ route('age.index') }}",
                 renewals_leads_datatable_route: "{{ route('renewals.index') }}",
                 sanction_list_downloads_datatable_route: "{{ url('kyc/aml/download/history') }}",
+                reward_sliders_datatable_route: "{{ route('reward-sliders.index') }}",
+                searchLeadsDataTable: "{{ route('leadsearch.index') }}",
+                leadassignmentDataTable: "{{ route('leadassignment.index') }}",
+                myleadsDataTable: "{{ route('myleads.index') }}",
             },
             _token: "{{ csrf_token() }}",
-            image_path: "{{ \Config::get('constants.azure_storage_url') . 'myrewards/' }}"
+            image_path: "{{ \Config::get('constants.azure_storage_url') . 'myrewards/' }}",
+            image_path_rewards_slider: "{{ \Config::get('constants.azure_storage_url') . 'myrewards/rewards-slider/' }}"
         };
     </script>
     <script src="{{ asset('build/js/customjs.js') }}"></script>

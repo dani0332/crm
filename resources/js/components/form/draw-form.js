@@ -28,7 +28,7 @@ function makeNullHideFields(state) {
       if (typeof getField?.transform === 'function')
         getVal = getField?.transform(recVal);
 
-      const val = getField.if[getVal?.selected];
+      let val = getField.if[getVal?.selected] ? getField.if[getVal.selected]: getField.if[getVal.value];
       if (val?.fields) {
         const getCondFields = val.fields;
         if (getCondFields.length > 0) {
@@ -47,11 +47,11 @@ function makeNullHideFields(state) {
 
 function conditionState(state, action) {
   const {
-    field: { name, selected },
+    field: { name, selected, value },
   } = action;
   const getField = state.fields[name];
   if (getField?.if) {
-    const calcVal = selected; //(typeof value === 'object') ? value?.selected : value
+    const calcVal = (typeof value === 'object') ? value?.value : selected
     const val = getField.if[calcVal];
     if (val?.fields) {
       const getCondFields = getField.if[calcVal].fields;
@@ -60,7 +60,6 @@ function conditionState(state, action) {
           state.fields[element].offscreen = false;
         });
       }
-      console.log(getCondFields);
     } else {
       const getCondFields = getField.else;
       getCondFields.forEach(element => {
@@ -93,16 +92,16 @@ function reducer(state, action) {
         state?.selectedRecord &&
         state?.selectedRecord?.[name]
       ) {
-        console.log('------draw-form.js---Removing---draw-form.js-----------');
         conditionState(state, action);
         state.selectedRecord[name] = value;
       } else if (state?.action_type === 'edit') {
-        console.log('------draw-form.js---Editing---draw-form.js-------');
-        console.log(state);
-        console.log(action);
         conditionState(state, action);
-        console.log('------draw-form.js---Editing---draw-form.js-------');
       }
+
+      console.log('------Return-------');
+      console.log(state);
+      console.log('------Return-------');
+
       return { ...state };
     }
     default:
@@ -125,11 +124,8 @@ function DrawForm(props) {
     formState: { errors },
   } = useForm({ shouldUnregister: true });
   const onSubmit = data => {
-    let getData = {};
-    if (state?.action_type === 'edit') getData = makeNullHideFields(state);
-
-    console.log('------------getData----------');
-    console.log(getData);
+    
+    console.log('------------getData----------')
     console.log(data);
     console.log('------------getData----------');
 
@@ -143,7 +139,7 @@ function DrawForm(props) {
       dispatch_({
         type: 'VISIBLE_FORM_SAVE',
         selectedRecord: state?.selectedRecord,
-        body: { ...cleanDeep(transformData), ...getData },
+        body: { ...cleanDeep(transformData) },
         initialForm: initialForm,
         manageListDispatch: manageListDispatch,
       });
