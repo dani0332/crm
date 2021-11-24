@@ -29,15 +29,15 @@
                     </div>
                 </div>
                 <div class="item form-group">
-                    <label class="col-form-label col-md-3 col-sm-3 label-align" for="start_datetime"><b>Start Date & Time</b></label>
+                    <label class="col-form-label col-md-3 col-sm-3 label-align" for="start_date"><b>Start Date & Time</b></label>
                     <div class="col-md-6 col-sm-6 ">
-                        <p class="label-align-center">{{ $rewardSlider->start_datetime }}</p>
+                        <p class="label-align-center">{{ $rewardSlider->start_date }}</p>
                     </div>
                 </div>
                 <div class="item form-group">
-                    <label class="col-form-label col-md-3 col-sm-3 label-align" for="end_datetime"><b>End Date & Time</b></label>
+                    <label class="col-form-label col-md-3 col-sm-3 label-align" for="end_date"><b>End Date & Time</b></label>
                     <div class="col-md-6 col-sm-6 ">
-                        <p class="label-align-center">{{ $rewardSlider->end_datetime }}</p>
+                        <p class="label-align-center">{{ $rewardSlider->end_date }}</p>
                     </div>
                 </div>
                 <div class="item form-group">
