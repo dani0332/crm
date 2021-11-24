@@ -14074,15 +14074,29 @@ function DrawForm(props) {
                 return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__.jsx)("div", {}, i);
               }
 
+              if (dslField.type === 'subform') {
+                return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__.jsxs)("div", {
+                  className: "item form-group",
+                  children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__.jsx)(_draw_subform__WEBPACK_IMPORTED_MODULE_9__.default, {
+                    control: control,
+                    errors: errors,
+                    field: dslField,
+                    Controller: react_hook_form__WEBPACK_IMPORTED_MODULE_2__.Controller
+                  }, "formfield-subform-".concat(i)), errors[u] && errors[u].type === 'required' && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__.jsx)(_modules_theme__WEBPACK_IMPORTED_MODULE_4__.Error, {
+                    children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__.jsx)("p", {
+                      children: "Required."
+                    })
+                  }), errors[u] && errors[u].type === 'maxLength' && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__.jsx)(_modules_theme__WEBPACK_IMPORTED_MODULE_4__.Error, {
+                    children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__.jsx)("p", {
+                      children: "maxLength."
+                    })
+                  })]
+                }, i);
+              }
+
               return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__.jsxs)("div", {
                 className: "item form-group",
-                children: [dslField.type === 'subform' && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__.jsx)(_draw_subform__WEBPACK_IMPORTED_MODULE_9__.default, {
-                  control: control,
-                  errors: errors,
-                  field: dslField,
-                  Controller: react_hook_form__WEBPACK_IMPORTED_MODULE_2__.Controller
-                }, "formfield-subform-".concat(i)) //<FormField control={control} errors={errors} key={`formfield-subform-${i}`} field={dslField} Controller={Controller}  />
-                , /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__.jsxs)("label", {
+                children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__.jsxs)("label", {
                   className: "col-form-label col-md-3 col-sm-3 label-align",
                   children: [dslField.label, (rules === null || rules === void 0 ? void 0 : rules.required) && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__.jsx)("span", {
                     className: "required",
@@ -20882,7 +20896,7 @@ function LeadSnapShot() {
     data: 'carQuotePolicy'
   }, {
     icon: 'fa fa-line-chart',
-    label: 'Statuses History',
+    label: 'Lead History',
     active: 0,
     id: 19,
     data: 'ftcQuoteStatusHistory'
