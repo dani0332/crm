@@ -1610,9 +1610,10 @@ $(document).ready(function () {
     });
 
     $("#quotePlansGenerateButton").click(function() {
-        var selectquoteUuId = $('#selectquoteUuId').val();
-        var url = "https://ecom-ma.alfred.ae/car-insurance/view/quote/"+selectquoteUuId;
-        window.open(url, '_blank');
+        var quotePlansGenerateUrl = $('#quotePlansGenerateUrl').val();
+        navigator.clipboard.writeText(quotePlansGenerateUrl);
+        $("#quotePlansGenerateMsg").show(300);
+        $("#quotePlansGenerateMsg").hide(3000);
     });
 
     $(".auditablebtn").click(function () {
