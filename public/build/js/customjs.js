@@ -1544,8 +1544,8 @@ $(document).ready(function () {
                 },
             },
             { data: 'link', name: 'link' },
-            { data: 'start_datetime', name: 'start_datetime' },
-            { data: 'end_datetime', name: 'end_datetime' },
+            { data: 'start_date', name: 'start_date' },
+            { data: 'end_date', name: 'end_date' },
             { data: 'sort_order', name: 'sort_order' },
             { data: 'is_active', name: 'is_active' },
             { data: 'created_at', name: 'created_at' },
@@ -1553,7 +1553,7 @@ $(document).ready(function () {
         ]
     });
 
-    $("#rewards_slider_start_end #start_datetime").daterangepicker({ // Rewards Slider start date & time
+    $("#rewards_slider_start_end #start_date").daterangepicker({ // Rewards Slider start date & time
         timePicker: true,
         singleDatePicker: true,
         timePicker24Hour: true,
@@ -1577,7 +1577,7 @@ $(document).ready(function () {
         minRewardSliderEndDateTime = new Date();
     }
 
-    $("#rewards_slider_start_end #end_datetime").daterangepicker({ // Rewards Slider end date & time
+    $("#rewards_slider_start_end #end_date").daterangepicker({ // Rewards Slider end date & time
         timePicker: true,
         singleDatePicker: true,
         timePicker24Hour: true,
