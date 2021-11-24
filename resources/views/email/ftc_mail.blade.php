@@ -169,7 +169,7 @@
                                                                                     <tr>
                                                                                        <td align="left" style="font-size:0px;padding:10px 25px;padding-top:0;word-break:break-word;">
                                                                                           <div style="font-family:Open Sans, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';font-size:13px;line-height:1.5;text-align:left;color:#000000;">
-                                                                                             <p><b>Hi {{$first_name}} {{$last_name}}</b>,</p>
+                                                                                             <p><b>Hi {{ucwords($first_name)}} {{ucwords($last_name)}}</b>,</p>
                                                                                              <p>Thank you for sending us the documents required to start your insurance policy.</p>
                                                                                              <p>In order to proceed further and issue your policy document, we now need you to review the information for accuracy and confirm all is in order by clicking on the “I confirm the details” button below.</p>
                                                                                              <p>**<i><b>Please note that any discrepancy with the below may invalidate your policy.</b></i>**</p>
