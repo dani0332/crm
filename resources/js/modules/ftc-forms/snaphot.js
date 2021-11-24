@@ -188,7 +188,7 @@ function LeadSnapShot() {
     },
     {
       icon: 'fa fa-line-chart',
-      label: 'Statuses History',
+      label: 'Lead History',
       active: 0,
       id: 19,
       data: 'ftcQuoteStatusHistory',

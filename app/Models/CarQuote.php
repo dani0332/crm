@@ -289,7 +289,7 @@ class CarQuote extends BaseModel
                 if($advisorEmail) {
                     $params = [
                         'to' => $advisorEmail,
-                        'subject' => 'Your approval request has been assigned to a Production team - CDB-ID:'.$carQuote->code,
+                        'subject' => LookUpModel::subjectForFTCEmailCarQuote($carQuote),
                         'templateName' => 'notification',
                         'templateParams' => $templateParams
                     ];
@@ -314,7 +314,7 @@ class CarQuote extends BaseModel
                 if($advisorEmail) {
                     $params = [
                         'to' => $advisorEmail,
-                        'subject' => 'Lead has been assigned to a Payment team member - CDB-ID:'.$carQuote->code,
+                        'subject' => LookUpModel::subjectForFTCEmailCarQuote($carQuote),
                         'templateName' => 'notification',
                         'templateParams' => $templateParams
                     ];

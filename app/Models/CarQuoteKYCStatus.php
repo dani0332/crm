@@ -60,7 +60,7 @@ class CarQuoteKYCStatus extends BaseModel
                     if($advisorEmail) {
                         $params = [
                             'to' => $advisorEmail,
-                            'subject' => 'Required Additional Document - CDB-ID:'.$carQuote->code,
+                            'subject' => LookUpModel::subjectForFTCEmailCarQuote($carQuote),
                             'templateName' => 'notification',
                             'templateParams' => $templateParams
                         ];

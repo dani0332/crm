@@ -30,4 +30,5 @@ return [
     'MAIL_FROM_ADDRESS_AML' => env('MAIL_FROM_ADDRESS_AML'),
     'MAIL_FROM_NAME_AML' => env('MAIL_FROM_NAME_AML'),
     'MAIL_NOTIFICATION_FTC' => env('MAIL_FROM_ADDRESS'),
+    'FTC_EMAIL_FORMAT' => 'd F Y g:i A',
 ];
