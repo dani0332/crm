@@ -141,7 +141,7 @@ class CRUDController extends Controller
             return Redirect::back()->with('message', $modelType . ' '. explode(':', $recordUUID)[1])->withInput();
         }
         else{
-            return redirect('/quotes/' . strtolower($modelType) . '/' . $recordUUID)->with('success', $modelType . ' has been stored');
+            return redirect('/quotes/' . strtolower($modelType) . '/' . $recordUUID)->with('success', ((str_contains(strtolower($modelType), 'team') ? 'Team' : (str_contains(strtolower($modelType), 'leadstatus') ? 'Lead Status' : $modelType))) . ' has been stored');
         }
 
     }
