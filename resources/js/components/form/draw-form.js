@@ -252,20 +252,31 @@ function DrawForm(props) {
                         return <div key={i}></div>;
                       }
 
+                      if(dslField.type === 'subform'){
+                          return (
+                            <div className='item form-group' key={i}>
+                               <DrawSubform
+                                  control={control}
+                                  errors={errors}
+                                  key={`formfield-subform-${i}`}
+                                  field={dslField}
+                                  Controller={Controller}
+                              />
+                              {errors[u] && errors[u].type === 'required' && (
+                              <Error>
+                                <p>Required.</p>
+                              </Error>
+                            )}
+                            {errors[u] && errors[u].type === 'maxLength' && (
+                              <Error>
+                                <p>maxLength.</p>
+                              </Error>
+                            )}
+                            </div>
+                          )
+                      }
                       return (
                         <div className='item form-group' key={i}>
-                          {
-                            dslField.type === 'subform' && (
-                              <DrawSubform
-                                control={control}
-                                errors={errors}
-                                key={`formfield-subform-${i}`}
-                                field={dslField}
-                                Controller={Controller}
-                              />
-                            )
-                            //<FormField control={control} errors={errors} key={`formfield-subform-${i}`} field={dslField} Controller={Controller}  />
-                          }
                           <label className='col-form-label col-md-3 col-sm-3 label-align'>
                             {dslField.label}
                             {rules?.required && (

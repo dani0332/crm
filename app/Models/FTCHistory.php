@@ -73,7 +73,7 @@ class FTCHistory extends BaseModel
                     $carQuote->quote_status_id = LookUpModel::getLookModel('QuoteStatus', ['code', '=', $request->input('status')]);
                     $carQuote->save();
 
-                    if($request->input('status') == 'resubmitForApproval' ) {
+                    if($request->input('status') == 'resubmitForApproval' ) { 
                         if($paEmail) {
                             $templateParams = [
                                 'notes' => $request->input('notes', ""),
@@ -84,7 +84,7 @@ class FTCHistory extends BaseModel
 
                             $params = [
                                 'to' => $paEmail,
-                                'subject' => 'Resubmit for approval - CDB-ID:'.$carQuote->code,
+                                'subject' => LookUpModel::subjectForFTCEmailCarQuote($carQuote),
                                 'templateName' => 'notification',
                                 'templateParams' => $templateParams
                             ];

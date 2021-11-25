@@ -4,6 +4,7 @@ import { session } from './session';
 import { calculatePermissionAccess } from './permission';
 import { config } from './config';
 import { setLocalStorage, getLocalStorage } from './localstorage';
+import { capitalizeFirstLetter } from './helper';
 
 export {
   session,
@@ -11,4 +12,5 @@ export {
   config,
   getLocalStorage,
   setLocalStorage,
+  capitalizeFirstLetter
 };

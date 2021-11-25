@@ -2,7 +2,7 @@ import { transform } from 'node-json-transform';
 import { confirmAlert } from 'react-confirm-alert';
 import { dispatchPromise } from '../sagas';
 import { vehicleTransform } from '../transforms';
-import { session, setLocalStorage } from '../utils';
+import { session, setLocalStorage, capitalizeFirstLetter } from '../utils';
 const leadRequest = {
   getForm() {
     const form = {
@@ -206,7 +206,7 @@ const leadRequest = {
           },
           {
             Header: 'Customer Name',
-            accessor: d => `${d.first_name} ${d.last_name}`,
+            accessor: d => `${capitalizeFirstLetter(d.first_name)} ${capitalizeFirstLetter(d.last_name)}`,
           },
           {
             Header: 'Lead Status',

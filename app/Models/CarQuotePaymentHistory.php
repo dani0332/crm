@@ -48,10 +48,11 @@ class CarQuotePaymentHistory extends BaseModel
 
                 if($carQuote &&  ( $statusVal === 'TransactionApproved' ||  $statusVal === 'TransactionDeclined')) {
                     $row = $carQuote->toArray();
+                    $row['notes'] =  $request->input('notes', "");
                     $paymentStatus =  $statusVal === 'TransactionApproved' ? "Approved" : "Declined";
                     $params = [
                         'to' => $row['advisor_id']["email"],
-                        'subject' => 'Payment Status is updated to '.$paymentStatus.' - CDB-ID:'.$carQuote->code,
+                        'subject' => LookUpModel::subjectForFTCEmailCarQuote($carQuote), //'Payment Status is updated to '.$paymentStatus.' - CDB-ID:'.$carQuote->code,
                         'templateName' => 'notification',
                         'templateParams' => $row
                     ];
