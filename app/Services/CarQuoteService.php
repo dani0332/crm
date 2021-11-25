@@ -16,44 +16,52 @@ class CarQuoteService extends BaseService
     {
         $this->query = "
             SELECT
-                cqr.uuid
-                ,cqr.id
-                ,cqr.first_name
-                ,cqr.last_name
-                ,cqr.email
-                ,cqr.mobile_no
-                ,cqr.dob
-                ,cqr.car_value
-                ,cqr.additional_notes
-                ,cqr.nationality_id
-                ,cqr.year_of_manufacture
-                ,n.TEXT AS nationality_id_text
-                ,cqr.uae_license_held_for_id
-                ,ulhf.TEXT AS uae_license_held_for_id_text
-                ,cqr.car_make_id
-                ,cmake.TEXT AS car_make_id_text
-                ,cqr.car_model_id
-                ,cmodel.TEXT AS car_model_id_text
-                ,cqr.emirate_of_registration_id
-                ,e.TEXT AS emirate_of_registration_id_text
-                ,ip.id AS currently_insured_with
-                ,ip.TEXT AS currently_insured_with_text
-                ,cqr.car_type_insurance_id
-                ,cti.TEXT AS car_type_insurance_id_text
-                ,cqr.claim_history_id
-                ,ch.TEXT AS claim_history_id_text
-                ,cqr.advisor_id
-                ,u.name as advisor_id_text
-            FROM car_quote_request cqr
-            LEFT OUTER JOIN nationality n ON n.id = cqr.nationality_id
-            LEFT OUTER JOIN uae_license_held_for ulhf ON ulhf.id = cqr.uae_license_held_for_id
-            LEFT OUTER JOIN car_make cmake ON cmake.id = cqr.car_make_id
-            LEFT OUTER JOIN car_model cmodel ON cmodel.id = cqr.car_model_id
-            LEFT OUTER JOIN emirates e ON e.id = cqr.emirate_of_registration_id
-            LEFT OUTER JOIN insurance_provider ip ON ip.TEXT = cqr.currently_insured_with
-            LEFT OUTER JOIN car_type_insurance cti ON cti.id = cqr.car_type_insurance_id
-            LEFT OUTER JOIN claim_history ch ON ch.id = cqr.claim_history_id
-            LEFT OUTER JOIN users u on u.id = cqr.advisor_id";
+            cqr.uuid
+            ,cqr.id
+            ,cqr.first_name
+            ,cqr.last_name
+            ,cqr.email
+            ,cqr.mobile_no
+            ,cqr.dob
+            ,cqr.car_value
+            ,cqr.additional_notes
+            ,cqr.nationality_id
+            ,cqr.year_of_manufacture
+            ,cqr.premium
+            ,cqr.paid_at
+            ,n.TEXT AS nationality_id_text
+            ,cqr.uae_license_held_for_id
+            ,ulhf.TEXT AS uae_license_held_for_id_text
+            ,cqr.car_make_id
+            ,cmake.TEXT AS car_make_id_text
+            ,cqr.car_model_id
+            ,cmodel.TEXT AS car_model_id_text
+            ,cqr.emirate_of_registration_id
+            ,e.TEXT AS emirate_of_registration_id_text
+            ,ip.id AS currently_insured_with
+            ,ip.TEXT AS currently_insured_with_text
+            ,cqr.car_type_insurance_id
+            ,cti.TEXT AS car_type_insurance_id_text
+            ,cqr.claim_history_id
+            ,ch.TEXT AS claim_history_id_text
+            ,cqr.advisor_id
+            ,u.name AS advisor_id_text
+            ,cqr.payment_status_id
+            ,ps.text AS payment_status_id_text
+            ,cqr.plan_id
+            ,cp.text AS plan_id_text
+        FROM car_quote_request cqr
+        LEFT OUTER JOIN nationality n ON n.id = cqr.nationality_id
+        LEFT OUTER JOIN uae_license_held_for ulhf ON ulhf.id = cqr.uae_license_held_for_id
+        LEFT OUTER JOIN car_make cmake ON cmake.id = cqr.car_make_id
+        LEFT OUTER JOIN car_model cmodel ON cmodel.id = cqr.car_model_id
+        LEFT OUTER JOIN emirates e ON e.id = cqr.emirate_of_registration_id
+        LEFT OUTER JOIN insurance_provider ip ON ip.TEXT = cqr.currently_insured_with
+        LEFT OUTER JOIN car_type_insurance cti ON cti.id = cqr.car_type_insurance_id
+        LEFT OUTER JOIN claim_history ch ON ch.id = cqr.claim_history_id
+        LEFT OUTER JOIN users u ON u.id = cqr.advisor_id
+        LEFT OUTER JOIN payment_status ps ON ps.id = cqr.payment_status_id
+        LEFT OUTER JOIN car_plan cp ON cp.id = cqr.plan_id";
     }
     public function saveCarQuote(Request $request)
     {
@@ -127,10 +135,14 @@ class CarQuoteService extends BaseService
             "emirate_of_registration_id" => "select|title|required",
             "currently_insured_with" => "select|required",
             "car_value" => "number|required",
+            "premium" => "number",
+            "paid_at" => "input|date",
             "car_type_insurance_id" => "select|title|required",
             "claim_history_id" => "select|title|required",
             "advisor_id" => "select|title|required",
             "additional_notes" => "textarea|required",
+            "payment_status_id" => "select|title",
+            "plan_id" => "select|title",
         );
     }
 
@@ -173,6 +185,12 @@ class CarQuoteService extends BaseService
                 break;
             case 'advisor_id':
                 $title = "Advisor";
+                break;
+            case 'payment_status_id':
+                $title = "Payment Status";
+                break;
+            case 'plan_id':
+                $title = "Insurance Plan";
                 break;
             default:
                 break;

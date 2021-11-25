@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\BusinessInsuranceType;
 use App\Models\CarMake;
 use App\Models\CarModel;
+use App\Models\CarQuotePlan;
 use App\Models\CurrencyType;
 use App\Models\Emirate;
 use App\Models\HealthCoverFor;
@@ -17,10 +18,12 @@ use App\Models\LifeNumberOfYears;
 use App\Models\LifePurposeOfInsurance;
 use App\Models\MartialStatus;
 use App\Models\Nationality;
+use App\Models\PaymentStatus;
 use App\Models\Regions;
 use App\Models\TravelCoverFor;
 use App\Models\User;
 use DB;
+use Faker\Provider\ar_SA\Payment;
 
 class DropdownSourceService extends BaseService
 {
@@ -133,6 +136,12 @@ class DropdownSourceService extends BaseService
                     ->join('model_has_roles', 'model_has_roles.model_id', '=', 'users.id')
                     ->join('roles', 'roles.id', '=', 'model_has_roles.role_id')
                     ->where('roles.name', '=', 'MANAGER')->get();
+                break;
+            case 'payment_status_id':
+                $data = PaymentStatus::select('id', 'text')->get();
+                break;
+            case 'plan_id':
+                $data = CarQuotePlan::select('id', 'text')->get();
                 break;
             default:
                 break;
