@@ -17895,11 +17895,13 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
+/* harmony import */ var _utils__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../utils */ "./resources/js/utils/index.js");
 function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) { symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); } keys.push.apply(keys, symbols); } return keys; }
 
 function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys(Object(source), true).forEach(function (key) { _defineProperty(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
 
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
 
 var ftcPayment = {
   getForm: function getForm() {
@@ -17998,6 +18000,28 @@ var ftcPayment = {
           accessor: 'id'
         }],
         events: {
+          transformBeforeOpenReadMode: function transformBeforeOpenReadMode(form) {
+            var _form$data, _form$data$car_quote_, _form$data$car_quote_2;
+
+            if ((form === null || form === void 0 ? void 0 : form.data.length) < 1) return form;
+            var code = form === null || form === void 0 ? void 0 : (_form$data = form.data) === null || _form$data === void 0 ? void 0 : (_form$data$car_quote_ = _form$data.car_quote_id) === null || _form$data$car_quote_ === void 0 ? void 0 : (_form$data$car_quote_2 = _form$data$car_quote_.quote_status_id) === null || _form$data$car_quote_2 === void 0 ? void 0 : _form$data$car_quote_2.code;
+
+            var _session = (0,_utils__WEBPACK_IMPORTED_MODULE_0__.session)(),
+                role = _session.role;
+
+            if (code && code === 'transaction_declined' && role === 'invoicing') {
+              var access = {
+                read: ['pa', 'advisor', 'admin', 'invoicing', 'production_approval_manager'],
+                write: ['invoicing'],
+                update: ['invoicing'],
+                "delete": []
+              };
+              form.access = access;
+              return form;
+            }
+
+            return form;
+          },
           transformAfterFetchFromServer: function transformAfterFetchFromServer(form, data) {
             var _form$getForm, _form$getForm2;
 

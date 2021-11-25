@@ -13,7 +13,7 @@ const leadRequest = {
           'pa',
           'advisor',
           'admin',
-          'invoicing',
+            'invoicing',
           'production_approval_manager',
           'production_approval_manager',
         ],
