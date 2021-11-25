@@ -104,13 +104,12 @@
                     </div>
                     @if(gettype($listQuotePlans) != 'string')
                     <div class="x_content">
-                        {{-- <div class="alert alert-success" id="quotePlansGenerateMsg" style="display: none">Copied!</div> --}}
                         <div class="row">
                             <div class="col-auto mr-auto"></div>
                             <span class="alert alert-success" id="quotePlansGenerateMsg" style="display: none">Copied</span>
                             <div class="col-auto">
                                 <input type="hidden" id="quotePlansGenerateUrl" name="quotePlansGenerateUrl" value="{{ $ecomCarInsuranceQuoteUrl.$record[0]->uuid }}">
-                                <button type="button" id="quotePlansGenerateButton" name="quotePlansGenerateButton" class="btn btn-warning btn-sm">Generate Quote</button>
+                                <button type="button" id="quotePlansGenerateButton" name="quotePlansGenerateButton" class="btn btn-warning btn-sm">Copy link</button>
                             </div>
                         </div>
                         <div id="quote-plans">

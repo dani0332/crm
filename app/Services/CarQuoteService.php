@@ -281,8 +281,8 @@ class CarQuoteService extends BaseService
     public function fillModelSkipProperties()
     {
         return [
-            "create" => "id,advisor_id",
-            "list" => "additional_notes,email,mobile_no,first_name,last_name,currently_insured_with",
+            "create" => "id,advisor_id,premium,paid_at,payment_status_id,plan_id",
+            "list" => "additional_notes,email,mobile_no,first_name,last_name,currently_insured_with,premium,paid_at,payment_status_id,plan_id",
         ];
     }
 
