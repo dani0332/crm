@@ -64,7 +64,7 @@ class CarQuotePayment extends BaseModel
                         if($advisorEmail) {
                             $params = [
                                 'to' => $advisorEmail,
-                                'subject' => 'Policy issued and recorded in the system - CDB-ID:'.$carQuote->code,
+                                'subject' => LookUpModel::subjectForFTCEmailCarQuote($carQuote),
                                 'templateName' => 'notification',
                                 'templateParams' => $templateParams
                             ];

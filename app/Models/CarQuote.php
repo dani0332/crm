@@ -64,6 +64,7 @@ class CarQuote extends BaseModel
         return $this->hasOne(PaymentStatus::class, 'id', 'payment_status_id');
     }
 
+    
     public function quoteStatus()
     {
         return $this->hasOne(QuoteStatus::class, 'id', 'quote_status_id');
@@ -92,7 +93,7 @@ class CarQuote extends BaseModel
     {
         return $this->hasOne(CarQuoteRequestDetail::class, 'car_quote_request_id', 'id');
     }
-
+    
     public function car_model_id()
     {
         return $this->hasOne(CarModel::class, 'id', 'car_model_id')->select(['id', 'code','text']);;
@@ -243,7 +244,7 @@ class CarQuote extends BaseModel
                     $restrictFilter["pa_id"] = $pa_id;
                     $restrictFilter["advisor_id"] = ["op" => "<>", "val" => ''];
                     $restrictFilter["quote_status_id"] =  ["op" => "in", "val" => $valuesIn];
-                }
+                }   
             }
 
             if(Auth::user()->hasRole('invoicing')) {
@@ -288,7 +289,7 @@ class CarQuote extends BaseModel
                 if($advisorEmail) {
                     $params = [
                         'to' => $advisorEmail,
-                        'subject' => 'Your approval request has been assigned to a Production team - CDB-ID:'.$carQuote->code,
+                        'subject' => LookUpModel::subjectForFTCEmailCarQuote($carQuote),
                         'templateName' => 'notification',
                         'templateParams' => $templateParams
                     ];
@@ -313,7 +314,7 @@ class CarQuote extends BaseModel
                 if($advisorEmail) {
                     $params = [
                         'to' => $advisorEmail,
-                        'subject' => 'Lead has been assigned to a Payment team member - CDB-ID:'.$carQuote->code,
+                        'subject' => LookUpModel::subjectForFTCEmailCarQuote($carQuote),
                         'templateName' => 'notification',
                         'templateParams' => $templateParams
                     ];

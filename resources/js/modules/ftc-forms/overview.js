@@ -3,6 +3,7 @@ import { ScaleLoader } from 'react-spinners';
 import { dispatchPromise } from '../../sagas';
 import { useDispatch } from 'react-redux';
 import moment from 'moment';
+import {  capitalizeFirstLetter } from '../../utils';
 
 export default function Overview(props) {
   const dispatch = useDispatch();
@@ -49,7 +50,7 @@ export default function Overview(props) {
                   <tr>
                     <td>Name:</td>
                     <td className='fs15 fw700 text-right'>
-                      {state.data?.first_name} {state.data?.last_name}
+                      {capitalizeFirstLetter(state.data?.first_name)} {capitalizeFirstLetter(state.data?.last_name)}
                     </td>
                   </tr>
                   <tr>

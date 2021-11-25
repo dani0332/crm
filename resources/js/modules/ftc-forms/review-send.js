@@ -2,7 +2,7 @@ import React from 'react';
 import { useParams } from 'react-router-dom';
 import { confirmAlert } from 'react-confirm-alert'; // Import
 import 'react-confirm-alert/src/react-confirm-alert.css'; // Import css
-import { session } from '../../utils';
+import { session, capitalizeFirstLetter } from '../../utils';
 import moment from 'moment';
 
 export default function ReviewSend(props) {
@@ -72,7 +72,7 @@ export default function ReviewSend(props) {
                   <tr>
                     <td>Name:</td>
                     <td className='fs15 fw700 text-right'>
-                      {data?.first_name} {data?.last_name}
+                      {capitalizeFirstLetter(data?.first_name)} {capitalizeFirstLetter(data?.last_name)}
                     </td>
                   </tr>
                   <tr>
