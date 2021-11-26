@@ -1613,7 +1613,7 @@ $(document).ready(function () {
         var quotePlansGenerateUrl = $('#quotePlansGenerateUrl').val();
         navigator.clipboard.writeText(quotePlansGenerateUrl);
         $("#quotePlansGenerateMsg").show(300);
-        $("#quotePlansGenerateMsg").hide(3000);
+        $("#quotePlansGenerateMsg").hide(2000);
     });
 
     $(".auditablebtn").click(function () {
