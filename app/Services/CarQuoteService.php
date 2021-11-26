@@ -48,8 +48,6 @@ class CarQuoteService extends BaseService
             ,u.name AS advisor_id_text
             ,cqr.payment_status_id
             ,ps.text AS payment_status_id_text
-            ,cqr.plan_id
-            ,cp.text AS plan_id_text
         FROM car_quote_request cqr
         LEFT OUTER JOIN nationality n ON n.id = cqr.nationality_id
         LEFT OUTER JOIN uae_license_held_for ulhf ON ulhf.id = cqr.uae_license_held_for_id
@@ -60,8 +58,7 @@ class CarQuoteService extends BaseService
         LEFT OUTER JOIN car_type_insurance cti ON cti.id = cqr.car_type_insurance_id
         LEFT OUTER JOIN claim_history ch ON ch.id = cqr.claim_history_id
         LEFT OUTER JOIN users u ON u.id = cqr.advisor_id
-        LEFT OUTER JOIN payment_status ps ON ps.id = cqr.payment_status_id
-        LEFT OUTER JOIN car_plan cp ON cp.id = cqr.plan_id";
+        LEFT OUTER JOIN payment_status ps ON ps.id = cqr.payment_status_id";
     }
     public function saveCarQuote(Request $request)
     {
@@ -142,7 +139,6 @@ class CarQuoteService extends BaseService
             "advisor_id" => "select|title|required",
             "additional_notes" => "textarea|required",
             "payment_status_id" => "select|title",
-            "plan_id" => "select|title",
         );
     }
 
@@ -188,9 +184,6 @@ class CarQuoteService extends BaseService
                 break;
             case 'payment_status_id':
                 $title = "Payment Status";
-                break;
-            case 'plan_id':
-                $title = "Insurance Plan";
                 break;
             default:
                 break;
@@ -281,8 +274,8 @@ class CarQuoteService extends BaseService
     public function fillModelSkipProperties()
     {
         return [
-            "create" => "id,advisor_id,premium,paid_at,payment_status_id,plan_id",
-            "list" => "additional_notes,email,mobile_no,first_name,last_name,currently_insured_with,premium,paid_at,payment_status_id,plan_id",
+            "create" => "id,advisor_id,premium,paid_at,payment_status_id",
+            "list" => "additional_notes,email,mobile_no,first_name,last_name,currently_insured_with,premium,paid_at,payment_status_id",
         ];
     }
 
