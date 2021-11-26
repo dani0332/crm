@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Models\BusinessInsuranceType;
 use App\Models\CarMake;
 use App\Models\CarModel;
-use App\Models\CarQuotePlan;
 use App\Models\CurrencyType;
 use App\Models\Emirate;
 use App\Models\HealthCoverFor;
@@ -139,9 +138,6 @@ class DropdownSourceService extends BaseService
                 break;
             case 'payment_status_id':
                 $data = PaymentStatus::select('id', 'text')->get();
-                break;
-            case 'plan_id':
-                $data = CarQuotePlan::select('id', 'text')->get();
                 break;
             default:
                 break;
