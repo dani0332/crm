@@ -12,6 +12,8 @@ const vehicleTransform = {
       vehicle_modified: 'vehicle_modified',
       specs: 'specs',
       current_cover: 'current_cover',
+      car_value: 'car_value',
+      currently_insured_with: 'currently_insured_with',
       date_first_registration: 'date_first_registration',
     },
   },

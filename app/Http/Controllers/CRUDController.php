@@ -18,6 +18,7 @@ use App\Services\UserService;
 use DataTables;
 use Auth;
 use Illuminate\Support\Facades\Redirect;
+use Config;
 
 class CRUDController extends Controller
 {
@@ -140,7 +141,7 @@ class CRUDController extends Controller
             return Redirect::back()->with('message', $modelType . ' '. explode(':', $recordUUID)[1])->withInput();
         }
         else{
-            return redirect('/quotes/' . strtolower($modelType) . '/' . $recordUUID)->with('success', $modelType . ' has been stored');
+            return redirect('/quotes/' . strtolower($modelType) . '/' . $recordUUID)->with('success', ((str_contains(strtolower($modelType), 'team') ? 'Team' : (str_contains(strtolower($modelType), 'leadstatus') ? 'Lead Status' : $modelType))) . ' has been stored');
         }
 
     }
@@ -179,7 +180,9 @@ class CRUDController extends Controller
                 $listQuotePlans = $quotePlans;
             }
 
-            return view('shared.show', compact(['record', 'model', 'customTitles', 'listQuotePlans', 'customTableList']));
+            $ecomCarInsuranceQuoteUrl = Config::get('constants.ECOM_CAR_INSURANCE_QUOTE_URL');
+
+            return view('shared.show', compact(['record', 'model', 'customTitles', 'listQuotePlans', 'customTableList','ecomCarInsuranceQuoteUrl']));
         } else {
             return view('shared.show', compact(['record', 'model', 'customTitles', 'customTableList']));
         }

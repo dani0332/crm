@@ -10,9 +10,9 @@
         <div class="col-md-12 col-sm-12 admin-detail">
             <div class="x_panel">
                 <div class="x_title">
-                    <h2>{{$model->modelType.' Detail'}}</h2>
+                    <h2>{{(str_contains(strtolower($model->modelType), 'team') ? 'Team' : (str_contains(strtolower($model->modelType), 'leadstatus') ? 'Lead Status' : $model->modelType)). ' Detail' }}</h2>
                     <ul class="nav navbar-right panel_toolbox">
-                        <li><a href="{{ url('quotes/'.strtolower($model->modelType)) }}" class="btn btn-warning btn-sm">{{$model->modelType.' List'}}</a></li>
+                        <li><a href="{{ url('quotes/'.strtolower($model->modelType)) }}" class="btn btn-warning btn-sm">{{(str_contains(strtolower($model->modelType), 'team') ? 'Team' : (str_contains(strtolower($model->modelType), 'leadstatus') ? 'Lead Status' : $model->modelType)). ' List' }}</a></li>
                     </ul>
                     <div class="clearfix"></div>
                 </div>
@@ -24,38 +24,53 @@
                     @if (session()->has('message'))
                         <div class="alert alert-danger">{{ session()->get('message') }}</div>
                     @endif
+                    @php
+                    $count = 1;
+                    @endphp
                     @foreach($model->properties as $property => $value)
+                        @if($count % 2 != 0)
                         <div class="item form-group">
-                            @if(strpos($value, 'title'))
-                                <label class="col-form-label col-md-3 col-sm-3 label-align" for="Status Description"><b>{{ strtoupper($customTitles[$property])}}</b></label>
-                            @else
-                                <label class="col-form-label col-md-3 col-sm-3 label-align" for="Status Description"><b>{{str_replace("_"," ",strtoupper($property))}}</b></label>
-                            @endif
-                            @if(str_contains($value, 'select'))
-                                @if(str_contains($value, 'customTable'))
-                                <div class="col-md-6 col-sm-6">
-                                    <p class="label-align-center">{{ $customTableList[$property][0]->names }}</p>
-                                </div>
+                        @endif
+                           <div class="col">
+                                @if(strpos($value, 'title'))
+                                    <label class="col-form-label col-md-6 col-sm-6" for="Status Description"><b>{{ strtoupper($customTitles[$property])}}</b></label>
                                 @else
-                                    <div class="col-md-6 col-sm-6">
-                                        @php
-                                            $propertyName = $property.'_text';
-                                        @endphp
-                                        <p class="label-align-center">{{ $record[0]->$propertyName}}</p>
-                                    </div>
+                                    <label class="col-form-label col-md-6 col-sm-6" for="Status Description"><b>{{str_replace("_"," ",strtoupper($property))}}</b></label>
                                 @endif
-                            @else
-                                @if(str_contains($value, 'customTable'))
-                                <div class="col-md-6 col-sm-6">
-                                    <p class="label-align-center">{{ $customTableList[$property][0]->names }}</p>
-                                </div>
+                                @if(str_contains($value, 'select'))
+                                    @if(str_contains($value, 'customTable'))
+                                    <div class="col-md-6 col-sm-6">
+                                        <p class="label-align-center">{{ $customTableList[$property][0]->names }}</p>
+                                    </div>
+                                    @else
+                                        <div class="col-md-6 col-sm-6">
+                                            @php
+                                                $propertyName = $property.'_text';
+                                            @endphp
+                                            <p class="label-align-center">{{ $record[0]->$propertyName}}</p>
+                                        </div>
+                                    @endif
                                 @else
+                                    @if(str_contains($value, 'customTable'))
                                     <div class="col-md-6 col-sm-6">
-                                        <p class="label-align-center">{{ $record[0]->$property }}</p>
+                                        <p class="label-align-center">{{ $customTableList[$property][0]->names }}</p>
                                     </div>
+                                    @else
+                                        <div class="col-md-6 col-sm-6">
+                                            <p class="label-align-center">{{ $record[0]->$property }}</p>
+                                        </div>
+                                    @endif
                                 @endif
-                            @endif
+                           </div>
+                        @if(count($model->properties) == $count && $count % 2 != 0)
+                           <div class="col"></div>
                         </div>
+                        @elseif($count % 2 == 0)
+                            </div>
+                        @endif
+                        @php
+                        $count++;
+                        @endphp
                     @endforeach
                     <div class="ln_solid"></div>
                     <div class="row">
@@ -86,8 +101,7 @@
                 </div>
                 <div class="quote-plan-modal-body"> </div>
                 <div class="modal-footer" style="border: none">
-                        {{-- <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                        <button type="button" class="btn btn-primary">Save changes</button> --}}
+
                 </div>
             </div>
         </div>
@@ -107,9 +121,10 @@
                     <div class="x_content">
                         <div class="row">
                             <div class="col-auto mr-auto"></div>
+                            <span class="alert alert-success" id="quotePlansGenerateMsg" style="display: none">Copied</span>
                             <div class="col-auto">
-                                <input type="hidden" id="selectquoteUuId" name="selectquoteUuId" value="{{ $record[0]->uuid }}">
-                                <button type="button" id="quotePlansGenerateButton" name="quotePlansGenerateButton" class="btn btn-warning btn-sm">Generate Quote</button>
+                                <input type="hidden" id="quotePlansGenerateUrl" name="quotePlansGenerateUrl" value="{{ $ecomCarInsuranceQuoteUrl.$record[0]->uuid }}">
+                                <button type="button" id="quotePlansGenerateButton" name="quotePlansGenerateButton" class="btn btn-warning btn-sm">Copy link</button>
                             </div>
                         </div>
                         <div id="quote-plans">

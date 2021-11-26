@@ -9,11 +9,11 @@
             </tr>
             <tr>
                 <td>First Name:</td>
-                <td class="fs15 fw700 text-right">{{$first_name ?? ""}}</td>
+                <td class="fs15 fw700 text-right">{{ucwords($first_name) ?? ""}}</td>
             </tr>
             <tr>
                 <td>Last Name:</td>
-                <td class="fs15 fw700 text-right">{{$last_name ?? ""}}</td>
+                <td class="fs15 fw700 text-right">{{ucwords($last_name) ?? ""}}</td>
             </tr>
             <tr>
                 <td>CDBD ID:</td>

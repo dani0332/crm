@@ -7,6 +7,9 @@ use Illuminate\Database\Eloquent\Model;
 use App\Models\BaseModel;
 use Auth;
 use Illuminate\Support\Arr;
+use App\Models\CarQuote;
+use App\Jobs\FTCMailServiceJob;
+use LookUpModel;
 
 class CarQuotePolicy extends BaseModel
 {
@@ -53,8 +56,34 @@ class CarQuotePolicy extends BaseModel
             $response = array_merge( $collection['transactions_id'], $collection);
         }
 
-        return $response;
+        return $response;       
+    }
 
-       
+
+    public function saveForm($request, $update = false) {
+
+        if( Auth::user()->hasRole('pa') ) {
+            $carQuote = CarQuote::where(['id' => $request->input('car_quote_id', -1), 'advisor_id' => Auth::user()->id])->get()->first();
+            if($carQuote) {
+                $templateParams = [
+                    'notes' => "Policy issued",
+                    "first_name" => $carQuote->first_name,
+                    "last_name" => $carQuote->last_name,
+                    "code" => $carQuote->code
+                ];
+                $advisorEmail = $carQuote->advisor_id()->first()->email;
+                if($advisorEmail) {
+                    $params = [
+                        'to' => $advisorEmail,
+                        'subject' => LookUpModel::subjectForFTCEmailCarQuote($carQuote),
+                        'templateName' => 'notification',
+                        'templateParams' => $templateParams
+                    ];
+                    dispatch(new FTCMailServiceJob($params));
+                }
+            }
+        }
+
+        return parent::saveForm($request, $update ); 
     }
 }
