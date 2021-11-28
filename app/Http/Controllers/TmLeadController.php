@@ -104,21 +104,11 @@ class TmLeadController extends Controller
             ) {
 
                 if ($request->tmLeadsEndDate >= $request->tmLeadsStartDate) {
-                    if ($request->searchType == 'createdAt') {
-                        $searchDateColumn = "created_at";
-                    }
-                    if ($request->searchType == 'updatedAt') {
-                        $searchDateColumn = "updated_at";
-                    }
-                    if ($request->searchType == 'nextFollowupDate') {
-                        $searchDateColumn = "next_followup_date";
-                    }
-                    if ($request->searchType == 'enquiryDate') {
-                        $searchDateColumn = "enquiry_date";
-                    }
-                    if ($request->searchType == 'allocationDate') {
-                        $searchDateColumn = "allocation_date";
-                    }
+                    if ($request->searchType == 'createdAt') { $searchDateColumn = "created_at"; }
+                    if ($request->searchType == 'updatedAt') { $searchDateColumn = "updated_at"; }
+                    if ($request->searchType == 'nextFollowupDate') { $searchDateColumn = "next_followup_date"; }
+                    if ($request->searchType == 'enquiryDate') { $searchDateColumn = "enquiry_date"; }
+                    if ($request->searchType == 'allocationDate') { $searchDateColumn = "allocation_date"; }
                     $queryTmLeads->whereRaw('DATE(tm_leads.' . $searchDateColumn . ') BETWEEN "' . $request->tmLeadsStartDate . '" AND "' . $request->tmLeadsEndDate . '"');
                 }
             }
