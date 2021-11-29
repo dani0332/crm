@@ -1308,14 +1308,12 @@ $(document).ready(function () {
     $("#tm-leads-export").hide();
     $("#search-tm-leads").submit(function (e) {
         e.preventDefault();
-        //$(".loader").show();
-
         var tmLeadsStartDate = $("#tmLeadsStartDate").val();
         var tmLeadsEndDate = $("#tmLeadsEndDate").val();
         var searchType = $("#searchType").val();
 
-        if (searchType == "createdAt" || searchType == "updatedAt" || searchType == "nextFollowupDate" ||
-            searchType == "enquiryDate" || searchType == "allocationDate") {
+        if (searchType == "created_at" || searchType == "updated_at" || searchType == "next_followup_date" ||
+            searchType == "enquiry_date" || searchType == "allocation_date") {
 
             var tmLeadsStartDateVar = new Date(tmLeadsStartDate);
             var tmLeadsEndDateVar = new Date(tmLeadsEndDate);
@@ -1341,34 +1339,45 @@ $(document).ready(function () {
                 $("#tm-leads-export").hide();
                 return false
             } else {
-                tmLeadsDatatable.draw();
-                $(".loader").show();
                 $("#result").html("");
                 $('#tmLeadsStartDate').css('border-color', '');
                 $('#tmLeadsEndDate').css('border-color', '');
-                $("#tm-leads-export").show();
-                setTimeout(() => {
-                    $(".loader").hide();
-                }, 1000);
+                $(".loader").show();
+                $.ajax({
+                    success: function (response) {
+                        tmLeadsDatatable.draw();
+                        $("#tm-leads-export").show();
+                        $(".loader").hide();
 
-                // Hide Download CSV for advisors
-                var isCurrentUserIsAdvisor = $("#isCurrentUserIsAdvisor").val();
-                if (isCurrentUserIsAdvisor == 0) {
-                    $("a[title='Download CSV']").show();
-                } else {
-                    $("a[title='Download CSV']").hide();
-                }
+                        // Hide Download CSV for advisors
+                        var isCurrentUserIsAdvisor = $("#isCurrentUserIsAdvisor").val();
+                        if (isCurrentUserIsAdvisor == 0) {
+                            $("a[title='Download CSV']").show();
+                        } else {
+                            $("a[title='Download CSV']").hide();
+                        }
+                    },
+                    error: function (jqXHR, textStatus, errorThrown) {
+                        $(".loader").hide();
+                    },
+                });
             }
         } else {
-            tmLeadsDatatable.draw();
+
             $(".loader").show();
             $("#result").html("");
             $('#tmLeadsStartDate').css('border-color', '');
             $('#tmLeadsEndDate').css('border-color', '');
             $("#tm-leads-export").hide();
-            setTimeout(() => {
-                $(".loader").hide();
-            }, 1000);
+            $.ajax({
+                success: function (response) {
+                    tmLeadsDatatable.draw();
+                    $(".loader").hide();
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    $(".loader").hide();
+                },
+            });
         }
 
     });
@@ -1476,8 +1485,8 @@ $(document).ready(function () {
     function tmleads_search_start_end_dates_filters_visiblity() {
         var searchTypeValue = $("#searchType").val();
         console.log("searchTypeValue: " + searchTypeValue);
-        if (searchTypeValue == "createdAt" || searchTypeValue == "updatedAt" || searchTypeValue == "nextFollowupDate" ||
-            searchTypeValue == "enquiryDate" || searchTypeValue == "allocationDate") {
+        if (searchTypeValue == "created_at" || searchTypeValue == "updated_at" || searchTypeValue == "next_followup_date" ||
+            searchTypeValue == "enquiry_date" || searchTypeValue == "allocation_date") {
             $("#tmLeads-search-start-end-dates-filters").show(300);
             $("#tmLeads-search-value-filter").hide(300);
         } else {
