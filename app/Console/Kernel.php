@@ -48,7 +48,7 @@ class Kernel extends ConsoleKernel
 
 
         $schedule->command('log:FTCAckEmail')
-                 ->everyMinute();
+                 ->everyFifteenMinutes();
     }
 
     /**
