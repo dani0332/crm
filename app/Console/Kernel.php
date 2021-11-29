@@ -17,7 +17,8 @@ class Kernel extends ConsoleKernel
      */
     protected $commands = [
         DailyInslyDataCapture::class,
-        InslyOldDataCapture::class
+        InslyOldDataCapture::class,
+        Commands\FTCAcKEmail::class,
     ];
 
     /**
@@ -44,6 +45,10 @@ class Kernel extends ConsoleKernel
         ->runInBackground()
         ->onOneServer()
         ->withoutOverlapping();
+
+
+        $schedule->command('log:FTCAckEmail')
+                 ->everyMinute();
     }
 
     /**

@@ -315,7 +315,7 @@ let insuranceDetail = {
               return form
 
             const code  = form?.data?.car_quote_id?.quote_status_id?.code;
-            if(code && code === 'ftc_pending') {
+            if(code && code === 'ftc_pending' || code === 'ftc_accepted') {
               return form
             }
 

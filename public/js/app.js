@@ -16902,7 +16902,7 @@ var insuranceDetail = {
             if ((form === null || form === void 0 ? void 0 : form.data.length) < 1) return form;
             var code = form === null || form === void 0 ? void 0 : (_form$data = form.data) === null || _form$data === void 0 ? void 0 : (_form$data$car_quote_ = _form$data.car_quote_id) === null || _form$data$car_quote_ === void 0 ? void 0 : (_form$data$car_quote_2 = _form$data$car_quote_.quote_status_id) === null || _form$data$car_quote_2 === void 0 ? void 0 : _form$data$car_quote_2.code;
 
-            if (code && code === 'ftc_pending') {
+            if (code && code === 'ftc_pending' || code === 'ftc_accepted') {
               return form;
             }
 
@@ -17667,7 +17667,7 @@ var leadRequest = {
 
             var showConfirmMsg = function showConfirmMsg() {
               (0,react_confirm_alert__WEBPACK_IMPORTED_MODULE_2__.confirmAlert)({
-                title: "".concat(row.first_name, " ").concat(row.last_name),
+                title: "".concat((0,_utils__WEBPACK_IMPORTED_MODULE_5__.capitalizeFirstLetter)(row.first_name), " ").concat((0,_utils__WEBPACK_IMPORTED_MODULE_5__.capitalizeFirstLetter)(row.last_name)),
                 message: 'Are you sure you want to assign this lead yourself?',
                 buttons: [{
                   label: 'Yes',
@@ -18880,7 +18880,7 @@ var policyHolderDetail = {
 
             var code = form === null || form === void 0 ? void 0 : (_form$data = form.data) === null || _form$data === void 0 ? void 0 : (_form$data$quote_stat = _form$data.quote_status_id) === null || _form$data$quote_stat === void 0 ? void 0 : _form$data$quote_stat.code;
 
-            if (code && code === 'ftc_pending') {
+            if (code && code === 'ftc_pending' || code === 'ftc_accepted') {
               return form;
             }
 
@@ -19530,7 +19530,7 @@ var vehicleDetail = {
 
             var code = form === null || form === void 0 ? void 0 : (_form$data = form.data) === null || _form$data === void 0 ? void 0 : (_form$data$quote_stat = _form$data.quote_status_id) === null || _form$data$quote_stat === void 0 ? void 0 : _form$data$quote_stat.code;
 
-            if (code && code === 'ftc_pending') {
+            if (code && code === 'ftc_pending' || code === 'ftc_accepted') {
               return form;
             }
 
