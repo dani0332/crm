@@ -236,7 +236,7 @@ else {
                     <div class="row">
                         <div class="col-auto mr-auto"></div>
                         <div class="col-auto">
-                            <button type="submit" class="btn btn-warning btn-sm" id="return_to_view">Update</button>
+                            <button type="submit" class="btn btn-warning btn-sm" id="return_to_view" onClick="this.disabled=true;">Update</button>
                         </div>
                     </div>
                 </form>
