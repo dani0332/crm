@@ -1308,19 +1308,16 @@ $(document).ready(function () {
     $("#tm-leads-export").hide();
     $("#search-tm-leads").submit(function (e) {
         e.preventDefault();
-        $(".loader").show();
-
         var tmLeadsStartDate = $("#tmLeadsStartDate").val();
         var tmLeadsEndDate = $("#tmLeadsEndDate").val();
         var searchType = $("#searchType").val();
 
-        if (searchType == "createdAt" || searchType == "updatedAt" || searchType == "nextFollowupDate" ||
-            searchType == "enquiryDate" || searchType == "allocationDate") {
+        if (searchType == "created_at" || searchType == "updated_at" || searchType == "next_followup_date" ||
+            searchType == "enquiry_date" || searchType == "allocation_date") {
 
-            var date1 = new Date(tmLeadsStartDate);
-            var date2 = new Date(tmLeadsEndDate);
-
-            var time_difference = date2.getTime() - date1.getTime();
+            var tmLeadsStartDateVar = new Date(tmLeadsStartDate);
+            var tmLeadsEndDateVar = new Date(tmLeadsEndDate);
+            var time_difference = tmLeadsEndDateVar.getTime() - tmLeadsStartDateVar.getTime();
             var daysDiff = time_difference / (1000 * 60 * 60 * 24);
 
             if ((tmLeadsStartDate == "") || (tmLeadsEndDate == "")) {
@@ -1328,33 +1325,22 @@ $(document).ready(function () {
                 $('#tmLeadsStartDate').css('border-color', 'red');
                 $('#tmLeadsEndDate').css('border-color', 'red');
                 $("#tm-leads-export").hide();
-
-                setTimeout(() => {
-                    $(".loader").hide();
-                }, 1000);
                 return false
             } else if (tmLeadsStartDate > tmLeadsEndDate) {
                 $("#result").html("Start date must be equal or less than end date");
                 $('#tmLeadsStartDate').css('border-color', 'red');
                 $('#tmLeadsEndDate').css('border-color', 'red');
                 $("#tm-leads-export").hide();
-
-                setTimeout(() => {
-                    $(".loader").hide();
-                }, 1000);
                 return false
             } else if (daysDiff > 30) {
                 $("#result").html("Allowed number of days between start and and dates are 30 days.");
                 $('#tmLeadsStartDate').css('border-color', 'red');
                 $('#tmLeadsEndDate').css('border-color', 'red');
                 $("#tm-leads-export").hide();
-
-                setTimeout(() => {
-                    $(".loader").hide();
-                }, 1000);
                 return false
             } else {
                 tmLeadsDatatable.draw();
+                $(".loader").show();
                 $("#result").html("");
                 $('#tmLeadsStartDate').css('border-color', '');
                 $('#tmLeadsEndDate').css('border-color', '');
@@ -1370,10 +1356,10 @@ $(document).ready(function () {
                 } else {
                     $("a[title='Download CSV']").hide();
                 }
-
             }
         } else {
             tmLeadsDatatable.draw();
+            $(".loader").show();
             $("#result").html("");
             $('#tmLeadsStartDate').css('border-color', '');
             $('#tmLeadsEndDate').css('border-color', '');
@@ -1488,13 +1474,15 @@ $(document).ready(function () {
     function tmleads_search_start_end_dates_filters_visiblity() {
         var searchTypeValue = $("#searchType").val();
         console.log("searchTypeValue: " + searchTypeValue);
-        if (searchTypeValue == "createdAt" || searchTypeValue == "updatedAt" || searchTypeValue == "nextFollowupDate" ||
-            searchTypeValue == "enquiryDate" || searchTypeValue == "allocationDate") {
+        if (searchTypeValue == "created_at" || searchTypeValue == "updated_at" || searchTypeValue == "next_followup_date" ||
+            searchTypeValue == "enquiry_date" || searchTypeValue == "allocation_date") {
             $("#tmLeads-search-start-end-dates-filters").show(300);
             $("#tmLeads-search-value-filter").hide(300);
         } else {
             $("#tmLeads-search-start-end-dates-filters").hide(300);
             $("#tmLeads-search-value-filter").show(300);
+            $('#tmLeadsStartDate').val('');
+            $('#tmLeadsEndDate').val('');
         }
     }
 
@@ -1613,7 +1601,7 @@ $(document).ready(function () {
         var quotePlansGenerateUrl = $('#quotePlansGenerateUrl').val();
         navigator.clipboard.writeText(quotePlansGenerateUrl);
         $("#quotePlansGenerateMsg").show(300);
-        $("#quotePlansGenerateMsg").hide(3000);
+        $("#quotePlansGenerateMsg").hide(2000);
     });
 
     $(".auditablebtn").click(function () {

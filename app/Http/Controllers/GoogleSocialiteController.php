@@ -48,10 +48,16 @@ class GoogleSocialiteController extends Controller
 
         Auth::login($isExisted[0]);
 
-        if(Auth::user()->hasAnyRole(['ADMIN','MANAGER','HEALTH_ADVISOR','BUSINESS_ADVISOR','TRAVEL_ADVISOR','LIFE_ADIVSOR','HOME_ADVISOR','CAR_ADVISOR'])){
-            return redirect('/leadsearch');
+        if(Auth::user()->hasAnyRole(['ADMIN'
+        ,'HEALTH_ADVISOR','HEALTH_MANAGER'
+        ,'BUSINESS_ADVISOR','BUSINESS_MANAGER'
+        ,'TRAVEL_ADVISOR','TRAVEL_MANAGER'
+        ,'LIFE_ADIVSOR','LIFE_MANAGER'
+        ,'HOME_ADVISOR','HOME_MANAGER'
+        ,'CAR_ADVISOR','CAR_MANAGER'])) {
+            return redirect()->intended('/leadsearch');
         } else {
-            return redirect('/home');
+            return redirect()->intended('/home');
         }
     }
 }
