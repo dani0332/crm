@@ -47,7 +47,7 @@ class TmLeadController extends Controller
         $tmLeadTypes = TmLeadType::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
         $tmLeadStatuses = TmLeadStatus::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
 
-        if (Auth::user()->hasRole('TM_ADVISOR')) {
+        if (Auth::user()->hasAnyRole(['TM_ADVISOR','TM_AUDIT'])) {
             $isCurrentUserIsAdvisor = "1";
         } else {
             $isCurrentUserIsAdvisor = "0";
