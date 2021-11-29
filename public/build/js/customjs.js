@@ -1339,45 +1339,34 @@ $(document).ready(function () {
                 $("#tm-leads-export").hide();
                 return false
             } else {
+                tmLeadsDatatable.draw();
+                $(".loader").show();
                 $("#result").html("");
                 $('#tmLeadsStartDate').css('border-color', '');
                 $('#tmLeadsEndDate').css('border-color', '');
-                $(".loader").show();
-                $.ajax({
-                    success: function (response) {
-                        tmLeadsDatatable.draw();
-                        $("#tm-leads-export").show();
-                        $(".loader").hide();
+                $("#tm-leads-export").show();
+                setTimeout(() => {
+                    $(".loader").hide();
+                }, 1000);
 
-                        // Hide Download CSV for advisors
-                        var isCurrentUserIsAdvisor = $("#isCurrentUserIsAdvisor").val();
-                        if (isCurrentUserIsAdvisor == 0) {
-                            $("a[title='Download CSV']").show();
-                        } else {
-                            $("a[title='Download CSV']").hide();
-                        }
-                    },
-                    error: function (jqXHR, textStatus, errorThrown) {
-                        $(".loader").hide();
-                    },
-                });
+                // Hide Download CSV for advisors
+                var isCurrentUserIsAdvisor = $("#isCurrentUserIsAdvisor").val();
+                if (isCurrentUserIsAdvisor == 0) {
+                    $("a[title='Download CSV']").show();
+                } else {
+                    $("a[title='Download CSV']").hide();
+                }
             }
         } else {
-
+            tmLeadsDatatable.draw();
             $(".loader").show();
             $("#result").html("");
             $('#tmLeadsStartDate').css('border-color', '');
             $('#tmLeadsEndDate').css('border-color', '');
             $("#tm-leads-export").hide();
-            $.ajax({
-                success: function (response) {
-                    tmLeadsDatatable.draw();
-                    $(".loader").hide();
-                },
-                error: function (jqXHR, textStatus, errorThrown) {
-                    $(".loader").hide();
-                },
-            });
+            setTimeout(() => {
+                $(".loader").hide();
+            }, 1000);
         }
 
     });
