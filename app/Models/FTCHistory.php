@@ -13,6 +13,7 @@ use App\Jobs\FTCMailServiceJob;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 use LookUpModel;
+use \Carbon\Carbon;
 
 class FTCHistory extends BaseModel
 {
@@ -56,6 +57,32 @@ class FTCHistory extends BaseModel
                 $sumInsured = 'AED '.$value;
         }
         return $sumInsured;
+    }
+
+    public function sendFtcEmail($row, $template){
+
+        $templateParams = collect($row)->toArray();
+        $templateParams["insurance_coverage"]["sum_insured"] = $this->prefixAED($templateParams["insurance_coverage"]["sum_insured"]);
+        $templateParams["insurance_coverage"]["excess"] = $this->prefixAED($templateParams["insurance_coverage"]["excess"]);
+        $templateParams["insurance_coverage"]["premium_price"] = $this->prefixAED($templateParams["insurance_coverage"]["premium_price"]);
+        $templateParams["insurance_coverage"]["ancillary_excess"] = $this->prefixAED($templateParams["insurance_coverage"]["ancillary_excess"]);
+
+        $params = [
+            'to' => $row->email,
+            'subject' => ucwords($row->first_name).' '.ucwords($row->last_name). '`s Car Insurance | InsuranceMarket.ae',
+            'templateName' => $template,
+            'templateParams' => $templateParams
+        ];
+
+        $attachment = FtcDocument::where(['car_quote_id' => $row->id, 'document' => 9])->get();
+        if(sizeof($attachment) > 0){
+            $params['templateParams']['attachment'] = [];
+            foreach ($attachment as $model) {
+                $params['templateParams']['attachment'][] = 'https://myalfreddev.blob.core.windows.net/myrewards/'.$model->file_name;
+            }
+        }
+        dispatch(new FTCMailServiceJob($params));
+
     }
 
     public function saveForm($request, $update = false) {
@@ -106,28 +133,29 @@ class FTCHistory extends BaseModel
                         $results = $getQuote->processGetBaseDSL(["id" => $request->input('car_quote_id')] , false);
                         $row = $results[0];
                         $row['generateLink'] = [ 'hash' => $carQuoteEmailLink->hash, 'quote' => $carQuote->id];
+                        $row->dob = Carbon::parse($row->dob)->format('d F Y');
+                        $this->sendFtcEmail($row,"ftc_mail");
+                        // $templateParams = collect($row)->toArray();
+                        // $templateParams["insurance_coverage"]["sum_insured"] = $this->prefixAED($templateParams["insurance_coverage"]["sum_insured"]);
+                        // $templateParams["insurance_coverage"]["excess"] = $this->prefixAED($templateParams["insurance_coverage"]["excess"]);
+                        // $templateParams["insurance_coverage"]["premium_price"] = $this->prefixAED($templateParams["insurance_coverage"]["premium_price"]);
+                        // $templateParams["insurance_coverage"]["ancillary_excess"] = $this->prefixAED($templateParams["insurance_coverage"]["ancillary_excess"]);
 
-                        $templateParams = collect($row)->toArray();
-                        $templateParams["insurance_coverage"]["sum_insured"] = $this->prefixAED($templateParams["insurance_coverage"]["sum_insured"]);
-                        $templateParams["insurance_coverage"]["excess"] = $this->prefixAED($templateParams["insurance_coverage"]["excess"]);
-                        $templateParams["insurance_coverage"]["premium_price"] = $this->prefixAED($templateParams["insurance_coverage"]["premium_price"]);
-                        $templateParams["insurance_coverage"]["ancillary_excess"] = $this->prefixAED($templateParams["insurance_coverage"]["ancillary_excess"]);
+                        // $params = [
+                        //     'to' => $carQuote->email,
+                        //     'subject' => ucwords($carQuote->first_name).' '.ucwords($carQuote->last_name). '`s Car Insurance',
+                        //     'templateName' => 'ftc_mail',
+                        //     'templateParams' => $templateParams
+                        // ];
 
-                        $params = [
-                            'to' => $carQuote->email,
-                            'subject' => $carQuote->first_name.' '.$carQuote->last_name. '`s Car Insurance',
-                            'templateName' => 'ftc_mail',
-                            'templateParams' => $templateParams
-                        ];
-
-                        $attachment = FtcDocument::where(['car_quote_id' => $carQuote->id, 'document' => 9])->get();
-                        if(sizeof($attachment) > 0){
-                            $params['templateParams']['attachment'] = [];
-                            foreach ($attachment as $model) {
-                                $params['templateParams']['attachment'][] = 'https://myalfreddev.blob.core.windows.net/myrewards/'.$model->file_name;
-                            }
-                        }
-                        dispatch(new FTCMailServiceJob($params));
+                        // $attachment = FtcDocument::where(['car_quote_id' => $carQuote->id, 'document' => 9])->get();
+                        // if(sizeof($attachment) > 0){
+                        //     $params['templateParams']['attachment'] = [];
+                        //     foreach ($attachment as $model) {
+                        //         $params['templateParams']['attachment'][] = 'https://myalfreddev.blob.core.windows.net/myrewards/'.$model->file_name;
+                        //     }
+                        // }
+                        // dispatch(new FTCMailServiceJob($params));
                     }else{
                         return $this->APIController->respondData(["message" => "Something wrong"], 500);
                     }
