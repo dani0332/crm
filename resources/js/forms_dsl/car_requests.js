@@ -13,7 +13,7 @@ const leadRequest = {
           'pa',
           'advisor',
           'admin',
-          'invoicing',
+            'invoicing',
           'production_approval_manager',
           'production_approval_manager',
         ],
@@ -247,7 +247,7 @@ const leadRequest = {
 
             const showConfirmMsg = () => {
               confirmAlert({
-                title: `${row.first_name} ${row.last_name}`,
+                title: `${capitalizeFirstLetter(row.first_name)} ${capitalizeFirstLetter(row.last_name)}`,
                 message: 'Are you sure you want to assign this lead yourself?',
                 buttons: [
                   {

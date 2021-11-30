@@ -37,8 +37,13 @@ class CarQuotePayment extends BaseModel
         return $this->hasOne(FTCPaymentMode::class, 'id', 'mode_id')->select(['id', 'name']);
     }
 
+    public function car_quote_id()
+    {
+        return $this->hasOne(CarQuote::class, 'id', 'car_quote_id')->select(['id','quote_status_id']);
+    }
+
     public function relations() {
-        return ['mode_id'];
+        return ['mode_id', 'car_quote_id.quote_status_id'];
     }
 
     public function processGetDSL($filters, $request) {

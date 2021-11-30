@@ -1,3 +1,5 @@
+import { session, setLocalStorage, capitalizeFirstLetter } from '../utils';
+
 const ftcPayment = {
   getForm() {
     const form = {
@@ -113,6 +115,31 @@ const ftcPayment = {
           },
         ],
         events: {
+          transformBeforeOpenReadMode(form){
+            if(form?.data.length < 1)
+              return form
+
+            const code  = form?.data?.car_quote_id?.quote_status_id?.code;
+            const { role } = session();
+            if(code && code === 'transaction_declined' && role === 'invoicing' ) {
+              const access = {
+                read: [
+                  'pa',
+                  'advisor',
+                  'admin',
+                  'invoicing',
+                  'production_approval_manager',
+                ],
+                write: ['invoicing'],
+                update: ['invoicing'],
+                delete: [],
+              };
+              form.access = access
+              return form
+            }
+            return form
+          },
+
           transformAfterFetchFromServer(form, data){
               if(form?.getForm?.context === 'car_quote_snap' && form?.formState === 'list' && form?.getForm?.multi === false) {
                   return { ...data, mode_id: { id: data?.mode_id?.id, text: data?.mode_id?.name}}
