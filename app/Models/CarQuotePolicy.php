@@ -21,6 +21,7 @@ class CarQuotePolicy extends BaseModel
         'delete' => ['admin'],
         'access' => [
             "advisor" => [],
+            "oe" => [],
             "production_approval_manager" => [],
             "pa" => [ 'car_quote_id', 'transactions_id', 'quote_number', 'policy_number', 'issue_date', 'start_date', 'end_date' ],
             "admin" => [ 'car_quote_id' , 'transactions_id', 'quote_number', 'policy_number', 'issue_date', 'start_date', 'end_date' ],
@@ -30,6 +31,7 @@ class CarQuotePolicy extends BaseModel
             "pa" => ['id', 'car_quote_id' , 'transactions_id', 'quote_number', 'policy_number', 'issue_date', 'start_date', 'end_date' ],
             "production_approval_manager" => ['id', 'car_quote_id', 'transactions_id', 'quote_number', 'policy_number', 'issue_date', 'start_date', 'end_date' ],
             "advisor" => ['id', 'car_quote_id', 'transactions_id', 'quote_number', 'policy_number', 'issue_date', 'start_date', 'end_date' ],
+            "oe" => ['id', 'car_quote_id', 'transactions_id', 'quote_number', 'policy_number', 'issue_date', 'start_date', 'end_date' ],
             "admin" => ['id', 'car_quote_id', 'transactions_id', 'quote_number', 'policy_number', 'issue_date', 'start_date', 'end_date' ],
             "invoicing" => ['id', 'car_quote_id', 'transactions_id', 'quote_number', 'policy_number', 'issue_date', 'start_date', 'end_date' ]
         ]

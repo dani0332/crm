@@ -11,12 +11,13 @@ class CarModel extends BaseModel
     protected $table = 'car_model';
     public $access = [
 
-        'write' => ['advisor'],
-        'update' => ['advisor'],
-        'delete' => ['advisor'],
+        'write' => ['advisor', 'oe'],
+        'update' => ['advisor', 'oe'],
+        'delete' => ['advisor', 'oe'],
         'access' => [
             "pa" => [ 'code', 'text', 'car_make_code'],
             "advisor" => [ 'code', 'text', 'car_make_code'],
+            "oe" => [ 'code', 'text', 'car_make_code'],
             "admin" => [ 'code', 'text', 'car_make_code' ],
             "invoicing" => [ 'code', 'text', 'car_make_code']
 
@@ -24,6 +25,7 @@ class CarModel extends BaseModel
         "list" => [
             "pa" => ['id','code', 'text', 'car_make_code' ],
             "advisor" => [ 'id','code', 'text', 'car_make_code'],
+            "oe" => [ 'id','code', 'text', 'car_make_code'],
             "admin" => [ 'id','code', 'text', 'car_make_code'],
             "invoicing" => [ 'code', 'text', 'car_make_code']
         ]

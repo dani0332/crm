@@ -22,6 +22,7 @@ class CarQuotePaymentHistory extends BaseModel
             "pa" => [],
             "production_approval_manager" => [],
             "advisor" => [],
+            "oe" => [],
             "admin" => [],
             "invoicing" => [ 'car_quote_id', 'status', 'notes' ]
         ],
@@ -29,6 +30,7 @@ class CarQuotePaymentHistory extends BaseModel
             "pa" => ['id', 'car_quote_id', 'status', 'notes'],
             "production_approval_manager" => ['id', 'car_quote_id', 'status', 'notes'],
             "advisor" => [ 'id', 'car_quote_id', 'status', 'notes'],
+            "oe" => [ 'id', 'car_quote_id', 'status', 'notes'],
             "admin" => ['id', 'car_quote_id', 'status', 'notes'],
             "invoicing" => ['id', 'car_quote_id', 'status', 'notes' ]
         ]

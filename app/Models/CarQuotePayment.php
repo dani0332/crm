@@ -13,13 +13,14 @@ class CarQuotePayment extends BaseModel
     use HasFactory;
     protected $table = 'car_quote_payment';
     public $access = [
-        'write'  => ['advisor'],
-        'update' => ['advisor'],
-        'delete' => [ 'advisor'],
+        'write'  => ['advisor','oe'],
+        'update' => ['advisor','oe'],
+        'delete' => [ 'advisor','oe'],
         'access' => [
             "pa" => [],
             "production_approval_manager" => [],
             "advisor" => [ 'car_quote_id', 'mode_id', 'method', 'comment' ],
+            "oe" => [ 'car_quote_id', 'mode_id', 'method', 'comment' ],
             "admin" => [ 'car_quote_id', 'mode_id', 'method', 'comment'],
             "invoicing" => []
         ],
@@ -27,6 +28,7 @@ class CarQuotePayment extends BaseModel
             "pa" => ['id', 'car_quote_id' , 'mode_id', 'method', 'comment'],
             "production_approval_manager" => ['id', 'car_quote_id' , 'mode_id', 'method', 'comment'],
             "advisor" => [ 'id', 'car_quote_id' , 'mode_id', 'method', 'comment'],
+            "oe" => [ 'id', 'car_quote_id' , 'mode_id', 'method', 'comment'],
             "admin" => ['id', 'car_quote_id' , 'mode_id', 'method', 'comment'],
             "invoicing" => ['id', 'car_quote_id' , 'mode_id', 'method', 'comment']
         ]

@@ -20,6 +20,7 @@ class CarQuoteKYCStatus extends BaseModel
         'access' => [
             "pa" => [  'car_quote_id' , 'status', 'notes'],
             "advisor" => [  'car_quote_id' , 'status', 'notes'],
+            "oe" => [  'car_quote_id' , 'status', 'notes'],
             "admin" => [  'car_quote_id' , 'status', 'notes'],
             "invoicing" => [  'car_quote_id' , 'status', 'notes'],
         ],
