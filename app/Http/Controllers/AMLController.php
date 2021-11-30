@@ -368,7 +368,7 @@ class AMLController extends Controller
     }
 
     public function sanctionListHistory(Request $request, SanctionListDownloads $sanctionListDownloads, Datatables $datatables) {
-        $url = env('AZURE_RYU_STORAGE_URL').'aml-uploads';
+        $url = env('AZURE_RYU_STORAGE_URL').env('AZURE_AML_HISTORY');
 
         if($request->ajax()) {
 
