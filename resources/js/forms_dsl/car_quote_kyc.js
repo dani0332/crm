@@ -7,13 +7,14 @@ const carQuoteKycStatus = {
       access: {
         read: [
           'advisor',
+          'oe',
           'pa',
           'admin',
           'invoicing',
           'production_approval_manager',
         ],
-        write: ['advisor', 'admin'],
-        update: ['advisor', 'admin'],
+        write: ['advisor',  'oe','admin'],
+        update: ['advisor',  'oe','admin'],
         delete: ['admin'],
       },
       fields: {
@@ -25,13 +26,14 @@ const carQuoteKycStatus = {
           access: {
             read: [
               'advisor',
+              'oe',
               'pa',
               'admin',
               'invoicing',
               'production_approval_manager',
             ],
-            write: ['advisor', 'admin'],
-            update: ['advisor', 'admin'],
+            write: ['advisor', 'oe', 'admin'],
+            update: ['advisor', 'oe', 'admin'],
           },
         },
         organization: {
@@ -40,13 +42,14 @@ const carQuoteKycStatus = {
           access: {
             read: [
               'advisor',
+              'oe',
               'pa',
               'admin',
               'invoicing',
               'production_approval_manager',
             ],
-            write: ['advisor', 'admin'],
-            update: ['advisor', 'admin'],
+            write: ['advisor',  'oe','admin'],
+            update: ['advisor', 'oe', 'admin'],
           },
           rules: { required: true },
         },
@@ -79,13 +82,14 @@ const carQuoteKycStatus = {
           access: {
             read: [
               'advisor',
+              'oe',
               'pa',
               'admin',
               'invoicing',
               'production_approval_manager',
             ],
-            write: ['advisor', 'admin'],
-            update: ['advisor', 'admin'],
+            write: ['advisor', 'oe', 'admin'],
+            update: ['advisor', 'oe', 'admin'],
           },
           rules: { required: true },
         },

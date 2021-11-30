@@ -8,13 +8,14 @@ const policyHolderDetail = {
       access: {
         read: [
           'advisor',
+          'oe',
           'pa',
           'admin',
           'invoicing',
           'production_approval_manager',
         ],
-        write: ['advisor'],
-        update: ['advisor'],
+        write: [ 'oe','advisor'],
+        update: [ 'oe','advisor'],
         delete: [],
       },
       fields: {
@@ -57,12 +58,13 @@ const policyHolderDetail = {
             read: [
               'pa',
               'advisor',
+              'oe',
               'admin',
               'invoicing',
               'production_approval_manager',
             ],
-            write: ['advisor', 'admin'],
-            update: ['advisor', 'admin'],
+            write: [ 'oe','advisor', 'admin'],
+            update: [ 'oe','advisor', 'admin'],
           },
           // rules: { required: true }
         }
@@ -139,6 +141,7 @@ const policyHolderDetail = {
               read: [
                 'pa',
                 'advisor',
+                'oe',
                 'admin',
                 'invoicing',
                 'production_approval_manager',

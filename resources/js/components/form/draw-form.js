@@ -15,35 +15,35 @@ const initialState = {
   sections: [],
 };
 
-function makeNullHideFields(state) {
-  let data = {};
-  const { fields, selectedRecord } = state;
-  Object.entries(fields).forEach(entry => {
-    const [key, value] = entry;
-    const getField = value;
-    const recVal = selectedRecord?.[key];
+// function makeNullHideFields(state) {
+//   let data = {};
+//   const { fields, selectedRecord } = state;
+//   Object.entries(fields).forEach(entry => {
+//     const [key, value] = entry;
+//     const getField = value;
+//     const recVal = selectedRecord?.[key];
 
-    if (recVal && getField?.if) {
-      let getVal = recVal;
-      if (typeof getField?.transform === 'function')
-        getVal = getField?.transform(recVal);
+//     if (recVal && getField?.if) {
+//       let getVal = recVal;
+//       if (typeof getField?.transform === 'function')
+//         getVal = getField?.transform(recVal);
 
-      let val = getField.if[getVal?.selected] ? getField.if[getVal.selected]: getField.if[getVal.value];
-      if (val?.fields) {
-        const getCondFields = val.fields;
-        if (getCondFields.length > 0) {
-          getCondFields.forEach(() => {});
-        }
-      } else {
-        const getCondFields = getField.else;
-        getCondFields.forEach(element => {
-          data[element] = '';
-        });
-      }
-    }
-  });
-  return data;
-}
+//       let val = getField.if[getVal?.selected] ? getField.if[getVal.selected]: getField.if[getVal.value];
+//       if (val?.fields) {
+//         const getCondFields = val.fields;
+//         if (getCondFields.length > 0) {
+//           getCondFields.forEach(() => {});
+//         }
+//       } else {
+//         const getCondFields = getField.else;
+//         getCondFields.forEach(element => {
+//           data[element] = '';
+//         });
+//       }
+//     }
+//   });
+//   return data;
+// }
 
 function conditionState(state, action) {
   const {
