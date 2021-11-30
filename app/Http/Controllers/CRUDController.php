@@ -309,10 +309,7 @@ class CRUDController extends Controller
                     $listQuotePlanBenefitsExclusions = $listQuotePlan->benefits->exclusion;
                     $listQuotePlanBenefitsFeatures = $listQuotePlan->benefits->feature;
                     $listQuotePlanBenefitsRsas = $listQuotePlan->benefits->roadSideAssistance;
-
-                    echo "<pre>"; print_r($listQuotePlan); exit;
-
-                    $listQuotePlanBenefitsPolicyDetails = $listQuotePlan->benefits->policyDetail;
+                    $listQuotePlanBenefitsPolicyDetails = $listQuotePlan->policyDetails;
 
                     foreach ($listQuotePlanAddonss as $listQuotePlanAddon) {
                         $listQuotePlanAddons[] = $listQuotePlanAddon; // Get Addons Names
