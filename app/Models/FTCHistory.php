@@ -135,28 +135,7 @@ class FTCHistory extends BaseModel
                         $row['generateLink'] = [ 'hash' => $carQuoteEmailLink->hash, 'quote' => $carQuote->id];
                         $row->dob = Carbon::parse($row->dob)->format('d F Y');
                         $this->sendFtcEmail($row,"ftc_mail");
-                        // $templateParams = collect($row)->toArray();
-                        // $templateParams["insurance_coverage"]["sum_insured"] = $this->prefixAED($templateParams["insurance_coverage"]["sum_insured"]);
-                        // $templateParams["insurance_coverage"]["excess"] = $this->prefixAED($templateParams["insurance_coverage"]["excess"]);
-                        // $templateParams["insurance_coverage"]["premium_price"] = $this->prefixAED($templateParams["insurance_coverage"]["premium_price"]);
-                        // $templateParams["insurance_coverage"]["ancillary_excess"] = $this->prefixAED($templateParams["insurance_coverage"]["ancillary_excess"]);
-
-                        // $params = [
-                        //     'to' => $carQuote->email,
-                        //     'subject' => ucwords($carQuote->first_name).' '.ucwords($carQuote->last_name). '`s Car Insurance',
-                        //     'templateName' => 'ftc_mail',
-                        //     'templateParams' => $templateParams
-                        // ];
-
-                        // $attachment = FtcDocument::where(['car_quote_id' => $carQuote->id, 'document' => 9])->get();
-                        // if(sizeof($attachment) > 0){
-                        //     $params['templateParams']['attachment'] = [];
-                        //     foreach ($attachment as $model) {
-                        //         $params['templateParams']['attachment'][] = 'https://myalfreddev.blob.core.windows.net/myrewards/'.$model->file_name;
-                        //     }
-                        // }
-                        // dispatch(new FTCMailServiceJob($params));
-                    }else{
+                   }else{
                         return $this->APIController->respondData(["message" => "Something wrong"], 500);
                     }
                 }
