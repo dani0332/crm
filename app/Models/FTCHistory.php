@@ -89,8 +89,14 @@ class FTCHistory extends BaseModel
 
     public function saveForm($request, $update = false) {
 
-        if( Auth::user()->hasRole('advisor') ) {
-            $carQuote = CarQuote::where(['id' => $request->input('car_quote_id', -1), 'advisor_id' => Auth::user()->id])->get()->first();
+        if( Auth::user()->hasRole('advisor') || Auth::user()->hasRole('oe') ) {
+           
+            $carQuote = null;
+            if(Auth::user()->hasRole('advisor'))
+                $carQuote   =   CarQuote::where(['id' => $request->input('car_quote_id', -1), 'advisor_id' => Auth::user()->id])->first();
+            if(Auth::user()->hasRole('oe'))
+                $carQuote   =   CarQuote::where(['id' => $request->input('car_quote_id', -1), 'oe_id' => Auth::user()->id])->first();
+          
             if($carQuote) {
 
                 if($request->input('status', '') == 'resubmitForApproval' || $request->input('status', '') == 'ftc_pending') {

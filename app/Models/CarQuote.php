@@ -231,6 +231,15 @@ class CarQuote extends BaseModel
                 }
             }
 
+            if(Auth::user()->hasRole('oe')) {
+                if(empty($filters)){
+                    $restrictFilter["oe_id"] = Auth::user()->id;
+                }else{
+                    $restrictFilter["oe_id"] = Auth::user()->id;
+                    $restrictFilter = array_merge($restrictFilter,$filters);
+                }
+            }
+
             if(Auth::user()->hasRole('pa')) {
                 if(!array_key_exists('pa_id', $filters)){
                     return [];

@@ -215,7 +215,7 @@
                         </li>
                     </ul>
                 @endcan
-                @if (Auth::user()->hasRole('advisor') || Auth::user()->hasRole('pa') || Auth::user()->hasRole('invoicing') || Auth::user()->hasRole('production_approval_manager'))
+                @if (Auth::user()->hasRole('advisor') || Auth::user()->hasRole('pa') || Auth::user()->hasRole('invoicing') || Auth::user()->hasRole('production_approval_manager') || Auth::user()->hasRole('oe'))
                     <ul class="nav side-menu">
                         <li><a href="{{ url('ftcform') }}"><i></i> Policy Issuance </a>
                     </ul>

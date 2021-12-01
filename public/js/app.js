@@ -13753,14 +13753,6 @@ function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) { try
 
 function _asyncToGenerator(fn) { return function () { var self = this, args = arguments; return new Promise(function (resolve, reject) { var gen = fn.apply(self, args); function _next(value) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "next", value); } function _throw(err) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "throw", err); } _next(undefined); }); }; }
 
-function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) { symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); } keys.push.apply(keys, symbols); } return keys; }
-
-function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys(Object(source), true).forEach(function (key) { _defineProperty(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
-
-function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
-
-function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
-
 function _slicedToArray(arr, i) { return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _unsupportedIterableToArray(arr, i) || _nonIterableRest(); }
 
 function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
@@ -13772,6 +13764,14 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
 function _iterableToArrayLimit(arr, i) { var _i = arr == null ? null : typeof Symbol !== "undefined" && arr[Symbol.iterator] || arr["@@iterator"]; if (_i == null) return; var _arr = []; var _n = true; var _d = false; var _s, _e; try { for (_i = _i.call(arr); !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"] != null) _i["return"](); } finally { if (_d) throw _e; } } return _arr; }
 
 function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
+
+function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) { symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); } keys.push.apply(keys, symbols); } return keys; }
+
+function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys(Object(source), true).forEach(function (key) { _defineProperty(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
+function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
 
 
 
@@ -13789,44 +13789,33 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
 var initialState = {
   fields: [],
   sections: []
-};
-
-function makeNullHideFields(state) {
-  var data = {};
-  var fields = state.fields,
-      selectedRecord = state.selectedRecord;
-  Object.entries(fields).forEach(function (entry) {
-    var _entry = _slicedToArray(entry, 2),
-        key = _entry[0],
-        value = _entry[1];
-
-    var getField = value;
-    var recVal = selectedRecord === null || selectedRecord === void 0 ? void 0 : selectedRecord[key];
-
-    if (recVal && getField !== null && getField !== void 0 && getField["if"]) {
-      var _getVal;
-
-      var getVal = recVal;
-      if (typeof (getField === null || getField === void 0 ? void 0 : getField.transform) === 'function') getVal = getField === null || getField === void 0 ? void 0 : getField.transform(recVal);
-      var val = getField["if"][(_getVal = getVal) === null || _getVal === void 0 ? void 0 : _getVal.selected] ? getField["if"][getVal.selected] : getField["if"][getVal.value];
-
-      if (val !== null && val !== void 0 && val.fields) {
-        var getCondFields = val.fields;
-
-        if (getCondFields.length > 0) {
-          getCondFields.forEach(function () {});
-        }
-      } else {
-        var _getCondFields = getField["else"];
-
-        _getCondFields.forEach(function (element) {
-          data[element] = '';
-        });
-      }
-    }
-  });
-  return data;
-}
+}; // function makeNullHideFields(state) {
+//   let data = {};
+//   const { fields, selectedRecord } = state;
+//   Object.entries(fields).forEach(entry => {
+//     const [key, value] = entry;
+//     const getField = value;
+//     const recVal = selectedRecord?.[key];
+//     if (recVal && getField?.if) {
+//       let getVal = recVal;
+//       if (typeof getField?.transform === 'function')
+//         getVal = getField?.transform(recVal);
+//       let val = getField.if[getVal?.selected] ? getField.if[getVal.selected]: getField.if[getVal.value];
+//       if (val?.fields) {
+//         const getCondFields = val.fields;
+//         if (getCondFields.length > 0) {
+//           getCondFields.forEach(() => {});
+//         }
+//       } else {
+//         const getCondFields = getField.else;
+//         getCondFields.forEach(element => {
+//           data[element] = '';
+//         });
+//       }
+//     }
+//   });
+//   return data;
+// }
 
 function conditionState(state, action) {
   var _action$field = action.field,
@@ -13848,9 +13837,9 @@ function conditionState(state, action) {
         });
       }
     } else {
-      var _getCondFields2 = getField["else"];
+      var _getCondFields = getField["else"];
 
-      _getCondFields2.forEach(function (element) {
+      _getCondFields.forEach(function (element) {
         state.fields[element].offscreen = true;
       });
     }
@@ -16677,9 +16666,9 @@ var insuranceDetail = {
       title: 'Insurance Coverage Information',
       subtitle: '',
       access: {
-        read: ['pa', 'advisor', 'admin', 'invoicing', 'production_approval_manager'],
-        write: ['advisor', 'admin'],
-        update: ['advisor', 'admin'],
+        read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'production_approval_manager'],
+        write: ['advisor', 'admin', 'oe'],
+        update: ['advisor', 'admin', 'oe'],
         "delete": []
       },
       fields: {
@@ -16687,9 +16676,9 @@ var insuranceDetail = {
           type: 'datePicker',
           label: 'Policy start date',
           access: {
-            read: ['pa', 'advisor', 'admin', 'invoicing', 'production_approval_manager'],
-            write: ['advisor', 'admin'],
-            update: ['advisor', 'admin']
+            read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'production_approval_manager'],
+            write: ['advisor', 'oe', 'admin'],
+            update: ['advisor', 'oe', 'admin']
           } // rules: { required: true }
 
         },
@@ -16701,9 +16690,9 @@ var insuranceDetail = {
             required: true
           },
           access: {
-            read: ['pa', 'advisor', 'admin', 'invoicing', 'production_approval_manager'],
-            write: ['advisor', 'admin'],
-            update: ['advisor', 'admin']
+            read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'production_approval_manager'],
+            write: ['advisor', 'oe', 'admin'],
+            update: ['advisor', 'oe', 'admin']
           },
           transform: function transform(item) {
             if (Array.isArray(item)) {
@@ -16725,9 +16714,9 @@ var insuranceDetail = {
           label: 'Insurance Plan',
           source: 'car_quote_insurance_plan',
           access: {
-            read: ['pa', 'advisor', 'admin', 'invoicing', 'production_approval_manager'],
-            write: ['advisor', 'admin'],
-            update: ['advisor', 'admin']
+            read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'production_approval_manager'],
+            write: ['advisor', 'oe', 'admin'],
+            update: ['advisor', 'oe', 'admin']
           },
           rules: {
             required: true
@@ -16738,9 +16727,9 @@ var insuranceDetail = {
           label: 'Vehicle Type',
           source: 'vehicle_type',
           access: {
-            read: ['pa', 'advisor', 'admin', 'invoicing', 'production_approval_manager'],
-            write: ['advisor', 'admin'],
-            update: ['advisor', 'admin']
+            read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'production_approval_manager'],
+            write: ['advisor', 'oe', 'admin'],
+            update: ['advisor', 'oe', 'admin']
           },
           rules: {
             required: true
@@ -16750,9 +16739,9 @@ var insuranceDetail = {
           type: 'text',
           label: 'Excess',
           access: {
-            read: ['advisor', 'admin', 'invoicing', 'pa', 'production_approval_manager'],
-            write: ['advisor', 'admin'],
-            update: ['advisor', 'admin']
+            read: ['advisor', 'oe', 'admin', 'invoicing', 'pa', 'production_approval_manager'],
+            write: ['advisor', 'oe', 'admin'],
+            update: ['advisor', 'oe', 'admin']
           },
           rules: {
             required: true
@@ -16762,9 +16751,9 @@ var insuranceDetail = {
           type: 'text',
           label: 'Sum Insured',
           access: {
-            read: ['advisor', 'admin', 'invoicing', 'pa', 'production_approval_manager'],
-            write: ['advisor', 'admin'],
-            update: ['advisor', 'admin']
+            read: ['advisor', 'oe', 'admin', 'invoicing', 'pa', 'production_approval_manager'],
+            write: ['advisor', 'oe', 'admin'],
+            update: ['advisor', 'oe', 'admin']
           },
           rules: {
             required: true
@@ -16774,9 +16763,9 @@ var insuranceDetail = {
           type: 'text',
           label: 'Premium/Price',
           access: {
-            read: ['pa', 'advisor', 'admin', 'invoicing', 'production_approval_manager'],
-            write: ['advisor', 'admin'],
-            update: ['advisor', 'admin']
+            read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'production_approval_manager'],
+            write: ['advisor', 'oe', 'admin'],
+            update: ['advisor', 'oe', 'admin']
           },
           rules: {
             required: true
@@ -16786,9 +16775,9 @@ var insuranceDetail = {
           type: 'text',
           label: 'Ancillary Excess',
           access: {
-            read: ['pa', 'advisor', 'admin', 'invoicing', 'production_approval_manager'],
-            write: ['advisor', 'admin'],
-            update: ['advisor', 'admin']
+            read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'production_approval_manager'],
+            write: ['advisor', 'oe', 'admin'],
+            update: ['advisor', 'oe', 'admin']
           },
           rules: {
             required: true
@@ -16798,9 +16787,9 @@ var insuranceDetail = {
           type: 'dropdown',
           label: 'Personal Accident Benefit',
           access: {
-            read: ['pa', 'advisor', 'admin', 'invoicing', 'production_approval_manager'],
-            write: ['advisor', 'admin'],
-            update: ['advisor', 'admin']
+            read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'production_approval_manager'],
+            write: ['advisor', 'oe', 'admin'],
+            update: ['advisor', 'oe', 'admin']
           },
           source: ['INCLUDED', 'NOT INCLUDED']
         },
@@ -16809,9 +16798,9 @@ var insuranceDetail = {
           label: 'Breakdown recovery',
           source: ['INCLUDED', 'NOT INCLUDED'],
           access: {
-            read: ['pa', 'advisor', 'admin', 'invoicing', 'production_approval_manager'],
-            write: ['advisor', 'admin'],
-            update: ['advisor', 'admin']
+            read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'production_approval_manager'],
+            write: ['advisor', 'oe', 'admin'],
+            update: ['advisor', 'oe', 'admin']
           },
           rules: {
             required: true
@@ -16822,9 +16811,9 @@ var insuranceDetail = {
           label: 'Off-road cover (for 4X4 only)',
           source: ['INCLUDED', 'NOT INCLUDED'],
           access: {
-            read: ['pa', 'advisor', 'admin', 'invoicing', 'production_approval_manager'],
-            write: ['advisor', 'admin'],
-            update: ['advisor', 'admin']
+            read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'production_approval_manager'],
+            write: ['advisor', 'oe', 'admin'],
+            update: ['advisor', 'oe', 'admin']
           },
           rules: {
             required: true
@@ -16835,9 +16824,9 @@ var insuranceDetail = {
           label: 'Rent a Car',
           source: ['INCLUDED', 'NOT INCLUDED'],
           access: {
-            read: ['pa', 'advisor', 'admin', 'invoicing', 'production_approval_manager'],
-            write: ['advisor', 'admin'],
-            update: ['advisor', 'admin']
+            read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'production_approval_manager'],
+            write: ['advisor', 'oe', 'admin'],
+            update: ['advisor', 'oe', 'admin']
           },
           rules: {
             required: true
@@ -16848,9 +16837,9 @@ var insuranceDetail = {
           label: 'Repair Type',
           source: ['Agency', 'NON Agency', 'Not Applicable'],
           access: {
-            read: ['pa', 'advisor', 'admin', 'invoicing', 'production_approval_manager'],
-            write: ['advisor', 'admin'],
-            update: ['advisor', 'admin']
+            read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'production_approval_manager'],
+            write: ['advisor', 'oe', 'admin'],
+            update: ['advisor', 'oe', 'admin']
           },
           rules: {
             required: true
@@ -16860,9 +16849,9 @@ var insuranceDetail = {
           type: 'text',
           label: 'Financed By',
           access: {
-            read: ['pa', 'advisor', 'admin', 'invoicing', 'production_approval_manager'],
-            write: ['advisor', 'admin'],
-            update: ['advisor', 'admin']
+            read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'production_approval_manager'],
+            write: ['advisor', 'oe', 'admin'],
+            update: ['advisor', 'oe', 'admin']
           },
           rules: {
             required: true
@@ -16872,9 +16861,9 @@ var insuranceDetail = {
           type: 'text',
           label: 'Geographical Area',
           access: {
-            read: ['pa', 'advisor', 'admin', 'invoicing', 'production_approval_manager'],
-            write: ['advisor', 'admin'],
-            update: ['advisor', 'admin']
+            read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'production_approval_manager'],
+            write: ['advisor', 'oe', 'admin'],
+            update: ['advisor', 'oe', 'admin']
           },
           rules: {
             required: true
@@ -16907,7 +16896,7 @@ var insuranceDetail = {
             }
 
             var access = {
-              read: ['pa', 'advisor', 'admin', 'invoicing', 'production_approval_manager'],
+              read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'production_approval_manager'],
               write: [],
               update: [],
               "delete": []
@@ -16979,9 +16968,9 @@ var carQuoteKycStatus = {
       title: 'KYC',
       subtitle: '',
       access: {
-        read: ['advisor', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
-        write: ['advisor', 'admin'],
-        update: ['advisor', 'admin'],
+        read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
+        write: ['advisor', 'oe', 'admin'],
+        update: ['advisor', 'oe', 'admin'],
         "delete": ['admin']
       },
       fields: {
@@ -16993,18 +16982,18 @@ var carQuoteKycStatus = {
             required: true
           },
           access: {
-            read: ['advisor', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
-            write: ['advisor', 'admin'],
-            update: ['advisor', 'admin']
+            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
+            write: ['advisor', 'oe', 'admin'],
+            update: ['advisor', 'oe', 'admin']
           }
         },
         organization: {
           type: 'text',
           label: 'Organization',
           access: {
-            read: ['advisor', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
-            write: ['advisor', 'admin'],
-            update: ['advisor', 'admin']
+            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
+            write: ['advisor', 'oe', 'admin'],
+            update: ['advisor', 'oe', 'admin']
           },
           rules: {
             required: true
@@ -17015,9 +17004,9 @@ var carQuoteKycStatus = {
           label: 'Profession',
           source: ['Business Owner', 'CEO/Managing Director/Managing Partner', 'Human Resources (HR)', 'Administration/Operations/Secretarial/Assistant/Customer Service Executive', 'Sales/Business Development', 'Finance or Accounting', 'Consultant/Self Employed', 'Healthcare Professional: Doctor, Nurse, Pharmacist, Diagnostician etc', 'Teacher/Instructor/Coach', 'Real Estate Agent', 'Engineer/Architect/Contractor', 'Pilot', 'Chef', 'Technician/Technical Manager/Quality Controller/IT/Software Developer/Analyst', 'Lawyer', 'Government Official: Police, Municipality, Court etc', 'Driver', 'Marketing/Media/Advertising', 'Artist/Actor/Writer/Sportsperson', 'House Wife', 'Unemployed'],
           access: {
-            read: ['advisor', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
-            write: ['advisor', 'admin'],
-            update: ['advisor', 'admin']
+            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
+            write: ['advisor', 'oe', 'admin'],
+            update: ['advisor', 'oe', 'admin']
           },
           rules: {
             required: true
@@ -17095,7 +17084,7 @@ var carQuoteKycStatus = {
       title: 'KYC Status',
       subtitle: '',
       access: {
-        read: ['advisor', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
+        read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
         write: ['pa', 'admin', 'production_approval_manager'],
         update: [],
         "delete": ['admin']
@@ -17110,7 +17099,7 @@ var carQuoteKycStatus = {
             required: true
           },
           access: {
-            read: ['advisor', 'pa', 'advisor', 'admin', 'invoicing', 'production_approval_manager'],
+            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
             write: ['pa', 'admin'],
             update: ['pa', 'admin']
           }
@@ -17119,7 +17108,7 @@ var carQuoteKycStatus = {
           type: 'textarea',
           label: 'Notes',
           access: {
-            read: ['advisor', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
+            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
             write: ['pa', 'admin', 'invoicing'],
             update: ['pa', 'admin', 'invoicing']
           },
@@ -17219,7 +17208,7 @@ var carQuotePolicy = {
       title: 'Car Quote Policy',
       subtitle: '',
       access: {
-        read: ['pa', 'advisor', 'admin', 'invoicing', 'production_approval_manager'],
+        read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'production_approval_manager'],
         write: ['pa', 'admin'],
         update: ['pa', 'admin'],
         "delete": []
@@ -17229,7 +17218,7 @@ var carQuotePolicy = {
           type: 'text',
           label: 'Customer',
           access: {
-            read: ['advisor', 'pa', 'admin', 'invoicing', 'production_approval_manager']
+            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'production_approval_manager']
           },
           transform: function transform(item) {
             return "".concat(item === null || item === void 0 ? void 0 : item.first_name, "  ").concat(item === null || item === void 0 ? void 0 : item.last_name);
@@ -17239,7 +17228,7 @@ var carQuotePolicy = {
           type: 'text',
           label: 'Quote Number',
           access: {
-            read: ['advisor', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
+            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
             write: ['pa'],
             update: ['pa']
           },
@@ -17251,7 +17240,7 @@ var carQuotePolicy = {
           type: 'text',
           label: 'Policy Number',
           access: {
-            read: ['advisor', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
+            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
             write: ['pa'],
             update: ['pa']
           },
@@ -17263,7 +17252,7 @@ var carQuotePolicy = {
           type: 'datePicker',
           label: 'Policy Issue Date',
           access: {
-            read: ['pa', 'advisor', 'admin', 'invoicing', 'production_approval_manager'],
+            read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'production_approval_manager'],
             write: ['pa', 'admin'],
             update: ['pa', 'admin']
           } // rules: { required: true }
@@ -17273,7 +17262,7 @@ var carQuotePolicy = {
           type: 'datePicker',
           label: 'Policy Start Date',
           access: {
-            read: ['pa', 'advisor', 'admin', 'invoicing', 'production_approval_manager'],
+            read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'production_approval_manager'],
             write: ['pa', 'admin'],
             update: ['pa', 'admin']
           }
@@ -17282,7 +17271,7 @@ var carQuotePolicy = {
           type: 'datePicker',
           label: 'Policy End Date',
           access: {
-            read: ['pa', 'advisor', 'admin', 'invoicing', 'production_approval_manager'],
+            read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'production_approval_manager'],
             write: ['pa', 'admin'],
             update: ['pa', 'admin']
           }
@@ -17291,14 +17280,14 @@ var carQuotePolicy = {
           type: 'text',
           label: 'Approval Code',
           access: {
-            read: ['pa', 'advisor', 'admin', 'invoicing', 'production_approval_manager']
+            read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'production_approval_manager']
           }
         },
         amount_paid: {
           type: 'text',
           label: 'Amound Paid',
           access: {
-            read: ['pa', 'advisor', 'admin', 'invoicing', 'production_approval_manager']
+            read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'production_approval_manager']
           }
         },
         payment_mode_id: {
@@ -17306,7 +17295,7 @@ var carQuotePolicy = {
           label: 'Payment Mode',
           source: 'payment_modes',
           access: {
-            read: ['pa', 'advisor', 'admin', 'invoicing', 'production_approval_manager']
+            read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'production_approval_manager']
           },
           transform: function transform(item) {
             if (Array.isArray(item)) {
@@ -17328,7 +17317,7 @@ var carQuotePolicy = {
           label: 'Type of Insurance',
           source: 'type_of_insurances',
           access: {
-            read: ['pa', 'advisor', 'admin', 'invoicing', 'production_approval_manager']
+            read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'production_approval_manager']
           }
         },
         insurance_company_id: {
@@ -17336,7 +17325,7 @@ var carQuotePolicy = {
           label: 'Insurance Company',
           source: 'insurance_companies',
           access: {
-            read: ['pa', 'advisor', 'admin', 'invoicing', 'production_approval_manager']
+            read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'production_approval_manager']
           },
           transform: function transform(item) {
             if (Array.isArray(item)) {
@@ -17436,10 +17425,10 @@ var leadRequest = {
       db_table: 'car_quote_request',
       title: 'Lead Listing',
       access: {
-        read: ['pa', 'advisor', 'admin', 'invoicing', 'production_approval_manager', 'production_approval_manager'],
+        read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'production_approval_manager', 'production_approval_manager'],
         write: [],
         update: [],
-        "delete": ['advisor', 'admin']
+        "delete": ['advisor', 'oe', 'admin']
       },
       fields: {
         first_name: {
@@ -17451,9 +17440,9 @@ var leadRequest = {
             required: true
           },
           access: {
-            read: ['pa', 'advisor', 'admin', 'invoicing', 'production_approval_manager', 'production_approval_manager'],
+            read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'production_approval_manager', 'production_approval_manager'],
             write: ['admin'],
-            update: ['advisor', 'admin']
+            update: ['advisor', 'oe', 'admin']
           }
         },
         last_name: {
@@ -17481,9 +17470,9 @@ var leadRequest = {
           label: 'Car Model',
           source: 'car_model',
           access: {
-            read: ['advisor', 'pa', 'admin', 'invoicing', 'production_approval_manager', 'production_approval_manager'],
-            write: ['advisor', 'admin'],
-            update: ['advisor', 'admin']
+            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'production_approval_manager', 'production_approval_manager'],
+            write: ['advisor', 'oe', 'admin'],
+            update: ['advisor', 'oe', 'admin']
           },
           transform: function transform(item) {
             if (Array.isArray(item)) {
@@ -17517,7 +17506,7 @@ var leadRequest = {
             label: 'CDB ID',
             field: 'code',
             access: {
-              read: ['advisor'],
+              read: ['oe', 'advisor'],
               write: [],
               update: []
             }
@@ -17526,7 +17515,7 @@ var leadRequest = {
             label: 'Customer email',
             field: 'email',
             access: {
-              read: ['advisor'],
+              read: ['oe', 'advisor'],
               write: [],
               update: []
             }
@@ -17535,7 +17524,7 @@ var leadRequest = {
             label: 'Phone number',
             field: 'mobile_no',
             access: {
-              read: ['advisor'],
+              read: ['oe', 'advisor'],
               write: [],
               update: []
             }
@@ -17545,7 +17534,7 @@ var leadRequest = {
             field: 'quote_status_id',
             source: 'quote_status',
             access: {
-              read: ['advisor'],
+              read: ['oe', 'advisor'],
               write: [],
               update: []
             }
@@ -17558,7 +17547,7 @@ var leadRequest = {
               name: 'pa'
             },
             access: {
-              read: ['advisor'],
+              read: ['oe', 'advisor'],
               write: [],
               update: []
             },
@@ -17597,7 +17586,7 @@ var leadRequest = {
             label: 'Created At',
             field: 'created_at',
             access: {
-              read: ['advisor'],
+              read: ['oe', 'advisor'],
               write: [],
               update: []
             } // rules: { required: true }
@@ -17776,10 +17765,10 @@ var ftcHistory = {
       title: 'FTC History',
       subtitle: '',
       access: {
-        read: ['pa', 'advisor', 'admin', 'invoicing', 'production_approval_manager'],
-        write: ['advisor', 'admin'],
-        update: ['advisor', 'admin'],
-        "delete": ['advisor', 'admin', 'admin']
+        read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'production_approval_manager'],
+        write: ['advisor', 'oe', 'admin'],
+        update: ['advisor', 'oe', 'admin'],
+        "delete": ['advisor', 'oe', 'admin', 'admin']
       },
       fields: {
         status: {
@@ -17793,8 +17782,8 @@ var ftcHistory = {
             text: "FTC Pending"
           }],
           access: {
-            read: ['advisor', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
-            write: ['advisor'],
+            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
+            write: ['oe', 'advisor'],
             update: []
           },
           rules: {
@@ -17805,9 +17794,9 @@ var ftcHistory = {
           type: 'textarea',
           label: 'Notes',
           access: {
-            read: ['advisor', 'pa', 'production_approval_manager'],
-            write: ['advisor'],
-            update: ['advisor']
+            read: ['advisor', 'oe', 'pa', 'production_approval_manager'],
+            write: ['oe', 'advisor'],
+            update: ['oe', 'advisor']
           },
           rules: {
             required: true
@@ -17910,9 +17899,9 @@ var ftcPayment = {
       title: 'FTC Payment',
       subtitle: '',
       access: {
-        read: ['pa', 'advisor', 'admin', 'invoicing', 'production_approval_manager'],
-        write: ['advisor', 'admin'],
-        update: ['advisor', 'admin'],
+        read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'production_approval_manager'],
+        write: ['advisor', 'oe', 'admin'],
+        update: ['advisor', 'oe', 'admin'],
         "delete": []
       },
       fields: {
@@ -17953,8 +17942,8 @@ var ftcPayment = {
           // },
           access: {
             read: ['advisor', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
-            write: ['advisor'],
-            update: ['advisor']
+            write: ['oe', 'advisor'],
+            update: ['oe', 'advisor']
           },
           rules: {
             required: true
@@ -17966,9 +17955,9 @@ var ftcPayment = {
           source: ['Spotii', 'payments.insurancemarket.ae '],
           offscreen: true,
           access: {
-            read: ['advisor', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
-            write: ['advisor'],
-            update: ['advisor']
+            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
+            write: ['oe', 'advisor'],
+            update: ['oe', 'advisor']
           },
           rules: {
             required: true
@@ -17978,9 +17967,9 @@ var ftcPayment = {
           type: 'textarea',
           label: 'Comment',
           access: {
-            read: ['advisor', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
-            write: ['advisor'],
-            update: ['advisor']
+            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
+            write: ['oe', 'advisor'],
+            update: ['oe', 'advisor']
           },
           rules: {}
         }
@@ -18011,7 +18000,7 @@ var ftcPayment = {
 
             if (code && code === 'transaction_declined' && role === 'invoicing') {
               var access = {
-                read: ['pa', 'advisor', 'admin', 'invoicing', 'production_approval_manager'],
+                read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'production_approval_manager'],
                 write: ['invoicing'],
                 update: ['invoicing'],
                 "delete": []
@@ -18088,7 +18077,7 @@ var ftcPaymentHistory = {
       title: 'FTC Payment History',
       subtitle: '',
       access: {
-        read: ['pa', 'advisor', 'admin', 'invoicing', 'production_approval_manager'],
+        read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'production_approval_manager'],
         write: ['invoicing'],
         update: ['invoicing'],
         "delete": []
@@ -18099,7 +18088,7 @@ var ftcPaymentHistory = {
           label: 'Status',
           source: ['Transaction Approved', 'Transaction Declined'],
           access: {
-            read: ['advisor', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
+            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
             write: ['invoicing'],
             update: ['invoicing']
           },
@@ -18111,7 +18100,7 @@ var ftcPaymentHistory = {
           type: 'textarea',
           label: 'Notes',
           access: {
-            read: ['advisor', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
+            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
             write: ['invoicing'],
             update: ['invoicing']
           },
@@ -18205,7 +18194,7 @@ var ftcQuoteStatusHistory = {
       title: 'FTC Quote Status History',
       subtitle: '',
       access: {
-        read: ['pa', 'advisor', 'admin', 'invoicing', 'production_approval_manager'],
+        read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'production_approval_manager'],
         write: [],
         update: [],
         "delete": []
@@ -18217,7 +18206,7 @@ var ftcQuoteStatusHistory = {
           source: 'quote_status',
           field: 'quote_status_id',
           access: {
-            read: ['advisor', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
+            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
             write: [],
             update: []
           },
@@ -18229,7 +18218,7 @@ var ftcQuoteStatusHistory = {
           type: 'textarea',
           label: 'Notes',
           access: {
-            read: ['advisor', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
+            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
             write: [],
             update: []
           },
@@ -18439,10 +18428,10 @@ var leadAttachment = {
       title: 'Document Attachment',
       subtitle: 'document need for insurance purpose',
       access: {
-        read: ['pa', 'advisor', 'admin', 'invoicing', 'production_approval_manager'],
-        write: ['advisor', 'admin'],
-        update: ['advisor', 'admin'],
-        "delete": ['advisor', 'admin']
+        read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'production_approval_manager'],
+        write: ['advisor', 'oe', 'admin'],
+        update: ['advisor', 'oe', 'admin'],
+        "delete": ['advisor', 'oe', 'admin']
       },
       fields: {
         document: {
@@ -18451,7 +18440,7 @@ var leadAttachment = {
           field: 'document',
           source: 'car_quote_documents',
           access: {
-            read: ['advisor', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
+            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
             write: ['advisor', 'admin'],
             update: ['advisor', 'admin']
           },
@@ -18465,7 +18454,7 @@ var leadAttachment = {
           label: 'Upload Document',
           field: 'file_name',
           access: {
-            read: ['advisor', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
+            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
             write: ['advisor', 'admin'],
             update: ['advisor', 'admin']
           },
@@ -18777,9 +18766,9 @@ var policyHolderDetail = {
       multi: false,
       subtitle: '',
       access: {
-        read: ['advisor', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
-        write: ['advisor'],
-        update: ['advisor'],
+        read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
+        write: ['oe', 'advisor'],
+        update: ['oe', 'advisor'],
         "delete": []
       },
       fields: {
@@ -18825,9 +18814,9 @@ var policyHolderDetail = {
           type: 'datePicker',
           label: 'Birth Date',
           access: {
-            read: ['pa', 'advisor', 'admin', 'invoicing', 'production_approval_manager'],
-            write: ['advisor', 'admin'],
-            update: ['advisor', 'admin']
+            read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'production_approval_manager'],
+            write: ['oe', 'advisor', 'admin'],
+            update: ['oe', 'advisor', 'admin']
           } // rules: { required: true }
 
         }
@@ -18885,7 +18874,7 @@ var policyHolderDetail = {
             }
 
             var access = {
-              read: ['pa', 'advisor', 'admin', 'invoicing', 'production_approval_manager'],
+              read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'production_approval_manager'],
               write: [],
               update: [],
               "delete": []
@@ -19217,10 +19206,10 @@ var vehicleSubform = {
       db_table: 'car_quote_request',
       title: 'Vehicle Detail Subform',
       access: {
-        read: ['advisor', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
-        write: ['advisor', 'admin'],
-        update: ['advisor', 'admin'],
-        "delete": ['advisor', 'admin']
+        read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
+        write: ['advisor', 'oe', 'admin'],
+        update: ['advisor', 'oe', 'admin'],
+        "delete": ['advisor', 'oe', 'admin']
       },
       subtitle: '',
       fields: {
@@ -19231,7 +19220,7 @@ var vehicleSubform = {
             required: true
           },
           access: {
-            read: ['advisor', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
+            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
             write: ['advisor', 'admin'],
             update: ['advisor', 'admin']
           }
@@ -19243,9 +19232,9 @@ var vehicleSubform = {
             required: true
           },
           access: {
-            read: ['advisor', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
-            write: ['advisor', 'admin'],
-            update: ['advisor', 'admin']
+            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
+            write: ['advisor', 'oe', 'admin'],
+            update: ['advisor', 'oe', 'admin']
           }
         },
         chassis_number: {
@@ -19255,9 +19244,9 @@ var vehicleSubform = {
             required: true
           },
           access: {
-            read: ['advisor', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
-            write: ['advisor', 'admin'],
-            update: ['advisor', 'admin']
+            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
+            write: ['advisor', 'oe', 'admin'],
+            update: ['advisor', 'oe', 'admin']
           }
         },
         engine_number: {
@@ -19267,13 +19256,13 @@ var vehicleSubform = {
             required: true
           },
           access: {
-            read: ['advisor', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
-            write: ['advisor', 'admin'],
-            update: ['advisor', 'admin'],
+            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
+            write: ['advisor', 'oe', 'admin'],
+            update: ['advisor', 'oe', 'admin'],
             access: {
-              read: ['advisor', 'pa', 'admin'],
-              write: ['advisor', 'admin'],
-              update: ['advisor', 'admin']
+              read: ['advisor', 'oe', 'pa', 'admin'],
+              write: ['advisor', 'oe', 'admin'],
+              update: ['advisor', 'oe', 'admin']
             }
           }
         },
@@ -19282,9 +19271,9 @@ var vehicleSubform = {
           label: 'Date of first registration',
           field: 'date_first_registration',
           access: {
-            read: ['advisor', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
-            write: ['advisor', 'admin'],
-            update: ['advisor', 'admin']
+            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
+            write: ['advisor', 'oe', 'admin'],
+            update: ['advisor', 'oe', 'admin']
           }
         },
         car_value: {
@@ -19294,9 +19283,9 @@ var vehicleSubform = {
             required: true
           },
           access: {
-            read: ['advisor', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
-            write: ['advisor'],
-            update: ['advisor']
+            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
+            write: ['oe', 'advisor'],
+            update: ['oe', 'advisor']
           }
         },
         currently_insured_with: {
@@ -19306,9 +19295,9 @@ var vehicleSubform = {
             required: true
           },
           access: {
-            read: ['advisor', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
-            write: ['advisor'],
-            update: ['advisor']
+            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
+            write: ['oe', 'advisor'],
+            update: ['oe', 'advisor']
           }
         },
         vehicle_color: {
@@ -19318,9 +19307,9 @@ var vehicleSubform = {
             required: true
           },
           access: {
-            read: ['advisor', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
-            write: ['advisor', 'admin'],
-            update: ['advisor', 'admin']
+            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
+            write: ['oe', 'advisor', 'admin'],
+            update: ['oe', 'advisor', 'admin']
           }
         },
         seating_capacity: {
@@ -19330,9 +19319,9 @@ var vehicleSubform = {
             required: true
           },
           access: {
-            read: ['advisor', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
-            write: ['advisor', 'admin'],
-            update: ['advisor', 'admin']
+            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
+            write: ['oe', 'advisor', 'admin'],
+            update: ['oe', 'advisor', 'admin']
           }
         },
         specs: {
@@ -19343,9 +19332,9 @@ var vehicleSubform = {
             required: true
           },
           access: {
-            read: ['advisor', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
-            write: ['advisor', 'admin'],
-            update: ['advisor', 'admin']
+            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
+            write: ['oe', 'advisor', 'admin'],
+            update: ['oe', 'advisor', 'admin']
           }
         },
         current_cover: {
@@ -19356,9 +19345,9 @@ var vehicleSubform = {
             required: true
           },
           access: {
-            read: ['advisor', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
-            write: ['advisor', 'admin'],
-            update: ['advisor', 'admin']
+            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
+            write: ['advisor', 'oe', 'admin'],
+            update: ['advisor', 'oe', 'admin']
           }
         },
         vehicle_modified: {
@@ -19369,9 +19358,9 @@ var vehicleSubform = {
             required: true
           },
           access: {
-            read: ['advisor', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
-            write: ['advisor', 'admin'],
-            update: ['advisor', 'admin']
+            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
+            write: ['advisor', 'oe', 'admin'],
+            update: ['advisor', 'oe', 'admin']
           }
         }
       },
@@ -19426,9 +19415,9 @@ var vehicleDetail = {
       title: 'Car Quote Request',
       subtitle: '',
       access: {
-        read: ['advisor', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
-        write: ['advisor', 'admin'],
-        update: ['advisor', 'admin'],
+        read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
+        write: ['advisor', 'oe', 'admin'],
+        update: ['advisor', 'oe', 'admin'],
         "delete": []
       },
       fields: {
@@ -19440,7 +19429,7 @@ var vehicleDetail = {
             required: true
           },
           access: {
-            read: ['advisor', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
+            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
             write: [],
             update: []
           }
@@ -19450,7 +19439,7 @@ var vehicleDetail = {
           label: 'Car Model',
           source: 'car_model',
           access: {
-            read: ['advisor', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
+            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
             write: [],
             update: []
           }
@@ -19460,7 +19449,7 @@ var vehicleDetail = {
           label: 'Car Make',
           source: 'car_make',
           access: {
-            read: ['advisor', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
+            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
             write: [],
             update: []
           }
@@ -19469,7 +19458,7 @@ var vehicleDetail = {
           type: 'dropdown',
           label: 'Emirate of Registration',
           access: {
-            read: ['advisor', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
+            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
             write: [],
             update: []
           },
@@ -19484,7 +19473,7 @@ var vehicleDetail = {
           type: 'dropdown',
           label: 'UAE licence held for',
           access: {
-            read: ['advisor', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
+            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
             write: [],
             update: []
           },
@@ -19500,7 +19489,7 @@ var vehicleDetail = {
           label: 'Claim',
           form: 'claim_history',
           access: {
-            read: ['advisor', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
+            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
             write: [],
             update: []
           }
@@ -19535,7 +19524,7 @@ var vehicleDetail = {
             }
 
             var access = {
-              read: ['pa', 'advisor', 'admin', 'invoicing', 'production_approval_manager'],
+              read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'production_approval_manager'],
               write: [],
               update: [],
               "delete": []
@@ -19984,7 +19973,7 @@ function KycForm(props) {
   var override = {
     title: 'KYC documents',
     access: {
-      read: ['pa', 'advisor', 'admin', 'invoicing', 'production_approval_manager'],
+      read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'production_approval_manager'],
       write: [],
       update: [],
       "delete": []

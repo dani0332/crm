@@ -55,12 +55,12 @@ class CarQuotePayment extends BaseModel
     public function saveForm($request, $update = false) {
 
         try{
-            if( Auth::user()->hasRole('advisor')) {
+            if( Auth::user()->hasRole('advisor') || Auth::user()->hasRole('oe')) {
                 $carQuote = CarQuote::where(['id' => $request->input('car_quote_id', -1)])->first();
                 if($carQuote) {
 
                     if(parent::saveForm($request, $update)) {
-
+                        
                         $advisorEmail = $carQuote->advisor_id()->first()->email;
                         $templateParams = [
                             'notes' => $request->input('comment', ""),
