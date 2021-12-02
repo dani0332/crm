@@ -78,11 +78,13 @@
             }
             var vehicleTypeDataTable = $("#dtBasicExample").DataTable({
                 ordering: false,
-                info: false,
+                info: true,
                 searching: false,
                 dom: 'rBfrtip',
                 bLengthChange: false,
                 serverSide: true,
+                paging: true,
+                processing: true,
                 ajax: {
                     url: '/quotes/' + model.modelType.toLowerCase(),
                     data: function(d) {

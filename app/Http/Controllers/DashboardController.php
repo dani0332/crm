@@ -5,6 +5,7 @@ use App\Models\CarQuote;
 use App\Models\Customer;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use DB;
 
 class DashboardController extends Controller
 {
@@ -28,10 +29,24 @@ class DashboardController extends Controller
             $endDate = Carbon::parse($request->endDate)->endOfDay()->toDateTimeString();
         }
         $customers = Customer::whereBetween('created_at', [$startDate, $endDate]);
-        $carQuotes = CarQuote::whereBetween('created_at', [$startDate, $endDate])->GroupBy('customer_id');
+
+        $ecomLeadCount = DB::table('car_quote_request')->where('is_ecommerce', true)
+                        ->whereBetween('created_at', [$startDate, $endDate]);
+
+        $fakeLeads = DB::table('car_quote_request')
+                         ->join('quote_status', 'quote_status.id', '=', 'car_quote_request.quote_status_id')
+                         ->where('quote_status.text', 'New Lead')
+                         ->orWhere('quote_status.text', 'Fake')
+                         ->whereBetween('car_quote_request.created_at', [$startDate, $endDate]);
+
+        $carQuotes = DB::table('car_quote_request')->whereBetween('created_at', [date($startDate), date($endDate)])
+                        ->GroupBy('customer_id');
+
         return response()->json([
             'totalCustomers' => $customers->count(),
             'totalCarQuotes' => $carQuotes->count(),
+            'totalEcommerceLeads' => $ecomLeadCount->count(),
+            'totalFakeLeads' => $fakeLeads->count(),
         ]);
     }
 }
