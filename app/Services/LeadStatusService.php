@@ -11,7 +11,8 @@ class LeadStatusService extends BaseService
     protected $query;
     public function __construct()
     {
-        $this->query = "select ls.id, ls.uuid, ls.text from quote_status ls";
+        $this->query = DB::table('quote_status as ls')
+        ->select('ls.id', 'ls.uuid', 'ls.text');
     }
 	public function saveLeadStatus(Request $request)
 	{
@@ -38,26 +39,23 @@ class LeadStatusService extends BaseService
 	}
 
     public function getGridData($searchProperties, $request){
-        $count = 0;
         if ($request->ajax()) {
             foreach ($searchProperties as $item) {
-                if(!empty($request[$item])){
-                    $suffix = 'ls';
-                    $this->query = $this->query. ($count > 0 ? ' and' : ' where ').$suffix.'.'.$item.'='."'".$request[$item]."'";
-                    $count++;
+                if (!empty($request[$item])) {
+                    $this->query->where('ls.' . $item, $request[$item]);
                 }
             }
         }
-
-        return DB::select($this->query);
+        $this->query->orderBy('ls.created_at', 'DESC');
+        return $this->query;
     }
 
     public function getEntity($id){
-        return DB::select($this->query.' where ls.uuid = "'. $id.'"');
+        return $this->query->where('ls.uuid', $id)->first();
     }
 
     public function getEntityPlain($id){
-        return QuoteStatus::where('uuid',$id);
+        return QuoteStatus::where('id',$id)->first();
     }
 
     public function fillModelProperties() {

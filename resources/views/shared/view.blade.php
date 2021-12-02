@@ -250,7 +250,7 @@
                                         </span>
                                         <select @if (strpos($value, 'multiple')) multiple="multiple" class="form-control select2 select-roles" @else class="form-control" @endif id="{{ $property }}"
                                             name="{{ $property }}">
-                                            <option value="">{{ 'Please select ' . str_replace('_', ' ', $property) }}
+                                            <option value="">{{ 'Please select ' . str_replace('id', ' ', str_replace('_', ' ', $property)) }}
                                             </option>
                                             @foreach ($dropdownSource[$property] as $item)
                                                 <option value="{{ $item->id }}">

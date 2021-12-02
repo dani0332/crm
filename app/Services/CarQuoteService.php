@@ -94,7 +94,7 @@ class CarQuoteService extends BaseService
 
     public function getEntityPlain($id)
     {
-        return CarQuote::where('uuid', $id);
+        return CarQuote::where('id', $id)->first();
     }
 
     public function fillModelProperties()
@@ -236,9 +236,6 @@ class CarQuoteService extends BaseService
         }
         if (!empty($mobile_no)) {
             $query->where('cqr.mobile_no', $mobile_no);
-        }
-        if (Auth::user()->hasRole(strtoupper($lead_type) . '_ADVISOR')) {
-           $query->orWhere('cqr.advisor_id', Auth::user()->id);
         }
         return $query;
     }

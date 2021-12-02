@@ -328,20 +328,4 @@ class CRUDController extends Controller
             ]));
         }
     }
-
-    public function manualLeadAssign(Request $request)
-    {
-        $assignedToUserIdNew = $request->assigned_to_id_new;
-        $leadsIds = $request->selectTmLeadId;
-        $leadsIds = array_map('intval', explode(',', $leadsIds));
-        foreach ($leadsIds as $tmLeadsId) {
-            $updateTmLead = $this->{strtolower($request->modelType) . 'QuoteService'}->getEntityPlain($tmLeadsId);
-            $userId = (int)$assignedToUserIdNew;
-            $updateTmLead->advisor_id = $userId;
-            $updateTmLead->save();
-        }
-
-        $assignedUserName = $this->userService->getUserNameById($assignedToUserIdNew);
-        return Redirect::back()->with('success', $request->modelType . ' Leads has been Assigned To ' . $assignedUserName);
-    }
 }
