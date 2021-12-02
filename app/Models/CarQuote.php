@@ -173,6 +173,11 @@ class CarQuote extends BaseModel
         return $this->hasOne(User::class, 'id', 'advisor_id')->select(['id', 'email','name']);
     }
 
+    public function oe_id()
+    {
+        return $this->hasOne(User::class, 'id', 'oe_id')->select(['id', 'email','name']);
+    }
+
 
     /*****  NewRelationships so old should not effect */
 
@@ -299,16 +304,22 @@ class CarQuote extends BaseModel
 
                 $advisorEmail = $carQuote->advisor_id()->get()->first()->email;
                 if($advisorEmail) {
+
                     $params = [
                         'to' => $advisorEmail,
                         'subject' => LookUpModel::subjectForFTCEmailCarQuote($carQuote),
                         'templateName' => 'notification',
                         'templateParams' => $templateParams
                     ];
+                    
+                    $oeId = $carQuote->oe_id()->first();
+                    if($oeId && $oeId->email)
+                        $params['cc'] = $oeId->email;
+
                     dispatch(new FTCMailServiceJob($params));
                 }
             }
-            return parent::saveForm($request, true);
+            return  parent::saveForm($request, true);
         }
         else if(Auth::user()->hasRole('invoicing') && $request->has('action')){
             $request->request->add(['invoicing' => Auth::user()->id]);
@@ -330,6 +341,10 @@ class CarQuote extends BaseModel
                         'templateName' => 'notification',
                         'templateParams' => $templateParams
                     ];
+                    
+                    $oeId = $carQuote->oe_id()->first();
+                    if($oeId && $oeId->email)
+                        $params['cc'] = $oeId->email;
                     dispatch(new FTCMailServiceJob($params));
                 }
             }

@@ -65,6 +65,10 @@ class CarQuoteKYCStatus extends BaseModel
                             'templateName' => 'notification',
                             'templateParams' => $templateParams
                         ];
+
+                        $oeId = $carQuote->oe_id()->first();
+                        if($oeId && $oeId->email)
+                            $params['cc'] = $oeId->email;
                         dispatch(new FTCMailServiceJob($params));
                     }
                 }
