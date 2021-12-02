@@ -13,7 +13,7 @@ class LifeQuoteService extends BaseService
 
     public function __construct()
     {
-        $this->query =DB::table('life_quote_request lqr')
+        $this->query =DB::table('life_quote_request as lqr')
                         ->select('lqr.id' ,'lqr.uuid' ,'lqr.first_name','lqr.last_name','lqr.email','lqr.mobile_no','lqr.gender','lqr.dob','lqr.is_smoker'
                         ,'lqr.others_info','lqr.sum_insured_value','lqr.sum_insured_currency_id','ct.TEXT AS sum_insured_currency_id_text'
                         ,'lqr.marital_status_id','ms.TEXT AS marital_status_id_text','lqr.purpose_of_insurance_id','lip.TEXT AS purpose_of_insurance_id_text'

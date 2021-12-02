@@ -32,7 +32,7 @@ class BusinessQuoteService extends BaseService
 
     public function getLeads($CDBID, $email, $mobile_no, $lead_type)
     {
-        $query = DB::table('business_quote_request bqr')
+        $query = DB::table('business_quote_request as  bqr')
                     ->select('bqr.id','bqr.uuid','bqr.first_name','bqr.last_name','bqr.created_at','u.name AS advisor_name','Business as lead_type'
                     ,'u.id as advisor_id','qs.text as lead_status')
                     ->Join('users as u', 'u.id', '=', 'bqr.advisor_id')
