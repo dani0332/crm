@@ -14,63 +14,45 @@ class BusinessQuoteService extends BaseService
 
     public function __construct()
     {
-        $this->query = "
-                            SELECT bqr.id
-                            ,bqr.uuid
-                            ,bqr.first_name
-                            ,bqr.last_name
-                            ,bqr.email
-                            ,bqr.mobile_no
-                            ,bqr.company_name
-                            ,bqr.brief_details
-                            ,bqr.business_type_of_insurance_id
-                            ,bti.TEXT AS business_type_of_insurance_id_text
-                            ,bqr.advisor_id
-                            ,u.name as advisor_id_text
-                        FROM business_quote_request bqr
-                        LEFT OUTER JOIN business_type_of_insurance bti ON bti.id = bqr.business_type_of_insurance_id
-                        LEFT OUTER JOIN users u ON u.id = bqr.advisor_id";
+        $this->query = DB::table('business_quote_request as bqr')
+        ->select('bqr.id','bqr.uuid'
+        ,'bqr.first_name','bqr.last_name'
+        ,'bqr.email','bqr.mobile_no'
+        ,'bqr.company_name','bqr.brief_details'
+        ,'bqr.business_type_of_insurance_id','bti.TEXT AS business_type_of_insurance_id_text'
+        ,'bqr.advisor_id','u.name as advisor_id_text')
+        ->Join('business_type_of_insurance as bti', 'bti.id', '=', 'bqr.business_type_of_insurance_id')
+        ->leftJoin('users as u', 'u.id', '=', 'bqr.advisor_id');
     }
 
     public function getEntity($id)
     {
-        return DB::select($this->query . ' where bqr.uuid = "' . $id.'"');
+        return $this->query->where('bqr.uuid', $id)->first();
     }
 
     public function getLeads($CDBID, $email, $mobile_no, $lead_type)
     {
-        $query = "SELECT hqr.id
-                        ,hqr.uuid
-                        ,hqr.first_name
-                        ,hqr.last_name
-                        ,hqr.created_at
-                        ,u.name AS advisor_name
-                        ,'Business' as lead_type
-                        ,u.id as advisor_id
-                        ,qs.text as lead_status
-                    FROM business_quote_request hqr
-                    LEFT OUTER JOIN users u ON u.id = hqr.advisor_id
-                    LEFT OUTER JOIN quote_status qs ON qs.id = hqr.quote_status_id
-                    ORDER BY u.name";
-        $count = 0;
+        $query = DB::table('business_quote_request bqr')
+                    ->select('bqr.id','bqr.uuid','bqr.first_name','bqr.last_name','bqr.created_at','u.name AS advisor_name','Business as lead_type'
+                    ,'u.id as advisor_id','qs.text as lead_status')
+                    ->Join('users as u', 'u.id', '=', 'bqr.advisor_id')
+                    ->Join('quote_status as qs', 'qs.id', '=', 'bqr.quote_status_id')
+                    ->orderBy('u.name', 'ASC');
         if (!empty($CDBID)) {
-            $query .= ' where hqr.id = ' . $CDBID;
-            $count++;
+           $query->where('bqr.id', '=', $CDBID);
         }
         if (!empty($email)) {
-            $query .= ($count == 0 ? ' where' : ' and') . ' hqr.email = ' . $email;
-            $count++;
+           $query->where('bqr.email', '=', $email);
         }
         if (!empty($mobile_no)) {
-            $query .= ($count == 0 ? ' where' : ' and') . ' hqr.mobile_no = ' . $mobile_no;
-            $count++;
+            $query->where('bqr.mobile_no', '=', $mobile_no);
         }
-        return DB::select($query);
+        return $query;
     }
 
     public function getEntityPlain($id)
     {
-        return BusinessQuote::where('uuid', $id);
+        return BusinessQuote::where('uuid', $id)->first();
     }
 
     public function getLeadsForAssignment()
@@ -91,33 +73,35 @@ class BusinessQuoteService extends BaseService
             "businessTypeOfInsuranceId" => $request->business_type_of_insurance_id,
         );
         if(Auth::user()->hasRole("BUSINESS_ADVISOR")) $dataArr['advisorId'] = Auth::users()->id;
-        return $this->sendCAPIRequest('/api/v1-save-business-quote', $dataArr);
+        return CapiRequestService::sendCAPIRequest('/api/v1-save-business-quote', $dataArr);
     }
 
     public function getGridData($searchProperties, $request)
     {
-        $count = 0;
         if ($request->ajax()) {
             foreach ($searchProperties as $item) {
                 if (!empty($request[$item])) {
-                    $suffix = '';
-                    switch ($item) {
-                        case 'business_type_of_insurance':
-                            $suffix = 'bti';
-                            break;
-                        case 'advisor':
-                            $suffix = 'u';
-                            break;
-                        default:
-                            $suffix = 'bqr';
-                            break;
-                    }
-                    $this->query = $this->query . ($count == 0 ? ' where ' : ' and ') . $suffix . '.' . $item . '=' . "'" . $request[$item] . "'";
-                    $count++;
+                    $this->query->where($this->getQuerySuffix($item) . '.' . $item, $request[$item]);
                 }
             }
         }
-        return DB::select($this->query);
+        $this->query->orderBy('cqr.created_at', 'DESC');
+        return $this->query;
+    }
+
+    private function getQuerySuffix($item)
+    {
+        switch ($item) {
+            case 'business_type_of_insurance':
+                return 'bti';
+                break;
+            case 'advisor':
+                return 'u';
+                break;
+            default:
+                return 'bqr';
+                break;
+        }
     }
 
     public function updateBusinessQuote(Request $request, $id)
@@ -182,32 +166,5 @@ class BusinessQuoteService extends BaseService
     public function fillModelSearchProperties()
     {
         return ["email", 'first_name', 'last_name', 'iam_possesion_type_id', 'ilivein_accommodation_type_id'];
-    }
-
-    public function sendCAPIRequest($endpoint, $data)
-    {
-        $apiEndPoint = Config::get('constants.CENTRAL_API_ENDPOINT') . $endpoint;
-        $apiToken = Config::get('constants.CENTRAL_API_TOKEN');
-        $apiTimeout = Config::get('constants.CENTRAL_API_TIMEOUT');
-
-        $client = new \GuzzleHttp\Client();
-        $capiRequest = $client->post(
-            $apiEndPoint,
-            [
-                'headers' => ['Content-Type' => 'application/json', 'Accept' => 'application/json', 'x-api-token' => $apiToken],
-                'body' => json_encode($data),
-                'timeout' => $apiTimeout,
-            ]
-        );
-
-        $getStatusCode = $capiRequest->getStatusCode();
-
-        if ($getStatusCode == 200) {
-            $getContents = $capiRequest->getBody();
-            $getdecodeContents = json_decode($getContents);
-            return $getdecodeContents;
-        } else {
-            return "API failed";
-        }
     }
 }

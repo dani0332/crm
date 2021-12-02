@@ -47,7 +47,7 @@
                                             @php
                                                 $propertyName = $property.'_text';
                                             @endphp
-                                            <p class="label-align-center">{{ $record[0]->$propertyName}}</p>
+                                            <p class="label-align-center">{{ $record->$propertyName}}</p>
                                         </div>
                                     @endif
                                 @else
@@ -57,7 +57,7 @@
                                     </div>
                                     @else
                                         <div class="col-md-6 col-sm-6">
-                                            <p class="label-align-center">{{ $record[0]->$property }}</p>
+                                            <p class="label-align-center">{{ $record->$property }}</p>
                                         </div>
                                     @endif
                                 @endif
@@ -77,7 +77,7 @@
                         <div class="col-auto mr-auto"></div>
                         <div class="col-auto">
                             @if (Auth::user()->hasRole('ADMIN') || Auth::user()->hasRole($model->modelType.'_MANAGER') || Auth::user()->hasRole($model->modelType.'_DEPUTY') ||Auth::user()->hasRole($model->modelType.'_ADVISOR'))
-                            <a id="texta" href="{{ url('quotes/'.strtolower($model->modelType).'/'.$record[0]->uuid.'/edit') }}" class='btn btn-warning btn-sm'>Edit</a>
+                            <a id="texta" href="{{ url('quotes/'.strtolower($model->modelType).'/'.$record->uuid.'/edit') }}" class='btn btn-warning btn-sm'>Edit</a>
                             @endif
                         </div>
                     </div>
@@ -123,7 +123,7 @@
                             <div class="col-auto mr-auto"></div>
                             <span class="alert alert-success" id="quotePlansGenerateMsg" style="display: none">Copied</span>
                             <div class="col-auto">
-                                <input type="hidden" id="quotePlansGenerateUrl" name="quotePlansGenerateUrl" value="{{ $ecomCarInsuranceQuoteUrl.$record[0]->uuid }}">
+                                <input type="hidden" id="quotePlansGenerateUrl" name="quotePlansGenerateUrl" value="{{ $ecomCarInsuranceQuoteUrl.$record->uuid }}">
                                 <button type="button" id="quotePlansGenerateButton" name="quotePlansGenerateButton" class="btn btn-warning btn-sm">Copy link</button>
                             </div>
                         </div>
@@ -147,7 +147,7 @@
                                             <td>{{ $quotePlan->repairType }}</td>
                                             <td>{{ $quotePlan->actualPremium }}</td>
                                             <td>{{ $quotePlan->actualPremium + $quotePlan->vatPremium }}</td>
-                                            <td><a href="#" planDetailUrl="{{ $record[0]->uuid }}/plan_details/{{ $quotePlan->id }}" data-toggle="modal" data-target="#quotePlanModal" class="quotePlanModalPopup">View</a></td>
+                                            <td><a href="#" planDetailUrl="{{ $record->uuid }}/plan_details/{{ $quotePlan->id }}" data-toggle="modal" data-target="#quotePlanModal" class="quotePlanModalPopup">View</a></td>
                                         </tr>
                                     @endforeach
                                 </tbody>
