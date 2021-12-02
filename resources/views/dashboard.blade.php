@@ -33,7 +33,7 @@
             <x-dashboard-tile
             icon="fa fa-comments-o"
             class='carquote'
-            title='Total CarQuotes' />
+            title='Total Quotes' />
 
           </div>
         </div>
