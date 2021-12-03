@@ -82,7 +82,13 @@ class User extends Authenticatable implements AuditableContract
 
     public function getTeamUserIds()
     {
-        $isManager = $this->hasRole('MANAGER');
+        $userRoles = Auth::user()->usersroles()->get();
+        $isManager = false;
+        foreach ($userRoles as $userRole) {
+            if(str_contains(strtolower($userRole->name), 'manager')) {
+                $isManager = true;
+            }
+        }
         if ($isManager) {
             $team_members = UserTeams::where('manager_id', $this->id)->get();
             $user_ids = $team_members->pluck('user_id');
