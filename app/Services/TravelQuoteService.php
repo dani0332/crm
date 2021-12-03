@@ -44,11 +44,11 @@ class TravelQuoteService extends BaseService
 
     public function getLeads($CDBID, $email, $mobile_no, $lead_type)
     {
-        $query = DB::table('travel_quote_request tqr')
-                    ->select('tqr.id','tqr.uuid','tqr.first_name','tqr.last_name','tqr.created_at','u.name AS advisor_name','Business as lead_type'
+        $query = DB::table('travel_quote_request as tqr')
+                    ->select('tqr.id','tqr.uuid','tqr.first_name','tqr.last_name','tqr.created_at','u.name AS advisor_name',DB::raw("'Travel' as lead_type")
                     ,'u.id as advisor_id','qs.text as lead_status')
-                    ->Join('users as u', 'u.id', '=', 'hqr.advisor_id')
-                    ->Join('quote_status as qs', 'qs.id', '=', 'bqr.quote_status_id');
+                    ->Join('users as u', 'u.id', '=', 'tqr.advisor_id')
+                    ->Join('quote_status as qs', 'qs.id', '=', 'tqr.quote_status_id');
         if (!empty($CDBID)) {
             $query->where('tqr.id', '=', $CDBID);
         }
@@ -97,7 +97,7 @@ class TravelQuoteService extends BaseService
 
     public function getEntity($id)
     {
-        $this->query->where('tqr.uuid', $id)->first();
+        return $this->query->where('tqr.uuid', $id)->first();
     }
 
     public function getEntityPlain($id)

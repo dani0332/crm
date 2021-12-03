@@ -205,7 +205,7 @@
                                         <option value="">Please Select Lead Assigned To</option>
                                         @foreach ($assignToUsers as $item)
                                             @if (old('assignedToId') == $item->name)
-                                                <option value="{{ $item->named }}" selected>{{ $item->name }}</option>
+                                                <option value="{{ $item->name }}" selected>{{ $item->name }}</option>
                                             @else
                                                 <option value="{{ $item->name }}">{{ $item->name }}</option>
                                             @endif
@@ -258,7 +258,7 @@
                                                 <select class="form-control" id="assigned_to_id_new"
                                                     name="assigned_to_id_new">
                                                     @foreach ($advisors as $handler)
-                                                        <option value="{{ $handler['id'] }}">{{ $handler['name'] }}
+                                                        <option value="{{ $handler['uuid'] }}">{{ $handler['name'] }}
                                                         </option>
                                                     @endforeach
                                                 </select>

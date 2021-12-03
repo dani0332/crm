@@ -132,7 +132,7 @@
                                         @endif
                                     </span>
                                     <select @if(strpos($value, 'multiple')) name="{{$property.'[]'}}" multiple="multiple" class="form-control select2 select-roles" @else class="form-control" name="{{$property}}" @endif id="{{$property}}" >
-                                        <option value="">{{"Please select ".str_replace("_"," ",$property) }}</option>
+                                        <option value="">{{"Please select ".str_replace("id"," ",str_replace("_"," ",$property)) }}</option>
                                         @foreach($dropdownSource[$property] as $item)
                                             @if (old($property) == $item->id)
                                             <option value="{{ $item->id }}" selected>{{ $item->text ?? $item->name }}</option>

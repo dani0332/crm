@@ -32,8 +32,8 @@ class BusinessQuoteService extends BaseService
 
     public function getLeads($CDBID, $email, $mobile_no, $lead_type)
     {
-        $query = DB::table('business_quote_request as  bqr')
-                    ->select('bqr.id','bqr.uuid','bqr.first_name','bqr.last_name','bqr.created_at','u.name AS advisor_name','Business as lead_type'
+        $query = DB::table('business_quote_request as bqr')
+                    ->select('bqr.id','bqr.uuid','bqr.first_name','bqr.last_name','bqr.created_at','u.name AS advisor_name',DB::raw("'Business' as lead_type")
                     ,'u.id as advisor_id','qs.text as lead_status')
                     ->Join('users as u', 'u.id', '=', 'bqr.advisor_id')
                     ->Join('quote_status as qs', 'qs.id', '=', 'bqr.quote_status_id')
@@ -52,7 +52,7 @@ class BusinessQuoteService extends BaseService
 
     public function getEntityPlain($id)
     {
-        return BusinessQuote::where('uuid', $id)->first();
+        return BusinessQuote::where('id', $id)->first();
     }
 
     public function getLeadsForAssignment()
@@ -85,7 +85,7 @@ class BusinessQuoteService extends BaseService
                 }
             }
         }
-        $this->query->orderBy('cqr.created_at', 'DESC');
+        $this->query->orderBy('bqr.created_at', 'DESC');
         return $this->query;
     }
 

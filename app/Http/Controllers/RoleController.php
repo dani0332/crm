@@ -72,6 +72,7 @@ class RoleController extends Controller
         $role->syncPermissions($request->input('permission'));
         if(isset($request->return_to_view))
             return redirect("admin/roles/".$role->id)->with('success','Role has been stored');
+        return redirect()->back()->with('success', 'Role has been updated');
     }
 
     /**

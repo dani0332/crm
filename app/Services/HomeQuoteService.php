@@ -58,6 +58,7 @@ class HomeQuoteService extends BaseService
                 }
             }
         }
+        $this->query->orderBy('hqr.created_at', 'DESC');
         return $this->query;
     }
 
@@ -83,11 +84,11 @@ class HomeQuoteService extends BaseService
 
     public function getLeads($CDBID, $email, $mobile_no, $lead_type)
     {
-        $query = DB::table('home_quote_request hqr')
-                    ->select('hqr.id','hqr.uuid','hqr.first_name','hqr.last_name','hqr.created_at','u.name AS advisor_name','Business as lead_type'
+        $query = DB::table('home_quote_request as hqr')
+                    ->select('hqr.id','hqr.uuid','hqr.first_name','hqr.last_name','hqr.created_at','u.name AS advisor_name',DB::raw("'Home' as lead_type")
                     ,'u.id as advisor_id','qs.text as lead_status')
                     ->Join('users as u', 'u.id', '=', 'hqr.advisor_id')
-                    ->Join('quote_status as qs', 'qs.id', '=', 'bqr.quote_status_id');
+                    ->Join('quote_status as qs', 'qs.id', '=', 'hqr.quote_status_id');
         if (!empty($CDBID)) {
             $query->where('hqr.id', '=', $CDBID);
         }
@@ -226,6 +227,6 @@ class HomeQuoteService extends BaseService
 
     public function getEntityPlain($id)
     {
-        return HomeQuote::where('uuid', $id)->first();
+        return HomeQuote::where('id', $id)->first();
     }
 }

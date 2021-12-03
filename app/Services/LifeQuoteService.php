@@ -58,7 +58,7 @@ class LifeQuoteService extends BaseService
 
     public function getEntityPlain($id)
     {
-        return LifeQuote::where('uuid', $id);
+        return LifeQuote::where('id', $id)->first();
     }
     public function getLeadsForAssignment()
     {
@@ -73,6 +73,7 @@ class LifeQuoteService extends BaseService
                 }
             }
         }
+        $this->query->orderBy('lqr.created_at', 'DESC');
         return $this->query;
     }
 
@@ -128,11 +129,11 @@ class LifeQuoteService extends BaseService
 
     public function getLeads($CDBID, $email, $mobile_no, $lead_type)
     {
-        $query = DB::table('life_quote_request lqr')
-                    ->select('lqr.id','lqr.uuid','lqr.first_name','lqr.last_name','lqr.created_at','u.name AS advisor_name','Business as lead_type'
+        $query = DB::table('life_quote_request as lqr')
+                    ->select('lqr.id','lqr.uuid','lqr.first_name','lqr.last_name','lqr.created_at','u.name AS advisor_name',DB::raw("'Life' as lead_type")
                     ,'u.id as advisor_id','qs.text as lead_status')
-                    ->Join('users as u', 'u.id', '=', 'hqr.advisor_id')
-                    ->Join('quote_status as qs', 'qs.id', '=', 'bqr.quote_status_id');
+                    ->Join('users as u', 'u.id', '=', 'lqr.advisor_id')
+                    ->Join('quote_status as qs', 'qs.id', '=', 'lqr.quote_status_id');
         if (!empty($CDBID)) {
             $query->where('lqr.id', '=', $CDBID);
         }
