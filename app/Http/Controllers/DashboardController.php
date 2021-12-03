@@ -30,8 +30,8 @@ class DashboardController extends Controller
         }
         $customers = Customer::whereBetween('created_at', [$startDate, $endDate]);
 
-        $ecomLeadCount = DB::table('car_quote_request')->where('is_ecommerce', true)
-                        ->whereBetween('created_at', [$startDate, $endDate]);
+        // $ecomLeadCount = DB::table('car_quote_request')->where('is_ecommerce', true)
+        //                 ->whereBetween('created_at', [$startDate, $endDate]);
 
         $fakeLeads = DB::table('car_quote_request')
                          ->join('quote_status', 'quote_status.id', '=', 'car_quote_request.quote_status_id')
@@ -45,7 +45,7 @@ class DashboardController extends Controller
         return response()->json([
             'totalCustomers' => $customers->count(),
             'totalCarQuotes' => $carQuotes->count(),
-            'totalEcommerceLeads' => $ecomLeadCount->count(),
+            'totalEcommerceLeads' => 0,
             'totalFakeLeads' => $fakeLeads->count(),
         ]);
     }
