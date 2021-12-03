@@ -268,7 +268,6 @@ class CRUDController extends Controller
         $modelType = $request->get('modelType') ?? $type;
         $quoteTypes = 'Health,Car,Travel,Life,Home,Business';
         $serviceType = str_contains($quoteTypes, ucwords($modelType)) ? strtolower($modelType) . 'QuoteService' : lcfirst(ucwords($modelType)) . 'Service';
-
         $this->genericModel->properties = $this->{$serviceType}->fillModelProperties();
         $this->genericModel->skipProperties = $this->{$serviceType}->fillModelSkipProperties();
         $this->genericModel->searchProperties = $this->{$serviceType}->fillModelSearchProperties();

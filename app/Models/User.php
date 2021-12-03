@@ -104,14 +104,9 @@ class User extends Authenticatable implements AuditableContract
         $userRoles = Auth::user()->usersroles()->get();
         $isManagerORDeputy = false;
         foreach ($userRoles as $userRole) {
-            if(str_contains(strtolower($userRole->name), 'manager')) {
+            if(str_contains(strtolower($userRole->name), 'manager') || str_contains(strtolower($userRole->name), 'deputy')) {
                 $isManagerORDeputy = true;
             }
-
-            if(str_contains(strtolower($userRole->name), 'deputy')) {
-                $isManagerORDeputy = true;
-            }
-
         }
         return $isManagerORDeputy;
     }

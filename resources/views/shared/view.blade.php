@@ -75,7 +75,6 @@
                     }
                 }
             }
-            console.log(dataTableColumns);
             var vehicleTypeDataTable = $("#dtBasicExample").DataTable({
                 ordering: false,
                 info: true,
