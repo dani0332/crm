@@ -145,7 +145,6 @@ Route::group(['middleware' =>  ['auth']], function () {
         Route::post('update', [CRUDController::class, 'update'])->name('updateQuote');
         Route::get('getvalues/{modelType}/{propertyName}/{recordId}', [CRUDController::class, 'getDropdownSourceNameForDisplay']);
         Route::get('car/{quoteId}/plan_details/{planId}', [CRUDController::class, 'plan_details'])->name('plan_details');
-        Route::get('manualLeadAssign', [CRUDController::class, 'manualLeadAssign'])->name('manualLeadAssign');
     });
 
     Route::group(['prefix' => 'transapp'], function () {
@@ -168,7 +167,7 @@ Route::group(['middleware' =>  ['auth']], function () {
         Route::get('calculatevaluation', [ValuationController::class, 'calculateValuation'])->name('calculatevaluation');
         Route::resource('vehicledepreciation', VehicleDepreciationController::class);
     });
-    Route::get('/valuation/car-models', [ValuationController::class, 'carModelBasedOnCa `   rMake']);
+    Route::get('/valuation/car-models', [ValuationController::class, 'carModelBasedOnCarMake']);
     Route::get('/valuation/car-model-detail', [ValuationController::class, 'carTrimBasedOnCarModel']);
 
     Route::group(['prefix' => 'claim'], function () {

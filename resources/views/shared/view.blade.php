@@ -78,11 +78,13 @@
             }
             var vehicleTypeDataTable = $("#dtBasicExample").DataTable({
                 ordering: false,
-                info: false,
+                info: true,
                 searching: false,
                 dom: 'rBfrtip',
                 bLengthChange: false,
                 serverSide: true,
+                paging: true,
+                processing: true,
                 ajax: {
                     url: '/quotes/' + model.modelType.toLowerCase(),
                     data: function(d) {
@@ -248,7 +250,7 @@
                                         </span>
                                         <select @if (strpos($value, 'multiple')) multiple="multiple" class="form-control select2 select-roles" @else class="form-control" @endif id="{{ $property }}"
                                             name="{{ $property }}">
-                                            <option value="">{{ 'Please select ' . str_replace('_', ' ', $property) }}
+                                            <option value="">{{ 'Please select ' . str_replace('id', ' ', str_replace('_', ' ', $property)) }}
                                             </option>
                                             @foreach ($dropdownSource[$property] as $item)
                                                 <option value="{{ $item->id }}">

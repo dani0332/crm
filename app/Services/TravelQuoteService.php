@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Models\TravelQuote;
 use Illuminate\Http\Request;
 use DB;
-use Config;
 use Auth;
 
 class TravelQuoteService extends BaseService
@@ -14,25 +13,13 @@ class TravelQuoteService extends BaseService
     protected $query;
     public function __construct()
     {
-        $this->query = "SELECT tqr.id
-                        ,tqr.uuid
-                        ,tqr.days_cover_for
-                        ,tqr.details
-                        ,tqr.destination
-                        ,tqr.travel_cover_for_id
-                        ,tcf.TEXT AS travel_cover_for_id_text
-                        ,tqr.first_name
-                        ,tqr.last_name
-                        ,tqr.email
-                        ,tqr.mobile_no
-                        ,tqr.nationality_id
-                        ,n.TEXT AS nationality_id_text
-                        ,tqr.region_cover_for_id
-                        ,r.TEXT AS region_cover_for_id_text
-                    FROM travel_quote_request tqr
-                    LEFT OUTER JOIN travel_cover_for tcf ON tcf.id = tqr.travel_cover_for_id
-                    LEFT OUTER JOIN nationality n ON n.id = tqr.nationality_id
-                    LEFT OUTER JOIN region r ON r.id = tqr.region_cover_for_id";
+        $this->query = DB::table('travel_quote_request as tqr')->
+        select('tqr.id','tqr.uuid','tqr.days_cover_for','tqr.details','tqr.destination','tqr.travel_cover_for_id','tcf.TEXT AS travel_cover_for_id_text'
+        ,'tqr.first_name','tqr.last_name','tqr.email' ,'tqr.mobile_no','tqr.nationality_id','n.TEXT AS nationality_id_text'
+        ,'tqr.region_cover_for_id','r.TEXT AS region_cover_for_id_text')
+        ->leftJoin('travel_cover_for as tcf', 'tcf.id', '=', 'tqr.travel_cover_for_id')
+        ->leftJoin('nationality as n', 'n.id', '=', 'tqr.nationality_id')
+        ->leftJoin('region as r', 'r.id', '=', 'tqr.region_cover_for_id');
     }
 
     public function saveTravelQuote(Request $request)
@@ -52,111 +39,70 @@ class TravelQuoteService extends BaseService
         if(Auth::user()->hasRole("TRAVEL_ADVISOR")){
             $dataArr['advisorId'] = Auth::user()->id;
         }
-        return $this->sendCAPIRequest('/api/v1-save-travel-quote', $dataArr);
+        return CapiRequestService::sendCAPIRequest('/api/v1-save-travel-quote', $dataArr);
     }
 
     public function getLeads($CDBID, $email, $mobile_no, $lead_type)
     {
-        $query = "SELECT hqr.id
-                            ,hqr.uuid
-                            ,hqr.first_name
-                            ,hqr.last_name
-                            ,hqr.created_at
-                            ,u.name AS advisor_name
-                            ,'Travel' as lead_type
-                            ,u.id as advisor_id
-                            ,qs.text as lead_status
-                        FROM travel_quote_request hqr
-                        LEFT OUTER JOIN users u ON u.id = hqr.advisor_id
-                        LEFT OUTER JOIN quote_status qs ON qs.id = hqr.quote_status_id
-                        ORDER BY u.name";
-        $count = 0;
+        $query = DB::table('travel_quote_request as tqr')
+                    ->select('tqr.id','tqr.uuid','tqr.first_name','tqr.last_name','tqr.created_at','u.name AS advisor_name',DB::raw("'Travel' as lead_type")
+                    ,'u.id as advisor_id','qs.text as lead_status')
+                    ->Join('users as u', 'u.id', '=', 'tqr.advisor_id')
+                    ->Join('quote_status as qs', 'qs.id', '=', 'tqr.quote_status_id');
         if (!empty($CDBID)) {
-            $query .= ' where hqr.id = ' . $CDBID;
-            $count++;
+            $query->where('tqr.id', '=', $CDBID);
         }
         if (!empty($email)) {
-            $query .= ($count == 0 ? ' where ' : ' and '). ' hqr.email = ' . $email;
-            $count++;
+            $query->where('tqr.email', '=', $email);
         }
         if (!empty($mobile_no)) {
-            $query .= ($count == 0 ? ' where ' : ' and '). ' hqr.mobile_no = ' . $mobile_no;
-            $count++;
+            $query->where('tqr.mobile_no', '=', $mobile_no);
         }
-        return DB::select($query);
+        return $query;
     }
     public function getLeadsForAssignment()
     {
         return TravelQuote::orderBy('created_at', 'desc')->get();
     }
-    public function sendCAPIRequest($endpoint, $data)
-    {
-        $apiEndPoint = Config::get('constants.CENTRAL_API_ENDPOINT') . $endpoint;
-        $apiToken = Config::get('constants.CENTRAL_API_TOKEN');
-        $apiTimeout = Config::get('constants.CENTRAL_API_TIMEOUT');
-
-        $client = new \GuzzleHttp\Client();
-        $capiRequest = $client->post(
-            $apiEndPoint,
-            [
-                'headers' => ['Content-Type' => 'application/json', 'Accept' => 'application/json', 'x-api-token' => $apiToken],
-                'body' => json_encode($data),
-                'timeout' => $apiTimeout,
-            ]
-        );
-
-        $getStatusCode = $capiRequest->getStatusCode();
-
-        if ($getStatusCode == 200) {
-            $getContents = $capiRequest->getBody();
-            $getdecodeContents = json_decode($getContents);
-            return $getdecodeContents;
-        } else {
-            return "API failed";
-        }
-    }
 
     public function getGridData($searchProperties, $request)
     {
-        $count = 0;
         if ($request->ajax()) {
             foreach ($searchProperties as $item) {
                 if (!empty($request[$item])) {
-                    $suffix = '';
-                    switch ($item) {
-                        case 'travel_cover_for':
-                            $suffix = 'tcf';
-                            break;
-                        case 'region':
-                            $suffix = 'r';
-                            break;
-                        case 'nationality':
-                            $suffix = 'n';
-                            break;
-                        default:
-                            $suffix = 'tqr';
-                            break;
-                    }
-                    if ($count == 0) {
-                        $this->query = $this->query . ' where ' . $suffix . '.' . $item . '=' . "'" . $request[$item] . "'";
-                    } else {
-                        $this->query = $this->query . ' and ' . $suffix . '.' . $item . '=' . "'" . $request[$item] . "'";
-                    }
-                    $count++;
+                    $this->query->where($this->getQuerySuffix($item) . '.' . $item, $request[$item]);
                 }
             }
         }
-        return DB::select($this->query);
+        return $this->query;
+    }
+
+    private function getQuerySuffix($item)
+    {
+        switch ($item) {
+            case 'travel_cover_for':
+                return 'tcf';
+                break;
+            case 'region':
+                return  'r';
+                break;
+            case 'nationality':
+                return  'n';
+                break;
+            default:
+                return  'tqr';
+                break;
+        }
     }
 
     public function getEntity($id)
     {
-        return DB::select($this->query . ' where tqr.uuid =  "' . $id.'"');
+        return $this->query->where('tqr.uuid', $id)->first();
     }
 
     public function getEntityPlain($id)
     {
-        return TravelQuote::where('uuid', $id);
+        return TravelQuote::where('uuid', $id)->first();
     }
 
     public function updateTravelQuote(Request $request, $id)

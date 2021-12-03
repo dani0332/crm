@@ -7,7 +7,7 @@
     $(document).ready(function() {
         var model = JSON.parse('<?php echo json_encode(get_object_vars($model)) ?>');
         var modelPropertiesArray = convertObjectToArray(model.properties);
-        var record = JSON.parse('<?php echo json_encode($record[0]) ?>');
+        var record = JSON.parse('<?php echo json_encode($record) ?>');
         String.prototype.replaceAll = function(search, replacement) {
             var target = this;
             return target.replace(new RegExp(search, 'g'), replacement);
@@ -85,7 +85,7 @@
                         <div class="alert alert-danger">{{ session()->get('message') }}</div>
                     @endif
                     <form id="demo-form2" method='post'
-                        action="{{ route(strtolower($model->modelType).'.update', $record[0]->uuid) }}"
+                        action="{{ route(strtolower($model->modelType).'.update', $record->uuid) }}"
                         enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left"
                         autocomplete="off">
                         {{ csrf_field() }}
@@ -117,7 +117,7 @@
                                                 @endif id={{$property}}
                                             name={{$property}}
                                             @if(Auth::user()->hasRole(strtoupper($model->modelType).'_ADVISOR') && ($property == 'email' || $property == 'mobile_no')) disabled="disabled" @endif
-                                            value="{{ old($property, $record[0]->$property) }}"
+                                            value="{{ old($property, $record->$property) }}"
                                         class="form-control">
                                         @if ($errors->has($property))
                                             <span class="text-danger">{{ $errors->first($property) }}</span>
@@ -128,14 +128,14 @@
                                             @if(strpos($value, 'title'))
                                                 {{ strtoupper($customTitles[$property]) }}
                                             @else
-                                                {{str_replace("_"," ",strtoupper($property))}}
+                                            {{str_replace("_"," ",strtoupper($property))}}
                                             @endif
                                             @if(strpos($value, "required") == true)
                                             <span class='required'>*</span>
                                             @endif
                                         </span>
                                         <select @if(strpos($value, 'multiple')) multiple="multiple" name="{{$property.'[]'}}" class="form-control select2 select-roles" @else name="{{$property}}" class="form-control" @endif id="{{$property}}" >
-                                            <option value="">{{"Please select ".str_replace("_"," ",$property) }}</option>
+                                            <option value="">{{"Please select ".str_replace("id"," ",str_replace("_"," ",$property)) }}</option>
                                             @if (strpos($value, 'customTable') !== false)
                                                 @foreach($customLists[$property] as $selectedItem)
                                                     @foreach($dropdownSource[$property] as $item)
@@ -152,7 +152,7 @@
                                                 @endforeach
                                             @else
                                             @foreach($dropdownSource[$property] as $item)
-                                                <option value="{{$item->id}}" {{ $item->id == old($item->id, $record[0]->$property) ? 'selected' : ''}}>{{ $item->text ?? $item->name }}</option>
+                                                <option value="{{$item->id}}" {{ $item->id == old($item->id, $record->$property) ? 'selected' : ''}}>{{ $item->text ?? $item->name }}</option>
                                             @endforeach
 
                                             @endif
@@ -176,7 +176,7 @@
                                         <textarea
                                             id={{$property}}
                                             name={{$property}}
-                                        class="form-control">{{ old($property, $record[0]->$property) }}</textarea>
+                                        class="form-control">{{ old($property, $record->$property) }}</textarea>
                                         @if ($errors->has($property))
                                             <span class="text-danger">{{ $errors->first($property) }}</span>
                                         @endif
@@ -204,7 +204,7 @@
                                         </label>
                                     </div>
                                     <div class="col-md-3">
-                                        <input type="checkbox" {{ $record[0]->$property ? 'checked' : '' }} style="float: right;" id={{$property}} name={{$property}}>                                        </div>
+                                        <input type="checkbox" {{ $record->$property ? 'checked' : '' }} style="float: right;" id={{$property}} name={{$property}}>                                        </div>
                                 </div>
                                 <br />
                                 @if ($errors->has($property))

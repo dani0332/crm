@@ -169,10 +169,17 @@
                                                                                     <tr>
                                                                                        <td align="left" style="font-size:0px;padding:10px 25px;padding-top:0;word-break:break-word;">
                                                                                           <div style="font-family:Open Sans, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';font-size:13px;line-height:1.5;text-align:left;color:#000000;">
-                                                                                             <p><b>Hi {{ucwords($first_name)}} {{ucwords($last_name)}}</b>,</p>
-                                                                                             <p>Thank you for sending us the documents required to start your insurance policy.</p>
-                                                                                             <p>In order to proceed further and issue your policy document, we now need you to review the information for accuracy and confirm all is in order by clicking on the “I confirm the details” button below.</p>
-                                                                                             <p>**<i><b>Please note that any discrepancy with the below may invalidate your policy.</b></i>**</p>
+                                                                                             <p><b>Dear {{ucwords($first_name)}} {{ucwords($last_name)}}</b>,</p>
+                                                                                             <p>Hoping this mail finds you well. </p>
+                                                                                             <p>Please be advised that following receipt of your Final Terms & Conditions confirmation, we are now preparing your policy documentation. Therefore, should you wish to edit or update any details please let us know as soon as possible.</p>
+                                                                                             <p>If already made the payment, please ignore</p>
+                                                                                             <p>Your credit card payment may now be made through our payment gateway at<br><a href="https://payments.insurancemarket.ae">https://payments.insurancemarket.ae </a></p>
+                                                                                             <p>Please send me the 6-digit code shown on screen in order to issue the policy. </p>
+                                                                                             <p>Please note +5% VAT is applicable quotes for policies effective from January 2018 in compliance with UAE Federal VAT law.</p>
+                                                                                             <p>Please further note that payments made using an <u>International Credit Card/Debit issued outside UAE may incur additional charges such as forex/exchange fee/service fee</u> depending on the terms of your bank.</p>
+                                                                                             <p>We look forward to hearing from you and to issuing your insurance documents as soon as possible.</p>
+                                                                                             <p>In the event of any query or concern, please do not hesitate to contact us.</p>
+                                                                                       
                                                                                           </div>
                                                                                        </td>
                                                                                     </tr>
@@ -235,54 +242,8 @@
                                                                                                 <li>Name of Organization: {{$car_quote_kyc['organization'] ?? ''}}</li>
                                                                                                 <li>Designation: {{$car_quote_kyc['designation'] ?? ''}}</li>
                                                                                              </ol>
-                                                                                             <p>Please make sure that all the above details are correct and click on either the button or the link below to “Proceed” to policy issuance.</p>
-                                                                                             <p>Should you need to change any details shown, please do not hesitate to reply to this email so we can amend accordingly.</p>
-                                                                                          </div>
-                                                                                       </td>
-                                                                                    </tr>
-                                                                                 </tbody>
-                                                                              </table>
-                                                                           </div>
-                                                                           <!--[if mso | IE]>
-                                                                        </td>
-                                                                        <td class="" style="vertical-align:top;width:594px;" >
-                                                                           <![endif]-->
-                                                                           <div class="mj-column-per-100 mj-outlook-group-fix" style="font-size:0px;text-align:left;direction:ltr;display:inline-block;vertical-align:top;width:100%;">
-                                                                              <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="vertical-align:top;" width="100%">
-                                                                                 <tbody>
-                                                                                    <tr>
-                                                                                       <td align="center" vertical-align="middle" style="font-size:0px;padding:10px 25px;padding-top:0px;word-break:break-word;">
-                                                                                          <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="border-collapse:separate;line-height:100%;">
-                                                                                             <tbody>
-                                                                                                <tr>
-                                                                                                   <td align="center" bgcolor="#1D83BC" role="presentation" style="border:none;border-radius:3px;cursor:auto;mso-padding-alt:10px 25px;background:#1D83BC;" valign="middle"><a href="https://mastage.alfred.ae/car-insurance/ftc/confirmation?hash={{$generateLink['hash'] ?? ''}}&quote={{$generateLink['quote'] ?? ''}}" style="display:inline-block;background:#1D83BC;color:#ffffff;font-family:Open Sans, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';font-size:20px;font-weight:bold;line-height:120%;margin:0;text-decoration:none;text-transform:none;padding:10px 25px;mso-padding-alt:0px;border-radius:3px;" target="_blank">I confirm the details</a></td>
-                                                                                                </tr>
-                                                                                             </tbody>
-                                                                                          </table>
-                                                                                       </td>
-                                                                                    </tr>
-                                                                                 </tbody>
-                                                                              </table>
-                                                                           </div>
-                                                                           <!--[if mso | IE]>
-                                                                        </td>
-                                                                        <td class="" style="vertical-align:top;width:594px;" >
-                                                                           <![endif]-->
-                                                                           <div class="mj-column-per-100 mj-outlook-group-fix" style="font-size:0px;text-align:left;direction:ltr;display:inline-block;vertical-align:top;width:100%;">
-                                                                              <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="vertical-align:top;" width="100%">
-                                                                                 <tbody>
-                                                                                    <tr>
-                                                                                       <td align="left" style="font-size:0px;padding:10px 25px;word-break:break-word;">
-                                                                                          <div style="font-family:Open Sans, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';font-size:13px;line-height:1.5;text-align:left;color:#000000;">
-                                                                                             <p><i>Please note +5% VAT is applicable to all quotes for policies effective from January 2018 in compliance with UAE Federal VAT law.</i></p>
-                                                                                             @if ($payment_detail && $payment_detail["mode"] === "CC" && $payment_detail["method"] === "payments.insurancemarket.ae" )
-                                                                                                <p>Lastly, you may proceed with the credit card payment at</p>
-                                                                                                <p><a href="https://payments.insurancemarket.ae">https://payments.insurancemarket.ae</a><br>Please send me the 6-digit code shown on screen to issue the policy.</p>
-                                                                                                @endif
-                                                                                             <p>Please note that payments made using an <u>International Credit Card/Debit issued outside UAE may incur additional charges such as forex/exchange fee/service fee</u> depending on the terms of your bank.</p>
-                                                                                             <p>We look forward to hearing from you and to issuing your insurance documents as soon as possible.</p>
                                                                                              <br>
-                                                                                             <p><b>Thanks and Regards,</b><br>InsuranceMarket.ae</p>
+                                                                                             <p><b>Best Regards,</b><br>InsuranceMarket.ae</p>
                                                                                           </div>
                                                                                        </td>
                                                                                     </tr>

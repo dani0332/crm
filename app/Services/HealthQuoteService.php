@@ -5,54 +5,33 @@ namespace App\Services;
 use App\Models\HealthQuote;
 use Illuminate\Http\Request;
 use DB;
-use Illuminate\Support\Facades\Auth;
-use Config;
+use Auth;
 
 class HealthQuoteService extends BaseService
 {
     protected $query;
     public function __construct()
     {
-        $this->query = "
-        SELECT hqr.id
-        ,hqr.uuid
-        ,hqr.first_name
-        ,hqr.last_name
-        ,hqr.email
-        ,hqr.mobile_no
-        ,hqr.preference
-        ,hqr.details
-        ,hqr.source
-        ,hqr.dob
-        ,hqr.has_dental
-        ,hqr.has_home
-        ,hqr.has_worldwide_cover
-        ,hqr.marital_status_id
-        ,ms.TEXT AS marital_status_id_text
-        ,hqr.cover_for_id
-        ,hcf.TEXT AS cover_for_id_text
-        ,hqr.nationality_id
-        ,n.TEXT AS nationality_id_text
-        ,hqr.emirate_of_your_visa_id
-        ,e.TEXT AS emirate_of_your_visa_id_text
-        ,hqr.advisor_id
-        ,u.name as advisor_id_text
-    FROM health_quote_request hqr
-    LEFT OUTER JOIN marital_status ms ON ms.id = hqr.marital_status_id
-    LEFT OUTER JOIN health_cover_for hcf ON hcf.id = hqr.cover_for_id
-    LEFT OUTER JOIN nationality n ON n.id = hqr.nationality_id
-    LEFT OUTER JOIN emirates e ON e.id = hqr.emirate_of_your_visa_id
-    LEFT OUTER JOIN users u on u.id = hqr.advisor_id";
+        $this->query = DB::table('health_quote_request as hqr')->
+        select('hqr.id','hqr.uuid','hqr.first_name','hqr.last_name','hqr.email','hqr.mobile_no','hqr.preference','hqr.details','hqr.source','hqr.dob'
+        ,'hqr.has_dental','hqr.has_home','hqr.has_worldwide_cover','hqr.marital_status_id','ms.TEXT AS marital_status_id_text','hqr.cover_for_id'
+        ,'hcf.TEXT AS cover_for_id_text','hqr.nationality_id','n.TEXT AS nationality_id_text','hqr.emirate_of_your_visa_id'
+        ,'e.TEXT AS emirate_of_your_visa_id_text','hqr.advisor_id','u.name as advisor_id_text')
+        ->leftJoin('marital_status as ms', 'ms.id', '=', 'hqr.marital_status_id')
+        ->leftJoin('health_cover_for as hcf', 'hcf.id', '=', 'hqr.cover_for_id')
+        ->leftJoin('nationality as n', 'n.id', '=', 'hqr.nationality_id')
+        ->leftJoin('emirates as e', 'e.id', '=', 'hqr.emirate_of_your_visa_id')
+        ->leftJoin('users as u', 'u.id', '=', 'hqr.advisor_id');
     }
 
     public function getEntity($id)
     {
-        return DB::select($this->query . ' where hqr.uuid =  "' . $id.'"');
+        return $this->query->where('hqr.uuid', $id)->first();
     }
 
     public function getEntityPlain($id)
     {
-        return HealthQuote::where('uuid', $id);
+        return HealthQuote::where('id', $id)->first();
     }
     public function getLeadsForAssignment()
     {
@@ -78,70 +57,44 @@ class HealthQuoteService extends BaseService
             "emirateOfYourVisaId" => $request->emirate_of_your_visa_id,
         );
         if(Auth::user()->hasRole("HEALTH_ADVISOR")) $dataArr['advisorId'] = Auth::users()->id;
-        return $this->sendCAPIRequest('/api/v1-save-health-quote', $dataArr);
-    }
-
-    public function sendCAPIRequest($endpoint, $data)
-    {
-        $apiEndPoint = Config::get('constants.CENTRAL_API_ENDPOINT') . $endpoint;
-        $apiToken = Config::get('constants.CENTRAL_API_TOKEN');
-        $apiTimeout = Config::get('constants.CENTRAL_API_TIMEOUT');
-
-        $client = new \GuzzleHttp\Client();
-        $capiRequest = $client->post(
-            $apiEndPoint,
-            [
-                'headers' => ['Content-Type' => 'application/json', 'Accept' => 'application/json', 'x-api-token' => $apiToken],
-                'body' => json_encode($data),
-                'timeout' => $apiTimeout,
-            ]
-        );
-
-        $getStatusCode = $capiRequest->getStatusCode();
-
-        if ($getStatusCode == 200) {
-            $getContents = $capiRequest->getBody();
-            $getdecodeContents = json_decode($getContents);
-            return $getdecodeContents;
-        } else {
-            return "API failed";
-        }
+        return CapiRequestService::sendCAPIRequest('/api/v1-save-health-quote', $dataArr);
     }
 
     public function getGridData($searchProperties, $request)
     {
-        $count = 0;
         if ($request->ajax()) {
             foreach ($searchProperties as $item) {
                 if (!empty($request[$item])) {
-                    $suffix = '';
-                    switch ($item) {
-                        case 'marital_status_id':
-                            $suffix = 'ms';
-                            break;
-                        case 'health_cover_for':
-                            $suffix = 'hcf';
-                            break;
-                        case 'nationality':
-                            $suffix = 'n';
-                            break;
-                        case 'emirates':
-                            $suffix = 'e';
-                            break;
-                        case 'advisor':
-                            $suffix = 'u';
-                            break;
-                        default:
-                            $suffix = 'hqr';
-                            break;
-                    }
-                    $this->query = $this->query . ($count == 0 ? ' where ' : ' and ') . $suffix . '.' . $item . '=' . "'" . $request[$item] . "'";
-                    $count++;
+                    $this->query->where($this->getQuerySuffix($item) . '.' . $item, $request[$item]);
                 }
             }
         }
-        #dd($this->query);
-        return DB::select($this->query);
+        $this->query->orderBy('hqr.created_at', 'DESC');
+        return $this->query;
+    }
+
+    private function getQuerySuffix($item)
+    {
+        switch ($item) {
+            case 'marital_status_id':
+                return 'ms';
+                break;
+            case 'health_cover_for':
+                return 'hcf';
+                break;
+            case 'nationality':
+                return 'n';
+                break;
+            case 'emirates':
+                return 'e';
+                break;
+            case 'advisor':
+                return 'u';
+                break;
+            default:
+            return 'hqr';
+                break;
+        }
     }
 
     public function updateHealthQuote(Request $request, $id)
@@ -173,38 +126,21 @@ class HealthQuoteService extends BaseService
 
     public function getLeads($CDBID, $email, $mobile_no, $lead_type)
     {
-        $isAdvisor = Auth::user()->hasRole(strtoupper($lead_type) . '_ADVISOR');
-        $isManager = Auth::user()->hasRole('MANAGER');
-        if ($isManager) {
-            $userIds = Auth::user()->getTeamUserIds();
-        }
-        $query = "SELECT hqr.id
-                            ,hqr.uuid
-                            ,hqr.first_name
-                            ,hqr.last_name
-                            ,hqr.created_at
-                            ,u.name AS advisor_name
-                            ,'Health' as lead_type
-                            ,u.id as advisor_id
-                            ,qs.text as lead_status
-                        FROM health_quote_request hqr
-                        LEFT OUTER JOIN users u ON u.id = hqr.advisor_id
-                        LEFT OUTER JOIN quote_status qs ON qs.id = hqr.quote_status_id
-                        ORDER BY u.name";
-        $count = 0;
+        $query = DB::table('health_quote_request as hqr')
+                    ->select('hqr.id','hqr.uuid','hqr.first_name','hqr.last_name','hqr.created_at','u.name AS advisor_name',DB::raw("'Health' as lead_type")
+                    ,'u.id as advisor_id','qs.text as lead_status')
+                    ->Join('users as u', 'u.id', '=', 'hqr.advisor_id')
+                    ->Join('quote_status as qs', 'qs.id', '=', 'hqr.quote_status_id');
         if (!empty($CDBID)) {
-            $query .= ' where hqr.id = ' . $CDBID;
-            $count++;
+            $query->where('hqr.id', '=', $CDBID);
         }
         if (!empty($email)) {
-            $query .= ($count == 0 ? ' where' : ' and '). ' hqr.email = ' . $email;
-            $count++;
+            $query->where('hqr.email', '=', $email);
         }
         if (!empty($mobile_no)) {
-            $query .= ($count == 0 ? ' where' : ' and '). ' hqr.mobile_no = ' . $mobile_no;
-            $count++;
+            $query->where('hqr.mobile_no', '=', $mobile_no);
         }
-        return DB::select($query);
+        return $query;
     }
 
     public function fillModelProperties()

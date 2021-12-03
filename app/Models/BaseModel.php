@@ -32,8 +32,10 @@ class BaseModel extends Model implements AuditableContract
        parent::boot();
        static::creating(function($model)
        {
-           $model->created_by = Auth::user()->email;
-           $model->updated_by = Auth::user()->email;
+            if (Auth::check()) {
+                $model->created_by = Auth::user()->email;
+                $model->updated_by = Auth::user()->email;
+            }
        });
        static::updating(function($model)
        {
@@ -47,7 +49,9 @@ class BaseModel extends Model implements AuditableContract
                     $ftcModel->save();
                 }
             }
-            $model->updated_by = Auth::user()->email;
+            if (Auth::check()) {
+                $model->updated_by = Auth::user()->email;
+            }
        });
     }
 
