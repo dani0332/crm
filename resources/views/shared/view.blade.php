@@ -40,18 +40,20 @@
                 if (!skipPropertiesArray.includes(modelPropertiesArray[i].name)) {
                     if (modelPropertiesArray[i].name == 'id') {
                         var isManagerOrDeputy = $("#isManagerOrDeputy").val();
+                        if (isManagerOrDeputy === "1" && allowedModelTypes.includes(model.modelType.toLocaleLowerCase())) {
                         dataTableColumns.push(
                             {
                                 data: "id",
                                 name: "id",
                                 render: function (data, type, row, meta) {
-                                    if (isManagerOrDeputy === "1" && allowedModelTypes.includes(model.modelType.toLocaleLowerCase())) {
+
                                         return (
                                             '<input type="checkbox" id="tmLeadID" class="tmleadCheckbox" name="tmLeadID" value="' + data + '">'
                                         );
-                                    }
+
                                 },
                             });
+                        }
                             dataTableColumns.push({
                                 data: 'id',
                                 name: 'id',
