@@ -73,7 +73,7 @@ class CRUDController extends Controller
     {
         $gridData = $this->crudService->getGridData($this->genericModel, $request);
         $advisors = $this->crudService->getAdvisorsByModelType($this->genericModel->modelType);
-        $isManagerOrDeputy = Auth::user()->isManagerOrDeputy();
+        $isManagerORDeputy = Auth::user()->isManagerOrDeputy();
         $dropdownSource = $customTitles = [];
         foreach ($this->genericModel->properties as $property => $value) {
             if (str_contains($value, 'title')) {
@@ -265,10 +265,10 @@ class CRUDController extends Controller
 
     private function fillModelByModelType($type, Request $request)
     {
-        $requestModelType = json_decode($request->modelType, true);
-        $modelType = $requestModelType ?? $type;
+        $modelType = $request->get('modelType') ?? $type;
         $quoteTypes = 'Health,Car,Travel,Life,Home,Business';
         $serviceType = str_contains($quoteTypes, ucwords($modelType)) ? strtolower($modelType) . 'QuoteService' : lcfirst(ucwords($modelType)) . 'Service';
+
         $this->genericModel->properties = $this->{$serviceType}->fillModelProperties();
         $this->genericModel->skipProperties = $this->{$serviceType}->fillModelSkipProperties();
         $this->genericModel->searchProperties = $this->{$serviceType}->fillModelSearchProperties();
@@ -327,5 +327,21 @@ class CRUDController extends Controller
                 'listQuotePlanBenefitsPolicyDetails', 'listQuotePlanAddonPrices'
             ]));
         }
+    }
+
+    public function manualLeadAssign(Request $request)
+    {
+        $assignedToUserIdNew = $request->assigned_to_id_new;
+        $leadsIds = $request->selectTmLeadId;
+        $leadsIds = array_map('intval', explode(',', $leadsIds));
+        foreach ($leadsIds as $tmLeadsId) {
+            $updateTmLead = $this->{strtolower($request->modelType) . 'QuoteService'}->getEntityPlain($tmLeadsId);
+            $userId = (int)$assignedToUserIdNew;
+            $updateTmLead->advisor_id = $userId;
+            $updateTmLead->save();
+        }
+
+        $assignedUserName = $this->userService->getUserNameById($assignedToUserIdNew);
+        return Redirect::back()->with('success', $request->modelType . ' Leads has been Assigned To ' . $assignedUserName);
     }
 }

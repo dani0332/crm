@@ -38,29 +38,28 @@
             for (var i = 0; i < modelPropertiesArray.length; i++) {
 
                 if (!skipPropertiesArray.includes(modelPropertiesArray[i].name)) {
-                    console.log(modelPropertiesArray[i].name);
                     if (modelPropertiesArray[i].name == 'id') {
                         var isManagerOrDeputy = $("#isManagerOrDeputy").val();
-                        if (isManagerOrDeputy === "1" && allowedModelTypes.includes(model.modelType)) {
-                            dataTableColumns.push({
+                        dataTableColumns.push(
+                            {
                                 data: "id",
                                 name: "id",
-                                render: function(data, type, row, meta) {
-                                    return (
-                                        '<input type="checkbox" id="tmLeadID" class="tmleadCheckbox" name="tmLeadID" value="' +
-                                        data + '">'
-                                    );
+                                render: function (data, type, row, meta) {
+                                    if (isManagerOrDeputy === "1" && allowedModelTypes.includes(model.modelType.toLocaleLowerCase())) {
+                                        return (
+                                            '<input type="checkbox" id="tmLeadID" class="tmleadCheckbox" name="tmLeadID" value="' + data + '">'
+                                        );
+                                    }
                                 },
                             });
-                        }
-                        dataTableColumns.push({
-                            data: modelPropertiesArray[i].name,
-                            name: 'id',
-                            render: function(data, type, row) {
-                                var url = '/quotes/' + model.modelType.toLowerCase();
-                                return "<a href='" + url + '/' + row.uuid + "'>" + row.id + "</a>"
-                            }
-                        });
+                            dataTableColumns.push({
+                                data: 'id',
+                                name: 'id',
+                                render: function (data, type, row) {
+                                    var url = '/quotes/' + model.modelType.toLowerCase();
+                                    return "<a href='" + url + '/' + row.uuid + "'>" + row.id + "</a>"
+                                }
+                            });
                     } else {
                         if (modelPropertiesArray[i].value.indexOf('select') > -1) {
                             dataTableColumns.push({
@@ -76,6 +75,7 @@
                     }
                 }
             }
+            console.log(dataTableColumns);
             var vehicleTypeDataTable = $("#dtBasicExample").DataTable({
                 ordering: false,
                 info: true,
@@ -322,7 +322,7 @@
                         width="100%">
                         <thead>
                             <tr>
-                                @if ($isManagerORDeputy == '1' && str_contains('home,health,life,business,travel,car', $model->modelType))
+                                @if ($isManagerORDeputy == '1' && str_contains('home,health,life,business,travel,car', strtolower($model->modelType)))
                                     <th style="width: 15px;"><input type="checkbox" id="checkAllTmLeads"
                                             name="checkAllTmLeads" value=""></th>
                                 @endif
