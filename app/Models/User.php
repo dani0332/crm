@@ -100,6 +100,17 @@ class User extends Authenticatable implements AuditableContract
         }
     }
 
+    public function isManagerOrDeputy(){
+        $userRoles = Auth::user()->usersroles()->get();
+        $isManagerORDeputy = false;
+        foreach ($userRoles as $userRole) {
+            if(str_contains(strtolower($userRole->name), 'manager') || str_contains(strtolower($userRole->name), 'deputy')) {
+                $isManagerORDeputy = true;
+            }
+        }
+        return $isManagerORDeputy;
+    }
+
     public function getUserTeams($userId)
     {
         $userTeams = UserTeams::where('user_id', $userId)->get();
