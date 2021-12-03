@@ -73,7 +73,7 @@ class CRUDController extends Controller
     {
         $gridData = $this->crudService->getGridData($this->genericModel, $request);
         $advisors = $this->crudService->getAdvisorsByModelType($this->genericModel->modelType);
-        $isManagerORDeputy = Auth::user()->hasAnyRole(['MANAGER', 'DEPUTY']);
+        $isManagerOrDeputy = Auth::user()->isManagerOrDeputy();
         $dropdownSource = $customTitles = [];
         foreach ($this->genericModel->properties as $property => $value) {
             if (str_contains($value, 'title')) {
