@@ -35,6 +35,9 @@
                                     return "You don’t have access to view this lead"
                                 }
                             }
+                            else{
+                                return "You don’t have access to view this lead";
+                            }
                         }
                     },
                     {
