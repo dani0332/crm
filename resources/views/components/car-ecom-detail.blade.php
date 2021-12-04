@@ -52,6 +52,7 @@
                                             <td width="20" valign="top">{{ $sno }}.</td>
                                             <td width="120" valign="top">{{ ucwords($carQuotePlanAddon->car_addon_text) }}</td>
                                             <td>{{ ucwords($carQuotePlanAddon->car_addon_option_value) }}</td>
+                                            <td>{{ ucwords($carQuotePlanAddon->car_addon_option_price) }}</td>
                                         </tr>
                                         @php
                                             $sno++;
@@ -62,7 +63,6 @@
                         </div>
                     </div>
                 </div>
-
             </div>
         </div>
     </div>
