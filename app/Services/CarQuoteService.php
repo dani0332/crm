@@ -29,7 +29,8 @@ class CarQuoteService extends BaseService
         ,'cqr.car_type_insurance_id','cti.TEXT AS car_type_insurance_id_text'
         ,'cqr.claim_history_id','ch.TEXT AS claim_history_id_text'
         ,'cqr.advisor_id','u.name AS advisor_id_text'
-        ,'cqr.payment_status_id','ps.text AS payment_status_id_text')
+        ,'cqr.payment_status_id','ps.text AS payment_status_id_text'
+        ,'cqr.plan_id','cp.text AS plan_id_text')
         ->leftJoin('nationality as n', 'n.id', '=', 'cqr.nationality_id')
         ->Join('car_make as cmake', 'cmake.id', '=', 'cqr.car_make_id')
         ->leftJoin('uae_license_held_for as ulhf', 'ulhf.id', '=', 'cqr.uae_license_held_for_id')
@@ -39,6 +40,7 @@ class CarQuoteService extends BaseService
         ->leftJoin('car_type_insurance as cti', 'cti.id', '=', 'cqr.car_type_insurance_id')
         ->leftJoin('claim_history as ch', 'ch.id', '=', 'cqr.claim_history_id')
         ->leftJoin('users as u', 'u.id', '=', 'cqr.advisor_id')
+        ->leftJoin('car_plan as cp', 'cp.id', '=', 'cqr.plan_id')
         ->Join('payment_status as ps', 'ps.id', '=', 'cqr.payment_status_id');
     }
 
@@ -220,6 +222,9 @@ class CarQuoteService extends BaseService
             case 'advisor':
                 return 'u';
                 break;
+            case 'plan':
+                return 'cp';
+                break;
             default:
                 return 'cqr';
                 break;
@@ -298,6 +303,7 @@ class CarQuoteService extends BaseService
     }
 
     public function getCarQuotePlanAddons($id) {
+
         $listCarQuotePlanAddons = DB::select( DB::raw("SELECT
         car_addon.text AS car_addon_text,
         car_addon_option.value AS car_addon_option_value,

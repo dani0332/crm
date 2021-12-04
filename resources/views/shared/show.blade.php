@@ -108,17 +108,17 @@
     </div>
 
     <x-car-ecom-detail
-    :carQuotePremium="$record[0]->premium"
-    :carQuotePaidAt="$record[0]->paid_at"
-    :carQuotePaymentStatus="$record[0]->payment_status_id_text"
-    :carQuotePlanName="$record[0]->plan_id_text"
+    :carQuotePremium="$record->premium"
+    :carQuotePaidAt="$record->paid_at"
+    :carQuotePaymentStatus="$record->payment_status_id_text"
+    :carQuotePlanName="$record->plan_id_text"
     :carQuotePlanAddons="$carQuotePlanAddons"
     />
 
     <x-car-quote-plans
         :listQuotePlans="$listQuotePlans"
-        :uuid="$ecomCarInsuranceQuoteUrl.$record[0]->uuid"
-        :uuidModal="$record[0]->uuid"
+        :uuid="$ecomCarInsuranceQuoteUrl.$record->uuid"
+        :uuidModal="$record->uuid"
     />
 
 @endif
