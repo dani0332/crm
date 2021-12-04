@@ -304,16 +304,13 @@ class CarQuoteService extends BaseService
 
     public function getCarQuotePlanAddons($id) {
 
-        $listCarQuotePlanAddons = DB::select( DB::raw("SELECT
-        car_addon.text AS car_addon_text,
-        car_addon_option.value AS car_addon_option_value,
-        car_addon_option.price AS car_addon_option_price,
-        car_addon.type AS car_addon_type
-      FROM car_addon_option
-      LEFT OUTER JOIN car_addon ON (car_addon_option.addon_id = car_addon.id)
-      LEFT OUTER JOIN car_quote_request_addon ON (car_quote_request_addon.addon_option_id = car_addon_option.id)
-      LEFT OUTER JOIN car_quote_request ON (car_quote_request_addon.quote_request_id = car_quote_request.id)
-      WHERE car_quote_request.uuid = '$id'") );
-      return $listCarQuotePlanAddons;
+        $listCarQuotePlanAddons = DB::table('car_addon_option')
+        ->select('car_addon.text AS car_addon_text','car_addon_option.value AS car_addon_option_value'
+        ,'car_addon_option.price AS car_addon_option_price','car_addon.type AS car_addon_type')
+        ->leftJoin('car_addon', 'car_addon.id', '=', 'car_addon_option.addon_id')
+        ->leftJoin('car_quote_request_addon', 'car_addon_option.id', '=', 'car_quote_request_addon.addon_option_id')
+        ->leftJoin('car_quote_request', 'car_quote_request.id', '=', 'car_quote_request_addon.quote_request_id')
+        ->where('car_quote_request.uuid', $id)->get();
+        return $listCarQuotePlanAddons;
     }
 }

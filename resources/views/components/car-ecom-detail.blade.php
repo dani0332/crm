@@ -36,22 +36,29 @@
                     <div class="col">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="PLAN NAME"><b>PLAN NAME</b></label>
                         <div class="col-md-6 col-sm-6">
-                        <p class="label-align-center">{{ $carQuotePlanName }}</p>
+                        <p class="label-align-center">{{ ucwords($carQuotePlanName) }}</p>
                         </div>
                     </div>
                     <div class="col">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="ADDONS"><b>ADDONS</b></label>
-                        <div class="col-md-6 col-sm-6">
-                        <p class="label-align-center">
-                            <table>
-                                @foreach($carQuotePlanAddons as $carQuotePlanAddon)
-                                    <tr>
-                                        <td width="100">{{ $carQuotePlanAddons[0]->car_addon_text }}</td>
-                                        <td>{{ $carQuotePlanAddons[0]->car_addon_option_value }}</td>
-                                    </tr>
-                                @endforeach
-                            </table>
-                        </p>
+                        <div class="col-md-6 col-sm-6" style="max-width: 75%;">
+                            <p class="label-align-center">
+                                <table>
+                                    @php
+                                        $sno = 1;
+                                    @endphp
+                                    @foreach($carQuotePlanAddons as $carQuotePlanAddon)
+                                        <tr>
+                                            <td width="20" valign="top">{{ $sno }}.</td>
+                                            <td width="120" valign="top">{{ ucwords($carQuotePlanAddon->car_addon_text) }}</td>
+                                            <td>{{ ucwords($carQuotePlanAddon->car_addon_option_value) }}</td>
+                                        </tr>
+                                        @php
+                                            $sno++;
+                                        @endphp
+                                    @endforeach
+                                </table>
+                            </p>
                         </div>
                     </div>
                 </div>
