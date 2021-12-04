@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Models\HomeQuote;
 use Illuminate\Http\Request;
 use DB;
-use Config;
 use Illuminate\Support\Facades\Auth;
 
 class HomeQuoteService extends BaseService
@@ -14,32 +13,18 @@ class HomeQuoteService extends BaseService
 
     public function __construct()
     {
-        $this->query = "
-                SELECT hqr.id
-                ,hqr.uuid
-                ,hqr.first_name
-                ,hqr.last_name
-                ,hqr.email
-                ,hqr.mobile_no
-                ,hqr.address
-                ,hqr.has_contents
-                ,hqr.contents_aed
-                ,hqr.has_personal_belongings
-                ,hqr.personal_belongings_aed
-                ,hqr.has_building
-                ,hqr.building_aed
-                ,hqr.ilivein_accommodation_type_id
-                ,hat.TEXT AS ilivein_accommodation_type_id_text
-                ,hqr.iam_possesion_type_id
-                ,hpt.TEXT AS iam_possesion_type_id_text
-            FROM home_quote_request hqr
-            LEFT OUTER JOIN home_accommodation_type hat ON hat.id = hqr.ilivein_accommodation_type_id
-            LEFT OUTER JOIN home_possession_type hpt ON hpt.id = hqr.iam_possesion_type_id";
+
+        $this->query = DB::table('home_quote_request as hqr')->
+        select('hqr.id','hqr.uuid','hqr.first_name','hqr.last_name','hqr.email','hqr.mobile_no','hqr.address','hqr.has_contents','hqr.contents_aed'
+        ,'hqr.has_personal_belongings','hqr.personal_belongings_aed','hqr.has_building','hqr.building_aed','hqr.ilivein_accommodation_type_id'
+        ,'hat.TEXT AS ilivein_accommodation_type_id_text','hqr.iam_possesion_type_id','hpt.TEXT AS iam_possesion_type_id_text')
+        ->leftJoin('home_accommodation_type as hat', 'hat.id', '=', 'hqr.ilivein_accommodation_type_id')
+        ->leftJoin('home_possession_type as hpt', 'hpt.id', '=', 'hqr.iam_possesion_type_id');
     }
 
     public function getEntity($id)
     {
-        return DB::select($this->query . ' where hqr.uuid =  "' . $id.'"');
+        return $this->query->where('hqr.uuid', $id)->first();
     }
 
     public function saveHomeQuote(Request $request)
@@ -61,33 +46,35 @@ class HomeQuoteService extends BaseService
             "hasPersonalBelongings" => $request->has_personal_belongings == 'on' ?  true : false,
         );
         if(Auth::user()->hasRole("HOME_ADVISOR")) $dataArr['advisorId'] = Auth::users()->id;
-        return $this->sendCAPIRequest('/api/v1-save-home-quote', $dataArr);
+        return CapiRequestService::sendCAPIRequest('/api/v1-save-home-quote', $dataArr);
     }
 
     public function getGridData($searchProperties, $request)
     {
-        $count = 0;
         if ($request->ajax()) {
             foreach ($searchProperties as $item) {
                 if (!empty($request[$item])) {
-                    $suffix = '';
-                    switch ($item) {
-                        case 'ilivein_accommodation_type':
-                            $suffix = 'hat';
-                            break;
-                        case 'iam_possesion_type':
-                            $suffix = 'hpt';
-                            break;
-                        default:
-                            $suffix = 'hqr';
-                            break;
-                    }
-                    $this->query = $this->query . ($count == 0 ? ' where ' : ' and ') . $suffix . '.' . $item . '=' . "'" . $request[$item] . "'";
-                    $count++;
+                    $this->query->where($this->getQuerySuffix($item) . '.' . $item, $request[$item]);
                 }
             }
         }
-        return DB::select($this->query);
+        $this->query->orderBy('hqr.created_at', 'DESC');
+        return $this->query;
+    }
+
+    private function getQuerySuffix($item)
+    {
+        switch ($item) {
+            case 'ilivein_accommodation_type':
+                return 'hat';
+                break;
+            case 'iam_possesion_type':
+                return 'hpt';
+                break;
+            default:
+                return 'hqr';
+                break;
+        }
     }
 
     public function getLeadsForAssignment()
@@ -97,34 +84,21 @@ class HomeQuoteService extends BaseService
 
     public function getLeads($CDBID, $email, $mobile_no, $lead_type)
     {
-        $isAdvisor = Auth::user()->hasRole(strtoupper($lead_type) . '_ADVISOR');
-        $query = "SELECT hqr.id
-                            ,hqr.uuid
-                            ,hqr.first_name
-                            ,hqr.last_name
-                            ,hqr.created_at
-                            ,u.name AS advisor_name
-                            ,'Home' as lead_type
-                            ,u.id as advisor_id
-                            ,qs.text as lead_status
-                        FROM home_quote_request hqr
-                        LEFT OUTER JOIN users u ON u.id = hqr.advisor_id
-                        LEFT OUTER JOIN quote_status qs ON qs.id = hqr.quote_status_id
-                        ORDER BY u.name";
-        $count = 0;
+        $query = DB::table('home_quote_request as hqr')
+                    ->select('hqr.id','hqr.uuid','hqr.first_name','hqr.last_name','hqr.created_at','u.name AS advisor_name',DB::raw("'Home' as lead_type")
+                    ,'u.id as advisor_id','qs.text as lead_status')
+                    ->Join('users as u', 'u.id', '=', 'hqr.advisor_id')
+                    ->Join('quote_status as qs', 'qs.id', '=', 'hqr.quote_status_id');
         if (!empty($CDBID)) {
-            $query .= ' where hqr.id = ' . $CDBID;
-            $count++;
+            $query->where('hqr.id', '=', $CDBID);
         }
         if (!empty($email)) {
-            $query .= ($count == 0 ? ' where' : ' and '). ' hqr.email = ' . $email;
-            $count++;
+            $query->where('hqr.email', '=', $email);
         }
         if (!empty($mobile_no)) {
-            $query .= ($count == 0 ? ' where' : ' and '). ' hqr.mobile_no = ' . $mobile_no ;
-            $count++;
+            $query->where('hqr.mobile_no', '=', $mobile_no);
         }
-        return DB::select($query);
+        return $query;
     }
 
     public function updateHomeQuote(Request $request, $id)
@@ -253,33 +227,6 @@ class HomeQuoteService extends BaseService
 
     public function getEntityPlain($id)
     {
-        return HomeQuote::where('uuid', $id);
-    }
-
-    public function sendCAPIRequest($endpoint, $data)
-    {
-        $apiEndPoint = Config::get('constants.CENTRAL_API_ENDPOINT') . $endpoint;
-        $apiToken = Config::get('constants.CENTRAL_API_TOKEN');
-        $apiTimeout = Config::get('constants.CENTRAL_API_TIMEOUT');
-
-        $client = new \GuzzleHttp\Client();
-        $capiRequest = $client->post(
-            $apiEndPoint,
-            [
-                'headers' => ['Content-Type' => 'application/json', 'Accept' => 'application/json', 'x-api-token' => $apiToken],
-                'body' => json_encode($data),
-                'timeout' => $apiTimeout,
-            ]
-        );
-
-        $getStatusCode = $capiRequest->getStatusCode();
-
-        if ($getStatusCode == 200) {
-            $getContents = $capiRequest->getBody();
-            $getdecodeContents = json_decode($getContents);
-            return $getdecodeContents;
-        } else {
-            return "API failed";
-        }
+        return HomeQuote::where('id', $id)->first();
     }
 }

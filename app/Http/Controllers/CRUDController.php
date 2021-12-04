@@ -73,7 +73,7 @@ class CRUDController extends Controller
     {
         $gridData = $this->crudService->getGridData($this->genericModel, $request);
         $advisors = $this->crudService->getAdvisorsByModelType($this->genericModel->modelType);
-        $isManagerORDeputy = Auth::user()->hasAnyRole(['MANAGER', 'DEPUTY']);
+        $isManagerORDeputy = Auth::user()->isManagerOrDeputy();
         $dropdownSource = $customTitles = [];
         foreach ($this->genericModel->properties as $property => $value) {
             if (str_contains($value, 'title')) {
@@ -266,8 +266,7 @@ class CRUDController extends Controller
 
     private function fillModelByModelType($type, Request $request)
     {
-        $requestModelType = json_decode($request->modelType, true);
-        $modelType = $requestModelType ?? $type;
+        $modelType = $request->get('modelType') ?? $type;
         $quoteTypes = 'Health,Car,Travel,Life,Home,Business';
         $serviceType = str_contains($quoteTypes, ucwords($modelType)) ? strtolower($modelType) . 'QuoteService' : lcfirst(ucwords($modelType)) . 'Service';
         $this->genericModel->properties = $this->{$serviceType}->fillModelProperties();

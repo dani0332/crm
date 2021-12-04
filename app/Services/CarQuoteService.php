@@ -14,55 +14,34 @@ class CarQuoteService extends BaseService
     protected $query;
     public function __construct()
     {
-        $this->query = "
-            SELECT
-            cqr.uuid
-            ,cqr.id
-            ,cqr.first_name
-            ,cqr.last_name
-            ,cqr.email
-            ,cqr.mobile_no
-            ,cqr.dob
-            ,cqr.car_value
-            ,cqr.additional_notes
-            ,cqr.nationality_id
-            ,cqr.year_of_manufacture
-            ,cqr.premium
-            ,cqr.paid_at
-            ,n.TEXT AS nationality_id_text
-            ,cqr.uae_license_held_for_id
-            ,ulhf.TEXT AS uae_license_held_for_id_text
-            ,cqr.car_make_id
-            ,cmake.TEXT AS car_make_id_text
-            ,cqr.car_model_id
-            ,cmodel.TEXT AS car_model_id_text
-            ,cqr.emirate_of_registration_id
-            ,e.TEXT AS emirate_of_registration_id_text
-            ,ip.id AS currently_insured_with
-            ,ip.TEXT AS currently_insured_with_text
-            ,cqr.car_type_insurance_id
-            ,cti.TEXT AS car_type_insurance_id_text
-            ,cqr.claim_history_id
-            ,ch.TEXT AS claim_history_id_text
-            ,cqr.advisor_id
-            ,u.name AS advisor_id_text
-            ,cqr.payment_status_id
-            ,ps.text AS payment_status_id_text
-            ,cqr.plan_id
-            ,cp.text AS plan_id_text
-        FROM car_quote_request cqr
-        LEFT OUTER JOIN nationality n ON n.id = cqr.nationality_id
-        LEFT OUTER JOIN uae_license_held_for ulhf ON ulhf.id = cqr.uae_license_held_for_id
-        LEFT OUTER JOIN car_make cmake ON cmake.id = cqr.car_make_id
-        LEFT OUTER JOIN car_model cmodel ON cmodel.id = cqr.car_model_id
-        LEFT OUTER JOIN emirates e ON e.id = cqr.emirate_of_registration_id
-        LEFT OUTER JOIN insurance_provider ip ON ip.TEXT = cqr.currently_insured_with
-        LEFT OUTER JOIN car_type_insurance cti ON cti.id = cqr.car_type_insurance_id
-        LEFT OUTER JOIN claim_history ch ON ch.id = cqr.claim_history_id
-        LEFT OUTER JOIN users u ON u.id = cqr.advisor_id
-        LEFT OUTER JOIN payment_status ps ON ps.id = cqr.payment_status_id
-        LEFT OUTER JOIN car_plan cp ON cp.id = cqr.plan_id";
+        $this->query = DB::table('car_quote_request as cqr')
+        ->select('cqr.uuid','cqr.id'
+        ,'cqr.first_name','cqr.last_name'
+        ,'cqr.email','cqr.mobile_no','cqr.dob'
+        ,'cqr.car_value','cqr.additional_notes'
+        ,'cqr.nationality_id','cqr.year_of_manufacture'
+        ,'cqr.premium','cqr.paid_at','n.TEXT AS nationality_id_text'
+        ,'cqr.uae_license_held_for_id','ulhf.TEXT AS uae_license_held_for_id_text'
+        ,'cqr.car_make_id','cmake.TEXT AS car_make_id_text'
+        ,'cqr.car_model_id','cmodel.TEXT AS car_model_id_text'
+        ,'cqr.emirate_of_registration_id','e.TEXT AS emirate_of_registration_id_text'
+        ,'ip.id AS currently_insured_with','ip.TEXT AS currently_insured_with_text'
+        ,'cqr.car_type_insurance_id','cti.TEXT AS car_type_insurance_id_text'
+        ,'cqr.claim_history_id','ch.TEXT AS claim_history_id_text'
+        ,'cqr.advisor_id','u.name AS advisor_id_text'
+        ,'cqr.payment_status_id','ps.text AS payment_status_id_text')
+        ->leftJoin('nationality as n', 'n.id', '=', 'cqr.nationality_id')
+        ->Join('car_make as cmake', 'cmake.id', '=', 'cqr.car_make_id')
+        ->leftJoin('uae_license_held_for as ulhf', 'ulhf.id', '=', 'cqr.uae_license_held_for_id')
+        ->Join('car_model as cmodel', 'cmodel.id', '=', 'cqr.car_model_id')
+        ->leftJoin('emirates as e', 'e.id', '=', 'cqr.emirate_of_registration_id')
+        ->leftJoin('insurance_provider as ip', 'ip.id', '=', 'cqr.currently_insured_with')
+        ->leftJoin('car_type_insurance as cti', 'cti.id', '=', 'cqr.car_type_insurance_id')
+        ->leftJoin('claim_history as ch', 'ch.id', '=', 'cqr.claim_history_id')
+        ->leftJoin('users as u', 'u.id', '=', 'cqr.advisor_id')
+        ->Join('payment_status as ps', 'ps.id', '=', 'cqr.payment_status_id');
     }
+
     public function saveCarQuote(Request $request)
     {
         $carQuote = new CarQuote();
@@ -110,12 +89,12 @@ class CarQuoteService extends BaseService
 
     public function getEntity($id)
     {
-        return DB::select($this->query . ' where cqr.uuid = "' . $id . '"');
+        return $this->query->where('cqr.uuid', $id)->first();
     }
 
     public function getEntityPlain($id)
     {
-        return CarQuote::where('uuid', $id);
+        return CarQuote::where('id', $id)->first();
     }
 
     public function fillModelProperties()
@@ -200,82 +179,69 @@ class CarQuoteService extends BaseService
 
     public function getGridData($searchProperties, $request)
     {
-        $count = 0;
         if ($request->ajax()) {
             foreach ($searchProperties as $item) {
                 if (!empty($request[$item])) {
-                    $suffix = '';
-                    switch ($item) {
-                        case 'uae_license_held_for':
-                            $suffix = 'ulhf';
-                            break;
-                        case 'car_make':
-                            $suffix = 'cmake';
-                            break;
-                        case 'car_model':
-                            $suffix = 'cmodel';
-                            break;
-                        case 'nationality':
-                            $suffix = 'n';
-                            break;
-                        case 'emirates':
-                            $suffix = 'e';
-                            break;
-                        case 'insurance_provider':
-                            $suffix = 'ip';
-                            break;
-                        case 'claim_history':
-                            $suffix = 'ch';
-                            break;
-                        case 'car_type_insurance':
-                            $suffix = 'cti';
-                            break;
-                        case 'advisor':
-                            $suffix = 'u';
-                            break;
-                        default:
-                            $suffix = 'cqr';
-                            break;
-                    }
-                    $this->query = $this->query . ($count == 0 ? ' where ' : ' and ') . $suffix . '.' . $item . '=' . "'" . $request[$item] . "'";
-                    $count++;
+                    $this->query->where($this->getQuerySuffix($item) . '.' . $item, $request[$item]);
                 }
             }
         }
+        $this->query->orderBy('cqr.created_at', 'DESC');
+        return $this->query;
+    }
 
-        $this->query .= ' ORDER BY cqr.created_at DESC';
-        return DB::select($this->query);
+    private function getQuerySuffix($item)
+    {
+        switch ($item) {
+            case 'uae_license_held_for':
+                return 'ulhf';
+                break;
+            case 'car_make':
+                return 'cmake';
+                break;
+            case 'car_model':
+                return 'cmodel';
+                break;
+            case 'nationality':
+                return 'n';
+                break;
+            case 'emirates':
+                return 'e';
+                break;
+            case 'insurance_provider':
+                return 'ip';
+                break;
+            case 'claim_history':
+                return 'ch';
+                break;
+            case 'car_type_insurance':
+                return 'cti';
+                break;
+            case 'advisor':
+                return 'u';
+                break;
+            default:
+                return 'cqr';
+                break;
+        }
     }
 
     public function getLeads($CDBID, $email, $mobile_no, $lead_type)
     {
-        $isAdvisor = Auth::user()->hasRole(strtoupper($lead_type) . '_ADVISOR');
-        $query = "SELECT hqr.id
-                            ,hqr.first_name
-                            ,hqr.last_name
-                            ,hqr.created_at
-                            ,u.name AS advisor_name
-                            ,'Car' as lead_type
-                        FROM car_quote_request hqr
-                        LEFT OUTER JOIN users u ON u.id = hqr.advisor_id";
-        $count = 0;
+        $query =  DB::table('car_quote_request as cqr')
+                ->select('cqr.id','cqr.first_name','cqr.last_name','cqr.created_at','u.name as advisor_name',DB::raw("'Car' as lead_type"))
+                ->leftJoin('users as u', 'u.id', '=', 'cqr.advisor_id');
+
         if (!empty($CDBID)) {
-            $query .= ' where hqr.id = ' . $CDBID;
-            $count++;
+           $query->where('cqr.CDBID', $CDBID);
         }
         if (!empty($email)) {
-            $query .= ($count == 0 ? ' where ' : ' and ') . ' hqr.email = ' . $email;
-            $count++;
+            $query->where('cqr.email', $email);
         }
         if (!empty($mobile_no)) {
-            $query .= ($count == 0 ? ' where ' : ' and '). ' hqr.mobile_no = ' . $mobile_no;
-            $count++;
+            $query->where('cqr.mobile_no', $mobile_no);
         }
-        if ($isAdvisor) {
-            $query .= ($count == 0 ? ' where ' : ' and '). ' hqr.advisor_id = ' . Auth::user()->id;
-            $count++;
-        }
-        return DB::select($query);
+        return $query;
     }
 
     public function fillModelSkipProperties()

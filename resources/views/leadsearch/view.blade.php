@@ -26,12 +26,17 @@
                         data: 'id',
                         name: 'id',
                         render: function(data, type, row) {
-                            if (teamUserIds.includes(row.advisor_id) || row.advisor_id == userId ||
-                                isAdmin) {
-                                return "<a href='/quotes/" + $("#leadType").val() + "/" + row.uuid +
-                                    "'>" + row.id + "</a>"
-                            } else {
-                                return "You don’t have access to view this lead"
+                            if(teamUserIds != 0){
+                                if (teamUserIds.includes(row.advisor_id) || row.advisor_id == userId ||
+                                    isAdmin) {
+                                    return "<a href='/quotes/" + $("#leadType").val() + "/" + row.uuid +
+                                        "'>" + row.id + "</a>"
+                                } else {
+                                    return "You don’t have access to view this lead"
+                                }
+                            }
+                            else{
+                                return "You don’t have access to view this lead";
                             }
                         }
                     },
