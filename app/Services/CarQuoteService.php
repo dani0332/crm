@@ -30,7 +30,8 @@ class CarQuoteService extends BaseService
         ,'cqr.claim_history_id','ch.TEXT AS claim_history_id_text'
         ,'cqr.advisor_id','u.name AS advisor_id_text'
         ,'cqr.payment_status_id','ps.text AS payment_status_id_text'
-        ,'cqr.plan_id','cp.text AS plan_id_text')
+        ,'cqr.plan_id','cp.text AS plan_id_text'
+        ,'cp.provider_id AS car_plan_provider_id','cpip.text AS car_plan_provider_id_text')
         ->leftJoin('nationality as n', 'n.id', '=', 'cqr.nationality_id')
         ->Join('car_make as cmake', 'cmake.id', '=', 'cqr.car_make_id')
         ->leftJoin('uae_license_held_for as ulhf', 'ulhf.id', '=', 'cqr.uae_license_held_for_id')
@@ -41,6 +42,7 @@ class CarQuoteService extends BaseService
         ->leftJoin('claim_history as ch', 'ch.id', '=', 'cqr.claim_history_id')
         ->leftJoin('users as u', 'u.id', '=', 'cqr.advisor_id')
         ->leftJoin('car_plan as cp', 'cp.id', '=', 'cqr.plan_id')
+        ->leftJoin('insurance_provider as cpip', 'cpip.id', '=', 'cp.provider_id')
         ->Join('payment_status as ps', 'ps.id', '=', 'cqr.payment_status_id');
     }
 
@@ -124,6 +126,7 @@ class CarQuoteService extends BaseService
             "additional_notes" => "textarea|required",
             "payment_status_id" => "select|title",
             "plan_id" => "select|title",
+            "car_plan_provider_id" => "select|title",
         );
     }
 
@@ -172,6 +175,9 @@ class CarQuoteService extends BaseService
                 break;
             case 'plan_id':
                 $title = "Plan Name";
+                break;
+            case 'car_plan_provider_id':
+                $title = "Provider Name";
                 break;
             default:
                 break;
@@ -225,6 +231,9 @@ class CarQuoteService extends BaseService
             case 'plan':
                 return 'cp';
                 break;
+            case 'car_plan_provider':
+                return 'cpip';
+                break;
             default:
                 return 'cqr';
                 break;
@@ -252,8 +261,8 @@ class CarQuoteService extends BaseService
     public function fillModelSkipProperties()
     {
         return [
-            "create" => "id,advisor_id,premium,paid_at,payment_status_id,plan_id",
-            "list" => "additional_notes,email,mobile_no,first_name,last_name,currently_insured_with,premium,paid_at,payment_status_id,plan_id",
+            "create" => "id,advisor_id,premium,paid_at,payment_status_id,plan_id,car_plan_provider_id",
+            "list" => "additional_notes,email,mobile_no,first_name,last_name,currently_insured_with,premium,paid_at,payment_status_id,plan_id,car_plan_provider_id",
         ];
     }
 

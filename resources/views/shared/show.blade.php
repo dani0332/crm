@@ -113,6 +113,7 @@
     :carQuotePaymentStatus="$record->payment_status_id_text"
     :carQuotePlanName="$record->plan_id_text"
     :carQuotePlanAddons="$carQuotePlanAddons"
+    :carQuotePlanProvider="$record->car_plan_provider_id_text"
     />
 
     <x-car-quote-plans
