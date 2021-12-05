@@ -49,7 +49,7 @@
                                     @endphp
                                     @foreach($carQuotePlanAddons as $carQuotePlanAddon)
                                         <tr>
-                                            <td width="20" valign="top">{{ $sno }}.</td>
+                                            <td width="20" height="25" valign="top">{{ $sno }}.</td>
                                             <td width="120" valign="top">{{ ucwords($carQuotePlanAddon->car_addon_text) }}</td>
                                             <td valign="top">{{ ucwords($carQuotePlanAddon->car_addon_option_value) }}</td>
                                             <td valign="top">{{ ucwords($carQuotePlanAddon->car_addon_option_price) }}</td>
