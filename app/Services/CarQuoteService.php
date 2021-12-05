@@ -269,6 +269,8 @@ class CarQuoteService extends BaseService
         $plansApiEndPoint = Config::get('constants.KEN_PLANS_API_ENDPOINT');
         $plansApiToken = Config::get('constants.KEN_PLANS_API_TOKEN');
         $plansApiTimeout = Config::get('constants.KEN_PLANS_API_TIMEOUT');
+        $plansApiUserName = Config::get('constants.KEN_PLANS_API_USER');
+        $plansApiPassword = Config::get('constants.KEN_PLANS_API_PWD');
 
         $plansDataArr = array(
             "quoteUID" => $quoteUuId,
@@ -282,7 +284,10 @@ class CarQuoteService extends BaseService
             $kenRequest = $client->post(
                 $plansApiEndPoint,
                 [
-                    'headers' => ['Content-Type' => 'application/json', 'Accept' => 'application/json', 'x-api-token' => $plansApiToken],
+                    'headers' => ['Content-Type' => 'application/json', 'Accept' => 'application/json',
+                    'x-api-token' => $plansApiToken,
+                    'username' => $plansApiUserName,
+                    'password' => $plansApiPassword],
                     'body' => json_encode($plansDataArr),
                     'timeout' => $plansApiTimeout,
                 ]
