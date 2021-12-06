@@ -220,6 +220,11 @@
                         <li><a href="{{ url('ftcform') }}"><i></i> Policy Issuance </a>
                     </ul>
                 @endif
+                @if (Auth::user()->hasRole('pa'))
+                    <ul class="nav side-menu">
+                        <li><a href="{{ url('assign_oe') }}"><i></i> Assign OE </a>
+                    </ul>
+                @endif
                 @can('telemarketing-list')
                     <ul class="nav side-menu">
                         <li><a><i class="fa fa-quote-left"></i> Telemarketing <span class="fa fa-chevron-down"></span></a>

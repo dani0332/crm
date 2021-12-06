@@ -103,7 +103,7 @@ class User extends Authenticatable implements AuditableContract
     }
 
     public function processGetDSL($filters = [])
-    {
+    {   
 
         if (Auth::user()->hasRole('production_approval_manager')) {
 
@@ -113,11 +113,11 @@ class User extends Authenticatable implements AuditableContract
                     $q->where('name', 'pa');
                 }
             )
-                ->get();
+            ->get();
             return $users;
         }
 
-        if(Auth::user()->hasRole('advisor')) {
+        if(Auth::user()->hasRole('advisor') || Auth::user()->hasRole('ADMIN')) {
 
             $users =  User::select(['id', 'name'])->whereHas(
                 'roles', function($q) use($filters) {
@@ -127,11 +127,8 @@ class User extends Authenticatable implements AuditableContract
                 }
             )
             ->get();
-
             return $users;
-
         }
-
 
         return self::with(array('usersroles' => function ($query) {
             $query->where('name', 'admin');

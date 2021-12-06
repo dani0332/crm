@@ -13,6 +13,7 @@ import ftcPayment from './ftc_payment';
 import ftcPaymentHistory from './ftc_payment_history';
 import carQuotePolicy from './car_quote_policy';
 import teams from './teams';
+import advisorToOe from './car_quote_advisor_to_oe';
 
 const getDSLForm = options => {
   const { form } = options;
@@ -45,6 +46,8 @@ const getDSLForm = options => {
       return carQuoteKyc.getForm();
     case 'teams':
       return teams.getForm();
+    case 'advisorToOe':
+      return advisorToOe.getForm()
   }
 };
 

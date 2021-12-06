@@ -53,7 +53,7 @@ function conditionState(state, action) {
   if (getField?.if) {
     const calcVal = (typeof value === 'object') ? value?.value : selected
     const val = getField.if[calcVal];
-    if (val?.fields) {
+    if (val?.fields) {  
       const getCondFields = getField.if[calcVal].fields;
       if (getCondFields.length > 0) {
         getCondFields.forEach(element => {
@@ -125,10 +125,6 @@ function DrawForm(props) {
   } = useForm({ shouldUnregister: true });
   const onSubmit = data => {
     
-    console.log('------------getData----------')
-    console.log(data);
-    console.log('------------getData----------');
-
     if (typeof state?.postTransform === 'function') {
       console.log('*****onSubmit-Transform-Data-draw-form.js*************');
       let transformData = state?.postTransform({
@@ -147,7 +143,7 @@ function DrawForm(props) {
       dispatch_({
         type: 'VISIBLE_FORM_SAVE',
         selectedRecord: state?.selectedRecord,
-        body: { ...cleanDeep(data), ...getData },
+        body: { ...cleanDeep(data) },
         initialForm: initialForm,
         manageListDispatch: manageListDispatch,
       });
