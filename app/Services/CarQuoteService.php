@@ -19,7 +19,7 @@ class CarQuoteService extends BaseService
         ,'cqr.first_name','cqr.last_name'
         ,'cqr.email','cqr.mobile_no','cqr.dob'
         ,'cqr.car_value','cqr.additional_notes'
-        ,'cqr.nationality_id','cqr.year_of_manufacture'
+        ,'cqr.nationality_id','cqr.year_of_manufacture','cqr.code'
         ,'cqr.premium','cqr.paid_at','n.TEXT AS nationality_id_text'
         ,'cqr.uae_license_held_for_id','ulhf.TEXT AS uae_license_held_for_id_text'
         ,'cqr.car_make_id','cmake.TEXT AS car_make_id_text'
@@ -110,10 +110,12 @@ class CarQuoteService extends BaseService
             "email" => "input|email|required",
             "mobile_no" => "input|title|number|required",
             "dob" => "input|title|date|required",
+            "code" => "input|title",
             "nationality_id" => "select|title|required",
             "uae_license_held_for_id" => "select|title|required",
-            "car_make_id" => "select|title|required",
-            "car_model_id" => "select|title|required",
+            "is_ecommerce" => "|static|title|Yes,No",
+            // "car_make_id" => "select|title|required",
+            // "car_model_id" => "select|title|required",
             "year_of_manufacture" => "|static|required|2022,2021,2020,2019,2018,2017,2016,2015,2014,2013,2012,2011,2010,2009,2008,2007,2006,2005,2004,2003,2002,2001,2000,1999,1998 or older",
             "emirate_of_registration_id" => "select|title|required",
             "currently_insured_with" => "select|required",
@@ -167,6 +169,9 @@ class CarQuoteService extends BaseService
             case 'reviver_name':
                 $title = "Reviver Name";
                 break;
+            case 'code':
+                $title = "CDB ID";
+                break;
             case 'advisor_id':
                 $title = "Advisor";
                 break;
@@ -178,6 +183,9 @@ class CarQuoteService extends BaseService
                 break;
             case 'car_plan_provider_id':
                 $title = "Provider Name";
+                break;
+            case 'is_ecommerce':
+                $title = "Ecommerce";
                 break;
             default:
                 break;
@@ -261,14 +269,14 @@ class CarQuoteService extends BaseService
     public function fillModelSkipProperties()
     {
         return [
-            "create" => "id,advisor_id,premium,paid_at,payment_status_id,plan_id,car_plan_provider_id",
+            "create" => "id,advisor_id,premium,paid_at,payment_status_id,plan_id,car_plan_provider_id,code",
             "list" => "additional_notes,email,mobile_no,first_name,last_name,currently_insured_with,premium,paid_at,payment_status_id,plan_id,car_plan_provider_id",
         ];
     }
 
     public function fillModelSearchProperties()
     {
-        return ["first_name", "last_name", "email", "mobile_no", "nationality_id"];
+        return ["first_name", "last_name", "email", "mobile_no", "nationality_id", "payment_status_id", "code"];
     }
 
     public function getQuotePlans($id)
