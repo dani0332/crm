@@ -83,7 +83,7 @@
                         @method('POST')
                         <div class="item form-group">
                             <div class="col">
-                                <label class="col-form-label col-md-2 col-sm-2" for="Start Date">Lead Type <span class="required">*</span></label>
+                                <label class="col-form-label col-md-4 col-sm-4" for="Start Date">Lead Type <span class="required">*</span></label>
                                 <div class="col-md-6 col-sm-6">
                                     <select class="form-control" id="myLeadsType" name="leadType">
                                         @foreach ($leadTypes as $item)
