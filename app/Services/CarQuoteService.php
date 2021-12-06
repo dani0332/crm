@@ -198,7 +198,8 @@ class CarQuoteService extends BaseService
         if ($request->ajax()) {
             foreach ($searchProperties as $item) {
                 if (!empty($request[$item])) {
-                    $this->query->where($this->getQuerySuffix($item) . '.' . $item, $request[$item]);
+                    $searchedValue = str_contains($request[$item], 'Yes') || str_contains($request[$item], 'No') ? ( $request[$item] == 'Yes' ? 1 : 0 ) : $request[$item];
+                    $this->query->where($this->getQuerySuffix($item) . '.' . $item, $searchedValue);
                 }
             }
         }
@@ -269,14 +270,14 @@ class CarQuoteService extends BaseService
     public function fillModelSkipProperties()
     {
         return [
-            "create" => "id,advisor_id,premium,paid_at,payment_status_id,plan_id,car_plan_provider_id,code",
+            "create" => "id,advisor_id,premium,paid_at,payment_status_id,plan_id,car_plan_provider_id,code,is_ecommerce",
             "list" => "additional_notes,email,mobile_no,first_name,last_name,currently_insured_with,premium,paid_at,payment_status_id,plan_id,car_plan_provider_id",
         ];
     }
 
     public function fillModelSearchProperties()
     {
-        return ["first_name", "last_name", "email", "mobile_no", "nationality_id", "payment_status_id", "code"];
+        return ["first_name", "last_name", "email", "mobile_no", "nationality_id", "payment_status_id", "code", "is_ecommerce"];
     }
 
     public function getQuotePlans($id)
