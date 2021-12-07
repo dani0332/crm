@@ -109,6 +109,46 @@
                                             <span class="text-danger">{{ $errors->first('last_name') }}</span>
                                         @endif
                                     </p>
+                            </div>
+                        </div>
+                        <div class="item form-group">
+                            <div class="col">
+                                <label class="col-form-label col-md-3 col-sm-3 label-align" for="nationality"><b>Nationality</b> <span class="required">*</span></label>
+                                <div class="col-md-6 col-sm-6">
+                                    <p class="label-align-center">
+                                        <select class="form-control" id='nationality' name='nationality'>
+                                            <option value=''></option>
+                                            @foreach($nationalityList as $nationality)
+                                                {{-- @if (old('nationality') == $nationality) --}}
+                                                    {{-- <option value="{{ $nationality }}" selected>{{ $nationality }}</option> --}}
+                                                {{-- @else --}}
+                                                    <option value="{{ $nationality }}" data-id="{{ $nationality }}">{{ $nationality }}</option>
+                                                {{-- @endif --}}
+                                            @endforeach
+                                            </select>
+                                        @if ($errors->has('last_name'))
+                                            <span class="text-danger">{{ $errors->first('last_name') }}</span>
+                                        @endif
+                                    </p>
+                            </div>
+                            <div class="col">
+                                <label class="col-form-label col-md-3 col-sm-3 label-align" for="year of birth"><b>Year of Birth</b> <span class="required">*</span></label>
+                                <div class="col-md-6 col-sm-6">
+                                    <p class="label-align-center">
+                                        <select class="form-control" id='year' name='year'>
+                                            <option value=''></option>
+                                            @foreach($yearsList as $year)
+                                                {{-- @if (old('year') == $year) --}}
+                                                    {{-- <option value="{{ $year }}" selected>{{ $year }}</option> --}}
+                                                {{-- @else --}}
+                                                    <option value="{{ $year }}" data-id="{{ $year }}">{{ $year }}</option>
+                                                {{-- @endif --}}
+                                            @endforeach
+                                            </select>
+                                        @if ($errors->has('last_name'))
+                                            <span class="text-danger">{{ $errors->first('last_name') }}</span>
+                                        @endif
+                                    </p>
                                     <div style="text-align: right;"><button type="submit" class="btn btn-primary btn-sm" id="return_to_view">Update & Verify</button></div>
                             </div>
                         </div>
