@@ -10,15 +10,16 @@ class TeamService extends BaseService
     protected $query;
     public function __construct()
     {
-        $this->query = "SELECT t.id, t.uuid, t.name AS name FROM teams t ";
+        $this->query = DB::table('teams as t')
+                        ->select('t.id', 't.uuid', 't.name AS name');
     }
 
     public function getEntity($id){
-        return DB::select($this->query.' where t.uuid = "'. $id.'" GROUP BY t.name,t.id,t.uuid');
+        return $this->query->where('t.uuid', $id)->first();
     }
 
     public function getEntityPlain($id){
-        return Team::find($id);
+        return Team::where('id',$id)->first();
     }
 
 	public function saveTeams(Request $request)
@@ -35,18 +36,15 @@ class TeamService extends BaseService
 
     public function getGridData($searchProperties, $request){
 
-        $count = 0;
         if ($request->ajax()) {
             foreach ($searchProperties as $item) {
-                if(!empty($request[$item])){
-                    $suffix = 't';
-                    $this->query = $this->query. ($count > 0 ? ' and' : ' where ').$suffix.'.'.$item.'='."'".$request[$item]."'";
-                    $count++;
+                if (!empty($request[$item])) {
+                    $this->query->where('t.' . $item, $request[$item]);
                 }
             }
         }
-        $this->query = $this->query .' GROUP BY t.name,t.id,t.uuid ORDER BY t.id DESC ';
-        return DB::select($this->query);
+        $this->query->orderBy('t.created_at', 'DESC');
+        return $this->query;
     }
 
 

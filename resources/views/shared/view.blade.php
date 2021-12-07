@@ -38,29 +38,30 @@
             for (var i = 0; i < modelPropertiesArray.length; i++) {
 
                 if (!skipPropertiesArray.includes(modelPropertiesArray[i].name)) {
-                    console.log(modelPropertiesArray[i].name);
                     if (modelPropertiesArray[i].name == 'id') {
                         var isManagerOrDeputy = $("#isManagerOrDeputy").val();
-                        if (isManagerOrDeputy === "1" && allowedModelTypes.includes(model.modelType)) {
-                            dataTableColumns.push({
+                        if (isManagerOrDeputy === "1" && allowedModelTypes.includes(model.modelType.toLocaleLowerCase())) {
+                        dataTableColumns.push(
+                            {
                                 data: "id",
                                 name: "id",
-                                render: function(data, type, row, meta) {
-                                    return (
-                                        '<input type="checkbox" id="tmLeadID" class="tmleadCheckbox" name="tmLeadID" value="' +
-                                        data + '">'
-                                    );
+                                render: function (data, type, row, meta) {
+
+                                        return (
+                                            '<input type="checkbox" id="tmLeadID" class="tmleadCheckbox" name="tmLeadID" value="' + data + '">'
+                                        );
+
                                 },
                             });
                         }
-                        dataTableColumns.push({
-                            data: modelPropertiesArray[i].name,
-                            name: 'id',
-                            render: function(data, type, row) {
-                                var url = '/quotes/' + model.modelType.toLowerCase();
-                                return "<a href='" + url + '/' + row.uuid + "'>" + row.id + "</a>"
-                            }
-                        });
+                            dataTableColumns.push({
+                                data: 'id',
+                                name: 'id',
+                                render: function (data, type, row) {
+                                    var url = '/quotes/' + model.modelType.toLowerCase();
+                                    return "<a href='" + url + '/' + row.uuid + "'>" + row.id + "</a>"
+                                }
+                            });
                     } else {
                         if (modelPropertiesArray[i].value.indexOf('select') > -1) {
                             dataTableColumns.push({
@@ -78,11 +79,13 @@
             }
             var vehicleTypeDataTable = $("#dtBasicExample").DataTable({
                 ordering: false,
-                info: false,
+                info: true,
                 searching: false,
                 dom: 'rBfrtip',
                 bLengthChange: false,
                 serverSide: true,
+                paging: true,
+                processing: true,
                 ajax: {
                     url: '/quotes/' + model.modelType.toLowerCase(),
                     data: function(d) {
@@ -193,11 +196,11 @@
         <div class="col-md-12 col-sm-12 ">
             <div class="x_panel">
                 <div class="x_title">
-                    <h2>{{ str_contains(strtolower($model->modelType), 'team') ? 'Team' : (str_contains(strtolower($model->modelType), 'leadstatus') ? 'Lead Status' : $model->modelType) }} List</h2>
+                    <h2>{{ str_contains(strtolower($model->modelType), 'teams') ? 'Teams' : (str_contains(strtolower($model->modelType), 'leadstatus') ? 'Lead Status' : $model->modelType) }} List</h2>
                     <ul class="nav navbar-right panel_toolbox">
                         @if (Auth::user()->hasRole('ADMIN') || Auth::user()->hasRole($model->modelType.'_MANAGER') || Auth::user()->hasRole($model->modelType.'_DEPUTY') ||Auth::user()->hasRole($model->modelType.'_ADVISOR'))
                         <li><a href="{{ url('quotes/' . strtolower($model->modelType) . '/create') }}"
-                             class="btn btn-warning btn-sm">Create {{ str_contains(strtolower($model->modelType), 'team') ? 'Team' : (str_contains(strtolower($model->modelType), 'leadstatus') ? 'Lead Status' : 'Lead') }}</a></li>
+                             class="btn btn-warning btn-sm">Create {{ str_contains(strtolower($model->modelType), 'teams') ? 'Team' : (str_contains(strtolower($model->modelType), 'leadstatus') ? 'Lead Status' : 'Lead') }}</a></li>
                         @endif
 
                     </ul>
@@ -248,7 +251,7 @@
                                         </span>
                                         <select @if (strpos($value, 'multiple')) multiple="multiple" class="form-control select2 select-roles" @else class="form-control" @endif id="{{ $property }}"
                                             name="{{ $property }}">
-                                            <option value="">{{ 'Please select ' . str_replace('_', ' ', $property) }}
+                                            <option value="">{{ 'Please select ' . str_replace('id', ' ', str_replace('_', ' ', $property)) }}
                                             </option>
                                             @foreach ($dropdownSource[$property] as $item)
                                                 <option value="{{ $item->id }}">
@@ -258,6 +261,34 @@
                                         </select>
                                         @if ($errors->has($property))
                                             <span class="text-danger">{{ $errors->first($property) }}</span>
+                                        @endif
+                                    @endif
+                                    @if(strpos($value, 'static') !== false )
+                                    <span style="font-size: 11px;" class="col-form-label col-md-6 col-sm-6" for="name">
+                                        @if (strpos($value, 'title'))
+                                            {{ strtoupper($customTitles[$property]) }}
+                                        @else
+                                            {{ str_replace('_', ' ', strtoupper($property)) }}
+                                        @endif
+                                        @if (strpos($value, 'required') == true)
+                                            <span class='required'>*</span>
+                                        @endif
+                                    </span>
+                                        @php
+                                            $propertyLastIndex = explode('|', $model->properties[$property]);
+                                            $staticOptionString = end($propertyLastIndex);
+                                            $staticOptions = explode(',', $staticOptionString);
+                                        @endphp
+
+                                        <select @if(strpos($value, 'multiple')) name="{{$property.'[]'}}" multiple="multiple" class="form-control select2 select-roles" @else class="form-control" name="{{$property}}" @endif id="{{$property}}" >
+                                            <option value="">{{ 'Please select ' . str_replace('id', ' ', str_replace('_', ' ', $property)) }}</option>
+                                            @foreach($staticOptions as $item)
+
+                                             <option value="{{ $item }}">{{ $item }}</option>
+                                            @endforeach
+                                        </select>
+                                        @if ($errors->has($property))
+                                        <span class="text-danger">{{ $errors->first($property) }}</span>
                                         @endif
                                     @endif
                 </div>
@@ -311,7 +342,7 @@
                             </div>
                         </div>
                     </div>
-                    <input type="hidden" id="modelType" name="modelType" value="">
+                    <input type="hidden" id="modelType" name="modelType" value={{strtolower($model->modelType)}}>
                     <input type="hidden" id="displayTmLeadsDownloadCsvIcon" name="displayTmLeadsDownloadCsvIcon" value="">
                     <input type="hidden" id="selectTmLeadId" name="selectTmLeadId" value="">
                     <input type="hidden" id="isManagerOrDeputy" name="isManagerOrDeputy"
@@ -320,7 +351,7 @@
                         width="100%">
                         <thead>
                             <tr>
-                                @if ($isManagerORDeputy == '1' && str_contains('home,health,life,business,travel,car', $model->modelType))
+                                @if ($isManagerORDeputy == '1' && str_contains('home,health,life,business,travel,car', strtolower($model->modelType)))
                                     <th style="width: 15px;"><input type="checkbox" id="checkAllTmLeads"
                                             name="checkAllTmLeads" value=""></th>
                                 @endif

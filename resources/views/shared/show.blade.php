@@ -47,7 +47,7 @@
                                             @php
                                                 $propertyName = $property.'_text';
                                             @endphp
-                                            <p class="label-align-center">{{ $record[0]->$propertyName}}</p>
+                                            <p class="label-align-center">{{ $record->$propertyName}}</p>
                                         </div>
                                     @endif
                                 @else
@@ -57,7 +57,7 @@
                                     </div>
                                     @else
                                         <div class="col-md-6 col-sm-6">
-                                            <p class="label-align-center">{{ $record[0]->$property }}</p>
+                                            <p class="label-align-center">{{ $record->$property }}</p>
                                         </div>
                                     @endif
                                 @endif
@@ -77,7 +77,7 @@
                         <div class="col-auto mr-auto"></div>
                         <div class="col-auto">
                             @if (Auth::user()->hasRole('ADMIN') || Auth::user()->hasRole($model->modelType.'_MANAGER') || Auth::user()->hasRole($model->modelType.'_DEPUTY') ||Auth::user()->hasRole($model->modelType.'_ADVISOR'))
-                            <a id="texta" href="{{ url('quotes/'.strtolower($model->modelType).'/'.$record[0]->uuid.'/edit') }}" class='btn btn-warning btn-sm'>Edit</a>
+                            <a id="texta" href="{{ url('quotes/'.strtolower($model->modelType).'/'.$record->uuid.'/edit') }}" class='btn btn-warning btn-sm'>Edit</a>
                             @endif
                         </div>
                     </div>
@@ -107,59 +107,20 @@
         </div>
     </div>
 
-    <form method="post" action="#" class="form-horizontal form-label-left" role="form" data-parsley-validate=""novalidate="" autocomplete="off">
-        {{csrf_field()}}
-        @method('GET')
-        <div class="row">
-            <div class="col-md-12 col-sm-12">
-                <div class="x_panel">
-                    <div class="x_title">
-                        <h2>Available Plans</h2>
-                        <div class="clearfix"></div>
-                    </div>
-                    @if(gettype($listQuotePlans) != 'string')
-                    <div class="x_content">
-                        <div class="row">
-                            <div class="col-auto mr-auto"></div>
-                            <span class="alert alert-success" id="quotePlansGenerateMsg" style="display: none">Copied</span>
-                            <div class="col-auto">
-                                <input type="hidden" id="quotePlansGenerateUrl" name="quotePlansGenerateUrl" value="{{ $ecomCarInsuranceQuoteUrl.$record[0]->uuid }}">
-                                <button type="button" id="quotePlansGenerateButton" name="quotePlansGenerateButton" class="btn btn-warning btn-sm">Copy link</button>
-                            </div>
-                        </div>
-                        <div id="quote-plans">
-                            <table id="datatable" class="table table-striped jambo_table" style="width:100%">
-                                <thead>
-                                    <tr>
-                                        <th>Provider Name</th>
-                                        <th>Plan Name</th>
-                                        <th>Repair Type</th>
-                                        <th>Actual Premium</th>
-                                        <th>Premium with VAT</th>
-                                        <th>Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach ($listQuotePlans as $key => $quotePlan)
-                                        <tr>
-                                            <td>{{ ucwords($quotePlan->providerName) }}</td>
-                                            <td>{{ ucwords($quotePlan->name) }}</td>
-                                            <td>{{ $quotePlan->repairType }}</td>
-                                            <td>{{ $quotePlan->actualPremium }}</td>
-                                            <td>{{ $quotePlan->actualPremium + $quotePlan->vatPremium }}</td>
-                                            <td><a href="#" planDetailUrl="{{ $record[0]->uuid }}/plan_details/{{ $quotePlan->id }}" data-toggle="modal" data-target="#quotePlanModal" class="quotePlanModalPopup">View</a></td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        </div>
-                        @else
-                        <h4>{{ $listQuotePlans }}</h4>
-                        @endif
-                    </div>
-                </div>
-            </div>
-        </div>
-    </form>
+    <x-car-ecom-detail
+    :carQuotePremium="$record->premium"
+    :carQuotePaidAt="$record->paid_at"
+    :carQuotePaymentStatus="$record->payment_status_id_text"
+    :carQuotePlanName="$record->plan_id_text"
+    :carQuotePlanAddons="$carQuotePlanAddons"
+    :carQuotePlanProvider="$record->car_plan_provider_id_text"
+    />
+
+    <x-car-quote-plans
+        :listQuotePlans="$listQuotePlans"
+        :uuid="$ecomCarInsuranceQuoteUrl.$record->uuid"
+        :uuidModal="$record->uuid"
+    />
+
 @endif
 @endsection

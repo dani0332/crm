@@ -8,6 +8,8 @@ use App\Services\CRUDService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use DataTables;
+use Carbon\Carbon;
+use Config;
 
 class MyLeadsController extends Controller
 {
@@ -110,6 +112,7 @@ class MyLeadsController extends Controller
 
     private function getMyLeadsByType($leadType)
     {
+        $format = Config::get('constants.datetime_format');
         $customersWithRelation = Customer::with([
             $leadType.'Quotes' => function($q) {
                 $q->where('advisor_id', '=', Auth::user()->id);
@@ -126,7 +129,7 @@ class MyLeadsController extends Controller
                         'uuid' => $item->uuid,
                         'clientName' => $item->first_name. ' ' .$item->last_name,
                         'leadStatus' => $item->quoteStatus != null ? $item->quoteStatus->first()->text : '',
-                        'createdAt' => date($item->created_at) ,
+                        'createdAt' => Carbon::parse($item->created_at)->format($format),
                         'assignedDate' => $item->{$leadType.'QuoteRequestDetail'} != null && $item->{$leadType.'QuoteRequestDetail'}->assignedBy != null ? $item->{$leadType.'QuoteRequestDetail'}->advisor_assigned_date : '',
                         'assignedBy' => $item->{$leadType.'QuoteRequestDetail'} != null && $item->{$leadType.'QuoteRequestDetail'}->assignedBy != null ? $item->{$leadType.'QuoteRequestDetail'}->assignedBy->name : '',
                         'leadSource' => $item->source,

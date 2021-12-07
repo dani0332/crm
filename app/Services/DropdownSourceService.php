@@ -5,11 +5,15 @@ namespace App\Services;
 use App\Models\BusinessInsuranceType;
 use App\Models\CarMake;
 use App\Models\CarModel;
+use App\Models\CarPlan;
+use App\Models\CarTypeInsurance;
+use App\Models\ClaimHistory;
 use App\Models\CurrencyType;
 use App\Models\Emirate;
 use App\Models\HealthCoverFor;
 use App\Models\HomeAccomodationType;
 use App\Models\HomePossessionType;
+use App\Models\InsuranceProvider;
 use App\Models\LeadStatus;
 use App\Models\LifeChildren;
 use App\Models\LifeInsuranceTenure;
@@ -20,6 +24,7 @@ use App\Models\Nationality;
 use App\Models\PaymentStatus;
 use App\Models\Regions;
 use App\Models\TravelCoverFor;
+use App\Models\UAELicenseHeldFor;
 use App\Models\User;
 use DB;
 use Faker\Provider\ar_SA\Payment;
@@ -128,8 +133,27 @@ class DropdownSourceService extends BaseService
             case 'business_type_of_insurance_id':
                 $data = BusinessInsuranceType::select('id', 'text')->get();
                 break;
+            case 'uae_license_held_for_id':
+                $data = UAELicenseHeldFor::select('id', 'text')->get();
+                break;
+            case 'emirate_of_registration_id':
+                $data = Emirate::select('id', 'text')->get();
+                break;
             case 'currently_insured_with':
-                //$data = BusinessInsuranceType::select('id','text')->get();
+                $data = InsuranceProvider::select('id','text')->get();
+                break;
+            case 'car_type_insurance_id':
+                $data = CarTypeInsurance::select('id','text')->get();
+                break;
+            case 'claim_history_id':
+                $data = ClaimHistory::select('id','text')->get();
+                break;
+            case 'plan_id':
+                $data = CarPlan::select('id','text')->get();
+                break;
+            case 'car_plan_provider_id':
+                $data = InsuranceProvider::select('id','text')->get();
+                break;
             case 'team_managers':
                 $data = User::select('users.id', 'users.name')
                     ->join('model_has_roles', 'model_has_roles.model_id', '=', 'users.id')

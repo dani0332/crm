@@ -13,39 +13,19 @@ class LifeQuoteService extends BaseService
 
     public function __construct()
     {
-        $this->query = "SELECT lqr.id
-                        ,lqr.uuid
-                        ,lqr.first_name
-                        ,lqr.last_name
-                        ,lqr.email
-                        ,lqr.mobile_no
-                        ,lqr.gender
-                        ,lqr.dob
-                        ,lqr.is_smoker
-                        ,lqr.others_info
-                        ,lqr.sum_insured_value
-                        ,lqr.sum_insured_currency_id
-                        ,ct.TEXT AS sum_insured_currency_id_text
-                        ,lqr.marital_status_id
-                        ,ms.TEXT AS marital_status_id_text
-                        ,lqr.purpose_of_insurance_id
-                        ,lip.TEXT AS purpose_of_insurance_id_text
-                        ,lqr.children_id
-                        ,lc.TEXT AS children_id_text
-                        ,lqr.tenure_of_insurance_id
-                        ,lit.TEXT AS tenure_of_insurance_id_text
-                        ,lqr.number_of_years_id
-                        ,liy.TEXT AS number_of_years_id_text
-                        ,lqr.nationality_id
-                        ,n.TEXT AS nationality_id_text
-                    FROM life_quote_request lqr
-                    LEFT OUTER JOIN currency_type ct ON ct.id = lqr.sum_insured_currency_id
-                    LEFT OUTER JOIN marital_status ms ON ms.id = lqr.marital_status_id
-                    LEFT OUTER JOIN life_insurance_purpose lip ON lip.id = lqr.purpose_of_insurance_id
-                    LEFT OUTER JOIN life_children lc ON lc.id = lqr.children_id
-                    LEFT OUTER JOIN life_insurance_tenure lit ON lit.id = lqr.tenure_of_insurance_id
-                    LEFT OUTER JOIN life_number_of_year liy ON liy.id = lqr.number_of_years_id
-                    LEFT OUTER JOIN nationality n ON n.id = lqr.nationality_id";
+        $this->query =DB::table('life_quote_request as lqr')
+                        ->select('lqr.id' ,'lqr.uuid' ,'lqr.first_name','lqr.last_name','lqr.email','lqr.mobile_no','lqr.gender','lqr.dob','lqr.is_smoker'
+                        ,'lqr.others_info','lqr.sum_insured_value','lqr.sum_insured_currency_id','ct.TEXT AS sum_insured_currency_id_text'
+                        ,'lqr.marital_status_id','ms.TEXT AS marital_status_id_text','lqr.purpose_of_insurance_id','lip.TEXT AS purpose_of_insurance_id_text'
+                        ,'lqr.children_id','lc.TEXT AS children_id_text','lqr.tenure_of_insurance_id','lit.TEXT AS tenure_of_insurance_id_text'
+                        ,'lqr.number_of_years_id','liy.TEXT AS number_of_years_id_text','lqr.nationality_id','n.TEXT AS nationality_id_text')
+                        ->leftJoin('currency_type as ct', 'ct.id', '=', 'lqr.sum_insured_currency_id')
+                        ->leftJoin('marital_status as ms', 'ms.id', '=', 'lqr.marital_status_id')
+                        ->leftJoin('life_insurance_purpose as lip', 'lip.id', '=', 'lqr.purpose_of_insurance_id')
+                        ->leftJoin('life_children as lc', 'lc.id', '=', 'lqr.children_id')
+                        ->leftJoin('life_insurance_tenure as lit', 'lit.id', '=', 'lqr.tenure_of_insurance_id')
+                        ->leftJoin('life_number_of_year as liy', 'liy.id', '=', 'lqr.number_of_years_id')
+                        ->leftJoin('nationality as n', 'n.id', '=', 'lqr.nationality_id');
     }
     public function saveLifeQuote(Request $request)
     {
@@ -68,17 +48,17 @@ class LifeQuoteService extends BaseService
             "othersInfo" => $request->others_info,
         );
         if(Auth::user()->hasRole("LIFE_ADVISOR")) $dataArr['advisorId'] = Auth::users()->id;
-        return $this->sendCAPIRequest('/api/v1-save-home-quote', $dataArr);
+        return CapiRequestService::sendCAPIRequest('/api/v1-save-home-quote', $dataArr);
     }
 
     public function getEntity($id)
     {
-        return DB::select($this->query . ' where lqr.uuid =  "' . $id.'"');
+        return $this->query->where('lqr.uuid', $id)->first();
     }
 
     public function getEntityPlain($id)
     {
-        return LifeQuote::where('uuid', $id);
+        return LifeQuote::where('id', $id)->first();
     }
     public function getLeadsForAssignment()
     {
@@ -86,44 +66,45 @@ class LifeQuoteService extends BaseService
     }
     public function getGridData($searchProperties, $request)
     {
-        $count = 0;
         if ($request->ajax()) {
             foreach ($searchProperties as $item) {
                 if (!empty($request[$item])) {
-                    $suffix = '';
-                    switch ($item) {
-                        case 'sum_insured_currency_id':
-                            $suffix = 'ct';
-                            break;
-                        case 'marital_status_id':
-                            $suffix = 'ms';
-                            break;
-                        case 'nationality_id':
-                            $suffix = 'n';
-                            break;
-                        case 'purpose_of_insurance_id':
-                            $suffix = 'lip';
-                            break;
-                        case 'children_id':
-                            $suffix = 'lc';
-                            break;
-                        case 'tenure_of_insurance_id':
-                            $suffix = 'lit';
-                            break;
-                        case 'number_of_years_id':
-                            $suffix = 'liy';
-                            break;
-                        default:
-                            $suffix = 'lqr';
-                            break;
-                    }
-                    $this->query = $this->query . ($count == 0 ? ' where ' : ' and ') . $suffix . '.' . $item . '=' . "'" . $request[$item] . "'";
-                    $count++;
+                    $this->query->where($this->getQuerySuffix($item) . '.' . $item, $request[$item]);
                 }
             }
         }
+        $this->query->orderBy('lqr.created_at', 'DESC');
+        return $this->query;
+    }
 
-        return DB::select($this->query);
+    private function getQuerySuffix($item)
+    {
+        switch ($item) {
+            case 'sum_insured_currency_id':
+                return 'ct';
+                break;
+            case 'marital_status_id':
+                return 'ms';
+                break;
+            case 'nationality_id':
+                return 'n';
+                break;
+            case 'purpose_of_insurance_id':
+                return 'lip';
+                break;
+            case 'children_id':
+                return 'lc';
+                break;
+            case 'tenure_of_insurance_id':
+                return 'lit';
+                break;
+            case 'number_of_years_id':
+                return 'liy';
+                break;
+            default:
+                return 'lqr';
+                break;
+        }
     }
 
     public function updateLifeQuote(Request $request, $id)
@@ -148,34 +129,22 @@ class LifeQuoteService extends BaseService
 
     public function getLeads($CDBID, $email, $mobile_no, $lead_type)
     {
-        $isAdvisor = Auth::user()->hasRole(strtoupper($lead_type) . '_ADVISOR');
-        $query = "SELECT hqr.id
-                            ,hqr.uuid
-                            ,hqr.first_name
-                            ,hqr.last_name
-                            ,hqr.created_at
-                            ,u.name AS advisor_name
-                            ,'Life' as lead_type
-                            ,u.id as advisor_id
-                            ,qs.text as lead_status
-                        FROM life_quote_request hqr
-                        LEFT OUTER JOIN users u ON u.id = hqr.advisor_id
-                        LEFT OUTER JOIN quote_status qs ON qs.id = hqr.quote_status_id
-                        ORDER BY u.name";
-        $count = 0;
+        $query = DB::table('life_quote_request as lqr')
+                    ->select('lqr.id','lqr.uuid','lqr.first_name','lqr.last_name','lqr.created_at','u.name AS advisor_name',DB::raw("'Life' as lead_type")
+                    ,'u.id as advisor_id','qs.text as lead_status')
+                    ->leftJoin('users as u', 'u.id', '=', 'lqr.advisor_id')
+                    ->leftJoin('quote_status as qs', 'qs.id', '=', 'lqr.quote_status_id')
+                    ->orderBy('advisor_id', 'ASC');
         if (!empty($CDBID)) {
-            $query .= ' where hqr.id = ' . $CDBID;
-            $count++;
+            $query->where('lqr.id', '=', $CDBID);
         }
         if (!empty($email)) {
-            $query .= ($count == 0 ? ' where' : ' and '). ' hqr.email = ' . $email;
-            $count++;
+            $query->where('lqr.email', '=', $email);
         }
         if (!empty($mobile_no)) {
-            $query .= ($count == 0 ? ' where' : ' and '). ' hqr.mobile_no = ' . $mobile_no;
-            $count++;
+            $query->where('lqr.mobile_no', '=', $mobile_no);
         }
-        return DB::select($query);
+        return $query;
     }
 
     public function fillModelProperties()
@@ -254,32 +223,5 @@ class LifeQuoteService extends BaseService
     public function fillModelSearchProperties()
     {
         return ["email", 'first_name', 'last_name', 'nationality_id', 'region_cover_for_id', 'travel_cover_for_id'];
-    }
-
-    public function sendCAPIRequest($endpoint, $data)
-    {
-        $apiEndPoint = Config::get('constants.CENTRAL_API_ENDPOINT') . $endpoint;
-        $apiToken = Config::get('constants.CENTRAL_API_TOKEN');
-        $apiTimeout = Config::get('constants.CENTRAL_API_TIMEOUT');
-
-        $client = new \GuzzleHttp\Client();
-        $capiRequest = $client->post(
-            $apiEndPoint,
-            [
-                'headers' => ['Content-Type' => 'application/json', 'Accept' => 'application/json', 'x-api-token' => $apiToken],
-                'body' => json_encode($data),
-                'timeout' => $apiTimeout,
-            ]
-        );
-
-        $getStatusCode = $capiRequest->getStatusCode();
-
-        if ($getStatusCode == 200) {
-            $getContents = $capiRequest->getBody();
-            $getdecodeContents = json_decode($getContents);
-            return $getdecodeContents;
-        } else {
-            return "API failed";
-        }
     }
 }

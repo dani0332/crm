@@ -60,7 +60,7 @@ class LeadAssignmentController extends Controller
         $userTeams = Auth::user()->getUserTeams(Auth::user()->id);
         $userId = Auth::user()->getTeamUserIds();
         $assignToUsers = User::whereIn('id', explode(',', $userId))->get();
-        $gridData = $advisors = $insuranceTypes = [];
+        $advisors = $insuranceTypes = [];
         foreach ($userTeams as $teamName) {
             if (str_contains($this->quotTypes, strtolower($teamName))) {
                 array_push($insuranceTypes, $teamName);
@@ -68,20 +68,17 @@ class LeadAssignmentController extends Controller
         }
         if (isset($request->leadType) && !empty($request->leadType)) {
 
-            $mergedGridData = $this->crudService->getLeads('', '', '', strtolower($request->leadType));
+            $gridData = $this->crudService->getLeads('', '', '', strtolower($request->leadType));
             if ($request->ajax()) {
-                foreach ($mergedGridData as $rowItem) {
-                    if (!empty($request->assignedToId)) {
-                        $mergedGridData = collect($mergedGridData)->where('advisor_name', $request->assignedToId)->all();
-                    }
-                    if (!empty($request->startDate)) {
-                        $mergedGridData = collect($mergedGridData)->filter(function ($item) use ($request) {
-                            $createdDate = date('Y-m-d', strtotime($item->created_at));
-                            return $createdDate >= date($request->startDate) && $createdDate <= date($request->endDate);
-                        })->all();
-                    }
+                if (!empty($request->assignedToId))
+                {
+                    $gridData->orWhere('advisor_name', $request->assignedToId);
                 }
-                return DataTables::of(collect($mergedGridData)->sortBy('advisor_name')->toArray())
+                if (!empty($request->startDate))
+                {
+                    $gridData->whereBetween('created_at', [$request->startDate, $request->endDate]);
+                }
+                return DataTables::of($gridData->orderBy('created_at'))
                     ->addIndexColumn()
                     ->make(true);
             }

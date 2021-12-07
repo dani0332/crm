@@ -1621,7 +1621,6 @@ $(document).ready(function () {
     });
     dateRangePickerChange("", "");
     $(".x_panel transparent > .applyBtn, .ranges li").click(function () {
-        $(".loader").show();
         setTimeout(() => {
             var date = $("#reportrange span").html();
             var dateAsArray = date.split("-");
@@ -1709,60 +1708,56 @@ $(document).ready(function () {
         }, 1000);
 
     });
-    // $("#search-leads").reset(function (e) {
-    //     $(".loader").show();
-    //     searchLeadsTable.draw();
-    //     setTimeout(() => {
-    //         $(".loader").hide();
-    //     }, 1000);
-
-    // });
-});
-$('#car_make_value').on('change', function (e) {
-    var make_code = $("#car_make_value option:selected").attr('data-id');
-    $.get('/valuation/car-models?make_code=' + make_code, function (data) {
-        var carmodel = $('#car_model_value').empty();
-        carmodel.append('<option value="">Select</option>');
-        $.each(data, function (create, carmodelObj) {
-            var option = $('<option/>', { id: create, value: carmodelObj });
-            carmodel.append('<option value="' + carmodelObj.id + '">' + carmodelObj.text + '</option>');
+    $('#car_make_value').on('change', function (e) {
+        var make_code = $("#car_make_value option:selected").attr('data-id');
+        $.get('/valuation/car-models?make_code=' + make_code, function (data) {
+            var carmodel = $('#car_model_value').empty();
+            carmodel.append('<option value="">Select</option>');
+            $.each(data, function (create, carmodelObj) {
+                var option = $('<option/>', { id: create, value: carmodelObj });
+                carmodel.append('<option value="' + carmodelObj.id + '">' + carmodelObj.text + '</option>');
+            });
         });
     });
-});
-$('#car_model_value').on('change', function (e) {
-    var modelId = $("#car_model_value option:selected").val();
-    $.get('/valuation/car-model-detail?modelId=' + modelId, function (data) {
-        var cartrim = $('#car_trim_value').empty();
-        cartrim.append('<option value="">Select</option>');
-        if (data.length == 0) {
-            cartrim.append('<option value="">No Trim Available</option>');
-            $('#car_trim_value option:eq(1)').prop('selected', true);
-        }
-        $.each(data, function (create, cartrimObj) {
-            var option = $('<option/>', { id: create, value: cartrimObj });
-            cartrim.append('<option value="' + cartrimObj.id + '">' + cartrimObj.text + '</option>');
+    $('#car_model_value').on('change', function (e) {
+        var modelId = $("#car_model_value option:selected").val();
+        $.get('/valuation/car-model-detail?modelId=' + modelId, function (data) {
+            var cartrim = $('#car_trim_value').empty();
+            cartrim.append('<option value="">Select</option>');
+            if (data.length == 0) {
+                cartrim.append('<option value="">No Trim Available</option>');
+                $('#car_trim_value option:eq(1)').prop('selected', true);
+            }
+            $.each(data, function (create, cartrimObj) {
+                var option = $('<option/>', { id: create, value: cartrimObj });
+                cartrim.append('<option value="' + cartrimObj.id + '">' + cartrimObj.text + '</option>');
+            });
         });
     });
-});
 
-$(document).on('click', '.delete', function () {
-    var route = $(this).attr('date-route');
-    $('#delete-form').attr('action', route);
-    $('#exampleModal').modal('show');
+    $(document).on('click', '.delete', function () {
+        var route = $(this).attr('date-route');
+        $('#delete-form').attr('action', route);
+        $('#exampleModal').modal('show');
 
-});
-
-function dateRangePickerChange(startDate, endDate) {
-    $.ajax({
-        url: config.routes.load_dashboard_stats,
-        method: "POST",
-        data: { startDate, endDate, _token: config._token },
-        success: function (data) {
-            console.log("request " + data);
-            $(".customer-count").html(data.totalCustomers);
-            $(".carquote-count").html(data.totalCarQuotes);
-            $(".duration").html(startDate + " - " + endDate);
-            $(".loader").hide();
-        },
     });
-}
+
+    function dateRangePickerChange(startDate, endDate) {
+        $(".loader").show();
+        $.ajax({
+            url: config.routes.load_dashboard_stats,
+            method: "POST",
+            data: { startDate, endDate, _token: config._token },
+            success: function (data) {
+                console.log("request ", data);
+                $(".customer-count").html(data.totalCustomers);
+                $(".carquote-count").html(data.totalCarQuotes);
+                $(".ecomleads-count").html(data.totalEcommerceLeads);
+                $(".fakeleads-count").html(data.totalFakeLeads);
+                $(".duration").html(startDate + " - " + endDate);
+                $(".loader").hide();
+            },
+        });
+    }
+});
+
