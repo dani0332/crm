@@ -47,8 +47,9 @@ class TravelQuoteService extends BaseService
         $query = DB::table('travel_quote_request as tqr')
                     ->select('tqr.id','tqr.uuid','tqr.first_name','tqr.last_name','tqr.created_at','u.name AS advisor_name',DB::raw("'Travel' as lead_type")
                     ,'u.id as advisor_id','qs.text as lead_status')
-                    ->Join('users as u', 'u.id', '=', 'tqr.advisor_id')
-                    ->Join('quote_status as qs', 'qs.id', '=', 'tqr.quote_status_id');
+                    ->leftJoin('users as u', 'u.id', '=', 'tqr.advisor_id')
+                    ->leftJoin('quote_status as qs', 'qs.id', '=', 'tqr.quote_status_id')
+                    ->orderBy('advisor_id', 'ASC');
         if (!empty($CDBID)) {
             $query->where('tqr.id', '=', $CDBID);
         }

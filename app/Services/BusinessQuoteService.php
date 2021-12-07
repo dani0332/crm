@@ -35,9 +35,9 @@ class BusinessQuoteService extends BaseService
         $query = DB::table('business_quote_request as bqr')
                     ->select('bqr.id','bqr.uuid','bqr.first_name','bqr.last_name','bqr.created_at','u.name AS advisor_name',DB::raw("'Business' as lead_type")
                     ,'u.id as advisor_id','qs.text as lead_status')
-                    ->Join('users as u', 'u.id', '=', 'bqr.advisor_id')
-                    ->Join('quote_status as qs', 'qs.id', '=', 'bqr.quote_status_id')
-                    ->orderBy('u.name', 'ASC');
+                    ->leftJoin('users as u', 'u.id', '=', 'bqr.advisor_id')
+                    ->leftJoin('quote_status as qs', 'qs.id', '=', 'bqr.quote_status_id')
+                    ->orderBy('advisor_id', 'ASC');
         if (!empty($CDBID)) {
            $query->where('bqr.id', '=', $CDBID);
         }
