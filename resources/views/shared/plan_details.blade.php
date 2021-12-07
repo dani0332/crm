@@ -135,7 +135,7 @@
                             <table cellpadding="3" cellspacing="3">
                                 <tr>
                                     <td>
-                                        <a href="{{ $listQuotePlanBenefitsPolicyDetails }}" target="_blank">Click here</a>
+                                        <a href="{{ $listQuotePlanBenefitsPolicyDetailLink }}" target="_blank">Click here</a>
                                     </td>
                                 </tr>
                             </table>
