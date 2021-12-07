@@ -135,22 +135,10 @@
                             <table cellpadding="3" cellspacing="3">
                                 <tr>
                                     <td>
-                                        <table cellpadding="3" cellspacing="3">
-                                            @foreach ($listQuotePlanBenefitsPolicyDetails as $key => $listQuotePlanBenefitsPolicyDetail)
-                                                <tr><td style="width: 300px;">{{ ucwords($listQuotePlanBenefitsPolicyDetail->text) }}</td>
-                                                    <td>{{ ucwords($listQuotePlanBenefitsPolicyDetail->value) }}</td></tr>
-                                            @endforeach
-                                        </table>
+                                        <a href="{{ $listQuotePlanBenefitsPolicyDetails }}" target="_blank">Click here</a>
                                     </td>
                                 </tr>
                             </table>
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-auto mr-auto"></div>
-                        <div class="col-auto">
-                            {{-- <a id="texta" href="{{ url('quotes/'.strtolower($model->modelType).'/'.$record->id.'/edit') }}" class='btn btn-warning btn-sm'>Edit</a> --}}
                         </div>
                     </div>
                 </div>
