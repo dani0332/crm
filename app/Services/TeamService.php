@@ -11,8 +11,7 @@ class TeamService extends BaseService
     public function __construct()
     {
         $this->query = DB::table('teams as t')
-                        ->select('t.id', 't.uuid', 't.name AS name')
-                        ->groupBy('t.id', 't.name', 't.uuid');
+                        ->select('t.id', 't.uuid', 't.name AS name');
     }
 
     public function getEntity($id){

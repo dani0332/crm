@@ -132,8 +132,9 @@ class LifeQuoteService extends BaseService
         $query = DB::table('life_quote_request as lqr')
                     ->select('lqr.id','lqr.uuid','lqr.first_name','lqr.last_name','lqr.created_at','u.name AS advisor_name',DB::raw("'Life' as lead_type")
                     ,'u.id as advisor_id','qs.text as lead_status')
-                    ->Join('users as u', 'u.id', '=', 'lqr.advisor_id')
-                    ->Join('quote_status as qs', 'qs.id', '=', 'lqr.quote_status_id');
+                    ->leftJoin('users as u', 'u.id', '=', 'lqr.advisor_id')
+                    ->leftJoin('quote_status as qs', 'qs.id', '=', 'lqr.quote_status_id')
+                    ->orderBy('advisor_id', 'ASC');
         if (!empty($CDBID)) {
             $query->where('lqr.id', '=', $CDBID);
         }

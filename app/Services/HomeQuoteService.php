@@ -87,8 +87,9 @@ class HomeQuoteService extends BaseService
         $query = DB::table('home_quote_request as hqr')
                     ->select('hqr.id','hqr.uuid','hqr.first_name','hqr.last_name','hqr.created_at','u.name AS advisor_name',DB::raw("'Home' as lead_type")
                     ,'u.id as advisor_id','qs.text as lead_status')
-                    ->Join('users as u', 'u.id', '=', 'hqr.advisor_id')
-                    ->Join('quote_status as qs', 'qs.id', '=', 'hqr.quote_status_id');
+                    ->leftJoin('users as u', 'u.id', '=', 'hqr.advisor_id')
+                    ->leftJoin('quote_status as qs', 'qs.id', '=', 'hqr.quote_status_id')
+                    ->orderBy('advisor_id', 'ASC');
         if (!empty($CDBID)) {
             $query->where('hqr.id', '=', $CDBID);
         }

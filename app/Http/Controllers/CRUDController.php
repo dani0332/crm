@@ -173,6 +173,7 @@ class CRUDController extends Controller
 
             $listQuotePlans = '';
             $quotePlans = $this->carQuoteService->getQuotePlans($id);
+            $carQuotePlanAddons = $this->carQuoteService->getCarQuotePlanAddons($id);
 
             if (gettype($quotePlans) != 'string') {
                 $listQuotePlans = $quotePlans->quotes->plans;
@@ -182,7 +183,7 @@ class CRUDController extends Controller
 
             $ecomCarInsuranceQuoteUrl = Config::get('constants.ECOM_CAR_INSURANCE_QUOTE_URL');
 
-            return view('shared.show', compact(['record', 'model', 'customTitles', 'listQuotePlans', 'customTableList','ecomCarInsuranceQuoteUrl']));
+            return view('shared.show', compact(['record', 'model', 'customTitles', 'listQuotePlans', 'customTableList','ecomCarInsuranceQuoteUrl','carQuotePlanAddons']));
         } else {
             return view('shared.show', compact(['record', 'model', 'customTitles', 'customTableList']));
         }
@@ -253,14 +254,16 @@ class CRUDController extends Controller
 
     private function setModelType(Request $request)
     {
-        if (strpos($request->fullUrl(), 'health')) $this->genericModel->modelType = 'Health';
-        if (strpos($request->fullUrl(), 'travel')) $this->genericModel->modelType = 'Travel';
-        if (strpos($request->fullUrl(), 'teams')) $this->genericModel->modelType = 'Teams';
-        if (strpos($request->fullUrl(), 'car')) $this->genericModel->modelType = 'Car';
-        if (strpos($request->fullUrl(), 'life')) $this->genericModel->modelType = 'Life';
-        if (strpos($request->fullUrl(), 'home')) $this->genericModel->modelType = 'Home';
-        if (strpos($request->fullUrl(), 'business')) $this->genericModel->modelType = 'Business';
-        if (strpos($request->fullUrl(), 'leadstatus')) $this->genericModel->modelType = 'LeadStatus';
+        $url = strpos($request->fullUrl(), '?') ? explode('?', $request->fullUrl())[0] : $request->fullUrl();
+        if (strpos($url, 'health')) $this->genericModel->modelType = 'Health';
+        if (strpos($url, 'travel')) $this->genericModel->modelType = 'Travel';
+        if (strpos($url, 'teams')) $this->genericModel->modelType = 'Teams';
+        if (strpos($url, 'car')) $this->genericModel->modelType = 'Car';
+        if (strpos($url, 'life')) $this->genericModel->modelType = 'Life';
+        if (strpos($url, 'home')) $this->genericModel->modelType = 'Home';
+        if (strpos($url, 'business')) $this->genericModel->modelType = 'Business';
+        if (strpos($url, 'leadstatus')) $this->genericModel->modelType = 'LeadStatus';
+
     }
 
     private function fillModelByModelType($type, Request $request)
@@ -307,7 +310,7 @@ class CRUDController extends Controller
                     $listQuotePlanBenefitsExclusions = $listQuotePlan->benefits->exclusion;
                     $listQuotePlanBenefitsFeatures = $listQuotePlan->benefits->feature;
                     $listQuotePlanBenefitsRsas = $listQuotePlan->benefits->roadSideAssistance;
-                    $listQuotePlanBenefitsPolicyDetails = $listQuotePlan->benefits->policyDetail;
+                    $listQuotePlanBenefitsPolicyDetails = $listQuotePlan->policyWordings;
 
                     foreach ($listQuotePlanAddonss as $listQuotePlanAddon) {
                         $listQuotePlanAddons[] = $listQuotePlanAddon; // Get Addons Names
@@ -317,13 +320,16 @@ class CRUDController extends Controller
                             $listQuotePlanAddonPrices[] = $listQuotePlanAddonsOptions->price;
                         }
                     }
+                    foreach ($listQuotePlanBenefitsPolicyDetails as $listQuotePlanBenefitsPolicyDetail) {
+                        $listQuotePlanBenefitsPolicyDetailLink = $listQuotePlanBenefitsPolicyDetail->link;
+                    }
                 }
             }
             return view('shared.plan_details', compact([
                 'listQuotePlanName', 'providerCode', 'providerName', 'repairType',
                 'actualPremium', 'discountPremium', 'listQuotePlanAddons', 'listQuotePlanAddonValues', 'listQuotePlanBenefitsInclusions',
                 'listQuotePlanBenefitsExclusions', 'listQuotePlanBenefitsFeatures', 'listQuotePlanBenefitsRsas',
-                'listQuotePlanBenefitsPolicyDetails', 'listQuotePlanAddonPrices'
+                'listQuotePlanBenefitsPolicyDetailLink', 'listQuotePlanAddonPrices'
             ]));
         }
     }
