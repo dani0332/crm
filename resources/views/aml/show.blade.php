@@ -127,7 +127,7 @@
                         <td>{{ $amlResult->alias }}</td>
                         <td>{{ $amlResult->gender }}</td>
                         <td>{{ $amlResult->dob }}</td>
-                        @if ($amlResult->yobMatch)
+                        @if (isset($amlResult->yobMatch))
                             @if ($amlResult->yobMatch == 1)
                                 <td>True</td>
                             @else 
@@ -138,7 +138,7 @@
                         @endif
                         <td>{{ $amlResult->pob }}</td>
                         <td>{{ $amlResult->nationality }}</td>
-                        @if ($amlResult->nationalityMatch)
+                        @if (isset($amlResult->nationalityMatch))
                             @if ($amlResult->nationalityMatch == 1)
                                 <td>True</td>
                             @else 
