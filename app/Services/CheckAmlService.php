@@ -20,7 +20,7 @@ use Auth;
 
 class CheckAmlService
 {
-    public function checkAml($firstName,$lastName,$quoteRequestId,$quoteTypeId,$isEmailSendingEnabled)
+    public function checkAml($firstName,$lastName,$quoteRequestId,$quoteTypeId,$isEmailSendingEnabled, $nationality, $yob)
     {
         $amlSearchEndPoint = Config::get('constants.AML_SEARCH_API_ENDPOINT');
 
@@ -28,7 +28,7 @@ class CheckAmlService
         $appUrl = env('APP_URL');
         $amlUrl = $appUrl.'/kyc/aml/'.$quoteTypeId.'/details/'.$quoteRequestId;
 
-        $dataArr = array("search" => $firstName." ".$lastName,"quoteRequestId" => $quoteRequestId,"quoteTypeId" => $quoteTypeId);
+        $dataArr = array("search" => $firstName." ".$lastName,"quoteRequestId" => $quoteRequestId,"quoteTypeId" => $quoteTypeId,"nationality" => $nationality,"yob" => $yob);
         $dataArrProc = json_encode($dataArr);
 
         $chAml = Http::contentType("application/json")->send('POST',$amlSearchEndPoint, ['body' => $dataArrProc]);

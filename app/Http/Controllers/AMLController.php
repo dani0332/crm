@@ -358,6 +358,8 @@ class AMLController extends Controller
         $quoteUpdate = $updateQuote;
         $firstName = ucwords(strtolower($request->first_name));
         $lastName = ucwords(strtolower($request->last_name));
+        $nationality = $request->nationality;
+        $yob = $request->yob;
         $quoteUpdate->first_name = $firstName;
         $quoteUpdate->last_name = $lastName;
 
@@ -368,7 +370,7 @@ class AMLController extends Controller
 
         $quoteUpdate->save();
 
-        $this->checkAmlService->checkAml($firstName,$lastName,$quoteRequestId,$quoteTypeId, true);
+        $this->checkAmlService->checkAml($firstName,$lastName,$quoteRequestId,$quoteTypeId, true, $nationality, $yob);
 
         return redirect()->back()->with('success', 'Quote is updated');
     }

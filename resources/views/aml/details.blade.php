@@ -114,7 +114,7 @@
                 </div>
                 <div class="item form-group">
                     <div class="col">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Phone Number"><b>Nationality</b></label>
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="nationality"><b>Nationality</b></label>
                         <div class="col-md-6 col-sm-6">
                             <p class="label-align-center">
                                 <select class="form-control" id='nationality' name='nationality'>
@@ -123,7 +123,7 @@
                                         {{-- @if (old('nationality') == $nationality) --}}
                                             {{-- <option value="{{ $nationality }}" selected>{{ $nationality }}</option> --}}
                                         {{-- @else --}}
-                                            <option value="{{ $nationality }}" data-id="{{ $nationality }}">{{ $nationality }}</option>
+                                            <option value="{{ $nationality }}">{{ $nationality }}</option>
                                         {{-- @endif --}}
                                     @endforeach
                                     </select>
@@ -134,21 +134,21 @@
                         </div>
                     </div>
                     <div class="col">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Email Address"><b>Year of Birth</b></label>
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="yob"><b>Year of Birth</b></label>
                         <div class="col-md-6 col-sm-6">
                             <p class="label-align-center">
-                                <select class="form-control" id='year' name='year'>
+                                <select class="form-control" id='yob' name='yob'>
                                     <option value=''></option>
                                     @foreach($yearsList as $year)
                                         {{-- @if (old('year') == $year) --}}
                                             {{-- <option value="{{ $year }}" selected>{{ $year }}</option> --}}
                                         {{-- @else --}}
-                                            <option value="{{ $year }}" data-id="{{ $year }}">{{ $year }}</option>
+                                            <option value="{{ $year }}">{{ $year }}</option>
                                         {{-- @endif --}}
                                     @endforeach
                                     </select>
-                                @if ($errors->has('year'))
-                                    <span class="text-danger">{{ $errors->first('year') }}</span>
+                                @if ($errors->has('yob'))
+                                    <span class="text-danger">{{ $errors->first('yob') }}</span>
                                 @endif
                             </p>
                             <div style="text-align: right;"><button type="submit" class="btn btn-primary btn-sm" id="return_to_view">Update & Verify</button></div>
