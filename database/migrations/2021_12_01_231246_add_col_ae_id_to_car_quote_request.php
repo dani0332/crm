@@ -14,7 +14,7 @@ class AddColAeIdToCarQuoteRequest extends Migration
     public function up()
     {
         Schema::table('car_quote_request', function (Blueprint $table) {
-            if(!Schema::hasColumn('car_quote_email_unique_link', 'oe_id')) {
+            if(!Schema::hasColumn('car_quote_request', 'oe_id')) {
                 $table->bigInteger('oe_id')->nullable()->unsigned();
                 $table->index('oe_id');
                 $table->foreign('oe_id')->references('id')->on('users');
