@@ -173,6 +173,7 @@ class CRUDController extends Controller
 
             $listQuotePlans = '';
             $quotePlans = $this->carQuoteService->getQuotePlans($id);
+            $carQuotePlanAddons = $this->carQuoteService->getCarQuotePlanAddons($id);
 
             if (gettype($quotePlans) != 'string') {
                 $listQuotePlans = $quotePlans->quotes->plans;
@@ -182,7 +183,7 @@ class CRUDController extends Controller
 
             $ecomCarInsuranceQuoteUrl = Config::get('constants.ECOM_CAR_INSURANCE_QUOTE_URL');
 
-            return view('shared.show', compact(['record', 'model', 'customTitles', 'listQuotePlans', 'customTableList','ecomCarInsuranceQuoteUrl']));
+            return view('shared.show', compact(['record', 'model', 'customTitles', 'listQuotePlans', 'customTableList','ecomCarInsuranceQuoteUrl','carQuotePlanAddons']));
         } else {
             return view('shared.show', compact(['record', 'model', 'customTitles', 'customTableList']));
         }
@@ -309,7 +310,7 @@ class CRUDController extends Controller
                     $listQuotePlanBenefitsExclusions = $listQuotePlan->benefits->exclusion;
                     $listQuotePlanBenefitsFeatures = $listQuotePlan->benefits->feature;
                     $listQuotePlanBenefitsRsas = $listQuotePlan->benefits->roadSideAssistance;
-                    $listQuotePlanBenefitsPolicyDetails = $listQuotePlan->benefits->policyDetail;
+                    $listQuotePlanBenefitsPolicyDetails = $listQuotePlan->policyDetails;
 
                     foreach ($listQuotePlanAddonss as $listQuotePlanAddon) {
                         $listQuotePlanAddons[] = $listQuotePlanAddon; // Get Addons Names
