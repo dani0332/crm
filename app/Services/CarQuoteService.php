@@ -31,15 +31,15 @@ class CarQuoteService extends BaseService
         ,'cqr.advisor_id','u.name AS advisor_id_text'
         ,'cqr.payment_status_id','ps.text AS payment_status_id_text')
         ->leftJoin('nationality as n', 'n.id', '=', 'cqr.nationality_id')
-        ->Join('car_make as cmake', 'cmake.id', '=', 'cqr.car_make_id')
+        ->leftJoin('car_make as cmake', 'cmake.id', '=', 'cqr.car_make_id')
         ->leftJoin('uae_license_held_for as ulhf', 'ulhf.id', '=', 'cqr.uae_license_held_for_id')
-        ->Join('car_model as cmodel', 'cmodel.id', '=', 'cqr.car_model_id')
+        ->leftJoin('car_model as cmodel', 'cmodel.id', '=', 'cqr.car_model_id')
         ->leftJoin('emirates as e', 'e.id', '=', 'cqr.emirate_of_registration_id')
         ->leftJoin('insurance_provider as ip', 'ip.id', '=', 'cqr.currently_insured_with')
         ->leftJoin('car_type_insurance as cti', 'cti.id', '=', 'cqr.car_type_insurance_id')
         ->leftJoin('claim_history as ch', 'ch.id', '=', 'cqr.claim_history_id')
         ->leftJoin('users as u', 'u.id', '=', 'cqr.advisor_id')
-        ->Join('payment_status as ps', 'ps.id', '=', 'cqr.payment_status_id');
+        ->leftJoin('payment_status as ps', 'ps.id', '=', 'cqr.payment_status_id');
     }
 
     public function saveCarQuote(Request $request)
@@ -225,8 +225,11 @@ class CarQuoteService extends BaseService
     public function getLeads($CDBID, $email, $mobile_no, $lead_type)
     {
         $query =  DB::table('car_quote_request as cqr')
-                ->select('cqr.id','cqr.first_name','cqr.last_name','cqr.created_at','u.name as advisor_name',DB::raw("'Car' as lead_type"))
-                ->leftJoin('users as u', 'u.id', '=', 'cqr.advisor_id');
+                    ->select('cqr.id','cqr.uuid','cqr.first_name','cqr.last_name','cqr.created_at','u.name AS advisor_name',DB::raw("'Car' as lead_type")
+                    ,'u.id as advisor_id','qs.text as lead_status')
+                    ->leftJoin('users as u', 'u.id', '=', 'cqr.advisor_id')
+                    ->leftJoin('quote_status as qs', 'qs.id', '=', 'cqr.quote_status_id')
+                    ->orderBy('advisor_id', 'ASC');
 
         if (!empty($CDBID)) {
            $query->where('cqr.CDBID', $CDBID);
