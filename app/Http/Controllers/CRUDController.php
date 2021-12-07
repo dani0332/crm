@@ -310,7 +310,7 @@ class CRUDController extends Controller
                     $listQuotePlanBenefitsExclusions = $listQuotePlan->benefits->exclusion;
                     $listQuotePlanBenefitsFeatures = $listQuotePlan->benefits->feature;
                     $listQuotePlanBenefitsRsas = $listQuotePlan->benefits->roadSideAssistance;
-                    $listQuotePlanBenefitsPolicyDetails = $listQuotePlan->policyDetails;
+                    $listQuotePlanBenefitsPolicyDetails = $listQuotePlan->policyWordings;
 
                     foreach ($listQuotePlanAddonss as $listQuotePlanAddon) {
                         $listQuotePlanAddons[] = $listQuotePlanAddon; // Get Addons Names
@@ -320,13 +320,16 @@ class CRUDController extends Controller
                             $listQuotePlanAddonPrices[] = $listQuotePlanAddonsOptions->price;
                         }
                     }
+                    foreach ($listQuotePlanBenefitsPolicyDetails as $listQuotePlanBenefitsPolicyDetail) {
+                        $listQuotePlanBenefitsPolicyDetailLink = $listQuotePlanBenefitsPolicyDetail->link;
+                    }
                 }
             }
             return view('shared.plan_details', compact([
                 'listQuotePlanName', 'providerCode', 'providerName', 'repairType',
                 'actualPremium', 'discountPremium', 'listQuotePlanAddons', 'listQuotePlanAddonValues', 'listQuotePlanBenefitsInclusions',
                 'listQuotePlanBenefitsExclusions', 'listQuotePlanBenefitsFeatures', 'listQuotePlanBenefitsRsas',
-                'listQuotePlanBenefitsPolicyDetails', 'listQuotePlanAddonPrices'
+                'listQuotePlanBenefitsPolicyDetailLink', 'listQuotePlanAddonPrices'
             ]));
         }
     }
