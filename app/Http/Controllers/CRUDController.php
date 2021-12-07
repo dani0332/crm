@@ -254,14 +254,16 @@ class CRUDController extends Controller
 
     private function setModelType(Request $request)
     {
-        if (strpos($request->fullUrl(), 'health')) $this->genericModel->modelType = 'Health';
-        if (strpos($request->fullUrl(), 'travel')) $this->genericModel->modelType = 'Travel';
-        if (strpos($request->fullUrl(), 'teams')) $this->genericModel->modelType = 'Teams';
-        if (strpos($request->fullUrl(), 'car')) $this->genericModel->modelType = 'Car';
-        if (strpos($request->fullUrl(), 'life')) $this->genericModel->modelType = 'Life';
-        if (strpos($request->fullUrl(), 'home')) $this->genericModel->modelType = 'Home';
-        if (strpos($request->fullUrl(), 'business')) $this->genericModel->modelType = 'Business';
-        if (strpos($request->fullUrl(), 'leadstatus')) $this->genericModel->modelType = 'LeadStatus';
+        $url = strpos($request->fullUrl(), '?') ? explode('?', $request->fullUrl())[0] : $request->fullUrl();
+        if (strpos($url, 'health')) $this->genericModel->modelType = 'Health';
+        if (strpos($url, 'travel')) $this->genericModel->modelType = 'Travel';
+        if (strpos($url, 'teams')) $this->genericModel->modelType = 'Teams';
+        if (strpos($url, 'car')) $this->genericModel->modelType = 'Car';
+        if (strpos($url, 'life')) $this->genericModel->modelType = 'Life';
+        if (strpos($url, 'home')) $this->genericModel->modelType = 'Home';
+        if (strpos($url, 'business')) $this->genericModel->modelType = 'Business';
+        if (strpos($url, 'leadstatus')) $this->genericModel->modelType = 'LeadStatus';
+
     }
 
     private function fillModelByModelType($type, Request $request)
