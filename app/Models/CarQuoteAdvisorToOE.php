@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\BaseModel;
+use App\Models\CarQuote;
 
 class CarQuoteAdvisorToOE extends BaseModel
 {
@@ -48,5 +49,18 @@ class CarQuoteAdvisorToOE extends BaseModel
 
     public function processGetDSL($filters) {
         return self::processGetBaseDSL($filters, false);
+    }
+
+    public function saveForm($request, $update = false) {
+        try{
+            if(self::where($request->all())->exists())
+                return $this->APIController->respondData(["message" => "This relation already exists."], 500);
+
+            CarQuote::where("advisor_id", $request->input('advisor_id'))->update(["oe_id" => $request->input('oe_id')]);
+            return parent::saveForm($request, $update);
+        }
+        catch(\Exception $e) {
+            return $e->getMessage();
+        }
     }
 }

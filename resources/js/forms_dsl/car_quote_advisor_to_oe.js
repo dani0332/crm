@@ -35,7 +35,7 @@ const advisorToOe = {
             type: 'dropdown',
             label: 'OE',
             source: 'users',
-            filter: {name: 'pa'},
+            filter: {name: 'oe'},
             access: {
               read: ['admin'],
               write: ['admin'],
@@ -67,6 +67,22 @@ const advisorToOe = {
                 label: 'Advisor',
                 source: 'users',
                 field: 'advisor_id',
+                filter: {name: 'advisor'},
+                transform(item) {
+                  if (Array.isArray(item)) {
+                    const items = item.map(u => {
+                      return { value: u?.id, label: u?.name };
+                    });
+                    return items;
+                  } else return { value: item?.id, label: item?.name };
+                },
+              },
+              {
+                type: 'dropdown',
+                label: 'OE',
+                source: 'users',
+                field: 'oe_id',
+                filter: {name: 'oe'},
                 transform(item) {
                   if (Array.isArray(item)) {
                     const items = item.map(u => {

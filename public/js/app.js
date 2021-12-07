@@ -17009,7 +17009,7 @@ var advisorToOe = {
           label: 'OE',
           source: 'users',
           filter: {
-            name: 'pa'
+            name: 'oe'
           },
           access: {
             read: ['admin'],
@@ -17047,6 +17047,31 @@ var advisorToOe = {
             label: 'Advisor',
             source: 'users',
             field: 'advisor_id',
+            filter: {
+              name: 'advisor'
+            },
+            transform: function transform(item) {
+              if (Array.isArray(item)) {
+                var items = item.map(function (u) {
+                  return {
+                    value: u === null || u === void 0 ? void 0 : u.id,
+                    label: u === null || u === void 0 ? void 0 : u.name
+                  };
+                });
+                return items;
+              } else return {
+                value: item === null || item === void 0 ? void 0 : item.id,
+                label: item === null || item === void 0 ? void 0 : item.name
+              };
+            }
+          }, {
+            type: 'dropdown',
+            label: 'OE',
+            source: 'users',
+            field: 'oe_id',
+            filter: {
+              name: 'oe'
+            },
             transform: function transform(item) {
               if (Array.isArray(item)) {
                 var items = item.map(function (u) {
