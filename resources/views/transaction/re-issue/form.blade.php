@@ -116,26 +116,6 @@
                             @endif
                         </div>
                     </div>
-                    {{-- <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Handler">Type Of Insurance <span class="required">*</span></label>
-                        <div class="col-md-6 col-sm-6">
-                            @if ($route == 'cancel')
-                            <input type="hidden" id="type_of_insurance_id" name="type_of_insurance_id" value="{{ $transaction->type_of_insurance_id }}" />
-                            <select class="form-control" disabled>
-                            @elseif ($route == 're_issue')
-                            <select id="type_of_insurance_id" name="type_of_insurance_id" class="form-control">
-                            @endif
-                                <option value="">Please select Type Of Insurance</option>
-                                @foreach ($typeofinsurances as $toi )
-                                    <option {{ $transaction->type_of_insurance_id == $toi->id ? 'selected':'' }} value="{{ $toi->id }}">{{ $toi->text }}</option>
-                                @endforeach
-                            </select>
-                            <small class="text-muted">Please select Type Of Insurance</small><br/>
-                            @if ($errors->has('type_of_insurance_id'))
-                                <span class="text-danger">{{ $errors->first('type_of_insurance_id') }}</span>
-                            @endif
-                        </div>
-                    </div> --}}
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="Risk details">Risk details <span class="required">*</span></label>
                         <div class="col-md-6 col-sm-6">
@@ -213,7 +193,7 @@
                     <div class="row">
                     <div class="col-auto mr-auto"></div>
                         <div class="col-auto">
-                            <button type="submit" class="btn btn-warning btn-sm">{{ $title }}</button>
+                            <button type="submit" class="btn btn-warning btn-sm" onclick="$('button').hide();">{{ $title }}</button>
                         </div>
                     </div>
                 </form>

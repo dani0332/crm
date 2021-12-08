@@ -26,6 +26,7 @@
                                     <th>Plan Name</th>
                                     <th>Repair Type</th>
                                     <th>Actual Premium</th>
+                                    <th>Discounted Premium</th>
                                     <th>Premium with VAT</th>
                                     <th>Action</th>
                                 </tr>
@@ -37,7 +38,8 @@
                                         <td>{{ ucwords($quotePlan->name) }}</td>
                                         <td>{{ $quotePlan->repairType }}</td>
                                         <td>{{ $quotePlan->actualPremium }}</td>
-                                        <td>{{ $quotePlan->actualPremium + $quotePlan->vatPremium }}</td>
+                                        <td>{{ $quotePlan->discountPremium }}</td>
+                                        <td>{{ $quotePlan->discountPremium + $quotePlan->vatPremium }}</td>
                                         <td><a href="#" planDetailUrl="{{ $uuidModal }}/plan_details/{{ $quotePlan->id }}" data-toggle="modal" data-target="#quotePlanModal" class="quotePlanModalPopup">View</a></td>
                                     </tr>
                                 @endforeach

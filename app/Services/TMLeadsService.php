@@ -51,7 +51,7 @@ class TMLeadsService
 
         if($tmInsuranceTypeCode == tmInsuranceTypeCode::Car) {
             $tmLead->year_of_manufacture = $request->year_of_manufacture;
-            $tmLead->car_value = $request->car_value;
+            $tmLead->car_value = floatval(preg_replace('/[^\d.]/', '', $request->car_value));
             $tmLead->car_model_id = $request->car_model_id;
             $tmLead->car_make_id = $request->car_make_id;
             $tmLead->nationality_id = $request->nationality_id;

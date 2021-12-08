@@ -215,7 +215,7 @@ else {
                     <div class="item form-group">
                         <div class="col">
                             <span class="col-form-label col-md-6 col-sm-6">Car Value</span>
-                            <input type="text" id="car_value" name="car_value" value="{{ old('car_value', $tmlead->car_value) }}" class="form-control" data-toggle="tooltip" data-placement="top" title="Please enter car value">
+                            <input type="number" id="car_value" name="car_value" value="{{ old('car_value', $tmlead->car_value) }}" class="form-control" data-toggle="tooltip" data-placement="top" title="Please enter car value">
                         </div>
                         <div class="col">
                             <span class="col-form-label col-md-6 col-sm-6">Nationality</span>
