@@ -33,7 +33,12 @@ class FTCMailServiceJob implements ShouldQueue
         try {
 
             $email = new FTCMailerService($this->request);
-            Mail::to($this->request['to'])->send($email);
+            $sender = Mail::to($this->request['to']);
+            if(isset($this->request['cc'])){
+                 $sender->cc($this->request['cc']);
+            }
+            $sender->send($email);
+
             return "Success";
         } catch (Exception $ex) {
             return $ex;

@@ -12,6 +12,7 @@ export default function KycForm(props) {
       read: [
         'pa',
         'advisor',
+        'oe',
         'admin',
         'invoicing',
         'production_approval_manager',

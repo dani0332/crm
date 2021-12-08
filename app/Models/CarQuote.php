@@ -173,6 +173,11 @@ class CarQuote extends BaseModel
         return $this->hasOne(User::class, 'id', 'advisor_id')->select(['id', 'email','name']);
     }
 
+    public function oe_id()
+    {
+        return $this->hasOne(User::class, 'id', 'oe_id')->select(['id', 'email','name']);
+    }
+
 
     /*****  NewRelationships so old should not effect */
 
@@ -186,13 +191,14 @@ class CarQuote extends BaseModel
 
     public $access = [
 
-        'write' => ['advisor'],
-        'update' => ['advisor','invoicing', 'pa'],
-        'delete' => ['advisor'],
+        'write' => ['advisor', 'oe'],
+        'update' => ['advisor','invoicing', 'pa', 'oe'],
+        'delete' => ['advisor', 'oe'],
         'access' => [
             "pa" => [ 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'created_at','car_value', "pa_id","invoicing"],
             "production_approval_manager" => [ 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'created_at','car_value', "pa_id","invoicing"],
             "advisor" => [ 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'created_at','car_value', 'dob', 'nationality_id' ],
+            "oe" => [ 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'created_at','car_value', 'dob', 'nationality_id' ],
             "admin" => [ 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'created_at','car_value' ],
             "invoicing" => [ 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'created_at','car_value','invoicing']
         ],
@@ -200,6 +206,7 @@ class CarQuote extends BaseModel
             "pa" => [ 'id','code', 'first_name', 'last_name',  'created_at', "pa_id", "kyc_status_id","quote_status_id","aml_status","invoicing"],
             "production_approval_manager" => [ 'id','code', 'first_name', 'last_name',  'created_at', "pa_id", "kyc_status_id","quote_status_id","aml_status","invoicing"],
             "advisor" => [ 'id','code', 'first_name', 'last_name', 'updated_at', 'created_at', "pa_id", "kyc_status_id","quote_status_id","aml_status","invoicing"],
+            "oe" => [ 'id','code', 'first_name', 'last_name', 'updated_at', 'created_at', "pa_id", "kyc_status_id","quote_status_id","aml_status","invoicing"],
             "admin" => [ 'id','code', 'first_name', 'last_name',  'created_at', "kyc_status_id","quote_status_id","aml_status","invoicing"],
             "invoicing" => [ 'id','code', 'first_name', 'last_name',"pa_id",  'created_at' , "kyc_status_id","quote_status_id","aml_status","invoicing"]
         ],
@@ -207,6 +214,7 @@ class CarQuote extends BaseModel
             "pa" => [ 'id','code', 'dob','first_name', 'last_name', 'email', 'mobile_no','Year_of_manufacture',"kyc_status_id","quote_status_id", 'created_at', "car_make_id", "car_model_id", "emirate_of_registration_id", "claim_history_id",  "nationality_id","uae_license_held_for_id", "pa_id","aml_status","invoicing"],
             "production_approval_manager" => [ 'id','code', 'dob','first_name', 'last_name', 'email', 'mobile_no','Year_of_manufacture',"kyc_status_id","quote_status_id", 'created_at', "car_make_id", "car_model_id", "emirate_of_registration_id", "claim_history_id",  "nationality_id","uae_license_held_for_id", "pa_id","aml_status","invoicing"],
             "advisor" => [ 'id','code','dob', 'first_name', 'last_name', 'email', 'mobile_no', 'Year_of_manufacture',"kyc_status_id","quote_status_id", 'created_at', "car_make_id", "car_model_id", "emirate_of_registration_id", "claim_history_id",  "nationality_id","uae_license_held_for_id", "pa_id","aml_status","invoicing"],
+            "oe" => [ 'id','code','dob', 'first_name', 'last_name', 'email', 'mobile_no', 'Year_of_manufacture',"kyc_status_id","quote_status_id", 'created_at', "car_make_id", "car_model_id", "emirate_of_registration_id", "claim_history_id",  "nationality_id","uae_license_held_for_id", "pa_id","aml_status","invoicing"],
             "admin" => [ 'id','code', 'dob','first_name', 'last_name', 'email', 'mobile_no', 'Year_of_manufacture',"kyc_status_id","quote_status_id", 'created_at', "car_make_id", "car_model_id", "emirate_of_registration_id", "claim_history_id",  "nationality_id","uae_license_held_for_id", "pa_id","aml_status","invoicing"],
             "invoicing" => [ 'id','code','dob', 'first_name', 'last_name', 'email', 'mobile_no','Year_of_manufacture',"kyc_status_id","quote_status_id", 'created_at', "car_make_id", "car_model_id", "emirate_of_registration_id", "claim_history_id",  "nationality_id","uae_license_held_for_id", "pa_id","aml_status","invoicing"],
         ]
@@ -224,6 +232,15 @@ class CarQuote extends BaseModel
                     $restrictFilter["advisor_id"] = Auth::user()->id;
                 }else{
                     $restrictFilter["advisor_id"] = Auth::user()->id;
+                    $restrictFilter = array_merge($restrictFilter,$filters);
+                }
+            }
+
+            if(Auth::user()->hasRole('oe')) {
+                if(empty($filters)){
+                    $restrictFilter["oe_id"] = Auth::user()->id;
+                }else{
+                    $restrictFilter["oe_id"] = Auth::user()->id;
                     $restrictFilter = array_merge($restrictFilter,$filters);
                 }
             }
@@ -287,16 +304,22 @@ class CarQuote extends BaseModel
 
                 $advisorEmail = $carQuote->advisor_id()->get()->first()->email;
                 if($advisorEmail) {
+
                     $params = [
                         'to' => $advisorEmail,
                         'subject' => LookUpModel::subjectForFTCEmailCarQuote($carQuote),
                         'templateName' => 'notification',
                         'templateParams' => $templateParams
                     ];
+                    
+                    $oeId = $carQuote->oe_id()->first();
+                    if($oeId && $oeId->email)
+                        $params['cc'] = $oeId->email;
+
                     dispatch(new FTCMailServiceJob($params));
                 }
             }
-            return parent::saveForm($request, true);
+            return  parent::saveForm($request, true);
         }
         else if(Auth::user()->hasRole('invoicing') && $request->has('action')){
             $request->request->add(['invoicing' => Auth::user()->id]);
@@ -318,6 +341,10 @@ class CarQuote extends BaseModel
                         'templateName' => 'notification',
                         'templateParams' => $templateParams
                     ];
+                    
+                    $oeId = $carQuote->oe_id()->first();
+                    if($oeId && $oeId->email)
+                        $params['cc'] = $oeId->email;
                     dispatch(new FTCMailServiceJob($params));
                 }
             }

@@ -225,6 +225,7 @@ Route::POST('/sendBulkWelcomeEmails', [BulkEmailProcessController::class, 'Proce
 
 Route::group(['middleware' =>  ['auth.rest']], function () use ($router) {
     Route::resource('ftcform', FtcFormController::class);
+    Route::resource('assignOE', FtcFormController::class);
     Route::group(['prefix' => 'form'], function () {
         Route::GET('/{form}', [FormController::class, 'index']);
         Route::GET('/{form}/{form_id}', [FormController::class, 'getFormDetail']);

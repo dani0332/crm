@@ -19,6 +19,7 @@ use App\Models\CarMake;
 use App\Models\CarModel;
 use App\Models\CarTypeInsurance;
 use App\Models\TmLeadType;
+use \Carbon\Carbon;
 
 class TmLeadController extends Controller
 {
@@ -104,8 +105,9 @@ class TmLeadController extends Controller
             ) {
 
                 if ($request->tmLeadsEndDate >= $request->tmLeadsStartDate) {
-
-                    $queryTmLeads->whereRaw('DATE(tm_leads.' . $request->searchType . ') BETWEEN "' . $request->tmLeadsStartDate . '" AND "' . $request->tmLeadsEndDate . '"');
+                    $tmLeadsDateFrom = Carbon::createFromFormat('Y-m-d', $request->tmLeadsStartDate)->startOfDay()->toDateTimeString();
+                    $tmLeadsDateTo = Carbon::createFromFormat('Y-m-d', $request->tmLeadsEndDate)->endOfDay()->toDateTimeString();
+                    $queryTmLeads->whereBetween("tm_leads.".$request->searchType, [$tmLeadsDateFrom, $tmLeadsDateTo]);
                 }
             }
             if (isset($request->assigned_to_id) && !empty($request->assigned_to_id)) {
@@ -126,10 +128,6 @@ class TmLeadController extends Controller
 
             return Datatables::of($queryTmLeads)
                 ->addIndexColumn()
-                ->addColumn('action', function ($row) {
-                    return view('tmlead.actions', compact('row'))->render();
-                })
-                ->rawColumns(['action'])
                 ->make(true);
         }
         return view('tmlead.view', compact(

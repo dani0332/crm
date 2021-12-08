@@ -62,6 +62,9 @@ function AppContainer() {
             {/* <ManageListFormView form={{ context:'root', form: 'teams', view_mode: 'list', action_type: 'list' }} /> */}
             {COMP}
           </Route>
+          <Route path='/assignOE'>
+            { <ManageListFormView form={{ context:'root', form: 'advisorToOe', view_mode: 'list', action_type: 'list' }} /> }
+          </Route>
           <Route path='/lead/:id'>
             <LeadSnapShot />
           </Route>

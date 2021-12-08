@@ -13,13 +13,14 @@ class CarQuotePayment extends BaseModel
     use HasFactory;
     protected $table = 'car_quote_payment';
     public $access = [
-        'write'  => ['advisor'],
-        'update' => ['advisor'],
-        'delete' => [ 'advisor'],
+        'write'  => ['advisor','oe'],
+        'update' => ['advisor','oe'],
+        'delete' => [ 'advisor','oe'],
         'access' => [
             "pa" => [],
             "production_approval_manager" => [],
             "advisor" => [ 'car_quote_id', 'mode_id', 'method', 'comment' ],
+            "oe" => [ 'car_quote_id', 'mode_id', 'method', 'comment' ],
             "admin" => [ 'car_quote_id', 'mode_id', 'method', 'comment'],
             "invoicing" => []
         ],
@@ -27,6 +28,7 @@ class CarQuotePayment extends BaseModel
             "pa" => ['id', 'car_quote_id' , 'mode_id', 'method', 'comment'],
             "production_approval_manager" => ['id', 'car_quote_id' , 'mode_id', 'method', 'comment'],
             "advisor" => [ 'id', 'car_quote_id' , 'mode_id', 'method', 'comment'],
+            "oe" => [ 'id', 'car_quote_id' , 'mode_id', 'method', 'comment'],
             "admin" => ['id', 'car_quote_id' , 'mode_id', 'method', 'comment'],
             "invoicing" => ['id', 'car_quote_id' , 'mode_id', 'method', 'comment']
         ]
@@ -53,12 +55,12 @@ class CarQuotePayment extends BaseModel
     public function saveForm($request, $update = false) {
 
         try{
-            if( Auth::user()->hasRole('advisor')) {
+            if( Auth::user()->hasRole('advisor') || Auth::user()->hasRole('oe')) {
                 $carQuote = CarQuote::where(['id' => $request->input('car_quote_id', -1)])->first();
                 if($carQuote) {
 
                     if(parent::saveForm($request, $update)) {
-
+                        
                         $advisorEmail = $carQuote->advisor_id()->first()->email;
                         $templateParams = [
                             'notes' => $request->input('comment', ""),
@@ -73,6 +75,11 @@ class CarQuotePayment extends BaseModel
                                 'templateName' => 'notification',
                                 'templateParams' => $templateParams
                             ];
+                            
+                            $oeId = $carQuote->oe_id()->first();
+                            if($oeId && $oeId->email)
+                                $params['cc'] = $oeId->email;
+                            
                             dispatch(new FTCMailServiceJob($params));
                         }
                         
