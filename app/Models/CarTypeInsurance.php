@@ -16,12 +16,13 @@ class CarTypeInsurance extends BaseModel implements AuditableContract
 
     public $access = [
 
-        'write' => ['advisor'],
-        'update' => ['advisor'],
-        'delete' => ['advisor'],
+        'write' => ['advisor','oe'],
+        'update' => ['advisor','oe'],
+        'delete' => ['advisor','oe'],
         'access' => [
             "pa" => [ ],
             "advisor" => [ ],
+            "oe" => [ ],
             "admin" => [  ],
             "invoicing" => [ ]
 
@@ -29,6 +30,7 @@ class CarTypeInsurance extends BaseModel implements AuditableContract
         "list" => [
             "pa" => ['id', 'text' ],
             "advisor" => [ 'id', 'text'],
+            "oe" => [ 'id', 'text'],
             "admin" => ['id', 'text'],
             "invoicing" => [ 'id', 'text']
         ]

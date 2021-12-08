@@ -220,7 +220,7 @@ function* processVisibleFormStates(obj) {
         const formVisible = getFormObjForDraw(initialForm); //yield select(getVisibleForm)
         console.log('**************Delete-watch-saga.js******************');
         console.log(formVisible);
-        // const { db_table } = formVisible;
+       
         if (!selectedRecord) {
           const newState = { ...formVisible, data: {} };
           const obj = {
@@ -235,9 +235,10 @@ function* processVisibleFormStates(obj) {
           return;
         }
         console.log('**************Delete-watch-saga.js******************');
-        // let objUrl = `/form/${db_table}/${selectedRecord.id}`;
-        // const resp = yield fetch(objUrl, { method: 'Delete' });
-        // const data = yield resp.json();
+        const { db_table } = formVisible;
+        let objUrl = `/form/${db_table}/${selectedRecord.id}`;
+        const resp = yield fetch(objUrl, { method: 'Delete' });
+        const data = yield resp.json();
         const initialReducerState = getFormObjForDraw(initialForm);
         const getForm = {
           ...initialReducerState,

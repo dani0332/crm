@@ -9,13 +9,14 @@ const ftcHistory = {
         read: [
           'pa',
           'advisor',
+          'oe',
           'admin',
           'invoicing',
           'production_approval_manager',
         ],
-        write: ['advisor', 'admin'],
-        update: ['advisor', 'admin'],
-        delete: ['advisor', 'admin', 'admin'],
+        write: ['advisor',  'oe','admin'],
+        update: ['advisor',  'oe', 'admin'],
+        delete: ['advisor',  'oe','admin', 'admin'],
       },
       fields: {
         status: {
@@ -25,12 +26,13 @@ const ftcHistory = {
           access: {
             read: [
               'advisor',
+              'oe',
               'pa',
               'admin',
               'invoicing',
               'production_approval_manager',
             ],
-            write: ['advisor'],
+            write: [ 'oe','advisor'],
             update: [],
           },
           rules: { required: true },
@@ -39,9 +41,9 @@ const ftcHistory = {
           type: 'textarea',
           label: 'Notes',
           access: {
-            read: ['advisor', 'pa', 'production_approval_manager'],
-            write: ['advisor'],
-            update: ['advisor'],
+            read: ['advisor', 'oe', 'pa', 'production_approval_manager'],
+            write: [ 'oe','advisor'],
+            update: [ 'oe','advisor'],
           },
           rules: { required: true },
           shouldRenderForRead(field) {

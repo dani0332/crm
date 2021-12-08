@@ -39,6 +39,9 @@ return [
     'ftc_quote_status_history' => [
         'model' => FtcQuoteStatusHistory::class
     ],
+    'car_quote_assign_oe_to_advisor' =>[
+        'model' => CarQuoteAdvisorToOE::class
+    ],
     'payment_modes' => [
         'model' => FTCPaymentMode::class
     ],

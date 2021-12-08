@@ -12,6 +12,7 @@ const leadRequest = {
         read: [
           'pa',
           'advisor',
+          'oe',
           'admin',
             'invoicing',
           'production_approval_manager',
@@ -19,7 +20,7 @@ const leadRequest = {
         ],
         write: [],
         update: [],
-        delete: ['advisor', 'admin'],
+        delete: ['advisor', 'oe', 'admin'],
       },
       fields: {
         first_name: {
@@ -32,13 +33,14 @@ const leadRequest = {
             read: [
               'pa',
               'advisor',
+              'oe',
               'admin',
               'invoicing',
               'production_approval_manager',
               'production_approval_manager',
             ],
             write: ['admin'],
-            update: ['advisor', 'admin'],
+            update: ['advisor', 'oe', 'admin'],
           },
         },
         last_name: {
@@ -66,14 +68,15 @@ const leadRequest = {
           access: {
             read: [
               'advisor',
+              'oe',
               'pa',
               'admin',
               'invoicing',
               'production_approval_manager',
               'production_approval_manager',
             ],
-            write: ['advisor', 'admin'],
-            update: ['advisor', 'admin'],
+            write: ['advisor', 'oe', 'admin'],
+            update: ['advisor', 'oe', 'admin'],
           },
           transform(item) {
             if (Array.isArray(item)) {
@@ -111,7 +114,7 @@ const leadRequest = {
               label: 'CDB ID',
               field: 'code',
               access: {
-                read: ['advisor'],
+                read: [ 'oe','advisor'],
                 write: [],
                 update: [],
               },
@@ -121,7 +124,7 @@ const leadRequest = {
               label: 'Customer email',
               field: 'email',
               access: {
-                read: ['advisor'],
+                read: [ 'oe','advisor'],
                 write: [],
                 update: [],
               },
@@ -131,7 +134,7 @@ const leadRequest = {
               label: 'Phone number',
               field: 'mobile_no',
               access: {
-                read: ['advisor'],
+                read: [ 'oe','advisor'],
                 write: [],
                 update: [],
               },
@@ -142,7 +145,7 @@ const leadRequest = {
               field: 'quote_status_id',
               source: 'quote_status',
               access: {
-                read: ['advisor'],
+                read: [ 'oe','advisor'],
                 write: [],
                 update: [],
               },
@@ -154,7 +157,7 @@ const leadRequest = {
               source: 'users',
               filter: { name: 'pa' },
               access: {
-                read: ['advisor'],
+                read: [ 'oe','advisor'],
                 write: [],
                 update: [],
               },
@@ -186,7 +189,7 @@ const leadRequest = {
               label: 'Created At',
               field: 'created_at',
               access: {
-                read: ['advisor'],
+                read: [ 'oe','advisor'],
                 write: [],
                 update: [],
               },

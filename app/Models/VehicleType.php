@@ -10,19 +10,21 @@ class VehicleType extends BaseModel
     protected $table = 'vehicle_type';
     public $access = [
 
-        'write' => ['advisor'],
-        'update' => ['advisor'],
-        'delete' => ['advisor'],
+        'write' => ['advisor', 'oe'],
+        'update' => ['advisor', 'oe'],
+        'delete' => ['advisor', 'oe'],
         'access' => [
             "pa" => [ 'id','category', 'text', 'is_active'],
             "invoicing" => [ 'id','category', 'text', 'is_active'],
             "advisor" => [ 'id','category', 'text', 'is_active'],
+            "oe" => [ 'id','category', 'text', 'is_active'],
             "admin" => [ 'id','category', 'text', 'is_active' ],
         ],
         "list" => [
             "pa" => ['id','category', 'text', 'is_active' ],
             "invoicing" => ['id','category', 'text', 'is_active' ],
             "advisor" => [ 'id','category', 'text', 'is_active'],
+            "oe" => [ 'id','category', 'text', 'is_active'],
             "admin" => [ 'id','category', 'text', 'is_active']
         ]
     ];
