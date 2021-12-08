@@ -5,7 +5,9 @@ namespace App\Imports;
 use App\Models\Customer;
 use App\Models\QuoteCustomer;
 use App\Services\CustomerService;
+use App\Mail\SendInBlueMail;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Maatwebsite\Excel\Row;
 use Maatwebsite\Excel\Concerns\OnEachRow;
 use Maatwebsite\Excel\Concerns\WithStartRow;
@@ -80,6 +82,11 @@ class CustomersImport implements OnEachRow, WithStartRow
                 $newQuoteCustomer->save();
                 Log::channel('daily')->info('Saved in quote customer with Customer Id-> '.$customerId.' , CDB Id ->'. $this->CDBId);
             }
+            $emailPayload = [
+                'templateId' => 272,
+            ];
+            $sendEmail = new SendInBlueMail($emailPayload);
+            Mail::to($email)->send($sendEmail);
         }
     }
 

@@ -28,6 +28,7 @@
         "sentry/sentry-laravel": "^2.7",
         "spatie/laravel-fractal": "^5.8",
         "spatie/laravel-permission": "^4.0",
+        "webup/laravel-sendinblue": "^3.3",
         "yajra/laravel-datatables-oracle": "^9.18"
     },
     "require-dev": {
