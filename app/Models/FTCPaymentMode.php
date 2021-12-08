@@ -19,12 +19,14 @@ class FTCPaymentMode extends BaseModel
             "pa" => [],
             "invoicing" => [ ],
             "advisor" => [],
+            "oe" => [],
             "admin" => [ ],
         ],
         "list" => [
             "pa" => ['id' , 'name'  ],
             "invoicing" => ['id' , 'name'  ],
             "advisor" => ['id' , 'name'  ],
+            "oe" => ['id' , 'name'  ],
             "admin" => ['id' , 'name'  ],
         ]
     ];

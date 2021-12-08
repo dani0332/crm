@@ -10,13 +10,14 @@ let vehicleDetail = {
       access: {
         read: [
           'advisor',
+          'oe',
           'pa',
           'admin',
           'invoicing',
           'production_approval_manager',
         ],
-        write: ['advisor', 'admin'],
-        update: ['advisor', 'admin'],
+        write: ['advisor', 'oe', 'admin'],
+        update: ['advisor', 'oe', 'admin'],
         delete: [],
       },
       fields: {
@@ -28,6 +29,7 @@ let vehicleDetail = {
           access: {
             read: [
               'advisor',
+              'oe',
               'pa',
               'admin',
               'invoicing',
@@ -44,6 +46,7 @@ let vehicleDetail = {
           access: {
             read: [
               'advisor',
+              'oe',
               'pa',
               'admin',
               'invoicing',
@@ -60,6 +63,7 @@ let vehicleDetail = {
           access: {
             read: [
               'advisor',
+              'oe',
               'pa',
               'admin',
               'invoicing',
@@ -75,6 +79,7 @@ let vehicleDetail = {
           access: {
             read: [
               'advisor',
+              'oe',
               'pa',
               'admin',
               'invoicing',
@@ -93,6 +98,7 @@ let vehicleDetail = {
           access: {
             read: [
               'advisor',
+              'oe',
               'pa',
               'admin',
               'invoicing',
@@ -112,6 +118,7 @@ let vehicleDetail = {
           access: {
             read: [
               'advisor',
+              'oe',
               'pa',
               'admin',
               'invoicing',
@@ -165,6 +172,7 @@ let vehicleDetail = {
               read: [
                 'pa',
                 'advisor',
+                'oe',
                 'admin',
                 'invoicing',
                 'production_approval_manager',

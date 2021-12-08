@@ -16,6 +16,7 @@ class CarQuoteAMLStatusLookup extends Model
         'access' => [
             "pa" => [ ],
             "advisor" => [ ],
+            "oe" => [ ],
             "admin" => [ 'code', 'text' ],
             "invoicing" => []
 
@@ -23,6 +24,7 @@ class CarQuoteAMLStatusLookup extends Model
         "list" => [
             "pa" => ['id','code', 'text' ],
             "advisor" => [ 'id','code', 'text'],
+            "oe" => [ 'id','code', 'text'],
             "admin" => [ 'id','code', 'text'],
             "invoicing" => [ 'code', 'text' ]
         ]

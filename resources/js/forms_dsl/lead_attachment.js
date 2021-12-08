@@ -8,13 +8,14 @@ const leadAttachment = {
         read: [
           'pa',
           'advisor',
+          'oe',
           'admin',
           'invoicing',
           'production_approval_manager',
         ],
-        write: ['advisor', 'admin'],
-        update: ['advisor', 'admin'],
-        delete: ['advisor', 'admin'],
+        write: ['advisor','oe', 'admin'],
+        update: ['advisor','oe', 'admin'],
+        delete: ['advisor','oe', 'admin'],
       },
       fields: {
         document: {
@@ -25,6 +26,7 @@ const leadAttachment = {
           access: {
             read: [
               'advisor',
+              'oe',
               'pa',
               'admin',
               'invoicing',
@@ -43,6 +45,7 @@ const leadAttachment = {
           access: {
             read: [
               'advisor',
+              'oe',
               'pa',
               'admin',
               'invoicing',

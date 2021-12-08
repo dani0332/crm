@@ -21,14 +21,15 @@ class FTCHistory extends BaseModel
     protected $table = 'ftc_history';
     public $access = [
 
-        'write' => ['advisor'],
-        'update' => ['advisor'],
-        'delete' => ['advisor'],
+        'write' => ['advisor','oe'],
+        'update' => ['advisor','oe'],
+        'delete' => ['advisor','oe'],
         'access' => [
             "pa" => [],
             "production_approval_manager" => [],
             "invoicing" => [ ],
             "advisor" => ['car_quote_id', 'status', 'data'],
+            "oe" => ['car_quote_id', 'status', 'data'],
             "admin" => [ 'car_quote_id', 'status', 'data'],
         ],
         "list" => [
@@ -36,6 +37,7 @@ class FTCHistory extends BaseModel
             "production_approval_manager" => ['id' , 'status' , 'data', 'created_at' ],
             "invoicing" => ['id' , 'status' , 'data', 'created_at' ],
             "advisor" => [ 'id' , 'status', 'data' , 'created_at'],
+            "oe" => [ 'id' , 'status', 'data' , 'created_at'],
             "admin" => ['id' , 'status' , 'data' , 'created_at']
         ]
     ];
@@ -87,8 +89,14 @@ class FTCHistory extends BaseModel
 
     public function saveForm($request, $update = false) {
 
-        if( Auth::user()->hasRole('advisor') ) {
-            $carQuote = CarQuote::where(['id' => $request->input('car_quote_id', -1), 'advisor_id' => Auth::user()->id])->get()->first();
+        if( Auth::user()->hasRole('advisor') || Auth::user()->hasRole('oe') ) {
+           
+            $carQuote = null;
+            if(Auth::user()->hasRole('advisor'))
+                $carQuote   =   CarQuote::where(['id' => $request->input('car_quote_id', -1), 'advisor_id' => Auth::user()->id])->first();
+            if(Auth::user()->hasRole('oe'))
+                $carQuote   =   CarQuote::where(['id' => $request->input('car_quote_id', -1), 'oe_id' => Auth::user()->id])->first();
+          
             if($carQuote) {
 
                 if($request->input('status', '') == 'resubmitForApproval' || $request->input('status', '') == 'ftc_pending') {

@@ -8,6 +8,7 @@ const carQuotePolicy = {
         read: [
           'pa',
           'advisor',
+          'oe',
           'admin',
           'invoicing',
           'production_approval_manager',
@@ -23,6 +24,7 @@ const carQuotePolicy = {
           access: {
             read: [
               'advisor',
+              'oe',
               'pa',
               'admin',
               'invoicing',
@@ -39,6 +41,7 @@ const carQuotePolicy = {
           access: {
             read: [
               'advisor',
+              'oe',
               'pa',
               'admin',
               'invoicing',
@@ -55,6 +58,7 @@ const carQuotePolicy = {
           access: {
             read: [
               'advisor',
+              'oe',
               'pa',
               'admin',
               'invoicing',
@@ -72,6 +76,7 @@ const carQuotePolicy = {
             read: [
               'pa',
               'advisor',
+              'oe',
               'admin',
               'invoicing',
               'production_approval_manager',
@@ -88,6 +93,7 @@ const carQuotePolicy = {
             read: [
               'pa',
               'advisor',
+              'oe',
               'admin',
               'invoicing',
               'production_approval_manager',
@@ -103,6 +109,7 @@ const carQuotePolicy = {
             read: [
               'pa',
               'advisor',
+              'oe',
               'admin',
               'invoicing',
               'production_approval_manager',
@@ -118,6 +125,7 @@ const carQuotePolicy = {
             read: [
               'pa',
               'advisor',
+              'oe',
               'admin',
               'invoicing',
               'production_approval_manager',
@@ -131,6 +139,7 @@ const carQuotePolicy = {
             read: [
               'pa',
               'advisor',
+              'oe',
               'admin',
               'invoicing',
               'production_approval_manager',
@@ -145,6 +154,7 @@ const carQuotePolicy = {
             read: [
               'pa',
               'advisor',
+              'oe',
               'admin',
               'invoicing',
               'production_approval_manager',
@@ -167,6 +177,7 @@ const carQuotePolicy = {
             read: [
               'pa',
               'advisor',
+              'oe',
               'admin',
               'invoicing',
               'production_approval_manager',
@@ -181,6 +192,7 @@ const carQuotePolicy = {
             read: [
               'pa',
               'advisor',
+              'oe',
               'admin',
               'invoicing',
               'production_approval_manager',
