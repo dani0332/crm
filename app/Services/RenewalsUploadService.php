@@ -317,7 +317,7 @@ class RenewalsUploadService
         $createRenewalQuote->save();
         $this->renewalsAddonService->updateBikeQuoteRequestCode($createRenewalQuote->id);   
         
-        $this->checkAMLService->checkAml($getBikeQuoteData->first_name, $getBikeQuoteData->last_name, $createRenewalQuote->id, $quoteType->id, false); 
+        $this->checkAMLService->checkAml($getBikeQuoteData->first_name, $getBikeQuoteData->last_name, $createRenewalQuote->id, $quoteType->id, false, null, null); 
         return $createRenewalQuote->id;
     }
 

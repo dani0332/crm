@@ -24,10 +24,11 @@ use App\Models\CommunicationMode;
 use App\Models\QuoteStatus;
 use App\Models\SanctionListDownloads;
 use App\Models\UAEAMLListUploads;
+use App\Services\SanctionListService;
 
 class AMLController extends Controller
 {
-    protected $checkAmlService, $quoteStatusService;
+    protected $checkAmlService, $quoteStatusService, $sanctionListService;
 
     /**
      * Display a listing of the resource.
@@ -35,11 +36,12 @@ class AMLController extends Controller
      * @return \Illuminate\Http\Response
      */
 
-    public function __construct(CheckAmlService $checkAmlService, QuoteStatusService $quoteStatusService)
+    public function __construct(CheckAmlService $checkAmlService, QuoteStatusService $quoteStatusService, SanctionListService $sanctionListService)
     {
         $this->middleware('permission:aml-list', ['only' => ['index']]);
         $this->checkAmlService = $checkAmlService;
         $this->quoteStatusService = $quoteStatusService;
+        $this->sanctionListService = $sanctionListService;
     }
 
     /**
@@ -297,16 +299,20 @@ class AMLController extends Controller
         ->where('quote_request_id', $quoteRequestId)->get();
         $getAMLNumRows = $getAMLRows->count();
 
+        $nationalityList = $this->sanctionListService->fetchNationality();
+        $yearsList = $this->sanctionListService->years();
+
         if($quoteTypeCode == quoteTypeCode::Business) {
             return view("aml.details", compact("quoteTypeCode","quoteTypeText","quoteRequest","businessTypeCode"
             ,"businessCoverTypeText","businessCommuModeText","kycLogs","quoteStatusCode","auditLogLine"
             ,"isCurrentUserFromCompliance","isCurrentUserFromPaAml","firstAmlLogResults","latestAmlLogResults"
-            , "quoteTypeId", "getAMLNumRows"));
+            , "quoteTypeId", "getAMLNumRows", "nationalityList", "yearsList"));
         }
         else {
             return view("aml.details", compact("quoteTypeCode","quoteTypeText","quoteRequest","kycLogs"
             ,"quoteStatusCode","auditLogLine","isCurrentUserFromCompliance","isCurrentUserFromPaAml"
-            ,"firstAmlLogResults","latestAmlLogResults", "quoteTypeId", "getAMLNumRows"));
+            ,"firstAmlLogResults","latestAmlLogResults", "quoteTypeId", "getAMLNumRows"
+            ,"nationalityList", "yearsList"));
         }
     }
 
@@ -352,6 +358,8 @@ class AMLController extends Controller
         $quoteUpdate = $updateQuote;
         $firstName = ucwords(strtolower($request->first_name));
         $lastName = ucwords(strtolower($request->last_name));
+        $nationality = $request->nationality;
+        $yob = $request->yob;
         $quoteUpdate->first_name = $firstName;
         $quoteUpdate->last_name = $lastName;
 
@@ -362,7 +370,7 @@ class AMLController extends Controller
 
         $quoteUpdate->save();
 
-        $this->checkAmlService->checkAml($firstName,$lastName,$quoteRequestId,$quoteTypeId, true);
+        $this->checkAmlService->checkAml($firstName,$lastName,$quoteRequestId,$quoteTypeId, true, $nationality, $yob);
 
         return redirect()->back()->with('success', 'Quote is updated');
     }

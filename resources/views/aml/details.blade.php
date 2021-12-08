@@ -109,9 +109,43 @@
                                             <span class="text-danger">{{ $errors->first('last_name') }}</span>
                                         @endif
                                     </p>
-                                    <div style="text-align: right;"><button type="submit" class="btn btn-primary btn-sm" id="return_to_view">Update & Verify</button></div>
                             </div>
                         </div>
+                </div>
+                <div class="item form-group">
+                    <div class="col">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="nationality"><b>Nationality</b></label>
+                        <div class="col-md-6 col-sm-6">
+                            <p class="label-align-center">
+                                <select class="form-control" id='nationality' name='nationality'>
+                                    <option value=''></option>
+                                    @foreach($nationalityList as $nationality)
+                                        <option value="{{ $nationality }}">{{ $nationality }}</option>
+                                    @endforeach
+                                    </select>
+                                @if ($errors->has('nationality'))
+                                    <span class="text-danger">{{ $errors->first('nationality') }}</span>
+                                @endif
+                            </p>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="yob"><b>Year of Birth</b></label>
+                        <div class="col-md-6 col-sm-6">
+                            <p class="label-align-center">
+                                <select class="form-control" id='yob' name='yob'>
+                                    <option value=''></option>
+                                    @foreach($yearsList as $year)
+                                        <option value="{{ $year }}">{{ $year }}</option>
+                                    @endforeach
+                                    </select>
+                                @if ($errors->has('yob'))
+                                    <span class="text-danger">{{ $errors->first('yob') }}</span>
+                                @endif
+                            </p>
+                            <div style="text-align: right;"><button type="submit" class="btn btn-primary btn-sm" id="return_to_view">Update & Verify</button></div>
+                        </div>
+                    </div>
                 </div>
                 <div class="item form-group">
                     <div class="col">
