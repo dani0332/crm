@@ -120,11 +120,7 @@
                                 <select class="form-control" id='nationality' name='nationality'>
                                     <option value=''></option>
                                     @foreach($nationalityList as $nationality)
-                                        {{-- @if (old('nationality') == $nationality) --}}
-                                            {{-- <option value="{{ $nationality }}" selected>{{ $nationality }}</option> --}}
-                                        {{-- @else --}}
-                                            <option value="{{ $nationality }}">{{ $nationality }}</option>
-                                        {{-- @endif --}}
+                                        <option value="{{ $nationality }}">{{ $nationality }}</option>
                                     @endforeach
                                     </select>
                                 @if ($errors->has('nationality'))
@@ -140,11 +136,7 @@
                                 <select class="form-control" id='yob' name='yob'>
                                     <option value=''></option>
                                     @foreach($yearsList as $year)
-                                        {{-- @if (old('year') == $year) --}}
-                                            {{-- <option value="{{ $year }}" selected>{{ $year }}</option> --}}
-                                        {{-- @else --}}
-                                            <option value="{{ $year }}">{{ $year }}</option>
-                                        {{-- @endif --}}
+                                        <option value="{{ $year }}">{{ $year }}</option>
                                     @endforeach
                                     </select>
                                 @if ($errors->has('yob'))
