@@ -99,14 +99,6 @@
                             <span aria-hidden="true">&times;</span>
                         </button>
                 </div>
-                <table>
-                    <tr>
-                        <td> </td>
-                        <td> <button id="prevPlan">Prev Plan</button> </td>
-                        <td style="text-align: right;"> <button id="nextPlan">Next Plan</button> </td>
-                        <td> </td>
-                    </tr>
-                </table>
                 <div class="quote-plan-modal-body"> </div>
                 <div class="modal-footer" style="border: none">
 
@@ -115,16 +107,14 @@
         </div>
     </div>
 
-    @if($record->is_ecommerce == 1)
-        <x-car-ecom-detail
-        :carQuotePremium="$record->premium"
-        :carQuotePaidAt="$record->paid_at"
-        :carQuotePaymentStatus="$record->payment_status_id_text"
-        :carQuotePlanName="$record->plan_id_text"
-        :carQuotePlanAddons="$carQuotePlanAddons"
-        :carQuotePlanProvider="$record->car_plan_provider_id_text"
-        />
-    @endif
+    <x-car-ecom-detail
+    :carQuotePremium="$record->premium"
+    :carQuotePaidAt="$record->paid_at"
+    :carQuotePaymentStatus="$record->payment_status_id_text"
+    :carQuotePlanName="$record->plan_id_text"
+    :carQuotePlanAddons="$carQuotePlanAddons"
+    :carQuotePlanProvider="$record->car_plan_provider_id_text"
+    />
 
     <x-car-quote-plans
         :listQuotePlans="$listQuotePlans"
