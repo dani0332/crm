@@ -14,7 +14,7 @@ class RewardSliderSeeder extends Seeder
      */
     public function run()
     {
-        RewardSlider::factory()->count(20)->create();
+        //RewardSlider::factory()->count(20)->create();
         //dd('here');
         // factory(RewardSlider::class, 20)->create();
     }

@@ -120,21 +120,6 @@
                             @endif
                         </div>
                     </div>
-                    {{-- <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Type Of Insurance">Type Of Insurance <span class="required">*</span></label>
-                        <div class="col-md-6 col-sm-6">
-                            <select class="form-control" id="typeofinsurance" name="typeofinsurance">
-                                <option value="">Select</option>
-                                @foreach ($typeofinsurances as $toi )
-                                    <option {{ old('typeofinsurance') == $toi->id ? "selected":""  }} value="{{ $toi->id }}">{{ $toi->text }}</option>
-                                @endforeach
-                            </select>
-                            <small class="text-muted">Please select Type of Insurance</small><br/>
-                            @if ($errors->has('typeofinsurance'))
-                                <span class="text-danger">{{ $errors->first('typeofinsurance') }}</span>
-                            @endif
-                        </div>
-                    </div> --}}
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="Risk Details">Risk Details <span class="required">*</span></label>
                         <div class="col-md-6 col-sm-6">
@@ -150,7 +135,7 @@
                     <div class="row">
                     <div class="col-auto mr-auto"></div>
                         <div class="col-auto">
-                            <button type="submit" class="btn btn-warning btn-sm" id="return_to_view">Submit</button>
+                            <button type="submit" class="btn btn-warning btn-sm" id="return_to_view" onclick="$('button').hide();">Submit</button>
                         </div>
                     </div>
                 </form>
