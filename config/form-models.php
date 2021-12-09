@@ -18,11 +18,11 @@ return [
     'car_quote_documents' => [
         'model' => CarQuoteDocuments::class
     ],
-    'insurance_companies' =>[
-        'model' => InsuranceCompany::class
+    'insurance_provider' =>[
+        'model' => InsuranceProvider::class
     ],
-    'car_quote_insurance_plan' => [
-        'model' => CarQuoteInsurancePlan::class
+    'car_plan' => [
+        'model' => CarPlan::class
     ],
     'vehicle_type' => [
         'model' => VehicleType::class

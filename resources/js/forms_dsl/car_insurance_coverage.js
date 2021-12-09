@@ -39,7 +39,8 @@ let insuranceDetail = {
         insurance_company_id: {
           type: 'dropdown',
           label: 'Insurance Company',
-          source: 'insurance_companies',
+          source: 'insurance_provider',
+          filter: {insurance_company_id: { op: "<>", val: "null"}},
           rules: { required: true },
           access: {
             read: [
@@ -53,19 +54,19 @@ let insuranceDetail = {
             write: ['advisor','oe', 'admin'],
             update: ['advisor','oe', 'admin'],
           },
-          transform(item) {
-            if (Array.isArray(item)) {
-              const items = item.map(u => {
-                return { value: u?.id, label: u?.name };
-              });
-              return items;
-            } else return { value: item?.id, label: item?.name };
-          },
+          // transform(item) {
+          //   if (Array.isArray(item)) {
+          //     const items = item.map(u => {
+          //       return { value: u?.id, label: u?.name };
+          //     });
+          //     return items;
+          //   } else return { value: item?.id, label: item?.name };
+          // },
         },
         insurance_plan_id: {
           type: 'dropdown',
           label: 'Insurance Plan',
-          source: 'car_quote_insurance_plan',
+          source: 'car_plan',
           access: {
             read: [
               'pa',

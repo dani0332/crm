@@ -16691,7 +16691,13 @@ var insuranceDetail = {
         insurance_company_id: {
           type: 'dropdown',
           label: 'Insurance Company',
-          source: 'insurance_companies',
+          source: 'insurance_provider',
+          filter: {
+            insurance_company_id: {
+              op: "<>",
+              val: "null"
+            }
+          },
           rules: {
             required: true
           },
@@ -16699,26 +16705,20 @@ var insuranceDetail = {
             read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'production_approval_manager'],
             write: ['advisor', 'oe', 'admin'],
             update: ['advisor', 'oe', 'admin']
-          },
-          transform: function transform(item) {
-            if (Array.isArray(item)) {
-              var items = item.map(function (u) {
-                return {
-                  value: u === null || u === void 0 ? void 0 : u.id,
-                  label: u === null || u === void 0 ? void 0 : u.name
-                };
-              });
-              return items;
-            } else return {
-              value: item === null || item === void 0 ? void 0 : item.id,
-              label: item === null || item === void 0 ? void 0 : item.name
-            };
-          }
+          } // transform(item) {
+          //   if (Array.isArray(item)) {
+          //     const items = item.map(u => {
+          //       return { value: u?.id, label: u?.name };
+          //     });
+          //     return items;
+          //   } else return { value: item?.id, label: item?.name };
+          // },
+
         },
         insurance_plan_id: {
           type: 'dropdown',
           label: 'Insurance Plan',
-          source: 'car_quote_insurance_plan',
+          source: 'car_plan',
           access: {
             read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'production_approval_manager'],
             write: ['advisor', 'oe', 'admin'],
@@ -17509,24 +17509,24 @@ var carQuotePolicy = {
         insurance_company_id: {
           type: 'dropdown',
           label: 'Insurance Company',
-          source: 'insurance_companies',
+          source: 'insurance_provider',
+          filter: {
+            insurance_company_id: {
+              op: "<>",
+              val: "null"
+            }
+          },
           access: {
             read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'production_approval_manager']
-          },
-          transform: function transform(item) {
-            if (Array.isArray(item)) {
-              var items = item.map(function (u) {
-                return {
-                  value: u === null || u === void 0 ? void 0 : u.id,
-                  label: u === null || u === void 0 ? void 0 : u.name
-                };
-              });
-              return items;
-            } else return {
-              value: item === null || item === void 0 ? void 0 : item.id,
-              label: item === null || item === void 0 ? void 0 : item.name
-            };
-          }
+          } // transform(item) {
+          //   if (Array.isArray(item)) {
+          //     const items = item.map(u => {
+          //       return { value: u?.id, label: u?.name };
+          //     });
+          //     return items;
+          //   } else return { value: item?.id, label: item?.name };
+          // },
+
         }
       },
       sections: [{

@@ -35,12 +35,12 @@ class CarQuoteInsuranceCoverage extends BaseModel
 
     public function insurance_company_id()
     {
-        return $this->hasOne(InsuranceCompany::class, 'id', 'insurance_company_id');
+        return $this->hasOne(InsuranceProvider::class, 'id', 'insurance_company_id');
     }
 
     public function insurance_plan_id()
     {
-        return $this->hasOne(CarQuoteInsurancePlan::class, 'id', 'insurance_plan_id');
+        return $this->hasOne(CarPlan::class, 'id', 'insurance_plan_id');
     }
 
     public function vehicle_type_id()

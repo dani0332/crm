@@ -169,12 +169,20 @@ class BaseModel extends Model implements AuditableContract
             foreach($filters as $key => $value) {
 
                 if (is_array($value)){
+
+                   
                     switch($value['op']){
                         case 'in':
                             $query->whereIn($key,$value['val']);
                             break;
-                        default:
-                            $query->where($key,$value['op'],$value['val']);
+                        default:{
+                            
+                            if($value['op'] == "<>" && $value['val'] == "null"){
+                                $query->whereNotNull($key);
+                            }else{
+                                $query->where($key,$value['op'],$value['val']);
+                            }
+                        }
                     }
                 }
                 else{

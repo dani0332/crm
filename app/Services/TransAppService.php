@@ -11,6 +11,7 @@ use App\Models\CarQuotePolicy;
 use App\Models\CarQuotePaymentHistory;
 use Illuminate\Support\Facades\Mail;
 use Config;
+use LookUpModel;
 
 
 class TransAppService extends BaseService
@@ -41,7 +42,7 @@ class TransAppService extends BaseService
 
             $carQuoteObj = CarQuote::where("id",$request->input("car_quote_id"))->first();
             if($carQuoteObj){
-                $carQuoteObj->quote_status_id = 15;// Transaction Approved
+                $carQuoteObj->quote_status_id =  LookUpModel::getLookModel('QuoteStatus', ['code', '=', 'transaction_approved']);// Transaction Approved
                 $carQuoteObj->pa_id = null;
                 if($carQuoteObj->save()){
 
