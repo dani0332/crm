@@ -292,6 +292,7 @@ class CarQuoteService extends BaseService
         $plansApiTimeout = Config::get('constants.KEN_PLANS_API_TIMEOUT');
         $plansApiUserName = Config::get('constants.KEN_PLANS_API_USER');
         $plansApiPassword = Config::get('constants.KEN_PLANS_API_PWD');
+        $authBasic = base64_encode($plansApiUserName.":".$plansApiPassword);
 
         $plansDataArr = array(
             "quoteUID" => $quoteUuId,
@@ -307,8 +308,7 @@ class CarQuoteService extends BaseService
                 [
                     'headers' => ['Content-Type' => 'application/json', 'Accept' => 'application/json',
                     'x-api-token' => $plansApiToken,
-                    'username' => $plansApiUserName,
-                    'password' => $plansApiPassword],
+                    'Authorization: Basic' => $authBasic],
                     'body' => json_encode($plansDataArr),
                     'timeout' => $plansApiTimeout,
                 ]
