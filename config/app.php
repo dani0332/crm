@@ -183,7 +183,7 @@ return [
         OwenIt\Auditing\AuditingServiceProvider::class,
         Spatie\Fractal\FractalServiceProvider::class,
         Maatwebsite\Excel\ExcelServiceProvider::class,
-
+        Webup\LaravelSendinBlue\SendinBlueServiceProvider::class,
     ],
 
     /*
@@ -240,7 +240,7 @@ return [
         'DataTables' => Yajra\DataTables\Facades\DataTables::class,
         'Excel' => Maatwebsite\Excel\Facades\Excel::class,
         'LookUpModel' => App\helpers\LookUpModelHelper::class,
-
+        'SendinBlue' => \Webup\LaravelSendinBlue\SendinBlueTransport::class,
     ],
 
 ];

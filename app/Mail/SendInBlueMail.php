@@ -31,7 +31,8 @@ class SendInBlueMail extends Mailable {
         return $this
             ->view([])
             ->subject('Welcome to myAlfred by InsuranceMarket.ae')
-            ->to($this->request->to)
+            ->from('alfred@corporate.insurancemarket.email', 'Alfred')
+            ->replyTo('myalfred@insurancemarket.ae', 'myAlfred')
             ->sendinblue(
                 [
                     'template_id' => $this->request->templateId,
