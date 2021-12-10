@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Mail;
 use Maatwebsite\Excel\Row;
 use Maatwebsite\Excel\Concerns\OnEachRow;
 use Maatwebsite\Excel\Concerns\WithStartRow;
-
+use Throwable;
 
 class CustomersImport implements OnEachRow, WithStartRow
 {
@@ -85,8 +85,10 @@ class CustomersImport implements OnEachRow, WithStartRow
             $emailPayload = [
                 'templateId' => 272,
             ];
-            $sendEmail = new SendInBlueMail($emailPayload);
-            Mail::to($email)->send($sendEmail);
+            // $sendEmail = new SendInBlueMail($emailPayload);
+            // $sendEmail->to($email);
+            // $sendEmail->send(new SendInBlueMail($emailPayload));
+            Mail::to($email)->send(new SendInBlueMail($emailPayload));
         }
     }
 
