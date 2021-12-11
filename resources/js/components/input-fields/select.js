@@ -95,7 +95,8 @@ export default function SelectField({ field, controller }) {
   };
   const onChange = selectedOptions => {
     if (typeof field?.dispatch === 'function') {
-      if (field?.if) {
+      if (field?.if || field?.appendFilterToFields) {
+
         // For condition fields
         let selectOp = selectedOptions;
         if (typeof field?.transform === 'function')
@@ -105,12 +106,22 @@ export default function SelectField({ field, controller }) {
             value: { ...selectedOptions, text: selectedOptions.label },
             selected: selectedOptions?.label,
           };
-        field.dispatch({
-          type: 'setValue',
-          field: { name: field.field, ...selectOp },
-        });
-      }
+
+        if(field?.if) {
+          field.dispatch({
+            type: 'setValue',
+            field: { name: field.field, ...selectOp },
+          });
+        }
+        else if (field?.appendFilterToFields) {
+          field.dispatch({
+            type: 'append',
+            fields: field?.appendFilterToFields,
+            field: { name: field.field, ...selectOp },
+          });
+        }
     }
+  }
 
     controller.onChange(selectedOptions.value);
     setData({ ...data, defaultValue: selectedOptions });

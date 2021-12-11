@@ -24,11 +24,11 @@ class CarPlan extends BaseModel
             "invoicing" => [ 'code', 'text']
         ],
         "list" => [
-            "pa" => ['id','code', 'text' ],
-            "advisor" => [ 'id','code', 'text'],
-            "oe" => [ 'id','code', 'text'],
-            "admin" => [ 'id','code', 'text'],
-            "invoicing" => [ 'code', 'text']
+            "pa" => ['id','code', 'text', 'provider_id' ],
+            "advisor" => [ 'id','code', 'text' , 'provider_id'],
+            "oe" => [ 'id','code', 'text' , 'provider_id'],
+            "admin" => [ 'id','code', 'text' , 'provider_id'],
+            "invoicing" => [ 'code', 'text' , 'provider_id']
         ]
     ];
 

@@ -41,6 +41,12 @@ let insuranceDetail = {
           label: 'Insurance Company',
           source: 'insurance_provider',
           filter: {insurance_company_id: { op: "<>", val: "null"}},
+          appendFilterToFields:[
+            { 
+              field: 'insurance_plan_id', 
+              key: "provider_id"
+            }
+          ],
           rules: { required: true },
           access: {
             read: [

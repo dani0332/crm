@@ -82,11 +82,6 @@ function reducer(state, action) {
       } = action;
       const getField = state.fields[name];
       getField.value = value;
-      if (state?.action_type === 'new') {
-        console.log('------draw-form.js---Adding---draw-form.js-------');
-        console.log(state);
-        console.log('------draw-form.js---Adding---draw-form.js-------');
-      }
       if (
         state?.action_type === 'edit' &&
         state?.selectedRecord &&
@@ -97,11 +92,26 @@ function reducer(state, action) {
       } else if (state?.action_type === 'edit') {
         conditionState(state, action);
       }
+      return { ...state };
+    }
+    case 'append': {
+      const {
+        fields, field: { name, value },
+      } = action;
+      fields.forEach(element => {
+        const appendObj = {}
+        appendObj[element.key] = value?.value
+        const getField = state.fields[element.field];
+        getField.filter = appendObj
+      });
 
-      console.log('------Return-------');
-      console.log(state);
-      console.log('------Return-------');
-
+      if (
+        state?.action_type === 'edit' &&
+        state?.selectedRecord &&
+        state?.selectedRecord?.[name]
+      ) {
+        state.selectedRecord[name] = value;
+      } 
       return { ...state };
     }
     default:

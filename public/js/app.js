@@ -13876,12 +13876,6 @@ function reducer(state, action) {
         var getField = state.fields[name];
         getField.value = value;
 
-        if ((state === null || state === void 0 ? void 0 : state.action_type) === 'new') {
-          console.log('------draw-form.js---Adding---draw-form.js-------');
-          console.log(state);
-          console.log('------draw-form.js---Adding---draw-form.js-------');
-        }
-
         if ((state === null || state === void 0 ? void 0 : state.action_type) === 'edit' && state !== null && state !== void 0 && state.selectedRecord && state !== null && state !== void 0 && (_state$selectedRecord = state.selectedRecord) !== null && _state$selectedRecord !== void 0 && _state$selectedRecord[name]) {
           conditionState(state, action);
           state.selectedRecord[name] = value;
@@ -13889,9 +13883,28 @@ function reducer(state, action) {
           conditionState(state, action);
         }
 
-        console.log('------Return-------');
-        console.log(state);
-        console.log('------Return-------');
+        return _objectSpread({}, state);
+      }
+
+    case 'append':
+      {
+        var _state$selectedRecord2;
+
+        var fields = action.fields,
+            _action$field3 = action.field,
+            _name = _action$field3.name,
+            _value = _action$field3.value;
+        fields.forEach(function (element) {
+          var appendObj = {};
+          appendObj[element.key] = _value === null || _value === void 0 ? void 0 : _value.value;
+          var getField = state.fields[element.field];
+          getField.filter = appendObj;
+        });
+
+        if ((state === null || state === void 0 ? void 0 : state.action_type) === 'edit' && state !== null && state !== void 0 && state.selectedRecord && state !== null && state !== void 0 && (_state$selectedRecord2 = state.selectedRecord) !== null && _state$selectedRecord2 !== void 0 && _state$selectedRecord2[_name]) {
+          state.selectedRecord[_name] = _value;
+        }
+
         return _objectSpread({}, state);
       }
 
@@ -14024,7 +14037,7 @@ function DrawForm(props) {
           }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__.jsx)("div", {
             className: "x_content",
             children: section && section.fields.map(function (u, i) {
-              var _state$fields$u, _state$fields$u3, _state$selectedRecord2, _state$fields$u4;
+              var _state$fields$u, _state$fields$u3, _state$selectedRecord3, _state$fields$u4;
 
               if ((_state$fields$u = state.fields[u]) !== null && _state$fields$u !== void 0 && _state$fields$u.access) {
                 var _state$fields$u2;
@@ -14045,7 +14058,7 @@ function DrawForm(props) {
 
               if ((_state$fields$u3 = state.fields[u]) !== null && _state$fields$u3 !== void 0 && _state$fields$u3.value) {
                 value = state.fields[u].value;
-              } else if (state !== null && state !== void 0 && state.selectedRecord && state !== null && state !== void 0 && (_state$selectedRecord2 = state.selectedRecord) !== null && _state$selectedRecord2 !== void 0 && _state$selectedRecord2[u]) {
+              } else if (state !== null && state !== void 0 && state.selectedRecord && state !== null && state !== void 0 && (_state$selectedRecord3 = state.selectedRecord) !== null && _state$selectedRecord3 !== void 0 && _state$selectedRecord3[u]) {
                 value = state.selectedRecord[u];
               }
 
@@ -15309,7 +15322,7 @@ function SelectField(_ref) {
 
   var onChange = function onChange(selectedOptions) {
     if (typeof (field === null || field === void 0 ? void 0 : field.dispatch) === 'function') {
-      if (field !== null && field !== void 0 && field["if"]) {
+      if (field !== null && field !== void 0 && field["if"] || field !== null && field !== void 0 && field.appendFilterToFields) {
         // For condition fields
         var selectOp = selectedOptions;
         if (typeof (field === null || field === void 0 ? void 0 : field.transform) === 'function') selectOp = field.transform(selectedOptions, true);else selectOp = {
@@ -15318,12 +15331,23 @@ function SelectField(_ref) {
           }),
           selected: selectedOptions === null || selectedOptions === void 0 ? void 0 : selectedOptions.label
         };
-        field.dispatch({
-          type: 'setValue',
-          field: _objectSpread({
-            name: field.field
-          }, selectOp)
-        });
+
+        if (field !== null && field !== void 0 && field["if"]) {
+          field.dispatch({
+            type: 'setValue',
+            field: _objectSpread({
+              name: field.field
+            }, selectOp)
+          });
+        } else if (field !== null && field !== void 0 && field.appendFilterToFields) {
+          field.dispatch({
+            type: 'append',
+            fields: field === null || field === void 0 ? void 0 : field.appendFilterToFields,
+            field: _objectSpread({
+              name: field.field
+            }, selectOp)
+          });
+        }
       }
     }
 
@@ -16698,6 +16722,10 @@ var insuranceDetail = {
               val: "null"
             }
           },
+          appendFilterToFields: [{
+            field: 'insurance_plan_id',
+            key: "provider_id"
+          }],
           rules: {
             required: true
           },
