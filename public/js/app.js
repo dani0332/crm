@@ -19440,8 +19440,8 @@ var vehicleSubform = {
           },
           access: {
             read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
-            write: ['advisor', 'admin'],
-            update: ['advisor', 'admin']
+            write: ['oe', 'advisor', 'admin'],
+            update: ['oe', 'advisor', 'admin']
           }
         },
         cylinder: {
