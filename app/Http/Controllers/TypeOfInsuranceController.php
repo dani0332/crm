@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use DataTables;
 use Spatie\Permission\Models\Role;
 use DB;
+use App\Http\Requests\TypeInsuranceRequest;
+use App\Http\Resources\TypeInsuranceResource;
 
 class TypeOfInsuranceController extends Controller
 {
@@ -53,21 +55,9 @@ class TypeOfInsuranceController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store(TypeInsuranceRequest $request, TypeOfInsurance $typeofinsurance)
     {
-        $this->validate($request,[
-            'text' => 'required|max:120',
-            'text_ar' => 'required|max:120',
-            'sort_order' => 'required',
-        ]);
-
-        $typeofinsurance = new TypeOfInsurance();
-        $typeofinsurance->text=  $request->text;
-        $typeofinsurance->text_ar=  $request->text_ar;
-        $typeofinsurance->is_active =  $request->is_active == 'on' ? 1 : 0;
-        $typeofinsurance->sort_order =  $request->sort_order;
-        $typeofinsurance->save();
-
+        $typeofinsurance->create($request->validated());
         if(isset($request->return_to_view)) {
             return redirect("claim/typeofinsurance/".$typeofinsurance->id)->with('success', 'Type Of Insurance has been stored');
         }
@@ -82,6 +72,7 @@ class TypeOfInsuranceController extends Controller
      */
     public function show(TypeOfInsurance $typeofinsurance)
     {
+        $typeofinsurance = new TypeInsuranceResource($typeofinsurance);
         return view('typeofinsurance.show',compact('typeofinsurance'));
     }
 
@@ -93,6 +84,7 @@ class TypeOfInsuranceController extends Controller
      */
     public function edit(TypeOfInsurance $typeofinsurance)
     {
+        $typeofinsurance = new TypeInsuranceResource($typeofinsurance);
         return view('typeofinsurance.edit',compact('typeofinsurance'));
     }
 
@@ -103,19 +95,11 @@ class TypeOfInsuranceController extends Controller
      * @param  \App\Models\TypeOfInsurance  $typeofinsurance
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, TypeOfInsurance $typeofinsurance)
+    public function update(TypeInsuranceRequest $request, TypeOfInsurance $typeofinsurance)
     {
-        $this->validate($request,[
-            'text' => 'required|max:120',
-            'text_ar' => 'required|max:120',
-            'sort_order' => 'required',
-        ]);
-        $typeofinsurance->text=  $request->text;
-        $typeofinsurance->text_ar=  $request->text_ar;
-        $typeofinsurance->is_active =  $request->is_active == 'on' ? 1 : 0;
-        $typeofinsurance->sort_order =  $request->sort_order;
-        $typeofinsurance->save();
-
+        $validated = $request->validated();
+        $validated['is_active'] = $validated['is_active'] ?? 0;
+        $typeofinsurance->update($validated);
         if(isset($request->return_to_view)) {
             return redirect("claim/typeofinsurance/".$typeofinsurance->id)->with('success', 'Type Of Insurance has been updated');
         }

@@ -27,16 +27,19 @@
                             <div class="col">
                                 <span class="col-form-label col-md-6 col-sm-6">Start Value<span
                                         class="required">*</span></span>
-                                <input type="text" id="start_value" name="start_value" value="{{ old('start_value') }}"
+                                <input type="text" id="start_value" name="value_start" value="{{ old('value_start') }}"
                                     class="form-control">
-                                @if ($errors->has('start_value'))
-                                    <span class="text-danger">{{ $errors->first('start_value') }}</span>
+                                @if ($errors->has('value_start'))
+                                    <span class="text-danger">{{ $errors->first('value_start') }}</span>
                                 @endif
                             </div>
                             <div class="col">
                                 <span class="col-form-label col-md-6 col-sm-6">End Value </span>
-                                <input type="text" id="end_value" name="end_value" value="{{ old('end_value') }}"
+                                <input type="text" id="end_value" name="value_end" value="{{ old('value_end') }}"
                                     class="form-control">
+                                    @if ($errors->has('value_end'))
+                                    <span class="text-danger">{{ $errors->first('value_end') }}</span>
+                                @endif
                             </div>
                         </div>
 
@@ -44,23 +47,23 @@
                             <div class="col">
                                 <span class="col-form-label col-md-6 col-sm-6">Vehicle Type<span
                                         class="required">*</span></span>
-                                <select class="form-control" name="vehicle_type" id="vehicle_type">
+                                <select class="form-control" name="vehicle_type_id" id="vehicle_type_id" >
                                     <option value="">Select Vehicle Type</option>
                                     @foreach ($vehicleTypes as $vehicleType)
-                                        <option value="{{ $vehicleType->id }}">{{ $vehicleType->text }}</option>
+                                        <option value="{{ $vehicleType->id }}" @if(old("vehicle_type_id") == $vehicleType->id) selected @endif>{{ $vehicleType->text }}</option>
                                     @endforeach
                                 </select>
-                                @if ($errors->has('vehicle_type'))
-                                    <span class="text-danger">{{ $errors->first('vehicle_type') }}</span>
+                                @if ($errors->has('vehicle_type_id'))
+                                    <span class="text-danger">{{ $errors->first('vehicle_type_id') }}</span>
                                 @endif
                             </div>
                             <div class="col">
                                 <span class="col-form-label col-md-6 col-sm-6">Comprehensive NON Agency Discount<span
                                         class="required">*</span></span>
-                                <input type="text" id="non_agency" name="non_agency" value="{{ old('non_agency') }}"
+                                <input type="text" id="non_agency" name="comprehensive_discount" value="{{ old('comprehensive_discount') }}"
                                     class="form-control">
-                                @if ($errors->has('non_agency'))
-                                    <span class="text-danger">{{ $errors->first('non_agency') }}</span>
+                                @if ($errors->has('comprehensive_discount'))
+                                    <span class="text-danger">{{ $errors->first('comprehensive_discount') }}</span>
                                 @endif
                             </div>
                         </div>
@@ -69,10 +72,10 @@
                             <div class="col">
                                 <span class="col-form-label col-md-6 col-sm-6">Agency Discount<span
                                         class="required">*</span></span>
-                                <input type="text" id="agency" name="agency" value="{{ old('agency') }}"
+                                <input type="text" id="agency" name="agency_discount" value="{{ old('agency_discount') }}"
                                     class="form-control">
-                                @if ($errors->has('agency'))
-                                    <span class="text-danger">{{ $errors->first('agency') }}</span>
+                                @if ($errors->has('agency_discount'))
+                                    <span class="text-danger">{{ $errors->first('agency_discount') }}</span>
                                 @endif
                             </div>
                         </div>

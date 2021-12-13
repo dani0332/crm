@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use DataTables;
 use Spatie\Permission\Models\Role;
 use DB;
+use App\Http\Requests\CarRepairTypeRequest;
+use App\Http\Resources\CarRepairTypeResource;
 
 class CarRepairTypeController extends Controller
 {
@@ -25,7 +27,7 @@ class CarRepairTypeController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $data = CarRepairType::select('*')->orderBy('sort_order','asc');;
+            $data = CarRepairType::select('*')->orderBy('sort_order','asc');
             return DataTables::of($data)
                     ->addIndexColumn()
                     ->addColumn('action', function($row){
@@ -54,20 +56,10 @@ class CarRepairTypeController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store(CarRepairTypeRequest $request, CarRepairType $carrepairtype)
     {
-        $this->validate($request,[
-            'text' => 'required|max:120',
-            'text_ar' => 'required|max:120',
-            'sort_order' => 'required',
-        ]);
-
-        $carrepairtype = new CarRepairType();
-        $carrepairtype->text=  $request->text;
-        $carrepairtype->text_ar=  $request->text_ar;
-        $carrepairtype->is_active =  $request->is_active == 'on' ? 1 : 0;
-        $carrepairtype->sort_order =  $request->sort_order;
-        $carrepairtype->save();
+       
+        $carrepairtype->create($request->validated());
         if(isset($request->return_to_view)) {
             return redirect("claim/carrepairtype/".$carrepairtype->id)->with('success', 'Car Repair Type has been stored');
         }
@@ -82,6 +74,7 @@ class CarRepairTypeController extends Controller
      */
     public function show(CarRepairType $carrepairtype)
     {
+        $carrepairtype = new CarRepairTypeResource($carrepairtype);
         return view('carrepairtype.show',compact('carrepairtype'));
     }
 
@@ -93,6 +86,7 @@ class CarRepairTypeController extends Controller
      */
     public function edit(CarRepairType $carrepairtype)
     {
+        $carrepairtype = new CarRepairTypeResource($carrepairtype);
         return view('carrepairtype.edit',compact('carrepairtype'));
     }
 
@@ -103,18 +97,12 @@ class CarRepairTypeController extends Controller
      * @param  \App\Models\CarRepairType  $carRepairType
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, CarRepairType $carrepairtype)
+    public function update(CarRepairTypeRequest $request, CarRepairType $carrepairtype)
     {
-        $this->validate($request,[
-            'text' => 'required|max:120',
-            'text_ar' => 'required|max:120',
-            'sort_order' => 'required',
-        ]);
-        $carrepairtype->text=  $request->text;
-        $carrepairtype->text_ar=  $request->text_ar;
-        $carrepairtype->is_active =  $request->is_active == 'on' ? 1 : 0;
-        $carrepairtype->sort_order =  $request->sort_order;
-        $carrepairtype->save();
+
+        $validated = $request->validated();
+        $validated['is_active'] = $validated['is_active'] ?? 0;
+        $carrepairtype->update($validated);
         if(isset($request->return_to_view)) {
             return redirect("claim/carrepairtype/".$carrepairtype->id)->with('success', 'Car Repair Type has been updated');
         }

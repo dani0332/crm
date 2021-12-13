@@ -50,7 +50,7 @@
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="is_active">Is Active</label>
                         <div class="col-md-6 col-sm-6">
                             <div class="checkbox">
-                                <input type="checkbox" {{ $carrepaircoverage->is_active ? 'checked' : '' }} class="flat" id='is_active' name='is_active'>
+                                <input type="checkbox" {{ $carrepaircoverage->is_active ? 'checked' : '' }} class="flat" id='is_active' name='is_active' value="1">
                             </div>
                         </div>
                     </div>
