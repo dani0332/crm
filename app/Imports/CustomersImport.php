@@ -52,12 +52,13 @@ class CustomersImport implements OnEachRow, WithStartRow
             }
             function sendEmail($email, $name) {
                 $apiKey = env('SENDINBLUE_KEY');
-                $url = "https://api.sendinblue.com/v3/smtp/email";
+                $url = env('SIB_URL');
+                $sibTemplate = env('SIB_CORPORATE_TEMPLATE');
         
                 $headers = [
-                    'accept' => 'application/json',
+                    'Accept' => 'application/json',
                     'api-key' => $apiKey,
-                    'content-type' => 'application/json'
+                    'Content-Type' => 'application/json'
                 ];
         
                 $body = [
@@ -65,7 +66,7 @@ class CustomersImport implements OnEachRow, WithStartRow
                         "email" => $email,
                         "name" => $name,
                     ]),
-                    "templateId" => 272,
+                    "templateId" => $sibTemplate,
                 ];
         
                 Http::withHeaders($headers)->post($url, $body);
