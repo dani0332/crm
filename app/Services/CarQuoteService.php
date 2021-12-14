@@ -323,7 +323,19 @@ class CarQuoteService extends BaseService
             }
         } catch (ClientException $e) {
             $response = $e->getResponse();
-            $responseBodyAsString = "API Failed - " . $response->getBody()->getContents();
+            $contents = (string) $response->getBody();
+            $response = json_decode($contents);
+
+            if(isset($response->message)) {
+                $responseBodyAsString = $response->message;
+            }
+            else if(isset($response->error)) {
+                $responseBodyAsString = $response->error;
+            }
+            else {
+                $responseBodyAsString = $response->msg;
+            }
+
             return $responseBodyAsString;
         }
     }

@@ -349,4 +349,10 @@ class CRUDController extends Controller
         $assignedUserName = $this->userService->getUserNameById($assignedToUserIdNew);
         return Redirect::back()->with('success', $request->modelType . ' Leads has been Assigned To ' . $assignedUserName);
     }
+
+    public function updateDiscountedPremium(Request $request)
+    {
+        return $request;
+
+    }
 }
