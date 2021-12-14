@@ -18155,7 +18155,7 @@ var ftcPayment = {
           //     };
           // },
           access: {
-            read: ['advisor', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
+            read: ['advisor', 'pa', 'oe', 'admin', 'invoicing', 'production_approval_manager'],
             write: ['oe', 'advisor'],
             update: ['oe', 'advisor']
           },
@@ -19495,18 +19495,6 @@ var vehicleSubform = {
             update: ['advisor', 'oe', 'admin']
           }
         },
-        car_value: {
-          type: 'text',
-          label: 'Car Value',
-          rules: {
-            required: true
-          },
-          access: {
-            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
-            write: ['oe', 'advisor'],
-            update: ['oe', 'advisor']
-          }
-        },
         currently_insured_with: {
           type: 'text',
           label: 'Cyurrently With (Insurer Name)',
@@ -19585,7 +19573,7 @@ var vehicleSubform = {
       },
       sections: [{
         label: 'Add Vehicle Detail',
-        fields: ['engine_capacity', 'cylinder', 'chassis_number', 'engine_number', 'date_first_registration', 'car_value', 'currently_insured_with', 'vehicle_color', 'seating_capacity', 'specs', 'current_cover', 'vehicle_modified']
+        fields: ['engine_capacity', 'cylinder', 'chassis_number', 'engine_number', 'date_first_registration', 'currently_insured_with', 'vehicle_color', 'seating_capacity', 'specs', 'current_cover', 'vehicle_modified']
       }],
       view: {
         find: {
@@ -19673,6 +19661,15 @@ var vehicleDetail = {
             update: []
           }
         },
+        car_value: {
+          type: 'text',
+          label: 'Car Value',
+          access: {
+            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
+            write: [],
+            update: []
+          }
+        },
         emirate_of_registration_id: {
           type: 'dropdown',
           label: 'Emirate of Registration',
@@ -19721,7 +19718,7 @@ var vehicleDetail = {
       },
       sections: [{
         label: 'Car Quote Detail',
-        fields: ['Year_of_manufacture', 'car_model_id', 'car_make_id', 'emirate_of_registration_id', 'uae_license_held_for_id', 'claim_history_id', 'vehicle_detail_id']
+        fields: ['Year_of_manufacture', 'car_model_id', 'car_make_id', 'car_value', 'emirate_of_registration_id', 'uae_license_held_for_id', 'claim_history_id', 'vehicle_detail_id']
       }],
       view: {
         find: {
@@ -20561,7 +20558,7 @@ function ReviewSend(props) {
             className: "offset-md-2 col-md-7 hidden-small",
             children: [(data === null || data === void 0 ? void 0 : data.vehicle_detail_id) && (data === null || data === void 0 ? void 0 : data.insurance_coverage) && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("div", {
               className: "pull-right",
-              children: role === 'advisor' && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("button", {
+              children: role === 'advisor' || role === 'oe' && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("button", {
                 type: "submit",
                 className: "btn btn-success",
                 onClick: submit,
