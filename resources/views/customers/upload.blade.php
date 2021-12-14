@@ -48,7 +48,7 @@
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="inviation_mail">Send Invitation Email <span class="required">*</span></label>
                         <div class="col-md-6 col-sm-6">
-                            <input type="checkbox" id="inviatation_email" checked value="{{ old('inviatation_email') }}"  name="inviatation_email" class="flat m-0"  />
+                            <input type="checkbox" id="inviatation_email" checked name="inviatation_email" class="flat m-0"  />
                             @if ($errors->has('inviatation_email'))
                                 <span class="text-danger">{{ $errors->first('inviatation_email') }}</span>
                             @endif

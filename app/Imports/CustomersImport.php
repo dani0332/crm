@@ -5,23 +5,24 @@ namespace App\Imports;
 use App\Models\Customer;
 use App\Models\QuoteCustomer;
 use App\Services\CustomerService;
-use App\Mail\SendInBlueMail;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
 use Maatwebsite\Excel\Row;
 use Maatwebsite\Excel\Concerns\OnEachRow;
 use Maatwebsite\Excel\Concerns\WithStartRow;
-use Throwable;
+use Illuminate\Support\Facades\Http;
+
 
 class CustomersImport implements OnEachRow, WithStartRow
 {
 
     public $myalfredExpiryDate;
     public $CDBId;
-    public function __construct($myalfredExpiryDate, $cdbId)
+    public $inviatationEmail;
+    public function __construct($myalfredExpiryDate, $cdbId, $inviatationEmail)
     {
         $this->myalfredExpiryDate = $myalfredExpiryDate;
         $this->CDBId = $cdbId;
+        $this->inviatationEmail = $inviatationEmail;
     }
 
     /**
@@ -35,6 +36,7 @@ class CustomersImport implements OnEachRow, WithStartRow
         $row = $row->toArray();
 
         $email = $row[1];
+
         if($email != null) {
             $customerId = 0;
             $myalfredExpiryDate = date('Y-m-d H:i:s', strtotime(str_replace('"', '', $this->myalfredExpiryDate)));
@@ -47,6 +49,29 @@ class CustomersImport implements OnEachRow, WithStartRow
             else {
                 $firstName = $row[0];
                 $lastName = "";
+            }
+            function sendEmail($email, $name) {
+                $apiKey = env('SENDINBLUE_KEY');
+                $url = "https://api.sendinblue.com/v3/smtp/email";
+        
+                $headers = [
+                    'accept' => 'application/json',
+                    'api-key' => $apiKey,
+                    'content-type' => 'application/json'
+                ];
+        
+                $body = [
+                    "to" => array([
+                        "email" => $email,
+                        "name" => $name,
+                    ]),
+                    "templateId" => 272,
+                ];
+        
+                Http::withHeaders($headers)->post($url, $body);
+            }
+            if ($this->inviatationEmail == 'on') {
+                sendEmail($email, $firstName);
             }
             $findCustomerByEmail = CustomerService::getCustomerByEmail($email);
             if(!$findCustomerByEmail->isEmpty()) {
@@ -82,13 +107,6 @@ class CustomersImport implements OnEachRow, WithStartRow
                 $newQuoteCustomer->save();
                 Log::channel('daily')->info('Saved in quote customer with Customer Id-> '.$customerId.' , CDB Id ->'. $this->CDBId);
             }
-            $emailPayload = [
-                'templateId' => 272,
-            ];
-            // $sendEmail = new SendInBlueMail($emailPayload);
-            // $sendEmail->to($email);
-            // $sendEmail->send(new SendInBlueMail($emailPayload));
-            Mail::to($email)->send(new SendInBlueMail($emailPayload));
         }
     }
 
