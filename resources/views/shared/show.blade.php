@@ -120,6 +120,8 @@
             :listQuotePlans="$listQuotePlans"
             :uuid="$ecomCarInsuranceQuoteUrl.$record->uuid"
             :uuidModal="$record->uuid"
+            :quoteRequestId="$record->id"
+            :quoteIsCommerce="$record->is_ecommerce"
         />
     @endif
 @endsection
