@@ -9,7 +9,7 @@ use App\Models\InsuranceProvider;
 use App\Models\CarPlan;
 
 
-class AddInsuranceCompaniesAndPlansFromExcel extends Migration
+class AddInsuranceCompaniesAndPlansDataFromExcel extends Migration
 {
     private function exportRow($insuranceProviderModel, $row){
 
