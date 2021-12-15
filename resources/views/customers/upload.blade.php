@@ -37,11 +37,20 @@
                         </div>
                     </div>
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="myalfredExpiryDate">myAlfred Expiry Date <span class="required">*</span></label>
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="myalfredExpiryDate">Policy Expiry Date <span class="required">*</span></label>
                         <div class="col-md-6 col-sm-6">
                             <input type="date" id="myalfred_expiry_date"  value="{{ old('myalfred_expiry_date') }}"  name="myalfred_expiry_date" class="form-control form-control-sm"  />
                             @if ($errors->has('myalfred_expiry_date'))
                                 <span class="text-danger">{{ $errors->first('myalfred_expiry_date') }}</span>
+                            @endif
+                        </div>
+                    </div>
+                    <div class="item form-group">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="inviation_mail">Send Invitation Email <span class="required">*</span></label>
+                        <div class="col-md-6 col-sm-6">
+                            <input type="checkbox" id="inviatation_email" checked name="inviatation_email" class="flat m-0"  />
+                            @if ($errors->has('inviatation_email'))
+                                <span class="text-danger">{{ $errors->first('inviatation_email') }}</span>
                             @endif
                         </div>
                     </div>
