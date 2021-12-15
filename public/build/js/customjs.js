@@ -1238,6 +1238,7 @@ $(document).ready(function () {
         },
         { data: 'customer_name', name: 'customer_name' },
         { data: 'tm_insurance_types_text', name: 'tm_insurance_types_text' },
+        { data: 'tm_lead_type', name: 'tm_lead_type' },
         { data: 'tm_lead_status_text', name: 'tm_lead_status_text' },
         { data: 'notes', name: 'notes' },
         { data: 'enquiry_date', name: 'enquiry_date' },
@@ -1245,7 +1246,8 @@ $(document).ready(function () {
         { data: 'next_followup_date', name: 'next_followup_date' },
         { data: 'handlers_name', name: 'handlers_name' },
         { data: 'created_at', name: 'created_at' },
-        { data: 'updated_at', name: 'updated_at' },
+        { data: 'updated_at', name: 'updated_at' }
+       
         ],
         createdRow: function (row, data, index) {
 
@@ -1267,6 +1269,7 @@ $(document).ready(function () {
             $("#totalLeads").text("Total Leads: " + settings._iRecordsTotal);
         }
     });
+    tmLeadsDatatable.column(4).visible(false);
 
     // TM Leads: Expost data into csv
     function newexportaction(e, dt, button, config) {

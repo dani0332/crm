@@ -11,18 +11,21 @@ use App\Enums\tmLeadStatusCode;
 use App\Services\TMLeadsService;
 use App\Models\TmInsuranceType;
 use App\Models\TmLeadStatus;
-use App\Models\Nationality;
-use App\Models\UAELicenseHeldFor;
-use App\Models\Emirate;
+// use App\Models\Nationality;
+// use App\Models\UAELicenseHeldFor;
+// use App\Models\Emirate;
 use App\Models\User;
-use App\Models\CarMake;
-use App\Models\CarModel;
-use App\Models\CarTypeInsurance;
-use App\Models\TmLeadType;
+// use App\Models\CarMake;
+// use App\Models\CarModel;
+// use App\Models\CarTypeInsurance;
+// use App\Models\TmLeadType;
 use \Carbon\Carbon;
+use App\Http\Requests\TmLeadRequest;
+use App\Http\Traits\TmLeadTrait;
 
 class TmLeadController extends Controller
 {
+    use TmLeadTrait;
     private $teleMarketingLeadsService;
     function __construct(TMLeadsService $tmLeadsCreateUpdateService)
     {
@@ -44,9 +47,9 @@ class TmLeadController extends Controller
             ->leftjoin('roles', 'roles.id', 'model_has_roles.role_id')
             ->whereIn('roles.name', ['TM_ADVISOR'])->orderBy('roles.name', 'asc')->get();
 
-        $tmInsuranceTypes = TmInsuranceType::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
-        $tmLeadTypes = TmLeadType::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
-        $tmLeadStatuses = TmLeadStatus::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
+        $tmInsuranceTypes = $this->getInsuranceTypes(); //TmInsuranceType::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
+        $tmLeadTypes = $this->getLeadTypes(); //TmLeadType::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
+        $tmLeadStatuses = $this->getLeadStatuses(); //TmLeadStatus::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
 
         if (Auth::user()->hasAnyRole(['TM_ADVISOR','TM_AUDIT'])) {
             $isCurrentUserIsAdvisor = "1";
@@ -68,11 +71,13 @@ class TmLeadController extends Controller
                 'tm_lead_statuses.code as tm_lead_status_code',
                 'handlers.name as handlers_name',
                 'tm_insurance_types.text as tm_insurance_types_text',
-                'tm_lead_statuses.text as tm_lead_status_text'
+                'tm_lead_statuses.text as tm_lead_status_text',
+                'tm_lead_types.text as tm_lead_type',
             )
                 ->leftjoin('tm_lead_statuses', 'tm_leads.tm_lead_statuses_id', 'tm_lead_statuses.id')
                 ->leftjoin('users as handlers', 'tm_leads.assigned_to_id', 'handlers.id')
                 ->leftjoin('tm_insurance_types', 'tm_leads.tm_insurance_types_id', 'tm_insurance_types.id')
+                ->leftjoin('tm_lead_types', 'tm_leads.tm_lead_types_id', 'tm_lead_types.id')
                 ->whereRaw('tm_leads.is_deleted=0')
                 ->orderByRaw('tm_leads.next_followup_date IS NULL, tm_leads.next_followup_date, tm_leads.created_at');
 
@@ -146,15 +151,15 @@ class TmLeadController extends Controller
      */
     public function create()
     {
-        $tmLeadStatuses = TmLeadStatus::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
-        $tmInsuranceTypes = TmInsuranceType::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
-        $nationalities = Nationality::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
-        $yearsOfDrivings = UAELicenseHeldFor::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
-        $carMakes = CarMake::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
-        $carModels = CarModel::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
-        $emiratesOfRegistrations = Emirate::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
-        $carTypeInsurances = CarTypeInsurance::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
-        $tmLeadTypes = TmLeadType::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
+        $tmLeadStatuses = $this->getLeadStatuses();
+        $tmInsuranceTypes = $this->getInsuranceTypes();
+        $nationalities = $this->getNationalities();
+        $yearsOfDrivings = $this->getYearsOfDriving();
+        $carMakes = $this->getCarMakes();
+        $carModels = $this->getCarModels();
+        $emiratesOfRegistrations = $this->getEmiratesOfRegistrations();
+        $carTypeInsurances = $this->getCarTypeInsurances();
+        $tmLeadTypes = $this->getLeadTypes();
         $handlers = User::select('users.*')
             ->leftjoin('model_has_roles', 'users.id', 'model_has_roles.model_id')
             ->leftjoin('roles', 'roles.id', 'model_has_roles.role_id')
@@ -187,17 +192,8 @@ class TmLeadController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store(TmLeadRequest $request)
     {
-        $this->validate($request, [
-            'customer_name' => 'required|max:50',
-            'phone_number' => 'required|max:20',
-            'email_address' => 'required|email|max:50',
-            'tm_insurance_types_id' => 'required',
-            'enquiry_date' => 'required',
-            'allocation_date' => 'required',
-            'tm_lead_types_id' => 'required',
-        ]);
 
         $tmLeadID = $this->teleMarketingLeadsService->tmLeadsCreateUpdate($request, "create", $tmLeadID = "");
 
@@ -271,7 +267,7 @@ class TmLeadController extends Controller
 
         $tmLeadStatusCode = TmLeadStatus::where('id', '=', $tmlead->tm_lead_statuses_id)->value('code');
         $tmInsuranceTypeCode = TmInsuranceType::where('id', '=', $tmlead->tm_insurance_types_id)->value('code');
-        $tmLeadStatuses = TmLeadStatus::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
+        $tmLeadStatuses = $this->getLeadStatuses(); //TmLeadStatus::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
 
         return view("tmlead.show", compact(
             "tmlead",
@@ -299,16 +295,16 @@ class TmLeadController extends Controller
         } else {
             $isUserTmAdvisor = "0";
         }
-
-        $tmLeadStatuses = TmLeadStatus::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
-        $tmInsuranceTypes = TmInsuranceType::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
-        $nationalities = Nationality::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
-        $yearsOfDrivings = UAELicenseHeldFor::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
-        $carMakes = CarMake::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
-        $carModels = CarModel::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
-        $emiratesOfRegistrations = Emirate::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
-        $carTypeInsurances = CarTypeInsurance::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
-        $tmLeadTypes = TmLeadType::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
+        $tmLeadStatuses = $this->getLeadStatuses();
+        $tmInsuranceTypes = $this->getInsuranceTypes();
+        $nationalities = $this->getNationalities();
+        $yearsOfDrivings = $this->getYearsOfDriving();
+        $carMakes = $this->getCarMakes();
+        $carModels = $this->getCarModels();
+        $emiratesOfRegistrations = $this->getEmiratesOfRegistrations();
+        $carTypeInsurances = $this->getCarTypeInsurances();
+        $tmLeadTypes = $this->getLeadTypes();
+       
         $handlers = User::select('users.*')
             ->leftjoin('model_has_roles', 'users.id', 'model_has_roles.model_id')
             ->leftjoin('roles', 'roles.id', 'model_has_roles.role_id')
@@ -337,17 +333,8 @@ class TmLeadController extends Controller
      * @param  \App\Models\TmLead  $tmlead
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, TmLead $tmlead)
+    public function update(TmLeadRequest $request, TmLead $tmlead)
     {
-        $this->validate($request, [
-            'customer_name' => 'required|max:50',
-            'phone_number' => 'required|max:20',
-            'email_address' => 'required|email|max:50',
-            'tm_insurance_types_id' => 'required',
-            'enquiry_date' => 'required',
-            'allocation_date' => 'required',
-            'tm_lead_types_id' => 'required',
-        ]);
 
         $tmLeadID = $this->teleMarketingLeadsService->tmLeadsCreateUpdate($request, "update", $tmlead->id);
 
