@@ -73,6 +73,22 @@ let vehicleDetail = {
             update: [],
           }
         },
+        car_value: {
+          type: 'text',
+          label: 'Car Value',
+          access: {
+            read: [
+              'advisor',
+              'oe',
+              'pa',
+              'admin',
+              'invoicing',
+              'production_approval_manager',
+            ],
+            write: [ ],
+            update: [],
+          },
+        },
         emirate_of_registration_id: {
           type: 'dropdown',
           label: 'Emirate of Registration',
@@ -141,6 +157,7 @@ let vehicleDetail = {
             'Year_of_manufacture',
             'car_model_id',
             'car_make_id',
+            'car_value',
             'emirate_of_registration_id',
             'uae_license_held_for_id',
             'claim_history_id',

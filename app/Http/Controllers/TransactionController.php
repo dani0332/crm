@@ -134,11 +134,10 @@ class TransactionController extends Controller
 
         $carQuote = [];
         if($request->has("carQuote")){
-            $carQuote = CarQuote::with(["insurance_coverage" ,"advisor_id", "payment_detail"])->where("id",$request->input("carQuote"))->first();
+            $carQuote = CarQuote::with(["insurance_coverage.insurance_company_id" ,"advisor_id", "payment_detail"])->where("id",$request->input("carQuote"))->first();
             if($carQuote)
                 $carQuote = $carQuote->toArray();
         }
-
 
         $handlers = User::select('users.*')
         ->leftjoin('model_has_roles','users.id','model_has_roles.model_id')

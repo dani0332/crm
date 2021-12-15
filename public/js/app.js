@@ -13876,12 +13876,6 @@ function reducer(state, action) {
         var getField = state.fields[name];
         getField.value = value;
 
-        if ((state === null || state === void 0 ? void 0 : state.action_type) === 'new') {
-          console.log('------draw-form.js---Adding---draw-form.js-------');
-          console.log(state);
-          console.log('------draw-form.js---Adding---draw-form.js-------');
-        }
-
         if ((state === null || state === void 0 ? void 0 : state.action_type) === 'edit' && state !== null && state !== void 0 && state.selectedRecord && state !== null && state !== void 0 && (_state$selectedRecord = state.selectedRecord) !== null && _state$selectedRecord !== void 0 && _state$selectedRecord[name]) {
           conditionState(state, action);
           state.selectedRecord[name] = value;
@@ -13889,9 +13883,28 @@ function reducer(state, action) {
           conditionState(state, action);
         }
 
-        console.log('------Return-------');
-        console.log(state);
-        console.log('------Return-------');
+        return _objectSpread({}, state);
+      }
+
+    case 'append':
+      {
+        var _state$selectedRecord2;
+
+        var fields = action.fields,
+            _action$field3 = action.field,
+            _name = _action$field3.name,
+            _value = _action$field3.value;
+        fields.forEach(function (element) {
+          var appendObj = {};
+          appendObj[element.key] = _value === null || _value === void 0 ? void 0 : _value.value;
+          var getField = state.fields[element.field];
+          getField.filter = appendObj;
+        });
+
+        if ((state === null || state === void 0 ? void 0 : state.action_type) === 'edit' && state !== null && state !== void 0 && state.selectedRecord && state !== null && state !== void 0 && (_state$selectedRecord2 = state.selectedRecord) !== null && _state$selectedRecord2 !== void 0 && _state$selectedRecord2[_name]) {
+          state.selectedRecord[_name] = _value;
+        }
+
         return _objectSpread({}, state);
       }
 
@@ -14024,7 +14037,7 @@ function DrawForm(props) {
           }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_11__.jsx)("div", {
             className: "x_content",
             children: section && section.fields.map(function (u, i) {
-              var _state$fields$u, _state$fields$u3, _state$selectedRecord2, _state$fields$u4;
+              var _state$fields$u, _state$fields$u3, _state$selectedRecord3, _state$fields$u4;
 
               if ((_state$fields$u = state.fields[u]) !== null && _state$fields$u !== void 0 && _state$fields$u.access) {
                 var _state$fields$u2;
@@ -14045,7 +14058,7 @@ function DrawForm(props) {
 
               if ((_state$fields$u3 = state.fields[u]) !== null && _state$fields$u3 !== void 0 && _state$fields$u3.value) {
                 value = state.fields[u].value;
-              } else if (state !== null && state !== void 0 && state.selectedRecord && state !== null && state !== void 0 && (_state$selectedRecord2 = state.selectedRecord) !== null && _state$selectedRecord2 !== void 0 && _state$selectedRecord2[u]) {
+              } else if (state !== null && state !== void 0 && state.selectedRecord && state !== null && state !== void 0 && (_state$selectedRecord3 = state.selectedRecord) !== null && _state$selectedRecord3 !== void 0 && _state$selectedRecord3[u]) {
                 value = state.selectedRecord[u];
               }
 
@@ -15309,7 +15322,7 @@ function SelectField(_ref) {
 
   var onChange = function onChange(selectedOptions) {
     if (typeof (field === null || field === void 0 ? void 0 : field.dispatch) === 'function') {
-      if (field !== null && field !== void 0 && field["if"]) {
+      if (field !== null && field !== void 0 && field["if"] || field !== null && field !== void 0 && field.appendFilterToFields) {
         // For condition fields
         var selectOp = selectedOptions;
         if (typeof (field === null || field === void 0 ? void 0 : field.transform) === 'function') selectOp = field.transform(selectedOptions, true);else selectOp = {
@@ -15318,12 +15331,23 @@ function SelectField(_ref) {
           }),
           selected: selectedOptions === null || selectedOptions === void 0 ? void 0 : selectedOptions.label
         };
-        field.dispatch({
-          type: 'setValue',
-          field: _objectSpread({
-            name: field.field
-          }, selectOp)
-        });
+
+        if (field !== null && field !== void 0 && field["if"]) {
+          field.dispatch({
+            type: 'setValue',
+            field: _objectSpread({
+              name: field.field
+            }, selectOp)
+          });
+        } else if (field !== null && field !== void 0 && field.appendFilterToFields) {
+          field.dispatch({
+            type: 'append',
+            fields: field === null || field === void 0 ? void 0 : field.appendFilterToFields,
+            field: _objectSpread({
+              name: field.field
+            }, selectOp)
+          });
+        }
       }
     }
 
@@ -16691,7 +16715,17 @@ var insuranceDetail = {
         insurance_company_id: {
           type: 'dropdown',
           label: 'Insurance Company',
-          source: 'insurance_companies',
+          source: 'insurance_provider',
+          filter: {
+            insurance_company_id: {
+              op: "<>",
+              val: "null"
+            }
+          },
+          appendFilterToFields: [{
+            field: 'insurance_plan_id',
+            key: "provider_id"
+          }],
           rules: {
             required: true
           },
@@ -16699,26 +16733,20 @@ var insuranceDetail = {
             read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'production_approval_manager'],
             write: ['advisor', 'oe', 'admin'],
             update: ['advisor', 'oe', 'admin']
-          },
-          transform: function transform(item) {
-            if (Array.isArray(item)) {
-              var items = item.map(function (u) {
-                return {
-                  value: u === null || u === void 0 ? void 0 : u.id,
-                  label: u === null || u === void 0 ? void 0 : u.name
-                };
-              });
-              return items;
-            } else return {
-              value: item === null || item === void 0 ? void 0 : item.id,
-              label: item === null || item === void 0 ? void 0 : item.name
-            };
-          }
+          } // transform(item) {
+          //   if (Array.isArray(item)) {
+          //     const items = item.map(u => {
+          //       return { value: u?.id, label: u?.name };
+          //     });
+          //     return items;
+          //   } else return { value: item?.id, label: item?.name };
+          // },
+
         },
         insurance_plan_id: {
           type: 'dropdown',
           label: 'Insurance Plan',
-          source: 'car_quote_insurance_plan',
+          source: 'car_plan',
           access: {
             read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'production_approval_manager'],
             write: ['advisor', 'oe', 'admin'],
@@ -17509,24 +17537,24 @@ var carQuotePolicy = {
         insurance_company_id: {
           type: 'dropdown',
           label: 'Insurance Company',
-          source: 'insurance_companies',
+          source: 'insurance_provider',
+          filter: {
+            insurance_company_id: {
+              op: "<>",
+              val: "null"
+            }
+          },
           access: {
             read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'production_approval_manager']
-          },
-          transform: function transform(item) {
-            if (Array.isArray(item)) {
-              var items = item.map(function (u) {
-                return {
-                  value: u === null || u === void 0 ? void 0 : u.id,
-                  label: u === null || u === void 0 ? void 0 : u.name
-                };
-              });
-              return items;
-            } else return {
-              value: item === null || item === void 0 ? void 0 : item.id,
-              label: item === null || item === void 0 ? void 0 : item.name
-            };
-          }
+          } // transform(item) {
+          //   if (Array.isArray(item)) {
+          //     const items = item.map(u => {
+          //       return { value: u?.id, label: u?.name };
+          //     });
+          //     return items;
+          //   } else return { value: item?.id, label: item?.name };
+          // },
+
         }
       },
       sections: [{
@@ -18127,7 +18155,7 @@ var ftcPayment = {
           //     };
           // },
           access: {
-            read: ['advisor', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
+            read: ['advisor', 'pa', 'oe', 'admin', 'invoicing', 'production_approval_manager'],
             write: ['oe', 'advisor'],
             update: ['oe', 'advisor']
           },
@@ -19412,8 +19440,8 @@ var vehicleSubform = {
           },
           access: {
             read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
-            write: ['advisor', 'admin'],
-            update: ['advisor', 'admin']
+            write: ['oe', 'advisor', 'admin'],
+            update: ['oe', 'advisor', 'admin']
           }
         },
         cylinder: {
@@ -19465,18 +19493,6 @@ var vehicleSubform = {
             read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
             write: ['advisor', 'oe', 'admin'],
             update: ['advisor', 'oe', 'admin']
-          }
-        },
-        car_value: {
-          type: 'text',
-          label: 'Car Value',
-          rules: {
-            required: true
-          },
-          access: {
-            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
-            write: ['oe', 'advisor'],
-            update: ['oe', 'advisor']
           }
         },
         currently_insured_with: {
@@ -19557,7 +19573,7 @@ var vehicleSubform = {
       },
       sections: [{
         label: 'Add Vehicle Detail',
-        fields: ['engine_capacity', 'cylinder', 'chassis_number', 'engine_number', 'date_first_registration', 'car_value', 'currently_insured_with', 'vehicle_color', 'seating_capacity', 'specs', 'current_cover', 'vehicle_modified']
+        fields: ['engine_capacity', 'cylinder', 'chassis_number', 'engine_number', 'date_first_registration', 'currently_insured_with', 'vehicle_color', 'seating_capacity', 'specs', 'current_cover', 'vehicle_modified']
       }],
       view: {
         find: {
@@ -19645,6 +19661,15 @@ var vehicleDetail = {
             update: []
           }
         },
+        car_value: {
+          type: 'text',
+          label: 'Car Value',
+          access: {
+            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
+            write: [],
+            update: []
+          }
+        },
         emirate_of_registration_id: {
           type: 'dropdown',
           label: 'Emirate of Registration',
@@ -19693,7 +19718,7 @@ var vehicleDetail = {
       },
       sections: [{
         label: 'Car Quote Detail',
-        fields: ['Year_of_manufacture', 'car_model_id', 'car_make_id', 'emirate_of_registration_id', 'uae_license_held_for_id', 'claim_history_id', 'vehicle_detail_id']
+        fields: ['Year_of_manufacture', 'car_model_id', 'car_make_id', 'car_value', 'emirate_of_registration_id', 'uae_license_held_for_id', 'claim_history_id', 'vehicle_detail_id']
       }],
       view: {
         find: {
@@ -20533,7 +20558,7 @@ function ReviewSend(props) {
             className: "offset-md-2 col-md-7 hidden-small",
             children: [(data === null || data === void 0 ? void 0 : data.vehicle_detail_id) && (data === null || data === void 0 ? void 0 : data.insurance_coverage) && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("div", {
               className: "pull-right",
-              children: role === 'advisor' && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("button", {
+              children: role === 'advisor' || role === 'oe' && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("button", {
                 type: "submit",
                 className: "btn btn-success",
                 onClick: submit,

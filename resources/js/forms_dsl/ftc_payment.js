@@ -53,6 +53,7 @@ const ftcPayment = {
             read: [
               'advisor',
               'pa',
+              'oe',
               'admin',
               'invoicing',
               'production_approval_manager',

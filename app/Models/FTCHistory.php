@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 use LookUpModel;
 use \Carbon\Carbon;
+use Config;
 
 class FTCHistory extends BaseModel
 {
@@ -79,8 +80,8 @@ class FTCHistory extends BaseModel
         $attachment = FtcDocument::where(['car_quote_id' => $row->id, 'document' => 9])->get();
         if(sizeof($attachment) > 0){
             $params['templateParams']['attachment'] = [];
-            foreach ($attachment as $model) {
-                $params['templateParams']['attachment'][] = 'https://myalfreddev.blob.core.windows.net/myrewards/'.$model->file_name;
+            foreach ($attachment as $model) { 
+                $params['templateParams']['attachment'][] = Config::get('constants.azure_storage_url').'/'.Config::get('constants.AZURE_STORAGE_CONTAINER').'/'.$model->file_name;
             }
         }
         dispatch(new FTCMailServiceJob($params));

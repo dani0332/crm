@@ -5,12 +5,42 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Auditable;
+use App\Models\BaseModel;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
-class InsuranceProvider extends Model implements AuditableContract
+class InsuranceProvider extends BaseModel implements AuditableContract
 {
     use HasFactory, Auditable;
     protected $table = 'insurance_provider';
+
+    public $access = [
+
+        'write' => ['advisor', 'oe'],
+        'update' => ['advisor', 'oe'],
+        'delete' => ['advisor', 'oe'],
+        'access' => [
+            "pa" => [ 'code', 'text'],
+            "advisor" => [ 'code', 'text'],
+            "oe" => [ 'code', 'text'],
+            "admin" => [ 'code', 'text' ],
+            "invoicing" => [ 'code', 'text']
+        ],
+        "list" => [
+            "pa" => ['id','code', 'text', 'insurance_company_id' ],
+            "advisor" => [ 'id','code', 'text', 'insurance_company_id'],
+            "oe" => [ 'id','code', 'text', 'insurance_company_id'],
+            "admin" => [ 'id','code', 'text', 'insurance_company_id'],
+            "invoicing" => [ 'code', 'text', 'insurance_company_id']
+        ]
+    ];
+
+    public function relations() {
+        return [];
+    }
+
+    public function processGetDSL($filters) {
+        return self::processGetBaseDSL($filters, false);
+    }
 
     public function getCreatedAtAttribute($table)
     {

@@ -31,8 +31,8 @@ let vehicleSubform = {
               'invoicing',
               'production_approval_manager',
             ],
-            write: ['advisor', 'admin'],
-            update: ['advisor', 'admin'],
+            write: ['oe','advisor', 'admin'],
+            update: ['oe','advisor', 'admin'],
           },
         },
         cylinder: {
@@ -106,23 +106,6 @@ let vehicleSubform = {
             ],
             write: ['advisor', 'oe', 'admin'],
             update: ['advisor', 'oe', 'admin'],
-          },
-        },
-        car_value: {
-          type: 'text',
-          label: 'Car Value',
-          rules: { required: true },
-          access: {
-            read: [
-              'advisor',
-              'oe',
-              'pa',
-              'admin',
-              'invoicing',
-              'production_approval_manager',
-            ],
-            write: [ 'oe','advisor'],
-            update: [ 'oe','advisor'],
           },
         },
         currently_insured_with:{
@@ -244,7 +227,6 @@ let vehicleSubform = {
             'chassis_number',
             'engine_number',
             'date_first_registration',
-            'car_value',
             'currently_insured_with',
             'vehicle_color',
             'seating_capacity',
