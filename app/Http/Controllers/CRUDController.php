@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\GenericModel;
+use App\Models\InsuranceProvider;
 use App\Services\BusinessQuoteService;
 use Illuminate\Http\Request;
 use App\Services\DropdownSourceService;
@@ -19,6 +20,7 @@ use DataTables;
 use Auth;
 use Illuminate\Support\Facades\Redirect;
 use Config;
+use DB;
 
 class CRUDController extends Controller
 {
@@ -352,7 +354,13 @@ class CRUDController extends Controller
 
     public function updateDiscountedPremium(Request $request)
     {
-        return $request;
 
+    }
+
+    public function add_quote(Request $request)
+    {
+        $insuranceproviders = InsuranceProvider::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
+
+        return view('shared.add_quote', compact('insuranceproviders'));
     }
 }

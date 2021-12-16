@@ -321,7 +321,7 @@ class CarQuoteService extends BaseService
                 $getdecodeContents = json_decode($getContents);
                 return $getdecodeContents;
             }
-        } catch (ClientException $e) {
+        } catch (\GuzzleHttp\Exception\BadResponseException $e) {
             $response = $e->getResponse();
             $contents = (string) $response->getBody();
             $response = json_decode($contents);
