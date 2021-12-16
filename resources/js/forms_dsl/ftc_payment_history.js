@@ -2,7 +2,7 @@ const ftcPaymentHistory = {
   getForm() {
     const form = {
       db_table: 'car_quote_payment_history',
-      title: 'FTC Payment History',
+      title: 'Payment History',
       subtitle: '',
       access: {
         read: [
@@ -61,7 +61,7 @@ const ftcPaymentHistory = {
         },
       ],
       view: {
-        label: 'FTC Payment Method',
+        label: 'Payment Method',
         find: {
           basic: [
             {
