@@ -15,7 +15,7 @@ use App\Services\RenewalsAddonServices;;
 use Hidehalo\Nanoid\Client;
 use App\Services\CheckAmlService;
 use App\Enums\quoteTypeCode;
-
+use App\Models\CarModel;
 
 class RenewalsUploadService
 {
@@ -145,8 +145,12 @@ class RenewalsUploadService
         $carTypeOfInsurance = null;
         $carMake = $this->renewalsAddonService->getCarMake($quoteData->make);
         $carModel = $this->renewalsAddonService->getCarModel($quoteData->model);
-        $vehicleType = $this->renewalsAddonService->getVehicleType($carModel->vehicle_type_id);
+        $vehicleType = null;
         $advisorId = $this->renewalsAddonService->getUserInfo($quoteData->pAdvisor);
+
+        if ($carModel) {
+            $vehicleType = $this->renewalsAddonService->getVehicleType($carModel->vehicle_type_id);
+        }
 
         if ($quoteData->product_type != null) {
             $carTypeOfInsurance = $this->renewalsAddonService->getCarTypeOfInsurance($quoteData->product_type)->id;
