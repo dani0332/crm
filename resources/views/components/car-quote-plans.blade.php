@@ -52,7 +52,7 @@ $(document).ready(function() {
                                             <th>Provider Name</th>
                                             <th>Plan Name</th>
                                             <th>Repair Type</th>
-                                            <th>Third Party Damage Limit</th>
+                                            <th>TPL Limit</th>
                                             <th>PAB cover</th>
                                             <th>Roadside assistance</th>
                                             <th>Oman cover TPL</th>

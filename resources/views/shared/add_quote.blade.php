@@ -8,7 +8,7 @@ $(document).ready(function() {
         $('.customer_records').clone().appendTo('.customer_records_dynamic');
         $('.customer_records_dynamic .customer_records').addClass('single remove');
         $('.single .extra-fields-customer').remove();
-        $('.single').append('<a href="#" class="remove-field btn-remove-customer" style="text-align: right;">Remove</a>');
+        $('.single').append('<a href="#" class="remove-field btn-remove-customer" style="text-align: right;"><span class="fa fa-remove"></span></a>');
         $('.customer_records_dynamic > .single').attr("class", "remove");
 
         $('.customer_records_dynamic input').each(function() {
@@ -50,7 +50,7 @@ $(document).ready(function() {
                                         <tr>
                                             <td>
                                                 <select class="form-control" id='insurance_provider_id' name='insurance_provider_id' data-toggle="tooltip" data-placement="top" title="Please select insurance provider" style="width: auto;">
-                                                    <option value=''></option>
+                                                    <option value=''>Select Provider</option>
                                                     @foreach($insuranceproviders as $insuranceprovider)
                                                         @if (old('insurance_provider_id') == $insuranceprovider->id)
                                                             <option value="{{ $insuranceprovider->id }}" data-id="{{ $insuranceprovider->code }}" selected>{{ $insuranceprovider->text }}</option>
@@ -62,14 +62,14 @@ $(document).ready(function() {
                                             </td>
                                             <td>
                                                 <select class="form-control" id="car_plan_id" name="car_plan_id" data-toggle="tooltip" data-placement="top" title="Please select plan" style="width: auto;">
-                                                    <option value=""></option>
+                                                    <option value="">Select Plan</option>
                                                 </select>
                                             </td>
                                             <td>
-                                                <input type="number" id="sss" name="sss" class="form-control" data-toggle="tooltip" data-placement="top" title="Please enter discounted premium" onKeyDown="if(this.value.length==11)return false;" style="width: 150px;">
+                                                <input type="number" id="sss" name="sss" placeholder="Enter Premium" onfocus="this.type='number';" class="form-control" data-toggle="tooltip" data-placement="top" title="Please enter premium" onKeyDown="if(this.value.length==11)return false;" style="width: 150px;">
                                             </td>
                                             <td>
-                                                <a class="extra-fields-customer" href="#">Add More</a>
+                                                <a class="extra-fields-customer" href="#"><span class="fa fa-plus-square"></span></a>
                                             </td>
                                         </tr>
                                     </table>
