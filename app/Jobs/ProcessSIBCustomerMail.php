@@ -61,9 +61,13 @@ class ProcessSIBCustomerMail implements ShouldQueue
             );
 
             $getStatusCode = $capiRequest->getStatusCode();
-            
             Log::channel('daily')->info('sending email via http - SIB '.$getStatusCode);
-
+            if ($getStatusCode == 201) {
+                Log::channel('daily')->info('Email sent successfully - SIB');
+                return;
+            } else {
+                throw new Error('SIB - Error dispatching to '.$this->email);
+            }
         }
         catch(Exception $ex) {
             Log::channel('daily')->error('Error occured for SendInBlue Email to '. $this->email);
