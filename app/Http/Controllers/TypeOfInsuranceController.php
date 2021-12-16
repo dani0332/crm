@@ -57,9 +57,11 @@ class TypeOfInsuranceController extends Controller
      */
     public function store(TypeInsuranceRequest $request, TypeOfInsurance $typeofinsurance)
     {
-        $typeofinsurance->create($request->validated());
+        $validated = $request->validated();
+        $validated['is_active'] = $validated['is_active'] ?? 0;
+        $id = $typeofinsurance->create($validated)->id;
         if(isset($request->return_to_view)) {
-            return redirect("claim/typeofinsurance/".$typeofinsurance->id)->with('success', 'Type Of Insurance has been stored');
+            return redirect("claim/typeofinsurance/".$id)->with('success', 'Type Of Insurance has been stored');
         }
         return redirect()->back()->with('success', 'Type Of Insurance has been stored');
     }

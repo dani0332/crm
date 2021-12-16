@@ -58,10 +58,11 @@ class CarRepairTypeController extends Controller
      */
     public function store(CarRepairTypeRequest $request, CarRepairType $carrepairtype)
     {
-       
-        $carrepairtype->create($request->validated());
+        $validated = $request->validated();
+        $validated['is_active'] = $validated['is_active'] ?? 0;
+        $id = $carrepairtype->create($validated)->id;
         if(isset($request->return_to_view)) {
-            return redirect("claim/carrepairtype/".$carrepairtype->id)->with('success', 'Car Repair Type has been stored');
+            return redirect("claim/carrepairtype/".$id)->with('success', 'Car Repair Type has been stored');
         }
         return redirect()->back()->with('success', 'Car Repair Type has been stored');
     }

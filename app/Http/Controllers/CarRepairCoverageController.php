@@ -57,10 +57,11 @@ class CarRepairCoverageController extends Controller
      */
     public function store(CarRepairCoverageRequest $request, CarRepairCoverage $carrepaircoverage)
     {
-        $carrepaircoverage->create($request->validated());
-
+        $validated = $request->validated();
+        $validated['is_active'] = $request->is_active ?? 0;
+        $id = $carrepaircoverage->create($validated)->id;
         if(isset($request->return_to_view)) {
-            return redirect("claim/carrepaircoverage/".$carrepaircoverage->id)->with('success', 'Car Repair Coverage has been stored');
+            return redirect("claim/carrepaircoverage/".$id)->with('success', 'Car Repair Coverage has been stored');
         }
         return redirect()->back()->with('success', 'Car Repair Coverage has been stored');
     }

@@ -56,9 +56,11 @@ class SubTypeOfInsuranceController extends Controller
      */
     public function store(SubTypeInsuranceRequest $request, SubTypeOfInsurance $subtypeofinsurance)
     {
-        $subtypeofinsurance->create($request->validated());
+        $validated = $request->validated();
+        $validated['is_active'] = $validated['is_active'] ?? 0;
+        $id = $subtypeofinsurance->create($validated)->id;
         if(isset($request->return_to_view)) {
-            return redirect("claim/subtypeofinsurance/".$subtypeofinsurance->id)->with('success', 'Sub Type Of Insurance has been stored');
+            return redirect("claim/subtypeofinsurance/".$id)->with('success', 'Sub Type Of Insurance has been stored');
         }
         return redirect()->back()->with('success', 'Sub Type Of Insurance has been stored');
     }

@@ -57,9 +57,11 @@ class ClaimsStatusController extends Controller
      */
     public function store(ClaimStatusRequest $request, ClaimsStatus $claimsstatus)
     {
-        $claimsstatus->create($request->validated());
+        $validated = $request->validated();
+        $validated['is_active'] = $validated['is_active'] ?? 0;
+        $id = $claimsstatus->create($validated)->id;
         if(isset($request->return_to_view)) {
-            return redirect("claim/claimsstatus/".$claimsstatus->id)->with('success', 'Claim Status has been stored');
+            return redirect("claim/claimsstatus/".$id)->with('success', 'Claim Status has been stored');
         }
         return redirect()->back()->with('success', 'Claim Status has been stored');
     }
