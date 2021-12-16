@@ -6,6 +6,9 @@ use App\Models\Partner;
 use DataTables;
 use Illuminate\Http\Request;
 use DB;
+use App\Http\Requests\PartnerRequest;
+use App\Http\Resources\PartnerResource;
+
 class PartnerController extends Controller
 {
     /**
@@ -55,25 +58,22 @@ class PartnerController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
-    {
-        $this->validate($request, [
-            'name' => 'required|max:120',
-            'name_ar' => 'required|max:120',
-            'logo_image' => 'required|image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
-        ]);
-
-        $partner = new Partner();
-        $partner->name = $request->name;
-        $partner->name_ar = $request->name_ar;
-        $partner->is_active = $request->is_active == 'on' ? 1 : 0;
+    public function store(PartnerRequest $request, Partner $partner)
+    {  
+        // $partner = new Partner();
+        // $partner->name = $request->name;
+        // $partner->name_ar = $request->name_ar;
+        // $partner->is_active = $request->is_active == 'on' ? 1 : 0;
+        $validated = $request->validated();
         if ($request->file()) {
             $fileName = time() . '_' . $request->logo_image->getClientOriginalName();
             $filePath = $request->file('logo_image')->storeAs('/', $fileName, 'azure');
-            $partner->logo_image = $fileName;
+           // $partner->logo_image = $fileName;
+           $validated['logo_image'] = $fileName;
         }
-
-        $partner->save();
+        $validated['is_active'] = $validated['is_active'] ?? 0;
+        $partner->create($validated);
+        // $partner->save();
 
         if(isset($request->return_to_view)) {
             return redirect("rewards/partner/".$partner->id)->with('success', 'Partner has been stored');
@@ -88,6 +88,7 @@ class PartnerController extends Controller
      */
     public function show(Partner $partner)
     {
+        $partner = new PartnerResource($partner);
         return view('partner.show', compact('partner'));
     }
     /**
@@ -98,6 +99,7 @@ class PartnerController extends Controller
      */
     public function edit(Partner $partner)
     {
+        $partner = new PartnerResource($partner);
         return view('partner.edit', compact('partner'));
     }
     /**
@@ -107,23 +109,26 @@ class PartnerController extends Controller
      * @param  \App\Partner  $partner
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, Partner $partner)
+    public function update(PartnerRequest $request, Partner $partner)
     {
-        $this->validate($request, [
-            'name' => 'required|max:120',
-            'name_ar' => 'required|max:120',
-            'logo_image' => 'image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
-        ]);
-        $partner->name = $request->name;
-        $partner->name_ar = $request->name_ar;
-        $partner->is_active = $request->is_active == 'on' ? 1 : 0;
+        // $this->validate($request, [
+        //     'name' => 'required|max:120',
+        //     'name_ar' => 'required|max:120',
+        //     'logo_image' => 'image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
+        // ]);
+        //$partner->name = $request->name;
+        //$partner->name_ar = $request->name_ar;
+        //$partner->is_active = $request->is_active == 'on' ? 1 : 0;
+        $validated = $request->validated();
         if ($request->file()) {
             $fileName = time() . '_' . $request->logo_image->getClientOriginalName();
             $filePath = $request->file('logo_image')->storeAs('/', $fileName, 'azure');
-            $partner->logo_image = $fileName;
+            //$partner->logo_image = $fileName;
+            $validated['logo_image'] = $fileName;
         }
-
-        $partner->save();
+        $validated['is_active'] = $validated['is_active'] ?? 0;
+        $partner->update($validated);
+        //$partner->save();
         if(isset($request->return_to_view)) {
             return redirect("rewards/partner/".$partner->id)->with('success', 'Partner has been updated');
         }
