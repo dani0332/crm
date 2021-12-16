@@ -354,9 +354,7 @@ class CRUDController extends Controller
 
     public function updateDiscountedPremium(Request $request)
     {
-        foreach($request->discountedPremium as $tmLeadsId) {
-            echo "<pre>"; print_r($tmLeadsId);
-        }
+
     }
 
     public function add_quote(Request $request)

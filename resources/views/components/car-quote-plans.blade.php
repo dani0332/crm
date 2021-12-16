@@ -103,6 +103,14 @@ $(document).ready(function() {
                                                             </tr>
                                                         @endif
                                                     @endforeach
+                                                    @foreach ($quotePlan->benefits->inclusion as $key => $quotePlanInclusion)
+                                                        @if($quotePlanInclusion->code == 'tplOmanCover')
+                                                            <tr style="background-color: transparent;">
+                                                                <td style="border-top: none !important;">{{ $quotePlanInclusion->text }}:</td>
+                                                                <td style="border-top: none !important;">{{ $quotePlanInclusion->value }}</td>
+                                                            </tr>
+                                                        @endif
+                                                    @endforeach
                                                     </table>
                                                 </td>
                                                 <td>{{ $quotePlan->actualPremium }}</td>
@@ -128,6 +136,10 @@ $(document).ready(function() {
                                         <th>Provider Name</th>
                                         <th>Plan Name</th>
                                         <th>Repair Type</th>
+                                        <th>TPL Limit</th>
+                                        <th>PAB cover</th>
+                                        <th>Roadside assistance</th>
+                                        <th>Oman cover TPL</th>
                                         <th>Actual Premium</th>
                                         <th>Discounted Premium</th>
                                         <th>Premium with VAT</th>
@@ -136,7 +148,7 @@ $(document).ready(function() {
                                 </thead>
                             <tbody>
                                 <tr class="odd">
-                                    <td valign="top" colspan="7" class="dataTables_empty">{{ ucfirst($listQuotePlans) }}</td>
+                                    <td valign="top" colspan="11" class="dataTables_empty">{{ ucfirst($listQuotePlans) }}</td>
                                 </tr>
                             </tbody>
                             </table>
