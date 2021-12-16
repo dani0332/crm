@@ -162,12 +162,12 @@ class RenewalsUploadService
             "source" => $quoteData->source,
             "currently_insured_with" => $quoteData->insurer,
             "car_type_insurance_id" => $carTypeOfInsurance,
-            "year_of_manufacture" => $quoteData->year,
-            "car_make_id" => $carMake->id,
-            "car_model_id" => $carModel->id,
+            "year_of_manufacture" => $quoteData->year ?? null,
+            "car_make_id" => $carMake->id ?? null,
+            "car_model_id" => $carModel->id ?? null,
             "policy_number" => $quoteData->policy,
-            "cylinder" => $carModel->cylinder,
-            "vehicle_category" => $vehicleType->category,
+            "cylinder" => $carModel->cylinder ?? null,
+            "vehicle_category" => $vehicleType->category ?? null,
             "advisor_id" => $advisorId,
             "additional_notes" => $quoteData->notes
         ]);
