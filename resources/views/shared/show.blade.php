@@ -109,6 +109,7 @@
 
         <x-car-quote-more-detail
         :listQuoteVehicleDetails="$listQuoteVehicleDetails"
+        :vehicleTypeText="$vehicleTypeText"
         />
 
         <x-car-ecom-detail

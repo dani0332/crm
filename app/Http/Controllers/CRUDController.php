@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\GenericModel;
 use App\Models\InsuranceProvider;
+use App\Models\VehicleType;
 use App\Services\BusinessQuoteService;
 use Illuminate\Http\Request;
 use App\Services\DropdownSourceService;
@@ -180,16 +181,19 @@ class CRUDController extends Controller
             if (gettype($quotePlans) != 'string') {
                 $listQuotePlans = $quotePlans->quotes->plans;
                 $listQuoteVehicleDetails = $quotePlans->quotes;
+                $vehicleTypeText = VehicleType::where('id', '=', $listQuoteVehicleDetails->vehicleTypeId)->value('text');
             } else {
                 $listQuotePlans = $quotePlans;
                 $listQuoteVehicleDetails = $quotePlans;
+                $vehicleTypeText = '';
             }
 
             //echo "<pre>"; print_r($listQuoteVehicleDetails); exit;
 
             $ecomCarInsuranceQuoteUrl = Config::get('constants.ECOM_CAR_INSURANCE_QUOTE_URL');
 
-            return view('shared.show', compact(['record', 'model', 'customTitles', 'listQuotePlans', 'customTableList','ecomCarInsuranceQuoteUrl','carQuotePlanAddons','listQuoteVehicleDetails']));
+            return view('shared.show', compact(['record', 'model', 'customTitles', 'listQuotePlans', 'customTableList',
+            'ecomCarInsuranceQuoteUrl','carQuotePlanAddons','listQuoteVehicleDetails','vehicleTypeText']));
         } else {
             return view('shared.show', compact(['record', 'model', 'customTitles', 'customTableList']));
         }
