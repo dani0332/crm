@@ -107,6 +107,10 @@
             </div>
         </div>
 
+        <x-car-quote-more-detail
+        :listQuoteVehicleDetails="$listQuoteVehicleDetails"
+        />
+
         <x-car-ecom-detail
         :carQuotePremium="$record->premium"
         :carQuotePaidAt="$record->paid_at"

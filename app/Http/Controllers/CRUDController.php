@@ -179,13 +179,17 @@ class CRUDController extends Controller
 
             if (gettype($quotePlans) != 'string') {
                 $listQuotePlans = $quotePlans->quotes->plans;
+                $listQuoteVehicleDetails = $quotePlans->quotes;
             } else {
                 $listQuotePlans = $quotePlans;
+                $listQuoteVehicleDetails = $quotePlans;
             }
+
+            //echo "<pre>"; print_r($listQuoteVehicleDetails); exit;
 
             $ecomCarInsuranceQuoteUrl = Config::get('constants.ECOM_CAR_INSURANCE_QUOTE_URL');
 
-            return view('shared.show', compact(['record', 'model', 'customTitles', 'listQuotePlans', 'customTableList','ecomCarInsuranceQuoteUrl','carQuotePlanAddons']));
+            return view('shared.show', compact(['record', 'model', 'customTitles', 'listQuotePlans', 'customTableList','ecomCarInsuranceQuoteUrl','carQuotePlanAddons','listQuoteVehicleDetails']));
         } else {
             return view('shared.show', compact(['record', 'model', 'customTitles', 'customTableList']));
         }
