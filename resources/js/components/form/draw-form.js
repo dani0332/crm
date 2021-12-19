@@ -15,35 +15,35 @@ const initialState = {
   sections: [],
 };
 
-function makeNullHideFields(state) {
-  let data = {};
-  const { fields, selectedRecord } = state;
-  Object.entries(fields).forEach(entry => {
-    const [key, value] = entry;
-    const getField = value;
-    const recVal = selectedRecord?.[key];
+// function makeNullHideFields(state) {
+//   let data = {};
+//   const { fields, selectedRecord } = state;
+//   Object.entries(fields).forEach(entry => {
+//     const [key, value] = entry;
+//     const getField = value;
+//     const recVal = selectedRecord?.[key];
 
-    if (recVal && getField?.if) {
-      let getVal = recVal;
-      if (typeof getField?.transform === 'function')
-        getVal = getField?.transform(recVal);
+//     if (recVal && getField?.if) {
+//       let getVal = recVal;
+//       if (typeof getField?.transform === 'function')
+//         getVal = getField?.transform(recVal);
 
-      let val = getField.if[getVal?.selected] ? getField.if[getVal.selected]: getField.if[getVal.value];
-      if (val?.fields) {
-        const getCondFields = val.fields;
-        if (getCondFields.length > 0) {
-          getCondFields.forEach(() => {});
-        }
-      } else {
-        const getCondFields = getField.else;
-        getCondFields.forEach(element => {
-          data[element] = '';
-        });
-      }
-    }
-  });
-  return data;
-}
+//       let val = getField.if[getVal?.selected] ? getField.if[getVal.selected]: getField.if[getVal.value];
+//       if (val?.fields) {
+//         const getCondFields = val.fields;
+//         if (getCondFields.length > 0) {
+//           getCondFields.forEach(() => {});
+//         }
+//       } else {
+//         const getCondFields = getField.else;
+//         getCondFields.forEach(element => {
+//           data[element] = '';
+//         });
+//       }
+//     }
+//   });
+//   return data;
+// }
 
 function conditionState(state, action) {
   const {
@@ -53,7 +53,7 @@ function conditionState(state, action) {
   if (getField?.if) {
     const calcVal = (typeof value === 'object') ? value?.value : selected
     const val = getField.if[calcVal];
-    if (val?.fields) {
+    if (val?.fields) {  
       const getCondFields = getField.if[calcVal].fields;
       if (getCondFields.length > 0) {
         getCondFields.forEach(element => {
@@ -82,11 +82,6 @@ function reducer(state, action) {
       } = action;
       const getField = state.fields[name];
       getField.value = value;
-      if (state?.action_type === 'new') {
-        console.log('------draw-form.js---Adding---draw-form.js-------');
-        console.log(state);
-        console.log('------draw-form.js---Adding---draw-form.js-------');
-      }
       if (
         state?.action_type === 'edit' &&
         state?.selectedRecord &&
@@ -97,11 +92,26 @@ function reducer(state, action) {
       } else if (state?.action_type === 'edit') {
         conditionState(state, action);
       }
+      return { ...state };
+    }
+    case 'append': {
+      const {
+        fields, field: { name, value },
+      } = action;
+      fields.forEach(element => {
+        const appendObj = {}
+        appendObj[element.key] = value?.value
+        const getField = state.fields[element.field];
+        getField.filter = appendObj
+      });
 
-      console.log('------Return-------');
-      console.log(state);
-      console.log('------Return-------');
-
+      if (
+        state?.action_type === 'edit' &&
+        state?.selectedRecord &&
+        state?.selectedRecord?.[name]
+      ) {
+        state.selectedRecord[name] = value;
+      } 
       return { ...state };
     }
     default:
@@ -125,10 +135,6 @@ function DrawForm(props) {
   } = useForm({ shouldUnregister: true });
   const onSubmit = data => {
     
-    console.log('------------getData----------')
-    console.log(data);
-    console.log('------------getData----------');
-
     if (typeof state?.postTransform === 'function') {
       console.log('*****onSubmit-Transform-Data-draw-form.js*************');
       let transformData = state?.postTransform({
@@ -147,7 +153,7 @@ function DrawForm(props) {
       dispatch_({
         type: 'VISIBLE_FORM_SAVE',
         selectedRecord: state?.selectedRecord,
-        body: { ...cleanDeep(data), ...getData },
+        body: { ...cleanDeep(data) },
         initialForm: initialForm,
         manageListDispatch: manageListDispatch,
       });

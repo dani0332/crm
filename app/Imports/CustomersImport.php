@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Row;
 use Maatwebsite\Excel\Concerns\OnEachRow;
 use Maatwebsite\Excel\Concerns\WithStartRow;
+use Illuminate\Support\Facades\Http;
 
 
 class CustomersImport implements OnEachRow, WithStartRow
@@ -16,10 +17,12 @@ class CustomersImport implements OnEachRow, WithStartRow
 
     public $myalfredExpiryDate;
     public $CDBId;
-    public function __construct($myalfredExpiryDate, $cdbId)
+    public $inviatationEmail;
+    public function __construct($myalfredExpiryDate, $cdbId, $inviatationEmail)
     {
         $this->myalfredExpiryDate = $myalfredExpiryDate;
         $this->CDBId = $cdbId;
+        $this->inviatationEmail = $inviatationEmail;
     }
 
     /**
@@ -33,6 +36,7 @@ class CustomersImport implements OnEachRow, WithStartRow
         $row = $row->toArray();
 
         $email = $row[1];
+
         if($email != null) {
             $customerId = 0;
             $myalfredExpiryDate = date('Y-m-d H:i:s', strtotime(str_replace('"', '', $this->myalfredExpiryDate)));
@@ -45,6 +49,30 @@ class CustomersImport implements OnEachRow, WithStartRow
             else {
                 $firstName = $row[0];
                 $lastName = "";
+            }
+            function sendEmail($email, $name) {
+                $apiKey = env('SENDINBLUE_KEY');
+                $url = env('SIB_URL');
+                $sibTemplate = env('SIB_CORPORATE_TEMPLATE');
+        
+                $headers = [
+                    'Accept' => 'application/json',
+                    'api-key' => $apiKey,
+                    'Content-Type' => 'application/json'
+                ];
+        
+                $body = [
+                    "to" => array([
+                        "email" => $email,
+                        "name" => $name,
+                    ]),
+                    "templateId" => $sibTemplate,
+                ];
+        
+                Http::withHeaders($headers)->post($url, $body);
+            }
+            if ($this->inviatationEmail == 'on') {
+                sendEmail($email, $firstName);
             }
             $findCustomerByEmail = CustomerService::getCustomerByEmail($email);
             if(!$findCustomerByEmail->isEmpty()) {

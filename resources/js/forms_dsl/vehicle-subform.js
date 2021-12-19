@@ -6,14 +6,15 @@ let vehicleSubform = {
       access: {
         read: [
           'advisor',
+          'oe',
           'pa',
           'admin',
           'invoicing',
           'production_approval_manager',
         ],
-        write: ['advisor', 'admin'],
-        update: ['advisor', 'admin'],
-        delete: ['advisor', 'admin'],
+        write: ['advisor', 'oe', 'admin'],
+        update: ['advisor', 'oe', 'admin'],
+        delete: ['advisor', 'oe', 'admin'],
       },
       subtitle: '',
       fields: {
@@ -24,13 +25,14 @@ let vehicleSubform = {
           access: {
             read: [
               'advisor',
+              'oe',
               'pa',
               'admin',
               'invoicing',
               'production_approval_manager',
             ],
-            write: ['advisor', 'admin'],
-            update: ['advisor', 'admin'],
+            write: ['oe','advisor', 'admin'],
+            update: ['oe','advisor', 'admin'],
           },
         },
         cylinder: {
@@ -40,13 +42,14 @@ let vehicleSubform = {
           access: {
             read: [
               'advisor',
+              'oe',
               'pa',
               'admin',
               'invoicing',
               'production_approval_manager',
             ],
-            write: ['advisor', 'admin'],
-            update: ['advisor', 'admin'],
+            write: ['advisor', 'oe', 'admin'],
+            update: ['advisor', 'oe', 'admin'],
           },
         },
         chassis_number: {
@@ -56,13 +59,14 @@ let vehicleSubform = {
           access: {
             read: [
               'advisor',
+              'oe',
               'pa',
               'admin',
               'invoicing',
               'production_approval_manager',
             ],
-            write: ['advisor', 'admin'],
-            update: ['advisor', 'admin'],
+            write: ['advisor', 'oe', 'admin'],
+            update: ['advisor', 'oe', 'admin'],
           },
         },
         engine_number: {
@@ -72,17 +76,18 @@ let vehicleSubform = {
           access: {
             read: [
               'advisor',
+              'oe',
               'pa',
               'admin',
               'invoicing',
               'production_approval_manager',
             ],
-            write: ['advisor', 'admin'],
-            update: ['advisor', 'admin'],
+            write: ['advisor', 'oe', 'admin'],
+            update: ['advisor', 'oe', 'admin'],
             access: {
-              read: ['advisor', 'pa', 'admin'],
-              write: ['advisor', 'admin'],
-              update: ['advisor', 'admin'],
+              read: ['advisor', 'oe', 'pa', 'admin'],
+              write: ['advisor', 'oe', 'admin'],
+              update: ['advisor', 'oe', 'admin'],
             },
           },
         },
@@ -93,29 +98,14 @@ let vehicleSubform = {
           access: {
             read: [
               'advisor',
+              'oe',
               'pa',
               'admin',
               'invoicing',
               'production_approval_manager',
             ],
-            write: ['advisor', 'admin'],
-            update: ['advisor', 'admin'],
-          },
-        },
-        car_value: {
-          type: 'text',
-          label: 'Car Value',
-          rules: { required: true },
-          access: {
-            read: [
-              'advisor',
-              'pa',
-              'admin',
-              'invoicing',
-              'production_approval_manager',
-            ],
-            write: ['advisor'],
-            update: ['advisor'],
+            write: ['advisor', 'oe', 'admin'],
+            update: ['advisor', 'oe', 'admin'],
           },
         },
         currently_insured_with:{
@@ -125,13 +115,14 @@ let vehicleSubform = {
           access: {
             read: [
               'advisor',
+              'oe',
               'pa',
               'admin',
               'invoicing',
               'production_approval_manager',
             ],
-            write: ['advisor'],
-            update: ['advisor'],
+            write: [ 'oe','advisor'],
+            update: [ 'oe','advisor'],
           },
         },
         vehicle_color: {
@@ -141,13 +132,14 @@ let vehicleSubform = {
           access: {
             read: [
               'advisor',
+              'oe',
               'pa',
               'admin',
               'invoicing',
               'production_approval_manager',
             ],
-            write: ['advisor', 'admin'],
-            update: ['advisor', 'admin'],
+            write: [ 'oe','advisor', 'admin'],
+            update: [ 'oe','advisor', 'admin'],
           },
         },
         seating_capacity: {
@@ -157,13 +149,14 @@ let vehicleSubform = {
           access: {
             read: [
               'advisor',
+              'oe',
               'pa',
               'admin',
               'invoicing',
               'production_approval_manager',
             ],
-            write: ['advisor', 'admin'],
-            update: ['advisor', 'admin'],
+            write: [ 'oe','advisor', 'admin'],
+            update: [ 'oe','advisor', 'admin'],
           },
         },
         specs: {
@@ -174,13 +167,14 @@ let vehicleSubform = {
           access: {
             read: [
               'advisor',
+              'oe',
               'pa',
               'admin',
               'invoicing',
               'production_approval_manager',
             ],
-            write: ['advisor', 'admin'],
-            update: ['advisor', 'admin'],
+            write: [ 'oe','advisor', 'admin'],
+            update: [ 'oe','advisor', 'admin'],
           },
         },
         current_cover: {
@@ -195,13 +189,14 @@ let vehicleSubform = {
           access: {
             read: [
               'advisor',
+              'oe',
               'pa',
               'admin',
               'invoicing',
               'production_approval_manager',
             ],
-            write: ['advisor', 'admin'],
-            update: ['advisor', 'admin'],
+            write: ['advisor', 'oe', 'admin'],
+            update: ['advisor', 'oe', 'admin'],
           },
         },
         vehicle_modified: {
@@ -212,13 +207,14 @@ let vehicleSubform = {
           access: {
             read: [
               'advisor',
+              'oe',
               'pa',
               'admin',
               'invoicing',
               'production_approval_manager',
             ],
-            write: ['advisor', 'admin'],
-            update: ['advisor', 'admin'],
+            write: ['advisor', 'oe', 'admin'],
+            update: ['advisor',  'oe','admin'],
           },
         },
       },
@@ -231,7 +227,6 @@ let vehicleSubform = {
             'chassis_number',
             'engine_number',
             'date_first_registration',
-            'car_value',
             'currently_insured_with',
             'vehicle_color',
             'seating_capacity',

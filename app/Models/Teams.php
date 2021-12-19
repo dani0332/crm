@@ -27,6 +27,7 @@ class Teams extends BaseModel
         'access' => [
             "pa" => [],
             "advisor" => [ ],
+            "oe" => [ ],
             "admin" => [ 'lead_id', 'user_id' ],
             "invoicing" => [ ],
             "production_approval_manager" => [ 'lead_id', 'user_id']
@@ -35,6 +36,7 @@ class Teams extends BaseModel
         "list" => [
             "pa" => [ 'lead_id', 'user_id' ],
             "advisor" => [ 'id', 'lead_id', 'user_id'],
+            "oe" => [ 'id', 'lead_id', 'user_id'],
             "admin" => [  'lead_id', 'user_id'],
             "invoicing" => [  'lead_id', 'user_id'],
             "production_approval_manager" => [  'lead_id', 'user_id']

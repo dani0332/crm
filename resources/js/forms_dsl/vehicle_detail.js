@@ -10,13 +10,14 @@ let vehicleDetail = {
       access: {
         read: [
           'advisor',
+          'oe',
           'pa',
           'admin',
           'invoicing',
           'production_approval_manager',
         ],
-        write: ['advisor', 'admin'],
-        update: ['advisor', 'admin'],
+        write: ['advisor', 'oe', 'admin'],
+        update: ['advisor', 'oe', 'admin'],
         delete: [],
       },
       fields: {
@@ -28,6 +29,7 @@ let vehicleDetail = {
           access: {
             read: [
               'advisor',
+              'oe',
               'pa',
               'admin',
               'invoicing',
@@ -44,6 +46,7 @@ let vehicleDetail = {
           access: {
             read: [
               'advisor',
+              'oe',
               'pa',
               'admin',
               'invoicing',
@@ -60,6 +63,7 @@ let vehicleDetail = {
           access: {
             read: [
               'advisor',
+              'oe',
               'pa',
               'admin',
               'invoicing',
@@ -69,12 +73,29 @@ let vehicleDetail = {
             update: [],
           }
         },
+        car_value: {
+          type: 'text',
+          label: 'Car Value',
+          access: {
+            read: [
+              'advisor',
+              'oe',
+              'pa',
+              'admin',
+              'invoicing',
+              'production_approval_manager',
+            ],
+            write: [ ],
+            update: [],
+          },
+        },
         emirate_of_registration_id: {
           type: 'dropdown',
           label: 'Emirate of Registration',
           access: {
             read: [
               'advisor',
+              'oe',
               'pa',
               'admin',
               'invoicing',
@@ -93,6 +114,7 @@ let vehicleDetail = {
           access: {
             read: [
               'advisor',
+              'oe',
               'pa',
               'admin',
               'invoicing',
@@ -112,6 +134,7 @@ let vehicleDetail = {
           access: {
             read: [
               'advisor',
+              'oe',
               'pa',
               'admin',
               'invoicing',
@@ -134,6 +157,7 @@ let vehicleDetail = {
             'Year_of_manufacture',
             'car_model_id',
             'car_make_id',
+            'car_value',
             'emirate_of_registration_id',
             'uae_license_held_for_id',
             'claim_history_id',
@@ -165,6 +189,7 @@ let vehicleDetail = {
               read: [
                 'pa',
                 'advisor',
+                'oe',
                 'admin',
                 'invoicing',
                 'production_approval_manager',

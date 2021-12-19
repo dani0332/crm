@@ -7,6 +7,7 @@ const carQuoteKycStatus = {
       access: {
         read: [
           'advisor',
+          'oe',
           'pa',
           'admin',
           'invoicing',
@@ -26,8 +27,8 @@ const carQuoteKycStatus = {
           access: {
             read: [
               'advisor',
+              'oe',
               'pa',
-              'advisor',
               'admin',
               'invoicing',
               'production_approval_manager',
@@ -42,6 +43,7 @@ const carQuoteKycStatus = {
           access: {
             read: [
               'advisor',
+              'oe',
               'pa',
               'admin',
               'invoicing',

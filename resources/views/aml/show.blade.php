@@ -105,8 +105,10 @@
                         <th>Alias</th>
                         <th>Gender</th>
                         <th>DOB</th>
+                        <th>YOB Match</th>
                         <th>POB</th>
                         <th>Nationality</th>
+                        <th>Nationality Match</th>
                         <th>Source</th>
                         <th>Source ID</th>
                         <th>Created At</th>
@@ -125,8 +127,26 @@
                         <td>{{ $amlResult->alias }}</td>
                         <td>{{ $amlResult->gender }}</td>
                         <td>{{ $amlResult->dob }}</td>
+                        @if (isset($amlResult->yobMatch))
+                            @if ($amlResult->yobMatch == 1)
+                                <td>True</td>
+                            @else 
+                                <td>False</td>
+                            @endif
+                        @else 
+                            <td>No match found</td>
+                        @endif
                         <td>{{ $amlResult->pob }}</td>
                         <td>{{ $amlResult->nationality }}</td>
+                        @if (isset($amlResult->nationalityMatch))
+                            @if ($amlResult->nationalityMatch == 1)
+                                <td>True</td>
+                            @else 
+                                <td>False</td>
+                            @endif
+                        @else 
+                            <td>No match found</td>
+                        @endif
                         <td>{{ $amlResult->source }}</td>
                         <td>{{ $amlResult->sourceId }}</td>
                         <td>{{ date('d-M-Y h:ia', strtotime($amlResult->createdAt)) }}</td>

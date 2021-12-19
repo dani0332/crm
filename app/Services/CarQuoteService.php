@@ -292,6 +292,7 @@ class CarQuoteService extends BaseService
         $plansApiTimeout = Config::get('constants.KEN_PLANS_API_TIMEOUT');
         $plansApiUserName = Config::get('constants.KEN_PLANS_API_USER');
         $plansApiPassword = Config::get('constants.KEN_PLANS_API_PWD');
+        $authBasic = base64_encode($plansApiUserName.":".$plansApiPassword);
 
         $plansDataArr = array(
             "quoteUID" => $quoteUuId,
@@ -307,8 +308,7 @@ class CarQuoteService extends BaseService
                 [
                     'headers' => ['Content-Type' => 'application/json', 'Accept' => 'application/json',
                     'x-api-token' => $plansApiToken,
-                    'username' => $plansApiUserName,
-                    'password' => $plansApiPassword],
+                    'Authorization' => 'Basic '.$authBasic],
                     'body' => json_encode($plansDataArr),
                     'timeout' => $plansApiTimeout,
                 ]
@@ -321,9 +321,21 @@ class CarQuoteService extends BaseService
                 $getdecodeContents = json_decode($getContents);
                 return $getdecodeContents;
             }
-        } catch (ClientException $e) {
+        } catch (\GuzzleHttp\Exception\BadResponseException $e) {
             $response = $e->getResponse();
-            $responseBodyAsString = "API Failed - " . $response->getBody()->getContents();
+            $contents = (string) $response->getBody();
+            $response = json_decode($contents);
+
+            if(isset($response->message)) {
+                $responseBodyAsString = $response->message;
+            }
+            else if(isset($response->error)) {
+                $responseBodyAsString = $response->error;
+            }
+            else {
+                $responseBodyAsString = $response->msg;
+            }
+
             return $responseBodyAsString;
         }
     }

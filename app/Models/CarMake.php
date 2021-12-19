@@ -13,12 +13,13 @@ class CarMake extends BaseModel
 
     public $access = [
 
-        'write' => ['advisor'],
-        'update' => ['advisor'],
-        'delete' => ['advisor'],
+        'write' => ['advisor','oe'],
+        'update' => ['advisor','oe'],
+        'delete' => ['advisor','oe'],
         'access' => [
             "pa" => [ 'code', 'text'],
             "advisor" => [ 'code', 'text'],
+            "oe" => [ 'code', 'text'],
             "admin" => [ 'code', 'text' ],
             "invoicing" => [ 'code', 'text']
 
@@ -26,6 +27,7 @@ class CarMake extends BaseModel
         "list" => [
             "pa" => ['id','code', 'text' ],
             "advisor" => [ 'id','code', 'text'],
+            "oe" => [ 'id','code', 'text'],
             "admin" => [ 'id','code', 'text'],
             "invoicing" => [ 'code', 'text']
         ]

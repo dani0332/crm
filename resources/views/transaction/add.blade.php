@@ -22,7 +22,7 @@
                                 <option value="">Select</option>
                                 @foreach ($insurancecompanies as $insurancecompany )
                                     <option {{ old('insurance_company') == $insurancecompany->id ? "selected":""  }} value="{{ $insurancecompany->id }}">{{ $insurancecompany->name }}</option>
-                                    @if ( isset($carQuote['insurance_coverage']['id']) && $carQuote['insurance_coverage']['id'] == $insurancecompany->id )
+                                    @if ( isset($carQuote['insurance_coverage']['insurance_company_id']['insurance_company_id']) && $carQuote['insurance_coverage']['insurance_company_id']['insurance_company_id'] == $insurancecompany->id )
                                         <option   selected="selected"   value="{{ $insurancecompany->id }}">{{ $insurancecompany->name }}</option>
                                     @endif
                                 @endforeach

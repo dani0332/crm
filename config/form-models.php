@@ -18,11 +18,11 @@ return [
     'car_quote_documents' => [
         'model' => CarQuoteDocuments::class
     ],
-    'insurance_companies' =>[
-        'model' => InsuranceCompany::class
+    'insurance_provider' =>[
+        'model' => InsuranceProvider::class
     ],
-    'car_quote_insurance_plan' => [
-        'model' => CarQuoteInsurancePlan::class
+    'car_plan' => [
+        'model' => CarPlan::class
     ],
     'vehicle_type' => [
         'model' => VehicleType::class
@@ -38,6 +38,9 @@ return [
     ],
     'ftc_quote_status_history' => [
         'model' => FtcQuoteStatusHistory::class
+    ],
+    'car_quote_assign_oe_to_advisor' =>[
+        'model' => CarQuoteAdvisorToOE::class
     ],
     'payment_modes' => [
         'model' => FTCPaymentMode::class

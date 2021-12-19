@@ -10,12 +10,13 @@ class CarQuoteEmailUniqueLink extends BaseModel
     use HasFactory;
     protected $table = 'car_quote_email_unique_link';
     public $access = [
-        'write' => ['advisor', 'admin'],
-        'update' => ['advisor', 'admin'],
+        'write' => ['advisor', 'admin', 'oe'],
+        'update' => ['advisor', 'admin', 'oe'],
         'delete' => [ 'admin'],
         'access' => [
             "pa" => [],
             "advisor" => [ 'car_quote_id', 'hash', 'status'],
+            "oe" => [ 'car_quote_id', 'hash', 'status'],
             "admin" => [ 'car_quote_id', 'hash', 'status' ],
             "invoicing" => []
 
@@ -23,6 +24,7 @@ class CarQuoteEmailUniqueLink extends BaseModel
         "list" => [
             "pa" => ['car_quote_id' , 'status'],
             "advisor" => [ 'car_quote_id' , 'status'],
+            "oe" => [ 'car_quote_id' , 'status'],
             "admin" => [ 'car_quote_id' , 'hash', 'status'],
             "invoicing" => ['car_quote_id' , 'status']
         ]

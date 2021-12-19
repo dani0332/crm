@@ -8,6 +8,7 @@ const carQuotePolicy = {
         read: [
           'pa',
           'advisor',
+          'oe',
           'admin',
           'invoicing',
           'production_approval_manager',
@@ -23,6 +24,7 @@ const carQuotePolicy = {
           access: {
             read: [
               'advisor',
+              'oe',
               'pa',
               'admin',
               'invoicing',
@@ -39,6 +41,7 @@ const carQuotePolicy = {
           access: {
             read: [
               'advisor',
+              'oe',
               'pa',
               'admin',
               'invoicing',
@@ -55,6 +58,7 @@ const carQuotePolicy = {
           access: {
             read: [
               'advisor',
+              'oe',
               'pa',
               'admin',
               'invoicing',
@@ -72,6 +76,7 @@ const carQuotePolicy = {
             read: [
               'pa',
               'advisor',
+              'oe',
               'admin',
               'invoicing',
               'production_approval_manager',
@@ -88,6 +93,7 @@ const carQuotePolicy = {
             read: [
               'pa',
               'advisor',
+              'oe',
               'admin',
               'invoicing',
               'production_approval_manager',
@@ -103,6 +109,7 @@ const carQuotePolicy = {
             read: [
               'pa',
               'advisor',
+              'oe',
               'admin',
               'invoicing',
               'production_approval_manager',
@@ -118,6 +125,7 @@ const carQuotePolicy = {
             read: [
               'pa',
               'advisor',
+              'oe',
               'admin',
               'invoicing',
               'production_approval_manager',
@@ -131,6 +139,7 @@ const carQuotePolicy = {
             read: [
               'pa',
               'advisor',
+              'oe',
               'admin',
               'invoicing',
               'production_approval_manager',
@@ -145,6 +154,7 @@ const carQuotePolicy = {
             read: [
               'pa',
               'advisor',
+              'oe',
               'admin',
               'invoicing',
               'production_approval_manager',
@@ -167,6 +177,7 @@ const carQuotePolicy = {
             read: [
               'pa',
               'advisor',
+              'oe',
               'admin',
               'invoicing',
               'production_approval_manager',
@@ -176,24 +187,26 @@ const carQuotePolicy = {
         insurance_company_id: {
           type: 'dropdown',
           label: 'Insurance Company',
-          source: 'insurance_companies',
+          source: 'insurance_provider',
+          filter: {insurance_company_id: { op: "<>", val: "null"}},
           access: {
             read: [
               'pa',
               'advisor',
+              'oe',
               'admin',
               'invoicing',
               'production_approval_manager',
             ],
           },
-          transform(item) {
-            if (Array.isArray(item)) {
-              const items = item.map(u => {
-                return { value: u?.id, label: u?.name };
-              });
-              return items;
-            } else return { value: item?.id, label: item?.name };
-          },
+          // transform(item) {
+          //   if (Array.isArray(item)) {
+          //     const items = item.map(u => {
+          //       return { value: u?.id, label: u?.name };
+          //     });
+          //     return items;
+          //   } else return { value: item?.id, label: item?.name };
+          // },
         },
       },
       sections: [
