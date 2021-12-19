@@ -72,29 +72,35 @@ $(document).ready(function() {
                                                 <td>{{ ucwords($quotePlan->providerName) }}</td>
                                                 <td>{{ ucwords($quotePlan->name) }}</td>
                                                 <td>{{ $quotePlan->repairType }}</td>
-                                                <td>{{ $quotePlan->benefits->feature[0]->value }}</td>
+                                                <td>
+                                                    @foreach ($quotePlan->benefits->feature as $quotePlanFeatures)
+                                                        @if($quotePlanFeatures->text == 'Third Party Damage Limit')
+                                                            {{ $quotePlanFeatures->value }}
+                                                        @endif
+                                                    @endforeach
+                                                </td>
                                                 <td>
                                                     <table style="margin-left: -10px;margin-top: -10px;">
-                                                        <tr style="background-color: transparent;">
-                                                            <td style="border-top: none !important;">{{ $quotePlan->addons[0]->text }}:</td>
-                                                            <td style="border-top: none !important;">{{ $quotePlan->addons[0]->carAddonOption[0]->value }}</td>
-                                                        </tr>
-                                                        <tr style="background-color: transparent;">
-                                                            <td style="border-top: none !important;">{{ $quotePlan->addons[1]->text }}:</td>
-                                                            <td style="border-top: none !important;">{{ $quotePlan->addons[1]->carAddonOption[0]->value }}</td>
-                                                        </tr>
+                                                        @foreach ($quotePlan->addons as $quotePlanAddon)
+                                                            @foreach ($quotePlanAddon->carAddonOption as $quotePlanOptions)
+                                                                @if($quotePlanAddon->text == 'Driver Cover' || $quotePlanAddon->text == 'Passengers Cover')
+                                                                    <tr style="background-color: transparent;">
+                                                                        <td style="border-top: none !important;">{{ $quotePlanAddon->text }}:</td>
+                                                                        <td style="border-top: none !important;">{{ $quotePlanOptions->value }}</td>
+                                                                    </tr>
+                                                                @endif
+                                                            @endforeach
+                                                        @endforeach
                                                     </table>
                                                 </td>
                                                 <td>
                                                     <table style="margin-left: -10px;margin-top: -10px;">
-                                                        <tr style="background-color: transparent;">
-                                                            <td style="border-top: none !important;">{{ $quotePlan->benefits->roadSideAssistance[0]->text }}:</td>
-                                                            <td style="border-top: none !important;">{{ $quotePlan->benefits->roadSideAssistance[0]->value }}</td>
-                                                        </tr>
-                                                        <tr style="background-color: transparent;">
-                                                            <td style="border-top: none !important;">{{ $quotePlan->benefits->roadSideAssistance[1]->text }}:</td>
-                                                            <td style="border-top: none !important;">{{ $quotePlan->benefits->roadSideAssistance[1]->value }}</td>
-                                                        </tr>
+                                                        @foreach ($quotePlan->benefits->roadSideAssistance as $quotePlanRsa)
+                                                            <tr style="background-color: transparent;">
+                                                                <td style="border-top: none !important;">{{ $quotePlanRsa->text }}:</td>
+                                                                <td style="border-top: none !important;">{{ $quotePlanRsa->value }}</td>
+                                                            </tr>
+                                                        @endforeach
                                                     </table>
                                                 </td>
                                                 <td>
