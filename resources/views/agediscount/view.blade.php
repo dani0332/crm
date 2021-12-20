@@ -5,7 +5,7 @@
         <div class="x_panel">
             <div class="x_title">
                 <ul class="nav navbar-right panel_toolbox">
-                    <li><a href="{{ url('discount/age/create') }}" class="btn btn-warning btn-sm">Create Base Discount</a>
+                    <li><a href="{{ url('discount/age/create') }}" class="btn btn-warning btn-sm">Create Age Discount</a>
                     </li>
                 </ul>
                 <div class="clearfix"></div>
