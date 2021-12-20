@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\GenericModel;
+use App\Models\InsuranceProvider;
+use App\Models\VehicleType;
 use App\Services\BusinessQuoteService;
 use Illuminate\Http\Request;
 use App\Services\DropdownSourceService;
@@ -19,6 +21,7 @@ use DataTables;
 use Auth;
 use Illuminate\Support\Facades\Redirect;
 use Config;
+use DB;
 
 class CRUDController extends Controller
 {
@@ -177,13 +180,18 @@ class CRUDController extends Controller
 
             if (gettype($quotePlans) != 'string') {
                 $listQuotePlans = $quotePlans->quotes->plans;
+                $listQuoteVehicleDetails = $quotePlans->quotes;
+                $vehicleTypeText = VehicleType::where('id', '=', $listQuoteVehicleDetails->vehicleTypeId)->value('text');
             } else {
                 $listQuotePlans = $quotePlans;
+                $listQuoteVehicleDetails = $quotePlans;
+                $vehicleTypeText = '';
             }
 
             $ecomCarInsuranceQuoteUrl = Config::get('constants.ECOM_CAR_INSURANCE_QUOTE_URL');
 
-            return view('shared.show', compact(['record', 'model', 'customTitles', 'listQuotePlans', 'customTableList','ecomCarInsuranceQuoteUrl','carQuotePlanAddons']));
+            return view('shared.show', compact(['record', 'model', 'customTitles', 'listQuotePlans', 'customTableList',
+            'ecomCarInsuranceQuoteUrl','carQuotePlanAddons','listQuoteVehicleDetails','vehicleTypeText']));
         } else {
             return view('shared.show', compact(['record', 'model', 'customTitles', 'customTableList']));
         }
@@ -352,7 +360,13 @@ class CRUDController extends Controller
 
     public function updateDiscountedPremium(Request $request)
     {
-        return $request;
 
+    }
+
+    public function add_quote(Request $request)
+    {
+        $insuranceproviders = InsuranceProvider::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
+
+        return view('shared.add_quote', compact('insuranceproviders'));
     }
 }

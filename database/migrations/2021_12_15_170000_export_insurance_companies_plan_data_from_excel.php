@@ -36,7 +36,7 @@ class ExportInsuranceCompaniesPlanDataFromExcel extends Migration
         $carPlan->text = $row[2];
         $carPlan->provider_id = $insuranceProviderModel->id;
         $carPlan->repair_type = $row[3];
-        $carPlan->is_active = ($row[5] == "Active") ? 1 : 0;
+        $carPlan->is_active = 0;
         $carPlan->insurance_type = $row[4];
         $carPlan->save();
 

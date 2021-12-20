@@ -107,6 +107,11 @@
             </div>
         </div>
 
+        <x-car-quote-more-detail
+        :listQuoteVehicleDetails="$listQuoteVehicleDetails"
+        :vehicleTypeText="$vehicleTypeText"
+        />
+
         <x-car-ecom-detail
         :carQuotePremium="$record->premium"
         :carQuotePaidAt="$record->paid_at"
@@ -120,6 +125,8 @@
             :listQuotePlans="$listQuotePlans"
             :uuid="$ecomCarInsuranceQuoteUrl.$record->uuid"
             :uuidModal="$record->uuid"
+            :quoteRequestId="$record->id"
+            :quoteIsCommerce="$record->is_ecommerce"
         />
     @endif
 @endsection

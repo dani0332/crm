@@ -287,11 +287,11 @@ class CarQuoteService extends BaseService
     {
         $quoteUuId = CarQuote::where('uuid', '=', $id)->value('uuid');
 
-        $plansApiEndPoint = Config::get('constants.KEN_PLANS_API_ENDPOINT');
-        $plansApiToken = Config::get('constants.KEN_PLANS_API_TOKEN');
-        $plansApiTimeout = Config::get('constants.KEN_PLANS_API_TIMEOUT');
-        $plansApiUserName = Config::get('constants.KEN_PLANS_API_USER');
-        $plansApiPassword = Config::get('constants.KEN_PLANS_API_PWD');
+        $plansApiEndPoint = Config::get('constants.KEN_API_ENDPOINT').'/get-car-quote-plans';
+        $plansApiToken = Config::get('constants.KEN_API_TOKEN');
+        $plansApiTimeout = Config::get('constants.KEN_API_TIMEOUT');
+        $plansApiUserName = Config::get('constants.KEN_API_USER');
+        $plansApiPassword = Config::get('constants.KEN_API_PWD');
         $authBasic = base64_encode($plansApiUserName.":".$plansApiPassword);
 
         $plansDataArr = array(
@@ -321,7 +321,7 @@ class CarQuoteService extends BaseService
                 $getdecodeContents = json_decode($getContents);
                 return $getdecodeContents;
             }
-        } catch (ClientException $e) {
+        } catch (\GuzzleHttp\Exception\BadResponseException $e) {
             $response = $e->getResponse();
             $contents = (string) $response->getBody();
             $response = json_decode($contents);
