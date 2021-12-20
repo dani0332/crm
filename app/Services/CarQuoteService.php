@@ -287,11 +287,11 @@ class CarQuoteService extends BaseService
     {
         $quoteUuId = CarQuote::where('uuid', '=', $id)->value('uuid');
 
-        $plansApiEndPoint = Config::get('constants.PLANS_API_ENDPOINT').'/get-car-quote-plans';
-        $plansApiToken = Config::get('constants.PLANS_API_TOKEN');
-        $plansApiTimeout = Config::get('constants.PLANS_API_TIMEOUT');
-        $plansApiUserName = Config::get('constants.PLANS_API_USER');
-        $plansApiPassword = Config::get('constants.PLANS_API_PWD');
+        $plansApiEndPoint = Config::get('constants.KEN_API_ENDPOINT').'/get-car-quote-plans';
+        $plansApiToken = Config::get('constants.KEN_API_TOKEN');
+        $plansApiTimeout = Config::get('constants.KEN_API_TIMEOUT');
+        $plansApiUserName = Config::get('constants.KEN_API_USER');
+        $plansApiPassword = Config::get('constants.KEN_API_PWD');
         $authBasic = base64_encode($plansApiUserName.":".$plansApiPassword);
 
         $plansDataArr = array(
