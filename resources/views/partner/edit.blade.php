@@ -44,7 +44,7 @@
                         </label>
                         <div class="col-md-6 col-sm-6 ">
                             <img src="{{ \Config::get('constants.azure_storage_url').'myrewards/'.$partner->logo_image }}" style='width:100px;' /> <br /><br />
-                            <input type="file" id="logo_image" name="logo_image"  >
+                            <input type="file" id="logo_image" name="logo_image" >
                         </div>
                     </div>
                     <div class="item form-group">

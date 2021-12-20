@@ -4,7 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class PartnerRequest extends FormRequest
+class PartnerEditRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -26,8 +26,9 @@ class PartnerRequest extends FormRequest
         return [
             'name' => 'required|max:120',
             'name_ar' => 'required|max:120',
-            'logo_image' => 'sometimes|required|image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
-            'is_active' => 'nullable'
+            'logo_image' => 'sometimes|image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
+            'is_active' => 'nullable',
+            'return_to_view' => 'nullable'
         ];
     }
 }
