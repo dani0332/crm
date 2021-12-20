@@ -66,16 +66,6 @@ class RewardController extends Controller
      */
     public function store(RewardRequest $request)
     {
-        // $this->validate($request, [
-        //     'coupon_code' => 'required|max:25',
-        //     'partner_id' => 'required',
-        //     'discount' => 'required|string|max:15',
-        //     'start_date' => 'required',
-        //     'end_date' => 'required',
-        //     'reward_categories' => 'required',
-        //     'reward_tags' => 'required'
-        // ]);
-
         // if($request->is_active == 'on'){
         //     throw ValidationException::withMessages(['is_active' => 'There is no translation against this reward please create one first']);
         // }
@@ -138,16 +128,6 @@ class RewardController extends Controller
      */
     public function update(RewardRequest $request, reward $reward)
     {
-        // $this->validate($request, [
-        //     'coupon_code' => 'required|max:25',
-        //     'partner_id' => 'required|max:120',
-        //     'discount' => 'required|max:120',
-        //     'start_date' => 'required',
-        //     'end_date' => 'required',
-        //     'reward_categories' => 'required',
-        //     'reward_tags' => 'required'
-        // ]);
-
         if($request->is_active == 'on'){
             if(RewardTranslation::where('reward_id',$reward->id)->count() == 0)
                 throw ValidationException::withMessages(['is_active' => 'There is no translation against this reward please create one first']);
