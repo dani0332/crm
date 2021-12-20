@@ -20,7 +20,7 @@ class CarQuoteService extends BaseService
         ,'cqr.email','cqr.mobile_no','cqr.dob'
         ,'cqr.car_value','cqr.additional_notes'
         ,'cqr.nationality_id','cqr.year_of_manufacture','cqr.code','cqr.is_ecommerce'
-        ,'cqr.premium','cqr.paid_at','cqr.payment_gateway','n.TEXT AS nationality_id_text'
+        ,'cqr.premium','cqr.paid_at','cqr.payment_gateway','cqr.source','n.TEXT AS nationality_id_text'
         ,'cqr.uae_license_held_for_id','ulhf.TEXT AS uae_license_held_for_id_text'
         ,'cqr.car_make_id','cmake.TEXT AS car_make_id_text'
         ,'cqr.car_model_id','cmodel.TEXT AS car_model_id_text'
