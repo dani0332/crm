@@ -30,9 +30,9 @@ class ProcessSIBCustomerMail implements ShouldQueue
     {
         try {
             Log::channel('daily')->info('Process SendInBlue Email trigged');
-            $apiKey = Config::get('SENDINBLUE_KEY');
-            $url = Config::get('SIB_URL');
-            $sibTemplate = (int)Config::get('SIB_CORPORATE_TEMPLATE');
+            $apiKey = Config::get('constants.SENDINBLUE_KEY');
+            $url = Config::get('constants.SIB_URL');
+            $sibTemplate = (int)Config::get('constants.SIB_CORPORATE_TEMPLATE');
 
             $headers = [
                 'Accept' => 'application/json',
