@@ -4,12 +4,12 @@ namespace App\Jobs;
 
 use Error;
 use Exception;
-use Faker\Core\Number;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -30,9 +30,9 @@ class ProcessSIBCustomerMail implements ShouldQueue
     {
         try {
             Log::channel('daily')->info('Process SendInBlue Email trigged');
-            $apiKey = env('SENDINBLUE_KEY');
-            $url = env('SIB_URL');
-            $sibTemplate = (int)env('SIB_CORPORATE_TEMPLATE');
+            $apiKey = Config::get('SENDINBLUE_KEY');
+            $url = Config::get('SIB_URL');
+            $sibTemplate = (int)Config::get('SIB_CORPORATE_TEMPLATE');
 
             $headers = [
                 'Accept' => 'application/json',
