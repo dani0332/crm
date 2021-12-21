@@ -177,18 +177,24 @@ class CRUDController extends Controller
             $listQuotePlans = '';
             $quotePlans = $this->carQuoteService->getQuotePlans($id);
             $carQuotePlanAddons = $this->carQuoteService->getCarQuotePlanAddons($id);
+            $ecomCarInsuranceQuoteUrl = Config::get('constants.ECOM_CAR_INSURANCE_QUOTE_URL');
 
-            if (gettype($quotePlans) != 'string') {
-                $listQuotePlans = $quotePlans->quotes->plans;
-                $listQuoteVehicleDetails = $quotePlans->quotes;
-                $vehicleTypeText = VehicleType::where('id', '=', $listQuoteVehicleDetails->vehicleTypeId)->value('text');
-            } else {
-                $listQuotePlans = $quotePlans;
-                $listQuoteVehicleDetails = $quotePlans;
+            if (isset($quotePlans->message) && $quotePlans->message != '') {
+                $listQuotePlans = $quotePlans->message;
+                $listQuoteVehicleDetails = '';
                 $vehicleTypeText = '';
             }
-
-            $ecomCarInsuranceQuoteUrl = Config::get('constants.ECOM_CAR_INSURANCE_QUOTE_URL');
+            else {
+                if (gettype($quotePlans) != 'string') {
+                    $listQuotePlans = $quotePlans->quotes->plans;
+                    $listQuoteVehicleDetails = $quotePlans->quotes;
+                    $vehicleTypeText = VehicleType::where('id', '=', $listQuoteVehicleDetails->vehicleTypeId)->value('text');
+                } else {
+                    $listQuotePlans = $quotePlans;
+                    $listQuoteVehicleDetails = $quotePlans;
+                    $vehicleTypeText = '';
+                }
+            }
 
             return view('shared.show', compact(['record', 'model', 'customTitles', 'listQuotePlans', 'customTableList',
             'ecomCarInsuranceQuoteUrl','carQuotePlanAddons','listQuoteVehicleDetails','vehicleTypeText']));
