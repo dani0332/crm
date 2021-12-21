@@ -174,9 +174,11 @@ class LeadAssignmentController extends Controller
             $updateTmLead = $this->{$type . 'QuoteService'}->getEntityPlain($id);
             $userId = (int)$assignedToUserIdNew;
             $updateTmLead->advisor_id = $userId;
-            $advisorOE = CarQuoteAdvisorToOE::where('advisor_id', $userId)->first();
-            if(!empty($advisorOE)){
-                $updateTmLead->oe_id = $advisorOE->oe_id;
+            if($type == 'car'){
+                $advisorOE = CarQuoteAdvisorToOE::where('advisor_id', $userId)->first();
+                if(!empty($advisorOE)){
+                    $updateTmLead->oe_id = $advisorOE->oe_id;
+                }
             }
             $updateTmLead->save();
         }
