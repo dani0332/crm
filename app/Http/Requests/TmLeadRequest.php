@@ -25,7 +25,7 @@ class TmLeadRequest extends FormRequest
     {
         return [
             'customer_name' => 'required|max:50',
-            'phone_number' => ['required','regex:/^(?:\+971|00971|0)(?:2|3|4|6|7|9|50|51|52|55|56)[0-9]{7}$/','max:20'],
+            'phone_number' => ['required','max:20'],
             'email_address' => 'required|email|max:50',
             'tm_insurance_types_id' => 'required',
             'enquiry_date' => 'required',
