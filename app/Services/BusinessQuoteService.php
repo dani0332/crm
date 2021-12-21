@@ -212,6 +212,7 @@ class BusinessQuoteService extends BaseService
         return [
             "create" => "id,advisor_id,quote_status_id,code",
             "list" => "email,mobile_no,company_name,brief_details,business_type_of_insurance_id",
+            "update" => "id,advisor_id,quote_status_id,code",
         ];
     }
 
