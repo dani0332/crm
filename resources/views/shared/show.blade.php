@@ -119,14 +119,18 @@
         :carQuotePlanName="$record->plan_id_text"
         :carQuotePlanAddons="$carQuotePlanAddons"
         :carQuotePlanProvider="$record->car_plan_provider_id_text"
+        :carQuotePaymentMethod="$record->payment_gateway"
         />
 
-        <x-car-quote-plans
-            :listQuotePlans="$listQuotePlans"
-            :uuid="$ecomCarInsuranceQuoteUrl.$record->uuid"
-            :uuidModal="$record->uuid"
-            :quoteRequestId="$record->id"
-            :quoteIsCommerce="$record->is_ecommerce"
-        />
+        @if($record->source != 'TPL_RENEWALS' && $record->source != 'TM_SP_RENEWAL')
+            <x-car-quote-plans
+                :listQuotePlans="$listQuotePlans"
+                :uuid="$ecomCarInsuranceQuoteUrl.$record->uuid"
+                :uuidModal="$record->uuid"
+                :quoteRequestId="$record->id"
+                :quoteIsCommerce="$record->is_ecommerce"
+            />
+        @endif
+
     @endif
 @endsection
