@@ -111,6 +111,11 @@
             </div>
         </div>
 
+        <x-car-quote-more-detail
+        :listQuoteVehicleDetails="$listQuoteVehicleDetails"
+        :vehicleTypeText="$vehicleTypeText"
+        />
+
         <x-car-ecom-detail
         :carQuotePremium="$record->premium"
         :carQuotePaidAt="$record->paid_at"
@@ -118,12 +123,18 @@
         :carQuotePlanName="$record->plan_id_text"
         :carQuotePlanAddons="$carQuotePlanAddons"
         :carQuotePlanProvider="$record->car_plan_provider_id_text"
+        :carQuotePaymentMethod="$record->payment_gateway"
         />
 
-        <x-car-quote-plans
-            :listQuotePlans="$listQuotePlans"
-            :uuid="$ecomCarInsuranceQuoteUrl.$record->uuid"
-            :uuidModal="$record->uuid"
-        />
+        @if($record->source != 'TPL_RENEWALS' && $record->source != 'TM_SP_RENEWAL')
+            <x-car-quote-plans
+                :listQuotePlans="$listQuotePlans"
+                :uuid="$ecomCarInsuranceQuoteUrl.$record->uuid"
+                :uuidModal="$record->uuid"
+                :quoteRequestId="$record->id"
+                :quoteIsCommerce="$record->is_ecommerce"
+            />
+        @endif
+
     @endif
 @endsection

@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Row;
 use Maatwebsite\Excel\Concerns\OnEachRow;
 use Maatwebsite\Excel\Concerns\WithStartRow;
-use Illuminate\Support\Facades\Http;
+use App\Jobs\ProcessSIBCustomerMail;
 
 
 class CustomersImport implements OnEachRow, WithStartRow
@@ -50,29 +50,9 @@ class CustomersImport implements OnEachRow, WithStartRow
                 $firstName = $row[0];
                 $lastName = "";
             }
-            function sendEmail($email, $name) {
-                $apiKey = env('SENDINBLUE_KEY');
-                $url = env('SIB_URL');
-                $sibTemplate = env('SIB_CORPORATE_TEMPLATE');
-        
-                $headers = [
-                    'Accept' => 'application/json',
-                    'api-key' => $apiKey,
-                    'Content-Type' => 'application/json'
-                ];
-        
-                $body = [
-                    "to" => array([
-                        "email" => $email,
-                        "name" => $name,
-                    ]),
-                    "templateId" => $sibTemplate,
-                ];
-        
-                Http::withHeaders($headers)->post($url, $body);
-            }
+            
             if ($this->inviatationEmail == 'on') {
-                sendEmail($email, $firstName);
+                dispatch(new ProcessSIBCustomerMail($email, $firstName));
             }
             $findCustomerByEmail = CustomerService::getCustomerByEmail($email);
             if(!$findCustomerByEmail->isEmpty()) {

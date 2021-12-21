@@ -6,8 +6,6 @@ use App\Models\CarQuote;
 use Illuminate\Http\Request;
 use Config;
 use DB;
-use Auth;
-use GuzzleHttp\Exception\ClientException;
 use \Carbon\Carbon;
 
 class CarQuoteService extends BaseService
@@ -152,6 +150,7 @@ class CarQuoteService extends BaseService
             "car_value" => "number|required",
             "premium" => "number",
             "paid_at" => "input|date",
+            "payment_gateway" => "input|title",
             "car_type_insurance_id" => "select|title|required",
             "claim_history_id" => "select|title|required",
             "advisor_id" => "select|title|required",
@@ -225,6 +224,9 @@ class CarQuoteService extends BaseService
                 break;
             case 'created_at':
                 $title = "Created Date";
+                break;
+            case 'payment_gateway':
+                $title = "Payment Method";
                 break;
             default:
                 break;
@@ -346,11 +348,11 @@ class CarQuoteService extends BaseService
     {
         $quoteUuId = CarQuote::where('uuid', '=', $id)->value('uuid');
 
-        $plansApiEndPoint = Config::get('constants.KEN_PLANS_API_ENDPOINT');
-        $plansApiToken = Config::get('constants.KEN_PLANS_API_TOKEN');
-        $plansApiTimeout = Config::get('constants.KEN_PLANS_API_TIMEOUT');
-        $plansApiUserName = Config::get('constants.KEN_PLANS_API_USER');
-        $plansApiPassword = Config::get('constants.KEN_PLANS_API_PWD');
+        $plansApiEndPoint = Config::get('constants.KEN_API_ENDPOINT') . '/get-car-quote-plans';
+        $plansApiToken = Config::get('constants.KEN_API_TOKEN');
+        $plansApiTimeout = Config::get('constants.KEN_API_TIMEOUT');
+        $plansApiUserName = Config::get('constants.KEN_API_USER');
+        $plansApiPassword = Config::get('constants.KEN_API_PWD');
         $authBasic = base64_encode($plansApiUserName . ":" . $plansApiPassword);
 
         $plansDataArr = array(
@@ -382,7 +384,7 @@ class CarQuoteService extends BaseService
                 $getdecodeContents = json_decode($getContents);
                 return $getdecodeContents;
             }
-        } catch (ClientException $e) {
+        } catch (\GuzzleHttp\Exception\BadResponseException $e) {
             $response = $e->getResponse();
             $contents = (string) $response->getBody();
             $response = json_decode($contents);

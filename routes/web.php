@@ -81,7 +81,7 @@ Route::middleware(['auth'])->get('/home', function () {
 
 
 Route::group(['middleware' =>  ['auth']], function () {
-    Route::resource('myleads', MyLeadsController::class)->middleware('CheckRole:ADMIN,MANAGER,HEALTH_ADVISOR,BUSINESS_ADVISOR,TRAVEL_ADVISOR,LIFE_ADIVSOR,HOME_ADVISOR,CAR_ADVISOR');
+    Route::resource('myleads', MyLeadsController::class)->middleware('CheckRole:ADMIN,MANAGER,HEALTH_ADVISOR,BUSINESS_ADVISOR,TRAVEL_ADVISOR,LIFE_ADIVSOR,HOME_ADVISOR,CAR_ADVISOR,CAR_OE');
     Route::resource('leadsearch', LeadSearchController::class)->names([
         'index' => 'leadsearch.index',
         'create' => 'leadsearch.create',
@@ -90,7 +90,7 @@ Route::group(['middleware' =>  ['auth']], function () {
         'edit' => 'leadsearch.edit',
         'update' => 'leadsearch.update',
         'destroy' => 'leadsearch.destroy',
-    ])->middleware('CheckRole:ADMIN,MANAGER,HEALTH_ADVISOR,BUSINESS_ADVISOR,TRAVEL_ADVISOR,LIFE_ADIVSOR,HOME_ADVISOR,CAR_ADVISOR');
+    ])->middleware('CheckRole:ADMIN,MANAGER,HEALTH_ADVISOR,BUSINESS_ADVISOR,TRAVEL_ADVISOR,LIFE_ADIVSOR,HOME_ADVISOR,CAR_ADVISOR,CAR_MANAGER');
     Route::resource('leadassignment', LeadAssignmentController::class)->names([
         'index' => 'leadassignment.index',
         'create' => 'leadassignment.create',
@@ -147,6 +147,7 @@ Route::group(['middleware' =>  ['auth']], function () {
         Route::get('car/{quoteId}/plan_details/{planId}', [CRUDController::class, 'plan_details'])->name('plan_details');
         Route::post('manualLeadAssign', [CRUDController::class, 'manualLeadAssign'])->name('manualLeadAssign');
         Route::get('car/{quoteUuId}/updateDiscountedPremium', [CRUDController::class, 'updateDiscountedPremium']);
+        Route::get('car/{quoteUuId}/add_quote', [CRUDController::class, 'add_quote']);
     });
 
     Route::group(['prefix' => 'transapp'], function () {
