@@ -20,7 +20,7 @@ class CarQuoteService extends BaseService
         ,'cqr.email','cqr.mobile_no','cqr.dob'
         ,'cqr.car_value','cqr.additional_notes'
         ,'cqr.nationality_id','cqr.year_of_manufacture','cqr.code','cqr.is_ecommerce'
-        ,'cqr.premium','cqr.paid_at','cqr.payment_gateway','cqr.source','n.TEXT AS nationality_id_text'
+        ,'cqr.premium','cqr.paid_at','cqr.payment_gateway','cqr.source','cqr.created_at','cqr.updated_at','n.TEXT AS nationality_id_text'
         ,'cqr.uae_license_held_for_id','ulhf.TEXT AS uae_license_held_for_id_text'
         ,'cqr.car_make_id','cmake.TEXT AS car_make_id_text'
         ,'cqr.car_model_id','cmodel.TEXT AS car_model_id_text'
@@ -123,6 +123,8 @@ class CarQuoteService extends BaseService
             "premium" => "number",
             "paid_at" => "input|date",
             "payment_gateway" => "input|title",
+            "created_at" => "input|date",
+            "updated_at" => "input|date",
             "car_type_insurance_id" => "select|title|required",
             "claim_history_id" => "select|title|required",
             "advisor_id" => "select|title|required",
@@ -277,8 +279,8 @@ class CarQuoteService extends BaseService
     public function fillModelSkipProperties()
     {
         return [
-            "create" => "id,advisor_id,premium,paid_at,payment_status_id,plan_id,car_plan_provider_id,code,is_ecommerce,payment_gateway",
-            "list" => "additional_notes,email,mobile_no,first_name,last_name,currently_insured_with,premium,paid_at,payment_status_id,plan_id,car_plan_provider_id,payment_gateway",
+            "create" => "id,advisor_id,premium,paid_at,payment_status_id,plan_id,car_plan_provider_id,code,is_ecommerce,payment_gateway,created_at,updated_at",
+            "list" => "additional_notes,email,mobile_no,first_name,last_name,currently_insured_with,premium,paid_at,payment_status_id,plan_id,car_plan_provider_id,payment_gateway,created_at,updated_at",
         ];
     }
 
