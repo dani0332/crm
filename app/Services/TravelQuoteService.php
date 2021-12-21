@@ -14,11 +14,14 @@ class TravelQuoteService extends BaseService
     public function __construct()
     {
         $this->query = DB::table('travel_quote_request as tqr')->
-        select('tqr.id','tqr.uuid','tqr.days_cover_for','tqr.details','tqr.destination','tqr.travel_cover_for_id','tcf.TEXT AS travel_cover_for_id_text'
+        select('tqr.id','tqr.uuid', 'tqr.created_at','tqr.updated_at','tqr.code', 'tqr.days_cover_for','tqr.details','tqr.destination','tqr.travel_cover_for_id','tcf.TEXT AS travel_cover_for_id_text'
         ,'tqr.first_name','tqr.last_name','tqr.email' ,'tqr.mobile_no','tqr.nationality_id','n.TEXT AS nationality_id_text'
+        ,'qs.id as quote_status_id', 'qs.text as quote_status_id_text', 'u.id as advisor_id', 'u.name as advisor_id_text'
         ,'tqr.region_cover_for_id','r.TEXT AS region_cover_for_id_text')
         ->leftJoin('travel_cover_for as tcf', 'tcf.id', '=', 'tqr.travel_cover_for_id')
         ->leftJoin('nationality as n', 'n.id', '=', 'tqr.nationality_id')
+        ->leftJoin('quote_status as qs', 'qs.id', '=', 'tqr.quote_status_id')
+        ->leftJoin('users as u', 'u.id', '=', 'tqr.advisor_id')
         ->leftJoin('region as r', 'r.id', '=', 'tqr.region_cover_for_id');
     }
 
@@ -87,6 +90,12 @@ class TravelQuoteService extends BaseService
             case 'region':
                 return  'r';
                 break;
+            case 'advisor':
+                return 'u';
+                break;
+            case 'quote_status':
+                return 'qs';
+                break;
             case 'nationality':
                 return  'n';
                 break;
@@ -135,12 +144,17 @@ class TravelQuoteService extends BaseService
             "first_name" => "input|text|required",
             "last_name" => "input|text|required",
             "email" => "input|email|required",
+            "code" => "input|title",
+            "created_at" => "input|date|title",
+            "updated_at" => "input|date|title",
             "mobile_no" => "input|number|title|required",
             "days_cover_for" => "input|number|title|required",
             "destination" => "input|text|required",
             "nationality_id" => "select|title|required",
             "region_cover_for_id" => "select|title|required",
             "travel_cover_for_id" => "select|title|required",
+            "advisor_id" => "select|title|required",
+            "quote_status_id" => "select|title",
             "details" => "textarea|text|required"
         );
     }
@@ -151,6 +165,21 @@ class TravelQuoteService extends BaseService
         switch ($propertyName) {
             case 'days_cover_for':
                 $title = "How many days would you like cover for?";
+                break;
+            case 'advisor_id':
+                $title = "Advisor";
+                break;
+            case 'quote_status_id':
+                $title = "Lead Status";
+                break;
+            case 'code':
+                $title = "CDB ID";
+                break;
+            case 'created_at':
+                $title = "Created Date";
+                break;
+            case 'updated_at':
+                $title = "Last Modified Date";
                 break;
             case 'region_cover_for_id':
                 $title = "Which regions do you need cover for?";
@@ -173,13 +202,14 @@ class TravelQuoteService extends BaseService
     public function fillModelSkipProperties()
     {
         return [
-            "create" => "id",
-            "list" => "email,mobile_no",
+            "create" => "id,created_at,id,code,advisor_id,updated_at,quote_status_id",
+            "list" => "email,mobile_no,region_cover_for_id,travel_cover_for_id,details,nationality_id,destination,days_cover_for",
+            "update" => 'created_at,id,code,advisor_id,updated_at,quote_status_id'
         ];
     }
 
     public function fillModelSearchProperties()
     {
-        return ["email", 'first_name', 'last_name', 'nationality_id', 'region_cover_for_id', 'travel_cover_for_id'];
+        return ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id','advisor_id','created_at'];
     }
 }

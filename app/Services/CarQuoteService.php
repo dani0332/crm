@@ -16,7 +16,7 @@ class CarQuoteService extends BaseService
     {
         $this->query = DB::table('car_quote_request as cqr')
         ->select('cqr.uuid','cqr.id'
-        ,'cqr.first_name','cqr.last_name'
+        ,'cqr.first_name','cqr.last_name', 'cqr.created_at', 'cqr.updated_at'
         ,'cqr.email','cqr.mobile_no','cqr.dob'
         ,'cqr.car_value','cqr.additional_notes'
         ,'cqr.nationality_id','cqr.year_of_manufacture','cqr.code','cqr.is_ecommerce'
@@ -31,6 +31,7 @@ class CarQuoteService extends BaseService
         ,'cqr.advisor_id','u.name AS advisor_id_text'
         ,'cqr.payment_status_id','ps.text AS payment_status_id_text'
         ,'cqr.plan_id','cp.text AS plan_id_text'
+        ,'cqr.quote_status_id','qs.text AS quote_status_id_text'
         ,'cp.provider_id AS car_plan_provider_id','cpip.text AS car_plan_provider_id_text')
         ->leftJoin('nationality as n', 'n.id', '=', 'cqr.nationality_id')
         ->leftJoin('car_make as cmake', 'cmake.id', '=', 'cqr.car_make_id')
@@ -43,6 +44,7 @@ class CarQuoteService extends BaseService
         ->leftJoin('users as u', 'u.id', '=', 'cqr.advisor_id')
         ->leftJoin('car_plan as cp', 'cp.id', '=', 'cqr.plan_id')
         ->leftJoin('insurance_provider as cpip', 'cpip.id', '=', 'cp.provider_id')
+        ->leftJoin('quote_status as qs', 'qs.id', '=', 'cqr.quote_status_id')
         ->leftJoin('payment_status as ps', 'ps.id', '=', 'cqr.payment_status_id');
     }
 
@@ -105,17 +107,18 @@ class CarQuoteService extends BaseService
     {
         return array(
             "id" => "readonly|none",
+            "code" => "input|title",
             "first_name" => "input|text|required",
             "last_name" => "input|text|required",
             "email" => "input|email|required",
             "mobile_no" => "input|title|number|required",
             "dob" => "input|title|date|required",
-            "code" => "input|title",
+            "created_at" => "input|date|title",
+            "updated_at" => "input|date|title",
             "nationality_id" => "select|title|required",
+            "quote_status_id" => "select|title",
             "uae_license_held_for_id" => "select|title|required",
             "is_ecommerce" => "|static|title|Yes,No",
-            // "car_make_id" => "select|title|required",
-            // "car_model_id" => "select|title|required",
             "year_of_manufacture" => "|static|required|2022,2021,2020,2019,2018,2017,2016,2015,2014,2013,2012,2011,2010,2009,2008,2007,2006,2005,2004,2003,2002,2001,2000,1999,1998 or older",
             "emirate_of_registration_id" => "select|title|required",
             "currently_insured_with" => "select|required",
@@ -154,6 +157,12 @@ class CarQuoteService extends BaseService
             case 'mobile_no':
                 $title = "Mobile Number";
                 break;
+            case 'updated_at':
+                $title = "Last Modified Date";
+                break;
+            case 'quote_status_id':
+                $title = "Lead Status";
+                break;
             case 'emirate_of_registration_id':
                 $title = "Emirate Of Registration";
                 break;
@@ -186,6 +195,9 @@ class CarQuoteService extends BaseService
                 break;
             case 'is_ecommerce':
                 $title = "Ecommerce";
+                break;
+            case 'created_at':
+                $title = "Created Date";
                 break;
             default:
                 break;
@@ -237,12 +249,16 @@ class CarQuoteService extends BaseService
             case 'advisor':
                 return 'u';
                 break;
+            case 'quote_status':
+                return 'qs';
+                break;
             case 'plan':
                 return 'cp';
                 break;
             case 'car_plan_provider':
                 return 'cpip';
                 break;
+
             default:
                 return 'cqr';
                 break;
@@ -274,13 +290,13 @@ class CarQuoteService extends BaseService
     {
         return [
             "create" => "id,advisor_id,premium,paid_at,payment_status_id,plan_id,car_plan_provider_id,code,is_ecommerce",
-            "list" => "additional_notes,email,mobile_no,first_name,last_name,currently_insured_with,premium,paid_at,payment_status_id,plan_id,car_plan_provider_id",
+            "list" => "car_plan_provider_id,plan_id,additional_notes,claim_history_id,car_type_insurance_id,paid_at,premium,car_value,currently_insured_with,emirate_of_registration_id,year_of_manufacture,uae_license_held_for_id,dob,email,mobile_no,nationality_id",
         ];
     }
 
     public function fillModelSearchProperties()
     {
-        return ["first_name", "last_name", "email", "mobile_no", "nationality_id", "payment_status_id", "code", "is_ecommerce"];
+        return ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id','advisor_id','created_at'];
     }
 
     public function getQuotePlans($id)

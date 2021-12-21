@@ -15,11 +15,14 @@ class HomeQuoteService extends BaseService
     {
 
         $this->query = DB::table('home_quote_request as hqr')->
-        select('hqr.id','hqr.uuid','hqr.first_name','hqr.last_name','hqr.email','hqr.mobile_no','hqr.address','hqr.has_contents','hqr.contents_aed'
+        select('hqr.id', 'hqr.code', 'hqr.uuid','hqr.first_name','hqr.last_name','hqr.email','hqr.mobile_no','hqr.address','hqr.has_contents','hqr.contents_aed'
         ,'hqr.has_personal_belongings','hqr.personal_belongings_aed','hqr.has_building','hqr.building_aed','hqr.ilivein_accommodation_type_id'
+        ,'hqr.quote_status_id', 'qs.text as quote_status_id_text','hqr.created_at','hqr.updated_at','hqr.advisor_id','u.name as advisor_id_text'
         ,'hat.TEXT AS ilivein_accommodation_type_id_text','hqr.iam_possesion_type_id','hpt.TEXT AS iam_possesion_type_id_text')
         ->leftJoin('home_accommodation_type as hat', 'hat.id', '=', 'hqr.ilivein_accommodation_type_id')
-        ->leftJoin('home_possession_type as hpt', 'hpt.id', '=', 'hqr.iam_possesion_type_id');
+        ->leftJoin('home_possession_type as hpt', 'hpt.id', '=', 'hqr.iam_possesion_type_id')
+        ->leftJoin('quote_status as qs', 'qs.id', '=', 'hqr.quote_status_id')
+        ->leftJoin('users as u', 'u.id', '=', 'hqr.advisor_id');
     }
 
     public function getEntity($id)
@@ -70,6 +73,12 @@ class HomeQuoteService extends BaseService
                 break;
             case 'iam_possesion_type':
                 return 'hpt';
+                break;
+            case 'advisor':
+                return 'u';
+                break;
+            case 'quote_status':
+                return 'qs';
                 break;
             default:
                 return 'hqr';
@@ -135,12 +144,17 @@ class HomeQuoteService extends BaseService
             "first_name" => "input|text|required",
             "last_name" => "input|text|required",
             "email" => "input|email|required",
+            "code" => "input|title",
+            "created_at" => "input|date|title",
+            "updated_at" => "input|date|title",
             "mobile_no" => "input|title|number|required",
             "contents_aed" => "input|number|required",
             "personal_belongings_aed" => "input|number|required",
             "building_aed" => "input|number|required",
             "iam_possesion_type_id" => "select|title|required",
             "ilivein_accommodation_type_id" => "select|title|required",
+            "quote_status_id" => "select|title",
+            "advisor_id" => "select|title|required",
             "has_contents" => "input|checkbox|required",
             "has_personal_belongings" => "input|checkbox|required",
             "has_building" => "input|checkbox|required",
@@ -155,11 +169,29 @@ class HomeQuoteService extends BaseService
             case 'iam_possesion_type_id':
                 $title = "I am";
                 break;
+            case 'created_at':
+                $title = "Created Date";
+                break;
+            case 'updated_at':
+                $title = "Last Modified Date";
+                break;
+            case 'created_at_end':
+                $title = "End Date";
+                break;
+            case 'quote_status_id':
+                $title = "Lead Status";
+                break;
+            case 'advisor_id':
+                $title = "Advisor";
+                break;
             case 'ilivein_accommodation_type_id':
                 $title = "I Live In";
                 break;
             case 'mobile_no':
                 $title = "Mobile Number";
+                break;
+            case 'code':
+                $title = "CDB ID";
                 break;
             default:
                 break;
@@ -170,14 +202,15 @@ class HomeQuoteService extends BaseService
     public function fillModelSkipProperties()
     {
         return [
-            "create" => "id",
-            "list" => "email,address,iam_possesion_type_id,ilivein_accommodation_type_id",
+            "create" => "id,code,quote_status_id,advisor_id,created_at,updated_at",
+            "list" => "email,address,iam_possesion_type_id,ilivein_accommodation_type_id,mobile_no,personal_belongings_aed,building_aed,contents_aed,has_contents,has_personal_belongings,has_building,address",
+            "update" => "id,code,quote_status_id,advisor_id,created_at,updated_at",
         ];
     }
 
     public function fillModelSearchProperties()
     {
-        return ["email", 'first_name', 'last_name', 'iam_possesion_type_id', 'ilivein_accommodation_type_id'];
+        return ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id','advisor_id','created_at'];
     }
 
     public function getValidationArray($modelPropertiesList, $request)

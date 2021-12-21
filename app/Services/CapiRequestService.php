@@ -14,6 +14,7 @@ class CapiRequestService
         $client = new \GuzzleHttp\Client();
         $capiRequest = $client->post(
             $apiEndPoint,
+
             [
                 'headers' => ['Content-Type' => 'application/json', 'Accept' => 'application/json', 'x-api-token' => $apiToken],
                 'body' => json_encode($data),

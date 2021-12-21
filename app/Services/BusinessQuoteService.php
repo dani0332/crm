@@ -15,14 +15,15 @@ class BusinessQuoteService extends BaseService
     public function __construct()
     {
         $this->query = DB::table('business_quote_request as bqr')
-        ->select('bqr.id','bqr.uuid'
+        ->select('bqr.id','bqr.uuid', 'bqr.code', 'bqr.created_at', 'bqr.updated_at'
         ,'bqr.first_name','bqr.last_name'
         ,'bqr.email','bqr.mobile_no'
         ,'bqr.company_name','bqr.brief_details'
         ,'bqr.business_type_of_insurance_id','bti.TEXT AS business_type_of_insurance_id_text'
-        ,'bqr.advisor_id','u.name as advisor_id_text')
+        ,'bqr.advisor_id','u.name as advisor_id_text','bqr.quote_status_id','qs.text as quote_status_id_text')
         ->Join('business_type_of_insurance as bti', 'bti.id', '=', 'bqr.business_type_of_insurance_id')
-        ->leftJoin('users as u', 'u.id', '=', 'bqr.advisor_id');
+        ->leftJoin('users as u', 'u.id', '=', 'bqr.advisor_id')
+        ->leftJoin('quote_status as qs', 'qs.id', '=', 'bqr.quote_status_id');
     }
 
     public function getEntity($id)
@@ -98,6 +99,9 @@ class BusinessQuoteService extends BaseService
             case 'advisor':
                 return 'u';
                 break;
+            case 'quote_status':
+                return 'qs';
+                break;
             default:
                 return 'bqr';
                 break;
@@ -129,9 +133,14 @@ class BusinessQuoteService extends BaseService
             "first_name" => "input|text|required",
             "last_name" => "input|text|required",
             "email" => "input|email|required",
+            "code" => "input|text|title",
             "mobile_no" => "input|title|number|required",
+            "created_at" => "input|date|title",
+            "updated_at" => "input|date|title",
             "company_name" => "input|text|required",
             "business_type_of_insurance_id" => "select|title|required",
+            "advisor_id" => "select|title|required",
+            "quote_status_id" => "select|title",
             "brief_details" => 'textarea|required',
         );
     }
@@ -149,6 +158,21 @@ class BusinessQuoteService extends BaseService
             case 'mobile_no':
                 $title = "Mobile Number";
                 break;
+            case 'created_at':
+                $title = "Created Date";
+                break;
+            case 'updated_at':
+                $title = "Last Modified Date";
+                break;
+            case 'code':
+                $title = "CDB ID";
+                break;
+            case 'advisor_id':
+                $title = "Advisor";
+                break;
+            case 'quote_status_id':
+                $title = "Lead Status";
+                break;
             default:
                 break;
         }
@@ -158,13 +182,13 @@ class BusinessQuoteService extends BaseService
     public function fillModelSkipProperties()
     {
         return [
-            "create" => "id,advisor_id",
-            "list" => "email",
+            "create" => "id,advisor_id,quote_status_id,code",
+            "list" => "email,mobile_no,company_name,brief_details,business_type_of_insurance_id",
         ];
     }
 
     public function fillModelSearchProperties()
     {
-        return ["email", 'first_name', 'last_name', 'iam_possesion_type_id', 'ilivein_accommodation_type_id'];
+        return ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id','advisor_id','created_at'];
     }
 }

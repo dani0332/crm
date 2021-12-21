@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Services\CRUDService;
+use App\Models\CarQuoteAdvisorToOE;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Services\BusinessQuoteService;
@@ -173,6 +174,10 @@ class LeadAssignmentController extends Controller
             $updateTmLead = $this->{$type . 'QuoteService'}->getEntityPlain($id);
             $userId = (int)$assignedToUserIdNew;
             $updateTmLead->advisor_id = $userId;
+            $advisorOE = CarQuoteAdvisorToOE::where('advisor_id', $userId)->first();
+            if(!empty($advisorOE)){
+                $updateTmLead->oe_id = $advisorOE->oe_id;
+            }
             $updateTmLead->save();
         }
 

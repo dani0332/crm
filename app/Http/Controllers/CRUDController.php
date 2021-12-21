@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CarQuoteAdvisorToOE;
 use App\Models\GenericModel;
 use App\Services\BusinessQuoteService;
 use Illuminate\Http\Request;
@@ -124,7 +125,7 @@ class CRUDController extends Controller
     public function store(Request $request)
     {
         $modelPropertiesList = json_decode($request->get('model'), true);
-        $modelType = json_decode($request->modelType, true);
+        $modelType = json_decode($request->get('modelType'), true);
         $validateArray = [];
         if ($modelType == 'Home') {
             $validateArray = $this->homeQuoteService->getValidationArray($modelPropertiesList, $request);
@@ -268,7 +269,8 @@ class CRUDController extends Controller
 
     private function fillModelByModelType($type, Request $request)
     {
-        $modelType = $request->get('modelType') ?? $type;
+        $modelType = json_decode($request->get('modelType'), true) ?? $type;
+        if($modelType == null) $modelType = $request->get('modelType');
         $quoteTypes = 'Health,Car,Travel,Life,Home,Business';
         $serviceType = str_contains($quoteTypes, ucwords($modelType)) ? strtolower($modelType) . 'QuoteService' : lcfirst(ucwords($modelType)) . 'Service';
         $this->genericModel->properties = $this->{$serviceType}->fillModelProperties();
@@ -343,6 +345,11 @@ class CRUDController extends Controller
             $updateTmLead = $this->{strtolower($request->modelType) . 'QuoteService'}->getEntityPlain($tmLeadsId);
             $userId = (int)$assignedToUserIdNew;
             $updateTmLead->advisor_id = $userId;
+            $advisorOE = CarQuoteAdvisorToOE::where('advisor_id', $userId)->first();
+            if(!empty($advisorOE)){
+                $updateTmLead->oe_id = $advisorOE->oe_id;
+            }
+
             $updateTmLead->save();
         }
 

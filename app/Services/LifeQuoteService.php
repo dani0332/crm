@@ -14,10 +14,12 @@ class LifeQuoteService extends BaseService
     public function __construct()
     {
         $this->query =DB::table('life_quote_request as lqr')
-                        ->select('lqr.id' ,'lqr.uuid' ,'lqr.first_name','lqr.last_name','lqr.email','lqr.mobile_no','lqr.gender','lqr.dob','lqr.is_smoker'
+                        ->select('lqr.id' ,'lqr.uuid','lqr.code','lqr.updated_at','lqr.created_at','lqr.first_name','lqr.last_name','lqr.email','lqr.mobile_no','lqr.gender','lqr.dob','lqr.is_smoker'
                         ,'lqr.others_info','lqr.sum_insured_value','lqr.sum_insured_currency_id','ct.TEXT AS sum_insured_currency_id_text'
                         ,'lqr.marital_status_id','ms.TEXT AS marital_status_id_text','lqr.purpose_of_insurance_id','lip.TEXT AS purpose_of_insurance_id_text'
                         ,'lqr.children_id','lc.TEXT AS children_id_text','lqr.tenure_of_insurance_id','lit.TEXT AS tenure_of_insurance_id_text'
+                        ,'lqr.quote_status_id', 'qs.text as quote_status_id_text'
+                        ,'lqr.advisor_id','u.name as advisor_id_text'
                         ,'lqr.number_of_years_id','liy.TEXT AS number_of_years_id_text','lqr.nationality_id','n.TEXT AS nationality_id_text')
                         ->leftJoin('currency_type as ct', 'ct.id', '=', 'lqr.sum_insured_currency_id')
                         ->leftJoin('marital_status as ms', 'ms.id', '=', 'lqr.marital_status_id')
@@ -25,6 +27,8 @@ class LifeQuoteService extends BaseService
                         ->leftJoin('life_children as lc', 'lc.id', '=', 'lqr.children_id')
                         ->leftJoin('life_insurance_tenure as lit', 'lit.id', '=', 'lqr.tenure_of_insurance_id')
                         ->leftJoin('life_number_of_year as liy', 'liy.id', '=', 'lqr.number_of_years_id')
+                        ->leftJoin('quote_status as qs', 'qs.id', '=', 'lqr.quote_status_id')
+                        ->leftJoin('users as u', 'u.id', '=', 'lqr.advisor_id')
                         ->leftJoin('nationality as n', 'n.id', '=', 'lqr.nationality_id');
     }
     public function saveLifeQuote(Request $request)
@@ -101,6 +105,12 @@ class LifeQuoteService extends BaseService
             case 'number_of_years_id':
                 return 'liy';
                 break;
+            case 'advisor':
+                return 'u';
+                break;
+            case 'quote_status':
+                return 'qs';
+                break;
             default:
                 return 'lqr';
                 break;
@@ -155,6 +165,9 @@ class LifeQuoteService extends BaseService
             "last_name" => "input|text|required",
             "mobile_no" => "input|number|title|required",
             "email" => "input|email|required",
+            "code" => "input|title",
+            "created_at" => "input|date|title",
+            "updated_at" => "input|date|title",
             "dob" => "input|date|title|required",
             "sum_insured_value" => "input|number|title||required",
             "sum_insured_currency_id" => "select|title|required",
@@ -162,6 +175,8 @@ class LifeQuoteService extends BaseService
             "marital_status_id" => "select|title|required",
             "children_id" => "select|title|required",
             "tenure_of_insurance_id" => "select|title|required",
+            "quote_status_id" => "select|title",
+            "advisor_id" => "select|title|required",
             "number_of_years_id" => "select|title|required",
             "gender" => "|static|required|Male,Female",
             "is_smoker" => "|static|title|required|Yes,No",
@@ -173,6 +188,9 @@ class LifeQuoteService extends BaseService
     {
         $title = "";
         switch ($propertyName) {
+            case 'code':
+                $title = "CDB ID";
+                break;
             case 'purpose_of_insurance_id':
                 $title = "Purpose of Insurance";
                 break;
@@ -203,6 +221,18 @@ class LifeQuoteService extends BaseService
             case 'sum_insured_value':
                 $title = "Sum Insured Value";
                 break;
+            case 'created_at':
+                $title = "Created Date";
+                break;
+            case 'updated_at':
+                $title = "Last Modified Date";
+                break;
+            case 'quote_status_id':
+                $title = "Lead Status";
+                break;
+            case 'advisor_id':
+                $title = "Advisor";
+                break;
             case 'marital_status_id':
                 $title = "Marital Status";
                 break;
@@ -216,12 +246,12 @@ class LifeQuoteService extends BaseService
     {
         return [
             "create" => "id",
-            "list" => "email,mobile_no,others_info",
+            "list" => "email,mobile_no,others_info,dob,sum_insured_value,sum_insured_currency_id,purpose_of_insurance_id,marital_status_id,children_id,tenure_of_insurance_id,number_of_years_id,gender,is_smoker,others_info",
         ];
     }
 
     public function fillModelSearchProperties()
     {
-        return ["email", 'first_name', 'last_name', 'nationality_id', 'region_cover_for_id', 'travel_cover_for_id'];
+        return ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id','advisor_id','created_at'];
     }
 }

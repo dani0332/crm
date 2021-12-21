@@ -229,11 +229,7 @@
                                                         {{ str_replace('_', ' ', strtoupper($property)) }}
                                                     @endif
                                                 </span>
-                                                <input @if (explode('|', $value)[1] != 'date')
-                                                type={{ explode('|', $value)[1] }}
-                                            @endif id={{ $property }}
-                                            name={{ $property }}
-                                            class="form-control">
+                                                <input type={{ explode('|', $value)[1] }} id={{ $property }} name={{ $property }} class="form-control">
                                             @if ($errors->has($property))
                                                 <span class="text-danger">{{ $errors->first($property) }}</span>
                                             @endif
@@ -251,8 +247,11 @@
                                         </span>
                                         <select @if (strpos($value, 'multiple')) multiple="multiple" class="form-control select2 select-roles" @else class="form-control" @endif id="{{ $property }}"
                                             name="{{ $property }}">
-                                            <option value="">{{ 'Please select ' . str_replace('id', ' ', str_replace('_', ' ', $property)) }}
-                                            </option>
+                                            @if(strpos($value, 'title'))
+                                                <option value="">{{"Please select ".$customTitles[$property] }}</option>
+                                            @else
+                                                <option value="">{{"Please select ".str_replace("id"," ",str_replace("_"," ",$property)) }}</option>
+                                            @endif
                                             @foreach ($dropdownSource[$property] as $item)
                                                 <option value="{{ $item->id }}">
                                                     {{ $item->text ?? $item->name }}
@@ -309,7 +308,7 @@
                 <form method="post" action="manualLeadAssign" class="form-horizontal form-label-left" role="form"
                     data-parsley-validate="" novalidate="" autocomplete="off">
                     {{ csrf_field() }}
-                    @method('GET')
+                    <input type="hidden" value="{{strtolower($model->modelType)}}" name="modelType">
                     <div class="row" id="tm-leads-assign-div">
                         <div class="col-md-12 col-sm-12">
                             <div class="x_panel">
@@ -358,7 +357,11 @@
                                 @foreach ($model->properties as $property => $value)
                                     @if (!in_array($property, explode(',', $model->skipProperties['list'])))
                                         <th data-type="{{ explode('|', $value)[1] }}">
-                                            {{ str_replace('_', ' ', ucwords($property)) }}</th>
+                                            @if(strpos($value, 'title'))
+                                                {{ strtoupper($customTitles[$property]) }}
+                                            @else
+                                                {{str_replace("_"," ",strtoupper($property))}}
+                                            @endif</th>
                                     @endif
                                 @endforeach
                             </tr>

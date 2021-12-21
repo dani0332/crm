@@ -13,14 +13,16 @@ class HealthQuoteService extends BaseService
     public function __construct()
     {
         $this->query = DB::table('health_quote_request as hqr')->
-        select('hqr.id','hqr.uuid','hqr.first_name','hqr.last_name','hqr.email','hqr.mobile_no','hqr.preference','hqr.details','hqr.source','hqr.dob'
+        select('hqr.id','hqr.uuid','hqr.code','hqr.first_name','hqr.updated_at','hqr.created_at','hqr.last_name','hqr.email','hqr.mobile_no','hqr.preference','hqr.details','hqr.source','hqr.dob'
         ,'hqr.has_dental','hqr.has_home','hqr.has_worldwide_cover','hqr.marital_status_id','ms.TEXT AS marital_status_id_text','hqr.cover_for_id'
         ,'hcf.TEXT AS cover_for_id_text','hqr.nationality_id','n.TEXT AS nationality_id_text','hqr.emirate_of_your_visa_id'
+        ,'hqr.quote_status_id', 'qs.text as quote_status_id_text'
         ,'e.TEXT AS emirate_of_your_visa_id_text','hqr.advisor_id','u.name as advisor_id_text')
         ->leftJoin('marital_status as ms', 'ms.id', '=', 'hqr.marital_status_id')
         ->leftJoin('health_cover_for as hcf', 'hcf.id', '=', 'hqr.cover_for_id')
         ->leftJoin('nationality as n', 'n.id', '=', 'hqr.nationality_id')
         ->leftJoin('emirates as e', 'e.id', '=', 'hqr.emirate_of_your_visa_id')
+        ->leftJoin('quote_status as qs', 'qs.id', '=', 'hqr.quote_status_id')
         ->leftJoin('users as u', 'u.id', '=', 'hqr.advisor_id');
     }
 
@@ -84,6 +86,12 @@ class HealthQuoteService extends BaseService
                 break;
             case 'nationality':
                 return 'n';
+                break;
+            case 'advisor':
+                return 'u';
+                break;
+            case 'quote_status':
+                return 'qs';
                 break;
             case 'emirates':
                 return 'e';
@@ -151,6 +159,9 @@ class HealthQuoteService extends BaseService
             "first_name" => "input|text|required",
             "last_name" => "input|text|required",
             "preference" => "input|text",
+            "code" => "input|title",
+            "created_at" => "input|date|title",
+            "updated_at" => "input|date|title",
             "email" => "input|email|required",
             "details" => "input|text",
             "mobile_no" => "input|title|number|required",
@@ -160,6 +171,7 @@ class HealthQuoteService extends BaseService
             "cover_for_id" => "select|title|required",
             "nationality_id" => "select|title|required",
             "advisor_id" => "select|title|required",
+            "quote_status_id" => "select|title|required",
             "has_dental" => "input|checkbox|title",
             "has_worldwide_cover" => "input|checkbox|title",
             "has_home" => "input|checkbox|title",
@@ -173,6 +185,9 @@ class HealthQuoteService extends BaseService
         switch ($propertyName) {
             case 'marital_status_id':
                 $title = "Marital Status";
+                break;
+            case 'code':
+                $title = "CDB ID";
                 break;
             case 'cover_for_id':
                 $title = "Who would you like cover for?";
@@ -204,6 +219,15 @@ class HealthQuoteService extends BaseService
             case 'dob':
                 $title = "Date of Birth";
                 break;
+            case 'quote_status_id':
+                $title = "Lead Status";
+                break;
+            case 'updated_at':
+                $title = "Last Modified Date";
+                break;
+            case 'created_at':
+                $title = "Created Date";
+                break;
             default:
                 break;
         }
@@ -213,13 +237,13 @@ class HealthQuoteService extends BaseService
     public function fillModelSkipProperties()
     {
         return [
-            "create" => "id,advisor_id",
-            "list" => "email,cover_for_id,has_worldwide_cover,has_home,details,preference",
+            "create" => "id,advisor_id,code",
+            "list" => "email,cover_for_id,has_worldwide_cover,has_home,details,preference,mobile_no,dob,marital_status_id,nationality_id,source,has_dental,emirate_of_your_visa_id",
         ];
     }
 
     public function fillModelSearchProperties()
     {
-        return ["email", 'first_name', 'last_name', 'nationality_id', 'advisor_id'];
+        return ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id','advisor_id','created_at'];
     }
 }
