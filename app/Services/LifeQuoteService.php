@@ -6,6 +6,7 @@ use App\Models\LifeQuote;
 use Illuminate\Http\Request;
 use DB;
 use Auth;
+use \Carbon\Carbon;
 
 class LifeQuoteService extends BaseService
 {
@@ -13,23 +14,50 @@ class LifeQuoteService extends BaseService
 
     public function __construct()
     {
-        $this->query =DB::table('life_quote_request as lqr')
-                        ->select('lqr.id' ,'lqr.uuid','lqr.code','lqr.updated_at','lqr.created_at','lqr.first_name','lqr.last_name','lqr.email','lqr.mobile_no','lqr.gender','lqr.dob','lqr.is_smoker'
-                        ,'lqr.others_info','lqr.sum_insured_value','lqr.sum_insured_currency_id','ct.TEXT AS sum_insured_currency_id_text'
-                        ,'lqr.marital_status_id','ms.TEXT AS marital_status_id_text','lqr.purpose_of_insurance_id','lip.TEXT AS purpose_of_insurance_id_text'
-                        ,'lqr.children_id','lc.TEXT AS children_id_text','lqr.tenure_of_insurance_id','lit.TEXT AS tenure_of_insurance_id_text'
-                        ,'lqr.quote_status_id', 'qs.text as quote_status_id_text'
-                        ,'lqr.advisor_id','u.name as advisor_id_text'
-                        ,'lqr.number_of_years_id','liy.TEXT AS number_of_years_id_text','lqr.nationality_id','n.TEXT AS nationality_id_text')
-                        ->leftJoin('currency_type as ct', 'ct.id', '=', 'lqr.sum_insured_currency_id')
-                        ->leftJoin('marital_status as ms', 'ms.id', '=', 'lqr.marital_status_id')
-                        ->leftJoin('life_insurance_purpose as lip', 'lip.id', '=', 'lqr.purpose_of_insurance_id')
-                        ->leftJoin('life_children as lc', 'lc.id', '=', 'lqr.children_id')
-                        ->leftJoin('life_insurance_tenure as lit', 'lit.id', '=', 'lqr.tenure_of_insurance_id')
-                        ->leftJoin('life_number_of_year as liy', 'liy.id', '=', 'lqr.number_of_years_id')
-                        ->leftJoin('quote_status as qs', 'qs.id', '=', 'lqr.quote_status_id')
-                        ->leftJoin('users as u', 'u.id', '=', 'lqr.advisor_id')
-                        ->leftJoin('nationality as n', 'n.id', '=', 'lqr.nationality_id');
+        $this->query = DB::table('life_quote_request as lqr')
+            ->select(
+                'lqr.id',
+                'lqr.uuid',
+                'lqr.code',
+                'lqr.updated_at',
+                'lqr.created_at',
+                'lqr.first_name',
+                'lqr.last_name',
+                'lqr.email',
+                'lqr.mobile_no',
+                'lqr.gender',
+                'lqr.dob',
+                'lqr.is_smoker',
+                'lqr.others_info',
+                'lqr.sum_insured_value',
+                'lqr.sum_insured_currency_id',
+                'ct.TEXT AS sum_insured_currency_id_text',
+                'lqr.marital_status_id',
+                'ms.TEXT AS marital_status_id_text',
+                'lqr.purpose_of_insurance_id',
+                'lip.TEXT AS purpose_of_insurance_id_text',
+                'lqr.children_id',
+                'lc.TEXT AS children_id_text',
+                'lqr.tenure_of_insurance_id',
+                'lit.TEXT AS tenure_of_insurance_id_text',
+                'lqr.quote_status_id',
+                'qs.text as quote_status_id_text',
+                'lqr.advisor_id',
+                'u.name as advisor_id_text',
+                'lqr.number_of_years_id',
+                'liy.TEXT AS number_of_years_id_text',
+                'lqr.nationality_id',
+                'n.TEXT AS nationality_id_text'
+            )
+            ->leftJoin('currency_type as ct', 'ct.id', '=', 'lqr.sum_insured_currency_id')
+            ->leftJoin('marital_status as ms', 'ms.id', '=', 'lqr.marital_status_id')
+            ->leftJoin('life_insurance_purpose as lip', 'lip.id', '=', 'lqr.purpose_of_insurance_id')
+            ->leftJoin('life_children as lc', 'lc.id', '=', 'lqr.children_id')
+            ->leftJoin('life_insurance_tenure as lit', 'lit.id', '=', 'lqr.tenure_of_insurance_id')
+            ->leftJoin('life_number_of_year as liy', 'liy.id', '=', 'lqr.number_of_years_id')
+            ->leftJoin('quote_status as qs', 'qs.id', '=', 'lqr.quote_status_id')
+            ->leftJoin('users as u', 'u.id', '=', 'lqr.advisor_id')
+            ->leftJoin('nationality as n', 'n.id', '=', 'lqr.nationality_id');
     }
     public function saveLifeQuote(Request $request)
     {
@@ -51,7 +79,7 @@ class LifeQuoteService extends BaseService
             "gender" => $request->gender,
             "othersInfo" => $request->others_info,
         );
-        if(Auth::user()->hasRole("LIFE_ADVISOR")) $dataArr['advisorId'] = Auth::users()->id;
+        if (Auth::user()->hasRole("LIFE_ADVISOR")) $dataArr['advisorId'] = Auth::users()->id;
         return CapiRequestService::sendCAPIRequest('/api/v1-save-home-quote', $dataArr);
     }
 
@@ -71,6 +99,11 @@ class LifeQuoteService extends BaseService
     public function getGridData($searchProperties, $request)
     {
         if ($request->ajax()) {
+            if (in_array('created_at', $searchProperties) && isset($request->created_at) && $request->created_at != "") {
+                $dateFrom = Carbon::createFromFormat('Y-m-d', $request['created_at'])->startOfDay()->toDateTimeString();
+                $dateTo = Carbon::createFromFormat('Y-m-d', $request['created_at_end'])->endOfDay()->toDateTimeString();
+                $this->query->whereBetween('cqr.created_at', [$dateFrom, $dateTo]);
+            }
             foreach ($searchProperties as $item) {
                 if (!empty($request[$item])) {
                     $this->query->where($this->getQuerySuffix($item) . '.' . $item, $request[$item]);
@@ -120,18 +153,18 @@ class LifeQuoteService extends BaseService
     public function updateLifeQuote(Request $request, $id)
     {
         $updateArray = [
-            'first_name'=>$request->first_name,
-            'last_name'=>$request->last_name,
-            'details'=>$request->details,
-            'dob'=>$request->dob,
-            'gender'=>$request->gender == 'Male' ? 'M' : 'F',
-            'is_smoker'=>$request->is_smoker == 'Yes' ? '1' : '0',
+            'first_name' => $request->first_name,
+            'last_name' => $request->last_name,
+            'details' => $request->details,
+            'dob' => $request->dob,
+            'gender' => $request->gender == 'Male' ? 'M' : 'F',
+            'is_smoker' => $request->is_smoker == 'Yes' ? '1' : '0',
         ];
-        if(!Auth::user()->hasRole('LIFE_ADVISOR')){
+        if (!Auth::user()->hasRole('LIFE_ADVISOR')) {
             $updateArray['email'] = $request->email;
             $updateArray['mobile_no'] = $request->mobile_no;
         }
-        LifeQuote::where('uuid',$id)->update($updateArray);
+        LifeQuote::where('uuid', $id)->update($updateArray);
 
         if (isset($request->return_to_view))
             return redirect("quote/life/" . $lifeQuote->id)->with('success', 'Life Quote has been updated');
@@ -140,11 +173,20 @@ class LifeQuoteService extends BaseService
     public function getLeads($CDBID, $email, $mobile_no, $lead_type)
     {
         $query = DB::table('life_quote_request as lqr')
-                    ->select('lqr.id','lqr.uuid','lqr.first_name','lqr.last_name','lqr.created_at','u.name AS advisor_name',DB::raw("'Life' as lead_type")
-                    ,'u.id as advisor_id','qs.text as lead_status')
-                    ->leftJoin('users as u', 'u.id', '=', 'lqr.advisor_id')
-                    ->leftJoin('quote_status as qs', 'qs.id', '=', 'lqr.quote_status_id')
-                    ->orderBy('advisor_id', 'ASC');
+            ->select(
+                'lqr.id',
+                'lqr.uuid',
+                'lqr.first_name',
+                'lqr.last_name',
+                'lqr.created_at',
+                'u.name AS advisor_name',
+                DB::raw("'Life' as lead_type"),
+                'u.id as advisor_id',
+                'qs.text as lead_status'
+            )
+            ->leftJoin('users as u', 'u.id', '=', 'lqr.advisor_id')
+            ->leftJoin('quote_status as qs', 'qs.id', '=', 'lqr.quote_status_id')
+            ->orderBy('advisor_id', 'ASC');
         if (!empty($CDBID)) {
             $query->where('lqr.id', '=', $CDBID);
         }
@@ -166,7 +208,7 @@ class LifeQuoteService extends BaseService
             "mobile_no" => "input|number|title|required",
             "email" => "input|email|required",
             "code" => "input|title",
-            "created_at" => "input|date|title",
+            "created_at" => "input|date|title|range",
             "updated_at" => "input|date|title",
             "dob" => "input|date|title|required",
             "sum_insured_value" => "input|number|title||required",
@@ -252,6 +294,6 @@ class LifeQuoteService extends BaseService
 
     public function fillModelSearchProperties()
     {
-        return ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id','advisor_id','created_at'];
+        return ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'advisor_id', 'created_at'];
     }
 }
