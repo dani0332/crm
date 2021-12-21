@@ -6,8 +6,7 @@ use App\Models\CarQuote;
 use Illuminate\Http\Request;
 use Config;
 use DB;
-use Auth;
-use GuzzleHttp\Exception\ClientException;
+use \Carbon\Carbon;
 
 class CarQuoteService extends BaseService
 {
@@ -15,35 +14,63 @@ class CarQuoteService extends BaseService
     public function __construct()
     {
         $this->query = DB::table('car_quote_request as cqr')
-        ->select('cqr.uuid','cqr.id'
-        ,'cqr.first_name','cqr.last_name'
-        ,'cqr.email','cqr.mobile_no','cqr.dob'
-        ,'cqr.car_value','cqr.additional_notes'
-        ,'cqr.nationality_id','cqr.year_of_manufacture','cqr.code','cqr.is_ecommerce'
-        ,'cqr.premium','cqr.paid_at','cqr.payment_gateway','cqr.source','n.TEXT AS nationality_id_text'
-        ,'cqr.uae_license_held_for_id','ulhf.TEXT AS uae_license_held_for_id_text'
-        ,'cqr.car_make_id','cmake.TEXT AS car_make_id_text'
-        ,'cqr.car_model_id','cmodel.TEXT AS car_model_id_text'
-        ,'cqr.emirate_of_registration_id','e.TEXT AS emirate_of_registration_id_text'
-        ,'ip.id AS currently_insured_with','ip.TEXT AS currently_insured_with_text'
-        ,'cqr.car_type_insurance_id','cti.TEXT AS car_type_insurance_id_text'
-        ,'cqr.claim_history_id','ch.TEXT AS claim_history_id_text'
-        ,'cqr.advisor_id','u.name AS advisor_id_text'
-        ,'cqr.payment_status_id','ps.text AS payment_status_id_text'
-        ,'cqr.plan_id','cp.text AS plan_id_text'
-        ,'cp.provider_id AS car_plan_provider_id','cpip.text AS car_plan_provider_id_text')
-        ->leftJoin('nationality as n', 'n.id', '=', 'cqr.nationality_id')
-        ->leftJoin('car_make as cmake', 'cmake.id', '=', 'cqr.car_make_id')
-        ->leftJoin('uae_license_held_for as ulhf', 'ulhf.id', '=', 'cqr.uae_license_held_for_id')
-        ->leftJoin('car_model as cmodel', 'cmodel.id', '=', 'cqr.car_model_id')
-        ->leftJoin('emirates as e', 'e.id', '=', 'cqr.emirate_of_registration_id')
-        ->leftJoin('insurance_provider as ip', 'ip.id', '=', 'cqr.currently_insured_with')
-        ->leftJoin('car_type_insurance as cti', 'cti.id', '=', 'cqr.car_type_insurance_id')
-        ->leftJoin('claim_history as ch', 'ch.id', '=', 'cqr.claim_history_id')
-        ->leftJoin('users as u', 'u.id', '=', 'cqr.advisor_id')
-        ->leftJoin('car_plan as cp', 'cp.id', '=', 'cqr.plan_id')
-        ->leftJoin('insurance_provider as cpip', 'cpip.id', '=', 'cp.provider_id')
-        ->leftJoin('payment_status as ps', 'ps.id', '=', 'cqr.payment_status_id');
+            ->select(
+                'cqr.uuid',
+                'cqr.id',
+                'cqr.first_name',
+                'cqr.last_name',
+                'cqr.created_at',
+                'cqr.updated_at',
+                'cqr.email',
+                'cqr.mobile_no',
+                'cqr.dob',
+                'cqr.car_value',
+                'cqr.additional_notes',
+                'cqr.nationality_id',
+                'cqr.year_of_manufacture',
+                'cqr.code',
+                'cqr.is_ecommerce',
+                'cqr.premium',
+                'cqr.paid_at',
+                'n.TEXT AS nationality_id_text',
+                'cqr.uae_license_held_for_id',
+                'ulhf.TEXT AS uae_license_held_for_id_text',
+                'cqr.car_make_id',
+                'cmake.TEXT AS car_make_id_text',
+                'cqr.car_model_id',
+                'cmodel.TEXT AS car_model_id_text',
+                'cqr.emirate_of_registration_id',
+                'e.TEXT AS emirate_of_registration_id_text',
+                'ip.id AS currently_insured_with',
+                'ip.TEXT AS currently_insured_with_text',
+                'cqr.car_type_insurance_id',
+                'cti.TEXT AS car_type_insurance_id_text',
+                'cqr.claim_history_id',
+                'ch.TEXT AS claim_history_id_text',
+                'cqr.advisor_id',
+                'u.name AS advisor_id_text',
+                'cqr.payment_status_id',
+                'ps.text AS payment_status_id_text',
+                'cqr.plan_id',
+                'cp.text AS plan_id_text',
+                'cqr.quote_status_id',
+                'qs.text AS quote_status_id_text',
+                'cp.provider_id AS car_plan_provider_id',
+                'cpip.text AS car_plan_provider_id_text'
+            )
+            ->leftJoin('nationality as n', 'n.id', '=', 'cqr.nationality_id')
+            ->leftJoin('car_make as cmake', 'cmake.id', '=', 'cqr.car_make_id')
+            ->leftJoin('uae_license_held_for as ulhf', 'ulhf.id', '=', 'cqr.uae_license_held_for_id')
+            ->leftJoin('car_model as cmodel', 'cmodel.id', '=', 'cqr.car_model_id')
+            ->leftJoin('emirates as e', 'e.id', '=', 'cqr.emirate_of_registration_id')
+            ->leftJoin('insurance_provider as ip', 'ip.id', '=', 'cqr.currently_insured_with')
+            ->leftJoin('car_type_insurance as cti', 'cti.id', '=', 'cqr.car_type_insurance_id')
+            ->leftJoin('claim_history as ch', 'ch.id', '=', 'cqr.claim_history_id')
+            ->leftJoin('users as u', 'u.id', '=', 'cqr.advisor_id')
+            ->leftJoin('car_plan as cp', 'cp.id', '=', 'cqr.plan_id')
+            ->leftJoin('insurance_provider as cpip', 'cpip.id', '=', 'cp.provider_id')
+            ->leftJoin('quote_status as qs', 'qs.id', '=', 'cqr.quote_status_id')
+            ->leftJoin('payment_status as ps', 'ps.id', '=', 'cqr.payment_status_id');
     }
 
     public function saveCarQuote(Request $request)
@@ -105,17 +132,18 @@ class CarQuoteService extends BaseService
     {
         return array(
             "id" => "readonly|none",
+            "code" => "input|title",
             "first_name" => "input|text|required",
             "last_name" => "input|text|required",
             "email" => "input|email|required",
             "mobile_no" => "input|title|number|required",
             "dob" => "input|title|date|required",
-            "code" => "input|title",
+            "created_at" => "input|date|title|range",
+            "updated_at" => "input|date|title",
             "nationality_id" => "select|title|required",
+            "quote_status_id" => "select|title",
             "uae_license_held_for_id" => "select|title|required",
             "is_ecommerce" => "|static|title|Yes,No",
-            // "car_make_id" => "select|title|required",
-            // "car_model_id" => "select|title|required",
             "year_of_manufacture" => "|static|required|2022,2021,2020,2019,2018,2017,2016,2015,2014,2013,2012,2011,2010,2009,2008,2007,2006,2005,2004,2003,2002,2001,2000,1999,1998 or older",
             "emirate_of_registration_id" => "select|title|required",
             "currently_insured_with" => "select|required",
@@ -155,6 +183,12 @@ class CarQuoteService extends BaseService
             case 'mobile_no':
                 $title = "Mobile Number";
                 break;
+            case 'updated_at':
+                $title = "Last Modified Date";
+                break;
+            case 'quote_status_id':
+                $title = "Lead Status";
+                break;
             case 'emirate_of_registration_id':
                 $title = "Emirate Of Registration";
                 break;
@@ -188,6 +222,9 @@ class CarQuoteService extends BaseService
             case 'is_ecommerce':
                 $title = "Ecommerce";
                 break;
+            case 'created_at':
+                $title = "Created Date";
+                break;
             case 'payment_gateway':
                 $title = "Payment Method";
                 break;
@@ -200,9 +237,17 @@ class CarQuoteService extends BaseService
     public function getGridData($searchProperties, $request)
     {
         if ($request->ajax()) {
+            if (in_array('created_at', $searchProperties) && isset($request->created_at) && $request->created_at != "") {
+                $dateFrom = Carbon::createFromFormat('Y-m-d', $request['created_at'])->startOfDay()->toDateTimeString();
+                $dateTo = Carbon::createFromFormat('Y-m-d', $request['created_at_end'])->endOfDay()->toDateTimeString();
+                $this->query->whereBetween('cqr.created_at', [$dateFrom, $dateTo]);
+            }
             foreach ($searchProperties as $item) {
+                if ($item == 'created_at') {
+                    continue;
+                }
                 if (!empty($request[$item])) {
-                    $searchedValue = str_contains($request[$item], 'Yes') || str_contains($request[$item], 'No') ? ( $request[$item] == 'Yes' ? 1 : 0 ) : $request[$item];
+                    $searchedValue = str_contains($request[$item], 'Yes') || str_contains($request[$item], 'No') ? ($request[$item] == 'Yes' ? 1 : 0) : $request[$item];
                     $this->query->where($this->getQuerySuffix($item) . '.' . $item, $searchedValue);
                 }
             }
@@ -241,6 +286,9 @@ class CarQuoteService extends BaseService
             case 'advisor':
                 return 'u';
                 break;
+            case 'quote_status':
+                return 'qs';
+                break;
             case 'plan':
                 return 'cp';
                 break;
@@ -256,14 +304,23 @@ class CarQuoteService extends BaseService
     public function getLeads($CDBID, $email, $mobile_no, $lead_type)
     {
         $query =  DB::table('car_quote_request as cqr')
-                    ->select('cqr.id','cqr.uuid','cqr.first_name','cqr.last_name','cqr.created_at','u.name AS advisor_name',DB::raw("'Car' as lead_type")
-                    ,'u.id as advisor_id','qs.text as lead_status')
-                    ->leftJoin('users as u', 'u.id', '=', 'cqr.advisor_id')
-                    ->leftJoin('quote_status as qs', 'qs.id', '=', 'cqr.quote_status_id')
-                    ->orderBy('advisor_id', 'ASC');
+            ->select(
+                'cqr.id',
+                'cqr.uuid',
+                'cqr.first_name',
+                'cqr.last_name',
+                'cqr.created_at',
+                'u.name AS advisor_name',
+                DB::raw("'Car' as lead_type"),
+                'u.id as advisor_id',
+                'qs.text as lead_status'
+            )
+            ->leftJoin('users as u', 'u.id', '=', 'cqr.advisor_id')
+            ->leftJoin('quote_status as qs', 'qs.id', '=', 'cqr.quote_status_id')
+            ->orderBy('advisor_id', 'ASC');
 
         if (!empty($CDBID)) {
-           $query->where('cqr.CDBID', $CDBID);
+            $query->where('cqr.CDBID', $CDBID);
         }
         if (!empty($email)) {
             $query->where('cqr.email', $email);
@@ -277,26 +334,26 @@ class CarQuoteService extends BaseService
     public function fillModelSkipProperties()
     {
         return [
-            "create" => "id,advisor_id,premium,paid_at,payment_status_id,plan_id,car_plan_provider_id,code,is_ecommerce,payment_gateway",
-            "list" => "additional_notes,email,mobile_no,first_name,last_name,currently_insured_with,premium,paid_at,payment_status_id,plan_id,car_plan_provider_id,payment_gateway",
+            "create" => "id,advisor_id,premium,paid_at,payment_status_id,plan_id,car_plan_provider_id,code,is_ecommerce",
+            "list" => "car_plan_provider_id,plan_id,additional_notes,claim_history_id,car_type_insurance_id,paid_at,premium,car_value,currently_insured_with,emirate_of_registration_id,year_of_manufacture,uae_license_held_for_id,dob,email,mobile_no,nationality_id",
         ];
     }
 
     public function fillModelSearchProperties()
     {
-        return ["first_name", "last_name", "email", "mobile_no", "nationality_id", "payment_status_id", "code", "is_ecommerce"];
+        return ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'advisor_id', 'created_at'];
     }
 
     public function getQuotePlans($id)
     {
         $quoteUuId = CarQuote::where('uuid', '=', $id)->value('uuid');
 
-        $plansApiEndPoint = Config::get('constants.KEN_API_ENDPOINT').'/get-car-quote-plans';
+        $plansApiEndPoint = Config::get('constants.KEN_API_ENDPOINT') . '/get-car-quote-plans';
         $plansApiToken = Config::get('constants.KEN_API_TOKEN');
         $plansApiTimeout = Config::get('constants.KEN_API_TIMEOUT');
         $plansApiUserName = Config::get('constants.KEN_API_USER');
         $plansApiPassword = Config::get('constants.KEN_API_PWD');
-        $authBasic = base64_encode($plansApiUserName.":".$plansApiPassword);
+        $authBasic = base64_encode($plansApiUserName . ":" . $plansApiPassword);
 
         $plansDataArr = array(
             "quoteUID" => $quoteUuId,
@@ -310,9 +367,11 @@ class CarQuoteService extends BaseService
             $kenRequest = $client->post(
                 $plansApiEndPoint,
                 [
-                    'headers' => ['Content-Type' => 'application/json', 'Accept' => 'application/json',
-                    'x-api-token' => $plansApiToken,
-                    'Authorization' => 'Basic '.$authBasic],
+                    'headers' => [
+                        'Content-Type' => 'application/json', 'Accept' => 'application/json',
+                        'x-api-token' => $plansApiToken,
+                        'Authorization' => 'Basic ' . $authBasic
+                    ],
                     'body' => json_encode($plansDataArr),
                     'timeout' => $plansApiTimeout,
                 ]
@@ -330,13 +389,11 @@ class CarQuoteService extends BaseService
             $contents = (string) $response->getBody();
             $response = json_decode($contents);
 
-            if(isset($response->message)) {
+            if (isset($response->message)) {
                 $responseBodyAsString = $response->message;
-            }
-            else if(isset($response->error)) {
+            } else if (isset($response->error)) {
                 $responseBodyAsString = $response->error;
-            }
-            else {
+            } else {
                 $responseBodyAsString = $response->msg;
             }
 
@@ -344,15 +401,20 @@ class CarQuoteService extends BaseService
         }
     }
 
-    public function getCarQuotePlanAddons($id) {
+    public function getCarQuotePlanAddons($id)
+    {
 
         $listCarQuotePlanAddons = DB::table('car_addon_option')
-        ->select('car_addon.text AS car_addon_text','car_addon_option.value AS car_addon_option_value'
-        ,'car_addon_option.price AS car_addon_option_price','car_addon.type AS car_addon_type')
-        ->leftJoin('car_addon', 'car_addon.id', '=', 'car_addon_option.addon_id')
-        ->leftJoin('car_quote_request_addon', 'car_addon_option.id', '=', 'car_quote_request_addon.addon_option_id')
-        ->leftJoin('car_quote_request', 'car_quote_request.id', '=', 'car_quote_request_addon.quote_request_id')
-        ->where('car_quote_request.uuid', $id)->get();
+            ->select(
+                'car_addon.text AS car_addon_text',
+                'car_addon_option.value AS car_addon_option_value',
+                'car_addon_option.price AS car_addon_option_price',
+                'car_addon.type AS car_addon_type'
+            )
+            ->leftJoin('car_addon', 'car_addon.id', '=', 'car_addon_option.addon_id')
+            ->leftJoin('car_quote_request_addon', 'car_addon_option.id', '=', 'car_quote_request_addon.addon_option_id')
+            ->leftJoin('car_quote_request', 'car_quote_request.id', '=', 'car_quote_request_addon.quote_request_id')
+            ->where('car_quote_request.uuid', $id)->get();
         return $listCarQuotePlanAddons;
     }
 }
