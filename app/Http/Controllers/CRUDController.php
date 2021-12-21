@@ -141,13 +141,11 @@ class CRUDController extends Controller
         }
         $this->validate($request, $validateArray);
         $recordUUID = $this->crudService->saveModelByType($modelType, $request);
-        if(str_contains($recordUUID, 'Error')) {
-            return Redirect::back()->with('message', $modelType . ' '. explode(':', $recordUUID)[1])->withInput();
-        }
-        else{
+        if (str_contains($recordUUID, 'Error')) {
+            return Redirect::back()->with('message', $modelType . ' ' . explode(':', $recordUUID)[1])->withInput();
+        } else {
             return redirect('/quotes/' . strtolower($modelType) . '/' . $recordUUID)->with('success', ((str_contains(strtolower($modelType), 'team') ? 'Team' : (str_contains(strtolower($modelType), 'leadstatus') ? 'Lead Status' : $modelType))) . ' has been stored');
         }
-
     }
 
     /**
@@ -159,7 +157,7 @@ class CRUDController extends Controller
     public function show($id)
     {
         $record = $this->crudService->getEntity($this->genericModel->modelType, $id);
-        if(!$record) abort(404);
+        if (!$record) abort(404);
         $model = $this->genericModel;
         $customTitles = $customTableList = [];
         foreach ($model->properties as $property => $value) {
@@ -184,8 +182,7 @@ class CRUDController extends Controller
                 $listQuotePlans = $quotePlans->message;
                 $listQuoteVehicleDetails = '';
                 $vehicleTypeText = '';
-            }
-            else {
+            } else {
                 if (gettype($quotePlans) != 'string') {
                     $listQuotePlans = $quotePlans->quotes->plans;
                     $listQuoteVehicleDetails = $quotePlans->quotes;
@@ -197,8 +194,10 @@ class CRUDController extends Controller
                 }
             }
 
-            return view('shared.show', compact(['record', 'model', 'customTitles', 'listQuotePlans', 'customTableList',
-            'ecomCarInsuranceQuoteUrl','carQuotePlanAddons','listQuoteVehicleDetails','vehicleTypeText']));
+            return view('shared.show', compact([
+                'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList',
+                'ecomCarInsuranceQuoteUrl', 'carQuotePlanAddons', 'listQuoteVehicleDetails', 'vehicleTypeText'
+            ]));
         } else {
             return view('shared.show', compact(['record', 'model', 'customTitles', 'customTableList']));
         }
@@ -245,11 +244,9 @@ class CRUDController extends Controller
         $modelPropertiesList = json_decode($request->all()['model'], true);
         $validateArray = [];
         foreach ($modelPropertiesList as $property => $value) {
-            if (strpos($value, 'required') && ($property !== "email" && $property !== "mobile_no"))
-            {
+            if (strpos($value, 'required') && ($property !== "email" && $property !== "mobile_no")) {
                 $validateArray[$property] = 'required';
             }
-
         }
         $this->validate($request, $validateArray);
         $this->crudService->updateModelByType(json_decode($request->modelType, true), $request, $id);
@@ -278,13 +275,12 @@ class CRUDController extends Controller
         if (strpos($url, 'home')) $this->genericModel->modelType = 'Home';
         if (strpos($url, 'business')) $this->genericModel->modelType = 'Business';
         if (strpos($url, 'leadstatus')) $this->genericModel->modelType = 'LeadStatus';
-
     }
 
     private function fillModelByModelType($type, Request $request)
     {
         $modelType = json_decode($request->get('modelType'), true) ?? $type;
-        if($modelType == null) $modelType = $request->get('modelType');
+        if ($modelType == null) $modelType = $request->get('modelType');
         $quoteTypes = 'Health,Car,Travel,Life,Home,Business';
         $serviceType = str_contains($quoteTypes, ucwords($modelType)) ? strtolower($modelType) . 'QuoteService' : lcfirst(ucwords($modelType)) . 'Service';
         $this->genericModel->properties = $this->{$serviceType}->fillModelProperties();
@@ -360,7 +356,7 @@ class CRUDController extends Controller
             $userId = (int)$assignedToUserIdNew;
             $updateTmLead->advisor_id = $userId;
             $advisorOE = CarQuoteAdvisorToOE::where('advisor_id', $userId)->first();
-            if(!empty($advisorOE)){
+            if (!empty($advisorOE) && strtolower($request->modelType) == 'car') {
                 $updateTmLead->oe_id = $advisorOE->oe_id;
             }
 
@@ -373,7 +369,6 @@ class CRUDController extends Controller
 
     public function updateDiscountedPremium(Request $request)
     {
-
     }
 
     public function add_quote(Request $request)
