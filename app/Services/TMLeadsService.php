@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use App\Enums\tmInsuranceTypeCode;
 use App\Enums\tmLeadStatusCode;
 use Auth;
+use App\Models\TmLeadContactInformation;
 
 class TMLeadsService
 {
@@ -77,13 +78,29 @@ class TMLeadsService
         else {
             $tmLead->dob = NULL;
         }
-
         $tmLead->save();
-
+    
         $updateTmLead = TmLead::find($tmLead->id);
         $updateTmLead->cdb_id = "TM-".$tmLead->id;
         $updateTmLead->save();
 
+        ///////////////////////////////
+        $tmLead->additionalInformation()->delete();
+        if($request->has('phones') && $request->has('emails')) 
+        {
+            $phones = $request->phones;
+            $emails = $request->emails;
+            for($i=0; $i < count($phones); $i ++) {
+                $model = new TmLeadContactInformation();
+                $model->phone_number = $phones[$i];
+                $model->email_address = $emails[$i];
+                $model->tm_lead_id = $tmLead->id;
+                $model->created_by = Auth::user()->id;
+                $model->updated_by = Auth::user()->id;
+                $model->save();
+            }
+        }
+        
         return $tmLead->id;
     }
 
