@@ -28,49 +28,53 @@
                     $count = 1;
                     @endphp
                     @foreach($model->properties as $property => $value)
-                        @if($count % 2 != 0)
-                        <div class="item form-group">
-                        @endif
-                           <div class="col">
-                                @if(strpos($value, 'title'))
-                                    <label class="col-form-label col-md-6 col-sm-6" for="Status Description"><b>{{ strtoupper($customTitles[$property])}}</b></label>
-                                @else
-                                    <label class="col-form-label col-md-6 col-sm-6" for="Status Description"><b>{{str_replace("_"," ",strtoupper($property))}}</b></label>
-                                @endif
-                                @if(str_contains($value, 'select'))
-                                    @if(str_contains($value, 'customTable'))
-                                    <div class="col-md-6 col-sm-6">
-                                        <p class="label-align-center">{{ $customTableList[$property][0]->names }}</p>
-                                    </div>
+                        @if(!str_contains($model->skipProperties['update'], $property))
+                            @if($count % 2 != 0)
+                            <div class="item form-group">
+                            @endif
+                            <div class="col">
+                                    @if(strpos($value, 'title'))
+                                        <label class="col-form-label col-md-6 col-sm-6" for="Status Description"><b>{{ strtoupper($customTitles[$property])}}</b></label>
                                     @else
-                                        <div class="col-md-6 col-sm-6">
-                                            @php
-                                                $propertyName = $property.'_text';
-                                            @endphp
-                                            <p class="label-align-center">{{ $record->$propertyName}}</p>
-                                        </div>
+                                        <label class="col-form-label col-md-6 col-sm-6" for="Status Description"><b>{{str_replace("_"," ",strtoupper($property))}}</b></label>
                                     @endif
-                                @else
-                                    @if(str_contains($value, 'customTable'))
-                                    <div class="col-md-6 col-sm-6">
-                                        <p class="label-align-center">{{ $customTableList[$property][0]->names }}</p>
-                                    </div>
+                                    @if(str_contains($value, 'select'))
+                                        @if(str_contains($value, 'customTable'))
+                                        <div class="col-md-6 col-sm-6">
+                                            <p class="label-align-center">{{ $customTableList[$property][0]->names }}</p>
+                                        </div>
+                                        @else
+                                            <div class="col-md-6 col-sm-6">
+                                                @php
+                                                    $propertyName = $property.'_text';
+                                                @endphp
+                                                <p class="label-align-center">{{ $record->$propertyName}}</p>
+                                            </div>
+                                        @endif
                                     @else
+                                        @if(str_contains($value, 'customTable'))
                                         <div class="col-md-6 col-sm-6">
-                                            <p class="label-align-center">{{ $record->$property }}</p>
+                                            <p class="label-align-center">{{ $customTableList[$property][0]->names }}</p>
                                         </div>
+                                        @else
+                                            <div class="col-md-6 col-sm-6">
+                                                <p class="label-align-center">{{ $record->$property }}</p>
+                                            </div>
+                                        @endif
                                     @endif
-                                @endif
-                           </div>
-                        @if(count($model->properties) == $count && $count % 2 != 0)
-                           <div class="col"></div>
-                        </div>
-                        @elseif($count % 2 == 0)
                             </div>
-                        @endif
+                            @if(count($model->properties) == $count && $count % 2 != 0)
+                            <div class="col"></div>
+                            </div>
+                            @elseif($count % 2 == 0)
+                                </div>
+                            @endif
+
+
                         @php
                         $count++;
                         @endphp
+                        @endif
                     @endforeach
                     <div class="ln_solid"></div>
                     <div class="row">
