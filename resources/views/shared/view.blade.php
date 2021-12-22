@@ -56,24 +56,26 @@
                             });
                         }
                         dataTableColumns.push({
-                            data: 'id',
-                            name: 'id',
+                            data: 'code',
+                            name: 'code',
                             render: function(data, type, row) {
                                 var url = '/quotes/' + model.modelType.toLowerCase();
-                                return "<a href='" + url + '/' + row.uuid + "'>" + row.id + "</a>"
+                                return "<a href='" + url + '/' + row.uuid + "'>" + row.code + "</a>"
                             }
                         });
                     } else {
+                        if(modelPropertiesArray[i].name !== 'code'){
                         if (modelPropertiesArray[i].value.indexOf('select') > -1) {
                             dataTableColumns.push({
                                 data: modelPropertiesArray[i].name + '_text',
                                 name: modelPropertiesArray[i].name
                             });
                         } else {
-                            dataTableColumns.push({
-                                data: modelPropertiesArray[i].name,
-                                name: modelPropertiesArray[i].name
-                            });
+                                dataTableColumns.push({
+                                    data: modelPropertiesArray[i].name,
+                                    name: modelPropertiesArray[i].name
+                                });
+                            }
                         }
                     }
                 }
@@ -341,7 +343,6 @@
                                     @endif
                                 @endforeach
                             @endforeach
-
                             <div class="col-md-12" style="margin-top: 25px;">
                                 <div class="col">
                                     <ul class="nav navbar-right panel_toolbox">
@@ -408,14 +409,16 @@
                                                 name="checkAllTmLeads" value=""></th>
                                     @endif
                                     @foreach ($model->properties as $property => $value)
-                                        @if (!in_array($property, explode(',', $model->skipProperties['list'])))
-                                            <th data-type="{{ explode('|', $value)[1] }}">
-                                                @if (strpos($value, 'title'))
-                                                    {{ strtoupper($customTitles[$property]) }}
-                                                @else
-                                                    {{ str_replace('_', ' ', strtoupper($property)) }}
-                                                @endif
-                                            </th>
+                                        @if ($property != 'id')
+                                            @if (!in_array($property, explode(',', $model->skipProperties['list'])))
+                                                <th data-type="{{ explode('|', $value)[1] }}">
+                                                    @if (strpos($value, 'title'))
+                                                        {{ strtoupper($customTitles[$property]) }}
+                                                    @else
+                                                        {{ str_replace('_', ' ', strtoupper($property)) }}
+                                                    @endif
+                                                </th>
+                                            @endif
                                         @endif
                                     @endforeach
                                 </tr>

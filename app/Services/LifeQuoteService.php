@@ -102,10 +102,10 @@ class LifeQuoteService extends BaseService
             if (in_array('created_at', $searchProperties) && isset($request->created_at) && $request->created_at != "") {
                 $dateFrom = Carbon::createFromFormat('Y-m-d', $request['created_at'])->startOfDay()->toDateTimeString();
                 $dateTo = Carbon::createFromFormat('Y-m-d', $request['created_at_end'])->endOfDay()->toDateTimeString();
-                $this->query->whereBetween('cqr.created_at', [$dateFrom, $dateTo]);
+                $this->query->whereBetween('lqr.created_at', [$dateFrom, $dateTo]);
             }
             foreach ($searchProperties as $item) {
-                if (!empty($request[$item])) {
+                if (!empty($request[$item]) && $item != "created_at") {
                     $this->query->where($this->getQuerySuffix($item) . '.' . $item, $request[$item]);
                 }
             }
@@ -203,22 +203,21 @@ class LifeQuoteService extends BaseService
     {
         return array(
             "id" => "readonly|none",
+            "code" => "input|title",
             "first_name" => "input|text|required",
             "last_name" => "input|text|required",
-            "mobile_no" => "input|number|title|required",
             "email" => "input|email|required",
-            "code" => "input|title",
+            "mobile_no" => "input|title|number|required",
+            "quote_status_id" => "select|title",
+            "advisor_id" => "select|title|required",
             "created_at" => "input|date|title|range",
             "updated_at" => "input|date|title",
-            "dob" => "input|date|title|required",
             "sum_insured_value" => "input|number|title||required",
             "sum_insured_currency_id" => "select|title|required",
             "purpose_of_insurance_id" => "select|title|required",
             "marital_status_id" => "select|title|required",
             "children_id" => "select|title|required",
             "tenure_of_insurance_id" => "select|title|required",
-            "quote_status_id" => "select|title",
-            "advisor_id" => "select|title|required",
             "number_of_years_id" => "select|title|required",
             "gender" => "|static|required|Male,Female",
             "is_smoker" => "|static|title|required|Yes,No",
@@ -273,7 +272,7 @@ class LifeQuoteService extends BaseService
                 $title = "Lead Status";
                 break;
             case 'advisor_id':
-                $title = "Advisor";
+                $title = "Assigned To";
                 break;
             case 'marital_status_id':
                 $title = "Marital Status";
@@ -290,6 +289,7 @@ class LifeQuoteService extends BaseService
             "create" => "id,advisor_id,quote_status_id,code",
             "list" => "email,mobile_no,others_info,dob,sum_insured_value,sum_insured_currency_id,purpose_of_insurance_id,marital_status_id,children_id,tenure_of_insurance_id,number_of_years_id,gender,is_smoker,others_info",
             "update" => "id,advisor_id,quote_status_id,code",
+            "show" => "",
         ];
     }
 

@@ -93,10 +93,10 @@ class HealthQuoteService extends BaseService
             if (in_array('created_at', $searchProperties) && isset($request->created_at) && $request->created_at != "") {
                 $dateFrom = Carbon::createFromFormat('Y-m-d', $request['created_at'])->startOfDay()->toDateTimeString();
                 $dateTo = Carbon::createFromFormat('Y-m-d', $request['created_at_end'])->endOfDay()->toDateTimeString();
-                $this->query->whereBetween('cqr.created_at', [$dateFrom, $dateTo]);
+                $this->query->whereBetween('hqr.created_at', [$dateFrom, $dateTo]);
             }
             foreach ($searchProperties as $item) {
-                if (!empty($request[$item])) {
+                if (!empty($request[$item]) && $item != "created_at") {
                     $this->query->where($this->getQuerySuffix($item) . '.' . $item, $request[$item]);
                 }
             }
@@ -195,22 +195,23 @@ class HealthQuoteService extends BaseService
     {
         return array(
             "id" => "readonly|none",
+            "code" => "input|title",
             "first_name" => "input|text|required",
             "last_name" => "input|text|required",
-            "preference" => "input|text",
-            "code" => "input|title",
+            "email" => "input|email|required",
+            "mobile_no" => "input|title|number|required",
+            "quote_status_id" => "select|title",
+            "advisor_id" => "select|title|required",
             "created_at" => "input|date|title|range",
             "updated_at" => "input|date|title",
-            "email" => "input|email|required",
+            "dob" => "input|title|date|required",
+            "preference" => "input|text",
             "details" => "input|text",
-            "mobile_no" => "input|title|number|required",
             "source" => "input|text|title",
             "dob" => 'input|date|required',
             "marital_status_id" => "select|title|required",
             "cover_for_id" => "select|title|required",
             "nationality_id" => "select|title|required",
-            "advisor_id" => "select|title|required",
-            "quote_status_id" => "select|title|required",
             "has_dental" => "input|checkbox|title",
             "has_worldwide_cover" => "input|checkbox|title",
             "has_home" => "input|checkbox|title",
@@ -247,7 +248,7 @@ class HealthQuoteService extends BaseService
                 $title = "Home Country Cover";
                 break;
             case 'advisor_id':
-                $title = "Advisor";
+                $title = "Assigned To";
                 break;
             case 'source':
                 $title = "Lead Source";
@@ -279,6 +280,7 @@ class HealthQuoteService extends BaseService
             "create" => "id,advisor_id,quote_status_id,code",
             "list" => "email,cover_for_id,has_worldwide_cover,has_home,details,preference,mobile_no,dob,marital_status_id,nationality_id,source,has_dental,emirate_of_your_visa_id",
             "update" => "id,advisor_id,quote_status_id,code",
+            "show" => "id",
         ];
     }
 
