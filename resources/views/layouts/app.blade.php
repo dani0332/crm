@@ -95,9 +95,7 @@ $appName = Config::get('constants.APP_NAME');
             @include('partials.sidebar')
             @include('partials.topnav')
             <div class="right_col" role="main">
-                <div class="">
-                    @yield('content')
-                </div>
+                @yield('content')
             </div>
 
             @include('partials.footer')

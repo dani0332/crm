@@ -28,7 +28,7 @@
                     $count = 1;
                     @endphp
                     @foreach($model->properties as $property => $value)
-                        @if(!str_contains($model->skipProperties['update'], $property))
+                        @if(!str_contains($model->skipProperties['show'], $property))
                             @if($count % 2 != 0)
                             <div class="item form-group">
                             @endif
@@ -69,8 +69,6 @@
                             @elseif($count % 2 == 0)
                                 </div>
                             @endif
-
-
                         @php
                         $count++;
                         @endphp

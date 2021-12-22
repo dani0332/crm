@@ -19,8 +19,6 @@ class CarQuoteService extends BaseService
                 'cqr.id',
                 'cqr.first_name',
                 'cqr.last_name',
-                'cqr.created_at',
-                'cqr.updated_at',
                 'cqr.email',
                 'cqr.mobile_no',
                 'cqr.dob',
@@ -32,7 +30,23 @@ class CarQuoteService extends BaseService
                 'cqr.is_ecommerce',
                 'cqr.premium',
                 'cqr.paid_at',
+                'cqr.payment_gateway',
+                'cqr.source',
+                'cqr.created_at',
+                'cqr.updated_at',
                 'n.TEXT AS nationality_id_text',
+                'cqr.currently_insured_with',
+                'cqr.promo_code',
+                'cqr.reviver_name',
+                'cqr.device',
+                'cqr.reference_url',
+                'cqr.policy_number',
+                'cqr.previous_quote_id',
+                'cqr.order_reference',
+                'cqr.payment_reference',
+                'cqr.calculated_value',
+                'cqr.created_by',
+                'cqr.updated_by',
                 'cqr.uae_license_held_for_id',
                 'ulhf.TEXT AS uae_license_held_for_id_text',
                 'cqr.car_make_id',
@@ -41,8 +55,6 @@ class CarQuoteService extends BaseService
                 'cmodel.TEXT AS car_model_id_text',
                 'cqr.emirate_of_registration_id',
                 'e.TEXT AS emirate_of_registration_id_text',
-                'ip.id AS currently_insured_with',
-                'ip.TEXT AS currently_insured_with_text',
                 'cqr.car_type_insurance_id',
                 'cti.TEXT AS car_type_insurance_id_text',
                 'cqr.claim_history_id',
@@ -53,24 +65,23 @@ class CarQuoteService extends BaseService
                 'ps.text AS payment_status_id_text',
                 'cqr.plan_id',
                 'cp.text AS plan_id_text',
-                'cqr.quote_status_id',
-                'qs.text AS quote_status_id_text',
                 'cp.provider_id AS car_plan_provider_id',
-                'cpip.text AS car_plan_provider_id_text'
+                'cpip.text AS car_plan_provider_id_text',
+                'cqr.quote_status_id',
+                'qs.text AS quote_status_id_text'
             )
             ->leftJoin('nationality as n', 'n.id', '=', 'cqr.nationality_id')
             ->leftJoin('car_make as cmake', 'cmake.id', '=', 'cqr.car_make_id')
             ->leftJoin('uae_license_held_for as ulhf', 'ulhf.id', '=', 'cqr.uae_license_held_for_id')
             ->leftJoin('car_model as cmodel', 'cmodel.id', '=', 'cqr.car_model_id')
             ->leftJoin('emirates as e', 'e.id', '=', 'cqr.emirate_of_registration_id')
-            ->leftJoin('insurance_provider as ip', 'ip.id', '=', 'cqr.currently_insured_with')
             ->leftJoin('car_type_insurance as cti', 'cti.id', '=', 'cqr.car_type_insurance_id')
             ->leftJoin('claim_history as ch', 'ch.id', '=', 'cqr.claim_history_id')
             ->leftJoin('users as u', 'u.id', '=', 'cqr.advisor_id')
             ->leftJoin('car_plan as cp', 'cp.id', '=', 'cqr.plan_id')
             ->leftJoin('insurance_provider as cpip', 'cpip.id', '=', 'cp.provider_id')
-            ->leftJoin('quote_status as qs', 'qs.id', '=', 'cqr.quote_status_id')
-            ->leftJoin('payment_status as ps', 'ps.id', '=', 'cqr.payment_status_id');
+            ->leftJoin('payment_status as ps', 'ps.id', '=', 'cqr.payment_status_id')
+            ->leftJoin('quote_status as qs', 'qs.id', '=', 'cqr.quote_status_id');
     }
 
     public function saveCarQuote(Request $request)
@@ -137,27 +148,42 @@ class CarQuoteService extends BaseService
             "last_name" => "input|text|required",
             "email" => "input|email|required",
             "mobile_no" => "input|title|number|required",
+            "quote_status_id" => "select|title",
+            "advisor_id" => "select|title|required",
             "dob" => "input|title|date|required",
+            "is_ecommerce" => "|static|title|Yes,No",
+            "payment_status_id" => "select|title",
             "created_at" => "input|date|title|range",
             "updated_at" => "input|date|title",
             "nationality_id" => "select|title|required",
-            "quote_status_id" => "select|title",
             "uae_license_held_for_id" => "select|title|required",
-            "is_ecommerce" => "|static|title|Yes,No",
+            "car_make_id" => "select|title|required",
+            "car_model_id" => "select|title|required",
             "year_of_manufacture" => "|static|required|2022,2021,2020,2019,2018,2017,2016,2015,2014,2013,2012,2011,2010,2009,2008,2007,2006,2005,2004,2003,2002,2001,2000,1999,1998 or older",
             "emirate_of_registration_id" => "select|title|required",
-            "currently_insured_with" => "select|required",
             "car_value" => "number|required",
             "premium" => "number",
             "paid_at" => "input|date",
             "payment_gateway" => "input|title",
+            "currently_insured_with" => "input",
+            "source" => "input|title",
+            "promo_code" => "input|title",
+            "reviver_name" => "input|title",
+            "device" => "input|title",
+            "reference_url" => "textarea",
+            "policy_number" => "input",
+            "previous_quote_id" => "input",
+            "order_reference" => "input",
+            "payment_reference" => "input",
+            "calculated_value" => "number",
+            "created_by" => "input",
+            "updated_by" => "input",
             "car_type_insurance_id" => "select|title|required",
             "claim_history_id" => "select|title|required",
-            "advisor_id" => "select|title|required",
             "additional_notes" => "textarea|required",
-            "payment_status_id" => "select|title",
             "plan_id" => "select|title",
             "car_plan_provider_id" => "select|title",
+            "quote_status_id" => "select|title",
         );
     }
 
@@ -181,7 +207,7 @@ class CarQuoteService extends BaseService
                 $title = "Nationality";
                 break;
             case 'mobile_no':
-                $title = "Mobile Number";
+                $title = "Phone Number";
                 break;
             case 'updated_at':
                 $title = "Last Modified Date";
@@ -193,7 +219,7 @@ class CarQuoteService extends BaseService
                 $title = "Emirate Of Registration";
                 break;
             case 'car_type_insurance_id':
-                $title = "Type Of Insurance";
+                $title = "Type of Car Insurance";
                 break;
             case 'claim_history_id':
                 $title = "Claim History";
@@ -208,7 +234,7 @@ class CarQuoteService extends BaseService
                 $title = "CDB ID";
                 break;
             case 'advisor_id':
-                $title = "Advisor";
+                $title = "Assigned To";
                 break;
             case 'payment_status_id':
                 $title = "Payment Status";
@@ -228,6 +254,18 @@ class CarQuoteService extends BaseService
             case 'payment_gateway':
                 $title = "Payment Method";
                 break;
+            case 'source':
+                $title = "Lead Source";
+                break;
+            case 'promo_code':
+                $title = "Advisor/Promo Code";
+                break;
+            case 'quote_status_id':
+                $title = "Quote Status";
+                break;
+            case 'device':
+                $title = "Device";
+                break;
             default:
                 break;
         }
@@ -243,10 +281,7 @@ class CarQuoteService extends BaseService
                 $this->query->whereBetween('cqr.created_at', [$dateFrom, $dateTo]);
             }
             foreach ($searchProperties as $item) {
-                if ($item == 'created_at') {
-                    continue;
-                }
-                if (!empty($request[$item])) {
+                if (!empty($request[$item]) && $item != "created_at") {
                     $searchedValue = str_contains($request[$item], 'Yes') || str_contains($request[$item], 'No') ? ($request[$item] == 'Yes' ? 1 : 0) : $request[$item];
                     $this->query->where($this->getQuerySuffix($item) . '.' . $item, $searchedValue);
                 }
@@ -295,6 +330,9 @@ class CarQuoteService extends BaseService
             case 'car_plan_provider':
                 return 'cpip';
                 break;
+            case 'quote_status':
+                return 'qs';
+                break;
             default:
                 return 'cqr';
                 break;
@@ -334,8 +372,10 @@ class CarQuoteService extends BaseService
     public function fillModelSkipProperties()
     {
         return [
-            "create" => "id,advisor_id,premium,paid_at,payment_status_id,plan_id,car_plan_provider_id,code,is_ecommerce",
-            "list" => "car_plan_provider_id,plan_id,additional_notes,claim_history_id,car_type_insurance_id,paid_at,premium,car_value,currently_insured_with,emirate_of_registration_id,year_of_manufacture,uae_license_held_for_id,dob,email,mobile_no,nationality_id",
+            "create" => "id,advisor_id,premium,paid_at,payment_status_id,plan_id,car_plan_provider_id,code,is_ecommerce,payment_gateway,created_at,updated_at,currently_insured_with,source,promo_code,reviver_name,car_make_id,car_model_id,quote_status_id,device,reference_url,policy_number,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by",
+            "list" => "additional_notes,email,mobile_no,premium,paid_at,plan_id,car_plan_provider_id,payment_gateway,currently_insured_with,source,promo_code,reviver_name,car_make_id,car_model_id,device,reference_url,policy_number,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by,nationality_id,dob,year_of_manufacture,uae_license_held_for_id,car_value,emirate_of_registration_id,claim_history_id,car_type_insurance_id",
+            "update" => "id,advisor_id,premium,paid_at,payment_status_id,plan_id,car_plan_provider_id,code,is_ecommerce,payment_gateway,created_at,updated_at,currently_insured_with,source,promo_code,reviver_name,car_make_id,car_model_id,device,reference_url,policy_number,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by",
+            "show" => "",
         ];
     }
 
