@@ -37,9 +37,7 @@ class CarQuoteService extends BaseService
                 'n.TEXT AS nationality_id_text',
                 'cqr.currently_insured_with',
                 'cqr.promo_code',
-                'cqr.reviver_name',
                 'cqr.device',
-                'cqr.reference_url',
                 'cqr.policy_number',
                 'cqr.previous_quote_id',
                 'cqr.order_reference',
@@ -166,11 +164,8 @@ class CarQuoteService extends BaseService
             "paid_at" => "input|date",
             "payment_gateway" => "input|title",
             "currently_insured_with" => "input",
-            "source" => "input|title",
             "promo_code" => "input|title",
-            "reviver_name" => "input|title",
             "device" => "input|title",
-            "reference_url" => "textarea",
             "policy_number" => "input",
             "previous_quote_id" => "input",
             "order_reference" => "input",
@@ -224,12 +219,6 @@ class CarQuoteService extends BaseService
             case 'claim_history_id':
                 $title = "Claim History";
                 break;
-            case 'source':
-                $title = "Lead Source";
-                break;
-            case 'reviver_name':
-                $title = "Reviver Name";
-                break;
             case 'code':
                 $title = "CDB ID";
                 break;
@@ -253,9 +242,6 @@ class CarQuoteService extends BaseService
                 break;
             case 'payment_gateway':
                 $title = "Payment Method";
-                break;
-            case 'source':
-                $title = "Lead Source";
                 break;
             case 'promo_code':
                 $title = "Advisor/Promo Code";
@@ -372,9 +358,9 @@ class CarQuoteService extends BaseService
     public function fillModelSkipProperties()
     {
         return [
-            "create" => "id,advisor_id,premium,paid_at,payment_status_id,plan_id,car_plan_provider_id,code,is_ecommerce,payment_gateway,created_at,updated_at,currently_insured_with,source,promo_code,reviver_name,car_make_id,car_model_id,quote_status_id,device,reference_url,policy_number,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by",
-            "list" => "additional_notes,email,mobile_no,premium,paid_at,plan_id,car_plan_provider_id,payment_gateway,currently_insured_with,source,promo_code,reviver_name,car_make_id,car_model_id,device,reference_url,policy_number,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by,nationality_id,dob,year_of_manufacture,uae_license_held_for_id,car_value,emirate_of_registration_id,claim_history_id,car_type_insurance_id",
-            "update" => "id,advisor_id,premium,paid_at,payment_status_id,plan_id,car_plan_provider_id,code,is_ecommerce,payment_gateway,created_at,updated_at,currently_insured_with,source,promo_code,reviver_name,car_make_id,car_model_id,device,reference_url,policy_number,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by",
+            "create" => "id,advisor_id,premium,paid_at,payment_status_id,plan_id,car_plan_provider_id,code,is_ecommerce,payment_gateway,created_at,updated_at,currently_insured_with,promo_code,car_make_id,car_model_id,quote_status_id,device,policy_number,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by",
+            "list" => "additional_notes,email,mobile_no,premium,paid_at,plan_id,car_plan_provider_id,payment_gateway,currently_insured_with,promo_code,car_make_id,car_model_id,device,policy_number,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by,nationality_id,dob,year_of_manufacture,uae_license_held_for_id,car_value,emirate_of_registration_id,claim_history_id,car_type_insurance_id",
+            "update" => "id,advisor_id,premium,paid_at,payment_status_id,plan_id,car_plan_provider_id,code,is_ecommerce,payment_gateway,created_at,updated_at,currently_insured_with,promo_code,car_make_id,car_model_id,device,policy_number,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by",
             "show" => "",
         ];
     }
