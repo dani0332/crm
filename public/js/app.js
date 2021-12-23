@@ -20533,6 +20533,17 @@ function ReviewSend(props) {
   }();
 
   var data = props.data;
+  var reviewSend = [];
+
+  if (role === 'advisor' || role === 'oe') {
+    reviewSend.push( /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("button", {
+      type: "submit",
+      className: "btn btn-success",
+      onClick: submit,
+      children: " Review & Send "
+    }));
+  }
+
   return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("div", {
     className: "row",
     children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("div", {
@@ -20556,12 +20567,7 @@ function ReviewSend(props) {
             className: "offset-md-2 col-md-7 hidden-small",
             children: [(data === null || data === void 0 ? void 0 : data.vehicle_detail_id) && (data === null || data === void 0 ? void 0 : data.insurance_coverage) && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("div", {
               className: "pull-right",
-              children: role === 'advisor' || role === 'oe' && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("button", {
-                type: "submit",
-                className: "btn btn-success",
-                onClick: submit,
-                children: "Review & Send"
-              })
+              children: reviewSend
             }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("h2", {
               className: "line_30",
               children: "Policy Holder & Vehicle Information"
