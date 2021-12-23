@@ -84,13 +84,14 @@ class TMLeadsService
         $updateTmLead->cdb_id = "TM-".$tmLead->id;
         $updateTmLead->save();
 
-        ///////////////////////////////
         $tmLead->additionalInformation()->delete();
-        if($request->has('phones') && $request->has('emails')) 
+        if ($request->has('phones') && $request->has('emails')) 
         {
             $phones = $request->phones;
             $emails = $request->emails;
-            for($i=0; $i < count($phones); $i ++) {
+            for ($i=0; $i < count($phones); $i ++) {
+                if (empty ($phones[$i]) && empty ($emails[$i]) )
+                    continue;
                 $model = new TmLeadContactInformation();
                 $model->phone_number = $phones[$i];
                 $model->email_address = $emails[$i];
