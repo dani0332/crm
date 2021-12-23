@@ -64,8 +64,8 @@ class BaseDiscountController extends Controller
             return redirect()->back()->with('message', 'Discount with vehicle type and values already exists.')->withInput();
         }
 
-        $base->create($request->validated());
-        return redirect()->back()->with('success', 'Discount has been stored');
+        $id = $base->create($request->validated())->id;
+        return redirect("discount/base/" . $id)->with('success', 'Base Discount has been stored');
     }
 
     /**

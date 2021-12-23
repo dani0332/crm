@@ -51,8 +51,8 @@ class AgeDiscountController extends Controller
         if ($existingAgeDiscount != '') {
             return redirect()->back()->with('message', 'Discount with specified age already exists.')->withInput();
         }
-        $age->create($request->validated());
-        return redirect()->back()->with('success', 'Age Discount has been stored');
+        $id = $age->create($request->validated())->id;
+        return redirect("discount/age/" . $id)->with('success', 'Age Discount has been stored');
     }
 
     /**
