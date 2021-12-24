@@ -24,7 +24,7 @@
                         data: 'id',
                         name: 'id',
                         render: function(data, type, row) {
-                            return "<a href='/quotes/" + $("#myLeadsType").val().toLowerCase() + '/' + row.uuid + "'>" + row.id + "</a>"
+                            return "<a href='/quotes/" + $("#myLeadsType").val().toLowerCase() + '/' + row.uuid + "'>" + row.code + "</a>"
                         }
                     },
                     {
@@ -113,7 +113,7 @@
                     <table class="table table-striped jambo_table leadSearch-data-table" style="width:100%">
                         <thead>
                             <tr>
-                                <th>id</th>
+                                <th>CDB ID</th>
                                 <th>Client Name</th>
                                 <th>Lead Status</th>
                                 <th>Created Date</th>

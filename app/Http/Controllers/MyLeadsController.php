@@ -21,20 +21,19 @@ class MyLeadsController extends Controller
     public function index(Request $request)
     {
         $roles = Auth::user()->roles;
-        $filtered_collection = $roles->filter(function ($item)           {
+        $filtered_collection = $roles->filter(function ($item) {
             return str_contains($item->name, 'ADVISOR');
         })->values();
         $leadTypes = [];
         foreach ($filtered_collection as $item) {
             array_push($leadTypes, explode('_', $item->name)[0]);
         }
-        if($request->ajax())
-        {
+        if ($request->ajax()) {
             $leadType = strtolower($request->leadType);
             $resultSet = $this->getMyLeadsByType($leadType);
             return DataTables::of($resultSet->sortBy('assignedBy')->toArray())
-                    ->addIndexColumn()
-                    ->make(true);
+                ->addIndexColumn()
+                ->make(true);
         }
         return view('myleads.view', compact('leadTypes'));
     }
@@ -114,24 +113,26 @@ class MyLeadsController extends Controller
     {
         $format = Config::get('constants.datetime_format');
         $customersWithRelation = Customer::with([
-            $leadType.'Quotes' => function($q) {
+            $leadType . 'Quotes' => function ($q) {
                 $q->where('advisor_id', '=', Auth::user()->id);
             },
-            $leadType.'Quotes.quoteStatus',
-            $leadType.'Quotes.'.$leadType.'QuoteRequestDetail',
-            $leadType.'Quotes.'.$leadType.'QuoteRequestDetail.assignedBy'])->get();
+            $leadType . 'Quotes.quoteStatus',
+            $leadType . 'Quotes.' . $leadType . 'QuoteRequestDetail',
+            $leadType . 'Quotes.' . $leadType . 'QuoteRequestDetail.assignedBy'
+        ])->get();
         $resultSet = collect([]);
         foreach ($customersWithRelation as $customerWithRelation) {
-            if($customerWithRelation->{$leadType.'Quotes'}->count() > 0){
-                foreach ($customerWithRelation->{$leadType.'Quotes'} as $item) {
+            if ($customerWithRelation->{$leadType . 'Quotes'}->count() > 0) {
+                foreach ($customerWithRelation->{$leadType . 'Quotes'} as $item) {
                     $dataObject = [
                         'id' => $item->id,
+                        'code' => $item->code,
                         'uuid' => $item->uuid,
-                        'clientName' => $item->first_name. ' ' .$item->last_name,
+                        'clientName' => $item->first_name . ' ' . $item->last_name,
                         'leadStatus' => $item->quoteStatus != null ? $item->quoteStatus->first()->text : '',
                         'createdAt' => Carbon::parse($item->created_at)->format($format),
-                        'assignedDate' => $item->{$leadType.'QuoteRequestDetail'} != null && $item->{$leadType.'QuoteRequestDetail'}->assignedBy != null ? $item->{$leadType.'QuoteRequestDetail'}->advisor_assigned_date : '',
-                        'assignedBy' => $item->{$leadType.'QuoteRequestDetail'} != null && $item->{$leadType.'QuoteRequestDetail'}->assignedBy != null ? $item->{$leadType.'QuoteRequestDetail'}->assignedBy->name : '',
+                        'assignedDate' => $item->{$leadType . 'QuoteRequestDetail'} != null && $item->{$leadType . 'QuoteRequestDetail'}->assignedBy != null ? $item->{$leadType . 'QuoteRequestDetail'}->advisor_assigned_date : '',
+                        'assignedBy' => $item->{$leadType . 'QuoteRequestDetail'} != null && $item->{$leadType . 'QuoteRequestDetail'}->assignedBy != null ? $item->{$leadType . 'QuoteRequestDetail'}->assignedBy->name : '',
                         'leadSource' => $item->source,
                     ];
                     $resultSet->push($dataObject);

@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Models\LeadStatus;
 use App\Models\QuoteStatus;
 use Illuminate\Http\Request;
 use DB;
@@ -13,7 +12,7 @@ class LeadStatusService extends BaseService
     public function __construct()
     {
         $this->query = DB::table('quote_status as ls')
-            ->select('ls.id', 'ls.uuid', 'ls.text');
+            ->select('ls.id', 'ls.uuid', 'ls.text', 'ls.created_at', 'ls.updated_at');
     }
     public function saveLeadStatus(Request $request)
     {
@@ -86,7 +85,7 @@ class LeadStatusService extends BaseService
     {
         return [
             'create' => '',
-            'list' => 'id',
+            'list' => '',
             'update' => '',
             'show' => '',
         ];
