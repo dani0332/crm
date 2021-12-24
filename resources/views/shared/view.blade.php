@@ -31,55 +31,81 @@
                 }));
             }
             var model = JSON.parse('<?php echo json_encode(get_object_vars($model)); ?>');
+            var isAdmin = JSON.parse('<?php echo json_encode(Auth::user()->hasRole("ADMIN")); ?>');
+            if(isAdmin) {
+                model.searchProperties.push('is_ecommerce');
+                model.searchProperties.push('payment_status_id');
+            }
             var modelPropertiesArray = convertObjectToArray(model.properties);
             $('#modelType').val(model.modelType);
             var dataTableColumns = [];
             var skipPropertiesArray = model.skipProperties['list'].split(',');
             for (var i = 0; i < modelPropertiesArray.length; i++) {
-
                 if (!skipPropertiesArray.includes(modelPropertiesArray[i].name)) {
-                    if (modelPropertiesArray[i].name == 'id') {
-                        var isManagerOrDeputy = $("#isManagerOrDeputy").val();
-                        if (isManagerOrDeputy === "1" && allowedModelTypes.includes(model.modelType
-                                .toLocaleLowerCase())) {
-                            dataTableColumns.push({
-                                data: "id",
-                                name: "id",
-                                render: function(data, type, row, meta) {
-
-                                    return (
-                                        '<input type="checkbox" id="tmLeadID" class="tmleadCheckbox" name="tmLeadID" value="' +
-                                        data + '">'
-                                    );
-
-                                },
-                            });
-                        }
-                        dataTableColumns.push({
-                            data: 'code',
-                            name: 'code',
-                            render: function(data, type, row) {
-                                var url = '/quotes/' + model.modelType.toLowerCase();
-                                return "<a href='" + url + '/' + row.uuid + "'>" + row.code + "</a>"
-                            }
-                        });
-                    } else {
-                        if(modelPropertiesArray[i].name !== 'code'){
-                        if (modelPropertiesArray[i].value.indexOf('select') > -1) {
-                            dataTableColumns.push({
-                                data: modelPropertiesArray[i].name + '_text',
-                                name: modelPropertiesArray[i].name
-                            });
-                        } else {
+                    if(model.modelType == 'LeadStatus' || model.modelType == 'Teams') {
+                            if(modelPropertiesArray[i].name == 'id'){
+                                dataTableColumns.push({
+                                    data: "id",
+                                    name: "id",
+                                    render: function(data, type, row) {
+                                        var url = '/quotes/' + model.modelType.toLowerCase();
+                                        return "<a href='" + url + '/' + row.uuid + "'>" + row.id + "</a>";
+                                    },
+                                });
+                            }else {
                                 dataTableColumns.push({
                                     data: modelPropertiesArray[i].name,
                                     name: modelPropertiesArray[i].name
                                 });
                             }
+
+                    }else{
+                        if (modelPropertiesArray[i].name == 'id' ) {
+                            var isManagerOrDeputy = $("#isManagerOrDeputy").val();
+                            if (isManagerOrDeputy === "1" && allowedModelTypes.includes(model.modelType
+                                    .toLocaleLowerCase())) {
+                                dataTableColumns.push({
+                                    data: "id",
+                                    name: "id",
+                                    render: function(data, type, row, meta) {
+
+                                        return (
+                                            '<input type="checkbox" id="tmLeadID" class="tmleadCheckbox" name="tmLeadID" value="' +
+                                            data + '">'
+                                        );
+
+                                    },
+                                });
+                            }
+                            var isAllowedModel = allowedModelTypes.includes(model.modelType.toLocaleLowerCase());
+                            dataTableColumns.push({
+                                data: 'code',
+                                name: 'code',
+                                render: function(data, type, row) {
+                                    var url = '/quotes/' + model.modelType.toLowerCase();
+                                    var href = "<a href='" + url + '/' + row.uuid + "'>" + (isAllowedModel ? row.code : row.id) + "</a>";
+                                    return href;
+                                }
+                            });
+                        } else {
+                            if(modelPropertiesArray[i].name !== 'code'){
+                            if (modelPropertiesArray[i].value.indexOf('select') > -1) {
+                                dataTableColumns.push({
+                                    data: modelPropertiesArray[i].name + '_text',
+                                    name: modelPropertiesArray[i].name
+                                });
+                            } else {
+                                    dataTableColumns.push({
+                                        data: modelPropertiesArray[i].name,
+                                        name: modelPropertiesArray[i].name
+                                    });
+                                }
+                            }
                         }
                     }
                 }
             }
+            debugger;
             var vehicleTypeDataTable = $("#dtBasicExample").DataTable({
                 ordering: false,
                 info: true,
@@ -95,7 +121,7 @@
                         model.searchProperties.forEach(element => {
                             d[element] = $('#' + element).val();
                         });
-                        if (model.properties['created_at'].indexOf('range') > -1) {
+                        if (model.properties['created_at'] && model.properties['created_at'].indexOf('range') > -1) {
                             d['created_at_end'] = $('#created_at_end').val();
                         }
                     }
@@ -225,6 +251,12 @@
                     @if (count($model->searchProperties) > 0)
                         <form method="POST" id="searchTable" class="form-horizontal form-label-left" role="form"
                             data-parsley-validate="" novalidate="" autocomplete="off">
+                            @if (Auth::user()->hasRole('ADMIN') && $model->modelType == 'Car')
+                                @php
+                                    array_push($model->searchProperties, 'is_ecommerce');
+                                    array_push($model->searchProperties, 'payment_status_id');
+                                @endphp
+                            @endif
                             @foreach ($model->properties as $property => $value)
                                 @foreach ($model->searchProperties as $searchProperty)
                                     @if ($searchProperty == $property)
@@ -409,7 +441,20 @@
                                                 name="checkAllTmLeads" value=""></th>
                                     @endif
                                     @foreach ($model->properties as $property => $value)
-                                        @if ($property != 'id')
+                                        @if ($model->modelType != 'LeadStatus' && $model->modelType != 'Teams')
+                                            @if ($property != 'id' )
+                                                @if (!in_array($property, explode(',', $model->skipProperties['list'])))
+                                                    <th data-type="{{ explode('|', $value)[1] }}">
+                                                        @if (strpos($value, 'title'))
+                                                            {{ strtoupper($customTitles[$property]) }}
+                                                        @else
+                                                            {{ str_replace('_', ' ', strtoupper($property)) }}
+                                                        @endif
+                                                    </th>
+                                                @endif
+                                            @endif
+
+                                        @else
                                             @if (!in_array($property, explode(',', $model->skipProperties['list'])))
                                                 <th data-type="{{ explode('|', $value)[1] }}">
                                                     @if (strpos($value, 'title'))
