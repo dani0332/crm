@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use DataTables;
 use Spatie\Permission\Models\Role;
 use DB;
+use App\Http\Requests\CarRepairCoverageRequest;
+use App\Http\Resources\CarRepairCoverageResource;
 
 class CarRepairCoverageController extends Controller
 {
@@ -53,22 +55,13 @@ class CarRepairCoverageController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store(CarRepairCoverageRequest $request, CarRepairCoverage $carrepaircoverage)
     {
-        $this->validate($request,[
-            'text' => 'required|max:120',
-            'text_ar' => 'required|max:120',
-            'sort_order' => 'required',
-        ]);
-
-        $carrepaircoverage = new CarRepairCoverage();
-        $carrepaircoverage->text=  $request->text;
-        $carrepaircoverage->text_ar=  $request->text_ar;
-        $carrepaircoverage->is_active =  $request->is_active == 'on' ? 1 : 0;
-        $carrepaircoverage->sort_order =  $request->sort_order;
-        $carrepaircoverage->save();
+        $validated = $request->validated();
+        $validated['is_active'] = $request->is_active ?? 0;
+        $id = $carrepaircoverage->create($validated)->id;
         if(isset($request->return_to_view)) {
-            return redirect("claim/carrepaircoverage/".$carrepaircoverage->id)->with('success', 'Car Repair Coverage has been stored');
+            return redirect("claim/carrepaircoverage/".$id)->with('success', 'Car Repair Coverage has been stored');
         }
         return redirect()->back()->with('success', 'Car Repair Coverage has been stored');
     }
@@ -81,6 +74,7 @@ class CarRepairCoverageController extends Controller
      */
     public function show(CarRepairCoverage $carrepaircoverage)
     {
+        $carrepaircoverage = new CarRepairCoverageResource($carrepaircoverage);
         return view('carrepaircoverage.show',compact('carrepaircoverage'));
     }
 
@@ -92,6 +86,7 @@ class CarRepairCoverageController extends Controller
      */
     public function edit(CarRepairCoverage $carrepaircoverage)
     {
+        $carrepaircoverage = new CarRepairCoverageResource($carrepaircoverage);
         return view('carrepaircoverage.edit',compact('carrepaircoverage'));
     }
 
@@ -102,18 +97,11 @@ class CarRepairCoverageController extends Controller
      * @param  \App\Models\CarRepairCoverage  $carRepairCoverage
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, CarRepairCoverage $carrepaircoverage)
+    public function update(CarRepairCoverageRequest $request, CarRepairCoverage $carrepaircoverage)
     {
-        $this->validate($request,[
-            'text' => 'required|max:120',
-            'text_ar' => 'required|max:120',
-            'sort_order' => 'required',
-        ]);
-        $carrepaircoverage->text=  $request->text;
-        $carrepaircoverage->text_ar=  $request->text_ar;
-        $carrepaircoverage->is_active =  $request->is_active == 'on' ? 1 : 0;
-        $carrepaircoverage->sort_order =  $request->sort_order;
-        $carrepaircoverage->save();
+        $validated = $request->validated();
+        $validated['is_active'] = $validated['is_active'] ?? 0;
+        $carrepaircoverage->update($validated);
         if(isset($request->return_to_view)) {
             return redirect("claim/carrepaircoverage/".$carrepaircoverage->id)->with('success', 'Car Repair Coverage has been updated');
         }
