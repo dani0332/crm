@@ -39,7 +39,13 @@
                     <div class="col">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="PAYMENT METHOD"><b>PAYMENT METHOD</b></label>
                         <div class="col-md-6 col-sm-6">
-                        <p class="label-align-center">{{ $carQuotePaymentMethod }}</p>
+                        <p class="label-align-center">
+                            @if ($carQuotePaymentMethod == 'NGENIUS')
+                                CREDIT CARD
+                            @else
+                                {{ $carQuotePaymentMethod }}
+                            @endif
+                        </p>
                         </div>
                     </div>
                     <div class="col">

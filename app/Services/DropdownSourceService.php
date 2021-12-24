@@ -22,6 +22,7 @@ use App\Models\LifePurposeOfInsurance;
 use App\Models\MartialStatus;
 use App\Models\Nationality;
 use App\Models\PaymentStatus;
+use App\Models\QuoteStatus;
 use App\Models\Regions;
 use App\Models\TravelCoverFor;
 use App\Models\UAELicenseHeldFor;
@@ -74,6 +75,7 @@ class DropdownSourceService extends BaseService
 
     public function getDropdownSource($type)
     {
+        $advisorType = strtoupper(explode('/', $_SERVER["REQUEST_URI"])[2]). '_ADVISOR';
         $data = '';
         switch ($type) {
             case 'marital_status_id':
@@ -82,8 +84,8 @@ class DropdownSourceService extends BaseService
             case 'nationality_id':
                 $data = Nationality::select('id', 'text')->get();
                 break;
-            case 'lead_status':
-                $data = LeadStatus::select('id, text')->get();
+            case 'quote_status_id':
+                $data = DB::table('quote_status')->select('id', 'text')->get();
                 break;
             case 'cover_for_id':
                 $data = HealthCoverFor::select('id', 'text')->get();
@@ -122,7 +124,14 @@ class DropdownSourceService extends BaseService
                 $data = LifeNumberOfYears::select('id', 'text')->get();
                 break;
             case 'advisor_id':
-                $data = User::select('id', 'name')->get();
+                if(!empty($advisorType)){
+                    $data = DB::table('users as u')->select('u.id', 'u.name')
+                    ->join('model_has_roles as mhr', 'mhr.model_id', '=', 'u.id')
+                    ->join('roles as r', 'mhr.role_id', '=', 'r.id')
+                    ->where('r.name', '=', $advisorType)->get();
+                } else {
+                    $data = User::select('id', 'name')->get();
+                }
                 break;
             case 'iam_possesion_type_id':
                 $data = HomePossessionType::select('id', 'text')->get();

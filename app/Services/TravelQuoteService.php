@@ -6,6 +6,7 @@ use App\Models\TravelQuote;
 use Illuminate\Http\Request;
 use DB;
 use Auth;
+use \Carbon\Carbon;
 
 class TravelQuoteService extends BaseService
 {
@@ -13,13 +14,35 @@ class TravelQuoteService extends BaseService
     protected $query;
     public function __construct()
     {
-        $this->query = DB::table('travel_quote_request as tqr')->
-        select('tqr.id','tqr.uuid','tqr.days_cover_for','tqr.details','tqr.destination','tqr.travel_cover_for_id','tcf.TEXT AS travel_cover_for_id_text'
-        ,'tqr.first_name','tqr.last_name','tqr.email' ,'tqr.mobile_no','tqr.nationality_id','n.TEXT AS nationality_id_text'
-        ,'tqr.region_cover_for_id','r.TEXT AS region_cover_for_id_text')
-        ->leftJoin('travel_cover_for as tcf', 'tcf.id', '=', 'tqr.travel_cover_for_id')
-        ->leftJoin('nationality as n', 'n.id', '=', 'tqr.nationality_id')
-        ->leftJoin('region as r', 'r.id', '=', 'tqr.region_cover_for_id');
+        $this->query = DB::table('travel_quote_request as tqr')->select(
+            'tqr.id',
+            'tqr.uuid',
+            'tqr.created_at',
+            'tqr.updated_at',
+            'tqr.code',
+            'tqr.days_cover_for',
+            'tqr.details',
+            'tqr.destination',
+            'tqr.travel_cover_for_id',
+            'tcf.TEXT AS travel_cover_for_id_text',
+            'tqr.first_name',
+            'tqr.last_name',
+            'tqr.email',
+            'tqr.mobile_no',
+            'tqr.nationality_id',
+            'n.TEXT AS nationality_id_text',
+            'qs.id as quote_status_id',
+            'qs.text as quote_status_id_text',
+            'u.id as advisor_id',
+            'u.name as advisor_id_text',
+            'tqr.region_cover_for_id',
+            'r.TEXT AS region_cover_for_id_text'
+        )
+            ->leftJoin('travel_cover_for as tcf', 'tcf.id', '=', 'tqr.travel_cover_for_id')
+            ->leftJoin('nationality as n', 'n.id', '=', 'tqr.nationality_id')
+            ->leftJoin('quote_status as qs', 'qs.id', '=', 'tqr.quote_status_id')
+            ->leftJoin('users as u', 'u.id', '=', 'tqr.advisor_id')
+            ->leftJoin('region as r', 'r.id', '=', 'tqr.region_cover_for_id');
     }
 
     public function saveTravelQuote(Request $request)
@@ -36,7 +59,7 @@ class TravelQuoteService extends BaseService
             "destination" => $request->destination,
             "regionCoverForId" => $request->region_cover_for_i,
         );
-        if(Auth::user()->hasRole("TRAVEL_ADVISOR")){
+        if (Auth::user()->hasRole("TRAVEL_ADVISOR")) {
             $dataArr['advisorId'] = Auth::user()->id;
         }
         return CapiRequestService::sendCAPIRequest('/api/v1-save-travel-quote', $dataArr);
@@ -45,11 +68,20 @@ class TravelQuoteService extends BaseService
     public function getLeads($CDBID, $email, $mobile_no, $lead_type)
     {
         $query = DB::table('travel_quote_request as tqr')
-                    ->select('tqr.id','tqr.uuid','tqr.first_name','tqr.last_name','tqr.created_at','u.name AS advisor_name',DB::raw("'Travel' as lead_type")
-                    ,'u.id as advisor_id','qs.text as lead_status')
-                    ->leftJoin('users as u', 'u.id', '=', 'tqr.advisor_id')
-                    ->leftJoin('quote_status as qs', 'qs.id', '=', 'tqr.quote_status_id')
-                    ->orderBy('advisor_id', 'ASC');
+            ->select(
+                'tqr.id',
+                'tqr.uuid',
+                'tqr.first_name',
+                'tqr.last_name',
+                'tqr.created_at',
+                'u.name AS advisor_name',
+                DB::raw("'Travel' as lead_type"),
+                'u.id as advisor_id',
+                'qs.text as lead_status'
+            )
+            ->leftJoin('users as u', 'u.id', '=', 'tqr.advisor_id')
+            ->leftJoin('quote_status as qs', 'qs.id', '=', 'tqr.quote_status_id')
+            ->orderBy('advisor_id', 'ASC');
         if (!empty($CDBID)) {
             $query->where('tqr.id', '=', $CDBID);
         }
@@ -69,8 +101,13 @@ class TravelQuoteService extends BaseService
     public function getGridData($searchProperties, $request)
     {
         if ($request->ajax()) {
+            if (in_array('created_at', $searchProperties) && isset($request->created_at) && $request->created_at != "") {
+                $dateFrom = Carbon::createFromFormat('Y-m-d', $request['created_at'])->startOfDay()->toDateTimeString();
+                $dateTo = Carbon::createFromFormat('Y-m-d', $request['created_at_end'])->endOfDay()->toDateTimeString();
+                $this->query->whereBetween('tqr.created_at', [$dateFrom, $dateTo]);
+            }
             foreach ($searchProperties as $item) {
-                if (!empty($request[$item])) {
+                if (!empty($request[$item]) && $item != "created_at") {
                     $this->query->where($this->getQuerySuffix($item) . '.' . $item, $request[$item]);
                 }
             }
@@ -86,6 +123,12 @@ class TravelQuoteService extends BaseService
                 break;
             case 'region':
                 return  'r';
+                break;
+            case 'advisor':
+                return 'u';
+                break;
+            case 'quote_status':
+                return 'qs';
                 break;
             case 'nationality':
                 return  'n';
@@ -109,21 +152,21 @@ class TravelQuoteService extends BaseService
     public function updateTravelQuote(Request $request, $id)
     {
         $updateArray = [
-            'first_name'=>$request->first_name,
-            'last_name'=>$request->last_name,
-            'details'=>$request->details,
-            'travel_cover_for_id'=>$request->travel_cover_for_id,
-            'nationality_id'=>$request->nationality_id,
-            'days_cover_for'=>$request->days_cover_for,
-            'destination'=>$request->destination,
-            'region_cover_for_id'=>$request->region_cover_for_id,
-            'details'=>$request->details,
+            'first_name' => $request->first_name,
+            'last_name' => $request->last_name,
+            'details' => $request->details,
+            'travel_cover_for_id' => $request->travel_cover_for_id,
+            'nationality_id' => $request->nationality_id,
+            'days_cover_for' => $request->days_cover_for,
+            'destination' => $request->destination,
+            'region_cover_for_id' => $request->region_cover_for_id,
+            'details' => $request->details,
         ];
-        if(!Auth::user()->hasRole('TRAVEL_ADVISOR')){
+        if (!Auth::user()->hasRole('TRAVEL_ADVISOR')) {
             $updateArray['email'] = $request->email;
             $updateArray['mobile_no'] = $request->mobile_no;
         }
-        TravelQuote::where('uuid',$id)->update($updateArray);
+        TravelQuote::where('uuid', $id)->update($updateArray);
         if (isset($request->return_to_view))
             return redirect("quote/travel/" . $id)->with('success', 'Travel Quote has been updated');
     }
@@ -132,10 +175,15 @@ class TravelQuoteService extends BaseService
     {
         return array(
             "id" => "readonly|none",
+            "code" => "input|title",
             "first_name" => "input|text|required",
             "last_name" => "input|text|required",
             "email" => "input|email|required",
-            "mobile_no" => "input|number|title|required",
+            "mobile_no" => "input|title|number|required",
+            "quote_status_id" => "select|title",
+            "advisor_id" => "select|title|required",
+            "created_at" => "input|date|title|range",
+            "updated_at" => "input|date|title",
             "days_cover_for" => "input|number|title|required",
             "destination" => "input|text|required",
             "nationality_id" => "select|title|required",
@@ -151,6 +199,21 @@ class TravelQuoteService extends BaseService
         switch ($propertyName) {
             case 'days_cover_for':
                 $title = "How many days would you like cover for?";
+                break;
+            case 'advisor_id':
+                $title = "Assigned To";
+                break;
+            case 'quote_status_id':
+                $title = "Lead Status";
+                break;
+            case 'code':
+                $title = "CDB ID";
+                break;
+            case 'created_at':
+                $title = "Created Date";
+                break;
+            case 'updated_at':
+                $title = "Last Modified Date";
                 break;
             case 'region_cover_for_id':
                 $title = "Which regions do you need cover for?";
@@ -173,13 +236,15 @@ class TravelQuoteService extends BaseService
     public function fillModelSkipProperties()
     {
         return [
-            "create" => "id",
-            "list" => "email,mobile_no",
+            "create" => "id,created_at,id,code,advisor_id,updated_at,quote_status_id",
+            "list" => "email,mobile_no,region_cover_for_id,travel_cover_for_id,details,nationality_id,destination,days_cover_for",
+            "update" => 'created_at,id,code,advisor_id,updated_at,quote_status_id',
+            "show" => "",
         ];
     }
 
     public function fillModelSearchProperties()
     {
-        return ["email", 'first_name', 'last_name', 'nationality_id', 'region_cover_for_id', 'travel_cover_for_id'];
+        return ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'advisor_id', 'created_at'];
     }
 }
