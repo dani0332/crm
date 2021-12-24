@@ -35,10 +35,11 @@
             $('#modelType').val(model.modelType);
             var dataTableColumns = [];
             var skipPropertiesArray = model.skipProperties['list'].split(',');
+            debugger;
             for (var i = 0; i < modelPropertiesArray.length; i++) {
 
                 if (!skipPropertiesArray.includes(modelPropertiesArray[i].name)) {
-                    if (modelPropertiesArray[i].name == 'id') {
+                    if (modelPropertiesArray[i].name == 'id' && (model.modelType !== 'LeadStatus' && model.modelType !== 'Teams')) {
                         var isManagerOrDeputy = $("#isManagerOrDeputy").val();
                         if (isManagerOrDeputy === "1" && allowedModelTypes.includes(model.modelType
                                 .toLocaleLowerCase())) {
@@ -80,6 +81,7 @@
                     }
                 }
             }
+            debugger;
             var vehicleTypeDataTable = $("#dtBasicExample").DataTable({
                 ordering: false,
                 info: true,
