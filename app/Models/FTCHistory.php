@@ -12,6 +12,7 @@ use Auth;
 use App\Jobs\FTCMailServiceJob;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Log;
 use LookUpModel;
 use \Carbon\Carbon;
 use Config;
@@ -64,6 +65,8 @@ class FTCHistory extends BaseModel
 
     public function sendFtcEmail($row, $template){
 
+        
+        Log::info('start sendFtcEmail func...');
         $templateParams = collect($row)->toArray();
         $templateParams["insurance_coverage"]["sum_insured"] = $this->prefixAED($templateParams["insurance_coverage"]["sum_insured"]);
         $templateParams["insurance_coverage"]["excess"] = $this->prefixAED($templateParams["insurance_coverage"]["excess"]);
@@ -84,8 +87,12 @@ class FTCHistory extends BaseModel
             $params['templateParams']['attachment'] = [];
             foreach ($attachment as $model) { 
                 $params['templateParams']['attachment'][] = Config::get('constants.azure_storage_url').Config::get('constants.AZURE_STORAGE_CONTAINER').'/'.$model->file_name;
+                Log::info('FTC Email attachment:'.Config::get('constants.azure_storage_url').Config::get('constants.AZURE_STORAGE_CONTAINER').'/'.$model->file_name);
             }
         }
+
+
+        Log::info('Sending email with params ' . json_encode($params));
         dispatch(new FTCMailServiceJob($params));
 
     }
