@@ -25,7 +25,8 @@ class CarQuotePolicy extends BaseModel
             "production_approval_manager" => [],
             "pa" => [ 'car_quote_id', 'transactions_id', 'quote_number', 'policy_number', 'issue_date', 'start_date', 'end_date' ],
             "admin" => [ 'car_quote_id' , 'transactions_id', 'quote_number', 'policy_number', 'issue_date', 'start_date', 'end_date' ],
-            "invoicing" => []
+            "invoicing" => [],
+            "payment" => []
         ],
         "list" => [
             "pa" => ['id', 'car_quote_id' , 'transactions_id', 'quote_number', 'policy_number', 'issue_date', 'start_date', 'end_date' ],
@@ -33,7 +34,8 @@ class CarQuotePolicy extends BaseModel
             "advisor" => ['id', 'car_quote_id', 'transactions_id', 'quote_number', 'policy_number', 'issue_date', 'start_date', 'end_date' ],
             "oe" => ['id', 'car_quote_id', 'transactions_id', 'quote_number', 'policy_number', 'issue_date', 'start_date', 'end_date' ],
             "admin" => ['id', 'car_quote_id', 'transactions_id', 'quote_number', 'policy_number', 'issue_date', 'start_date', 'end_date' ],
-            "invoicing" => ['id', 'car_quote_id', 'transactions_id', 'quote_number', 'policy_number', 'issue_date', 'start_date', 'end_date' ]
+            "invoicing" => ['id', 'car_quote_id', 'transactions_id', 'quote_number', 'policy_number', 'issue_date', 'start_date', 'end_date' ],
+            "payment" => ['id', 'car_quote_id', 'transactions_id', 'quote_number', 'policy_number', 'issue_date', 'start_date', 'end_date' ]
         ]
     ];
 
@@ -53,12 +55,13 @@ class CarQuotePolicy extends BaseModel
         }
         
         $response =  self::processGetBaseDSL($filters, false)->first();
-        $collection = $response->toArray();
-        if(Arr::exists($collection, 'transactions_id')){
-            $response = array_merge( $collection['transactions_id'], $collection);
+        if($response){
+            $collection = $response->toArray();
+            if(Arr::exists($collection, 'transactions_id')){
+                $response = array_merge( $collection['transactions_id'], $collection);
+            }
         }
-
-        return $response;       
+        return $response;               
     }
 
 

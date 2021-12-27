@@ -16696,7 +16696,7 @@ var insuranceDetail = {
       title: 'Insurance Coverage Information',
       subtitle: '',
       access: {
-        read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'production_approval_manager'],
+        read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'payment', 'production_approval_manager'],
         write: ['advisor', 'admin', 'oe'],
         update: ['advisor', 'admin', 'oe'],
         "delete": []
@@ -16706,7 +16706,7 @@ var insuranceDetail = {
           type: 'datePicker',
           label: 'Policy start date',
           access: {
-            read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'production_approval_manager'],
+            read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'payment', 'production_approval_manager'],
             write: ['advisor', 'oe', 'admin'],
             update: ['advisor', 'oe', 'admin']
           } // rules: { required: true }
@@ -16730,7 +16730,7 @@ var insuranceDetail = {
             required: true
           },
           access: {
-            read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'production_approval_manager'],
+            read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'payment', 'production_approval_manager'],
             write: ['advisor', 'oe', 'admin'],
             update: ['advisor', 'oe', 'admin']
           } // transform(item) {
@@ -16748,7 +16748,7 @@ var insuranceDetail = {
           label: 'Insurance Plan',
           source: 'car_plan',
           access: {
-            read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'production_approval_manager'],
+            read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'payment', 'production_approval_manager'],
             write: ['advisor', 'oe', 'admin'],
             update: ['advisor', 'oe', 'admin']
           },
@@ -16761,7 +16761,7 @@ var insuranceDetail = {
           label: 'Vehicle Type',
           source: 'vehicle_type',
           access: {
-            read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'production_approval_manager'],
+            read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'payment', 'production_approval_manager'],
             write: ['advisor', 'oe', 'admin'],
             update: ['advisor', 'oe', 'admin']
           },
@@ -16773,7 +16773,7 @@ var insuranceDetail = {
           type: 'text',
           label: 'Excess',
           access: {
-            read: ['advisor', 'oe', 'admin', 'invoicing', 'pa', 'production_approval_manager'],
+            read: ['advisor', 'oe', 'admin', 'invoicing', 'payment', 'pa', 'production_approval_manager'],
             write: ['advisor', 'oe', 'admin'],
             update: ['advisor', 'oe', 'admin']
           },
@@ -16785,7 +16785,7 @@ var insuranceDetail = {
           type: 'text',
           label: 'Sum Insured',
           access: {
-            read: ['advisor', 'oe', 'admin', 'invoicing', 'pa', 'production_approval_manager'],
+            read: ['advisor', 'oe', 'admin', 'invoicing', 'payment', 'pa', 'production_approval_manager'],
             write: ['advisor', 'oe', 'admin'],
             update: ['advisor', 'oe', 'admin']
           },
@@ -16797,7 +16797,7 @@ var insuranceDetail = {
           type: 'text',
           label: 'Premium/Price',
           access: {
-            read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'production_approval_manager'],
+            read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'payment', 'production_approval_manager'],
             write: ['advisor', 'oe', 'admin'],
             update: ['advisor', 'oe', 'admin']
           },
@@ -16809,7 +16809,7 @@ var insuranceDetail = {
           type: 'text',
           label: 'Ancillary Excess',
           access: {
-            read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'production_approval_manager'],
+            read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'payment', 'production_approval_manager'],
             write: ['advisor', 'oe', 'admin'],
             update: ['advisor', 'oe', 'admin']
           },
@@ -16821,7 +16821,7 @@ var insuranceDetail = {
           type: 'dropdown',
           label: 'Personal Accident Benefit',
           access: {
-            read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'production_approval_manager'],
+            read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'payment', 'production_approval_manager'],
             write: ['advisor', 'oe', 'admin'],
             update: ['advisor', 'oe', 'admin']
           },
@@ -16832,7 +16832,7 @@ var insuranceDetail = {
           label: 'Breakdown recovery',
           source: ['INCLUDED', 'NOT INCLUDED'],
           access: {
-            read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'production_approval_manager'],
+            read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'payment', 'production_approval_manager'],
             write: ['advisor', 'oe', 'admin'],
             update: ['advisor', 'oe', 'admin']
           },
@@ -16845,7 +16845,7 @@ var insuranceDetail = {
           label: 'Off-road cover (for 4X4 only)',
           source: ['INCLUDED', 'NOT INCLUDED'],
           access: {
-            read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'production_approval_manager'],
+            read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'payment', 'production_approval_manager'],
             write: ['advisor', 'oe', 'admin'],
             update: ['advisor', 'oe', 'admin']
           },
@@ -16858,7 +16858,7 @@ var insuranceDetail = {
           label: 'Rent a Car',
           source: ['INCLUDED', 'NOT INCLUDED'],
           access: {
-            read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'production_approval_manager'],
+            read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'payment', 'production_approval_manager'],
             write: ['advisor', 'oe', 'admin'],
             update: ['advisor', 'oe', 'admin']
           },
@@ -16871,7 +16871,7 @@ var insuranceDetail = {
           label: 'Repair Type',
           source: ['Agency', 'NON Agency', 'Not Applicable'],
           access: {
-            read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'production_approval_manager'],
+            read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'payment', 'production_approval_manager'],
             write: ['advisor', 'oe', 'admin'],
             update: ['advisor', 'oe', 'admin']
           },
@@ -16883,7 +16883,7 @@ var insuranceDetail = {
           type: 'text',
           label: 'Financed By',
           access: {
-            read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'production_approval_manager'],
+            read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'payment', 'production_approval_manager'],
             write: ['advisor', 'oe', 'admin'],
             update: ['advisor', 'oe', 'admin']
           },
@@ -16895,7 +16895,7 @@ var insuranceDetail = {
           type: 'text',
           label: 'Geographical Area',
           access: {
-            read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'production_approval_manager'],
+            read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'payment', 'production_approval_manager'],
             write: ['advisor', 'oe', 'admin'],
             update: ['advisor', 'oe', 'admin']
           },
@@ -16930,7 +16930,7 @@ var insuranceDetail = {
             }
 
             var access = {
-              read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'production_approval_manager'],
+              read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'payment', 'production_approval_manager'],
               write: [],
               update: [],
               "delete": []
@@ -17182,7 +17182,7 @@ var carQuoteKycStatus = {
       title: 'KYC',
       subtitle: '',
       access: {
-        read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
+        read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'payment', 'production_approval_manager'],
         write: ['advisor', 'oe', 'admin'],
         update: ['advisor', 'oe', 'admin'],
         "delete": ['admin']
@@ -17196,7 +17196,7 @@ var carQuoteKycStatus = {
             required: true
           },
           access: {
-            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
+            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'payment', 'production_approval_manager'],
             write: ['advisor', 'oe', 'admin'],
             update: ['advisor', 'oe', 'admin']
           }
@@ -17205,7 +17205,7 @@ var carQuoteKycStatus = {
           type: 'text',
           label: 'Organization',
           access: {
-            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
+            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'payment', 'production_approval_manager'],
             write: ['advisor', 'oe', 'admin'],
             update: ['advisor', 'oe', 'admin']
           },
@@ -17218,7 +17218,7 @@ var carQuoteKycStatus = {
           label: 'Profession',
           source: ['Business Owner', 'CEO/Managing Director/Managing Partner', 'Human Resources (HR)', 'Administration/Operations/Secretarial/Assistant/Customer Service Executive', 'Sales/Business Development', 'Finance or Accounting', 'Consultant/Self Employed', 'Healthcare Professional: Doctor, Nurse, Pharmacist, Diagnostician etc', 'Teacher/Instructor/Coach', 'Real Estate Agent', 'Engineer/Architect/Contractor', 'Pilot', 'Chef', 'Technician/Technical Manager/Quality Controller/IT/Software Developer/Analyst', 'Lawyer', 'Government Official: Police, Municipality, Court etc', 'Driver', 'Marketing/Media/Advertising', 'Artist/Actor/Writer/Sportsperson', 'House Wife', 'Unemployed'],
           access: {
-            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
+            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'payment', 'production_approval_manager'],
             write: ['advisor', 'oe', 'admin'],
             update: ['advisor', 'oe', 'admin']
           },
@@ -17298,7 +17298,7 @@ var carQuoteKycStatus = {
       title: 'KYC Status',
       subtitle: '',
       access: {
-        read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
+        read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'payment', 'production_approval_manager'],
         write: ['pa', 'admin', 'production_approval_manager'],
         update: [],
         "delete": ['admin']
@@ -17313,7 +17313,7 @@ var carQuoteKycStatus = {
             required: true
           },
           access: {
-            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
+            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'payment', 'production_approval_manager'],
             write: ['pa', 'admin'],
             update: ['pa', 'admin']
           }
@@ -17322,9 +17322,9 @@ var carQuoteKycStatus = {
           type: 'textarea',
           label: 'Notes',
           access: {
-            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
-            write: ['pa', 'admin', 'invoicing'],
-            update: ['pa', 'admin', 'invoicing']
+            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'payment', 'production_approval_manager'],
+            write: ['pa', 'admin', 'payment'],
+            update: ['pa', 'admin', 'payment']
           },
           rules: {
             required: true
@@ -17422,7 +17422,7 @@ var carQuotePolicy = {
       title: 'Car Quote Policy',
       subtitle: '',
       access: {
-        read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'production_approval_manager'],
+        read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'payment', 'production_approval_manager'],
         write: ['pa', 'admin'],
         update: ['pa', 'admin'],
         "delete": []
@@ -17432,7 +17432,7 @@ var carQuotePolicy = {
           type: 'text',
           label: 'Customer',
           access: {
-            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'production_approval_manager']
+            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'payment', 'production_approval_manager']
           },
           transform: function transform(item) {
             return "".concat(item === null || item === void 0 ? void 0 : item.first_name, "  ").concat(item === null || item === void 0 ? void 0 : item.last_name);
@@ -17442,7 +17442,7 @@ var carQuotePolicy = {
           type: 'text',
           label: 'Quote Number',
           access: {
-            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
+            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'payment', 'production_approval_manager'],
             write: ['pa'],
             update: ['pa']
           },
@@ -17454,7 +17454,7 @@ var carQuotePolicy = {
           type: 'text',
           label: 'Policy Number',
           access: {
-            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
+            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'payment', 'production_approval_manager'],
             write: ['pa'],
             update: ['pa']
           },
@@ -17466,7 +17466,7 @@ var carQuotePolicy = {
           type: 'datePicker',
           label: 'Policy Issue Date',
           access: {
-            read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'production_approval_manager'],
+            read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'payment', 'production_approval_manager'],
             write: ['pa', 'admin'],
             update: ['pa', 'admin']
           } // rules: { required: true }
@@ -17476,7 +17476,7 @@ var carQuotePolicy = {
           type: 'datePicker',
           label: 'Policy Start Date',
           access: {
-            read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'production_approval_manager'],
+            read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'payment', 'production_approval_manager'],
             write: ['pa', 'admin'],
             update: ['pa', 'admin']
           }
@@ -17485,7 +17485,7 @@ var carQuotePolicy = {
           type: 'datePicker',
           label: 'Policy End Date',
           access: {
-            read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'production_approval_manager'],
+            read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'payment', 'production_approval_manager'],
             write: ['pa', 'admin'],
             update: ['pa', 'admin']
           }
@@ -17494,14 +17494,14 @@ var carQuotePolicy = {
           type: 'text',
           label: 'Approval Code',
           access: {
-            read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'production_approval_manager']
+            read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'payment', 'production_approval_manager']
           }
         },
         amount_paid: {
           type: 'text',
           label: 'Amound Paid',
           access: {
-            read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'production_approval_manager']
+            read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'payment', 'production_approval_manager']
           }
         },
         payment_mode_id: {
@@ -17509,7 +17509,7 @@ var carQuotePolicy = {
           label: 'Payment Mode',
           source: 'payment_modes',
           access: {
-            read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'production_approval_manager']
+            read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'payment', 'production_approval_manager']
           },
           transform: function transform(item) {
             if (Array.isArray(item)) {
@@ -17531,7 +17531,7 @@ var carQuotePolicy = {
           label: 'Type of Insurance',
           source: 'type_of_insurances',
           access: {
-            read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'production_approval_manager']
+            read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'payment', 'production_approval_manager']
           }
         },
         insurance_company_id: {
@@ -17545,7 +17545,7 @@ var carQuotePolicy = {
             }
           },
           access: {
-            read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'production_approval_manager']
+            read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'payment', 'production_approval_manager']
           } // transform(item) {
           //   if (Array.isArray(item)) {
           //     const items = item.map(u => {
@@ -17639,7 +17639,7 @@ var leadRequest = {
       db_table: 'car_quote_request',
       title: 'Lead Listing',
       access: {
-        read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'production_approval_manager', 'production_approval_manager'],
+        read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'payment', 'production_approval_manager', 'production_approval_manager'],
         write: [],
         update: [],
         "delete": ['advisor', 'oe', 'admin']
@@ -17654,7 +17654,7 @@ var leadRequest = {
             required: true
           },
           access: {
-            read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'production_approval_manager', 'production_approval_manager'],
+            read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'payment', 'production_approval_manager', 'production_approval_manager'],
             write: ['admin'],
             update: ['advisor', 'oe', 'admin']
           }
@@ -17684,7 +17684,7 @@ var leadRequest = {
           label: 'Car Model',
           source: 'car_model',
           access: {
-            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'production_approval_manager', 'production_approval_manager'],
+            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'payment', 'production_approval_manager', 'production_approval_manager'],
             write: ['advisor', 'oe', 'admin'],
             update: ['advisor', 'oe', 'admin']
           },
@@ -17791,7 +17791,7 @@ var leadRequest = {
               text: 'Assigned Leads'
             }],
             access: {
-              read: ['pa', 'invoicing'],
+              read: ['pa', 'payment'],
               write: [],
               update: []
             }
@@ -17836,9 +17836,9 @@ var leadRequest = {
         }, {
           Header: 'Payment Agent',
           accessor: function accessor(d) {
-            var _d$invoicing;
+            var _d$payment_id;
 
-            return "".concat(d === null || d === void 0 ? void 0 : (_d$invoicing = d.invoicing) === null || _d$invoicing === void 0 ? void 0 : _d$invoicing.name);
+            return "".concat(d === null || d === void 0 ? void 0 : (_d$payment_id = d.payment_id) === null || _d$payment_id === void 0 ? void 0 : _d$payment_id.name);
           }
         }, {
           Header: 'Last Modified',
@@ -17925,7 +17925,7 @@ var leadRequest = {
 
             if (role === 'pa' && !row.pa_id) {
               showConfirmMsg();
-            } else if (role === 'invoicing' && !row.invoicing) {
+            } else if (role === 'payment' && !row.payment_id) {
               showConfirmMsg();
             } else {
               dispatch({
@@ -17979,7 +17979,7 @@ var ftcHistory = {
       title: 'FTC History',
       subtitle: '',
       access: {
-        read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'production_approval_manager'],
+        read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'payment', 'production_approval_manager'],
         write: ['advisor', 'oe', 'admin'],
         update: ['advisor', 'oe', 'admin'],
         "delete": ['advisor', 'oe', 'admin', 'admin']
@@ -17996,7 +17996,7 @@ var ftcHistory = {
             text: "FTC Pending"
           }],
           access: {
-            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
+            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'payment', 'production_approval_manager'],
             write: ['oe', 'advisor'],
             update: []
           },
@@ -18113,7 +18113,7 @@ var ftcPayment = {
       title: 'FTC Payment',
       subtitle: '',
       access: {
-        read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'production_approval_manager'],
+        read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'payment', 'production_approval_manager'],
         write: ['advisor', 'oe', 'admin'],
         update: ['advisor', 'oe', 'admin'],
         "delete": []
@@ -18155,7 +18155,7 @@ var ftcPayment = {
           //     };
           // },
           access: {
-            read: ['advisor', 'pa', 'oe', 'admin', 'invoicing', 'production_approval_manager'],
+            read: ['advisor', 'pa', 'oe', 'admin', 'invoicing', 'payment', 'production_approval_manager'],
             write: ['oe', 'advisor'],
             update: ['oe', 'advisor']
           },
@@ -18169,7 +18169,7 @@ var ftcPayment = {
           source: ['Spotii', 'payments.insurancemarket.ae '],
           offscreen: true,
           access: {
-            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
+            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'payment', 'production_approval_manager'],
             write: ['oe', 'advisor'],
             update: ['oe', 'advisor']
           },
@@ -18181,7 +18181,7 @@ var ftcPayment = {
           type: 'textarea',
           label: 'Comment',
           access: {
-            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
+            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'payment', 'production_approval_manager'],
             write: ['oe', 'advisor'],
             update: ['oe', 'advisor']
           },
@@ -18212,11 +18212,11 @@ var ftcPayment = {
             var _session = (0,_utils__WEBPACK_IMPORTED_MODULE_0__.session)(),
                 role = _session.role;
 
-            if (code && code === 'transaction_declined' && role === 'invoicing') {
+            if (code && code === 'transaction_declined' && role === 'payment') {
               var access = {
-                read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'production_approval_manager'],
-                write: ['invoicing'],
-                update: ['invoicing'],
+                read: ['pa', 'advisor', 'oe', 'admin', 'payment', 'invoicing', 'production_approval_manager'],
+                write: ['payment'],
+                update: ['payment'],
                 "delete": []
               };
               form.access = access;
@@ -18291,9 +18291,9 @@ var ftcPaymentHistory = {
       title: 'Payment History',
       subtitle: '',
       access: {
-        read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'production_approval_manager'],
-        write: ['invoicing'],
-        update: ['invoicing'],
+        read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'payment', 'production_approval_manager'],
+        write: ['payment'],
+        update: ['payment'],
         "delete": []
       },
       fields: {
@@ -18302,9 +18302,9 @@ var ftcPaymentHistory = {
           label: 'Status',
           source: ['Transaction Approved', 'Transaction Declined'],
           access: {
-            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
-            write: ['invoicing'],
-            update: ['invoicing']
+            read: ['advisor', 'oe', 'pa', 'admin', 'payment', 'invoicing', 'production_approval_manager'],
+            write: ['payment'],
+            update: ['payment']
           },
           rules: {
             required: true
@@ -18314,9 +18314,9 @@ var ftcPaymentHistory = {
           type: 'textarea',
           label: 'Notes',
           access: {
-            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
-            write: ['invoicing'],
-            update: ['invoicing']
+            read: ['advisor', 'oe', 'pa', 'admin', 'payment', 'invoicing', 'production_approval_manager'],
+            write: ['payment'],
+            update: ['payment']
           },
           rules: {
             required: true
@@ -18408,7 +18408,7 @@ var ftcQuoteStatusHistory = {
       title: 'FTC Quote Status History',
       subtitle: '',
       access: {
-        read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'production_approval_manager'],
+        read: ['pa', 'advisor', 'oe', 'admin', 'payment', 'invoicing', 'production_approval_manager'],
         write: [],
         update: [],
         "delete": []
@@ -18420,7 +18420,7 @@ var ftcQuoteStatusHistory = {
           source: 'quote_status',
           field: 'quote_status_id',
           access: {
-            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
+            read: ['advisor', 'oe', 'pa', 'admin', 'payment', 'invoicing', 'production_approval_manager'],
             write: [],
             update: []
           },
@@ -18432,7 +18432,7 @@ var ftcQuoteStatusHistory = {
           type: 'textarea',
           label: 'Notes',
           access: {
-            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
+            read: ['advisor', 'oe', 'pa', 'admin', 'payment', 'invoicing', 'production_approval_manager'],
             write: [],
             update: []
           },
@@ -18647,7 +18647,7 @@ var leadAttachment = {
       title: 'Upload Documents',
       subtitle: 'document need for insurance purpose',
       access: {
-        read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'production_approval_manager'],
+        read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'payment', 'production_approval_manager'],
         write: ['advisor', 'oe', 'admin'],
         update: ['advisor', 'oe', 'admin'],
         "delete": ['advisor', 'oe', 'admin']
@@ -18659,7 +18659,7 @@ var leadAttachment = {
           field: 'document',
           source: 'car_quote_documents',
           access: {
-            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
+            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'payment', 'production_approval_manager'],
             write: ['advisor', 'oe', 'admin'],
             update: ['advisor', 'oe', 'admin']
           },
@@ -18673,7 +18673,7 @@ var leadAttachment = {
           label: 'Select Document',
           field: 'file_name',
           access: {
-            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
+            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'payment', 'production_approval_manager'],
             write: ['advisor', 'oe', 'admin'],
             update: ['advisor', 'oe', 'admin']
           },
@@ -18985,7 +18985,7 @@ var policyHolderDetail = {
       multi: false,
       subtitle: '',
       access: {
-        read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
+        read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'payment', 'production_approval_manager'],
         write: ['oe', 'advisor'],
         update: ['oe', 'advisor'],
         "delete": []
@@ -19033,7 +19033,7 @@ var policyHolderDetail = {
           type: 'datePicker',
           label: 'Birth Date',
           access: {
-            read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'production_approval_manager'],
+            read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'payment', 'production_approval_manager'],
             write: ['oe', 'advisor', 'admin'],
             update: ['oe', 'advisor', 'admin']
           } // rules: { required: true }
@@ -19093,7 +19093,7 @@ var policyHolderDetail = {
             }
 
             var access = {
-              read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'production_approval_manager'],
+              read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'payment', 'production_approval_manager'],
               write: [],
               update: [],
               "delete": []
@@ -19425,7 +19425,7 @@ var vehicleSubform = {
       db_table: 'car_quote_request',
       title: 'Vehicle Detail Subform',
       access: {
-        read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
+        read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'payment', 'production_approval_manager'],
         write: ['advisor', 'oe', 'admin'],
         update: ['advisor', 'oe', 'admin'],
         "delete": ['advisor', 'oe', 'admin']
@@ -19439,7 +19439,7 @@ var vehicleSubform = {
             required: true
           },
           access: {
-            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
+            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'payment', 'production_approval_manager'],
             write: ['oe', 'advisor', 'admin'],
             update: ['oe', 'advisor', 'admin']
           }
@@ -19451,7 +19451,7 @@ var vehicleSubform = {
             required: true
           },
           access: {
-            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
+            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'payment', 'production_approval_manager'],
             write: ['advisor', 'oe', 'admin'],
             update: ['advisor', 'oe', 'admin']
           }
@@ -19463,7 +19463,7 @@ var vehicleSubform = {
             required: true
           },
           access: {
-            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
+            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'payment', 'production_approval_manager'],
             write: ['advisor', 'oe', 'admin'],
             update: ['advisor', 'oe', 'admin']
           }
@@ -19475,7 +19475,7 @@ var vehicleSubform = {
             required: true
           },
           access: {
-            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
+            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'payment', 'production_approval_manager'],
             write: ['advisor', 'oe', 'admin'],
             update: ['advisor', 'oe', 'admin'],
             access: {
@@ -19490,7 +19490,7 @@ var vehicleSubform = {
           label: 'Date of first registration',
           field: 'date_first_registration',
           access: {
-            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
+            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'payment', 'production_approval_manager'],
             write: ['advisor', 'oe', 'admin'],
             update: ['advisor', 'oe', 'admin']
           }
@@ -19502,7 +19502,7 @@ var vehicleSubform = {
             required: true
           },
           access: {
-            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
+            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'payment', 'production_approval_manager'],
             write: ['oe', 'advisor'],
             update: ['oe', 'advisor']
           }
@@ -19514,7 +19514,7 @@ var vehicleSubform = {
             required: true
           },
           access: {
-            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
+            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'payment', 'production_approval_manager'],
             write: ['oe', 'advisor', 'admin'],
             update: ['oe', 'advisor', 'admin']
           }
@@ -19526,7 +19526,7 @@ var vehicleSubform = {
             required: true
           },
           access: {
-            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
+            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'payment', 'production_approval_manager'],
             write: ['oe', 'advisor', 'admin'],
             update: ['oe', 'advisor', 'admin']
           }
@@ -19539,7 +19539,7 @@ var vehicleSubform = {
             required: true
           },
           access: {
-            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
+            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'payment', 'production_approval_manager'],
             write: ['oe', 'advisor', 'admin'],
             update: ['oe', 'advisor', 'admin']
           }
@@ -19552,7 +19552,7 @@ var vehicleSubform = {
             required: true
           },
           access: {
-            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
+            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'payment', 'production_approval_manager'],
             write: ['advisor', 'oe', 'admin'],
             update: ['advisor', 'oe', 'admin']
           }
@@ -19565,7 +19565,7 @@ var vehicleSubform = {
             required: true
           },
           access: {
-            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
+            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'payment', 'production_approval_manager'],
             write: ['advisor', 'oe', 'admin'],
             update: ['advisor', 'oe', 'admin']
           }
@@ -19622,7 +19622,7 @@ var vehicleDetail = {
       title: 'Car Quote Request',
       subtitle: '',
       access: {
-        read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
+        read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'payment', 'production_approval_manager'],
         write: ['advisor', 'oe', 'admin'],
         update: ['advisor', 'oe', 'admin'],
         "delete": []
@@ -19636,7 +19636,7 @@ var vehicleDetail = {
             required: true
           },
           access: {
-            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
+            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'payment', 'production_approval_manager'],
             write: [],
             update: []
           }
@@ -19646,7 +19646,7 @@ var vehicleDetail = {
           label: 'Car Model',
           source: 'car_model',
           access: {
-            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
+            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'payment', 'production_approval_manager'],
             write: [],
             update: []
           }
@@ -19656,7 +19656,7 @@ var vehicleDetail = {
           label: 'Car Make',
           source: 'car_make',
           access: {
-            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
+            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'payment', 'production_approval_manager'],
             write: [],
             update: []
           }
@@ -19665,7 +19665,7 @@ var vehicleDetail = {
           type: 'text',
           label: 'Car Value',
           access: {
-            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
+            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'payment', 'production_approval_manager'],
             write: [],
             update: []
           }
@@ -19674,7 +19674,7 @@ var vehicleDetail = {
           type: 'dropdown',
           label: 'Emirate of Registration',
           access: {
-            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
+            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'payment', 'production_approval_manager'],
             write: [],
             update: []
           },
@@ -19689,7 +19689,7 @@ var vehicleDetail = {
           type: 'dropdown',
           label: 'UAE licence held for',
           access: {
-            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
+            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'payment', 'production_approval_manager'],
             write: [],
             update: []
           },
@@ -19705,7 +19705,7 @@ var vehicleDetail = {
           label: 'Claim',
           form: 'claim_history',
           access: {
-            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
+            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'payment', 'production_approval_manager'],
             write: [],
             update: []
           }
@@ -19740,7 +19740,7 @@ var vehicleDetail = {
             }
 
             var access = {
-              read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'production_approval_manager'],
+              read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'payment', 'production_approval_manager'],
               write: [],
               update: [],
               "delete": []
@@ -20130,7 +20130,7 @@ function FtcPayment(props) {
           }
         })
       }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxs)(react_tabs__WEBPACK_IMPORTED_MODULE_4__.TabPanel, {
-        children: [role && role === 'invoicing' && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxs)("a", {
+        children: [role && role === 'payment' && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxs)("a", {
           style: {
             display: 'inline',
             cursor: 'pointer'
@@ -20189,7 +20189,7 @@ function KycForm(props) {
   var override = {
     title: 'KYC documents',
     access: {
-      read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'production_approval_manager'],
+      read: ['pa', 'advisor', 'oe', 'admin', 'payment', 'invoicing', 'production_approval_manager'],
       write: [],
       update: [],
       "delete": []
@@ -21119,7 +21119,7 @@ function LeadSnapShot() {
     data: 'kyc'
   }, {
     icon: 'fa fa-line-chart',
-    label: 'FTC History',
+    label: 'FTC Status',
     active: 0,
     id: 5,
     data: 'ftcHistory'
@@ -21319,25 +21319,15 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* binding */ KycAMLForm)
 /* harmony export */ });
-/* harmony import */ var _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @babel/runtime/regenerator */ "./node_modules/@babel/runtime/regenerator/index.js");
-/* harmony import */ var _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! react */ "./node_modules/react/index.js");
-/* harmony import */ var react_confirm_alert__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! react-confirm-alert */ "./node_modules/react-confirm-alert/lib/index.js");
-/* harmony import */ var react_confirm_alert_src_react_confirm_alert_css__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! react-confirm-alert/src/react-confirm-alert.css */ "./node_modules/react-confirm-alert/src/react-confirm-alert.css");
-/* harmony import */ var _utils__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../../utils */ "./resources/js/utils/index.js");
-/* harmony import */ var react_spinners__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! react-spinners */ "./node_modules/react-spinners/index.js");
-/* harmony import */ var react_spinners__WEBPACK_IMPORTED_MODULE_8___default = /*#__PURE__*/__webpack_require__.n(react_spinners__WEBPACK_IMPORTED_MODULE_8__);
-/* harmony import */ var _sagas__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../../sagas */ "./resources/js/sagas/index.js");
-/* harmony import */ var react_redux__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! react-redux */ "./node_modules/react-redux/es/index.js");
-/* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! react/jsx-runtime */ "./node_modules/react/jsx-runtime.js");
-function _extends() { _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; }; return _extends.apply(this, arguments); }
-
-
-
-function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { Promise.resolve(value).then(_next, _throw); } }
-
-function _asyncToGenerator(fn) { return function () { var self = this, args = arguments; return new Promise(function (resolve, reject) { var gen = fn.apply(self, args); function _next(value) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "next", value); } function _throw(err) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "throw", err); } _next(undefined); }); }; }
-
+/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! react */ "./node_modules/react/index.js");
+/* harmony import */ var react_confirm_alert__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! react-confirm-alert */ "./node_modules/react-confirm-alert/lib/index.js");
+/* harmony import */ var react_confirm_alert_src_react_confirm_alert_css__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! react-confirm-alert/src/react-confirm-alert.css */ "./node_modules/react-confirm-alert/src/react-confirm-alert.css");
+/* harmony import */ var _utils__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../../utils */ "./resources/js/utils/index.js");
+/* harmony import */ var react_spinners__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! react-spinners */ "./node_modules/react-spinners/index.js");
+/* harmony import */ var react_spinners__WEBPACK_IMPORTED_MODULE_7___default = /*#__PURE__*/__webpack_require__.n(react_spinners__WEBPACK_IMPORTED_MODULE_7__);
+/* harmony import */ var _sagas__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../../sagas */ "./resources/js/sagas/index.js");
+/* harmony import */ var react_redux__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! react-redux */ "./node_modules/react-redux/es/index.js");
+/* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! react/jsx-runtime */ "./node_modules/react/jsx-runtime.js");
 function _slicedToArray(arr, i) { return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _unsupportedIterableToArray(arr, i) || _nonIterableRest(); }
 
 function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
@@ -21363,15 +21353,13 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
 
 
 function KycAMLForm(props) {
-  var _getLocalStorage2;
-
   var filter = props.form.filter;
-  var dispatch = (0,react_redux__WEBPACK_IMPORTED_MODULE_6__.useDispatch)();
+  var dispatch = (0,react_redux__WEBPACK_IMPORTED_MODULE_5__.useDispatch)();
 
-  var _session = (0,_utils__WEBPACK_IMPORTED_MODULE_4__.session)(),
+  var _session = (0,_utils__WEBPACK_IMPORTED_MODULE_3__.session)(),
       role = _session.role;
 
-  var _useState = (0,react__WEBPACK_IMPORTED_MODULE_1__.useState)({
+  var _useState = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)({
     loader: false,
     found: 0,
     matches: 0
@@ -21380,289 +21368,36 @@ function KycAMLForm(props) {
       state = _useState2[0],
       setState = _useState2[1];
 
-  var verifyAml = function verifyAml() {
-    setState({
-      loader: true,
-      found: 0,
-      matches: 0
-    });
-    (0,_sagas__WEBPACK_IMPORTED_MODULE_5__.dispatchPromise)({
-      dispatch: dispatch,
-      options: {
-        type: 'SEND_REQUEST',
-        request: {
-          url: "/form/kyc_logs/?filter={\"quote_request_id\":\"".concat(filter.car_quote_id, "\"}")
-        }
-      }
-    }).then(function (response) {
-      var _response$data;
-
-      if ((response === null || response === void 0 ? void 0 : (_response$data = response.data) === null || _response$data === void 0 ? void 0 : _response$data.length) > 0) {
-        var resp = response.data[0];
-
-        if (resp.results_found > 0) {
-          setState({
-            loader: false,
-            found: 1,
-            matches: resp.results_found
-          });
-        } else {
-          setState({
-            loader: false,
-            found: 2,
-            matches: resp.results_found
-          });
-        }
-      } else {
-        setState({
-          loader: false,
-          found: 2,
-          matches: 0
-        });
-      }
-    })["catch"](function (error) {
-      console.log(error);
-      setState({
-        loader: false,
-        found: 0
-      });
-    });
-  };
-
-  var approveAml = function approveAml(status) {
-    (0,react_confirm_alert__WEBPACK_IMPORTED_MODULE_2__.confirmAlert)({
-      title: status,
-      message: 'Are you sure to  ' + status + ' AML?',
-      buttons: [{
-        label: 'Yes',
-        onClick: function () {
-          var _onClick = _asyncToGenerator( /*#__PURE__*/_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().mark(function _callee() {
-            return _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().wrap(function _callee$(_context) {
-              while (1) {
-                switch (_context.prev = _context.next) {
-                  case 0:
-                    (0,_sagas__WEBPACK_IMPORTED_MODULE_5__.dispatchPromise)({
-                      dispatch: dispatch,
-                      options: {
-                        type: 'SEND_REQUEST',
-                        request: {
-                          url: "/form/car_quote_aml_status",
-                          method: 'POST',
-                          body: JSON.stringify({
-                            status: status,
-                            car_quote_id: filter.car_quote_id
-                          })
-                        }
-                      }
-                    }).then(function () {
-                      var storage = (0,_utils__WEBPACK_IMPORTED_MODULE_4__.getLocalStorage)('car_request_snap');
-                      storage.aml_status = status;
-                      (0,_utils__WEBPACK_IMPORTED_MODULE_4__.setLocalStorage)('car_request_snap', storage);
-                      setState({
-                        loader: false,
-                        found: 3
-                      });
-                    })["catch"](function (error) {
-                      console.log(error);
-                    });
-
-                  case 1:
-                  case "end":
-                    return _context.stop();
-                }
-              }
-            }, _callee);
-          }));
-
-          function onClick() {
-            return _onClick.apply(this, arguments);
-          }
-
-          return onClick;
-        }()
-      }, {
-        label: 'No',
-        onClick: function onClick() {}
-      }]
-    });
-  };
-
   var viewDetail = function viewDetail() {
     window.open('/kyc/aml/1/details/' + filter.car_quote_id, '_blank');
   };
 
-  var _getLocalStorage = (0,_utils__WEBPACK_IMPORTED_MODULE_4__.getLocalStorage)('car_request_snap'),
-      rest = _extends({}, _getLocalStorage);
-
-  var amlStatus = ((_getLocalStorage2 = (0,_utils__WEBPACK_IMPORTED_MODULE_4__.getLocalStorage)('car_request_snap')) === null || _getLocalStorage2 === void 0 ? void 0 : _getLocalStorage2.aml_status) || '';
-
-  if (amlStatus != null && amlStatus.toLowerCase() === 'approved' || amlStatus.toLowerCase() === 'rejected') {
-    return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("div", {
-      className: "row",
-      children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("div", {
-        className: "col-md-12",
-        children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsxs)("div", {
-          className: "x_panel",
-          children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsxs)("div", {
-            className: "x_title",
-            children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsxs)("h2", {
-              children: ["AML Process ", /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("small", {
-                children: "Verify AML Detail"
-              })]
-            }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("div", {
-              className: "clearfix"
-            })]
-          }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsxs)("div", {
-            className: "x_content",
-            children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("div", {
-              className: "clearfix"
-            }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("table", {
-              className: "countries_list",
-              style: {
-                width: '25%'
-              },
-              children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("tbody", {
-                children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("tr", {
-                  children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("td", {
-                    children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsxs)("span", {
-                      className: "badge badge-success",
-                      children: ["AML has been ", amlStatus, "."]
-                    })
-                  })
-                })
-              })
-            })]
-          })]
-        })
-      })
-    });
-  }
-
-  return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsxs)("div", {
+  return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxs)("div", {
     className: "row",
-    children: [(state === null || state === void 0 ? void 0 : state.loader) === true && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("div", {
+    children: [(state === null || state === void 0 ? void 0 : state.loader) === true && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("div", {
       className: "sweet-loading",
-      children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)(react_spinners__WEBPACK_IMPORTED_MODULE_8__.ScaleLoader, {
+      children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)(react_spinners__WEBPACK_IMPORTED_MODULE_7__.ScaleLoader, {
         color: '#000000',
         loading: true,
         size: 150
       })
-    }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("div", {
+    }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("div", {
       className: "col-md-12",
-      children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsxs)("div", {
+      children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("div", {
         className: "x_panel",
-        children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsxs)("div", {
+        children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxs)("div", {
           className: "x_title",
-          children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsxs)("a", {
+          children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxs)("a", {
             href: "javascript:void(0)",
             onClick: viewDetail,
             className: "btn-link",
-            children: ["Verify AML Detail ", /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("i", {
+            children: ["Verify AML Detail ", /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("i", {
               className: "fa fa-angle-right"
             })]
-          }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("div", {
+          }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("div", {
             className: "clearfix"
           })]
-        }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsxs)("div", {
-          className: "x_content",
-          children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("div", {
-            className: "clearfix"
-          }), (state === null || state === void 0 ? void 0 : state.found) === 1 && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("table", {
-            className: "countries_list",
-            children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsxs)("tbody", {
-              children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsxs)("tr", {
-                children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("td", {
-                  children: "Found Matches"
-                }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("td", {
-                  className: "fs15 fw700 text-right"
-                })]
-              }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("tr", {
-                children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsxs)("td", {
-                  colSpan: "2",
-                  align: "left",
-                  style: {
-                    paddingTop: 16
-                  },
-                  children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("button", {
-                    type: "button",
-                    className: "btn btn-round btn-success btn-sm",
-                    onClick: viewDetail,
-                    children: "View Detail"
-                  }), (rest === null || rest === void 0 ? void 0 : rest.quote_status_id) && (rest === null || rest === void 0 ? void 0 : rest.quote_status_id) === 11 && role === 'pa' && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsxs)("span", {
-                    children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("button", {
-                      type: "button",
-                      className: "btn btn-round btn-danger btn-sm",
-                      onClick: function onClick() {
-                        return approveAml('Rejected');
-                      },
-                      children: "AML Failed"
-                    }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("button", {
-                      type: "button",
-                      className: "btn btn-round btn-primary btn-sm",
-                      onClick: function onClick() {
-                        return approveAml('Approved');
-                      },
-                      children: "AML Cleared"
-                    })]
-                  })]
-                })
-              })]
-            })
-          }), (state === null || state === void 0 ? void 0 : state.found) === 2 && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("table", {
-            className: "countries_list",
-            style: {
-              width: '25%'
-            },
-            children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsxs)("tbody", {
-              children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("tr", {
-                children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("td", {
-                  children: "No Matches Found"
-                })
-              }), (rest === null || rest === void 0 ? void 0 : rest.quote_status_id) && (rest === null || rest === void 0 ? void 0 : rest.quote_status_id) === 11 && role === 'pa' && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("tr", {
-                children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("td", {
-                  align: "left",
-                  style: {
-                    paddingTop: 16
-                  },
-                  children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("button", {
-                    type: "button",
-                    className: "btn btn-round btn-success",
-                    onClick: function onClick() {
-                      return approveAml('Approved');
-                    },
-                    children: "AML Check Cleared"
-                  })
-                })
-              }), (rest === null || rest === void 0 ? void 0 : rest.quote_status_id) && (rest === null || rest === void 0 ? void 0 : rest.quote_status_id) !== 11 && role === 'pa' && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("tr", {
-                children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("td", {
-                  align: "left",
-                  style: {
-                    paddingTop: 16
-                  },
-                  children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("span", {
-                    className: "badge badge-success",
-                    children: "KYC has not cleared."
-                  })
-                })
-              })]
-            })
-          }), (state === null || state === void 0 ? void 0 : state.found) === 3 && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("table", {
-            className: "countries_list",
-            style: {
-              width: '25%'
-            },
-            children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("tbody", {
-              children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("tr", {
-                children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("td", {
-                  children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_7__.jsx)("span", {
-                    className: "badge badge-success",
-                    children: "AML has been verified."
-                  })
-                })
-              })
-            })
-          })]
-        })]
+        })
       })
     })]
   });

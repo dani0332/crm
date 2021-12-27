@@ -22,7 +22,8 @@ class CarQuotePayment extends BaseModel
             "advisor" => [ 'car_quote_id', 'mode_id', 'method', 'comment' ],
             "oe" => [ 'car_quote_id', 'mode_id', 'method', 'comment' ],
             "admin" => [ 'car_quote_id', 'mode_id', 'method', 'comment'],
-            "invoicing" => []
+            "invoicing" => [],
+            "payment" => []
         ],
         "list" => [
             "pa" => ['id', 'car_quote_id' , 'mode_id', 'method', 'comment'],
@@ -30,7 +31,8 @@ class CarQuotePayment extends BaseModel
             "advisor" => [ 'id', 'car_quote_id' , 'mode_id', 'method', 'comment'],
             "oe" => [ 'id', 'car_quote_id' , 'mode_id', 'method', 'comment'],
             "admin" => ['id', 'car_quote_id' , 'mode_id', 'method', 'comment'],
-            "invoicing" => ['id', 'car_quote_id' , 'mode_id', 'method', 'comment']
+            "invoicing" => ['id', 'car_quote_id' , 'mode_id', 'method', 'comment'],
+            "payment" => ['id', 'car_quote_id' , 'mode_id', 'method', 'comment']
         ]
     ];
 

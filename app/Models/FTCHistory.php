@@ -29,6 +29,7 @@ class FTCHistory extends BaseModel
             "pa" => [],
             "production_approval_manager" => [],
             "invoicing" => [ ],
+            "payment" => [ ],
             "advisor" => ['car_quote_id', 'status', 'data'],
             "oe" => ['car_quote_id', 'status', 'data'],
             "admin" => [ 'car_quote_id', 'status', 'data'],
@@ -37,6 +38,7 @@ class FTCHistory extends BaseModel
             "pa" => ['id' , 'status' , 'data', 'created_at' ],
             "production_approval_manager" => ['id' , 'status' , 'data', 'created_at' ],
             "invoicing" => ['id' , 'status' , 'data', 'created_at' ],
+            "payment" => ['id' , 'status' , 'data', 'created_at' ],
             "advisor" => [ 'id' , 'status', 'data' , 'created_at'],
             "oe" => [ 'id' , 'status', 'data' , 'created_at'],
             "admin" => ['id' , 'status' , 'data' , 'created_at']
