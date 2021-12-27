@@ -102,12 +102,12 @@ const ftcPayment = {
       },
       sections: [
         {
-          label: 'FTC Payment Method',
+          label: 'Payments Details',
           fields: ['mode_id', 'method', 'comment'],
         },
       ],
       view: {
-        label: 'FTC Payment Method',
+        label: 'Payments Details',
         find: {
           basic: [],
           advanced: [],

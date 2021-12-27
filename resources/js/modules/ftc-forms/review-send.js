@@ -40,6 +40,12 @@ export default function ReviewSend(props) {
     });
   };
   const { data } = props;
+
+  let reviewSend = []
+  if(role === 'advisor' || role === 'oe'){
+    reviewSend.push(<button type='submit' className='btn btn-success' onClick={submit} > Review & Send </button>) 
+  }
+
   return (
     <div className='row'>
       <div className='col-md-12'>
@@ -55,15 +61,7 @@ export default function ReviewSend(props) {
             <div className='offset-md-2 col-md-7 hidden-small'>
               {data?.vehicle_detail_id && data?.insurance_coverage && (
                 <div className='pull-right'>
-                  {role === 'advisor' || role === 'oe' && (
-                    <button
-                      type='submit'
-                      className='btn btn-success'
-                      onClick={submit}
-                    >
-                      Review & Send
-                    </button>
-                  )}
+                  {reviewSend}
                 </div>
               )}
               <h2 className='line_30'>Policy Holder & Vehicle Information</h2>

@@ -299,7 +299,7 @@ let insuranceDetail = {
       },
       sections: [
         {
-          label: 'Insurance Coverage Information',
+          label: 'Insurance Coverage',
           //fields: ['start_date', 'insurance_company_id']
           fields: [
             'start_date',

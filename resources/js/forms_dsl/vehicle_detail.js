@@ -152,7 +152,7 @@ let vehicleDetail = {
       },
       sections: [
         {
-          label: 'Car Quote Detail',
+          label: 'Vehicle Details',
           fields: [
             'Year_of_manufacture',
             'car_model_id',
