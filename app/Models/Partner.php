@@ -12,7 +12,7 @@ class Partner extends Model implements AuditableContract
 {
     use HasFactory, Auditable;
     protected $table = 'partner';
-
+    protected $fillable = ['name', 'name_ar', 'logo_image','is_active']; 
     public function rewards()
     {
         return $this->hasMany(Reward::class);

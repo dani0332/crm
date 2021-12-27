@@ -3,25 +3,29 @@
 namespace App\Http\Controllers;
 
 use App\Models\BaseDiscount;
-use App\Models\VehicleType;
 use Illuminate\Http\Request;
 use Auth;
 use DataTables;
 use Illuminate\Support\Facades\Log;
+use App\Http\Requests\BaseDiscountRequest;
+use App\Http\Resources\BaseDiscountResource;
+use App\Http\Traits\VehicleTypeTrait;
 
 class BaseDiscountController extends Controller
 {
+    use VehicleTypeTrait;
+
     /**
      * Display a listing of the resource.
      *
      * @return \Illuminate\Http\Response
      */
-    public function index(Request $request)
+    public function index(Request $request, BaseDiscount $base)
     {
-        $vehicleTypes = VehicleType::where('is_active', '=', 1)->whereRaw('text = category')->orderBy('created_at', 'desc')->get();
+        $vehicleTypes = $this->getVehicleTypes();
         if ($request->ajax()) {
 
-            $data = BaseDiscount::select('discount_engine_base.*', 'vehicle_type.text as vehicle_type_text')
+            $data = $base::select('discount_engine_base.*', 'vehicle_type.text as vehicle_type_text')
                 ->leftjoin('vehicle_type', 'vehicle_type.id', 'discount_engine_base.vehicle_type_id')
                 ->where('discount_engine_base.vehicle_type_id', '!=', null)
                 ->orderBy('discount_engine_base.created_at', 'desc');
@@ -43,7 +47,7 @@ class BaseDiscountController extends Controller
      */
     public function create()
     {
-        $vehicleTypes = VehicleType::where('is_active', '=', 1)->whereRaw('text = category')->orderBy('created_at', 'desc')->get();
+        $vehicleTypes = $this->getVehicleTypes();
         return view('basediscount.add', compact('vehicleTypes'));
     }
 
@@ -53,27 +57,15 @@ class BaseDiscountController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store(BaseDiscountRequest $request, BaseDiscount $base)
     {
-        $this->validate($request, [
-            'start_value' => 'required|numeric|min:0',
-            'vehicle_type' => 'required',
-            'non_agency' => 'required|numeric|min:0',
-            'agency' => 'required|numeric|min:0',
-        ]);
-
-        $existingBaseDiscount = BaseDiscount::where([['value_start', $request->start_value], ['value_end', $request->end_value], ['vehicle_type_id', $request->vehicle_type]])->get()->first();
+        $existingBaseDiscount = $base::where([['value_start', $request->start_value], ['value_end', $request->end_value], ['vehicle_type_id', $request->vehicle_type]])->get()->first();
         if ($existingBaseDiscount != '') {
             return redirect()->back()->with('message', 'Discount with vehicle type and values already exists.')->withInput();
         }
-        $baseDiscount = new BaseDiscount();
-        $baseDiscount->value_start = $request->start_value;
-        $baseDiscount->value_end = $request->end_value;
-        $baseDiscount->vehicle_type_id = $request->vehicle_type;
-        $baseDiscount->comprehensive_discount = $request->non_agency;
-        $baseDiscount->agency_discount = $request->agency;
-        $baseDiscount->save();
-        return redirect()->back()->with('success', 'Discount has been stored');
+
+        $id = $base->create($request->validated())->id;
+        return redirect("discount/base/" . $id)->with('success', 'Base Discount has been stored');
     }
 
     /**
@@ -82,10 +74,10 @@ class BaseDiscountController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show($id)
+    public function show(BaseDiscount $base)
     {
 
-        $basediscount = BaseDiscount::find($id);
+        $basediscount = new BaseDiscountResource($base);
         return view('basediscount.show', compact('basediscount'));
     }
 
@@ -95,10 +87,10 @@ class BaseDiscountController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function edit($id)
+    public function edit(BaseDiscount $base)
     {
-        $vehicleTypes = VehicleType::where('is_active', '=', 1)->whereRaw('text = category')->orderBy('created_at', 'desc')->get();
-        $basediscount = BaseDiscount::find($id);
+        $vehicleTypes = $this->getVehicleTypes();
+        $basediscount = new BaseDiscountResource($base);
         return view('basediscount.edit', compact('basediscount', 'vehicleTypes'));
     }
 
@@ -109,23 +101,11 @@ class BaseDiscountController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+    public function update(BaseDiscountRequest $request, BaseDiscount $base)
     {
-        $this->validate($request, [
-            'value_start' => 'required|numeric|min:0',
-            'vehicle_type_id' => 'required',
-            'comprehensive_discount' => 'required|numeric|min:0',
-            'agency_discount' => 'required|numeric|min:0',
-        ]);
-        $baseDiscount = BaseDiscount::find($id);
-        $baseDiscount->value_start = $request->value_start;
-        $baseDiscount->value_end = $request->value_end;
-        $baseDiscount->vehicle_type_id = $request->vehicle_type_id;
-        $baseDiscount->comprehensive_discount = $request->comprehensive_discount;
-        $baseDiscount->agency_discount = $request->agency_discount;
-        $baseDiscount->save();
+        $base->update($request->validated());
         if (isset($request->return_to_view))
-            return redirect("discount/base/" . $baseDiscount->id)->with('success', 'Base Discount has been updated');
+            return redirect("discount/base/" . $base->id)->with('success', 'Base Discount has been updated');
     }
 
     /**
@@ -134,9 +114,9 @@ class BaseDiscountController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function destroy($id)
+    public function destroy(BaseDiscount $base)
     {
-        DB::table("discount_engine_base")->where('id', $id)->delete();
+        $base->delete();
         return redirect()->route('basediscount.index')->with('message', 'Base discount has been deleted');
     }
 }

@@ -12,7 +12,8 @@ class CarRepairType extends Model implements AuditableContract
 {
     use HasFactory, Auditable;
     protected $table = 'car_repair_types';
-
+    protected $fillable = ['text', 'text_ar', 'sort_order', 'is_active'];
+    
     public function getCreatedAtAttribute($table)
     {
         $date_time_format = Config::get('constants.datetime_format');

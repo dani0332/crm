@@ -16905,7 +16905,7 @@ var insuranceDetail = {
         }
       },
       sections: [{
-        label: 'Insurance Coverage Information',
+        label: 'Insurance Coverage',
         //fields: ['start_date', 'insurance_company_id']
         fields: ['start_date', 'insurance_company_id', 'insurance_plan_id', 'vehicle_type_id', 'excess', 'sum_insured', 'premium_price', 'ancillary_excess', 'personal_accident_benefit', 'breakdown_recovery', 'off_road_cover', 'rend_a_car', 'repair_type', 'financed_by', 'geographical_area']
       }],
@@ -18189,11 +18189,11 @@ var ftcPayment = {
         }
       },
       sections: [{
-        label: 'FTC Payment Method',
+        label: 'Payments Details',
         fields: ['mode_id', 'method', 'comment']
       }],
       view: {
-        label: 'FTC Payment Method',
+        label: 'Payments Details',
         find: {
           basic: [],
           advanced: []
@@ -18288,7 +18288,7 @@ var ftcPaymentHistory = {
   getForm: function getForm() {
     var form = {
       db_table: 'car_quote_payment_history',
-      title: 'FTC Payment History',
+      title: 'Payment History',
       subtitle: '',
       access: {
         read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'production_approval_manager'],
@@ -18328,7 +18328,7 @@ var ftcPaymentHistory = {
         fields: ['status', 'notes']
       }],
       view: {
-        label: 'FTC Payment Method',
+        label: 'Payment Method',
         find: {
           basic: [{
             type: 'dropdown',
@@ -18644,7 +18644,7 @@ var leadAttachment = {
   getForm: function getForm() {
     var form = {
       db_table: 'car_quote_ftc_documents',
-      title: 'Document Attachment',
+      title: 'Upload Documents',
       subtitle: 'document need for insurance purpose',
       access: {
         read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'production_approval_manager'],
@@ -18660,8 +18660,8 @@ var leadAttachment = {
           source: 'car_quote_documents',
           access: {
             read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
-            write: ['advisor', 'admin'],
-            update: ['advisor', 'admin']
+            write: ['advisor', 'oe', 'admin'],
+            update: ['advisor', 'oe', 'admin']
           },
           rules: {
             required: true
@@ -18670,12 +18670,12 @@ var leadAttachment = {
         },
         file_name: {
           type: 'file',
-          label: 'Upload Document',
+          label: 'Select Document',
           field: 'file_name',
           access: {
             read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'production_approval_manager'],
-            write: ['advisor', 'admin'],
-            update: ['advisor', 'admin']
+            write: ['advisor', 'oe', 'admin'],
+            update: ['advisor', 'oe', 'admin']
           },
           defaultValue: '',
           rules: {
@@ -18684,7 +18684,7 @@ var leadAttachment = {
         }
       },
       sections: [{
-        label: 'Document Attachment',
+        label: 'Upload Documents',
         fields: ['document', 'file_name']
       }],
       view: {
@@ -18692,7 +18692,7 @@ var leadAttachment = {
         find: {
           basic: [{
             type: 'dropdown',
-            label: 'Choose Document',
+            label: 'Select Document',
             field: 'document',
             source: 'car_quote_documents'
           }],
@@ -18705,7 +18705,7 @@ var leadAttachment = {
           Header: 'File Name',
           accessor: 'file_name'
         }, {
-          Header: 'Document',
+          Header: 'Document Type',
           accessor: function accessor(d) {
             var _d$document;
 
@@ -19041,7 +19041,7 @@ var policyHolderDetail = {
         }
       },
       sections: [{
-        label: 'Policy Holder Detail',
+        label: 'Customer Details',
         fields: ['first_name', 'last_name', 'email', 'mobile_no', 'dob', 'nationality_id']
       }],
       view: {
@@ -19572,7 +19572,7 @@ var vehicleSubform = {
         }
       },
       sections: [{
-        label: 'Add Vehicle Detail',
+        label: '',
         fields: ['engine_capacity', 'cylinder', 'chassis_number', 'engine_number', 'date_first_registration', 'currently_insured_with', 'vehicle_color', 'seating_capacity', 'specs', 'current_cover', 'vehicle_modified']
       }],
       view: {
@@ -19717,7 +19717,7 @@ var vehicleDetail = {
         }
       },
       sections: [{
-        label: 'Car Quote Detail',
+        label: 'Vehicle Details',
         fields: ['Year_of_manufacture', 'car_model_id', 'car_make_id', 'car_value', 'emirate_of_registration_id', 'uae_license_held_for_id', 'claim_history_id', 'vehicle_detail_id']
       }],
       view: {
@@ -20203,9 +20203,9 @@ function KycForm(props) {
         children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)(react_tabs__WEBPACK_IMPORTED_MODULE_4__.Tab, {
           children: "KYC"
         }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)(react_tabs__WEBPACK_IMPORTED_MODULE_4__.Tab, {
-          children: "KYC Documents"
+          children: "Documents"
         }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)(react_tabs__WEBPACK_IMPORTED_MODULE_4__.Tab, {
-          children: "Request Advisor"
+          children: "Update Status"
         }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)(react_tabs__WEBPACK_IMPORTED_MODULE_4__.Tab, {
           children: "AML"
         })]
@@ -20295,7 +20295,7 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
 
 
 function Overview(props) {
-  var _state$data, _state$data2, _state$data3, _state$data3$national, _state$data4, _state$data5, _state$data5$uae_lice, _state$data6, _state$data6$quote_st;
+  var _state$data, _state$data$quote_sta, _state$data2, _state$data3, _state$data4, _state$data4$national, _state$data5, _state$data6, _state$data6$uae_lice;
 
   var dispatch = (0,react_redux__WEBPACK_IMPORTED_MODULE_2__.useDispatch)();
 
@@ -20342,10 +20342,8 @@ function Overview(props) {
         className: "x_panel",
         children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxs)("div", {
           className: "x_title",
-          children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxs)("h2", {
-            children: ["Car Request ", /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("small", {
-              children: "Overivew"
-            })]
+          children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("h2", {
+            children: "Overview"
           }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("div", {
             className: "clearfix"
           })]
@@ -20357,7 +20355,22 @@ function Overview(props) {
             className: "offset-md-2 col-md-7 hidden-small",
             children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("h2", {
               className: "line_30",
-              children: "Policy Holder Detail"
+              children: "Status"
+            }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("table", {
+              className: "countries_list",
+              children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("tbody", {
+                children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxs)("tr", {
+                  children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("td", {
+                    children: "Status:"
+                  }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("td", {
+                    className: "fs15 fw700 text-right",
+                    children: (_state$data = state.data) === null || _state$data === void 0 ? void 0 : (_state$data$quote_sta = _state$data.quote_status_id) === null || _state$data$quote_sta === void 0 ? void 0 : _state$data$quote_sta.text
+                  })]
+                })
+              })
+            }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("h2", {
+              className: "line_30",
+              children: "Customer Detail"
             }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("table", {
               className: "countries_list",
               children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxs)("tbody", {
@@ -20366,45 +20379,30 @@ function Overview(props) {
                     children: "Name:"
                   }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxs)("td", {
                     className: "fs15 fw700 text-right",
-                    children: [(0,_utils__WEBPACK_IMPORTED_MODULE_4__.capitalizeFirstLetter)((_state$data = state.data) === null || _state$data === void 0 ? void 0 : _state$data.first_name), " ", (0,_utils__WEBPACK_IMPORTED_MODULE_4__.capitalizeFirstLetter)((_state$data2 = state.data) === null || _state$data2 === void 0 ? void 0 : _state$data2.last_name)]
+                    children: [(0,_utils__WEBPACK_IMPORTED_MODULE_4__.capitalizeFirstLetter)((_state$data2 = state.data) === null || _state$data2 === void 0 ? void 0 : _state$data2.first_name), " ", (0,_utils__WEBPACK_IMPORTED_MODULE_4__.capitalizeFirstLetter)((_state$data3 = state.data) === null || _state$data3 === void 0 ? void 0 : _state$data3.last_name)]
                   })]
                 }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxs)("tr", {
                   children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("td", {
                     children: "Nationality:"
                   }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("td", {
                     className: "fs15 fw700 text-right",
-                    children: (_state$data3 = state.data) === null || _state$data3 === void 0 ? void 0 : (_state$data3$national = _state$data3.nationality_id) === null || _state$data3$national === void 0 ? void 0 : _state$data3$national.text
+                    children: (_state$data4 = state.data) === null || _state$data4 === void 0 ? void 0 : (_state$data4$national = _state$data4.nationality_id) === null || _state$data4$national === void 0 ? void 0 : _state$data4$national.text
                   })]
                 }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxs)("tr", {
                   children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("td", {
                     children: "Date of Birth:"
                   }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("td", {
                     className: "fs15 fw700 text-right",
-                    children: moment__WEBPACK_IMPORTED_MODULE_3___default()((_state$data4 = state.data) === null || _state$data4 === void 0 ? void 0 : _state$data4.dob).format('dddd, MMMM Do YYYY')
+                    children: moment__WEBPACK_IMPORTED_MODULE_3___default()((_state$data5 = state.data) === null || _state$data5 === void 0 ? void 0 : _state$data5.dob).format('dddd, MMMM Do YYYY')
                   })]
                 }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxs)("tr", {
                   children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("td", {
                     children: "UAE Years driving:"
                   }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("td", {
                     className: "fs15 fw700 text-right",
-                    children: (_state$data5 = state.data) === null || _state$data5 === void 0 ? void 0 : (_state$data5$uae_lice = _state$data5.uae_license_held_for_id) === null || _state$data5$uae_lice === void 0 ? void 0 : _state$data5$uae_lice.text
+                    children: (_state$data6 = state.data) === null || _state$data6 === void 0 ? void 0 : (_state$data6$uae_lice = _state$data6.uae_license_held_for_id) === null || _state$data6$uae_lice === void 0 ? void 0 : _state$data6$uae_lice.text
                   })]
                 })]
-              })
-            }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("h2", {
-              className: "line_30",
-              children: "Status"
-            }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("table", {
-              className: "countries_list",
-              children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("tbody", {
-                children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxs)("tr", {
-                  children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("td", {
-                    children: "FTC status:"
-                  }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("td", {
-                    className: "fs15 fw700 text-right",
-                    children: (_state$data6 = state.data) === null || _state$data6 === void 0 ? void 0 : (_state$data6$quote_st = _state$data6.quote_status_id) === null || _state$data6$quote_st === void 0 ? void 0 : _state$data6$quote_st.text
-                  })]
-                })
               })
             })]
           })]
@@ -20535,6 +20533,17 @@ function ReviewSend(props) {
   }();
 
   var data = props.data;
+  var reviewSend = [];
+
+  if (role === 'advisor' || role === 'oe') {
+    reviewSend.push( /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("button", {
+      type: "submit",
+      className: "btn btn-success",
+      onClick: submit,
+      children: " Review & Send "
+    }));
+  }
+
   return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("div", {
     className: "row",
     children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("div", {
@@ -20558,12 +20567,7 @@ function ReviewSend(props) {
             className: "offset-md-2 col-md-7 hidden-small",
             children: [(data === null || data === void 0 ? void 0 : data.vehicle_detail_id) && (data === null || data === void 0 ? void 0 : data.insurance_coverage) && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("div", {
               className: "pull-right",
-              children: role === 'advisor' || role === 'oe' && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("button", {
-                type: "submit",
-                className: "btn btn-success",
-                onClick: submit,
-                children: "Review & Send"
-              })
+              children: reviewSend
             }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("h2", {
               className: "line_30",
               children: "Policy Holder & Vehicle Information"

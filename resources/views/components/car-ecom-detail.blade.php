@@ -37,6 +37,23 @@
                 </div>
                 <div class="item form-group">
                     <div class="col">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="PAYMENT METHOD"><b>PAYMENT METHOD</b></label>
+                        <div class="col-md-6 col-sm-6">
+                        <p class="label-align-center">
+                            @if ($carQuotePaymentMethod == 'NGENIUS')
+                                CREDIT CARD
+                            @else
+                                {{ $carQuotePaymentMethod }}
+                            @endif
+                        </p>
+                        </div>
+                    </div>
+                    <div class="col">
+
+                    </div>
+                </div>
+                <div class="item form-group">
+                    <div class="col">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="PLAN NAME"><b>PLAN NAME</b></label>
                         <div class="col-md-6 col-sm-6">
                         <p class="label-align-center">{{ ucwords($carQuotePlanName) }}</p>
@@ -57,13 +74,10 @@
                                             <td width="200" valign="top">{{ ucwords($carQuotePlanAddon->car_addon_option_value) }}</td>
                                             <td valign="top">
                                                 <table>
-                                                        @if($carQuotePlanAddon->car_addon_option_price == 0)
-                                                        <tr><td style="width: 53px;">Free</td>
-                                                            <td><input type="checkbox" checked style="height: unset !important;" disabled></td></td></tr>
-                                                        @else
-                                                        <tr><td style="width: 53px;">AED {{ ucwords($carQuotePlanAddon->car_addon_option_price) }}</td>
-                                                            <td><input type="checkbox" style="height: unset !important;" disabled></td></tr>
-                                                        @endif
+                                                    <tr>
+                                                        <td style="width: 53px;">Free</td>
+                                                        <td><input type="checkbox" checked style="height: unset !important;" disabled></td>
+                                                    </tr>
                                                 </table>
                                             </td>
                                         </tr>

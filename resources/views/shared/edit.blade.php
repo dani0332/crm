@@ -97,118 +97,126 @@
                         $index = 0
                         @endphp
                         @foreach($model->properties as $property => $value)
-                            @if($index == 0 || strpos($value, 'checkbox'))
-                            @else
-                                <div @if(count($model->properties) <6) class="col-md-12" @else class="col-md-6" @endif id={{$property.'_div'}}>
-                                    @if(strpos($value, 'input') !== false )
-                                        <span class="col-form-label col-md-6 col-sm-6" for="name">
-                                            @if(strpos($value, 'title'))
-                                                {{ strtoupper($customTitles[$property])}}
-                                            @else
-                                                {{str_replace("_"," ",strtoupper($property))}}
-                                            @endif
-                                            @if(strpos($value, "required") == true)
-                                            <span class='required'>*</span>
-                                            @endif
-                                        </span>
-                                        <input
-                                            @if(explode("|", $value)[1] != 'date')
-                                                type={{ explode("|", $value)[1]  }}
-                                                @endif id={{$property}}
-                                            name={{$property}}
-                                            @if(Auth::user()->hasRole(strtoupper($model->modelType).'_ADVISOR') && ($property == 'email' || $property == 'mobile_no')) disabled="disabled" @endif
-                                            value="{{ old($property, $record->$property) }}"
-                                        class="form-control">
-                                        @if ($errors->has($property))
-                                            <span class="text-danger">{{ $errors->first($property) }}</span>
-                                        @endif
-                                    @endif
-                                    @if(strpos($value, 'select') !== false)
-                                        <span class="col-form-label col-md-6 col-sm-6" for="name">
-                                            @if(strpos($value, 'title'))
-                                                {{ strtoupper($customTitles[$property]) }}
-                                            @else
-                                            {{str_replace("_"," ",strtoupper($property))}}
-                                            @endif
-                                            @if(strpos($value, "required") == true)
-                                            <span class='required'>*</span>
-                                            @endif
-                                        </span>
-                                        <select @if(strpos($value, 'multiple')) multiple="multiple" name="{{$property.'[]'}}" class="form-control select2 select-roles" @else name="{{$property}}" class="form-control" @endif id="{{$property}}" >
-                                            <option value="">{{"Please select ".str_replace("id"," ",str_replace("_"," ",$property)) }}</option>
-                                            @if (strpos($value, 'customTable') !== false)
-                                                @foreach($customLists[$property] as $selectedItem)
-                                                    @foreach($dropdownSource[$property] as $item)
-                                                        @if ($selectedItem->id == $item->id)
-                                                            <option value="{{$item->id}}" selected="selected">
-                                                            {{ $item->text ?? $item->name }}
-                                                            </option>
-                                                        @else
-                                                            <option value="{{$item->id}}">
-                                                            {{ $item->text ?? $item->name }}
-                                                            </option>
-                                                        @endif
-                                                    @endforeach
-                                                @endforeach
-                                            @else
-                                            @foreach($dropdownSource[$property] as $item)
-                                                <option value="{{$item->id}}" {{ $item->id == old($item->id, $record->$property) ? 'selected' : ''}}>{{ $item->text ?? $item->name }}</option>
-                                            @endforeach
-
-                                            @endif
-
-                                        </select>
-                                        @if ($errors->has($property))
-                                        <span class="text-danger">{{ $errors->first($property) }}</span>
-                                        @endif
-                                    @endif
-                                    @if(strpos($value, 'textarea') !== false )
-                                        <span class="col-form-label col-md-6 col-sm-6" for="name">
-                                            @if(strpos($value, 'title'))
-                                                {{ strtoupper($customTitles[$property])}}
-                                            @else
-                                                {{str_replace("_"," ",strtoupper($property))}}
-                                            @endif
-                                            @if(strpos($value, "required") == true)
-                                            <span class='required'>*</span>
-                                            @endif
-                                        </span>
-                                        <textarea
-                                            id={{$property}}
-                                            name={{$property}}
-                                        class="form-control">{{ old($property, $record->$property) }}</textarea>
-                                        @if ($errors->has($property))
-                                            <span class="text-danger">{{ $errors->first($property) }}</span>
-                                        @endif
-                                    @endif
-                                </div>
-                            @endif
-                            @php
-                            $index++
-                            @endphp
-                        @endforeach
-
-                        @foreach ($model->properties as $property => $value)
-                            @if (strpos($value, 'checkbox'))
-
-                                <div class="col-md-2" id={{$property.'_div'}}>
-                                    <div class="col-md-9">
-                                        <label for="middle-name" style="margin-top: 8px;">
-                                            <b>
+                            @if(!str_contains($model->skipProperties['update'], $property))
+                                @if($index == 0 || strpos($value, 'checkbox'))
+                                @else
+                                    <div @if(count($model->properties) <6) class="col-md-12" @else class="col-md-6" @endif id={{$property.'_div'}}>
+                                        @if(strpos($value, 'input') !== false )
+                                            <span class="col-form-label col-md-6 col-sm-6" for="name">
                                                 @if(strpos($value, 'title'))
                                                     {{ strtoupper($customTitles[$property])}}
                                                 @else
                                                     {{str_replace("_"," ",strtoupper($property))}}
                                                 @endif
-                                            </b>
-                                        </label>
+                                                @if(strpos($value, "required") == true)
+                                                <span class='required'>*</span>
+                                                @endif
+                                            </span>
+                                            <input
+                                                @if(explode("|", $value)[1] != 'date')
+                                                    type={{ explode("|", $value)[1]  }}
+                                                    @endif id={{$property}}
+                                                name={{$property}}
+                                                @if(Auth::user()->hasRole(strtoupper($model->modelType).'_ADVISOR') && ($property == 'email' || $property == 'mobile_no')) disabled="disabled" @endif
+                                                value="{{ old($property, $record->$property) }}"
+                                            class="form-control">
+                                            @if ($errors->has($property))
+                                                <span class="text-danger">{{ $errors->first($property) }}</span>
+                                            @endif
+                                        @endif
+                                        @if(strpos($value, 'select') !== false)
+                                            <span class="col-form-label col-md-6 col-sm-6" for="name">
+                                                @if(strpos($value, 'title'))
+                                                    {{ strtoupper($customTitles[$property]) }}
+                                                @else
+                                                {{str_replace("_"," ",strtoupper($property))}}
+                                                @endif
+                                                @if(strpos($value, "required") == true)
+                                                <span class='required'>*</span>
+                                                @endif
+                                            </span>
+                                            <select @if(strpos($value, 'multiple')) multiple="multiple" name="{{$property.'[]'}}" class="form-control select2 select-roles" @else name="{{$property}}" class="form-control" @endif id="{{$property}}" >
+                                                @if(strpos($value, 'title'))
+                                                    <option value="">{{"Please select ".$customTitles[$property] }}</option>
+                                                @else
+                                                    <option value="">{{"Please select ".str_replace("id"," ",str_replace("_"," ",$property)) }}</option>
+                                                @endif
+                                                @if (strpos($value, 'customTable') !== false)
+                                                    @foreach($customLists[$property] as $selectedItem)
+                                                        @foreach($dropdownSource[$property] as $item)
+                                                            @if ($selectedItem->id == $item->id)
+                                                                <option value="{{$item->id}}" selected="selected">
+                                                                {{ $item->text ?? $item->name }}
+                                                                </option>
+                                                            @else
+                                                                <option value="{{$item->id}}">
+                                                                {{ $item->text ?? $item->name }}
+                                                                </option>
+                                                            @endif
+                                                        @endforeach
+                                                    @endforeach
+                                                @else
+                                                @foreach($dropdownSource[$property] as $item)
+                                                    <option value="{{$item->id}}" {{ $item->id == old($item->id, $record->$property) ? 'selected' : ''}}>{{ $item->text ?? $item->name }}</option>
+                                                @endforeach
+
+                                                @endif
+
+                                            </select>
+                                            @if ($errors->has($property))
+                                            <span class="text-danger">{{ $errors->first($property) }}</span>
+                                            @endif
+                                        @endif
+                                        @if(strpos($value, 'textarea') !== false )
+                                            <span class="col-form-label col-md-6 col-sm-6" for="name">
+                                                @if(strpos($value, 'title'))
+                                                    {{ strtoupper($customTitles[$property])}}
+                                                @else
+                                                    {{str_replace("_"," ",strtoupper($property))}}
+                                                @endif
+                                                @if(strpos($value, "required") == true)
+                                                <span class='required'>*</span>
+                                                @endif
+                                            </span>
+                                            <textarea
+                                                id={{$property}}
+                                                name={{$property}}
+                                            class="form-control">{{ old($property, $record->$property) }}</textarea>
+                                            @if ($errors->has($property))
+                                                <span class="text-danger">{{ $errors->first($property) }}</span>
+                                            @endif
+                                        @endif
                                     </div>
-                                    <div class="col-md-3">
-                                        <input type="checkbox" {{ $record->$property ? 'checked' : '' }} style="float: right;" id={{$property}} name={{$property}}>                                        </div>
-                                </div>
-                                <br />
-                                @if ($errors->has($property))
-                                    <span class="text-danger">{{ $errors->first($property) }}</span>
+                                @endif
+                            @endif
+                            @php
+                            $index++
+                            @endphp
+
+                        @endforeach
+
+                        @foreach ($model->properties as $property => $value)
+                            @if(!str_contains($model->skipProperties['update'], $property))
+                                @if (strpos($value, 'checkbox'))
+                                    <div class="col-md-2" id={{$property.'_div'}}>
+                                        <div class="col-md-9">
+                                            <label for="middle-name" style="margin-top: 8px;">
+                                                <b>
+                                                    @if(strpos($value, 'title'))
+                                                        {{ strtoupper($customTitles[$property])}}
+                                                    @else
+                                                        {{str_replace("_"," ",strtoupper($property))}}
+                                                    @endif
+                                                </b>
+                                            </label>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <input type="checkbox" {{ $record->$property ? 'checked' : '' }} style="float: right;" id={{$property}} name={{$property}}>                                        </div>
+                                    </div>
+                                    <br />
+                                    @if ($errors->has($property))
+                                        <span class="text-danger">{{ $errors->first($property) }}</span>
+                                    @endif
                                 @endif
                             @endif
                         @endforeach

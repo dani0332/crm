@@ -13,9 +13,12 @@ use DB;
 use App\Models\RewardTranslation;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use App\Http\Requests\RewardRequest;
+use App\Http\Traits\RewardsTrait;
 
 class RewardController extends Controller
 {
+    use RewardsTrait;
     public function __construct()
     {
         $this->middleware('permission:rewards-list|rewards-create|rewards-edit|rewards-delete', ['only' => ['index', 'store']]);
@@ -50,9 +53,9 @@ class RewardController extends Controller
      */
     public function create()
     {
-        $partners = Partner::where('is_active', '=', 1)->orderBy('name', 'asc')->get();
-        $rewardCategories = RewardCategory::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
-        $rewardTags = RewardTag::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
+        $partners = $this->getPartners();
+        $rewardCategories = $this->getRewardCategory();
+        $rewardTags = $this->getRewardTag();
         return view('reward.add', compact('partners', 'rewardTags', 'rewardCategories'));
     }
     /**
@@ -61,18 +64,8 @@ class RewardController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store(RewardRequest $request)
     {
-        $this->validate($request, [
-            'coupon_code' => 'required|max:25',
-            'partner_id' => 'required',
-            'discount' => 'required|string|max:15',
-            'start_date' => 'required',
-            'end_date' => 'required',
-            'reward_categories' => 'required',
-            'reward_tags' => 'required'
-        ]);
-
         // if($request->is_active == 'on'){
         //     throw ValidationException::withMessages(['is_active' => 'There is no translation against this reward please create one first']);
         // }
@@ -121,9 +114,9 @@ class RewardController extends Controller
      */
     public function edit(Reward $reward)
     {
-        $partners = Partner::where('is_active', '=', 1)->orderBy('name', 'asc')->get();
-        $rewardCategories = RewardCategory::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
-        $rewardTags = RewardTag::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
+        $partners = $this->getPartners();
+        $rewardCategories = $this->getRewardCategory();
+        $rewardTags = $this->getRewardTag();
         return view('reward.edit', compact('partners', 'reward', 'rewardCategories', 'rewardTags'));
     }
     /**
@@ -133,18 +126,8 @@ class RewardController extends Controller
      * @param  \App\Reward  $reward
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, reward $reward)
+    public function update(RewardRequest $request, reward $reward)
     {
-        $this->validate($request, [
-            'coupon_code' => 'required|max:25',
-            'partner_id' => 'required|max:120',
-            'discount' => 'required|max:120',
-            'start_date' => 'required',
-            'end_date' => 'required',
-            'reward_categories' => 'required',
-            'reward_tags' => 'required'
-        ]);
-
         if($request->is_active == 'on'){
             if(RewardTranslation::where('reward_id',$reward->id)->count() == 0)
                 throw ValidationException::withMessages(['is_active' => 'There is no translation against this reward please create one first']);

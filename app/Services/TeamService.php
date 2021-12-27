@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Services;
+
 use App\Models\Team;
 use Illuminate\Http\Request;
 use DB;
@@ -11,30 +12,33 @@ class TeamService extends BaseService
     public function __construct()
     {
         $this->query = DB::table('teams as t')
-                        ->select('t.id', 't.uuid', 't.name AS name');
+            ->select('t.id', 't.uuid', 't.name AS name');
     }
 
-    public function getEntity($id){
+    public function getEntity($id)
+    {
         return $this->query->where('t.uuid', $id)->first();
     }
 
-    public function getEntityPlain($id){
-        return Team::where('id',$id)->first();
+    public function getEntityPlain($id)
+    {
+        return Team::where('id', $id)->first();
     }
 
-	public function saveTeams(Request $request)
-	{
+    public function saveTeams(Request $request)
+    {
         $existingTeam = Team::where('name', $request->name)->first();
-        if($existingTeam != null){
+        if ($existingTeam != null) {
             return "Error: name already exists";
         }
         $team = new Team();
         $team->name = $request->name;
         $team->save();
         return Team::find($team->id)->uuid;
-	}
+    }
 
-    public function getGridData($searchProperties, $request){
+    public function getGridData($searchProperties, $request)
+    {
 
         if ($request->ajax()) {
             foreach ($searchProperties as $item) {
@@ -49,22 +53,24 @@ class TeamService extends BaseService
 
 
     public function updateTeams(Request $request, $id)
-	{
-        Team::where('uuid',$id)->update(
-            ['name'=>$request->name]
+    {
+        Team::where('uuid', $id)->update(
+            ['name' => $request->name]
         );
         if (isset($request->return_to_view))
             return redirect("/quotes/teams/" . $id)->with('success', 'Team has been updated');
-	}
+    }
 
-    public function fillModelProperties() {
-        return array (
+    public function fillModelProperties()
+    {
+        return array(
             "id" => "readonly|none",
             "name" => "input|text|required|title",
         );
     }
 
-    public function getCustomTitleByProperty($propertyName){
+    public function getCustomTitleByProperty($propertyName)
+    {
         $title = "";
         switch ($propertyName) {
             case 'name':
@@ -76,14 +82,18 @@ class TeamService extends BaseService
         return $title;
     }
 
-    public function fillModelSkipProperties() {
+    public function fillModelSkipProperties()
+    {
         return [
             'create' => '',
             'list' => '',
+            'show' => '',
+            'update' => '',
         ];
     }
 
-    public function fillModelSearchProperties(){
+    public function fillModelSearchProperties()
+    {
         return ["name"];
     }
 }

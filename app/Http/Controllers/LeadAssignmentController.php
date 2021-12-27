@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Services\CRUDService;
+use App\Models\CarQuoteAdvisorToOE;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Services\BusinessQuoteService;
@@ -14,7 +15,7 @@ use App\Services\LifeQuoteService;
 use App\Services\TravelQuoteService;
 use App\Services\UserService;
 use DataTables;
-use Illuminate\Support\Facades\Redirect;
+use \Carbon\Carbon;
 
 class LeadAssignmentController extends Controller
 {
@@ -69,21 +70,48 @@ class LeadAssignmentController extends Controller
         if (isset($request->leadType) && !empty($request->leadType)) {
 
             $gridData = $this->crudService->getLeads('', '', '', strtolower($request->leadType));
+            $suffix = $this->getQuerySuffix(strtolower($request->leadType));
             if ($request->ajax()) {
-                if (!empty($request->assignedToId))
-                {
-                    $gridData->orWhere('advisor_name', $request->assignedToId);
+                if (!empty($request->assignedToId)) {
+                    $gridData->orWhere($suffix . '.advisor_name', $request->assignedToId);
                 }
-                if (!empty($request->startDate))
-                {
-                    $gridData->whereBetween('created_at', [$request->startDate, $request->endDate]);
+                if (!empty($request->startDate)) {
+                    $dateFrom = Carbon::createFromFormat('Y-m-d', $request->startDate)->startOfDay()->toDateTimeString();
+                    $dateTo = Carbon::createFromFormat('Y-m-d', $request->endDate)->endOfDay()->toDateTimeString();
+                    $gridData->whereBetween($suffix . '.created_at', [$dateFrom, $dateTo]);
                 }
-                return DataTables::of($gridData->orderBy('created_at'))
+                return DataTables::of($gridData->orderBy($suffix . '.created_at'))
                     ->addIndexColumn()
                     ->make(true);
             }
         }
         return view('leadassignment.view', compact('assignToUsers', 'advisors', 'insuranceTypes'));
+    }
+
+    private function getQuerySuffix($leadType)
+    {
+        $suffix = '';
+        switch ($leadType) {
+            case 'health':
+                $suffix = 'hqr';
+                break;
+            case 'life':
+                $suffix = 'lqr';
+                break;
+            case 'travel':
+                $suffix = 'tqr';
+                break;
+            case 'car':
+                $suffix = 'cqr';
+                break;
+            case 'home':
+                $suffix = 'hqr';
+                break;
+            case 'business':
+                $suffix = 'bqr';
+                break;
+        }
+        return $suffix;
     }
 
     /**
@@ -173,6 +201,12 @@ class LeadAssignmentController extends Controller
             $updateTmLead = $this->{$type . 'QuoteService'}->getEntityPlain($id);
             $userId = (int)$assignedToUserIdNew;
             $updateTmLead->advisor_id = $userId;
+            if ($type == 'car') {
+                $advisorOE = CarQuoteAdvisorToOE::where('advisor_id', $userId)->first();
+                if (!empty($advisorOE)) {
+                    $updateTmLead->oe_id = $advisorOE->oe_id;
+                }
+            }
             $updateTmLead->save();
         }
 

@@ -71,7 +71,7 @@ const policyHolderDetail = {
       },
       sections: [
         {
-          label: 'Policy Holder Detail',
+          label: 'Customer Details',
           fields: [
             'first_name',
             'last_name',

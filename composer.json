@@ -25,6 +25,7 @@
         "matthewbdaly/laravel-azure-storage": "^1.6",
         "owen-it/laravel-auditing": "^12.0",
         "parsecsv/php-parsecsv": "^1.3",
+        "predis/predis": "^1.1",
         "sentry/sentry-laravel": "^2.7",
         "spatie/laravel-fractal": "^5.8",
         "spatie/laravel-permission": "^4.0",
