@@ -20,8 +20,8 @@ class CreateTmLeadContactInformationTable extends BaseMigration
                 $table->unsignedBigInteger('tm_lead_id');
                 $table->index('tm_lead_id');
                 $table->foreign('tm_lead_id')->references('id')->on('tm_leads');
-                $table->string('email_address', '50')->nullable();
-                $table->string('phone_number', '20')->nullable();
+                $table->string('email_address', '50');
+                $table->string('phone_number', '20');
                 parent::commonFields($table);
             });
         }

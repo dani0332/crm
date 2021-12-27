@@ -16,10 +16,10 @@ class AlterTableTmLeadContactInformation extends Migration
         Schema::table('tm_lead_contact_information', function (Blueprint $table) {
             
             if(Schema::hasColumn('tm_lead_contact_information', 'email_address')) {
-                $table->string('email_address', '50')->nullable();
+                $table->string('email_address')->nullable()->change();
             }
             if(Schema::hasColumn('tm_lead_contact_information', 'phone_number')) {
-                $table->string('phone_number', '20')->nullable();
+                $table->string('phone_number')->nullable()->change();
             }
         });
     }
