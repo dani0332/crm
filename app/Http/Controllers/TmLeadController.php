@@ -11,14 +11,7 @@ use App\Enums\tmLeadStatusCode;
 use App\Services\TMLeadsService;
 use App\Models\TmInsuranceType;
 use App\Models\TmLeadStatus;
-// use App\Models\Nationality;
-// use App\Models\UAELicenseHeldFor;
-// use App\Models\Emirate;
 use App\Models\User;
-// use App\Models\CarMake;
-// use App\Models\CarModel;
-// use App\Models\CarTypeInsurance;
-// use App\Models\TmLeadType;
 use \Carbon\Carbon;
 use App\Http\Requests\TmLeadRequest;
 use App\Http\Traits\TmLeadTrait;
@@ -47,9 +40,9 @@ class TmLeadController extends Controller
             ->leftjoin('roles', 'roles.id', 'model_has_roles.role_id')
             ->whereIn('roles.name', ['TM_ADVISOR'])->orderBy('roles.name', 'asc')->get();
 
-        $tmInsuranceTypes = $this->getInsuranceTypes(); //TmInsuranceType::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
-        $tmLeadTypes = $this->getLeadTypes(); //TmLeadType::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
-        $tmLeadStatuses = $this->getLeadStatuses(); //TmLeadStatus::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
+        $tmInsuranceTypes = $this->getInsuranceTypes();
+        $tmLeadTypes = $this->getLeadTypes();
+        $tmLeadStatuses = $this->getLeadStatuses();
 
         if (Auth::user()->hasAnyRole(['TM_ADVISOR','TM_AUDIT'])) {
             $isCurrentUserIsAdvisor = "1";
@@ -267,7 +260,7 @@ class TmLeadController extends Controller
 
         $tmLeadStatusCode = TmLeadStatus::where('id', '=', $tmlead->tm_lead_statuses_id)->value('code');
         $tmInsuranceTypeCode = TmInsuranceType::where('id', '=', $tmlead->tm_insurance_types_id)->value('code');
-        $tmLeadStatuses = $this->getLeadStatuses(); //TmLeadStatus::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
+        $tmLeadStatuses = $this->getLeadStatuses();
 
         return view("tmlead.show", compact(
             "tmlead",
