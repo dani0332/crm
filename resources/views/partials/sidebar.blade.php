@@ -18,18 +18,18 @@
                     <li> <a href="{{ url('/home') }}"><i class="fa fa-home"></i> Home</a></li>
                     @endif
                 </ul>
+                @if (Auth::user()->hasAnyRole(['MANAGER','CAR_ADVISOR', 'BUSINESS_ADVISOR', 'HEALTH_ADVISOR','HOME_ADVISOR','LIFE_ADVISOR','TRAVEL_ADVISOR']))
+                    <ul class="nav side-menu">
+                        <li>
+                            <a  href="{{ url('/myleads') }}"><i class="fa fa-inbox"></i> My Leads</a>
+                        </li>
+                    </ul>
+                @endif
                 @can('crm-admin')
                     <ul class="nav side-menu">
                         <li> <a><i class="fa fa-dashboard"></i> Dashboard <span class="fa fa-chevron-down"></span></a>
                             <ul class="nav child_menu">
                                 <li><a href="{{ url('dashboard') }}">Over All Dashboard</a></li>
-                                @if (Auth::user()->hasAnyRole(['CAR_MANAGER','BUSINESS_MANAGER', 'HEALTH_MANAGER','HOME_MANAGER','LIFE_MANAGER','TRAVEL_MANAGER']))
-                                    <li><a href="{{ url('/leadassignment') }}">Lead Assignment</a></li>
-                                @endif
-
-                                @if (Auth::user()->hasAnyRole(['MANAGER','CAR_ADVISOR', 'BUSINESS_ADVISOR', 'HEALTH_ADVISOR','HOME_ADVISOR','LIFE_ADVISOR','TRAVEL_ADVISOR']))
-                                    <li><a href="{{ url('/myleads') }}">My Leads</a></li>
-                                @endif
                             </ul>
                     </ul>
                 @endcan

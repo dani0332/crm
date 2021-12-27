@@ -12,7 +12,8 @@ class SubTypeOfInsurance extends Model implements AuditableContract
 {
     use HasFactory, Auditable;
     protected $table = 'business_type_of_insurance';
-
+    protected $fillable = ['text', 'text_ar', 'sort_order', 'is_active'];
+    
     public function getCreatedAtAttribute($table)
     {
         $date_time_format = Config::get('constants.datetime_format');

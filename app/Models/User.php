@@ -85,7 +85,7 @@ class User extends Authenticatable implements AuditableContract
         $userRoles = Auth::user()->usersroles()->get();
         $isManager = false;
         foreach ($userRoles as $userRole) {
-            if(str_contains(strtolower($userRole->name), 'manager')) {
+            if (str_contains(strtolower($userRole->name), 'manager')) {
                 $isManager = true;
             }
         }
@@ -100,15 +100,28 @@ class User extends Authenticatable implements AuditableContract
         }
     }
 
-    public function isManagerOrDeputy(){
+    public function isManagerOrDeputy()
+    {
         $userRoles = Auth::user()->usersroles()->get();
         $isManagerORDeputy = false;
         foreach ($userRoles as $userRole) {
-            if(str_contains(strtolower($userRole->name), 'manager') || str_contains(strtolower($userRole->name), 'deputy')) {
+            if (str_contains(strtolower($userRole->name), 'manager') || str_contains(strtolower($userRole->name), 'deputy')) {
                 $isManagerORDeputy = true;
             }
         }
         return $isManagerORDeputy;
+    }
+
+    public function isAdmin()
+    {
+        $userRoles = Auth::user()->usersroles()->get();
+        $isAdmin = false;
+        foreach ($userRoles as $userRole) {
+            if (str_contains(strtolower($userRole->name), 'ADMIN')) {
+                $isAdmin = true;
+            }
+        }
+        return $isAdmin;
     }
 
     public function getUserTeams($userId)
@@ -120,7 +133,7 @@ class User extends Authenticatable implements AuditableContract
     }
 
     public function processGetDSL($filters = [])
-    {   
+    {
 
         if (Auth::user()->hasRole('production_approval_manager')) {
 
@@ -130,20 +143,21 @@ class User extends Authenticatable implements AuditableContract
                     $q->where('name', 'pa');
                 }
             )
-            ->get();
+                ->get();
             return $users;
         }
 
-        if(Auth::user()->hasRole('advisor') || Auth::user()->hasRole('ADMIN')) {
+        if (Auth::user()->hasRole('advisor') || Auth::user()->hasRole('ADMIN')) {
 
             $users =  User::select(['id', 'name'])->whereHas(
-                'roles', function($q) use($filters) {
-                    foreach($filters as $key => $value) {
-                        $q->where($key,$value);
+                'roles',
+                function ($q) use ($filters) {
+                    foreach ($filters as $key => $value) {
+                        $q->where($key, $value);
                     }
                 }
             )
-            ->get();
+                ->get();
             return $users;
         }
 

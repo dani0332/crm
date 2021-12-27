@@ -42,7 +42,7 @@
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="logo_image">Logo Image <span class="required">*</span>
                         </label>
                         <div class="col-md-6 col-sm-6 ">
-                            <input type="file" id="logo_image" name="logo_image" /> <br/>
+                            <input type="file" id="logo_image" name="logo_image" required /> <br/>
                             @if ($errors->has('logo_image'))
                                 <span class="text-danger">{{ $errors->first('logo_image') }}</span>
                             @endif
@@ -52,7 +52,7 @@
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="is_active">Is Active</label>
                         <div class="col-md-6 col-sm-6 ">
                         <div class="checkbox">
-                            <input type="checkbox" class="flat" name='is_active'>
+                            <input type="checkbox" class="flat" name='is_active' value="1">
                         </div>
                         </div>
                     </div>

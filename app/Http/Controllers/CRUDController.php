@@ -19,7 +19,7 @@ use App\Services\TeamService;
 use App\Services\TravelQuoteService;
 use App\Services\UserService;
 use DataTables;
-use Auth;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
 use Config;
 use DB;

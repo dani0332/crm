@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Config;
 use DB;
 use \Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 
 class CarQuoteService extends BaseService
 {
@@ -266,6 +267,11 @@ class CarQuoteService extends BaseService
                 $dateTo = Carbon::createFromFormat('Y-m-d', $request['created_at_end'])->endOfDay()->toDateTimeString();
                 $this->query->whereBetween('cqr.created_at', [$dateFrom, $dateTo]);
             }
+            if (Auth::user()->hasRole('ADMIN')) {
+                array_push($searchProperties, 'is_ecommerce');
+                array_push($searchProperties, 'payment_status_id');
+            }
+            //dd($searchProperties, $request->all());
             foreach ($searchProperties as $item) {
                 if (!empty($request[$item]) && $item != "created_at") {
                     $searchedValue = str_contains($request[$item], 'Yes') || str_contains($request[$item], 'No') ? ($request[$item] == 'Yes' ? 1 : 0) : $request[$item];
@@ -285,6 +291,9 @@ class CarQuoteService extends BaseService
                 break;
             case 'car_make':
                 return 'cmake';
+                break;
+            case 'payment_status':
+                return 'ps';
                 break;
             case 'car_model':
                 return 'cmodel';

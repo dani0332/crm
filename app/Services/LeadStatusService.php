@@ -2,22 +2,22 @@
 
 namespace App\Services;
 
-use App\Models\LeadStatus;
 use App\Models\QuoteStatus;
 use Illuminate\Http\Request;
 use DB;
+
 class LeadStatusService extends BaseService
 {
     protected $query;
     public function __construct()
     {
         $this->query = DB::table('quote_status as ls')
-        ->select('ls.id', 'ls.uuid', 'ls.text');
+            ->select('ls.id', 'ls.uuid', 'ls.text', 'ls.created_at', 'ls.updated_at');
     }
-	public function saveLeadStatus(Request $request)
-	{
+    public function saveLeadStatus(Request $request)
+    {
         $existingStatus = QuoteStatus::where('text', $request->text)->first();
-        if($existingStatus != null){
+        if ($existingStatus != null) {
             return "Error: name already exists";
         }
         $leadStatus = new QuoteStatus();
@@ -26,19 +26,20 @@ class LeadStatusService extends BaseService
         $leadStatus->is_active = true;
         $leadStatus->save();
         return QuoteStatus::find($leadStatus->id)->uuid;
-	}
+    }
 
     public function updateLeadStatus(Request $request, $id)
-	{
-        QuoteStatus::where('uuid',$id)->update(
-            ['text'=>$request->text]
+    {
+        QuoteStatus::where('uuid', $id)->update(
+            ['text' => $request->text]
         );
 
         if (isset($request->return_to_view))
-            return redirect("quote/teams/" . $id)->with('success', 'Lead Status has been updated');
-	}
+            return redirect("quote/leadstatus/" . $id)->with('success', 'Lead Status has been updated');
+    }
 
-    public function getGridData($searchProperties, $request){
+    public function getGridData($searchProperties, $request)
+    {
         if ($request->ajax()) {
             foreach ($searchProperties as $item) {
                 if (!empty($request[$item])) {
@@ -46,26 +47,29 @@ class LeadStatusService extends BaseService
                 }
             }
         }
-        $this->query->orderBy('ls.created_at', 'DESC');
-        return $this->query;
+        return $this->query->orderBy('ls.created_at', 'DESC');
     }
 
-    public function getEntity($id){
+    public function getEntity($id)
+    {
         return $this->query->where('ls.uuid', $id)->first();
     }
 
-    public function getEntityPlain($id){
-        return QuoteStatus::where('id',$id)->first();
+    public function getEntityPlain($id)
+    {
+        return QuoteStatus::where('id', $id)->first();
     }
 
-    public function fillModelProperties() {
-        return array (
+    public function fillModelProperties()
+    {
+        return array(
             "id" => "readonly|none",
             "text" => "input|text|required|title",
         );
     }
 
-    public function getCustomTitleByProperty($propertyName){
+    public function getCustomTitleByProperty($propertyName)
+    {
         $title = "";
         switch ($propertyName) {
             case 'text':
@@ -77,13 +81,17 @@ class LeadStatusService extends BaseService
         return $title;
     }
 
-    public function fillModelSkipProperties() {
+    public function fillModelSkipProperties()
+    {
         return [
             'create' => '',
             'list' => '',
+            'update' => '',
+            'show' => '',
         ];
     }
-    public function fillModelSearchProperties(){
+    public function fillModelSearchProperties()
+    {
         return ['text'];
     }
 }
