@@ -14,6 +14,7 @@ class CreateTmLeadContactInformationTable extends BaseMigration
     public function up()
     {
         if (!Schema::hasTable('tm_lead_contact_information')) {
+            
             Schema::create('tm_lead_contact_information', function (Blueprint $table) {
                 $table->id()->autoIncrement();
                 $table->unsignedBigInteger('tm_lead_id');
