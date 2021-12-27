@@ -38,7 +38,7 @@ class FTCMailerService extends Mailable
             ->view('email.'. $this->request['templateName'].'', collect($this->request['templateParams'])->toArray());
 
         if(Arr::has($this->request['templateParams'], 'attachment')){
-            $attachment =   collect($this->request['templateParams']['attachment'])->toArray();
+            $attachment =  $this->request['templateParams']['attachment'];
             foreach($attachment as $filePath){
                 $email->attach($filePath);
             }

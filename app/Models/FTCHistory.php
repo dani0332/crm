@@ -77,11 +77,13 @@ class FTCHistory extends BaseModel
             'templateParams' => $templateParams
         ];
 
-        $attachment = FtcDocument::where(['car_quote_id' => $row->id, 'document' => 9])->get();
+
+        $documentId = LookUpModel::getLookModel('CarQuoteDocuments', ['code', '=', 'code_7']);
+        $attachment = FtcDocument::where(['car_quote_id' => $row->id, 'document' => $documentId])->get();
         if(sizeof($attachment) > 0){
             $params['templateParams']['attachment'] = [];
             foreach ($attachment as $model) { 
-                $params['templateParams']['attachment'][] = Config::get('constants.azure_storage_url').'/'.Config::get('constants.AZURE_STORAGE_CONTAINER').'/'.$model->file_name;
+                $params['templateParams']['attachment'][] = Config::get('constants.azure_storage_url').Config::get('constants.AZURE_STORAGE_CONTAINER').'/'.$model->file_name;
             }
         }
         dispatch(new FTCMailServiceJob($params));
