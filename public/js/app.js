@@ -21119,7 +21119,7 @@ function LeadSnapShot() {
     data: 'kyc'
   }, {
     icon: 'fa fa-line-chart',
-    label: 'FTC Status',
+    label: 'FTC History',
     active: 0,
     id: 5,
     data: 'ftcHistory'

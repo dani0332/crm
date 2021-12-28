@@ -211,7 +211,7 @@ $appName = Config::get('constants.APP_NAME');
         };
     </script>
     <script src="{{ asset('build/js/customjs.js') }}"></script>
-
+    <script src="{{ asset('build/js/tm_js.js') }}"></script>
     <script>
         $(document).ajaxError(function(event, jqxhr, settings, exception) {
             if (exception == 'Unauthorized') {

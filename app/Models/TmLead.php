@@ -80,4 +80,8 @@ class TmLead extends Model implements AuditableContract
     {
         return $this->belongsTo(CarTypeInsurance::class,'car_type_insurance_id','id');
     }
+
+    public function additionalInformation(){
+        return $this->hasMany(TmLeadContactInformation::class,'tm_lead_id','id');
+    }
 }

@@ -12,6 +12,7 @@ use Auth;
 use App\Jobs\FTCMailServiceJob;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Log;
 use LookUpModel;
 use \Carbon\Carbon;
 use Config;
@@ -64,6 +65,8 @@ class FTCHistory extends BaseModel
 
     public function sendFtcEmail($row, $template){
 
+        
+        Log::info('start sendFtcEmail func...');
         $templateParams = collect($row)->toArray();
         $templateParams["insurance_coverage"]["sum_insured"] = $this->prefixAED($templateParams["insurance_coverage"]["sum_insured"]);
         $templateParams["insurance_coverage"]["excess"] = $this->prefixAED($templateParams["insurance_coverage"]["excess"]);
@@ -77,13 +80,21 @@ class FTCHistory extends BaseModel
             'templateParams' => $templateParams
         ];
 
-        $attachment = FtcDocument::where(['car_quote_id' => $row->id, 'document' => 9])->get();
+
+        $documentId = LookUpModel::getLookModel('CarQuoteDocuments', ['code', '=', 'code_7']);
+        $attachment = FtcDocument::where(['car_quote_id' => $row->id, 'document' => $documentId])->get();
         if(sizeof($attachment) > 0){
             $params['templateParams']['attachment'] = [];
             foreach ($attachment as $model) { 
-                $params['templateParams']['attachment'][] = Config::get('constants.azure_storage_url').'/'.Config::get('constants.AZURE_STORAGE_CONTAINER').'/'.$model->file_name;
+
+                $attachmentPath = Config::get('constants.azure_storage_url').Config::get('constants.AZURE_STORAGE_CONTAINER').'/'.$model->file_name;
+                $attachmentPath =   str_replace("//","/",$attachmentPath);
+                $params['templateParams']['attachment'][] = $attachmentPath;
+                Log::info('FTC Email attachment:'.Config::get('constants.azure_storage_url').Config::get('constants.AZURE_STORAGE_CONTAINER').'/'.$model->file_name);
             }
         }
+
+        Log::info('Sending email with params ' . json_encode($params));
         dispatch(new FTCMailServiceJob($params));
 
     }
