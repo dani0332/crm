@@ -58,6 +58,11 @@ class CRUDService extends BaseService
         return $this->{$teamName . 'QuoteService'}->getLeadsForAssignment();
     }
 
+    public function getAdvisorLeads($request, $leadType)
+    {
+        return $this->{$leadType . 'QuoteService'}->{'get' . ucwords($leadType) . 'LeadsForAdvisor'}($request);
+    }
+
     public function getCustomTitleByModelType($modelType, $propertyName)
     {
         $lowerCaseModelType = strtolower($modelType);
@@ -70,8 +75,8 @@ class CRUDService extends BaseService
     {
 
         return User::whereHas('roles', function ($query) use ($modelType) {
-                $query->whereIn('name', [strtoupper($modelType) . '_ADVISOR']);
-            })->get();
+            $query->whereIn('name', [strtoupper($modelType) . '_ADVISOR']);
+        })->get();
     }
 
     public function saveModelByType($modelType, Request $request)

@@ -98,6 +98,40 @@ class TravelQuoteService extends BaseService
         return TravelQuote::orderBy('created_at', 'desc')->get();
     }
 
+    public function getTravelLeadsForAdvisor($request)
+    {
+        $query = DB::table('travel_quote_request as tqr')
+            ->select(
+                'tqr.id',
+                'tqr.uuid',
+                'tqr.code',
+                DB::raw("CONCAT_WS(' ',tqr.first_name,tqr.last_name) AS clientName"),
+                'qs.text as leadStatus',
+                'tqr.created_at as createdAt',
+                'tqr.quote_status_id',
+                'tqrd.advisor_assigned_date as assignedDate',
+                'u.name as assignedBy',
+                'tqr.updated_at',
+                'tqr.source as leadSource',
+            )
+            ->leftJoin('travel_quote_request_detail as tqrd', 'tqrd.travel_quote_request_id', '=', 'tqr.id')
+            ->leftJoin('quote_status as qs', 'qs.id', '=', 'tqr.quote_status_id')
+            ->leftJoin('users as u', 'u.id', '=', 'tqrd.advisor_assigned_by_id')
+            ->where('tqr.advisor_id', Auth::user()->id);
+        if (isset($request->startedAt) && isset($request->endAt) && $request->startedAt != '' && $request->endAt != '') {
+            $dateFrom = Carbon::createFromFormat('Y-m-d', $request->startedAt)->startOfDay()->toDateTimeString();
+            $dateTo = Carbon::createFromFormat('Y-m-d', $request->endAt)->endOfDay()->toDateTimeString();
+            $query->whereBetween('tqrd.advisor_assigned_date', [$dateFrom, $dateTo]);
+        }
+        if (isset($request->cdbId) && $request->cdbId != 0) {
+            $query->where('tqr.code', $request->cdbId);
+        }
+        if (isset($request->leadStatus) && $request->leadStatus != 0) {
+            $query->where('tqr.quote_status_id', $request->leadStatus);
+        }
+        return $query;
+    }
+
     public function getGridData($searchProperties, $request)
     {
         if ($request->ajax()) {

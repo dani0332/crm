@@ -18,6 +18,10 @@
                     url: config.routes.myleadsDataTable,
                     data: function(d) {
                         d.leadType = $("#myLeadsType").val();
+                        d.cdbId = $("#cdbId").val();
+                        d.leadStatus = $("#leadStatus").val();
+                        d.startedAt = $("#startedAt").val();
+                        d.endAt = $("#endAt").val();
                     },
                 },
                 columns: [{
@@ -60,6 +64,12 @@
                 myleadsTable.draw();
                 $(".loader").hide();
             });
+            $("#resetBtn").click(function(e) {
+                e.preventDefault();
+                $(".loader").show();
+                myleadsTable.draw();
+                $(".loader").hide();
+            });
         });
     </script>
     <div class="row">
@@ -81,21 +91,51 @@
                         data-parsley-validate="" novalidate="" autocomplete="off">
                         {{ csrf_field() }}
                         @method('POST')
+                        <select class="form-control" style="display: none" id="myLeadsType" name="leadType">
+
+                            @foreach ($leadTypes as $item)
+                                <option  value="{{$item}}">{{$item}}</option>
+                            @endforeach
+                        </select>
                         <div class="item form-group">
                             <div class="col">
-                                <label class="col-form-label col-md-4 col-sm-4" for="Start Date">Lead Type <span class="required">*</span></label>
+                                <label class="col-form-label col-md-4 col-sm-4" for="Start Date">Assigned Date Start</label>
                                 <div class="col-md-6 col-sm-6">
-                                    <select class="form-control" id="myLeadsType" name="leadType">
-                                        @foreach ($leadTypes as $item)
-                                            <option  value="{{$item}}">{{$item}}</option>
-                                        @endforeach
-                                    </select>
-                                    @if ($errors->has('leadType'))
-                                        <span class="text-danger">{{ $errors->first('leadType') }}</span>
-                                    @endif
+                                    <div class="input-group">
+                                        <input type="date" name="startedAt" id="startedAt" class="form-control">
+                                    </div>
                                 </div>
                             </div>
                             <div class="col">
+                                <label class="col-form-label col-md-4 col-sm-4" for="Start Date">Assigned Date End</label>
+                                <div class="col-md-6 col-sm-6">
+                                    <div class="input-group">
+                                        <input type="date" name="endAt" id="endAt" class="form-control">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="item form-group">
+                            <div class="col">
+                                <label class="col-form-label col-md-4 col-sm-4" for="Start Date">CDB ID</label>
+                                <div class="col-md-6 col-sm-6">
+                                    <div class="input-group">
+                                        <input type="text" name="cdbId" id="cdbId" class="form-control">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col">
+                                <label class="col-form-label col-md-4 col-sm-4" for="Start Date">Lead Status</label>
+                                <div class="col-md-6 col-sm-6">
+                                    <div class="input-group">
+                                        <select class="form-control" id="leadStatus" name="leadStatus">
+                                            <option value="" selected="selected">Select Lead Status</option>
+                                            @foreach ($leadStatusList as $item)
+                                                <option  value="{{$item->id}}">{{$item->text}}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         <div class="item form-group">
@@ -105,7 +145,7 @@
                             <div class="col">
                                 <ul class="nav navbar-right panel_toolbox">
                                     <li><input type="submit" class="btn btn-warning btn-sm" value="Search"></li>
-                                    <li><input type="reset" class="btn btn-warning btn-sm"></li>
+                                    <li><input type="reset" id="resetBtn" class="btn btn-warning btn-sm"></li>
                                 </ul>
                             </div>
                         </div>
