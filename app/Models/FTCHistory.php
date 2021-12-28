@@ -116,8 +116,9 @@ class FTCHistory extends BaseModel
                     $paEmail = null;
                     if($carQuote->pa_id()->first())
                         $paEmail =$carQuote->pa_id()->first()->email;
+                        
                     $carQuote->pa_id = null;
-                    $carQuote->quote_status_id = LookUpModel::getLookModel('QuoteStatus', ['code', '=', $request->input('status')]);
+                    $carQuote->quote_status_id = $request->input('status', '') == 'resubmitForApproval' ? LookUpModel::getLookModel('QuoteStatus', ['code', '=', 'ftc_resubmitted']) : LookUpModel::getLookModel('QuoteStatus', ['code', '=', $request->input('status')]);
                     $carQuote->save();
 
                     if($request->input('status') == 'resubmitForApproval' ) { 
