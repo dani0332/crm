@@ -2,7 +2,7 @@ const leadAttachment = {
   getForm() {
     const form = {
       db_table: 'car_quote_ftc_documents',
-      title: 'Document Attachment',
+      title: 'Upload Documents',
       subtitle: 'document need for insurance purpose',
       access: {
         read: [
@@ -32,15 +32,15 @@ const leadAttachment = {
               'invoicing',
               'production_approval_manager',
             ],
-            write: ['advisor', 'admin'],
-            update: ['advisor', 'admin'],
+            write: ['advisor', 'oe','admin'],
+            update: ['advisor', 'oe', 'admin'],
           },
           rules: { required: true },
           defaultValue: '',
         },
         file_name: {
           type: 'file',
-          label: 'Upload Document',
+          label: 'Select Document',
           field: 'file_name',
           access: {
             read: [
@@ -51,8 +51,8 @@ const leadAttachment = {
               'invoicing',
               'production_approval_manager',
             ],
-            write: ['advisor', 'admin'],
-            update: ['advisor', 'admin'],
+            write: ['advisor','oe', 'admin'],
+            update: ['advisor','oe', 'admin'],
           },
           defaultValue: '',
           rules: { required: true },
@@ -60,7 +60,7 @@ const leadAttachment = {
       },
       sections: [
         {
-          label: 'Document Attachment',
+          label: 'Upload Documents',
           fields: ['document', 'file_name'],
         },
       ],
@@ -70,7 +70,7 @@ const leadAttachment = {
           basic: [
             {
               type: 'dropdown',
-              label: 'Choose Document',
+              label: 'Select Document',
               field: 'document',
               source: 'car_quote_documents',
             },
@@ -87,7 +87,7 @@ const leadAttachment = {
             accessor: 'file_name',
           },
           {
-            Header: 'Document',
+            Header: 'Document Type',
             accessor: d => `${d?.document?.text}`,
           },
         ],

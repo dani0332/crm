@@ -37,14 +37,25 @@ export default function Overview(props) {
         <div className='x_panel'>
           <div className='x_title'>
             <h2>
-              Car Request <small>Overivew</small>
+              Overview
             </h2>
             <div className='clearfix'></div>
           </div>
           <div className='x_content'>
             <div className='clearfix'></div>
             <div className='offset-md-2 col-md-7 hidden-small'>
-              <h2 className='line_30'>Policy Holder Detail</h2>
+            <h2 className='line_30'>Status</h2>
+              <table className='countries_list'>
+                <tbody>
+                  <tr>
+                    <td>Status:</td>
+                    <td className='fs15 fw700 text-right'>
+                      {state.data?.quote_status_id?.text}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+              <h2 className='line_30'>Customer Detail</h2>
               <table className='countries_list'>
                 <tbody>
                   <tr>
@@ -71,25 +82,6 @@ export default function Overview(props) {
                       {state.data?.uae_license_held_for_id?.text}
                     </td>
                   </tr>
-                </tbody>
-              </table>
-              <h2 className='line_30'>Status</h2>
-              <table className='countries_list'>
-                <tbody>
-                  <tr>
-                    <td>FTC status:</td>
-                    <td className='fs15 fw700 text-right'>
-                      {state.data?.quote_status_id?.text}
-                    </td>
-                  </tr>
-                  {/* <tr>
-                        <td>KYC status:</td>
-                        <td class="fs15 fw700 text-right">{state?.data?.kyc_status_id?.text}</td>
-                    </tr>
-                    <tr>
-                        <td>AML status:</td>
-                        <td class="fs15 fw700 text-right">{ state.data?.aml_status ? state.data.aml_status : "Pending" }</td>
-                    </tr> */}
                 </tbody>
               </table>
             </div>

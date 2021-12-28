@@ -29,8 +29,8 @@ export default function KycForm(props) {
       <Tabs>
         <TabList>
           <Tab>KYC</Tab>
-          <Tab>KYC Documents</Tab>
-          <Tab>Request Advisor</Tab>
+          <Tab>Documents</Tab>
+          <Tab>Update Status</Tab>
           <Tab>AML</Tab>
         </TabList>
         <TabPanel>
