@@ -42,14 +42,30 @@
                     <div class="item form-group">
                         <div class="col">
                             <span class="col-form-label col-md-6 col-sm-6">Customer Name <span class="required">*</span></span>
-                            <input type="text" id="customer_name" name="customer_name" value="{{ old('customer_name') }}" class="form-control" data-toggle="tooltip" data-placement="top" title="Please enter customer name">
+                            <input type="text" id="customer_name" name="customer_name" value="{{ old('customer_name') }}" class="form-control" data-toggle="tooltip" data-placement="top" title="Please enter customer name" required>
                             @if ($errors->has('customer_name'))
                                 <span class="text-danger">{{ $errors->first('customer_name') }}</span>
                             @endif
                         </div>
                         <div class="col">
+                            <span class="col-form-label col-md-6 col-sm-6">Phone number <span class="required">*</span></span>
+                            <input type="text" id="phone_number" name="phone_number" value="{{ old('phone_number') }}" class="form-control" data-toggle="tooltip" data-placement="top" required title="Please enter 11 digit phone number. Example: 0563264418">
+                            @if ($errors->has('phone_number'))
+                                <span class="text-danger">{{ $errors->first('phone_number') }}</span>
+                            @endif
+                        </div>
+                    </div>
+                    <div class="item form-group">
+                        <div class="col">
+                            <span class="col-form-label col-md-6 col-sm-6">Email Address <span class="required">*</span></span>
+                            <input type="email" id="email_address" name="email_address" value="{{ old('email_address') }}" class="form-control" data-toggle="tooltip" data-placement="top" title="Please enter email address" required>
+                            @if ($errors->has('email_address'))
+                                <span class="text-danger">{{ $errors->first('email_address') }}</span>
+                            @endif
+                        </div>
+                        <div class="col">
                             <span class="col-form-label col-md-6 col-sm-6">Insurance Type <span class="required">*</span></span>
-                            <select class="form-control" id="tm_insurance_types_id" name="tm_insurance_types_id" data-toggle="tooltip" data-placement="top" title="Please select insurance type">
+                            <select class="form-control" id="tm_insurance_types_id" name="tm_insurance_types_id" data-toggle="tooltip" data-placement="top" title="Please select insurance type" required>
                                 <option value=""></option>
                                 @foreach($tmInsuranceTypes as $tmInsuranceType)
                                     @if (old('tm_insurance_types_id') == $tmInsuranceType->id)
@@ -63,37 +79,18 @@
                                 <span class="text-danger">{{ $errors->first('tm_insurance_types_id') }}</span>
                             @endif
                         </div>
-                       
                     </div>
-                    <div class="item form-group">
-                        <div class="col">
-                            <span class="col-form-label col-md-6 col-sm-6">Email Address <span class="required">*</span></span>
-                            <input type="text" id="email_address" name="email_address" value="{{ old('email_address') }}" class="form-control" data-toggle="tooltip" data-placement="top" title="Please enter email address">
-                            @if ($errors->has('email_address'))
-                                <span class="text-danger">{{ $errors->first('email_address') }}</span>
-                            @endif
-                        </div>
-                        <div class="col">
-                            <span class="col-form-label col-md-6 col-sm-6">Phone number <span class="required">*</span></span>
-                            <input type="text" id="phone_number" name="phone_number" value="{{ old('phone_number') }}" class="form-control" data-toggle="tooltip" data-placement="top" title="Please enter 11 digit phone number. Example: 0563264418">
-                            @if ($errors->has('phone_number'))
-                                <span class="text-danger">{{ $errors->first('phone_number') }}</span>
-                            @endif
-                        </div>
-                        <a href="javascript:void(0);" class="remove_additional_btn" id="add_additional_btn" title="Add field"><img src="/image/add-icon.png"/></a>
-                    </div>
-                    <div id="additional_info"></div>
                     <div class="item form-group">
                         <div class="col">
                             <span class="col-form-label col-md-6 col-sm-6">Enquiry date <span class="required">*</span></span>
-                            <input type="text" id="enquiry_date" name="enquiry_date" value="{{ old('enquiry_date') }}" class="form-control" data-toggle="tooltip" data-placement="top" title="Please select enquiry date">
+                            <input type="text" id="enquiry_date" name="enquiry_date" value="{{ old('enquiry_date') }}" class="form-control" data-toggle="tooltip" data-placement="top" title="Please select enquiry date" required>
                             @if ($errors->has('enquiry_date'))
                                 <span class="text-danger">{{ $errors->first('enquiry_date') }}</span>
                             @endif
                         </div>
                         <div class="col">
                             <span class="col-form-label col-md-6 col-sm-6">Allocation date <span class="required">*</span></span>
-                            <input type="text" id="allocation_date" name="allocation_date" value="{{ old('allocation_date') }}" class="form-control" data-toggle="tooltip" data-placement="top" title="Please select allocation date">
+                            <input type="text" id="allocation_date" name="allocation_date" value="{{ old('allocation_date') }}" class="form-control" data-toggle="tooltip" data-placement="top" title="Please select allocation date" required>
                             @if ($errors->has('allocation_date'))
                                 <span class="text-danger">{{ $errors->first('allocation_date') }}</span>
                             @endif
@@ -103,7 +100,7 @@
                         <div class="item form-group">
                             <div class="col">
                                 <span class="col-form-label col-md-6 col-sm-6">Date of Birth</span>
-                                <input type="text" id="dob" name="dob" value="{{ old('dob') }}" class="form-control" data-toggle="tooltip" data-placement="top" title="Please select date of birth">
+                                <input type="text"  id="dob" name="dob" value="{{ old('dob') }}" class="form-control" data-toggle="tooltip" data-placement="top" title="Please select date of birth">
                             </div>
                             <div class="col">
 
@@ -225,14 +222,13 @@
                             </select>
                         </div>
                     </div>
-                    </div>                  
+                    </div>
                    <div id="redirect_to_view_div"></div>
                     <div class="ln_solid"></div>
                     <div class="row">
                     <div class="col-auto mr-auto"></div>
                         <div class="col-auto">
                             <button type="submit" class="btn btn-warning btn-sm" id="return_to_view" onClick="this.disabled=true;">Create</button>
-                            <!-- <button type="button" class="btn btn-warning btn-sm" id="add_additional_btn" >Add Additional Contact Information</button> -->
                         </div>
                     </div>
                 </form>
