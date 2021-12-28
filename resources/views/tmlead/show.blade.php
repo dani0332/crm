@@ -44,11 +44,12 @@ use App\Enums\tmInsuranceTypeCode;
                             </div>
                         </div>
                         <div class="col">
-                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="Phone number"><b>Phone number</b></label>
+                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="Insurance Type"><b>Insurance Type</b></label>
                             <div class="col-md-6 col-sm-6">
-                            <p class="label-align-center"><a href="tel:{{ $customerCorrectPhoneNo }}" id="ignore-redirection" style="text-decoration:underline;">{{ $customerCorrectPhoneNo }}</a></p>
+                            <p class="label-align-center">{{ $tmlead->tminsurancetype ? $tmlead->tminsurancetype->text : '' }}</p>
                             </div>
                         </div>
+                        
                     </div>
                     <div class="item form-group">
                         <div class="col">
@@ -58,12 +59,30 @@ use App\Enums\tmInsuranceTypeCode;
                             </div>
                         </div>
                         <div class="col">
-                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="Insurance Type"><b>Insurance Type</b></label>
+                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="Phone number"><b>Phone number</b></label>
                             <div class="col-md-6 col-sm-6">
-                            <p class="label-align-center">{{ $tmlead->tminsurancetype ? $tmlead->tminsurancetype->text : '' }}</p>
+                            <p class="label-align-center"><a href="tel:{{ $customerCorrectPhoneNo }}" id="ignore-redirection" style="text-decoration:underline;">{{ $customerCorrectPhoneNo }}</a></p>
                             </div>
                         </div>
                     </div>
+                    @if(count($tmlead->additionalInformation) > 0)
+                        @foreach($tmlead->additionalInformation as $info)
+                            <div class="item form-group">
+                                <div class="col">
+                                    <label class="col-form-label col-md-3 col-sm-3 label-align" for="Email Address"><b>Email Address</b></label>
+                                    <div class="col-md-6 col-sm-6">
+                                    <p class="label-align-center">{{ $info->email_address }}</p>
+                                    </div>
+                                </div>
+                                <div class="col">
+                                    <label class="col-form-label col-md-3 col-sm-3 label-align" for="Phone number"><b>Phone number</b></label>
+                                    <div class="col-md-6 col-sm-6">
+                                    <p class="label-align-center"><a href="tel:{{ mapPhoneNumber($info->phone_number) }}" id="ignore-redirection" style="text-decoration:underline;">{{ mapPhoneNumber($info->phone_number) }}</a></p>
+                                    </div>
+                                </div>
+                            </div>
+                        @endforeach
+                    @endif
                     <div class="item form-group">
                         <div class="col">
                             <label class="col-form-label col-md-3 col-sm-3 label-align" for="Enquiry date"><b>Enquiry date</b></label>
@@ -205,38 +224,7 @@ use App\Enums\tmInsuranceTypeCode;
         </div>
     </div>
 </div>
-@if(count($tmlead->additionalInformation) > 0)
-<div class="row">
-    <div class="col-md-12 col-sm-12">
-        <div class="x_panel">
-            <div class="x_title">
-                <h2>Additional Information</h2>
-                <div class="clearfix"></div>
-            </div>
-            <div class="x_content">
-           
-                @foreach($tmlead->additionalInformation as $info)
-                    <div class="item form-group">
-                        <div class="col">
-                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="Email Address"><b>Email Address</b></label>
-                            <div class="col-md-6 col-sm-6">
-                            <p class="label-align-center">{{ $info->email_address }}</p>
-                            </div>
-                        </div>
-                        <div class="col">
-                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="Phone Number"><b>Phone Number</b></label>
-                            <div class="col-md-6 col-sm-6">
-                            <p class="label-align-center"><a href="tel:{{ $customerCorrectPhoneNo }}" id="ignore-redirection" style="text-decoration:underline;">{{ mapPhoneNumber($info->phone_number) }}</a></p>
-                            </div>
-                        </div>
-                    </div>
-                @endforeach
-            
-            </div>
-        </div>
-    </div>
-</div>
-@endif
+
 <div class="row">
     <div class="col-md-12 col-sm-12">
         <div class="x_panel">

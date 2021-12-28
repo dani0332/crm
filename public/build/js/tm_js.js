@@ -5,11 +5,11 @@ $(document).ready(function () {
     var fieldHTML = `
         <div class="item form-group">
             <div class="col">
-                <span class="col-form-label col-md-6 col-sm-6"><b> Email Address (Optional)</b> <span class="required">*</span></span>
+                <span class="col-form-label col-md-6 col-sm-6"><b> Email Address (Optional)</b> </span>
                 <input type="email" name="emails[]" class="form-control" data-toggle="tooltip" data-placement="top" title="Please enter email address">
             </div>
             <div class="col">
-                <span class="col-form-label col-md-6 col-sm-6"><b>Phone number (Optional)</b> <span class="required">*</span></span>
+                <span class="col-form-label col-md-6 col-sm-6"><b>Phone number (Optional)</b> </span>
                 <input type="text" name="phones[]"class="form-control" data-toggle="tooltip" data-placement="top" title="Please enter 11 digit phone number. Example: 0563264418">
             </div>
             <a href="javascript:void(0);" class="remove_additional_btn" title="Add field"><img src="/image/remove-icon.png"/></a>
