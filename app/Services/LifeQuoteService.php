@@ -170,6 +170,40 @@ class LifeQuoteService extends BaseService
             return redirect("quote/life/" . $lifeQuote->id)->with('success', 'Life Quote has been updated');
     }
 
+    public function getLifeLeadsForAdvisor($request)
+    {
+        $query = DB::table('life_quote_request as lqr')
+            ->select(
+                'lqr.id',
+                'lqr.uuid',
+                'lqr.code',
+                DB::raw("CONCAT_WS(' ',lqr.first_name,lqr.last_name) AS clientName"),
+                'qs.text as leadStatus',
+                'lqr.created_at as createdAt',
+                'lqr.quote_status_id',
+                'lqrd.advisor_assigned_date as assignedDate',
+                'u.name as assignedBy',
+                'lqr.updated_at',
+                'lqr.source as leadSource',
+            )
+            ->leftJoin('life_quote_request_detail as lqrd', 'lqrd.life_quote_request_id', '=', 'lqr.id')
+            ->leftJoin('quote_status as qs', 'qs.id', '=', 'lqr.quote_status_id')
+            ->leftJoin('users as u', 'u.id', '=', 'lqrd.advisor_assigned_by_id')
+            ->where('lqr.advisor_id', Auth::user()->id);
+        if (isset($request->startedAt) && isset($request->endAt) && $request->startedAt != '' && $request->endAt != '') {
+            $dateFrom = Carbon::createFromFormat('Y-m-d', $request->startedAt)->startOfDay()->toDateTimeString();
+            $dateTo = Carbon::createFromFormat('Y-m-d', $request->endAt)->endOfDay()->toDateTimeString();
+            $query->whereBetween('lqrd.advisor_assigned_date', [$dateFrom, $dateTo]);
+        }
+        if (isset($request->cdbId) && $request->cdbId != 0) {
+            $query->where('lqr.code', $request->cdbId);
+        }
+        if (isset($request->leadStatus) && $request->leadStatus != 0) {
+            $query->where('lqr.quote_status_id', $request->leadStatus);
+        }
+        return $query;
+    }
+
     public function getLeads($CDBID, $email, $mobile_no, $lead_type)
     {
         $query = DB::table('life_quote_request as lqr')
