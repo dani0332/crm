@@ -2,17 +2,19 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Customer;
-use App\Models\User;
+use App\Models\QuoteStatus;
 use App\Services\CRUDService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use DataTables;
-use Carbon\Carbon;
-use Config;
 
 class MyLeadsController extends Controller
 {
+    protected $crudService;
+    public function __construct(CRUDService $crudService)
+    {
+        $this->crudService = $crudService;
+    }
     /**
      * Display a listing of the resource.
      *
@@ -28,14 +30,15 @@ class MyLeadsController extends Controller
         foreach ($filtered_collection as $item) {
             array_push($leadTypes, explode('_', $item->name)[0]);
         }
+        $leadStatusList = QuoteStatus::select('id', 'text')->get();
         if ($request->ajax()) {
             $leadType = strtolower($request->leadType);
-            $resultSet = $this->getMyLeadsByType($leadType);
-            return DataTables::of($resultSet->sortBy('assignedBy')->toArray())
+            $gridData = $this->crudService->getAdvisorLeads($request, $leadType);
+            return DataTables::of($gridData)
                 ->addIndexColumn()
                 ->make(true);
         }
-        return view('myleads.view', compact('leadTypes'));
+        return view('myleads.view', compact('leadTypes', 'leadStatusList'));
     }
 
     /**
@@ -67,12 +70,6 @@ class MyLeadsController extends Controller
      */
     public function show($id, CRUDService $crudService)
     {
-        $queryString = explode('&', $id);
-        $recordId = $queryString[0];
-        $leadType = strtolower($queryString[1]);
-        $record = $crudService->getEntity($leadType, $recordId);
-        $resultSet = $this->getMyLeadsByType(strtolower($leadType))->where('uuid', $recordId);
-        return view('myleads.show', compact('record', 'resultSet', 'leadType'));
     }
 
     /**
@@ -107,38 +104,5 @@ class MyLeadsController extends Controller
     public function destroy($id)
     {
         //
-    }
-
-    private function getMyLeadsByType($leadType)
-    {
-        $format = Config::get('constants.datetime_format');
-        $customersWithRelation = Customer::with([
-            $leadType . 'Quotes' => function ($q) {
-                $q->where('advisor_id', '=', Auth::user()->id);
-            },
-            $leadType . 'Quotes.quoteStatus',
-            $leadType . 'Quotes.' . $leadType . 'QuoteRequestDetail',
-            $leadType . 'Quotes.' . $leadType . 'QuoteRequestDetail.assignedBy'
-        ])->get();
-        $resultSet = collect([]);
-        foreach ($customersWithRelation as $customerWithRelation) {
-            if ($customerWithRelation->{$leadType . 'Quotes'}->count() > 0) {
-                foreach ($customerWithRelation->{$leadType . 'Quotes'} as $item) {
-                    $dataObject = [
-                        'id' => $item->id,
-                        'code' => $item->code,
-                        'uuid' => $item->uuid,
-                        'clientName' => $item->first_name . ' ' . $item->last_name,
-                        'leadStatus' => $item->quoteStatus != null ? $item->quoteStatus->first()->text : '',
-                        'createdAt' => Carbon::parse($item->created_at)->format($format),
-                        'assignedDate' => $item->{$leadType . 'QuoteRequestDetail'} != null && $item->{$leadType . 'QuoteRequestDetail'}->assignedBy != null ? $item->{$leadType . 'QuoteRequestDetail'}->advisor_assigned_date : '',
-                        'assignedBy' => $item->{$leadType . 'QuoteRequestDetail'} != null && $item->{$leadType . 'QuoteRequestDetail'}->assignedBy != null ? $item->{$leadType . 'QuoteRequestDetail'}->assignedBy->name : '',
-                        'leadSource' => $item->source,
-                    ];
-                    $resultSet->push($dataObject);
-                }
-            }
-        }
-        return $resultSet;
     }
 }

@@ -162,6 +162,40 @@ class HealthQuoteService extends BaseService
             return redirect("quote/health/" . $id)->with('success', 'Health Quote has been updated');
     }
 
+    public function getHealthLeadsForAdvisor($request)
+    {
+        $query = DB::table('health_quote_request as hqr')
+            ->select(
+                'hqr.id',
+                'hqr.uuid',
+                'hqr.code',
+                DB::raw("CONCAT_WS(' ',hqr.first_name,hqr.last_name) AS clientName"),
+                'qs.text as leadStatus',
+                'hqr.created_at as createdAt',
+                'hqr.quote_status_id',
+                'hqrd.advisor_assigned_date as assignedDate',
+                'u.name as assignedBy',
+                'hqr.updated_at',
+                'hqr.source as leadSource',
+            )
+            ->leftJoin('health_quote_request_detail as hqrd', 'hqrd.health_quote_request_id', '=', 'hqr.id')
+            ->leftJoin('quote_status as qs', 'qs.id', '=', 'hqr.quote_status_id')
+            ->leftJoin('users as u', 'u.id', '=', 'hqrd.advisor_assigned_by_id')
+            ->where('hqr.advisor_id', Auth::user()->id);
+        if (isset($request->startedAt) && isset($request->endAt) && $request->startedAt != '' && $request->endAt != '') {
+            $dateFrom = Carbon::createFromFormat('Y-m-d', $request->startedAt)->startOfDay()->toDateTimeString();
+            $dateTo = Carbon::createFromFormat('Y-m-d', $request->endAt)->endOfDay()->toDateTimeString();
+            $query->whereBetween('hqrd.advisor_assigned_date', [$dateFrom, $dateTo]);
+        }
+        if (isset($request->cdbId) && $request->cdbId != 0) {
+            $query->where('hqr.code', $request->cdbId);
+        }
+        if (isset($request->leadStatus) && $request->leadStatus != 0) {
+            $query->where('hqr.quote_status_id', $request->leadStatus);
+        }
+        return $query;
+    }
+
     public function getLeads($CDBID, $email, $mobile_no, $lead_type)
     {
         $query = DB::table('health_quote_request as hqr')
