@@ -87,8 +87,8 @@ class FTCHistory extends BaseModel
             $params['templateParams']['attachment'] = [];
             foreach ($attachment as $model) { 
 
-                $attachmentPath = Config::get('constants.azure_storage_url').Config::get('constants.AZURE_STORAGE_CONTAINER').'/'.$model->file_name;
-                $attachmentPath =   str_replace("//","/",$attachmentPath);
+                //$attachmentPath = //Config::get('constants.azure_storage_url').Config::get('constants.AZURE_STORAGE_CONTAINER').'/'.$model->file_name;
+                $attachmentPath =   "https://myalfreddev.blob.core.windows.net/myrewards/".$model->file_name;//str_replace("//","/",$attachmentPath);
                 $params['templateParams']['attachment'][] = $attachmentPath;
                 Log::info('FTC Email attachment:'.Config::get('constants.azure_storage_url').Config::get('constants.AZURE_STORAGE_CONTAINER').'/'.$model->file_name);
             }
