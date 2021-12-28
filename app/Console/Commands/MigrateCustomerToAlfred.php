@@ -41,7 +41,7 @@ class migrateCustomerToAlfred extends Command
      */
     public function handle()
     {
-        $customers = Customer::get();
+        $customers = Customer::where('has_alfred_access', 1)->get();
         $customerChunk = $customers->chunk(2);
 
         $bar = $this->output->createProgressBar(count($customers));
@@ -53,7 +53,7 @@ class migrateCustomerToAlfred extends Command
                 $response = Http::post(env('BERLIN_API_ENDPOINT'));
                 $responseBody = json_decode($response->body());
                 MyAlFredUser::insert([
-                    'signup_url' => $responseBody->data->dataValues->url,
+                    'signup_url' => $responseBody->data->url,
                     'customer_id' => $item->id
                 ]);
                 $bar->advance();
