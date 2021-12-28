@@ -64,12 +64,6 @@
                 myleadsTable.draw();
                 $(".loader").hide();
             });
-            $("#resetBtn").click(function(e) {
-                e.preventDefault();
-                $(".loader").show();
-                myleadsTable.draw();
-                $(".loader").hide();
-            });
         });
     </script>
     <div class="row">
@@ -145,7 +139,7 @@
                             <div class="col">
                                 <ul class="nav navbar-right panel_toolbox">
                                     <li><input type="submit" class="btn btn-warning btn-sm" value="Search"></li>
-                                    <li><input type="reset" id="resetBtn" class="btn btn-warning btn-sm"></li>
+                                    <li><input type="reset" class="btn btn-warning btn-sm"></li>
                                 </ul>
                             </div>
                         </div>
