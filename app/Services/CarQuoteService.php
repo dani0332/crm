@@ -259,6 +259,40 @@ class CarQuoteService extends BaseService
         return $title;
     }
 
+    public function getCarLeadsForAdvisor($request)
+    {
+        $query = DB::table('car_quote_request as cqr')
+            ->select(
+                'cqr.id',
+                'cqr.uuid',
+                'cqr.code',
+                DB::raw("CONCAT_WS(' ',cqr.first_name,cqr.last_name) AS clientName"),
+                'qs.text as leadStatus',
+                'cqr.created_at as createdAt',
+                'cqr.quote_status_id',
+                'cqrd.advisor_assigned_date as assignedDate',
+                'u.name as assignedBy',
+                'cqr.updated_at',
+                'cqr.source as leadSource',
+            )
+            ->leftJoin('car_quote_request_detail as cqrd', 'cqrd.car_quote_request_id', '=', 'cqr.id')
+            ->leftJoin('quote_status as qs', 'qs.id', '=', 'cqr.quote_status_id')
+            ->leftJoin('users as u', 'u.id', '=', 'cqrd.advisor_assigned_by_id')
+            ->where('cqr.advisor_id', Auth::user()->id);
+        if (isset($request->startedAt) && isset($request->endAt) && $request->startedAt != '' && $request->endAt != '') {
+            $dateFrom = Carbon::createFromFormat('Y-m-d', $request->startedAt)->startOfDay()->toDateTimeString();
+            $dateTo = Carbon::createFromFormat('Y-m-d', $request->endAt)->endOfDay()->toDateTimeString();
+            $query->whereBetween('cqrd.advisor_assigned_date', [$dateFrom, $dateTo]);
+        }
+        if (isset($request->cdbId) && $request->cdbId != 0) {
+            $query->where('cqr.code', $request->cdbId);
+        }
+        if (isset($request->leadStatus) && $request->leadStatus != 0) {
+            $query->where('cqr.quote_status_id', $request->leadStatus);
+        }
+        return $query;
+    }
+
     public function getGridData($searchProperties, $request)
     {
         if ($request->ajax()) {

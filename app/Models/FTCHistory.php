@@ -12,6 +12,7 @@ use Auth;
 use App\Jobs\FTCMailServiceJob;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Log;
 use LookUpModel;
 use \Carbon\Carbon;
 use Config;
@@ -66,6 +67,8 @@ class FTCHistory extends BaseModel
 
     public function sendFtcEmail($row, $template){
 
+        
+        Log::info('start sendFtcEmail func...');
         $templateParams = collect($row)->toArray();
         $templateParams["insurance_coverage"]["sum_insured"] = $this->prefixAED($templateParams["insurance_coverage"]["sum_insured"]);
         $templateParams["insurance_coverage"]["excess"] = $this->prefixAED($templateParams["insurance_coverage"]["excess"]);
@@ -85,9 +88,16 @@ class FTCHistory extends BaseModel
         if(sizeof($attachment) > 0){
             $params['templateParams']['attachment'] = [];
             foreach ($attachment as $model) { 
-                $params['templateParams']['attachment'][] = Config::get('constants.azure_storage_url').Config::get('constants.AZURE_STORAGE_CONTAINER').'/'.$model->file_name;
+
+                $attachmentPath = Config::get('constants.azure_storage_url').Config::get('constants.AZURE_STORAGE_CONTAINER').'/'.$model->file_name;
+                $attachmentPath =   str_replace("//","/",$attachmentPath);
+                $attachmentPath =   str_replace(":/","://",$attachmentPath);
+                $params['templateParams']['attachment'][] = $attachmentPath;
+                Log::info('FTC Email attachment:'.$attachmentPath);
             }
         }
+
+        Log::info('Sending email with params ' . json_encode($params));
         dispatch(new FTCMailServiceJob($params));
 
     }
@@ -109,8 +119,9 @@ class FTCHistory extends BaseModel
                     $paEmail = null;
                     if($carQuote->pa_id()->first())
                         $paEmail =$carQuote->pa_id()->first()->email;
+
                     $carQuote->pa_id = null;
-                    $carQuote->quote_status_id = LookUpModel::getLookModel('QuoteStatus', ['code', '=', $request->input('status')]);
+                    $carQuote->quote_status_id = $request->input('status', '') == 'resubmitForApproval' ? LookUpModel::getLookModel('QuoteStatus', ['code', '=', 'ftc_resubmitted']) : LookUpModel::getLookModel('QuoteStatus', ['code', '=', $request->input('status')]);
                     $carQuote->save();
 
                     if($request->input('status') == 'resubmitForApproval' ) { 

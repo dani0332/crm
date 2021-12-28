@@ -56,22 +56,6 @@ else {
                             @endif
                         </div>
                         <div class="col">
-                            <span class="col-form-label col-md-6 col-sm-6">Phone number <span class="required">*</span></span>
-                            <input type="text" id="phone_number" name="phone_number" value="{{ old('phone_number', $tmlead->phone_number) }}" class="form-control" data-toggle="tooltip" data-placement="top" title="Please enter 11 digit phone number. Example: 0563264418" style="{{ $readonlyFieldCss }}">
-                            @if ($errors->has('phone_number'))
-                                <span class="text-danger">{{ $errors->first('phone_number') }}</span>
-                            @endif
-                        </div>
-                    </div>
-                    <div class="item form-group">
-                        <div class="col">
-                            <span class="col-form-label col-md-6 col-sm-6">Email Address <span class="required">*</span></span>
-                            <input type="text" id="email_address" name="email_address" value="{{ old('email_address', $tmlead->email_address) }}" class="form-control" data-toggle="tooltip" data-placement="top" title="Please enter email address" style="{{ $readonlyFieldCss }}">
-                            @if ($errors->has('email_address'))
-                                <span class="text-danger">{{ $errors->first('email_address') }}</span>
-                            @endif
-                        </div>
-                        <div class="col">
                             <span class="col-form-label col-md-6 col-sm-6">Insurance Type <span class="required">*</span></span>
                             <select class="form-control" id="tm_insurance_types_id" name="tm_insurance_types_id" data-toggle="tooltip" data-placement="top" title="Please select insurance type">
                             <option value=""></option>
@@ -86,7 +70,45 @@ else {
                                 <span class="text-danger">{{ $errors->first('tm_insurance_types_id') }}</span>
                             @endif
                         </div>
+                       
                     </div>
+                    <div class="item form-group">
+                        <div class="col">
+                            <span class="col-form-label col-md-6 col-sm-6">Email Address <span class="required">*</span></span>
+                            <input type="text" id="email_address" name="email_address" value="{{ old('email_address', $tmlead->email_address) }}" class="form-control" data-toggle="tooltip" data-placement="top" title="Please enter email address" style="{{ $readonlyFieldCss }}">
+                            @if ($errors->has('email_address'))
+                                <span class="text-danger">{{ $errors->first('email_address') }}</span>
+                            @endif
+                        </div>
+                        <div class="col">
+                            <span class="col-form-label col-md-6 col-sm-6">Phone number <span class="required">*</span></span>
+                            <input type="text" id="phone_number" name="phone_number" value="{{ old('phone_number', $tmlead->phone_number) }}" class="form-control" data-toggle="tooltip" data-placement="top" title="Please enter 11 digit phone number. Example: 0563264418" style="{{ $readonlyFieldCss }}">
+                            @if ($errors->has('phone_number'))
+                                <span class="text-danger">{{ $errors->first('phone_number') }}</span>
+                            @endif
+                        </div>
+                        <a href="javascript:void(0);" class="" id="add_additional_btn" title="Add field"><img src="/image/add-icon.png"/></a>
+                    </div>
+                   
+                        <div id="additional_info">
+                        @if(count($tmlead->additionalInformation) > 0)
+                            @foreach($tmlead->additionalInformation as $info)
+                                <div class="item form-group">
+                                    <div class="col">
+                                        <span class="col-form-label col-md-6 col-sm-6"><b> Email Address (Optional)</b> </span>
+                                        <input type="email" name="emails[]" class="form-control" data-toggle="tooltip" data-placement="top" title="Please enter email address" value="{{$info->email_address}}">
+                                    </div>
+                                    <div class="col">
+                                        <span class="col-form-label col-md-6 col-sm-6"><b>Phone number (Optional)</b> </span>
+                                        <input type="text" name="phones[]"class="form-control" data-toggle="tooltip" data-placement="top" title="Please enter 11 digit phone number. Example: 0563264418"  value="{{$info->phone_number}}">
+                                    </div>
+                                    <a href="javascript:void(0);" class="remove_additional_btn" title="Add field"><img src="/image/remove-icon.png"/></a>
+                                </div>
+                            @endforeach
+                            @endif
+                        </div>
+                    
+
                     <div class="item form-group">
                         <div class="col">
                             <span class="col-form-label col-md-6 col-sm-6">Enquiry date <span class="required">*</span></span>
@@ -231,12 +253,14 @@ else {
                         </div>
                     </div>
                     </div>
+
                     <div id="redirect_to_view_div"></div>
                     <div class="ln_solid"></div>
                     <div class="row">
                         <div class="col-auto mr-auto"></div>
                         <div class="col-auto">
                             <button type="submit" class="btn btn-warning btn-sm" id="return_to_view" onClick="this.disabled=true;">Update</button>
+                            <!-- <button type="button" class="btn btn-warning btn-sm" id="add_additional_btn" >Add Additional Contact Information</button> -->
                         </div>
                     </div>
                 </form>
