@@ -86,11 +86,13 @@ class FTCHistory extends BaseModel
         if(sizeof($attachment) > 0){
             $params['templateParams']['attachment'] = [];
             foreach ($attachment as $model) { 
-                $params['templateParams']['attachment'][] = Config::get('constants.azure_storage_url').Config::get('constants.AZURE_STORAGE_CONTAINER').'/'.$model->file_name;
+
+                $attachmentPath = Config::get('constants.azure_storage_url').Config::get('constants.AZURE_STORAGE_CONTAINER').'/'.$model->file_name;
+                $attachmentPath =   str_replace("//","/",$attachmentPath);
+                $params['templateParams']['attachment'][] = $attachmentPath;
                 Log::info('FTC Email attachment:'.Config::get('constants.azure_storage_url').Config::get('constants.AZURE_STORAGE_CONTAINER').'/'.$model->file_name);
             }
         }
-
 
         Log::info('Sending email with params ' . json_encode($params));
         dispatch(new FTCMailServiceJob($params));
