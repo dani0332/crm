@@ -17499,7 +17499,7 @@ var carQuotePolicy = {
         },
         amount_paid: {
           type: 'text',
-          label: 'Amound Paid',
+          label: 'Gross Premium Amount (AED)',
           access: {
             read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'payment', 'production_approval_manager']
           }
@@ -19495,18 +19495,6 @@ var vehicleSubform = {
             update: ['advisor', 'oe', 'admin']
           }
         },
-        currently_insured_with: {
-          type: 'text',
-          label: 'Cyurrently With (Insurer Name)',
-          rules: {
-            required: true
-          },
-          access: {
-            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'payment', 'production_approval_manager'],
-            write: ['oe', 'advisor'],
-            update: ['oe', 'advisor']
-          }
-        },
         vehicle_color: {
           type: 'text',
           label: 'Color of the vehicle',
@@ -19573,7 +19561,7 @@ var vehicleSubform = {
       },
       sections: [{
         label: '',
-        fields: ['engine_capacity', 'cylinder', 'chassis_number', 'engine_number', 'date_first_registration', 'currently_insured_with', 'vehicle_color', 'seating_capacity', 'specs', 'current_cover', 'vehicle_modified']
+        fields: ['engine_capacity', 'cylinder', 'chassis_number', 'engine_number', 'date_first_registration', 'vehicle_color', 'seating_capacity', 'specs', 'current_cover', 'vehicle_modified']
       }],
       view: {
         find: {
@@ -19670,6 +19658,31 @@ var vehicleDetail = {
             update: []
           }
         },
+        currently_insured_with: {
+          type: 'dropdown',
+          label: 'Cyurrently With (Insurer Name)',
+          rules: {
+            required: true
+          },
+          access: {
+            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'payment', 'production_approval_manager'],
+            write: [],
+            update: []
+          }
+        },
+        car_type_insurance_id: {
+          type: 'dropdown',
+          label: 'Type of Insurance',
+          source: 'car_type_insurance',
+          rules: {
+            required: true
+          },
+          access: {
+            read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'payment', 'production_approval_manager'],
+            write: [],
+            update: []
+          }
+        },
         emirate_of_registration_id: {
           type: 'dropdown',
           label: 'Emirate of Registration',
@@ -19718,7 +19731,7 @@ var vehicleDetail = {
       },
       sections: [{
         label: 'Vehicle Details',
-        fields: ['Year_of_manufacture', 'car_model_id', 'car_make_id', 'car_value', 'emirate_of_registration_id', 'uae_license_held_for_id', 'claim_history_id', 'vehicle_detail_id']
+        fields: ['Year_of_manufacture', 'car_model_id', 'car_make_id', 'car_value', 'currently_insured_with', 'car_type_insurance_id', 'emirate_of_registration_id', 'uae_license_held_for_id', 'claim_history_id', 'vehicle_detail_id']
       }],
       view: {
         find: {
@@ -21119,7 +21132,7 @@ function LeadSnapShot() {
     data: 'kyc'
   }, {
     icon: 'fa fa-line-chart',
-    label: 'FTC Status',
+    label: 'FTC History',
     active: 0,
     id: 5,
     data: 'ftcHistory'

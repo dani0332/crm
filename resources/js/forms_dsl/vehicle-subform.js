@@ -114,24 +114,6 @@ let vehicleSubform = {
             update: ['advisor', 'oe', 'admin'],
           },
         },
-        currently_insured_with:{
-          type: 'text',
-          label: 'Cyurrently With (Insurer Name)',
-          rules: { required: true },
-          access: {
-            read: [
-              'advisor',
-              'oe',
-              'pa',
-              'admin',
-              'invoicing',
-              'payment',
-              'production_approval_manager',
-            ],
-            write: [ 'oe','advisor'],
-            update: [ 'oe','advisor'],
-          },
-        },
         vehicle_color: {
           type: 'text',
           label: 'Color of the vehicle',
@@ -239,7 +221,6 @@ let vehicleSubform = {
             'chassis_number',
             'engine_number',
             'date_first_registration',
-            'currently_insured_with',
             'vehicle_color',
             'seating_capacity',
             'specs',

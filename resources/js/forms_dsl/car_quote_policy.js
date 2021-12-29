@@ -142,7 +142,7 @@ const carQuotePolicy = {
         },
         amount_paid: {
           type: 'text',
-          label: 'Amound Paid',
+          label: 'Gross Premium Amount (AED)',
           access: {
             read: [
               'pa',
