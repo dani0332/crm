@@ -87,7 +87,7 @@ class CarQuotePayment extends BaseModel
                         
                         // when transaction declined
                         $transcDeclinedId = LookUpModel::getLookModel('QuoteStatus', ['code', '=', 'transaction_declined']);
-                        if($transcDeclinedId = $carQuote->quote_status_id){
+                        if($transcDeclinedId == $carQuote->quote_status_id){
                             $carQuote->quote_status_id =  LookUpModel::getLookModel('QuoteStatus', ['code', '=', 'AMLScreeningCleared']);
                             return $carQuote->save();
                         }else{
