@@ -26,7 +26,7 @@ class CustomerWEGenerateUrlService extends BaseService
             if ($getStatusCode == 200) {
                 $getContents = $berlinRequest->getBody();
                 $getdecodeContents = json_decode($getContents);
-                $getResponseUrl = $getdecodeContents->url;
+                $getResponseUrl = $getdecodeContents->data->url;
             }
         } catch (\GuzzleHttp\Exception\BadResponseException $e) {
             $responseErrorCode = $e->getResponse()->getStatusCode();
