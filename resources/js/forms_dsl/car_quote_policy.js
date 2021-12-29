@@ -52,8 +52,7 @@ const carQuotePolicy = {
             ],
             write: ['pa'],
             update: ['pa'],
-          },
-          rules: { required: true },
+          }
         },
         policy_number: {
           type: 'text',
@@ -89,7 +88,26 @@ const carQuotePolicy = {
             write: ['pa', 'admin'],
             update: ['pa', 'admin'],
           },
-          // rules: { required: true }
+          // rules: { required: true }//
+        },
+        policy_type: {
+          type: 'dropdown',
+          label: 'Policy Type',
+          access: {
+            read: [
+              'pa',
+              'advisor',
+              'oe',
+              'admin',
+              'invoicing',
+              'payment',
+              'production_approval_manager',
+            ],
+            write: ['pa', 'admin'],
+            update: ['pa', 'admin'],
+          },
+          source: ['Comprehensive', 'TPL'],
+          rules: { required: true },
         },
         start_date: {
           type: 'datePicker',
@@ -179,7 +197,7 @@ const carQuotePolicy = {
             } else return { value: item?.id, label: item?.name };
           },
         },
-        typeofinsurance: {
+        type_of_insurance_id: {
           type: 'dropdown',
           label: 'Type of Insurance',
           source: 'type_of_insurances',
@@ -211,14 +229,14 @@ const carQuotePolicy = {
               'production_approval_manager',
             ],
           },
-          // transform(item) {
-          //   if (Array.isArray(item)) {
-          //     const items = item.map(u => {
-          //       return { value: u?.id, label: u?.name };
-          //     });
-          //     return items;
-          //   } else return { value: item?.id, label: item?.name };
-          // },
+          transform(item) {
+            if (Array.isArray(item)) {
+              const items = item.map(u => {
+                return { value: u?.id, label: u?.name };
+              });
+              return items;
+            } else return { value: item?.id, label: item?.name };
+          },
         },
       },
       sections: [
@@ -229,9 +247,10 @@ const carQuotePolicy = {
             'approval_code',
             'amount_paid',
             'payment_mode_id',
-            'typeofinsurance',
+            'type_of_insurance_id',
             'insurance_company_id',
             'quote_number',
+            'policy_type',
             'policy_number',
             'issue_date',
             'start_date',

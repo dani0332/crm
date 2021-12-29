@@ -14460,7 +14460,7 @@ function DatePickerField(_ref) {
   return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_3__.jsx)((react_datepicker__WEBPACK_IMPORTED_MODULE_4___default()), {
     disabled: shouldDisable,
     className: "form-control",
-    dateFormat: "yyyy-MM-dd",
+    dateFormat: "dd-MM-yyy",
     selected: startDate ? startDate : field !== null && field !== void 0 && field.value ? new Date(field.value) : null,
     onChange: onChange
   });
@@ -17445,9 +17445,6 @@ var carQuotePolicy = {
             read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'payment', 'production_approval_manager'],
             write: ['pa'],
             update: ['pa']
-          },
-          rules: {
-            required: true
           }
         },
         policy_number: {
@@ -17469,8 +17466,21 @@ var carQuotePolicy = {
             read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'payment', 'production_approval_manager'],
             write: ['pa', 'admin'],
             update: ['pa', 'admin']
-          } // rules: { required: true }
+          } // rules: { required: true }//
 
+        },
+        policy_type: {
+          type: 'dropdown',
+          label: 'Policy Type',
+          access: {
+            read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'payment', 'production_approval_manager'],
+            write: ['pa', 'admin'],
+            update: ['pa', 'admin']
+          },
+          source: ['Comprehensive', 'TPL'],
+          rules: {
+            required: true
+          }
         },
         start_date: {
           type: 'datePicker',
@@ -17526,7 +17536,7 @@ var carQuotePolicy = {
             };
           }
         },
-        typeofinsurance: {
+        type_of_insurance_id: {
           type: 'dropdown',
           label: 'Type of Insurance',
           source: 'type_of_insurances',
@@ -17546,20 +17556,26 @@ var carQuotePolicy = {
           },
           access: {
             read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'payment', 'production_approval_manager']
-          } // transform(item) {
-          //   if (Array.isArray(item)) {
-          //     const items = item.map(u => {
-          //       return { value: u?.id, label: u?.name };
-          //     });
-          //     return items;
-          //   } else return { value: item?.id, label: item?.name };
-          // },
-
+          },
+          transform: function transform(item) {
+            if (Array.isArray(item)) {
+              var items = item.map(function (u) {
+                return {
+                  value: u === null || u === void 0 ? void 0 : u.id,
+                  label: u === null || u === void 0 ? void 0 : u.name
+                };
+              });
+              return items;
+            } else return {
+              value: item === null || item === void 0 ? void 0 : item.id,
+              label: item === null || item === void 0 ? void 0 : item.name
+            };
+          }
         }
       },
       sections: [{
         label: 'Car Quote Policy Record',
-        fields: ['customer', 'approval_code', 'amount_paid', 'payment_mode_id', 'typeofinsurance', 'insurance_company_id', 'quote_number', 'policy_number', 'issue_date', 'start_date', 'end_date']
+        fields: ['customer', 'approval_code', 'amount_paid', 'payment_mode_id', 'type_of_insurance_id', 'insurance_company_id', 'quote_number', 'policy_type', 'policy_number', 'issue_date', 'start_date', 'end_date']
       }],
       view: {
         label: 'Policy Number',
