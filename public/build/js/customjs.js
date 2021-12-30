@@ -1247,7 +1247,7 @@ $(document).ready(function () {
         { data: 'handlers_name', name: 'handlers_name' },
         { data: 'created_at', name: 'created_at' },
         { data: 'updated_at', name: 'updated_at' }
-       
+
         ],
         createdRow: function (row, data, index) {
 
@@ -1440,7 +1440,7 @@ $(document).ready(function () {
         }
 
         if (tm_insurance_types_id_code == 'Car' || tm_insurance_types_id_code == 'Bike' ||
-            tm_insurance_types_id_code == 'Life' || tm_insurance_types_id_code == 'Health') {
+            tm_insurance_types_id_code == 'Life' || tm_insurance_types_id_code == 'Health' || tm_insurance_types_id_code == 'Critical') {
             $("#tm_dob_field").show();
         } else {
             $("#tm_dob_field").hide();

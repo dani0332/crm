@@ -19,4 +19,5 @@ final class tmInsuranceTypeCode extends Enum
     const Bike = "Bike";
     const Yacht = "Yacht";
     const Travel = "Travel";
+    const Critical = "Critical";
 }
