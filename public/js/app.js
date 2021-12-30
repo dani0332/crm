@@ -17812,15 +17812,21 @@ var leadRequest = {
               update: []
             }
           }, {
-            type: 'datePicker',
-            label: 'Created At',
-            field: 'created_at',
+            type: 'dropdown',
+            label: 'Payment Status',
+            field: 'payment_status_id',
+            source: [{
+              id: 6,
+              text: 'AUTHORISED'
+            }, {
+              id: 10,
+              text: 'PAID'
+            }],
             access: {
               read: ['oe', 'advisor'],
               write: [],
               update: []
-            } // rules: { required: true }
-
+            }
           }],
           advanced: []
         },
