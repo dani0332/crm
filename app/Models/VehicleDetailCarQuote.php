@@ -17,8 +17,8 @@ class VehicleDetailCarQuote extends BaseModel
             "pa" => [ ],
             "production_approval_manager" => [ ],
             "invoicing" => [ ],
-            "advisor" => ['car_quote_id','engine_capacity' , 'cylinder' , 'chassis_number', 'engine_number', 'vehicle_color', 'seating_capacity','vehicle_modified', 'specs', 'current_cover', 'date_first_registration', 'car_value', 'currently_insured_with'  ],
-            "oe" => ['car_quote_id','engine_capacity' , 'cylinder' , 'chassis_number', 'engine_number', 'vehicle_color', 'seating_capacity','vehicle_modified', 'specs', 'current_cover', 'date_first_registration', 'car_value', 'currently_insured_with'  ],
+            "advisor" => ['car_quote_id','engine_capacity' , 'cylinder' , 'chassis_number', 'engine_number', 'vehicle_color', 'seating_capacity','vehicle_modified', 'specs', 'current_cover', 'date_first_registration', 'currently_insured_with'  ],
+            "oe" => ['car_quote_id','engine_capacity' , 'cylinder' , 'chassis_number', 'engine_number', 'vehicle_color', 'seating_capacity','vehicle_modified', 'specs', 'current_cover', 'date_first_registration', 'currently_insured_with'  ],
             "admin" => ['car_quote_id','engine_capacity' , 'cylinder' , 'chassis_number', 'engine_number', 'vehicle_color', 'seating_capacity','vehicle_modified', 'specs', 'current_cover', 'date_first_registration' ],
         ],
         "list" => [

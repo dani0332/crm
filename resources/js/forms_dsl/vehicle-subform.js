@@ -220,7 +220,7 @@ let vehicleSubform = {
       },
       sections: [
         {
-          label: 'Add Vehicle Detail',
+          label: '',
           fields: [
             'engine_capacity',
             'cylinder',

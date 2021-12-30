@@ -170,6 +170,7 @@
                           <th>TM Id</th>
                           <th>Customer Name</th>
                           <th>Insurance Type</th>
+                          <th>Lead Type</th>
                           <th>Lead Status</th>
                           <th>Notes</th>
                           <th>Enquiry Date</th>
@@ -178,6 +179,7 @@
                           <th>Assigned To</th>
                           <th>Created At</th>
                           <th>Updated At</th>
+                         
                         </tr>
                       </thead>
 
