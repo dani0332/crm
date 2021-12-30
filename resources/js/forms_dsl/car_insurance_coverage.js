@@ -386,15 +386,15 @@ let insuranceDetail = {
             form.access = access
             return form
           },
-          transformBeforeOpenEditMode(form) {
-            console.log('-------------transformBeforeOpenEditMode---------------')
-            console.log(form)
-            console.log('-------------transformBeforeOpenEditMode---------------')
-            // if(form?.getForm?.context === 'car_quote_snap' && form?.formState === 'list' && form?.getForm?.multi === false) {
-            //     return { ...data, mode_id: { id: data?.mode_id?.id, text: data?.mode_id?.name}}
-            // }
-            // return data
-          },
+          // transformBeforeOpenEditMode(form) {
+          //   console.log('-------------transformBeforeOpenEditMode---------------')
+          //   console.log(form)
+          //   console.log('-------------transformBeforeOpenEditMode---------------')
+          //   // if(form?.getForm?.context === 'car_quote_snap' && form?.formState === 'list' && form?.getForm?.multi === false) {
+          //   //     return { ...data, mode_id: { id: data?.mode_id?.id, text: data?.mode_id?.name}}
+          //   // }
+          //   // return data
+          // },
           applyFilter(options) {
             const {
               params: { id },
