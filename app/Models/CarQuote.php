@@ -202,7 +202,8 @@ class CarQuote extends BaseModel
             "advisor" => [ 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'created_at','car_value', 'dob', 'nationality_id' ],
             "oe" => [ 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'created_at','car_value', 'dob', 'nationality_id' ],
             "admin" => [ 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'created_at','car_value' ],
-            "payment" => [ 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'created_at','payment_id']
+            "payment" => [ 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'created_at','payment_id'],
+            "invoicing" => [ 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'created_at','invoicing'],
         ],
         "list" => [
             "pa" => [ 'id','code', 'first_name', 'last_name',  'created_at', "pa_id", "kyc_status_id","quote_status_id","aml_status","payment_id","car_value", "currently_insured_with", "car_type_insurance_id"],
@@ -211,7 +212,7 @@ class CarQuote extends BaseModel
             "oe" => [ 'id','code', 'first_name', 'last_name', 'updated_at', 'created_at', "pa_id", "kyc_status_id","quote_status_id","aml_status","payment_id","car_value", "currently_insured_with", "car_type_insurance_id"],
             "admin" => [ 'id','code', 'first_name', 'last_name',  'created_at', "kyc_status_id","quote_status_id","aml_status","payment_id","car_value", "currently_insured_with", "car_type_insurance_id"],
             "payment" => [ 'id','code', 'first_name', 'last_name',"pa_id",  'created_at' , "kyc_status_id","quote_status_id","aml_status","payment_id","car_value", "currently_insured_with", "car_type_insurance_id"],
-            "invoicing" => [ 'id','code', 'first_name', 'last_name',"pa_id",  'created_at' , "kyc_status_id","quote_status_id","aml_status","payment_id","car_value", "currently_insured_with", "car_type_insurance_id"]
+            "invoicing" => [ 'id','code', 'first_name', 'last_name',"pa_id",  'created_at' , "kyc_status_id","quote_status_id","aml_status","payment_id","car_value", "currently_insured_with", "car_type_insurance_id", "invoicing"]
         ],
         "detail" => [
             "pa" => [ 'id','code', 'dob','first_name', 'last_name', 'email', 'mobile_no','Year_of_manufacture',"kyc_status_id","quote_status_id", 'created_at', "car_make_id", "car_model_id","car_value", "emirate_of_registration_id", "claim_history_id",  "nationality_id","uae_license_held_for_id", "pa_id","aml_status","payment_id", "currently_insured_with", "car_type_insurance_id"],
@@ -284,6 +285,20 @@ class CarQuote extends BaseModel
                     $restrictFilter["advisor_id"] = ["op" => "<>", "val" => ''];
                     $restrictFilter["quote_status_id"] =  ["op" => "in", "val" => $valuesIn];
                 }
+            } //invoicing
+
+            if(Auth::user()->hasRole('invoicing')) {
+                if(!array_key_exists('pa_id', $filters)){
+                    return [];
+                }else{
+
+                    $valuesIn = [];
+                    array_push($valuesIn,  LookUpModel::getLookModel('QuoteStatus', ['code', '=', 'policy_issued']));
+                    $pa_id = $filters["pa_id"] == 0 ? NULL : Auth::user()->id;
+                    $restrictFilter["invoicing"] = $pa_id;
+                    $restrictFilter["advisor_id"] = ["op" => "<>", "val" => ''];
+                    $restrictFilter["quote_status_id"] =  ["op" => "in", "val" => $valuesIn];
+                }
             }
 
             if(empty($restrictFilter))
@@ -332,6 +347,36 @@ class CarQuote extends BaseModel
             if($carQuote) {
                 $templateParams = [
                     'notes' => "Lead has been assigned to a Payment team member",
+                    "first_name" => $carQuote->first_name,
+                    "last_name" => $carQuote->last_name,
+                    "code" => $carQuote->code
+                ];
+
+                $advisorEmail = $carQuote->advisor_id()->get()->first()->email;
+                if($advisorEmail) {
+                    $params = [
+                        'to' => $advisorEmail,
+                        'subject' => LookUpModel::subjectForFTCEmailCarQuote($carQuote),
+                        'templateName' => 'notification',
+                        'templateParams' => $templateParams
+                    ];
+                    
+                    $oeId = $carQuote->oe_id()->first();
+                    if($oeId && $oeId->email)
+                        $params['cc'] = $oeId->email;
+                    dispatch(new FTCMailServiceJob($params));
+                }
+            }
+            
+            return parent::saveForm($request, true);
+        }
+        else if(Auth::user()->hasRole('invoicing') && $request->has('action')){
+            $request->request->add(['invoicing' => Auth::user()->id]);
+
+            $carQuote = CarQuote::where(['id' => $request->form_id])->whereNull('invoicing')->first();
+            if($carQuote) {
+                $templateParams = [
+                    'notes' => "Lead has been assigned to a Invoicing team member",
                     "first_name" => $carQuote->first_name,
                     "last_name" => $carQuote->last_name,
                     "code" => $carQuote->code

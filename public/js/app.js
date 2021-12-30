@@ -17807,7 +17807,7 @@ var leadRequest = {
               text: 'Assigned Leads'
             }],
             access: {
-              read: ['pa', 'payment'],
+              read: ['pa', 'payment', 'invoicing'],
               write: [],
               update: []
             }
@@ -17943,6 +17943,8 @@ var leadRequest = {
               showConfirmMsg();
             } else if (role === 'payment' && !row.payment_id) {
               showConfirmMsg();
+            } else if (role === 'invoicing' && !row.invoicing) {
+              showConfirmMsg(); //123
             } else {
               dispatch({
                 type: 'VISIBLE_FORM',

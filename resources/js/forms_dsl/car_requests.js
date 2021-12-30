@@ -14,8 +14,8 @@ const leadRequest = {
           'advisor',
           'oe',
           'admin',
-            'invoicing',
-            'payment',
+          'invoicing',
+          'payment',
           'production_approval_manager',
           'production_approval_manager',
         ],
@@ -182,7 +182,7 @@ const leadRequest = {
                 { id: 1, text: 'Assigned Leads' },
               ],
               access: {
-                read: ['pa', 'payment'],
+                read: ['pa', 'payment', 'invoicing'],
                 write: [],
                 update: [],
               },
@@ -293,7 +293,11 @@ const leadRequest = {
               showConfirmMsg();
             } else if (role === 'payment' && !row.payment_id) {
               showConfirmMsg();
-            } else {
+            }
+            else if (role === 'invoicing' && !row.invoicing) {
+              showConfirmMsg(); //123
+            }
+            else {
               dispatch({ type: 'VISIBLE_FORM', formState: 'reset' });
               history.push('/lead/' + row.id);
             }
