@@ -42,7 +42,7 @@ let insuranceDetail = {
           type: 'dropdown',
           label: 'Insurance Company',
           source: 'insurance_provider',
-          filter: {insurance_company_id: { op: "<>", val: "null"}},
+          filter: {is_active: { op: "=", val: 1}},
           appendFilterToFields:[
             { 
               field: 'insurance_plan_id', 
@@ -63,14 +63,13 @@ let insuranceDetail = {
             write: ['advisor','oe', 'admin'],
             update: ['advisor','oe', 'admin'],
           },
-          // transform(item) {
-          //   if (Array.isArray(item)) {
-          //     const items = item.map(u => {
-          //       return { value: u?.id, label: u?.name };
-          //     });
-          //     return items;
-          //   } else return { value: item?.id, label: item?.name };
-          // },
+          valueTransform(field) {
+            if(field?.formState === "read" && field?.selectedRecord){
+              if(field?.selectedRecord?.insurance_company_id)
+                return { value: field?.selectedRecord?.insurance_company_id?.id, label: field?.selectedRecord?.insurance_company_id?.text}
+              return  { value: field?.selectedRecord?.car_quote_id?.plan_id?.provider_id?.id, label: field?.selectedRecord?.car_quote_id?.plan_id?.provider_id?.text }
+            }
+          },
         },
         insurance_plan_id: {
           type: 'dropdown',
@@ -88,6 +87,18 @@ let insuranceDetail = {
             ],
             write: ['advisor', 'oe', 'admin'],
             update: ['advisor', 'oe', 'admin'],
+          },
+          valueTransform(field) {
+
+          console.log('---**********SelectRender-************----');
+          console.log(field?.selectedRecord);
+          console.log('---**********SelectRender-************----');
+          if(field?.formState === "read" && field?.selectedRecord){
+              if(field?.selectedRecord?.insurance_plan_id)
+                return { value: field?.selectedRecord?.insurance_plan_id?.id, label: field?.selectedRecord?.insurance_plan_id?.text}
+              return  { value: field?.selectedRecord?.car_quote_id?.plan_id?.id, label: field?.selectedRecord?.car_quote_id?.plan_id?.text }
+          }
+            
           },
           rules: { required: true },
         },

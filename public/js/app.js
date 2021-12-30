@@ -15261,15 +15261,15 @@ function SelectField(_ref) {
     // console.log('---**********redraw-************----');
     // console.log(field);
     if ((field === null || field === void 0 ? void 0 : field.formState) === 'read' || (field === null || field === void 0 ? void 0 : field.formState) === 'edit') {
-      var defaultValue = {};
+      var _defaultValue = {};
 
       if (field !== null && field !== void 0 && field.value) {
         if (typeof (field === null || field === void 0 ? void 0 : field.transform) === 'function') {
-          defaultValue = field === null || field === void 0 ? void 0 : field.transform(field === null || field === void 0 ? void 0 : field.value);
+          _defaultValue = field === null || field === void 0 ? void 0 : field.transform(field === null || field === void 0 ? void 0 : field.value);
         } else {
           var _field$value;
 
-          defaultValue = {
+          _defaultValue = {
             value: _typeof(field === null || field === void 0 ? void 0 : field.value) === 'object' ? field.value.id : field === null || field === void 0 ? void 0 : field.value,
             label: _typeof(field === null || field === void 0 ? void 0 : field.value) === 'object' ? (_field$value = field.value) === null || _field$value === void 0 ? void 0 : _field$value.text : field === null || field === void 0 ? void 0 : field.value
           };
@@ -15281,20 +15281,20 @@ function SelectField(_ref) {
       setData({
         data: [],
         isDisabled: field.formState === 'read' ? true : false,
-        defaultValue: defaultValue,
+        defaultValue: _defaultValue,
         loading: false
       });
     } else if (typeof (field === null || field === void 0 ? void 0 : field.source) === 'string') {
-      var _defaultValue = [];
+      var _defaultValue2 = [];
 
       if (field !== null && field !== void 0 && field.value) {
-        if (typeof field.transform === 'function') _defaultValue = field.transform(field.value);else _defaultValue = field.value;
+        if (typeof field.transform === 'function') _defaultValue2 = field.transform(field.value);else _defaultValue2 = field.value;
       }
 
       setData({
         data: [],
         isDisabled: false,
-        defaultValue: _defaultValue,
+        defaultValue: _defaultValue2,
         loading: false
       });
     } else {
@@ -15306,15 +15306,15 @@ function SelectField(_ref) {
           text: _typeof(u) === 'object' ? u.text : u
         };
       });
-      var _defaultValue2 = [];
-      if (field !== null && field !== void 0 && field.value) _defaultValue2 = {
+      var _defaultValue3 = [];
+      if (field !== null && field !== void 0 && field.value) _defaultValue3 = {
         value: _typeof(field === null || field === void 0 ? void 0 : field.value) === 'object' ? field.value.id : field === null || field === void 0 ? void 0 : field.value,
         label: _typeof(field === null || field === void 0 ? void 0 : field.value) === 'object' ? (_field$value2 = field.value) === null || _field$value2 === void 0 ? void 0 : _field$value2.text : field === null || field === void 0 ? void 0 : field.value
       };
       setData({
         data: options,
         isDisabled: false,
-        defaultValue: _defaultValue2,
+        defaultValue: _defaultValue3,
         loading: false
       });
     }
@@ -15359,7 +15359,7 @@ function SelectField(_ref) {
 
   var onFocus = /*#__PURE__*/function () {
     var _ref2 = _asyncToGenerator( /*#__PURE__*/_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().mark(function _callee() {
-      var options, defaultValue, _field$value3, filter, queryParamObj, params, url;
+      var options, _defaultValue4, _field$value3, filter, queryParamObj, params, url;
 
       return _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().wrap(function _callee$(_context) {
         while (1) {
@@ -15376,13 +15376,13 @@ function SelectField(_ref) {
                   text: _typeof(u) === 'object' ? u.text : u
                 };
               });
-              defaultValue = {};
+              _defaultValue4 = {};
 
               if (field !== null && field !== void 0 && field.value) {
                 if (typeof (field === null || field === void 0 ? void 0 : field.transform) === 'function') {
-                  defaultValue = field === null || field === void 0 ? void 0 : field.transform(field === null || field === void 0 ? void 0 : field.value);
+                  _defaultValue4 = field === null || field === void 0 ? void 0 : field.transform(field === null || field === void 0 ? void 0 : field.value);
                 } else {
-                  defaultValue = {
+                  _defaultValue4 = {
                     value: _typeof(field === null || field === void 0 ? void 0 : field.value) === 'object' ? field.value.id : field.value,
                     label: _typeof(field === null || field === void 0 ? void 0 : field.value) === 'object' ? (_field$value3 = field.value) === null || _field$value3 === void 0 ? void 0 : _field$value3.text : field.value
                   };
@@ -15392,7 +15392,7 @@ function SelectField(_ref) {
               setData(_objectSpread(_objectSpread({}, data), {}, {
                 data: options,
                 isDisabled: false,
-                defaultValue: defaultValue,
+                defaultValue: _defaultValue4,
                 loading: false
               }));
               return _context.abrupt("return");
@@ -15458,6 +15458,7 @@ function SelectField(_ref) {
   }();
 
   var value = [];
+  var defaultValue = data === null || data === void 0 ? void 0 : data.defaultValue;
 
   if (typeof (field === null || field === void 0 ? void 0 : field.transform) === 'function') {
     if (data.data.length > 0) {
@@ -15471,16 +15472,15 @@ function SelectField(_ref) {
       };
     });
     value = options;
-  } // console.log('---**********SelectRender-************----');
-  // console.log(field);
-  // console.log(value);
-  // console.log(data);
-  // console.log('---**********SelectRender-************----');
+  }
 
+  if (typeof (field === null || field === void 0 ? void 0 : field.valueTransform) === 'function') {
+    defaultValue = field === null || field === void 0 ? void 0 : field.valueTransform(field);
+  }
 
   return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(react_select__WEBPACK_IMPORTED_MODULE_6__.default, {
     options: value,
-    value: data === null || data === void 0 ? void 0 : data.defaultValue,
+    value: defaultValue,
     onChange: onChange,
     isDisabled: data.isDisabled,
     onFocus: onFocus,
@@ -16717,9 +16717,9 @@ var insuranceDetail = {
           label: 'Insurance Company',
           source: 'insurance_provider',
           filter: {
-            insurance_company_id: {
-              op: "<>",
-              val: "null"
+            is_active: {
+              op: "=",
+              val: 1
             }
           },
           appendFilterToFields: [{
@@ -16733,15 +16733,21 @@ var insuranceDetail = {
             read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'payment', 'production_approval_manager'],
             write: ['advisor', 'oe', 'admin'],
             update: ['advisor', 'oe', 'admin']
-          } // transform(item) {
-          //   if (Array.isArray(item)) {
-          //     const items = item.map(u => {
-          //       return { value: u?.id, label: u?.name };
-          //     });
-          //     return items;
-          //   } else return { value: item?.id, label: item?.name };
-          // },
+          },
+          valueTransform: function valueTransform(field) {
+            if ((field === null || field === void 0 ? void 0 : field.formState) === "read" && field !== null && field !== void 0 && field.selectedRecord) {
+              var _field$selectedRecord, _field$selectedRecord2, _field$selectedRecord3, _field$selectedRecord4, _field$selectedRecord5, _field$selectedRecord6, _field$selectedRecord7, _field$selectedRecord8, _field$selectedRecord9, _field$selectedRecord10, _field$selectedRecord11, _field$selectedRecord12, _field$selectedRecord13;
 
+              if (field !== null && field !== void 0 && (_field$selectedRecord = field.selectedRecord) !== null && _field$selectedRecord !== void 0 && _field$selectedRecord.insurance_company_id) return {
+                value: field === null || field === void 0 ? void 0 : (_field$selectedRecord2 = field.selectedRecord) === null || _field$selectedRecord2 === void 0 ? void 0 : (_field$selectedRecord3 = _field$selectedRecord2.insurance_company_id) === null || _field$selectedRecord3 === void 0 ? void 0 : _field$selectedRecord3.id,
+                label: field === null || field === void 0 ? void 0 : (_field$selectedRecord4 = field.selectedRecord) === null || _field$selectedRecord4 === void 0 ? void 0 : (_field$selectedRecord5 = _field$selectedRecord4.insurance_company_id) === null || _field$selectedRecord5 === void 0 ? void 0 : _field$selectedRecord5.text
+              };
+              return {
+                value: field === null || field === void 0 ? void 0 : (_field$selectedRecord6 = field.selectedRecord) === null || _field$selectedRecord6 === void 0 ? void 0 : (_field$selectedRecord7 = _field$selectedRecord6.car_quote_id) === null || _field$selectedRecord7 === void 0 ? void 0 : (_field$selectedRecord8 = _field$selectedRecord7.plan_id) === null || _field$selectedRecord8 === void 0 ? void 0 : (_field$selectedRecord9 = _field$selectedRecord8.provider_id) === null || _field$selectedRecord9 === void 0 ? void 0 : _field$selectedRecord9.id,
+                label: field === null || field === void 0 ? void 0 : (_field$selectedRecord10 = field.selectedRecord) === null || _field$selectedRecord10 === void 0 ? void 0 : (_field$selectedRecord11 = _field$selectedRecord10.car_quote_id) === null || _field$selectedRecord11 === void 0 ? void 0 : (_field$selectedRecord12 = _field$selectedRecord11.plan_id) === null || _field$selectedRecord12 === void 0 ? void 0 : (_field$selectedRecord13 = _field$selectedRecord12.provider_id) === null || _field$selectedRecord13 === void 0 ? void 0 : _field$selectedRecord13.text
+              };
+            }
+          }
         },
         insurance_plan_id: {
           type: 'dropdown',
@@ -16751,6 +16757,24 @@ var insuranceDetail = {
             read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'payment', 'production_approval_manager'],
             write: ['advisor', 'oe', 'admin'],
             update: ['advisor', 'oe', 'admin']
+          },
+          valueTransform: function valueTransform(field) {
+            console.log('---**********SelectRender-************----');
+            console.log(field === null || field === void 0 ? void 0 : field.selectedRecord);
+            console.log('---**********SelectRender-************----');
+
+            if ((field === null || field === void 0 ? void 0 : field.formState) === "read" && field !== null && field !== void 0 && field.selectedRecord) {
+              var _field$selectedRecord14, _field$selectedRecord15, _field$selectedRecord16, _field$selectedRecord17, _field$selectedRecord18, _field$selectedRecord19, _field$selectedRecord20, _field$selectedRecord21, _field$selectedRecord22, _field$selectedRecord23, _field$selectedRecord24;
+
+              if (field !== null && field !== void 0 && (_field$selectedRecord14 = field.selectedRecord) !== null && _field$selectedRecord14 !== void 0 && _field$selectedRecord14.insurance_plan_id) return {
+                value: field === null || field === void 0 ? void 0 : (_field$selectedRecord15 = field.selectedRecord) === null || _field$selectedRecord15 === void 0 ? void 0 : (_field$selectedRecord16 = _field$selectedRecord15.insurance_plan_id) === null || _field$selectedRecord16 === void 0 ? void 0 : _field$selectedRecord16.id,
+                label: field === null || field === void 0 ? void 0 : (_field$selectedRecord17 = field.selectedRecord) === null || _field$selectedRecord17 === void 0 ? void 0 : (_field$selectedRecord18 = _field$selectedRecord17.insurance_plan_id) === null || _field$selectedRecord18 === void 0 ? void 0 : _field$selectedRecord18.text
+              };
+              return {
+                value: field === null || field === void 0 ? void 0 : (_field$selectedRecord19 = field.selectedRecord) === null || _field$selectedRecord19 === void 0 ? void 0 : (_field$selectedRecord20 = _field$selectedRecord19.car_quote_id) === null || _field$selectedRecord20 === void 0 ? void 0 : (_field$selectedRecord21 = _field$selectedRecord20.plan_id) === null || _field$selectedRecord21 === void 0 ? void 0 : _field$selectedRecord21.id,
+                label: field === null || field === void 0 ? void 0 : (_field$selectedRecord22 = field.selectedRecord) === null || _field$selectedRecord22 === void 0 ? void 0 : (_field$selectedRecord23 = _field$selectedRecord22.car_quote_id) === null || _field$selectedRecord23 === void 0 ? void 0 : (_field$selectedRecord24 = _field$selectedRecord23.plan_id) === null || _field$selectedRecord24 === void 0 ? void 0 : _field$selectedRecord24.text
+              };
+            }
           },
           rules: {
             required: true

@@ -52,15 +52,15 @@ class CarQuoteInsuranceCoverage extends BaseModel
 
     public function car_quote_id()
     {
-        return $this->hasOne(CarQuote::class, 'id', 'car_quote_id')->select(['id','quote_status_id']);
+        return $this->hasOne(CarQuote::class, 'id', 'car_quote_id')->select(['id','quote_status_id', 'plan_id']);
     }
     
     public function relations() {
 
         if($this->isGetList)
-            return ['insurance_company_id' , 'insurance_plan_id', 'vehicle_type_id', 'car_quote_id.quote_status_id'];
+            return ['insurance_company_id' , 'insurance_plan_id', 'vehicle_type_id', 'car_quote_id.quote_status_id', 'car_quote_id.plan_id', 'car_quote_id.plan_id.provider_id'];
         else
-            return ['insurance_company_id' , 'insurance_plan_id', 'vehicle_type_id', 'car_quote_id.quote_status_id'];
+            return ['insurance_company_id' , 'insurance_plan_id', 'vehicle_type_id', 'car_quote_id.quote_status_id', 'car_quote_id.plan_id'];
     }
 
     public function processGetDSL($filters) {

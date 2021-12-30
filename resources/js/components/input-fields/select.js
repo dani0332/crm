@@ -202,6 +202,7 @@ export default function SelectField({ field, controller }) {
   };
 
   let value = [];
+  let defaultValue = data?.defaultValue;
   if (typeof field?.transform === 'function') {
     if (data.data.length > 0) {
       value = field?.transform(data.data);
@@ -213,16 +214,15 @@ export default function SelectField({ field, controller }) {
     value = options;
   }
 
-  // console.log('---**********SelectRender-************----');
-  // console.log(field);
-  // console.log(value);
-  // console.log(data);
-  // console.log('---**********SelectRender-************----');
+  if (typeof field?.valueTransform === 'function') {
+    defaultValue = field?.valueTransform(field);
+  }
+
 
   return (
     <Select
       options={value}
-      value={data?.defaultValue}
+      value={defaultValue}
       onChange={onChange}
       isDisabled={data.isDisabled}
       onFocus={onFocus}
