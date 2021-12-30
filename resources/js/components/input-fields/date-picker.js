@@ -31,7 +31,7 @@ export default function DatePickerField({ field, controller }) {
     <DatePicker
       disabled={shouldDisable}
       className='form-control'
-      dateFormat='yyyy-MM-dd'
+      dateFormat='dd-MM-yyy'
       selected={
         startDate ? startDate : field?.value ? new Date(field.value) : null
       }

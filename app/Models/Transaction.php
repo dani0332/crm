@@ -33,6 +33,11 @@ class Transaction extends Model implements AuditableContract
     {
         return $this->belongsTo(User::class,'assigned_to_id','id');
     }
+    public function type_of_insurance_id()
+    {
+        return $this->belongsTo(TypeOfInsurance::class,'type_of_insurance_id','id');
+    }
+
     public function typeofinsurance()
     {
         return $this->belongsTo(TypeOfInsurance::class,'type_of_insurance_id','id');

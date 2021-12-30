@@ -21,7 +21,8 @@ class CarQuoteKyc extends BaseModel
             "advisor" => [ 'car_quote_id', 'profession', 'organization', 'designation'],
             "oe" => [ 'car_quote_id', 'profession', 'organization', 'designation'],
             "admin" => [ 'car_quote_id', 'profession', 'organization' , 'designation'],
-            "invoicing" => []
+            "invoicing" => [],
+            "payment" => []
         ],
         "list" => [
             "pa" => ['id', 'car_quote_id' , 'profession', 'organization', 'designation'],
@@ -29,7 +30,8 @@ class CarQuoteKyc extends BaseModel
             "advisor" => [ 'id','car_quote_id' , 'profession', 'organization', 'designation'],
             "oe" => [ 'id','car_quote_id' , 'profession', 'organization', 'designation'],
             "admin" => ['id', 'car_quote_id' , 'profession', 'organization', 'designation'],
-            "invoicing" => ['id','car_quote_id' , 'profession', 'organization', 'designation']
+            "invoicing" => ['id','car_quote_id' , 'profession', 'organization', 'designation'],
+            "payment" => ['id','car_quote_id' , 'profession', 'organization', 'designation']
         ]
     ];
 
