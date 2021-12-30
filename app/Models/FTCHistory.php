@@ -30,6 +30,7 @@ class FTCHistory extends BaseModel
             "pa" => [],
             "production_approval_manager" => [],
             "invoicing" => [ ],
+            "payment" => [ ],
             "advisor" => ['car_quote_id', 'status', 'data'],
             "oe" => ['car_quote_id', 'status', 'data'],
             "admin" => [ 'car_quote_id', 'status', 'data'],
@@ -38,6 +39,7 @@ class FTCHistory extends BaseModel
             "pa" => ['id' , 'status' , 'data', 'created_at' ],
             "production_approval_manager" => ['id' , 'status' , 'data', 'created_at' ],
             "invoicing" => ['id' , 'status' , 'data', 'created_at' ],
+            "payment" => ['id' , 'status' , 'data', 'created_at' ],
             "advisor" => [ 'id' , 'status', 'data' , 'created_at'],
             "oe" => [ 'id' , 'status', 'data' , 'created_at'],
             "admin" => ['id' , 'status' , 'data' , 'created_at']
@@ -87,10 +89,11 @@ class FTCHistory extends BaseModel
             $params['templateParams']['attachment'] = [];
             foreach ($attachment as $model) { 
 
-                //$attachmentPath = //Config::get('constants.azure_storage_url').Config::get('constants.AZURE_STORAGE_CONTAINER').'/'.$model->file_name;
-                $attachmentPath =   "https://myalfreddev.blob.core.windows.net/myrewards/".$model->file_name;//str_replace("//","/",$attachmentPath);
+                $attachmentPath = Config::get('constants.azure_storage_url').Config::get('constants.AZURE_STORAGE_CONTAINER').'/'.$model->file_name;
+                $attachmentPath =   str_replace("//","/",$attachmentPath);
+                $attachmentPath =   str_replace(":/","://",$attachmentPath);
                 $params['templateParams']['attachment'][] = $attachmentPath;
-                Log::info('FTC Email attachment:'.Config::get('constants.azure_storage_url').Config::get('constants.AZURE_STORAGE_CONTAINER').'/'.$model->file_name);
+                Log::info('FTC Email attachment:'.$attachmentPath);
             }
         }
 
@@ -116,8 +119,9 @@ class FTCHistory extends BaseModel
                     $paEmail = null;
                     if($carQuote->pa_id()->first())
                         $paEmail =$carQuote->pa_id()->first()->email;
+
                     $carQuote->pa_id = null;
-                    $carQuote->quote_status_id = LookUpModel::getLookModel('QuoteStatus', ['code', '=', $request->input('status')]);
+                    $carQuote->quote_status_id = $request->input('status', '') == 'resubmitForApproval' ? LookUpModel::getLookModel('QuoteStatus', ['code', '=', 'ftc_resubmitted']) : LookUpModel::getLookModel('QuoteStatus', ['code', '=', $request->input('status')]);
                     $carQuote->save();
 
                     if($request->input('status') == 'resubmitForApproval' ) { 

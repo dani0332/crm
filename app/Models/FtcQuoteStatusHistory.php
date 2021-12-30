@@ -19,6 +19,7 @@ class FtcQuoteStatusHistory extends BaseModel
             "pa" => [],
             "production_approval_manager" => [],
             "invoicing" => [ ],
+            "payment" => [ ],
             "advisor" => [ ],
             "oe" => [ ],
             "admin" => [ ],
@@ -27,6 +28,7 @@ class FtcQuoteStatusHistory extends BaseModel
             "pa" => ['id' , 'quote_status_id' , 'notes', 'created_by','created_at' ],
             "production_approval_manager" => ['id' , 'quote_status_id' , 'notes', 'created_by','created_at' ],
             "invoicing" => ['id' , 'quote_status_id' , 'notes', 'created_by','created_at' ],
+            "payment" => ['id' , 'quote_status_id' , 'notes', 'created_by','created_at' ],
             "advisor" => ['id' , 'quote_status_id' , 'notes', 'created_by' ,'created_at'],
             "oe" => ['id' , 'quote_status_id' , 'notes', 'created_by' ,'created_at'],
             "admin" => ['id' , 'quote_status_id' , 'notes', 'created_by','created_at' ]
