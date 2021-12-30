@@ -24,7 +24,8 @@ class CarTypeInsurance extends BaseModel implements AuditableContract
             "advisor" => [ ],
             "oe" => [ ],
             "admin" => [  ],
-            "invoicing" => [ ]
+            "invoicing" => [ ],
+            "payment" => [ ]
 
         ],
         "list" => [
@@ -32,7 +33,8 @@ class CarTypeInsurance extends BaseModel implements AuditableContract
             "advisor" => [ 'id', 'text'],
             "oe" => [ 'id', 'text'],
             "admin" => ['id', 'text'],
-            "invoicing" => [ 'id', 'text']
+            "invoicing" => [ 'id', 'text'],
+            "payment" => [ 'id', 'text']
         ]
     ];
 

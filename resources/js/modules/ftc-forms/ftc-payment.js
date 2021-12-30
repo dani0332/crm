@@ -35,7 +35,7 @@ export default function FtcPayment(props) {
           />
         </TabPanel>
         <TabPanel>
-          {role && role === 'invoicing' && (
+          {role && role === 'payment' && (
             <a
               style={{ display: 'inline', cursor: 'pointer' }}
               onClick={viewDetail}
