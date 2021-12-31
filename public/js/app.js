@@ -16712,6 +16712,32 @@ var insuranceDetail = {
           } // rules: { required: true }
 
         },
+        insurance_company_id_latest: {
+          type: 'dropdown',
+          label: 'Insurance Company',
+          source: 'insurance_provider',
+          filter: {
+            is_active: {
+              op: "=",
+              val: 1
+            }
+          },
+          access: {
+            read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'payment', 'production_approval_manager'],
+            write: [],
+            update: []
+          },
+          valueTransform: function valueTransform(field) {
+            if ((field === null || field === void 0 ? void 0 : field.formState) === "read" && field !== null && field !== void 0 && field.selectedRecord) {
+              var _field$selectedRecord, _field$selectedRecord2, _field$selectedRecord3, _field$selectedRecord4, _field$selectedRecord5, _field$selectedRecord6, _field$selectedRecord7, _field$selectedRecord8;
+
+              return {
+                value: field === null || field === void 0 ? void 0 : (_field$selectedRecord = field.selectedRecord) === null || _field$selectedRecord === void 0 ? void 0 : (_field$selectedRecord2 = _field$selectedRecord.car_quote_id) === null || _field$selectedRecord2 === void 0 ? void 0 : (_field$selectedRecord3 = _field$selectedRecord2.plan_id) === null || _field$selectedRecord3 === void 0 ? void 0 : (_field$selectedRecord4 = _field$selectedRecord3.provider_id) === null || _field$selectedRecord4 === void 0 ? void 0 : _field$selectedRecord4.id,
+                label: field === null || field === void 0 ? void 0 : (_field$selectedRecord5 = field.selectedRecord) === null || _field$selectedRecord5 === void 0 ? void 0 : (_field$selectedRecord6 = _field$selectedRecord5.car_quote_id) === null || _field$selectedRecord6 === void 0 ? void 0 : (_field$selectedRecord7 = _field$selectedRecord6.plan_id) === null || _field$selectedRecord7 === void 0 ? void 0 : (_field$selectedRecord8 = _field$selectedRecord7.provider_id) === null || _field$selectedRecord8 === void 0 ? void 0 : _field$selectedRecord8.text
+              };
+            }
+          }
+        },
         insurance_company_id: {
           type: 'dropdown',
           label: 'Insurance Company',
@@ -16736,17 +16762,40 @@ var insuranceDetail = {
           },
           valueTransform: function valueTransform(field) {
             if ((field === null || field === void 0 ? void 0 : field.formState) === "read" && field !== null && field !== void 0 && field.selectedRecord) {
-              var _field$selectedRecord, _field$selectedRecord2, _field$selectedRecord3, _field$selectedRecord4, _field$selectedRecord5, _field$selectedRecord6, _field$selectedRecord7, _field$selectedRecord8, _field$selectedRecord9, _field$selectedRecord10, _field$selectedRecord11, _field$selectedRecord12, _field$selectedRecord13;
+              var _field$selectedRecord9, _field$selectedRecord10, _field$selectedRecord11, _field$selectedRecord12, _field$selectedRecord13, _field$selectedRecord14, _field$selectedRecord15, _field$selectedRecord16, _field$selectedRecord17, _field$selectedRecord18, _field$selectedRecord19, _field$selectedRecord20, _field$selectedRecord21;
 
-              if (field !== null && field !== void 0 && (_field$selectedRecord = field.selectedRecord) !== null && _field$selectedRecord !== void 0 && _field$selectedRecord.insurance_company_id) return {
-                value: field === null || field === void 0 ? void 0 : (_field$selectedRecord2 = field.selectedRecord) === null || _field$selectedRecord2 === void 0 ? void 0 : (_field$selectedRecord3 = _field$selectedRecord2.insurance_company_id) === null || _field$selectedRecord3 === void 0 ? void 0 : _field$selectedRecord3.id,
-                label: field === null || field === void 0 ? void 0 : (_field$selectedRecord4 = field.selectedRecord) === null || _field$selectedRecord4 === void 0 ? void 0 : (_field$selectedRecord5 = _field$selectedRecord4.insurance_company_id) === null || _field$selectedRecord5 === void 0 ? void 0 : _field$selectedRecord5.text
+              if (field !== null && field !== void 0 && (_field$selectedRecord9 = field.selectedRecord) !== null && _field$selectedRecord9 !== void 0 && _field$selectedRecord9.insurance_company_id) return {
+                value: field === null || field === void 0 ? void 0 : (_field$selectedRecord10 = field.selectedRecord) === null || _field$selectedRecord10 === void 0 ? void 0 : (_field$selectedRecord11 = _field$selectedRecord10.insurance_company_id) === null || _field$selectedRecord11 === void 0 ? void 0 : _field$selectedRecord11.id,
+                label: field === null || field === void 0 ? void 0 : (_field$selectedRecord12 = field.selectedRecord) === null || _field$selectedRecord12 === void 0 ? void 0 : (_field$selectedRecord13 = _field$selectedRecord12.insurance_company_id) === null || _field$selectedRecord13 === void 0 ? void 0 : _field$selectedRecord13.text
               };
               return {
-                value: field === null || field === void 0 ? void 0 : (_field$selectedRecord6 = field.selectedRecord) === null || _field$selectedRecord6 === void 0 ? void 0 : (_field$selectedRecord7 = _field$selectedRecord6.car_quote_id) === null || _field$selectedRecord7 === void 0 ? void 0 : (_field$selectedRecord8 = _field$selectedRecord7.plan_id) === null || _field$selectedRecord8 === void 0 ? void 0 : (_field$selectedRecord9 = _field$selectedRecord8.provider_id) === null || _field$selectedRecord9 === void 0 ? void 0 : _field$selectedRecord9.id,
-                label: field === null || field === void 0 ? void 0 : (_field$selectedRecord10 = field.selectedRecord) === null || _field$selectedRecord10 === void 0 ? void 0 : (_field$selectedRecord11 = _field$selectedRecord10.car_quote_id) === null || _field$selectedRecord11 === void 0 ? void 0 : (_field$selectedRecord12 = _field$selectedRecord11.plan_id) === null || _field$selectedRecord12 === void 0 ? void 0 : (_field$selectedRecord13 = _field$selectedRecord12.provider_id) === null || _field$selectedRecord13 === void 0 ? void 0 : _field$selectedRecord13.text
+                value: field === null || field === void 0 ? void 0 : (_field$selectedRecord14 = field.selectedRecord) === null || _field$selectedRecord14 === void 0 ? void 0 : (_field$selectedRecord15 = _field$selectedRecord14.car_quote_id) === null || _field$selectedRecord15 === void 0 ? void 0 : (_field$selectedRecord16 = _field$selectedRecord15.plan_id) === null || _field$selectedRecord16 === void 0 ? void 0 : (_field$selectedRecord17 = _field$selectedRecord16.provider_id) === null || _field$selectedRecord17 === void 0 ? void 0 : _field$selectedRecord17.id,
+                label: field === null || field === void 0 ? void 0 : (_field$selectedRecord18 = field.selectedRecord) === null || _field$selectedRecord18 === void 0 ? void 0 : (_field$selectedRecord19 = _field$selectedRecord18.car_quote_id) === null || _field$selectedRecord19 === void 0 ? void 0 : (_field$selectedRecord20 = _field$selectedRecord19.plan_id) === null || _field$selectedRecord20 === void 0 ? void 0 : (_field$selectedRecord21 = _field$selectedRecord20.provider_id) === null || _field$selectedRecord21 === void 0 ? void 0 : _field$selectedRecord21.text
               };
             }
+          }
+        },
+        insurance_plan_id_latest: {
+          type: 'dropdown',
+          label: 'Insurance Plan',
+          source: 'car_plan',
+          access: {
+            read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'payment', 'production_approval_manager'],
+            write: [],
+            update: []
+          },
+          valueTransform: function valueTransform(field) {
+            if ((field === null || field === void 0 ? void 0 : field.formState) === "read" && field !== null && field !== void 0 && field.selectedRecord) {
+              var _field$selectedRecord22, _field$selectedRecord23, _field$selectedRecord24, _field$selectedRecord25, _field$selectedRecord26, _field$selectedRecord27;
+
+              return {
+                value: field === null || field === void 0 ? void 0 : (_field$selectedRecord22 = field.selectedRecord) === null || _field$selectedRecord22 === void 0 ? void 0 : (_field$selectedRecord23 = _field$selectedRecord22.car_quote_id) === null || _field$selectedRecord23 === void 0 ? void 0 : (_field$selectedRecord24 = _field$selectedRecord23.plan_id) === null || _field$selectedRecord24 === void 0 ? void 0 : _field$selectedRecord24.id,
+                label: field === null || field === void 0 ? void 0 : (_field$selectedRecord25 = field.selectedRecord) === null || _field$selectedRecord25 === void 0 ? void 0 : (_field$selectedRecord26 = _field$selectedRecord25.car_quote_id) === null || _field$selectedRecord26 === void 0 ? void 0 : (_field$selectedRecord27 = _field$selectedRecord26.plan_id) === null || _field$selectedRecord27 === void 0 ? void 0 : _field$selectedRecord27.text
+              };
+            }
+          },
+          rules: {
+            required: true
           }
         },
         insurance_plan_id: {
@@ -16759,20 +16808,16 @@ var insuranceDetail = {
             update: ['advisor', 'oe', 'admin']
           },
           valueTransform: function valueTransform(field) {
-            console.log('---**********SelectRender-************----');
-            console.log(field === null || field === void 0 ? void 0 : field.selectedRecord);
-            console.log('---**********SelectRender-************----');
-
             if ((field === null || field === void 0 ? void 0 : field.formState) === "read" && field !== null && field !== void 0 && field.selectedRecord) {
-              var _field$selectedRecord14, _field$selectedRecord15, _field$selectedRecord16, _field$selectedRecord17, _field$selectedRecord18, _field$selectedRecord19, _field$selectedRecord20, _field$selectedRecord21, _field$selectedRecord22, _field$selectedRecord23, _field$selectedRecord24;
+              var _field$selectedRecord28, _field$selectedRecord29, _field$selectedRecord30, _field$selectedRecord31, _field$selectedRecord32, _field$selectedRecord33, _field$selectedRecord34, _field$selectedRecord35, _field$selectedRecord36, _field$selectedRecord37, _field$selectedRecord38;
 
-              if (field !== null && field !== void 0 && (_field$selectedRecord14 = field.selectedRecord) !== null && _field$selectedRecord14 !== void 0 && _field$selectedRecord14.insurance_plan_id) return {
-                value: field === null || field === void 0 ? void 0 : (_field$selectedRecord15 = field.selectedRecord) === null || _field$selectedRecord15 === void 0 ? void 0 : (_field$selectedRecord16 = _field$selectedRecord15.insurance_plan_id) === null || _field$selectedRecord16 === void 0 ? void 0 : _field$selectedRecord16.id,
-                label: field === null || field === void 0 ? void 0 : (_field$selectedRecord17 = field.selectedRecord) === null || _field$selectedRecord17 === void 0 ? void 0 : (_field$selectedRecord18 = _field$selectedRecord17.insurance_plan_id) === null || _field$selectedRecord18 === void 0 ? void 0 : _field$selectedRecord18.text
+              if (field !== null && field !== void 0 && (_field$selectedRecord28 = field.selectedRecord) !== null && _field$selectedRecord28 !== void 0 && _field$selectedRecord28.insurance_plan_id) return {
+                value: field === null || field === void 0 ? void 0 : (_field$selectedRecord29 = field.selectedRecord) === null || _field$selectedRecord29 === void 0 ? void 0 : (_field$selectedRecord30 = _field$selectedRecord29.insurance_plan_id) === null || _field$selectedRecord30 === void 0 ? void 0 : _field$selectedRecord30.id,
+                label: field === null || field === void 0 ? void 0 : (_field$selectedRecord31 = field.selectedRecord) === null || _field$selectedRecord31 === void 0 ? void 0 : (_field$selectedRecord32 = _field$selectedRecord31.insurance_plan_id) === null || _field$selectedRecord32 === void 0 ? void 0 : _field$selectedRecord32.text
               };
               return {
-                value: field === null || field === void 0 ? void 0 : (_field$selectedRecord19 = field.selectedRecord) === null || _field$selectedRecord19 === void 0 ? void 0 : (_field$selectedRecord20 = _field$selectedRecord19.car_quote_id) === null || _field$selectedRecord20 === void 0 ? void 0 : (_field$selectedRecord21 = _field$selectedRecord20.plan_id) === null || _field$selectedRecord21 === void 0 ? void 0 : _field$selectedRecord21.id,
-                label: field === null || field === void 0 ? void 0 : (_field$selectedRecord22 = field.selectedRecord) === null || _field$selectedRecord22 === void 0 ? void 0 : (_field$selectedRecord23 = _field$selectedRecord22.car_quote_id) === null || _field$selectedRecord23 === void 0 ? void 0 : (_field$selectedRecord24 = _field$selectedRecord23.plan_id) === null || _field$selectedRecord24 === void 0 ? void 0 : _field$selectedRecord24.text
+                value: field === null || field === void 0 ? void 0 : (_field$selectedRecord33 = field.selectedRecord) === null || _field$selectedRecord33 === void 0 ? void 0 : (_field$selectedRecord34 = _field$selectedRecord33.car_quote_id) === null || _field$selectedRecord34 === void 0 ? void 0 : (_field$selectedRecord35 = _field$selectedRecord34.plan_id) === null || _field$selectedRecord35 === void 0 ? void 0 : _field$selectedRecord35.id,
+                label: field === null || field === void 0 ? void 0 : (_field$selectedRecord36 = field.selectedRecord) === null || _field$selectedRecord36 === void 0 ? void 0 : (_field$selectedRecord37 = _field$selectedRecord36.car_quote_id) === null || _field$selectedRecord37 === void 0 ? void 0 : (_field$selectedRecord38 = _field$selectedRecord37.plan_id) === null || _field$selectedRecord38 === void 0 ? void 0 : _field$selectedRecord38.text
               };
             }
           },
@@ -16929,6 +16974,9 @@ var insuranceDetail = {
         }
       },
       sections: [{
+        label: 'Latest Plan & Insurance Company Selected By Custom',
+        fields: ['insurance_company_id_latest', 'insurance_plan_id_latest']
+      }, {
         label: 'Insurance Coverage',
         //fields: ['start_date', 'insurance_company_id']
         fields: ['start_date', 'insurance_company_id', 'insurance_plan_id', 'vehicle_type_id', 'excess', 'sum_insured', 'premium_price', 'ancillary_excess', 'personal_accident_benefit', 'breakdown_recovery', 'off_road_cover', 'rend_a_car', 'repair_type', 'financed_by', 'geographical_area']

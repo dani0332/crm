@@ -38,6 +38,30 @@ let insuranceDetail = {
           },
           // rules: { required: true }
         },
+        insurance_company_id_latest: {
+          type: 'dropdown',
+          label: 'Insurance Company',
+          source: 'insurance_provider',
+          filter: {is_active: { op: "=", val: 1}},
+          access: {
+            read: [
+              'pa',
+              'advisor',
+              'oe',
+              'admin',
+              'invoicing',
+              'payment',
+              'production_approval_manager',
+            ],
+            write: [],
+            update: [],
+          },
+          valueTransform(field) {
+            if(field?.formState === "read" && field?.selectedRecord){
+              return  { value: field?.selectedRecord?.car_quote_id?.plan_id?.provider_id?.id, label: field?.selectedRecord?.car_quote_id?.plan_id?.provider_id?.text }
+            }
+          },
+        },
         insurance_company_id: {
           type: 'dropdown',
           label: 'Insurance Company',
@@ -71,6 +95,30 @@ let insuranceDetail = {
             }
           },
         },
+        insurance_plan_id_latest: {
+          type: 'dropdown',
+          label: 'Insurance Plan',
+          source: 'car_plan',
+          access: {
+            read: [
+              'pa',
+              'advisor',
+              'oe',
+              'admin',
+              'invoicing',
+              'payment',
+              'production_approval_manager',
+            ],
+            write: [],
+            update: [],
+          },
+          valueTransform(field) {
+            if(field?.formState === "read" && field?.selectedRecord){
+                return  { value: field?.selectedRecord?.car_quote_id?.plan_id?.id, label: field?.selectedRecord?.car_quote_id?.plan_id?.text }
+            }
+          },
+          rules: { required: true },
+        },
         insurance_plan_id: {
           type: 'dropdown',
           label: 'Insurance Plan',
@@ -89,16 +137,11 @@ let insuranceDetail = {
             update: ['advisor', 'oe', 'admin'],
           },
           valueTransform(field) {
-
-          console.log('---**********SelectRender-************----');
-          console.log(field?.selectedRecord);
-          console.log('---**********SelectRender-************----');
-          if(field?.formState === "read" && field?.selectedRecord){
-              if(field?.selectedRecord?.insurance_plan_id)
-                return { value: field?.selectedRecord?.insurance_plan_id?.id, label: field?.selectedRecord?.insurance_plan_id?.text}
-              return  { value: field?.selectedRecord?.car_quote_id?.plan_id?.id, label: field?.selectedRecord?.car_quote_id?.plan_id?.text }
-          }
-            
+            if(field?.formState === "read" && field?.selectedRecord){
+                if(field?.selectedRecord?.insurance_plan_id)
+                  return { value: field?.selectedRecord?.insurance_plan_id?.id, label: field?.selectedRecord?.insurance_plan_id?.text}
+                return  { value: field?.selectedRecord?.car_quote_id?.plan_id?.id, label: field?.selectedRecord?.car_quote_id?.plan_id?.text }
+            }
           },
           rules: { required: true },
         },
@@ -325,6 +368,13 @@ let insuranceDetail = {
         },
       },
       sections: [
+        {
+          label: 'Latest Plan & Insurance Company Selected By Custom',
+          fields: [
+            'insurance_company_id_latest',
+            'insurance_plan_id_latest',
+          ],
+        },
         {
           label: 'Insurance Coverage',
           //fields: ['start_date', 'insurance_company_id']
