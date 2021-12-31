@@ -6,7 +6,7 @@ use App\Models\Customer;
 use App\Models\MyAlFredUser;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Http;
-
+use Carbon\Carbon;
 
 class migrateCustomerToAlfred extends Command
 {
@@ -41,7 +41,7 @@ class migrateCustomerToAlfred extends Command
      */
     public function handle()
     {
-        $customers = Customer::where('has_alfred_access', 1)->get();
+        $customers = Customer::where('has_alfred_access', 1)->whereDate('myalfred_expiry_date', '>=', Carbon::now())->get();
         $customerChunk = $customers->chunk(2);
 
         $bar = $this->output->createProgressBar(count($customers));
