@@ -22,9 +22,7 @@ class MyAlfredUserMIgrationTable extends Migration
                 $table->softDeletes();
 
                 //DB relations
-                $table->foreign('customer_id')
-                    ->references('id')
-                    ->on('customer');
+                $table->foreign('customer_id')->references('id')->on('customer')->onDelete('no action');
             });
         }
     }
