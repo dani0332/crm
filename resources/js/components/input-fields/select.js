@@ -215,7 +215,7 @@ export default function SelectField({ field, controller }) {
   }
 
   if (typeof field?.valueTransform === 'function') {
-    defaultValue = field?.valueTransform(field);
+    defaultValue = field?.valueTransform(field, defaultValue);
   }
 
 

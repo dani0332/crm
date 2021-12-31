@@ -15475,7 +15475,7 @@ function SelectField(_ref) {
   }
 
   if (typeof (field === null || field === void 0 ? void 0 : field.valueTransform) === 'function') {
-    defaultValue = field === null || field === void 0 ? void 0 : field.valueTransform(field);
+    defaultValue = field === null || field === void 0 ? void 0 : field.valueTransform(field, defaultValue);
   }
 
   return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(react_select__WEBPACK_IMPORTED_MODULE_6__.default, {
@@ -15556,10 +15556,12 @@ function TextAreaField(_ref) {
     shouldDisable = true;
   }
 
+  var finalVal = value;
+  if (typeof (field === null || field === void 0 ? void 0 : field.transform) === 'function') finalVal = field.transform(value, field);
   return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_2__.jsx)(rc_textarea__WEBPACK_IMPORTED_MODULE_1__.default, {
     className: "form-control",
     disabled: shouldDisable,
-    value: value,
+    value: finalVal,
     onChange: onChange,
     autoSize: {
       minRows: 5,
@@ -18263,12 +18265,24 @@ var ftcPayment = {
         method: {
           type: 'dropdown',
           label: 'Payment Method',
-          source: ['Spotii', 'payments.insurancemarket.ae '],
+          source: ['Spotii', 'payments.insurancemarket.ae', 'Network International Payment Gateway'],
           offscreen: true,
           access: {
             read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'payment', 'production_approval_manager'],
             write: ['oe', 'advisor'],
             update: ['oe', 'advisor']
+          },
+          valueTransform: function valueTransform(field, defaultValue) {
+            var _field$selectedRecord, _field$selectedRecord2, _field$selectedRecord3, _field$selectedRecord4, _field$selectedRecord5;
+
+            if (field !== null && field !== void 0 && field.selectedRecord && (_field$selectedRecord = field.selectedRecord.car_quote_id) !== null && _field$selectedRecord !== void 0 && _field$selectedRecord.is_ecommerce && ((_field$selectedRecord2 = field.selectedRecord.car_quote_id) === null || _field$selectedRecord2 === void 0 ? void 0 : (_field$selectedRecord3 = _field$selectedRecord2.payment_status_id) === null || _field$selectedRecord3 === void 0 ? void 0 : _field$selectedRecord3.code) === 'paid' || ((_field$selectedRecord4 = field.selectedRecord.car_quote_id) === null || _field$selectedRecord4 === void 0 ? void 0 : (_field$selectedRecord5 = _field$selectedRecord4.payment_status_id) === null || _field$selectedRecord5 === void 0 ? void 0 : _field$selectedRecord5.code) === 'authorised') {
+              return {
+                value: 'Network International Payment Gateway',
+                label: 'Network International Payment Gateway'
+              };
+            }
+
+            return defaultValue;
           },
           rules: {
             required: true
@@ -18281,6 +18295,17 @@ var ftcPayment = {
             read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'payment', 'production_approval_manager'],
             write: ['oe', 'advisor'],
             update: ['oe', 'advisor']
+          },
+          transform: function transform(value, field) {
+            var _field$selectedRecord6, _field$selectedRecord7, _field$selectedRecord8, _field$selectedRecord9, _field$selectedRecord10;
+
+            if (!value && field !== null && field !== void 0 && field.selectedRecord && (_field$selectedRecord6 = field.selectedRecord.car_quote_id) !== null && _field$selectedRecord6 !== void 0 && _field$selectedRecord6.is_ecommerce && ((_field$selectedRecord7 = field.selectedRecord.car_quote_id) === null || _field$selectedRecord7 === void 0 ? void 0 : (_field$selectedRecord8 = _field$selectedRecord7.payment_status_id) === null || _field$selectedRecord8 === void 0 ? void 0 : _field$selectedRecord8.code) === 'paid' || ((_field$selectedRecord9 = field.selectedRecord.car_quote_id) === null || _field$selectedRecord9 === void 0 ? void 0 : (_field$selectedRecord10 = _field$selectedRecord9.payment_status_id) === null || _field$selectedRecord10 === void 0 ? void 0 : _field$selectedRecord10.code) === 'authorised') {
+              var _field$selectedRecord11;
+
+              return 'Payment reference: ' + ((_field$selectedRecord11 = field.selectedRecord.car_quote_id) === null || _field$selectedRecord11 === void 0 ? void 0 : _field$selectedRecord11.payment_reference);
+            }
+
+            return value;
           },
           rules: {}
         }

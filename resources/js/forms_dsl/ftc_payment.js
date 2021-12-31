@@ -68,7 +68,7 @@ const ftcPayment = {
         method: {
           type: 'dropdown',
           label: 'Payment Method',
-          source: ['Spotii', 'payments.insurancemarket.ae '],
+          source: ['Spotii', 'payments.insurancemarket.ae', 'Network International Payment Gateway'],
           offscreen: true,
           access: {
             read: [
@@ -82,6 +82,12 @@ const ftcPayment = {
             ],
             write: [ 'oe','advisor'],
             update: [ 'oe','advisor'],
+          },
+          valueTransform(field, defaultValue) {
+             if( field?.selectedRecord && field.selectedRecord.car_quote_id?.is_ecommerce && field.selectedRecord.car_quote_id?.payment_status_id?.code === 'paid' || field.selectedRecord.car_quote_id?.payment_status_id?.code === 'authorised') {
+                return  { value: 'Network International Payment Gateway', label: 'Network International Payment Gateway' }
+             }
+             return defaultValue
           },
           rules: { required: true },
         },
@@ -101,6 +107,12 @@ const ftcPayment = {
             write: [ 'oe','advisor'],
             update: [ 'oe','advisor'],
           },
+          transform(value, field) {
+            if(!value && field?.selectedRecord && field.selectedRecord.car_quote_id?.is_ecommerce && field.selectedRecord.car_quote_id?.payment_status_id?.code === 'paid' || field.selectedRecord.car_quote_id?.payment_status_id?.code === 'authorised') {
+               return 'Payment reference: ' + field.selectedRecord.car_quote_id?.payment_reference
+            }
+            return value
+         },
           rules: {},
         },
       },
