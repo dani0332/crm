@@ -80,7 +80,7 @@ class LifeQuoteService extends BaseService
             "othersInfo" => $request->others_info,
         );
         if (Auth::user()->hasRole("LIFE_ADVISOR")) $dataArr['advisorId'] = Auth::users()->id;
-        return CapiRequestService::sendCAPIRequest('/api/v1-save-home-quote', $dataArr);
+        return CapiRequestService::sendCAPIRequest('/api/v1-save-life-quote', $dataArr);
     }
 
     public function getEntity($id)
@@ -320,9 +320,9 @@ class LifeQuoteService extends BaseService
     public function fillModelSkipProperties()
     {
         return [
-            "create" => "id,advisor_id,quote_status_id,code",
+            "create" => "id,advisor_id,quote_status_id,code,created_at,updated_at",
             "list" => "email,mobile_no,others_info,dob,sum_insured_value,sum_insured_currency_id,purpose_of_insurance_id,marital_status_id,children_id,tenure_of_insurance_id,number_of_years_id,gender,is_smoker,others_info",
-            "update" => "id,advisor_id,quote_status_id,code",
+            "update" => "id,advisor_id,quote_status_id,code,created_at,updated_at",
             "show" => "",
         ];
     }

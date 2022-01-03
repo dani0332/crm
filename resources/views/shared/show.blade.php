@@ -78,9 +78,9 @@
                     <div class="row">
                         <div class="col-auto mr-auto"></div>
                         <div class="col-auto">
-                            @if (Auth::user()->hasRole('ADMIN') || Auth::user()->hasRole($model->modelType.'_MANAGER') || Auth::user()->hasRole($model->modelType.'_DEPUTY') ||Auth::user()->hasRole($model->modelType.'_ADVISOR'))
+                            @can(strtolower($model->modelType).'-edit')
                             <a id="texta" href="{{ url('quotes/'.strtolower($model->modelType).'/'.$record->uuid.'/edit') }}" class='btn btn-warning btn-sm'>Edit</a>
-                            @endif
+                            @endcan
                         </div>
                     </div>
                 </div>

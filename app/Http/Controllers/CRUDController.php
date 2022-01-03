@@ -128,13 +128,14 @@ class CRUDController extends Controller
     public function store(Request $request)
     {
         $modelPropertiesList = json_decode($request->get('model'), true);
+        $modelSkipPropertiesList = json_decode($request->get('modelSkipProperties'), true);
         $modelType = json_decode($request->get('modelType'), true);
         $validateArray = [];
         if ($modelType == 'Home') {
             $validateArray = $this->homeQuoteService->getValidationArray($modelPropertiesList, $request);
         } else {
             foreach ($modelPropertiesList as $property => $value) {
-                if (strpos($value, 'required') && $property != 'id') {
+                if (strpos($value, 'required') && $property != 'id' && !strpos($modelSkipPropertiesList['create'], $property)) {
                     $validateArray[$property] = 'required';
                 }
             }
@@ -369,6 +370,10 @@ class CRUDController extends Controller
 
     public function updateDiscountedPremium(Request $request)
     {
+    }
+    public function saveQuote(Request $request)
+    {
+        dd($request->all());
     }
 
     public function add_quote(Request $request)
