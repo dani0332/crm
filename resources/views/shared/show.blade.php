@@ -9,13 +9,41 @@
     <div class="row">
         <div class="col-md-12 col-sm-12 admin-detail">
             <div class="x_panel">
+
                 <div class="x_title">
                     <h2>{{(str_contains(strtolower($model->modelType), 'team') ? 'Team' : (str_contains(strtolower($model->modelType), 'leadstatus') ? 'Lead Status' : $model->modelType)). ' Detail' }}</h2>
                     <ul class="nav navbar-right panel_toolbox">
+                        <li><button class="btn btn-success btn-sm" style="float: right">Convert Lead To Business</button></li>
                         <li><a href="{{ url('quotes/'.strtolower($model->modelType)) }}" class="btn btn-warning btn-sm">{{(str_contains(strtolower($model->modelType), 'team') ? 'Team' : (str_contains(strtolower($model->modelType), 'leadstatus') ? 'Lead Status' : $model->modelType)). ' List' }}</a></li>
                     </ul>
                     <div class="clearfix"></div>
                 </div>
+                <form method="post" action="manualLeadAssign" class="form-horizontal form-label-left" role="form"
+                data-parsley-validate="" novalidate="" autocomplete="off">
+                {{ csrf_field() }}
+                <input type="hidden" value="{{ strtolower($model->modelType) }}" name="modelType">
+                    <div class="col-md-6">
+                        <div class="col-md-4">
+                            <h2><b>Assign Lead</b></h2>
+                        </div>
+                        <div class="col-md-4">
+                            <select class="form-control"  id="assigned_to_id_new"
+                            name="assigned_to_id_new">
+                                <option>Select Assignee</option>
+                                @foreach ($advisors as $item)
+                                    <option @if($record->advisor_id == $item->id) selected="selected" @endif value="{{ $item->id }}">{{ $item->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <button type="submit" id="tmLeadsAssignToUser"
+                            name="tmLeadsAssignToUser"
+                            class="btn btn-warning btn-sm">Assign</button>
+                        </div>
+                    </div>
+                    <div class="clearfix">
+                    </div>
+                </form>
                 <div class="x_content">
                     <br />
                     @if (session()->has('success'))

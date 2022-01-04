@@ -161,6 +161,7 @@ class CRUDController extends Controller
         if (!$record) abort(404);
         $model = $this->genericModel;
         $customTitles = $customTableList = [];
+        $advisors = $this->crudService->getAdvisorsByModelType($this->genericModel->modelType);
         foreach ($model->properties as $property => $value) {
             if (str_contains($value, 'title')) {
                 $customTitles[$property] = $this->crudService->getCustomTitleByModelType($this->genericModel->modelType, $property);
@@ -200,7 +201,7 @@ class CRUDController extends Controller
                 'ecomCarInsuranceQuoteUrl', 'carQuotePlanAddons', 'listQuoteVehicleDetails', 'vehicleTypeText'
             ]));
         } else {
-            return view('shared.show', compact(['record', 'model', 'customTitles', 'customTableList']));
+            return view('shared.show', compact(['record', 'model', 'customTitles', 'customTableList', 'advisors']));
         }
     }
 
