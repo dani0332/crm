@@ -102,6 +102,7 @@ Route::group(['middleware' =>  ['auth']], function () {
         'destroy' => 'leadassignment.destroy',
     ]);
     Route::post('manualLeadAssign', [LeadAssignmentController::class, 'manualLeadAssign'])->name('manualAssignment');
+    Route::post('healthTeamAssign', [LeadAssignmentController::class, 'healthTeamAssign'])->name('healthTeamAssign');
     Route::get('getAdvisors', [LeadAssignmentController::class, 'getAdvisors'])->name('getAdvisors');
     Route::get('getTeamManagers', [UserController::class, 'getTeamManagers'])->name('getTeamManagers');
     Route::resource('customer', CustomerController::class);
