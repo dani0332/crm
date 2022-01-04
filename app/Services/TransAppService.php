@@ -75,7 +75,7 @@ class TransAppService extends BaseService
 
         $fromEmail = Config::get('constants.MAIL_FROM_ADDRESS');
         $fromName = Config::get('constants.MAIL_FROM_NAME');
-        $replyToEmail = Config::get('constants.MAIL_REPLY_TO');
+        $replyToEmail = Config::get('constants.MAIL_MYALFRED_SUPPORT_REPLY_TO');
 
         $to = $customer->email;
 
