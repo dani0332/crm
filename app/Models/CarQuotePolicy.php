@@ -23,17 +23,19 @@ class CarQuotePolicy extends BaseModel
             "advisor" => [],
             "oe" => [],
             "production_approval_manager" => [],
-            "pa" => [ 'car_quote_id', 'transactions_id', 'quote_number', 'policy_number', 'issue_date', 'start_date', 'end_date' ],
-            "admin" => [ 'car_quote_id' , 'transactions_id', 'quote_number', 'policy_number', 'issue_date', 'start_date', 'end_date' ],
-            "invoicing" => []
+            "pa" => [ 'car_quote_id', 'transactions_id', 'quote_number', 'policy_number', 'issue_date', 'start_date', 'end_date', 'policy_type' ],
+            "admin" => [ 'car_quote_id' , 'transactions_id', 'quote_number', 'policy_number', 'issue_date', 'start_date', 'end_date' , 'policy_type'],
+            "invoicing" => [],
+            "payment" => []
         ],
         "list" => [
-            "pa" => ['id', 'car_quote_id' , 'transactions_id', 'quote_number', 'policy_number', 'issue_date', 'start_date', 'end_date' ],
-            "production_approval_manager" => ['id', 'car_quote_id', 'transactions_id', 'quote_number', 'policy_number', 'issue_date', 'start_date', 'end_date' ],
-            "advisor" => ['id', 'car_quote_id', 'transactions_id', 'quote_number', 'policy_number', 'issue_date', 'start_date', 'end_date' ],
-            "oe" => ['id', 'car_quote_id', 'transactions_id', 'quote_number', 'policy_number', 'issue_date', 'start_date', 'end_date' ],
-            "admin" => ['id', 'car_quote_id', 'transactions_id', 'quote_number', 'policy_number', 'issue_date', 'start_date', 'end_date' ],
-            "invoicing" => ['id', 'car_quote_id', 'transactions_id', 'quote_number', 'policy_number', 'issue_date', 'start_date', 'end_date' ]
+            "pa" => ['id', 'car_quote_id' , 'transactions_id', 'quote_number', 'policy_number', 'issue_date', 'start_date', 'end_date' , 'policy_type'],
+            "production_approval_manager" => ['id', 'car_quote_id', 'transactions_id', 'quote_number', 'policy_number', 'issue_date', 'start_date', 'end_date' , 'policy_type'],
+            "advisor" => ['id', 'car_quote_id', 'transactions_id', 'quote_number', 'policy_number', 'issue_date', 'start_date', 'end_date' , 'policy_type'],
+            "oe" => ['id', 'car_quote_id', 'transactions_id', 'quote_number', 'policy_number', 'issue_date', 'start_date', 'end_date', 'policy_type' ],
+            "admin" => ['id', 'car_quote_id', 'transactions_id', 'quote_number', 'policy_number', 'issue_date', 'start_date', 'end_date' , 'policy_type'],
+            "invoicing" => ['id', 'car_quote_id', 'transactions_id', 'quote_number', 'policy_number', 'issue_date', 'start_date', 'end_date' , 'policy_type'],
+            "payment" => ['id', 'car_quote_id', 'transactions_id', 'quote_number', 'policy_number', 'issue_date', 'start_date', 'end_date', 'policy_type' ]
         ]
     ];
 
@@ -43,7 +45,7 @@ class CarQuotePolicy extends BaseModel
     }
 
     public function relations() {
-        return ['transactions_id', 'transactions_id.insurance_company_id', 'transactions_id.typeofinsurance', 'transactions_id.payment_mode_id', 'transactions_id.customer'];
+        return ['transactions_id', 'transactions_id.insurance_company_id', 'transactions_id.type_of_insurance_id', 'transactions_id.payment_mode_id', 'transactions_id.customer'];
     }
 
     public function processGetDSL($filters, $request) {
@@ -53,44 +55,53 @@ class CarQuotePolicy extends BaseModel
         }
         
         $response =  self::processGetBaseDSL($filters, false)->first();
-        $collection = $response->toArray();
-        if(Arr::exists($collection, 'transactions_id')){
-            $response = array_merge( $collection['transactions_id'], $collection);
-        }
 
-        return $response;       
+        
+        if($response){
+            $collection = $response->toArray();
+            if(Arr::exists($collection, 'transactions_id')){
+                $response = array_merge( $collection['transactions_id'], $collection);
+            }
+        }
+        return $response;               
     }
 
 
     public function saveForm($request, $update = false) {
 
         if( Auth::user()->hasRole('pa') ) {
-            $carQuote = CarQuote::where(['id' => $request->input('car_quote_id', -1), 'advisor_id' => Auth::user()->id])->get()->first();
+            $carQuote = CarQuote::where(['id' => $request->input('car_quote_id', -1), 'pa_id' => Auth::user()->id])->get()->first();
             if($carQuote) {
-                $templateParams = [
-                    'notes' => "Policy issued",
-                    "first_name" => $carQuote->first_name,
-                    "last_name" => $carQuote->last_name,
-                    "code" => $carQuote->code
-                ];
-                $advisorEmail = $carQuote->advisor_id()->first()->email;
-                if($advisorEmail) {
-                    $params = [
-                        'to' => $advisorEmail,
-                        'subject' => LookUpModel::subjectForFTCEmailCarQuote($carQuote),
-                        'templateName' => 'notification',
-                        'templateParams' => $templateParams
+
+                if(parent::saveForm($request, $update )) {
+                    $templateParams = [
+                        'notes' => "Policy issued",
+                        "first_name" => $carQuote->first_name,
+                        "last_name" => $carQuote->last_name,
+                        "code" => $carQuote->code
                     ];
+                    $advisorEmail = $carQuote->advisor_id()->first()->email;
+                    if($advisorEmail) {
+                        $params = [
+                            'to' => $advisorEmail,
+                            'subject' => LookUpModel::subjectForFTCEmailCarQuote($carQuote),
+                            'templateName' => 'notification',
+                            'templateParams' => $templateParams
+                        ];
 
-                    $oeId = $carQuote->oe_id()->first();
-                    if($oeId && $oeId->email)
-                        $params['cc'] = $oeId->email;
+                        $oeId = $carQuote->oe_id()->first();
+                        if($oeId && $oeId->email)
+                            $params['cc'] = $oeId->email;
 
-                    dispatch(new FTCMailServiceJob($params));
+                        dispatch(new FTCMailServiceJob($params));
+                    }
+
+                    $carQuote->quote_status_id =  LookUpModel::getLookModel('QuoteStatus', ['code', '=', 'policy_issued']);
+                    return $carQuote->save();
                 }
             }
         }
 
-        return parent::saveForm($request, $update ); 
+        return $this->APIController->respondData(["message" => "Something wrong"], 500);
     }
 }

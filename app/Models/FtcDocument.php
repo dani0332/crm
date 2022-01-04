@@ -15,7 +15,8 @@ class FtcDocument extends BaseModel
         'access' => [
             "pa" => [ 'file_name' , 'document' , 'car_quote_id'],
             "production_approval_manager" => [ 'file_name' , 'document' , 'car_quote_id'],
-            "invoicing" => [ 'file_name' , 'document' , 'car_quote_id'],
+            "invoicing" => [ ],
+            "payment" => [ 'file_name' , 'document' , 'car_quote_id'],
             "advisor" => [ 'file_name' , 'document' , 'car_quote_id' ],
             "oe" => [ 'file_name' , 'document' , 'car_quote_id' ],
             "admin" => [ 'file_name' , 'document' ],
@@ -24,6 +25,7 @@ class FtcDocument extends BaseModel
             "pa" => [ 'id' , 'file_name' , 'document'],
             "production_approval_manager" => [ 'id' , 'file_name' , 'document'],
             "invoicing" => [ 'id' , 'file_name' , 'document'],
+            "payment" => [ 'id' , 'file_name' , 'document'],
             "advisor" => [ 'id' , 'file_name' , 'document'],
             "oe" => [ 'id' , 'file_name' , 'document'],
             "admin" => [ 'id' , 'file_name', 'document' ],

@@ -20,6 +20,7 @@ class InsuranceCompany extends BaseModel implements AuditableContract
             "oe" => [ 'id','name', 'is_active'],
             "admin" => [ 'id','name', 'is_active' ],
             "invoicing" => [ 'id','name', 'is_active'],
+            "payment" => [ 'id','name', 'is_active'],
         ],
         "list" => [
             "pa" => [ 'id','name', 'is_active' ],
@@ -27,6 +28,7 @@ class InsuranceCompany extends BaseModel implements AuditableContract
             "oe" => [ 'id','name', 'is_active' ],
             "admin" => [ 'id','name', 'is_active' ],
             "invoicing" => [ 'id','name', 'is_active' ],
+            "payment" => [ 'id','name', 'is_active' ],
         ]
     ];
 

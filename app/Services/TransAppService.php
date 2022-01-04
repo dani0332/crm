@@ -72,8 +72,18 @@ class TransAppService extends BaseService
         $customer->is_we_sent = true;
         $customer->save();
         $subject = 'Welcome to myAlfred by InsuranceMarket.ae';
-        MailService::sendEmail('customerWelcome', [
+
+        $fromEmail = Config::get('constants.MAIL_FROM_ADDRESS');
+        $fromName = Config::get('constants.MAIL_FROM_NAME');
+        $replyToEmail = Config::get('constants.MAIL_MYALFRED_SUPPORT_REPLY_TO');
+
+        $to = $customer->email;
+
+		Mail::send(['html' => 'customerWelcome'], [
             'customerName' => $customer->first_name." ".$customer->last_name,
-        ], $subject, [$customer->email]);
+        ], function ($message) use ($subject, $to, $fromName, $fromEmail, $replyToEmail) {
+            $message->to($to)->replyTo($replyToEmail)->subject($subject);
+            $message->from($fromEmail, $fromName);
+        });
     }
 }

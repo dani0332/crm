@@ -18,6 +18,7 @@ class FTCPaymentMode extends BaseModel
         'access' => [
             "pa" => [],
             "invoicing" => [ ],
+            "payment" => [ ],
             "advisor" => [],
             "oe" => [],
             "admin" => [ ],
@@ -25,6 +26,7 @@ class FTCPaymentMode extends BaseModel
         "list" => [
             "pa" => ['id' , 'name'  ],
             "invoicing" => ['id' , 'name'  ],
+            "payment" => ['id' , 'name'  ],
             "advisor" => ['id' , 'name'  ],
             "oe" => ['id' , 'name'  ],
             "admin" => ['id' , 'name'  ],
