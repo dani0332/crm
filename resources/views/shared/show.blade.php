@@ -180,15 +180,13 @@
         :carQuotePaymentMethod="$record->payment_gateway"
         />
 
-        @if($record->source != 'TPL_RENEWALS' && $record->source != 'TM_SP_RENEWAL')
-            <x-car-quote-plans
-                :listQuotePlans="$listQuotePlans"
-                :uuid="$ecomCarInsuranceQuoteUrl.$record->uuid"
-                :uuidModal="$record->uuid"
-                :quoteRequestId="$record->id"
-                :quoteIsCommerce="$record->is_ecommerce"
-            />
-        @endif
+        <x-car-quote-plans
+            :listQuotePlans="$listQuotePlans"
+            :uuid="$ecomCarInsuranceQuoteUrl.$record->uuid"
+            :uuidModal="$record->uuid"
+            :quoteRequestId="$record->id"
+            :quoteIsCommerce="$record->is_ecommerce"
+        />
 
     @endif
 @endsection
