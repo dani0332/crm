@@ -13900,6 +13900,7 @@ function reducer(state, action) {
           var getField = state.fields[element.field];
           getField.filter = appendObj;
         });
+        state.fields[_name].value = _value;
 
         if ((state === null || state === void 0 ? void 0 : state.action_type) === 'edit' && state !== null && state !== void 0 && state.selectedRecord && state !== null && state !== void 0 && (_state$selectedRecord2 = state.selectedRecord) !== null && _state$selectedRecord2 !== void 0 && _state$selectedRecord2[_name]) {
           state.selectedRecord[_name] = _value;
@@ -16684,11 +16685,15 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
+/* harmony import */ var _modules_ftc_forms_car_quote_addon__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./../modules/ftc-forms/car-quote-addon */ "./resources/js/modules/ftc-forms/car-quote-addon.js");
+/* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! react/jsx-runtime */ "./node_modules/react/jsx-runtime.js");
 function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) { symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); } keys.push.apply(keys, symbols); } return keys; }
 
 function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys(Object(source), true).forEach(function (key) { _defineProperty(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
 
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
+
 
 var insuranceDetail = {
   getForm: function getForm() {
@@ -16704,6 +16709,23 @@ var insuranceDetail = {
         "delete": []
       },
       fields: {
+        car_quote_request_add_on: {
+          type: 'textarea',
+          label: '',
+          access: {
+            read: ['advisor', 'oe', 'pa', 'production_approval_manager'],
+            write: [],
+            update: []
+          },
+          shouldRenderForRead: function shouldRenderForRead(field) {
+            return true;
+          },
+          renderForRead: function renderForRead(field) {
+            return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)(_modules_ftc_forms_car_quote_addon__WEBPACK_IMPORTED_MODULE_0__.default, {
+              field: field
+            });
+          }
+        },
         start_date: {
           type: 'datePicker',
           label: 'Policy start date',
@@ -16714,33 +16736,7 @@ var insuranceDetail = {
           } // rules: { required: true }
 
         },
-        insurance_company_id_latest: {
-          type: 'dropdown',
-          label: 'Insurance Company',
-          source: 'insurance_provider',
-          filter: {
-            is_active: {
-              op: "=",
-              val: 1
-            }
-          },
-          access: {
-            read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'payment', 'production_approval_manager'],
-            write: [],
-            update: []
-          },
-          valueTransform: function valueTransform(field) {
-            if ((field === null || field === void 0 ? void 0 : field.formState) === "read" && field !== null && field !== void 0 && field.selectedRecord) {
-              var _field$selectedRecord, _field$selectedRecord2, _field$selectedRecord3, _field$selectedRecord4, _field$selectedRecord5, _field$selectedRecord6, _field$selectedRecord7, _field$selectedRecord8;
-
-              return {
-                value: field === null || field === void 0 ? void 0 : (_field$selectedRecord = field.selectedRecord) === null || _field$selectedRecord === void 0 ? void 0 : (_field$selectedRecord2 = _field$selectedRecord.car_quote_id) === null || _field$selectedRecord2 === void 0 ? void 0 : (_field$selectedRecord3 = _field$selectedRecord2.plan_id) === null || _field$selectedRecord3 === void 0 ? void 0 : (_field$selectedRecord4 = _field$selectedRecord3.provider_id) === null || _field$selectedRecord4 === void 0 ? void 0 : _field$selectedRecord4.id,
-                label: field === null || field === void 0 ? void 0 : (_field$selectedRecord5 = field.selectedRecord) === null || _field$selectedRecord5 === void 0 ? void 0 : (_field$selectedRecord6 = _field$selectedRecord5.car_quote_id) === null || _field$selectedRecord6 === void 0 ? void 0 : (_field$selectedRecord7 = _field$selectedRecord6.plan_id) === null || _field$selectedRecord7 === void 0 ? void 0 : (_field$selectedRecord8 = _field$selectedRecord7.provider_id) === null || _field$selectedRecord8 === void 0 ? void 0 : _field$selectedRecord8.text
-              };
-            }
-          }
-        },
-        insurance_company_id: {
+        insurance_company: {
           type: 'dropdown',
           label: 'Insurance Company',
           source: 'insurance_provider',
@@ -16751,7 +16747,7 @@ var insuranceDetail = {
             }
           },
           appendFilterToFields: [{
-            field: 'insurance_plan_id',
+            field: 'plan_id',
             key: "provider_id"
           }],
           rules: {
@@ -16761,46 +16757,9 @@ var insuranceDetail = {
             read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'payment', 'production_approval_manager'],
             write: ['advisor', 'oe', 'admin'],
             update: ['advisor', 'oe', 'admin']
-          },
-          valueTransform: function valueTransform(field) {
-            if ((field === null || field === void 0 ? void 0 : field.formState) === "read" && field !== null && field !== void 0 && field.selectedRecord) {
-              var _field$selectedRecord9, _field$selectedRecord10, _field$selectedRecord11, _field$selectedRecord12, _field$selectedRecord13, _field$selectedRecord14, _field$selectedRecord15, _field$selectedRecord16, _field$selectedRecord17, _field$selectedRecord18, _field$selectedRecord19, _field$selectedRecord20, _field$selectedRecord21;
-
-              if (field !== null && field !== void 0 && (_field$selectedRecord9 = field.selectedRecord) !== null && _field$selectedRecord9 !== void 0 && _field$selectedRecord9.insurance_company_id) return {
-                value: field === null || field === void 0 ? void 0 : (_field$selectedRecord10 = field.selectedRecord) === null || _field$selectedRecord10 === void 0 ? void 0 : (_field$selectedRecord11 = _field$selectedRecord10.insurance_company_id) === null || _field$selectedRecord11 === void 0 ? void 0 : _field$selectedRecord11.id,
-                label: field === null || field === void 0 ? void 0 : (_field$selectedRecord12 = field.selectedRecord) === null || _field$selectedRecord12 === void 0 ? void 0 : (_field$selectedRecord13 = _field$selectedRecord12.insurance_company_id) === null || _field$selectedRecord13 === void 0 ? void 0 : _field$selectedRecord13.text
-              };
-              return {
-                value: field === null || field === void 0 ? void 0 : (_field$selectedRecord14 = field.selectedRecord) === null || _field$selectedRecord14 === void 0 ? void 0 : (_field$selectedRecord15 = _field$selectedRecord14.car_quote_id) === null || _field$selectedRecord15 === void 0 ? void 0 : (_field$selectedRecord16 = _field$selectedRecord15.plan_id) === null || _field$selectedRecord16 === void 0 ? void 0 : (_field$selectedRecord17 = _field$selectedRecord16.provider_id) === null || _field$selectedRecord17 === void 0 ? void 0 : _field$selectedRecord17.id,
-                label: field === null || field === void 0 ? void 0 : (_field$selectedRecord18 = field.selectedRecord) === null || _field$selectedRecord18 === void 0 ? void 0 : (_field$selectedRecord19 = _field$selectedRecord18.car_quote_id) === null || _field$selectedRecord19 === void 0 ? void 0 : (_field$selectedRecord20 = _field$selectedRecord19.plan_id) === null || _field$selectedRecord20 === void 0 ? void 0 : (_field$selectedRecord21 = _field$selectedRecord20.provider_id) === null || _field$selectedRecord21 === void 0 ? void 0 : _field$selectedRecord21.text
-              };
-            }
           }
         },
-        insurance_plan_id_latest: {
-          type: 'dropdown',
-          label: 'Insurance Plan',
-          source: 'car_plan',
-          access: {
-            read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'payment', 'production_approval_manager'],
-            write: [],
-            update: []
-          },
-          valueTransform: function valueTransform(field) {
-            if ((field === null || field === void 0 ? void 0 : field.formState) === "read" && field !== null && field !== void 0 && field.selectedRecord) {
-              var _field$selectedRecord22, _field$selectedRecord23, _field$selectedRecord24, _field$selectedRecord25, _field$selectedRecord26, _field$selectedRecord27;
-
-              return {
-                value: field === null || field === void 0 ? void 0 : (_field$selectedRecord22 = field.selectedRecord) === null || _field$selectedRecord22 === void 0 ? void 0 : (_field$selectedRecord23 = _field$selectedRecord22.car_quote_id) === null || _field$selectedRecord23 === void 0 ? void 0 : (_field$selectedRecord24 = _field$selectedRecord23.plan_id) === null || _field$selectedRecord24 === void 0 ? void 0 : _field$selectedRecord24.id,
-                label: field === null || field === void 0 ? void 0 : (_field$selectedRecord25 = field.selectedRecord) === null || _field$selectedRecord25 === void 0 ? void 0 : (_field$selectedRecord26 = _field$selectedRecord25.car_quote_id) === null || _field$selectedRecord26 === void 0 ? void 0 : (_field$selectedRecord27 = _field$selectedRecord26.plan_id) === null || _field$selectedRecord27 === void 0 ? void 0 : _field$selectedRecord27.text
-              };
-            }
-          },
-          rules: {
-            required: true
-          }
-        },
-        insurance_plan_id: {
+        plan_id: {
           type: 'dropdown',
           label: 'Insurance Plan',
           source: 'car_plan',
@@ -16808,20 +16767,6 @@ var insuranceDetail = {
             read: ['pa', 'advisor', 'oe', 'admin', 'invoicing', 'payment', 'production_approval_manager'],
             write: ['advisor', 'oe', 'admin'],
             update: ['advisor', 'oe', 'admin']
-          },
-          valueTransform: function valueTransform(field) {
-            if ((field === null || field === void 0 ? void 0 : field.formState) === "read" && field !== null && field !== void 0 && field.selectedRecord) {
-              var _field$selectedRecord28, _field$selectedRecord29, _field$selectedRecord30, _field$selectedRecord31, _field$selectedRecord32, _field$selectedRecord33, _field$selectedRecord34, _field$selectedRecord35, _field$selectedRecord36, _field$selectedRecord37, _field$selectedRecord38;
-
-              if (field !== null && field !== void 0 && (_field$selectedRecord28 = field.selectedRecord) !== null && _field$selectedRecord28 !== void 0 && _field$selectedRecord28.insurance_plan_id) return {
-                value: field === null || field === void 0 ? void 0 : (_field$selectedRecord29 = field.selectedRecord) === null || _field$selectedRecord29 === void 0 ? void 0 : (_field$selectedRecord30 = _field$selectedRecord29.insurance_plan_id) === null || _field$selectedRecord30 === void 0 ? void 0 : _field$selectedRecord30.id,
-                label: field === null || field === void 0 ? void 0 : (_field$selectedRecord31 = field.selectedRecord) === null || _field$selectedRecord31 === void 0 ? void 0 : (_field$selectedRecord32 = _field$selectedRecord31.insurance_plan_id) === null || _field$selectedRecord32 === void 0 ? void 0 : _field$selectedRecord32.text
-              };
-              return {
-                value: field === null || field === void 0 ? void 0 : (_field$selectedRecord33 = field.selectedRecord) === null || _field$selectedRecord33 === void 0 ? void 0 : (_field$selectedRecord34 = _field$selectedRecord33.car_quote_id) === null || _field$selectedRecord34 === void 0 ? void 0 : (_field$selectedRecord35 = _field$selectedRecord34.plan_id) === null || _field$selectedRecord35 === void 0 ? void 0 : _field$selectedRecord35.id,
-                label: field === null || field === void 0 ? void 0 : (_field$selectedRecord36 = field.selectedRecord) === null || _field$selectedRecord36 === void 0 ? void 0 : (_field$selectedRecord37 = _field$selectedRecord36.car_quote_id) === null || _field$selectedRecord37 === void 0 ? void 0 : (_field$selectedRecord38 = _field$selectedRecord37.plan_id) === null || _field$selectedRecord38 === void 0 ? void 0 : _field$selectedRecord38.text
-              };
-            }
           },
           rules: {
             required: true
@@ -16975,13 +16920,14 @@ var insuranceDetail = {
           }
         }
       },
+      //car_quote_request_add_on
       sections: [{
-        label: 'Latest Plan & Insurance Company Selected By Custom',
-        fields: ['insurance_company_id_latest', 'insurance_plan_id_latest']
+        label: 'Insurance Coverage Addon',
+        fields: ['car_quote_request_add_on']
       }, {
         label: 'Insurance Coverage',
         //fields: ['start_date', 'insurance_company_id']
-        fields: ['start_date', 'insurance_company_id', 'insurance_plan_id', 'vehicle_type_id', 'excess', 'sum_insured', 'premium_price', 'ancillary_excess', 'personal_accident_benefit', 'breakdown_recovery', 'off_road_cover', 'rend_a_car', 'repair_type', 'financed_by', 'geographical_area']
+        fields: ['start_date', 'insurance_company', 'plan_id', 'vehicle_type_id', 'excess', 'sum_insured', 'premium_price', 'ancillary_excess', 'personal_accident_benefit', 'breakdown_recovery', 'off_road_cover', 'rend_a_car', 'repair_type', 'financed_by', 'geographical_area']
       }],
       view: {
         find: {
@@ -20138,6 +20084,70 @@ function AssignUser(props) {
         children: "Already assigned you."
       })]
     })]
+  });
+}
+
+/***/ }),
+
+/***/ "./resources/js/modules/ftc-forms/car-quote-addon.js":
+/*!***********************************************************!*\
+  !*** ./resources/js/modules/ftc-forms/car-quote-addon.js ***!
+  \***********************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (/* binding */ CarQuoteAddon)
+/* harmony export */ });
+/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! react */ "./node_modules/react/index.js");
+/* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! react/jsx-runtime */ "./node_modules/react/jsx-runtime.js");
+
+
+
+function CarQuoteAddon(props) {
+  var _props$field, _props$field2;
+
+  if (!((_props$field = props.field) !== null && _props$field !== void 0 && _props$field.value) || props.field.value.length === 0) return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)("div", {
+    className: "row",
+    children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)("div", {
+      className: "col-md-12"
+    })
+  });
+  return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)("div", {
+    className: "row",
+    children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)("div", {
+      className: "col-md-12",
+      children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsxs)("div", {
+        className: "",
+        children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)("div", {
+          className: "x_content"
+        }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)("table", {
+          style: {
+            width: '100%'
+          },
+          children: (props === null || props === void 0 ? void 0 : props.field) && ((_props$field2 = props.field) === null || _props$field2 === void 0 ? void 0 : _props$field2.value.map(function (addOnObj, i) {
+            var _addOnObj$addon_optio, _addOnObj$addon_optio2, _addOnObj$addon_optio3;
+
+            var name = addOnObj === null || addOnObj === void 0 ? void 0 : (_addOnObj$addon_optio = addOnObj.addon_option_id) === null || _addOnObj$addon_optio === void 0 ? void 0 : (_addOnObj$addon_optio2 = _addOnObj$addon_optio.addon_id) === null || _addOnObj$addon_optio2 === void 0 ? void 0 : _addOnObj$addon_optio2.text;
+            var value = addOnObj === null || addOnObj === void 0 ? void 0 : (_addOnObj$addon_optio3 = addOnObj.addon_option_id) === null || _addOnObj$addon_optio3 === void 0 ? void 0 : _addOnObj$addon_optio3.value;
+            return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsxs)("tr", {
+              className: "border-top",
+              style: {
+                fontSize: 13,
+                lineHeight: "30px"
+              },
+              children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsxs)("td", {
+                children: [name, ":"]
+              }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)("td", {
+                className: "fs15 fw700 text-right",
+                children: value
+              })]
+            });
+          }))
+        })]
+      })
+    })
   });
 }
 

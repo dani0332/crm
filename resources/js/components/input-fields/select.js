@@ -93,6 +93,7 @@ export default function SelectField({ field, controller }) {
       });
     }
   };
+  
   const onChange = selectedOptions => {
     if (typeof field?.dispatch === 'function') {
       if (field?.if || field?.appendFilterToFields) {
@@ -217,8 +218,6 @@ export default function SelectField({ field, controller }) {
   if (typeof field?.valueTransform === 'function') {
     defaultValue = field?.valueTransform(field, defaultValue);
   }
-
-
   return (
     <Select
       options={value}

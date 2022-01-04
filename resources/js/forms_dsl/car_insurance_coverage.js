@@ -1,3 +1,6 @@
+
+import CarQuoteAddon from './../modules/ftc-forms/car-quote-addon'
+
 let insuranceDetail = {
   getForm() {
     const yuu = {
@@ -20,6 +23,21 @@ let insuranceDetail = {
         delete: [],
       },
       fields: {
+        car_quote_request_add_on: {
+          type: 'textarea',
+          label: '',
+          access: {
+            read: ['advisor', 'oe', 'pa', 'production_approval_manager'],
+            write: [ ],
+            update: [],
+          },
+          shouldRenderForRead(field) {
+              return true;
+          },
+          renderForRead(field) {
+            return <CarQuoteAddon field={field} />;
+          },
+        },
         start_date: {
           type: 'datePicker',
           label: 'Policy start date',
@@ -38,38 +56,14 @@ let insuranceDetail = {
           },
           // rules: { required: true }
         },
-        insurance_company_id_latest: {
+        insurance_company: {
           type: 'dropdown',
           label: 'Insurance Company',
           source: 'insurance_provider',
-          filter: {is_active: { op: "=", val: 1}},
-          access: {
-            read: [
-              'pa',
-              'advisor',
-              'oe',
-              'admin',
-              'invoicing',
-              'payment',
-              'production_approval_manager',
-            ],
-            write: [],
-            update: [],
-          },
-          valueTransform(field) {
-            if(field?.formState === "read" && field?.selectedRecord){
-              return  { value: field?.selectedRecord?.car_quote_id?.plan_id?.provider_id?.id, label: field?.selectedRecord?.car_quote_id?.plan_id?.provider_id?.text }
-            }
-          },
-        },
-        insurance_company_id: {
-          type: 'dropdown',
-          label: 'Insurance Company',
-          source: 'insurance_provider',
-          filter: {is_active: { op: "=", val: 1}},
+          filter: {is_active: { op: "=", val: 1 } },
           appendFilterToFields:[
             { 
-              field: 'insurance_plan_id', 
+              field: 'plan_id', 
               key: "provider_id"
             }
           ],
@@ -87,39 +81,8 @@ let insuranceDetail = {
             write: ['advisor','oe', 'admin'],
             update: ['advisor','oe', 'admin'],
           },
-          valueTransform(field) {
-            if(field?.formState === "read" && field?.selectedRecord){
-              if(field?.selectedRecord?.insurance_company_id)
-                return { value: field?.selectedRecord?.insurance_company_id?.id, label: field?.selectedRecord?.insurance_company_id?.text}
-              return  { value: field?.selectedRecord?.car_quote_id?.plan_id?.provider_id?.id, label: field?.selectedRecord?.car_quote_id?.plan_id?.provider_id?.text }
-            }
-          },
         },
-        insurance_plan_id_latest: {
-          type: 'dropdown',
-          label: 'Insurance Plan',
-          source: 'car_plan',
-          access: {
-            read: [
-              'pa',
-              'advisor',
-              'oe',
-              'admin',
-              'invoicing',
-              'payment',
-              'production_approval_manager',
-            ],
-            write: [],
-            update: [],
-          },
-          valueTransform(field) {
-            if(field?.formState === "read" && field?.selectedRecord){
-                return  { value: field?.selectedRecord?.car_quote_id?.plan_id?.id, label: field?.selectedRecord?.car_quote_id?.plan_id?.text }
-            }
-          },
-          rules: { required: true },
-        },
-        insurance_plan_id: {
+        plan_id: {
           type: 'dropdown',
           label: 'Insurance Plan',
           source: 'car_plan',
@@ -135,13 +98,6 @@ let insuranceDetail = {
             ],
             write: ['advisor', 'oe', 'admin'],
             update: ['advisor', 'oe', 'admin'],
-          },
-          valueTransform(field) {
-            if(field?.formState === "read" && field?.selectedRecord){
-                if(field?.selectedRecord?.insurance_plan_id)
-                  return { value: field?.selectedRecord?.insurance_plan_id?.id, label: field?.selectedRecord?.insurance_plan_id?.text}
-                return  { value: field?.selectedRecord?.car_quote_id?.plan_id?.id, label: field?.selectedRecord?.car_quote_id?.plan_id?.text }
-            }
           },
           rules: { required: true },
         },
@@ -366,13 +322,12 @@ let insuranceDetail = {
           },
           rules: { required: true },
         },
-      },
+      }, //car_quote_request_add_on
       sections: [
         {
-          label: 'Latest Plan & Insurance Company Selected By Custom',
+          label: 'Insurance Coverage Addon',
           fields: [
-            'insurance_company_id_latest',
-            'insurance_plan_id_latest',
+            'car_quote_request_add_on',
           ],
         },
         {
@@ -380,8 +335,8 @@ let insuranceDetail = {
           //fields: ['start_date', 'insurance_company_id']
           fields: [
             'start_date',
-            'insurance_company_id',
-            'insurance_plan_id',
+            'insurance_company',
+            'plan_id',
             'vehicle_type_id',
             'excess',
             'sum_insured',

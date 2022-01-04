@@ -105,6 +105,7 @@ function reducer(state, action) {
         getField.filter = appendObj
       });
 
+      state.fields[name].value = value 
       if (
         state?.action_type === 'edit' &&
         state?.selectedRecord &&
