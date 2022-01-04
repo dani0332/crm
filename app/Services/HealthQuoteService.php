@@ -28,6 +28,7 @@ class HealthQuoteService extends BaseService
             'hqr.source',
             'hqr.dob',
             'hqr.has_dental',
+            'hqr.health_team_type',
             'hqr.has_home',
             'hqr.has_worldwide_cover',
             'hqr.marital_status_id',
@@ -246,6 +247,7 @@ class HealthQuoteService extends BaseService
             "marital_status_id" => "select|title|required",
             "cover_for_id" => "select|title|required",
             "nationality_id" => "select|title|required",
+            "health_team_type" => "|static|default:All|All,RM,EBP",
             "has_dental" => "input|checkbox|title",
             "has_worldwide_cover" => "input|checkbox|title",
             "has_home" => "input|checkbox|title",
@@ -302,6 +304,9 @@ class HealthQuoteService extends BaseService
             case 'created_at':
                 $title = "Created Date";
                 break;
+            case 'health_team_type':
+                $title = "Health Team Type";
+                break;
             default:
                 break;
         }
@@ -311,15 +316,15 @@ class HealthQuoteService extends BaseService
     public function fillModelSkipProperties()
     {
         return [
-            "create" => "id,advisor_id,quote_status_id,code",
-            "list" => "email,cover_for_id,has_worldwide_cover,has_home,details,preference,mobile_no,dob,marital_status_id,nationality_id,source,has_dental,emirate_of_your_visa_id",
-            "update" => "id,advisor_id,quote_status_id,code",
-            "show" => "id",
+            "create" => "created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type",
+            "list" => "email,health_team_type,cover_for_id,has_worldwide_cover,has_home,details,preference,mobile_no,dob,marital_status_id,nationality_id,source,has_dental,emirate_of_your_visa_id",
+            "update" => "created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type",
+            "show" => "id,health_team_type",
         ];
     }
 
     public function fillModelSearchProperties()
     {
-        return ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'advisor_id', 'created_at'];
+        return ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'advisor_id', 'created_at', 'health_team_type'];
     }
 }

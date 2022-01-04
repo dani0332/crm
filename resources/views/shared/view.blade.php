@@ -105,7 +105,6 @@
                     }
                 }
             }
-            debugger;
             var vehicleTypeDataTable = $("#dtBasicExample").DataTable({
                 ordering: false,
                 info: true,
@@ -231,12 +230,12 @@
                     <h2>{{ str_contains(strtolower($model->modelType), 'teams') ? 'Teams' : (str_contains(strtolower($model->modelType), 'leadstatus') ? 'Lead Status' : $model->modelType) }}
                         List</h2>
                     <ul class="nav navbar-right panel_toolbox">
-                        @if (Auth::user()->hasRole('ADMIN') || Auth::user()->hasRole($model->modelType . '_MANAGER') || Auth::user()->hasRole($model->modelType . '_DEPUTY') || Auth::user()->hasRole($model->modelType . '_ADVISOR'))
+                        @can(strtolower($model->modelType) . '-create')
                             <li><a href="{{ url('quotes/' . strtolower($model->modelType) . '/create') }}"
                                     class="btn btn-warning btn-sm">Create
                                     {{ str_contains(strtolower($model->modelType), 'teams') ? 'Team' : (str_contains(strtolower($model->modelType), 'leadstatus') ? 'Lead Status' : 'Lead') }}</a>
                             </li>
-                        @endif
+                        @endcan
 
                     </ul>
                     <div class="clearfix"></div>
@@ -357,14 +356,21 @@
                                                     $staticOptionString = end($propertyLastIndex);
                                                     $staticOptions = explode(',', $staticOptionString);
                                                 @endphp
-
                                                 <select @if (strpos($value, 'multiple')) name="{{ $property . '[]' }}" multiple="multiple" class="form-control select2 select-roles" @else class="form-control" name="{{ $property }}" @endif id="{{ $property }}">
                                                     <option value="">
                                                         {{ 'Please select ' . str_replace('id', ' ', str_replace('_', ' ', $property)) }}
                                                     </option>
-                                                    @foreach ($staticOptions as $item)
 
-                                                        <option value="{{ $item }}">{{ $item }}</option>
+                                                    @foreach ($staticOptions as $item)
+                                                        @if (str_contains($model->properties[$property], 'default') && $item == explode('|', explode('default:', $model->properties[$property])[1])[0])
+                                                            <option value="" selected>
+                                                                {{ $item }}
+                                                            </option>
+                                                        @else
+                                                            <option value="{{ $item }}">
+                                                                {{ $item }}
+                                                            </option>
+                                                        @endif
                                                     @endforeach
                                                 </select>
                                                 @if ($errors->has($property))

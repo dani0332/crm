@@ -37,7 +37,8 @@ class BusinessQuoteService extends BaseService
             )
             ->Join('business_type_of_insurance as bti', 'bti.id', '=', 'bqr.business_type_of_insurance_id')
             ->leftJoin('users as u', 'u.id', '=', 'bqr.advisor_id')
-            ->leftJoin('quote_status as qs', 'qs.id', '=', 'bqr.quote_status_id');
+            ->leftJoin('quote_status as qs', 'qs.id', '=', 'bqr.quote_status_id')
+            ->where('bti.text', '!=', 'Group Medical');
     }
 
     public function getEntity($id)
@@ -203,8 +204,6 @@ class BusinessQuoteService extends BaseService
             "updated_at" => "input|date|title",
             "company_name" => "input|text|required",
             "business_type_of_insurance_id" => "select|title|required",
-
-
             "brief_details" => 'textarea|required',
         );
     }

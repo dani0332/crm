@@ -1518,29 +1518,29 @@ $(document).ready(function () {
         serverSide: true,
         ajax: config.routes.reward_sliders_datatable_route,
         columns: [{
-                data: 'id',
-                name: 'id',
-                render: function(data, type, row) {
-                    return "<a href='" + config.routes.reward_sliders_datatable_route + '/' + row.id + "'>" + row.id + "</a>"
-                }
+            data: 'id',
+            name: 'id',
+            render: function (data, type, row) {
+                return "<a href='" + config.routes.reward_sliders_datatable_route + '/' + row.id + "'>" + row.id + "</a>"
+            }
+        },
+        {
+            data: "image",
+            name: "image",
+            render: function (data, type, row, meta) {
+                var imgsrc = config.image_path_rewards_slider + data;
+                return (
+                    '<img class="img-responsive" src="' + imgsrc + '" alt="image" height="40px" width="40px">'
+                );
             },
-            {
-                data: "image",
-                name: "image",
-                render: function(data, type, row, meta) {
-                    var imgsrc = config.image_path_rewards_slider + data;
-                    return (
-                        '<img class="img-responsive" src="' + imgsrc + '" alt="image" height="40px" width="40px">'
-                    );
-                },
-            },
-            { data: 'link', name: 'link' },
-            { data: 'start_date', name: 'start_date' },
-            { data: 'end_date', name: 'end_date' },
-            { data: 'sort_order', name: 'sort_order' },
-            { data: 'is_active', name: 'is_active' },
-            { data: 'created_at', name: 'created_at' },
-            { data: 'updated_at', name: 'updated_at' },
+        },
+        { data: 'link', name: 'link' },
+        { data: 'start_date', name: 'start_date' },
+        { data: 'end_date', name: 'end_date' },
+        { data: 'sort_order', name: 'sort_order' },
+        { data: 'is_active', name: 'is_active' },
+        { data: 'created_at', name: 'created_at' },
+        { data: 'updated_at', name: 'updated_at' },
         ]
     });
 
@@ -1559,8 +1559,8 @@ $(document).ready(function () {
     var rewardSliderEditCurrentDateTime = rsdt.getFullYear() + "-" + ("0" + (rsdt.getMonth() + 1)).slice(-2) + "-" + ("0" + rsdt.getDate()).slice(-2) +
         " " + ("0" + rsdt.getHours()).slice(-2) + ":" + ("0" + rsdt.getMinutes()).slice(-2) + ":" + ("0" + rsdt.getSeconds()).slice(-2);
 
-    console.log("rewardSliderEditCurrentDateTime: ",rewardSliderEditCurrentDateTime);
-    console.log("rewardSliderEditEndDateTime: ",rewardSliderEditEndDateTime);
+    console.log("rewardSliderEditCurrentDateTime: ", rewardSliderEditCurrentDateTime);
+    console.log("rewardSliderEditEndDateTime: ", rewardSliderEditEndDateTime);
 
     if (rewardSliderEditEndDateTime != "" && rewardSliderEditEndDateTime < rewardSliderEditCurrentDateTime) {
         minRewardSliderEndDateTime = rewardSliderEditEndDateTime;
@@ -1600,7 +1600,7 @@ $(document).ready(function () {
         });
     });
 
-    $("#quotePlansGenerateButton").click(function() {
+    $("#quotePlansGenerateButton").click(function () {
         var quotePlansGenerateUrl = $('#quotePlansGenerateUrl').val();
         navigator.clipboard.writeText(quotePlansGenerateUrl);
         $("#quotePlansGenerateMsg").show(300);
@@ -1637,7 +1637,7 @@ $(document).ready(function () {
         var input = '<input name="return_to_view" type="hidden" value="1"/>';
         $("#redirect_to_view_div").html(input);
         setTimeout(function () {
-            $("form").submit();
+            $("#demo-form2").submit();
         }, 500);
     });
 
@@ -1762,5 +1762,66 @@ $(document).ready(function () {
             },
         });
     }
+    var corpLineDataTable = $(".corpline-data-table").DataTable({
+        ordering: false,
+        info: false,
+        searching: false,
+        bLengthChange: false,
+        serverSide: true,
+        ajax: {
+            url: config.routes.amtDataTable,
+            data: function (d) {
+                d.leadType = $("#leadStatus").val();
+                d.cdbID = $("#cdbID").val();
+            },
+        },
+        columns: [{
+            data: 'code',
+            name: 'code',
+            render: function (data, type, row) {
+                var href = '/quotes/business/' + row.uuid;
+                return "<a href='" + href + "'>" + row.code + "</a>";
+            }
+        },
+        { data: "first_name", name: "first_name" },
+        { data: "last_name", name: "last_name" },
+        { data: "leadStatus", name: "leadStatus" },
+        { data: "leadType", name: "leadType" },
+        { data: "created_at", name: "created_at" },
+        { data: "updated_at", name: "updated_at" },
+
+        ],
+    });
+    var amtDataTable = $(".amt-data-table").DataTable({
+        ordering: false,
+        info: false,
+        searching: false,
+        bLengthChange: false,
+        serverSide: true,
+        ajax: {
+            url: config.routes.amtDataTable,
+            data: function (d) {
+                d.leadType = $("#leadStatus").val();
+                d.cdbID = $("#cdbID").val();
+            },
+        },
+        columns: [{
+            data: 'code',
+            name: 'code',
+            render: function (data, type, row) {
+                var type = row.code.indexOf('HEA-') > -1 ? 'health' : 'business';
+                var href = '/quotes/' + type + '/' + row.uuid;
+                return "<a href='" + href + "'>" + row.code + "</a>";
+            }
+        },
+        { data: "first_name", name: "first_name" },
+        { data: "last_name", name: "last_name" },
+        { data: "leadStatus", name: "leadStatus" },
+        { data: "leadType", name: "leadType" },
+        { data: "created_at", name: "created_at" },
+        { data: "updated_at", name: "updated_at" },
+
+        ],
+    });
 });
 
