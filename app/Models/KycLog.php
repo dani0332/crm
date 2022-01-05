@@ -19,7 +19,8 @@ class KycLog extends BaseModel
             "advisor" => [],
             "oe" => [],
             "admin" => [],
-            "invoicing" => []
+            "invoicing" => [],
+            "payment" => []
         ],
         "list" => [
             "pa" => [ 'id','results', 'quote_request_id', 'results_found' ],
@@ -27,7 +28,8 @@ class KycLog extends BaseModel
             "advisor" => [ 'id','results', 'quote_request_id', 'results_found' ],
             "oe" => [ 'id','results', 'quote_request_id', 'results_found' ],
             "admin" => [ 'id','results', 'quote_request_id', 'results_found' ],
-            "invoicing" => [ 'id','results', 'quote_request_id', 'results_found' ]
+            "invoicing" => [ 'id','results', 'quote_request_id', 'results_found' ],
+            "payment" => [ 'id','results', 'quote_request_id', 'results_found' ]
         ]
     ];
     public function processGetDSL($filters) {

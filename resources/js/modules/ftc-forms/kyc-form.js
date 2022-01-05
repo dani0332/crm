@@ -14,6 +14,7 @@ export default function KycForm(props) {
         'advisor',
         'oe',
         'admin',
+        'payment',
         'invoicing',
         'production_approval_manager',
       ],

@@ -14,7 +14,8 @@ const leadRequest = {
           'advisor',
           'oe',
           'admin',
-            'invoicing',
+          'invoicing',
+          'payment',
           'production_approval_manager',
           'production_approval_manager',
         ],
@@ -36,6 +37,7 @@ const leadRequest = {
               'oe',
               'admin',
               'invoicing',
+              'payment',
               'production_approval_manager',
               'production_approval_manager',
             ],
@@ -72,6 +74,7 @@ const leadRequest = {
               'pa',
               'admin',
               'invoicing',
+              'payment',
               'production_approval_manager',
               'production_approval_manager',
             ],
@@ -179,7 +182,7 @@ const leadRequest = {
                 { id: 1, text: 'Assigned Leads' },
               ],
               access: {
-                read: ['pa', 'invoicing'],
+                read: ['pa', 'payment', 'invoicing'],
                 write: [],
                 update: [],
               },
@@ -221,7 +224,7 @@ const leadRequest = {
           },
           {
             Header: 'Payment Agent',
-            accessor: d => `${d?.invoicing?.name}`,
+            accessor: d => `${d?.payment_id?.name}`,
           },
           {
             Header: 'Last Modified',
@@ -288,9 +291,13 @@ const leadRequest = {
             };
             if (role === 'pa' && !row.pa_id) {
               showConfirmMsg();
-            } else if (role === 'invoicing' && !row.invoicing) {
+            } else if (role === 'payment' && !row.payment_id) {
               showConfirmMsg();
-            } else {
+            }
+            else if (role === 'invoicing' && !row.invoicing) {
+              showConfirmMsg(); //123
+            }
+            else {
               dispatch({ type: 'VISIBLE_FORM', formState: 'reset' });
               history.push('/lead/' + row.id);
             }

@@ -13,6 +13,7 @@ const ftcPayment = {
           'oe',
           'admin',
           'invoicing',
+          'payment',
           'production_approval_manager',
         ],
         write: ['advisor', 'oe', 'admin'],
@@ -56,6 +57,7 @@ const ftcPayment = {
               'oe',
               'admin',
               'invoicing',
+              'payment',
               'production_approval_manager',
             ],
             write: [ 'oe','advisor'],
@@ -75,6 +77,7 @@ const ftcPayment = {
               'pa',
               'admin',
               'invoicing',
+              'payment',
               'production_approval_manager',
             ],
             write: [ 'oe','advisor'],
@@ -92,6 +95,7 @@ const ftcPayment = {
               'pa',
               'admin',
               'invoicing',
+              'payment',
               'production_approval_manager',
             ],
             write: [ 'oe','advisor'],
@@ -125,18 +129,19 @@ const ftcPayment = {
 
             const code  = form?.data?.car_quote_id?.quote_status_id?.code;
             const { role } = session();
-            if(code && code === 'transaction_declined' && role === 'invoicing' ) {
+            if(code && code === 'transaction_declined' && role === 'payment' ) {
               const access = {
                 read: [
                   'pa',
                   'advisor',
                   'oe',
                   'admin',
+                  'payment',
                   'invoicing',
                   'production_approval_manager',
                 ],
-                write: ['invoicing'],
-                update: ['invoicing'],
+                write: ['payment'],
+                update: ['payment'],
                 delete: [],
               };
               form.access = access

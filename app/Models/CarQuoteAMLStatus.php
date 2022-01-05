@@ -20,7 +20,7 @@ class CarQuoteAMLStatus extends BaseModel
             "advisor" => [  'car_quote_id' , 'status', 'notes'],
             "oe" => [  'car_quote_id' , 'status', 'notes'],
             "admin" => [  'car_quote_id' , 'status', 'notes'],
-            "invoicing" => [  'car_quote_id' , 'status', 'notes'],
+            "payment" => [  'car_quote_id' , 'status', 'notes'],
         ],
         "list" => [ 'id', 'status', 'notes', 'updated_at' ]
     ];

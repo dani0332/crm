@@ -21,7 +21,8 @@ class CarQuoteAdvisorToOE extends BaseModel
             "advisor" => [ ],
             "oe" => [ ],
             "admin" => ['oe_id', 'advisor_id' ],
-            "invoicing" => [ ]
+            "invoicing" => [ ],
+            "payment" => [ ]
 
         ],
         "list" => [
@@ -29,7 +30,8 @@ class CarQuoteAdvisorToOE extends BaseModel
             "advisor" => ['id','oe_id', 'advisor_id'],
             "oe" => ['id','oe_id', 'advisor_id'],
             "admin" => ['id','oe_id', 'advisor_id'],
-            "invoicing" => ['id','oe_id', 'advisor_id']
+            "invoicing" => ['id','oe_id', 'advisor_id'],
+            "payment" => ['id','oe_id', 'advisor_id']
         ]
     ];
 
