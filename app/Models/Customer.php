@@ -24,6 +24,12 @@ class Customer extends Model implements AuditableContract
         return $this->belongsToMany(Reward::class, 'reward_customer_viewed', 'reward_id', 'customer_id');
     }
 
+    public function MyAlfredUsers()
+    {
+        return $this->hasOne(MyAlFredUser::class);
+    }
+
+
     public function getCreatedAtAttribute($table)
     {
         $dateTimeFormat = Config::get('constants.datetime_format');

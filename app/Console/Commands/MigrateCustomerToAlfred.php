@@ -41,21 +41,26 @@ class migrateCustomerToAlfred extends Command
      */
     public function handle()
     {
-        $customers = Customer::where('has_alfred_access', 1)->where('is_we_sent', 1)->get();
+        $customers = Customer::doesnthave('MyAlfredUsers')->where('has_alfred_access', 1)->where('is_we_sent', 1)->get();
         $customerChunk = $customers->chunk(5);
-
         $bar = $this->output->createProgressBar(count($customers));
-        
+
         $bar->start();
 
         $customerChunk->each(function ($chunk) use ($bar) {
             $chunk->each(function ($item) use ($bar) {
                 $response = Http::post(env('BERLIN_API_ENDPOINT'));
                 $responseBody = json_decode($response->body());
-                MyAlFredUser::insert([
-                    'signup_url' => $responseBody->data->url,
-                    'customer_id' => $item->id
-                ]);
+                $customer = MyAlFredUser::where('customer_id', $item->id)->first();
+                if (!$customer) {
+                    MyAlFredUser::insert([
+                        'signup_url' => $responseBody->data->url,
+                        'customer_id' => $item->id,
+                        'created_at' => Carbon::now('Asia/Dubai'),
+                        'updated_at' => Carbon::now('Asia/Dubai')
+                    ]);
+                    
+                }
                 $bar->advance();
             });
         });
