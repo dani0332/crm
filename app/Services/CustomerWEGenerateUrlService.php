@@ -8,7 +8,7 @@ class CustomerWEGenerateUrlService extends BaseService
 {
 	public static function getCustomerWeUrl(Request $request)
     {
-        $berlinApiEndPoint = Config::get('constants.BERLIN_API_ENDPOINT') . '/api/auth/generate-url';
+        $berlinApiEndPoint = Config::get('constants.BERLIN_API_ENDPOINT');
         $clientBerlin = new \GuzzleHttp\Client();
 
         try {

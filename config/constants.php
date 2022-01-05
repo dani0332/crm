@@ -41,4 +41,5 @@ return [
     'SIB_URL' => env('SIB_URL'),
     'BERLIN_API_ENDPOINT' => env('BERLIN_API_ENDPOINT'),
     'MAIL_MYALFRED_SUPPORT_REPLY_TO' => env('MAIL_MYALFRED_SUPPORT_REPLY_TO'),
+    'APP_ENV' => env('APP_ENV'),
 ];

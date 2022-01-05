@@ -78,19 +78,21 @@ class TransAppService extends BaseService
         $customer->is_we_sent = true;
         $customer->save();
 
-        $emailL_sys = Config::get('constants.emailL_sys');
-        if($emailL_sys == "PRODUCTION") {
-            $emailSubject = 'Act now and simply sign up to cash in your rewards & keep on saving!';
-            $fromEmail = 'no-reply@alert.insurancemarket.email';
-        }
-        else {
-            $emailSubject = $emailL_sys.' | Act now and simply sign up to cash in your rewards & keep on saving!';
-            $fromEmail = 'no-reply@alert.instacover.ae';
-        }
-
+        $appEnv = Config::get('constants.APP_ENV');
+        $emailSubject = 'Act now and simply sign up to cash in your rewards & keep on saving!';
         $emailRecipient = $customer->email;
         $fromName = 'no-reply';
-        $replyToEmail = 'support@myalfred.com';
+        $fromEmail = Config::get('constants.MAIL_FROM_ADDRESS');
+        $replyToEmail = Config::get('constants.MAIL_MYALFRED_SUPPORT_REPLY_TO');
+        $emailSubjectExt = $appEnv." | ".$emailSubject;
+
+        if($appEnv == "production") {
+            $emailSubject = $emailSubject;
+
+        }
+        else {
+            $emailSubject = $emailSubjectExt;
+        }
 
         Mail::send(['html' => 'customerWelcome'], [
             'customerName' => $customer->first_name." ".$customer->last_name,
