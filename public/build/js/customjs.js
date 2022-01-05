@@ -1245,8 +1245,8 @@ $(document).ready(function () {
         { data: 'allocation_date', name: 'allocation_date' },
         { data: 'next_followup_date', name: 'next_followup_date' },
         { data: 'handlers_name', name: 'handlers_name' },
-        { data: 'created_at', name: 'created_at' },
-        { data: 'updated_at', name: 'updated_at' }
+        { data: 'tm_created_at', name: 'created_at' },
+        { data: 'tm_updated_at', name: 'updated_at' }
 
         ],
         createdRow: function (row, data, index) {
