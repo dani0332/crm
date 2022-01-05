@@ -76,7 +76,7 @@ export default function ReviewSend(props) {
                   <tr>
                     <td>Nationality:</td>
                     <td className='fs15 fw700 text-right'>
-                      {data?.nationality_id.text}
+                      {data?.nationality_id?.text}
                     </td>
                   </tr>
                   <tr>
@@ -88,7 +88,7 @@ export default function ReviewSend(props) {
                   <tr>
                     <td>UAE Years driving:</td>
                     <td className='fs15 fw700 text-right'>
-                      {data?.uae_license_held_for_id.text}
+                      {data?.uae_license_held_for_id?.text}
                     </td>
                   </tr>
                   <tr>
@@ -99,34 +99,36 @@ export default function ReviewSend(props) {
                   </tr>
                   <tr>
                     <td>Date of first registration:</td>
-                    <td className='fs15 fw700 text-right'>
-                      {moment(data?.date_first_registration)
-                        .format('YYYY/MM/DD')
-                        .toString()}
-                    </td>
+                    { data?.date_first_registration && 
+                      <td className='fs15 fw700 text-right'>
+                        {moment(data.date_first_registration)
+                          .format('YYYY/MM/DD')
+                          .toString()}
+                      </td>
+                    }
                   </tr>
                   <tr>
                     <td>Model:</td>
                     <td className='fs15 fw700 text-right'>
-                      {data?.car_model_id.text}
+                      {data?.car_model_id?.text}
                     </td>
                   </tr>
                   <tr>
                     <td>Make:</td>
                     <td className='fs15 fw700 text-right'>
-                      {data?.car_make_id.text}
+                      {data?.car_make_id?.text}
                     </td>
                   </tr>
                   <tr>
                     <td>Emirate of Registration:</td>
                     <td className='fs15 fw700 text-right'>
-                      {data?.emirate_of_registration_id.text}
+                      {data?.emirate_of_registration_id?.text}
                     </td>
                   </tr>
                   <tr>
                     <td>Declared years of no claims:</td>
                     <td className='fs15 fw700 text-right'>
-                      {data?.claim_history_id.text}
+                      {data?.claim_history_id?.text}
                     </td>
                   </tr>
                   <tr>

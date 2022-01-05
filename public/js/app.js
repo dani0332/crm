@@ -20597,7 +20597,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
 
 
 function ReviewSend(props) {
-  var _data$vehicle_detail_, _data$vehicle_detail_2, _data$vehicle_detail_3, _data$vehicle_detail_4, _data$vehicle_detail_5, _data$vehicle_detail_6, _data$vehicle_detail_7, _data$vehicle_detail_8, _data$vehicle_detail_9, _data$insurance_cover, _data$insurance_cover2, _data$insurance_cover3, _data$insurance_cover4, _data$insurance_cover5, _data$insurance_cover6, _data$insurance_cover7, _data$insurance_cover8, _data$insurance_cover9, _data$insurance_cover10, _data$insurance_cover11, _data$insurance_cover12, _data$insurance_cover13, _data$insurance_cover14, _data$car_quote_kyc, _data$car_quote_kyc2, _data$car_quote_kyc3, _data$payment_detail, _data$payment_detail2;
+  var _data$nationality_id, _data$uae_license_hel, _data$car_model_id, _data$car_make_id, _data$emirate_of_regi, _data$claim_history_i, _data$vehicle_detail_, _data$vehicle_detail_2, _data$vehicle_detail_3, _data$vehicle_detail_4, _data$vehicle_detail_5, _data$vehicle_detail_6, _data$vehicle_detail_7, _data$vehicle_detail_8, _data$vehicle_detail_9, _data$insurance_cover, _data$insurance_cover2, _data$insurance_cover3, _data$insurance_cover4, _data$insurance_cover5, _data$insurance_cover6, _data$insurance_cover7, _data$insurance_cover8, _data$insurance_cover9, _data$insurance_cover10, _data$insurance_cover11, _data$insurance_cover12, _data$insurance_cover13, _data$insurance_cover14, _data$car_quote_kyc, _data$car_quote_kyc2, _data$car_quote_kyc3, _data$payment_detail, _data$payment_detail2;
 
   var _useParams = (0,react_router_dom__WEBPACK_IMPORTED_MODULE_7__.useParams)(),
       id = _useParams.id;
@@ -20731,7 +20731,7 @@ function ReviewSend(props) {
                     children: "Nationality:"
                   }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("td", {
                     className: "fs15 fw700 text-right",
-                    children: data === null || data === void 0 ? void 0 : data.nationality_id.text
+                    children: data === null || data === void 0 ? void 0 : (_data$nationality_id = data.nationality_id) === null || _data$nationality_id === void 0 ? void 0 : _data$nationality_id.text
                   })]
                 }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxs)("tr", {
                   children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("td", {
@@ -20745,7 +20745,7 @@ function ReviewSend(props) {
                     children: "UAE Years driving:"
                   }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("td", {
                     className: "fs15 fw700 text-right",
-                    children: data === null || data === void 0 ? void 0 : data.uae_license_held_for_id.text
+                    children: data === null || data === void 0 ? void 0 : (_data$uae_license_hel = data.uae_license_held_for_id) === null || _data$uae_license_hel === void 0 ? void 0 : _data$uae_license_hel.text
                   })]
                 }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxs)("tr", {
                   children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("td", {
@@ -20757,37 +20757,37 @@ function ReviewSend(props) {
                 }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxs)("tr", {
                   children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("td", {
                     children: "Date of first registration:"
-                  }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("td", {
+                  }), (data === null || data === void 0 ? void 0 : data.date_first_registration) && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("td", {
                     className: "fs15 fw700 text-right",
-                    children: moment__WEBPACK_IMPORTED_MODULE_5___default()(data === null || data === void 0 ? void 0 : data.date_first_registration).format('YYYY/MM/DD').toString()
+                    children: moment__WEBPACK_IMPORTED_MODULE_5___default()(data.date_first_registration).format('YYYY/MM/DD').toString()
                   })]
                 }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxs)("tr", {
                   children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("td", {
                     children: "Model:"
                   }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("td", {
                     className: "fs15 fw700 text-right",
-                    children: data === null || data === void 0 ? void 0 : data.car_model_id.text
+                    children: data === null || data === void 0 ? void 0 : (_data$car_model_id = data.car_model_id) === null || _data$car_model_id === void 0 ? void 0 : _data$car_model_id.text
                   })]
                 }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxs)("tr", {
                   children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("td", {
                     children: "Make:"
                   }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("td", {
                     className: "fs15 fw700 text-right",
-                    children: data === null || data === void 0 ? void 0 : data.car_make_id.text
+                    children: data === null || data === void 0 ? void 0 : (_data$car_make_id = data.car_make_id) === null || _data$car_make_id === void 0 ? void 0 : _data$car_make_id.text
                   })]
                 }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxs)("tr", {
                   children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("td", {
                     children: "Emirate of Registration:"
                   }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("td", {
                     className: "fs15 fw700 text-right",
-                    children: data === null || data === void 0 ? void 0 : data.emirate_of_registration_id.text
+                    children: data === null || data === void 0 ? void 0 : (_data$emirate_of_regi = data.emirate_of_registration_id) === null || _data$emirate_of_regi === void 0 ? void 0 : _data$emirate_of_regi.text
                   })]
                 }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxs)("tr", {
                   children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("td", {
                     children: "Declared years of no claims:"
                   }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("td", {
                     className: "fs15 fw700 text-right",
-                    children: data === null || data === void 0 ? void 0 : data.claim_history_id.text
+                    children: data === null || data === void 0 ? void 0 : (_data$claim_history_i = data.claim_history_id) === null || _data$claim_history_i === void 0 ? void 0 : _data$claim_history_i.text
                   })]
                 }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxs)("tr", {
                   children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("td", {
