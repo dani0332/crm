@@ -43,11 +43,11 @@ class CarQuotePayment extends BaseModel
 
     public function car_quote_id()
     {
-        return $this->hasOne(CarQuote::class, 'id', 'car_quote_id')->select(['id','quote_status_id']);
+        return $this->hasOne(CarQuote::class, 'id', 'car_quote_id')->select(['id','quote_status_id','payment_status_id', 'payment_gateway','payment_reference','is_ecommerce']);
     }
 
     public function relations() {
-        return ['mode_id', 'car_quote_id.quote_status_id'];
+        return ['mode_id', 'car_quote_id.quote_status_id', 'car_quote_id.payment_status_id'];
     }
 
     public function processGetDSL($filters, $request) {

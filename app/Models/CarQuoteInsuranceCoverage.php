@@ -5,6 +5,12 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\BaseModel;
+use App\Models\CarQuote;
+use Auth;
+use League\Fractal;
+use League\Fractal\Manager;
+use League\Fractal\Serializer\ArraySerializer;
+use App\Transformers\CarQuoteInsuranceCoverageTransformer;
 
 class CarQuoteInsuranceCoverage extends BaseModel
 {
@@ -52,18 +58,47 @@ class CarQuoteInsuranceCoverage extends BaseModel
 
     public function car_quote_id()
     {
-        return $this->hasOne(CarQuote::class, 'id', 'car_quote_id')->select(['id','quote_status_id']);
+        return $this->hasOne(CarQuote::class, 'id', 'car_quote_id')->select(['id','quote_status_id', 'plan_id']);
+    }
+
+    public function car_quote_request_add_on()
+    {
+        return $this->hasMany(CarQuoteRequestAddOn::class, 'quote_request_id', 'car_quote_id')->select(['id','quote_request_id', 'addon_option_id', 'price' ]);
     }
     
     public function relations() {
 
         if($this->isGetList)
-            return ['insurance_company_id' , 'insurance_plan_id', 'vehicle_type_id', 'car_quote_id.quote_status_id'];
+            return ['insurance_company_id' , 'insurance_plan_id', 'vehicle_type_id', 'car_quote_id.quote_status_id', 'car_quote_id.plan_id', 'car_quote_id.plan_id.provider_id', 'car_quote_request_add_on', 'car_quote_request_add_on.addon_option_id', 'car_quote_request_add_on.addon_option_id.addon_id'];
         else
-            return ['insurance_company_id' , 'insurance_plan_id', 'vehicle_type_id', 'car_quote_id.quote_status_id'];
+            return ['insurance_company_id' , 'insurance_plan_id', 'vehicle_type_id', 'car_quote_id.quote_status_id', 'car_quote_id.plan_id'];
     }
 
     public function processGetDSL($filters) {
-        return self::processGetBaseDSL($filters, false);
+
+       $fractal = new Manager(); 
+       $fractal->setSerializer(new ArraySerializer());
+       $data = self::processGetBaseDSL($filters, false);
+       if($data->count() < 1 )
+            return null;
+       $resource = new Fractal\Resource\Item($data , new CarQuoteInsuranceCoverageTransformer);
+       return $fractal->createData($resource)->toArray();
+       
+    }
+
+    public function saveForm($request, $update = false) {
+
+        $carQuote   =   CarQuote::where(['id' => $request->input('car_quote_id', -1), 'advisor_id' => Auth::user()->id])->first();
+        
+        $request->request->add(['insurance_company_id' => $request->input('insurance_company', 0)]);
+        $request->request->add(['insurance_plan_id' => $request->input('plan_id', 0)]);
+        
+        
+        if($carQuote && parent::saveForm($request, $update)) {   
+            $carQuote->plan_id = $request->input("plan_id");
+            return $carQuote->save();
+        }
+
+        return $this->APIController->respondData(["message" => "Something wrong"], 500);
     }
 }

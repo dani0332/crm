@@ -1,3 +1,6 @@
+
+import CarQuoteAddon from './../modules/ftc-forms/car-quote-addon'
+
 let insuranceDetail = {
   getForm() {
     const yuu = {
@@ -20,6 +23,21 @@ let insuranceDetail = {
         delete: [],
       },
       fields: {
+        car_quote_request_add_on: {
+          type: 'textarea',
+          label: '',
+          access: {
+            read: ['advisor', 'oe', 'pa', 'production_approval_manager'],
+            write: [ ],
+            update: [],
+          },
+          shouldRenderForRead(field) {
+              return true;
+          },
+          renderForRead(field) {
+            return <CarQuoteAddon field={field} />;
+          },
+        },
         start_date: {
           type: 'datePicker',
           label: 'Policy start date',
@@ -38,14 +56,14 @@ let insuranceDetail = {
           },
           // rules: { required: true }
         },
-        insurance_company_id: {
+        insurance_company: {
           type: 'dropdown',
           label: 'Insurance Company',
           source: 'insurance_provider',
-          filter: {insurance_company_id: { op: "<>", val: "null"}},
+          filter: {is_active: { op: "=", val: 1 } },
           appendFilterToFields:[
             { 
-              field: 'insurance_plan_id', 
+              field: 'plan_id', 
               key: "provider_id"
             }
           ],
@@ -63,16 +81,8 @@ let insuranceDetail = {
             write: ['advisor','oe', 'admin'],
             update: ['advisor','oe', 'admin'],
           },
-          // transform(item) {
-          //   if (Array.isArray(item)) {
-          //     const items = item.map(u => {
-          //       return { value: u?.id, label: u?.name };
-          //     });
-          //     return items;
-          //   } else return { value: item?.id, label: item?.name };
-          // },
         },
-        insurance_plan_id: {
+        plan_id: {
           type: 'dropdown',
           label: 'Insurance Plan',
           source: 'car_plan',
@@ -312,15 +322,21 @@ let insuranceDetail = {
           },
           rules: { required: true },
         },
-      },
+      }, //car_quote_request_add_on
       sections: [
+        {
+          label: 'Insurance Coverage Addon',
+          fields: [
+            'car_quote_request_add_on',
+          ],
+        },
         {
           label: 'Insurance Coverage',
           //fields: ['start_date', 'insurance_company_id']
           fields: [
             'start_date',
-            'insurance_company_id',
-            'insurance_plan_id',
+            'insurance_company',
+            'plan_id',
             'vehicle_type_id',
             'excess',
             'sum_insured',
@@ -375,15 +391,15 @@ let insuranceDetail = {
             form.access = access
             return form
           },
-          transformBeforeOpenEditMode(form) {
-            console.log('-------------transformBeforeOpenEditMode---------------')
-            console.log(form)
-            console.log('-------------transformBeforeOpenEditMode---------------')
-            // if(form?.getForm?.context === 'car_quote_snap' && form?.formState === 'list' && form?.getForm?.multi === false) {
-            //     return { ...data, mode_id: { id: data?.mode_id?.id, text: data?.mode_id?.name}}
-            // }
-            // return data
-          },
+          // transformBeforeOpenEditMode(form) {
+          //   console.log('-------------transformBeforeOpenEditMode---------------')
+          //   console.log(form)
+          //   console.log('-------------transformBeforeOpenEditMode---------------')
+          //   // if(form?.getForm?.context === 'car_quote_snap' && form?.formState === 'list' && form?.getForm?.multi === false) {
+          //   //     return { ...data, mode_id: { id: data?.mode_id?.id, text: data?.mode_id?.name}}
+          //   // }
+          //   // return data
+          // },
           applyFilter(options) {
             const {
               params: { id },
