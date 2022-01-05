@@ -58,8 +58,8 @@ class TmLeadController extends Controller
                 'tm_leads.enquiry_date as enquiry_date',
                 'tm_leads.allocation_date as allocation_date',
                 'tm_leads.next_followup_date as next_followup_date',
-                'tm_leads.created_at as created_at',
-                'tm_leads.updated_at as updated_at',
+                'tm_leads.created_at as tm_created_at',
+                'tm_leads.updated_at as tm_updated_at',
                 'tm_leads.cdb_id as cdb_id',
                 'tm_lead_statuses.code as tm_lead_status_code',
                 'handlers.name as handlers_name',
@@ -204,7 +204,7 @@ class TmLeadController extends Controller
      */
     public function show(TmLead $tmlead)
     {
-        $customerCorrectPhoneNo = mapPhoneNumber($tmlead->phone_number); 
+        $customerCorrectPhoneNo = mapPhoneNumber($tmlead->phone_number);
         if (Auth::user()->hasRole("TM_ADVISOR")) {
             if (Auth::user()->id != $tmlead->assigned_to_id) {
                 return redirect()->route("tmleads.index")->with("message", "You don't have access to view this lead");
@@ -266,7 +266,7 @@ class TmLeadController extends Controller
         $emiratesOfRegistrations = $this->getEmiratesOfRegistrations();
         $carTypeInsurances = $this->getCarTypeInsurances();
         $tmLeadTypes = $this->getLeadTypes();
-       
+
         $handlers = User::select('users.*')
             ->leftjoin('model_has_roles', 'users.id', 'model_has_roles.model_id')
             ->leftjoin('roles', 'roles.id', 'model_has_roles.role_id')

@@ -31,11 +31,15 @@ export default function TextAreaField({ field, controller }) {
     shouldDisable = true;
   }
 
+  let finalVal = value;
+  if (typeof field?.transform === 'function')
+    finalVal = field.transform(value, field);
+
   return (
     <Textarea
       className='form-control'
       disabled={shouldDisable}
-      value={value}
+      value={finalVal}
       onChange={onChange}
       autoSize={{ minRows: 5, maxRows: 15 }}
     />
