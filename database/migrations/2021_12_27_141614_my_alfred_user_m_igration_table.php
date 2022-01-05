@@ -21,7 +21,7 @@ class MyAlfredUserMIgrationTable extends Migration
                 $table->timestamps();
                 $table->softDeletes();
 
-                //DB relations
+                //DB relations 
                 $table->foreign('customer_id')->references('id')->on('customer')->onDelete('no action');
             });
         }
