@@ -93,6 +93,7 @@ export default function SelectField({ field, controller }) {
       });
     }
   };
+  
   const onChange = selectedOptions => {
     if (typeof field?.dispatch === 'function') {
       if (field?.if || field?.appendFilterToFields) {
@@ -202,6 +203,7 @@ export default function SelectField({ field, controller }) {
   };
 
   let value = [];
+  let defaultValue = data?.defaultValue;
   if (typeof field?.transform === 'function') {
     if (data.data.length > 0) {
       value = field?.transform(data.data);
@@ -213,16 +215,13 @@ export default function SelectField({ field, controller }) {
     value = options;
   }
 
-  // console.log('---**********SelectRender-************----');
-  // console.log(field);
-  // console.log(value);
-  // console.log(data);
-  // console.log('---**********SelectRender-************----');
-
+  if (typeof field?.valueTransform === 'function') {
+    defaultValue = field?.valueTransform(field, defaultValue);
+  }
   return (
     <Select
       options={value}
-      value={data?.defaultValue}
+      value={defaultValue}
       onChange={onChange}
       isDisabled={data.isDisabled}
       onFocus={onFocus}
