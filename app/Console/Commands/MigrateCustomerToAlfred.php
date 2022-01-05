@@ -41,7 +41,7 @@ class migrateCustomerToAlfred extends Command
      */
     public function handle()
     {
-        $customers = Customer::where('has_alfred_access', 1)->where('is_we_sent', 1)->whereDate('myalfred_expiry_date', '>=', Carbon::now())->get();
+        $customers = Customer::where('has_alfred_access', 1)->where('is_we_sent', 1)->get();
         $customerChunk = $customers->chunk(5);
 
         $bar = $this->output->createProgressBar(count($customers));
