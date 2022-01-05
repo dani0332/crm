@@ -67,7 +67,7 @@
                                     <li><a href="{{ url('quotes/car') }}">Car Quotes</a></li>
                                 @endcan
                                 @can('health-quotes-list')
-                                    <li><a href="{{ url('quotes/health') }}">Health Quotes</a></li>
+                                    <li><a href={{ url('quotes/health') }}>Health Quotes</a></li>
                                 @endcan
                                 @can('travel-quotes-list')
                                     <li><a href="{{ url('quotes/travel') }}">Travel Quotes</a></li>
@@ -78,11 +78,21 @@
                                 @can('home-quotes-list')
                                     <li><a href="{{ url('quotes/home') }}">Home Quotes</a></li>
                                 @endcan
-                                @can('business-quotes-list')
-                                    <li><a href="{{ url('quotes/business') }}">Business Quotes</a></li>
-                                @endcan
                             </ul>
                         </li>
+                    </ul>
+                @endcan
+                @can('crm-admin')
+                    <ul class="nav side-menu">
+                        <li> <a><i class="fa fa-quote-right"></i> Business Quotes <span class="fa fa-chevron-down"></span></a>
+                            <ul class="nav child_menu">
+                                @can('business-quotes-list')
+                                    <li><a href="{{ url('medical/amt') }}"> AMT Quotes </a></li>
+                                @endcan
+                                @can('business-quotes-list')
+                                    <li><a href="{{ url('quotes/business') }}"> CorpLine Quotes </a></li>
+                                @endcan
+                            </ul>
                     </ul>
                 @endcan
                 @canany(['vehicle-depreciation-list', 'vehicle-valuation-list'])

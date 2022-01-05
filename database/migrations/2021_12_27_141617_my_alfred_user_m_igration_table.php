@@ -20,9 +20,6 @@ class MyAlfredUserMIgrationTable extends Migration
                 $table->integer('customer_id')->unsigned();
                 $table->timestamps();
                 $table->softDeletes();
-
-                //DB relations
-                $table->foreign('customer_id')->references('id')->on('customer')->onDelete('no action');
             });
         }
     }

@@ -23,6 +23,7 @@ use App\Http\Controllers\CarRepairTypeController;
 use App\Http\Controllers\RentACarController;
 use App\Http\Controllers\ClaimsAttachmentsController;
 use App\Http\Controllers\AMLController;
+use App\Http\Controllers\AMTController;
 use App\Http\Controllers\BaseDiscountController;
 use App\Http\Controllers\BulkEmailProcessController;
 use App\Http\Controllers\CRUDController;
@@ -101,6 +102,7 @@ Route::group(['middleware' =>  ['auth']], function () {
         'destroy' => 'leadassignment.destroy',
     ]);
     Route::post('manualLeadAssign', [LeadAssignmentController::class, 'manualLeadAssign'])->name('manualAssignment');
+    Route::post('healthTeamAssign', [LeadAssignmentController::class, 'healthTeamAssign'])->name('healthTeamAssign');
     Route::get('getAdvisors', [LeadAssignmentController::class, 'getAdvisors'])->name('getAdvisors');
     Route::get('getTeamManagers', [UserController::class, 'getTeamManagers'])->name('getTeamManagers');
     Route::resource('customer', CustomerController::class);
@@ -194,12 +196,13 @@ Route::group(['middleware' =>  ['auth']], function () {
         Route::post('aml/upload/uae-list', [AMLController::class, 'uaeSanctionListUpload'])->name('uaeSanctionListUpload');
     });
 
+    Route::group(['prefix' => 'medical'], function () {
+        Route::resource('amt', AMTController::class);
+    });
 
     Route::group(['prefix' => 'discount'], function () {
         Route::resource('base', BaseDiscountController::class);
         Route::resource('age', AgeDiscountController::class);
-        // Route::get('create',[DiscountEngineBaseController::class,'create']);
-        // Route::post('submit',[DiscountEngineBaseController::class,'store']);
     });
 
     Route::group(['prefix' => 'telemarketing'], function () {
