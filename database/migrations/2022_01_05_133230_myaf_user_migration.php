@@ -31,6 +31,6 @@ class MyafUserMigration extends Migration
      */
     public function down()
     {
-        //
+        Schema::dropIfExists('myalfred_users_migration');
     }
 }
