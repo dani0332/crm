@@ -201,7 +201,7 @@ class CarQuote extends BaseModel
         if($this->isGetList)
             return ["pa_id","payment_id", "quote_status_id", "plan_id"];
         else
-            return ["car_type_insurance_id","payment_detail","quote_status_id", "kyc_status_id", "insurance_coverage.insurance_company_id", "insurance_coverage.insurance_plan_id", "insurance_coverage.vehicle_type_id", "uae_license_held_for_id", "car_make_id", "car_model_id", "emirate_of_registration_id", "claim_history_id",  "nationality_id", "vehicle_detail_id", "pa_id", "car_quote_kyc",  "plan_id"];
+            return ["car_type_insurance_id","payment_detail","quote_status_id", "kyc_status_id", "insurance_coverage.insurance_company_id", "insurance_coverage.insurance_plan_id", "insurance_coverage.vehicle_type_id", "uae_license_held_for_id", "car_make_id", "car_model_id", "emirate_of_registration_id", "claim_history_id",  "nationality_id", "vehicle_detail_id", "pa_id", "car_quote_kyc",  "plan_id","plan_id.provider_id"];
     }
 
     public $access = [

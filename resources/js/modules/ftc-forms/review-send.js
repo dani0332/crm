@@ -40,9 +40,8 @@ export default function ReviewSend(props) {
     });
   };
   const { data } = props;
-
   let reviewSend = []
-  if(role === 'advisor' || role === 'oe'){
+  if(role === 'advisor' || role === 'oe') {
     reviewSend.push(<button type='submit' className='btn btn-success' onClick={submit} > Review & Send </button>) 
   }
 
@@ -199,7 +198,7 @@ export default function ReviewSend(props) {
                   <tr>
                     <td>Insurance Company:</td>
                     <td className='fs15 fw700 text-right'>
-                      {data?.insurance_coverage?.insurance_company_id?.name}
+                      {data?.plan_id?.provider_id?.text}
                     </td>
                   </tr>
                   <tr>

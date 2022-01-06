@@ -123,7 +123,7 @@ export default function FTCDetail({ field }) {
           <tr>
             <td>Insurance Company:</td>
             <td className='fs15 fw700 text-right'>
-              {data?.insurance_coverage?.insurance_company_id?.name}
+              {data?.plan_id?.provider_id?.text}
             </td>
           </tr>
           <tr>
