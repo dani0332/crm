@@ -84,12 +84,15 @@ class HomeQuoteService extends BaseService
             }
             foreach ($searchProperties as $item) {
                 if (!empty($request[$item]) && $item != "created_at") {
-                    $this->query->where($this->getQuerySuffix($item) . '.' . $item, $request[$item]);
+                    if ($request[$item] == 'null') {
+                        $this->query->whereNull($item);
+                    } else {
+                        $this->query->where($this->getQuerySuffix($item) . '.' . $item, $request[$item]);
+                    }
                 }
             }
         }
-        $this->query->orderBy('hqr.created_at', 'DESC');
-        return $this->query;
+        return $this->query->orderBy('hqr.advisor_id', 'ASC');
     }
 
     private function getQuerySuffix($item)

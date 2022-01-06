@@ -9,11 +9,17 @@
     <div class="row">
         <div class="col-md-12 col-sm-12 admin-detail">
             <div class="x_panel">
-
+                <br />
+                    @if (session()->has('success'))
+                        <div class="alert alert-success">{{ session()->get('success') }}</div>
+                    @endif
+                    @if (session()->has('message'))
+                        <div class="alert alert-danger">{{ session()->get('message') }}</div>
+                    @endif
+                <div class="alert alert-success" style="display: none" id="teamassignmentSuccess"></div>
                 <div class="x_title">
                     <h2>{{(str_contains(strtolower($model->modelType), 'team') ? 'Team' : (str_contains(strtolower($model->modelType), 'leadstatus') ? 'Lead Status' : $model->modelType)). ' Detail' }}</h2>
                     <ul class="nav navbar-right panel_toolbox">
-                        @if($model->modelType == 'health' && $record->health_team_type != '') <li><button class="btn btn-success btn-sm" style="float: right">Convert Lead To Business</button></li> @endif
                         <li><a href="{{ url('quotes/'.strtolower($model->modelType)) }}" class="btn btn-warning btn-sm">{{(str_contains(strtolower($model->modelType), 'team') ? 'Team' : (str_contains(strtolower($model->modelType), 'leadstatus') ? 'Lead Status' : $model->modelType)). ' List' }}</a></li>
                     </ul>
                     <div class="clearfix"></div>
@@ -22,7 +28,9 @@
                 @if(strtolower($model->modelType) == 'health' && $record->health_team_type != '')
                     <form method="post" action="manualLeadAssign" class="form-horizontal form-label-left" autocomplete="off">
                         {{ csrf_field() }}
+                        @method('POST')
                         <input type="hidden" value="{{ strtolower($model->modelType) }}" name="modelType">
+                        <input type="hidden" value="{{ strtolower($record->id) }}" name="entityId">
                         <div class="col-md-6">
                             <div class="col-md-4">
                                 <h2><b>Assign Lead</b></h2>
@@ -35,10 +43,11 @@
                                         <option @if($record->advisor_id == $item->id) selected="selected" @endif value="{{ $item->id }}">{{ $item->name }}</option>
                                     @endforeach
                                 </select>
+                                <label id='userAssignValidation' style="display: none;color:red;">Please user for assignment</label>
                             </div>
                             <div class="col-md-4">
-                                <button type="submit" id="tmLeadsAssignToUser"
-                                name="tmLeadsAssignToUser"
+                                <button id="manualAssignBtn"
+                                name="manualAssignBtn"
                                 class="btn btn-warning btn-sm">Assign</button>
                             </div>
                         </div>
@@ -46,10 +55,10 @@
                         </div>
                     </form>
                 @elseif (strtolower($model->modelType) == 'health' )
-                    <form method="post" action="healthTeamAssign" class="form-horizontal form-label-left" autocomplete="off">
+                    <form method="post" id="healthTeamAssignForm" action="healthTeamAssign" class="form-horizontal form-label-left" autocomplete="off">
                         {{ csrf_field() }}
                         <input type="hidden" value="{{ strtolower($model->modelType) }}" name="modelType">
-                        <input type="hidden" value="{{ $record->id }}" name="entityId">
+                        <input type="hidden" value="{{ $record->id }}" id="entityId" name="entityId">
                         <div class="col-md-6">
                             <div class="col-md-4">
                                 <h2><b>Assign Lead Team</b></h2>
@@ -57,14 +66,16 @@
                             <div class="col-md-4">
                                 <select class="form-control"  id="assign_team"
                                 name="assign_team">
-                                    <option>Select Team</option>
+                                    <option value="">Select Team</option>
                                     <option value="EBP" >EBP</option>
                                     <option value="RM">RM</option>
+                                    <option value="GM">Group Medical</option>
                                 </select>
+                                <label id='teamAssignValidation' style="display: none;color:red;">Please select a team for assignment</label>
                             </div>
                             <div class="col-md-4">
-                                <button type="submit" id="tmLeadsAssignToUser"
-                                name="tmLeadsAssignToUser"
+                                <button type="submit" id="assignTeamBtn"
+                                name="assignTeamBtn"
                                 class="btn btn-warning btn-sm">Assign Team</button>
                             </div>
                         </div>
@@ -73,13 +84,7 @@
                     </form>
                 @endif
                 <div class="x_content">
-                    <br />
-                    @if (session()->has('success'))
-                        <div class="alert alert-success">{{ session()->get('success') }}</div>
-                    @endif
-                    @if (session()->has('message'))
-                        <div class="alert alert-danger">{{ session()->get('message') }}</div>
-                    @endif
+
                     @php
                     $count = 1;
                     @endphp
