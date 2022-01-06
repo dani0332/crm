@@ -183,7 +183,15 @@ class CarQuote extends BaseModel
         return $this->hasOne(User::class, 'id', 'oe_id')->select(['id', 'email','name']);
     }
 
-   
+    public function scopeRelationWhere($query, $isGetList, $filters) {
+      
+
+        if(Auth::user()->hasRole('pa') && $isGetList) {
+
+            $query->select(['car_quote_request.id','code', 'first_name', 'last_name', 'car_quote_request.updated_at', 'car_quote_request.created_at', "pa_id", "kyc_status_id","quote_status_id","aml_status","payment_id","car_value", "currently_insured_with", "car_type_insurance_id", "plan_id"]);
+            $query->join('car_quote_insurance_coverage', 'car_quote_insurance_coverage.car_quote_id', '=', 'car_quote_request.id');
+        }
+    }
 
 
     /*****  NewRelationships so old should not effect */
@@ -193,7 +201,7 @@ class CarQuote extends BaseModel
         if($this->isGetList)
             return ["pa_id","payment_id", "quote_status_id", "plan_id"];
         else
-            return ["car_type_insurance_id","payment_detail","quote_status_id", "kyc_status_id", "insurance_coverage.insurance_company_id", "insurance_coverage.insurance_plan_id", "insurance_coverage.vehicle_type_id", "uae_license_held_for_id", "car_make_id", "car_model_id", "emirate_of_registration_id", "claim_history_id",  "nationality_id", "vehicle_detail_id", "pa_id", "car_quote_kyc",  "plan_id"];
+            return ["car_type_insurance_id","payment_detail","quote_status_id", "kyc_status_id", "insurance_coverage.insurance_company_id", "insurance_coverage.insurance_plan_id", "insurance_coverage.vehicle_type_id", "uae_license_held_for_id", "car_make_id", "car_model_id", "emirate_of_registration_id", "claim_history_id",  "nationality_id", "vehicle_detail_id", "pa_id", "car_quote_kyc",  "plan_id","plan_id.provider_id"];
     }
 
     public $access = [
@@ -244,6 +252,8 @@ class CarQuote extends BaseModel
                     $restrictFilter["advisor_id"] = Auth::user()->id;
                     $restrictFilter = array_merge($restrictFilter,$filters);
                 }
+
+               // $restrictFilter["insurance_coverage.car_quote_id"] = 12222;
             }
 
             if(Auth::user()->hasRole('oe')) {
@@ -270,6 +280,7 @@ class CarQuote extends BaseModel
                     $pa_id = $filters["pa_id"] == 0 ? NULL : Auth::user()->id;
                     $restrictFilter["pa_id"] = $pa_id;
                     $restrictFilter["advisor_id"] = ["op" => "<>", "val" => ''];
+                   
                     $restrictFilter["quote_status_id"] =  ["op" => "in", "val" => $valuesIn];
                 }   
             }
