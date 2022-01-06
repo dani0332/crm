@@ -159,7 +159,8 @@ class FTCHistory extends BaseModel
                         $results = $getQuote->processGetBaseDSL(["id" => $request->input('car_quote_id')] , false);
                         $row = $results[0];
                         $row['generateLink'] = [ 'hash' => $carQuoteEmailLink->hash, 'quote' => $carQuote->id];
-                        $row->dob = Carbon::parse($row->dob)->format('d F Y');
+                        if($row->dob)
+                            $row->dob = Carbon::parse($row->dob)->addDay()->format('d F Y');
                         $this->sendFtcEmail($row,"ftc_mail");
                    }else {
                         return $this->APIController->respondData(["message" => "Something wrong"], 500);
