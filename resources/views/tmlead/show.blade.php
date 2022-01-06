@@ -49,7 +49,7 @@ use App\Enums\tmInsuranceTypeCode;
                             <p class="label-align-center">{{ $tmlead->tminsurancetype ? $tmlead->tminsurancetype->text : '' }}</p>
                             </div>
                         </div>
-                        
+
                     </div>
                     <div class="item form-group">
                         <div class="col">
@@ -78,7 +78,7 @@ use App\Enums\tmInsuranceTypeCode;
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="item form-group">
                         <div class="col">
                             <label class="col-form-label col-md-3 col-sm-3 label-align" for="Enquiry date"><b>Enquiry date</b></label>
@@ -200,7 +200,7 @@ use App\Enums\tmInsuranceTypeCode;
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="ln_solid"></div>
                     <div class="row">
                     <div class="col-auto mr-auto"></div>
@@ -278,7 +278,7 @@ use App\Enums\tmInsuranceTypeCode;
                             <input type="hidden" id="tmLeadId" name="tmLeadId" value="{{ $tmlead->id }}">
                             <input type="hidden" id="no_answer_count" name="no_answer_count" value="{{ $tmlead->no_answer_count }}">
                             @can('telemarketing-edit')
-                                <button type="submit" class="btn btn-warning btn-sm" id="return_to_view">Update</button>
+                                <button type="submit" class="btn btn-warning btn-sm">Update</button>
                             @endcan
                         </div>
                     </div>

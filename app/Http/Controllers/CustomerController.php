@@ -8,13 +8,16 @@ use App\Models\Customer;
 use App\Models\Nationality;
 use App\Services\TransAppService;
 use App\Services\CustomerUploadService;
+use App\Services\CustomerWEGenerateUrlService;
 
 class CustomerController extends Controller
 {
-    private $customerUploadFileService;
-    public function __construct(CustomerUploadService $customerUploadFileService)
+    private $customerUploadFileService, $transAppService, $customerWeEmailGenerateUrlService;
+    public function __construct(CustomerUploadService $customerUploadFileService, TransAppService $transAppService, CustomerWEGenerateUrlService $customerWeEmailGenerateUrlService)
     {
         $this->customerUploadFileService = $customerUploadFileService;
+        $this->transAppService = $transAppService;
+        $this->customerWeEmailGenerateUrlService = $customerWeEmailGenerateUrlService;
         $this->middleware('permission:customers-list', ['only' => ['index', 'store']]);
         $this->middleware('permission:customers-edit', ['only' => ['edit','update']]);
     }
@@ -79,6 +82,7 @@ class CustomerController extends Controller
         $this->validate($request, [
             'first_name' => 'required|max:120',
             'last_name' => 'required|max:120',
+            'email' => 'required|email',
 
         ]);
         $existingCustomer = $customer;
@@ -96,16 +100,17 @@ class CustomerController extends Controller
         $customer->save();
 
         if($sendWelcomeEmail && Config::get('constants.ENABLE_TRANSAPP_WE') == '1' && !$customer->is_we_sent) {
-            TransAppService::sendWelcomeEmail($customer->id);
+
+            $WEGenerateUrlResponse = $this->customerWeEmailGenerateUrlService->getCustomerWeUrl($request);
+
+            if(gettype($WEGenerateUrlResponse) == 'string') {
+                $this->transAppService->sendWelcomeEmail($customer->id, $WEGenerateUrlResponse);
+            }
             $customer->is_we_sent = true;
             $customer->save();
         }
 
-        if(isset($request->return_to_view)) {
-            return redirect("customer");
-        }
-
-        return back()->with('success', 'Customer has been Updated');
+        return redirect("customer/".$customer->id)->with('success', 'Customer has been Updated');
     }
 
     /**
