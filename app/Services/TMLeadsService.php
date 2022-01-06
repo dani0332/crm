@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use App\Enums\tmInsuranceTypeCode;
 use App\Enums\tmLeadStatusCode;
 use Auth;
+use App\Models\TmLeadContactInformation;
 
 class TMLeadsService
 {
@@ -51,7 +52,7 @@ class TMLeadsService
 
         if($tmInsuranceTypeCode == tmInsuranceTypeCode::Car) {
             $tmLead->year_of_manufacture = $request->year_of_manufacture;
-            $tmLead->car_value = $request->car_value;
+            $tmLead->car_value = floatval(preg_replace('/[^\d.]/', '', $request->car_value));
             $tmLead->car_model_id = $request->car_model_id;
             $tmLead->car_make_id = $request->car_make_id;
             $tmLead->nationality_id = $request->nationality_id;
@@ -77,13 +78,30 @@ class TMLeadsService
         else {
             $tmLead->dob = NULL;
         }
-
         $tmLead->save();
-
+    
         $updateTmLead = TmLead::find($tmLead->id);
         $updateTmLead->cdb_id = "TM-".$tmLead->id;
         $updateTmLead->save();
 
+        $tmLead->additionalInformation()->delete();
+        if ($request->has('phones') && $request->has('emails')) 
+        {
+            $phones = $request->phones;
+            $emails = $request->emails;
+            for ($i=0; $i < count($phones); $i ++) {
+                if (empty ($phones[$i]) && empty ($emails[$i]) )
+                    continue;
+                $model = new TmLeadContactInformation();
+                $model->phone_number = $phones[$i];
+                $model->email_address = $emails[$i];
+                $model->tm_lead_id = $tmLead->id;
+                $model->created_by = Auth::user()->id;
+                $model->updated_by = Auth::user()->id;
+                $model->save();
+            }
+        }
+        
         return $tmLead->id;
     }
 

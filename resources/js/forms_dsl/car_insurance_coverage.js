@@ -1,3 +1,6 @@
+
+import CarQuoteAddon from './../modules/ftc-forms/car-quote-addon'
+
 let insuranceDetail = {
   getForm() {
     const yuu = {
@@ -9,15 +12,32 @@ let insuranceDetail = {
         read: [
           'pa',
           'advisor',
+          'oe',
           'admin',
           'invoicing',
+          'payment',
           'production_approval_manager',
         ],
-        write: ['advisor', 'admin'],
-        update: ['advisor', 'admin'],
+        write: ['advisor', 'admin', 'oe'],
+        update: ['advisor', 'admin', 'oe'],
         delete: [],
       },
       fields: {
+        car_quote_request_add_on: {
+          type: 'textarea',
+          label: '',
+          access: {
+            read: ['advisor', 'oe', 'pa', 'production_approval_manager'],
+            write: [ ],
+            update: [],
+          },
+          shouldRenderForRead(field) {
+              return true;
+          },
+          renderForRead(field) {
+            return <CarQuoteAddon field={field} />;
+          },
+        },
         start_date: {
           type: 'datePicker',
           label: 'Policy start date',
@@ -25,54 +45,59 @@ let insuranceDetail = {
             read: [
               'pa',
               'advisor',
+              'oe',
               'admin',
               'invoicing',
+              'payment',
               'production_approval_manager',
             ],
-            write: ['advisor', 'admin'],
-            update: ['advisor', 'admin'],
+            write: ['advisor', 'oe', 'admin'],
+            update: ['advisor','oe', 'admin'],
           },
           // rules: { required: true }
         },
-        insurance_company_id: {
+        insurance_company: {
           type: 'dropdown',
           label: 'Insurance Company',
-          source: 'insurance_companies',
+          source: 'insurance_provider',
+          filter: {is_active: { op: "=", val: 1 } },
+          appendFilterToFields:[
+            { 
+              field: 'plan_id', 
+              key: "provider_id"
+            }
+          ],
           rules: { required: true },
           access: {
             read: [
               'pa',
               'advisor',
+              'oe',
               'admin',
               'invoicing',
+              'payment',
               'production_approval_manager',
             ],
-            write: ['advisor', 'admin'],
-            update: ['advisor', 'admin'],
-          },
-          transform(item) {
-            if (Array.isArray(item)) {
-              const items = item.map(u => {
-                return { value: u?.id, label: u?.name };
-              });
-              return items;
-            } else return { value: item?.id, label: item?.name };
+            write: ['advisor','oe', 'admin'],
+            update: ['advisor','oe', 'admin'],
           },
         },
-        insurance_plan_id: {
+        plan_id: {
           type: 'dropdown',
           label: 'Insurance Plan',
-          source: 'car_quote_insurance_plan',
+          source: 'car_plan',
           access: {
             read: [
               'pa',
               'advisor',
+              'oe',
               'admin',
               'invoicing',
+              'payment',
               'production_approval_manager',
             ],
-            write: ['advisor', 'admin'],
-            update: ['advisor', 'admin'],
+            write: ['advisor', 'oe', 'admin'],
+            update: ['advisor', 'oe', 'admin'],
           },
           rules: { required: true },
         },
@@ -84,12 +109,14 @@ let insuranceDetail = {
             read: [
               'pa',
               'advisor',
+              'oe',
               'admin',
               'invoicing',
+              'payment',
               'production_approval_manager',
             ],
-            write: ['advisor', 'admin'],
-            update: ['advisor', 'admin'],
+            write: ['advisor',  'oe','admin'],
+            update: ['advisor',  'oe','admin'],
           },
           rules: { required: true },
         },
@@ -99,13 +126,15 @@ let insuranceDetail = {
           access: {
             read: [
               'advisor',
+              'oe',
               'admin',
               'invoicing',
+              'payment',
               'pa',
               'production_approval_manager',
             ],
-            write: ['advisor', 'admin'],
-            update: ['advisor', 'admin'],
+            write: ['advisor', 'oe', 'admin'],
+            update: ['advisor', 'oe', 'admin'],
           },
           rules: { required: true },
         },
@@ -115,13 +144,15 @@ let insuranceDetail = {
           access: {
             read: [
               'advisor',
+              'oe',
               'admin',
               'invoicing',
+              'payment',
               'pa',
               'production_approval_manager',
             ],
-            write: ['advisor', 'admin'],
-            update: ['advisor', 'admin'],
+            write: ['advisor', 'oe', 'admin'],
+            update: ['advisor', 'oe', 'admin'],
           },
           rules: { required: true },
         },
@@ -132,12 +163,14 @@ let insuranceDetail = {
             read: [
               'pa',
               'advisor',
+              'oe',
               'admin',
               'invoicing',
+              'payment',
               'production_approval_manager',
             ],
-            write: ['advisor', 'admin'],
-            update: ['advisor', 'admin'],
+            write: ['advisor', 'oe', 'admin'],
+            update: ['advisor', 'oe', 'admin'],
           },
           rules: { required: true },
         },
@@ -148,12 +181,14 @@ let insuranceDetail = {
             read: [
               'pa',
               'advisor',
+              'oe',
               'admin',
               'invoicing',
+              'payment',
               'production_approval_manager',
             ],
-            write: ['advisor', 'admin'],
-            update: ['advisor', 'admin'],
+            write: ['advisor', 'oe', 'admin'],
+            update: ['advisor', 'oe', 'admin'],
           },
           rules: { required: true },
         },
@@ -164,12 +199,14 @@ let insuranceDetail = {
             read: [
               'pa',
               'advisor',
+              'oe',
               'admin',
               'invoicing',
+              'payment',
               'production_approval_manager',
             ],
-            write: ['advisor', 'admin'],
-            update: ['advisor', 'admin'],
+            write: ['advisor', 'oe', 'admin'],
+            update: ['advisor', 'oe', 'admin'],
           },
           source: ['INCLUDED', 'NOT INCLUDED'],
         },
@@ -181,12 +218,14 @@ let insuranceDetail = {
             read: [
               'pa',
               'advisor',
+              'oe',
               'admin',
               'invoicing',
+              'payment',
               'production_approval_manager',
             ],
-            write: ['advisor', 'admin'],
-            update: ['advisor', 'admin'],
+            write: ['advisor', 'oe', 'admin'],
+            update: ['advisor', 'oe', 'admin'],
           },
           rules: { required: true },
         },
@@ -198,12 +237,14 @@ let insuranceDetail = {
             read: [
               'pa',
               'advisor',
+              'oe',
               'admin',
               'invoicing',
+              'payment',
               'production_approval_manager',
             ],
-            write: ['advisor', 'admin'],
-            update: ['advisor', 'admin'],
+            write: ['advisor',  'oe','admin'],
+            update: ['advisor', 'oe', 'admin'],
           },
           rules: { required: true },
         },
@@ -215,12 +256,14 @@ let insuranceDetail = {
             read: [
               'pa',
               'advisor',
+              'oe',
               'admin',
               'invoicing',
+              'payment',
               'production_approval_manager',
             ],
-            write: ['advisor', 'admin'],
-            update: ['advisor', 'admin'],
+            write: ['advisor',  'oe','admin'],
+            update: ['advisor', 'oe', 'admin'],
           },
           rules: { required: true },
         },
@@ -232,12 +275,14 @@ let insuranceDetail = {
             read: [
               'pa',
               'advisor',
+              'oe',
               'admin',
               'invoicing',
+              'payment',
               'production_approval_manager',
             ],
-            write: ['advisor', 'admin'],
-            update: ['advisor', 'admin'],
+            write: ['advisor',  'oe','admin'],
+            update: ['advisor', 'oe', 'admin'],
           },
           rules: { required: true },
         },
@@ -248,12 +293,14 @@ let insuranceDetail = {
             read: [
               'pa',
               'advisor',
+              'oe',
               'admin',
               'invoicing',
+              'payment',
               'production_approval_manager',
             ],
-            write: ['advisor', 'admin'],
-            update: ['advisor', 'admin'],
+            write: ['advisor', 'oe', 'admin'],
+            update: ['advisor', 'oe', 'admin'],
           },
           rules: { required: true },
         },
@@ -264,24 +311,32 @@ let insuranceDetail = {
             read: [
               'pa',
               'advisor',
+              'oe',
               'admin',
               'invoicing',
+              'payment',
               'production_approval_manager',
             ],
-            write: ['advisor', 'admin'],
-            update: ['advisor', 'admin'],
+            write: ['advisor', 'oe', 'admin'],
+            update: ['advisor', 'oe', 'admin'],
           },
           rules: { required: true },
         },
-      },
+      }, //car_quote_request_add_on
       sections: [
         {
-          label: 'Insurance Coverage Information',
+          label: 'Insurance Coverage Addon',
+          fields: [
+            'car_quote_request_add_on',
+          ],
+        },
+        {
+          label: 'Insurance Coverage',
           //fields: ['start_date', 'insurance_company_id']
           fields: [
             'start_date',
-            'insurance_company_id',
-            'insurance_plan_id',
+            'insurance_company',
+            'plan_id',
             'vehicle_type_id',
             'excess',
             'sum_insured',
@@ -309,6 +364,42 @@ let insuranceDetail = {
           },
         ],
         events: {
+          transformBeforeOpenReadMode(form){
+
+            if(form?.data.length < 1)
+              return form
+
+            const code  = form?.data?.car_quote_id?.quote_status_id?.code;
+            if(code && code === 'ftc_pending' || code === 'ftc_accepted') {
+              return form
+            }
+
+            const access = {
+              read: [
+                'pa',
+                'advisor',
+                'oe',
+                'admin',
+                'invoicing',
+                'payment',
+                'production_approval_manager',
+              ],
+              write: [],
+              update: [],
+              delete: [],
+            };
+            form.access = access
+            return form
+          },
+          // transformBeforeOpenEditMode(form) {
+          //   console.log('-------------transformBeforeOpenEditMode---------------')
+          //   console.log(form)
+          //   console.log('-------------transformBeforeOpenEditMode---------------')
+          //   // if(form?.getForm?.context === 'car_quote_snap' && form?.formState === 'list' && form?.getForm?.multi === false) {
+          //   //     return { ...data, mode_id: { id: data?.mode_id?.id, text: data?.mode_id?.name}}
+          //   // }
+          //   // return data
+          // },
           applyFilter(options) {
             const {
               params: { id },

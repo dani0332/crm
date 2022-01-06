@@ -154,6 +154,10 @@ function* processVisibleFormStates(obj) {
             if (Array.isArray(data.data) && data.data.length > 0)
               rec = data.data[0];
             else rec = data.data;
+
+            if(typeof initialReducerState.view?.events?.transformAfterFetchFromServer === 'function' ) {
+              rec = initialReducerState.view.events.transformAfterFetchFromServer({formState,getForm },  rec)
+            }
             const obj = {
               ...initialFormState,
               view_mode: 'form',
@@ -163,15 +167,14 @@ function* processVisibleFormStates(obj) {
               action_type: 'read',
             };
             manageListDispatch({ type: 'showLoader', obj: { loader: false } });
-            console.log(
-              '**************Read-Data-multi-false-1******************',
-            );
-            console.log(obj);
-            console.log(
-              '**************Read-Data-multi-false-1******************',
-            );
             yield fillConditionalFields(obj);
-            manageListDispatch({ type: 'read', obj });
+            let beforeSendRead = obj
+
+            if(initialFormState.view?.events?.transformBeforeOpenReadMode && typeof initialFormState.view.events.transformBeforeOpenReadMode === 'function' ) {
+              beforeSendRead = initialFormState.view.events.transformBeforeOpenReadMode(obj)
+            }
+
+            manageListDispatch({ type: 'read', obj: beforeSendRead });
           } else {
             const obj = {
               ...initialFormState,
@@ -181,7 +184,12 @@ function* processVisibleFormStates(obj) {
               action_type: 'read',
             };
             manageListDispatch({ type: 'showLoader', obj: { loader: false } });
-            manageListDispatch({ type: 'read', obj });
+
+            let beforeSendRead = obj
+            if(initialFormState.view?.events?.transformBeforeOpenReadMode && typeof initialFormState.view.events.transformBeforeOpenReadMode === 'function' ) {
+              beforeSendRead = initialFormState.view.events.transformBeforeOpenReadMode(obj)
+            }
+            manageListDispatch({ type: 'read', obj: beforeSendRead });
           }
         } else {
           manageListDispatch({ type: 'showLoader', obj: { loader: false } });
@@ -212,7 +220,7 @@ function* processVisibleFormStates(obj) {
         const formVisible = getFormObjForDraw(initialForm); //yield select(getVisibleForm)
         console.log('**************Delete-watch-saga.js******************');
         console.log(formVisible);
-        // const { db_table } = formVisible;
+       
         if (!selectedRecord) {
           const newState = { ...formVisible, data: {} };
           const obj = {
@@ -227,9 +235,10 @@ function* processVisibleFormStates(obj) {
           return;
         }
         console.log('**************Delete-watch-saga.js******************');
-        // let objUrl = `/form/${db_table}/${selectedRecord.id}`;
-        // const resp = yield fetch(objUrl, { method: 'Delete' });
-        // const data = yield resp.json();
+        const { db_table } = formVisible;
+        let objUrl = `/form/${db_table}/${selectedRecord.id}`;
+        const resp = yield fetch(objUrl, { method: 'Delete' });
+        const data = yield resp.json();
         const initialReducerState = getFormObjForDraw(initialForm);
         const getForm = {
           ...initialReducerState,
@@ -271,16 +280,8 @@ function* processVisibleFormStates(obj) {
           };
           //yield put({ type: 'read', obj })
           manageListDispatch({ type: 'showLoader', obj: { loader: false } });
-
-          console.log(
-            '**************Read-Data!selectedRecord******************',
-          );
-          console.log(obj);
-          console.log(
-            '**************Read-Data!selectedRecord******************',
-          );
-
           manageListDispatch({ type: 'read', obj });
+
         } else {
           let objUrl = `/form/${db_table}/${selectedRecord.id}`;
           const resp = yield fetch(objUrl, { method: 'GET' });
@@ -295,20 +296,21 @@ function* processVisibleFormStates(obj) {
             ...initialForm?.override,
             session: session,
           };
-          console.log('**************Read-watch-saga.js*****************');
-          console.log(obj);
-          console.log(formVisible);
-          console.log(selectedRecord);
-          console.log('**************Read-watch-saga.js******************');
-          // yield put({ type: 'read', obj })
-          manageListDispatch({ type: 'showLoader', obj: { loader: false } });
+          // console.log('**************Read-watch-saga.js*****************');
+          // console.log(obj);
+          // console.log(formVisible);
+          // console.log(selectedRecord);
+          // console.log('**************Read-watch-saga.js******************');
 
-          console.log('**************Read-Data******************');
-          console.log(obj);
-          console.log('**************Read-Data******************');
+          manageListDispatch({ type: 'showLoader', obj: { loader: false } });
           yield fillConditionalFields(obj);
 
-          manageListDispatch({ type: 'read', obj });
+          let beforeSendRead = obj
+          if(formVisible.view?.events?.transformBeforeOpenReadMode && typeof formVisible.view.events.transformBeforeOpenReadMode === 'function' ) {
+            beforeSendRead = initialFormState.view.events.transformBeforeOpenReadMode(obj)
+          }
+
+          manageListDispatch({ type: 'read', obj: beforeSendRead });
         }
       }
       break;

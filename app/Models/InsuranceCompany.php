@@ -11,20 +11,24 @@ class InsuranceCompany extends BaseModel implements AuditableContract
     use HasFactory,Auditable;
     protected $table = 'insurance_companies';
     public $access = [
-        'write' => ['advisor'],
-        'update' => ['advisor'],
-        'delete' => ['advisor'],
+        'write' => ['advisor', 'oe'],
+        'update' => ['advisor', 'oe'],
+        'delete' => ['advisor', 'oe'],
         'access' => [
             "pa" => [ 'id','name', 'is_active'],
             "advisor" => [ 'id','name', 'is_active'],
+            "oe" => [ 'id','name', 'is_active'],
             "admin" => [ 'id','name', 'is_active' ],
             "invoicing" => [ 'id','name', 'is_active'],
+            "payment" => [ 'id','name', 'is_active'],
         ],
         "list" => [
             "pa" => [ 'id','name', 'is_active' ],
             "advisor" => [ 'id','name', 'is_active' ],
+            "oe" => [ 'id','name', 'is_active' ],
             "admin" => [ 'id','name', 'is_active' ],
             "invoicing" => [ 'id','name', 'is_active' ],
+            "payment" => [ 'id','name', 'is_active' ],
         ]
     ];
 

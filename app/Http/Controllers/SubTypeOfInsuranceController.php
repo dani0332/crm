@@ -7,7 +7,8 @@ use Illuminate\Http\Request;
 use DataTables;
 use Spatie\Permission\Models\Role;
 use DB;
-
+use App\Http\Requests\SubTypeInsuranceRequest;
+use App\Http\Resources\SubTypeInsuranceResource;
 class SubTypeOfInsuranceController extends Controller
 {
     function __construct()
@@ -53,22 +54,13 @@ class SubTypeOfInsuranceController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store(SubTypeInsuranceRequest $request, SubTypeOfInsurance $subtypeofinsurance)
     {
-        $this->validate($request,[
-            'text' => 'required|max:120',
-            'text_ar' => 'required|max:120',
-            'sort_order' => 'required',
-        ]);
-
-        $subtypeofinsurance = new SubTypeOfInsurance();
-        $subtypeofinsurance->text=  $request->text;
-        $subtypeofinsurance->text_ar=  $request->text_ar;
-        $subtypeofinsurance->is_active =  $request->is_active == 'on' ? 1 : 0;
-        $subtypeofinsurance->sort_order =  $request->sort_order;
-        $subtypeofinsurance->save();
+        $validated = $request->validated();
+        $validated['is_active'] = $validated['is_active'] ?? 0;
+        $id = $subtypeofinsurance->create($validated)->id;
         if(isset($request->return_to_view)) {
-            return redirect("claim/subtypeofinsurance/".$subtypeofinsurance->id)->with('success', 'Sub Type Of Insurance has been stored');
+            return redirect("claim/subtypeofinsurance/".$id)->with('success', 'Sub Type Of Insurance has been stored');
         }
         return redirect()->back()->with('success', 'Sub Type Of Insurance has been stored');
     }
@@ -81,6 +73,7 @@ class SubTypeOfInsuranceController extends Controller
      */
     public function show(SubTypeOfInsurance $subtypeofinsurance)
     {
+        $subtypeofinsurance = new SubTypeInsuranceResource($subtypeofinsurance);
         return view('subtypeofinsurance.show',compact('subtypeofinsurance'));
     }
 
@@ -92,6 +85,7 @@ class SubTypeOfInsuranceController extends Controller
      */
     public function edit(SubTypeOfInsurance $subtypeofinsurance)
     {
+        $subtypeofinsurance = new SubTypeInsuranceResource($subtypeofinsurance);
         return view('subtypeofinsurance.edit',compact('subtypeofinsurance'));
     }
 
@@ -102,18 +96,11 @@ class SubTypeOfInsuranceController extends Controller
      * @param  \App\Models\SubTypeOfInsurance  $subTypeOfInsurance
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, SubTypeOfInsurance $subtypeofinsurance)
+    public function update(SubTypeInsuranceRequest $request, SubTypeOfInsurance $subtypeofinsurance)
     {
-        $this->validate($request,[
-            'text' => 'required|max:120',
-            'text_ar' => 'required|max:120',
-            'sort_order' => 'required',
-        ]);
-        $subtypeofinsurance->text=  $request->text;
-        $subtypeofinsurance->text_ar=  $request->text_ar;
-        $subtypeofinsurance->is_active =  $request->is_active == 'on' ? 1 : 0;
-        $subtypeofinsurance->sort_order =  $request->sort_order;
-        $subtypeofinsurance->save();
+        $validated = $request->validated();
+        $validated['is_active'] = $validated['is_active'] ?? 0;
+        $subtypeofinsurance->update($validated);
         if(isset($request->return_to_view)) {
             return redirect("claim/subtypeofinsurance/".$subtypeofinsurance->id)->with('success', 'Sub Type Of Insurance has been updated');
         }

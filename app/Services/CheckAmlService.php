@@ -20,7 +20,7 @@ use Auth;
 
 class CheckAmlService
 {
-    public function checkAml($firstName,$lastName,$quoteRequestId,$quoteTypeId,$isEmailSendingEnabled)
+    public function checkAml($firstName,$lastName,$quoteRequestId,$quoteTypeId,$isEmailSendingEnabled, $nationality, $yob)
     {
         $amlSearchEndPoint = Config::get('constants.AML_SEARCH_API_ENDPOINT');
 
@@ -28,7 +28,7 @@ class CheckAmlService
         $appUrl = env('APP_URL');
         $amlUrl = $appUrl.'/kyc/aml/'.$quoteTypeId.'/details/'.$quoteRequestId;
 
-        $dataArr = array("search" => $firstName." ".$lastName,"quoteRequestId" => $quoteRequestId,"quoteTypeId" => $quoteTypeId);
+        $dataArr = array("search" => $firstName." ".$lastName,"quoteRequestId" => $quoteRequestId,"quoteTypeId" => $quoteTypeId,"nationality" => $nationality,"yob" => $yob);
         $dataArrProc = json_encode($dataArr);
 
         $chAml = Http::contentType("application/json")->send('POST',$amlSearchEndPoint, ['body' => $dataArrProc]);
@@ -38,12 +38,8 @@ class CheckAmlService
         $fullName = $firstName." ".$lastName;
         $resultsFound = $chAmlMessage["resultsFound"];
 
-        $getTotalResults = AML::where('quote_type_id', $quoteTypeId)
-        ->where('quote_request_id', $quoteRequestId)
-        ->sum('results_found');
-
         // Match is found
-        if(($resultsFound > 0 || $getTotalResults > 0) && stripos($fullName, "test") === false) {
+        if($resultsFound > 0) {
 
             // Send Email alert to Compliance team only
             $quoteTypeName = QuoteType::where('id', '=', $quoteTypeId)->value('text'); // Get quote type text
@@ -119,8 +115,8 @@ class CheckAmlService
     public function amlComplianceMail($templateName, $templateParams, $emailSubject, $emailRecipients, $emailL_sys)
 	{
         if($emailL_sys == "PRODUCTION") {
-            $fromEmail = Config::get('constants.MAIL_FROM_ADDRESS');
-            $fromName = Config::get('constants.MAIL_FROM_NAME');
+            $fromEmail = Config::get('constants.MAIL_FROM_ADDRESS_AML');
+            $fromName = Config::get('constants.MAIL_FROM_NAME_AML');
         }
         else {
             $fromEmail = Config::get('constants.MAIL_FROM_ADDRESS');
@@ -187,8 +183,8 @@ class CheckAmlService
     public function amlQuoteStatusUpdateMail($templateName, $templateParams, $emailSubject, $toRecipient, $ccRecipients, $emailL_sys)
 	{
         if($emailL_sys == "PRODUCTION") {
-            $fromEmail = Config::get('constants.MAIL_FROM_ADDRESS');
-            $fromName = Config::get('constants.MAIL_FROM_NAME');
+            $fromEmail = Config::get('constants.MAIL_FROM_ADDRESS_AML');
+            $fromName = Config::get('constants.MAIL_FROM_NAME_AML');
         }
         else {
             $fromEmail = Config::get('constants.MAIL_FROM_ADDRESS');

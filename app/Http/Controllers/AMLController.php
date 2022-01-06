@@ -22,10 +22,13 @@ use App\Models\BusinessQuoteType;
 use App\Models\BusinessCoverType;
 use App\Models\CommunicationMode;
 use App\Models\QuoteStatus;
+use App\Models\SanctionListDownloads;
+use App\Models\UAEAMLListUploads;
+use App\Services\SanctionListService;
 
 class AMLController extends Controller
 {
-    protected $checkAmlService, $quoteStatusService;
+    protected $checkAmlService, $quoteStatusService, $sanctionListService;
 
     /**
      * Display a listing of the resource.
@@ -33,11 +36,12 @@ class AMLController extends Controller
      * @return \Illuminate\Http\Response
      */
 
-    public function __construct(CheckAmlService $checkAmlService, QuoteStatusService $quoteStatusService)
+    public function __construct(CheckAmlService $checkAmlService, QuoteStatusService $quoteStatusService, SanctionListService $sanctionListService)
     {
         $this->middleware('permission:aml-list', ['only' => ['index']]);
         $this->checkAmlService = $checkAmlService;
         $this->quoteStatusService = $quoteStatusService;
+        $this->sanctionListService = $sanctionListService;
     }
 
     /**
@@ -123,15 +127,15 @@ class AMLController extends Controller
 
     public function amlQuoteDetails($quoteTypeId, $quoteRequestId)
     {
-        //return $this->checkAmlService->checkAml("Saddam","Hussain",$quoteRequestId,$quoteTypeId);
-
         $quoteType = QuoteType::where('id', '=', $quoteTypeId)->get(array('code','text'));
         $quoteTypeCode = $quoteType[0]->code;
         $quoteTypeText = $quoteType[0]->text;
 
         if($quoteTypeCode != "") {
 
-            $kycLogs = AML::where('quote_request_id', '=', $quoteRequestId)->orderBy('created_at', 'desc')->get();
+            $kycLogs = AML::where('quote_request_id', '=', $quoteRequestId)
+            ->where('quote_type_id', '=', $quoteTypeId)
+            ->orderBy('created_at', 'desc')->get();
 
             if($quoteTypeCode == quoteTypeCode::Car) {
 
@@ -283,29 +287,32 @@ class AMLController extends Controller
             $isCurrentUserFromPaAml = 0;
         }
 
-        $getTotalResults = AML::where('quote_type_id', $quoteTypeId)
-        ->where('quote_request_id', $quoteRequestId)
-        ->sum('results_found');
-        if($getTotalResults > 0) {
-            $resultsFound = 1;
-        }
-        else {
-            $resultsFound = 0;
-        }
+        $getFirstAmlLog = AML::where('quote_type_id', $quoteTypeId)
+        ->where('quote_request_id', $quoteRequestId)->first();
+        $firstAmlLogResults = $getFirstAmlLog->results_found;
+
+        $getLatestAmlLog = AML::where('quote_type_id', $quoteTypeId)
+        ->where('quote_request_id', $quoteRequestId)->latest()->first();
+        $latestAmlLogResults = $getLatestAmlLog->results_found;
 
         $getAMLRows = AML::where('quote_type_id', '=', $quoteTypeId)
         ->where('quote_request_id', $quoteRequestId)->get();
         $getAMLNumRows = $getAMLRows->count();
 
+        $nationalityList = $this->sanctionListService->fetchNationality();
+        $yearsList = $this->sanctionListService->years();
+
         if($quoteTypeCode == quoteTypeCode::Business) {
             return view("aml.details", compact("quoteTypeCode","quoteTypeText","quoteRequest","businessTypeCode"
             ,"businessCoverTypeText","businessCommuModeText","kycLogs","quoteStatusCode","auditLogLine"
-            ,"isCurrentUserFromCompliance","isCurrentUserFromPaAml","resultsFound","getAMLNumRows", "quoteTypeId"));
+            ,"isCurrentUserFromCompliance","isCurrentUserFromPaAml","firstAmlLogResults","latestAmlLogResults"
+            , "quoteTypeId", "getAMLNumRows", "nationalityList", "yearsList"));
         }
         else {
             return view("aml.details", compact("quoteTypeCode","quoteTypeText","quoteRequest","kycLogs"
             ,"quoteStatusCode","auditLogLine","isCurrentUserFromCompliance","isCurrentUserFromPaAml"
-            ,"resultsFound","getAMLNumRows", "quoteTypeId"));
+            ,"firstAmlLogResults","latestAmlLogResults", "quoteTypeId", "getAMLNumRows"
+            ,"nationalityList", "yearsList"));
         }
     }
 
@@ -351,6 +358,8 @@ class AMLController extends Controller
         $quoteUpdate = $updateQuote;
         $firstName = ucwords(strtolower($request->first_name));
         $lastName = ucwords(strtolower($request->last_name));
+        $nationality = $request->nationality;
+        $yob = $request->yob;
         $quoteUpdate->first_name = $firstName;
         $quoteUpdate->last_name = $lastName;
 
@@ -361,9 +370,53 @@ class AMLController extends Controller
 
         $quoteUpdate->save();
 
-        $this->checkAmlService->checkAml($firstName,$lastName,$quoteRequestId,$quoteTypeId, true);
+        $this->checkAmlService->checkAml($firstName,$lastName,$quoteRequestId,$quoteTypeId, true, $nationality, $yob);
 
         return redirect()->back()->with('success', 'Quote is updated');
+    }
+
+    public function sanctionListHistory(Request $request, SanctionListDownloads $sanctionListDownloads, Datatables $datatables) {
+        $url = env('AZURE_RYU_STORAGE_URL').env('AZURE_AML_HISTORY');
+
+        if($request->ajax()) {
+
+            return $datatables::of($sanctionListDownloads::query()->orderBy('created_at','DESC'))
+                ->addIndexColumn()
+                ->make(true);
+        }
+        return view('aml.history', compact('url'));
+    }
+
+    public function uaeSanctionListUpload(Request $request) {
+        $this->validate($request, [
+            'file_name' => 'required|mimetypes:application/vnd.ms-excel,text/anytext,application/octet-stream,application/txt,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet|max:2048',
+        ]);
+
+        $getUAEUploadRecord = UAEAMLListUploads::where('id', '=', 1)->get()->first();
+
+        if ($getUAEUploadRecord == null) {
+            $newUAEUploadRecord = new UAEAMLListUploads([
+                "id" => 1,
+                "file_name" => '16-11-2021_UAESanctionlist.xls',
+                "is_updated" => false
+            ]);
+            $newUAEUploadRecord->save();
+        }
+
+        $fileNameOriginal = $request->file_name->getClientOriginalName();
+        $fileNameAzure = date('d-m-Y').'_'.$fileNameOriginal;
+        $request->file('file_name')->storeAs('/', $fileNameAzure, 'azureForRyu');
+
+        $newUpload = UAEAMLListUploads::where('id', '=', 1)->get()->first();
+        $newUpload->file_name = $fileNameAzure;
+        $newUpload->is_updated = true;
+        $newUpload->save();
+
+        return redirect('/kyc/aml/upload/uae')->with('success', 'UAE Sanction list uploaded successfully');
+    }
+
+    public function uploadUaeSanctionList() {
+        return view('aml.upload');
     }
 
 }

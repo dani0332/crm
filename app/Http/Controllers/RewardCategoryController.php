@@ -6,6 +6,8 @@ use App\Models\RewardCategory;
 use DataTables;
 use Illuminate\Http\Request;
 use DB;
+use App\Http\Requests\RewardCategoriesRequest;
+
 class RewardCategoryController extends Controller
 {
     public function __construct()
@@ -49,14 +51,8 @@ class RewardCategoryController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store(RewardCategoriesRequest $request)
     {
-        $this->validate($request, [
-            'text' => 'required|max:120',
-            'text_ar' => 'required|max:120',
-            'sort_order' => 'required',
-        ]);
-
         $rewardCategory = new RewardCategory();
         $rewardCategory->text = $request->text;
         $rewardCategory->text_ar = $request->text_ar;
@@ -96,13 +92,8 @@ class RewardCategoryController extends Controller
      * @param  \App\RewardCategory  $rewardCategory
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, RewardCategory $rewardCategory)
+    public function update(RewardCategoriesRequest $request, RewardCategory $rewardCategory)
     {
-        $this->validate($request, [
-            'text' => 'required|max:120',
-            'text_ar' => 'required|max:120',
-            'sort_order' => 'required',
-        ]);
         $rewardCategory->text = $request->text;
         $rewardCategory->text_ar = $request->text_ar;
         $rewardCategory->is_active = $request->is_active == 'on' ? 1 : 0;

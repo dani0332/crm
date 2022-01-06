@@ -1,6 +1,29 @@
 @extends('layouts.app')
 @section('title','Add User')
 @section('content')
+<script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
+<script>
+    $(document).ready(function(){
+        $("#user-team-select").on('change', function(){
+            $(".loader").show();
+            $.ajax({
+                    url: '/getTeamManagers?teamId=' + this.value,
+                    type: "get",
+                    success: function(response) {
+                        $('#user-manager-select').find('option').remove().end().append('<option value="0" selected="selected">None</option>');
+                        for (let index = 0; index < response.length; index++) {
+                            const element = response[index];
+                            $('#user-manager-select').append($("<option></option>").attr("value", element.id).text(element.name));
+                        }
+                        $('.select-manager').removeAttr('disabled');
+                        $(".loader").hide();
+                    },
+                });
+
+        });
+    });
+
+</script>
 <div class="row">
     <div class="col-md-12 col-sm-12 ">
         <div class="x_panel">
@@ -45,18 +68,54 @@
                             @endif
                         </div>
                     </div>
+
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="roles">Role <span class="required">*</span></label>
                         <div class="col-md-6 col-sm-6 ">
-                            <select name="roles[]" multiple class="form-control">
-                                @foreach ($roles as $role )
-                                    <option value="{{ $role }}">{{ $role }}</option>
+                            <select name="roles[]" multiple="multiple" style="margin-bottom:15px;"
+                                            class="form-control select2 select-roles">
+                            @foreach(array_chunk($roles, 6) as $chunk)
+                                @foreach($chunk as $skey=>$item)
+                                <option value="{{$item }}"}}>
+                                {{ $item }}
+                                </option>
                                 @endforeach
-                            </select>
+                            @endforeach
+                        </select>
                             @if ($errors->has('roles'))
                                 <span class="text-danger">{{ $errors->first('roles') }}</span>
                             @endif
                         </div>
+                    </div>
+
+                    <div class="item form-group">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="roles">Team <span class="required">*</span></label>
+                        <div class="col-md-6 col-sm-6 ">
+                            <select name="team" id="user-team-select" class="form-control">
+                                @foreach ($teams as $team)
+
+                                @if (old('team') == $team->id)
+                                <option value="{{ $team->id }}" selected>{{ $team->name }}</option>
+                                @else
+                                <option value="{{ $team->id }}">{{ $team->name }}</option>
+                                @endif
+                                @endforeach
+                            </select>
+                            @if ($errors->has('team'))
+                                <span class="text-danger">{{ $errors->first('team') }}</span>
+                            @endif
+                        </div>
+                    </div>
+                    <div class="item form-group">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="roles">Manager</label>
+                            <div class="col-md-6 col-sm-6 ">
+                                <select disabled="disabled" id='user-manager-select' name="manager" class="form-control select2 select-manager">
+                                    <option value="0" selected="selected" >None</option>
+                                </select>
+                                @if ($errors->has('manager'))
+                                    <span class="text-danger">{{ $errors->first('manager') }}</span>
+                                @endif
+                            </div>
                     </div>
                     <div id='redirect_to_view_div'></div>
                     <div class="ln_solid"></div>

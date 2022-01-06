@@ -19,6 +19,7 @@ class QuoteStatus extends BaseModel
         'access' => [
             "pa" => ['id', 'code', 'text'],
             "advisor" => [ 'id', 'code', 'text'],
+            "oe" => [ 'id', 'code', 'text'],
             "admin" => [ 'id', 'code', 'text' ],
             "invoicing" => [ 'id', 'code', 'text']
 
@@ -26,6 +27,7 @@ class QuoteStatus extends BaseModel
         "list" => [
             "pa" => ['id', 'code', 'text' ],
             "advisor" => [ 'id', 'code', 'text'],
+            "oe" => [ 'id', 'code', 'text'],
             "admin" => [ 'id', 'code', 'text'],
             "invoicing" => [ 'id', 'code', 'text']
         ]

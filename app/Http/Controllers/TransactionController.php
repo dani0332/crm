@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Handler;
 use App\Models\InsuranceCompany;
 use App\Models\PaymentMode;
 use App\Models\Reason;
@@ -18,7 +17,6 @@ use App\Services\CustomerService;
 use DB;
 use App\Services\TransAppService;
 use App\Services\ReasonService;
-use Illuminate\Support\Facades\Log;
 
 class TransactionController extends Controller
 {
@@ -36,7 +34,6 @@ class TransactionController extends Controller
         $this->customerService = $cusService;
         $this->reasonService = $reasService;
         $this->middleware('permission:transapp-list|transapp-create|transapp-edit|transapp-delete', ['only' => ['index', 'store']]);
-       // $this->middleware('permission:transapp-create', ['only' => ['create', 'store']]);
         $this->middleware('permission:transapp-edit', ['only' => ['edit', 'update']]);
         $this->middleware('permission:transapp-delete', ['only' => ['destroy']]);
     }
@@ -48,20 +45,19 @@ class TransactionController extends Controller
      */
     public function index(Request $request)
     {
-        //Log::channel('daily')->info('Entered into transaction');
         $transactors = User::select('users.*')
         ->leftjoin('model_has_roles','users.id','model_has_roles.model_id')
         ->leftjoin('roles','roles.id','model_has_roles.role_id')
-        ->whereIn('roles.name', ['TRANSAPP_ADVISOR', 'TRANSAPP_APPROVER', 'TRANSAPP_ADMIN'])->orderBy('roles.name', 'asc')->get();
+        ->whereIn('roles.name', ['TRANSAPP_ADVISOR', 'TRANSAPP_APPROVER', 'TRANSAPP_ADMIN'])->orderBy('users.name', 'asc')->get();
 
         $handlers = User::select('users.*')
         ->leftjoin('model_has_roles','users.id','model_has_roles.model_id')
         ->leftjoin('roles','roles.id','model_has_roles.role_id')
-        ->whereIn('roles.name', ['TRANSAPP_ADVISOR', 'TRANSAPP_APPROVER', 'TRANSAPP_ADMIN'])->orderBy('roles.name', 'asc')->get();
+        ->whereIn('roles.name', ['TRANSAPP_ADVISOR', 'TRANSAPP_APPROVER', 'TRANSAPP_ADMIN'])->orderBy('users.name', 'asc')->get();
 
-        $insurance_companies = InsuranceCompany::where('is_active', '=', 1)->where('is_deleted', 0)->orderBy('created_at', 'desc')->get();
-        $payment_modes = PaymentMode::where('is_active', '=', 1)->where('is_deleted', 0)->orderBy('created_at', 'desc')->get();
-        $reasons = Reason::where('is_active', '=', 1)->where('is_deleted', 0)->orderBy('created_at', 'desc')->get();
+        $insurance_companies = InsuranceCompany::where('is_active', '=', 1)->where('is_deleted', 0)->orderBy('name', 'asc')->get();
+        $payment_modes = PaymentMode::where('is_active', '=', 1)->where('is_deleted', 0)->orderBy('name', 'asc')->get();
+        $reasons = Reason::where('is_active', '=', 1)->where('is_deleted', 0)->orderBy('name', 'asc')->get();
 
         if ($request->ajax()) {
 
@@ -121,7 +117,6 @@ class TransactionController extends Controller
             ->make(true);
         }
         return view('transaction.view',compact('transactors','handlers','insurance_companies','payment_modes','reasons'));
-        //return view('transaction.view');
     }
 
     /**
@@ -134,20 +129,19 @@ class TransactionController extends Controller
 
         $carQuote = [];
         if($request->has("carQuote")){
-            $carQuote = CarQuote::with(["insurance_coverage" ,"advisor_id", "payment_detail"])->where("id",$request->input("carQuote"))->first();
+            $carQuote = CarQuote::with(["insurance_coverage.insurance_company_id" ,"advisor_id", "payment_detail"])->where("id",$request->input("carQuote"))->first();
             if($carQuote)
                 $carQuote = $carQuote->toArray();
         }
-
 
         $handlers = User::select('users.*')
         ->leftjoin('model_has_roles','users.id','model_has_roles.model_id')
         ->leftjoin('roles','roles.id','model_has_roles.role_id')
         ->whereIn('roles.name', ['TRANSAPP_ADVISOR', 'TRANSAPP_APPROVER', 'TRANSAPP_ADMIN', 'advisor', 'invoicing'])
-        ->orderBy('roles.name', 'asc')->get();
-        $insurancecompanies = InsuranceCompany::where('is_active', '=', 1)->where('is_deleted', 0)->orderBy('created_at', 'desc')->get();
-        $typeofinsurances = TypeOfInsurance::where('is_active', '=', 1)->where('is_deleted', 0)->orderBy('created_at', 'desc')->get();
-        $paymentmodes = PaymentMode::where('is_active', '=', 1)->where('is_deleted', 0)->orderBy('created_at', 'desc')->get();
+        ->orderBy('users.name', 'asc')->get();
+        $insurancecompanies = InsuranceCompany::where('is_active', '=', 1)->where('is_deleted', 0)->orderBy('name', 'asc')->get();
+        $typeofinsurances = TypeOfInsurance::where('is_active', '=', 1)->where('is_deleted', 0)->orderBy('text', 'asc')->get();
+        $paymentmodes = PaymentMode::where('is_active', '=', 1)->where('is_deleted', 0)->orderBy('name', 'asc')->get();
         return view('transaction.add', compact('insurancecompanies', 'handlers', 'paymentmodes','typeofinsurances', 'carQuote'));
     }
 
@@ -167,13 +161,18 @@ class TransactionController extends Controller
             'assigned_to_id' => 'required',
             'paymentmode' => 'required',
             'amount_paid' => "required|max:12|regex:/^\d*(\.\d{1,2})?$/",
-            //'typeofinsurance' => 'required',
             'risk_detail' => 'required|max:2000',
         ]);
 
+        $approvalCode = $this->transactionService->createTransaction($request);
 
-        $approval_code = $this->transactionService->createTransaction($request);
-        return redirect("transapp/home")->with('success', 'Transaction added successfully, Approval code is '.$approval_code);
+        if(gettype($approvalCode) == 'string') {
+            return redirect("transapp/home")->with('success', 'Transaction added successfully, Approval code is '.$approvalCode);
+        }
+        else {
+            return back()->withInput()->with('message', 'myAlfred signup link creation failed. Please try recreating Transapp.');
+        }
+
     }
 
     /**
@@ -219,12 +218,12 @@ class TransactionController extends Controller
             }
         }
 
-        $insurancecompanies = InsuranceCompany::where('is_active', '=', 1)->where('is_deleted', 0)->orderBy('created_at', 'desc')->get();
-        $paymentmodes = PaymentMode::where('is_active', '=', 1)->where('is_deleted', 0)->orderBy('created_at', 'desc')->get();
+        $insurancecompanies = InsuranceCompany::where('is_active', '=', 1)->where('is_deleted', 0)->orderBy('name', 'asc')->get();
+        $paymentmodes = PaymentMode::where('is_active', '=', 1)->where('is_deleted', 0)->orderBy('name', 'asc')->get();
         $handlers = User::select('users.*')
         ->leftjoin('model_has_roles','users.id','model_has_roles.model_id')
         ->leftjoin('roles','roles.id','model_has_roles.role_id')
-        ->whereIn('roles.name', ['TRANSAPP_ADVISOR', 'TRANSAPP_APPROVER', 'TRANSAPP_ADMIN'])->orderBy('roles.name', 'asc')->get();
+        ->whereIn('roles.name', ['TRANSAPP_ADVISOR', 'TRANSAPP_APPROVER', 'TRANSAPP_ADMIN'])->orderBy('users.name', 'asc')->get();
         return view('transaction.edit', compact('transaction', 'insurancecompanies', 'handlers', 'paymentmodes'));
     }
 
@@ -382,15 +381,15 @@ class TransactionController extends Controller
         }
 
         $transaction = Transaction::where('approval_code', $request->approval_code)->where('is_deleted', 0)->get();
-        $insurancecompanies = InsuranceCompany::where('is_active', '=', 1)->where('is_deleted', 0)->orderBy('created_at', 'desc')->get();
-        $paymentmodes = PaymentMode::where('is_active', '=', 1)->where('is_deleted', 0)->orderBy('created_at', 'desc')->get();
-        $reasons = Reason::where('is_active', '=', 1)->where('is_deleted', 0)->orderBy('created_at', 'desc')->get();
-        $statuses = Status::where('is_active', '=', 1)->where('is_deleted', 0)->orderBy('created_at', 'desc')->get();
-        $typeofinsurances = TypeOfInsurance::where('is_active', '=', 1)->where('is_deleted', 0)->orderBy('created_at', 'desc')->get();
+        $insurancecompanies = InsuranceCompany::where('is_active', '=', 1)->where('is_deleted', 0)->orderBy('name', 'asc')->get();
+        $paymentmodes = PaymentMode::where('is_active', '=', 1)->where('is_deleted', 0)->orderBy('name', 'asc')->get();
+        $reasons = Reason::where('is_active', '=', 1)->where('is_deleted', 0)->orderBy('name', 'asc')->get();
+        $statuses = Status::where('is_active', '=', 1)->where('is_deleted', 0)->orderBy('name', 'asc')->get();
+        $typeofinsurances = TypeOfInsurance::where('is_active', '=', 1)->where('is_deleted', 0)->orderBy('text', 'asc')->get();
         $handlers = User::select('users.*')
         ->leftjoin('model_has_roles','users.id','model_has_roles.model_id')
         ->leftjoin('roles','roles.id','model_has_roles.role_id')
-        ->whereIn('roles.name', ['TRANSAPP_ADVISOR', 'TRANSAPP_APPROVER', 'TRANSAPP_ADMIN'])->orderBy('roles.name', 'asc')->get();
+        ->whereIn('roles.name', ['TRANSAPP_ADVISOR', 'TRANSAPP_APPROVER', 'TRANSAPP_ADMIN'])->orderBy('users.name', 'asc')->get();
         if (count($transaction) > 0) {
             $transaction = $transaction[0];
             $customer = $this->customerService->getCustomerById($transaction->customer_id);
@@ -412,7 +411,6 @@ class TransactionController extends Controller
             'assigned_to_id' => 'required',
             'paymentmode' => 'required',
             'amount_paid' => "required|max:12|regex:/^\d*(\.\d{1,2})?$/",
-            //'type_of_insurance_id' => 'required',
             'reason' => 'required',
         ]);
 
@@ -431,7 +429,6 @@ class TransactionController extends Controller
         $transaction->assigned_to_id = $request->assigned_to_id;
         $transaction->payment_mode_id = $request->paymentmode;
         $transaction->risk_details = $request->risk_detail;
-        //$transaction->type_of_insurance_id = $request->type_of_insurance_id;
         $transaction->amount_paid = $request->amount_paid;
         $transaction->reason_id = $request->reason;
         $transaction->comments = $request->comments;

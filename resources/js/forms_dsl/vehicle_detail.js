@@ -10,13 +10,15 @@ let vehicleDetail = {
       access: {
         read: [
           'advisor',
+          'oe',
           'pa',
           'admin',
           'invoicing',
+          'payment',
           'production_approval_manager',
         ],
-        write: ['advisor', 'admin'],
-        update: ['advisor', 'admin'],
+        write: ['advisor', 'oe', 'admin'],
+        update: ['advisor', 'oe', 'admin'],
         delete: [],
       },
       fields: {
@@ -28,13 +30,15 @@ let vehicleDetail = {
           access: {
             read: [
               'advisor',
+              'oe',
               'pa',
               'admin',
               'invoicing',
+              'payment',
               'production_approval_manager',
             ],
-            write: ['admin'],
-            update: ['admin'],
+            write: [],
+            update: [],
           },
         },
         car_model_id: {
@@ -44,42 +48,87 @@ let vehicleDetail = {
           access: {
             read: [
               'advisor',
+              'oe',
               'pa',
               'admin',
               'invoicing',
+              'payment',
               'production_approval_manager',
             ],
-            write: ['admin'],
-            update: ['admin'],
-          },
-          transform(item) {
-            if (typeof item === 'object')
-              return { value: item?.id, label: item?.code };
-            else {
-              const items = item.map(() => {
-                return { value: 1, label: '222' };
-              });
-              return items;
-            }
+            write: [],
+            update: [],
           },
         },
         car_make_id: {
           type: 'dropdown',
           label: 'Car Make',
-          field: 'car_make_id',
+          source: 'car_make',
           access: {
             read: [
               'advisor',
+              'oe',
               'pa',
               'admin',
               'invoicing',
+              'payment',
               'production_approval_manager',
             ],
-            write: ['admin'],
-            update: ['admin'],
+            write: [],
+            update: [],
+          }
+        },
+        car_value: {
+          type: 'text',
+          label: 'Car Value',
+          access: {
+            read: [
+              'advisor',
+              'oe',
+              'pa',
+              'admin',
+              'invoicing',
+              'payment',
+              'production_approval_manager',
+            ],
+            write: [ ],
+            update: [],
           },
-          transform(item) {
-            return { value: item?.id, label: item?.text };
+        },
+        currently_insured_with:{
+          type: 'dropdown',
+          label: 'Cyurrently With (Insurer Name)',
+          rules: { required: true },
+          access: {
+            read: [
+              'advisor',
+              'oe',
+              'pa',
+              'admin',
+              'invoicing',
+              'payment',
+              'production_approval_manager',
+            ],
+            write: [ ],
+            update: [ ],
+          },
+        },
+        car_type_insurance_id:{
+          type: 'dropdown',
+          label: 'Type of Insurance',
+          source: 'car_type_insurance',
+          rules: { required: true },
+          access: {
+            read: [
+              'advisor',
+              'oe',
+              'pa',
+              'admin',
+              'invoicing',
+              'payment',
+              'production_approval_manager',
+            ],
+            write: [ ],
+            update: [ ],
           },
         },
         emirate_of_registration_id: {
@@ -88,13 +137,15 @@ let vehicleDetail = {
           access: {
             read: [
               'advisor',
+              'oe',
               'pa',
               'admin',
               'invoicing',
+              'payment',
               'production_approval_manager',
             ],
-            write: ['admin'],
-            update: ['admin'],
+            write: [],
+            update: [],
           },
           transform(item) {
             return { value: item?.id, label: item?.text };
@@ -106,13 +157,15 @@ let vehicleDetail = {
           access: {
             read: [
               'advisor',
+              'oe',
               'pa',
               'admin',
               'invoicing',
+              'payment',
               'production_approval_manager',
             ],
-            write: ['admin'],
-            update: ['admin'],
+            write: [],
+            update: [],
           },
           transform(item) {
             return { value: item?.id, label: item?.text };
@@ -125,13 +178,15 @@ let vehicleDetail = {
           access: {
             read: [
               'advisor',
+              'oe',
               'pa',
               'admin',
               'invoicing',
+              'payment',
               'production_approval_manager',
             ],
-            write: ['admin'],
-            update: ['admin'],
+            write: [],
+            update: [],
           },
         },
         vehicle_detail_id: {
@@ -142,11 +197,14 @@ let vehicleDetail = {
       },
       sections: [
         {
-          label: 'Car Quote Detail',
+          label: 'Vehicle Details',
           fields: [
             'Year_of_manufacture',
             'car_model_id',
             'car_make_id',
+            'car_value',
+            'currently_insured_with',
+            'car_type_insurance_id',
             'emirate_of_registration_id',
             'uae_license_held_for_id',
             'claim_history_id',
@@ -166,6 +224,33 @@ let vehicleDetail = {
           },
         ],
         events: {
+
+          transformBeforeOpenReadMode(form){
+
+            const code  = form?.data?.quote_status_id?.code;
+            if(code && code === 'ftc_pending' || code === 'ftc_accepted') {
+              return form
+            }
+            
+            const access = {
+              read: [
+                'pa',
+                'advisor',
+                'oe',
+                'admin',
+                'invoicing',
+                'payment',
+                'production_approval_manager',
+              ],
+              write: [],
+              update: [],
+              delete: [],
+            };
+
+            form.access = access
+            return form
+          
+        },
           applyFilter(options) {
             const {
               params: { id },

@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\AgeDiscount;
 use Illuminate\Http\Request;
+use App\Http\Requests\AgeDiscountRequest;
+use App\Http\Resources\AgeDiscountResource;
 use DataTables;
 
 class AgeDiscountController extends Controller
@@ -13,11 +15,11 @@ class AgeDiscountController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index(Request $request)
+    public function index(Request $request, AgeDiscount $age)
     {
         if ($request->ajax()) {
 
-            $data = AgeDiscount::orderBy('created_at', 'desc');
+            $data = $age::orderBy('created_at', 'desc');
 
             return DataTables::of($data)
                 ->addIndexColumn()
@@ -43,24 +45,14 @@ class AgeDiscountController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store(AgeDiscountRequest $request, AgeDiscount $age)
     {
-        $this->validate($request, [
-            'age_start' => 'required|numeric|min:0',
-            'age_end' => 'required|numeric|min:0',
-            'discount' => 'required|numeric|min:0',
-        ]);
-
-        $existingAgeDiscount = AgeDiscount::where([['age_start', $request->age_start], ['age_end', $request->age_end]])->get()->first();
+        $existingAgeDiscount = $age::where([['age_start', $request->age_start], ['age_end', $request->age_end]])->get()->first();
         if ($existingAgeDiscount != '') {
             return redirect()->back()->with('message', 'Discount with specified age already exists.')->withInput();
         }
-        $baseDiscount = new AgeDiscount();
-        $baseDiscount->age_start = $request->age_start;
-        $baseDiscount->age_end = $request->age_end;
-        $baseDiscount->discount = $request->discount;
-        $baseDiscount->save();
-        return redirect()->back()->with('success', 'Age Discount has been stored');
+        $id = $age->create($request->validated())->id;
+        return redirect("discount/age/" . $id)->with('success', 'Age Discount has been stored');
     }
 
     /**
@@ -69,9 +61,9 @@ class AgeDiscountController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show($id)
+    public function show(AgeDiscount $age)
     {
-        $agediscount = AgeDiscount::find($id);
+       $agediscount = new AgeDiscountResource($age);
         return view('agediscount.show', compact('agediscount'));
     }
 
@@ -81,9 +73,9 @@ class AgeDiscountController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function edit($id)
+    public function edit(AgeDiscount $age)
     {
-        $agediscount = AgeDiscount::find($id);
+        $agediscount = new AgeDiscountResource($age);
         return view('agediscount.edit', compact('agediscount'));
     }
 
@@ -94,20 +86,11 @@ class AgeDiscountController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+    public function update(AgeDiscountRequest $request, AgeDiscount $age)
     {
-        $this->validate($request, [
-            'age_start' => 'required|numeric|min:0',
-            'age_end' => 'required|numeric|min:0',
-            'discount' => 'required|numeric|min:0',
-        ]);
-        $agediscount = AgeDiscount::find($id);
-        $agediscount->age_start = $request->age_start;
-        $agediscount->age_end = $request->age_end;
-        $agediscount->discount = $request->discount;
-        $agediscount->save();
+        $age->update($request->validated());
         if (isset($request->return_to_view))
-            return redirect("discount/age/" . $agediscount->id)->with('success', 'Age Discount has been updated');
+            return redirect("discount/age/" . $age->id)->with('success', 'Age Discount has been updated');
     }
 
     /**

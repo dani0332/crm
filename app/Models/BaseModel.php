@@ -32,8 +32,10 @@ class BaseModel extends Model implements AuditableContract
        parent::boot();
        static::creating(function($model)
        {
-           $model->created_by = Auth::user()->email;
-           $model->updated_by = Auth::user()->email;
+            if (Auth::check()) {
+                $model->created_by = Auth::user()->email;
+                $model->updated_by = Auth::user()->email;
+            }
        });
        static::updating(function($model)
        {
@@ -47,7 +49,9 @@ class BaseModel extends Model implements AuditableContract
                     $ftcModel->save();
                 }
             }
-            $model->updated_by = Auth::user()->email;
+            if (Auth::check()) {
+                $model->updated_by = Auth::user()->email;
+            }
        });
     }
 
@@ -165,12 +169,20 @@ class BaseModel extends Model implements AuditableContract
             foreach($filters as $key => $value) {
 
                 if (is_array($value)){
+
+                   
                     switch($value['op']){
                         case 'in':
                             $query->whereIn($key,$value['val']);
                             break;
-                        default:
-                            $query->where($key,$value['op'],$value['val']);
+                        default:{
+                            
+                            if($value['op'] == "<>" && $value['val'] == "null"){
+                                $query->whereNotNull($key);
+                            }else{
+                                $query->where($key,$value['op'],$value['val']);
+                            }
+                        }
                     }
                 }
                 else{

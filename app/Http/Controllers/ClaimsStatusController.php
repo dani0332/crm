@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use DataTables;
 use Spatie\Permission\Models\Role;
 use DB;
+use App\Http\Requests\ClaimStatusRequest;
+use App\Http\Resources\ClaimStatusResource;
 
 class ClaimsStatusController extends Controller
 {
@@ -53,22 +55,13 @@ class ClaimsStatusController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store(ClaimStatusRequest $request, ClaimsStatus $claimsstatus)
     {
-        $this->validate($request,[
-            'text' => 'required|max:120',
-            'text_ar' => 'required|max:120',
-            'sort_order' => 'required',
-        ]);
-
-        $claimsstatus = new ClaimsStatus();
-        $claimsstatus->text=  $request->text;
-        $claimsstatus->text_ar=  $request->text_ar;
-        $claimsstatus->is_active =  $request->is_active == 'on' ? 1 : 0;
-        $claimsstatus->sort_order =  $request->sort_order;
-        $claimsstatus->save();
+        $validated = $request->validated();
+        $validated['is_active'] = $validated['is_active'] ?? 0;
+        $id = $claimsstatus->create($validated)->id;
         if(isset($request->return_to_view)) {
-            return redirect("claim/claimsstatus/".$claimsstatus->id)->with('success', 'Claim Status has been stored');
+            return redirect("claim/claimsstatus/".$id)->with('success', 'Claim Status has been stored');
         }
         return redirect()->back()->with('success', 'Claim Status has been stored');
     }
@@ -81,6 +74,7 @@ class ClaimsStatusController extends Controller
      */
     public function show(ClaimsStatus $claimsstatus)
     {
+        $claimsstatus = new ClaimStatusResource($claimsstatus);
         return view('claimsstatus.show',compact('claimsstatus'));
     }
 
@@ -92,6 +86,7 @@ class ClaimsStatusController extends Controller
      */
     public function edit(ClaimsStatus $claimsstatus)
     {
+        $claimsstatus = new ClaimStatusResource($claimsstatus);
         return view('claimsstatus.edit',compact('claimsstatus'));
     }
 
@@ -102,18 +97,11 @@ class ClaimsStatusController extends Controller
      * @param  \App\Models\ClaimsStatus  $claimsStatus
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, ClaimsStatus $claimsstatus)
+    public function update(ClaimStatusRequest $request, ClaimsStatus $claimsstatus)
     {
-        $this->validate($request,[
-            'text' => 'required|max:120',
-            'text_ar' => 'required|max:120',
-            'sort_order' => 'required',
-        ]);
-        $claimsstatus->text=  $request->text;
-        $claimsstatus->text_ar=  $request->text_ar;
-        $claimsstatus->is_active =  $request->is_active == 'on' ? 1 : 0;
-        $claimsstatus->sort_order =  $request->sort_order;
-        $claimsstatus->save();
+        $validated = $request->validated();
+        $validated['is_active'] = $validated['is_active'] ?? 0;
+        $claimsstatus->update($validated);
         if(isset($request->return_to_view)) {
             return redirect("claim/claimsstatus/".$claimsstatus->id)->with('success', 'Claim Status has been updated');
         }

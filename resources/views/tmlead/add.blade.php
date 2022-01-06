@@ -48,22 +48,6 @@
                             @endif
                         </div>
                         <div class="col">
-                            <span class="col-form-label col-md-6 col-sm-6">Phone number <span class="required">*</span></span>
-                            <input type="text" id="phone_number" name="phone_number" value="{{ old('phone_number') }}" class="form-control" data-toggle="tooltip" data-placement="top" title="Please enter 11 digit phone number. Example: 0563264418">
-                            @if ($errors->has('phone_number'))
-                                <span class="text-danger">{{ $errors->first('phone_number') }}</span>
-                            @endif
-                        </div>
-                    </div>
-                    <div class="item form-group">
-                        <div class="col">
-                            <span class="col-form-label col-md-6 col-sm-6">Email Address <span class="required">*</span></span>
-                            <input type="text" id="email_address" name="email_address" value="{{ old('email_address') }}" class="form-control" data-toggle="tooltip" data-placement="top" title="Please enter email address">
-                            @if ($errors->has('email_address'))
-                                <span class="text-danger">{{ $errors->first('email_address') }}</span>
-                            @endif
-                        </div>
-                        <div class="col">
                             <span class="col-form-label col-md-6 col-sm-6">Insurance Type <span class="required">*</span></span>
                             <select class="form-control" id="tm_insurance_types_id" name="tm_insurance_types_id" data-toggle="tooltip" data-placement="top" title="Please select insurance type">
                                 <option value=""></option>
@@ -79,7 +63,26 @@
                                 <span class="text-danger">{{ $errors->first('tm_insurance_types_id') }}</span>
                             @endif
                         </div>
+                       
                     </div>
+                    <div class="item form-group">
+                        <div class="col">
+                            <span class="col-form-label col-md-6 col-sm-6">Email Address <span class="required">*</span></span>
+                            <input type="text" id="email_address" name="email_address" value="{{ old('email_address') }}" class="form-control" data-toggle="tooltip" data-placement="top" title="Please enter email address">
+                            @if ($errors->has('email_address'))
+                                <span class="text-danger">{{ $errors->first('email_address') }}</span>
+                            @endif
+                        </div>
+                        <div class="col">
+                            <span class="col-form-label col-md-6 col-sm-6">Phone number <span class="required">*</span></span>
+                            <input type="text" id="phone_number" name="phone_number" value="{{ old('phone_number') }}" class="form-control" data-toggle="tooltip" data-placement="top" title="Please enter 11 digit phone number. Example: 0563264418">
+                            @if ($errors->has('phone_number'))
+                                <span class="text-danger">{{ $errors->first('phone_number') }}</span>
+                            @endif
+                        </div>
+                        <a href="javascript:void(0);" class="remove_additional_btn" id="add_additional_btn" title="Add field"><img src="/image/add-icon.png"/></a>
+                    </div>
+                    <div id="additional_info"></div>
                     <div class="item form-group">
                         <div class="col">
                             <span class="col-form-label col-md-6 col-sm-6">Enquiry date <span class="required">*</span></span>
@@ -206,7 +209,7 @@
                     <div class="item form-group">
                         <div class="col">
                             <span class="col-form-label col-md-6 col-sm-6">Car Value</span>
-                            <input type="text" id="car_value" name="car_value" value="{{ old('car_value') }}" class="form-control" data-toggle="tooltip" data-placement="top" title="Please enter car value">
+                            <input type="number" id="car_value" name="car_value" value="{{ old('car_value') }}" class="form-control" data-toggle="tooltip" data-placement="top" title="Please enter car value">
                         </div>
                         <div class="col">
                             <span class="col-form-label col-md-6 col-sm-6">Nationality</span>
@@ -222,13 +225,14 @@
                             </select>
                         </div>
                     </div>
-                    </div>
+                    </div>                  
                    <div id="redirect_to_view_div"></div>
                     <div class="ln_solid"></div>
                     <div class="row">
                     <div class="col-auto mr-auto"></div>
                         <div class="col-auto">
-                            <button type="submit" class="btn btn-warning btn-sm" id="return_to_view">Create</button>
+                            <button type="submit" class="btn btn-warning btn-sm" id="return_to_view" onClick="this.disabled=true;">Create</button>
+                            <!-- <button type="button" class="btn btn-warning btn-sm" id="add_additional_btn" >Add Additional Contact Information</button> -->
                         </div>
                     </div>
                 </form>

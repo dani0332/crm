@@ -10,7 +10,9 @@ const ftcQuoteStatusHistory = {
         read: [
           'pa',
           'advisor',
+          'oe',
           'admin',
+          'payment',
           'invoicing',
           'production_approval_manager',
         ],
@@ -27,8 +29,10 @@ const ftcQuoteStatusHistory = {
           access: {
             read: [
               'advisor',
+              'oe',
               'pa',
               'admin',
+              'payment',
               'invoicing',
               'production_approval_manager',
             ],
@@ -43,8 +47,10 @@ const ftcQuoteStatusHistory = {
           access: {
             read: [
               'advisor',
+              'oe',
               'pa',
               'admin',
+              'payment',
               'invoicing',
               'production_approval_manager',
             ],

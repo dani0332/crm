@@ -25,6 +25,7 @@ class RoleController extends Controller
      */
     public function index(Request $request)
     {
+        $date_time_format = config('constants.datetime_format');
         if ($request->ajax()) {
             $data = Role::select('*')->orderBy('created_at','desc');
             return Datatables::of($data)
@@ -33,6 +34,12 @@ class RoleController extends Controller
                     return view('roles.actions', compact('row'))->render();
                 })
                 ->rawColumns(['action'])
+                ->editColumn('created_at', function ($q) use($date_time_format){
+                    return date($date_time_format, strtotime($q->created_at));
+                })
+                ->editColumn('updated_at', function ($q) use($date_time_format){
+                    return date($date_time_format, strtotime($q->updated_at));
+                })
                 ->make(true);
         }
         return view('roles.view');
@@ -65,6 +72,7 @@ class RoleController extends Controller
         $role->syncPermissions($request->input('permission'));
         if(isset($request->return_to_view))
             return redirect("admin/roles/".$role->id)->with('success','Role has been stored');
+        return redirect()->back()->with('success', 'Role has been updated');
     }
 
     /**
@@ -91,7 +99,7 @@ class RoleController extends Controller
     public function edit($id)
     {
         $role = Role::find($id);
-        $permission = Permission::get();
+        $permission = Permission::orderBy('name')->get();
         $rolePermissions = DB::table("role_has_permissions")->where("role_has_permissions.role_id", $id)
             ->pluck('role_has_permissions.permission_id', 'role_has_permissions.permission_id')->all();
         return view('roles.edit', compact('role', 'permission', 'rolePermissions'));

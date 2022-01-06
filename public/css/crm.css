@@ -1,0 +1,29 @@
+.select2{
+    width: 100% !important;
+}
+.select2-container--default .select2-selection--multiple .select2-selection__choice__remove{
+    color: white !important;
+    top: 8px !important;
+    border: none !important;
+    left: 2px !important;
+}
+.select2-container--default .select2-selection--multiple .select2-selection__choice__remove:hover{
+    color: white !important;
+    background-color: #3498db !important
+}
+.select2-container--default .select2-selection--multiple .select2-selection__choice{
+    background-color: #3498db !important;
+    color: white !important;
+    padding: 8px 20px 8px 22px !important;
+    font-family: calibri !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+
+}
+.select2-container--default .select2-search--inline .select2-search__field{
+    width: 100% !important;
+}
+
+.remove_additional_btn, #add_additional_btn{
+    padding-top: 39px;
+  }

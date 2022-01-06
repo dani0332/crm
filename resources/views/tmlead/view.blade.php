@@ -29,11 +29,11 @@
                                     <option value="cdbID">TM ID</option>
                                     <option value="emailAddress">Email Address</option>
                                     <option value="phoneNumber">Phone Number</option>
-                                    <option value="createdAt">Created Date</option>
-                                    <option value="updatedAt">Updated Date</option>
-                                    <option value="nextFollowupDate">Next Followup Date</option>
-                                    <option value="enquiryDate">Enquiry Date</option>
-                                    <option value="allocationDate">Allocation Date</option>
+                                    <option value="created_at">Created Date</option>
+                                    <option value="updated_at">Updated Date</option>
+                                    <option value="next_followup_date">Next Followup Date</option>
+                                    <option value="enquiry_date">Enquiry Date</option>
+                                    <option value="allocation_date">Allocation Date</option>
                                 </select>
                                 <div id="result" style="color:red;"> </div>
                             </div>
@@ -170,6 +170,7 @@
                           <th>TM Id</th>
                           <th>Customer Name</th>
                           <th>Insurance Type</th>
+                          <th>Lead Type</th>
                           <th>Lead Status</th>
                           <th>Notes</th>
                           <th>Enquiry Date</th>
@@ -178,6 +179,7 @@
                           <th>Assigned To</th>
                           <th>Created At</th>
                           <th>Updated At</th>
+                         
                         </tr>
                       </thead>
 

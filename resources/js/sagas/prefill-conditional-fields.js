@@ -1,10 +1,12 @@
 export function* fillConditionalFields(obj) {
+
+
+
   const { fields, selectedRecord } = obj;
   Object.entries(fields).forEach(entry => {
     const [key, value] = entry;
     const getField = value;
     const recVal = selectedRecord?.[key];
-
     if (recVal && getField?.if) {
       let selectedVal = {};
       if (typeof getField?.transform === 'function') {
@@ -15,7 +17,7 @@ export function* fillConditionalFields(obj) {
         selectedVal = { selected: recVal };
       }
 
-      const val = getField.if[selectedVal?.selected];
+      const val = getField.if[selectedVal?.selected] ? getField.if[selectedVal.selected]: getField.if[selectedVal.id];
       if (val?.fields) {
         const getCondFields = val.fields;
         if (getCondFields.length > 0) {
@@ -33,4 +35,6 @@ export function* fillConditionalFields(obj) {
       }
     }
   });
+
+  return obj;
 }

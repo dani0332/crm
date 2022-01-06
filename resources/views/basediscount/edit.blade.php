@@ -51,7 +51,7 @@
                             <div class="col">
                                 <span class="col-form-label col-md-6 col-sm-6">Vehicle Type</span>
                                 <select class="form-control" id='vehicle_type_id' name='vehicle_type_id'>
-                                    <option value=''></option>
+                                    <option value="">Select Vehicle Type</option>
                                     @foreach ($vehicleTypes as $vehicleType)
                                         <option value="{{ $vehicleType->id }}"
                                             {{ $vehicleType->id == old('vehicle_type_id', $basediscount->vehicle_type_id) ? 'selected' : '' }}>

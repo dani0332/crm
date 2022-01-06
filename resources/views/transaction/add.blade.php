@@ -13,6 +13,9 @@
                 @if(session()->has('success'))
                     <div class="alert alert-success">{{ session()->get('success') }}</div>
                 @endif
+                @if(session()->has('message'))
+                    <div class="alert alert-danger">{{ session()->get('message') }}</div>
+                @endif
                 <form id="demo-form2" method='post' action="{{ route('transaction.store') }}" enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left" autocomplete="off">
                 {{csrf_field()}}
                     <div class="item form-group">
@@ -22,7 +25,7 @@
                                 <option value="">Select</option>
                                 @foreach ($insurancecompanies as $insurancecompany )
                                     <option {{ old('insurance_company') == $insurancecompany->id ? "selected":""  }} value="{{ $insurancecompany->id }}">{{ $insurancecompany->name }}</option>
-                                    @if ( isset($carQuote['insurance_coverage']['id']) && $carQuote['insurance_coverage']['id'] == $insurancecompany->id )
+                                    @if ( isset($carQuote['insurance_coverage']['insurance_company_id']['insurance_company_id']) && $carQuote['insurance_coverage']['insurance_company_id']['insurance_company_id'] == $insurancecompany->id )
                                         <option   selected="selected"   value="{{ $insurancecompany->id }}">{{ $insurancecompany->name }}</option>
                                     @endif
                                 @endforeach
@@ -92,7 +95,7 @@
                         </div>
                     </div> ]
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Mode of payment">Mode of payment<span class="required">*</span></label>
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Mode of payment">Internal Payment Modes<span class="required">*</span></label>
                         <div class="col-md-6 col-sm-6">
                             <select class="form-control" id="paymentmode" name="paymentmode" {{ isset($carQuote['payment_detail']["mode_id"] ) ? 'readonly' : '' }}>
                                 <option value="">Select</option>
@@ -120,21 +123,6 @@
                             @endif
                         </div>
                     </div>
-                    {{-- <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Type Of Insurance">Type Of Insurance <span class="required">*</span></label>
-                        <div class="col-md-6 col-sm-6">
-                            <select class="form-control" id="typeofinsurance" name="typeofinsurance">
-                                <option value="">Select</option>
-                                @foreach ($typeofinsurances as $toi )
-                                    <option {{ old('typeofinsurance') == $toi->id ? "selected":""  }} value="{{ $toi->id }}">{{ $toi->text }}</option>
-                                @endforeach
-                            </select>
-                            <small class="text-muted">Please select Type of Insurance</small><br/>
-                            @if ($errors->has('typeofinsurance'))
-                                <span class="text-danger">{{ $errors->first('typeofinsurance') }}</span>
-                            @endif
-                        </div>
-                    </div> --}}
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="Risk Details">Risk Details <span class="required">*</span></label>
                         <div class="col-md-6 col-sm-6">
@@ -150,7 +138,7 @@
                     <div class="row">
                     <div class="col-auto mr-auto"></div>
                         <div class="col-auto">
-                            <button type="submit" class="btn btn-warning btn-sm" id="return_to_view">Submit</button>
+                            <button type="submit" class="btn btn-warning btn-sm" id="return_to_view" onclick="$('button').hide();">Submit</button>
                         </div>
                     </div>
                 </form>

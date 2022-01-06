@@ -80,22 +80,89 @@ class User extends Authenticatable implements AuditableContract
         return $this->asDateTime($table)->timezone(config('app.timezone'))->format($date_time_format);
     }
 
-    public function processGetDSL($filters = []) {
+    public function getTeamUserIds()
+    {
+        $userRoles = Auth::user()->usersroles()->get();
+        $isManager = false;
+        foreach ($userRoles as $userRole) {
+            if (str_contains(strtolower($userRole->name), 'manager')) {
+                $isManager = true;
+            }
+        }
+        if ($isManager) {
+            $team_members = UserTeams::where('manager_id', $this->id)->get();
+            $user_ids = $team_members->pluck('user_id');
+            $users = User::whereIn('id', $user_ids)->get();
+            $userIds = $users->pluck('id');
+            return $userIds->implode(',');
+        } else {
+            return 0;
+        }
+    }
 
-        if(Auth::user()->hasRole('production_approval_manager')) {
+    public function isManagerOrDeputy()
+    {
+        $userRoles = Auth::user()->usersroles()->get();
+        $isManagerORDeputy = false;
+        foreach ($userRoles as $userRole) {
+            if (str_contains(strtolower($userRole->name), 'manager') || str_contains(strtolower($userRole->name), 'deputy')) {
+                $isManagerORDeputy = true;
+            }
+        }
+        return $isManagerORDeputy;
+    }
+
+    public function isAdmin()
+    {
+        $userRoles = Auth::user()->usersroles()->get();
+        $isAdmin = false;
+        foreach ($userRoles as $userRole) {
+            if (str_contains(strtolower($userRole->name), 'ADMIN')) {
+                $isAdmin = true;
+            }
+        }
+        return $isAdmin;
+    }
+
+    public function getUserTeams($userId)
+    {
+        $userTeams = UserTeams::where('user_id', $userId)->get();
+        $teamIds = $userTeams->pluck('team_id');
+        $teams = Team::whereIn('id', $teamIds)->get();
+        return $teams->pluck('name');
+    }
+
+    public function processGetDSL($filters = [])
+    {
+
+        if (Auth::user()->hasRole('production_approval_manager')) {
 
             $users =  User::select(['id', 'name'])->whereHas(
-                'roles', function($q){
+                'roles',
+                function ($q) {
                     $q->where('name', 'pa');
                 }
             )
-            ->get();
+                ->get();
             return $users;
         }
 
+        if (Auth::user()->hasRole('advisor') || Auth::user()->hasRole('ADMIN')) {
 
-        return self::with( array('usersroles' => function($query) {
-            $query->where('name','admin');
+            $users =  User::select(['id', 'name'])->whereHas(
+                'roles',
+                function ($q) use ($filters) {
+                    foreach ($filters as $key => $value) {
+                        $q->where($key, $value);
+                    }
+                }
+            )
+                ->get();
+            return $users;
+        }
+
+        return self::with(array('usersroles' => function ($query) {
+            $query->where('name', 'admin');
         }))->get();
 
         // return User::whereHas(

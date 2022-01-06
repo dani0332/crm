@@ -15,52 +15,51 @@ const initialState = {
   sections: [],
 };
 
-function makeNullHideFields(state) {
-  let data = {};
-  const { fields, selectedRecord } = state;
-  Object.entries(fields).forEach(entry => {
-    const [key, value] = entry;
-    const getField = value;
-    const recVal = selectedRecord?.[key];
+// function makeNullHideFields(state) {
+//   let data = {};
+//   const { fields, selectedRecord } = state;
+//   Object.entries(fields).forEach(entry => {
+//     const [key, value] = entry;
+//     const getField = value;
+//     const recVal = selectedRecord?.[key];
 
-    if (recVal && getField?.if) {
-      let getVal = recVal;
-      if (typeof getField?.transform === 'function')
-        getVal = getField?.transform(recVal);
+//     if (recVal && getField?.if) {
+//       let getVal = recVal;
+//       if (typeof getField?.transform === 'function')
+//         getVal = getField?.transform(recVal);
 
-      const val = getField.if[getVal?.selected];
-      if (val?.fields) {
-        const getCondFields = val.fields;
-        if (getCondFields.length > 0) {
-          getCondFields.forEach(() => {});
-        }
-      } else {
-        const getCondFields = getField.else;
-        getCondFields.forEach(element => {
-          data[element] = '';
-        });
-      }
-    }
-  });
-  return data;
-}
+//       let val = getField.if[getVal?.selected] ? getField.if[getVal.selected]: getField.if[getVal.value];
+//       if (val?.fields) {
+//         const getCondFields = val.fields;
+//         if (getCondFields.length > 0) {
+//           getCondFields.forEach(() => {});
+//         }
+//       } else {
+//         const getCondFields = getField.else;
+//         getCondFields.forEach(element => {
+//           data[element] = '';
+//         });
+//       }
+//     }
+//   });
+//   return data;
+// }
 
 function conditionState(state, action) {
   const {
-    field: { name, selected },
+    field: { name, selected, value },
   } = action;
   const getField = state.fields[name];
   if (getField?.if) {
-    const calcVal = selected; //(typeof value === 'object') ? value?.selected : value
+    const calcVal = (typeof value === 'object') ? value?.value : selected
     const val = getField.if[calcVal];
-    if (val?.fields) {
+    if (val?.fields) {  
       const getCondFields = getField.if[calcVal].fields;
       if (getCondFields.length > 0) {
         getCondFields.forEach(element => {
           state.fields[element].offscreen = false;
         });
       }
-      console.log(getCondFields);
     } else {
       const getCondFields = getField.else;
       getCondFields.forEach(element => {
@@ -83,26 +82,37 @@ function reducer(state, action) {
       } = action;
       const getField = state.fields[name];
       getField.value = value;
-      if (state?.action_type === 'new') {
-        console.log('------draw-form.js---Adding---draw-form.js-------');
-        console.log(state);
-        console.log('------draw-form.js---Adding---draw-form.js-------');
-      }
       if (
         state?.action_type === 'edit' &&
         state?.selectedRecord &&
         state?.selectedRecord?.[name]
       ) {
-        console.log('------draw-form.js---Removing---draw-form.js-----------');
         conditionState(state, action);
         state.selectedRecord[name] = value;
       } else if (state?.action_type === 'edit') {
-        console.log('------draw-form.js---Editing---draw-form.js-------');
-        console.log(state);
-        console.log(action);
         conditionState(state, action);
-        console.log('------draw-form.js---Editing---draw-form.js-------');
       }
+      return { ...state };
+    }
+    case 'append': {
+      const {
+        fields, field: { name, value },
+      } = action;
+      fields.forEach(element => {
+        const appendObj = {}
+        appendObj[element.key] = value?.value
+        const getField = state.fields[element.field];
+        getField.filter = appendObj
+      });
+
+      state.fields[name].value = value 
+      if (
+        state?.action_type === 'edit' &&
+        state?.selectedRecord &&
+        state?.selectedRecord?.[name]
+      ) {
+        state.selectedRecord[name] = value;
+      } 
       return { ...state };
     }
     default:
@@ -125,14 +135,7 @@ function DrawForm(props) {
     formState: { errors },
   } = useForm({ shouldUnregister: true });
   const onSubmit = data => {
-    let getData = {};
-    if (state?.action_type === 'edit') getData = makeNullHideFields(state);
-
-    console.log('------------getData----------');
-    console.log(getData);
-    console.log(data);
-    console.log('------------getData----------');
-
+    
     if (typeof state?.postTransform === 'function') {
       console.log('*****onSubmit-Transform-Data-draw-form.js*************');
       let transformData = state?.postTransform({
@@ -143,7 +146,7 @@ function DrawForm(props) {
       dispatch_({
         type: 'VISIBLE_FORM_SAVE',
         selectedRecord: state?.selectedRecord,
-        body: { ...cleanDeep(transformData), ...getData },
+        body: { ...cleanDeep(transformData) },
         initialForm: initialForm,
         manageListDispatch: manageListDispatch,
       });
@@ -151,7 +154,7 @@ function DrawForm(props) {
       dispatch_({
         type: 'VISIBLE_FORM_SAVE',
         selectedRecord: state?.selectedRecord,
-        body: { ...cleanDeep(data), ...getData },
+        body: { ...cleanDeep(data) },
         initialForm: initialForm,
         manageListDispatch: manageListDispatch,
       });
@@ -217,7 +220,7 @@ function DrawForm(props) {
                         if (formState === 'new') getAccess = access?.write;
                         if (formState === 'edit') getAccess = access?.update;
                         if (formState === 'read') getAccess = access?.read;
-                        if (!getAccess.includes(role)) {
+                        if (!getAccess || !getAccess.includes(role)) {
                           return <div></div>;
                         }
                       }
@@ -256,20 +259,31 @@ function DrawForm(props) {
                         return <div key={i}></div>;
                       }
 
+                      if(dslField.type === 'subform'){
+                          return (
+                            <div className='item form-group' key={i}>
+                               <DrawSubform
+                                  control={control}
+                                  errors={errors}
+                                  key={`formfield-subform-${i}`}
+                                  field={dslField}
+                                  Controller={Controller}
+                              />
+                              {errors[u] && errors[u].type === 'required' && (
+                              <Error>
+                                <p>Required.</p>
+                              </Error>
+                            )}
+                            {errors[u] && errors[u].type === 'maxLength' && (
+                              <Error>
+                                <p>maxLength.</p>
+                              </Error>
+                            )}
+                            </div>
+                          )
+                      }
                       return (
                         <div className='item form-group' key={i}>
-                          {
-                            dslField.type === 'subform' && (
-                              <DrawSubform
-                                control={control}
-                                errors={errors}
-                                key={`formfield-subform-${i}`}
-                                field={dslField}
-                                Controller={Controller}
-                              />
-                            )
-                            //<FormField control={control} errors={errors} key={`formfield-subform-${i}`} field={dslField} Controller={Controller}  />
-                          }
                           <label className='col-form-label col-md-3 col-sm-3 label-align'>
                             {dslField.label}
                             {rules?.required && (

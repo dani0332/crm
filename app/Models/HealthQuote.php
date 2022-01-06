@@ -38,4 +38,8 @@ class HealthQuote extends Model implements AuditableContract
     {
         return $this->hasOne(QuoteStatus::class, 'id', 'quote_status_id');
     }
+    public function healthQuoteRequestDetail()
+    {
+        return $this->hasOne(HealthQuoteRequestDetail::class, 'id', 'health_quote_request_id');
+    }
 }

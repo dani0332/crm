@@ -7,9 +7,11 @@ const carQuoteKycStatus = {
       access: {
         read: [
           'advisor',
+          'oe',
           'pa',
           'admin',
           'invoicing',
+          'payment',
           'production_approval_manager',
         ],
         write: ['pa', 'admin', 'production_approval_manager'],
@@ -26,10 +28,11 @@ const carQuoteKycStatus = {
           access: {
             read: [
               'advisor',
+              'oe',
               'pa',
-              'advisor',
               'admin',
               'invoicing',
+              'payment',
               'production_approval_manager',
             ],
             write: ['pa', 'admin'],
@@ -42,13 +45,15 @@ const carQuoteKycStatus = {
           access: {
             read: [
               'advisor',
+              'oe',
               'pa',
               'admin',
               'invoicing',
+              'payment',
               'production_approval_manager',
             ],
-            write: ['pa', 'admin', 'invoicing'],
-            update: ['pa', 'admin', 'invoicing'],
+            write: ['pa', 'admin', 'payment'],
+            update: ['pa', 'admin', 'payment'],
           },
           rules: { required: true },
         },

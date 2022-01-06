@@ -9,17 +9,20 @@ return [
     'car_model' => [
         'model' => CarModel::class,
     ],
+    'car_make' => [
+        'model' => CarMake::class,
+    ],
     'car_quote_ftc_documents' => [
         'model' => FtcDocument::class
     ],
     'car_quote_documents' => [
         'model' => CarQuoteDocuments::class
     ],
-    'insurance_companies' =>[
-        'model' => InsuranceCompany::class
+    'insurance_provider' =>[
+        'model' => InsuranceProvider::class
     ],
-    'car_quote_insurance_plan' => [
-        'model' => CarQuoteInsurancePlan::class
+    'car_plan' => [
+        'model' => CarPlan::class
     ],
     'vehicle_type' => [
         'model' => VehicleType::class
@@ -30,8 +33,14 @@ return [
     'car_quote_payment' => [
         'model' => CarQuotePayment::class
     ],
+    'car_quote_policy' => [
+        'model' => CarQuotePolicy::class
+    ],
     'ftc_quote_status_history' => [
         'model' => FtcQuoteStatusHistory::class
+    ],
+    'car_quote_assign_oe_to_advisor' =>[
+        'model' => CarQuoteAdvisorToOE::class
     ],
     'payment_modes' => [
         'model' => FTCPaymentMode::class
@@ -68,5 +77,11 @@ return [
     ],
     'car_quote_aml_status_lookup' => [
         'model' => CarQuoteAMLStatusLookup::class
-    ]
+    ],
+    'type_of_insurances' => [
+        'model' => CarTypeInsurance::class
+    ],
+    'nationality' => [
+        'model' => Nationality::class
+    ],
 ];

@@ -2,18 +2,20 @@ const ftcPaymentHistory = {
   getForm() {
     const form = {
       db_table: 'car_quote_payment_history',
-      title: 'FTC Payment History',
+      title: 'Payment History',
       subtitle: '',
       access: {
         read: [
           'pa',
           'advisor',
+          'oe',
           'admin',
           'invoicing',
+          'payment',
           'production_approval_manager',
         ],
-        write: ['invoicing'],
-        update: ['invoicing'],
+        write: ['payment'],
+        update: ['payment'],
         delete: [],
       },
       fields: {
@@ -24,13 +26,15 @@ const ftcPaymentHistory = {
           access: {
             read: [
               'advisor',
+              'oe',
               'pa',
               'admin',
+              'payment',
               'invoicing',
               'production_approval_manager',
             ],
-            write: ['invoicing'],
-            update: ['invoicing'],
+            write: ['payment'],
+            update: ['payment'],
           },
           rules: { required: true },
         },
@@ -40,13 +44,15 @@ const ftcPaymentHistory = {
           access: {
             read: [
               'advisor',
+              'oe',
               'pa',
               'admin',
+              'payment',
               'invoicing',
               'production_approval_manager',
             ],
-            write: ['invoicing'],
-            update: ['invoicing'],
+            write: ['payment'],
+            update: ['payment'],
           },
           rules: { required: true },
         },
@@ -58,7 +64,7 @@ const ftcPaymentHistory = {
         },
       ],
       view: {
-        label: 'FTC Payment Method',
+        label: 'Payment Method',
         find: {
           basic: [
             {
@@ -80,11 +86,18 @@ const ftcPaymentHistory = {
             accessor: 'status',
           },
           {
-            Header: 'Notes',
+            Header: 'Approval Code',
             accessor: 'notes',
           },
         ],
         events: {
+          onClick(options) {
+            const { row, dispatch, history } = options;
+            window.open(
+              '/transapp/showtransaction?approval_code=' + row.notes,
+              '_blank',
+            );
+          },
           applyFilter(options) {
             const {
               params: { id },

@@ -26,8 +26,8 @@ export default function SelectField({ field, controller }) {
   }, [field, field?.value]);
 
   const redraw = field => {
-    console.log('---**********redraw-************----');
-    console.log(field);
+    // console.log('---**********redraw-************----');
+    // console.log(field);
 
     if (field?.formState === 'read' || field?.formState === 'edit') {
       let defaultValue = {};
@@ -46,8 +46,8 @@ export default function SelectField({ field, controller }) {
         }
       }
 
-      console.log(defaultValue);
-      console.log('---**********redraw-************----');
+      // console.log(defaultValue);
+      // console.log('---**********redraw-************----');
       setData({
         data: [],
         isDisabled: field.formState === 'read' ? true : false,
@@ -93,24 +93,36 @@ export default function SelectField({ field, controller }) {
       });
     }
   };
+  
   const onChange = selectedOptions => {
     if (typeof field?.dispatch === 'function') {
-      if (field?.if) {
+      if (field?.if || field?.appendFilterToFields) {
+
         // For condition fields
         let selectOp = selectedOptions;
         if (typeof field?.transform === 'function')
           selectOp = field.transform(selectedOptions, true);
         else
           selectOp = {
-            value: selectedOptions,
+            value: { ...selectedOptions, text: selectedOptions.label },
             selected: selectedOptions?.label,
           };
-        field.dispatch({
-          type: 'setValue',
-          field: { name: field.field, ...selectOp },
-        });
-      }
+
+        if(field?.if) {
+          field.dispatch({
+            type: 'setValue',
+            field: { name: field.field, ...selectOp },
+          });
+        }
+        else if (field?.appendFilterToFields) {
+          field.dispatch({
+            type: 'append',
+            fields: field?.appendFilterToFields,
+            field: { name: field.field, ...selectOp },
+          });
+        }
     }
+  }
 
     controller.onChange(selectedOptions.value);
     setData({ ...data, defaultValue: selectedOptions });
@@ -153,7 +165,19 @@ export default function SelectField({ field, controller }) {
 
     if (data.data.length < 1) {
       setData({ ...data, loading: true });
-      const url = `/form/${field.source}`;
+
+      let filter = '';
+      if (typeof field?.filter === 'object') {
+        let queryParamObj = { filter: JSON.stringify(field?.filter) };
+        const params = new URLSearchParams(queryParamObj);
+        filter = `/?${params.toString()}`;
+      } else if (typeof field?.filter === 'string') {
+        filter = `${field?.filter}`;
+      } else {
+        filter = ``;
+      }
+
+      const url = `/form/${field.source}${filter}`;
       dispatchPromise({
         dispatch: dispatch,
         options: {
@@ -179,6 +203,7 @@ export default function SelectField({ field, controller }) {
   };
 
   let value = [];
+  let defaultValue = data?.defaultValue;
   if (typeof field?.transform === 'function') {
     if (data.data.length > 0) {
       value = field?.transform(data.data);
@@ -190,16 +215,13 @@ export default function SelectField({ field, controller }) {
     value = options;
   }
 
-  console.log('---**********SelectAmjad-************----');
-  console.log(field);
-  console.log(value);
-  console.log(data);
-  console.log('---**********SelectAmjad-************----');
-
+  if (typeof field?.valueTransform === 'function') {
+    defaultValue = field?.valueTransform(field, defaultValue);
+  }
   return (
     <Select
       options={value}
-      value={data?.defaultValue}
+      value={defaultValue}
       onChange={onChange}
       isDisabled={data.isDisabled}
       onFocus={onFocus}

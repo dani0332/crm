@@ -169,7 +169,7 @@
                                                                                     <tr>
                                                                                        <td align="left" style="font-size:0px;padding:10px 25px;padding-top:0;word-break:break-word;">
                                                                                           <div style="font-family:Open Sans, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';font-size:13px;line-height:1.5;text-align:left;color:#000000;">
-                                                                                             <p><b>Hi {{$first_name}} {{$last_name}}</b>,</p>
+                                                                                             <p><b>Hi {{ucwords($first_name)}} {{ucwords($last_name)}}</b>,</p>
                                                                                              <p>Thank you for sending us the documents required to start your insurance policy.</p>
                                                                                              <p>In order to proceed further and issue your policy document, we now need you to review the information for accuracy and confirm all is in order by clicking on the “I confirm the details” button below.</p>
                                                                                              <p>**<i><b>Please note that any discrepancy with the below may invalidate your policy.</b></i>**</p>
@@ -191,11 +191,11 @@
                                                                                           <div style="font-family:Open Sans, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';font-size:13px;line-height:1.5;text-align:left;color:#000000;">
                                                                                              <p><b>Section 1: <u>Policy holder and Vehicle Information</u></b></p>
                                                                                              <ol>
-                                                                                                <li>Name: {{$first_name}} {{$last_name}}</li>
+                                                                                                <li>Name: {{ucwords($first_name)}} {{ucwords($last_name)}}</li>
                                                                                                 <li>Nationality: {{$nationality_id['text'] ?? ''}}</li>
-                                                                                                <li>Date of Birth: {{$dob}}</li>
+                                                                                                <li>Date of Birth: {{\Carbon\Carbon::parse($dob)->format('d F Y')}}</li>
                                                                                                 <li>UAE Years driving: {{$uae_license_held_for_id['text'] ?? ''}}</li>
-                                                                                                <li> Year of manufacture: {{$Year_of_manufacture}}</li>
+                                                                                                <li> Year of manufacture: {{$Year_of_manufacture ?? $year_of_manufacture}}</li>
                                                                                                 <li> Date of first registration: {{$vehicle_detail_id['date_first_registration'] ?? ''}}</li>
                                                                                                 <li> Model: {{$car_model_id['text'] ?? ''}}</li>
                                                                                                 <li> Make: {{$car_make_id['text'] ?? ''}}</li>
@@ -217,7 +217,7 @@
                                                                                             <li>Insurance Company: {{$insurance_coverage['insurance_company_id']['name'] ?? ''}}</li>
                                                                                             <li>Sum Insured: {{$insurance_coverage['sum_insured'] ?? ''}}</li>
                                                                                             <li>Excess: {{$insurance_coverage['excess'] ?? ''}}</li>
-                                                                                            <li>Premium/Price: {{$insurance_coverage['premium_price'] ?? ''}} ((incl. 5% VAT)</li>
+                                                                                            <li>Premium/Price: {{$insurance_coverage['premium_price'] ?? ''}} (incl. 5% VAT)</li>
                                                                                             <li>Ancillary Excess:{{$insurance_coverage['ancillary_excess'] ?? ''}} (Applicable only to HPV or subjected to specific make & model)</li>
                                                                                             <li>Repair type: {{$insurance_coverage['repair_type'] ?? ''}}</li>
                                                                                             <li>Financed by (if any): {{$insurance_coverage['financed_by'] ?? ''}}</li>
@@ -255,7 +255,7 @@
                                                                                           <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="border-collapse:separate;line-height:100%;">
                                                                                              <tbody>
                                                                                                 <tr>
-                                                                                                   <td align="center" bgcolor="#1D83BC" role="presentation" style="border:none;border-radius:3px;cursor:auto;mso-padding-alt:10px 25px;background:#1D83BC;" valign="middle"><a href="https://mastage.alfred.ae/car-insurance/ftc/confirmation?hash={{$generateLink['hash'] ?? ''}}&quote={{$generateLink['quote'] ?? ''}}" style="display:inline-block;background:#1D83BC;color:#ffffff;font-family:Open Sans, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';font-size:20px;font-weight:bold;line-height:120%;margin:0;text-decoration:none;text-transform:none;padding:10px 25px;mso-padding-alt:0px;border-radius:3px;" target="_blank">I confirm the details</a></td>
+                                                                                                   <td align="center" bgcolor="#1D83BC" role="presentation" style="border:none;border-radius:3px;cursor:auto;mso-padding-alt:10px 25px;background:#1D83BC;" valign="middle"><a href="{{Config::get('constants.CONFIRM_EMAIL_LINK')}}?hash={{$generateLink['hash'] ?? ''}}&quote={{$generateLink['quote'] ?? ''}}" style="display:inline-block;background:#1D83BC;color:#ffffff;font-family:Open Sans, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';font-size:20px;font-weight:bold;line-height:120%;margin:0;text-decoration:none;text-transform:none;padding:10px 25px;mso-padding-alt:0px;border-radius:3px;" target="_blank">I confirm the details</a></td>
                                                                                                 </tr>
                                                                                              </tbody>
                                                                                           </table>

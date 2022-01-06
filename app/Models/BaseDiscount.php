@@ -11,7 +11,8 @@ class BaseDiscount extends Model implements AuditableContract
 {
     use HasFactory, Auditable;
     protected $table = 'discount_engine_base';
-
+    protected $fillable = ['value_start', 'value_end', 'vehicle_type_id', 'comprehensive_discount', 'agency_discount']; 
+    
     public function VehicleTye()
     {
         return $this->hasOne(VehicleType::class, 'id', 'vehicle_type_id');

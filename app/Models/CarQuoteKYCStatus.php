@@ -7,6 +7,7 @@ use App\Models\BaseModel;
 use App\Models\CarQuote;
 use Auth;
 use App\Jobs\FTCMailServiceJob;
+use LookUpModel;
 
 class CarQuoteKYCStatus extends BaseModel
 {
@@ -19,8 +20,10 @@ class CarQuoteKYCStatus extends BaseModel
         'access' => [
             "pa" => [  'car_quote_id' , 'status', 'notes'],
             "advisor" => [  'car_quote_id' , 'status', 'notes'],
+            "oe" => [  'car_quote_id' , 'status', 'notes'],
             "admin" => [  'car_quote_id' , 'status', 'notes'],
             "invoicing" => [  'car_quote_id' , 'status', 'notes'],
+            "payment" => [  'car_quote_id' , 'status', 'notes'],
         ],
         "list" => [ 'id', 'status', 'notes', 'updated_at' ]
     ];
@@ -40,13 +43,14 @@ class CarQuoteKYCStatus extends BaseModel
 
     public function saveForm($request, $update = false) {
 
-        $carQuote = CarQuote::where(['id' => $request->input('car_quote_id', -1)])->get()->first();
+       
         if( Auth::user()->hasRole('pa') && $request->has('status')) {
+            
+            $carQuote = CarQuote::where(['id' => $request->input('car_quote_id', -1), 'pa_id' => Auth::user()->id])->first(); 
             $status = $request->input('status', 0);
             if($status  == "1") { // request additional document
-                $carQuote = CarQuote::where(['id' => $request->input('car_quote_id', -1), 'pa_id' => Auth::user()->id])->get()->first();
+            
                 if($carQuote) {
-
                     $templateParams = [
                         'notes' => $request->input('notes', ""),
                         "first_name" => $carQuote->first_name,
@@ -54,37 +58,42 @@ class CarQuoteKYCStatus extends BaseModel
                         "code" => $carQuote->code
                     ];
 
-                    $advisorEmail = $carQuote->advisor_id()->get()->first()->email;
+                    $advisorEmail = $carQuote->advisor_id()->first()->email;
                     if($advisorEmail) {
                         $params = [
                             'to' => $advisorEmail,
-                            'subject' => 'Required Additional Document - CDB-ID:'.$carQuote->code,
+                            'subject' => LookUpModel::subjectForFTCEmailCarQuote($carQuote),
                             'templateName' => 'notification',
                             'templateParams' => $templateParams
                         ];
+
+                        $oeId = $carQuote->oe_id()->first();
+                        if($oeId && $oeId->email)
+                            $params['cc'] = $oeId->email;
                         dispatch(new FTCMailServiceJob($params));
                     }
                 }
             }
+
             if($carQuote){
                 $carQuote->kyc_status_id = $status;
                 $quoteStatusId = 0;
                 switch($status) {
                     case '1':
                     case '3': {
-                        $quoteStatusId = 12;
+                        $quoteStatusId = LookUpModel::getLookModel('QuoteStatus', ['code', '=', 'missing_documents_requested']);//12;
                         $carQuote->pa_id = null;
                     }
                         break;
                     case '2':
-                        $quoteStatusId = 11;
+                        $quoteStatusId = LookUpModel::getLookModel('QuoteStatus', ['code', '=', 'kyc_cleared']);//11;
                         break;
                 }
 
                 $carQuote->quote_status_id = $quoteStatusId;
                 $carQuote->save();
             }
-            parent::saveForm($request, $update);
+            return parent::saveForm($request, $update);
         }else{
             return ['data' => false];
         }

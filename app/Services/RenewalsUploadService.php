@@ -15,7 +15,7 @@ use App\Services\RenewalsAddonServices;;
 use Hidehalo\Nanoid\Client;
 use App\Services\CheckAmlService;
 use App\Enums\quoteTypeCode;
-
+use App\Models\CarModel;
 
 class RenewalsUploadService
 {
@@ -145,8 +145,12 @@ class RenewalsUploadService
         $carTypeOfInsurance = null;
         $carMake = $this->renewalsAddonService->getCarMake($quoteData->make);
         $carModel = $this->renewalsAddonService->getCarModel($quoteData->model);
-        $vehicleType = $this->renewalsAddonService->getVehicleType($carModel->vehicle_type_id);
+        $vehicleType = null;
         $advisorId = $this->renewalsAddonService->getUserInfo($quoteData->pAdvisor);
+
+        if ($carModel) {
+            $vehicleType = $this->renewalsAddonService->getVehicleType($carModel->vehicle_type_id);
+        }
 
         if ($quoteData->product_type != null) {
             $carTypeOfInsurance = $this->renewalsAddonService->getCarTypeOfInsurance($quoteData->product_type)->id;
@@ -162,12 +166,12 @@ class RenewalsUploadService
             "source" => $quoteData->source,
             "currently_insured_with" => $quoteData->insurer,
             "car_type_insurance_id" => $carTypeOfInsurance,
-            "year_of_manufacture" => $quoteData->year,
-            "car_make_id" => $carMake->id,
-            "car_model_id" => $carModel->id,
+            "year_of_manufacture" => $quoteData->year ?? null,
+            "car_make_id" => $carMake->id ?? null,
+            "car_model_id" => $carModel->id ?? null,
             "policy_number" => $quoteData->policy,
-            "cylinder" => $carModel->cylinder,
-            "vehicle_category" => $vehicleType->category,
+            "cylinder" => $carModel->cylinder ?? null,
+            "vehicle_category" => $vehicleType->category ?? null,
             "advisor_id" => $advisorId,
             "additional_notes" => $quoteData->notes
         ]);
@@ -317,7 +321,7 @@ class RenewalsUploadService
         $createRenewalQuote->save();
         $this->renewalsAddonService->updateBikeQuoteRequestCode($createRenewalQuote->id);   
         
-        $this->checkAMLService->checkAml($getBikeQuoteData->first_name, $getBikeQuoteData->last_name, $createRenewalQuote->id, $quoteType->id, false); 
+        $this->checkAMLService->checkAml($getBikeQuoteData->first_name, $getBikeQuoteData->last_name, $createRenewalQuote->id, $quoteType->id, false, null, null); 
         return $createRenewalQuote->id;
     }
 
@@ -343,7 +347,7 @@ class RenewalsUploadService
         $createRenewalQuote->save();
         $this->renewalsAddonService->updateBusinessQuoteRequestCode($createRenewalQuote->id);    
         
-        $this->checkAMLService->checkAml($getBusinessQuoteData->first_name, $getBusinessQuoteData->last_name, $createRenewalQuote->id, $quoteType->id, false);
+        $this->checkAMLService->checkAml($getBusinessQuoteData->first_name, $getBusinessQuoteData->last_name, $createRenewalQuote->id, $quoteType->id, false, null, null);
         return $createRenewalQuote->id;
     }
 
@@ -376,7 +380,7 @@ class RenewalsUploadService
         $createRenewalQuote->save();
         $this->renewalsAddonService->updateCarQuoteRequestCode($createRenewalQuote->id);    
         
-        $this->checkAMLService->checkAml($getCarQuoteData->first_name, $getCarQuoteData->last_name, $createRenewalQuote->id, $quoteType->id, false);
+        $this->checkAMLService->checkAml($getCarQuoteData->first_name, $getCarQuoteData->last_name, $createRenewalQuote->id, $quoteType->id, false, null, null);
         return $createRenewalQuote->id;
     }
 
@@ -402,7 +406,7 @@ class RenewalsUploadService
         $createRenewalQuote->save();
         $this->renewalsAddonService->updateHealthQuoteRequestCode($createRenewalQuote->id);    
         
-        $this->checkAMLService->checkAml($getHealthQuoteData->first_name, $getHealthQuoteData->last_name, $createRenewalQuote->id, $quoteType->id, false);
+        $this->checkAMLService->checkAml($getHealthQuoteData->first_name, $getHealthQuoteData->last_name, $createRenewalQuote->id, $quoteType->id, false, null, null);
         return $createRenewalQuote->id;
     }
 
@@ -428,7 +432,7 @@ class RenewalsUploadService
         $createRenewalQuote->save();
         $this->renewalsAddonService->updateHomeQuoteRequestCode($createRenewalQuote->id);    
         
-        $this->checkAMLService->checkAml($getHomeQuoteData->first_name, $getHomeQuoteData->last_name, $createRenewalQuote->id, $quoteType->id, false);
+        $this->checkAMLService->checkAml($getHomeQuoteData->first_name, $getHomeQuoteData->last_name, $createRenewalQuote->id, $quoteType->id, false, null, null);
         return $createRenewalQuote->id;
     }
 
@@ -454,7 +458,7 @@ class RenewalsUploadService
         $createRenewalQuote->save();
         $this->renewalsAddonService->updateLifeQuoteRequestCode($createRenewalQuote->id);    
         
-        $this->checkAMLService->checkAml($getLifeQuoteData->first_name, $getLifeQuoteData->last_name, $createRenewalQuote->id, $quoteType->id, false);
+        $this->checkAMLService->checkAml($getLifeQuoteData->first_name, $getLifeQuoteData->last_name, $createRenewalQuote->id, $quoteType->id, false, null, null);
         return $createRenewalQuote->id;
     }
 
@@ -480,7 +484,7 @@ class RenewalsUploadService
         $createRenewalQuote->save();
         $this->renewalsAddonService->updateTravelQuoteRequestCode($createRenewalQuote->id);    
         
-        $this->checkAMLService->checkAml($getTravelQuoteData->first_name, $getTravelQuoteData->last_name, $createRenewalQuote->id, $quoteType->id, false);
+        $this->checkAMLService->checkAml($getTravelQuoteData->first_name, $getTravelQuoteData->last_name, $createRenewalQuote->id, $quoteType->id, false, null, null);
         return $createRenewalQuote->id;
     }
 
@@ -506,7 +510,7 @@ class RenewalsUploadService
         $createRenewalQuote->save();
         $this->renewalsAddonService->updateYachtQuoteRequestCode($createRenewalQuote->id);    
         
-        $this->checkAMLService->checkAml($getYachtQuoteData->first_name, $getYachtQuoteData->last_name, $createRenewalQuote->id, $quoteType->id, false);
+        $this->checkAMLService->checkAml($getYachtQuoteData->first_name, $getYachtQuoteData->last_name, $createRenewalQuote->id, $quoteType->id, false, null, null);
         return $createRenewalQuote->id;
     }
 

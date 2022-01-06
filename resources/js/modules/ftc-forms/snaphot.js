@@ -10,6 +10,7 @@ import AssignUser from './assign-user';
 import { session } from '../../utils';
 import Overview from './overview';
 import FtcPayment from './ftc-payment';
+import { confirmAlert } from 'react-confirm-alert';
 const Styles = styled.div``;
 
 function LeadSnapShot() {
@@ -70,6 +71,24 @@ function LeadSnapShot() {
           multi: false,
           filter: `/${paramRef.current.id}`,
         };
+      case 'carQuotePolicy':
+        return {
+          form: 'carQuotePolicy',
+          view_mode: 'list',
+          action_type: 'list',
+          context: 'car_quote_snap',
+          multi: false,
+          filter: { car_quote_id: paramRef.current.id },
+        };
+
+        case 'ftcQuoteStatusHistory':
+        return {
+          form: 'ftcQuoteStatusHistory',
+          view_mode: 'list',
+          action_type: 'list',
+          context: 'car_quote_snap',
+          filter: { car_quote_id: paramRef.current.id },
+        };
 
       case 'email_template':
         return { data: action.state, form: 'email_template' };
@@ -105,39 +124,39 @@ function LeadSnapShot() {
       data: 'overview',
     },
     {
-      icon: 'fa fa-upload',
-      label: 'Upload Documents',
-      active: 0,
-      id: 1,
-      data: 'document',
-    },
-    {
       icon: 'fa fa-file-text-o',
-      label: 'Policy Holder Detail',
+      label: 'Customer Details',
       active: 0,
       id: 2,
       data: 'policy',
     },
     {
       icon: 'fa fa-line-chart',
-      label: 'Vehicle Detail',
+      label: 'Vehicle Details',
       active: 0,
       id: 3,
       data: 'vehicle',
     },
     {
+      icon: 'fa fa-upload',
+      label: 'Upload Document',
+      active: 0,
+      id: 1,
+      data: 'document',
+    },
+    {
       icon: 'fa fa-line-chart',
-      label: 'Insurance Coverage Information',
+      label: 'Insurance Coverage',
       active: 0,
       id: 4,
       data: 'insurance',
     },
     {
       icon: 'fa fa-line-chart',
-      label: 'FTC',
+      label: 'Payment',
       active: 0,
-      id: 5,
-      data: 'ftcHistory',
+      id: 9,
+      data: 'ftcPayment',
     },
     {
       icon: 'fa fa-line-chart',
@@ -148,17 +167,31 @@ function LeadSnapShot() {
     },
     {
       icon: 'fa fa-line-chart',
-      label: 'KYC',
+      label: 'KYC & AML',
       active: 0,
       id: 7,
       data: 'kyc',
     },
     {
       icon: 'fa fa-line-chart',
-      label: 'Payment',
+      label: 'FTC History',
       active: 0,
-      id: 9,
-      data: 'ftcPayment',
+      id: 5,
+      data: 'ftcHistory',
+    },
+    {
+      icon: 'fa fa-line-chart',
+      label: 'Policy Details',
+      active: 0,
+      id: 11,
+      data: 'carQuotePolicy',
+    },
+    {
+      icon: 'fa fa-line-chart',
+      label: 'Lead History',
+      active: 0,
+      id: 19,
+      data: 'ftcQuoteStatusHistory',
     },
   ];
 
@@ -176,6 +209,30 @@ function LeadSnapShot() {
       );
       const data = await response.json();
       dispatch({ type: 'email_template', state: data?.data });
+    } else if (data === 'carQuotePolicy') {
+      const response = await fetch(
+        `/form/car_quote_request/${paramRef.current.id}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        },
+      );
+      const data = await response.json();
+      if (data?.data?.quote_status_id?.id !== 15) {
+        confirmAlert({
+          title: 'Error',
+          message: 'Car Quote status is not approved.',
+          buttons: [
+            {
+              label: 'OK',
+            },
+          ],
+        });
+      } else {
+        dispatch({ type: 'carQuotePolicy' });
+      }
     } else {
       dispatch({ type: data });
     }
@@ -185,9 +242,9 @@ function LeadSnapShot() {
     case 'email_template':
       formArr.push(<ReviewSend dispatch={dispatch} data={form.data} />);
       break;
-    case 'ftcHistory':
-      formArr.push(<FtcForm filter={{ car_quote_id: paramRef.current.id }} />);
-      break;
+    // case 'ftcHistory':
+    //   formArr.push(<FtcForm filter={{ car_quote_id: paramRef.current.id }} />);
+    //   break;
     case 'ftcPayment':
       formArr.push(
         <FtcPayment filter={{ car_quote_id: paramRef.current.id }} />,

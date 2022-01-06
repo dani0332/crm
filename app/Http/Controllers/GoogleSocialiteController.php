@@ -47,6 +47,17 @@ class GoogleSocialiteController extends Controller
         }
 
         Auth::login($isExisted[0]);
-        return redirect('/home');
+
+        if(Auth::user()->hasAnyRole(['ADMIN'
+        ,'HEALTH_ADVISOR','HEALTH_MANAGER'
+        ,'BUSINESS_ADVISOR','BUSINESS_MANAGER'
+        ,'TRAVEL_ADVISOR','TRAVEL_MANAGER'
+        ,'LIFE_ADIVSOR','LIFE_MANAGER'
+        ,'HOME_ADVISOR','HOME_MANAGER'
+        ,'CAR_ADVISOR','CAR_MANAGER'])) {
+            return redirect()->intended('/leadsearch');
+        } else {
+            return redirect()->intended('/home');
+        }
     }
 }

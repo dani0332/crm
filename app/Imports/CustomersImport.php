@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Row;
 use Maatwebsite\Excel\Concerns\OnEachRow;
 use Maatwebsite\Excel\Concerns\WithStartRow;
+use App\Jobs\ProcessSIBCustomerMail;
 
 
 class CustomersImport implements OnEachRow, WithStartRow
@@ -16,10 +17,12 @@ class CustomersImport implements OnEachRow, WithStartRow
 
     public $myalfredExpiryDate;
     public $CDBId;
-    public function __construct($myalfredExpiryDate, $cdbId)
+    public $inviatationEmail;
+    public function __construct($myalfredExpiryDate, $cdbId, $inviatationEmail)
     {
         $this->myalfredExpiryDate = $myalfredExpiryDate;
         $this->CDBId = $cdbId;
+        $this->inviatationEmail = $inviatationEmail;
     }
 
     /**
@@ -33,6 +36,7 @@ class CustomersImport implements OnEachRow, WithStartRow
         $row = $row->toArray();
 
         $email = $row[1];
+
         if($email != null) {
             $customerId = 0;
             $myalfredExpiryDate = date('Y-m-d H:i:s', strtotime(str_replace('"', '', $this->myalfredExpiryDate)));
@@ -45,6 +49,10 @@ class CustomersImport implements OnEachRow, WithStartRow
             else {
                 $firstName = $row[0];
                 $lastName = "";
+            }
+            
+            if ($this->inviatationEmail == 'on') {
+                dispatch(new ProcessSIBCustomerMail($email, $firstName));
             }
             $findCustomerByEmail = CustomerService::getCustomerByEmail($email);
             if(!$findCustomerByEmail->isEmpty()) {

@@ -5,12 +5,17 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use App\Models\BaseModel;
 use App\Models\CarQuote;
+use App\Models\FtcDocument;
+use App\Models\QuoteStatus;
 use App\Models\CarQuoteEmailUniqueLink;
 use Auth;
 use App\Jobs\FTCMailServiceJob;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
-
+use Illuminate\Support\Facades\Log;
+use LookUpModel;
+use \Carbon\Carbon;
+use Config;
 
 class FTCHistory extends BaseModel
 {
@@ -18,21 +23,25 @@ class FTCHistory extends BaseModel
     protected $table = 'ftc_history';
     public $access = [
 
-        'write' => ['advisor'],
-        'update' => ['advisor'],
-        'delete' => ['advisor'],
+        'write' => ['advisor','oe'],
+        'update' => ['advisor','oe'],
+        'delete' => ['advisor','oe'],
         'access' => [
             "pa" => [],
             "production_approval_manager" => [],
             "invoicing" => [ ],
+            "payment" => [ ],
             "advisor" => ['car_quote_id', 'status', 'data'],
+            "oe" => ['car_quote_id', 'status', 'data'],
             "admin" => [ 'car_quote_id', 'status', 'data'],
         ],
         "list" => [
             "pa" => ['id' , 'status' , 'data', 'created_at' ],
             "production_approval_manager" => ['id' , 'status' , 'data', 'created_at' ],
             "invoicing" => ['id' , 'status' , 'data', 'created_at' ],
+            "payment" => ['id' , 'status' , 'data', 'created_at' ],
             "advisor" => [ 'id' , 'status', 'data' , 'created_at'],
+            "oe" => [ 'id' , 'status', 'data' , 'created_at'],
             "admin" => ['id' , 'status' , 'data' , 'created_at']
         ]
     ];
@@ -56,17 +65,83 @@ class FTCHistory extends BaseModel
         return $sumInsured;
     }
 
+    public function sendFtcEmail($row, $template){
+
+        
+        Log::info('start sendFtcEmail func...');
+        $templateParams = collect($row)->toArray();
+        $templateParams["insurance_coverage"]["sum_insured"] = $this->prefixAED($templateParams["insurance_coverage"]["sum_insured"]);
+        $templateParams["insurance_coverage"]["excess"] = $this->prefixAED($templateParams["insurance_coverage"]["excess"]);
+        $templateParams["insurance_coverage"]["premium_price"] = $this->prefixAED($templateParams["insurance_coverage"]["premium_price"]);
+        $templateParams["insurance_coverage"]["ancillary_excess"] = $this->prefixAED($templateParams["insurance_coverage"]["ancillary_excess"]);
+
+        $params = [
+            'to' => $row->email,
+            'subject' => ucwords($row->first_name).' '.ucwords($row->last_name). '`s Car Insurance | InsuranceMarket.ae',
+            'templateName' => $template,
+            'templateParams' => $templateParams
+        ];
+
+
+        $documentId = LookUpModel::getLookModel('CarQuoteDocuments', ['code', '=', 'code_7']);
+        $attachment = FtcDocument::where(['car_quote_id' => $row->id, 'document' => $documentId])->get();
+        if(sizeof($attachment) > 0){
+            $params['templateParams']['attachment'] = [];
+            foreach ($attachment as $model) { 
+
+                $attachmentPath = Config::get('constants.azure_storage_url').Config::get('constants.AZURE_STORAGE_CONTAINER').'/'.$model->file_name;
+                $attachmentPath =   str_replace("//","/",$attachmentPath);
+                $attachmentPath =   str_replace(":/","://",$attachmentPath);
+                $params['templateParams']['attachment'][] = $attachmentPath;
+                Log::info('FTC Email attachment:'.$attachmentPath);
+            }
+        }
+
+        Log::info('Sending email with params ' . json_encode($params));
+        dispatch(new FTCMailServiceJob($params));
+
+    }
+
     public function saveForm($request, $update = false) {
 
-        if( Auth::user()->hasRole('advisor') ) {
-            $carQuote = CarQuote::where(['id' => $request->input('car_quote_id', -1), 'advisor_id' => Auth::user()->id])->get()->first();
+        if( Auth::user()->hasRole('advisor') || Auth::user()->hasRole('oe') ) {
+           
+            $carQuote = null;
+            if(Auth::user()->hasRole('advisor'))
+                $carQuote   =   CarQuote::where(['id' => $request->input('car_quote_id', -1), 'advisor_id' => Auth::user()->id])->first();
+            if(Auth::user()->hasRole('oe'))
+                $carQuote   =   CarQuote::where(['id' => $request->input('car_quote_id', -1), 'oe_id' => Auth::user()->id])->first();
+          
             if($carQuote) {
 
-                if($request->input('status', '') == 'Resubmit for Approval') {
+                if($request->input('status', '') == 'resubmitForApproval' || $request->input('status', '') == 'ftc_pending') {
+                    
+                    $paEmail = null;
+                    if($carQuote->pa_id()->first())
+                        $paEmail =$carQuote->pa_id()->first()->email;
 
                     $carQuote->pa_id = null;
-                    $carQuote->quote_status_id = 10; //FTC Resubmitted
+                    $carQuote->quote_status_id = $request->input('status', '') == 'resubmitForApproval' ? LookUpModel::getLookModel('QuoteStatus', ['code', '=', 'ftc_resubmitted']) : LookUpModel::getLookModel('QuoteStatus', ['code', '=', $request->input('status')]);
                     $carQuote->save();
+
+                    if($request->input('status') == 'resubmitForApproval' ) { 
+                        if($paEmail) {
+                            $templateParams = [
+                                'notes' => $request->input('notes', ""),
+                                "first_name" => $carQuote->first_name,
+                                "last_name" => $carQuote->last_name,
+                                "code" => $carQuote->code
+                            ];
+
+                            $params = [
+                                'to' => $paEmail,
+                                'subject' => LookUpModel::subjectForFTCEmailCarQuote($carQuote),
+                                'templateName' => 'notification',
+                                'templateParams' => $templateParams
+                            ];
+                            dispatch(new FTCMailServiceJob($params));
+                        }
+                    }
                 }
 
                 if($request->input('status', '') == 'FTC Sent') {
@@ -82,21 +157,9 @@ class FTCHistory extends BaseModel
                         $results = $getQuote->processGetBaseDSL(["id" => $request->input('car_quote_id')] , false);
                         $row = $results[0];
                         $row['generateLink'] = [ 'hash' => $carQuoteEmailLink->hash, 'quote' => $carQuote->id];
-
-                        $templateParams = collect($row)->toArray();
-                        $templateParams["insurance_coverage"]["sum_insured"] = $this->prefixAED($templateParams["insurance_coverage"]["sum_insured"]);
-                        $templateParams["insurance_coverage"]["excess"] = $this->prefixAED($templateParams["insurance_coverage"]["excess"]);
-                        $templateParams["insurance_coverage"]["premium_price"] = $this->prefixAED($templateParams["insurance_coverage"]["premium_price"]);
-                        $templateParams["insurance_coverage"]["ancillary_excess"] = $this->prefixAED($templateParams["insurance_coverage"]["ancillary_excess"]);
-
-                        $params = [
-                            'to' => $carQuote->email,
-                            'subject' => 'Required Additional Document - CDB-ID:'.$carQuote->code,
-                            'templateName' => 'ftc_mail',
-                            'templateParams' => $templateParams
-                        ];
-                        dispatch(new FTCMailServiceJob($params));
-                    }else{
+                        $row->dob = Carbon::parse($row->dob)->format('d F Y');
+                        $this->sendFtcEmail($row,"ftc_mail");
+                   }else{
                         return $this->APIController->respondData(["message" => "Something wrong"], 500);
                     }
                 }

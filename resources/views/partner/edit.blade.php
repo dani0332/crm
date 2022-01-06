@@ -44,13 +44,13 @@
                         </label>
                         <div class="col-md-6 col-sm-6 ">
                             <img src="{{ \Config::get('constants.azure_storage_url').'myrewards/'.$partner->logo_image }}" style='width:100px;' /> <br /><br />
-                            <input type="file" id="logo_image" name="logo_image"  >
+                            <input type="file" id="logo_image" name="logo_image" >
                         </div>
                     </div>
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="is_active">Is Active</label>
                         <div class="col-md-6 col-sm-6 ">
-                            <input {{ $partner->is_active ? 'checked' : '' }} type="checkbox" class="flat" name='is_active'>
+                            <input {{ $partner->is_active ? 'checked' : '' }} type="checkbox" class="flat" name='is_active' value="1">
                         </div>
                     </div>
                     <div id='redirect_to_view_div'></div>

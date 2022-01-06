@@ -2,7 +2,7 @@ import React from 'react';
 import { useParams } from 'react-router-dom';
 import { confirmAlert } from 'react-confirm-alert'; // Import
 import 'react-confirm-alert/src/react-confirm-alert.css'; // Import css
-import { session } from '../../utils';
+import { session, capitalizeFirstLetter } from '../../utils';
 import moment from 'moment';
 
 export default function ReviewSend(props) {
@@ -40,6 +40,12 @@ export default function ReviewSend(props) {
     });
   };
   const { data } = props;
+
+  let reviewSend = []
+  if(role === 'advisor' || role === 'oe'){
+    reviewSend.push(<button type='submit' className='btn btn-success' onClick={submit} > Review & Send </button>) 
+  }
+
   return (
     <div className='row'>
       <div className='col-md-12'>
@@ -55,15 +61,7 @@ export default function ReviewSend(props) {
             <div className='offset-md-2 col-md-7 hidden-small'>
               {data?.vehicle_detail_id && data?.insurance_coverage && (
                 <div className='pull-right'>
-                  {role === 'advisor' && (
-                    <button
-                      type='submit'
-                      className='btn btn-success'
-                      onClick={submit}
-                    >
-                      Review & Send
-                    </button>
-                  )}
+                  {reviewSend}
                 </div>
               )}
               <h2 className='line_30'>Policy Holder & Vehicle Information</h2>
@@ -72,7 +70,7 @@ export default function ReviewSend(props) {
                   <tr>
                     <td>Name:</td>
                     <td className='fs15 fw700 text-right'>
-                      {data?.first_name} {data?.last_name}
+                      {capitalizeFirstLetter(data?.first_name)} {capitalizeFirstLetter(data?.last_name)}
                     </td>
                   </tr>
                   <tr>

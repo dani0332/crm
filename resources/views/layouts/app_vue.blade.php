@@ -24,16 +24,14 @@
             @include('partials.topnav')
 
             <div class="right_col" role="main" style="min-height: 1211px;">
-          <div class="">
-            <div class="clearfix"></div>
-            <div class="row">
-              <div class="col-md-12 col-sm-12 ">
-                    <div id="root" class="root">
-                        <div id="app"></div>
-                    </div>
-              </div>
-            </div>
-          </div>
+                <div class="clearfix"></div>
+                <div class="row">
+                  <div class="col-md-12 col-sm-12 ">
+                        <div id="root" class="root">
+                            <div id="app"></div>
+                        </div>
+                  </div>
+                </div>
         </div>
             @include('partials.footer')
       </div>

@@ -44,26 +44,41 @@ use App\Enums\tmInsuranceTypeCode;
                             </div>
                         </div>
                         <div class="col">
-                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="Phone number"><b>Phone number</b></label>
-                            <div class="col-md-6 col-sm-6">
-                            <p class="label-align-center"><a href="tel:{{ $customerCorrectPhoneNo }}" id="ignore-redirection" style="text-decoration:underline;">{{ $customerCorrectPhoneNo }}</a></p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="item form-group">
-                        <div class="col">
-                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="Email Address"><b>Email Address</b></label>
-                            <div class="col-md-6 col-sm-6">
-                            <p class="label-align-center">{{ $tmlead->email_address }}</p>
-                            </div>
-                        </div>
-                        <div class="col">
                             <label class="col-form-label col-md-3 col-sm-3 label-align" for="Insurance Type"><b>Insurance Type</b></label>
                             <div class="col-md-6 col-sm-6">
                             <p class="label-align-center">{{ $tmlead->tminsurancetype ? $tmlead->tminsurancetype->text : '' }}</p>
                             </div>
                         </div>
+
                     </div>
+                    <div class="item form-group">
+                        <div class="col">
+                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="Email Address"><b>Email Address</b></label>
+                            <div class="col-md-6 col-sm-6">
+                            <p class="label-align-center">{{ $tmlead->email_address }}
+                            @if(count($tmlead->additionalInformation) > 0)
+                                @foreach($tmlead->additionalInformation as $info)
+                                , {{ $info->email_address }}
+                                @endforeach
+                            @endif
+                            </p>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="Phone number"><b>Phone number</b></label>
+                            <div class="col-md-6 col-sm-6">
+                            <p class="label-align-center">
+                                <a href="tel:{{ $customerCorrectPhoneNo }}" id="ignore-redirection" style="text-decoration:underline;">{{ $customerCorrectPhoneNo }}</a>
+                                @if(count($tmlead->additionalInformation) > 0)
+                                    @foreach($tmlead->additionalInformation as $info)
+                                    , <a href="tel:{{ mapPhoneNumber($info->phone_number) }}" id="ignore-redirection" style="text-decoration:underline;">{{ mapPhoneNumber($info->phone_number) }}</a>
+                                    @endforeach
+                                @endif
+                            </p>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="item form-group">
                         <div class="col">
                             <label class="col-form-label col-md-3 col-sm-3 label-align" for="Enquiry date"><b>Enquiry date</b></label>
@@ -185,6 +200,7 @@ use App\Enums\tmInsuranceTypeCode;
                             </div>
                         </div>
                     </div>
+
                     <div class="ln_solid"></div>
                     <div class="row">
                     <div class="col-auto mr-auto"></div>
@@ -261,7 +277,9 @@ use App\Enums\tmInsuranceTypeCode;
                             <input type="hidden" id="tmLeadEditFormNextFollowupDate" name="tmLeadEditFormNextFollowupDate" value="{{ $tmlead->next_followup_date }}">
                             <input type="hidden" id="tmLeadId" name="tmLeadId" value="{{ $tmlead->id }}">
                             <input type="hidden" id="no_answer_count" name="no_answer_count" value="{{ $tmlead->no_answer_count }}">
-                            <button type="submit" class="btn btn-warning btn-sm" id="return_to_view">Update</button>
+                            @can('telemarketing-edit')
+                                <button type="submit" class="btn btn-warning btn-sm">Update</button>
+                            @endcan
                         </div>
                     </div>
                 </form>

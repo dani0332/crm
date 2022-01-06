@@ -22,8 +22,18 @@
 
             <x-dashboard-tile
             icon="fa fa-comments-o"
+            class='ecomleads'
+            title='Ecom Leads' />
+
+            <x-dashboard-tile
+            icon="fa fa-comments-o"
+            class='fakeleads'
+            title='Fake Leads' />
+
+            <x-dashboard-tile
+            icon="fa fa-comments-o"
             class='carquote'
-            title='Car Quotes' />
+            title='Total Quotes' />
 
           </div>
         </div>
