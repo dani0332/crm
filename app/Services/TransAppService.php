@@ -81,17 +81,17 @@ class TransAppService extends BaseService
         $appEnv = Config::get('constants.APP_ENV');
         $emailSubject = 'Act now and simply sign up to cash in your rewards & keep on saving!';
         $emailRecipient = $customer->email;
-        $fromName = 'no-reply';
-        $fromEmail = Config::get('constants.MAIL_FROM_ADDRESS');
+        $fromName = 'Alfred';
         $replyToEmail = Config::get('constants.MAIL_MYALFRED_SUPPORT_REPLY_TO');
         $emailSubjectExt = $appEnv." | ".$emailSubject;
 
         if($appEnv == "production") {
             $emailSubject = $emailSubject;
-
+            $fromEmail = 'no-reply@alert.insurancemarket.email';
         }
         else {
             $emailSubject = $emailSubjectExt;
+            $fromEmail = 'no-reply@alert.instacover.ae';
         }
 
         Mail::send(['html' => 'customerWelcome'], [
