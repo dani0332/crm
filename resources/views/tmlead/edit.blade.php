@@ -70,7 +70,7 @@ else {
                                 <span class="text-danger">{{ $errors->first('tm_insurance_types_id') }}</span>
                             @endif
                         </div>
-                       
+
                     </div>
                     <div class="item form-group">
                         <div class="col">
@@ -89,7 +89,7 @@ else {
                         </div>
                         <a href="javascript:void(0);" class="" id="add_additional_btn" title="Add field"><img src="/image/add-icon.png"/></a>
                     </div>
-                   
+
                         <div id="additional_info">
                         @if(count($tmlead->additionalInformation) > 0)
                             @foreach($tmlead->additionalInformation as $info)
@@ -107,7 +107,7 @@ else {
                             @endforeach
                             @endif
                         </div>
-                    
+
 
                     <div class="item form-group">
                         <div class="col">
@@ -130,6 +130,9 @@ else {
                             <div class="col">
                                 <span class="col-form-label col-md-6 col-sm-6">Date of Birth</span>
                                 <input type="text" id="dob" name="dob" value="{{ old('dob', $tmlead->dob) }}" class="form-control" data-toggle="tooltip" data-placement="top" title="Please select date of birth">
+                                @if ($errors->has('dob'))
+                                    <span class="text-danger">{{ $errors->first('dob') }}</span>
+                                @endif
                             </div>
                             <div class="col">
 
