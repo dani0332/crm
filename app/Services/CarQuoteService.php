@@ -305,16 +305,18 @@ class CarQuoteService extends BaseService
                 array_push($searchProperties, 'is_ecommerce');
                 array_push($searchProperties, 'payment_status_id');
             }
-            //dd($searchProperties, $request->all());
             foreach ($searchProperties as $item) {
                 if (!empty($request[$item]) && $item != "created_at") {
-                    $searchedValue = str_contains($request[$item], 'Yes') || str_contains($request[$item], 'No') ? ($request[$item] == 'Yes' ? 1 : 0) : $request[$item];
-                    $this->query->where($this->getQuerySuffix($item) . '.' . $item, $searchedValue);
+                    if ($request[$item] == 'null') {
+                        $this->query->whereNull($item);
+                    } else {
+                        $searchedValue = str_contains($request[$item], 'Yes') || str_contains($request[$item], 'No') ? ($request[$item] == 'Yes' ? 1 : 0) : $request[$item];
+                        $this->query->where($this->getQuerySuffix($item) . '.' . $item, $searchedValue);
+                    }
                 }
             }
         }
-        $this->query->orderBy('cqr.created_at', 'DESC');
-        return $this->query;
+        return $this->query->orderBy('cqr.advisor_id', 'ASC');
     }
 
     private function getQuerySuffix($item)

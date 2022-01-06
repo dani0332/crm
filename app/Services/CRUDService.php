@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Services\TeamService;
 use App\Services\HealthQuoteService;
 use Illuminate\Http\Request;
+use DB;
 
 class CRUDService extends BaseService
 {
@@ -73,10 +74,16 @@ class CRUDService extends BaseService
 
     public function getAdvisorsByModelType($modelType)
     {
-
-        return User::whereHas('roles', function ($query) use ($modelType) {
-            $query->whereIn('name', [strtoupper($modelType) . '_ADVISOR']);
-        })->get();
+        $query = DB::table('users as u')
+            ->join('model_has_roles as mr', 'mr.model_id', '=', 'u.id')
+            ->join('roles as r', 'r.id', '=', 'mr.role_id')
+            ->select('u.id', 'u.name');
+        if (strtolower($modelType) == 'car') {
+            $query->whereIn('r.name', [strtoupper($modelType) . '_ADVISOR', 'advisor']);
+        } else {
+            $query->where('r.name', strtoupper($modelType) . '_ADVISOR');
+        }
+        return $query->orderBy('r.name')->distinct()->get();
     }
 
     public function saveModelByType($modelType, Request $request)

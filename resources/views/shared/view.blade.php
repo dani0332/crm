@@ -230,7 +230,7 @@
                     <h2>{{ str_contains(strtolower($model->modelType), 'teams') ? 'Teams' : (str_contains(strtolower($model->modelType), 'leadstatus') ? 'Lead Status' : $model->modelType) }}
                         List</h2>
                     <ul class="nav navbar-right panel_toolbox">
-                        @can(strtolower($model->modelType) . '-create')
+                        @can(strtolower($model->modelType) . '-quotes-create')
                             <li><a href="{{ url('quotes/' . strtolower($model->modelType) . '/create') }}"
                                     class="btn btn-warning btn-sm">Create
                                     {{ str_contains(strtolower($model->modelType), 'teams') ? 'Team' : (str_contains(strtolower($model->modelType), 'leadstatus') ? 'Lead Status' : 'Lead') }}</a>
@@ -329,6 +329,9 @@
                                                             {{ 'Please select ' . str_replace('id', ' ', str_replace('_', ' ', $property)) }}
                                                         </option>
                                                     @endif
+                                                    @if($property == 'advisor_id')
+                                                        <option value="null">UnAssigned</option>
+                                                    @endif
                                                     @foreach ($dropdownSource[$property] as $item)
                                                         <option value="{{ $item->id }}">
                                                             {{ $item->text ?? $item->name }}
@@ -367,9 +370,13 @@
                                                                 {{ $item }}
                                                             </option>
                                                         @else
-                                                            <option value="{{ $item }}">
+                                                            @if($item == 'No-Type')
+                                                                <option value="null">No-Type</option>
+                                                            @else
+                                                            <option value={{$item}}>
                                                                 {{ $item }}
                                                             </option>
+                                                            @endif
                                                         @endif
                                                     @endforeach
                                                 </select>
