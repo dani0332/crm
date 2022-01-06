@@ -1392,7 +1392,6 @@ $(document).ready(function () {
             tmLeadIDs.push($(this).val());
         });
         $('#selectTmLeadId').val(tmLeadIDs);
-        console.log("tmLeadIDs: " + tmLeadIDs);
     });
 
     // TM: Selecting a single record should also enable manual allocation
@@ -1822,6 +1821,28 @@ $(document).ready(function () {
         { data: "updated_at", name: "updated_at" },
 
         ],
+    });
+
+    $('#manualAssignBtn').on('click', function (e) {
+        e.preventDefault();
+        if ($('#assigned_to_id_new').val() == '') {
+            $('#userAssignValidation').show().fadeOut(5000);
+        } else {
+            $.ajax({
+                url: '/leadassignment/manualLeadAssign',
+                type: "PUT",
+                data: { selectTmLeadId: $('#entityId').val(), assigned_to_id_new: $('#assigned_to_id_new').val(), _token: config._token },
+                success: function (response) {
+                    $("#teamassignmentSuccess").html('Team Assigned Successfully').show().fadeOut(5000);
+                    setTimeout(() => {
+                        window.location.reload(true);
+                    }, 2000);
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    console.log(jqXHR, textStatus, errorThrown);
+                },
+            });
+        }
     });
 });
 

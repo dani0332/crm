@@ -12,13 +12,13 @@
         <div id="sidebar-menu" class="main_menu_side hidden-print main_menu">
             <div class="menu_section">
                 <ul class="nav side-menu">
-                    @if (Auth::user()->hasAnyRole(['ADMIN','MANAGER','CAR_ADVISOR', 'BUSINESS_ADVISOR', 'HEALTH_ADVISOR','HOME_ADVISOR','LIFE_ADVISOR','TRAVEL_ADVISOR']))
+                    @if (Auth::user()->hasAnyRole(['ADMIN','CAR_ADVISOR', 'BUSINESS_ADVISOR', 'HEALTH_ADVISOR','HOME_ADVISOR','LIFE_ADVISOR','TRAVEL_ADVISOR']))
                     <li> <a href="{{ url('/leadsearch') }}"><i class="fa fa-home"></i> Home</a></li>
                     @else
                     <li> <a href="{{ url('/home') }}"><i class="fa fa-home"></i> Home</a></li>
                     @endif
                 </ul>
-                @if (Auth::user()->hasAnyRole(['MANAGER','CAR_ADVISOR', 'BUSINESS_ADVISOR', 'HEALTH_ADVISOR','HOME_ADVISOR','LIFE_ADVISOR','TRAVEL_ADVISOR']))
+                @if (Auth::user()->hasAnyRole(['ADMIN','CAR_ADVISOR', 'BUSINESS_ADVISOR', 'HEALTH_ADVISOR','HOME_ADVISOR','LIFE_ADVISOR','TRAVEL_ADVISOR']))
                     <ul class="nav side-menu">
                         <li>
                             <a  href="{{ url('/myleads') }}"><i class="fa fa-inbox"></i> My Leads</a>
@@ -56,32 +56,30 @@
                         </li>
                     </ul>
                 @endcan
-                @can('personal-quotes')
-                    <ul class="nav side-menu">
-                        <li><a><i class="fa fa-quote-left"></i> Personal Quotes <span class="fa fa-chevron-down"></span></a>
-                            <ul class="nav child_menu">
-                                {{-- @can('car-quotes-list')
-                                    <li><a href="{{ url('quotes/carquotes') }}">Car Quotes</a></li>
-                                @endcan --}}
-                                @can('car-quotes-list')
-                                    <li><a href="{{ url('quotes/car') }}">Car Quotes</a></li>
-                                @endcan
-                                @can('health-quotes-list')
-                                    <li><a href={{ url('quotes/health') }}>Health Quotes</a></li>
-                                @endcan
-                                @can('travel-quotes-list')
-                                    <li><a href="{{ url('quotes/travel') }}">Travel Quotes</a></li>
-                                @endcan
-                                @can('life-quotes-list')
-                                    <li><a href="{{ url('quotes/life') }}">Life Quotes</a></li>
-                                @endcan
-                                @can('home-quotes-list')
-                                    <li><a href="{{ url('quotes/home') }}">Home Quotes</a></li>
-                                @endcan
-                            </ul>
-                        </li>
-                    </ul>
-                @endcan
+                <ul class="nav side-menu">
+                    <li><a><i class="fa fa-quote-left"></i> Personal Quotes <span class="fa fa-chevron-down"></span></a>
+                        <ul class="nav child_menu">
+                            {{-- @can('car-quotes-list')
+                                <li><a href="{{ url('quotes/carquotes') }}">Car Quotes</a></li>
+                            @endcan --}}
+                            @can('car-quotes-list')
+                                <li><a href="{{ url('quotes/car') }}">Car Quotes</a></li>
+                            @endcan
+                            @can('health-quotes-list')
+                                <li><a href={{ url('quotes/health') }}>Health Quotes</a></li>
+                            @endcan
+                            @can('travel-quotes-list')
+                                <li><a href="{{ url('quotes/travel') }}">Travel Quotes</a></li>
+                            @endcan
+                            @can('life-quotes-list')
+                                <li><a href="{{ url('quotes/life') }}">Life Quotes</a></li>
+                            @endcan
+                            @can('home-quotes-list')
+                                <li><a href="{{ url('quotes/home') }}">Home Quotes</a></li>
+                            @endcan
+                        </ul>
+                    </li>
+                </ul>
                 @can('crm-admin')
                     <ul class="nav side-menu">
                         <li> <a><i class="fa fa-quote-right"></i> Business Quotes <span class="fa fa-chevron-down"></span></a>

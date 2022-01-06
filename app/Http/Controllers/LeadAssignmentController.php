@@ -213,8 +213,4 @@ class LeadAssignmentController extends Controller
         $assignedUserName = $this->userService->getUserNameById($assignedToUserIdNew);
         return 'Leads has been Assigned To ' . $assignedUserName;
     }
-
-    public function healthTeamAssign(Request $request)
-    {
-    }
 }

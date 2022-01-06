@@ -369,18 +369,24 @@ class CRUDController extends Controller
         return Redirect::back()->with('success', $request->modelType . ' Leads has been Assigned To ' . $assignedUserName);
     }
 
-    public function updateDiscountedPremium(Request $request)
-    {
-    }
-    public function saveQuote(Request $request)
-    {
-        dd($request->all());
-    }
-
     public function add_quote(Request $request)
     {
         $insuranceproviders = InsuranceProvider::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
 
         return view('shared.add_quote', compact('insuranceproviders'));
+    }
+
+    public function healthTeamAssign(Request $request)
+    {
+        $selectedTeam = $request->get('assign_team');
+        $lead = $this->healthQuoteService->getEntityPlain($request->get('entityId'));
+        $lead->health_team_type = $request->get('assign_team');
+        $lead->save();
+        if ($selectedTeam == 'GM') {
+            $this->healthQuoteService->convertLeadFromToGM($lead);
+            return redirect()->to('/quotes/health')->with('success', ' Lead has been Converted And Assigned To Group Medical Team');
+        } else {
+            return redirect()->to('/quotes/health/' . $lead->uuid)->with('success', ' Lead has been Assigned To ' . ucwords($selectedTeam) . ' Team');
+        }
     }
 }

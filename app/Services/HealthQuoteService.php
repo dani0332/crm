@@ -2,11 +2,14 @@
 
 namespace App\Services;
 
+use App\Models\BusinessInsuranceType;
+use App\Models\BusinessQuote;
 use App\Models\HealthQuote;
 use Illuminate\Http\Request;
 use DB;
 use Auth;
 use \Carbon\Carbon;
+use Hidehalo\Nanoid\Client;
 
 class HealthQuoteService extends BaseService
 {
@@ -98,12 +101,15 @@ class HealthQuoteService extends BaseService
             }
             foreach ($searchProperties as $item) {
                 if (!empty($request[$item]) && $item != "created_at") {
-                    $this->query->where($this->getQuerySuffix($item) . '.' . $item, $request[$item]);
+                    if ($request[$item] == 'null') {
+                        $this->query->whereNull($item);
+                    } else {
+                        $this->query->where($this->getQuerySuffix($item) . '.' . $item, $request[$item]);
+                    }
                 }
             }
         }
-        $this->query->orderBy('hqr.created_at', 'DESC');
-        return $this->query;
+        return $this->query->orderBy('hqr.advisor_id', 'ASC');
     }
 
     private function getQuerySuffix($item)
@@ -247,7 +253,7 @@ class HealthQuoteService extends BaseService
             "marital_status_id" => "select|title|required",
             "cover_for_id" => "select|title|required",
             "nationality_id" => "select|title|required",
-            "health_team_type" => "|static|default:All|All,RM,EBP",
+            "health_team_type" => "|static|default:All|All,RM,EBP,No-Type",
             "has_dental" => "input|checkbox|title",
             "has_worldwide_cover" => "input|checkbox|title",
             "has_home" => "input|checkbox|title",
@@ -326,5 +332,35 @@ class HealthQuoteService extends BaseService
     public function fillModelSearchProperties()
     {
         return ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'advisor_id', 'created_at', 'health_team_type'];
+    }
+
+    public function convertLeadFromToGM($lead)
+    {
+        $businessLead = new BusinessQuote();
+        $businessLead->first_name = $lead->first_name;
+        $businessLead->last_name = $lead->last_name;
+        $businessLead->email = $lead->email;
+        $businessLead->mobile_no = $lead->mobile_no;
+        $businessLead->quote_status_id = $lead->quote_status_id;
+        $businessLead->business_type_of_insurance_id = BusinessInsuranceType::where('text', '=', 'Group Medical')->first()->id;
+        $businessLead->created_at = $lead->created_at;
+        $businessLead->updated_at = $lead->updated_at;
+        $businessLead->dob = $lead->dob;
+        $businessLead->brief_details = $lead->details;
+        $businessLead->source = $lead->source;
+        $uuid = strtoupper($this->generateUUID());
+        $businessLead->uuid = $uuid;
+        $businessLead->code = 'BUS-' . $uuid;
+        $businessLead->customer_id = $lead->customer_id;
+        $businessLead->save();
+        HealthQuote::find($lead->id)->delete();
+    }
+
+    public function generateUUID()
+    {
+        $client = new Client();
+        $alphabets = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+        $nanoId = $client->formattedId($alphabets, 8);
+        return $nanoId;
     }
 }

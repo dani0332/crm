@@ -43,12 +43,15 @@ class TeamService extends BaseService
         if ($request->ajax()) {
             foreach ($searchProperties as $item) {
                 if (!empty($request[$item])) {
-                    $this->query->where('t.' . $item, $request[$item]);
+                    if ($request[$item] == 'null') {
+                        $this->query->whereNull($item);
+                    } else {
+                        $this->query->where('t.' . $item, $request[$item]);
+                    }
                 }
             }
         }
-        $this->query->orderBy('t.created_at', 'DESC');
-        return $this->query;
+        return $this->query->orderBy('t.created_at', 'DESC');
     }
 
 
