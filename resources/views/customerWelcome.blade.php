@@ -332,7 +332,7 @@
                                   <div style="font-family:Open Sans, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';font-size:13px;line-height:1.5;text-align:left;color:#000000;">
                                     <p><b>How to sign-up to myAlfred?</b></p>
                                     <ol>
-                                      <li> Visit <a href="https://app.myalfred.com">https://app.myalfred.com</a></li>
+                                      <li> Visit <a href="{{ $signUpButtonUrl }}">myAlfred</a></li>
                                       <li> Sign Up to myAlfred by entering your name, email address and phone number</li>
                                       <li> Receive a 6-digit verification code on your registered email address</li>
                                       <li> Enter the 6-digit verification code on myAlfred to verify and complete the sign-up process</li>
