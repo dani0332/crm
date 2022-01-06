@@ -1489,6 +1489,11 @@ $(document).ready(function () {
         }
     }
 
+    // TM Leads: OnChange searchType do reset searchField
+    $('#search-tm-leads #searchType').on('change', function (e) {
+        $("#searchField").val("");
+    });
+
     $('.tmuploadlead-data-table').DataTable({
         ordering: false,
         info: false,
