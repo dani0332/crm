@@ -98,6 +98,16 @@ class CRUDService extends BaseService
         return $query->orderBy('r.name')->distinct()->get();
     }
 
+    public function getRMAndBusinessAdvisors()
+    {
+        $query = DB::table('users as u')
+            ->join('model_has_roles as mr', 'mr.model_id', '=', 'u.id')
+            ->join('roles as r', 'r.id', '=', 'mr.role_id')
+            ->whereIn('r.name', ['RM_ADVISOR', 'BUSINESS_ADVISOR'])
+            ->select('u.id', DB::raw("CONCAT(u.name,' - ',r.name) AS name"));
+        return $query->orderBy('r.name')->distinct()->get();
+    }
+
     public function saveModelByType($modelType, Request $request)
     {
         $lowerCaseModelType = strtolower($modelType);
