@@ -77,12 +77,24 @@ class CRUDService extends BaseService
         $query = DB::table('users as u')
             ->join('model_has_roles as mr', 'mr.model_id', '=', 'u.id')
             ->join('roles as r', 'r.id', '=', 'mr.role_id')
-            ->select('u.id', 'u.name');
+            ->select('u.id', DB::raw("CONCAT(u.name,' - ',r.name) AS name"));
         if (strtolower($modelType) == 'car') {
             $query->whereIn('r.name', [strtoupper($modelType) . '_ADVISOR', 'advisor']);
+        } else if (strtolower($modelType) == 'health') {
+            $query->whereIn('r.name', [strtoupper($modelType) . '_ADVISOR', 'WCU_ADVISOR']);
         } else {
             $query->where('r.name', strtoupper($modelType) . '_ADVISOR');
         }
+        return $query->orderBy('r.name')->distinct()->get();
+    }
+
+    public function getEBPAndRMAdvisors()
+    {
+        $query = DB::table('users as u')
+            ->join('model_has_roles as mr', 'mr.model_id', '=', 'u.id')
+            ->join('roles as r', 'r.id', '=', 'mr.role_id')
+            ->whereIn('r.name', ['RM_ADVISOR', 'EBP_ADVISOR'])
+            ->select('u.id', DB::raw("CONCAT(u.name,' - ',r.name) AS name"));
         return $query->orderBy('r.name')->distinct()->get();
     }
 

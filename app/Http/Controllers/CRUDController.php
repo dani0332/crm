@@ -161,7 +161,12 @@ class CRUDController extends Controller
         if (!$record) abort(404);
         $model = $this->genericModel;
         $customTitles = $customTableList = [];
-        $advisors = $this->crudService->getAdvisorsByModelType($this->genericModel->modelType);
+        if (strtolower($this->genericModel->modelType == 'health') && ($record->health_team_type == 'EBP' || $record->health_team_type == 'RM')) {
+            $advisors = $this->crudService->getEBPAndRMAdvisors();
+        } else {
+            $advisors = $this->crudService->getAdvisorsByModelType($this->genericModel->modelType);
+        }
+
         foreach ($model->properties as $property => $value) {
             if (str_contains($value, 'title')) {
                 $customTitles[$property] = $this->crudService->getCustomTitleByModelType($this->genericModel->modelType, $property);
@@ -354,17 +359,19 @@ class CRUDController extends Controller
         $leadsIds = $request->selectTmLeadId;
         $leadsIds = array_map('intval', explode(',', $leadsIds));
         foreach ($leadsIds as $tmLeadsId) {
-            $updateTmLead = $this->{strtolower($request->modelType) . 'QuoteService'}->getEntityPlain($tmLeadsId);
+            $entity = $this->{strtolower($request->modelType) . 'QuoteService'}->getEntityPlain($tmLeadsId);
             $userId = (int)$assignedToUserIdNew;
-            $updateTmLead->advisor_id = $userId;
+            if (Auth::user()->hasRole('WCU_ADVISOR')) {
+                $entity->wcu_id = $userId;
+            } else {
+                $entity->advisor_id = $userId;
+            }
             $advisorOE = CarQuoteAdvisorToOE::where('advisor_id', $userId)->first();
             if (!empty($advisorOE) && strtolower($request->modelType) == 'car') {
-                $updateTmLead->oe_id = $advisorOE->oe_id;
+                $entity->oe_id = $advisorOE->oe_id;
             }
-
-            $updateTmLead->save();
+            $entity->save();
         }
-
         $assignedUserName = $this->userService->getUserNameById($assignedToUserIdNew);
         return Redirect::back()->with('success', $request->modelType . ' Leads has been Assigned To ' . $assignedUserName);
     }
@@ -383,10 +390,10 @@ class CRUDController extends Controller
         $lead->health_team_type = $request->get('assign_team');
         $lead->save();
         if ($selectedTeam == 'GM') {
-            $this->healthQuoteService->convertLeadFromToGM($lead);
+            $this->healthQuoteService->convertLeadToGM($lead);
             return redirect()->to('/quotes/health')->with('success', ' Lead has been Converted And Assigned To Group Medical Team');
         } else {
-            return redirect()->to('/quotes/health/' . $lead->uuid)->with('success', ' Lead has been Assigned To ' . ucwords($selectedTeam) . ' Team');
+            return redirect()->to('/quotes/health/' . $lead->uuid)->with('success', ' Lead has been Assigned To ' . strtoupper($selectedTeam) . ' Team');
         }
     }
 }

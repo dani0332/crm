@@ -12,11 +12,7 @@
         <div id="sidebar-menu" class="main_menu_side hidden-print main_menu">
             <div class="menu_section">
                 <ul class="nav side-menu">
-                    @if (Auth::user()->hasAnyRole(['ADMIN','CAR_ADVISOR', 'BUSINESS_ADVISOR', 'HEALTH_ADVISOR','HOME_ADVISOR','LIFE_ADVISOR','TRAVEL_ADVISOR']))
                     <li> <a href="{{ url('/leadsearch') }}"><i class="fa fa-home"></i> Home</a></li>
-                    @else
-                    <li> <a href="{{ url('/home') }}"><i class="fa fa-home"></i> Home</a></li>
-                    @endif
                 </ul>
                 @if (Auth::user()->hasAnyRole(['ADMIN','CAR_ADVISOR', 'BUSINESS_ADVISOR', 'HEALTH_ADVISOR','HOME_ADVISOR','LIFE_ADVISOR','TRAVEL_ADVISOR']))
                     <ul class="nav side-menu">
