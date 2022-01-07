@@ -32,6 +32,11 @@ class CarPlan extends BaseModel
         ]
     ];
 
+    public function provider_id()
+    {
+        return $this->hasOne(InsuranceProvider::class, 'id', 'provider_id');
+    }
+
     public function relations() {
         return [];
     }

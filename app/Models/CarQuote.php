@@ -132,6 +132,11 @@ class CarQuote extends BaseModel
         return $this->hasOne(PaymentStatus::class, 'id', 'payment_status_id');
     }
 
+    public function plan_id()
+    {
+        return $this->hasOne(CarPlan::class, 'id', 'plan_id');
+    }
+
     public function kyc_status_id()
     {
         return $this->hasOne(KycStatus::class, 'id', 'kyc_status_id');
@@ -178,7 +183,15 @@ class CarQuote extends BaseModel
         return $this->hasOne(User::class, 'id', 'oe_id')->select(['id', 'email','name']);
     }
 
-   
+    public function scopeRelationWhere($query, $isGetList, $filters) {
+      
+
+        if(Auth::user()->hasRole('pa') && $isGetList) {
+
+            $query->select(['car_quote_request.id','code', 'first_name', 'last_name', 'car_quote_request.updated_at', 'car_quote_request.created_at', "pa_id", "kyc_status_id","quote_status_id","aml_status","payment_id","car_value", "currently_insured_with", "car_type_insurance_id", "plan_id"]);
+            $query->join('car_quote_insurance_coverage', 'car_quote_insurance_coverage.car_quote_id', '=', 'car_quote_request.id');
+        }
+    }
 
 
     /*****  NewRelationships so old should not effect */
@@ -186,9 +199,9 @@ class CarQuote extends BaseModel
     public function relations() {
 
         if($this->isGetList)
-            return ["pa_id","payment_id", "quote_status_id"];
+            return ["pa_id","payment_id", "quote_status_id", "plan_id"];
         else
-            return ["car_type_insurance_id","payment_detail","quote_status_id", "kyc_status_id", "insurance_coverage.insurance_company_id", "insurance_coverage.insurance_plan_id", "insurance_coverage.vehicle_type_id", "uae_license_held_for_id", "car_make_id", "car_model_id", "emirate_of_registration_id", "claim_history_id",  "nationality_id", "vehicle_detail_id", "pa_id", "car_quote_kyc"];
+            return ["car_type_insurance_id","payment_detail","quote_status_id", "kyc_status_id", "insurance_coverage.insurance_company_id", "insurance_coverage.insurance_plan_id", "insurance_coverage.vehicle_type_id", "uae_license_held_for_id", "car_make_id", "car_model_id", "emirate_of_registration_id", "claim_history_id",  "nationality_id", "vehicle_detail_id", "pa_id", "car_quote_kyc",  "plan_id","plan_id.provider_id"];
     }
 
     public $access = [
@@ -206,22 +219,22 @@ class CarQuote extends BaseModel
             "invoicing" => [ 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'created_at','invoicing'],
         ],
         "list" => [
-            "pa" => [ 'id','code', 'first_name', 'last_name',  'created_at', "pa_id", "kyc_status_id","quote_status_id","aml_status","payment_id","car_value", "currently_insured_with", "car_type_insurance_id"],
-            "production_approval_manager" => [ 'id','code', 'first_name', 'last_name',  'created_at', "pa_id", "kyc_status_id","quote_status_id","aml_status","payment_id","car_value", "currently_insured_with", "car_type_insurance_id"],
-            "advisor" => [ 'id','code', 'first_name', 'last_name', 'updated_at', 'created_at', "pa_id", "kyc_status_id","quote_status_id","aml_status","payment_id","car_value", "currently_insured_with", "car_type_insurance_id"],
-            "oe" => [ 'id','code', 'first_name', 'last_name', 'updated_at', 'created_at', "pa_id", "kyc_status_id","quote_status_id","aml_status","payment_id","car_value", "currently_insured_with", "car_type_insurance_id"],
-            "admin" => [ 'id','code', 'first_name', 'last_name',  'created_at', "kyc_status_id","quote_status_id","aml_status","payment_id","car_value", "currently_insured_with", "car_type_insurance_id"],
-            "payment" => [ 'id','code', 'first_name', 'last_name',"pa_id",  'created_at' , "kyc_status_id","quote_status_id","aml_status","payment_id","car_value", "currently_insured_with", "car_type_insurance_id"],
-            "invoicing" => [ 'id','code', 'first_name', 'last_name',"pa_id",  'created_at' , "kyc_status_id","quote_status_id","aml_status","payment_id","car_value", "currently_insured_with", "car_type_insurance_id", "invoicing"]
+            "pa" => [ 'id','code', 'first_name', 'last_name',  'created_at', "pa_id", "kyc_status_id","quote_status_id","aml_status","payment_id","car_value", "currently_insured_with", "car_type_insurance_id", "plan_id"],
+            "production_approval_manager" => [ 'id','code', 'first_name', 'last_name',  'created_at', "pa_id", "kyc_status_id","quote_status_id","aml_status","payment_id","car_value", "currently_insured_with", "car_type_insurance_id", "plan_id"],
+            "advisor" => [ 'id','code', 'first_name', 'last_name', 'updated_at', 'created_at', "pa_id", "kyc_status_id","quote_status_id","aml_status","payment_id","car_value", "currently_insured_with", "car_type_insurance_id", "plan_id"],
+            "oe" => [ 'id','code', 'first_name', 'last_name', 'updated_at', 'created_at', "pa_id", "kyc_status_id","quote_status_id","aml_status","payment_id","car_value", "currently_insured_with", "car_type_insurance_id", "plan_id"],
+            "admin" => [ 'id','code', 'first_name', 'last_name',  'created_at', "kyc_status_id","quote_status_id","aml_status","payment_id","car_value", "currently_insured_with", "car_type_insurance_id", "plan_id"],
+            "payment" => [ 'id','code', 'first_name', 'last_name',"pa_id",  'created_at' , "kyc_status_id","quote_status_id","aml_status","payment_id","car_value", "currently_insured_with", "car_type_insurance_id", "plan_id"],
+            "invoicing" => [ 'id','code', 'first_name', 'last_name',"pa_id",  'created_at' , "kyc_status_id","quote_status_id","aml_status","payment_id","car_value", "currently_insured_with", "car_type_insurance_id", "invoicing", "plan_id"]
         ],
         "detail" => [
-            "pa" => [ 'id','code', 'dob','first_name', 'last_name', 'email', 'mobile_no','Year_of_manufacture',"kyc_status_id","quote_status_id", 'created_at', "car_make_id", "car_model_id","car_value", "emirate_of_registration_id", "claim_history_id",  "nationality_id","uae_license_held_for_id", "pa_id","aml_status","payment_id", "currently_insured_with", "car_type_insurance_id"],
-            "production_approval_manager" => [ 'id','code', 'dob','first_name', 'last_name', 'email', 'mobile_no','Year_of_manufacture',"kyc_status_id","quote_status_id", 'created_at', "car_make_id", "car_model_id","car_value", "emirate_of_registration_id", "claim_history_id",  "nationality_id","uae_license_held_for_id", "pa_id","aml_status","payment_id", "currently_insured_with", "car_type_insurance_id"],
-            "advisor" => [ 'id','code','dob', 'first_name', 'last_name', 'email', 'mobile_no', 'Year_of_manufacture',"kyc_status_id","quote_status_id", 'created_at', "car_make_id", "car_model_id","car_value", "emirate_of_registration_id", "claim_history_id",  "nationality_id","uae_license_held_for_id", "pa_id","aml_status","payment_id", "currently_insured_with", "car_type_insurance_id"],
-            "oe" => [ 'id','code','dob', 'first_name', 'last_name', 'email', 'mobile_no', 'Year_of_manufacture',"kyc_status_id","quote_status_id", 'created_at', "car_make_id", "car_model_id","car_value", "emirate_of_registration_id", "claim_history_id",  "nationality_id","uae_license_held_for_id", "pa_id","aml_status","payment_id", "currently_insured_with", "car_type_insurance_id"],
-            "admin" => [ 'id','code', 'dob','first_name', 'last_name', 'email', 'mobile_no', 'Year_of_manufacture',"kyc_status_id","quote_status_id", 'created_at', "car_make_id", "car_model_id","car_value", "emirate_of_registration_id", "claim_history_id",  "nationality_id","uae_license_held_for_id", "pa_id","aml_status","payment_id", "currently_insured_with", "car_type_insurance_id"],
-            "payment" => [ 'id','code','dob', 'first_name', 'last_name', 'email', 'mobile_no','Year_of_manufacture',"kyc_status_id","quote_status_id", 'created_at', "car_make_id", "car_model_id","car_value", "emirate_of_registration_id", "claim_history_id",  "nationality_id","uae_license_held_for_id", "pa_id","aml_status","payment_id", "currently_insured_with", "car_type_insurance_id"],
-            "invoicing" => [ 'id','code','dob', 'first_name', 'last_name', 'email', 'mobile_no','Year_of_manufacture',"kyc_status_id","quote_status_id", 'created_at', "car_make_id", "car_model_id","car_value", "emirate_of_registration_id", "claim_history_id",  "nationality_id","uae_license_held_for_id", "pa_id","aml_status","payment_id", "currently_insured_with", "car_type_insurance_id"],
+            "pa" => [ 'id','code', 'dob','first_name', 'last_name', 'email', 'mobile_no','Year_of_manufacture',"kyc_status_id","quote_status_id", 'created_at', "car_make_id", "car_model_id","car_value", "emirate_of_registration_id", "claim_history_id",  "nationality_id","uae_license_held_for_id", "pa_id","aml_status","payment_id", "currently_insured_with", "car_type_insurance_id", "plan_id"],
+            "production_approval_manager" => [ 'id','code', 'dob','first_name', 'last_name', 'email', 'mobile_no','Year_of_manufacture',"kyc_status_id","quote_status_id", 'created_at', "car_make_id", "car_model_id","car_value", "emirate_of_registration_id", "claim_history_id",  "nationality_id","uae_license_held_for_id", "pa_id","aml_status","payment_id", "currently_insured_with", "car_type_insurance_id", "plan_id"],
+            "advisor" => [ 'id','code','dob', 'first_name', 'last_name', 'email', 'mobile_no', 'Year_of_manufacture',"kyc_status_id","quote_status_id", 'created_at', "car_make_id", "car_model_id","car_value", "emirate_of_registration_id", "claim_history_id",  "nationality_id","uae_license_held_for_id", "pa_id","aml_status","payment_id", "currently_insured_with", "car_type_insurance_id", "plan_id"],
+            "oe" => [ 'id','code','dob', 'first_name', 'last_name', 'email', 'mobile_no', 'Year_of_manufacture',"kyc_status_id","quote_status_id", 'created_at', "car_make_id", "car_model_id","car_value", "emirate_of_registration_id", "claim_history_id",  "nationality_id","uae_license_held_for_id", "pa_id","aml_status","payment_id", "currently_insured_with", "car_type_insurance_id", "plan_id"],
+            "admin" => [ 'id','code', 'dob','first_name', 'last_name', 'email', 'mobile_no', 'Year_of_manufacture',"kyc_status_id","quote_status_id", 'created_at', "car_make_id", "car_model_id","car_value", "emirate_of_registration_id", "claim_history_id",  "nationality_id","uae_license_held_for_id", "pa_id","aml_status","payment_id", "currently_insured_with", "car_type_insurance_id", "plan_id"],
+            "payment" => [ 'id','code','dob', 'first_name', 'last_name', 'email', 'mobile_no','Year_of_manufacture',"kyc_status_id","quote_status_id", 'created_at', "car_make_id", "car_model_id","car_value", "emirate_of_registration_id", "claim_history_id",  "nationality_id","uae_license_held_for_id", "pa_id","aml_status","payment_id", "currently_insured_with", "car_type_insurance_id", "plan_id"],
+            "invoicing" => [ 'id','code','dob', 'first_name', 'last_name', 'email', 'mobile_no','Year_of_manufacture',"kyc_status_id","quote_status_id", 'created_at', "car_make_id", "car_model_id","car_value", "emirate_of_registration_id", "claim_history_id",  "nationality_id","uae_license_held_for_id", "pa_id","aml_status","payment_id", "currently_insured_with", "car_type_insurance_id", "plan_id"],
         ]
     ];
 
@@ -239,6 +252,8 @@ class CarQuote extends BaseModel
                     $restrictFilter["advisor_id"] = Auth::user()->id;
                     $restrictFilter = array_merge($restrictFilter,$filters);
                 }
+
+               // $restrictFilter["insurance_coverage.car_quote_id"] = 12222;
             }
 
             if(Auth::user()->hasRole('oe')) {
@@ -265,6 +280,7 @@ class CarQuote extends BaseModel
                     $pa_id = $filters["pa_id"] == 0 ? NULL : Auth::user()->id;
                     $restrictFilter["pa_id"] = $pa_id;
                     $restrictFilter["advisor_id"] = ["op" => "<>", "val" => ''];
+                   
                     $restrictFilter["quote_status_id"] =  ["op" => "in", "val" => $valuesIn];
                 }   
             }

@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Handler;
 use App\Models\InsuranceCompany;
 use App\Models\PaymentMode;
 use App\Models\Reason;
@@ -18,7 +17,6 @@ use App\Services\CustomerService;
 use DB;
 use App\Services\TransAppService;
 use App\Services\ReasonService;
-use Illuminate\Support\Facades\Log;
 
 class TransactionController extends Controller
 {
@@ -36,7 +34,6 @@ class TransactionController extends Controller
         $this->customerService = $cusService;
         $this->reasonService = $reasService;
         $this->middleware('permission:transapp-list|transapp-create|transapp-edit|transapp-delete', ['only' => ['index', 'store']]);
-       // $this->middleware('permission:transapp-create', ['only' => ['create', 'store']]);
         $this->middleware('permission:transapp-edit', ['only' => ['edit', 'update']]);
         $this->middleware('permission:transapp-delete', ['only' => ['destroy']]);
     }
@@ -48,7 +45,6 @@ class TransactionController extends Controller
      */
     public function index(Request $request)
     {
-        //Log::channel('daily')->info('Entered into transaction');
         $transactors = User::select('users.*')
         ->leftjoin('model_has_roles','users.id','model_has_roles.model_id')
         ->leftjoin('roles','roles.id','model_has_roles.role_id')
@@ -121,7 +117,6 @@ class TransactionController extends Controller
             ->make(true);
         }
         return view('transaction.view',compact('transactors','handlers','insurance_companies','payment_modes','reasons'));
-        //return view('transaction.view');
     }
 
     /**
@@ -166,13 +161,18 @@ class TransactionController extends Controller
             'assigned_to_id' => 'required',
             'paymentmode' => 'required',
             'amount_paid' => "required|max:12|regex:/^\d*(\.\d{1,2})?$/",
-            //'typeofinsurance' => 'required',
             'risk_detail' => 'required|max:2000',
         ]);
 
+        $approvalCode = $this->transactionService->createTransaction($request);
 
-        $approval_code = $this->transactionService->createTransaction($request);
-        return redirect("transapp/home")->with('success', 'Transaction added successfully, Approval code is '.$approval_code);
+        if(gettype($approvalCode) == 'string') {
+            return redirect("transapp/home")->with('success', 'Transaction added successfully, Approval code is '.$approvalCode);
+        }
+        else {
+            return back()->withInput()->with('message', 'myAlfred signup link creation failed. Please try recreating Transapp.');
+        }
+
     }
 
     /**
@@ -411,7 +411,6 @@ class TransactionController extends Controller
             'assigned_to_id' => 'required',
             'paymentmode' => 'required',
             'amount_paid' => "required|max:12|regex:/^\d*(\.\d{1,2})?$/",
-            //'type_of_insurance_id' => 'required',
             'reason' => 'required',
         ]);
 
@@ -430,7 +429,6 @@ class TransactionController extends Controller
         $transaction->assigned_to_id = $request->assigned_to_id;
         $transaction->payment_mode_id = $request->paymentmode;
         $transaction->risk_details = $request->risk_detail;
-        //$transaction->type_of_insurance_id = $request->type_of_insurance_id;
         $transaction->amount_paid = $request->amount_paid;
         $transaction->reason_id = $request->reason;
         $transaction->comments = $request->comments;

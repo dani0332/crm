@@ -42,6 +42,7 @@ function get_guid() {
 
 function mapPhoneNumber($customerPhoneNo) {
     $customerCorrectPhoneNo = $customerPhoneNo;
+    $customerCorrectPhoneNo1 = $customerPhoneNo;
     if (strlen($customerPhoneNo) == 9) { // 563264418 9
         $customerCorrectPhoneNo = "0" . $customerPhoneNo;
     } else if (strlen($customerPhoneNo) == 12) { // 971563264418 12
@@ -51,21 +52,21 @@ function mapPhoneNumber($customerPhoneNo) {
         $customerPhoneNo = substr($customerPhoneNo, 0, 4);
 
         if ($customerPhoneNo == "9710") { // 9710563264418 13
-            $customerCorrectPhoneNo = substr($tmlead->phone_number, 3);
+            $customerCorrectPhoneNo = substr($customerCorrectPhoneNo1, 3);
         }
         if ($customerPhoneNo == "+971") { // +971563264418 13 Working
-            $customerPhoneNo = substr($tmlead->phone_number, 4);
+            $customerPhoneNo = substr($customerCorrectPhoneNo1, 4);
             $customerCorrectPhoneNo = "0" . $customerPhoneNo;
         }
     } else if (strlen($customerPhoneNo) == 14) {
         $customerPhoneNo = substr($customerPhoneNo, 0, 5);
 
         if ($customerPhoneNo == "00971") { // 00971563264418 14
-            $customerCorrectPhoneNo = substr($tmlead->phone_number, 5);
+            $customerCorrectPhoneNo = substr($customerCorrectPhoneNo1, 5);
             $customerCorrectPhoneNo = "0" . $customerCorrectPhoneNo;
         }
         if ($customerPhoneNo == "+9710") { // +9710563264418 14
-            $customerCorrectPhoneNo = substr($tmlead->phone_number, 4);
+            $customerCorrectPhoneNo = substr($customerCorrectPhoneNo1, 4);
         }
     } else if (strlen($customerPhoneNo) == 15) { // 009710563264418 15
         $customerCorrectPhoneNo = substr($customerPhoneNo, 5);
