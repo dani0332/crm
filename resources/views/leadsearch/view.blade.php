@@ -5,6 +5,8 @@
     <script>
         var userId = JSON.parse('<?php echo json_encode(Auth::user()->id); ?>');
         var isAdmin = JSON.parse('<?php echo json_encode(Auth::user()->hasRole('ADMIN')); ?>');
+        var isManager = JSON.parse('<?php echo json_encode($isManager); ?>');
+        var managerRoleType = JSON.parse('<?php echo json_encode($managerRole); ?>');
         var teamUserIds = JSON.parse('<?php echo json_encode(Auth::user()->getTeamUserIds()); ?>');
         $(document).ready(function() {
             var searchLeadsTable = $(".leadSearch-data-table").DataTable({
@@ -26,9 +28,12 @@
                         data: 'id',
                         name: 'id',
                         render: function(data, type, row) {
-                            if(teamUserIds != 0){
-                                if (teamUserIds.includes(row.advisor_id) || row.advisor_id == userId ||
-                                    isAdmin) {
+                            if(isAdmin || (isManager && managerRoleType == $('#leadType').val().toUpperCase())) {
+                                return "<a href='/quotes/" + $("#leadType").val() + "/" + row.uuid +
+                                        "'>" + row.id + "</a>"
+                            }
+                            else if (teamUserIds != 0){
+                                if (teamUserIds.includes(row.advisor_id) || row.advisor_id == userId) {
                                     return "<a href='/quotes/" + $("#leadType").val() + "/" + row.uuid +
                                         "'>" + row.id + "</a>"
                                 } else {

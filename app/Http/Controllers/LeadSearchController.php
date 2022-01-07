@@ -26,6 +26,14 @@ class LeadSearchController extends Controller
     public function index(Request $request)
     {
         $leadType = $request->leadType ?? '';
+        $userRoles = Auth::user()->usersroles()->get();
+        $managerRole = '';
+        foreach ($userRoles as $userRole) {
+            if (str_contains(strtolower($userRole->name), 'manager')) {
+                $managerRole = explode('_', $userRole->name)[0];
+            }
+        }
+        $isManager = Auth::user()->isManagerOrDeputy();
         if ($request->ajax()) {
             if (isset($leadType) && !empty($leadType)) {
                 $quoteResults = $this->crudService->getLeads($request->cdbID, $request->email, $request->phnNumber, $leadType);
@@ -34,7 +42,7 @@ class LeadSearchController extends Controller
                     ->make(true);
             }
         }
-        return view('leadsearch.view', compact('leadType'));
+        return view('leadsearch.view', compact('leadType', 'isManager', 'managerRole'));
     }
 
     /**
