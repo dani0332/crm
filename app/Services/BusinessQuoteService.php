@@ -37,8 +37,7 @@ class BusinessQuoteService extends BaseService
             )
             ->Join('business_type_of_insurance as bti', 'bti.id', '=', 'bqr.business_type_of_insurance_id')
             ->leftJoin('users as u', 'u.id', '=', 'bqr.advisor_id')
-            ->leftJoin('quote_status as qs', 'qs.id', '=', 'bqr.quote_status_id')
-            ->where('bti.text', '!=', 'Group Medical');
+            ->leftJoin('quote_status as qs', 'qs.id', '=', 'bqr.quote_status_id');
     }
 
     public function getEntity($id)
@@ -153,7 +152,7 @@ class BusinessQuoteService extends BaseService
                 }
             }
         }
-        return $this->query->orderBy('bqr.advisor_id', 'ASC');
+        return $this->query->where('bti.text', '!=', 'Group Medical')->orderBy('bqr.advisor_id', 'ASC');
     }
 
     private function getQuerySuffix($item)

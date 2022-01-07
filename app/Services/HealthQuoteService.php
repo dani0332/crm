@@ -334,7 +334,7 @@ class HealthQuoteService extends BaseService
         return ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'advisor_id', 'created_at', 'health_team_type'];
     }
 
-    public function convertLeadFromToGM($lead)
+    public function convertLeadToGM($lead)
     {
         $businessLead = new BusinessQuote();
         $businessLead->first_name = $lead->first_name;
