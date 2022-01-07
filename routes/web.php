@@ -83,6 +83,7 @@ Route::middleware(['auth'])->get('/home', function () {
 
 Route::group(['middleware' =>  ['auth']], function () {
     Route::resource('myleads', MyLeadsController::class);
+
     Route::resource('leadsearch', LeadSearchController::class)->names([
         'index' => 'leadsearch.index',
         'create' => 'leadsearch.create',
@@ -147,6 +148,8 @@ Route::group(['middleware' =>  ['auth']], function () {
         Route::get('getvalues/{modelType}/{propertyName}/{recordId}', [CRUDController::class, 'getDropdownSourceNameForDisplay']);
         Route::get('car/{quoteId}/plan_details/{planId}', [CRUDController::class, 'plan_details'])->name('plan_details');
         Route::post('manualLeadAssign', [CRUDController::class, 'manualLeadAssign'])->name('manualLeadAssign');
+        Route::post('health/manualLeadAssignAfterTeamAssign', [CRUDController::class, 'manualLeadAssignAfterTeamAssign'])->name('manualLeadAssignAfterTeamAssign');
+        Route::post('business/manualBusinessLeadAssign', [CRUDController::class, 'manualLeadAssignAfterTeamAssign'])->name('manualBusinessLeadAssign');
         Route::post('health/healthTeamAssign', [CRUDController::class, 'healthTeamAssign'])->name('healthTeamAssign');
         Route::get('car/{quoteUuId}/updateDiscountedPremium', [CRUDController::class, 'updateDiscountedPremium']);
         Route::get('car/{quoteUuId}/add_quote', [CRUDController::class, 'add_quote']);

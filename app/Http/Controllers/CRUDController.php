@@ -161,8 +161,10 @@ class CRUDController extends Controller
         if (!$record) abort(404);
         $model = $this->genericModel;
         $customTitles = $customTableList = [];
-        if (strtolower($this->genericModel->modelType == 'health') && ($record->health_team_type == 'EBP' || $record->health_team_type == 'RM')) {
+        if (strtolower($this->genericModel->modelType) == 'health' && ($record->health_team_type == 'EBP' || $record->health_team_type == 'RM')) {
             $advisors = $this->crudService->getEBPAndRMAdvisors();
+        } else if (strtolower($this->genericModel->modelType) == 'business') {
+            $advisors = $this->crudService->getRMAndBusinessAdvisors();
         } else {
             $advisors = $this->crudService->getAdvisorsByModelType($this->genericModel->modelType);
         }
@@ -374,6 +376,25 @@ class CRUDController extends Controller
         }
         $assignedUserName = $this->userService->getUserNameById($assignedToUserIdNew);
         return Redirect::back()->with('success', $request->modelType . ' Leads has been Assigned To ' . $assignedUserName);
+    }
+
+    public function manualLeadAssignAfterTeamAssign(Request $request)
+    {
+        $assignedToUserIdNew = $request->assigned_to_id_new;
+        $leadsIds = $request->entityId;
+        $leadsIds = array_map('intval', explode(',', $leadsIds));
+        foreach ($leadsIds as $tmLeadsId) {
+            $entity = $this->{strtolower($request->modelType) . 'QuoteService'}->getEntityPlain($tmLeadsId);
+            $userId = (int)$assignedToUserIdNew;
+            $entity->advisor_id = $userId;
+            $advisorOE = CarQuoteAdvisorToOE::where('advisor_id', $userId)->first();
+            if (!empty($advisorOE) && strtolower($request->modelType) == 'car') {
+                $entity->oe_id = $advisorOE->oe_id;
+            }
+            $entity->save();
+        }
+        $assignedUserName = $this->userService->getUserNameById($assignedToUserIdNew);
+        return Redirect::back()->with('success', ' Lead has been Assigned To ' . $assignedUserName);
     }
 
     public function add_quote(Request $request)
