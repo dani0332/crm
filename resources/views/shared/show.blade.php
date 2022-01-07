@@ -166,7 +166,7 @@
                     <div class="row">
                         <div class="col-auto mr-auto"></div>
                         <div class="col-auto">
-                            @can(strtolower($model->modelType).'-edit')
+                            @can(strtolower($model->modelType).'-quotes-edit')
                             <a id="texta" href="{{ url('quotes/'.strtolower($model->modelType).'/'.$record->uuid.'/edit') }}" class='btn btn-warning btn-sm'>Edit</a>
                             @endcan
                         </div>
