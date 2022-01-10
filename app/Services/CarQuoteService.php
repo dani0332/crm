@@ -377,6 +377,7 @@ class CarQuoteService extends BaseService
                 'cqr.id',
                 'cqr.uuid',
                 'cqr.first_name',
+                'cqr.code',
                 'cqr.last_name',
                 'cqr.created_at',
                 'u.name AS advisor_name',

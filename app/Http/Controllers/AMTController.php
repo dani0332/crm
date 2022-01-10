@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use DB;
 use DataTables;
 use \Carbon\Carbon;
+use Auth;
 
 class AMTController extends Controller
 {
@@ -37,6 +38,10 @@ class AMTController extends Controller
                 'u.name as advisor_id_text'
             )->orderBy('bqr.advisor_id', 'asc');
 
+        if (Auth::user()->isAdvisor()) {
+            $data = $data->where('bqr.advisor_id', Auth::user()->id);
+        }
+
         $leadStatuses = DB::table('quote_status')->select('id', 'text')->get();
         $advisors = DB::table('users as u')
             ->join('model_has_roles as mr', 'mr.model_id', '=', 'u.id')
@@ -52,7 +57,7 @@ class AMTController extends Controller
             if (isset($request->created_at_start) && $request->created_at_start != '' && isset($request->created_at_end) && $request->created_at_end != '') {
                 $dateFrom = Carbon::createFromFormat('Y-m-d', $request->created_at_start)->startOfDay()->toDateTimeString();
                 $dateTo = Carbon::createFromFormat('Y-m-d', $request->created_at_end)->endOfDay()->toDateTimeString();
-                $data->whereBetween('bqr.created_at', [$request->created_at_start, $request->created_at_end]);
+                $data->whereBetween('bqr.created_at', [$dateFrom, $dateTo]);
             }
             if (isset($request->last_name) && $request->last_name != '') {
                 $data->where('bqr.last_name', 'like', '%' . $request->last_name . '%');

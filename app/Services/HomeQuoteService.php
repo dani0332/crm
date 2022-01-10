@@ -163,6 +163,7 @@ class HomeQuoteService extends BaseService
                 'hqr.uuid',
                 'hqr.first_name',
                 'hqr.last_name',
+                'hqr.code',
                 'hqr.created_at',
                 'u.name AS advisor_name',
                 DB::raw("'Home' as lead_type"),

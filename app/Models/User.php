@@ -112,6 +112,18 @@ class User extends Authenticatable implements AuditableContract
         return $isManagerORDeputy;
     }
 
+    public function isAdvisor()
+    {
+        $userRoles = Auth::user()->usersroles()->get();
+        $isAdvisor = false;
+        foreach ($userRoles as $userRole) {
+            if (str_contains(strtolower($userRole->name), 'advisor')) {
+                $isAdvisor = true;
+            }
+        }
+        return $isAdvisor;
+    }
+
     public function isAdmin()
     {
         $userRoles = Auth::user()->usersroles()->get();

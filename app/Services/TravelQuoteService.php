@@ -73,6 +73,7 @@ class TravelQuoteService extends BaseService
                 'tqr.uuid',
                 'tqr.first_name',
                 'tqr.last_name',
+                'tqr.code',
                 'tqr.created_at',
                 'u.name AS advisor_name',
                 DB::raw("'Travel' as lead_type"),
