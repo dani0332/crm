@@ -57,7 +57,7 @@ class AMTController extends Controller
             if (isset($request->created_at_start) && $request->created_at_start != '' && isset($request->created_at_end) && $request->created_at_end != '') {
                 $dateFrom = Carbon::createFromFormat('Y-m-d', $request->created_at_start)->startOfDay()->toDateTimeString();
                 $dateTo = Carbon::createFromFormat('Y-m-d', $request->created_at_end)->endOfDay()->toDateTimeString();
-                $data->whereBetween('bqr.created_at', [$request->created_at_start, $request->created_at_end]);
+                $data->whereBetween('bqr.created_at', [$dateFrom, $dateTo]);
             }
             if (isset($request->last_name) && $request->last_name != '') {
                 $data->where('bqr.last_name', 'like', '%' . $request->last_name . '%');
