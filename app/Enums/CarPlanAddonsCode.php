@@ -12,6 +12,8 @@ use BenSampo\Enum\Enum;
 final class CarPlanAddonsCode extends Enum
 {
     const DRIVER_COVER = "driverCover";
+    const DRIVER_COVER_TEXT = "driver cover";
     const PASSENGER_COVER = "passengerCover";
+    const PASSENGER_COVER_TEXT = "passengers cover";
     const BREAKDOWN_COVER = "breakdownCover";
 }
