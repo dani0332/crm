@@ -17456,7 +17456,7 @@ var carQuotePolicy = {
             read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'payment', 'production_approval_manager']
           },
           transform: function transform(item) {
-            return "".concat(item === null || item === void 0 ? void 0 : item.first_name, "  ").concat(item === null || item === void 0 ? void 0 : item.last_name);
+            return item !== null && item !== void 0 && item.first_name ? "".concat(item === null || item === void 0 ? void 0 : item.first_name, "  ").concat(item === null || item === void 0 ? void 0 : item.last_name) : '';
           }
         },
         quote_number: {
@@ -21284,7 +21284,7 @@ function LeadSnapShot() {
 
   var onSelect = /*#__PURE__*/function () {
     var _ref = _asyncToGenerator( /*#__PURE__*/_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().mark(function _callee(obj) {
-      var data, response, _data, _data2$data, _data2$data$quote_sta, _response, _data2;
+      var data, response, _data, _data2$data, _data2$data$quote_sta, _response, _data2, codeStatus;
 
       return _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().wrap(function _callee$(_context) {
         while (1) {
@@ -21316,12 +21316,12 @@ function LeadSnapShot() {
                 type: 'email_template',
                 state: _data === null || _data === void 0 ? void 0 : _data.data
               });
-              _context.next = 22;
+              _context.next = 23;
               break;
 
             case 11:
               if (!(data === 'carQuotePolicy')) {
-                _context.next = 21;
+                _context.next = 22;
                 break;
               }
 
@@ -21340,30 +21340,32 @@ function LeadSnapShot() {
 
             case 17:
               _data2 = _context.sent;
+              codeStatus = _data2 === null || _data2 === void 0 ? void 0 : (_data2$data = _data2.data) === null || _data2$data === void 0 ? void 0 : (_data2$data$quote_sta = _data2$data.quote_status_id) === null || _data2$data$quote_sta === void 0 ? void 0 : _data2$data$quote_sta.code;
 
-              if ((_data2 === null || _data2 === void 0 ? void 0 : (_data2$data = _data2.data) === null || _data2$data === void 0 ? void 0 : (_data2$data$quote_sta = _data2$data.quote_status_id) === null || _data2$data$quote_sta === void 0 ? void 0 : _data2$data$quote_sta.id) !== 15) {
+              if (!codeStatus || codeStatus !== 'policy_issued' && codeStatus !== 'transaction_approved') {
                 (0,react_confirm_alert__WEBPACK_IMPORTED_MODULE_11__.confirmAlert)({
                   title: 'Error',
-                  message: 'Car Quote status is not approved.',
+                  message: 'This form will visible on Transcation approved or Policy issued. ',
                   buttons: [{
                     label: 'OK'
                   }]
                 });
               } else {
                 dispatch({
-                  type: 'carQuotePolicy'
+                  type: 'carQuotePolicy',
+                  state: _data2 === null || _data2 === void 0 ? void 0 : _data2.data
                 });
               }
 
-              _context.next = 22;
+              _context.next = 23;
               break;
 
-            case 21:
+            case 22:
               dispatch({
                 type: data
               });
 
-            case 22:
+            case 23:
             case "end":
               return _context.stop();
           }
