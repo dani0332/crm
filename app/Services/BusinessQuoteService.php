@@ -52,6 +52,7 @@ class BusinessQuoteService extends BaseService
             ->select(
                 'bqr.id',
                 'bqr.uuid',
+                'bqr.code',
                 'bqr.first_name',
                 'bqr.last_name',
                 'bqr.created_at',

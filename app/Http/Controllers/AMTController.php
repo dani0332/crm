@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use DB;
 use DataTables;
 use \Carbon\Carbon;
+use Auth;
 
 class AMTController extends Controller
 {

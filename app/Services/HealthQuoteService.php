@@ -210,6 +210,7 @@ class HealthQuoteService extends BaseService
                 'hqr.id',
                 'hqr.uuid',
                 'hqr.first_name',
+                'hqr.code',
                 'hqr.last_name',
                 'hqr.created_at',
                 'u.name AS advisor_name',
