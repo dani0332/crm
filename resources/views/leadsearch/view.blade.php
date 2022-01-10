@@ -30,12 +30,12 @@
                         render: function(data, type, row) {
                             if(isAdmin || (isManager && managerRoleType == $('#leadType').val().toUpperCase())) {
                                 return "<a href='/quotes/" + $("#leadType").val() + "/" + row.uuid +
-                                        "'>" + row.id + "</a>"
+                                        "'>" + row.code + "</a>"
                             }
                             else if (teamUserIds != 0){
                                 if (teamUserIds.includes(row.advisor_id) || row.advisor_id == userId) {
                                     return "<a href='/quotes/" + $("#leadType").val() + "/" + row.uuid +
-                                        "'>" + row.id + "</a>"
+                                        "'>" + row.code + "</a>"
                                 } else {
                                     return "You don’t have access to view this lead"
                                 }

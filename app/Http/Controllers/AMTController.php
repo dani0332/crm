@@ -37,6 +37,10 @@ class AMTController extends Controller
                 'u.name as advisor_id_text'
             )->orderBy('bqr.advisor_id', 'asc');
 
+        if (Auth::user()->isAdvisor()) {
+            $data = $data->where('bqr.advisor_id', Auth::user()->id);
+        }
+
         $leadStatuses = DB::table('quote_status')->select('id', 'text')->get();
         $advisors = DB::table('users as u')
             ->join('model_has_roles as mr', 'mr.model_id', '=', 'u.id')
