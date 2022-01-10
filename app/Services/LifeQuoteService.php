@@ -215,6 +215,7 @@ class LifeQuoteService extends BaseService
                 'lqr.uuid',
                 'lqr.first_name',
                 'lqr.last_name',
+                'lqr.code',
                 'lqr.created_at',
                 'u.name AS advisor_name',
                 DB::raw("'Life' as lead_type"),
