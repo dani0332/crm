@@ -55,13 +55,6 @@ $(document).ready(function() {
                             data-parsley-validate=""novalidate="" autocomplete="off">
                             {{csrf_field()}}
                             @method('GET')
-                            {{-- @foreach ($listQuotePlans as $key => $quotePlan)
-                                @foreach ($quotePlan->benefits->feature as $quotePlanFeatures)
-                                    @php
-                                    echo "<pre>"; print_r($quotePlanFeatures); echo "</pre>";
-                                    @endphp
-                                @endforeach
-                            @endforeach --}}
                                 <table id="datatable" class="table table-striped jambo_table" style="width:100%">
                                     <thead>
                                         <tr>
