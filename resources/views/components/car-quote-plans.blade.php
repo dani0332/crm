@@ -74,7 +74,7 @@ $(document).ready(function() {
                                                 <td>{{ $quotePlan->repairType }}</td>
                                                 <td>
                                                     @foreach ($quotePlan->benefits->feature as $quotePlanFeatures)
-                                                        @if($quotePlanFeatures->text == 'Third Party Damage Limit')
+                                                        @if(strtolower($quotePlanFeatures->text) == 'third party damage limit')
                                                             {{ $quotePlanFeatures->value }}
                                                         @endif
                                                     @endforeach
@@ -83,7 +83,7 @@ $(document).ready(function() {
                                                     <table style="margin-left: -10px;margin-top: -10px;">
                                                         @foreach ($quotePlan->addons as $quotePlanAddon)
                                                             @foreach ($quotePlanAddon->carAddonOption as $quotePlanOptions)
-                                                                @if($quotePlanAddon->text == 'Driver Cover' || $quotePlanAddon->text == 'Passengers Cover')
+                                                                @if($quotePlanAddon->code == 'driverCover' || $quotePlanAddon->code == 'passengerCover')
                                                                     <tr style="background-color: transparent;">
                                                                         <td style="border-top: none !important;">{{ $quotePlanAddon->text }}:</td>
                                                                         <td style="border-top: none !important;">{{ $quotePlanOptions->value }}</td>
