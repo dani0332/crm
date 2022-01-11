@@ -43,7 +43,11 @@ class LeadStatusService extends BaseService
         if ($request->ajax()) {
             foreach ($searchProperties as $item) {
                 if (!empty($request[$item])) {
-                    $this->query->where('ls.' . $item, $request[$item]);
+                    if ($request[$item] == 'null') {
+                        $this->query->whereNull($item);
+                    } else {
+                        $this->query->where('ls.' . $item, $request[$item]);
+                    }
                 }
             }
         }

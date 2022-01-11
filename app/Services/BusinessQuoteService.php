@@ -28,6 +28,7 @@ class BusinessQuoteService extends BaseService
                 'bqr.mobile_no',
                 'bqr.company_name',
                 'bqr.brief_details',
+                'bqr.number_of_employees',
                 'bqr.business_type_of_insurance_id',
                 'bti.TEXT AS business_type_of_insurance_id_text',
                 'bqr.advisor_id',
@@ -37,8 +38,7 @@ class BusinessQuoteService extends BaseService
             )
             ->Join('business_type_of_insurance as bti', 'bti.id', '=', 'bqr.business_type_of_insurance_id')
             ->leftJoin('users as u', 'u.id', '=', 'bqr.advisor_id')
-            ->leftJoin('quote_status as qs', 'qs.id', '=', 'bqr.quote_status_id')
-            ->where('bti.text', '!=', 'Group Medical');
+            ->leftJoin('quote_status as qs', 'qs.id', '=', 'bqr.quote_status_id');
     }
 
     public function getEntity($id)
@@ -52,6 +52,7 @@ class BusinessQuoteService extends BaseService
             ->select(
                 'bqr.id',
                 'bqr.uuid',
+                'bqr.code',
                 'bqr.first_name',
                 'bqr.last_name',
                 'bqr.created_at',
@@ -145,12 +146,15 @@ class BusinessQuoteService extends BaseService
             }
             foreach ($searchProperties as $item) {
                 if (!empty($request[$item]) && $item != "created_at") {
-                    $this->query->where($this->getQuerySuffix($item) . '.' . $item, $request[$item]);
+                    if ($request[$item] == 'null') {
+                        $this->query->whereNull($item);
+                    } else {
+                        $this->query->where($this->getQuerySuffix($item) . '.' . $item, $request[$item]);
+                    }
                 }
             }
         }
-        $this->query->orderBy('bqr.created_at', 'DESC');
-        return $this->query;
+        return $this->query->where('bti.text', '!=', 'Group Medical')->orderBy('bqr.advisor_id', 'ASC');
     }
 
     private function getQuerySuffix($item)
@@ -203,6 +207,7 @@ class BusinessQuoteService extends BaseService
             "created_at" => "input|date|title|range",
             "updated_at" => "input|date|title",
             "company_name" => "input|text|required",
+            "number_of_employees" => "input|title|number|required",
             "business_type_of_insurance_id" => "select|title|required",
             "brief_details" => 'textarea|required',
         );
@@ -217,6 +222,9 @@ class BusinessQuoteService extends BaseService
                 break;
             case 'ilivein_accommodation_type_id':
                 $title = "I Live In";
+                break;
+            case 'number_of_employees':
+                $title = "Number of Employees";
                 break;
             case 'mobile_no':
                 $title = "Mobile Number";

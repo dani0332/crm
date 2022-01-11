@@ -73,6 +73,7 @@ class TravelQuoteService extends BaseService
                 'tqr.uuid',
                 'tqr.first_name',
                 'tqr.last_name',
+                'tqr.code',
                 'tqr.created_at',
                 'u.name AS advisor_name',
                 DB::raw("'Travel' as lead_type"),
@@ -142,11 +143,15 @@ class TravelQuoteService extends BaseService
             }
             foreach ($searchProperties as $item) {
                 if (!empty($request[$item]) && $item != "created_at") {
-                    $this->query->where($this->getQuerySuffix($item) . '.' . $item, $request[$item]);
+                    if ($request[$item] == 'null') {
+                        $this->query->whereNull($item);
+                    } else {
+                        $this->query->where($this->getQuerySuffix($item) . '.' . $item, $request[$item]);
+                    }
                 }
             }
         }
-        return $this->query;
+        return $this->query->orderBy('tqr.advisor_id', 'ASC');
     }
 
     private function getQuerySuffix($item)

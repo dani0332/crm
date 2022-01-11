@@ -1392,7 +1392,6 @@ $(document).ready(function () {
             tmLeadIDs.push($(this).val());
         });
         $('#selectTmLeadId').val(tmLeadIDs);
-        console.log("tmLeadIDs: " + tmLeadIDs);
     });
 
     // TM: Selecting a single record should also enable manual allocation
@@ -1488,6 +1487,11 @@ $(document).ready(function () {
             $('#tmLeadsEndDate').val('');
         }
     }
+
+    // TM Leads: OnChange searchType do reset searchField
+    $('#search-tm-leads #searchType').on('change', function (e) {
+        $("#searchField").val("");
+    });
 
     $('.tmuploadlead-data-table').DataTable({
         ordering: false,
@@ -1792,36 +1796,28 @@ $(document).ready(function () {
 
         ],
     });
-    var amtDataTable = $(".amt-data-table").DataTable({
-        ordering: false,
-        info: false,
-        searching: false,
-        bLengthChange: false,
-        serverSide: true,
-        ajax: {
-            url: config.routes.amtDataTable,
-            data: function (d) {
-                d.leadType = $("#leadStatus").val();
-                d.cdbID = $("#cdbID").val();
-            },
-        },
-        columns: [{
-            data: 'code',
-            name: 'code',
-            render: function (data, type, row) {
-                var type = row.code.indexOf('HEA-') > -1 ? 'health' : 'business';
-                var href = '/quotes/' + type + '/' + row.uuid;
-                return "<a href='" + href + "'>" + row.code + "</a>";
-            }
-        },
-        { data: "first_name", name: "first_name" },
-        { data: "last_name", name: "last_name" },
-        { data: "leadStatus", name: "leadStatus" },
-        { data: "leadType", name: "leadType" },
-        { data: "created_at", name: "created_at" },
-        { data: "updated_at", name: "updated_at" },
 
-        ],
+
+    $('#manualAssignBtn').on('click', function (e) {
+        e.preventDefault();
+        if ($('#assigned_to_id_new').val() == '') {
+            $('#userAssignValidation').show().fadeOut(5000);
+        } else {
+            $.ajax({
+                url: '/leadassignment/manualLeadAssign',
+                type: "PUT",
+                data: { selectTmLeadId: $('#entityId').val(), assigned_to_id_new: $('#assigned_to_id_new').val(), _token: config._token },
+                success: function (response) {
+                    $("#teamassignmentSuccess").html('Team Assigned Successfully').show().fadeOut(5000);
+                    setTimeout(() => {
+                        window.location.reload(true);
+                    }, 2000);
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    console.log(jqXHR, textStatus, errorThrown);
+                },
+            });
+        }
     });
 });
 
