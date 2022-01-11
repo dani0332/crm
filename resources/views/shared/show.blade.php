@@ -201,6 +201,13 @@
             </div>
         </div>
 
+        <x-lead-status-update
+            :lead="$record"
+            :model="$model"
+            :status="$record->quote_status_id"
+            :statuses="$leadStatuses"
+        />
+
         <x-car-quote-more-detail
         :listQuoteVehicleDetails="$listQuoteVehicleDetails"
         :vehicleTypeText="$vehicleTypeText"

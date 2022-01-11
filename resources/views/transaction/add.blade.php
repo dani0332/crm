@@ -93,7 +93,7 @@
                                 <span class="text-danger">{{ $errors->first('assigned_to_id') }}</span>
                             @endif
                         </div>
-                    </div> ]
+                    </div>
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="Mode of payment">Internal Payment Modes<span class="required">*</span></label>
                         <div class="col-md-6 col-sm-6">
