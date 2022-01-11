@@ -21,7 +21,7 @@ class TransAppService extends BaseService
         if(gettype($WEGenerateUrlResponse) == 'string') {
 
             $existingCustomer = CustomerService::getCustomerByEmail($request->email)->first();
-            $sendWelcomeEmail = ($existingCustomer && !$existingCustomer->has_reward_access) || !$existingCustomer ? true : false;
+            $sendWelcomeEmail = ($existingCustomer && !$existingCustomer->is_we_sent) || !$existingCustomer ? true : false;
             $customerId = CustomerService::getCustomerIdAndCreateIfNotExists($request->first_name, $request->last_name, $request->email);
             $status_id = DB::table('statuses')->where('name', 'Active')->value('id');
             $transaction = new Transaction;
