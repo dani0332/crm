@@ -89,18 +89,15 @@ class CarQuoteService extends BaseService
         $carQuote->first_name = $request->first_name;
         $carQuote->last_name = $request->last_name;
         $carQuote->email = $request->email;
-        $carQuote->details = $request->details;
         $carQuote->mobile_no = $request->mobile_no;
-        $carQuote->preference = $request->preference;
-        $carQuote->source = $request->source;
-        $carQuote->marital_status_id = $request->marital_status_id;
         $carQuote->dob = $request->dob;
-        $carQuote->cover_for_id = $request->cover_for_id;
         $carQuote->nationality_id = $request->nationality_id;
-        $carQuote->has_dental = $request->has_dental == 'on' ? 1 : 0;
-        $carQuote->has_worldwide_cover = $request->has_worldwide_cover == 'on' ? 1 : 0;
-        $carQuote->has_home = $request->has_home == 'on' ? 1 : 0;
-        $carQuote->emirate_of_your_visa_id = $request->emirate_of_your_visa_id;
+        $carQuote->uae_license_held_for_id = $request->uae_license_held_for_id;
+        $carQuote->year_of_manufacture = $request->year_of_manufacture;
+        $carQuote->emirate_of_registration_id = $request->emirate_of_registration_id;
+        $carQuote->car_type_insurance_id = $request->car_type_insurance_id;
+        $carQuote->claim_history_id = $request->claim_history_id;
+        $carQuote->additional_notes = $request->additional_notes;
         $carQuote->save();
     }
 
@@ -110,22 +107,19 @@ class CarQuoteService extends BaseService
         $carQuote->first_name = $request->first_name;
         $carQuote->last_name = $request->last_name;
         $carQuote->email = $request->email;
-        $carQuote->details = $request->details;
         $carQuote->mobile_no = $request->mobile_no;
-        $carQuote->preference = $request->preference;
-        $carQuote->source = $request->source;
-        $carQuote->marital_status_id = $request->marital_status_id;
         $carQuote->dob = $request->dob;
-        $carQuote->cover_for_id = $request->cover_for_id;
         $carQuote->nationality_id = $request->nationality_id;
-        $carQuote->has_dental = $request->has_dental == 'on' ? 1 : 0;
-        $carQuote->has_worldwide_cover = $request->has_worldwide_cover == 'on' ? 1 : 0;
-        $carQuote->has_home = $request->has_home == 'on' ? 1 : 0;
-        $carQuote->emirate_of_your_visa_id = $request->emirate_of_your_visa_id;
+        $carQuote->uae_license_held_for_id = $request->uae_license_held_for_id;
+        $carQuote->year_of_manufacture = $request->year_of_manufacture;
+        $carQuote->emirate_of_registration_id = $request->emirate_of_registration_id;
+        $carQuote->car_type_insurance_id = $request->car_type_insurance_id;
+        $carQuote->claim_history_id = $request->claim_history_id;
+        $carQuote->additional_notes = $request->additional_notes;
         $carQuote->save();
 
         if (isset($request->return_to_view))
-            return redirect("quote/health/" . $carQuote->id)->with('success', 'Health Quote has been updated');
+            return redirect("quote/car/" . $carQuote->id)->with('success', 'Car Quote has been updated');
     }
 
     public function getEntity($id)
@@ -435,7 +429,6 @@ class CarQuoteService extends BaseService
         $client = new \GuzzleHttp\Client();
 
         try {
-
             $kenRequest = $client->post(
                 $plansApiEndPoint,
                 [
@@ -475,7 +468,6 @@ class CarQuoteService extends BaseService
 
     public function getCarQuotePlanAddons($id)
     {
-
         $listCarQuotePlanAddons = DB::table('car_addon_option')
             ->select(
                 'car_addon.text AS car_addon_text',
