@@ -27,6 +27,7 @@ use App\Models\Regions;
 use App\Models\TravelCoverFor;
 use App\Models\UAELicenseHeldFor;
 use App\Models\User;
+use App\Models\YearOfManufacture;
 use DB;
 use Faker\Provider\ar_SA\Payment;
 
@@ -122,6 +123,9 @@ class DropdownSourceService extends BaseService
                 break;
             case 'number_of_years_id':
                 $data = LifeNumberOfYears::select('id', 'text')->get();
+                break;
+            case 'year_of_manufacture':
+                $data = YearOfManufacture::select('id', 'text')->get();
                 break;
             case 'advisor_id':
                 if(!empty($advisorType)){

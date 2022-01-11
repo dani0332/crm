@@ -67,7 +67,8 @@ class CarQuoteService extends BaseService
                 'cp.provider_id AS car_plan_provider_id',
                 'cpip.text AS car_plan_provider_id_text',
                 'cqr.quote_status_id',
-                'qs.text AS quote_status_id_text'
+                'qs.text AS quote_status_id_text',
+                'ym.text AS year_of_manufacture_text'
             )
             ->leftJoin('nationality as n', 'n.id', '=', 'cqr.nationality_id')
             ->leftJoin('car_make as cmake', 'cmake.id', '=', 'cqr.car_make_id')
@@ -80,7 +81,8 @@ class CarQuoteService extends BaseService
             ->leftJoin('car_plan as cp', 'cp.id', '=', 'cqr.plan_id')
             ->leftJoin('insurance_provider as cpip', 'cpip.id', '=', 'cp.provider_id')
             ->leftJoin('payment_status as ps', 'ps.id', '=', 'cqr.payment_status_id')
-            ->leftJoin('quote_status as qs', 'qs.id', '=', 'cqr.quote_status_id');
+            ->leftJoin('quote_status as qs', 'qs.id', '=', 'cqr.quote_status_id')
+            ->leftJoin('year_of_manufacture as ym', 'ym.text', '=', 'cqr.year_of_manufacture');
     }
 
     public function saveCarQuote(Request $request)
@@ -152,7 +154,7 @@ class CarQuoteService extends BaseService
             "uae_license_held_for_id" => "select|title|required",
             "car_make_id" => "select|title|required",
             "car_model_id" => "select|title|required",
-            "year_of_manufacture" => "|static|required|2022,2021,2020,2019,2018,2017,2016,2015,2014,2013,2012,2011,2010,2009,2008,2007,2006,2005,2004,2003,2002,2001,2000,1999,1998 or older",
+            "year_of_manufacture" => "select|title|required",
             "emirate_of_registration_id" => "select|title|required",
             "car_value" => "number|required",
             "premium" => "number",
@@ -246,6 +248,9 @@ class CarQuoteService extends BaseService
                 break;
             case 'device':
                 $title = "Device";
+                break;
+            case 'year_of_manufacture':
+                $title = "Year of Manufacture";
                 break;
             default:
                 break;

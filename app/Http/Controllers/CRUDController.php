@@ -140,6 +140,7 @@ class CRUDController extends Controller
                 }
             }
         }
+        //dd($validateArray);
         $this->validate($request, $validateArray);
         $recordUUID = $this->crudService->saveModelByType($modelType, $request);
         if (str_contains($recordUUID, 'Error')) {
