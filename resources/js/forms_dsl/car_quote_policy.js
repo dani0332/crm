@@ -34,7 +34,7 @@ const carQuotePolicy = {
             ],
           },
           transform(item) {
-            return `${item?.first_name}  ${item?.last_name}`;
+            return item?.first_name ? `${item?.first_name}  ${item?.last_name}` : '';
           },
         },
         quote_number: {

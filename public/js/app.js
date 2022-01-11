@@ -17456,7 +17456,7 @@ var carQuotePolicy = {
             read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'payment', 'production_approval_manager']
           },
           transform: function transform(item) {
-            return "".concat(item === null || item === void 0 ? void 0 : item.first_name, "  ").concat(item === null || item === void 0 ? void 0 : item.last_name);
+            return item !== null && item !== void 0 && item.first_name ? "".concat(item === null || item === void 0 ? void 0 : item.first_name, "  ").concat(item === null || item === void 0 ? void 0 : item.last_name) : '';
           }
         },
         quote_number: {
@@ -21024,9 +21024,9 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @babel/runtime/regenerator */ "./node_modules/@babel/runtime/regenerator/index.js");
 /* harmony import */ var _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0__);
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! react */ "./node_modules/react/index.js");
-/* harmony import */ var styled_components__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(/*! styled-components */ "./node_modules/styled-components/dist/styled-components.browser.esm.js");
+/* harmony import */ var styled_components__WEBPACK_IMPORTED_MODULE_14__ = __webpack_require__(/*! styled-components */ "./node_modules/styled-components/dist/styled-components.browser.esm.js");
 /* harmony import */ var _components_sub_nav__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../../components/sub-nav */ "./resources/js/components/sub-nav.js");
-/* harmony import */ var react_router_dom__WEBPACK_IMPORTED_MODULE_14__ = __webpack_require__(/*! react-router-dom */ "./node_modules/react-router/esm/react-router.js");
+/* harmony import */ var react_router_dom__WEBPACK_IMPORTED_MODULE_15__ = __webpack_require__(/*! react-router-dom */ "./node_modules/react-router/esm/react-router.js");
 /* harmony import */ var _components_list_view_manage_list_form_view__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../../components/list-view/manage-list-form-view */ "./resources/js/components/list-view/manage-list-form-view.js");
 /* harmony import */ var _review_send__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./review-send */ "./resources/js/modules/ftc-forms/review-send.js");
 /* harmony import */ var _kyc_form__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./kyc-form */ "./resources/js/modules/ftc-forms/kyc-form.js");
@@ -21036,7 +21036,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _overview__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./overview */ "./resources/js/modules/ftc-forms/overview.js");
 /* harmony import */ var _ftc_payment__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ./ftc-payment */ "./resources/js/modules/ftc-forms/ftc-payment.js");
 /* harmony import */ var react_confirm_alert__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! react-confirm-alert */ "./node_modules/react-confirm-alert/lib/index.js");
-/* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! react/jsx-runtime */ "./node_modules/react/jsx-runtime.js");
+/* harmony import */ var _utils_constant__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! ../../utils/constant */ "./resources/js/utils/constant.js");
+/* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(/*! react/jsx-runtime */ "./node_modules/react/jsx-runtime.js");
 var _templateObject;
 
 
@@ -21074,11 +21075,12 @@ function _taggedTemplateLiteral(strings, raw) { if (!raw) { raw = strings.slice(
 
 
 
-var Styles = styled_components__WEBPACK_IMPORTED_MODULE_13__.default.div(_templateObject || (_templateObject = _taggedTemplateLiteral([""])));
+
+var Styles = styled_components__WEBPACK_IMPORTED_MODULE_14__.default.div(_templateObject || (_templateObject = _taggedTemplateLiteral([""])));
 
 function LeadSnapShot() {
   var paramRef = (0,react__WEBPACK_IMPORTED_MODULE_1__.useRef)();
-  paramRef.current = (0,react_router_dom__WEBPACK_IMPORTED_MODULE_14__.useParams)();
+  paramRef.current = (0,react_router_dom__WEBPACK_IMPORTED_MODULE_15__.useParams)();
 
   function reducer(state, action) {
     switch (action.type) {
@@ -21284,7 +21286,7 @@ function LeadSnapShot() {
 
   var onSelect = /*#__PURE__*/function () {
     var _ref = _asyncToGenerator( /*#__PURE__*/_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().mark(function _callee(obj) {
-      var data, response, _data, _data2$data, _data2$data$quote_sta, _response, _data2;
+      var data, response, _data, _data2$data, _data2$data$quote_sta, _response, _data2, codeStatus;
 
       return _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().wrap(function _callee$(_context) {
         while (1) {
@@ -21316,12 +21318,12 @@ function LeadSnapShot() {
                 type: 'email_template',
                 state: _data === null || _data === void 0 ? void 0 : _data.data
               });
-              _context.next = 22;
+              _context.next = 23;
               break;
 
             case 11:
               if (!(data === 'carQuotePolicy')) {
-                _context.next = 21;
+                _context.next = 22;
                 break;
               }
 
@@ -21340,30 +21342,32 @@ function LeadSnapShot() {
 
             case 17:
               _data2 = _context.sent;
+              codeStatus = _data2 === null || _data2 === void 0 ? void 0 : (_data2$data = _data2.data) === null || _data2$data === void 0 ? void 0 : (_data2$data$quote_sta = _data2$data.quote_status_id) === null || _data2$data$quote_sta === void 0 ? void 0 : _data2$data$quote_sta.code;
 
-              if ((_data2 === null || _data2 === void 0 ? void 0 : (_data2$data = _data2.data) === null || _data2$data === void 0 ? void 0 : (_data2$data$quote_sta = _data2$data.quote_status_id) === null || _data2$data$quote_sta === void 0 ? void 0 : _data2$data$quote_sta.id) !== 15) {
+              if (!codeStatus || codeStatus !== _utils_constant__WEBPACK_IMPORTED_MODULE_12__.QUOTE_STATUS.POLICY_ISSUED && codeStatus !== _utils_constant__WEBPACK_IMPORTED_MODULE_12__.QUOTE_STATUS.TRANSCATION_APPROVED) {
                 (0,react_confirm_alert__WEBPACK_IMPORTED_MODULE_11__.confirmAlert)({
                   title: 'Error',
-                  message: 'Car Quote status is not approved.',
+                  message: 'This form will visible on Transcation approved or Policy issued. ',
                   buttons: [{
                     label: 'OK'
                   }]
                 });
               } else {
                 dispatch({
-                  type: 'carQuotePolicy'
+                  type: 'carQuotePolicy',
+                  state: _data2 === null || _data2 === void 0 ? void 0 : _data2.data
                 });
               }
 
-              _context.next = 22;
+              _context.next = 23;
               break;
 
-            case 21:
+            case 22:
               dispatch({
                 type: data
               });
 
-            case 22:
+            case 23:
             case "end":
               return _context.stop();
           }
@@ -21380,7 +21384,7 @@ function LeadSnapShot() {
 
   switch (form === null || form === void 0 ? void 0 : form.form) {
     case 'email_template':
-      formArr.push( /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_12__.jsx)(_review_send__WEBPACK_IMPORTED_MODULE_4__.default, {
+      formArr.push( /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_13__.jsx)(_review_send__WEBPACK_IMPORTED_MODULE_4__.default, {
         dispatch: dispatch,
         data: form.data
       }));
@@ -21390,7 +21394,7 @@ function LeadSnapShot() {
     //   break;
 
     case 'ftcPayment':
-      formArr.push( /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_12__.jsx)(_ftc_payment__WEBPACK_IMPORTED_MODULE_10__.default, {
+      formArr.push( /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_13__.jsx)(_ftc_payment__WEBPACK_IMPORTED_MODULE_10__.default, {
         filter: {
           car_quote_id: paramRef.current.id
         }
@@ -21398,7 +21402,7 @@ function LeadSnapShot() {
       break;
 
     case 'kyc':
-      formArr.push( /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_12__.jsx)(_kyc_form__WEBPACK_IMPORTED_MODULE_5__.default, {
+      formArr.push( /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_13__.jsx)(_kyc_form__WEBPACK_IMPORTED_MODULE_5__.default, {
         filter: {
           car_quote_id: paramRef.current.id
         }
@@ -21406,7 +21410,7 @@ function LeadSnapShot() {
       break;
 
     case 'assign':
-      formArr.push( /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_12__.jsx)(_assign_user__WEBPACK_IMPORTED_MODULE_7__.default, {
+      formArr.push( /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_13__.jsx)(_assign_user__WEBPACK_IMPORTED_MODULE_7__.default, {
         filter: {
           car_quote_id: paramRef.current.id
         },
@@ -21415,7 +21419,7 @@ function LeadSnapShot() {
       break;
 
     case 'overview':
-      formArr.push( /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_12__.jsx)(_overview__WEBPACK_IMPORTED_MODULE_9__.default, {
+      formArr.push( /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_13__.jsx)(_overview__WEBPACK_IMPORTED_MODULE_9__.default, {
         filter: {
           car_quote_id: paramRef.current.id
         }
@@ -21423,24 +21427,24 @@ function LeadSnapShot() {
       break;
 
     default:
-      formArr.push( /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_12__.jsx)(_components_list_view_manage_list_form_view__WEBPACK_IMPORTED_MODULE_3__.default, {
+      formArr.push( /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_13__.jsx)(_components_list_view_manage_list_form_view__WEBPACK_IMPORTED_MODULE_3__.default, {
         form: form
       }));
       break;
   }
 
-  return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_12__.jsx)(Styles, {
-    children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_12__.jsxs)("div", {
+  return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_13__.jsx)(Styles, {
+    children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_13__.jsxs)("div", {
       className: "row x_panel",
-      children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_12__.jsx)("div", {
+      children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_13__.jsx)("div", {
         className: "col-md-2 col-sm-2",
-        children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_12__.jsx)(_components_sub_nav__WEBPACK_IMPORTED_MODULE_2__.default, {
+        children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_13__.jsx)(_components_sub_nav__WEBPACK_IMPORTED_MODULE_2__.default, {
           listNav: leftNavList,
           onSelect: onSelect
         })
-      }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_12__.jsx)("div", {
+      }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_13__.jsx)("div", {
         className: "col-md-10 col-sm-10 ",
-        children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_12__.jsx)("div", {
+        children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_13__.jsx)("div", {
           className: "",
           children: formArr
         })
@@ -22961,6 +22965,40 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 var config = {
   url: '`http://127.0.0.1:8000'
+};
+
+
+/***/ }),
+
+/***/ "./resources/js/utils/constant.js":
+/*!****************************************!*\
+  !*** ./resources/js/utils/constant.js ***!
+  \****************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "QUOTE_STATUS": () => (/* binding */ QUOTE_STATUS)
+/* harmony export */ });
+var QUOTE_STATUS = {
+  SENT: "ftcSent",
+  PENDING: "ftc_pending",
+  COMPLETED: "completed",
+  REJECTED: "rejected",
+  ISSUED: "issued",
+  APPROVED: "approved",
+  APPROVAL_REQUIRED: "approvalRequired",
+  RESUBMIT_FOR_APPROVAL: "resubmitForApproval",
+  ACCEPTED: "ftc_accepted",
+  RESUBMITTED: "ftc_resubmitted",
+  CLEARED: "kyc_cleared",
+  MISSING_DOCUMENTS_REQUESTED: "missing_documents_requested",
+  AML_SCREENING_CLEARED: "AMLScreeningCleared",
+  TRANSCATION_DECLINED: "transaction_declined",
+  TRANSCATION_APPROVED: "transaction_approved",
+  POLICY_ISSUED: "policy_issued",
+  POLICY_INVOICED: "policy_invoiced"
 };
 
 
