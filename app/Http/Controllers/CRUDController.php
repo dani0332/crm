@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\QuoteTypeId;
 use App\Models\CarQuoteAdvisorToOE;
+use App\Models\CarQuoteRequestDetail;
 use App\Models\GenericModel;
 use App\Models\InsuranceProvider;
+use App\Models\QuoteStatusLog;
 use App\Models\VehicleType;
 use App\Services\BusinessQuoteService;
 use Illuminate\Http\Request;
@@ -23,6 +26,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
 use Config;
 use DB;
+use \Carbon\Carbon;
 
 class CRUDController extends Controller
 {
@@ -161,6 +165,13 @@ class CRUDController extends Controller
         if (!$record) abort(404);
         $model = $this->genericModel;
         $customTitles = $customTableList = [];
+        $leadStatuses = DB::table('quote_status')
+            ->select('id', 'text')
+            ->whereNotIn('text', [
+                'AML Screening Cleared', 'AML Screening Failed', 'Transaction Declined', 'Policy Issued', 'Policy Invoiced',
+                'Completed', 'Pending', 'Rejected', 'Issued', 'Approved', 'Approval required', 'Resubmit for approval'
+            ])
+            ->get();
         if (strtolower($this->genericModel->modelType) == 'health' && ($record->health_team_type == 'EBP' || $record->health_team_type == 'RM')) {
             $advisors = $this->crudService->getEBPAndRMAdvisors();
         } else if (strtolower($this->genericModel->modelType) == 'business') {
@@ -205,10 +216,10 @@ class CRUDController extends Controller
 
             return view('shared.show', compact([
                 'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList',
-                'ecomCarInsuranceQuoteUrl', 'carQuotePlanAddons', 'listQuoteVehicleDetails', 'vehicleTypeText'
+                'ecomCarInsuranceQuoteUrl', 'carQuotePlanAddons', 'listQuoteVehicleDetails', 'vehicleTypeText', 'leadStatuses'
             ]));
         } else {
-            return view('shared.show', compact(['record', 'model', 'customTitles', 'customTableList', 'advisors']));
+            return view('shared.show', compact(['record', 'model', 'customTitles', 'customTableList', 'advisors', 'leadStatuses']));
         }
     }
 
@@ -416,5 +427,26 @@ class CRUDController extends Controller
         } else {
             return redirect()->to('/quotes/health/' . $lead->uuid)->with('success', ' Lead has been Assigned To ' . strtoupper($selectedTeam) . ' Team');
         }
+    }
+
+    public function UpdateLeadStatus(Request $request)
+    {
+        $entity = $this->{strtolower($request->modelType) . 'QuoteService'}->getEntityPlain($request->leadId);
+        $entity->quote_status_id = $request->leadStatus;
+        $entity->save();
+        QuoteStatusLog::create([
+            'quote_type_id' => QuoteTypeId::Car,
+            'quote_request_id' => $entity->id,
+            'current_quote_status_id' => $request->leadStatus,
+            'created_at' => Carbon::now(),
+            'updated_at' => Carbon::now()
+        ]);
+        CarQuoteRequestDetail::where('car_quote_request_id', $entity->id)->update(
+            [
+                'next_followup_date' => $request->nextFollowUpDate,
+                'notes' => $request->notes
+            ]
+        );
+        return redirect()->to('/quotes/' . $request->modelType . '/' . $entity->uuid)->with('success', ' Lead Status has been Updated');
     }
 }
