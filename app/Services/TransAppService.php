@@ -8,6 +8,7 @@ use App\Models\Transaction;
 use App\Models\CarQuote;
 use App\Models\CarQuotePolicy;
 use App\Models\CarQuotePaymentHistory;
+use App\Models\MyAlFredUser;
 use Illuminate\Support\Facades\Mail;
 use Config;
 use LookUpModel;
@@ -103,5 +104,14 @@ class TransAppService extends BaseService
                 $message->to($emailRecipient)->replyTo($replyToEmail)->subject($emailSubject);
                 $message->from($fromEmail, $fromName);
         });
+
+        $code = substr($WEGenerateUrlResponse, strpos($WEGenerateUrlResponse, "signup/") + 7); // code
+
+        $newMyAlFredUser = new MyAlFredUser;
+        $newMyAlFredUser->signup_url = $WEGenerateUrlResponse;
+        $newMyAlFredUser->customer_id = $customerId;
+        $newMyAlFredUser->code = $code;
+        $newMyAlFredUser->source = "TRANSAPP";
+        $newMyAlFredUser->save();
     }
 }

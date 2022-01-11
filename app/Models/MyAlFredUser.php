@@ -9,6 +9,6 @@ class MyAlFredUser extends Model
 {
     use HasFactory;
     protected $table = 'myalfred_users_migration';
-    protected $fillable = ['signup_url', 'customer_id', 'created_at', 'updated_at'];
-
+    protected $fillable = ['signup_url', 'customer_id', 'code', 'source'];
+    protected $timestamp = true;
 }
