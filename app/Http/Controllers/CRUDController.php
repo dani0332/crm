@@ -144,7 +144,6 @@ class CRUDController extends Controller
                 }
             }
         }
-
         $this->validate($request, $validateArray);
         $recordUUID = $this->crudService->saveModelByType($modelType, $request);
         if (str_contains($recordUUID, 'Error')) {
@@ -172,6 +171,9 @@ class CRUDController extends Controller
                 'AML Screening Cleared', 'AML Screening Failed', 'Transaction Declined', 'Policy Issued', 'Policy Invoiced',
                 'Completed', 'Pending', 'Rejected', 'Issued', 'Approved', 'Approval required', 'Resubmit for approval'
             ])
+            ->get();
+        $lostReasons = DB::table('reasons')
+            ->select('id', 'name as text')
             ->get();
         if (strtolower($this->genericModel->modelType) == 'health' && ($record->health_team_type == 'EBP' || $record->health_team_type == 'RM')) {
             $advisors = $this->crudService->getEBPAndRMAdvisors();
@@ -217,10 +219,11 @@ class CRUDController extends Controller
 
             return view('shared.show', compact([
                 'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList',
-                'ecomCarInsuranceQuoteUrl', 'carQuotePlanAddons', 'listQuoteVehicleDetails', 'vehicleTypeText', 'leadStatuses'
+                'ecomCarInsuranceQuoteUrl', 'carQuotePlanAddons', 'listQuoteVehicleDetails', 'vehicleTypeText', 'leadStatuses',
+                'lostReasons'
             ]));
         } else {
-            return view('shared.show', compact(['record', 'model', 'customTitles', 'customTableList', 'advisors', 'leadStatuses']));
+            return view('shared.show', compact(['record', 'model', 'customTitles', 'customTableList', 'advisors', 'leadStatuses', 'lostReasons']));
         }
     }
 

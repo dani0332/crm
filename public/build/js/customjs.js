@@ -834,6 +834,9 @@ $(document).ready(function () {
 
     $('#car_make_id').on('change', function (e) {
         var make_code = $("#car_make_id option:selected").attr('data-id');
+        if (!make_code) {
+            make_code = $("#car_make_id option:selected").val();
+        }
         $.get('/car-model?make_code=' + make_code, function (data) {
             var carmodel = $('#car_model_id').empty();
             $.each(data, function (create, carmodelObj) {

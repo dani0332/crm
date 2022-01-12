@@ -35,8 +35,10 @@ class CarQuoteService extends BaseService
                 'cqr.source',
                 'cqr.created_at',
                 'cqr.updated_at',
+                'cqr.seat_capacity',
+                'cqr.cylinder',
+                'cqr.vehicle_type_id',
                 'n.TEXT AS nationality_id_text',
-                'cqr.currently_insured_with',
                 'cqr.promo_code',
                 'cqr.device',
                 'cqr.policy_number',
@@ -71,6 +73,9 @@ class CarQuoteService extends BaseService
                 'ym.text AS year_of_manufacture_text',
                 'cqrd.next_followup_date',
                 'cqrd.notes',
+                'vt.text as vehicle_type_id_text',
+                'cqr.currently_insured_with',
+                'ciw.text as currently_insured_with_text',
             )
             ->leftJoin('nationality as n', 'n.id', '=', 'cqr.nationality_id')
             ->leftJoin('car_quote_request_detail as cqrd', 'cqrd.car_quote_request_id', '=', 'cqr.id')
@@ -83,8 +88,10 @@ class CarQuoteService extends BaseService
             ->leftJoin('users as u', 'u.id', '=', 'cqr.advisor_id')
             ->leftJoin('car_plan as cp', 'cp.id', '=', 'cqr.plan_id')
             ->leftJoin('insurance_provider as cpip', 'cpip.id', '=', 'cp.provider_id')
+            ->leftJoin('insurance_provider as ciw', 'ciw.text', '=', 'cqr.currently_insured_with')
             ->leftJoin('payment_status as ps', 'ps.id', '=', 'cqr.payment_status_id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'cqr.quote_status_id')
+            ->leftJoin('vehicle_type as vt', 'vt.id', '=', 'cqr.vehicle_type_id')
             ->leftJoin('year_of_manufacture as ym', 'ym.text', '=', 'cqr.year_of_manufacture');
     }
 
@@ -153,17 +160,20 @@ class CarQuoteService extends BaseService
             "payment_status_id" => "select|title",
             "created_at" => "input|date|title|range",
             "updated_at" => "input|date|title",
+            "car_value" => "input|number|required",
+            "seat_capacity" => "input|number|required",
+            "cylinder" => "input|number|required",
+            "vehicle_type_id" => "select|title|required",
             "nationality_id" => "select|title|required",
             "uae_license_held_for_id" => "select|title|required",
             "car_make_id" => "select|title|required",
             "car_model_id" => "select|title|required",
             "year_of_manufacture" => "select|title|required",
             "emirate_of_registration_id" => "select|title|required",
-            "car_value" => "input|number|required",
             "premium" => "input|number",
             "paid_at" => "input|date",
             "payment_gateway" => "input|title",
-            "currently_insured_with" => "input",
+            "currently_insured_with" => "select|title|required",
             "promo_code" => "input|title",
             "device" => "input|title",
             "policy_number" => "input",
@@ -188,6 +198,9 @@ class CarQuoteService extends BaseService
         switch ($propertyName) {
             case 'dob':
                 $title = "Date of Birth";
+                break;
+            case 'currently_insured_with':
+                $title = "Currently Insured With";
                 break;
             case 'uae_license_held_for_id':
                 $title = "UAE licence held for";
@@ -254,6 +267,9 @@ class CarQuoteService extends BaseService
                 break;
             case 'year_of_manufacture':
                 $title = "Year of Manufacture";
+                break;
+            case 'vehicle_type_id':
+                $title = "Vehicle Type";
                 break;
             default:
                 break;
@@ -406,7 +422,7 @@ class CarQuoteService extends BaseService
     public function fillModelSkipProperties()
     {
         return [
-            "create" => "id,advisor_id,premium,paid_at,payment_status_id,plan_id,car_plan_provider_id,code,is_ecommerce,payment_gateway,created_at,updated_at,currently_insured_with,promo_code,car_make_id,car_model_id,quote_status_id,device,policy_number,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by",
+            "create" => "id,advisor_id,premium,paid_at,payment_status_id,plan_id,car_plan_provider_id,code,is_ecommerce,payment_gateway,created_at,updated_at,promo_code,quote_status_id,device,policy_number,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by",
             "list" => "additional_notes,email,mobile_no,premium,paid_at,plan_id,car_plan_provider_id,payment_gateway,currently_insured_with,promo_code,car_make_id,car_model_id,device,policy_number,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by,nationality_id,dob,year_of_manufacture,uae_license_held_for_id,car_value,emirate_of_registration_id,claim_history_id,car_type_insurance_id",
             "update" => "id,advisor_id,premium,paid_at,payment_status_id,plan_id,car_plan_provider_id,code,is_ecommerce,payment_gateway,created_at,updated_at,currently_insured_with,promo_code,car_make_id,car_model_id,device,policy_number,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by",
             "show" => "",

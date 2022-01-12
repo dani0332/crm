@@ -8,8 +8,27 @@
         var target = this;
         return target.replace(new RegExp(search, 'g'), replacement);
         };
-
-
+        $('#car_model_id').on('change',function(){
+            var car_model_id = $('#car_model_id').val();
+            $.ajax({
+                url: "{{ url('/getCarModelDetails') }}",
+                type: "GET",
+                data: {
+                    car_model_id: car_model_id
+                },
+                success: function(data){
+                    if(data && Object.keys(data).length > 0){
+                        $('#cylinder').val(data.cylinder);
+                        $('#seat_capacity').val(data.seating_capacity);
+                    }else{
+                        alert('No Vehicle Assumptions Data Found');
+                    }
+                },
+                error: function(data){
+                    console.log(data);
+                }
+            });
+        });
         function convertObjectToArray(obj) {
         return Object.keys(obj).map(key => ({
             name: key,
