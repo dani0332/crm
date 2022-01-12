@@ -8,6 +8,8 @@ use App\Models\Transaction;
 use App\Models\CarQuote;
 use App\Models\CarQuotePolicy;
 use App\Models\CarQuotePaymentHistory;
+use App\Models\MyAlFredUser;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Mail;
 use Config;
 use LookUpModel;
@@ -21,7 +23,7 @@ class TransAppService extends BaseService
         if(gettype($WEGenerateUrlResponse) == 'string') {
 
             $existingCustomer = CustomerService::getCustomerByEmail($request->email)->first();
-            $sendWelcomeEmail = ($existingCustomer && !$existingCustomer->has_reward_access) || !$existingCustomer ? true : false;
+            $sendWelcomeEmail = ($existingCustomer && !$existingCustomer->is_we_sent) || !$existingCustomer ? true : false;
             $customerId = CustomerService::getCustomerIdAndCreateIfNotExists($request->first_name, $request->last_name, $request->email);
             $status_id = DB::table('statuses')->where('name', 'Active')->value('id');
             $transaction = new Transaction;
@@ -60,6 +62,12 @@ class TransAppService extends BaseService
                     }
                 }
             }
+
+            $expiryDate = Carbon::now()->addMonths(12);
+            $customer = CustomerService::getCustomerById($customerId);
+            $customer->myalfred_expiry_date = $expiryDate;
+            $customer->save();
+
 
             if($sendWelcomeEmail && Config::get('constants.ENABLE_TRANSAPP_WE') == '1') {
                 TransAppService::sendWelcomeEmail($customerId, $WEGenerateUrlResponse);
@@ -103,5 +111,14 @@ class TransAppService extends BaseService
                 $message->to($emailRecipient)->replyTo($replyToEmail)->subject($emailSubject);
                 $message->from($fromEmail, $fromName);
         });
+
+        $code = substr($WEGenerateUrlResponse, strpos($WEGenerateUrlResponse, "signup/") + 7); // code
+
+        $newMyAlFredUser = new MyAlFredUser;
+        $newMyAlFredUser->signup_url = $WEGenerateUrlResponse;
+        $newMyAlFredUser->customer_id = $customerId;
+        $newMyAlFredUser->code = $code;
+        $newMyAlFredUser->source = "TRANSAPP";
+        $newMyAlFredUser->save();
     }
 }
