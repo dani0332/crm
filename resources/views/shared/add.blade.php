@@ -20,6 +20,7 @@
                     if(data && Object.keys(data).length > 0){
                         $('#cylinder').val(data.cylinder);
                         $('#seat_capacity').val(data.seating_capacity);
+                        if(data.vehicle_type_id) $('#vehicle_type_id').val(data.vehicle_type_id);
                     }else{
                         alert('No Vehicle Assumptions Data Found');
                     }
