@@ -172,6 +172,9 @@ class CRUDController extends Controller
                 'Completed', 'Pending', 'Rejected', 'Issued', 'Approved', 'Approval required', 'Resubmit for approval'
             ])
             ->get();
+        $lostReasons = DB::table('reasons')
+            ->select('id', 'name as text')
+            ->get();
         if (strtolower($this->genericModel->modelType) == 'health' && ($record->health_team_type == 'EBP' || $record->health_team_type == 'RM')) {
             $advisors = $this->crudService->getEBPAndRMAdvisors();
         } else if (strtolower($this->genericModel->modelType) == 'business') {
@@ -216,10 +219,11 @@ class CRUDController extends Controller
 
             return view('shared.show', compact([
                 'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList',
-                'ecomCarInsuranceQuoteUrl', 'carQuotePlanAddons', 'listQuoteVehicleDetails', 'vehicleTypeText', 'leadStatuses'
+                'ecomCarInsuranceQuoteUrl', 'carQuotePlanAddons', 'listQuoteVehicleDetails', 'vehicleTypeText', 'leadStatuses',
+                'lostReasons'
             ]));
         } else {
-            return view('shared.show', compact(['record', 'model', 'customTitles', 'customTableList', 'advisors', 'leadStatuses']));
+            return view('shared.show', compact(['record', 'model', 'customTitles', 'customTableList', 'advisors', 'leadStatuses', 'lostReasons']));
         }
     }
 
@@ -431,6 +435,17 @@ class CRUDController extends Controller
 
     public function UpdateLeadStatus(Request $request)
     {
+        if ($request->leadStatus == 27) {
+            $this->validate($request, [
+                'lostReason' => 'required',
+            ]);
+        }
+        if ($request->leadStatus == 15) {
+            $this->validate($request, [
+                'trans_code' => 'required',
+            ]);
+        }
+        dd('not validated');
         $entity = $this->{strtolower($request->modelType) . 'QuoteService'}->getEntityPlain($request->leadId);
         $entity->quote_status_id = $request->leadStatus;
         $entity->save();

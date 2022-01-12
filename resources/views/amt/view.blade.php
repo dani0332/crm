@@ -55,7 +55,7 @@
     <div class="row">
         <div class="x_panel">
             <div class="x_title">
-                <h2>AMT Leads</h2>
+                <h2>Group Medical Leads</h2>
                 <div class="clearfix"></div>
             </div>
             <div class="x_content">
