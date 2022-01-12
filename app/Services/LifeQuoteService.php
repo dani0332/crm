@@ -47,8 +47,11 @@ class LifeQuoteService extends BaseService
                 'lqr.number_of_years_id',
                 'liy.TEXT AS number_of_years_id_text',
                 'lqr.nationality_id',
-                'n.TEXT AS nationality_id_text'
+                'n.TEXT AS nationality_id_text',
+                'lqrd.next_followup_date',
+                'lqrd.notes'
             )
+            ->leftJoin('life_quote_request_detail as lqrd', 'lqrd.life_quote_request_id', 'lqr.id')
             ->leftJoin('currency_type as ct', 'ct.id', '=', 'lqr.sum_insured_currency_id')
             ->leftJoin('marital_status as ms', 'ms.id', '=', 'lqr.marital_status_id')
             ->leftJoin('life_insurance_purpose as lip', 'lip.id', '=', 'lqr.purpose_of_insurance_id')

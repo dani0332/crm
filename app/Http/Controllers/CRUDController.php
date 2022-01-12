@@ -435,6 +435,17 @@ class CRUDController extends Controller
 
     public function UpdateLeadStatus(Request $request)
     {
+        if ($request->leadStatus == 27) {
+            $this->validate($request, [
+                'lostReason' => 'required',
+            ]);
+        }
+        if ($request->leadStatus == 15) {
+            $this->validate($request, [
+                'trans_code' => 'required',
+            ]);
+        }
+        dd('not validated');
         $entity = $this->{strtolower($request->modelType) . 'QuoteService'}->getEntityPlain($request->leadId);
         $entity->quote_status_id = $request->leadStatus;
         $entity->save();
