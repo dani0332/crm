@@ -11,6 +11,10 @@ import { session } from '../../utils';
 import Overview from './overview';
 import FtcPayment from './ftc-payment';
 import { confirmAlert } from 'react-confirm-alert';
+
+import { QUOTE_STATUS } from "../../utils/constant";
+
+
 const Styles = styled.div``;
 
 function LeadSnapShot() {
@@ -220,10 +224,11 @@ function LeadSnapShot() {
         },
       );
       const data = await response.json();
-      if (data?.data?.quote_status_id?.id !== 15) {
+      const codeStatus = data?.data?.quote_status_id?.code;
+      if (!codeStatus || (codeStatus !== QUOTE_STATUS.POLICY_ISSUED && codeStatus !== QUOTE_STATUS.TRANSCATION_APPROVED)) {
         confirmAlert({
           title: 'Error',
-          message: 'Car Quote status is not approved.',
+          message: 'This form will visible on Transcation approved or Policy issued. ',
           buttons: [
             {
               label: 'OK',
@@ -231,7 +236,7 @@ function LeadSnapShot() {
           ],
         });
       } else {
-        dispatch({ type: 'carQuotePolicy' });
+        dispatch({ type: 'carQuotePolicy', state: data?.data });
       }
     } else {
       dispatch({ type: data });
