@@ -103,7 +103,7 @@ class CarQuoteService extends BaseService
         $yearOfManufactureText = YearOfManufacture::where('id', '=', $request->year_of_manufacture)->value('text');
         $insuranceProviderText = InsuranceProvider::where('id', '=', $request->currently_insured_with)->value('text');
         $carMakeId = CarMake::where('code', '=', $request->car_make_id)->value('id');
-        $appName = Config::get('constants.APP_NAME');
+        $sourceName = Config::get('constants.SOURCE_NAME');
         $appUrl = Config::get('constants.APP_URL');
 
         $dataArr = array(
@@ -127,7 +127,7 @@ class CarQuoteService extends BaseService
             "carMakeId" => $carMakeId, // ID
             "carModelId" => $request->car_model_id, // ID
             "currentlyInsuredWith" => $insuranceProviderText, // TEXT
-            "source" => $appName,
+            "source" => $sourceName,
             "referenceUrl" => $appUrl,
         );
         if (Auth::user()->hasRole("CAR_ADVISOR")) $dataArr['advisorId'] = Auth::users()->id;
