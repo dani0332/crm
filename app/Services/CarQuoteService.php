@@ -68,9 +68,12 @@ class CarQuoteService extends BaseService
                 'cpip.text AS car_plan_provider_id_text',
                 'cqr.quote_status_id',
                 'qs.text AS quote_status_id_text',
-                'ym.text AS year_of_manufacture_text'
+                'ym.text AS year_of_manufacture_text',
+                'cqrd.next_followup_date',
+                'cqrd.notes',
             )
             ->leftJoin('nationality as n', 'n.id', '=', 'cqr.nationality_id')
+            ->leftJoin('car_quote_request_detail as cqrd', 'cqrd.car_quote_request_id', '=', 'cqr.id')
             ->leftJoin('car_make as cmake', 'cmake.id', '=', 'cqr.car_make_id')
             ->leftJoin('uae_license_held_for as ulhf', 'ulhf.id', '=', 'cqr.uae_license_held_for_id')
             ->leftJoin('car_model as cmodel', 'cmodel.id', '=', 'cqr.car_model_id')
