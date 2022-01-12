@@ -9,6 +9,7 @@ use App\Models\CarQuote;
 use App\Models\CarQuotePolicy;
 use App\Models\CarQuotePaymentHistory;
 use App\Models\MyAlFredUser;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Mail;
 use Config;
 use LookUpModel;
@@ -61,6 +62,12 @@ class TransAppService extends BaseService
                     }
                 }
             }
+
+            $expiryDate = Carbon::now()->addMonths(12);
+            $customer = CustomerService::getCustomerById($customerId);
+            $customer->myalfred_expiry_date = $expiryDate;
+            $customer->save();
+
 
             if($sendWelcomeEmail && Config::get('constants.ENABLE_TRANSAPP_WE') == '1') {
                 TransAppService::sendWelcomeEmail($customerId, $WEGenerateUrlResponse);
