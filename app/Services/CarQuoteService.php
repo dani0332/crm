@@ -2,7 +2,10 @@
 
 namespace App\Services;
 
+use App\Models\CarMake;
 use App\Models\CarQuote;
+use App\Models\InsuranceProvider;
+use App\Models\YearOfManufacture;
 use Illuminate\Http\Request;
 use Config;
 use DB;
@@ -97,20 +100,38 @@ class CarQuoteService extends BaseService
 
     public function saveCarQuote(Request $request)
     {
-        $carQuote = new CarQuote();
-        $carQuote->first_name = $request->first_name;
-        $carQuote->last_name = $request->last_name;
-        $carQuote->email = $request->email;
-        $carQuote->mobile_no = $request->mobile_no;
-        $carQuote->dob = $request->dob;
-        $carQuote->nationality_id = $request->nationality_id;
-        $carQuote->uae_license_held_for_id = $request->uae_license_held_for_id;
-        $carQuote->year_of_manufacture = $request->year_of_manufacture;
-        $carQuote->emirate_of_registration_id = $request->emirate_of_registration_id;
-        $carQuote->car_type_insurance_id = $request->car_type_insurance_id;
-        $carQuote->claim_history_id = $request->claim_history_id;
-        $carQuote->additional_notes = $request->additional_notes;
-        $carQuote->save();
+        $yearOfManufactureText = YearOfManufacture::where('id', '=', $request->year_of_manufacture)->value('text');
+        $insuranceProviderText = InsuranceProvider::where('id', '=', $request->currently_insured_with)->value('text');
+        $carMakeId = CarMake::where('code', '=', $request->car_make_id)->value('id');
+        $appName = Config::get('constants.APP_NAME');
+        $appUrl = Config::get('constants.APP_URL');
+
+        $dataArr = array(
+            "firstName" => $request->first_name,
+            "lastName" => $request->last_name,
+            "email" => $request->email,
+            "address" => $request->address,
+            "mobileNo" => $request->mobile_no,
+            "dob" => $request->dob,
+            "nationalityId" => $request->nationality_id,
+            "uaeLicenseHeldForId" => $request->uae_license_held_for_id,
+            "yearOfManufacture" => $yearOfManufactureText, // TEXT
+            "emirateOfRegistrationId" => $request->emirate_of_registration_id,
+            "carTypeInsuranceId" => $request->car_type_insurance_id,
+            "claimHistoryId" => $request->claim_history_id,
+            "additionalNotes" => $request->additional_notes,
+            "carValue" => $request->car_value,
+            "seatCapacity" => $request->seat_capacity,
+            "cylinder" => $request->cylinder,
+            "vehicleTypeId" => $request->vehicle_type_id,
+            "carMakeId" => $carMakeId, // ID
+            "carModelId" => $request->car_model_id, // ID
+            "currentlyInsuredWith" => $insuranceProviderText, // TEXT
+            "source" => $appName,
+            "referenceUrl" => $appUrl,
+        );
+        if (Auth::user()->hasRole("CAR_ADVISOR")) $dataArr['advisorId'] = Auth::users()->id;
+        return CapiRequestService::sendCAPIRequest('/api/v1-save-car-quote', $dataArr);
     }
 
     public function updateCarQuote(Request $request, $id)

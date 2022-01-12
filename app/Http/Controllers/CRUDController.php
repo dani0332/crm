@@ -145,11 +145,11 @@ class CRUDController extends Controller
             }
         }
         $this->validate($request, $validateArray);
-        $recordUUID = $this->crudService->saveModelByType($modelType, $request);
-        if (str_contains($recordUUID, 'Error')) {
-            return Redirect::back()->with('message', $modelType . ' ' . explode(':', $recordUUID)[1])->withInput();
+        $record = $this->crudService->saveModelByType($modelType, $request);
+        if (str_contains($record->message, 'Error')) {
+            return Redirect::back()->with('message', $record->message)->withInput();
         } else {
-            return redirect('/quotes/' . strtolower($modelType) . '/' . $recordUUID)->with('success', ((str_contains(strtolower($modelType), 'team') ? 'Team' : (str_contains(strtolower($modelType), 'leadstatus') ? 'Lead Status' : $modelType))) . ' has been stored');
+            return redirect('/quotes/' . strtolower($modelType) . '/' . $record->quoteUID)->with('success', ((str_contains(strtolower($modelType), 'team') ? 'Team' : (str_contains(strtolower($modelType), 'leadstatus') ? 'Lead Status' : $modelType))) . ' has been stored');
         }
     }
 
