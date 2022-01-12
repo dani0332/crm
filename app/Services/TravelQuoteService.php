@@ -36,9 +36,12 @@ class TravelQuoteService extends BaseService
             'u.id as advisor_id',
             'u.name as advisor_id_text',
             'tqr.region_cover_for_id',
-            'r.TEXT AS region_cover_for_id_text'
+            'r.TEXT AS region_cover_for_id_text',
+            'tqrd.next_followup_date',
+            'tqrd.notes'
         )
             ->leftJoin('travel_cover_for as tcf', 'tcf.id', '=', 'tqr.travel_cover_for_id')
+            ->leftJoin('travel_quote_request_detail as tqrd', 'tqr.id', '=', 'tqrd.travel_quote_request_id')
             ->leftJoin('nationality as n', 'n.id', '=', 'tqr.nationality_id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'tqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'tqr.advisor_id')
@@ -185,7 +188,7 @@ class TravelQuoteService extends BaseService
 
     public function getEntityPlain($id)
     {
-        return TravelQuote::where('uuid', $id)->first();
+        return TravelQuote::where('id', $id)->first();
     }
 
     public function updateTravelQuote(Request $request, $id)

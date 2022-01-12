@@ -102,7 +102,6 @@ Route::group(['middleware' =>  ['auth']], function () {
         'update' => 'leadassignment.update',
         'destroy' => 'leadassignment.destroy',
     ]);
-    Route::post('manualLeadAssign', [LeadAssignmentController::class, 'manualLeadAssign'])->name('manualAssignment');
     Route::get('getAdvisors', [LeadAssignmentController::class, 'getAdvisors'])->name('getAdvisors');
     Route::get('getTeamManagers', [UserController::class, 'getTeamManagers'])->name('getTeamManagers');
     Route::resource('customer', CustomerController::class);

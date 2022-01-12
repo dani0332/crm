@@ -1396,8 +1396,10 @@ $(document).ready(function () {
 
     // TM: Selecting a single record should also enable manual allocation
     $(document).on("change", "#tmLeadID", function () {
+        var idsArray = $('#selectTmLeadId').val();
+        idsArray = idsArray + ',' + $(this).val() + ',';
+        $('#selectTmLeadId').val(idsArray.replace(/^,|,$/g, ''));
         var countSelectedTmLeadIds = document.querySelectorAll('#tmLeadID:checked').length;
-        console.log(countSelectedTmLeadIds);
         if (countSelectedTmLeadIds > 0) {
             $("#tm-leads-assign-div").show(300);
         } else {

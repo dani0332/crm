@@ -45,9 +45,12 @@ class HealthQuoteService extends BaseService
             'qs.text as quote_status_id_text',
             'e.TEXT AS emirate_of_your_visa_id_text',
             'hqr.advisor_id',
-            'u.name as advisor_id_text'
+            'u.name as advisor_id_text',
+            'hqrd.next_followup_date',
+            'hqrd.notes'
         )
             ->leftJoin('marital_status as ms', 'ms.id', '=', 'hqr.marital_status_id')
+            ->leftJoin('health_quote_request_detail as hqrd', 'hqrd.health_quote_request_id', '=', 'hqr.id')
             ->leftJoin('health_cover_for as hcf', 'hcf.id', '=', 'hqr.cover_for_id')
             ->leftJoin('nationality as n', 'n.id', '=', 'hqr.nationality_id')
             ->leftJoin('emirates as e', 'e.id', '=', 'hqr.emirate_of_your_visa_id')

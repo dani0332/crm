@@ -39,8 +39,11 @@ class HomeQuoteService extends BaseService
             'u.name as advisor_id_text',
             'hat.TEXT AS ilivein_accommodation_type_id_text',
             'hqr.iam_possesion_type_id',
-            'hpt.TEXT AS iam_possesion_type_id_text'
+            'hpt.TEXT AS iam_possesion_type_id_text',
+            'hqrd.next_followup_date',
+            'hqrd.notes'
         )
+            ->leftJoin('home_quote_request_detail as hqrd', 'hqrd.home_quote_request_id', '=', 'hqr.id')
             ->leftJoin('home_accommodation_type as hat', 'hat.id', '=', 'hqr.ilivein_accommodation_type_id')
             ->leftJoin('home_possession_type as hpt', 'hpt.id', '=', 'hqr.iam_possesion_type_id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'hqr.quote_status_id')

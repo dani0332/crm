@@ -95,6 +95,8 @@ class BusinessQuoteService extends BaseService
                 'u.name as assignedBy',
                 'bqr.updated_at',
                 'bqr.source as leadSource',
+                'bqr.company_name',
+                'bqr.premium',
             )
             ->leftJoin('business_quote_request_detail as bqrd', 'bqrd.business_quote_request_id', '=', 'bqr.id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'bqr.quote_status_id')
@@ -204,10 +206,10 @@ class BusinessQuoteService extends BaseService
             "code" => "input|title",
             "first_name" => "input|text|required",
             "last_name" => "input|text|required",
-            "quote_status_id" => "select|title",
-            "advisor_id" => "select|title|required",
             "email" => "input|email|required",
             "mobile_no" => "input|title|number|required",
+            "advisor_id" => "select|title|required",
+            "quote_status_id" => "select|title",
             "created_at" => "input|date|title|range",
             "updated_at" => "input|date|title",
             "company_name" => "input|text|required",
@@ -259,7 +261,7 @@ class BusinessQuoteService extends BaseService
     {
         return [
             "create" => "id,advisor_id,quote_status_id,code,premium",
-            "list" => "email,mobile_no,company_name,brief_details,business_type_of_insurance_id,dob,premium",
+            "list" => "email,mobile_no,brief_details,business_type_of_insurance_id,dob",
             "update" => "id,advisor_id,quote_status_id,code,premium",
             "show" => "",
         ];
