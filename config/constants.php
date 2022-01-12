@@ -42,4 +42,5 @@ return [
     'BERLIN_API_ENDPOINT' => env('BERLIN_API_ENDPOINT'),
     'MAIL_MYALFRED_SUPPORT_REPLY_TO' => env('MAIL_MYALFRED_SUPPORT_REPLY_TO'),
     'APP_ENV' => env('APP_ENV'),
+    'APP_URL' => env('APP_URL'),
 ];
