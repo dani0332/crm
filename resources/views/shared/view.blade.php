@@ -120,6 +120,8 @@
                         model.searchProperties.forEach(element => {
                             d[element] = $('#' + element).val();
                         });
+                        d.assigned_to_date_start = $('#assigned_to_date_start').val();
+                        d.assigned_to_date_end = $('#assigned_to_date_end').val();
                         if (model.properties['created_at'] && model.properties['created_at'].indexOf('range') > -1) {
                             d['created_at_end'] = $('#created_at_end').val();
                         }
@@ -250,6 +252,16 @@
                     @if (count($model->searchProperties) > 0)
                         <form method="POST" id="searchTable" class="form-horizontal form-label-left" role="form"
                             data-parsley-validate="" novalidate="" autocomplete="off">
+                            @if(strtolower($model->modelType) != 'teams' || strtolower($model->modelType) != 'leadstatus')
+                                <div class="col-md-6">
+                                    <span style="font-size: 11px;" class="col-form-label col-md-6 col-sm-6" >ASSIGNED START DATE</span>
+                                    <input type="date" class="form-control" id="assigned_to_date_start" name="assigned_to_date_start" />
+                                </div>
+                                <div class="col-md-6">
+                                    <span style="font-size: 11px;" class="col-form-label col-md-6 col-sm-6" >ASSIGNED END DATE</span>
+                                    <input type="date" class="form-control" id="assigned_to_date_end" name="assigned_to_date_end" />
+                                </div>
+                            @endif
                             @if (Auth::user()->hasRole('ADMIN') && $model->modelType == 'Car')
                                 @php
                                     array_push($model->searchProperties, 'is_ecommerce');
