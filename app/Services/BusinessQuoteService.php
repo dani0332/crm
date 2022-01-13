@@ -213,13 +213,13 @@ class BusinessQuoteService extends BaseService
             "last_name" => "input|text|required",
             "email" => "input|email|required",
             "mobile_no" => "input|title|number|required",
+            "company_name" => "input|text|required",
             "advisor_id" => "select|title|required",
             "quote_status_id" => "select|title",
             "created_at" => "input|date|title|range",
             "updated_at" => "input|date|title",
-            "company_name" => "input|text|required",
             "premium" => "input|number|required",
-            "number_of_employees" => "input|title|number|required",
+            "number_of_employees" => "input|title|number",
             "business_type_of_insurance_id" => "select|title|required",
             "brief_details" => 'textarea|required',
         );
@@ -266,7 +266,7 @@ class BusinessQuoteService extends BaseService
     {
         return [
             "create" => "id,advisor_id,quote_status_id,code,premium",
-            "list" => "email,mobile_no,brief_details,business_type_of_insurance_id,dob",
+            "list" => "email,mobile_no,brief_details,dob",
             "update" => "id,advisor_id,quote_status_id,code,premium",
             "show" => "",
         ];
@@ -274,6 +274,6 @@ class BusinessQuoteService extends BaseService
 
     public function fillModelSearchProperties()
     {
-        return ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'advisor_id', 'created_at', 'business_type_of_insurance_id'];
+        return ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'advisor_id', 'created_at', 'company_name', 'business_type_of_insurance_id'];
     }
 }
