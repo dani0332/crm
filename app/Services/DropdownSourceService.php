@@ -27,6 +27,8 @@ use App\Models\Regions;
 use App\Models\TravelCoverFor;
 use App\Models\UAELicenseHeldFor;
 use App\Models\User;
+use App\Models\VehicleType;
+use App\Models\YearOfManufacture;
 use DB;
 use Faker\Provider\ar_SA\Payment;
 
@@ -75,7 +77,7 @@ class DropdownSourceService extends BaseService
 
     public function getDropdownSource($type)
     {
-        $advisorType = strtoupper(explode('/', $_SERVER["REQUEST_URI"])[2]). '_ADVISOR';
+        $advisorType = strtoupper(explode('/', $_SERVER["REQUEST_URI"])[2]) . '_ADVISOR';
         $data = '';
         switch ($type) {
             case 'marital_status_id':
@@ -97,7 +99,7 @@ class DropdownSourceService extends BaseService
                 $data = User::select('id', 'name')->get();
                 break;
             case 'car_make_id':
-                $data = CarMake::select('id', 'text')->get();
+                $data = CarMake::select('code as id', 'text')->get();
                 break;
             case 'car_model_id':
                 $data = [];
@@ -123,12 +125,15 @@ class DropdownSourceService extends BaseService
             case 'number_of_years_id':
                 $data = LifeNumberOfYears::select('id', 'text')->get();
                 break;
+            case 'year_of_manufacture':
+                $data = YearOfManufacture::select('id', 'text')->get();
+                break;
             case 'advisor_id':
-                if(!empty($advisorType)){
+                if (!empty($advisorType)) {
                     $data = DB::table('users as u')->select('u.id', 'u.name')
-                    ->join('model_has_roles as mhr', 'mhr.model_id', '=', 'u.id')
-                    ->join('roles as r', 'mhr.role_id', '=', 'r.id')
-                    ->where('r.name', '=', $advisorType)->get();
+                        ->join('model_has_roles as mhr', 'mhr.model_id', '=', 'u.id')
+                        ->join('roles as r', 'mhr.role_id', '=', 'r.id')
+                        ->where('r.name', '=', $advisorType)->get();
                 } else {
                     $data = User::select('id', 'name')->get();
                 }
@@ -149,19 +154,22 @@ class DropdownSourceService extends BaseService
                 $data = Emirate::select('id', 'text')->get();
                 break;
             case 'currently_insured_with':
-                $data = InsuranceProvider::select('id','text')->get();
+                $data = InsuranceProvider::select('id', 'text')->get();
                 break;
             case 'car_type_insurance_id':
-                $data = CarTypeInsurance::select('id','text')->get();
+                $data = CarTypeInsurance::select('id', 'text')->get();
                 break;
             case 'claim_history_id':
-                $data = ClaimHistory::select('id','text')->get();
+                $data = ClaimHistory::select('id', 'text')->get();
                 break;
             case 'plan_id':
-                $data = CarPlan::select('id','text')->get();
+                $data = CarPlan::select('id', 'text')->get();
+                break;
+            case 'vehicle_type_id':
+                $data = VehicleType::select('id', 'text')->get();
                 break;
             case 'car_plan_provider_id':
-                $data = InsuranceProvider::select('id','text')->get();
+                $data = InsuranceProvider::select('id', 'text')->get();
                 break;
             case 'team_managers':
                 $data = User::select('users.id', 'users.name')

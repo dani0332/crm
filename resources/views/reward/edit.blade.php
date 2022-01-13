@@ -20,7 +20,7 @@
                 {{csrf_field()}}
                 @method('PUT')
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="coupon_code">Coupon Code <span class="required">*</span>
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="coupon_code">Coupon Code
                         </label>
                         <div class="col-md-6 col-sm-6">
                             <input type="text" id="coupon_code" name="coupon_code" value="{{ $reward->coupon_code }}" class="form-control" maxlength="25">

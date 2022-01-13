@@ -35,7 +35,9 @@ class AMTController extends Controller
                 'bqr.updated_at',
                 'bit.text as leadType',
                 'bqr.advisor_id',
-                'u.name as advisor_id_text'
+                'u.name as advisor_id_text',
+                'bqr.premium',
+                'bqr.company_name'
             )->orderBy('bqr.advisor_id', 'asc');
 
         if (Auth::user()->isAdvisor()) {
@@ -48,7 +50,7 @@ class AMTController extends Controller
             ->join('roles as r', 'r.id', '=', 'mr.role_id')
             ->whereIn('r.name', ['BUSINESS_ADVISOR'])
             ->select('u.id', DB::raw("CONCAT(u.name,' - ',r.name) AS name"))->orderBy('r.name')->distinct()->get();
-
+        $isManagerORDeputy = Auth::user()->isManagerORDeputy();
         if ($request->ajax()) {
 
             if (isset($request->first_name) && $request->first_name != '') {
@@ -77,9 +79,9 @@ class AMTController extends Controller
             return DataTables::of($data)
                 ->addIndexColumn()
                 ->make(true);
-            return view('amt.view', compact('leadStatuses', 'advisors'));
+            return view('amt.view', compact('leadStatuses', 'advisors', 'isManagerORDeputy'));
         }
-        return view('amt.view', compact('leadStatuses', 'advisors'));
+        return view('amt.view', compact('leadStatuses', 'advisors', 'isManagerORDeputy'));
     }
 
     /**

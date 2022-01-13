@@ -834,6 +834,9 @@ $(document).ready(function () {
 
     $('#car_make_id').on('change', function (e) {
         var make_code = $("#car_make_id option:selected").attr('data-id');
+        if (!make_code) {
+            make_code = $("#car_make_id option:selected").val();
+        }
         $.get('/car-model?make_code=' + make_code, function (data) {
             var carmodel = $('#car_model_id').empty();
             $.each(data, function (create, carmodelObj) {
@@ -1396,8 +1399,10 @@ $(document).ready(function () {
 
     // TM: Selecting a single record should also enable manual allocation
     $(document).on("change", "#tmLeadID", function () {
+        var idsArray = $('#selectTmLeadId').val();
+        idsArray = idsArray + ',' + $(this).val() + ',';
+        $('#selectTmLeadId').val(idsArray.replace(/^,|,$/g, ''));
         var countSelectedTmLeadIds = document.querySelectorAll('#tmLeadID:checked').length;
-        console.log(countSelectedTmLeadIds);
         if (countSelectedTmLeadIds > 0) {
             $("#tm-leads-assign-div").show(300);
         } else {

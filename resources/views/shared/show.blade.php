@@ -180,6 +180,14 @@
         </div>
     </div>
 
+    <x-lead-status-update
+            :lead="$record"
+            :model="$model"
+            :status="$record->quote_status_id"
+            :statuses="$leadStatuses"
+            :lostreasons="$lostReasons"
+        />
+
     @if($model->modelType == "Car")
 
         <div class="modal fade" id="quotePlanModal" name="quotePlanModal" tabindex="-1" role="dialog" aria-labelledby="quotePlanModalLabel" aria-hidden="true">
@@ -201,12 +209,7 @@
             </div>
         </div>
 
-        <x-lead-status-update
-            :lead="$record"
-            :model="$model"
-            :status="$record->quote_status_id"
-            :statuses="$leadStatuses"
-        />
+
 
         <x-car-quote-more-detail
         :listQuoteVehicleDetails="$listQuoteVehicleDetails"

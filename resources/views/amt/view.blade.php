@@ -2,14 +2,86 @@
 @section('title', 'View AMT')
 @section('content')
 <script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
 <script>
     $(document).ready(function() {
+        var isAdmin = JSON.parse('<?php echo json_encode(Auth::user()->hasRole("ADMIN")); ?>');
+        var isManagerOrDeputy = $("#isManagerOrDeputy").val();
+        $(document).on("change", "#amtLeadID", function () {
+            var idsArray = $('#selectTmLeadId').val();
+            idsArray = idsArray+ ',' + $(this).val() + ',';
+            $('#selectTmLeadId').val(idsArray.replace(/^,|,$/g, ''));
+            var countSelectedTmLeadIds = document.querySelectorAll('#amtLeadID:checked').length;
+            if (countSelectedTmLeadIds > 0) {
+                $("#amt-leads-assign-div").show(300);
+            } else {
+                $('#checkAllAMT').prop('checked', false);
+                $("#amt-leads-assign-div").hide(300);
+            }
+        });
+        $("#checkAllAMT,#amtLeadID").click(function () {
+            if ($(this).is(":checked")) {
+                $("#amt-leads-assign-div").show(300);
+            } else {
+                $("#amt-leads-assign-div").hide(200);
+            }
+            $('input:checkbox').not(this).prop('checked', this.checked);
+
+            var idsArray = $('#selectTmLeadId').val();
+            $('input:checkbox').each(function (i, item) {
+                idsArray = idsArray + $(item).val() + ',';
+            });
+            $('#selectTmLeadId').val(idsArray.replace(/^,|,$/g, ''));
+        });
+
+        var dataTableColumns = [];
+        if (isManagerOrDeputy === "1") {
+            dataTableColumns.push({
+                data: "id",
+                name: "id",
+                render: function(data, type, row, meta) {
+                    return (
+                        '<input type="checkbox" id="amtLeadID" class="tmleadCheckbox" name="amtLeadID" value="' +
+                        data + '">'
+                    );
+                },
+            });
+        }
+        dataTableColumns.push({
+                data: 'code',
+                name: 'code',
+                render: function (data, type, row) {
+                    var type = row.code && row.code.indexOf('HEA-') > -1 ? 'health' : 'business';
+                    var href = '/quotes/' + type + '/' + row.uuid;
+                    return "<a href='" + href + "'>" + row.code + "</a>";
+                }
+            },
+            { data: "first_name", name: "first_name" },
+            { data: "last_name", name: "last_name" },
+            { data: "leadStatus", name: "leadStatus" },
+            { data: "advisor_id_text", name: "advisor_id_text" },
+            { data: "premium", name: "premium" },
+            { data: "company_name", name: "company_name" },
+            { data: "created_at", name: "created_at" },
+            { data: "updated_at", name: "updated_at" },
+
+            );
+            var buttons = [];
         var amtDataTable = $(".amt-data-table").DataTable({
             ordering: false,
             info: true,
             searching: false,
+            dom: 'rBfrtip',
             bLengthChange: false,
             serverSide: true,
+            paging: true,
+            processing: true,
+            buttons: isAdmin || isManagerOrDeputy ? [{
+                    extend: 'excel',
+                    text: '<i class="fa fa-file-excel-o" style="color:green;" ></i><div style="font-weight:bold;">Export</div>',
+                    title: 'Group Medical Listing',
+                    action: newexportaction
+                }] : [],
             ajax: {
                 url: config.routes.amtDataTable,
                 data: function (d) {
@@ -24,23 +96,7 @@
                     d.code = $("#code").val();
                 },
             },
-            columns: [{
-                data: 'code',
-                name: 'code',
-                render: function (data, type, row) {
-                    var type = row.code && row.code.indexOf('HEA-') > -1 ? 'health' : 'business';
-                    var href = '/quotes/' + type + '/' + row.uuid;
-                    return "<a href='" + href + "'>" + row.code + "</a>";
-                }
-            },
-            { data: "first_name", name: "first_name" },
-            { data: "last_name", name: "last_name" },
-            { data: "leadStatus", name: "leadStatus" },
-            { data: "advisor_id_text", name: "advisor_id_text" },
-            { data: "created_at", name: "created_at" },
-            { data: "updated_at", name: "updated_at" },
-
-            ],
+            columns: dataTableColumns,
         });
         $('#amt_sbmt').on('click', function(e) {
             e.preventDefault();
@@ -51,14 +107,66 @@
             amtDataTable.draw();
         });
     });
+    function newexportaction(e, dt, button, config) {
+                var self = this;
+                var oldStart = dt.settings()[0]._iDisplayStart;
+                dt.one('preXhr', function(e, s, data) {
+                    data.start = 0;
+                    data.length = 2147483647;
+                    dt.one('preDraw', function(e, settings) {
+                        if (button[0].className.indexOf('buttons-copy') >= 0) {
+                            $.fn.dataTable.ext.buttons.copyHtml5.action.call(self, e, dt, button,
+                                config);
+                        } else if (button[0].className.indexOf('buttons-excel') >= 0) {
+                            $.fn.dataTable.ext.buttons.excelHtml5.available(dt, config) ?
+                                $.fn.dataTable.ext.buttons.excelHtml5.action.call(self, e, dt,
+                                    button, config) :
+                                $.fn.dataTable.ext.buttons.excelFlash.action.call(self, e, dt,
+                                    button, config);
+                        } else if (button[0].className.indexOf('buttons-csv') >= 0) {
+                            $.fn.dataTable.ext.buttons.csvHtml5.available(dt, config) ?
+                                $.fn.dataTable.ext.buttons.csvHtml5.action.call(self, e, dt, button,
+                                    config) :
+                                $.fn.dataTable.ext.buttons.csvFlash.action.call(self, e, dt, button,
+                                    config);
+                        } else if (button[0].className.indexOf('buttons-pdf') >= 0) {
+                            $.fn.dataTable.ext.buttons.pdfHtml5.available(dt, config) ?
+                                $.fn.dataTable.ext.buttons.pdfHtml5.action.call(self, e, dt, button,
+                                    config) :
+                                $.fn.dataTable.ext.buttons.pdfFlash.action.call(self, e, dt, button,
+                                    config);
+                        } else if (button[0].className.indexOf('buttons-print') >= 0) {
+                            $.fn.dataTable.ext.buttons.print.action(e, dt, button, config);
+                        }
+                        dt.one('preXhr', function(e, s, data) {
+                            settings._iDisplayStart = oldStart;
+                            data.start = oldStart;
+                        });
+                        setTimeout(dt.ajax.reload, 0);
+                        return false;
+                    });
+                });
+                dt.ajax.reload();
+            }
 </script>
     <div class="row">
         <div class="x_panel">
             <div class="x_title">
-                <h2>AMT Leads</h2>
+                <h2>Group Medical Leads</h2>
+                <ul class="nav navbar-right panel_toolbox">
+                    @can('business-quotes-create')
+                    <li><a href="{{ url('/quotes/business/create') }}" class="btn btn-warning btn-sm">Create Lead</a></li>
+                    @endcan
+                </ul>
                 <div class="clearfix"></div>
             </div>
             <div class="x_content">
+                @if (session()->has('message'))
+                    <div class="alert alert-danger">{{ session()->get('message') }}</div>
+                @endif
+                @if (session()->has('success'))
+                    <div class="alert alert-success">{{ session()->get('success') }}</div>
+                @endif
                 <form method="POST" id="search-claims" action={{ route('amt.index') }} class="form-horizontal form-label-left" role="form" data-parsley-validate="" novalidate="" autocomplete="off">
                     <div class="item form-group">
                         <div class="col">
@@ -169,14 +277,63 @@
                     </div>
                 </form>
                 <br />
+                <form method="post" action="/quotes/manualLeadAssign" class="form-horizontal form-label-left" role="form"
+                data-parsley-validate="" novalidate="" autocomplete="off">
+                {{ csrf_field() }}
+                @method('POST')
+                <input type="hidden" name="modelType" value="business" />
+                <div class="row" id="amt-leads-assign-div" style="display: none">
+                    <div class="col-md-12 col-sm-12">
+                        <div class="x_panel">
+                            <div class="x_title">
+                                <h2>Assign Leads</h2>
+                                <div class="clearfix"></div>
+                            </div>
+                            <div class="x_content" id="form-to-show">
+                                <div class="item form-group">
+                                    <label class="col-form-label col-md-2 col-sm-2" for="Assign To">Assign
+                                        To</label>
+                                    <div class="col-md-6 col-sm-6">
+                                        <select class="form-control" id="assigned_to_id_new"
+                                            name="assigned_to_id_new">
+                                            @foreach ($advisors as $handler)
+                                                <option value="{{ $handler->id }}">{{ $handler->name }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="item form-group">
+                                    <label class="col-form-label col-md-2 col-sm-2" for="first-name"> </label>
+                                    <div class="col-md-6 col-sm-6">
+                                        <div class="input-group">
+                                            <button type="submit" id="assignToBtn"
+                                                name="assignToBtn"
+                                                class="btn btn-warning btn-sm">Assign</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <input type="hidden" id="selectTmLeadId" name="selectTmLeadId" value="">
+                <input type="hidden" id="isManagerOrDeputy" name="isManagerOrDeputy" value="{{ $isManagerORDeputy }}">
+                </form>
                 <table class="table table-striped jambo_table amt-data-table" style="width:100%">
                     <thead>
                         <tr>
+                            @if ($isManagerORDeputy == '1')
+                                <th style="width: 15px;"><input type="checkbox" id="checkAllAMT"
+                                        name="checkAllAMT" value=""></th>
+                            @endif
                             <th>CDB ID</th>
                             <th>First Name</th>
                             <th>Last Name</th>
                             <th>Lead Status</th>
                             <th>Assigned To</th>
+                            <th>Premium</th>
+                            <th>Company Name</th>
                             <th>Created At</th>
                             <th>Updated At</th>
                         </tr>
