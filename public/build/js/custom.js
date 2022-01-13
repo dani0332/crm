@@ -1112,10 +1112,6 @@ function init_wysiwyg() {
         });
     });
 
-
-    window.prettyPrint;
-    prettyPrint();
-
 };
 
 /* CROPPER */
