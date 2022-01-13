@@ -24,7 +24,7 @@ class RewardRequest extends FormRequest
     public function rules()
     {
         return [
-            'coupon_code' => 'required|max:25',
+            'coupon_code' => 'max:25',
             'partner_id' => 'required',
             'discount' => 'required|string|max:15',
             'start_date' => 'required',
