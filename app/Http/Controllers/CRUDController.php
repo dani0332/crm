@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\HealthTeamType;
 use App\Enums\LeadStatusCode;
+use App\Enums\quoteTypeCode;
 use App\Models\CarQuoteAdvisorToOE;
 use App\Models\GenericModel;
 use App\Models\InsuranceProvider;
@@ -172,7 +174,7 @@ class CRUDController extends Controller
         $lostReasons = DB::table('lost_reasons')
             ->select('id', 'text')
             ->get();
-        if (strtolower($this->genericModel->modelType) == 'health' && ($record->health_team_type == 'EBP' || $record->health_team_type == 'RM')) {
+        if (strtolower($this->genericModel->modelType) == strtolower(quoteTypeCode::Health) && ($record->health_team_type == HealthTeamType::EBP || $record->health_team_type == HealthTeamType::RM)) {
             $advisors = $this->crudService->getEBPAndRMAdvisors();
         } else if (strtolower($this->genericModel->modelType) == 'business') {
             $advisors = $this->crudService->getRMAndBusinessAdvisors();
