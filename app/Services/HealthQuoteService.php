@@ -80,6 +80,8 @@ class HealthQuoteService extends BaseService
     }
     public function saveHealthQuote(Request $request)
     {
+        $sourceName = Config::get('constants.SOURCE_NAME');
+        $appUrl = Config::get('constants.APP_URL');
         $dataArr = array(
             "firstName" => $request->first_name,
             "lastName" => $request->last_name,
@@ -87,8 +89,9 @@ class HealthQuoteService extends BaseService
             "details" => $request->details,
             "mobileNo" => $request->mobile_no,
             "preference" => $request->preference,
-            "source" => $request->source,
+            "source" => $sourceName,
             "maritalStatusId" => $request->marital_status_id,
+            "referenceUrl" => $appUrl,
             "dob" => $request->dob,
             "coverForId" => $request->cover_for_id,
             "nationalityId" => $request->nationality_id,

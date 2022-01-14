@@ -63,6 +63,8 @@ class HomeQuoteService extends BaseService
 
     public function saveHomeQuote(Request $request)
     {
+        $sourceName = Config::get('constants.SOURCE_NAME');
+        $appUrl = Config::get('constants.APP_URL');
         $dataArr = array(
             "firstName" => $request->first_name,
             "lastName" => $request->last_name,
@@ -78,6 +80,8 @@ class HomeQuoteService extends BaseService
             "nationalityId" => $request->nationality_id,
             "hasBuilding" => $request->has_building == 'on' ? true : false,
             "hasPersonalBelongings" => $request->has_personal_belongings == 'on' ?  true : false,
+            "source" => $sourceName,
+            "referenceUrl" => $appUrl,
         );
         if (Auth::user()->hasRole("HOME_ADVISOR")) $dataArr['advisorId'] = Auth::users()->id;
         return CapiRequestService::sendCAPIRequest('/api/v1-save-home-quote', $dataArr);

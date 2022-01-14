@@ -51,6 +51,8 @@ class TravelQuoteService extends BaseService
 
     public function saveTravelQuote(Request $request)
     {
+        $sourceName = Config::get('constants.SOURCE_NAME');
+        $appUrl = Config::get('constants.APP_URL');
         $dataArr = array(
             "firstName" => $request->first_name,
             "lastName" => $request->last_name,
@@ -62,6 +64,8 @@ class TravelQuoteService extends BaseService
             "daysCoverFor" => $request->days_cover_for,
             "destination" => $request->destination,
             "regionCoverForId" => $request->region_cover_for_i,
+            "source" => $sourceName,
+            "referenceUrl" => $appUrl,
         );
         if (Auth::user()->hasRole("TRAVEL_ADVISOR")) {
             $dataArr['advisorId'] = Auth::user()->id;
