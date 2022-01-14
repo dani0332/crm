@@ -65,6 +65,8 @@ class LifeQuoteService extends BaseService
     }
     public function saveLifeQuote(Request $request)
     {
+        $sourceName = Config::get('constants.SOURCE_NAME');
+        $appUrl = Config::get('constants.APP_URL');
         $dataArr = array(
             "firstName" => $request->first_name,
             "lastName" => $request->last_name,
@@ -82,6 +84,8 @@ class LifeQuoteService extends BaseService
             "isSmoker" => $request->is_smoker == 'Yes' ?  true : false,
             "gender" => $request->gender,
             "othersInfo" => $request->others_info,
+            "source" => $sourceName,
+            "referenceUrl" => $appUrl,
         );
         if (Auth::user()->hasRole("LIFE_ADVISOR")) $dataArr['advisorId'] = Auth::users()->id;
         return CapiRequestService::sendCAPIRequest('/api/v1-save-life-quote', $dataArr);

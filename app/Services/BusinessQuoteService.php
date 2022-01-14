@@ -134,18 +134,23 @@ class BusinessQuoteService extends BaseService
 
     public function saveBusinessQuote(Request $request)
     {
+        $sourceName = Config::get('constants.SOURCE_NAME');
+        $appUrl = Config::get('constants.APP_URL');
         $dataArr = array(
             "firstName" => $request->first_name,
             "lastName" => $request->last_name,
             "email" => $request->email,
-            "address" => $request->address,
+            "numberOfEmployees" => $request->number_of_employees,
             "mobileNo" => $request->mobile_no,
             "companyName" => $request->company_name,
             "briefDetails" => $request->brief_details,
             "businessTypeOfInsuranceId" => $request->business_type_of_insurance_id,
+            "source" => $sourceName,
+            "referenceUrl" => $appUrl,
         );
         if (Auth::user()->hasRole("BUSINESS_ADVISOR")) $dataArr['advisorId'] = Auth::users()->id;
-        return CapiRequestService::sendCAPIRequest('/api/v1-save-business-quote', $dataArr);
+        $response  = CapiRequestService::sendCAPIRequest('/api/v1-save-business-quote', $dataArr);
+        return $response;
     }
 
     public function getGridData($searchProperties, $request)
@@ -271,9 +276,9 @@ class BusinessQuoteService extends BaseService
     public function fillModelSkipProperties()
     {
         return [
-            "create" => "id,advisor_id,quote_status_id,code,premium",
+            "create" => "id,advisor_id,quote_status_id,code,premium,updated_at,created_at",
             "list" => "email,mobile_no,brief_details,dob",
-            "update" => "id,advisor_id,quote_status_id,code,premium",
+            "update" => "id,advisor_id,quote_status_id,code,premium,updated_at,created_at",
             "show" => "",
         ];
     }
