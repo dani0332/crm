@@ -136,7 +136,7 @@ class CRUDService extends BaseService
         $query = DB::table('users as u')
             ->join('model_has_roles as mr', 'mr.model_id', '=', 'u.id')
             ->join('roles as r', 'r.id', '=', 'mr.role_id')
-            ->whereIn('r.name', ['RM_ADVISOR', 'BUSINESS_ADVISOR'])
+            ->whereIn('r.name', ['RM_ADVISOR', 'BUSINESS_ADVISOR', 'AMT_ADVISOR'])
             ->select('u.id', DB::raw("CONCAT(u.name,' - ',r.name) AS name"));
         return $query->orderBy('r.name')->distinct()->get();
     }
@@ -163,5 +163,13 @@ class CRUDService extends BaseService
 
         return $this->{in_array($lowerCaseModelType, $this->quoteTypes) ? $lowerCaseModelType . 'QuoteService' : $lowerCaseModelType . 'Service'}
             ->getEntity($id);
+    }
+
+    public function getSelectedLostReason($modelType, $id)
+    {
+        $lowerCaseModelType = strtolower($modelType);
+
+        return $this->{in_array($lowerCaseModelType, $this->quoteTypes) ? $lowerCaseModelType . 'QuoteService' : $lowerCaseModelType . 'Service'}
+            ->getSelectedLostReason($id);
     }
 }

@@ -186,6 +186,7 @@
             :status="$record->quote_status_id"
             :statuses="$leadStatuses"
             :lostreasons="$lostReasons"
+            :selectedlostreason="$selectedLostReasonId"
         />
 
     @if($model->modelType == "Car")

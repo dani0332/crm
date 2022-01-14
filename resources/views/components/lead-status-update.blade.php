@@ -5,6 +5,9 @@
         if(showFollowupStatuses.find((str) => str == $('#leadStatus option:selected').text())){
             $('#followup-div').show();
         }
+        if($('#leadStatus option:selected').text() == 'Lost'){
+            $('#lost-reason-div').show();
+        }
         else{
             $('#followup-div').hide();
         }
@@ -106,7 +109,7 @@
                                     <select class="form-control" id="lostReason" name="lostReason">
                                         <option value="">Select Lost Reason</option>
                                         @foreach ($lostreasons as $item)
-                                            <option value="{{$item->id}}" >{{$item->text}}</option>
+                                            <option @if($selectedlostreason == $item->id) selected="selected" @endif value="{{$item->id}}" >{{$item->text}}</option>
                                         @endforeach
                                     </select>
                                     @if ($errors->has('lostReason'))

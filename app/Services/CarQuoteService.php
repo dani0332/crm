@@ -161,6 +161,16 @@ class CarQuoteService extends BaseService
         return $this->query->where('cqr.uuid', $id)->first();
     }
 
+    public function getSelectedLostReason($id)
+    {
+        $entity = CarQuoteRequestDetail::where('car_quote_request_id', $id)->first();
+        $lostId = 0;
+        if ($entity->lost_reason_id) {
+            $lostId = $entity->lost_reason_id;
+        }
+        return $lostId;
+    }
+
     public function getDetailEntity($id)
     {
         $entity = CarQuoteRequestDetail::where('car_quote_request_id', $id)->first();
@@ -374,7 +384,7 @@ class CarQuoteService extends BaseService
                 }
             }
         }
-        return $this->query->orderBy('cqr.advisor_id', 'ASC');
+        return $this->query->orderBy('cqr.created_at', 'ASC');
     }
 
     private function getQuerySuffix($item)

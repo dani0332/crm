@@ -56,6 +56,16 @@ class HomeQuoteService extends BaseService
         return $this->query->where('hqr.uuid', $id)->first();
     }
 
+    public function getSelectedLostReason($id)
+    {
+        $entity = HomeQuoteRequestDetail::where('home_quote_request_id', $id)->first();
+        $lostId = 0;
+        if ($entity->lost_reason_id) {
+            $lostId = $entity->lost_reason_id;
+        }
+        return $lostId;
+    }
+
     public function getDetailEntity($id)
     {
         $entity = HomeQuoteRequestDetail::where('home_quote_request_id', $id)->first();
@@ -118,7 +128,7 @@ class HomeQuoteService extends BaseService
                 }
             }
         }
-        return $this->query->orderBy('hqr.advisor_id', 'ASC');
+        return $this->query->orderBy('hqr.created_at', 'ASC');
     }
 
     private function getQuerySuffix($item)

@@ -78,15 +78,19 @@
                     </li>
                 </ul>
                 @endcanany
-                @can('business-quotes-list')
+                @canany(['gm-quotes-list', 'corpline-quotes-list'])
                 <ul class="nav side-menu">
                     <li> <a><i class="fa fa-quote-right"></i> Business Quotes <span class="fa fa-chevron-down"></span></a>
                         <ul class="nav child_menu">
+                                @can('gm-quotes-list')
                                 <li><a href="{{ url('medical/amt') }}"> Group Medical Quotes </a></li>
+                                @endcan
+                                @can('corpline-quotes-list')
                                 <li><a href="{{ url('quotes/business') }}"> CorpLine Quotes </a></li>
+                                @endcan
                         </ul>
                 </ul>
-                @endcan
+                @endcanany
                 @canany(['vehicle-depreciation-list', 'vehicle-valuation-list'])
                     <ul class="nav side-menu">
                         <li><a><i class="fa fa-car" aria-hidden="true"></i> Car <span
