@@ -19,7 +19,7 @@
                 <form id="demo-form2" method='post' action="{{ url('rewards/reward') }}" enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left" autocomplete="off">
                 {{csrf_field()}}
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="coupon_code">Coupon Code <span class="required">*</span></label>
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="coupon_code">Coupon Code</label>
                         <div class="col-md-6 col-sm-6">
                             <input type="text" id="coupon_code" name="coupon_code" value="{{ old('coupon_code') }}" class="form-control" maxlength="25">
                             @if ($errors->has('coupon_code'))

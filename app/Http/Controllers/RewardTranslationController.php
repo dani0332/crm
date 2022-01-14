@@ -39,8 +39,8 @@ class RewardTranslationController extends Controller
         $this->validate($request, [
             'title' => 'required',
             'description1' => 'required|max:1000',
-            'description2' => 'required|max:1000',
-            'instructions' => 'required|max:1000',
+            'description2' => 'required|max:2000',
+            'instructions' => 'required|max:2000',
             'terms_and_conditions' => 'required|max:1500',
             'product_image' => 'required|image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
             'full_width_banner_image' => 'image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048', // for desktop view
@@ -118,8 +118,8 @@ class RewardTranslationController extends Controller
         $this->validate($request, [
             'title' => 'required',
             'description1' => 'required|max:1000',
-            'description2' => 'required|max:1000',
-            'instructions' => 'required|max:1000',
+            'description2' => 'required|max:2000',
+            'instructions' => 'required|max:2000',
             'terms_and_conditions' => 'required|max:1500',
             'product_image' => 'image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
             'full_width_banner_image' => 'image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048', // for desktop view
