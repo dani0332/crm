@@ -438,8 +438,8 @@ class CRUDController extends Controller
 
     public function UpdateLeadStatus(Request $request)
     {
-        $transctionApprovedId = DB::table('quote_status')->where('name', LeadStatusCode::TRANSACTION_APPROVED)->value('id');
-        $lostId = DB::table('quote_status')->where('name', LeadStatusCode::LOST)->value('id');
+        $transctionApprovedId = DB::table('quote_status')->where('text', LeadStatusCode::TRANSACTION_APPROVED)->value('id');
+        $lostId = DB::table('quote_status')->where('text', LeadStatusCode::LOST)->value('id');
         if ($request->leadStatus == $lostId) {
             $this->validate($request, [
                 'lostReason' => 'required',

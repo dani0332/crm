@@ -58,6 +58,14 @@ class HomeQuoteService extends BaseService
 
     public function getDetailEntity($id)
     {
+        $entity = HomeQuoteRequestDetail::where('home_quote_request_id', $id)->first();
+        if (!$entity) {
+            HomeQuoteRequestDetail::create([
+                'home_quote_request_id' => $id,
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now(),
+            ]);
+        }
         return HomeQuoteRequestDetail::where('home_quote_request_id', $id)->first();
     }
 
