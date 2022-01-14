@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\BusinessInsuranceType;
 use App\Models\BusinessQuote;
 use App\Models\HealthQuote;
+use App\Models\HealthQuoteRequestDetail;
 use Illuminate\Http\Request;
 use DB;
 use Auth;
@@ -67,6 +68,12 @@ class HealthQuoteService extends BaseService
     {
         return HealthQuote::where('id', $id)->first();
     }
+
+    public function getDetailEntity($id)
+    {
+        return HealthQuoteRequestDetail::where('health_quote_request_id', $id)->first();
+    }
+
     public function getLeadsForAssignment()
     {
         return HealthQuote::orderBy('created_at', 'desc')->get();

@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\CarMake;
 use App\Models\CarQuote;
+use App\Models\CarQuoteRequestDetail;
 use App\Models\InsuranceProvider;
 use App\Models\YearOfManufacture;
 use Illuminate\Http\Request;
@@ -158,6 +159,11 @@ class CarQuoteService extends BaseService
     public function getEntity($id)
     {
         return $this->query->where('cqr.uuid', $id)->first();
+    }
+
+    public function getDetailEntity($id)
+    {
+        return CarQuoteRequestDetail::where('car_quote_request_id', $id)->first();
     }
 
     public function getEntityPlain($id)

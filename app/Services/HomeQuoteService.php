@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\HomeQuote;
+use App\Models\HomeQuoteRequestDetail;
 use Illuminate\Http\Request;
 use DB;
 use Illuminate\Support\Facades\Auth;
@@ -53,6 +54,11 @@ class HomeQuoteService extends BaseService
     public function getEntity($id)
     {
         return $this->query->where('hqr.uuid', $id)->first();
+    }
+
+    public function getDetailEntity($id)
+    {
+        return HomeQuoteRequestDetail::where('home_quote_request_id', $id)->first();
     }
 
     public function saveHomeQuote(Request $request)

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\LeadStatusCode;
 use App\Enums\QuoteTypeId;
 use App\Models\CarQuoteAdvisorToOE;
 use App\Models\CarQuoteRequestDetail;
@@ -172,8 +173,8 @@ class CRUDController extends Controller
                 'Completed', 'Pending', 'Rejected', 'Issued', 'Approved', 'Approval required', 'Resubmit for approval'
             ])
             ->get();
-        $lostReasons = DB::table('reasons')
-            ->select('id', 'name as text')
+        $lostReasons = DB::table('lost_reasons')
+            ->select('id', 'text')
             ->get();
         if (strtolower($this->genericModel->modelType) == 'health' && ($record->health_team_type == 'EBP' || $record->health_team_type == 'RM')) {
             $advisors = $this->crudService->getEBPAndRMAdvisors();
@@ -435,19 +436,29 @@ class CRUDController extends Controller
 
     public function UpdateLeadStatus(Request $request)
     {
-        if ($request->leadStatus == 27) {
+        if ($request->leadStatus == LeadStatusCode::LOST) {
             $this->validate($request, [
                 'lostReason' => 'required',
             ]);
         }
-        if ($request->leadStatus == 15) {
+        if ($request->leadStatus == LeadStatusCode::TRANSACTION_APPROVED) {
             $this->validate($request, [
                 'trans_code' => 'required',
             ]);
         }
-        dd('not validated');
         $entity = $this->{strtolower($request->modelType) . 'QuoteService'}->getEntityPlain($request->leadId);
+        $quoteDetailEntity = $this->{strtolower($request->modelType) . 'QuoteService'}->getDetailEntity($request->leadId);
         $entity->quote_status_id = $request->leadStatus;
+        if (isset($request->lostReason) && $request->lostReason != '') {
+            $quoteDetailEntity->lost_reason_id = $request->lostReason;
+        }
+        if (isset($request->trans_code) && $request->trans_code != '') {
+            $quoteDetailEntity->transapp_code = $request->trans_code;
+        }
+        if (isset($request->notes) && $request->notes != '') {
+            $quoteDetailEntity->notes = $request->notes;
+        }
+        $quoteDetailEntity->save();
         $entity->save();
         QuoteStatusLog::create([
             'quote_type_id' => QuoteTypeId::Car,
@@ -462,6 +473,6 @@ class CRUDController extends Controller
                 'notes' => $request->notes
             ]
         );
-        return redirect()->to('/quotes/' . $request->modelType . '/' . $entity->uuid)->with('success', ' Lead Status has been Updated');
+        return redirect()->to('/quotes/' . strtolower($request->modelType) . '/' . $entity->uuid)->with('success', ' Lead Status has been Updated');
     }
 }

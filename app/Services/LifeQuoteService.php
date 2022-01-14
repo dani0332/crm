@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\LifeQuote;
+use App\Models\LifeQuoteRequestDetail;
 use Illuminate\Http\Request;
 use DB;
 use Auth;
@@ -95,6 +96,12 @@ class LifeQuoteService extends BaseService
     {
         return LifeQuote::where('id', $id)->first();
     }
+
+    public function getDetailEntity($id)
+    {
+        return LifeQuoteRequestDetail::where('life_quote_request_id', $id)->first();
+    }
+
     public function getLeadsForAssignment()
     {
         return LifeQuote::orderBy('created_at', 'desc')->get();

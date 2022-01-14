@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\BusinessQuote;
+use App\Models\BusinessQuoteRequestDetail;
 use Illuminate\Http\Request;
 use DB;
 use Config;
@@ -119,6 +120,11 @@ class BusinessQuoteService extends BaseService
     public function getEntityPlain($id)
     {
         return BusinessQuote::where('id', $id)->first();
+    }
+
+    public function getDetailEntity($id)
+    {
+        return BusinessQuoteRequestDetail::where('business_quote_request_id', $id)->first();
     }
 
     public function getLeadsForAssignment()
