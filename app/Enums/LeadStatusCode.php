@@ -3,6 +3,7 @@
 namespace App\Enums;
 
 use BenSampo\Enum\Enum;
+use DB;
 
 /**
  * @method static static OptionOne()
@@ -11,6 +12,6 @@ use BenSampo\Enum\Enum;
  */
 final class LeadStatusCode extends Enum
 {
-    const TRANSACTION_APPROVED = "15";
-    const LOST = "27";
+    const TRANSACTION_APPROVED = 'Transaction Approved';
+    const LOST = "Lost";
 }
