@@ -71,6 +71,14 @@ class HealthQuoteService extends BaseService
 
     public function getDetailEntity($id)
     {
+        $entity = HealthQuoteRequestDetail::where('health_quote_request_id', $id)->first();
+        if (!$entity) {
+            HealthQuoteRequestDetail::create([
+                'health_quote_request_id' => $id,
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now(),
+            ]);
+        }
         return HealthQuoteRequestDetail::where('health_quote_request_id', $id)->first();
     }
 
