@@ -124,6 +124,14 @@ class BusinessQuoteService extends BaseService
 
     public function getDetailEntity($id)
     {
+        $entity = BusinessQuoteRequestDetail::where('business_quote_request_id', $id)->first();
+        if (!$entity) {
+            BusinessQuoteRequestDetail::create([
+                'business_quote_request_id' => $id,
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now(),
+            ]);
+        }
         return BusinessQuoteRequestDetail::where('business_quote_request_id', $id)->first();
     }
 

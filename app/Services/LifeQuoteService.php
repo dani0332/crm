@@ -103,6 +103,14 @@ class LifeQuoteService extends BaseService
 
     public function getDetailEntity($id)
     {
+        $entity = LifeQuoteRequestDetail::where('life_quote_request_id', $id)->first();
+        if (!$entity) {
+            LifeQuoteRequestDetail::create([
+                'life_quote_request_id' => $id,
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now(),
+            ]);
+        }
         return LifeQuoteRequestDetail::where('life_quote_request_id', $id)->first();
     }
 

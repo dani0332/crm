@@ -203,6 +203,14 @@ class TravelQuoteService extends BaseService
 
     public function getDetailEntity($id)
     {
+        $entity = TravelQuoteRequestDetail::where('travel_quote_request_id', $id)->first();
+        if (!$entity) {
+            TravelQuoteRequestDetail::create([
+                'travel_quote_request_id' => $id,
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now(),
+            ]);
+        }
         return TravelQuoteRequestDetail::where('travel_quote_request_id', $id)->first();
     }
 

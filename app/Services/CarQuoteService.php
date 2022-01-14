@@ -163,6 +163,14 @@ class CarQuoteService extends BaseService
 
     public function getDetailEntity($id)
     {
+        $entity = CarQuoteRequestDetail::where('car_quote_request_id', $id)->first();
+        if (!$entity) {
+            CarQuoteRequestDetail::create([
+                'car_quote_request_id' => $id,
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now(),
+            ]);
+        }
         return CarQuoteRequestDetail::where('car_quote_request_id', $id)->first();
     }
 
