@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\QuoteTypeId;
+use App\Enums\HealthTeamType;
+use App\Enums\LeadStatusCode;
+use App\Enums\quoteTypeCode;
 use App\Models\CarQuoteAdvisorToOE;
-use App\Models\CarQuoteRequestDetail;
 use App\Models\GenericModel;
 use App\Models\InsuranceProvider;
-use App\Models\QuoteStatusLog;
 use App\Models\VehicleType;
 use App\Services\BusinessQuoteService;
 use Illuminate\Http\Request;
@@ -26,7 +26,6 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
 use Config;
 use DB;
-use \Carbon\Carbon;
 
 class CRUDController extends Controller
 {
@@ -172,10 +171,10 @@ class CRUDController extends Controller
                 'Completed', 'Pending', 'Rejected', 'Issued', 'Approved', 'Approval required', 'Resubmit for approval'
             ])
             ->get();
-        $lostReasons = DB::table('reasons')
-            ->select('id', 'name as text')
+        $lostReasons = DB::table('lost_reasons')
+            ->select('id', 'text')
             ->get();
-        if (strtolower($this->genericModel->modelType) == 'health' && ($record->health_team_type == 'EBP' || $record->health_team_type == 'RM')) {
+        if (strtolower($this->genericModel->modelType) == strtolower(quoteTypeCode::Health) && ($record->health_team_type == HealthTeamType::EBP || $record->health_team_type == HealthTeamType::RM)) {
             $advisors = $this->crudService->getEBPAndRMAdvisors();
         } else if (strtolower($this->genericModel->modelType) == 'business') {
             $advisors = $this->crudService->getRMAndBusinessAdvisors();
@@ -435,33 +434,19 @@ class CRUDController extends Controller
 
     public function UpdateLeadStatus(Request $request)
     {
-        if ($request->leadStatus == 27) {
+        $transctionApprovedId = DB::table('quote_status')->where('name', LeadStatusCode::TRANSACTION_APPROVED)->value('id');
+        $lostId = DB::table('quote_status')->where('name', LeadStatusCode::LOST)->value('id');
+        if ($request->leadStatus == $lostId) {
             $this->validate($request, [
                 'lostReason' => 'required',
             ]);
         }
-        if ($request->leadStatus == 15) {
+        if ($request->leadStatus == $transctionApprovedId) {
             $this->validate($request, [
                 'trans_code' => 'required',
             ]);
         }
-        dd('not validated');
-        $entity = $this->{strtolower($request->modelType) . 'QuoteService'}->getEntityPlain($request->leadId);
-        $entity->quote_status_id = $request->leadStatus;
-        $entity->save();
-        QuoteStatusLog::create([
-            'quote_type_id' => QuoteTypeId::Car,
-            'quote_request_id' => $entity->id,
-            'current_quote_status_id' => $request->leadStatus,
-            'created_at' => Carbon::now(),
-            'updated_at' => Carbon::now()
-        ]);
-        CarQuoteRequestDetail::where('car_quote_request_id', $entity->id)->update(
-            [
-                'next_followup_date' => $request->nextFollowUpDate,
-                'notes' => $request->notes
-            ]
-        );
-        return redirect()->to('/quotes/' . $request->modelType . '/' . $entity->uuid)->with('success', ' Lead Status has been Updated');
+        $entity = $this->crudService->updateQuoteStatus($request);
+        return redirect()->to('/quotes/' . strtolower($request->modelType) . '/' . $entity->uuid)->with('success', ' Lead Status has been Updated');
     }
 }

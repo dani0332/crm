@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\TravelQuote;
+use App\Models\TravelQuoteRequestDetail;
 use Illuminate\Http\Request;
 use DB;
 use Auth;
@@ -194,6 +195,11 @@ class TravelQuoteService extends BaseService
     public function getEntityPlain($id)
     {
         return TravelQuote::where('id', $id)->first();
+    }
+
+    public function getDetailEntity($id)
+    {
+        return TravelQuoteRequestDetail::where('travel_quote_request_id', $id)->first();
     }
 
     public function updateTravelQuote(Request $request, $id)
