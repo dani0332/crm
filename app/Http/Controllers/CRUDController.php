@@ -3,12 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Enums\LeadStatusCode;
-use App\Enums\QuoteTypeId;
 use App\Models\CarQuoteAdvisorToOE;
-use App\Models\CarQuoteRequestDetail;
 use App\Models\GenericModel;
 use App\Models\InsuranceProvider;
-use App\Models\QuoteStatusLog;
 use App\Models\VehicleType;
 use App\Services\BusinessQuoteService;
 use Illuminate\Http\Request;
@@ -27,7 +24,6 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
 use Config;
 use DB;
-use \Carbon\Carbon;
 
 class CRUDController extends Controller
 {
@@ -446,33 +442,7 @@ class CRUDController extends Controller
                 'trans_code' => 'required',
             ]);
         }
-        $entity = $this->{strtolower($request->modelType) . 'QuoteService'}->getEntityPlain($request->leadId);
-        $quoteDetailEntity = $this->{strtolower($request->modelType) . 'QuoteService'}->getDetailEntity($request->leadId);
-        $entity->quote_status_id = $request->leadStatus;
-        if (isset($request->lostReason) && $request->lostReason != '') {
-            $quoteDetailEntity->lost_reason_id = $request->lostReason;
-        }
-        if (isset($request->trans_code) && $request->trans_code != '') {
-            $quoteDetailEntity->transapp_code = $request->trans_code;
-        }
-        if (isset($request->notes) && $request->notes != '') {
-            $quoteDetailEntity->notes = $request->notes;
-        }
-        $quoteDetailEntity->save();
-        $entity->save();
-        QuoteStatusLog::create([
-            'quote_type_id' => QuoteTypeId::Car,
-            'quote_request_id' => $entity->id,
-            'current_quote_status_id' => $request->leadStatus,
-            'created_at' => Carbon::now(),
-            'updated_at' => Carbon::now()
-        ]);
-        CarQuoteRequestDetail::where('car_quote_request_id', $entity->id)->update(
-            [
-                'next_followup_date' => $request->nextFollowUpDate,
-                'notes' => $request->notes
-            ]
-        );
+        $entity = $this->crudService->updateQuoteStatus($request);
         return redirect()->to('/quotes/' . strtolower($request->modelType) . '/' . $entity->uuid)->with('success', ' Lead Status has been Updated');
     }
 }

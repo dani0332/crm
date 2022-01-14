@@ -2,12 +2,16 @@
 
 namespace App\Services;
 
+use App\Enums\QuoteTypeId;
+use App\Models\CarQuoteRequestDetail;
 use App\Models\GenericModel;
+use App\Models\QuoteStatusLog;
 use App\Models\User;
 use App\Services\TeamService;
 use App\Services\HealthQuoteService;
 use Illuminate\Http\Request;
 use DB;
+use \Carbon\Carbon;
 
 class CRUDService extends BaseService
 {
@@ -70,6 +74,35 @@ class CRUDService extends BaseService
 
         return $this->{in_array($lowerCaseModelType, $this->quoteTypes) ? $lowerCaseModelType . 'QuoteService' : $lowerCaseModelType . 'Service'}
             ->getCustomTitleByProperty($propertyName);
+    }
+    public function updateQuoteStatus(Request $request)
+    {
+        $entity = $this->{strtolower($request->modelType) . 'QuoteService'}->getEntityPlain($request->leadId);
+        $quoteDetailEntity = $this->{strtolower($request->modelType) . 'QuoteService'}->getDetailEntity($request->leadId);
+        $entity->quote_status_id = $request->leadStatus;
+        if (isset($request->lostReason) && $request->lostReason != '') {
+            $quoteDetailEntity->lost_reason_id = $request->lostReason;
+        }
+        if (isset($request->trans_code) && $request->trans_code != '') {
+            $quoteDetailEntity->transapp_code = $request->trans_code;
+        }
+        if (isset($request->notes) && $request->notes != '') {
+            $quoteDetailEntity->notes = $request->notes;
+        }
+        if (isset($request->nextFollowUpDate) && $request->nextFollowUpDate != '') {
+            $quoteDetailEntity->next_followup_date = $request->nextFollowUpDate;
+        }
+
+        $quoteDetailEntity->save();
+        $entity->save();
+        QuoteStatusLog::create([
+            'quote_type_id' => QuoteTypeId::Car,
+            'quote_request_id' => $entity->id,
+            'current_quote_status_id' => $request->leadStatus,
+            'created_at' => Carbon::now(),
+            'updated_at' => Carbon::now()
+        ]);
+        return $entity;
     }
 
     public function getAdvisorsByModelType($modelType)
