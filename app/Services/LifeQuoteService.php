@@ -101,6 +101,16 @@ class LifeQuoteService extends BaseService
         return LifeQuote::where('id', $id)->first();
     }
 
+    public function getSelectedLostReason($id)
+    {
+        $entity = LifeQuoteRequestDetail::where('life_quote_request_id', $id)->first();
+        $lostId = 0;
+        if ($entity->lost_reason_id) {
+            $lostId = $entity->lost_reason_id;
+        }
+        return $lostId;
+    }
+
     public function getDetailEntity($id)
     {
         $entity = LifeQuoteRequestDetail::where('life_quote_request_id', $id)->first();
@@ -141,7 +151,7 @@ class LifeQuoteService extends BaseService
                 }
             }
         }
-        return $this->query->orderBy('lqr.advisor_id', 'ASC');
+        return $this->query->orderBy('lqr.created_at', 'ASC');
     }
 
     private function getQuerySuffix($item)

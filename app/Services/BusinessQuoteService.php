@@ -135,6 +135,16 @@ class BusinessQuoteService extends BaseService
         return BusinessQuoteRequestDetail::where('business_quote_request_id', $id)->first();
     }
 
+    public function getSelectedLostReason($id)
+    {
+        $entity = BusinessQuoteRequestDetail::where('business_quote_request_id', $id)->first();
+        $lostId = 0;
+        if ($entity->lost_reason_id) {
+            $lostId = $entity->lost_reason_id;
+        }
+        return $lostId;
+    }
+
     public function getLeadsForAssignment()
     {
         return BusinessQuote::orderBy('created_at', 'desc')->get();
@@ -184,7 +194,7 @@ class BusinessQuoteService extends BaseService
                 }
             }
         }
-        return $this->query->where('bti.text', '!=', 'Group Medical')->orderBy('bqr.advisor_id', 'ASC');
+        return $this->query->where('bti.text', '!=', 'Group Medical')->orderBy('bqr.created_at', 'ASC');
     }
 
     private function getQuerySuffix($item)

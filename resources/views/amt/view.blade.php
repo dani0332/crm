@@ -154,7 +154,7 @@
             <div class="x_title">
                 <h2>Group Medical Leads</h2>
                 <ul class="nav navbar-right panel_toolbox">
-                    @can('business-quotes-create')
+                    @can('gm-quotes-create')
                     <li><a href="{{ url('/quotes/business/create') }}" class="btn btn-warning btn-sm">Create Lead</a></li>
                     @endcan
                 </ul>

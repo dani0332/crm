@@ -69,6 +69,16 @@ class HealthQuoteService extends BaseService
         return HealthQuote::where('id', $id)->first();
     }
 
+    public function getSelectedLostReason($id)
+    {
+        $entity = HealthQuoteRequestDetail::where('health_quote_request_id', $id)->first();
+        $lostId = 0;
+        if ($entity->lost_reason_id) {
+            $lostId = $entity->lost_reason_id;
+        }
+        return $lostId;
+    }
+
     public function getDetailEntity($id)
     {
         $entity = HealthQuoteRequestDetail::where('health_quote_request_id', $id)->first();
@@ -135,7 +145,7 @@ class HealthQuoteService extends BaseService
                 }
             }
         }
-        return $this->query->orderBy('hqr.advisor_id', 'ASC');
+        return $this->query->orderBy('hqr.created_at', 'ASC');
     }
 
     private function getQuerySuffix($item)

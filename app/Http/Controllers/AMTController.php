@@ -76,7 +76,7 @@ class AMTController extends Controller
             if (isset($request->advisor_id) && $request->advisor_id != '') {
                 $request->advisor_id == '-1' ? $data->whereNull('bqr.advisor_id') : $data->where('bqr.advisor_id', '=', $request->advisor_id);
             }
-            return DataTables::of($data)
+            return DataTables::of($data->orderBy('bqr.created_at', 'asc'))
                 ->addIndexColumn()
                 ->make(true);
             return view('amt.view', compact('leadStatuses', 'advisors', 'isManagerORDeputy'));

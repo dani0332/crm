@@ -164,7 +164,7 @@ class TravelQuoteService extends BaseService
                 }
             }
         }
-        return $this->query->orderBy('tqr.advisor_id', 'ASC');
+        return $this->query->orderBy('tqr.created_at', 'ASC');
     }
 
     private function getQuerySuffix($item)
@@ -199,6 +199,16 @@ class TravelQuoteService extends BaseService
     public function getEntityPlain($id)
     {
         return TravelQuote::where('id', $id)->first();
+    }
+
+    public function getSelectedLostReason($id)
+    {
+        $entity = TravelQuoteRequestDetail::where('travel_quote_request_id', $id)->first();
+        $lostId = 0;
+        if ($entity->lost_reason_id) {
+            $lostId = $entity->lost_reason_id;
+        }
+        return $lostId;
     }
 
     public function getDetailEntity($id)
