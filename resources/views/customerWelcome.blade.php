@@ -314,7 +314,7 @@
                                   <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="border-collapse:separate;line-height:100%;">
                                     <tr>
                                       <td align="center" bgcolor="#1D83BC" role="presentation" style="border:none;border-radius:3px;cursor:auto;mso-padding-alt:10px 25px;background:#1D83BC;" valign="middle">
-                                        <a href="{{ $signUpButtonUrl }}" style="display:inline-block;background:#1D83BC;color:#ffffff;font-family:Open Sans, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';font-size:25px;font-weight:bold;line-height:120%;margin:0;text-decoration:none;text-transform:none;padding:10px 25px;mso-padding-alt:0px;border-radius:3px;" target="_blank"> I’m interested in myAlfred </a>
+                                        <a href="{{ $signUpButtonUrl }}" style="display:inline-block;background:#1D83BC;color:#ffffff;font-family:Open Sans, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';font-size:25px;font-weight:bold;line-height:120%;margin:0;text-decoration:none;text-transform:none;padding:10px 25px;mso-padding-alt:0px;border-radius:3px;" target="_blank"> I'm interested in myAlfred! </a>
                                       </td>
                                     </tr>
                                   </table>
@@ -334,8 +334,7 @@
                                     <ol>
                                       <li> Visit <a href="{{ $signUpButtonUrl }}">myAlfred</a></li>
                                       <li> Sign Up to myAlfred by entering your name, email address and phone number</li>
-                                      <li> Receive a 6-digit verification code on your registered email address</li>
-                                      <li> Enter the 6-digit verification code on myAlfred to verify and complete the sign-up process</li>
+                                      <li> Click on the verification link received on your email</li>
                                       <li> Enjoy the fabulous rewards and offers!</li>
                                     </ol>
                                     <p><b>How can I report if a promo code is not working?</b></p>
