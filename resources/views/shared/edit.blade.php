@@ -93,6 +93,7 @@
 
                         <input type="hidden" name="model" value={{ json_encode($model->properties) }} />
                         <input type="hidden" name="modelType" value={{ json_encode($model->modelType) }} />
+                        <input type="hidden" name="modelSkipProperties" value={{ json_encode($model->modelSkipProperties) }} />
                         @php
                         $index = 0
                         @endphp

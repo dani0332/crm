@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use DB;
 use Auth;
 use \Carbon\Carbon;
+use Config;
 
 class LifeQuoteService extends BaseService
 {
@@ -105,7 +106,7 @@ class LifeQuoteService extends BaseService
     {
         $entity = LifeQuoteRequestDetail::where('life_quote_request_id', $id)->first();
         $lostId = 0;
-        if ($entity->lost_reason_id) {
+        if (!is_null($entity) && $entity->lost_reason_id) {
             $lostId = $entity->lost_reason_id;
         }
         return $lostId;
