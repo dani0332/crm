@@ -2,14 +2,25 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\BusinessInsuranceType;
+use App\Models\BusinessQuote;
+use App\Models\QuoteStatus;
+use App\Services\BusinessQuoteService;
 use Illuminate\Http\Request;
 use DB;
 use DataTables;
 use \Carbon\Carbon;
 use Auth;
+use Illuminate\Support\Facades\Redirect;
 
 class AMTController extends Controller
 {
+    protected $businessQuoteService;
+
+    public function __construct(BusinessQuoteService $businessQuoteService)
+    {
+        $this->businessQuoteService = $businessQuoteService;
+    }
     /**
      * Display a listing of the resource.
      *
@@ -91,7 +102,8 @@ class AMTController extends Controller
      */
     public function create()
     {
-        //
+        $businessInsuranceType = BusinessInsuranceType::select('id', 'text')->where('text', 'Group Medical')->get();
+        return view('amt.add', compact('businessInsuranceType'));
     }
 
     /**
@@ -102,7 +114,26 @@ class AMTController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $this->validate($request, [
+            'first_name' => 'required|max:150',
+            'last_name' => 'required|max:150',
+            'email' => 'required|email',
+            'mobile_no' => 'required',
+            'business_type_of_insurance_id' => 'required',
+            'company_name' => 'required|max:150',
+            'number_of_employees' => 'required',
+            "brief_details" => "required",
+        ]);
+        $record = $this->businessQuoteService->saveBusinessQuote($request);
+        if (isset($record->message) && str_contains($record->message, 'Error')) {
+            return Redirect::back()->with('message', $record->message)->withInput();
+        } else {
+            if (!isset($record->quoteUID)) {
+                return redirect('medical/amt')->with('success', 'Lead has been stored');
+            } else {
+                return redirect('medical/amt/' . $record->quoteUID)->with('success', 'Lead has been stored');
+            }
+        }
     }
 
     /**
@@ -113,7 +144,13 @@ class AMTController extends Controller
      */
     public function show($id)
     {
-        //
+        $businessInsuranceType = BusinessInsuranceType::select('id', 'text')->where('text', 'Group Medical')->get();
+        $record = BusinessQuote::where([['uuid', $id], ['business_type_of_insurance_id', 5]])->first();
+        $selectedLeadStatus  = QuoteStatus::where('id', $record->quote_status_id)->first();
+        if (is_null($selectedLeadStatus)) {
+            $selectedLeadStatus = '';
+        }
+        return view('amt.show', compact('businessInsuranceType', 'record', 'selectedLeadStatus'));
     }
 
     /**
@@ -124,7 +161,9 @@ class AMTController extends Controller
      */
     public function edit($id)
     {
-        //
+        $businessInsuranceType = BusinessInsuranceType::select('id', 'text')->where('text', 'Group Medical')->get();
+        $record = BusinessQuote::where([['uuid', $id], ['business_type_of_insurance_id', 5]])->first();
+        return view('amt.edit', compact('businessInsuranceType', 'record'));
     }
 
     /**

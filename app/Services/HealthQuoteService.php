@@ -11,6 +11,7 @@ use DB;
 use Auth;
 use \Carbon\Carbon;
 use Hidehalo\Nanoid\Client;
+use Config;
 
 class HealthQuoteService extends BaseService
 {
@@ -73,7 +74,7 @@ class HealthQuoteService extends BaseService
     {
         $entity = HealthQuoteRequestDetail::where('health_quote_request_id', $id)->first();
         $lostId = 0;
-        if ($entity->lost_reason_id) {
+        if (!is_null($entity) && $entity->lost_reason_id) {
             $lostId = $entity->lost_reason_id;
         }
         return $lostId;
