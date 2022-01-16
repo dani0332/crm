@@ -149,6 +149,8 @@ class AMTController extends Controller
         $selectedLeadStatus  = QuoteStatus::where('id', $record->quote_status_id)->first();
         if (is_null($selectedLeadStatus)) {
             $selectedLeadStatus = '';
+        } else {
+            $selectedLeadStatus = $selectedLeadStatus->text;
         }
         return view('amt.show', compact('businessInsuranceType', 'record', 'selectedLeadStatus'));
     }
