@@ -8,15 +8,21 @@ class CustomerWEGenerateUrlService extends BaseService
 {
 	public static function getCustomerWeUrl(Request $request)
     {
-        $berlinApiEndPoint = Config::get('constants.BERLIN_API_ENDPOINT');
+        $magicUrlGenerateEndPoint = Config::get('constants.BERLIN_API_ENDPOINT');
+        $magicUrlGenerateUserName = Config::get('constants.BERLIN_BASIC_AUTH_USER_NAME');
+        $magicUrlGeneratePassword = Config::get('constants.BERLIN_BASIC_AUTH_PASSWORD');
+
+        $magicUrlGeneratauthBasic = base64_encode($magicUrlGenerateUserName . ":" . $magicUrlGeneratePassword);
         $clientBerlin = new \GuzzleHttp\Client();
 
         try {
             $berlinRequest = $clientBerlin->post(
-                $berlinApiEndPoint,
+                $magicUrlGenerateEndPoint,
                 [
                     'headers' => [
-                        'Content-Type' => 'application/json', 'Accept' => 'application/json'
+                        'Content-Type' => 'application/json',
+                        'Accept' => 'application/json',
+                        'Authorization' => 'Basic ' . $magicUrlGeneratauthBasic
                     ],
                 ]
             );
