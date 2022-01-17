@@ -3,10 +3,12 @@
 namespace App\Services;
 
 use App\Models\LifeQuote;
+use App\Models\LifeQuoteRequestDetail;
 use Illuminate\Http\Request;
 use DB;
 use Auth;
 use \Carbon\Carbon;
+use Config;
 
 class LifeQuoteService extends BaseService
 {
@@ -64,6 +66,8 @@ class LifeQuoteService extends BaseService
     }
     public function saveLifeQuote(Request $request)
     {
+        $sourceName = Config::get('constants.SOURCE_NAME');
+        $appUrl = Config::get('constants.APP_URL');
         $dataArr = array(
             "firstName" => $request->first_name,
             "lastName" => $request->last_name,
@@ -81,6 +85,8 @@ class LifeQuoteService extends BaseService
             "isSmoker" => $request->is_smoker == 'Yes' ?  true : false,
             "gender" => $request->gender,
             "othersInfo" => $request->others_info,
+            "source" => $sourceName,
+            "referenceUrl" => $appUrl,
         );
         if (Auth::user()->hasRole("LIFE_ADVISOR")) $dataArr['advisorId'] = Auth::users()->id;
         return CapiRequestService::sendCAPIRequest('/api/v1-save-life-quote', $dataArr);
@@ -95,6 +101,30 @@ class LifeQuoteService extends BaseService
     {
         return LifeQuote::where('id', $id)->first();
     }
+
+    public function getSelectedLostReason($id)
+    {
+        $entity = LifeQuoteRequestDetail::where('life_quote_request_id', $id)->first();
+        $lostId = 0;
+        if (!is_null($entity) && $entity->lost_reason_id) {
+            $lostId = $entity->lost_reason_id;
+        }
+        return $lostId;
+    }
+
+    public function getDetailEntity($id)
+    {
+        $entity = LifeQuoteRequestDetail::where('life_quote_request_id', $id)->first();
+        if (!$entity) {
+            LifeQuoteRequestDetail::create([
+                'life_quote_request_id' => $id,
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now(),
+            ]);
+        }
+        return LifeQuoteRequestDetail::where('life_quote_request_id', $id)->first();
+    }
+
     public function getLeadsForAssignment()
     {
         return LifeQuote::orderBy('created_at', 'desc')->get();
@@ -122,7 +152,7 @@ class LifeQuoteService extends BaseService
                 }
             }
         }
-        return $this->query->orderBy('lqr.advisor_id', 'ASC');
+        return $this->query->orderBy('lqr.created_at', 'ASC');
     }
 
     private function getQuerySuffix($item)

@@ -170,6 +170,11 @@
                     <div class="row">
                         <div class="col-auto mr-auto"></div>
                         <div class="col-auto">
+                            @if(strtolower($model->modelType) == 'business')
+                            @can('corpline-quotes-edit')
+                                <a id="texta" href="{{ url('quotes/'.strtolower($model->modelType).'/'.$record->uuid.'/edit') }}" class='btn btn-warning btn-sm'>Edit</a>
+                            @endcan
+                            @endif
                             @can(strtolower($model->modelType).'-quotes-edit')
                             <a id="texta" href="{{ url('quotes/'.strtolower($model->modelType).'/'.$record->uuid.'/edit') }}" class='btn btn-warning btn-sm'>Edit</a>
                             @endcan
@@ -186,6 +191,7 @@
             :status="$record->quote_status_id"
             :statuses="$leadStatuses"
             :lostreasons="$lostReasons"
+            :selectedlostreason="$selectedLostReasonId"
         />
 
     @if($model->modelType == "Car")
@@ -212,8 +218,9 @@
 
 
         <x-car-quote-more-detail
-        :listQuoteVehicleDetails="$listQuoteVehicleDetails"
         :vehicleTypeText="$vehicleTypeText"
+        :caqQuoteCylinder="$record->cylinder"
+        :caqQuoteSeatCapacity="$record->seat_capacity"
         />
 
         <x-car-ecom-detail

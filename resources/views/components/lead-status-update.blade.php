@@ -5,6 +5,9 @@
         if(showFollowupStatuses.find((str) => str == $('#leadStatus option:selected').text())){
             $('#followup-div').show();
         }
+        if($('#leadStatus option:selected').text() == 'Lost'){
+            $('#lost-reason-div').show();
+        }
         else{
             $('#followup-div').hide();
         }
@@ -59,7 +62,7 @@
                 <form method="POST" action="{{ $lead->id }}/UpdateLeadStatus" id="lead-status-form">
                     {{csrf_field()}}
                     <input type="hidden" value="{{$lead->id}}" name="leadId">
-                    <input type="hidden" value="car" name="modelType">
+                    <input type="hidden" value="{{$model->modelType}}" name="modelType">
                     <div class="item form-group">
                         <div class="col">
                             <label class="col-form-label col-md-3 col-sm-3 label-align" for="PREMIUM"><b>Lead Status</b></label>
@@ -106,7 +109,7 @@
                                     <select class="form-control" id="lostReason" name="lostReason">
                                         <option value="">Select Lost Reason</option>
                                         @foreach ($lostreasons as $item)
-                                            <option value="{{$item->id}}" >{{$item->text}}</option>
+                                            <option @if($selectedlostreason == $item->id) selected="selected" @endif value="{{$item->id}}" >{{$item->text}}</option>
                                         @endforeach
                                     </select>
                                     @if ($errors->has('lostReason'))

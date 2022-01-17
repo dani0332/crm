@@ -3,10 +3,12 @@
 namespace App\Services;
 
 use App\Models\HomeQuote;
+use App\Models\HomeQuoteRequestDetail;
 use Illuminate\Http\Request;
 use DB;
 use Illuminate\Support\Facades\Auth;
 use \Carbon\Carbon;
+use Config;
 
 class HomeQuoteService extends BaseService
 {
@@ -55,8 +57,33 @@ class HomeQuoteService extends BaseService
         return $this->query->where('hqr.uuid', $id)->first();
     }
 
+    public function getSelectedLostReason($id)
+    {
+        $entity = HomeQuoteRequestDetail::where('home_quote_request_id', $id)->first();
+        $lostId = 0;
+        if (!is_null($entity) && $entity->lost_reason_id) {
+            $lostId = $entity->lost_reason_id;
+        }
+        return $lostId;
+    }
+
+    public function getDetailEntity($id)
+    {
+        $entity = HomeQuoteRequestDetail::where('home_quote_request_id', $id)->first();
+        if (!$entity) {
+            HomeQuoteRequestDetail::create([
+                'home_quote_request_id' => $id,
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now(),
+            ]);
+        }
+        return HomeQuoteRequestDetail::where('home_quote_request_id', $id)->first();
+    }
+
     public function saveHomeQuote(Request $request)
     {
+        $sourceName = Config::get('constants.SOURCE_NAME');
+        $appUrl = Config::get('constants.APP_URL');
         $dataArr = array(
             "firstName" => $request->first_name,
             "lastName" => $request->last_name,
@@ -72,6 +99,8 @@ class HomeQuoteService extends BaseService
             "nationalityId" => $request->nationality_id,
             "hasBuilding" => $request->has_building == 'on' ? true : false,
             "hasPersonalBelongings" => $request->has_personal_belongings == 'on' ?  true : false,
+            "source" => $sourceName,
+            "referenceUrl" => $appUrl,
         );
         if (Auth::user()->hasRole("HOME_ADVISOR")) $dataArr['advisorId'] = Auth::users()->id;
         return CapiRequestService::sendCAPIRequest('/api/v1-save-home-quote', $dataArr);
@@ -100,7 +129,7 @@ class HomeQuoteService extends BaseService
                 }
             }
         }
-        return $this->query->orderBy('hqr.advisor_id', 'ASC');
+        return $this->query->orderBy('hqr.created_at', 'ASC');
     }
 
     private function getQuerySuffix($item)
@@ -229,7 +258,7 @@ class HomeQuoteService extends BaseService
             "email" => "input|email|required",
             "mobile_no" => "input|title|number|required",
             "quote_status_id" => "select|title",
-            "advisor_id" => "select|title|required",
+            "advisor_id" => "select|title",
             "created_at" => "input|date|title|range",
             "updated_at" => "input|date|title",
             "contents_aed" => "input|number|required",
@@ -296,11 +325,13 @@ class HomeQuoteService extends BaseService
         return ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'advisor_id', 'created_at'];
     }
 
-    public function getValidationArray($modelPropertiesList, $request)
+    public function getValidationArray($modelPropertiesList, $request, $modelSkipPropertiesList)
     {
         $validationArray = [];
+        $skipProperties = explode(',', $modelSkipPropertiesList);
         foreach ($modelPropertiesList as $propertyName => $propertyValue) {
-
+            if (in_array($propertyName, $skipProperties))
+                continue;
             if ($propertyName == 'contents_aed' || $propertyName ==  'personal_belongings_aed' || $propertyName == 'building_aed' || $propertyName == 'has_contents' || $propertyName == 'has_personal_belongings' || $propertyName == 'has_building') {
                 if ($request['iam_possesion_type_id'] == null) {
                     $validationArray['has_contents'] = 'required';

@@ -4,7 +4,9 @@ namespace App\Services;
 
 use App\Models\CarMake;
 use App\Models\CarQuote;
+use App\Models\CarQuoteRequestDetail;
 use App\Models\InsuranceProvider;
+use App\Models\VehicleType;
 use App\Models\YearOfManufacture;
 use Illuminate\Http\Request;
 use Config;
@@ -158,6 +160,29 @@ class CarQuoteService extends BaseService
     public function getEntity($id)
     {
         return $this->query->where('cqr.uuid', $id)->first();
+    }
+
+    public function getSelectedLostReason($id)
+    {
+        $entity = CarQuoteRequestDetail::where('car_quote_request_id', $id)->first();
+        $lostId = 0;
+        if (!is_null($entity) && $entity->lost_reason_id) {
+            $lostId = $entity->lost_reason_id;
+        }
+        return $lostId;
+    }
+
+    public function getDetailEntity($id)
+    {
+        $entity = CarQuoteRequestDetail::where('car_quote_request_id', $id)->first();
+        if (!$entity) {
+            CarQuoteRequestDetail::create([
+                'car_quote_request_id' => $id,
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now(),
+            ]);
+        }
+        return CarQuoteRequestDetail::where('car_quote_request_id', $id)->first();
     }
 
     public function getEntityPlain($id)
@@ -360,7 +385,7 @@ class CarQuoteService extends BaseService
                 }
             }
         }
-        return $this->query->orderBy('cqr.advisor_id', 'ASC');
+        return $this->query->orderBy('cqr.created_at', 'ASC');
     }
 
     private function getQuerySuffix($item)
@@ -530,5 +555,13 @@ class CarQuoteService extends BaseService
             ->leftJoin('car_quote_request', 'car_quote_request.id', '=', 'car_quote_request_addon.quote_request_id')
             ->where('car_quote_request.uuid', $id)->get();
         return $listCarQuotePlanAddons;
+    }
+
+    public function getCarQuoteVehicleType($id)
+    {
+        $vehicleTypeId = CarQuote::where('uuid', '=', $id)->value('vehicle_type_id');
+        $vehicleTypeText = VehicleType::where('id', '=', $vehicleTypeId)->value('text');
+
+        return $vehicleTypeText;
     }
 }

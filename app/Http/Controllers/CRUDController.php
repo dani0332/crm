@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\QuoteTypeId;
+use App\Enums\HealthTeamType;
+use App\Enums\LeadStatusCode;
+use App\Enums\quoteTypeCode;
 use App\Models\CarQuoteAdvisorToOE;
-use App\Models\CarQuoteRequestDetail;
 use App\Models\GenericModel;
 use App\Models\InsuranceProvider;
-use App\Models\QuoteStatusLog;
 use App\Models\VehicleType;
 use App\Services\BusinessQuoteService;
 use Illuminate\Http\Request;
@@ -26,7 +26,6 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
 use Config;
 use DB;
-use \Carbon\Carbon;
 
 class CRUDController extends Controller
 {
@@ -136,7 +135,7 @@ class CRUDController extends Controller
         $modelType = json_decode($request->get('modelType'), true);
         $validateArray = [];
         if ($modelType == 'Home') {
-            $validateArray = $this->homeQuoteService->getValidationArray($modelPropertiesList, $request);
+            $validateArray = $this->homeQuoteService->getValidationArray($modelPropertiesList, $request, $modelSkipPropertiesList['create']);
         } else {
             foreach ($modelPropertiesList as $property => $value) {
                 if (strpos($value, 'required') && $property != 'id' && !strpos($modelSkipPropertiesList['create'], $property)) {
@@ -146,10 +145,14 @@ class CRUDController extends Controller
         }
         $this->validate($request, $validateArray);
         $record = $this->crudService->saveModelByType($modelType, $request);
-        if (str_contains($record->message, 'Error')) {
+        if (isset($record->message) && str_contains($record->message, 'Error')) {
             return Redirect::back()->with('message', $record->message)->withInput();
         } else {
-            return redirect('/quotes/' . strtolower($modelType) . '/' . $record->quoteUID)->with('success', ((str_contains(strtolower($modelType), 'team') ? 'Team' : (str_contains(strtolower($modelType), 'leadstatus') ? 'Lead Status' : $modelType))) . ' has been stored');
+            if (!isset($record->quoteUID)) {
+                return redirect('/quotes/' . strtolower($modelType))->with('success', ((str_contains(strtolower($modelType), 'team') ? 'Team' : (str_contains(strtolower($modelType), 'leadstatus') ? 'Lead Status' : $modelType))) . ' has been stored');
+            } else {
+                return redirect('/quotes/' . strtolower($modelType) . '/' . $record->quoteUID)->with('success', ((str_contains(strtolower($modelType), 'team') ? 'Team' : (str_contains(strtolower($modelType), 'leadstatus') ? 'Lead Status' : $modelType))) . ' has been stored');
+            }
         }
     }
 
@@ -172,10 +175,11 @@ class CRUDController extends Controller
                 'Completed', 'Pending', 'Rejected', 'Issued', 'Approved', 'Approval required', 'Resubmit for approval'
             ])
             ->get();
-        $lostReasons = DB::table('reasons')
-            ->select('id', 'name as text')
+        $lostReasons = DB::table('lost_reasons')
+            ->select('id', 'text')
             ->get();
-        if (strtolower($this->genericModel->modelType) == 'health' && ($record->health_team_type == 'EBP' || $record->health_team_type == 'RM')) {
+        $selectedLostReasonId = $this->crudService->getSelectedLostReason($this->genericModel->modelType, $record->id);
+        if (strtolower($this->genericModel->modelType) == strtolower(quoteTypeCode::Health) && ($record->health_team_type == HealthTeamType::EBP || $record->health_team_type == HealthTeamType::RM)) {
             $advisors = $this->crudService->getEBPAndRMAdvisors();
         } else if (strtolower($this->genericModel->modelType) == 'business') {
             $advisors = $this->crudService->getRMAndBusinessAdvisors();
@@ -200,30 +204,27 @@ class CRUDController extends Controller
             $quotePlans = $this->carQuoteService->getQuotePlans($id);
             $carQuotePlanAddons = $this->carQuoteService->getCarQuotePlanAddons($id);
             $ecomCarInsuranceQuoteUrl = Config::get('constants.ECOM_CAR_INSURANCE_QUOTE_URL');
+            $vehicleTypeText = $this->carQuoteService->getCarQuoteVehicleType($id);
 
             if (isset($quotePlans->message) && $quotePlans->message != '') {
                 $listQuotePlans = $quotePlans->message;
-                $listQuoteVehicleDetails = '';
-                $vehicleTypeText = '';
+
             } else {
                 if (gettype($quotePlans) != 'string') {
                     $listQuotePlans = $quotePlans->quotes->plans;
-                    $listQuoteVehicleDetails = $quotePlans->quotes;
-                    $vehicleTypeText = VehicleType::where('id', '=', $listQuoteVehicleDetails->vehicleTypeId)->value('text');
+
                 } else {
                     $listQuotePlans = $quotePlans;
-                    $listQuoteVehicleDetails = $quotePlans;
-                    $vehicleTypeText = '';
                 }
             }
 
             return view('shared.show', compact([
                 'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList',
-                'ecomCarInsuranceQuoteUrl', 'carQuotePlanAddons', 'listQuoteVehicleDetails', 'vehicleTypeText', 'leadStatuses',
-                'lostReasons'
+                'ecomCarInsuranceQuoteUrl', 'carQuotePlanAddons', 'vehicleTypeText', 'leadStatuses',
+                'lostReasons', 'selectedLostReasonId'
             ]));
         } else {
-            return view('shared.show', compact(['record', 'model', 'customTitles', 'customTableList', 'advisors', 'leadStatuses', 'lostReasons']));
+            return view('shared.show', compact(['record', 'model', 'customTitles', 'customTableList', 'advisors', 'leadStatuses', 'lostReasons', 'selectedLostReasonId']));
         }
     }
 
@@ -266,15 +267,22 @@ class CRUDController extends Controller
     public function update(Request $request, $id)
     {
         $modelPropertiesList = json_decode($request->all()['model'], true);
+        $modelType = json_decode($request->all()['modelType'], true);
+        $modelSkipPropertiesList = json_decode($request->get('modelSkipProperties'), true);
         $validateArray = [];
-        foreach ($modelPropertiesList as $property => $value) {
-            if (strpos($value, 'required') && ($property !== "email" && $property !== "mobile_no")) {
-                $validateArray[$property] = 'required';
+
+        if ($modelType == 'Home') {
+            $validateArray = $this->homeQuoteService->getValidationArray($modelPropertiesList, $request, $modelSkipPropertiesList['update']);
+        } else {
+            foreach ($modelPropertiesList as $property => $value) {
+                if (strpos($value, 'required') && $property != 'id' && !strpos($modelSkipPropertiesList['update'], $property)) {
+                    $validateArray[$property] = 'required';
+                }
             }
         }
         $this->validate($request, $validateArray);
         $this->crudService->updateModelByType(json_decode($request->modelType, true), $request, $id);
-        return redirect('/quotes/' . strtolower(str_replace('"', '', $request->modelType)) . '/' . $id)->with('success', json_decode($request->modelType, true) . ' has been stored');
+        return redirect('/quotes/' . strtolower(str_replace('"', '', $request->modelType)) . '/' . $id)->with('success', json_decode($request->modelType, true) . ' has been updated');
     }
 
     /**
@@ -435,33 +443,19 @@ class CRUDController extends Controller
 
     public function UpdateLeadStatus(Request $request)
     {
-        if ($request->leadStatus == 27) {
+        $transctionApprovedId = DB::table('quote_status')->where('text', LeadStatusCode::TRANSACTION_APPROVED)->value('id');
+        $lostId = DB::table('quote_status')->where('text', LeadStatusCode::LOST)->value('id');
+        if ($request->leadStatus == $lostId) {
             $this->validate($request, [
                 'lostReason' => 'required',
             ]);
         }
-        if ($request->leadStatus == 15) {
+        if ($request->leadStatus == $transctionApprovedId) {
             $this->validate($request, [
                 'trans_code' => 'required',
             ]);
         }
-        dd('not validated');
-        $entity = $this->{strtolower($request->modelType) . 'QuoteService'}->getEntityPlain($request->leadId);
-        $entity->quote_status_id = $request->leadStatus;
-        $entity->save();
-        QuoteStatusLog::create([
-            'quote_type_id' => QuoteTypeId::Car,
-            'quote_request_id' => $entity->id,
-            'current_quote_status_id' => $request->leadStatus,
-            'created_at' => Carbon::now(),
-            'updated_at' => Carbon::now()
-        ]);
-        CarQuoteRequestDetail::where('car_quote_request_id', $entity->id)->update(
-            [
-                'next_followup_date' => $request->nextFollowUpDate,
-                'notes' => $request->notes
-            ]
-        );
-        return redirect()->to('/quotes/' . $request->modelType . '/' . $entity->uuid)->with('success', ' Lead Status has been Updated');
+        $entity = $this->crudService->updateQuoteStatus($request);
+        return redirect()->to('/quotes/' . strtolower($request->modelType) . '/' . $entity->uuid)->with('success', ' Lead Status has been Updated');
     }
 }

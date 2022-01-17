@@ -232,6 +232,14 @@
                     <h2>{{ str_contains(strtolower($model->modelType), 'teams') ? 'Teams' : (str_contains(strtolower($model->modelType), 'leadstatus') ? 'Lead Status' : $model->modelType) }}
                         List</h2>
                     <ul class="nav navbar-right panel_toolbox">
+                        @if(strtolower($model->modelType) == 'business')
+                        @can('corpline-quotes-create')
+                            <li><a href="{{ url('quotes/' . strtolower($model->modelType) . '/create') }}"
+                                    class="btn btn-warning btn-sm">Create
+                                    {{ str_contains(strtolower($model->modelType), 'teams') ? 'Team' : (str_contains(strtolower($model->modelType), 'leadstatus') ? 'Lead Status' : 'Lead') }}</a>
+                            </li>
+                        @endcan
+                        @endif
                         @can(strtolower($model->modelType) . '-quotes-create')
                             <li><a href="{{ url('quotes/' . strtolower($model->modelType) . '/create') }}"
                                     class="btn btn-warning btn-sm">Create

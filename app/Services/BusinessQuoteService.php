@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\BusinessQuote;
+use App\Models\BusinessQuoteRequestDetail;
 use Illuminate\Http\Request;
 use DB;
 use Config;
@@ -121,6 +122,29 @@ class BusinessQuoteService extends BaseService
         return BusinessQuote::where('id', $id)->first();
     }
 
+    public function getDetailEntity($id)
+    {
+        $entity = BusinessQuoteRequestDetail::where('business_quote_request_id', $id)->first();
+        if (!$entity) {
+            BusinessQuoteRequestDetail::create([
+                'business_quote_request_id' => $id,
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now(),
+            ]);
+        }
+        return BusinessQuoteRequestDetail::where('business_quote_request_id', $id)->first();
+    }
+
+    public function getSelectedLostReason($id)
+    {
+        $entity = BusinessQuoteRequestDetail::where('business_quote_request_id', $id)->first();
+        $lostId = 0;
+        if (!is_null($entity) && $entity->lost_reason_id) {
+            $lostId = $entity->lost_reason_id;
+        }
+        return $lostId;
+    }
+
     public function getLeadsForAssignment()
     {
         return BusinessQuote::orderBy('created_at', 'desc')->get();
@@ -128,18 +152,23 @@ class BusinessQuoteService extends BaseService
 
     public function saveBusinessQuote(Request $request)
     {
+        $sourceName = Config::get('constants.SOURCE_NAME');
+        $appUrl = Config::get('constants.APP_URL');
         $dataArr = array(
             "firstName" => $request->first_name,
             "lastName" => $request->last_name,
             "email" => $request->email,
-            "address" => $request->address,
+            "numberOfEmployees" => $request->number_of_employees,
             "mobileNo" => $request->mobile_no,
             "companyName" => $request->company_name,
             "briefDetails" => $request->brief_details,
             "businessTypeOfInsuranceId" => $request->business_type_of_insurance_id,
+            "source" => $sourceName,
+            "referenceUrl" => $appUrl,
         );
         if (Auth::user()->hasRole("BUSINESS_ADVISOR")) $dataArr['advisorId'] = Auth::users()->id;
-        return CapiRequestService::sendCAPIRequest('/api/v1-save-business-quote', $dataArr);
+        $response  = CapiRequestService::sendCAPIRequest('/api/v1-save-business-quote', $dataArr);
+        return $response;
     }
 
     public function getGridData($searchProperties, $request)
@@ -165,7 +194,7 @@ class BusinessQuoteService extends BaseService
                 }
             }
         }
-        return $this->query->where('bti.text', '!=', 'Group Medical')->orderBy('bqr.advisor_id', 'ASC');
+        return $this->query->where('bti.text', '!=', 'Group Medical')->orderBy('bqr.created_at', 'ASC');
     }
 
     private function getQuerySuffix($item)
@@ -265,9 +294,9 @@ class BusinessQuoteService extends BaseService
     public function fillModelSkipProperties()
     {
         return [
-            "create" => "id,advisor_id,quote_status_id,code,premium",
+            "create" => "id,advisor_id,quote_status_id,code,premium,updated_at,created_at",
             "list" => "email,mobile_no,brief_details,dob",
-            "update" => "id,advisor_id,quote_status_id,code,premium",
+            "update" => "id,advisor_id,quote_status_id,code,premium,updated_at,created_at",
             "show" => "",
         ];
     }

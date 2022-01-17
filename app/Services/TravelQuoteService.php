@@ -3,10 +3,12 @@
 namespace App\Services;
 
 use App\Models\TravelQuote;
+use App\Models\TravelQuoteRequestDetail;
 use Illuminate\Http\Request;
 use DB;
 use Auth;
 use \Carbon\Carbon;
+use Config;
 
 class TravelQuoteService extends BaseService
 {
@@ -50,6 +52,8 @@ class TravelQuoteService extends BaseService
 
     public function saveTravelQuote(Request $request)
     {
+        $sourceName = Config::get('constants.SOURCE_NAME');
+        $appUrl = Config::get('constants.APP_URL');
         $dataArr = array(
             "firstName" => $request->first_name,
             "lastName" => $request->last_name,
@@ -61,6 +65,8 @@ class TravelQuoteService extends BaseService
             "daysCoverFor" => $request->days_cover_for,
             "destination" => $request->destination,
             "regionCoverForId" => $request->region_cover_for_i,
+            "source" => $sourceName,
+            "referenceUrl" => $appUrl,
         );
         if (Auth::user()->hasRole("TRAVEL_ADVISOR")) {
             $dataArr['advisorId'] = Auth::user()->id;
@@ -159,7 +165,7 @@ class TravelQuoteService extends BaseService
                 }
             }
         }
-        return $this->query->orderBy('tqr.advisor_id', 'ASC');
+        return $this->query->orderBy('tqr.created_at', 'ASC');
     }
 
     private function getQuerySuffix($item)
@@ -194,6 +200,29 @@ class TravelQuoteService extends BaseService
     public function getEntityPlain($id)
     {
         return TravelQuote::where('id', $id)->first();
+    }
+
+    public function getSelectedLostReason($id)
+    {
+        $entity = TravelQuoteRequestDetail::where('travel_quote_request_id', $id)->first();
+        $lostId = 0;
+        if (!is_null($entity) && $entity->lost_reason_id) {
+            $lostId = $entity->lost_reason_id;
+        }
+        return $lostId;
+    }
+
+    public function getDetailEntity($id)
+    {
+        $entity = TravelQuoteRequestDetail::where('travel_quote_request_id', $id)->first();
+        if (!$entity) {
+            TravelQuoteRequestDetail::create([
+                'travel_quote_request_id' => $id,
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now(),
+            ]);
+        }
+        return TravelQuoteRequestDetail::where('travel_quote_request_id', $id)->first();
     }
 
     public function updateTravelQuote(Request $request, $id)

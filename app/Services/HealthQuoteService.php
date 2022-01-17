@@ -5,11 +5,13 @@ namespace App\Services;
 use App\Models\BusinessInsuranceType;
 use App\Models\BusinessQuote;
 use App\Models\HealthQuote;
+use App\Models\HealthQuoteRequestDetail;
 use Illuminate\Http\Request;
 use DB;
 use Auth;
 use \Carbon\Carbon;
 use Hidehalo\Nanoid\Client;
+use Config;
 
 class HealthQuoteService extends BaseService
 {
@@ -67,12 +69,38 @@ class HealthQuoteService extends BaseService
     {
         return HealthQuote::where('id', $id)->first();
     }
+
+    public function getSelectedLostReason($id)
+    {
+        $entity = HealthQuoteRequestDetail::where('health_quote_request_id', $id)->first();
+        $lostId = 0;
+        if (!is_null($entity) && $entity->lost_reason_id) {
+            $lostId = $entity->lost_reason_id;
+        }
+        return $lostId;
+    }
+
+    public function getDetailEntity($id)
+    {
+        $entity = HealthQuoteRequestDetail::where('health_quote_request_id', $id)->first();
+        if (!$entity) {
+            HealthQuoteRequestDetail::create([
+                'health_quote_request_id' => $id,
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now(),
+            ]);
+        }
+        return HealthQuoteRequestDetail::where('health_quote_request_id', $id)->first();
+    }
+
     public function getLeadsForAssignment()
     {
         return HealthQuote::orderBy('created_at', 'desc')->get();
     }
     public function saveHealthQuote(Request $request)
     {
+        $sourceName = Config::get('constants.SOURCE_NAME');
+        $appUrl = Config::get('constants.APP_URL');
         $dataArr = array(
             "firstName" => $request->first_name,
             "lastName" => $request->last_name,
@@ -80,8 +108,9 @@ class HealthQuoteService extends BaseService
             "details" => $request->details,
             "mobileNo" => $request->mobile_no,
             "preference" => $request->preference,
-            "source" => $request->source,
+            "source" => $sourceName,
             "maritalStatusId" => $request->marital_status_id,
+            "referenceUrl" => $appUrl,
             "dob" => $request->dob,
             "coverForId" => $request->cover_for_id,
             "nationalityId" => $request->nationality_id,
@@ -117,7 +146,7 @@ class HealthQuoteService extends BaseService
                 }
             }
         }
-        return $this->query->orderBy('hqr.advisor_id', 'ASC');
+        return $this->query->orderBy('hqr.created_at', 'ASC');
     }
 
     private function getQuerySuffix($item)
