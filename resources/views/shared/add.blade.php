@@ -17,11 +17,17 @@
                     car_model_id: car_model_id
                 },
                 success: function(data){
-                    if(data && Object.keys(data).length > 0){
+                        console.log("cylinder: ",data.cylinder);
+                        console.log("seat_capacity: ",data.seat_capacity);
+                        console.log("vehicle_type_id: ",data.vehicle_type_id);
+
+                    if(data.cylinder || data.seat_capacity || data.vehicle_type_id){
                         $('#cylinder').val(data.cylinder);
-                        $('#seat_capacity').val(data.seating_capacity);
+                        $('#seat_capacity').val(data.seat_capacity);
                         if(data.vehicle_type_id) $('#vehicle_type_id').val(data.vehicle_type_id);
-                    }else{
+                    }
+
+                    if(!data.cylinder && !data.seat_capacity && !data.vehicle_type_id){
                         alert('No Vehicle Assumptions Data Found');
                     }
                 },

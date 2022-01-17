@@ -44,4 +44,6 @@ return [
     'APP_ENV' => env('APP_ENV'),
     'APP_URL' => env('APP_URL'),
     'SOURCE_NAME' => env('SOURCE_NAME' , 'IMCRM'),
+    'BERLIN_BASIC_AUTH_USER_NAME' => env('BERLIN_BASIC_AUTH_USER_NAME'),
+    'BERLIN_BASIC_AUTH_PASSWORD' => env('BERLIN_BASIC_AUTH_PASSWORD'),
 ];

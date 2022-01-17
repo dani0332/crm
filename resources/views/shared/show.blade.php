@@ -218,8 +218,9 @@
 
 
         <x-car-quote-more-detail
-        :listQuoteVehicleDetails="$listQuoteVehicleDetails"
         :vehicleTypeText="$vehicleTypeText"
+        :caqQuoteCylinder="$record->cylinder"
+        :caqQuoteSeatCapacity="$record->seat_capacity"
         />
 
         <x-car-ecom-detail
