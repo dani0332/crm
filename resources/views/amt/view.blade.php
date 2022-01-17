@@ -52,7 +52,7 @@
                 name: 'code',
                 render: function (data, type, row) {
                     var type = row.code && row.code.indexOf('HEA-') > -1 ? 'health' : 'business';
-                    var href = '/quotes/' + type + '/' + row.uuid;
+                    var href = '/medical/amt/' + row.uuid;
                     return "<a href='" + href + "'>" + row.code + "</a>";
                 }
             },
@@ -155,7 +155,7 @@
                 <h2>Group Medical Leads</h2>
                 <ul class="nav navbar-right panel_toolbox">
                     @can('gm-quotes-create')
-                    <li><a href="{{ url('/quotes/business/create') }}" class="btn btn-warning btn-sm">Create Lead</a></li>
+                    <li><a href="{{ url('medical/amt/create') }}" class="btn btn-warning btn-sm">Create Lead</a></li>
                     @endcan
                 </ul>
                 <div class="clearfix"></div>

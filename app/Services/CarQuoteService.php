@@ -165,7 +165,7 @@ class CarQuoteService extends BaseService
     {
         $entity = CarQuoteRequestDetail::where('car_quote_request_id', $id)->first();
         $lostId = 0;
-        if ($entity->lost_reason_id) {
+        if (!is_null($entity) && $entity->lost_reason_id) {
             $lostId = $entity->lost_reason_id;
         }
         return $lostId;
