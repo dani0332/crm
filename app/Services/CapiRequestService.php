@@ -30,7 +30,7 @@ class CapiRequestService
             $getContents = $capiRequest->getBody();
             $getdecodeContents = json_decode($getContents);
 
-            if($endpoint = '/api/v1-save-car-quote') {
+            if($endpoint == '/api/v1-save-car-quote') {
                 $carQuoteId = CarQuote::where('id', '=', $getdecodeContents->quoteUID)->value('id');
                 $carQuoteUpdate = CarQuote::find($carQuoteId);
                 $carQuoteUpdate->cylinder = $data['cylinder'];
