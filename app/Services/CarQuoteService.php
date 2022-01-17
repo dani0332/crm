@@ -132,15 +132,7 @@ class CarQuoteService extends BaseService
             "referenceUrl" => $appUrl,
         );
         if (Auth::user()->hasRole("CAR_ADVISOR")) $dataArr['advisorId'] = Auth::users()->id;
-        $response = CapiRequestService::sendCAPIRequest('/api/v1-save-car-quote', $dataArr);
-        $carQuoteId = CarQuote::where('id', '=', $response->quoteUID)->value('id');
-
-        $carQuoteUpdate = CarQuote::find($carQuoteId);
-        $carQuoteUpdate->cylinder = $request->cylinder;
-        $carQuoteUpdate->seat_capacity = $request->seat_capacity;
-        $carQuoteUpdate->vehicle_type_id = $request->vehicle_type_id;
-        $carQuoteUpdate->save();
-        //return CapiRequestService::sendCAPIRequest('/api/v1-save-car-quote', $dataArr);
+        return CapiRequestService::sendCAPIRequest('/api/v1-save-car-quote', $dataArr);
     }
 
     public function updateCarQuote(Request $request, $id)

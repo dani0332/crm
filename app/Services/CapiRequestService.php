@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\CarQuote;
 use Config;
 
 class CapiRequestService
@@ -28,6 +29,16 @@ class CapiRequestService
         if ($getStatusCode == 200) {
             $getContents = $capiRequest->getBody();
             $getdecodeContents = json_decode($getContents);
+
+            if($endpoint = '/api/v1-save-car-quote') {
+                $carQuoteId = CarQuote::where('id', '=', $getdecodeContents->quoteUID)->value('id');
+                $carQuoteUpdate = CarQuote::find($carQuoteId);
+                $carQuoteUpdate->cylinder = $data['cylinder'];
+                $carQuoteUpdate->seat_capacity = $data['seat_capacity'];
+                $carQuoteUpdate->vehicle_type_id = $data['vehicle_type_id'];
+                $carQuoteUpdate->save();
+            }
+
             return $getdecodeContents;
         } else {
             return "API failed";
