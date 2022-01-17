@@ -204,26 +204,23 @@ class CRUDController extends Controller
             $quotePlans = $this->carQuoteService->getQuotePlans($id);
             $carQuotePlanAddons = $this->carQuoteService->getCarQuotePlanAddons($id);
             $ecomCarInsuranceQuoteUrl = Config::get('constants.ECOM_CAR_INSURANCE_QUOTE_URL');
+            $vehicleTypeText = $this->carQuoteService->getCarQuoteVehicleType($id);
 
             if (isset($quotePlans->message) && $quotePlans->message != '') {
                 $listQuotePlans = $quotePlans->message;
-                $listQuoteVehicleDetails = '';
-                $vehicleTypeText = '';
+
             } else {
                 if (gettype($quotePlans) != 'string') {
                     $listQuotePlans = $quotePlans->quotes->plans;
-                    $listQuoteVehicleDetails = $quotePlans->quotes;
-                    $vehicleTypeText = VehicleType::where('id', '=', $listQuoteVehicleDetails->vehicleTypeId)->value('text');
+
                 } else {
                     $listQuotePlans = $quotePlans;
-                    $listQuoteVehicleDetails = $quotePlans;
-                    $vehicleTypeText = '';
                 }
             }
 
             return view('shared.show', compact([
                 'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList',
-                'ecomCarInsuranceQuoteUrl', 'carQuotePlanAddons', 'listQuoteVehicleDetails', 'vehicleTypeText', 'leadStatuses',
+                'ecomCarInsuranceQuoteUrl', 'carQuotePlanAddons', 'vehicleTypeText', 'leadStatuses',
                 'lostReasons', 'selectedLostReasonId'
             ]));
         } else {

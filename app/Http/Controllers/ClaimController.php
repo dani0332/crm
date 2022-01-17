@@ -407,8 +407,9 @@ class ClaimController extends Controller
     public function getCarModelDetails(Request $request)
     {
         $modelId = $request->car_model_id;
-        $carModelDetail = DB::table('car_model_detail')
-            ->where([['car_model_id', '=', $modelId], ['is_default', '=', 1]])
+        $carModelDetail = DB::table('car_model')
+            ->select('cylinder','seat_capacity','vehicle_type_id')
+            ->where('id', '=', $modelId)
             ->first();
         return response()->json($carModelDetail);
     }
