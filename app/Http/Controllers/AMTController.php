@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\BusinessInsuranceType;
 use App\Models\BusinessQuote;
+use App\Models\BusinessQuoteRequestDetail;
 use App\Models\GroupMedicalType;
 use App\Models\QuoteStatus;
+use App\Models\User;
 use App\Services\BusinessQuoteService;
 use Illuminate\Http\Request;
 use DB;
@@ -148,12 +150,23 @@ class AMTController extends Controller
         $businessInsuranceType = BusinessInsuranceType::select('id', 'text')->where('text', 'Group Medical')->get();
         $record = BusinessQuote::where([['uuid', $id], ['business_type_of_insurance_id', 5]])->first();
         $selectedLeadStatus  = QuoteStatus::where('id', $record->quote_status_id)->first();
+        $assignedUserName = '';
+        if (isset($record->advisor_id) && $record->advisor_id != '') {
+            $assignedUser = User::where('id', $record->advisor_id)->first();
+            $assignedUserName = $assignedUser->name;
+        }
+        $advisors = DB::table('users as u')
+            ->join('model_has_roles as mr', 'mr.model_id', '=', 'u.id')
+            ->join('roles as r', 'r.id', '=', 'mr.role_id')
+            ->whereIn('r.name', ['RM_ADVISOR', 'GM_ADVISOR'])
+            ->select('u.id', DB::raw("CONCAT(u.name,' - ',r.name) AS name"))->orderBy('r.name')->distinct()->get();
+
         if (is_null($selectedLeadStatus)) {
             $selectedLeadStatus = '';
         } else {
             $selectedLeadStatus = $selectedLeadStatus->text;
         }
-        return view('amt.show', compact('businessInsuranceType', 'record', 'selectedLeadStatus'));
+        return view('amt.show', compact('businessInsuranceType', 'record', 'selectedLeadStatus', 'advisors', 'assignedUserName'));
     }
 
     /**
