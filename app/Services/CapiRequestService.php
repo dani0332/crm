@@ -33,7 +33,6 @@ class CapiRequestService
             if($endpoint == '/api/v1-save-car-quote') {
                 $carQuoteId = CarQuote::where('uuid', '=', $getdecodeContents->quoteUID)->value('id');
                 $carQuoteUpdate = CarQuote::find($carQuoteId);
-                dd($data, $carQuoteId, $getdecodeContents, $getdecodeContents->quoteUID, $carQuoteUpdate);
                 $carQuoteUpdate->cylinder = $data['cylinder'];
                 $carQuoteUpdate->seat_capacity = $data['seatCapacity'];
                 $carQuoteUpdate->vehicle_type_id = $data['vehicleTypeId'];
