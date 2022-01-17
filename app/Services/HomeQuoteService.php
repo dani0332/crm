@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use DB;
 use Illuminate\Support\Facades\Auth;
 use \Carbon\Carbon;
+use Config;
 
 class HomeQuoteService extends BaseService
 {
@@ -60,7 +61,7 @@ class HomeQuoteService extends BaseService
     {
         $entity = HomeQuoteRequestDetail::where('home_quote_request_id', $id)->first();
         $lostId = 0;
-        if ($entity->lost_reason_id) {
+        if (!is_null($entity) && $entity->lost_reason_id) {
             $lostId = $entity->lost_reason_id;
         }
         return $lostId;
@@ -257,7 +258,7 @@ class HomeQuoteService extends BaseService
             "email" => "input|email|required",
             "mobile_no" => "input|title|number|required",
             "quote_status_id" => "select|title",
-            "advisor_id" => "select|title|required",
+            "advisor_id" => "select|title",
             "created_at" => "input|date|title|range",
             "updated_at" => "input|date|title",
             "contents_aed" => "input|number|required",
@@ -324,11 +325,13 @@ class HomeQuoteService extends BaseService
         return ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'advisor_id', 'created_at'];
     }
 
-    public function getValidationArray($modelPropertiesList, $request)
+    public function getValidationArray($modelPropertiesList, $request, $modelSkipPropertiesList)
     {
         $validationArray = [];
+        $skipProperties = explode(',', $modelSkipPropertiesList);
         foreach ($modelPropertiesList as $propertyName => $propertyValue) {
-
+            if (in_array($propertyName, $skipProperties))
+                continue;
             if ($propertyName == 'contents_aed' || $propertyName ==  'personal_belongings_aed' || $propertyName == 'building_aed' || $propertyName == 'has_contents' || $propertyName == 'has_personal_belongings' || $propertyName == 'has_building') {
                 if ($request['iam_possesion_type_id'] == null) {
                     $validationArray['has_contents'] = 'required';

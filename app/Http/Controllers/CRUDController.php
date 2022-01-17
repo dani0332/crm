@@ -135,7 +135,7 @@ class CRUDController extends Controller
         $modelType = json_decode($request->get('modelType'), true);
         $validateArray = [];
         if ($modelType == 'Home') {
-            $validateArray = $this->homeQuoteService->getValidationArray($modelPropertiesList, $request);
+            $validateArray = $this->homeQuoteService->getValidationArray($modelPropertiesList, $request, $modelSkipPropertiesList['create']);
         } else {
             foreach ($modelPropertiesList as $property => $value) {
                 if (strpos($value, 'required') && $property != 'id' && !strpos($modelSkipPropertiesList['create'], $property)) {
@@ -204,26 +204,23 @@ class CRUDController extends Controller
             $quotePlans = $this->carQuoteService->getQuotePlans($id);
             $carQuotePlanAddons = $this->carQuoteService->getCarQuotePlanAddons($id);
             $ecomCarInsuranceQuoteUrl = Config::get('constants.ECOM_CAR_INSURANCE_QUOTE_URL');
+            $vehicleTypeText = $this->carQuoteService->getCarQuoteVehicleType($id);
 
             if (isset($quotePlans->message) && $quotePlans->message != '') {
                 $listQuotePlans = $quotePlans->message;
-                $listQuoteVehicleDetails = '';
-                $vehicleTypeText = '';
+
             } else {
                 if (gettype($quotePlans) != 'string') {
                     $listQuotePlans = $quotePlans->quotes->plans;
-                    $listQuoteVehicleDetails = $quotePlans->quotes;
-                    $vehicleTypeText = VehicleType::where('id', '=', $listQuoteVehicleDetails->vehicleTypeId)->value('text');
+
                 } else {
                     $listQuotePlans = $quotePlans;
-                    $listQuoteVehicleDetails = $quotePlans;
-                    $vehicleTypeText = '';
                 }
             }
 
             return view('shared.show', compact([
                 'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList',
-                'ecomCarInsuranceQuoteUrl', 'carQuotePlanAddons', 'listQuoteVehicleDetails', 'vehicleTypeText', 'leadStatuses',
+                'ecomCarInsuranceQuoteUrl', 'carQuotePlanAddons', 'vehicleTypeText', 'leadStatuses',
                 'lostReasons', 'selectedLostReasonId'
             ]));
         } else {
@@ -270,15 +267,22 @@ class CRUDController extends Controller
     public function update(Request $request, $id)
     {
         $modelPropertiesList = json_decode($request->all()['model'], true);
+        $modelType = json_decode($request->all()['modelType'], true);
+        $modelSkipPropertiesList = json_decode($request->get('modelSkipProperties'), true);
         $validateArray = [];
-        foreach ($modelPropertiesList as $property => $value) {
-            if (strpos($value, 'required') && ($property !== "email" && $property !== "mobile_no")) {
-                $validateArray[$property] = 'required';
+
+        if ($modelType == 'Home') {
+            $validateArray = $this->homeQuoteService->getValidationArray($modelPropertiesList, $request, $modelSkipPropertiesList['update']);
+        } else {
+            foreach ($modelPropertiesList as $property => $value) {
+                if (strpos($value, 'required') && $property != 'id' && !strpos($modelSkipPropertiesList['update'], $property)) {
+                    $validateArray[$property] = 'required';
+                }
             }
         }
         $this->validate($request, $validateArray);
         $this->crudService->updateModelByType(json_decode($request->modelType, true), $request, $id);
-        return redirect('/quotes/' . strtolower(str_replace('"', '', $request->modelType)) . '/' . $id)->with('success', json_decode($request->modelType, true) . ' has been stored');
+        return redirect('/quotes/' . strtolower(str_replace('"', '', $request->modelType)) . '/' . $id)->with('success', json_decode($request->modelType, true) . ' has been updated');
     }
 
     /**

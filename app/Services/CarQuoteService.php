@@ -6,6 +6,7 @@ use App\Models\CarMake;
 use App\Models\CarQuote;
 use App\Models\CarQuoteRequestDetail;
 use App\Models\InsuranceProvider;
+use App\Models\VehicleType;
 use App\Models\YearOfManufacture;
 use Illuminate\Http\Request;
 use Config;
@@ -165,7 +166,7 @@ class CarQuoteService extends BaseService
     {
         $entity = CarQuoteRequestDetail::where('car_quote_request_id', $id)->first();
         $lostId = 0;
-        if ($entity->lost_reason_id) {
+        if (!is_null($entity) && $entity->lost_reason_id) {
             $lostId = $entity->lost_reason_id;
         }
         return $lostId;
@@ -554,5 +555,13 @@ class CarQuoteService extends BaseService
             ->leftJoin('car_quote_request', 'car_quote_request.id', '=', 'car_quote_request_addon.quote_request_id')
             ->where('car_quote_request.uuid', $id)->get();
         return $listCarQuotePlanAddons;
+    }
+
+    public function getCarQuoteVehicleType($id)
+    {
+        $vehicleTypeId = CarQuote::where('uuid', '=', $id)->value('vehicle_type_id');
+        $vehicleTypeText = VehicleType::where('id', '=', $vehicleTypeId)->value('text');
+
+        return $vehicleTypeText;
     }
 }
