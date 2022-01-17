@@ -11,9 +11,7 @@
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="Cylinders"><b>Cylinders</b></label>
                         <div class="col-md-6 col-sm-6">
                         <p class="label-align-center">
-                            @isset($listQuoteVehicleDetails->cylinder)
-                                {{ ucwords($listQuoteVehicleDetails->cylinder) }}
-                            @endisset
+                            {{ $caqQuoteCylinder }}
                         </p>
                         </div>
                     </div>
@@ -21,9 +19,7 @@
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="Seat Capacity"><b>Seat Capacity</b></label>
                         <div class="col-md-6 col-sm-6">
                         <p class="label-align-center">
-                            @isset($listQuoteVehicleDetails->seatingCapacity)
-                                {{ ucwords($listQuoteVehicleDetails->seatingCapacity) }}
-                            @endisset
+                            {{ $caqQuoteSeatCapacity }}
                         </p>
                         </div>
                     </div>
