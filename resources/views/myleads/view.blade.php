@@ -54,7 +54,11 @@
                     {
                         data: 'leadSource',
                         name: 'leadSource'
-                    }
+                    },
+                    {
+                        data: 'nextFollowupDate',
+                        name: 'nextFollowupDate',
+                    },
                 ],
             });
 
@@ -154,11 +158,12 @@
                                 <th>Assigned Date</th>
                                 <th>Assigned By</th>
                                 <th>Lead Source</th>
+                                <th>Next FollowUp Date</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr class="odd">
-                                <td valign="top" colspan="7" class="dataTables_empty">No data available in table</td>
+                                <td valign="top" colspan="8" class="dataTables_empty">No data available in table</td>
                             </tr>
                         </tbody>
                     </table>

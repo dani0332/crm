@@ -123,6 +123,7 @@ class TravelQuoteService extends BaseService
                 'u.name as assignedBy',
                 'tqr.updated_at',
                 'tqr.source as leadSource',
+                'tqrd.next_followup_date as nextFollowupDate',
             )
             ->leftJoin('travel_quote_request_detail as tqrd', 'tqrd.travel_quote_request_id', '=', 'tqr.id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'tqr.quote_status_id')
