@@ -258,8 +258,10 @@ class LifeQuoteService extends BaseService
                 'u.name AS advisor_name',
                 DB::raw("'Life' as lead_type"),
                 'u.id as advisor_id',
-                'qs.text as lead_status'
+                'qs.text as lead_status',
+                'lqrd.next_followup_date as nextFollowupDate',
             )
+            ->leftJoin('life_quote_request_detail as lqrd', 'lqrd.life_quote_request_id', '=', 'lqr.id')
             ->leftJoin('users as u', 'u.id', '=', 'lqr.advisor_id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'lqr.quote_status_id')
             ->orderBy('advisor_id', 'ASC');

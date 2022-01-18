@@ -1824,5 +1824,15 @@ $(document).ready(function () {
             });
         }
     });
+    $('#group_medical_type_id').on('change', function () {
+        var txt = $(this).find("option:selected").data('id');
+        if (txt) {
+            txt = txt.replace(/(\r\n|\n|\r)/gm, "");
+            $('#tooltipGm').show();
+            $('#tooltipGm').attr('title', txt);
+        } else {
+            $('#tooltipGm').hide();
+        }
+    });
 });
 

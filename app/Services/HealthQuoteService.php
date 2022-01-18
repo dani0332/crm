@@ -221,6 +221,7 @@ class HealthQuoteService extends BaseService
                 'u.name as assignedBy',
                 'hqr.updated_at',
                 'hqr.source as leadSource',
+                'hqrd.next_followup_date as nextFollowupDate',
             )
             ->leftJoin('health_quote_request_detail as hqrd', 'hqrd.health_quote_request_id', '=', 'hqr.id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'hqr.quote_status_id')
