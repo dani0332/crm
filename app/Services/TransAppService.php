@@ -26,6 +26,13 @@ class TransAppService extends BaseService
             $sendWelcomeEmail = ($existingCustomer && !$existingCustomer->is_we_sent) || !$existingCustomer ? true : false;
             $customerId = CustomerService::getCustomerIdAndCreateIfNotExists($request->first_name, $request->last_name, $request->email);
             $status_id = DB::table('statuses')->where('name', 'Active')->value('id');
+
+            if($existingCustomer != null) { // Existing customer
+                if($existingCustomer->is_we_sent == 1) { // is_we_sent is true
+                    CustomerExtendSubscriptionService::extendCustomerSubscription($customerId);
+                }
+            }
+
             $transaction = new Transaction;
             $transaction->insurance_company_id = $request->insurance_company;
             $transaction->customer_id = $customerId;
