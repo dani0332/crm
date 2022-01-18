@@ -98,6 +98,7 @@ class BusinessQuoteService extends BaseService
                 'bqr.source as leadSource',
                 'bqr.company_name',
                 'bqr.premium',
+                'bqrd.next_followup_date as nextFollowupDate',
             )
             ->leftJoin('business_quote_request_detail as bqrd', 'bqrd.business_quote_request_id', '=', 'bqr.id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'bqr.quote_status_id')

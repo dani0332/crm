@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Add Group Medical')
+@section('title', 'Edit Group Medical')
 @section('content')
     <div class="row">
         <div class="col-md-12 col-sm-12">
@@ -19,9 +19,10 @@
                     @if (session()->has('message'))
                         <div class="alert alert-danger">{{ session()->get('message') }}</div>
                     @endif
-                    <form id="demo-form2" method='post' action="{{ url('medical/amt') }}" enctype="multipart/form-data"
+                    <form id="demo-form2" method='post' action="{{ route('amt.update', $record->uuid) }}" enctype="multipart/form-data"
                         data-parsley-validate class="form-horizontal form-label-left" autocomplete="off">
                         {{ csrf_field() }}
+                        @method('PUT')
                         <div class="item form-group">
                             <div class="col">
                                 <span class="col-form-label col-md-6 col-sm-6">First Name<span
@@ -99,13 +100,33 @@
                             @endif
                             </div>
                             <div class="col">
+                                <span class="col-form-label col-md-6 col-sm-6" style="width: 155px;">Group Medical Type<span
+                                    class="required">*</span></span> <i class="fa fa-info-circle" id="tooltipGm" title="" style="display: none;margin-top:8px;"></i>
+                                    <select class="form-control" id='group_medical_type_id' name='group_medical_type_id'>
+                                        <option value="" >Select Group Medical Type</option>
+                                        @foreach($gmTypes as $item)
+                                            <option @if($item->text == $selectedGmType) selected @endif value="{{ $item->id }}" data-id="{{ $item->description }}">{{ $item->text }}</option>
+                                        @endforeach
+                                    </select>
+
+                            @if ($errors->has('group_medical_type_id'))
+                                <span class="text-danger">{{ $errors->first('group_medical_type_id') }}</span>
+                            @endif
+                            </div>
+                        </div>
+
+                        <div class="item form-group">
+                            <div class="col">
                                 <span class="col-form-label col-md-6 col-sm-6">Brief Details<span
                                         class="required">*</span></span>
-                                <textarea type="text" id="brief_details" name="brief_details" value="{{ old('brief_details', $record->brief_details) }}"
-                                    class="form-control"></textarea>
+                                <textarea type="text" id="brief_details" name="brief_details"
+                                    class="form-control">{{ old('brief_details', $record->brief_details) }}</textarea>
                                 @if ($errors->has('brief_details'))
                                     <span class="text-danger">{{ $errors->first('brief_details') }}</span>
                                 @endif
+                            </div>
+
+                            <div class="col">
                             </div>
                         </div>
 
@@ -114,7 +135,7 @@
                         <div class="row">
                             <div class="col-auto mr-auto"></div>
                             <div class="col-auto">
-                                <button type="submit" class="btn btn-warning btn-sm" id="return_to_view">Update</button>
+                                <button type="submit" class="btn btn-warning btn-sm">Update</button>
                             </div>
                         </div>
                     </form>

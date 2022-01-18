@@ -19,6 +19,34 @@
                 @if(session()->has('message'))
                     <div class="alert alert-danger">{{ session()->get('message') }}</div>
                 @endif
+                <form method="post" action="/quotes/business/manualBusinessLeadAssign" class="form-horizontal form-label-left" autocomplete="off">
+                    {{ csrf_field() }}
+                    @method('POST')
+                    <input type="hidden" value="business" name="modelType">
+                    <input type="hidden" value="{{ $record->id}}" name="entityId">
+                    <div class="col-md-6">
+                        <div class="col-md-4">
+                            <h2><b>Assign Lead</b></h2>
+                        </div>
+                        <div class="col-md-4">
+                            <select class="form-control"  id="assigned_to_id_new"
+                            name="assigned_to_id_new">
+                                <option>Select Assignee</option>
+                                @foreach ($advisors as $item)
+                                    <option @if($record->advisor_id == $item->id) selected="selected" @endif value="{{ $item->id }}">{{ $item->name }}</option>
+                                @endforeach
+                            </select>
+                            <label id='userAssignValidation' style="display: none;color:red;">Please user for assignment</label>
+                        </div>
+                        <div class="col-md-4">
+                            <button id="assignAfterTeam"
+                            name="assignAfterTeam"
+                            class="btn btn-warning btn-sm">Assign</button>
+                        </div>
+                    </div>
+                    <div class="clearfix">
+                    </div>
+                </form>
                 <form id="demo-form2" method='post'  action="{{ url('medical/amt') }}"  enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left">
                 {{csrf_field()}}
                 @method('PUT')
@@ -119,6 +147,17 @@
                         <div class="col-md-6 col-sm-6 ">
                         <p class="label-align-center">{{ $record->brief_details }}</p>
                         </div>
+                    </div>
+                </div>
+                <div class="item form-group">
+                    <div class="col">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="created_at"><b> Assigned To</b></label>
+                        <div class="col-md-6 col-sm-6 ">
+                        <p class="label-align-center">{{$assignedUserName}}</p>
+                        </div>
+                    </div>
+                    <div class="col">
+
                     </div>
                 </div>
                 <div class="ln_solid"></div>
