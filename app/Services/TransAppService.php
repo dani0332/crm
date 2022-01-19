@@ -32,7 +32,15 @@ class TransAppService extends BaseService
 
             if($existingCustomer != null) { // Existing customer
                 if($existingCustomer->is_we_sent == 1) { // is_we_sent is true
-                    CustomerExtendSubscriptionService::extendCustomerSubscription($customerId);
+                    $response = CustomerExtendSubscriptionService::extendCustomerSubscription($customerId);
+                    $response = 422;
+                    if($response == 422) {
+                        $customerToken = MyAlFredUser::select('code')->where('customer_id', '=', $customerId)->orderBy('created_at','asc')->first();
+                        $message = "Customer trying to extend subscription but not exist in myAflred<br>
+                        Customer Email: ".$request->email."<br>
+                        Token: ".$customerToken;
+                        Log::error($message);
+                    }
                 }
             }
 
@@ -93,14 +101,12 @@ class TransAppService extends BaseService
     public static function sendWelcomeEmail($customerId, $WEGenerateUrlResponse)
     {
         $customer = CustomerService::getCustomerById($customerId);
-        $customer->is_we_sent = true;
-        $customer->save();
 
         try {
 
             $apiKey = Config::get('constants.SENDINBLUE_KEY');
             $url = Config::get('constants.SIB_URL');
-            $sibTemplate = Config::get('constants.SIB_MYALFRED_CUSTOMER_WE_TEMPLATE_ID'); //290
+            $sibTemplate = (int)Config::get('constants.SIB_MYALFRED_CUSTOMER_WE_TEMPLATE_ID'); //290
 
             $headers = [
                 'Accept' => 'application/json',
@@ -134,6 +140,17 @@ class TransAppService extends BaseService
             $getStatusCode = $capiRequest->getStatusCode();
 
             if ($getStatusCode == 201) {
+
+                $customer->is_we_sent = true;
+                $customer->save();
+
+                $code = substr($WEGenerateUrlResponse, strpos($WEGenerateUrlResponse, "signup/") + 7); // code
+                $newMyAlFredUser = new MyAlFredUser;
+                $newMyAlFredUser->signup_url = $WEGenerateUrlResponse;
+                $newMyAlFredUser->customer_id = $customerId;
+                $newMyAlFredUser->code = $code;
+                $newMyAlFredUser->source = "TRANSAPP";
+                $newMyAlFredUser->save();
                 return;
             } else {
                 throw new Error('SIB - Error dispatching to '.$customer->email);
@@ -143,40 +160,5 @@ class TransAppService extends BaseService
             dd("Error: ".$ex->getCode(), $ex->getMessage());
             return $ex;
         }
-
-        $appEnv = Config::get('constants.APP_ENV');
-        $emailSubject = 'Act now and simply sign up to cash in your rewards & keep on saving!';
-        $emailRecipient = $customer->email;
-        $fromName = 'Alfred';
-        $replyToEmail = Config::get('constants.MAIL_MYALFRED_SUPPORT_REPLY_TO');
-        $emailSubjectExt = $appEnv." | ".$emailSubject;
-
-        if($appEnv == "production") {
-            $emailSubject = $emailSubject;
-            $fromEmail = 'no-reply@alert.insurancemarket.email';
-        }
-        else {
-            $emailSubject = $emailSubjectExt;
-            $fromEmail = 'no-reply@alert.instacover.ae';
-        }
-
-        Mail::send(['html' => 'customerWelcome'], [
-            'customerName' => $customer->first_name." ".$customer->last_name,
-            'customerEmail' => $customer->email,
-            'signUpButtonUrl' => $WEGenerateUrlResponse,
-        ],
-            function ($message) use ($emailSubject, $emailRecipient, $fromName, $fromEmail, $replyToEmail) {
-                $message->to($emailRecipient)->replyTo($replyToEmail)->subject($emailSubject);
-                $message->from($fromEmail, $fromName);
-        });
-
-        $code = substr($WEGenerateUrlResponse, strpos($WEGenerateUrlResponse, "signup/") + 7); // code
-
-        $newMyAlFredUser = new MyAlFredUser;
-        $newMyAlFredUser->signup_url = $WEGenerateUrlResponse;
-        $newMyAlFredUser->customer_id = $customerId;
-        $newMyAlFredUser->code = $code;
-        $newMyAlFredUser->source = "TRANSAPP";
-        $newMyAlFredUser->save();
     }
 }

@@ -14,7 +14,6 @@ class CustomerExtendSubscriptionService extends BaseService
         $extendSubscriptionUserName = Config::get('constants.BERLIN_BASIC_AUTH_USER_NAME');
         $extendSubscriptionPassword = Config::get('constants.BERLIN_BASIC_AUTH_PASSWORD');
 
-        // order by created_at asc first
         $customerToken = MyAlFredUser::select('code')->where('customer_id', '=', $customerId)->orderBy('created_at','asc')->first();
 
         $customerDataArr = json_encode([
@@ -41,14 +40,8 @@ class CustomerExtendSubscriptionService extends BaseService
 
         } catch (\GuzzleHttp\Exception\BadResponseException $e) {
             $apiResponse = $e->getResponse()->getStatusCode();
-            //$apiResponse = $e->getResponse()->getBody()->getContents();
         }
 
-        // if response code is 422
-        if($apiResponse == 422) {
-            // Papertrail log: Customer trying to extend subscription but not exist in myAflred with customer email token
-        }
-        dd($apiResponse);
         return $apiResponse;
     }
 }
