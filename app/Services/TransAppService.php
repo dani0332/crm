@@ -138,12 +138,13 @@ class TransAppService extends BaseService
                 $newMyAlFredUser->save();
                 return;
             } else {
-                throw new Error('SIB - Error dispatching to '.$customer->email);
+                $errorMessage = "SIB Error:  ".$getStatusCode." ".$customer->email;
+                Log::error($errorMessage);
             }
         }
         catch(Exception $ex) {
-            dd("Error: ".$ex->getCode(), $ex->getMessage());
-            return $ex;
+            $errorMessage = "SIB Failed Error: ".$ex->getCode()." ".$ex->getMessage();
+            Log::error($errorMessage);
         }
     }
 }
