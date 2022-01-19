@@ -16,11 +16,11 @@ class CustomerExtendSubscriptionService extends BaseService
 
         // order by created_at asc first
         $customerToken = MyAlFredUser::select('code')->where('customer_id', '=', $customerId)->orderBy('created_at','asc')->first();
-        dd($customerToken);
 
         $customerDataArr = json_encode([
             "token" => $customerToken,
         ]);
+        dd($customerDataArr);
 
         $magicUrlGeneratauthBasic = base64_encode($extendSubscriptionUserName . ":" . $extendSubscriptionPassword);
         $clientExtendSubscription = new \GuzzleHttp\Client();
