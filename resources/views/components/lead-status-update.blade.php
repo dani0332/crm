@@ -59,10 +59,10 @@
                 <div class="clearfix"></div>
             </div>
             <div class="x_content">
-                <form method="POST" action="{{ $lead->id }}/UpdateLeadStatus" id="lead-status-form">
+                <form method="POST" action="/quotes/{{$modeltype}}/{{ $lead->id }}/UpdateLeadStatus" id="lead-status-form">
                     {{csrf_field()}}
                     <input type="hidden" value="{{$lead->id}}" name="leadId">
-                    <input type="hidden" value="{{$model->modelType}}" name="modelType">
+                    <input type="hidden" value="{{$modeltype}}" name="modelType">
                     <div class="item form-group">
                         <div class="col">
                             <label class="col-form-label col-md-3 col-sm-3 label-align" for="PREMIUM"><b>Lead Status</b></label>

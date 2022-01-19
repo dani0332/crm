@@ -111,6 +111,7 @@
                 searching: false,
                 dom: 'rBfrtip',
                 bLengthChange: false,
+                stateSave: false,
                 serverSide: true,
                 paging: true,
                 processing: true,
