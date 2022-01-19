@@ -30,20 +30,6 @@ class TransAppService extends BaseService
             $customerId = CustomerService::getCustomerIdAndCreateIfNotExists($request->first_name, $request->last_name, $request->email);
             $status_id = DB::table('statuses')->where('name', 'Active')->value('id');
 
-            if($existingCustomer != null) { // Existing customer
-                if($existingCustomer->is_we_sent == 1) { // is_we_sent is true
-                    $response = CustomerExtendSubscriptionService::extendCustomerSubscription($customerId);
-                    $response = 422;
-                    if($response == 422) {
-                        $customerToken = MyAlFredUser::select('code')->where('customer_id', '=', $customerId)->orderBy('created_at','asc')->first();
-                        $message = "Customer trying to extend subscription but not exist in myAflred<br>
-                        Customer Email: ".$request->email."<br>
-                        Token: ".$customerToken;
-                        Log::error($message);
-                    }
-                }
-            }
-
             $transaction = new Transaction;
             $transaction->insurance_company_id = $request->insurance_company;
             $transaction->customer_id = $customerId;
@@ -85,7 +71,6 @@ class TransAppService extends BaseService
             $customer = CustomerService::getCustomerById($customerId);
             $customer->myalfred_expiry_date = $expiryDate;
             $customer->save();
-
 
             if($sendWelcomeEmail && Config::get('constants.ENABLE_TRANSAPP_WE') == '1') {
                 TransAppService::sendWelcomeEmail($customerId, $WEGenerateUrlResponse);
@@ -144,7 +129,7 @@ class TransAppService extends BaseService
                 $customer->is_we_sent = true;
                 $customer->save();
 
-                $code = substr($WEGenerateUrlResponse, strpos($WEGenerateUrlResponse, "signup/") + 7); // code
+                $code = substr($WEGenerateUrlResponse, strpos($WEGenerateUrlResponse, "signup/") + 7);
                 $newMyAlFredUser = new MyAlFredUser;
                 $newMyAlFredUser->signup_url = $WEGenerateUrlResponse;
                 $newMyAlFredUser->customer_id = $customerId;
