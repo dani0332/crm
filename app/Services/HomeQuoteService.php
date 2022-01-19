@@ -133,7 +133,7 @@ class HomeQuoteService extends BaseService
                 }
             }
         }
-        return $this->query->orderBy('hqr.created_at', 'ASC');
+        return $this->query->orderBy('hqr.created_at', 'DESC');
     }
 
     private function getQuerySuffix($item)

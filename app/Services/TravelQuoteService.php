@@ -170,7 +170,7 @@ class TravelQuoteService extends BaseService
                 }
             }
         }
-        return $this->query->orderBy('tqr.created_at', 'ASC');
+        return $this->query->orderBy('tqr.created_at', 'DESC');
     }
 
     private function getQuerySuffix($item)

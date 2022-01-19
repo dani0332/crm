@@ -198,7 +198,7 @@ class BusinessQuoteService extends BaseService
                 }
             }
         }
-        return $this->query->where('bti.text', '!=', 'Group Medical')->orderBy('bqr.created_at', 'ASC');
+        return $this->query->where('bti.text', '!=', 'Group Medical')->orderBy('bqr.created_at', 'DESC');
     }
 
     private function getQuerySuffix($item)

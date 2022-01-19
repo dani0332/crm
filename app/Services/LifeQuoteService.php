@@ -156,7 +156,7 @@ class LifeQuoteService extends BaseService
                 }
             }
         }
-        return $this->query->orderBy('lqr.created_at', 'ASC');
+        return $this->query->orderBy('lqr.created_at', 'DESC');
     }
 
     private function getQuerySuffix($item)
