@@ -12,6 +12,9 @@ use App\Models\MyAlFredUser;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Mail;
 use Config;
+use Error;
+use Exception;
+use Illuminate\Support\Facades\Log;
 use LookUpModel;
 
 class TransAppService extends BaseService
@@ -92,6 +95,54 @@ class TransAppService extends BaseService
         $customer = CustomerService::getCustomerById($customerId);
         $customer->is_we_sent = true;
         $customer->save();
+
+        try {
+
+            $apiKey = Config::get('constants.SENDINBLUE_KEY');
+            $url = Config::get('constants.SIB_URL');
+            $sibTemplate = Config::get('constants.SIB_MYALFRED_CUSTOMER_WE_TEMPLATE_ID'); //290
+
+            $headers = [
+                'Accept' => 'application/json',
+                'api-key' => $apiKey,
+                'Content-Type' => 'application/json'
+            ];
+
+            $body = json_encode([
+                "to" => array([
+                    "email" => $customer->email,
+                    "name" => $customer->first_name." ".$customer->last_name,
+                ]),
+                "templateId" => $sibTemplate,
+                "params" => [
+                    "customerName" => $customer->first_name." ".$customer->last_name,
+                    "customerEmail" => $customer->email,
+                    "signUpButtonUrl" => $WEGenerateUrlResponse,
+                ],
+            ]);
+
+            $client = new \GuzzleHttp\Client();
+            $capiRequest = $client->post(
+                $url,
+                [
+                    'headers' => $headers,
+                    'body' => $body,
+                    'timeout' => 10000,
+                ]
+            );
+
+            $getStatusCode = $capiRequest->getStatusCode();
+
+            if ($getStatusCode == 201) {
+                return;
+            } else {
+                throw new Error('SIB - Error dispatching to '.$customer->email);
+            }
+        }
+        catch(Exception $ex) {
+            dd("Error: ".$ex->getCode(), $ex->getMessage());
+            return $ex;
+        }
 
         $appEnv = Config::get('constants.APP_ENV');
         $emailSubject = 'Act now and simply sign up to cash in your rewards & keep on saving!';
