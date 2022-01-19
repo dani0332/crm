@@ -86,65 +86,28 @@ class TransAppService extends BaseService
     public static function sendWelcomeEmail($customerId, $WEGenerateUrlResponse)
     {
         $customer = CustomerService::getCustomerById($customerId);
+        $emailTemplateId = (int)Config::get('constants.SIB_MYALFRED_CUSTOMER_WE_TEMPLATE_ID'); //290
 
-        try {
+        $emailData = array(
+            'customerName' => $customer->first_name." ".$customer->last_name,
+            'customerEmail' => $customer->email,
+            'signUpButtonUrl' => $WEGenerateUrlResponse
+        );
 
-            $apiKey = Config::get('constants.SENDINBLUE_KEY');
-            $url = Config::get('constants.SIB_URL');
-            $sibTemplate = (int)Config::get('constants.SIB_MYALFRED_CUSTOMER_WE_TEMPLATE_ID'); //290
+        $getStatusCode = SendEmailCustomerService::sendEmail($emailTemplateId, $emailData);
 
-            $headers = [
-                'Accept' => 'application/json',
-                'api-key' => $apiKey,
-                'Content-Type' => 'application/json'
-            ];
+        if($getStatusCode == 201) {
 
-            $body = json_encode([
-                "to" => array([
-                    "email" => $customer->email,
-                    "name" => $customer->first_name." ".$customer->last_name,
-                ]),
-                "templateId" => $sibTemplate,
-                "params" => [
-                    "customerName" => $customer->first_name." ".$customer->last_name,
-                    "customerEmail" => $customer->email,
-                    "signUpButtonUrl" => $WEGenerateUrlResponse,
-                ],
-            ]);
+            $customer->is_we_sent = true;
+            $customer->save();
 
-            $client = new \GuzzleHttp\Client();
-            $capiRequest = $client->post(
-                $url,
-                [
-                    'headers' => $headers,
-                    'body' => $body,
-                    'timeout' => 10000,
-                ]
-            );
-
-            $getStatusCode = $capiRequest->getStatusCode();
-
-            if ($getStatusCode == 201) {
-
-                $customer->is_we_sent = true;
-                $customer->save();
-
-                $code = substr($WEGenerateUrlResponse, strpos($WEGenerateUrlResponse, "signup/") + 7);
-                $newMyAlFredUser = new MyAlFredUser;
-                $newMyAlFredUser->signup_url = $WEGenerateUrlResponse;
-                $newMyAlFredUser->customer_id = $customerId;
-                $newMyAlFredUser->code = $code;
-                $newMyAlFredUser->source = "TRANSAPP";
-                $newMyAlFredUser->save();
-                return;
-            } else {
-                $errorMessage = "SIB Error:  ".$getStatusCode." ".$customer->email;
-                Log::error($errorMessage);
-            }
-        }
-        catch(Exception $ex) {
-            $errorMessage = "SIB Failed Error: ".$ex->getCode()." ".$ex->getMessage();
-            Log::error($errorMessage);
+            $code = substr($WEGenerateUrlResponse, strpos($WEGenerateUrlResponse, "signup/") + 7);
+            $newMyAlFredUser = new MyAlFredUser;
+            $newMyAlFredUser->signup_url = $WEGenerateUrlResponse;
+            $newMyAlFredUser->customer_id = $customerId;
+            $newMyAlFredUser->code = $code;
+            $newMyAlFredUser->source = "TRANSAPP";
+            $newMyAlFredUser->save();
         }
     }
 }
