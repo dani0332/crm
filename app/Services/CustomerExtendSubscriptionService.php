@@ -18,7 +18,7 @@ class CustomerExtendSubscriptionService extends BaseService
         $customerToken = MyAlFredUser::select('code')->where('customer_id', '=', $customerId)->orderBy('created_at','asc')->first();
 
         $customerDataArr = json_encode([
-            "token" => $customerToken,
+            "token" => $customerToken->code,
         ]);
         dd($customerDataArr);
 
