@@ -20,7 +20,6 @@ class CustomerExtendSubscriptionService extends BaseService
         $customerDataArr = json_encode([
             "token" => $customerToken->code,
         ]);
-        dd($customerDataArr);
 
         $magicUrlGeneratauthBasic = base64_encode($extendSubscriptionUserName . ":" . $extendSubscriptionPassword);
         $clientExtendSubscription = new \GuzzleHttp\Client();
