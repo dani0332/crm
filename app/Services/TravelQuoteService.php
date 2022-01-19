@@ -31,6 +31,8 @@ class TravelQuoteService extends BaseService
             'tqr.last_name',
             'tqr.email',
             'tqr.mobile_no',
+            'tqr.premium',
+            'tqr.source',
             'tqr.nationality_id',
             'n.TEXT AS nationality_id_text',
             'qs.id as quote_status_id',
@@ -40,10 +42,12 @@ class TravelQuoteService extends BaseService
             'tqr.region_cover_for_id',
             'r.TEXT AS region_cover_for_id_text',
             'tqrd.next_followup_date',
+            'ls.text as lost_reason',
             'tqrd.notes'
         )
             ->leftJoin('travel_cover_for as tcf', 'tcf.id', '=', 'tqr.travel_cover_for_id')
             ->leftJoin('travel_quote_request_detail as tqrd', 'tqr.id', '=', 'tqrd.travel_quote_request_id')
+            ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'tqrd.lost_reason_id')
             ->leftJoin('nationality as n', 'n.id', '=', 'tqr.nationality_id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'tqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'tqr.advisor_id')
@@ -261,6 +265,10 @@ class TravelQuoteService extends BaseService
             "advisor_id" => "select|title|required",
             "created_at" => "input|date|title|range",
             "updated_at" => "input|date|title",
+            "next_followup_date" => "input|text|required",
+            "lost_reason" => "input|text|required",
+            "source" => "input|text|required",
+            "premium" => "input|number|required",
             "days_cover_for" => "input|number|title|required",
             "destination" => "input|text|required",
             "nationality_id" => "select|title|required",
@@ -313,9 +321,9 @@ class TravelQuoteService extends BaseService
     public function fillModelSkipProperties()
     {
         return [
-            "create" => "id,created_at,id,code,advisor_id,updated_at,quote_status_id",
+            "create" => "id,created_at,id,source,code,advisor_id,updated_at,quote_status_id,next_followup_date,lost_reason",
             "list" => "email,mobile_no,region_cover_for_id,travel_cover_for_id,details,nationality_id,destination,days_cover_for",
-            "update" => 'created_at,id,code,advisor_id,updated_at,quote_status_id',
+            "update" => 'created_at,id,code,source,advisor_id,updated_at,quote_status_id,next_followup_date,lost_reason',
             "show" => "",
         ];
     }

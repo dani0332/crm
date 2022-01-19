@@ -9,6 +9,7 @@ use App\Models\GroupMedicalType;
 use App\Models\QuoteStatus;
 use App\Models\User;
 use App\Services\BusinessQuoteService;
+use App\Services\CRUDService;
 use Illuminate\Http\Request;
 use DB;
 use DataTables;
@@ -19,10 +20,11 @@ use Illuminate\Support\Facades\Redirect;
 class AMTController extends Controller
 {
     protected $businessQuoteService;
-
-    public function __construct(BusinessQuoteService $businessQuoteService)
+    protected $crudService;
+    public function __construct(BusinessQuoteService $businessQuoteService, CRUDService $crudService)
     {
         $this->businessQuoteService = $businessQuoteService;
+        $this->crudService = $crudService;
     }
     /**
      * Display a listing of the resource.
@@ -36,6 +38,7 @@ class AMTController extends Controller
             ->leftJoin('business_quote_request_detail as bqrd', 'bqr.id', '=', 'bqrd.business_quote_request_id')
             ->leftJoin('business_type_of_insurance as bit', 'bqr.business_type_of_insurance_id', '=', 'bit.id')
             ->leftJoin('users as u', 'bqr.advisor_id', '=', 'u.id')
+            ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'bqrd.lost_reason_id')
             ->leftJoin('quote_status as qs', 'bqr.quote_status_id', '=', 'qs.id')
             ->where('bit.text', '=', 'Group Medical')
             ->select(
@@ -49,9 +52,12 @@ class AMTController extends Controller
                 'bqr.updated_at',
                 'bit.text as leadType',
                 'bqr.advisor_id',
+                'bqr.source',
+                'ls.text as lost_reason',
                 'u.name as advisor_id_text',
                 'bqr.premium',
-                'bqr.company_name'
+                'bqr.company_name',
+                'bqrd.next_followup_date',
             )->orderBy('bqr.advisor_id', 'asc');
 
         if (Auth::user()->isAdvisor()) {
@@ -149,24 +155,42 @@ class AMTController extends Controller
     {
         $businessInsuranceType = BusinessInsuranceType::select('id', 'text')->where('text', 'Group Medical')->get();
         $record = BusinessQuote::where([['uuid', $id], ['business_type_of_insurance_id', 5]])->first();
-        $selectedLeadStatus  = QuoteStatus::where('id', $record->quote_status_id)->first();
+        $leadStatuses = DB::table('quote_status')
+            ->select('id', 'text')
+            ->whereNotIn('text', [
+                'AML Screening Cleared', 'AML Screening Failed', 'Transaction Declined', 'Policy Issued', 'Policy Invoiced',
+                'Completed', 'Pending', 'Rejected', 'Issued', 'Approved', 'Approval required', 'Resubmit for approval'
+            ])
+            ->get();
+        $lostReasons = DB::table('lost_reasons')
+            ->select('id', 'text')
+            ->get();
+        $selectedLostReasonId = $this->crudService->getSelectedLostReason('business', $record->id);;
+
+        $selectedLeadStatus = '';
+        if (isset($record->quote_status_id) && $record->quote_status_id != '') {
+            $selectedLeadStatus  = QuoteStatus::where('id', $record->quote_status_id)->first();
+        }
         $assignedUserName = '';
+        $assignedGMType = '';
+        if (isset($record->group_medical_type_id) &&  $record->group_medical_type_id != '') {
+            $assignedGMType = GroupMedicalType::where('id', $record->group_medical_type_id)->first()->text;
+        }
         if (isset($record->advisor_id) && $record->advisor_id != '') {
             $assignedUser = User::where('id', $record->advisor_id)->first();
             $assignedUserName = $assignedUser->name;
         }
+        $modeltype = 'business';
         $advisors = DB::table('users as u')
             ->join('model_has_roles as mr', 'mr.model_id', '=', 'u.id')
             ->join('roles as r', 'r.id', '=', 'mr.role_id')
             ->whereIn('r.name', ['RM_ADVISOR', 'GM_ADVISOR'])
             ->select('u.id', DB::raw("CONCAT(u.name,' - ',r.name) AS name"))->orderBy('r.name')->distinct()->get();
 
-        if (is_null($selectedLeadStatus)) {
-            $selectedLeadStatus = '';
-        } else {
+        if ($selectedLeadStatus != '') {
             $selectedLeadStatus = $selectedLeadStatus->text;
         }
-        return view('amt.show', compact('businessInsuranceType', 'record', 'selectedLeadStatus', 'advisors', 'assignedUserName'));
+        return view('amt.show', compact('businessInsuranceType', 'record', 'selectedLeadStatus', 'advisors', 'assignedUserName', 'assignedGMType', 'leadStatuses', 'lostReasons', 'selectedLostReasonId', 'modeltype'));
     }
 
     /**

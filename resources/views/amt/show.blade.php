@@ -157,7 +157,10 @@
                         </div>
                     </div>
                     <div class="col">
-
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="created_at"><b> Group Medical Type</b></label>
+                        <div class="col-md-6 col-sm-6 ">
+                        <p class="label-align-center">{{$assignedGMType}}</p>
+                        </div>
                     </div>
                 </div>
                 <div class="ln_solid"></div>
@@ -171,6 +174,16 @@
                 </div>
                 </form>
             </div>
+
+            <x-lead-status-update
+            :lead="$record"
+            :modeltype="$modeltype"
+            :status="$record->quote_status_id"
+            :statuses="$leadStatuses"
+            :lostreasons="$lostReasons"
+            :selectedlostreason="$selectedLostReasonId"
+        />
+
         </div>
     </div>
 </div>
