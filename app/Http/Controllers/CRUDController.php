@@ -272,7 +272,7 @@ class CRUDController extends Controller
             $validateArray = $this->homeQuoteService->getValidationArray($modelPropertiesList, $request, $modelSkipPropertiesList);
         } else {
             foreach ($modelPropertiesList as $property => $value) {
-                if (strpos($value, 'required') && $property != 'id' && $property != 'email' && $property != 'mobile_no' && !strpos($modelSkipPropertiesList, $property)) {
+                if (strpos($value, 'required') && $property != 'id' && $property != 'code' && $property != 'email' && $property != 'mobile_no' && !strpos($modelSkipPropertiesList, $property)) {
                     $validateArray[$property] = 'required';
                 }
             }

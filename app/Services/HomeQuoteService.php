@@ -376,7 +376,7 @@ class HomeQuoteService extends BaseService
                     }
                 }
             } else {
-                if ($propertyName != 'id') {
+                if ($propertyName != 'id' && $propertyName != 'email' && $propertyName != 'code'  && $propertyName != 'created_at' && $propertyName != 'updated_at' && $propertyName != 'mobile_no' && $propertyName != 'quote_status_id' && $propertyName != 'next_followup_date' && $propertyName != 'lost_reason' && $propertyName != 'source' && $propertyName != 'advisor_id') {
                     $validationArray[$propertyName] = 'required';
                 }
             }
