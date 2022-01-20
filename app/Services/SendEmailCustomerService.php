@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\EmailActivity;
 use Config;
 use Exception;
 use Illuminate\Support\Facades\Log;
@@ -35,7 +36,7 @@ class SendEmailCustomerService extends BaseService
             ]);
 
             $client = new \GuzzleHttp\Client();
-            $capiRequest = $client->post(
+            $clientRequest = $client->post(
                 $url,
                 [
                     'headers' => $headers,
@@ -44,23 +45,32 @@ class SendEmailCustomerService extends BaseService
                 ]
             );
 
-            $getStatusCode = $capiRequest->getStatusCode();
+            $getStatusCode = $clientRequest->getStatusCode();
+            $getResponse = json_encode($clientRequest->getStatusCode()." ".$clientRequest->getBody()->getContents());
 
             if($getStatusCode == 201) {
-
-
-            } else {
+                $isEmailSent = 1;
+            }
+            else {
                 $errorMessage = "SIB Error:  ".$getStatusCode." ".$emailData['customerEmail']." ".get_class();
                 Log::error($errorMessage);
+                $isEmailSent = 0;
             }
         }
         catch(Exception $ex) {
             $errorMessage = "SIB Failed Error: ".$ex->getCode()." ".$ex->getMessage()." ".get_class();
             Log::error($errorMessage);
+            $getStatusCode = $ex->getCode();
+            $getResponse = json_encode($ex->getCode()." ".$ex->getMessage());
+            $isEmailSent = 0;
         }
 
-        return $getStatusCode;
+        $newEmailActivity = new EmailActivity;
+        $newEmailActivity->api_response = $getResponse;
+        $newEmailActivity->successful = $isEmailSent;
+        $newEmailActivity->email = $emailData['customerEmail'];
+        $newEmailActivity->save();
 
-        // SAVE RESPONSE to email_activity table
+        return $getStatusCode;
     }
 }
