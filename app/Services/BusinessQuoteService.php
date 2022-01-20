@@ -166,6 +166,7 @@ class BusinessQuoteService extends BaseService
             "mobileNo" => $request->mobile_no,
             "companyName" => $request->company_name,
             "briefDetails" => $request->brief_details,
+            "premium" => $request->premium,
             "businessTypeOfInsuranceId" => $request->business_type_of_insurance_id,
             "source" => $sourceName,
             "referenceUrl" => $appUrl,
@@ -230,6 +231,7 @@ class BusinessQuoteService extends BaseService
         }
         $businessQuote->company_name = $request->company_name;
         $businessQuote->brief_details = $request->brief_details;
+        $businessQuote->premium = $request->premium;
         $businessQuote->business_type_of_insurance_id = $request->business_type_of_insurance_id;
         $businessQuote->save();
 

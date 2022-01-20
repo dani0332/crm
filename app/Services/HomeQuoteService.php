@@ -95,6 +95,7 @@ class HomeQuoteService extends BaseService
             "address" => $request->address,
             "mobileNo" => $request->mobile_no,
             "contentsAed" => $request->contents_aed,
+            "premium" => $request->premium,
             "iamPossesionTypeId" => $request->iam_possesion_type_id,
             "iliveinAccommodationTypeId" => $request->ilivein_accommodation_type_id,
             "personalBelongingsAed" => $request->personal_belongings_aed,
@@ -240,6 +241,7 @@ class HomeQuoteService extends BaseService
             'building_aed' => $request->building_aed,
             'has_contents' => $request->has_contents == 'on' ?  true : false,
             'nationality_id' => $request->nationality_id,
+            'premium' => $request->premium,
             'has_building' => $request->has_building == 'on' ? true : false,
             'has_personal_belongings' => $request->has_personal_belongings == 'on' ?  true : false,
         ];

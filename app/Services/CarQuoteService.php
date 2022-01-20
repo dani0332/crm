@@ -128,6 +128,7 @@ class CarQuoteService extends BaseService
             "seatCapacity" => $request->seat_capacity,
             "cylinder" => $request->cylinder,
             "vehicleTypeId" => $request->vehicle_type_id,
+            "premium" => $request->premium,
             "carMakeId" => $carMakeId, // ID
             "carModelId" => $request->car_model_id, // ID
             "currentlyInsuredWith" => $insuranceProviderText, // TEXT
@@ -152,6 +153,7 @@ class CarQuoteService extends BaseService
         $carQuote->emirate_of_registration_id = $request->emirate_of_registration_id;
         $carQuote->car_type_insurance_id = $request->car_type_insurance_id;
         $carQuote->claim_history_id = $request->claim_history_id;
+        $carQuote->premium = $request->premium;
         $carQuote->additional_notes = $request->additional_notes;
         $carQuote->save();
 
@@ -376,7 +378,7 @@ class CarQuoteService extends BaseService
                 $dateTo = Carbon::createFromFormat('Y-m-d', $request['created_at_end'])->endOfDay()->toDateTimeString();
                 $this->query->whereBetween('cqr.created_at', [$dateFrom, $dateTo]);
             } else {
-                $dateFrom = now()->subDays(30)->startOfDay()->toDateTimeString();
+                $dateFrom = now()->subDays(15)->startOfDay()->toDateTimeString();
                 $dateTo = Carbon::now()->endOfDay()->toDateTimeString();
                 $this->query->whereBetween('cqr.created_at', [$dateFrom, $dateTo]);
             }

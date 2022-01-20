@@ -113,6 +113,7 @@ class HealthQuoteService extends BaseService
             "preference" => $request->preference,
             "source" => $sourceName,
             "maritalStatusId" => $request->marital_status_id,
+            "premium" => $request->premium,
             "referenceUrl" => $appUrl,
             "dob" => $request->dob,
             "coverForId" => $request->cover_for_id,
@@ -198,6 +199,7 @@ class HealthQuoteService extends BaseService
             'has_worldwide_cover' => $request->has_worldwide_cover == 'on' ? true : false,
             'has_home' => $request->has_home == 'on' ? true : false,
             'emirate_of_your_visa_id' => $request->emirate_of_your_visa_id,
+            'premium' => $request->premium,
         ];
         if (!Auth::user()->hasRole('HOME_ADVISOR')) {
             $updateArray['email'] = $request->email;
