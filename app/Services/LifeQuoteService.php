@@ -84,6 +84,7 @@ class LifeQuoteService extends BaseService
             "maritalStatusId" => $request->marital_status_id,
             "purposeOfInsuranceId" => $request->purpose_of_insurance_id,
             "childrenId" => $request->children_id,
+            "premium" => $request->premium,
             "tenureOfInsuranceId" => $request->tenure_of_insurance_id,
             "numberOfYearsId" => $request->number_of_years_id,
             "isSmoker" => $request->is_smoker == 'Yes' ?  true : false,
@@ -202,6 +203,7 @@ class LifeQuoteService extends BaseService
             'last_name' => $request->last_name,
             'details' => $request->details,
             'dob' => $request->dob,
+            'premium' => $request->premium,
             'gender' => $request->gender == 'Male' ? 'M' : 'F',
             'is_smoker' => $request->is_smoker == 'Yes' ? '1' : '0',
         ];
