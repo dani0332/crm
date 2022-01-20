@@ -4,14 +4,14 @@ namespace App\Services;
 use App\Services\CustomerWEGenerateUrlService;
 use App\Models\MyAlFredUser;
 use App\Services\CustomerService;
-use Exception;
+use Exception, Log;
 class ApiService
 {
     public function fetchSignupUrl($request){
         try {
             return $this->checkmyAlredLink($request->email, $request);
         } catch(Exception $e) {
-            \Log::error($e->getLine() ." ".$e->getMessage() ." ".$e->getFile());
+            Log::error($e->getLine() ." ".$e->getMessage() ." ".$e->getFile());
             return response()->json(["message" => "Something went wrong. Please try again later."], 500);
         }
     }
