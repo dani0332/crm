@@ -32,6 +32,8 @@ class LifeQuoteService extends BaseService
                 'lqr.is_smoker',
                 'lqr.others_info',
                 'lqr.sum_insured_value',
+                'lqr.source',
+                'lqr.premium',
                 'lqr.sum_insured_currency_id',
                 'ct.TEXT AS sum_insured_currency_id_text',
                 'lqr.marital_status_id',
@@ -51,10 +53,12 @@ class LifeQuoteService extends BaseService
                 'lqr.nationality_id',
                 'n.TEXT AS nationality_id_text',
                 'lqrd.next_followup_date',
-                'lqrd.notes'
+                'lqrd.notes',
+                'ls.text as lost_reason',
             )
             ->leftJoin('life_quote_request_detail as lqrd', 'lqrd.life_quote_request_id', 'lqr.id')
             ->leftJoin('currency_type as ct', 'ct.id', '=', 'lqr.sum_insured_currency_id')
+            ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'lqrd.lost_reason_id')
             ->leftJoin('marital_status as ms', 'ms.id', '=', 'lqr.marital_status_id')
             ->leftJoin('life_insurance_purpose as lip', 'lip.id', '=', 'lqr.purpose_of_insurance_id')
             ->leftJoin('life_children as lc', 'lc.id', '=', 'lqr.children_id')
@@ -80,6 +84,7 @@ class LifeQuoteService extends BaseService
             "maritalStatusId" => $request->marital_status_id,
             "purposeOfInsuranceId" => $request->purpose_of_insurance_id,
             "childrenId" => $request->children_id,
+            "premium" => $request->premium,
             "tenureOfInsuranceId" => $request->tenure_of_insurance_id,
             "numberOfYearsId" => $request->number_of_years_id,
             "isSmoker" => $request->is_smoker == 'Yes' ?  true : false,
@@ -152,7 +157,7 @@ class LifeQuoteService extends BaseService
                 }
             }
         }
-        return $this->query->orderBy('lqr.created_at', 'ASC');
+        return $this->query->orderBy('lqr.created_at', 'DESC');
     }
 
     private function getQuerySuffix($item)
@@ -196,19 +201,21 @@ class LifeQuoteService extends BaseService
         $updateArray = [
             'first_name' => $request->first_name,
             'last_name' => $request->last_name,
-            'details' => $request->details,
             'dob' => $request->dob,
-            'gender' => $request->gender == 'Male' ? 'M' : 'F',
-            'is_smoker' => $request->is_smoker == 'Yes' ? '1' : '0',
+            'sum_insured_value' => $request->sum_insured_value,
+            'sum_insured_currency_id' => $request->sum_insured_currency_id,
+            'marital_status_id' => $request->marital_status_id,
+            'purpose_of_insurance_id' => $request->purpose_of_insurance_id,
+            'children_id' => $request->children_id,
+            'premium' => $request->premium,
+            'tenure_of_insurance_id' => $request->tenure_of_insurance_id,
+            'number_of_years_id' => $request->number_of_years_id,
+            'others_info' => $request->others_info,
         ];
-        if (!Auth::user()->hasRole('LIFE_ADVISOR')) {
-            $updateArray['email'] = $request->email;
-            $updateArray['mobile_no'] = $request->mobile_no;
-        }
         LifeQuote::where('uuid', $id)->update($updateArray);
 
         if (isset($request->return_to_view))
-            return redirect("quote/life/" . $lifeQuote->id)->with('success', 'Life Quote has been updated');
+            return redirect("quotes/life")->with('success', 'Life Quote has been updated');
     }
 
     public function getLifeLeadsForAdvisor($request)
@@ -287,18 +294,22 @@ class LifeQuoteService extends BaseService
             "email" => "input|email|required",
             "mobile_no" => "input|title|number|required",
             "quote_status_id" => "select|title",
-            "advisor_id" => "select|title|required",
+            "advisor_id" => "select|title",
             "created_at" => "input|date|title|range",
             "updated_at" => "input|date|title",
-            "sum_insured_value" => "input|number|title||required",
+            "sum_insured_value" => "input|number|title|required",
+            "next_followup_date" => "input|text",
+            "source" => "input|text",
+            "lost_reason" => "input|text",
+            "premium" => "input|number|required",
             "sum_insured_currency_id" => "select|title|required",
             "purpose_of_insurance_id" => "select|title|required",
             "marital_status_id" => "select|title|required",
             "children_id" => "select|title|required",
             "tenure_of_insurance_id" => "select|title|required",
             "number_of_years_id" => "select|title|required",
-            "gender" => "|static|required|Male,Female",
-            "is_smoker" => "|static|title|required|Yes,No",
+            "gender" => "|static|Male,Female",
+            "is_smoker" => "|static|title|Yes,No",
             "others_info" => "textarea",
         );
     }
@@ -364,9 +375,9 @@ class LifeQuoteService extends BaseService
     public function fillModelSkipProperties()
     {
         return [
-            "create" => "id,advisor_id,quote_status_id,code,created_at,updated_at",
+            "create" => "id,advisor_id,quote_status_id,code,created_at,updated_at,next_followup_date,lost_reason,source",
             "list" => "email,mobile_no,others_info,dob,sum_insured_value,sum_insured_currency_id,purpose_of_insurance_id,marital_status_id,children_id,tenure_of_insurance_id,number_of_years_id,gender,is_smoker,others_info",
-            "update" => "id,advisor_id,quote_status_id,code,created_at,updated_at",
+            "update" => "id,advisor_id,quote_status_id,code,created_at,updated_at,next_followup_date,lost_reason,source",
             "show" => "",
         ];
     }

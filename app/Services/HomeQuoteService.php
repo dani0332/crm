@@ -32,20 +32,24 @@ class HomeQuoteService extends BaseService
             'hqr.personal_belongings_aed',
             'hqr.has_building',
             'hqr.building_aed',
+            'hqr.source',
             'hqr.ilivein_accommodation_type_id',
             'hqr.quote_status_id',
             'qs.text as quote_status_id_text',
             'hqr.created_at',
             'hqr.updated_at',
+            'hqr.premium',
             'hqr.advisor_id',
             'u.name as advisor_id_text',
             'hat.TEXT AS ilivein_accommodation_type_id_text',
             'hqr.iam_possesion_type_id',
             'hpt.TEXT AS iam_possesion_type_id_text',
             'hqrd.next_followup_date',
-            'hqrd.notes'
+            'hqrd.notes',
+            'ls.text as lost_reason',
         )
             ->leftJoin('home_quote_request_detail as hqrd', 'hqrd.home_quote_request_id', '=', 'hqr.id')
+            ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'hqrd.lost_reason_id')
             ->leftJoin('home_accommodation_type as hat', 'hat.id', '=', 'hqr.ilivein_accommodation_type_id')
             ->leftJoin('home_possession_type as hpt', 'hpt.id', '=', 'hqr.iam_possesion_type_id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'hqr.quote_status_id')
@@ -91,6 +95,7 @@ class HomeQuoteService extends BaseService
             "address" => $request->address,
             "mobileNo" => $request->mobile_no,
             "contentsAed" => $request->contents_aed,
+            "premium" => $request->premium,
             "iamPossesionTypeId" => $request->iam_possesion_type_id,
             "iliveinAccommodationTypeId" => $request->ilivein_accommodation_type_id,
             "personalBelongingsAed" => $request->personal_belongings_aed,
@@ -129,7 +134,7 @@ class HomeQuoteService extends BaseService
                 }
             }
         }
-        return $this->query->orderBy('hqr.created_at', 'ASC');
+        return $this->query->orderBy('hqr.created_at', 'DESC');
     }
 
     private function getQuerySuffix($item)
@@ -236,6 +241,7 @@ class HomeQuoteService extends BaseService
             'building_aed' => $request->building_aed,
             'has_contents' => $request->has_contents == 'on' ?  true : false,
             'nationality_id' => $request->nationality_id,
+            'premium' => $request->premium,
             'has_building' => $request->has_building == 'on' ? true : false,
             'has_personal_belongings' => $request->has_personal_belongings == 'on' ?  true : false,
         ];
@@ -262,6 +268,10 @@ class HomeQuoteService extends BaseService
             "advisor_id" => "select|title",
             "created_at" => "input|date|title|range",
             "updated_at" => "input|date|title",
+            "next_followup_date" => "input|text",
+            "source" => "input|text|required",
+            "lost_reason" => "input|text",
+            "premium" => "input|number|required",
             "contents_aed" => "input|number|required",
             "personal_belongings_aed" => "input|number|required",
             "building_aed" => "input|number|required",
@@ -314,10 +324,10 @@ class HomeQuoteService extends BaseService
     public function fillModelSkipProperties()
     {
         return [
-            "create" => "id,code,quote_status_id,advisor_id,created_at,updated_at",
+            "create" => "id,code,quote_status_id,advisor_id,created_at,updated_at,next_followup_date,lost_reason,source",
             "list" => "email,address,iam_possesion_type_id,ilivein_accommodation_type_id,mobile_no,personal_belongings_aed,building_aed,contents_aed,has_contents,has_personal_belongings,has_building,address",
-            "update" => "id,code,quote_status_id,advisor_id,created_at,updated_at",
-            "show" => "id",
+            "update" => "id,code,quote_status_id,advisor_id,created_at,updated_at,next_followup_date,lost_reason,source",
+            "show" => "id,next_followup_date,lost_reason",
         ];
     }
 
@@ -366,7 +376,7 @@ class HomeQuoteService extends BaseService
                     }
                 }
             } else {
-                if ($propertyName != 'id') {
+                if ($propertyName != 'id' && $propertyName != 'email' && $propertyName != 'code'  && $propertyName != 'created_at' && $propertyName != 'updated_at' && $propertyName != 'mobile_no' && $propertyName != 'quote_status_id' && $propertyName != 'next_followup_date' && $propertyName != 'lost_reason' && $propertyName != 'source' && $propertyName != 'advisor_id') {
                     $validationArray[$propertyName] = 'required';
                 }
             }

@@ -187,7 +187,7 @@
 
     <x-lead-status-update
             :lead="$record"
-            :model="$model"
+            :modeltype="$model->modelType"
             :status="$record->quote_status_id"
             :statuses="$leadStatuses"
             :lostreasons="$lostReasons"

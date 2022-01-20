@@ -35,6 +35,7 @@ class HealthQuoteService extends BaseService
             'hqr.has_dental',
             'hqr.health_team_type',
             'hqr.has_home',
+            'hqr.premium',
             'hqr.has_worldwide_cover',
             'hqr.marital_status_id',
             'ms.TEXT AS marital_status_id_text',
@@ -49,10 +50,12 @@ class HealthQuoteService extends BaseService
             'hqr.advisor_id',
             'u.name as advisor_id_text',
             'hqrd.next_followup_date',
-            'hqrd.notes'
+            'hqrd.notes',
+            'ls.text as lost_reason',
         )
             ->leftJoin('marital_status as ms', 'ms.id', '=', 'hqr.marital_status_id')
             ->leftJoin('health_quote_request_detail as hqrd', 'hqrd.health_quote_request_id', '=', 'hqr.id')
+            ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'hqrd.lost_reason_id')
             ->leftJoin('health_cover_for as hcf', 'hcf.id', '=', 'hqr.cover_for_id')
             ->leftJoin('nationality as n', 'n.id', '=', 'hqr.nationality_id')
             ->leftJoin('emirates as e', 'e.id', '=', 'hqr.emirate_of_your_visa_id')
@@ -110,6 +113,7 @@ class HealthQuoteService extends BaseService
             "preference" => $request->preference,
             "source" => $sourceName,
             "maritalStatusId" => $request->marital_status_id,
+            "premium" => $request->premium,
             "referenceUrl" => $appUrl,
             "dob" => $request->dob,
             "coverForId" => $request->cover_for_id,
@@ -146,7 +150,7 @@ class HealthQuoteService extends BaseService
                 }
             }
         }
-        return $this->query->orderBy('hqr.created_at', 'ASC');
+        return $this->query->orderBy('hqr.created_at', 'DESC');
     }
 
     private function getQuerySuffix($item)
@@ -195,11 +199,8 @@ class HealthQuoteService extends BaseService
             'has_worldwide_cover' => $request->has_worldwide_cover == 'on' ? true : false,
             'has_home' => $request->has_home == 'on' ? true : false,
             'emirate_of_your_visa_id' => $request->emirate_of_your_visa_id,
+            'premium' => $request->premium,
         ];
-        if (!Auth::user()->hasRole('HOME_ADVISOR')) {
-            $updateArray['email'] = $request->email;
-            $updateArray['mobile_no'] = $request->mobile_no;
-        }
         HealthQuote::where('uuid', $id)->update($updateArray);
 
         if (isset($request->return_to_view))
@@ -281,10 +282,13 @@ class HealthQuoteService extends BaseService
             "email" => "input|email|required",
             "mobile_no" => "input|title|number|required",
             "quote_status_id" => "select|title",
-            "advisor_id" => "select|title|required",
+            "advisor_id" => "select|title",
             "created_at" => "input|date|title|range",
             "updated_at" => "input|date|title",
             "dob" => "input|title|date|required",
+            "next_followup_date" => "input|text",
+            "lost_reason" => "input|text",
+            "premium" => "input|number|required",
             "preference" => "input|text",
             "details" => "input|text",
             "source" => "input|text|title",
@@ -361,10 +365,10 @@ class HealthQuoteService extends BaseService
     public function fillModelSkipProperties()
     {
         return [
-            "create" => "created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type",
-            "list" => "email,health_team_type,cover_for_id,has_worldwide_cover,has_home,details,preference,mobile_no,dob,marital_status_id,nationality_id,source,has_dental,emirate_of_your_visa_id",
-            "update" => "created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type",
-            "show" => "id,health_team_type",
+            "create" => "created_at,updated_at,id,source,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason",
+            "list" => "email,health_team_type,cover_for_id,has_worldwide_cover,has_home,details,preference,mobile_no,dob,marital_status_id,nationality_id,has_dental,emirate_of_your_visa_id",
+            "update" => "created_at,updated_at,id,source,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason",
+            "show" => "id,health_team_type,next_followup_date",
         ];
     }
 
