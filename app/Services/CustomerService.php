@@ -14,6 +14,11 @@ class CustomerService extends BaseService
         return Customer::where('email', '=', $email)->get();
     }
 
+    public static function getUniqueCustomerByEmail($email)
+    {
+        return Customer::where('email', '=', $email)->first();
+    }
+
     public static function updatePolicyExpiry($email, $expiry_date)
     {
         //Log::channel('daily')->info('Inside updatePolicyExpiry');
