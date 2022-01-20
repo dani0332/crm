@@ -185,6 +185,7 @@ class HealthQuoteService extends BaseService
 
     public function updateHealthQuote(Request $request, $id)
     {
+        dd($request->all());
         $updateArray = [
             'first_name' => $request->first_name,
             'last_name' => $request->last_name,
@@ -201,10 +202,6 @@ class HealthQuoteService extends BaseService
             'emirate_of_your_visa_id' => $request->emirate_of_your_visa_id,
             'premium' => $request->premium,
         ];
-        if (!Auth::user()->hasRole('HOME_ADVISOR')) {
-            $updateArray['email'] = $request->email;
-            $updateArray['mobile_no'] = $request->mobile_no;
-        }
         HealthQuote::where('uuid', $id)->update($updateArray);
 
         if (isset($request->return_to_view))
@@ -286,12 +283,12 @@ class HealthQuoteService extends BaseService
             "email" => "input|email|required",
             "mobile_no" => "input|title|number|required",
             "quote_status_id" => "select|title",
-            "advisor_id" => "select|title|required",
+            "advisor_id" => "select|title",
             "created_at" => "input|date|title|range",
             "updated_at" => "input|date|title",
             "dob" => "input|title|date|required",
-            "next_followup_date" => "input|text|required",
-            "lost_reason" => "input|text|required",
+            "next_followup_date" => "input|text",
+            "lost_reason" => "input|text",
             "premium" => "input|number|required",
             "preference" => "input|text",
             "details" => "input|text",
