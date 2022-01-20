@@ -31,6 +31,8 @@ class TravelQuoteService extends BaseService
             'tqr.last_name',
             'tqr.email',
             'tqr.mobile_no',
+            'tqr.premium',
+            'tqr.source',
             'tqr.nationality_id',
             'n.TEXT AS nationality_id_text',
             'qs.id as quote_status_id',
@@ -40,10 +42,12 @@ class TravelQuoteService extends BaseService
             'tqr.region_cover_for_id',
             'r.TEXT AS region_cover_for_id_text',
             'tqrd.next_followup_date',
+            'ls.text as lost_reason',
             'tqrd.notes'
         )
             ->leftJoin('travel_cover_for as tcf', 'tcf.id', '=', 'tqr.travel_cover_for_id')
             ->leftJoin('travel_quote_request_detail as tqrd', 'tqr.id', '=', 'tqrd.travel_quote_request_id')
+            ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'tqrd.lost_reason_id')
             ->leftJoin('nationality as n', 'n.id', '=', 'tqr.nationality_id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'tqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'tqr.advisor_id')
@@ -61,6 +65,7 @@ class TravelQuoteService extends BaseService
             "details" => $request->details,
             "mobileNo" => $request->mobile_no,
             "travelCoverForId" => $request->travel_cover_for_id,
+            "premium" => $request->premium,
             "nationalityId" => $request->nationality_id,
             "daysCoverFor" => $request->days_cover_for,
             "destination" => $request->destination,
@@ -123,6 +128,7 @@ class TravelQuoteService extends BaseService
                 'u.name as assignedBy',
                 'tqr.updated_at',
                 'tqr.source as leadSource',
+                'tqrd.next_followup_date as nextFollowupDate',
             )
             ->leftJoin('travel_quote_request_detail as tqrd', 'tqrd.travel_quote_request_id', '=', 'tqr.id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'tqr.quote_status_id')
@@ -165,7 +171,7 @@ class TravelQuoteService extends BaseService
                 }
             }
         }
-        return $this->query->orderBy('tqr.created_at', 'ASC');
+        return $this->query->orderBy('tqr.created_at', 'DESC');
     }
 
     private function getQuerySuffix($item)
@@ -234,14 +240,11 @@ class TravelQuoteService extends BaseService
             'travel_cover_for_id' => $request->travel_cover_for_id,
             'nationality_id' => $request->nationality_id,
             'days_cover_for' => $request->days_cover_for,
+            'premium' => $request->premium,
             'destination' => $request->destination,
             'region_cover_for_id' => $request->region_cover_for_id,
             'details' => $request->details,
         ];
-        if (!Auth::user()->hasRole('TRAVEL_ADVISOR')) {
-            $updateArray['email'] = $request->email;
-            $updateArray['mobile_no'] = $request->mobile_no;
-        }
         TravelQuote::where('uuid', $id)->update($updateArray);
         if (isset($request->return_to_view))
             return redirect("quote/travel/" . $id)->with('success', 'Travel Quote has been updated');
@@ -257,9 +260,13 @@ class TravelQuoteService extends BaseService
             "email" => "input|email|required",
             "mobile_no" => "input|title|number|required",
             "quote_status_id" => "select|title",
-            "advisor_id" => "select|title|required",
+            "advisor_id" => "select|title",
             "created_at" => "input|date|title|range",
             "updated_at" => "input|date|title",
+            "next_followup_date" => "input|text",
+            "lost_reason" => "input|text",
+            "source" => "input|text",
+            "premium" => "input|number|required",
             "days_cover_for" => "input|number|title|required",
             "destination" => "input|text|required",
             "nationality_id" => "select|title|required",
@@ -312,9 +319,9 @@ class TravelQuoteService extends BaseService
     public function fillModelSkipProperties()
     {
         return [
-            "create" => "id,created_at,id,code,advisor_id,updated_at,quote_status_id",
+            "create" => "id,created_at,id,source,code,advisor_id,updated_at,quote_status_id,next_followup_date,lost_reason",
             "list" => "email,mobile_no,region_cover_for_id,travel_cover_for_id,details,nationality_id,destination,days_cover_for",
-            "update" => 'created_at,id,code,advisor_id,updated_at,quote_status_id',
+            "update" => 'created_at,id,code,source,advisor_id,updated_at,quote_status_id,next_followup_date,lost_reason',
             "show" => "",
         ];
     }

@@ -208,11 +208,9 @@ class CRUDController extends Controller
 
             if (isset($quotePlans->message) && $quotePlans->message != '') {
                 $listQuotePlans = $quotePlans->message;
-
             } else {
                 if (gettype($quotePlans) != 'string') {
                     $listQuotePlans = $quotePlans->quotes->plans;
-
                 } else {
                     $listQuotePlans = $quotePlans;
                 }
@@ -270,12 +268,11 @@ class CRUDController extends Controller
         $modelType = json_decode($request->all()['modelType'], true);
         $modelSkipPropertiesList = json_decode($request->get('modelSkipProperties'), true);
         $validateArray = [];
-
         if ($modelType == 'Home') {
-            $validateArray = $this->homeQuoteService->getValidationArray($modelPropertiesList, $request, $modelSkipPropertiesList['update']);
+            $validateArray = $this->homeQuoteService->getValidationArray($modelPropertiesList, $request, $modelSkipPropertiesList);
         } else {
             foreach ($modelPropertiesList as $property => $value) {
-                if (strpos($value, 'required') && $property != 'id' && !strpos($modelSkipPropertiesList['update'], $property)) {
+                if (strpos($value, 'required') && $property != 'id' && $property != 'code' && $property != 'email' && $property != 'mobile_no' && !strpos($modelSkipPropertiesList, $property)) {
                     $validateArray[$property] = 'required';
                 }
             }

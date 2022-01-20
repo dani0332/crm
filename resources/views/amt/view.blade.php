@@ -62,6 +62,9 @@
             { data: "advisor_id_text", name: "advisor_id_text" },
             { data: "premium", name: "premium" },
             { data: "company_name", name: "company_name" },
+            { data: "next_followup_date", name: "next_followup_date" },
+            { data: "lost_reason", name: "lost_reason" },
+            { data: "source", name: "source" },
             { data: "created_at", name: "created_at" },
             { data: "updated_at", name: "updated_at" },
 
@@ -334,6 +337,9 @@
                             <th>Assigned To</th>
                             <th>Premium</th>
                             <th>Company Name</th>
+                            <th>Next FollowUp Date</th>
+                            <th>Lost Reason</th>
+                            <th>Source</th>
                             <th>Created At</th>
                             <th>Updated At</th>
                         </tr>
