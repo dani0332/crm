@@ -245,10 +245,6 @@ class TravelQuoteService extends BaseService
             'region_cover_for_id' => $request->region_cover_for_id,
             'details' => $request->details,
         ];
-        if (!Auth::user()->hasRole('TRAVEL_ADVISOR')) {
-            $updateArray['email'] = $request->email;
-            $updateArray['mobile_no'] = $request->mobile_no;
-        }
         TravelQuote::where('uuid', $id)->update($updateArray);
         if (isset($request->return_to_view))
             return redirect("quote/travel/" . $id)->with('success', 'Travel Quote has been updated');
@@ -264,11 +260,11 @@ class TravelQuoteService extends BaseService
             "email" => "input|email|required",
             "mobile_no" => "input|title|number|required",
             "quote_status_id" => "select|title",
-            "advisor_id" => "select|title|required",
+            "advisor_id" => "select|title",
             "created_at" => "input|date|title|range",
             "updated_at" => "input|date|title",
-            "next_followup_date" => "input|text|required",
-            "lost_reason" => "input|text|required",
+            "next_followup_date" => "input|text",
+            "lost_reason" => "input|text",
             "source" => "input|text|required",
             "premium" => "input|number|required",
             "days_cover_for" => "input|number|title|required",
