@@ -201,20 +201,21 @@ class LifeQuoteService extends BaseService
         $updateArray = [
             'first_name' => $request->first_name,
             'last_name' => $request->last_name,
-            'details' => $request->details,
             'dob' => $request->dob,
+            'sum_insured_value' => $request->sum_insured_value,
+            'sum_insured_currency_id' => $request->sum_insured_currency_id,
+            'marital_status_id' => $request->marital_status_id,
+            'purpose_of_insurance_id' => $request->purpose_of_insurance_id,
+            'children_id' => $request->children_id,
             'premium' => $request->premium,
-            'gender' => $request->gender == 'Male' ? 'M' : 'F',
-            'is_smoker' => $request->is_smoker == 'Yes' ? '1' : '0',
+            'tenure_of_insurance_id' => $request->tenure_of_insurance_id,
+            'number_of_years_id' => $request->number_of_years_id,
+            'others_info' => $request->others_info,
         ];
-        if (!Auth::user()->hasRole('LIFE_ADVISOR')) {
-            $updateArray['email'] = $request->email;
-            $updateArray['mobile_no'] = $request->mobile_no;
-        }
         LifeQuote::where('uuid', $id)->update($updateArray);
 
         if (isset($request->return_to_view))
-            return redirect("quote/life/" . $lifeQuote->id)->with('success', 'Life Quote has been updated');
+            return redirect("quotes/life")->with('success', 'Life Quote has been updated');
     }
 
     public function getLifeLeadsForAdvisor($request)
@@ -296,9 +297,9 @@ class LifeQuoteService extends BaseService
             "advisor_id" => "select|title",
             "created_at" => "input|date|title|range",
             "updated_at" => "input|date|title",
-            "sum_insured_value" => "input|number|title||required",
+            "sum_insured_value" => "input|number|title|required",
             "next_followup_date" => "input|text",
-            "source" => "input|text|required",
+            "source" => "input|text",
             "lost_reason" => "input|text",
             "premium" => "input|number|required",
             "sum_insured_currency_id" => "select|title|required",
@@ -307,8 +308,8 @@ class LifeQuoteService extends BaseService
             "children_id" => "select|title|required",
             "tenure_of_insurance_id" => "select|title|required",
             "number_of_years_id" => "select|title|required",
-            "gender" => "|static|required|Male,Female",
-            "is_smoker" => "|static|title|required|Yes,No",
+            "gender" => "|static|Male,Female",
+            "is_smoker" => "|static|title|Yes,No",
             "others_info" => "textarea",
         );
     }

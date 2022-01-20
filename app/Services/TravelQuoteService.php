@@ -265,7 +265,7 @@ class TravelQuoteService extends BaseService
             "updated_at" => "input|date|title",
             "next_followup_date" => "input|text",
             "lost_reason" => "input|text",
-            "source" => "input|text|required",
+            "source" => "input|text",
             "premium" => "input|number|required",
             "days_cover_for" => "input|number|title|required",
             "destination" => "input|text|required",

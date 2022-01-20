@@ -222,17 +222,14 @@ class BusinessQuoteService extends BaseService
 
     public function updateBusinessQuote(Request $request, $id)
     {
-        $businessQuote = BusinessQuote::find($id);
+        $businessQuote = BusinessQuote::where('code', 'BUS-' . $id)->first();
         $businessQuote->first_name = $request->first_name;
         $businessQuote->last_name = $request->last_name;
-        if (!Auth::user()->hasRole('BUSINESS_ADVISOR')) {
-            $businessQuote->email = $request->email;
-            $businessQuote->mobile_no = $request->mobile_no;
-        }
         $businessQuote->company_name = $request->company_name;
         $businessQuote->brief_details = $request->brief_details;
         $businessQuote->premium = $request->premium;
         $businessQuote->business_type_of_insurance_id = $request->business_type_of_insurance_id;
+        $businessQuote->number_of_employees = $request->number_of_employees;
         $businessQuote->save();
 
         if (isset($request->return_to_view))
@@ -250,7 +247,7 @@ class BusinessQuoteService extends BaseService
             "mobile_no" => "input|title|number|required",
             "company_name" => "input|text|required",
             "next_followup_date" => "input|text",
-            "source" => "input|text|required",
+            "source" => "input|text",
             "lost_reason" => "input|text",
             "advisor_id" => "select|title",
             "quote_status_id" => "select|title",
@@ -303,9 +300,9 @@ class BusinessQuoteService extends BaseService
     public function fillModelSkipProperties()
     {
         return [
-            "create" => "id,advisor_id,quote_status_id,code,premium,updated_at,created_at,next_followup_date,lost_reason,source",
+            "create" => "id,advisor_id,quote_status_id,code,updated_at,created_at,next_followup_date,lost_reason,source",
             "list" => "email,mobile_no,brief_details,dob",
-            "update" => "id,advisor_id,quote_status_id,code,premium,updated_at,created_at,next_followup_date,lost_reason,source",
+            "update" => "id,advisor_id,quote_status_id,code,updated_at,created_at,next_followup_date,lost_reason,source",
             "show" => "",
         ];
     }
