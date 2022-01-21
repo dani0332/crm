@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Models\CarQuoteRequestDetail;
 use App\Models\GenericModel;
@@ -111,10 +112,12 @@ class CRUDService extends BaseService
             ->join('model_has_roles as mr', 'mr.model_id', '=', 'u.id')
             ->join('roles as r', 'r.id', '=', 'mr.role_id')
             ->select('u.id', DB::raw("CONCAT(u.name,' - ',r.name) AS name"));
-        if (strtolower($modelType) == 'car') {
+        if (strtolower($modelType) == strtolower(quoteTypeCode::Car)) {
             $query->whereIn('r.name', [strtoupper($modelType) . '_ADVISOR', 'advisor']);
-        } else if (strtolower($modelType) == 'health') {
+        } else if (strtolower($modelType) ==  strtolower(quoteTypeCode::Health)) {
             $query->whereIn('r.name', [strtoupper($modelType) . '_WCU_ADVISOR', 'RM_ADVISOR', 'EBP_ADVISOR']);
+        } else if (strtolower($modelType) ==  strtolower(quoteTypeCode::Business)) {
+            $query->whereIn('r.name', ['CORPLINE_ADVISOR']);
         } else {
             $query->where('r.name', strtoupper($modelType) . '_ADVISOR');
         }

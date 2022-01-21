@@ -19,4 +19,8 @@ final class quoteTypeCode extends Enum
     const Bike = "Bike";
     const Yacht = "Yacht";
     const Travel = "Travel";
+    const RM = "RM";
+    const EBP = "EBP";
+    const CORPLINE = "CORPLINE";
+    const GM = "GM";
 }

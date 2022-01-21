@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\quoteTypeCode;
 use App\Models\BusinessInsuranceType;
 use App\Models\CarMake;
 use App\Models\CarModel;
@@ -77,7 +78,7 @@ class DropdownSourceService extends BaseService
 
     public function getDropdownSource($type)
     {
-        $advisorType = strtoupper(explode('/', $_SERVER["REQUEST_URI"])[2]) . '_ADVISOR';
+        $advisorType = strtoupper(explode('/', $_SERVER["REQUEST_URI"])[2]);
         $data = '';
         switch ($type) {
             case 'marital_status_id':
@@ -129,13 +130,20 @@ class DropdownSourceService extends BaseService
                 $data = YearOfManufacture::select('id', 'text')->get();
                 break;
             case 'advisor_id':
-                if (!empty($advisorType)) {
-                    $data = DB::table('users as u')->select('u.id', 'u.name')
+                if (strtolower($advisorType) == strtolower(quoteTypeCode::Health)) {
+                    $data = DB::table('users as u')->select('u.id', DB::raw("CONCAT(u.name,' - ',r.name) AS name"))
                         ->join('model_has_roles as mhr', 'mhr.model_id', '=', 'u.id')
                         ->join('roles as r', 'mhr.role_id', '=', 'r.id')
-                        ->where('r.name', '=', $advisorType)->get();
+                        ->whereIn('r.name', ['RM_ADVISOR', 'EBP_ADVISOR', 'HEALTH_WCU_ADVISOR'])->get();
                 } else {
-                    $data = User::select('id', 'name')->get();
+                    if (!empty($advisorType)) {
+                        $data = DB::table('users as u')->select('u.id',  'u.name')
+                            ->join('model_has_roles as mhr', 'mhr.model_id', '=', 'u.id')
+                            ->join('roles as r', 'mhr.role_id', '=', 'r.id')
+                            ->where('r.name', '=', $advisorType)->get();
+                    } else {
+                        $data = User::select('id', 'name')->get();
+                    }
                 }
                 break;
             case 'iam_possesion_type_id':
