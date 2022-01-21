@@ -319,9 +319,9 @@ class TravelQuoteService extends BaseService
     public function fillModelSkipProperties()
     {
         return [
-            "create" => "id,created_at,id,source,code,advisor_id,updated_at,quote_status_id,next_followup_date,lost_reason",
+            "create" => "id,created_at,id,code,advisor_id,updated_at,quote_status_id,next_followup_date,lost_reason",
             "list" => "email,mobile_no,region_cover_for_id,travel_cover_for_id,details,nationality_id,destination,days_cover_for",
-            "update" => 'created_at,id,code,source,advisor_id,updated_at,quote_status_id,next_followup_date,lost_reason',
+            "update" => 'created_at,id,code,advisor_id,updated_at,quote_status_id,next_followup_date,lost_reason',
             "show" => "",
         ];
     }

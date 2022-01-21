@@ -184,7 +184,7 @@
             </div>
         </div>
     </div>
-
+    @if(strtolower($model->modelType) != 'teams' && strtolower($model->modelType) != 'leadstatus')
     <x-lead-status-update
             :lead="$record"
             :modeltype="$model->modelType"
@@ -193,7 +193,7 @@
             :lostreasons="$lostReasons"
             :selectedlostreason="$selectedLostReasonId"
         />
-
+    @endif
     @if($model->modelType == "Car")
 
         <div class="modal fade" id="quotePlanModal" name="quotePlanModal" tabindex="-1" role="dialog" aria-labelledby="quotePlanModalLabel" aria-hidden="true">
