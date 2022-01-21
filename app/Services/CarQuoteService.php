@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\CarMake;
+use App\Models\CarModel;
 use App\Models\CarQuote;
 use App\Models\CarQuoteRequestDetail;
 use App\Models\InsuranceProvider;
@@ -81,9 +82,11 @@ class CarQuoteService extends BaseService
                 'vt.text as vehicle_type_id_text',
                 'cqr.currently_insured_with',
                 'ciw.text as currently_insured_with_text',
+                'ls.text as lost_reason',
             )
             ->leftJoin('nationality as n', 'n.id', '=', 'cqr.nationality_id')
             ->leftJoin('car_quote_request_detail as cqrd', 'cqrd.car_quote_request_id', '=', 'cqr.id')
+            ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'cqrd.lost_reason_id')
             ->leftJoin('car_make as cmake', 'cmake.id', '=', 'cqr.car_make_id')
             ->leftJoin('uae_license_held_for as ulhf', 'ulhf.id', '=', 'cqr.uae_license_held_for_id')
             ->leftJoin('car_model as cmodel', 'cmodel.id', '=', 'cqr.car_model_id')
@@ -126,6 +129,7 @@ class CarQuoteService extends BaseService
             "seatCapacity" => $request->seat_capacity,
             "cylinder" => $request->cylinder,
             "vehicleTypeId" => $request->vehicle_type_id,
+            "premium" => $request->premium,
             "carMakeId" => $carMakeId, // ID
             "carModelId" => $request->car_model_id, // ID
             "currentlyInsuredWith" => $insuranceProviderText, // TEXT
@@ -138,7 +142,7 @@ class CarQuoteService extends BaseService
 
     public function updateCarQuote(Request $request, $id)
     {
-        $carQuote = CarQuote::find($id);
+        $carQuote = CarQuote::where('code', '=', 'CAR-' . $id)->first();
         $carQuote->first_name = $request->first_name;
         $carQuote->last_name = $request->last_name;
         $carQuote->email = $request->email;
@@ -150,7 +154,15 @@ class CarQuoteService extends BaseService
         $carQuote->emirate_of_registration_id = $request->emirate_of_registration_id;
         $carQuote->car_type_insurance_id = $request->car_type_insurance_id;
         $carQuote->claim_history_id = $request->claim_history_id;
+        $carQuote->premium = $request->premium;
+        $carQuote->car_value = $request->car_value;
+        $carQuote->seat_capacity = $request->seat_capacity;
+        $carQuote->cylinder = $request->cylinder;
+        $carQuote->vehicle_type_id = $request->vehicle_type_id;
         $carQuote->additional_notes = $request->additional_notes;
+        $carQuote->car_make_id = CarMake::where('code', '=', $request->car_make_id)->value('id');
+        $carQuote->car_model_id = CarModel::where('code', '=', $request->car_model_id)->value('id');
+        $carQuote->currently_insured_with = $request->currently_insured_with;
         $carQuote->save();
 
         if (isset($request->return_to_view))
@@ -200,7 +212,7 @@ class CarQuoteService extends BaseService
             "email" => "input|email|required",
             "mobile_no" => "input|title|number|required",
             "quote_status_id" => "select|title",
-            "advisor_id" => "select|title|required",
+            "advisor_id" => "select|title",
             "dob" => "input|title|date|required",
             "is_ecommerce" => "|static|title|Yes,No",
             "payment_status_id" => "select|title",
@@ -208,6 +220,9 @@ class CarQuoteService extends BaseService
             "updated_at" => "input|date|title",
             "car_value" => "input|number|required",
             "seat_capacity" => "input|number|required",
+            "next_followup_date" => "input|text",
+            "source" => "input|text",
+            "lost_reason" => "input|text",
             "cylinder" => "input|number|required",
             "vehicle_type_id" => "select|title|required",
             "nationality_id" => "select|title|required",
@@ -338,6 +353,7 @@ class CarQuoteService extends BaseService
                 'u.name as assignedBy',
                 'cqr.updated_at',
                 'cqr.source as leadSource',
+                'cqrd.next_followup_date as nextFollowupDate',
             )
             ->leftJoin('car_quote_request_detail as cqrd', 'cqrd.car_quote_request_id', '=', 'cqr.id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'cqr.quote_status_id')
@@ -369,6 +385,10 @@ class CarQuoteService extends BaseService
                 $dateFrom = Carbon::createFromFormat('Y-m-d', $request['created_at'])->startOfDay()->toDateTimeString();
                 $dateTo = Carbon::createFromFormat('Y-m-d', $request['created_at_end'])->endOfDay()->toDateTimeString();
                 $this->query->whereBetween('cqr.created_at', [$dateFrom, $dateTo]);
+            } else {
+                $dateFrom = now()->subDays(15)->startOfDay()->toDateTimeString();
+                $dateTo = Carbon::now()->endOfDay()->toDateTimeString();
+                $this->query->whereBetween('cqr.created_at', [$dateFrom, $dateTo]);
             }
             if (Auth::user()->hasRole('ADMIN')) {
                 array_push($searchProperties, 'is_ecommerce');
@@ -385,7 +405,7 @@ class CarQuoteService extends BaseService
                 }
             }
         }
-        return $this->query->orderBy('cqr.created_at', 'ASC');
+        return $this->query->orderBy('cqr.created_at', 'DESC');
     }
 
     private function getQuerySuffix($item)
@@ -473,9 +493,9 @@ class CarQuoteService extends BaseService
     public function fillModelSkipProperties()
     {
         return [
-            "create" => "id,advisor_id,premium,paid_at,payment_status_id,plan_id,car_plan_provider_id,code,is_ecommerce,payment_gateway,created_at,updated_at,promo_code,quote_status_id,device,policy_number,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by",
-            "list" => "additional_notes,email,mobile_no,premium,paid_at,plan_id,car_plan_provider_id,payment_gateway,currently_insured_with,promo_code,car_make_id,car_model_id,device,policy_number,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by,nationality_id,dob,year_of_manufacture,uae_license_held_for_id,car_value,emirate_of_registration_id,claim_history_id,car_type_insurance_id",
-            "update" => "id,advisor_id,premium,paid_at,payment_status_id,plan_id,car_plan_provider_id,code,is_ecommerce,payment_gateway,created_at,updated_at,currently_insured_with,promo_code,car_make_id,car_model_id,device,policy_number,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by",
+            "create" => "id,advisor_id,paid_at,source,lost_reason,payment_status_id,plan_id,car_plan_provider_id,code,is_ecommerce,payment_gateway,created_at,next_followup_date,updated_at,promo_code,quote_status_id,device,policy_number,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by",
+            "list" => "additional_notes,email,mobile_no,paid_at,plan_id,car_plan_provider_id,payment_gateway,currently_insured_with,promo_code,car_make_id,car_model_id,device,policy_number,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by,nationality_id,dob,year_of_manufacture,uae_license_held_for_id,car_value,emirate_of_registration_id,claim_history_id,car_type_insurance_id",
+            "update" => "id,advisor_id,paid_at,source,payment_status_id,lost_reason,plan_id,car_plan_provider_id,code,is_ecommerce,payment_gateway,created_at,next_followup_date,updated_at,promo_code,device,policy_number,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by",
             "show" => "",
         ];
     }
