@@ -114,7 +114,7 @@ class CRUDService extends BaseService
         if (strtolower($modelType) == 'car') {
             $query->whereIn('r.name', [strtoupper($modelType) . '_ADVISOR', 'advisor']);
         } else if (strtolower($modelType) == 'health') {
-            $query->whereIn('r.name', [strtoupper($modelType) . '_ADVISOR', 'WCU_ADVISOR']);
+            $query->whereIn('r.name', [strtoupper($modelType) . '_WCU_ADVISOR', 'RM_ADVISOR', 'EBP_ADVISOR']);
         } else {
             $query->where('r.name', strtoupper($modelType) . '_ADVISOR');
         }
