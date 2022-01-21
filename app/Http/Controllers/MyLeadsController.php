@@ -7,6 +7,7 @@ use App\Services\CRUDService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use DataTables;
+use App\Enums\quoteTypeCode;
 
 class MyLeadsController extends Controller
 {
@@ -33,6 +34,11 @@ class MyLeadsController extends Controller
         $leadStatusList = QuoteStatus::select('id', 'text')->get();
         if ($request->ajax()) {
             $leadType = strtolower($request->leadType);
+            if ($leadType == strtolower(quoteTypeCode::RM) || $leadType == strtolower(quoteTypeCode::EBP)) {
+                $leadType = 'health';
+            } else if ($leadType == strtolower(quoteTypeCode::CORPLINE) || $leadType == strtolower(quoteTypeCode::GM)) {
+                $leadType = 'business';
+            }
             $gridData = $this->crudService->getAdvisorLeads($request, $leadType);
             return DataTables::of($gridData)
                 ->addIndexColumn()
