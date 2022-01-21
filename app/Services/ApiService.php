@@ -4,6 +4,7 @@ namespace App\Services;
 use App\Services\CustomerWEGenerateUrlService;
 use App\Models\MyAlFredUser;
 use App\Services\CustomerService;
+use App\Models\Customer;
 use Exception, Log;
 class ApiService
 {
@@ -35,17 +36,15 @@ class ApiService
     private function generateSignupUrl($customer, $request) {
         $WEGenerateUrlResponse = CustomerWEGenerateUrlService::getCustomerWeUrl($request);
         if(gettype($WEGenerateUrlResponse) == 'string') {
-            $customer->is_we_sent = true;
-            $customer->save();
+            Customer::where("id", $customer->id)->update(['is_we_sent' => true]);
 
-            $newMyAlFredUser = new MyAlFredUser;
+            $newMyAlFredUser = new MyAlFredUser();
             $newMyAlFredUser->signup_url = $WEGenerateUrlResponse;
             $newMyAlFredUser->customer_id = $customer->id;
             $newMyAlFredUser->code =  substr($WEGenerateUrlResponse, strpos($WEGenerateUrlResponse, "signup/") + 7); // code;
             $newMyAlFredUser->source = "IMCRM";
             $newMyAlFredUser->save();
-            
-            return $newMyAlFredUser->signup_url;
+            return response()->json(["message" => $newMyAlFredUser->signup_url], 500);
         }else 
             return response()->json(["message" => $WEGenerateUrlResponse], 500);
 
