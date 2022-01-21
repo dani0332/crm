@@ -39,9 +39,12 @@ class BusinessQuoteService extends BaseService
                 'bqr.premium',
                 'bqrd.next_followup_date',
                 'bqrd.notes',
+                'ls.text as lost_reason',
+                'bqr.source',
             )
-            ->Join('business_type_of_insurance as bti', 'bti.id', '=', 'bqr.business_type_of_insurance_id')
+            ->leftJoin('business_type_of_insurance as bti', 'bti.id', '=', 'bqr.business_type_of_insurance_id')
             ->leftJoin('business_quote_request_detail as bqrd', 'bqrd.business_quote_request_id', '=', 'bqr.id')
+            ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'bqrd.lost_reason_id')
             ->leftJoin('users as u', 'u.id', '=', 'bqr.advisor_id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'bqr.quote_status_id');
     }
@@ -98,6 +101,7 @@ class BusinessQuoteService extends BaseService
                 'bqr.source as leadSource',
                 'bqr.company_name',
                 'bqr.premium',
+                'bqrd.next_followup_date as nextFollowupDate',
             )
             ->leftJoin('business_quote_request_detail as bqrd', 'bqrd.business_quote_request_id', '=', 'bqr.id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'bqr.quote_status_id')
@@ -162,6 +166,7 @@ class BusinessQuoteService extends BaseService
             "mobileNo" => $request->mobile_no,
             "companyName" => $request->company_name,
             "briefDetails" => $request->brief_details,
+            "premium" => $request->premium,
             "businessTypeOfInsuranceId" => $request->business_type_of_insurance_id,
             "source" => $sourceName,
             "referenceUrl" => $appUrl,
@@ -194,7 +199,7 @@ class BusinessQuoteService extends BaseService
                 }
             }
         }
-        return $this->query->where('bti.text', '!=', 'Group Medical')->orderBy('bqr.created_at', 'ASC');
+        return $this->query->where('bti.text', '!=', 'Group Medical')->orderBy('bqr.created_at', 'DESC');
     }
 
     private function getQuerySuffix($item)
@@ -217,16 +222,14 @@ class BusinessQuoteService extends BaseService
 
     public function updateBusinessQuote(Request $request, $id)
     {
-        $businessQuote = BusinessQuote::find($id);
+        $businessQuote = BusinessQuote::where('code', 'BUS-' . $id)->first();
         $businessQuote->first_name = $request->first_name;
         $businessQuote->last_name = $request->last_name;
-        if (!Auth::user()->hasRole('BUSINESS_ADVISOR')) {
-            $businessQuote->email = $request->email;
-            $businessQuote->mobile_no = $request->mobile_no;
-        }
         $businessQuote->company_name = $request->company_name;
         $businessQuote->brief_details = $request->brief_details;
+        $businessQuote->premium = $request->premium;
         $businessQuote->business_type_of_insurance_id = $request->business_type_of_insurance_id;
+        $businessQuote->number_of_employees = $request->number_of_employees;
         $businessQuote->save();
 
         if (isset($request->return_to_view))
@@ -243,7 +246,10 @@ class BusinessQuoteService extends BaseService
             "email" => "input|email|required",
             "mobile_no" => "input|title|number|required",
             "company_name" => "input|text|required",
-            "advisor_id" => "select|title|required",
+            "next_followup_date" => "input|text",
+            "source" => "input|text",
+            "lost_reason" => "input|text",
+            "advisor_id" => "select|title",
             "quote_status_id" => "select|title",
             "created_at" => "input|date|title|range",
             "updated_at" => "input|date|title",
@@ -294,9 +300,9 @@ class BusinessQuoteService extends BaseService
     public function fillModelSkipProperties()
     {
         return [
-            "create" => "id,advisor_id,quote_status_id,code,premium,updated_at,created_at",
+            "create" => "id,advisor_id,quote_status_id,code,updated_at,created_at,next_followup_date,lost_reason,source",
             "list" => "email,mobile_no,brief_details,dob",
-            "update" => "id,advisor_id,quote_status_id,code,premium,updated_at,created_at",
+            "update" => "id,advisor_id,quote_status_id,code,updated_at,created_at,next_followup_date,lost_reason,source",
             "show" => "",
         ];
     }
