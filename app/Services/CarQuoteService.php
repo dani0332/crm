@@ -76,12 +76,12 @@ class CarQuoteService extends BaseService
                 'cpip.text AS car_plan_provider_id_text',
                 'cqr.quote_status_id',
                 'qs.text AS quote_status_id_text',
-                'ym.text AS year_of_manufacture_text',
+                'cqr.year_of_manufacture AS year_of_manufacture_text',
                 'cqrd.next_followup_date',
                 'cqrd.notes',
                 'vt.text as vehicle_type_id_text',
                 'cqr.currently_insured_with',
-                'ciw.text as currently_insured_with_text',
+                'cqr.currently_insured_with as currently_insured_with_text',
                 'ls.text as lost_reason',
             )
             ->leftJoin('nationality as n', 'n.id', '=', 'cqr.nationality_id')
@@ -96,11 +96,9 @@ class CarQuoteService extends BaseService
             ->leftJoin('users as u', 'u.id', '=', 'cqr.advisor_id')
             ->leftJoin('car_plan as cp', 'cp.id', '=', 'cqr.plan_id')
             ->leftJoin('insurance_provider as cpip', 'cpip.id', '=', 'cp.provider_id')
-            ->leftJoin('insurance_provider as ciw', 'ciw.text', '=', 'cqr.currently_insured_with')
             ->leftJoin('payment_status as ps', 'ps.id', '=', 'cqr.payment_status_id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'cqr.quote_status_id')
             ->leftJoin('vehicle_type as vt', 'vt.id', '=', 'cqr.vehicle_type_id')
-            ->leftJoin('year_of_manufacture as ym', 'ym.text', '=', 'cqr.year_of_manufacture');
     }
 
     public function saveCarQuote(Request $request)
