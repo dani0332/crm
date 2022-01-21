@@ -135,6 +135,11 @@ class DropdownSourceService extends BaseService
                         ->join('model_has_roles as mhr', 'mhr.model_id', '=', 'u.id')
                         ->join('roles as r', 'mhr.role_id', '=', 'r.id')
                         ->whereIn('r.name', ['RM_ADVISOR', 'EBP_ADVISOR', 'HEALTH_WCU_ADVISOR'])->get();
+                } else if (strtolower($advisorType) == strtolower(quoteTypeCode::Business)) {
+                    $data = DB::table('users as u')->select('u.id', DB::raw("CONCAT(u.name,' - ',r.name) AS name"))
+                        ->join('model_has_roles as mhr', 'mhr.model_id', '=', 'u.id')
+                        ->join('roles as r', 'mhr.role_id', '=', 'r.id')
+                        ->whereIn('r.name', ['CORPLINE_ADVISOR'])->get();
                 } else {
                     if (!empty($advisorType)) {
                         $data = DB::table('users as u')->select('u.id',  'u.name')
