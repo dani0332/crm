@@ -98,7 +98,7 @@ class CarQuoteService extends BaseService
             ->leftJoin('insurance_provider as cpip', 'cpip.id', '=', 'cp.provider_id')
             ->leftJoin('payment_status as ps', 'ps.id', '=', 'cqr.payment_status_id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'cqr.quote_status_id')
-            ->leftJoin('vehicle_type as vt', 'vt.id', '=', 'cqr.vehicle_type_id')
+            ->leftJoin('vehicle_type as vt', 'vt.id', '=', 'cqr.vehicle_type_id');
     }
 
     public function saveCarQuote(Request $request)
@@ -382,10 +382,6 @@ class CarQuoteService extends BaseService
             if (in_array('created_at', $searchProperties) && isset($request->created_at) && $request->created_at != "") {
                 $dateFrom = Carbon::createFromFormat('Y-m-d', $request['created_at'])->startOfDay()->toDateTimeString();
                 $dateTo = Carbon::createFromFormat('Y-m-d', $request['created_at_end'])->endOfDay()->toDateTimeString();
-                $this->query->whereBetween('cqr.created_at', [$dateFrom, $dateTo]);
-            } else {
-                $dateFrom = now()->subDays(15)->startOfDay()->toDateTimeString();
-                $dateTo = Carbon::now()->endOfDay()->toDateTimeString();
                 $this->query->whereBetween('cqr.created_at', [$dateFrom, $dateTo]);
             }
             if (Auth::user()->hasRole('ADMIN')) {
