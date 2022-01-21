@@ -140,9 +140,7 @@
                 serverSide: true,
                 paging: true,
                 processing: true,
-                columnDefs: [
-                    { orderable: false, targets: disableSortColumns }
-                    ],
+
                 ajax: {
                     url: '/quotes/' + model.modelType.toLowerCase(),
                     data: function(d) {
