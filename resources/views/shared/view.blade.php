@@ -127,7 +127,6 @@
                     disableSortColumns = [-1,1,2,3,4,5,9,10,11];
                     break;
                 default:
-                    $('#leadStatus').val(model.modelType);
                     break;
             }
             var vehicleTypeDataTable = $("#dtBasicExample").DataTable({
@@ -154,6 +153,9 @@
                         }
                     }
                 },
+                columnDefs: [
+                    { orderable: false, targets: disableSortColumns }
+                    ],
                 columns: dataTableColumns,
                 buttons: [{
                     extend: 'excel',

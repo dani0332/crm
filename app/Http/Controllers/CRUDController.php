@@ -173,8 +173,7 @@ class CRUDController extends Controller
             ->whereNotIn('text', [
                 'AML Screening Cleared', 'AML Screening Failed', 'Transaction Declined', 'Policy Issued', 'Policy Invoiced',
                 'Completed', 'Pending', 'Rejected', 'Issued', 'Approved', 'Approval required', 'Resubmit for approval'
-            ])
-            ->get();
+            ])->orderBy('sort_order', 'asc')->get();
         $lostReasons = DB::table('lost_reasons')
             ->select('id', 'text')
             ->get();

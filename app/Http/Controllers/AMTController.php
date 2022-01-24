@@ -64,7 +64,7 @@ class AMTController extends Controller
             $data = $data->where('bqr.advisor_id', Auth::user()->id);
         }
 
-        $leadStatuses = DB::table('quote_status')->select('id', 'text')->get();
+        $leadStatuses = DB::table('quote_status')->select('id', 'text')->orderBy('sort_order', 'asc')->get();
         $advisors = DB::table('users as u')
             ->join('model_has_roles as mr', 'mr.model_id', '=', 'u.id')
             ->join('roles as r', 'r.id', '=', 'mr.role_id')
@@ -84,6 +84,9 @@ class AMTController extends Controller
             if (isset($request->last_name) && $request->last_name != '') {
                 $data->where('bqr.last_name', 'like', '%' . $request->last_name . '%');
             }
+            if (isset($request->email) && $request->email != '') {
+                $data->where('bqr.email', 'like', '%' . $request->email . '%');
+            }
             if (isset($request->code) && $request->code != '') {
                 $data->where('bqr.code', '=', $request->code);
             }
@@ -96,7 +99,23 @@ class AMTController extends Controller
             if (isset($request->advisor_id) && $request->advisor_id != '') {
                 $request->advisor_id == '-1' ? $data->whereNull('bqr.advisor_id') : $data->where('bqr.advisor_id', '=', $request->advisor_id);
             }
-            return DataTables::of($data->orderBy('bqr.created_at', 'desc'))
+            $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
+            $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';
+            if ($column != '' && $column != 0 && $direction != '') {
+                if ($column == 11) {
+                    $column = "bqr.created_at";
+                }
+                if ($column == 12) {
+                    $column = "bqr.updated_at";
+                }
+                if ($column == 8) {
+                    $column = "bqrd.next_followup_date";
+                }
+                $data->orderBy($column, $direction);
+            } else {
+                $data->orderBy('bqr.created_at', 'DESC');
+            }
+            return DataTables::of($data)
                 ->addIndexColumn()
                 ->make(true);
             return view('amt.view', compact('leadStatuses', 'advisors', 'isManagerORDeputy'));
@@ -161,7 +180,7 @@ class AMTController extends Controller
                 'AML Screening Cleared', 'AML Screening Failed', 'Transaction Declined', 'Policy Issued', 'Policy Invoiced',
                 'Completed', 'Pending', 'Rejected', 'Issued', 'Approved', 'Approval required', 'Resubmit for approval'
             ])
-            ->get();
+            ->orderBy('sort_order', 'asc')->get();
         $lostReasons = DB::table('lost_reasons')
             ->select('id', 'text')
             ->get();

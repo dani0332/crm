@@ -199,7 +199,22 @@ class BusinessQuoteService extends BaseService
                 }
             }
         }
-        return $this->query->where('bti.text', '!=', 'Group Medical')->orderBy('bqr.created_at', 'DESC');
+        $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
+        $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';
+        if ($column != '' && $column != 0 && $direction != '') {
+            if ($column == 10) {
+                $column = "bqr.created_at";
+            }
+            if ($column == 11) {
+                $column = "bqr.updated_at";
+            }
+            if ($column == 5) {
+                $column = "bqrd.next_followup_date";
+            }
+            return $this->query->where('bti.text', '!=', 'Group Medical')->orderBy($column, $direction);
+        } else {
+            return $this->query->where('bti.text', '!=', 'Group Medical')->orderBy('bqr.created_at', 'DESC');
+        }
     }
 
     private function getQuerySuffix($item)

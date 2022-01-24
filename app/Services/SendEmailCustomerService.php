@@ -9,12 +9,20 @@ use Illuminate\Support\Facades\Log;
 
 class SendEmailCustomerService extends BaseService
 {
-	public static function sendEmail($emailTemplateId, $emailData)
+	public static function sendEmail($emailTemplateId, $emailData, $tag)
     {
         try {
 
             $apiKey = Config::get('constants.SENDINBLUE_KEY');
             $url = Config::get('constants.SIB_URL');
+            $appEnv = Config::get('constants.APP_ENV');
+
+            if($appEnv == 'production') {
+                $tag = $tag;
+            }
+            else {
+                $tag = $appEnv.'-'.$tag;
+            }
 
             $headers = [
                 'Accept' => 'application/json',
@@ -32,6 +40,9 @@ class SendEmailCustomerService extends BaseService
                     "customerName" => $emailData['customerName'],
                     "customerEmail" => $emailData['customerEmail'],
                     "signUpButtonUrl" => $emailData['signUpButtonUrl'],
+                ],
+                "tags" => [
+                    $tag,
                 ],
             ]);
 

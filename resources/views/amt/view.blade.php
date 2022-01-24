@@ -71,7 +71,7 @@
             );
             var buttons = [];
         var amtDataTable = $(".amt-data-table").DataTable({
-            ordering: false,
+            ordering: true,
             info: true,
             searching: false,
             dom: 'rBfrtip',
@@ -79,6 +79,9 @@
             serverSide: true,
             paging: true,
             processing: true,
+            columnDefs: [
+                    { orderable: false, targets: [1,2,3,4,5,6,7,9,10] }
+                    ],
             buttons: isAdmin || isManagerOrDeputy ? [{
                     extend: 'excel',
                     text: '<i class="fa fa-file-excel-o" style="color:green;" ></i><div style="font-weight:bold;">Export</div>',

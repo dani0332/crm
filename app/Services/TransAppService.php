@@ -21,7 +21,7 @@ class TransAppService extends BaseService
 {
 	public static function createTransaction(Request $request)
     {
-        $WEGenerateUrlResponse = CustomerWEGenerateUrlService::getCustomerWeUrl($request);
+        $WEGenerateUrlResponse = CustomerWEGenerateUrlService::getCustomerWeUrl();
 
         if(gettype($WEGenerateUrlResponse) == 'string') {
 
@@ -73,7 +73,7 @@ class TransAppService extends BaseService
             $customer->save();
 
             if($sendWelcomeEmail && Config::get('constants.ENABLE_TRANSAPP_WE') == '1') {
-                TransAppService::sendWelcomeEmail($customerId, $WEGenerateUrlResponse);
+                TransAppService::sendWelcomeEmail($customerId, $WEGenerateUrlResponse, $tag='transapp-myalfred-we');
             }
             return $approvalCode;
         }
@@ -83,7 +83,7 @@ class TransAppService extends BaseService
 
     }
 
-    public static function sendWelcomeEmail($customerId, $WEGenerateUrlResponse)
+    public static function sendWelcomeEmail($customerId, $WEGenerateUrlResponse, $tag)
     {
         $customer = CustomerService::getCustomerById($customerId);
         $emailTemplateId = (int)Config::get('constants.SIB_MYALFRED_CUSTOMER_WE_TEMPLATE_ID'); //290
@@ -94,7 +94,7 @@ class TransAppService extends BaseService
             'signUpButtonUrl' => $WEGenerateUrlResponse
         );
 
-        $getStatusCode = SendEmailCustomerService::sendEmail($emailTemplateId, $emailData);
+        $getStatusCode = SendEmailCustomerService::sendEmail($emailTemplateId, $emailData, $tag);
 
         if($getStatusCode == 201) {
 
