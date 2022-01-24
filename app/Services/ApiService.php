@@ -34,7 +34,7 @@ class ApiService
     }
 
     private function generateSignupUrl($customer, $request) {
-        $WEGenerateUrlResponse = CustomerWEGenerateUrlService::getCustomerWeUrl($request);
+        $WEGenerateUrlResponse = CustomerWEGenerateUrlService::getCustomerWeUrl();
         if(gettype($WEGenerateUrlResponse) == 'string') {
             Customer::where("id", $customer->id)->update(['is_we_sent' => true]);
 
@@ -45,7 +45,7 @@ class ApiService
             $newMyAlFredUser->source = "IMCRM";
             $newMyAlFredUser->save();
             return response()->json(["message" => $newMyAlFredUser->signup_url], 500);
-        }else 
+        }else
             return response()->json(["message" => $WEGenerateUrlResponse], 500);
 
     }

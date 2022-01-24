@@ -101,7 +101,7 @@ class CustomerController extends Controller
 
         if($sendWelcomeEmail && Config::get('constants.ENABLE_TRANSAPP_WE') == '1' && !$customer->is_we_sent) {
 
-            $WEGenerateUrlResponse = $this->customerWeEmailGenerateUrlService->getCustomerWeUrl($request);
+            $WEGenerateUrlResponse = $this->customerWeEmailGenerateUrlService->getCustomerWeUrl();
 
             if(gettype($WEGenerateUrlResponse) == 'string') {
                 $this->transAppService->sendWelcomeEmail($customer->id, $WEGenerateUrlResponse, $tag='customer-myalfred-we');
