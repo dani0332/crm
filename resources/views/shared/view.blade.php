@@ -109,28 +109,33 @@
             switch(model.modelType.toLowerCase()) {
 
                 case 'car':
-                    disableSortColumns = [-1,1,2,3,4,5,6,7,10,12,13,14,15,16];
+                    if(isManagerORDeputy || isAdmin){
+                        disableSortColumns = [1,2,3,4,5,6,7,10,12,13,14,15,16];
+                    }else{
+
+                    }
                     break;
                 case 'home':
-                    disableSortColumns = [-1,1,2,3,4,5,9,10,11];
+                    disableSortColumns = [1,2,3,4,8,9,10];
                     break;
                 case 'health':
-                    disableSortColumns = [-1,1,2,3,4,5,9,10,11];
+                    disableSortColumns = [1,2,3,4,8,9,10];
                     break;
                 case 'life':
-                    disableSortColumns = [-1,1,2,3,4,5,9,10,11];
+                    disableSortColumns = [1,2,3,4,8,9,10];
                     break;
                 case 'business':
-                    disableSortColumns = [-1,1,2,3,4,6,7,8,9,12,13,14];
+                    disableSortColumns = [1,2,3,5,6,7,8,11,12,13];
                     break;
                 case 'travel':
-                    disableSortColumns = [-1,1,2,3,4,5,9,10,11];
+                    disableSortColumns = [1,2,3,4,8,9,10];
                     break;
                 default:
+                disableSortColumns = [];
                     break;
             }
             var vehicleTypeDataTable = $("#dtBasicExample").DataTable({
-                ordering: true,
+                ordering: false,
                 info: true,
                 searching: false,
                 dom: 'rBfrtip',
@@ -153,9 +158,9 @@
                         }
                     }
                 },
-                columnDefs: [
-                    { orderable: false, targets: disableSortColumns }
-                    ],
+                // columnDefs: [
+                //     { orderable: false, targets: disableSortColumns }
+                //     ],
                 columns: dataTableColumns,
                 buttons: [{
                     extend: 'excel',
