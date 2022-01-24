@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Config;
 
 class CustomerWEGenerateUrlService extends BaseService
 {
-	public static function getCustomerWeUrl(Request $request)
+	public static function getCustomerWeUrl()
     {
         $magicUrlGenerateEndPoint = Config::get('constants.BERLIN_API_ENDPOINT').'/auth/generate-url';
         $magicUrlGenerateUserName = Config::get('constants.BERLIN_BASIC_AUTH_USER_NAME');

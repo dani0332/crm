@@ -21,7 +21,7 @@ class TransAppService extends BaseService
 {
 	public static function createTransaction(Request $request)
     {
-        $WEGenerateUrlResponse = CustomerWEGenerateUrlService::getCustomerWeUrl($request);
+        $WEGenerateUrlResponse = CustomerWEGenerateUrlService::getCustomerWeUrl();
 
         if(gettype($WEGenerateUrlResponse) == 'string') {
 

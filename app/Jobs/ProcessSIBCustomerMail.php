@@ -2,6 +2,9 @@
 
 namespace App\Jobs;
 
+use App\Services\CustomerService;
+use App\Services\CustomerWEGenerateUrlService;
+use App\Services\SendEmailCustomerService;
 use Error;
 use Exception;
 use Illuminate\Bus\Queueable;
@@ -28,51 +31,22 @@ class ProcessSIBCustomerMail implements ShouldQueue
 
     public function handle()
     {
-        try {
-            Log::channel('daily')->info('Process SendInBlue Email trigged');
-            $apiKey = Config::get('constants.SENDINBLUE_KEY');
-            $url = Config::get('constants.SIB_URL');
-            $sibTemplate = (int)Config::get('constants.SIB_CORPORATE_TEMPLATE');
+        $emailTemplateId = (int)Config::get('constants.SIB_CORPORATE_TEMPLATE');
+        $WEGenerateUrlResponse = CustomerWEGenerateUrlService::getCustomerWeUrl($this->email);
 
-            $headers = [
-                'Accept' => 'application/json',
-                'api-key' => $apiKey,
-                'Content-Type' => 'application/json'
-            ];
+        $emailData = array(
+            'customerName' => $this->name,
+            'customerEmail' => $this->email,
+            'signUpButtonUrl' => $WEGenerateUrlResponse
+        );
 
-            $body = json_encode([
-                "to" => array([
-                    "email" => $this->email,
-                    "name" => $this->name,
-                ]),
-                "templateId" => $sibTemplate,
-            ]);
+        $getStatusCode = SendEmailCustomerService::sendEmail($emailTemplateId, $emailData, $tag='corporate-myalfred-we');
 
-            Log::channel('daily')->info('sending email via http BODY - SIB '.$body);
-
-            $client = new \GuzzleHttp\Client();
-            $capiRequest = $client->post(
-                $url,
-                [
-                    'headers' => $headers,
-                    'body' => $body,
-                    'timeout' => 10000,
-                ]
-            );
-
-            $getStatusCode = $capiRequest->getStatusCode();
-            Log::channel('daily')->info('sending email via http - SIB '.$getStatusCode);
-            if ($getStatusCode == 201) {
-                Log::channel('daily')->info('Email sent successfully - SIB');
-                return;
-            } else {
-                throw new Error('SIB - Error dispatching to '.$this->email);
-            }
-        }
-        catch(Exception $ex) {
-            Log::channel('daily')->error('Error occured for SendInBlue Email to '. $this->email);
-            Log::channel('daily')->error('Error SIB dispatch exception'.$ex);
-            return $ex;
+        if($getStatusCode == 201) {
+            $findCustomerByEmail = CustomerService::getCustomerByEmail($this->email);
+            $updateCustomer = $findCustomerByEmail->first();
+            $updateCustomer->is_we_sent = true;
+            $updateCustomer->save();
         }
     }
 }
