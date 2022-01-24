@@ -88,7 +88,12 @@ class DropdownSourceService extends BaseService
                 $data = Nationality::select('id', 'text')->get();
                 break;
             case 'quote_status_id':
-                $data = DB::table('quote_status')->select('id', 'text')->get();
+                $data = DB::table('quote_status')->select('id', 'text')->orderBy('sort_order', 'asc')
+                    ->whereNotIn('text', [
+                        'AML Screening Cleared', 'AML Screening Failed', 'Transaction Declined', 'Policy Issued', 'Policy Invoiced',
+                        'Completed', 'Pending', 'Rejected', 'Issued', 'Approved', 'Approval required', 'Resubmit for approval'
+                    ])
+                    ->get();
                 break;
             case 'cover_for_id':
                 $data = HealthCoverFor::select('id', 'text')->get();

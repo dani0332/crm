@@ -150,7 +150,22 @@ class HealthQuoteService extends BaseService
                 }
             }
         }
-        return $this->query->orderBy('hqr.created_at', 'DESC');
+        $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
+        $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';
+        if ($column != '' && $column != 0 && $direction != '') {
+            if ($column == 6) {
+                $column = "hqr.created_at";
+            }
+            if ($column == 7) {
+                $column = "hqr.updated_at";
+            }
+            if ($column == 8) {
+                $column = "hqrd.next_followup_date";
+            }
+            return $this->query->orderBy($column, $direction);
+        } else {
+            return $this->query->orderBy('hqr.created_at', 'DESC');
+        }
     }
 
     private function getQuerySuffix($item)
