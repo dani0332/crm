@@ -15,6 +15,14 @@ class SendEmailCustomerService extends BaseService
 
             $apiKey = Config::get('constants.SENDINBLUE_KEY');
             $url = Config::get('constants.SIB_URL');
+            $appEnv = Config::get('constants.APP_ENV');
+
+            if($appEnv == 'production') {
+                $tag = $tag;
+            }
+            else {
+                $tag = $appEnv.'-'.$tag;
+            }
 
             $headers = [
                 'Accept' => 'application/json',
