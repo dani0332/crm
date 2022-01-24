@@ -104,7 +104,7 @@ class CustomerController extends Controller
             $WEGenerateUrlResponse = $this->customerWeEmailGenerateUrlService->getCustomerWeUrl($request);
 
             if(gettype($WEGenerateUrlResponse) == 'string') {
-                $this->transAppService->sendWelcomeEmail($customer->id, $WEGenerateUrlResponse);
+                $this->transAppService->sendWelcomeEmail($customer->id, $WEGenerateUrlResponse, $tag='customer-myalfred-we');
             }
             $customer->is_we_sent = true;
             $customer->save();

@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Log;
 
 class SendEmailCustomerService extends BaseService
 {
-	public static function sendEmail($emailTemplateId, $emailData)
+	public static function sendEmail($emailTemplateId, $emailData, $tag)
     {
         try {
 
@@ -32,6 +32,9 @@ class SendEmailCustomerService extends BaseService
                     "customerName" => $emailData['customerName'],
                     "customerEmail" => $emailData['customerEmail'],
                     "signUpButtonUrl" => $emailData['signUpButtonUrl'],
+                ],
+                "tags" => [
+                    $tag,
                 ],
             ]);
 
