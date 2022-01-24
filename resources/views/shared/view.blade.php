@@ -105,8 +105,33 @@
                     }
                 }
             }
+            var disableSortColumns = [];
+            switch(model.modelType.toLowerCase()) {
+
+                case 'car':
+                    disableSortColumns = [-1,1,2,3,4,5,6,7,10,12,13,14,15,16];
+                    break;
+                case 'home':
+                    disableSortColumns = [-1,1,2,3,4,5,9,10,11];
+                    break;
+                case 'health':
+                    disableSortColumns = [-1,1,2,3,4,5,9,10,11];
+                    break;
+                case 'life':
+                    disableSortColumns = [-1,1,2,3,4,5,9,10,11];
+                    break;
+                case 'business':
+                    disableSortColumns = [-1,1,2,3,4,6,7,8,9,12,13,14];
+                    break;
+                case 'travel':
+                    disableSortColumns = [-1,1,2,3,4,5,9,10,11];
+                    break;
+                default:
+                    $('#leadStatus').val(model.modelType);
+                    break;
+            }
             var vehicleTypeDataTable = $("#dtBasicExample").DataTable({
-                ordering: false,
+                ordering: true,
                 info: true,
                 searching: false,
                 dom: 'rBfrtip',
@@ -115,6 +140,7 @@
                 serverSide: true,
                 paging: true,
                 processing: true,
+
                 ajax: {
                     url: '/quotes/' + model.modelType.toLowerCase(),
                     data: function(d) {

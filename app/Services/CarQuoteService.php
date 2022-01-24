@@ -76,12 +76,12 @@ class CarQuoteService extends BaseService
                 'cpip.text AS car_plan_provider_id_text',
                 'cqr.quote_status_id',
                 'qs.text AS quote_status_id_text',
-                'ym.text AS year_of_manufacture_text',
+                'cqr.year_of_manufacture AS year_of_manufacture_text',
                 'cqrd.next_followup_date',
                 'cqrd.notes',
                 'vt.text as vehicle_type_id_text',
                 'cqr.currently_insured_with',
-                'ciw.text as currently_insured_with_text',
+                'cqr.currently_insured_with as currently_insured_with_text',
                 'ls.text as lost_reason',
             )
             ->leftJoin('nationality as n', 'n.id', '=', 'cqr.nationality_id')
@@ -96,11 +96,9 @@ class CarQuoteService extends BaseService
             ->leftJoin('users as u', 'u.id', '=', 'cqr.advisor_id')
             ->leftJoin('car_plan as cp', 'cp.id', '=', 'cqr.plan_id')
             ->leftJoin('insurance_provider as cpip', 'cpip.id', '=', 'cp.provider_id')
-            ->leftJoin('insurance_provider as ciw', 'ciw.text', '=', 'cqr.currently_insured_with')
             ->leftJoin('payment_status as ps', 'ps.id', '=', 'cqr.payment_status_id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'cqr.quote_status_id')
-            ->leftJoin('vehicle_type as vt', 'vt.id', '=', 'cqr.vehicle_type_id')
-            ->leftJoin('year_of_manufacture as ym', 'ym.text', '=', 'cqr.year_of_manufacture');
+            ->leftJoin('vehicle_type as vt', 'vt.id', '=', 'cqr.vehicle_type_id');
     }
 
     public function saveCarQuote(Request $request)
@@ -385,10 +383,6 @@ class CarQuoteService extends BaseService
                 $dateFrom = Carbon::createFromFormat('Y-m-d', $request['created_at'])->startOfDay()->toDateTimeString();
                 $dateTo = Carbon::createFromFormat('Y-m-d', $request['created_at_end'])->endOfDay()->toDateTimeString();
                 $this->query->whereBetween('cqr.created_at', [$dateFrom, $dateTo]);
-            } else {
-                $dateFrom = now()->subDays(15)->startOfDay()->toDateTimeString();
-                $dateTo = Carbon::now()->endOfDay()->toDateTimeString();
-                $this->query->whereBetween('cqr.created_at', [$dateFrom, $dateTo]);
             }
             if (Auth::user()->hasRole('ADMIN')) {
                 array_push($searchProperties, 'is_ecommerce');
@@ -493,9 +487,9 @@ class CarQuoteService extends BaseService
     public function fillModelSkipProperties()
     {
         return [
-            "create" => "id,advisor_id,paid_at,source,lost_reason,payment_status_id,plan_id,car_plan_provider_id,code,is_ecommerce,payment_gateway,created_at,next_followup_date,updated_at,promo_code,quote_status_id,device,policy_number,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by",
+            "create" => "id,advisor_id,paid_at,lost_reason,payment_status_id,plan_id,car_plan_provider_id,code,is_ecommerce,payment_gateway,created_at,next_followup_date,updated_at,promo_code,quote_status_id,device,policy_number,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by",
             "list" => "additional_notes,email,mobile_no,paid_at,plan_id,car_plan_provider_id,payment_gateway,currently_insured_with,promo_code,car_make_id,car_model_id,device,policy_number,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by,nationality_id,dob,year_of_manufacture,uae_license_held_for_id,car_value,emirate_of_registration_id,claim_history_id,car_type_insurance_id",
-            "update" => "id,advisor_id,paid_at,source,payment_status_id,lost_reason,plan_id,car_plan_provider_id,code,is_ecommerce,payment_gateway,created_at,next_followup_date,updated_at,promo_code,device,policy_number,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by",
+            "update" => "id,advisor_id,paid_at,payment_status_id,lost_reason,plan_id,car_plan_provider_id,code,is_ecommerce,payment_gateway,created_at,next_followup_date,updated_at,promo_code,device,policy_number,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by",
             "show" => "",
         ];
     }

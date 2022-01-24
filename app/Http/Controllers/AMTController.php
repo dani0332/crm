@@ -68,7 +68,7 @@ class AMTController extends Controller
         $advisors = DB::table('users as u')
             ->join('model_has_roles as mr', 'mr.model_id', '=', 'u.id')
             ->join('roles as r', 'r.id', '=', 'mr.role_id')
-            ->whereIn('r.name', ['BUSINESS_ADVISOR'])
+            ->whereIn('r.name', ['GM_ADVISOR'])
             ->select('u.id', DB::raw("CONCAT(u.name,' - ',r.name) AS name"))->orderBy('r.name')->distinct()->get();
         $isManagerORDeputy = Auth::user()->isManagerORDeputy();
         if ($request->ajax()) {
@@ -96,7 +96,7 @@ class AMTController extends Controller
             if (isset($request->advisor_id) && $request->advisor_id != '') {
                 $request->advisor_id == '-1' ? $data->whereNull('bqr.advisor_id') : $data->where('bqr.advisor_id', '=', $request->advisor_id);
             }
-            return DataTables::of($data->orderBy('bqr.created_at', 'asc'))
+            return DataTables::of($data->orderBy('bqr.created_at', 'desc'))
                 ->addIndexColumn()
                 ->make(true);
             return view('amt.view', compact('leadStatuses', 'advisors', 'isManagerORDeputy'));

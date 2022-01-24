@@ -35,6 +35,7 @@ class CustomerWEGenerateUrlService extends BaseService
                 $getResponseUrl = $getdecodeContents->data->url;
             }
         } catch (\GuzzleHttp\Exception\BadResponseException $e) {
+            Log::error($e->getLine() ." ".$e->getMessage() ." ".$e->getFile());
             $responseErrorCode = $e->getResponse()->getStatusCode();
         }
 
