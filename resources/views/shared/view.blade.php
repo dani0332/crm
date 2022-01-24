@@ -109,11 +109,7 @@
             switch(model.modelType.toLowerCase()) {
 
                 case 'car':
-                    if(isManagerORDeputy || isAdmin){
-                        disableSortColumns = [1,2,3,4,5,6,7,10,12,13,14,15,16];
-                    }else{
-
-                    }
+                disableSortColumns = [1,2,3,4,5,6,7,10,12,13,14,15,16];
                     break;
                 case 'home':
                     disableSortColumns = [1,2,3,4,8,9,10];
