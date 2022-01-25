@@ -66,7 +66,7 @@ class CRUDService extends BaseService
 
     public function getAdvisorLeads($request, $leadType)
     {
-        return $this->{$leadType . 'QuoteService'}->{'get' . ucwords($leadType) . 'LeadsForAdvisor'}($request);
+        return $this->{strtolower($leadType) . 'QuoteService'}->{'get' . ucwords($leadType) . 'LeadsForAdvisor'}($request);
     }
 
     public function getCustomTitleByModelType($modelType, $propertyName)

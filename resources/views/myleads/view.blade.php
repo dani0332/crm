@@ -7,7 +7,6 @@
         var isAdmin = JSON.parse('<?php echo json_encode(Auth::user()->hasRole('ADMIN')); ?>');
         var teamUserIds = JSON.parse('<?php echo json_encode(Auth::user()->getTeamUserIds()); ?>');
         $(document).ready(function() {
-            $("#myLeadsType").prop("selectedIndex", 0);
             var myleadsTable = $(".leadSearch-data-table").DataTable({
                 ordering: false,
                 info: false,
@@ -17,7 +16,7 @@
                 ajax: {
                     url: config.routes.myleadsDataTable,
                     data: function(d) {
-                        d.leadType = $("#myLeadsType").val();
+                        d.leadType = $("#modelType").val();
                         d.cdbId = $("#cdbId").val();
                         d.leadStatus = $("#leadStatus").val();
                         d.startedAt = $("#startedAt").val();
@@ -28,7 +27,7 @@
                         data: 'id',
                         name: 'id',
                         render: function(data, type, row) {
-                            return "<a href='/quotes/" + $("#myLeadsType").val().toLowerCase() + '/' + row.uuid + "'>" + row.code + "</a>"
+                            return "<a href='/quotes/" + $("#modelType").val().toLowerCase() + '/' + row.uuid + "'>" + row.code + "</a>"
                         }
                     },
                     {
@@ -89,12 +88,7 @@
                         data-parsley-validate="" novalidate="" autocomplete="off">
                         {{ csrf_field() }}
                         @method('POST')
-                        <select class="form-control" style="display: none" id="myLeadsType" name="leadType">
-
-                            @foreach ($leadTypes as $item)
-                                <option  value="{{$item}}">{{$item}}</option>
-                            @endforeach
-                        </select>
+                        <input type="hidden" name="modelType" id="modelType" value="{{ $teamName }}">
                         <div class="item form-group">
                             <div class="col">
                                 <label class="col-form-label col-md-4 col-sm-4" for="Start Date">Assigned Date Start</label>
