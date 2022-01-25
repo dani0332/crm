@@ -10,10 +10,7 @@ use App\Models\CarQuotePolicy;
 use App\Models\CarQuotePaymentHistory;
 use App\Models\MyAlFredUser;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Mail;
 use Config;
-use Error;
-use Exception;
 use Illuminate\Support\Facades\Log;
 use LookUpModel;
 
@@ -29,6 +26,21 @@ class TransAppService extends BaseService
             $sendWelcomeEmail = ($existingCustomer && !$existingCustomer->is_we_sent) || !$existingCustomer ? true : false;
             $customerId = CustomerService::getCustomerIdAndCreateIfNotExists($request->first_name, $request->last_name, $request->email);
             $status_id = DB::table('statuses')->where('name', 'Active')->value('id');
+
+            if($existingCustomer != null) { // Existing customer
+                if($existingCustomer->is_we_sent == 1) { // is_we_sent is true
+
+                    $response = CustomerExtendSubscriptionService::extendCustomerSubscription($customerId);
+
+                    if($response == 422) {
+                        $customerToken = MyAlFredUser::select('code')->where('customer_id', '=', $customerId)->orderBy('created_at','asc')->first();
+                        $message = "Customer trying to extend subscription but not exist in myAflred<br>
+                        Customer Email: ".$request->email."<br>
+                        Token: ".$customerToken;
+                        Log::error($message);
+                    }
+                }
+            }
 
             $transaction = new Transaction;
             $transaction->insurance_company_id = $request->insurance_company;
