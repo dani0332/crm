@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use DataTables;
 use App\Enums\quoteTypeCode;
+use DB;
 
 class MyLeadsController extends Controller
 {
@@ -23,28 +24,22 @@ class MyLeadsController extends Controller
      */
     public function index(Request $request)
     {
-        $roles = Auth::user()->roles;
-        $filtered_collection = $roles->filter(function ($item) {
-            return str_contains($item->name, 'ADVISOR');
-        })->values();
-        $leadTypes = [];
-        foreach ($filtered_collection as $item) {
-            array_push($leadTypes, explode('_', $item->name)[0]);
+        $userTeam = DB::table('user_team')->where('user_id', Auth::user()->id)->first();
+        $team = DB::table('teams')->where('id', $userTeam->team_id)->first();
+        $teamName = $team->name;
+        if (strtolower($teamName) == strtolower(quoteTypeCode::RetailMedical) || strtolower($teamName) == strtolower(quoteTypeCode::EBP)) {
+            $teamName = 'health';
+        } else if (strtolower($teamName) == strtolower(quoteTypeCode::CORPLINE) || strtolower($teamName) == strtolower(quoteTypeCode::GM)) {
+            $teamName = 'business';
         }
         $leadStatusList = QuoteStatus::select('id', 'text')->get();
         if ($request->ajax()) {
-            $leadType = strtolower($request->leadType);
-            if ($leadType == strtolower(quoteTypeCode::RM) || $leadType == strtolower(quoteTypeCode::EBP)) {
-                $leadType = 'health';
-            } else if ($leadType == strtolower(quoteTypeCode::CORPLINE) || $leadType == strtolower(quoteTypeCode::GM)) {
-                $leadType = 'business';
-            }
-            $gridData = $this->crudService->getAdvisorLeads($request, $leadType);
+            $gridData = $this->crudService->getAdvisorLeads($request, $teamName);
             return DataTables::of($gridData)
                 ->addIndexColumn()
                 ->make(true);
         }
-        return view('myleads.view', compact('leadTypes', 'leadStatusList'));
+        return view('myleads.view', compact('teamName', 'leadStatusList'));
     }
 
     /**
