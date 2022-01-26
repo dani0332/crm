@@ -134,7 +134,7 @@ class CarQuoteService extends BaseService
             "source" => $sourceName,
             "referenceUrl" => $appUrl,
         );
-        if (Auth::user()->hasRole("CAR_ADVISOR")) $dataArr['advisorId'] = Auth::users()->id;
+        if (Auth::user()->hasRole("CAR_ADVISOR")) $dataArr['advisorId'] = Auth::user()->id;
         return CapiRequestService::sendCAPIRequest('/api/v1-save-car-quote', $dataArr);
     }
 
@@ -170,6 +170,14 @@ class CarQuoteService extends BaseService
     public function getEntity($id)
     {
         return $this->query->where('cqr.uuid', $id)->first();
+    }
+
+    public function updateChildRecord($id)
+    {
+        $childRecord = CarQuoteRequestDetail::where('car_quote_request_id', $id)->first();
+        $childRecord->advisor_assigned_by_id = Auth::user()->id;
+        $childRecord->advisor_assigned_date = Carbon::now();
+        $childRecord->save();
     }
 
     public function getSelectedLostReason($id)
@@ -356,6 +364,7 @@ class CarQuoteService extends BaseService
             ->leftJoin('car_quote_request_detail as cqrd', 'cqrd.car_quote_request_id', '=', 'cqr.id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'cqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'cqrd.advisor_assigned_by_id')
+            ->where('qs.text', '!=', 'Fake')
             ->where('cqr.advisor_id', Auth::user()->id);
         if (isset($request->startedAt) && isset($request->endAt) && $request->startedAt != '' && $request->endAt != '') {
             $dateFrom = Carbon::createFromFormat('Y-m-d', $request->startedAt)->startOfDay()->toDateTimeString();

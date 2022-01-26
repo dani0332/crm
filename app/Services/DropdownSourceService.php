@@ -90,7 +90,7 @@ class DropdownSourceService extends BaseService
             case 'quote_status_id':
                 $data = DB::table('quote_status')->select('id', 'text')->orderBy('sort_order', 'asc')
                     ->whereNotIn('text', [
-                        'AML Screening Cleared', 'AML Screening Failed', 'Transaction Declined', 'Policy Issued', 'Policy Invoiced',
+                        'AML Screening Cleared', 'Draft', 'Cancelled', 'AML Screening Failed', 'Transaction Declined', 'Policy Issued', 'Policy Invoiced',
                         'Completed', 'Pending', 'Rejected', 'Issued', 'Approved', 'Approval required', 'Resubmit for approval'
                     ])
                     ->get();

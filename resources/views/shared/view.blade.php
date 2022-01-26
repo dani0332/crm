@@ -111,9 +111,9 @@
 
                 case 'car':
                     if(isManagerOrDeputy || isAdmin){
-                        disableSortColumns = [1,2,3,4,5,6,7,10,12,13,14,15,16];
+                        disableSortColumns = [1,2,3,4,5,6,7,10,12,13,14,15];
                     }else {
-                        disableSortColumns = [1,2,3,4,5,6,7,10,12,13,14,15,16];
+                        disableSortColumns = [1,2,3,4,5,6,7,10,12,13,14,15];
                     }
                     break;
                 case 'home':

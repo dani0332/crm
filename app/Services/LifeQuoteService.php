@@ -93,7 +93,7 @@ class LifeQuoteService extends BaseService
             "source" => $sourceName,
             "referenceUrl" => $appUrl,
         );
-        if (Auth::user()->hasRole("LIFE_ADVISOR")) $dataArr['advisorId'] = Auth::users()->id;
+        if (Auth::user()->hasRole("LIFE_ADVISOR")) $dataArr['advisorId'] = Auth::user()->id;
         return CapiRequestService::sendCAPIRequest('/api/v1-save-life-quote', $dataArr);
     }
 
@@ -266,6 +266,7 @@ class LifeQuoteService extends BaseService
             ->leftJoin('life_quote_request_detail as lqrd', 'lqrd.life_quote_request_id', '=', 'lqr.id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'lqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'lqrd.advisor_assigned_by_id')
+            ->where('qs.text', '!=', 'Fake')
             ->where('lqr.advisor_id', Auth::user()->id);
         if (isset($request->startedAt) && isset($request->endAt) && $request->startedAt != '' && $request->endAt != '') {
             $dateFrom = Carbon::createFromFormat('Y-m-d', $request->startedAt)->startOfDay()->toDateTimeString();
@@ -311,6 +312,14 @@ class LifeQuoteService extends BaseService
             $query->where('lqr.mobile_no', '=', $mobile_no);
         }
         return $query;
+    }
+
+    public function updateChildRecord($id)
+    {
+        $childRecord = LifeQuoteRequestDetail::where('life_quote_request_id', $id)->first();
+        $childRecord->advisor_assigned_by_id = Auth::user()->id;
+        $childRecord->advisor_assigned_date = Carbon::now();
+        $childRecord->save();
     }
 
     public function fillModelProperties()
