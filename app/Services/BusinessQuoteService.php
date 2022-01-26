@@ -202,14 +202,28 @@ class BusinessQuoteService extends BaseService
         $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
         $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';
         if ($column != '' && $column != 0 && $direction != '') {
-            if ($column == 10) {
-                $column = "bqr.created_at";
-            }
-            if ($column == 11) {
-                $column = "bqr.updated_at";
-            }
-            if ($column == 5) {
-                $column = "bqrd.next_followup_date";
+            $isManagerORDeputy = Auth::user()->isManagerOrDeputy();
+            $isAdmin = Auth::user()->hasRole("ADMIN");
+            if ($isAdmin || $isManagerORDeputy == "1") {
+                if ($column == 10) {
+                    $column = "bqr.created_at";
+                }
+                if ($column == 11) {
+                    $column = "bqr.updated_at";
+                }
+                if ($column == 5) {
+                    $column = "bqrd.next_followup_date";
+                }
+            } else {
+                if ($column == 9) {
+                    $column = "bqr.created_at";
+                }
+                if ($column == 10) {
+                    $column = "bqr.updated_at";
+                }
+                if ($column == 4) {
+                    $column = "bqrd.next_followup_date";
+                }
             }
             return $this->query->where('bti.text', '!=', 'Group Medical')->orderBy($column, $direction);
         } else {
