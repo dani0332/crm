@@ -404,6 +404,13 @@ class ClaimController extends Controller
         return response()->json($carmodel);
     }
 
+    public function carModelBasedOnCarMakeId(Request $request)
+    {
+        $make_id = $request->id;
+        $carmodel = DB::table('car_model')->where('id', '=', $make_id)->get(array('id', 'text', 'code'));
+        return response()->json($carmodel);
+    }
+
     public function getCarModelDetails(Request $request)
     {
         $modelId = $request->car_model_id;
