@@ -847,18 +847,18 @@ $(document).ready(function () {
     });
 
     // Claims-EditView: Populate models of selected car make
-    var make_code = $("#car_make_id option:selected").attr('data-id');
-    var old_car_model_id = $("#old_car_model_id").val();
-    $.get('/car-model?make_code=' + make_code, function (data) {
-        var carmodel = $('#car_model_id').empty();
-        $.each(data, function (create, carmodelObj) {
-            var option = $('<option/>', { id: create, value: carmodelObj });
-            if (old_car_model_id == carmodelObj.id)
-                carmodel.append('<option selected data-id="' + carmodelObj.code + '" value="' + carmodelObj.id + '">' + carmodelObj.text + '</option>');
-            else
-                carmodel.append('<option  data-id="' + carmodelObj.code + '" value="' + carmodelObj.id + '">' + carmodelObj.text + '</option>');
-        });
-    });
+    // var make_code = $("#car_make_id option:selected").attr('data-id');
+    // var old_car_model_id = $("#old_car_model_id").val();
+    // $.get('/car-model?make_code=' + make_code, function (data) {
+    //     var carmodel = $('#car_model_id').empty();
+    //     $.each(data, function (create, carmodelObj) {
+    //         var option = $('<option/>', { id: create, value: carmodelObj });
+    //         if (old_car_model_id == carmodelObj.id)
+    //             carmodel.append('<option selected data-id="' + carmodelObj.code + '" value="' + carmodelObj.id + '">' + carmodelObj.text + '</option>');
+    //         else
+    //             carmodel.append('<option  data-id="' + carmodelObj.code + '" value="' + carmodelObj.id + '">' + carmodelObj.text + '</option>');
+    //     });
+    // });
 
     $("#sub_type_of_insurance").hide();
     $("#car_fields").hide();
