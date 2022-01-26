@@ -32,6 +32,7 @@
             }
             var model = JSON.parse('<?php echo json_encode(get_object_vars($model)); ?>');
             var isAdmin = JSON.parse('<?php echo json_encode(Auth::user()->hasRole("ADMIN")); ?>');
+            var isManagerOrDeputy = $("#isManagerOrDeputy").val();
             if(isAdmin) {
                 model.searchProperties.push('is_ecommerce');
                 model.searchProperties.push('payment_status_id');
@@ -61,7 +62,6 @@
 
                     }else{
                         if (modelPropertiesArray[i].name == 'id' ) {
-                            var isManagerOrDeputy = $("#isManagerOrDeputy").val();
                             if (isManagerOrDeputy === "1" && allowedModelTypes.includes(model.modelType
                                     .toLocaleLowerCase())) {
                                 dataTableColumns.push({
@@ -106,32 +106,53 @@
                 }
             }
             var disableSortColumns = [];
+            debugger;
             switch(model.modelType.toLowerCase()) {
 
                 case 'car':
-                disableSortColumns = [1,2,3,4,5,6,7,10,12,13,14,15,16];
+                    if(isManagerOrDeputy || isAdmin){
+                        disableSortColumns = [1,2,3,4,5,6,7,10,12,13,14,15,16];
+                    }else {
+                        disableSortColumns = [1,2,3,4,5,6,7,10,12,13,14,15,16];
+                    }
                     break;
                 case 'home':
-                    disableSortColumns = [1,2,3,4,8,9,10];
+                    if(isManagerOrDeputy == '1' || isAdmin)
+                        disableSortColumns = [-1,1,2,3,4,5,9,10];
+                    else
+                        disableSortColumns = [-1,0,1,2,3,4,8,9,10];
+                    break;
                     break;
                 case 'health':
-                    disableSortColumns = [1,2,3,4,8,9,10];
+                    if(isManagerOrDeputy == '1' || isAdmin)
+                        disableSortColumns = [-1,1,2,3,4,5,9,10];
+                    else
+                        disableSortColumns = [-1,0,1,2,3,4,8,9,10];
                     break;
                 case 'life':
-                    disableSortColumns = [1,2,3,4,8,9,10];
+                    if(isManagerOrDeputy == '1' || isAdmin)
+                        disableSortColumns = [-1,1,2,3,4,5,9,10];
+                    else
+                        disableSortColumns = [-1,0,1,2,3,4,8,9,10];
                     break;
                 case 'business':
-                    disableSortColumns = [1,2,3,5,6,7,8,11,12,13];
+                    if(isManagerOrDeputy == '1' || isAdmin)
+                        disableSortColumns = [-1,1,2,3,4,6,7,8,9,12,13,14];
+                    else
+                        disableSortColumns = [-1,0,1,2,3,5,6,7,8,11,12,13];
                     break;
                 case 'travel':
-                    disableSortColumns = [1,2,3,4,8,9,10];
+                    if(isManagerOrDeputy == '1' || isAdmin)
+                        disableSortColumns = [-1,1,2,3,4,5,9,10];
+                    else
+                        disableSortColumns = [-1,0,1,2,3,4,8,9,10];
                     break;
                 default:
                 disableSortColumns = [];
                     break;
             }
             var vehicleTypeDataTable = $("#dtBasicExample").DataTable({
-                ordering: false,
+                ordering: true,
                 info: true,
                 searching: false,
                 dom: 'rBfrtip',
@@ -154,9 +175,9 @@
                         }
                     }
                 },
-                // columnDefs: [
-                //     { orderable: false, targets: disableSortColumns }
-                //     ],
+                columnDefs: [
+                    { orderable: false, targets: disableSortColumns }
+                    ],
                 columns: dataTableColumns,
                 buttons: [{
                     extend: 'excel',

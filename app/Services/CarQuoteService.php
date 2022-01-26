@@ -402,15 +402,30 @@ class CarQuoteService extends BaseService
         $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
         $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';
         if ($column != '' && $column != 0 && $direction != '') {
-            if ($column == 8) {
-                $column = "cqr.created_at";
+            $isManagerORDeputy = Auth::user()->isManagerOrDeputy();
+            $isAdmin = Auth::user()->hasRole("ADMIN");
+            if ($isAdmin || $isManagerORDeputy == "1") {
+                if ($column == 8) {
+                    $column = "cqr.created_at";
+                }
+                if ($column == 9) {
+                    $column = "cqr.updated_at";
+                }
+                if ($column == 11) {
+                    $column = "cqrd.next_followup_date";
+                }
+            } else {
+                if ($column == 5) {
+                    $column = "cqr.created_at";
+                }
+                if ($column == 6) {
+                    $column = "cqr.updated_at";
+                }
+                if ($column == 7) {
+                    $column = "cqrd.next_followup_date";
+                }
             }
-            if ($column == 9) {
-                $column = "cqr.updated_at";
-            }
-            if ($column == 11) {
-                $column = "cqrd.next_followup_date";
-            }
+
             return $this->query->orderBy($column, $direction);
         } else {
             return $this->query->orderBy('cqr.created_at', 'DESC');
