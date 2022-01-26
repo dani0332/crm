@@ -424,13 +424,13 @@ class CarQuoteService extends BaseService
                     $column = "cqrd.next_followup_date";
                 }
             } else {
-                if ($column == 5) {
+                if ($column == 7) {
                     $column = "cqr.created_at";
                 }
-                if ($column == 6) {
+                if ($column == 8) {
                     $column = "cqr.updated_at";
                 }
-                if ($column == 7) {
+                if ($column == 10) {
                     $column = "cqrd.next_followup_date";
                 }
             }
