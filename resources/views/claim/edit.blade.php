@@ -57,7 +57,7 @@
                             <select class="form-control" id='insurance_provider_id' name='insurance_provider_id'>
                             <option value=''></option>
                             @foreach($insuranceproviders as $insuranceprovider)
-                                <option value="{{$insuranceprovider->id}}" 
+                                <option value="{{$insuranceprovider->id}}"
                                 {{ $insuranceprovider->id == old('insurance_provider_id',$claim->insurance_provider_id) ? 'selected' : ''}}>
 		                        {{ $insuranceprovider->text }}
                                 </option>
@@ -97,7 +97,7 @@
                             <select class="form-control" id='type_of_insurances_id' name='type_of_insurances_id'>
                             <option value=''></option>
                             @foreach($typeofinsurances as $typeofinsurance)
-                                <option value="{{$typeofinsurance->id}}" data-id="{{ $typeofinsurance->text }}" 
+                                <option value="{{$typeofinsurance->id}}" data-id="{{ $typeofinsurance->text }}"
                                 {{ $typeofinsurance->id == old('type_of_insurances_id',$claim->type_of_insurances_id) ? 'selected' : ''}}>
 		                        {{ $typeofinsurance->text }}
                                 </option>
@@ -113,7 +113,7 @@
                             <select class="form-control" id='sub_type_of_insurance_id' name='sub_type_of_insurance_id'>
                             <option value=''></option>
                             @foreach($subtypeofinsurances as $subtypeofinsurance)
-                                <option value="{{$subtypeofinsurance->id}}" 
+                                <option value="{{$subtypeofinsurance->id}}"
                                 {{ $subtypeofinsurance->id == old('sub_type_of_insurance_id',$claim->sub_type_of_insurance_id) ? 'selected' : ''}}>
 		                        {{ $subtypeofinsurance->text }}
                                 </option>
@@ -132,7 +132,7 @@
                             <option value=''></option>
                             @foreach($claimsstatuses as $claimsstatus)
                                 @if($claimsstatus->text != 'Settled')
-                                    <option value="{{$claimsstatus->id}}" 
+                                    <option value="{{$claimsstatus->id}}"
                                     {{ $claimsstatus->id == old('claims_status_id',$claim->claims_status_id) ? 'selected' : ''}}>
                                     {{ $claimsstatus->text }}
                                     </option>
@@ -149,7 +149,7 @@
                             <option value=''></option>
                             @foreach($advisors as $advisor)
                                 @if($claim->assigned_to_id == $advisor->id)
-                                    <option value="{{$advisor->id}}" 
+                                    <option value="{{$advisor->id}}"
                                     {{ $advisor->id == old('assigned_to_id',$claim->assigned_to_id) ? 'selected' : ''}}>
                                     {{ $advisor->name }}
                                     </option>
@@ -190,13 +190,14 @@
                         </div>
                     </div>
                     <div id="car_fields">
+                    <div id="edit_car_make_model">
                     <div class="item form-group">
                         <div class="col">
                             <span class="col-form-label col-md-6 col-sm-6">Car Make </span>
                             <select class="form-control" id='car_make_id' name='car_make_id'>
                             <option value=''></option>
                             @foreach($carmakes as $carmake)
-                                <option value="{{$carmake->id}}" data-id="{{ $carmake['code'] }}" 
+                                <option value="{{$carmake->id}}" data-id="{{ $carmake['code'] }}"
                                 {{ $carmake->id == old('car_make_id',$claim->car_make_id) ? 'selected' : ''}}>
                                 {{ $carmake->text }}
                                 </option>
@@ -211,11 +212,10 @@
                             <input type="hidden" value="{{ $claim->car_model_id }}" id="old_car_model_id" />
                             <select class="form-control" id='car_model_id' name='car_model_id'>
                             @foreach($carmodels as $carmodel)
-                                <option value="{{$carmodel->id}}" data-id="{{ $carmodel['code'] }}" 
+                                <option value="{{$carmodel->id}}" data-id="{{ $carmodel['code'] }}"
                                 {{ $carmodel->id == old('car_model_id',$claim->car_model_id) ? 'selected' : ''}}>
                                 {{ $carmodel->text }}
                                 </option>
-                               {{--<option data-id="{{ $carmodel['code'] }}" value="{{ $carmodel->id }}">{{ $carmake->text }}</option>--}}
                             @endforeach
                             </select>
                             @if ($errors->has('car_model_id'))
@@ -223,13 +223,14 @@
                             @endif
                         </div>
                     </div>
+                    </div>
                     <div class="item form-group">
                         <div class="col">
                             <span class="col-form-label col-md-6 col-sm-6">Car Repair Coverage </span>
                             <select class="form-control" id='car_repair_coverage_id' name='car_repair_coverage_id'>
                             <option value=''></option>
                             @foreach($carrepaircoverages as $carrepaircoverage)
-                                <option value="{{$carrepaircoverage->id}}" 
+                                <option value="{{$carrepaircoverage->id}}"
                                 {{ $carrepaircoverage->id == old('car_repair_coverage_id',$claim->car_repair_coverage_id) ? 'selected' : ''}}>
                                 {{ $carrepaircoverage->text }}
                                 </option>
@@ -244,7 +245,7 @@
                             <select class="form-control" id='car_repair_type_id' name='car_repair_type_id'>
                             <option value=''></option>
                             @foreach($carrepairtypes as $carrepairtype)
-                                <option value="{{$carrepairtype->id}}" 
+                                <option value="{{$carrepairtype->id}}"
                                 {{ $carrepairtype->id == old('car_repair_type_id',$claim->car_repair_type_id) ? 'selected' : ''}}>
                                 {{ $carrepairtype->text }}
                                 </option>
