@@ -37,7 +37,7 @@ class TransAppService extends BaseService
                         $message = "Customer trying to extend subscription but not exist in myAflred<br>
                         Customer Email: ".$request->email."<br>
                         Token: ".$customerToken;
-                        Log::error($message);
+                        //Log::error($message);
                     }
                 }
             }

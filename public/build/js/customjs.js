@@ -1380,21 +1380,28 @@ $(document).ready(function () {
     // TM Leads: Select tm leads id and store in hidden field
     $("#checkAllTmLeads").click(function () {
         $('input:checkbox').not(this).prop('checked', this.checked);
-
+        $('#selectTmLeadId').val('');
         var idsArray = $('#selectTmLeadId').val();
         $('input:checkbox').each(function (i, item) {
             idsArray = idsArray + $(item).val() + ',';
         });
         $('#selectTmLeadId').val(idsArray.replace(/^,|,$/g, ''));
+        if ($(this).is(":checked")) {
+            $("#tm-leads-assign-div").show(300);
+        } else {
+            $("#tm-leads-assign-div").hide(200);
+        }
     });
 
     // TM Leads: Select tm leads id and store in hidden field
     $("#tmLeadsAssignToUser").click(function () {
         var tmLeadIDs = [];
-        $.each($("input[name='tmLeadID']:checked"), function () {
-            tmLeadIDs.push($(this).val());
-        });
-        $('#selectTmLeadId').val(tmLeadIDs);
+        if (!$('#checkAllTmLeads').is(":checked")) {
+            $.each($("input[name='tmLeadID']:checked"), function () {
+                tmLeadIDs.push($(this).val());
+            });
+            $('#selectTmLeadId').val(tmLeadIDs);
+        }
     });
 
     // TM: Selecting a single record should also enable manual allocation
@@ -1413,13 +1420,6 @@ $(document).ready(function () {
 
     // TM Leads: On check main checkbox, display lead assignment panel
     $("#tm-leads-assign-div").hide();
-    $("#checkAllTmLeads").click(function () {
-        if ($(this).is(":checked")) {
-            $("#tm-leads-assign-div").show(300);
-        } else {
-            $("#tm-leads-assign-div").hide(200);
-        }
-    });
 
     // TM Leads: OnClick on phone number ignore redirection
     $("#ignore-redirection").click(function () {
