@@ -847,10 +847,10 @@ $(document).ready(function () {
     });
 
     // Claims-EditView: Populate models of selected car make
-    var make_code = $("#car_make_id option:selected").attr('data-id');
-    var old_car_model_id = $("#old_car_model_id").val();
+    var make_code = $("#edit_car_make_model #car_make_id option:selected").attr('data-id');
+    var old_car_model_id = $("#edit_car_make_model #old_car_model_id").val();
     $.get('/car-model?make_code=' + make_code, function (data) {
-        var carmodel = $('#car_model_id').empty();
+        var carmodel = $('#edit_car_make_model #car_model_id').empty();
         $.each(data, function (create, carmodelObj) {
             var option = $('<option/>', { id: create, value: carmodelObj });
             if (old_car_model_id == carmodelObj.id)

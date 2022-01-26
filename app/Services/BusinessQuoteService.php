@@ -180,7 +180,7 @@ class BusinessQuoteService extends BaseService
             "source" => $sourceName,
             "referenceUrl" => $appUrl,
         );
-        if (Auth::user()->hasRole("BUSINESS_ADVISOR")) $dataArr['advisorId'] = Auth::users()->id;
+        if (Auth::user()->hasRole("BUSINESS_ADVISOR")) $dataArr['advisorId'] = Auth::user()->id;
         $response  = CapiRequestService::sendCAPIRequest('/api/v1-save-business-quote', $dataArr);
         return $response;
     }
