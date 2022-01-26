@@ -150,6 +150,7 @@ class TravelQuoteService extends BaseService
 
     public function getGridData($searchProperties, $request)
     {
+
         if ($request->ajax()) {
             if (isset($request->assigned_to_date_start) && $request->assigned_to_date_start != '') {
                 $dateFrom = Carbon::createFromFormat('Y-m-d', $request['assigned_to_date_start'])->startOfDay()->toDateTimeString();
@@ -174,14 +175,28 @@ class TravelQuoteService extends BaseService
         $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
         $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';
         if ($column != '' && $column != 0 && $direction != '') {
-            if ($column == 6) {
-                $column = "tqr.created_at";
-            }
-            if ($column == 7) {
-                $column = "tqr.updated_at";
-            }
-            if ($column == 8) {
-                $column = "tqrd.next_followup_date";
+            $isManagerORDeputy = Auth::user()->isManagerOrDeputy();
+            $isAdmin = Auth::user()->hasRole("ADMIN");
+            if ($isAdmin || $isManagerORDeputy == "1") {
+                if ($column == 6) {
+                    $column = "tqr.created_at";
+                }
+                if ($column == 7) {
+                    $column = "tqr.updated_at";
+                }
+                if ($column == 8) {
+                    $column = "tqrd.next_followup_date";
+                }
+            } else {
+                if ($column == 5) {
+                    $column = "tqr.created_at";
+                }
+                if ($column == 6) {
+                    $column = "tqr.updated_at";
+                }
+                if ($column == 7) {
+                    $column = "tqrd.next_followup_date";
+                }
             }
             return $this->query->orderBy($column, $direction);
         } else {
