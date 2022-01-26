@@ -133,6 +133,7 @@ class TravelQuoteService extends BaseService
             ->leftJoin('travel_quote_request_detail as tqrd', 'tqrd.travel_quote_request_id', '=', 'tqr.id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'tqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'tqrd.advisor_assigned_by_id')
+            ->where('qs.text', '!=', 'Fake')
             ->where('tqr.advisor_id', Auth::user()->id);
         if (isset($request->startedAt) && isset($request->endAt) && $request->startedAt != '' && $request->endAt != '') {
             $dateFrom = Carbon::createFromFormat('Y-m-d', $request->startedAt)->startOfDay()->toDateTimeString();
@@ -202,6 +203,14 @@ class TravelQuoteService extends BaseService
         } else {
             return $this->query->orderBy('tqr.created_at', 'DESC');
         }
+    }
+
+    public function updateChildRecord($id)
+    {
+        $childRecord = TravelQuoteRequestDetail::where('travel_quote_request_id', $id)->first();
+        $childRecord->advisor_assigned_by_id = Auth::user()->id;
+        $childRecord->advisor_assigned_date = Carbon::now();
+        $childRecord->save();
     }
 
     private function getQuerySuffix($item)

@@ -177,7 +177,7 @@ class AMTController extends Controller
         $leadStatuses = DB::table('quote_status')
             ->select('id', 'text')
             ->whereNotIn('text', [
-                'AML Screening Cleared', 'AML Screening Failed', 'Transaction Declined', 'Policy Issued', 'Policy Invoiced',
+                'AML Screening Cleared', 'Draft', 'Cancelled', 'AML Screening Failed', 'Transaction Declined', 'Policy Issued', 'Policy Invoiced',
                 'Completed', 'Pending', 'Rejected', 'Issued', 'Approved', 'Approval required', 'Resubmit for approval'
             ])
             ->orderBy('sort_order', 'asc')->get();

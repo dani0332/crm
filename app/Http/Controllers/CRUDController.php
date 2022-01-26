@@ -171,7 +171,7 @@ class CRUDController extends Controller
         $leadStatuses = DB::table('quote_status')
             ->select('id', 'text')
             ->whereNotIn('text', [
-                'AML Screening Cleared', 'AML Screening Failed', 'Transaction Declined', 'Policy Issued', 'Policy Invoiced',
+                'AML Screening Cleared', 'Draft', 'Cancelled', 'AML Screening Failed', 'Transaction Declined', 'Policy Issued', 'Policy Invoiced',
                 'Completed', 'Pending', 'Rejected', 'Issued', 'Approved', 'Approval required', 'Resubmit for approval'
             ])->orderBy('sort_order', 'asc')->get();
         $lostReasons = DB::table('lost_reasons')
@@ -384,8 +384,9 @@ class CRUDController extends Controller
         $leadsIds = $request->selectTmLeadId;
         $leadsIds = array_map('intval', explode(',', $leadsIds));
         foreach ($leadsIds as $tmLeadsId) {
-            $entity = $this->{strtolower($request->modelType) . 'QuoteService'}->getEntityPlain($tmLeadsId);
             $userId = (int)$assignedToUserIdNew;
+            $entity = $this->{strtolower($request->modelType) . 'QuoteService'}->getEntityPlain($tmLeadsId);
+
             if (Auth::user()->hasRole('WCU_ADVISOR')) {
                 $entity->wcu_id = $userId;
             } else {
@@ -396,6 +397,7 @@ class CRUDController extends Controller
                 $entity->oe_id = $advisorOE->oe_id;
             }
             $entity->save();
+            $this->{strtolower($request->modelType) . 'QuoteService'}->updateChildRecord($tmLeadsId);
         }
         $assignedUserName = $this->userService->getUserNameById($assignedToUserIdNew);
         return Redirect::back()->with('success', $request->modelType . ' Leads has been Assigned To ' . $assignedUserName);
@@ -416,6 +418,7 @@ class CRUDController extends Controller
             }
             $entity->save();
         }
+        $this->{strtolower($request->modelType) . 'QuoteService'}->updateChildRecord($tmLeadsId);
         $assignedUserName = $this->userService->getUserNameById($assignedToUserIdNew);
         return Redirect::back()->with('success', ' Lead has been Assigned To ' . $assignedUserName);
     }

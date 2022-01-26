@@ -106,7 +106,8 @@ class BusinessQuoteService extends BaseService
             ->leftJoin('business_quote_request_detail as bqrd', 'bqrd.business_quote_request_id', '=', 'bqr.id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'bqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'bqrd.advisor_assigned_by_id')
-            ->where('bqr.advisor_id', Auth::user()->id);
+            ->where('bqr.advisor_id', Auth::user()->id)
+            ->where('qs.text', '!=', 'Fake');
         if (isset($request->startedAt) && isset($request->endAt) && $request->startedAt != '' && $request->endAt != '') {
             $dateFrom = Carbon::createFromFormat('Y-m-d', $request->startedAt)->startOfDay()->toDateTimeString();
             $dateTo = Carbon::createFromFormat('Y-m-d', $request->endAt)->endOfDay()->toDateTimeString();
@@ -124,6 +125,14 @@ class BusinessQuoteService extends BaseService
     public function getEntityPlain($id)
     {
         return BusinessQuote::where('id', $id)->first();
+    }
+
+    public function updateChildRecord($id)
+    {
+        $childRecord = BusinessQuoteRequestDetail::where('business_quote_request_id', $id)->first();
+        $childRecord->advisor_assigned_by_id = Auth::user()->id;
+        $childRecord->advisor_assigned_date = Carbon::now();
+        $childRecord->save();
     }
 
     public function getDetailEntity($id)

@@ -207,6 +207,7 @@ class HomeQuoteService extends BaseService
             ->leftJoin('home_quote_request_detail as hqrd', 'hqrd.home_quote_request_id', '=', 'hqr.id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'hqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'hqrd.advisor_assigned_by_id')
+            ->where('qs.text', '!=', 'Fake')
             ->where('hqr.advisor_id', Auth::user()->id);
         if (isset($request->startedAt) && isset($request->endAt) && $request->startedAt != '' && $request->endAt != '') {
             $dateFrom = Carbon::createFromFormat('Y-m-d', $request->startedAt)->startOfDay()->toDateTimeString();
@@ -225,6 +226,14 @@ class HomeQuoteService extends BaseService
     public function getLeadsForAssignment()
     {
         return HomeQuote::orderBy('created_at', 'desc')->get();
+    }
+
+    public function updateChildRecord($id)
+    {
+        $childRecord = HomeQuoteRequestDetail::where('home_quote_request_id', $id)->first();
+        $childRecord->advisor_assigned_by_id = Auth::user()->id;
+        $childRecord->advisor_assigned_date = Carbon::now();
+        $childRecord->save();
     }
 
     public function getLeads($CDBID, $email, $mobile_no, $lead_type)
