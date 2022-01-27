@@ -262,6 +262,7 @@ class LifeQuoteService extends BaseService
                 'u.name as assignedBy',
                 'lqr.updated_at',
                 'lqr.source as leadSource',
+                'lqrd.next_followup_date as nextFollowupDate',
             )
             ->leftJoin('life_quote_request_detail as lqrd', 'lqrd.life_quote_request_id', '=', 'lqr.id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'lqr.quote_status_id')
