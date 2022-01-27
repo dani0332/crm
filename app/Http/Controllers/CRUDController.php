@@ -383,21 +383,30 @@ class CRUDController extends Controller
         $assignedToUserIdNew = $request->assigned_to_id_new;
         $leadsIds = $request->selectTmLeadId;
         $leadsIds = array_map('intval', explode(',', $leadsIds));
+        if ($assignedToUserIdNew == '' || $assignedToUserIdNew == null) {
+            return redirect()->back()->with('message', 'Please select user to assign leads');
+        }
+        if ($leadsIds == '' || $leadsIds == null) {
+            return redirect()->back()->with('message', 'Please select lead(s) to assign');
+        }
         foreach ($leadsIds as $tmLeadsId) {
             $userId = (int)$assignedToUserIdNew;
             $entity = $this->{strtolower($request->modelType) . 'QuoteService'}->getEntityPlain($tmLeadsId);
-
-            if (Auth::user()->hasRole('WCU_ADVISOR')) {
-                $entity->wcu_id = $userId;
+            if ($entity) {
+                if (Auth::user()->hasRole('WCU_ADVISOR')) {
+                    $entity->wcu_id = $userId;
+                } else {
+                    $entity->advisor_id = $userId;
+                }
+                $advisorOE = CarQuoteAdvisorToOE::where('advisor_id', $userId)->first();
+                if (!empty($advisorOE) && strtolower($request->modelType) == 'car') {
+                    $entity->oe_id = $advisorOE->oe_id;
+                }
+                $entity->save();
+                $this->{strtolower($request->modelType) . 'QuoteService'}->updateChildRecord($tmLeadsId);
             } else {
-                $entity->advisor_id = $userId;
+                return redirect()->back()->with('message', 'Invalid lead selected for assignment');
             }
-            $advisorOE = CarQuoteAdvisorToOE::where('advisor_id', $userId)->first();
-            if (!empty($advisorOE) && strtolower($request->modelType) == 'car') {
-                $entity->oe_id = $advisorOE->oe_id;
-            }
-            $entity->save();
-            $this->{strtolower($request->modelType) . 'QuoteService'}->updateChildRecord($tmLeadsId);
         }
         $assignedUserName = $this->userService->getUserNameById($assignedToUserIdNew);
         return Redirect::back()->with('success', $request->modelType . ' Leads has been Assigned To ' . $assignedUserName);
