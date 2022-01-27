@@ -16,6 +16,32 @@
     </style>
     <script>
         $(document).ready(function() {
+
+            $('#searchGenericSubmit').on('click', function(e){
+                e.preventDefault();
+                if($('#assigned_to_date_start').val() != '' && $('#assigned_to_date_end').val() == '')  {
+                    $('#assigned_to_date_end').next().html('Please select assigned to end date');
+                    return false;
+                }
+                if($('#assigned_to_date_start').val() == '' && $('#assigned_to_date_end').val() != '')  {
+                    $('#assigned_to_date_start').next().html('Please select assigned start date');
+                    return false;
+                }
+                if($('#created_at').val() != '' && $('#created_at_end').val() == '')  {
+                    $('#created_at_end').next().html('Please select created end date');
+                    return false;
+                }
+                if($('#created_at').val() == '' && $('#created_at_end').val() != '')  {
+                    $('#created_at').next().html('Please select created start date');
+                    return false;
+                }
+                $("span").each(function (k, v) {
+                    if($(v).hasClass('text-danger')){
+                        $(v).html('');
+                    }
+                });
+                $('#searchTable').submit();
+            });
             var quoteTypes = ['home', 'health', 'life', 'business', 'travel'];
             String.prototype.replaceAll = function(search, replacement) {
                 var target = this;
@@ -136,7 +162,7 @@
                     break;
                 case 'business':
                     if(isManagerOrDeputy == '1' || isAdmin)
-                        disableSortColumns = [-1,1,2,3,4,6,7,8,9,12,13,14];
+                        disableSortColumns = [-1,1,2,3,4,6,7,8,9,12,13];
                     else
                         disableSortColumns = [-1,0,1,2,3,5,6,7,8,11,12,13];
                     break;
@@ -219,6 +245,11 @@
                 }, 1000);
             });
             $('#reset-btn-generic').click(function(e) {
+                $("span").each(function (k, v) {
+                    if($(v).hasClass('text-danger')){
+                        $(v).html('');
+                    }
+                });
                 $(':input', '#searchTable')
                     .not(':button, :submit, :reset, :hidden')
                     .val('')
@@ -314,10 +345,12 @@
                                 <div class="col-md-6">
                                     <span style="font-size: 11px;" class="col-form-label col-md-6 col-sm-6" >ASSIGNED START DATE</span>
                                     <input type="date" class="form-control" id="assigned_to_date_start" name="assigned_to_date_start" />
+                                    <span class="text-danger"></span>
                                 </div>
                                 <div class="col-md-6">
                                     <span style="font-size: 11px;" class="col-form-label col-md-6 col-sm-6" >ASSIGNED END DATE</span>
                                     <input type="date" class="form-control" id="assigned_to_date_end" name="assigned_to_date_end" />
+                                    <span class="text-danger"></span>
                                 </div>
                             @endif
                             @if (Auth::user()->hasRole('ADMIN') && $model->modelType == 'Car')
@@ -461,7 +494,7 @@
                             <div class="col-md-12" style="margin-top: 25px;">
                                 <div class="col">
                                     <ul class="nav navbar-right panel_toolbox">
-                                        <li><input type="submit" value="Search" class="btn btn-warning btn-sm"></li>
+                                        <li><input type="submit" value="Search" id="searchGenericSubmit" class="btn btn-warning btn-sm"></li>
                                         <li><input type="reset" id="reset-btn-generic" class="btn btn-warning btn-sm">
                                         </li>
                                     </ul>

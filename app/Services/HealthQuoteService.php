@@ -305,9 +305,11 @@ class HealthQuoteService extends BaseService
     public function updateChildRecord($id)
     {
         $childRecord = HealthQuoteRequestDetail::where('health_quote_request_id', $id)->first();
-        $childRecord->advisor_assigned_by_id = Auth::user()->id;
-        $childRecord->advisor_assigned_date = Carbon::now();
-        $childRecord->save();
+        if (!empty($childRecord)) {
+            $childRecord->advisor_assigned_by_id = Auth::user()->id;
+            $childRecord->advisor_assigned_date = Carbon::now();
+            $childRecord->save();
+        }
     }
 
     public function fillModelProperties()

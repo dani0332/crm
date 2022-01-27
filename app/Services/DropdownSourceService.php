@@ -147,10 +147,10 @@ class DropdownSourceService extends BaseService
                         ->whereIn('r.name', ['CORPLINE_ADVISOR'])->get();
                 } else {
                     if (!empty($advisorType)) {
-                        $data = DB::table('users as u')->select('u.id',  'u.name')
+                        $data = DB::table('users as u')->select('u.id',  DB::raw("CONCAT(u.name,' - ',r.name) AS name"))
                             ->join('model_has_roles as mhr', 'mhr.model_id', '=', 'u.id')
                             ->join('roles as r', 'mhr.role_id', '=', 'r.id')
-                            ->where('r.name', '=', $advisorType)->get();
+                            ->where('r.name', '=', $advisorType . '_ADVISOR')->get();
                     } else {
                         $data = User::select('id', 'name')->get();
                     }

@@ -8,7 +8,7 @@
         var teamUserIds = JSON.parse('<?php echo json_encode(Auth::user()->getTeamUserIds()); ?>');
         $(document).ready(function() {
             var myleadsTable = $(".leadSearch-data-table").DataTable({
-                ordering: false,
+                ordering: true,
                 info: false,
                 searching: false,
                 bLengthChange: false,
@@ -23,6 +23,9 @@
                         d.endAt = $("#endAt").val();
                     },
                 },
+                columnDefs: [
+                    { orderable: false, targets: [1,2,5,6,] }
+                    ],
                 columns: [{
                         data: 'id',
                         name: 'id',
