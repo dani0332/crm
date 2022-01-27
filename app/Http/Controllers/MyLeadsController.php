@@ -29,7 +29,7 @@ class MyLeadsController extends Controller
         $teamName = $team->name;
         if (strtolower($teamName) == strtolower(quoteTypeCode::RetailMedical) || strtolower($teamName) == strtolower(quoteTypeCode::EBP)) {
             $teamName = 'health';
-        } else if (strtolower($teamName) == strtolower(quoteTypeCode::CORPLINE) || strtolower($teamName) == strtolower(quoteTypeCode::GM)) {
+        } else if (strtolower($teamName) == strtolower(quoteTypeCode::CORPLINE) || strtolower($teamName) == strtolower(quoteTypeCode::GroupMedical) || strtolower($teamName) == strtolower(quoteTypeCode::GM)) {
             $teamName = 'business';
         }
         $leadStatusList = QuoteStatus::select('id', 'text')->get();
