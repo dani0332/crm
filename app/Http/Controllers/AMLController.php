@@ -289,11 +289,20 @@ class AMLController extends Controller
 
         $getFirstAmlLog = AML::where('quote_type_id', $quoteTypeId)
         ->where('quote_request_id', $quoteRequestId)->first();
-        $firstAmlLogResults = $getFirstAmlLog->results_found;
+
+        if($getFirstAmlLog == null){
+            $firstAmlLogResults = 0;
+        } else {
+            $firstAmlLogResults = $getFirstAmlLog->results_found;
+        }
 
         $getLatestAmlLog = AML::where('quote_type_id', $quoteTypeId)
         ->where('quote_request_id', $quoteRequestId)->latest()->first();
-        $latestAmlLogResults = $getLatestAmlLog->results_found;
+        if($getLatestAmlLog == null){
+            $latestAmlLogResults = 0;
+        } else {
+            $latestAmlLogResults = $getLatestAmlLog->results_found;
+        }
 
         $getAMLRows = AML::where('quote_type_id', '=', $quoteTypeId)
         ->where('quote_request_id', $quoteRequestId)->get();
