@@ -113,6 +113,20 @@ class BusinessQuoteService extends BaseService
             $dateTo = Carbon::createFromFormat('Y-m-d', $request->endAt)->endOfDay()->toDateTimeString();
             $query->whereBetween('bqrd.advisor_assigned_date', [$dateFrom, $dateTo]);
         }
+        $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
+        $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';
+        if ($column != '' && $column != 0 && $direction != '') {
+            if ($column == 3) {
+                $column = "bqr.created_at";
+            }
+            if ($column == 4) {
+                $column = "bqrd.advisor_assigned_date";
+            }
+            if ($column == 7) {
+                $column = "bqrd.next_followup_date";
+            }
+            $query->orderBy($column, $direction);
+        }
         if (isset($request->cdbId) && $request->cdbId != 0) {
             $query->where('bqr.code', $request->cdbId);
         }
@@ -130,9 +144,11 @@ class BusinessQuoteService extends BaseService
     public function updateChildRecord($id)
     {
         $childRecord = BusinessQuoteRequestDetail::where('business_quote_request_id', $id)->first();
-        $childRecord->advisor_assigned_by_id = Auth::user()->id;
-        $childRecord->advisor_assigned_date = Carbon::now();
-        $childRecord->save();
+        if (!empty($childRecord)) {
+            $childRecord->advisor_assigned_by_id = Auth::user()->id;
+            $childRecord->advisor_assigned_date = Carbon::now();
+            $childRecord->save();
+        }
     }
 
     public function getDetailEntity($id)
