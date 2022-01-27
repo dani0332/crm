@@ -368,6 +368,22 @@ class CarQuoteService extends BaseService
             ->leftJoin('users as u', 'u.id', '=', 'cqrd.advisor_assigned_by_id')
             ->where('qs.text', '!=', 'Fake')
             ->where('cqr.advisor_id', Auth::user()->id);
+
+        $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
+        $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';
+        if ($column != '' && $column != 0 && $direction != '') {
+            if ($column == 3) {
+                $column = "cqr.created_at";
+            }
+            if ($column == 4) {
+                $column = "cqrd.advisor_assigned_date";
+            }
+            if ($column == 7) {
+                $column = "cqrd.next_followup_date";
+            }
+            $query->orderBy($column, $direction);
+        }
+
         if (isset($request->startedAt) && isset($request->endAt) && $request->startedAt != '' && $request->endAt != '') {
             $dateFrom = Carbon::createFromFormat('Y-m-d', $request->startedAt)->startOfDay()->toDateTimeString();
             $dateTo = Carbon::createFromFormat('Y-m-d', $request->endAt)->endOfDay()->toDateTimeString();
