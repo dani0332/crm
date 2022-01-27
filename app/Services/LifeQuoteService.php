@@ -274,13 +274,13 @@ class LifeQuoteService extends BaseService
         $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';
         if ($column != '' && $column != 0 && $direction != '') {
             if ($column == 3) {
-                $column = "cqr.created_at";
+                $column = "lqr.created_at";
             }
             if ($column == 4) {
-                $column = "cqrd.advisor_assigned_date";
+                $column = "lqrd.advisor_assigned_date";
             }
             if ($column == 7) {
-                $column = "cqrd.next_followup_date";
+                $column = "lqrd.next_followup_date";
             }
             $query->orderBy($column, $direction);
         }
