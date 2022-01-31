@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers;
 
 use App\Jobs\RewardsBulkWEJob;
@@ -19,7 +20,6 @@ class BulkEmailProcessController extends Controller
 
     public function __construct()
     {
-
     }
 
     public function ProcessBulkWelcomeEmails(Request $request)

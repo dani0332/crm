@@ -31,6 +31,7 @@ class TmLeadRequest extends FormRequest
             'enquiry_date' => 'required',
             'allocation_date' => 'required',
             'tm_lead_types_id' => 'required',
+            'dob' => 'nullable|date_format:Y-m-d',
         ];
     }
 }

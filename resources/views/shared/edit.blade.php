@@ -7,6 +7,11 @@
     $(document).ready(function() {
         var model = JSON.parse('<?php echo json_encode(get_object_vars($model)) ?>');
         var modelPropertiesArray = convertObjectToArray(model.properties);
+        var modelSkipProperties = convertObjectToArray(model.skipProperties);
+        var result = modelSkipProperties.filter(obj => {
+            return obj.name === 'update'
+            });
+        $('#skip').val(result[0].value);
         var record = JSON.parse('<?php echo json_encode($record) ?>');
         String.prototype.replaceAll = function(search, replacement) {
             var target = this;
@@ -93,6 +98,7 @@
 
                         <input type="hidden" name="model" value={{ json_encode($model->properties) }} />
                         <input type="hidden" name="modelType" value={{ json_encode($model->modelType) }} />
+                        <input type="hidden" name="modelSkipProperties" id="skip" value={{ json_encode($model->modelSkipProperties) }} />
                         @php
                         $index = 0
                         @endphp
@@ -117,7 +123,7 @@
                                                     type={{ explode("|", $value)[1]  }}
                                                     @endif id={{$property}}
                                                 name={{$property}}
-                                                @if(Auth::user()->hasRole(strtoupper($model->modelType).'_ADVISOR') && ($property == 'email' || $property == 'mobile_no')) disabled="disabled" @endif
+                                                @if($property == 'email' || $property == 'mobile_no') disabled="disabled" @endif
                                                 value="{{ old($property, $record->$property) }}"
                                             class="form-control">
                                             @if ($errors->has($property))

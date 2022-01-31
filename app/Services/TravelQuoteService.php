@@ -3,10 +3,12 @@
 namespace App\Services;
 
 use App\Models\TravelQuote;
+use App\Models\TravelQuoteRequestDetail;
 use Illuminate\Http\Request;
 use DB;
 use Auth;
 use \Carbon\Carbon;
+use Config;
 
 class TravelQuoteService extends BaseService
 {
@@ -29,6 +31,8 @@ class TravelQuoteService extends BaseService
             'tqr.last_name',
             'tqr.email',
             'tqr.mobile_no',
+            'tqr.premium',
+            'tqr.source',
             'tqr.nationality_id',
             'n.TEXT AS nationality_id_text',
             'qs.id as quote_status_id',
@@ -36,9 +40,14 @@ class TravelQuoteService extends BaseService
             'u.id as advisor_id',
             'u.name as advisor_id_text',
             'tqr.region_cover_for_id',
-            'r.TEXT AS region_cover_for_id_text'
+            'r.TEXT AS region_cover_for_id_text',
+            'tqrd.next_followup_date',
+            'ls.text as lost_reason',
+            'tqrd.notes'
         )
             ->leftJoin('travel_cover_for as tcf', 'tcf.id', '=', 'tqr.travel_cover_for_id')
+            ->leftJoin('travel_quote_request_detail as tqrd', 'tqr.id', '=', 'tqrd.travel_quote_request_id')
+            ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'tqrd.lost_reason_id')
             ->leftJoin('nationality as n', 'n.id', '=', 'tqr.nationality_id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'tqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'tqr.advisor_id')
@@ -47,6 +56,8 @@ class TravelQuoteService extends BaseService
 
     public function saveTravelQuote(Request $request)
     {
+        $sourceName = Config::get('constants.SOURCE_NAME');
+        $appUrl = Config::get('constants.APP_URL');
         $dataArr = array(
             "firstName" => $request->first_name,
             "lastName" => $request->last_name,
@@ -54,10 +65,13 @@ class TravelQuoteService extends BaseService
             "details" => $request->details,
             "mobileNo" => $request->mobile_no,
             "travelCoverForId" => $request->travel_cover_for_id,
+            "premium" => $request->premium,
             "nationalityId" => $request->nationality_id,
             "daysCoverFor" => $request->days_cover_for,
             "destination" => $request->destination,
             "regionCoverForId" => $request->region_cover_for_i,
+            "source" => $sourceName,
+            "referenceUrl" => $appUrl,
         );
         if (Auth::user()->hasRole("TRAVEL_ADVISOR")) {
             $dataArr['advisorId'] = Auth::user()->id;
@@ -73,6 +87,7 @@ class TravelQuoteService extends BaseService
                 'tqr.uuid',
                 'tqr.first_name',
                 'tqr.last_name',
+                'tqr.code',
                 'tqr.created_at',
                 'u.name AS advisor_name',
                 DB::raw("'Travel' as lead_type"),
@@ -113,11 +128,28 @@ class TravelQuoteService extends BaseService
                 'u.name as assignedBy',
                 'tqr.updated_at',
                 'tqr.source as leadSource',
+                'tqrd.next_followup_date as nextFollowupDate',
             )
             ->leftJoin('travel_quote_request_detail as tqrd', 'tqrd.travel_quote_request_id', '=', 'tqr.id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'tqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'tqrd.advisor_assigned_by_id')
+            ->where('qs.text', '!=', 'Fake')
             ->where('tqr.advisor_id', Auth::user()->id);
+
+        $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
+        $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';
+        if ($column != '' && $column != 0 && $direction != '') {
+            if ($column == 3) {
+                $column = "tqr.created_at";
+            }
+            if ($column == 4) {
+                $column = "tqrd.advisor_assigned_date";
+            }
+            if ($column == 7) {
+                $column = "tqrd.next_followup_date";
+            }
+            $query->orderBy($column, $direction);
+        }
         if (isset($request->startedAt) && isset($request->endAt) && $request->startedAt != '' && $request->endAt != '') {
             $dateFrom = Carbon::createFromFormat('Y-m-d', $request->startedAt)->startOfDay()->toDateTimeString();
             $dateTo = Carbon::createFromFormat('Y-m-d', $request->endAt)->endOfDay()->toDateTimeString();
@@ -134,7 +166,13 @@ class TravelQuoteService extends BaseService
 
     public function getGridData($searchProperties, $request)
     {
+
         if ($request->ajax()) {
+            if (isset($request->assigned_to_date_start) && $request->assigned_to_date_start != '') {
+                $dateFrom = Carbon::createFromFormat('Y-m-d', $request['assigned_to_date_start'])->startOfDay()->toDateTimeString();
+                $dateTo = Carbon::createFromFormat('Y-m-d', $request['assigned_to_date_end'])->endOfDay()->toDateTimeString();
+                $this->query->whereBetween('tqrd.advisor_assigned_date', [$dateFrom, $dateTo]);
+            }
             if (in_array('created_at', $searchProperties) && isset($request->created_at) && $request->created_at != "") {
                 $dateFrom = Carbon::createFromFormat('Y-m-d', $request['created_at'])->startOfDay()->toDateTimeString();
                 $dateTo = Carbon::createFromFormat('Y-m-d', $request['created_at_end'])->endOfDay()->toDateTimeString();
@@ -142,11 +180,54 @@ class TravelQuoteService extends BaseService
             }
             foreach ($searchProperties as $item) {
                 if (!empty($request[$item]) && $item != "created_at") {
-                    $this->query->where($this->getQuerySuffix($item) . '.' . $item, $request[$item]);
+                    if ($request[$item] == 'null') {
+                        $this->query->whereNull($item);
+                    } else {
+                        $this->query->where($this->getQuerySuffix($item) . '.' . $item, $request[$item]);
+                    }
                 }
             }
         }
-        return $this->query;
+        $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
+        $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';
+        if ($column != '' && $column != 0 && $direction != '') {
+            $isManagerORDeputy = Auth::user()->isManagerOrDeputy();
+            $isAdmin = Auth::user()->hasRole("ADMIN");
+            if ($isAdmin || $isManagerORDeputy == "1") {
+                if ($column == 6) {
+                    $column = "tqr.created_at";
+                }
+                if ($column == 7) {
+                    $column = "tqr.updated_at";
+                }
+                if ($column == 8) {
+                    $column = "tqrd.next_followup_date";
+                }
+            } else {
+                if ($column == 5) {
+                    $column = "tqr.created_at";
+                }
+                if ($column == 6) {
+                    $column = "tqr.updated_at";
+                }
+                if ($column == 7) {
+                    $column = "tqrd.next_followup_date";
+                }
+            }
+            return $this->query->orderBy($column, $direction);
+        } else {
+            return $this->query->orderBy('tqr.created_at', 'DESC');
+        }
+    }
+
+    public function updateChildRecord($id)
+    {
+        $childRecord = TravelQuoteRequestDetail::where('travel_quote_request_id', $id)->first();
+        if (!empty($childRecord)) {
+            $childRecord->advisor_assigned_by_id = Auth::user()->id;
+            $childRecord->advisor_assigned_date = Carbon::now();
+            $childRecord->save();
+        }
     }
 
     private function getQuerySuffix($item)
@@ -180,7 +261,30 @@ class TravelQuoteService extends BaseService
 
     public function getEntityPlain($id)
     {
-        return TravelQuote::where('uuid', $id)->first();
+        return TravelQuote::where('id', $id)->first();
+    }
+
+    public function getSelectedLostReason($id)
+    {
+        $entity = TravelQuoteRequestDetail::where('travel_quote_request_id', $id)->first();
+        $lostId = 0;
+        if (!is_null($entity) && $entity->lost_reason_id) {
+            $lostId = $entity->lost_reason_id;
+        }
+        return $lostId;
+    }
+
+    public function getDetailEntity($id)
+    {
+        $entity = TravelQuoteRequestDetail::where('travel_quote_request_id', $id)->first();
+        if (!$entity) {
+            TravelQuoteRequestDetail::create([
+                'travel_quote_request_id' => $id,
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now(),
+            ]);
+        }
+        return TravelQuoteRequestDetail::where('travel_quote_request_id', $id)->first();
     }
 
     public function updateTravelQuote(Request $request, $id)
@@ -192,14 +296,11 @@ class TravelQuoteService extends BaseService
             'travel_cover_for_id' => $request->travel_cover_for_id,
             'nationality_id' => $request->nationality_id,
             'days_cover_for' => $request->days_cover_for,
+            'premium' => $request->premium,
             'destination' => $request->destination,
             'region_cover_for_id' => $request->region_cover_for_id,
             'details' => $request->details,
         ];
-        if (!Auth::user()->hasRole('TRAVEL_ADVISOR')) {
-            $updateArray['email'] = $request->email;
-            $updateArray['mobile_no'] = $request->mobile_no;
-        }
         TravelQuote::where('uuid', $id)->update($updateArray);
         if (isset($request->return_to_view))
             return redirect("quote/travel/" . $id)->with('success', 'Travel Quote has been updated');
@@ -215,9 +316,13 @@ class TravelQuoteService extends BaseService
             "email" => "input|email|required",
             "mobile_no" => "input|title|number|required",
             "quote_status_id" => "select|title",
-            "advisor_id" => "select|title|required",
+            "advisor_id" => "select|title",
             "created_at" => "input|date|title|range",
             "updated_at" => "input|date|title",
+            "next_followup_date" => "input|text",
+            "lost_reason" => "input|text",
+            "source" => "input|text",
+            "premium" => "input|number|required",
             "days_cover_for" => "input|number|title|required",
             "destination" => "input|text|required",
             "nationality_id" => "select|title|required",
@@ -270,9 +375,9 @@ class TravelQuoteService extends BaseService
     public function fillModelSkipProperties()
     {
         return [
-            "create" => "id,created_at,id,code,advisor_id,updated_at,quote_status_id",
+            "create" => "id,created_at,id,code,advisor_id,updated_at,quote_status_id,next_followup_date,lost_reason",
             "list" => "email,mobile_no,region_cover_for_id,travel_cover_for_id,details,nationality_id,destination,days_cover_for",
-            "update" => 'created_at,id,code,advisor_id,updated_at,quote_status_id',
+            "update" => 'created_at,id,code,advisor_id,updated_at,quote_status_id,next_followup_date,lost_reason',
             "show" => "",
         ];
     }

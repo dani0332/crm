@@ -3,10 +3,12 @@
 namespace App\Services;
 
 use App\Models\HomeQuote;
+use App\Models\HomeQuoteRequestDetail;
 use Illuminate\Http\Request;
 use DB;
 use Illuminate\Support\Facades\Auth;
 use \Carbon\Carbon;
+use Config;
 
 class HomeQuoteService extends BaseService
 {
@@ -30,17 +32,24 @@ class HomeQuoteService extends BaseService
             'hqr.personal_belongings_aed',
             'hqr.has_building',
             'hqr.building_aed',
+            'hqr.source',
             'hqr.ilivein_accommodation_type_id',
             'hqr.quote_status_id',
             'qs.text as quote_status_id_text',
             'hqr.created_at',
             'hqr.updated_at',
+            'hqr.premium',
             'hqr.advisor_id',
             'u.name as advisor_id_text',
             'hat.TEXT AS ilivein_accommodation_type_id_text',
             'hqr.iam_possesion_type_id',
-            'hpt.TEXT AS iam_possesion_type_id_text'
+            'hpt.TEXT AS iam_possesion_type_id_text',
+            'hqrd.next_followup_date',
+            'hqrd.notes',
+            'ls.text as lost_reason',
         )
+            ->leftJoin('home_quote_request_detail as hqrd', 'hqrd.home_quote_request_id', '=', 'hqr.id')
+            ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'hqrd.lost_reason_id')
             ->leftJoin('home_accommodation_type as hat', 'hat.id', '=', 'hqr.ilivein_accommodation_type_id')
             ->leftJoin('home_possession_type as hpt', 'hpt.id', '=', 'hqr.iam_possesion_type_id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'hqr.quote_status_id')
@@ -52,8 +61,33 @@ class HomeQuoteService extends BaseService
         return $this->query->where('hqr.uuid', $id)->first();
     }
 
+    public function getSelectedLostReason($id)
+    {
+        $entity = HomeQuoteRequestDetail::where('home_quote_request_id', $id)->first();
+        $lostId = 0;
+        if (!is_null($entity) && $entity->lost_reason_id) {
+            $lostId = $entity->lost_reason_id;
+        }
+        return $lostId;
+    }
+
+    public function getDetailEntity($id)
+    {
+        $entity = HomeQuoteRequestDetail::where('home_quote_request_id', $id)->first();
+        if (!$entity) {
+            HomeQuoteRequestDetail::create([
+                'home_quote_request_id' => $id,
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now(),
+            ]);
+        }
+        return HomeQuoteRequestDetail::where('home_quote_request_id', $id)->first();
+    }
+
     public function saveHomeQuote(Request $request)
     {
+        $sourceName = Config::get('constants.SOURCE_NAME');
+        $appUrl = Config::get('constants.APP_URL');
         $dataArr = array(
             "firstName" => $request->first_name,
             "lastName" => $request->last_name,
@@ -61,6 +95,7 @@ class HomeQuoteService extends BaseService
             "address" => $request->address,
             "mobileNo" => $request->mobile_no,
             "contentsAed" => $request->contents_aed,
+            "premium" => $request->premium,
             "iamPossesionTypeId" => $request->iam_possesion_type_id,
             "iliveinAccommodationTypeId" => $request->ilivein_accommodation_type_id,
             "personalBelongingsAed" => $request->personal_belongings_aed,
@@ -69,14 +104,21 @@ class HomeQuoteService extends BaseService
             "nationalityId" => $request->nationality_id,
             "hasBuilding" => $request->has_building == 'on' ? true : false,
             "hasPersonalBelongings" => $request->has_personal_belongings == 'on' ?  true : false,
+            "source" => $sourceName,
+            "referenceUrl" => $appUrl,
         );
-        if (Auth::user()->hasRole("HOME_ADVISOR")) $dataArr['advisorId'] = Auth::users()->id;
+        if (Auth::user()->hasRole("HOME_ADVISOR")) $dataArr['advisorId'] = Auth::user()->id;
         return CapiRequestService::sendCAPIRequest('/api/v1-save-home-quote', $dataArr);
     }
 
     public function getGridData($searchProperties, $request)
     {
         if ($request->ajax()) {
+            if (isset($request->assigned_to_date_start) && $request->assigned_to_date_start != '') {
+                $dateFrom = Carbon::createFromFormat('Y-m-d', $request['assigned_to_date_start'])->startOfDay()->toDateTimeString();
+                $dateTo = Carbon::createFromFormat('Y-m-d', $request['assigned_to_date_end'])->endOfDay()->toDateTimeString();
+                $this->query->whereBetween('hqrd.advisor_assigned_date', [$dateFrom, $dateTo]);
+            }
             if (in_array('created_at', $searchProperties) && isset($request->created_at) && $request->created_at != "") {
                 $dateFrom = Carbon::createFromFormat('Y-m-d', $request['created_at'])->startOfDay()->toDateTimeString();
                 $dateTo = Carbon::createFromFormat('Y-m-d', $request['created_at_end'])->endOfDay()->toDateTimeString();
@@ -84,12 +126,44 @@ class HomeQuoteService extends BaseService
             }
             foreach ($searchProperties as $item) {
                 if (!empty($request[$item]) && $item != "created_at") {
-                    $this->query->where($this->getQuerySuffix($item) . '.' . $item, $request[$item]);
+                    if ($request[$item] == 'null') {
+                        $this->query->whereNull($item);
+                    } else {
+                        $this->query->where($this->getQuerySuffix($item) . '.' . $item, $request[$item]);
+                    }
                 }
             }
         }
-        $this->query->orderBy('hqr.created_at', 'DESC');
-        return $this->query;
+        $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
+        $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';
+        if ($column != '' && $column != 0 && $direction != '') {
+            $isManagerORDeputy = Auth::user()->isManagerOrDeputy();
+            $isAdmin = Auth::user()->hasRole("ADMIN");
+            if ($isAdmin || $isManagerORDeputy == "1") {
+                if ($column == 6) {
+                    $column = "hqr.created_at";
+                }
+                if ($column == 7) {
+                    $column = "hqr.updated_at";
+                }
+                if ($column == 8) {
+                    $column = "hqrd.next_followup_date";
+                }
+            } else {
+                if ($column == 5) {
+                    $column = "hqr.created_at";
+                }
+                if ($column == 6) {
+                    $column = "hqr.updated_at";
+                }
+                if ($column == 7) {
+                    $column = "hqrd.next_followup_date";
+                }
+            }
+            return $this->query->orderBy($column, $direction);
+        } else {
+            return $this->query->orderBy('hqr.created_at', 'DESC');
+        }
     }
 
     private function getQuerySuffix($item)
@@ -128,11 +202,27 @@ class HomeQuoteService extends BaseService
                 'u.name as assignedBy',
                 'hqr.updated_at',
                 'hqr.source as leadSource',
+                'hqrd.next_followup_date as nextFollowupDate',
             )
             ->leftJoin('home_quote_request_detail as hqrd', 'hqrd.home_quote_request_id', '=', 'hqr.id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'hqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'hqrd.advisor_assigned_by_id')
+            ->where('qs.text', '!=', 'Fake')
             ->where('hqr.advisor_id', Auth::user()->id);
+        $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
+        $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';
+        if ($column != '' && $column != 0 && $direction != '') {
+            if ($column == 3) {
+                $column = "hqr.created_at";
+            }
+            if ($column == 4) {
+                $column = "hqrd.advisor_assigned_date";
+            }
+            if ($column == 7) {
+                $column = "hqrd.next_followup_date";
+            }
+            $query->orderBy($column, $direction);
+        }
         if (isset($request->startedAt) && isset($request->endAt) && $request->startedAt != '' && $request->endAt != '') {
             $dateFrom = Carbon::createFromFormat('Y-m-d', $request->startedAt)->startOfDay()->toDateTimeString();
             $dateTo = Carbon::createFromFormat('Y-m-d', $request->endAt)->endOfDay()->toDateTimeString();
@@ -152,6 +242,16 @@ class HomeQuoteService extends BaseService
         return HomeQuote::orderBy('created_at', 'desc')->get();
     }
 
+    public function updateChildRecord($id)
+    {
+        $childRecord = HomeQuoteRequestDetail::where('home_quote_request_id', $id)->first();
+        if (!empty($childRecord)) {
+            $childRecord->advisor_assigned_by_id = Auth::user()->id;
+            $childRecord->advisor_assigned_date = Carbon::now();
+            $childRecord->save();
+        }
+    }
+
     public function getLeads($CDBID, $email, $mobile_no, $lead_type)
     {
         $query = DB::table('home_quote_request as hqr')
@@ -160,6 +260,7 @@ class HomeQuoteService extends BaseService
                 'hqr.uuid',
                 'hqr.first_name',
                 'hqr.last_name',
+                'hqr.code',
                 'hqr.created_at',
                 'u.name AS advisor_name',
                 DB::raw("'Home' as lead_type"),
@@ -194,6 +295,7 @@ class HomeQuoteService extends BaseService
             'building_aed' => $request->building_aed,
             'has_contents' => $request->has_contents == 'on' ?  true : false,
             'nationality_id' => $request->nationality_id,
+            'premium' => $request->premium,
             'has_building' => $request->has_building == 'on' ? true : false,
             'has_personal_belongings' => $request->has_personal_belongings == 'on' ?  true : false,
         ];
@@ -217,9 +319,13 @@ class HomeQuoteService extends BaseService
             "email" => "input|email|required",
             "mobile_no" => "input|title|number|required",
             "quote_status_id" => "select|title",
-            "advisor_id" => "select|title|required",
+            "advisor_id" => "select|title",
             "created_at" => "input|date|title|range",
             "updated_at" => "input|date|title",
+            "next_followup_date" => "input|text",
+            "source" => "input|text|required",
+            "lost_reason" => "input|text",
+            "premium" => "input|number|required",
             "contents_aed" => "input|number|required",
             "personal_belongings_aed" => "input|number|required",
             "building_aed" => "input|number|required",
@@ -272,10 +378,10 @@ class HomeQuoteService extends BaseService
     public function fillModelSkipProperties()
     {
         return [
-            "create" => "id,code,quote_status_id,advisor_id,created_at,updated_at",
+            "create" => "id,code,quote_status_id,advisor_id,created_at,updated_at,next_followup_date,lost_reason",
             "list" => "email,address,iam_possesion_type_id,ilivein_accommodation_type_id,mobile_no,personal_belongings_aed,building_aed,contents_aed,has_contents,has_personal_belongings,has_building,address",
-            "update" => "id,code,quote_status_id,advisor_id,created_at,updated_at",
-            "show" => "id",
+            "update" => "id,code,quote_status_id,advisor_id,created_at,updated_at,next_followup_date,lost_reason",
+            "show" => "id,next_followup_date,lost_reason",
         ];
     }
 
@@ -284,11 +390,13 @@ class HomeQuoteService extends BaseService
         return ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'advisor_id', 'created_at'];
     }
 
-    public function getValidationArray($modelPropertiesList, $request)
+    public function getValidationArray($modelPropertiesList, $request, $modelSkipPropertiesList)
     {
         $validationArray = [];
+        $skipProperties = explode(',', $modelSkipPropertiesList);
         foreach ($modelPropertiesList as $propertyName => $propertyValue) {
-
+            if (in_array($propertyName, $skipProperties))
+                continue;
             if ($propertyName == 'contents_aed' || $propertyName ==  'personal_belongings_aed' || $propertyName == 'building_aed' || $propertyName == 'has_contents' || $propertyName == 'has_personal_belongings' || $propertyName == 'has_building') {
                 if ($request['iam_possesion_type_id'] == null) {
                     $validationArray['has_contents'] = 'required';
@@ -322,7 +430,7 @@ class HomeQuoteService extends BaseService
                     }
                 }
             } else {
-                if ($propertyName != 'id') {
+                if ($propertyName != 'id' && $propertyName != 'email' && $propertyName != 'code'  && $propertyName != 'created_at' && $propertyName != 'updated_at' && $propertyName != 'mobile_no' && $propertyName != 'quote_status_id' && $propertyName != 'next_followup_date' && $propertyName != 'lost_reason' && $propertyName != 'source' && $propertyName != 'advisor_id') {
                     $validationArray[$propertyName] = 'required';
                 }
             }

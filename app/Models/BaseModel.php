@@ -149,6 +149,14 @@ class BaseModel extends Model implements AuditableContract
         return $response;
     }
 
+    public function scopeRelationWhere($query, $isGetList, $filters) {
+
+        // $query->whereHas('insurance_coverage', function($q) {
+        //     // Query the name field in status table
+        //     $q->where('car_quote_id', '=', 1377); // '=' is optional
+        // });
+    }   
+
     private function relation($filters){
 
         $role = strtolower(Auth::user()->usersroles[0]->name);//'advisor';
@@ -162,7 +170,7 @@ class BaseModel extends Model implements AuditableContract
        if(!$this->isGetList && $collection->get('detail'))
             $access = collect($collection->get('detail')[$role]);
 
-       //DB::enableQueryLog();
+     //  DB::enableQueryLog();
         $response =  self::with($this->relations())
         ->select($access->toArray())
         ->where(function($query) use($filters) {
@@ -190,11 +198,12 @@ class BaseModel extends Model implements AuditableContract
                 }
             }
         })
+        ->relationWhere($this->isGetList, $filters)
         ->get();
 
          //dd($response);exit;
         // $query = DB::getQueryLog();
-        //dd($query);exit;
+        // dd($query);exit;
         return $response;
     }
 }

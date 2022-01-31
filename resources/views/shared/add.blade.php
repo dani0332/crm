@@ -9,7 +9,38 @@
         return target.replace(new RegExp(search, 'g'), replacement);
         };
 
+        var oldCarModelId = JSON.parse('<?php echo json_encode(old("car_model_id")) ?>');
 
+        if(oldCarModelId != '') {
+            getCarModels(oldCarModelId);
+        }
+
+        $('#car_model_id').on('change',function(){
+            var car_model_id = $('#car_model_id').val();
+            $.ajax({
+                url: "{{ url('/getCarModelDetails') }}",
+                type: "GET",
+                data: {
+                    car_model_id: car_model_id
+                },
+                success: function(data){
+                        console.log("cylinder: ",data.cylinder);
+                        console.log("seat_capacity: ",data.seat_capacity);
+                        console.log("vehicle_type_id: ",data.vehicle_type_id);
+                    if(data.cylinder || data.seat_capacity || data.vehicle_type_id){
+                        $('#cylinder').val(data.cylinder);
+                        $('#seat_capacity').val(data.seat_capacity);
+                        if(data.vehicle_type_id) $('#vehicle_type_id').val(data.vehicle_type_id);
+                    }
+                    if(!data.cylinder && !data.seat_capacity && !data.vehicle_type_id){
+                        alert('No Vehicle Assumptions Data Found');
+                    }
+                },
+                error: function(data){
+                    console.log(data);
+                }
+            });
+        });
         function convertObjectToArray(obj) {
         return Object.keys(obj).map(key => ({
             name: key,
@@ -31,7 +62,6 @@
                         $(this).hide();
                     }
                 }
-
             });
             $('#iam_possesion_type_id').on('change',function(){
                 debugger;
@@ -42,7 +72,6 @@
                     $('#has_building_div').hide();
                 }
             });
-
             $('#has_personal_belongings').on('change',function(){
                 this.checked ? $('#personal_belongings_aed_div').show() : $('#personal_belongings_aed_div').hide();
             });
@@ -64,6 +93,17 @@
             });
         }
     });
+
+    function getCarModels(id)
+    {
+        $.get('/car-model-by-id?id=' + id, function (data) {
+            var carmodel = $('#car_model_id').empty();
+            $.each(data, function (create, carmodelObj) {
+                var option = $('<option/>', { id: create, value: carmodelObj });
+                carmodel.append('<option data-id="' + carmodelObj.code + '" value="' + carmodelObj.id + '">' + carmodelObj.text + '</option>');
+            });
+        });
+    }
 
 </script>
     <div class="row">
@@ -255,4 +295,3 @@
         </div>
     </div>
 @endsection
-

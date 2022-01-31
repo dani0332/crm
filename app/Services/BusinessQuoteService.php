@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\BusinessQuote;
+use App\Models\BusinessQuoteRequestDetail;
 use Illuminate\Http\Request;
 use DB;
 use Config;
@@ -28,17 +29,24 @@ class BusinessQuoteService extends BaseService
                 'bqr.mobile_no',
                 'bqr.company_name',
                 'bqr.brief_details',
+                'bqr.number_of_employees',
                 'bqr.business_type_of_insurance_id',
                 'bti.TEXT AS business_type_of_insurance_id_text',
                 'bqr.advisor_id',
                 'u.name as advisor_id_text',
                 'bqr.quote_status_id',
-                'qs.text as quote_status_id_text'
+                'qs.text as quote_status_id_text',
+                'bqr.premium',
+                'bqrd.next_followup_date',
+                'bqrd.notes',
+                'ls.text as lost_reason',
+                'bqr.source',
             )
-            ->Join('business_type_of_insurance as bti', 'bti.id', '=', 'bqr.business_type_of_insurance_id')
+            ->leftJoin('business_type_of_insurance as bti', 'bti.id', '=', 'bqr.business_type_of_insurance_id')
+            ->leftJoin('business_quote_request_detail as bqrd', 'bqrd.business_quote_request_id', '=', 'bqr.id')
+            ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'bqrd.lost_reason_id')
             ->leftJoin('users as u', 'u.id', '=', 'bqr.advisor_id')
-            ->leftJoin('quote_status as qs', 'qs.id', '=', 'bqr.quote_status_id')
-            ->where('bti.text', '!=', 'Group Medical');
+            ->leftJoin('quote_status as qs', 'qs.id', '=', 'bqr.quote_status_id');
     }
 
     public function getEntity($id)
@@ -52,6 +60,7 @@ class BusinessQuoteService extends BaseService
             ->select(
                 'bqr.id',
                 'bqr.uuid',
+                'bqr.code',
                 'bqr.first_name',
                 'bqr.last_name',
                 'bqr.created_at',
@@ -90,15 +99,33 @@ class BusinessQuoteService extends BaseService
                 'u.name as assignedBy',
                 'bqr.updated_at',
                 'bqr.source as leadSource',
+                'bqr.company_name',
+                'bqr.premium',
+                'bqrd.next_followup_date as nextFollowupDate',
             )
             ->leftJoin('business_quote_request_detail as bqrd', 'bqrd.business_quote_request_id', '=', 'bqr.id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'bqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'bqrd.advisor_assigned_by_id')
-            ->where('bqr.advisor_id', Auth::user()->id);
+            ->where('bqr.advisor_id', Auth::user()->id)
+            ->where('qs.text', '!=', 'Fake');
         if (isset($request->startedAt) && isset($request->endAt) && $request->startedAt != '' && $request->endAt != '') {
             $dateFrom = Carbon::createFromFormat('Y-m-d', $request->startedAt)->startOfDay()->toDateTimeString();
             $dateTo = Carbon::createFromFormat('Y-m-d', $request->endAt)->endOfDay()->toDateTimeString();
             $query->whereBetween('bqrd.advisor_assigned_date', [$dateFrom, $dateTo]);
+        }
+        $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
+        $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';
+        if ($column != '' && $column != 0 && $direction != '') {
+            if ($column == 3) {
+                $column = "bqr.created_at";
+            }
+            if ($column == 4) {
+                $column = "bqrd.advisor_assigned_date";
+            }
+            if ($column == 7) {
+                $column = "bqrd.next_followup_date";
+            }
+            $query->orderBy($column, $direction);
         }
         if (isset($request->cdbId) && $request->cdbId != 0) {
             $query->where('bqr.code', $request->cdbId);
@@ -114,6 +141,39 @@ class BusinessQuoteService extends BaseService
         return BusinessQuote::where('id', $id)->first();
     }
 
+    public function updateChildRecord($id)
+    {
+        $childRecord = BusinessQuoteRequestDetail::where('business_quote_request_id', $id)->first();
+        if (!empty($childRecord)) {
+            $childRecord->advisor_assigned_by_id = Auth::user()->id;
+            $childRecord->advisor_assigned_date = Carbon::now();
+            $childRecord->save();
+        }
+    }
+
+    public function getDetailEntity($id)
+    {
+        $entity = BusinessQuoteRequestDetail::where('business_quote_request_id', $id)->first();
+        if (!$entity) {
+            BusinessQuoteRequestDetail::create([
+                'business_quote_request_id' => $id,
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now(),
+            ]);
+        }
+        return BusinessQuoteRequestDetail::where('business_quote_request_id', $id)->first();
+    }
+
+    public function getSelectedLostReason($id)
+    {
+        $entity = BusinessQuoteRequestDetail::where('business_quote_request_id', $id)->first();
+        $lostId = 0;
+        if (!is_null($entity) && $entity->lost_reason_id) {
+            $lostId = $entity->lost_reason_id;
+        }
+        return $lostId;
+    }
+
     public function getLeadsForAssignment()
     {
         return BusinessQuote::orderBy('created_at', 'desc')->get();
@@ -121,23 +181,34 @@ class BusinessQuoteService extends BaseService
 
     public function saveBusinessQuote(Request $request)
     {
+        $sourceName = Config::get('constants.SOURCE_NAME');
+        $appUrl = Config::get('constants.APP_URL');
         $dataArr = array(
             "firstName" => $request->first_name,
             "lastName" => $request->last_name,
             "email" => $request->email,
-            "address" => $request->address,
+            "numberOfEmployees" => $request->number_of_employees,
             "mobileNo" => $request->mobile_no,
             "companyName" => $request->company_name,
             "briefDetails" => $request->brief_details,
+            "premium" => $request->premium,
             "businessTypeOfInsuranceId" => $request->business_type_of_insurance_id,
+            "source" => $sourceName,
+            "referenceUrl" => $appUrl,
         );
-        if (Auth::user()->hasRole("BUSINESS_ADVISOR")) $dataArr['advisorId'] = Auth::users()->id;
-        return CapiRequestService::sendCAPIRequest('/api/v1-save-business-quote', $dataArr);
+        if (Auth::user()->hasRole("BUSINESS_ADVISOR")) $dataArr['advisorId'] = Auth::user()->id;
+        $response  = CapiRequestService::sendCAPIRequest('/api/v1-save-business-quote', $dataArr);
+        return $response;
     }
 
     public function getGridData($searchProperties, $request)
     {
         if ($request->ajax()) {
+            if (isset($request->assigned_to_date_start) && $request->assigned_to_date_start != '') {
+                $dateFrom = Carbon::createFromFormat('Y-m-d', $request['assigned_to_date_start'])->startOfDay()->toDateTimeString();
+                $dateTo = Carbon::createFromFormat('Y-m-d', $request['assigned_to_date_end'])->endOfDay()->toDateTimeString();
+                $this->query->whereBetween('bqrd.advisor_assigned_date', [$dateFrom, $dateTo]);
+            }
             if (in_array('created_at', $searchProperties) && isset($request->created_at) && $request->created_at != "") {
                 $dateFrom = Carbon::createFromFormat('Y-m-d', $request['created_at'])->startOfDay()->toDateTimeString();
                 $dateTo = Carbon::createFromFormat('Y-m-d', $request['created_at_end'])->endOfDay()->toDateTimeString();
@@ -145,12 +216,44 @@ class BusinessQuoteService extends BaseService
             }
             foreach ($searchProperties as $item) {
                 if (!empty($request[$item]) && $item != "created_at") {
-                    $this->query->where($this->getQuerySuffix($item) . '.' . $item, $request[$item]);
+                    if ($request[$item] == 'null') {
+                        $this->query->whereNull($item);
+                    } else {
+                        $this->query->where($this->getQuerySuffix($item) . '.' . $item, $request[$item]);
+                    }
                 }
             }
         }
-        $this->query->orderBy('bqr.created_at', 'DESC');
-        return $this->query;
+        $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
+        $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';
+        if ($column != '' && $column != 0 && $direction != '') {
+            $isManagerORDeputy = Auth::user()->isManagerOrDeputy();
+            $isAdmin = Auth::user()->hasRole("ADMIN");
+            if ($isAdmin || $isManagerORDeputy == "1") {
+                if ($column == 10) {
+                    $column = "bqr.created_at";
+                }
+                if ($column == 11) {
+                    $column = "bqr.updated_at";
+                }
+                if ($column == 5) {
+                    $column = "bqrd.next_followup_date";
+                }
+            } else {
+                if ($column == 9) {
+                    $column = "bqr.created_at";
+                }
+                if ($column == 10) {
+                    $column = "bqr.updated_at";
+                }
+                if ($column == 4) {
+                    $column = "bqrd.next_followup_date";
+                }
+            }
+            return $this->query->where('bti.text', '!=', 'Group Medical')->orderBy($column, $direction);
+        } else {
+            return $this->query->where('bti.text', '!=', 'Group Medical')->orderBy('bqr.created_at', 'DESC');
+        }
     }
 
     private function getQuerySuffix($item)
@@ -173,16 +276,15 @@ class BusinessQuoteService extends BaseService
 
     public function updateBusinessQuote(Request $request, $id)
     {
-        $businessQuote = BusinessQuote::find($id);
+        $businessQuote = BusinessQuote::where('code', 'BUS-' . $id)->first();
         $businessQuote->first_name = $request->first_name;
         $businessQuote->last_name = $request->last_name;
-        if (!Auth::user()->hasRole('BUSINESS_ADVISOR')) {
-            $businessQuote->email = $request->email;
-            $businessQuote->mobile_no = $request->mobile_no;
-        }
         $businessQuote->company_name = $request->company_name;
         $businessQuote->brief_details = $request->brief_details;
+        $businessQuote->premium = $request->premium;
         $businessQuote->business_type_of_insurance_id = $request->business_type_of_insurance_id;
+        $businessQuote->number_of_employees = $request->number_of_employees;
+        if (isset($request->group_medical_type_id)) $businessQuote->group_medical_type_id = $request->group_medical_type_id;
         $businessQuote->save();
 
         if (isset($request->return_to_view))
@@ -196,13 +298,18 @@ class BusinessQuoteService extends BaseService
             "code" => "input|title",
             "first_name" => "input|text|required",
             "last_name" => "input|text|required",
-            "quote_status_id" => "select|title",
-            "advisor_id" => "select|title|required",
             "email" => "input|email|required",
             "mobile_no" => "input|title|number|required",
+            "company_name" => "input|text|required",
+            "next_followup_date" => "input|text",
+            "source" => "input|text",
+            "lost_reason" => "input|text",
+            "advisor_id" => "select|title",
+            "quote_status_id" => "select|title",
             "created_at" => "input|date|title|range",
             "updated_at" => "input|date|title",
-            "company_name" => "input|text|required",
+            "premium" => "input|number|required",
+            "number_of_employees" => "input|title|number",
             "business_type_of_insurance_id" => "select|title|required",
             "brief_details" => 'textarea|required',
         );
@@ -217,6 +324,9 @@ class BusinessQuoteService extends BaseService
                 break;
             case 'ilivein_accommodation_type_id':
                 $title = "I Live In";
+                break;
+            case 'number_of_employees':
+                $title = "Number of Employees";
                 break;
             case 'mobile_no':
                 $title = "Mobile Number";
@@ -245,15 +355,15 @@ class BusinessQuoteService extends BaseService
     public function fillModelSkipProperties()
     {
         return [
-            "create" => "id,advisor_id,quote_status_id,code",
-            "list" => "email,mobile_no,company_name,brief_details,business_type_of_insurance_id,dob",
-            "update" => "id,advisor_id,quote_status_id,code",
+            "create" => "id,advisor_id,quote_status_id,code,updated_at,created_at,next_followup_date,lost_reason",
+            "list" => "email,mobile_no,brief_details,dob",
+            "update" => "id,advisor_id,quote_status_id,code,updated_at,created_at,next_followup_date,lost_reason",
             "show" => "",
         ];
     }
 
     public function fillModelSearchProperties()
     {
-        return ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'advisor_id', 'created_at'];
+        return ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'advisor_id', 'created_at', 'company_name', 'business_type_of_insurance_id'];
     }
 }

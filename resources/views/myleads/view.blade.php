@@ -7,9 +7,25 @@
         var isAdmin = JSON.parse('<?php echo json_encode(Auth::user()->hasRole('ADMIN')); ?>');
         var teamUserIds = JSON.parse('<?php echo json_encode(Auth::user()->getTeamUserIds()); ?>');
         $(document).ready(function() {
-            $("#myLeadsType").prop("selectedIndex", 0);
+            $('#mylead-search-submit-btn').on('click', function (e){
+                e.preventDefault();
+                if($('#startedAt').val() != '' && $('#endAt').val() == '') {
+                    $('#endAt').next().html('Please select assigned to end date');
+                    return false;
+                }
+                if($('#startedAt').val() == '' && $('#endAt').val() != '') {
+                    $('#startedAt').next().html('Please select assigned to start date');
+                    return false;
+                }
+                $("span").each(function (k, v) {
+                    if($(v).hasClass('text-danger')){
+                        $(v).html('');
+                    }
+                });
+                $('#my-leads-form').submit();
+            });
             var myleadsTable = $(".leadSearch-data-table").DataTable({
-                ordering: false,
+                ordering: true,
                 info: false,
                 searching: false,
                 bLengthChange: false,
@@ -17,18 +33,21 @@
                 ajax: {
                     url: config.routes.myleadsDataTable,
                     data: function(d) {
-                        d.leadType = $("#myLeadsType").val();
+                        d.leadType = $("#modelType").val();
                         d.cdbId = $("#cdbId").val();
                         d.leadStatus = $("#leadStatus").val();
                         d.startedAt = $("#startedAt").val();
                         d.endAt = $("#endAt").val();
                     },
                 },
+                columnDefs: [
+                    { orderable: false, targets: [1,2,5,6,] }
+                    ],
                 columns: [{
                         data: 'id',
                         name: 'id',
                         render: function(data, type, row) {
-                            return "<a href='/quotes/" + $("#myLeadsType").val().toLowerCase() + '/' + row.uuid + "'>" + row.code + "</a>"
+                            return "<a href='/quotes/" + $("#modelType").val().toLowerCase() + '/' + row.uuid + "'>" + row.code + "</a>"
                         }
                     },
                     {
@@ -54,8 +73,30 @@
                     {
                         data: 'leadSource',
                         name: 'leadSource'
-                    }
+                    },
+                    {
+                        data: 'nextFollowupDate',
+                        name: 'nextFollowupDate',
+                    },
                 ],
+            });
+
+            $('#mylead-reset-btn').on('click', function(){
+                $("span").each(function (k, v) {
+                    if($(v).hasClass('text-danger')){
+                        $(v).html('');
+                    }
+                });
+                $(':input', '#my-leads-form')
+                    .not(':button, :submit, :reset, :hidden')
+                    .val('')
+                    .prop('checked', false)
+                    .prop('selected', false);
+                $(".loader").show();
+                myleadsTable.draw();
+                setTimeout(() => {
+                    $(".loader").hide();
+                }, 1000);
             });
 
             $("#my-leads-form").submit(function(e) {
@@ -85,18 +126,14 @@
                         data-parsley-validate="" novalidate="" autocomplete="off">
                         {{ csrf_field() }}
                         @method('POST')
-                        <select class="form-control" style="display: none" id="myLeadsType" name="leadType">
-
-                            @foreach ($leadTypes as $item)
-                                <option  value="{{$item}}">{{$item}}</option>
-                            @endforeach
-                        </select>
+                        <input type="hidden" name="modelType" id="modelType" value="{{ $teamName }}">
                         <div class="item form-group">
                             <div class="col">
                                 <label class="col-form-label col-md-4 col-sm-4" for="Start Date">Assigned Date Start</label>
                                 <div class="col-md-6 col-sm-6">
                                     <div class="input-group">
                                         <input type="date" name="startedAt" id="startedAt" class="form-control">
+                                        <span class="text-danger"></span>
                                     </div>
                                 </div>
                             </div>
@@ -105,6 +142,7 @@
                                 <div class="col-md-6 col-sm-6">
                                     <div class="input-group">
                                         <input type="date" name="endAt" id="endAt" class="form-control">
+                                        <span class="text-danger"></span>
                                     </div>
                                 </div>
                             </div>
@@ -138,8 +176,8 @@
                             </div>
                             <div class="col">
                                 <ul class="nav navbar-right panel_toolbox">
-                                    <li><input type="submit" class="btn btn-warning btn-sm" value="Search"></li>
-                                    <li><input type="reset" class="btn btn-warning btn-sm"></li>
+                                    <li><input type="submit" id="mylead-search-submit-btn" class="btn btn-warning btn-sm" value="Search"></li>
+                                    <li><input type="reset" id="mylead-reset-btn" class="btn btn-warning btn-sm"></li>
                                 </ul>
                             </div>
                         </div>
@@ -154,11 +192,12 @@
                                 <th>Assigned Date</th>
                                 <th>Assigned By</th>
                                 <th>Lead Source</th>
+                                <th>Next FollowUp Date</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr class="odd">
-                                <td valign="top" colspan="7" class="dataTables_empty">No data available in table</td>
+                                <td valign="top" colspan="8" class="dataTables_empty">No data available in table</td>
                             </tr>
                         </tbody>
                     </table>

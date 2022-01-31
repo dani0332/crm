@@ -49,7 +49,7 @@ class migrateCustomerToAlfred extends Command
 
         $customerChunk->each(function ($chunk) use ($bar) {
             $chunk->each(function ($item) use ($bar) {
-                $response = Http::post(env('BERLIN_API_ENDPOINT'));
+                $response = Http::post(env('BERLIN_API_ENDPOINT').'/auth/generate-url');
                 $responseBody = json_decode($response->body());
                 $customer = MyAlFredUser::where('customer_id', $item->id)->first();
                 if (!$customer) {
@@ -59,7 +59,7 @@ class migrateCustomerToAlfred extends Command
                         'created_at' => Carbon::now('Asia/Dubai'),
                         'updated_at' => Carbon::now('Asia/Dubai')
                     ]);
-                    
+
                 }
                 $bar->advance();
             });

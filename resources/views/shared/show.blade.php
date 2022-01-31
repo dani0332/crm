@@ -9,77 +9,113 @@
     <div class="row">
         <div class="col-md-12 col-sm-12 admin-detail">
             <div class="x_panel">
-
-                <div class="x_title">
-                    <h2>{{(str_contains(strtolower($model->modelType), 'team') ? 'Team' : (str_contains(strtolower($model->modelType), 'leadstatus') ? 'Lead Status' : $model->modelType)). ' Detail' }}</h2>
-                    <ul class="nav navbar-right panel_toolbox">
-                        @if($model->modelType == 'health' && $record->health_team_type != '') <li><button class="btn btn-success btn-sm" style="float: right">Convert Lead To Business</button></li> @endif
-                        <li><a href="{{ url('quotes/'.strtolower($model->modelType)) }}" class="btn btn-warning btn-sm">{{(str_contains(strtolower($model->modelType), 'team') ? 'Team' : (str_contains(strtolower($model->modelType), 'leadstatus') ? 'Lead Status' : $model->modelType)). ' List' }}</a></li>
-                    </ul>
-                    <div class="clearfix"></div>
-                </div>
-
-                @if(strtolower($model->modelType) == 'health' && $record->health_team_type != '')
-                    <form method="post" action="manualLeadAssign" class="form-horizontal form-label-left" autocomplete="off">
-                        {{ csrf_field() }}
-                        <input type="hidden" value="{{ strtolower($model->modelType) }}" name="modelType">
-                        <div class="col-md-6">
-                            <div class="col-md-4">
-                                <h2><b>Assign Lead</b></h2>
-                            </div>
-                            <div class="col-md-4">
-                                <select class="form-control"  id="assigned_to_id_new"
-                                name="assigned_to_id_new">
-                                    <option>Select Assignee</option>
-                                    @foreach ($advisors as $item)
-                                        <option @if($record->advisor_id == $item->id) selected="selected" @endif value="{{ $item->id }}">{{ $item->name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="col-md-4">
-                                <button type="submit" id="tmLeadsAssignToUser"
-                                name="tmLeadsAssignToUser"
-                                class="btn btn-warning btn-sm">Assign</button>
-                            </div>
-                        </div>
-                        <div class="clearfix">
-                        </div>
-                    </form>
-                @elseif (strtolower($model->modelType) == 'health' )
-                    <form method="post" action="healthTeamAssign" class="form-horizontal form-label-left" autocomplete="off">
-                        {{ csrf_field() }}
-                        <input type="hidden" value="{{ strtolower($model->modelType) }}" name="modelType">
-                        <input type="hidden" value="{{ $record->id }}" name="entityId">
-                        <div class="col-md-6">
-                            <div class="col-md-4">
-                                <h2><b>Assign Lead Team</b></h2>
-                            </div>
-                            <div class="col-md-4">
-                                <select class="form-control"  id="assign_team"
-                                name="assign_team">
-                                    <option>Select Team</option>
-                                    <option value="EBP" >EBP</option>
-                                    <option value="RM">RM</option>
-                                </select>
-                            </div>
-                            <div class="col-md-4">
-                                <button type="submit" id="tmLeadsAssignToUser"
-                                name="tmLeadsAssignToUser"
-                                class="btn btn-warning btn-sm">Assign Team</button>
-                            </div>
-                        </div>
-                        <div class="clearfix">
-                        </div>
-                    </form>
-                @endif
-                <div class="x_content">
-                    <br />
+                <br />
                     @if (session()->has('success'))
                         <div class="alert alert-success">{{ session()->get('success') }}</div>
                     @endif
                     @if (session()->has('message'))
                         <div class="alert alert-danger">{{ session()->get('message') }}</div>
                     @endif
+                <div class="alert alert-success" style="display: none" id="teamassignmentSuccess"></div>
+                <div class="x_title">
+                    <h2>{{(str_contains(strtolower($model->modelType), 'team') ? 'Team' : (str_contains(strtolower($model->modelType), 'leadstatus') ? 'Lead Status' : $model->modelType)). ' Detail' }}</h2>
+                    <ul class="nav navbar-right panel_toolbox">
+                        <li><a href="{{ url('quotes/'.strtolower($model->modelType)) }}" class="btn btn-warning btn-sm">{{(str_contains(strtolower($model->modelType), 'team') ? 'Team' : (str_contains(strtolower($model->modelType), 'leadstatus') ? 'Lead Status' : $model->modelType)). ' List' }}</a></li>
+                    </ul>
+                    <div class="clearfix"></div>
+                </div>
+                @hasanyrole('ADMIN|HEALTH_MANAGER|WCU_ADVISOR|HEALTH_DEPUTY')
+                    @if(strtolower($model->modelType) == 'health' && $record->health_team_type != '')
+                        <form method="post" action="manualLeadAssignAfterTeamAssign" class="form-horizontal form-label-left" autocomplete="off">
+                            {{ csrf_field() }}
+                            @method('POST')
+                            <input type="hidden" value="{{ strtolower($model->modelType) }}" name="modelType">
+                            <input type="hidden" value="{{ strtolower($record->id) }}" name="entityId">
+                            <div class="col-md-6">
+                                <div class="col-md-4">
+                                    <h2><b>Assign Lead</b></h2>
+                                </div>
+                                <div class="col-md-4">
+                                    <select class="form-control"  id="assigned_to_id_new"
+                                    name="assigned_to_id_new">
+                                        <option>Select Assignee</option>
+                                        @foreach ($advisors as $item)
+                                            <option @if($record->advisor_id == $item->id) selected="selected" @endif value="{{ $item->id }}">{{ $item->name }}</option>
+                                        @endforeach
+                                    </select>
+                                    <label id='userAssignValidation' style="display: none;color:red;">Please user for assignment</label>
+                                </div>
+                                <div class="col-md-4">
+                                    <button id="assignAfterTeam"
+                                    name="assignAfterTeam"
+                                    class="btn btn-warning btn-sm">Assign</button>
+                                </div>
+                            </div>
+                            <div class="clearfix">
+                            </div>
+                        </form>
+                    @elseif (strtolower($model->modelType) == 'health' && ($record->health_team_type == '' || $record->health_team_type == null))
+                        <form method="post" id="healthTeamAssignForm" action="healthTeamAssign" class="form-horizontal form-label-left" autocomplete="off">
+                            {{ csrf_field() }}
+                            <input type="hidden" value="{{ strtolower($model->modelType) }}" name="modelType">
+                            <input type="hidden" value="{{ $record->id }}" id="entityId" name="entityId">
+                            <div class="col-md-6">
+                                <div class="col-md-4">
+                                    <h2><b>Assign Lead Team</b></h2>
+                                </div>
+                                <div class="col-md-4">
+                                    <select class="form-control"  id="assign_team"
+                                    name="assign_team">
+                                        <option value="">Select Team</option>
+                                        <option value="EBP" >EBP</option>
+                                        <option value="RM">RM</option>
+                                        <option value="GM">Group Medical</option>
+                                    </select>
+                                    <label id='teamAssignValidation' style="display: none;color:red;">Please select a team for assignment</label>
+                                </div>
+                                <div class="col-md-4">
+                                    <button type="submit" id="assignTeamBtn"
+                                    name="assignTeamBtn"
+                                    class="btn btn-warning btn-sm">Assign Team</button>
+                                </div>
+                            </div>
+                            <div class="clearfix">
+                            </div>
+                        </form>
+                    @endif
+                @endcan
+                @if(strtolower($model->modelType) == 'business' && Auth::user()->hasAnyRole(['ADMIN','BUSINESS_MANAGER', 'WCU_ADVISOR', 'BUSINESS_DEPUTY']) && $record->business_type_of_insurance_id_text = 'Group Medical')
+                <form method="post" action="manualBusinessLeadAssign" class="form-horizontal form-label-left" autocomplete="off">
+                    {{ csrf_field() }}
+                    @method('POST')
+                    <input type="hidden" value="{{ strtolower($model->modelType) }}" name="modelType">
+                    <input type="hidden" value="{{ strtolower($record->id) }}" name="entityId">
+                    <div class="col-md-6">
+                        <div class="col-md-4">
+                            <h2><b>Assign Lead</b></h2>
+                        </div>
+                        <div class="col-md-4">
+                            <select class="form-control"  id="assigned_to_id_new"
+                            name="assigned_to_id_new">
+                                <option>Select Assignee</option>
+                                @foreach ($advisors as $item)
+                                    <option @if($record->advisor_id == $item->id) selected="selected" @endif value="{{ $item->id }}">{{ $item->name }}</option>
+                                @endforeach
+                            </select>
+                            <label id='userAssignValidation' style="display: none;color:red;">Please user for assignment</label>
+                        </div>
+                        <div class="col-md-4">
+                            <button id="assignAfterTeam"
+                            name="assignAfterTeam"
+                            class="btn btn-warning btn-sm">Assign</button>
+                        </div>
+                    </div>
+                    <div class="clearfix">
+                    </div>
+                </form>
+                @endif
+                <div class="x_content">
+
                     @php
                     $count = 1;
                     @endphp
@@ -134,7 +170,12 @@
                     <div class="row">
                         <div class="col-auto mr-auto"></div>
                         <div class="col-auto">
-                            @can(strtolower($model->modelType).'-edit')
+                            @if(strtolower($model->modelType) == 'business')
+                            @can('corpline-quotes-edit')
+                                <a id="texta" href="{{ url('quotes/'.strtolower($model->modelType).'/'.$record->uuid.'/edit') }}" class='btn btn-warning btn-sm'>Edit</a>
+                            @endcan
+                            @endif
+                            @can(strtolower($model->modelType).'-quotes-edit')
                             <a id="texta" href="{{ url('quotes/'.strtolower($model->modelType).'/'.$record->uuid.'/edit') }}" class='btn btn-warning btn-sm'>Edit</a>
                             @endcan
                         </div>
@@ -143,7 +184,16 @@
             </div>
         </div>
     </div>
-
+    @if(strtolower($model->modelType) != 'teams' && strtolower($model->modelType) != 'leadstatus')
+    <x-lead-status-update
+            :lead="$record"
+            :modeltype="$model->modelType"
+            :status="$record->quote_status_id"
+            :statuses="$leadStatuses"
+            :lostreasons="$lostReasons"
+            :selectedlostreason="$selectedLostReasonId"
+        />
+    @endif
     @if($model->modelType == "Car")
 
         <div class="modal fade" id="quotePlanModal" name="quotePlanModal" tabindex="-1" role="dialog" aria-labelledby="quotePlanModalLabel" aria-hidden="true">
@@ -165,9 +215,12 @@
             </div>
         </div>
 
+
+
         <x-car-quote-more-detail
-        :listQuoteVehicleDetails="$listQuoteVehicleDetails"
         :vehicleTypeText="$vehicleTypeText"
+        :caqQuoteCylinder="$record->cylinder"
+        :caqQuoteSeatCapacity="$record->seat_capacity"
         />
 
         <x-car-ecom-detail

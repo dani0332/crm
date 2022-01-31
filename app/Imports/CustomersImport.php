@@ -50,10 +50,7 @@ class CustomersImport implements OnEachRow, WithStartRow
                 $firstName = $row[0];
                 $lastName = "";
             }
-            
-            if ($this->inviatationEmail == 'on') {
-                dispatch(new ProcessSIBCustomerMail($email, $firstName));
-            }
+
             $findCustomerByEmail = CustomerService::getCustomerByEmail($email);
             if(!$findCustomerByEmail->isEmpty()) {
                 $updateCustomer = $findCustomerByEmail->first();
@@ -66,7 +63,6 @@ class CustomersImport implements OnEachRow, WithStartRow
                 }
                 $updateCustomer->save();
                 $customerId = $updateCustomer->id;
-                return;
             }
             else {
                 $newCustomer = new Customer([
@@ -80,6 +76,14 @@ class CustomersImport implements OnEachRow, WithStartRow
                 $newCustomer->save();
                 $customerId = $newCustomer->id;
             }
+
+            $customerModel = Customer::find($customerId);
+            if ($this->inviatationEmail == 'on') {
+                if($customerModel->is_we_sent == 0) {
+                    dispatch(new ProcessSIBCustomerMail($email, $firstName));
+                }
+            }
+
             $existingQuoteCustomer = QuoteCustomer::where([['customer_id', '=', $customerId], ['cdb_id', '=', $this->CDBId]])->get();
             if($existingQuoteCustomer->isEmpty()) {
                 $newQuoteCustomer = new QuoteCustomer();

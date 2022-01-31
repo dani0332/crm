@@ -16,6 +16,32 @@
     </style>
     <script>
         $(document).ready(function() {
+
+            $('#searchGenericSubmit').on('click', function(e){
+                e.preventDefault();
+                if($('#assigned_to_date_start').val() != '' && $('#assigned_to_date_end').val() == '')  {
+                    $('#assigned_to_date_end').next().html('Please select assigned to end date');
+                    return false;
+                }
+                if($('#assigned_to_date_start').val() == '' && $('#assigned_to_date_end').val() != '')  {
+                    $('#assigned_to_date_start').next().html('Please select assigned start date');
+                    return false;
+                }
+                if($('#created_at').val() != '' && $('#created_at_end').val() == '')  {
+                    $('#created_at_end').next().html('Please select created end date');
+                    return false;
+                }
+                if($('#created_at').val() == '' && $('#created_at_end').val() != '')  {
+                    $('#created_at').next().html('Please select created start date');
+                    return false;
+                }
+                $("span").each(function (k, v) {
+                    if($(v).hasClass('text-danger')){
+                        $(v).html('');
+                    }
+                });
+                $('#searchTable').submit();
+            });
             var quoteTypes = ['home', 'health', 'life', 'business', 'travel'];
             String.prototype.replaceAll = function(search, replacement) {
                 var target = this;
@@ -32,6 +58,7 @@
             }
             var model = JSON.parse('<?php echo json_encode(get_object_vars($model)); ?>');
             var isAdmin = JSON.parse('<?php echo json_encode(Auth::user()->hasRole("ADMIN")); ?>');
+            var isManagerOrDeputy = $("#isManagerOrDeputy").val();
             if(isAdmin) {
                 model.searchProperties.push('is_ecommerce');
                 model.searchProperties.push('payment_status_id');
@@ -61,7 +88,6 @@
 
                     }else{
                         if (modelPropertiesArray[i].name == 'id' ) {
-                            var isManagerOrDeputy = $("#isManagerOrDeputy").val();
                             if (isManagerOrDeputy === "1" && allowedModelTypes.includes(model.modelType
                                     .toLocaleLowerCase())) {
                                 dataTableColumns.push({
@@ -105,26 +131,78 @@
                     }
                 }
             }
+            var disableSortColumns = [];
+            switch(model.modelType.toLowerCase()) {
+
+                case 'car':
+                    if(isManagerOrDeputy || isAdmin){
+                        disableSortColumns = [-1,1,2,3,4,5,6,7,10,12,13,14,15];
+                    }else {
+                        disableSortColumns = [-1,1,2,3,4,5,6,9,11,12,13,14,15];
+                    }
+                    break;
+                case 'home':
+                    if(isManagerOrDeputy == '1' || isAdmin)
+                        disableSortColumns = [-1,1,2,3,4,5,9,10];
+                    else
+                        disableSortColumns = [-1,0,1,2,3,4,8,9,10];
+                    break;
+                    break;
+                case 'health':
+                    if(isManagerOrDeputy == '1' || isAdmin)
+                        disableSortColumns = [-1,1,2,3,4,5,9,10];
+                    else
+                        disableSortColumns = [-1,0,1,2,3,4,8,9,10];
+                    break;
+                case 'life':
+                    if(isManagerOrDeputy == '1' || isAdmin)
+                        disableSortColumns = [-1,1,2,3,4,5,9,10];
+                    else
+                        disableSortColumns = [-1,0,1,2,3,4,8,9,10];
+                    break;
+                case 'business':
+                    if(isManagerOrDeputy == '1' || isAdmin)
+                        disableSortColumns = [-1,1,2,3,4,6,7,8,9,12,13];
+                    else
+                        disableSortColumns = [-1,0,1,2,3,5,6,7,8,11,12,13];
+                    break;
+                case 'travel':
+                    if(isManagerOrDeputy == '1' || isAdmin)
+                        disableSortColumns = [-1,1,2,3,4,5,9,10];
+                    else
+                        disableSortColumns = [-1,0,1,2,3,4,8,9,10];
+                    break;
+                default:
+                disableSortColumns = [];
+                    break;
+            }
             var vehicleTypeDataTable = $("#dtBasicExample").DataTable({
-                ordering: false,
+                ordering: true,
                 info: true,
                 searching: false,
                 dom: 'rBfrtip',
                 bLengthChange: false,
+                stateSave: false,
                 serverSide: true,
                 paging: true,
                 processing: true,
+
                 ajax: {
                     url: '/quotes/' + model.modelType.toLowerCase(),
                     data: function(d) {
                         model.searchProperties.forEach(element => {
                             d[element] = $('#' + element).val();
                         });
+                        d.assigned_to_date_start = $('#assigned_to_date_start').val();
+                        d.assigned_to_date_end = $('#assigned_to_date_end').val();
                         if (model.properties['created_at'] && model.properties['created_at'].indexOf('range') > -1) {
                             d['created_at_end'] = $('#created_at_end').val();
                         }
                     }
                 },
+                columnDefs: [
+                    { orderable: false, targets: disableSortColumns }
+                    ],
                 columns: dataTableColumns,
                 buttons: [{
                     extend: 'excel',
@@ -167,6 +245,11 @@
                 }, 1000);
             });
             $('#reset-btn-generic').click(function(e) {
+                $("span").each(function (k, v) {
+                    if($(v).hasClass('text-danger')){
+                        $(v).html('');
+                    }
+                });
                 $(':input', '#searchTable')
                     .not(':button, :submit, :reset, :hidden')
                     .val('')
@@ -230,7 +313,15 @@
                     <h2>{{ str_contains(strtolower($model->modelType), 'teams') ? 'Teams' : (str_contains(strtolower($model->modelType), 'leadstatus') ? 'Lead Status' : $model->modelType) }}
                         List</h2>
                     <ul class="nav navbar-right panel_toolbox">
-                        @can(strtolower($model->modelType) . '-create')
+                        @if(strtolower($model->modelType) == 'business')
+                        @can('corpline-quotes-create')
+                            <li><a href="{{ url('quotes/' . strtolower($model->modelType) . '/create') }}"
+                                    class="btn btn-warning btn-sm">Create
+                                    {{ str_contains(strtolower($model->modelType), 'teams') ? 'Team' : (str_contains(strtolower($model->modelType), 'leadstatus') ? 'Lead Status' : 'Lead') }}</a>
+                            </li>
+                        @endcan
+                        @endif
+                        @can(strtolower($model->modelType) . '-quotes-create')
                             <li><a href="{{ url('quotes/' . strtolower($model->modelType) . '/create') }}"
                                     class="btn btn-warning btn-sm">Create
                                     {{ str_contains(strtolower($model->modelType), 'teams') ? 'Team' : (str_contains(strtolower($model->modelType), 'leadstatus') ? 'Lead Status' : 'Lead') }}</a>
@@ -250,6 +341,18 @@
                     @if (count($model->searchProperties) > 0)
                         <form method="POST" id="searchTable" class="form-horizontal form-label-left" role="form"
                             data-parsley-validate="" novalidate="" autocomplete="off">
+                            @if(strtolower($model->modelType) != 'teams' || strtolower($model->modelType) != 'leadstatus')
+                                <div class="col-md-6">
+                                    <span style="font-size: 11px;" class="col-form-label col-md-6 col-sm-6" >ASSIGNED START DATE</span>
+                                    <input type="date" class="form-control" id="assigned_to_date_start" name="assigned_to_date_start" />
+                                    <span class="text-danger"></span>
+                                </div>
+                                <div class="col-md-6">
+                                    <span style="font-size: 11px;" class="col-form-label col-md-6 col-sm-6" >ASSIGNED END DATE</span>
+                                    <input type="date" class="form-control" id="assigned_to_date_end" name="assigned_to_date_end" />
+                                    <span class="text-danger"></span>
+                                </div>
+                            @endif
                             @if (Auth::user()->hasRole('ADMIN') && $model->modelType == 'Car')
                                 @php
                                     array_push($model->searchProperties, 'is_ecommerce');
@@ -329,6 +432,9 @@
                                                             {{ 'Please select ' . str_replace('id', ' ', str_replace('_', ' ', $property)) }}
                                                         </option>
                                                     @endif
+                                                    @if($property == 'advisor_id')
+                                                        <option value="null">UnAssigned</option>
+                                                    @endif
                                                     @foreach ($dropdownSource[$property] as $item)
                                                         <option value="{{ $item->id }}">
                                                             {{ $item->text ?? $item->name }}
@@ -367,9 +473,13 @@
                                                                 {{ $item }}
                                                             </option>
                                                         @else
-                                                            <option value="{{ $item }}">
+                                                            @if($item == 'No-Type')
+                                                                <option value="null">No-Type</option>
+                                                            @else
+                                                            <option value={{$item}}>
                                                                 {{ $item }}
                                                             </option>
+                                                            @endif
                                                         @endif
                                                     @endforeach
                                                 </select>
@@ -384,7 +494,7 @@
                             <div class="col-md-12" style="margin-top: 25px;">
                                 <div class="col">
                                     <ul class="nav navbar-right panel_toolbox">
-                                        <li><input type="submit" value="Search" class="btn btn-warning btn-sm"></li>
+                                        <li><input type="submit" value="Search" id="searchGenericSubmit" class="btn btn-warning btn-sm"></li>
                                         <li><input type="reset" id="reset-btn-generic" class="btn btn-warning btn-sm">
                                         </li>
                                     </ul>

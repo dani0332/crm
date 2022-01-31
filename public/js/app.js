@@ -14818,7 +14818,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 function FTCDetail(_ref) {
-  var _data$insurance_cover, _data$insurance_cover2, _data$insurance_cover3, _data$insurance_cover4, _data$insurance_cover5, _data$insurance_cover6, _data$insurance_cover7, _data$insurance_cover8, _data$insurance_cover9, _data$insurance_cover10, _data$insurance_cover11, _data$car_quote_kyc, _data$car_quote_kyc2, _data$car_quote_kyc3, _data$payment_detail, _data$payment_detail2;
+  var _data$insurance_cover, _data$plan_id, _data$plan_id$provide, _data$insurance_cover2, _data$insurance_cover3, _data$insurance_cover4, _data$insurance_cover5, _data$insurance_cover6, _data$insurance_cover7, _data$insurance_cover8, _data$insurance_cover9, _data$car_quote_kyc, _data$car_quote_kyc2, _data$car_quote_kyc3, _data$payment_detail, _data$payment_detail2;
 
   var field = _ref.field;
   var data = JSON.parse(field === null || field === void 0 ? void 0 : field.value);
@@ -14983,7 +14983,7 @@ function FTCDetail(_ref) {
             children: "Insurance Company:"
           }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)("td", {
             className: "fs15 fw700 text-right",
-            children: data === null || data === void 0 ? void 0 : (_data$insurance_cover2 = data.insurance_coverage) === null || _data$insurance_cover2 === void 0 ? void 0 : (_data$insurance_cover3 = _data$insurance_cover2.insurance_company_id) === null || _data$insurance_cover3 === void 0 ? void 0 : _data$insurance_cover3.name
+            children: data === null || data === void 0 ? void 0 : (_data$plan_id = data.plan_id) === null || _data$plan_id === void 0 ? void 0 : (_data$plan_id$provide = _data$plan_id.provider_id) === null || _data$plan_id$provide === void 0 ? void 0 : _data$plan_id$provide.text
           })]
         }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsxs)("tr", {
           children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)("td", {
@@ -14997,21 +14997,21 @@ function FTCDetail(_ref) {
             children: "Excess:"
           }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)("td", {
             className: "fs15 fw700 text-right",
-            children: data === null || data === void 0 ? void 0 : (_data$insurance_cover4 = data.insurance_coverage) === null || _data$insurance_cover4 === void 0 ? void 0 : _data$insurance_cover4.excess
+            children: data === null || data === void 0 ? void 0 : (_data$insurance_cover2 = data.insurance_coverage) === null || _data$insurance_cover2 === void 0 ? void 0 : _data$insurance_cover2.excess
           })]
         }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsxs)("tr", {
           children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)("td", {
             children: "Premium/Price:"
           }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)("td", {
             className: "fs15 fw700 text-right",
-            children: data === null || data === void 0 ? void 0 : (_data$insurance_cover5 = data.insurance_coverage) === null || _data$insurance_cover5 === void 0 ? void 0 : _data$insurance_cover5.premium_price
+            children: data === null || data === void 0 ? void 0 : (_data$insurance_cover3 = data.insurance_coverage) === null || _data$insurance_cover3 === void 0 ? void 0 : _data$insurance_cover3.premium_price
           })]
         }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsxs)("tr", {
           children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)("td", {
             children: "Ancillary Excess:(Applicable only to HPV or subjected to specific make & model)"
           }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)("td", {
             className: "fs15 fw700 text-right",
-            children: data === null || data === void 0 ? void 0 : (_data$insurance_cover6 = data.insurance_coverage) === null || _data$insurance_cover6 === void 0 ? void 0 : _data$insurance_cover6.ancillary_excess
+            children: data === null || data === void 0 ? void 0 : (_data$insurance_cover4 = data.insurance_coverage) === null || _data$insurance_cover4 === void 0 ? void 0 : _data$insurance_cover4.ancillary_excess
           })]
         }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsxs)("tr", {
           children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)("td", {
@@ -15032,35 +15032,35 @@ function FTCDetail(_ref) {
             children: "Personal Accident Benefit:"
           }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)("td", {
             className: "fs15 fw700 text-right",
-            children: data === null || data === void 0 ? void 0 : (_data$insurance_cover7 = data.insurance_coverage) === null || _data$insurance_cover7 === void 0 ? void 0 : _data$insurance_cover7.personal_accident_benefit
+            children: data === null || data === void 0 ? void 0 : (_data$insurance_cover5 = data.insurance_coverage) === null || _data$insurance_cover5 === void 0 ? void 0 : _data$insurance_cover5.personal_accident_benefit
           })]
         }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsxs)("tr", {
           children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)("td", {
             children: "Breakdown recovery:"
           }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)("td", {
             className: "fs15 fw700 text-right",
-            children: data === null || data === void 0 ? void 0 : (_data$insurance_cover8 = data.insurance_coverage) === null || _data$insurance_cover8 === void 0 ? void 0 : _data$insurance_cover8.breakdown_recovery
+            children: data === null || data === void 0 ? void 0 : (_data$insurance_cover6 = data.insurance_coverage) === null || _data$insurance_cover6 === void 0 ? void 0 : _data$insurance_cover6.breakdown_recovery
           })]
         }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsxs)("tr", {
           children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)("td", {
             children: "Off-road cover (for 4X4 only):"
           }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)("td", {
             className: "fs15 fw700 text-right",
-            children: data === null || data === void 0 ? void 0 : (_data$insurance_cover9 = data.insurance_coverage) === null || _data$insurance_cover9 === void 0 ? void 0 : _data$insurance_cover9.off_road_cover
+            children: data === null || data === void 0 ? void 0 : (_data$insurance_cover7 = data.insurance_coverage) === null || _data$insurance_cover7 === void 0 ? void 0 : _data$insurance_cover7.off_road_cover
           })]
         }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsxs)("tr", {
           children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)("td", {
             children: "Rent-a-car:"
           }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)("td", {
             className: "fs15 fw700 text-right",
-            children: data === null || data === void 0 ? void 0 : (_data$insurance_cover10 = data.insurance_coverage) === null || _data$insurance_cover10 === void 0 ? void 0 : _data$insurance_cover10.rend_a_car
+            children: data === null || data === void 0 ? void 0 : (_data$insurance_cover8 = data.insurance_coverage) === null || _data$insurance_cover8 === void 0 ? void 0 : _data$insurance_cover8.rend_a_car
           })]
         }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsxs)("tr", {
           children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)("td", {
             children: "Geographical Area:"
           }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)("td", {
             className: "fs15 fw700 text-right",
-            children: data === null || data === void 0 ? void 0 : (_data$insurance_cover11 = data.insurance_coverage) === null || _data$insurance_cover11 === void 0 ? void 0 : _data$insurance_cover11.geographical_area
+            children: data === null || data === void 0 ? void 0 : (_data$insurance_cover9 = data.insurance_coverage) === null || _data$insurance_cover9 === void 0 ? void 0 : _data$insurance_cover9.geographical_area
           })]
         })]
       })
@@ -17456,7 +17456,7 @@ var carQuotePolicy = {
             read: ['advisor', 'oe', 'pa', 'admin', 'invoicing', 'payment', 'production_approval_manager']
           },
           transform: function transform(item) {
-            return "".concat(item === null || item === void 0 ? void 0 : item.first_name, "  ").concat(item === null || item === void 0 ? void 0 : item.last_name);
+            return item !== null && item !== void 0 && item.first_name ? "".concat(item === null || item === void 0 ? void 0 : item.first_name, "  ").concat(item === null || item === void 0 ? void 0 : item.last_name) : '';
           }
         },
         quote_number: {
@@ -20597,7 +20597,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
 
 
 function ReviewSend(props) {
-  var _data$vehicle_detail_, _data$vehicle_detail_2, _data$vehicle_detail_3, _data$vehicle_detail_4, _data$vehicle_detail_5, _data$vehicle_detail_6, _data$vehicle_detail_7, _data$vehicle_detail_8, _data$vehicle_detail_9, _data$insurance_cover, _data$insurance_cover2, _data$insurance_cover3, _data$insurance_cover4, _data$insurance_cover5, _data$insurance_cover6, _data$insurance_cover7, _data$insurance_cover8, _data$insurance_cover9, _data$insurance_cover10, _data$insurance_cover11, _data$insurance_cover12, _data$insurance_cover13, _data$insurance_cover14, _data$car_quote_kyc, _data$car_quote_kyc2, _data$car_quote_kyc3, _data$payment_detail, _data$payment_detail2;
+  var _data$nationality_id, _data$uae_license_hel, _data$car_model_id, _data$car_make_id, _data$emirate_of_regi, _data$claim_history_i, _data$vehicle_detail_, _data$vehicle_detail_2, _data$vehicle_detail_3, _data$vehicle_detail_4, _data$vehicle_detail_5, _data$vehicle_detail_6, _data$vehicle_detail_7, _data$vehicle_detail_8, _data$vehicle_detail_9, _data$insurance_cover, _data$plan_id, _data$plan_id$provide, _data$insurance_cover2, _data$insurance_cover3, _data$insurance_cover4, _data$insurance_cover5, _data$insurance_cover6, _data$insurance_cover7, _data$insurance_cover8, _data$insurance_cover9, _data$insurance_cover10, _data$insurance_cover11, _data$insurance_cover12, _data$car_quote_kyc, _data$car_quote_kyc2, _data$car_quote_kyc3, _data$payment_detail, _data$payment_detail2;
 
   var _useParams = (0,react_router_dom__WEBPACK_IMPORTED_MODULE_7__.useParams)(),
       id = _useParams.id;
@@ -20731,7 +20731,7 @@ function ReviewSend(props) {
                     children: "Nationality:"
                   }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("td", {
                     className: "fs15 fw700 text-right",
-                    children: data === null || data === void 0 ? void 0 : data.nationality_id.text
+                    children: data === null || data === void 0 ? void 0 : (_data$nationality_id = data.nationality_id) === null || _data$nationality_id === void 0 ? void 0 : _data$nationality_id.text
                   })]
                 }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxs)("tr", {
                   children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("td", {
@@ -20745,7 +20745,7 @@ function ReviewSend(props) {
                     children: "UAE Years driving:"
                   }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("td", {
                     className: "fs15 fw700 text-right",
-                    children: data === null || data === void 0 ? void 0 : data.uae_license_held_for_id.text
+                    children: data === null || data === void 0 ? void 0 : (_data$uae_license_hel = data.uae_license_held_for_id) === null || _data$uae_license_hel === void 0 ? void 0 : _data$uae_license_hel.text
                   })]
                 }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxs)("tr", {
                   children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("td", {
@@ -20757,37 +20757,37 @@ function ReviewSend(props) {
                 }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxs)("tr", {
                   children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("td", {
                     children: "Date of first registration:"
-                  }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("td", {
+                  }), (data === null || data === void 0 ? void 0 : data.date_first_registration) && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("td", {
                     className: "fs15 fw700 text-right",
-                    children: moment__WEBPACK_IMPORTED_MODULE_5___default()(data === null || data === void 0 ? void 0 : data.date_first_registration).format('YYYY/MM/DD').toString()
+                    children: moment__WEBPACK_IMPORTED_MODULE_5___default()(data.date_first_registration).format('YYYY/MM/DD').toString()
                   })]
                 }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxs)("tr", {
                   children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("td", {
                     children: "Model:"
                   }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("td", {
                     className: "fs15 fw700 text-right",
-                    children: data === null || data === void 0 ? void 0 : data.car_model_id.text
+                    children: data === null || data === void 0 ? void 0 : (_data$car_model_id = data.car_model_id) === null || _data$car_model_id === void 0 ? void 0 : _data$car_model_id.text
                   })]
                 }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxs)("tr", {
                   children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("td", {
                     children: "Make:"
                   }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("td", {
                     className: "fs15 fw700 text-right",
-                    children: data === null || data === void 0 ? void 0 : data.car_make_id.text
+                    children: data === null || data === void 0 ? void 0 : (_data$car_make_id = data.car_make_id) === null || _data$car_make_id === void 0 ? void 0 : _data$car_make_id.text
                   })]
                 }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxs)("tr", {
                   children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("td", {
                     children: "Emirate of Registration:"
                   }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("td", {
                     className: "fs15 fw700 text-right",
-                    children: data === null || data === void 0 ? void 0 : data.emirate_of_registration_id.text
+                    children: data === null || data === void 0 ? void 0 : (_data$emirate_of_regi = data.emirate_of_registration_id) === null || _data$emirate_of_regi === void 0 ? void 0 : _data$emirate_of_regi.text
                   })]
                 }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxs)("tr", {
                   children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("td", {
                     children: "Declared years of no claims:"
                   }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("td", {
                     className: "fs15 fw700 text-right",
-                    children: data === null || data === void 0 ? void 0 : data.claim_history_id.text
+                    children: data === null || data === void 0 ? void 0 : (_data$claim_history_i = data.claim_history_id) === null || _data$claim_history_i === void 0 ? void 0 : _data$claim_history_i.text
                   })]
                 }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxs)("tr", {
                   children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("td", {
@@ -20872,84 +20872,84 @@ function ReviewSend(props) {
                     children: "Insurance Company:"
                   }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("td", {
                     className: "fs15 fw700 text-right",
-                    children: data === null || data === void 0 ? void 0 : (_data$insurance_cover2 = data.insurance_coverage) === null || _data$insurance_cover2 === void 0 ? void 0 : (_data$insurance_cover3 = _data$insurance_cover2.insurance_company_id) === null || _data$insurance_cover3 === void 0 ? void 0 : _data$insurance_cover3.name
+                    children: data === null || data === void 0 ? void 0 : (_data$plan_id = data.plan_id) === null || _data$plan_id === void 0 ? void 0 : (_data$plan_id$provide = _data$plan_id.provider_id) === null || _data$plan_id$provide === void 0 ? void 0 : _data$plan_id$provide.text
                   })]
                 }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxs)("tr", {
                   children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("td", {
                     children: "Sum Insured:"
                   }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("td", {
                     className: "fs15 fw700 text-right",
-                    children: data === null || data === void 0 ? void 0 : (_data$insurance_cover4 = data.insurance_coverage) === null || _data$insurance_cover4 === void 0 ? void 0 : _data$insurance_cover4.sum_insured
+                    children: data === null || data === void 0 ? void 0 : (_data$insurance_cover2 = data.insurance_coverage) === null || _data$insurance_cover2 === void 0 ? void 0 : _data$insurance_cover2.sum_insured
                   })]
                 }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxs)("tr", {
                   children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("td", {
                     children: "Excess:"
                   }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("td", {
                     className: "fs15 fw700 text-right",
-                    children: data === null || data === void 0 ? void 0 : (_data$insurance_cover5 = data.insurance_coverage) === null || _data$insurance_cover5 === void 0 ? void 0 : _data$insurance_cover5.excess
+                    children: data === null || data === void 0 ? void 0 : (_data$insurance_cover3 = data.insurance_coverage) === null || _data$insurance_cover3 === void 0 ? void 0 : _data$insurance_cover3.excess
                   })]
                 }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxs)("tr", {
                   children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("td", {
                     children: "Premium/Price:"
                   }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("td", {
                     className: "fs15 fw700 text-right",
-                    children: data === null || data === void 0 ? void 0 : (_data$insurance_cover6 = data.insurance_coverage) === null || _data$insurance_cover6 === void 0 ? void 0 : _data$insurance_cover6.premium_price
+                    children: data === null || data === void 0 ? void 0 : (_data$insurance_cover4 = data.insurance_coverage) === null || _data$insurance_cover4 === void 0 ? void 0 : _data$insurance_cover4.premium_price
                   })]
                 }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxs)("tr", {
                   children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("td", {
                     children: "Ancillary Excess:(Applicable only to HPV or subjected to specific make & model)"
                   }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("td", {
                     className: "fs15 fw700 text-right",
-                    children: data === null || data === void 0 ? void 0 : (_data$insurance_cover7 = data.insurance_coverage) === null || _data$insurance_cover7 === void 0 ? void 0 : _data$insurance_cover7.ancillary_excess
+                    children: data === null || data === void 0 ? void 0 : (_data$insurance_cover5 = data.insurance_coverage) === null || _data$insurance_cover5 === void 0 ? void 0 : _data$insurance_cover5.ancillary_excess
                   })]
                 }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxs)("tr", {
                   children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("td", {
                     children: "Repair type: "
                   }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("td", {
                     className: "fs15 fw700 text-right",
-                    children: data === null || data === void 0 ? void 0 : (_data$insurance_cover8 = data.insurance_coverage) === null || _data$insurance_cover8 === void 0 ? void 0 : _data$insurance_cover8.repair_type
+                    children: data === null || data === void 0 ? void 0 : (_data$insurance_cover6 = data.insurance_coverage) === null || _data$insurance_cover6 === void 0 ? void 0 : _data$insurance_cover6.repair_type
                   })]
                 }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxs)("tr", {
                   children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("td", {
                     children: "Financed by (if any): "
                   }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("td", {
                     className: "fs15 fw700 text-right",
-                    children: data === null || data === void 0 ? void 0 : (_data$insurance_cover9 = data.insurance_coverage) === null || _data$insurance_cover9 === void 0 ? void 0 : _data$insurance_cover9.financed_by
+                    children: data === null || data === void 0 ? void 0 : (_data$insurance_cover7 = data.insurance_coverage) === null || _data$insurance_cover7 === void 0 ? void 0 : _data$insurance_cover7.financed_by
                   })]
                 }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxs)("tr", {
                   children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("td", {
                     children: "Personal Accident Benefit:"
                   }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("td", {
                     className: "fs15 fw700 text-right",
-                    children: data === null || data === void 0 ? void 0 : (_data$insurance_cover10 = data.insurance_coverage) === null || _data$insurance_cover10 === void 0 ? void 0 : _data$insurance_cover10.personal_accident_benefit
+                    children: data === null || data === void 0 ? void 0 : (_data$insurance_cover8 = data.insurance_coverage) === null || _data$insurance_cover8 === void 0 ? void 0 : _data$insurance_cover8.personal_accident_benefit
                   })]
                 }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxs)("tr", {
                   children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("td", {
                     children: "Breakdown recovery:"
                   }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("td", {
                     className: "fs15 fw700 text-right",
-                    children: data === null || data === void 0 ? void 0 : (_data$insurance_cover11 = data.insurance_coverage) === null || _data$insurance_cover11 === void 0 ? void 0 : _data$insurance_cover11.breakdown_recovery
+                    children: data === null || data === void 0 ? void 0 : (_data$insurance_cover9 = data.insurance_coverage) === null || _data$insurance_cover9 === void 0 ? void 0 : _data$insurance_cover9.breakdown_recovery
                   })]
                 }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxs)("tr", {
                   children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("td", {
                     children: "Off-road cover (for 4X4 only):"
                   }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("td", {
                     className: "fs15 fw700 text-right",
-                    children: data === null || data === void 0 ? void 0 : (_data$insurance_cover12 = data.insurance_coverage) === null || _data$insurance_cover12 === void 0 ? void 0 : _data$insurance_cover12.off_road_cover
+                    children: data === null || data === void 0 ? void 0 : (_data$insurance_cover10 = data.insurance_coverage) === null || _data$insurance_cover10 === void 0 ? void 0 : _data$insurance_cover10.off_road_cover
                   })]
                 }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxs)("tr", {
                   children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("td", {
                     children: "Rent-a-car:"
                   }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("td", {
                     className: "fs15 fw700 text-right",
-                    children: data === null || data === void 0 ? void 0 : (_data$insurance_cover13 = data.insurance_coverage) === null || _data$insurance_cover13 === void 0 ? void 0 : _data$insurance_cover13.rend_a_car
+                    children: data === null || data === void 0 ? void 0 : (_data$insurance_cover11 = data.insurance_coverage) === null || _data$insurance_cover11 === void 0 ? void 0 : _data$insurance_cover11.rend_a_car
                   })]
                 }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxs)("tr", {
                   children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("td", {
                     children: "Geographical Area:"
                   }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("td", {
                     className: "fs15 fw700 text-right",
-                    children: data === null || data === void 0 ? void 0 : (_data$insurance_cover14 = data.insurance_coverage) === null || _data$insurance_cover14 === void 0 ? void 0 : _data$insurance_cover14.geographical_area
+                    children: data === null || data === void 0 ? void 0 : (_data$insurance_cover12 = data.insurance_coverage) === null || _data$insurance_cover12 === void 0 ? void 0 : _data$insurance_cover12.geographical_area
                   })]
                 }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("tr", {
                   children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_6__.jsx)("td", {
@@ -21024,9 +21024,9 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @babel/runtime/regenerator */ "./node_modules/@babel/runtime/regenerator/index.js");
 /* harmony import */ var _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0__);
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! react */ "./node_modules/react/index.js");
-/* harmony import */ var styled_components__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(/*! styled-components */ "./node_modules/styled-components/dist/styled-components.browser.esm.js");
+/* harmony import */ var styled_components__WEBPACK_IMPORTED_MODULE_14__ = __webpack_require__(/*! styled-components */ "./node_modules/styled-components/dist/styled-components.browser.esm.js");
 /* harmony import */ var _components_sub_nav__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../../components/sub-nav */ "./resources/js/components/sub-nav.js");
-/* harmony import */ var react_router_dom__WEBPACK_IMPORTED_MODULE_14__ = __webpack_require__(/*! react-router-dom */ "./node_modules/react-router/esm/react-router.js");
+/* harmony import */ var react_router_dom__WEBPACK_IMPORTED_MODULE_15__ = __webpack_require__(/*! react-router-dom */ "./node_modules/react-router/esm/react-router.js");
 /* harmony import */ var _components_list_view_manage_list_form_view__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../../components/list-view/manage-list-form-view */ "./resources/js/components/list-view/manage-list-form-view.js");
 /* harmony import */ var _review_send__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./review-send */ "./resources/js/modules/ftc-forms/review-send.js");
 /* harmony import */ var _kyc_form__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./kyc-form */ "./resources/js/modules/ftc-forms/kyc-form.js");
@@ -21036,7 +21036,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _overview__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./overview */ "./resources/js/modules/ftc-forms/overview.js");
 /* harmony import */ var _ftc_payment__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ./ftc-payment */ "./resources/js/modules/ftc-forms/ftc-payment.js");
 /* harmony import */ var react_confirm_alert__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! react-confirm-alert */ "./node_modules/react-confirm-alert/lib/index.js");
-/* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! react/jsx-runtime */ "./node_modules/react/jsx-runtime.js");
+/* harmony import */ var _utils_constant__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! ../../utils/constant */ "./resources/js/utils/constant.js");
+/* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(/*! react/jsx-runtime */ "./node_modules/react/jsx-runtime.js");
 var _templateObject;
 
 
@@ -21074,11 +21075,12 @@ function _taggedTemplateLiteral(strings, raw) { if (!raw) { raw = strings.slice(
 
 
 
-var Styles = styled_components__WEBPACK_IMPORTED_MODULE_13__.default.div(_templateObject || (_templateObject = _taggedTemplateLiteral([""])));
+
+var Styles = styled_components__WEBPACK_IMPORTED_MODULE_14__.default.div(_templateObject || (_templateObject = _taggedTemplateLiteral([""])));
 
 function LeadSnapShot() {
   var paramRef = (0,react__WEBPACK_IMPORTED_MODULE_1__.useRef)();
-  paramRef.current = (0,react_router_dom__WEBPACK_IMPORTED_MODULE_14__.useParams)();
+  paramRef.current = (0,react_router_dom__WEBPACK_IMPORTED_MODULE_15__.useParams)();
 
   function reducer(state, action) {
     switch (action.type) {
@@ -21284,7 +21286,7 @@ function LeadSnapShot() {
 
   var onSelect = /*#__PURE__*/function () {
     var _ref = _asyncToGenerator( /*#__PURE__*/_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().mark(function _callee(obj) {
-      var data, response, _data, _data2$data, _data2$data$quote_sta, _response, _data2;
+      var data, response, _data, _data2$data, _data2$data$quote_sta, _response, _data2, codeStatus;
 
       return _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().wrap(function _callee$(_context) {
         while (1) {
@@ -21316,12 +21318,12 @@ function LeadSnapShot() {
                 type: 'email_template',
                 state: _data === null || _data === void 0 ? void 0 : _data.data
               });
-              _context.next = 22;
+              _context.next = 23;
               break;
 
             case 11:
               if (!(data === 'carQuotePolicy')) {
-                _context.next = 21;
+                _context.next = 22;
                 break;
               }
 
@@ -21340,30 +21342,32 @@ function LeadSnapShot() {
 
             case 17:
               _data2 = _context.sent;
+              codeStatus = _data2 === null || _data2 === void 0 ? void 0 : (_data2$data = _data2.data) === null || _data2$data === void 0 ? void 0 : (_data2$data$quote_sta = _data2$data.quote_status_id) === null || _data2$data$quote_sta === void 0 ? void 0 : _data2$data$quote_sta.code;
 
-              if ((_data2 === null || _data2 === void 0 ? void 0 : (_data2$data = _data2.data) === null || _data2$data === void 0 ? void 0 : (_data2$data$quote_sta = _data2$data.quote_status_id) === null || _data2$data$quote_sta === void 0 ? void 0 : _data2$data$quote_sta.id) !== 15) {
+              if (!codeStatus || codeStatus !== _utils_constant__WEBPACK_IMPORTED_MODULE_12__.QUOTE_STATUS.POLICY_ISSUED && codeStatus !== _utils_constant__WEBPACK_IMPORTED_MODULE_12__.QUOTE_STATUS.TRANSCATION_APPROVED) {
                 (0,react_confirm_alert__WEBPACK_IMPORTED_MODULE_11__.confirmAlert)({
                   title: 'Error',
-                  message: 'Car Quote status is not approved.',
+                  message: 'This form will visible on Transcation approved or Policy issued. ',
                   buttons: [{
                     label: 'OK'
                   }]
                 });
               } else {
                 dispatch({
-                  type: 'carQuotePolicy'
+                  type: 'carQuotePolicy',
+                  state: _data2 === null || _data2 === void 0 ? void 0 : _data2.data
                 });
               }
 
-              _context.next = 22;
+              _context.next = 23;
               break;
 
-            case 21:
+            case 22:
               dispatch({
                 type: data
               });
 
-            case 22:
+            case 23:
             case "end":
               return _context.stop();
           }
@@ -21380,7 +21384,7 @@ function LeadSnapShot() {
 
   switch (form === null || form === void 0 ? void 0 : form.form) {
     case 'email_template':
-      formArr.push( /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_12__.jsx)(_review_send__WEBPACK_IMPORTED_MODULE_4__.default, {
+      formArr.push( /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_13__.jsx)(_review_send__WEBPACK_IMPORTED_MODULE_4__.default, {
         dispatch: dispatch,
         data: form.data
       }));
@@ -21390,7 +21394,7 @@ function LeadSnapShot() {
     //   break;
 
     case 'ftcPayment':
-      formArr.push( /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_12__.jsx)(_ftc_payment__WEBPACK_IMPORTED_MODULE_10__.default, {
+      formArr.push( /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_13__.jsx)(_ftc_payment__WEBPACK_IMPORTED_MODULE_10__.default, {
         filter: {
           car_quote_id: paramRef.current.id
         }
@@ -21398,7 +21402,7 @@ function LeadSnapShot() {
       break;
 
     case 'kyc':
-      formArr.push( /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_12__.jsx)(_kyc_form__WEBPACK_IMPORTED_MODULE_5__.default, {
+      formArr.push( /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_13__.jsx)(_kyc_form__WEBPACK_IMPORTED_MODULE_5__.default, {
         filter: {
           car_quote_id: paramRef.current.id
         }
@@ -21406,7 +21410,7 @@ function LeadSnapShot() {
       break;
 
     case 'assign':
-      formArr.push( /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_12__.jsx)(_assign_user__WEBPACK_IMPORTED_MODULE_7__.default, {
+      formArr.push( /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_13__.jsx)(_assign_user__WEBPACK_IMPORTED_MODULE_7__.default, {
         filter: {
           car_quote_id: paramRef.current.id
         },
@@ -21415,7 +21419,7 @@ function LeadSnapShot() {
       break;
 
     case 'overview':
-      formArr.push( /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_12__.jsx)(_overview__WEBPACK_IMPORTED_MODULE_9__.default, {
+      formArr.push( /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_13__.jsx)(_overview__WEBPACK_IMPORTED_MODULE_9__.default, {
         filter: {
           car_quote_id: paramRef.current.id
         }
@@ -21423,24 +21427,24 @@ function LeadSnapShot() {
       break;
 
     default:
-      formArr.push( /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_12__.jsx)(_components_list_view_manage_list_form_view__WEBPACK_IMPORTED_MODULE_3__.default, {
+      formArr.push( /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_13__.jsx)(_components_list_view_manage_list_form_view__WEBPACK_IMPORTED_MODULE_3__.default, {
         form: form
       }));
       break;
   }
 
-  return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_12__.jsx)(Styles, {
-    children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_12__.jsxs)("div", {
+  return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_13__.jsx)(Styles, {
+    children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_13__.jsxs)("div", {
       className: "row x_panel",
-      children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_12__.jsx)("div", {
+      children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_13__.jsx)("div", {
         className: "col-md-2 col-sm-2",
-        children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_12__.jsx)(_components_sub_nav__WEBPACK_IMPORTED_MODULE_2__.default, {
+        children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_13__.jsx)(_components_sub_nav__WEBPACK_IMPORTED_MODULE_2__.default, {
           listNav: leftNavList,
           onSelect: onSelect
         })
-      }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_12__.jsx)("div", {
+      }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_13__.jsx)("div", {
         className: "col-md-10 col-sm-10 ",
-        children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_12__.jsx)("div", {
+        children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_13__.jsx)("div", {
           className: "",
           children: formArr
         })
@@ -22961,6 +22965,40 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 var config = {
   url: '`http://127.0.0.1:8000'
+};
+
+
+/***/ }),
+
+/***/ "./resources/js/utils/constant.js":
+/*!****************************************!*\
+  !*** ./resources/js/utils/constant.js ***!
+  \****************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "QUOTE_STATUS": () => (/* binding */ QUOTE_STATUS)
+/* harmony export */ });
+var QUOTE_STATUS = {
+  SENT: "ftcSent",
+  PENDING: "ftc_pending",
+  COMPLETED: "completed",
+  REJECTED: "rejected",
+  ISSUED: "issued",
+  APPROVED: "approved",
+  APPROVAL_REQUIRED: "approvalRequired",
+  RESUBMIT_FOR_APPROVAL: "resubmitForApproval",
+  ACCEPTED: "ftc_accepted",
+  RESUBMITTED: "ftc_resubmitted",
+  CLEARED: "kyc_cleared",
+  MISSING_DOCUMENTS_REQUESTED: "missing_documents_requested",
+  AML_SCREENING_CLEARED: "AMLScreeningCleared",
+  TRANSCATION_DECLINED: "transaction_declined",
+  TRANSCATION_APPROVED: "transaction_approved",
+  POLICY_ISSUED: "policy_issued",
+  POLICY_INVOICED: "policy_invoiced"
 };
 
 

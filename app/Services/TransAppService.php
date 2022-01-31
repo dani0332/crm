@@ -8,22 +8,40 @@ use App\Models\Transaction;
 use App\Models\CarQuote;
 use App\Models\CarQuotePolicy;
 use App\Models\CarQuotePaymentHistory;
-use Illuminate\Support\Facades\Mail;
+use App\Models\MyAlFredUser;
+use Carbon\Carbon;
 use Config;
+use Illuminate\Support\Facades\Log;
 use LookUpModel;
 
 class TransAppService extends BaseService
 {
 	public static function createTransaction(Request $request)
     {
-        $WEGenerateUrlResponse = CustomerWEGenerateUrlService::getCustomerWeUrl($request);
+        $WEGenerateUrlResponse = CustomerWEGenerateUrlService::getCustomerWeUrl();
 
         if(gettype($WEGenerateUrlResponse) == 'string') {
 
             $existingCustomer = CustomerService::getCustomerByEmail($request->email)->first();
-            $sendWelcomeEmail = ($existingCustomer && !$existingCustomer->has_reward_access) || !$existingCustomer ? true : false;
+            $sendWelcomeEmail = ($existingCustomer && !$existingCustomer->is_we_sent) || !$existingCustomer ? true : false;
             $customerId = CustomerService::getCustomerIdAndCreateIfNotExists($request->first_name, $request->last_name, $request->email);
             $status_id = DB::table('statuses')->where('name', 'Active')->value('id');
+
+            if($existingCustomer != null) { // Existing customer
+                if($existingCustomer->is_we_sent == 1) { // is_we_sent is true
+
+                    $response = CustomerExtendSubscriptionService::extendCustomerSubscription($customerId);
+
+                    if($response == 422) {
+                        $customerToken = MyAlFredUser::select('code')->where('customer_id', '=', $customerId)->orderBy('created_at','asc')->first();
+                        $message = "Customer trying to extend subscription but not exist in myAflred<br>
+                        Customer Email: ".$request->email."<br>
+                        Token: ".$customerToken;
+                        //Log::error($message);
+                    }
+                }
+            }
+
             $transaction = new Transaction;
             $transaction->insurance_company_id = $request->insurance_company;
             $transaction->customer_id = $customerId;
@@ -61,8 +79,13 @@ class TransAppService extends BaseService
                 }
             }
 
+            $expiryDate = Carbon::now()->addMonths(12);
+            $customer = CustomerService::getCustomerById($customerId);
+            $customer->myalfred_expiry_date = $expiryDate;
+            $customer->save();
+
             if($sendWelcomeEmail && Config::get('constants.ENABLE_TRANSAPP_WE') == '1') {
-                TransAppService::sendWelcomeEmail($customerId, $WEGenerateUrlResponse);
+                TransAppService::sendWelcomeEmail($customerId, $WEGenerateUrlResponse, $tag='transapp-myalfred-we');
             }
             return $approvalCode;
         }
@@ -72,36 +95,31 @@ class TransAppService extends BaseService
 
     }
 
-    public static function sendWelcomeEmail($customerId, $WEGenerateUrlResponse)
+    public static function sendWelcomeEmail($customerId, $WEGenerateUrlResponse, $tag)
     {
         $customer = CustomerService::getCustomerById($customerId);
-        $customer->is_we_sent = true;
-        $customer->save();
+        $emailTemplateId = (int)Config::get('constants.SIB_MYALFRED_CUSTOMER_WE_TEMPLATE_ID'); //290
 
-        $appEnv = Config::get('constants.APP_ENV');
-        $emailSubject = 'Act now and simply sign up to cash in your rewards & keep on saving!';
-        $emailRecipient = $customer->email;
-        $fromName = 'no-reply';
-        $fromEmail = Config::get('constants.MAIL_FROM_ADDRESS');
-        $replyToEmail = Config::get('constants.MAIL_MYALFRED_SUPPORT_REPLY_TO');
-        $emailSubjectExt = $appEnv." | ".$emailSubject;
-
-        if($appEnv == "production") {
-            $emailSubject = $emailSubject;
-
-        }
-        else {
-            $emailSubject = $emailSubjectExt;
-        }
-
-        Mail::send(['html' => 'customerWelcome'], [
+        $emailData = array(
             'customerName' => $customer->first_name." ".$customer->last_name,
             'customerEmail' => $customer->email,
-            'signUpButtonUrl' => $WEGenerateUrlResponse,
-        ],
-            function ($message) use ($emailSubject, $emailRecipient, $fromName, $fromEmail, $replyToEmail) {
-                $message->to($emailRecipient)->replyTo($replyToEmail)->subject($emailSubject);
-                $message->from($fromEmail, $fromName);
-        });
+            'signUpButtonUrl' => $WEGenerateUrlResponse
+        );
+
+        $getStatusCode = SendEmailCustomerService::sendEmail($emailTemplateId, $emailData, $tag);
+
+        if($getStatusCode == 201) {
+
+            $customer->is_we_sent = true;
+            $customer->save();
+
+            $code = substr($WEGenerateUrlResponse, strpos($WEGenerateUrlResponse, "signup/") + 7);
+            $newMyAlFredUser = new MyAlFredUser;
+            $newMyAlFredUser->signup_url = $WEGenerateUrlResponse;
+            $newMyAlFredUser->customer_id = $customerId;
+            $newMyAlFredUser->code = $code;
+            $newMyAlFredUser->source = "TRANSAPP";
+            $newMyAlFredUser->save();
+        }
     }
 }

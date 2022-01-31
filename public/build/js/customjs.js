@@ -834,6 +834,9 @@ $(document).ready(function () {
 
     $('#car_make_id').on('change', function (e) {
         var make_code = $("#car_make_id option:selected").attr('data-id');
+        if (!make_code) {
+            make_code = $("#car_make_id option:selected").val();
+        }
         $.get('/car-model?make_code=' + make_code, function (data) {
             var carmodel = $('#car_model_id').empty();
             $.each(data, function (create, carmodelObj) {
@@ -844,10 +847,10 @@ $(document).ready(function () {
     });
 
     // Claims-EditView: Populate models of selected car make
-    var make_code = $("#car_make_id option:selected").attr('data-id');
-    var old_car_model_id = $("#old_car_model_id").val();
+    var make_code = $("#edit_car_make_model #car_make_id option:selected").attr('data-id');
+    var old_car_model_id = $("#edit_car_make_model #old_car_model_id").val();
     $.get('/car-model?make_code=' + make_code, function (data) {
-        var carmodel = $('#car_model_id').empty();
+        var carmodel = $('#edit_car_make_model #car_model_id').empty();
         $.each(data, function (create, carmodelObj) {
             var option = $('<option/>', { id: create, value: carmodelObj });
             if (old_car_model_id == carmodelObj.id)
@@ -1377,28 +1380,36 @@ $(document).ready(function () {
     // TM Leads: Select tm leads id and store in hidden field
     $("#checkAllTmLeads").click(function () {
         $('input:checkbox').not(this).prop('checked', this.checked);
-
+        $('#selectTmLeadId').val('');
         var idsArray = $('#selectTmLeadId').val();
         $('input:checkbox').each(function (i, item) {
             idsArray = idsArray + $(item).val() + ',';
         });
         $('#selectTmLeadId').val(idsArray.replace(/^,|,$/g, ''));
+        if ($(this).is(":checked")) {
+            $("#tm-leads-assign-div").show(300);
+        } else {
+            $("#tm-leads-assign-div").hide(200);
+        }
     });
 
     // TM Leads: Select tm leads id and store in hidden field
     $("#tmLeadsAssignToUser").click(function () {
         var tmLeadIDs = [];
-        $.each($("input[name='tmLeadID']:checked"), function () {
-            tmLeadIDs.push($(this).val());
-        });
-        $('#selectTmLeadId').val(tmLeadIDs);
-        console.log("tmLeadIDs: " + tmLeadIDs);
+        if (!$('#checkAllTmLeads').is(":checked")) {
+            $.each($("input[name='tmLeadID']:checked"), function () {
+                tmLeadIDs.push($(this).val());
+            });
+            $('#selectTmLeadId').val(tmLeadIDs);
+        }
     });
 
     // TM: Selecting a single record should also enable manual allocation
     $(document).on("change", "#tmLeadID", function () {
+        var idsArray = $('#selectTmLeadId').val();
+        idsArray = idsArray + ',' + $(this).val() + ',';
+        $('#selectTmLeadId').val(idsArray.replace(/^,|,$/g, ''));
         var countSelectedTmLeadIds = document.querySelectorAll('#tmLeadID:checked').length;
-        console.log(countSelectedTmLeadIds);
         if (countSelectedTmLeadIds > 0) {
             $("#tm-leads-assign-div").show(300);
         } else {
@@ -1409,13 +1420,6 @@ $(document).ready(function () {
 
     // TM Leads: On check main checkbox, display lead assignment panel
     $("#tm-leads-assign-div").hide();
-    $("#checkAllTmLeads").click(function () {
-        if ($(this).is(":checked")) {
-            $("#tm-leads-assign-div").show(300);
-        } else {
-            $("#tm-leads-assign-div").hide(200);
-        }
-    });
 
     // TM Leads: OnClick on phone number ignore redirection
     $("#ignore-redirection").click(function () {
@@ -1488,6 +1492,11 @@ $(document).ready(function () {
             $('#tmLeadsEndDate').val('');
         }
     }
+
+    // TM Leads: OnChange searchType do reset searchField
+    $('#search-tm-leads #searchType').on('change', function (e) {
+        $("#searchField").val("");
+    });
 
     $('.tmuploadlead-data-table').DataTable({
         ordering: false,
@@ -1792,36 +1801,38 @@ $(document).ready(function () {
 
         ],
     });
-    var amtDataTable = $(".amt-data-table").DataTable({
-        ordering: false,
-        info: false,
-        searching: false,
-        bLengthChange: false,
-        serverSide: true,
-        ajax: {
-            url: config.routes.amtDataTable,
-            data: function (d) {
-                d.leadType = $("#leadStatus").val();
-                d.cdbID = $("#cdbID").val();
-            },
-        },
-        columns: [{
-            data: 'code',
-            name: 'code',
-            render: function (data, type, row) {
-                var type = row.code.indexOf('HEA-') > -1 ? 'health' : 'business';
-                var href = '/quotes/' + type + '/' + row.uuid;
-                return "<a href='" + href + "'>" + row.code + "</a>";
-            }
-        },
-        { data: "first_name", name: "first_name" },
-        { data: "last_name", name: "last_name" },
-        { data: "leadStatus", name: "leadStatus" },
-        { data: "leadType", name: "leadType" },
-        { data: "created_at", name: "created_at" },
-        { data: "updated_at", name: "updated_at" },
 
-        ],
+
+    $('#manualAssignBtn').on('click', function (e) {
+        e.preventDefault();
+        if ($('#assigned_to_id_new').val() == '') {
+            $('#userAssignValidation').show().fadeOut(5000);
+        } else {
+            $.ajax({
+                url: '/leadassignment/manualLeadAssign',
+                type: "PUT",
+                data: { selectTmLeadId: $('#entityId').val(), assigned_to_id_new: $('#assigned_to_id_new').val(), _token: config._token },
+                success: function (response) {
+                    $("#teamassignmentSuccess").html('Team Assigned Successfully').show().fadeOut(5000);
+                    setTimeout(() => {
+                        window.location.reload(true);
+                    }, 2000);
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    console.log(jqXHR, textStatus, errorThrown);
+                },
+            });
+        }
+    });
+    $('#group_medical_type_id').on('change', function () {
+        var txt = $(this).find("option:selected").data('id');
+        if (txt) {
+            txt = txt.replace(/(\r\n|\n|\r)/gm, "");
+            $('#tooltipGm').show();
+            $('#tooltipGm').attr('title', txt);
+        } else {
+            $('#tooltipGm').hide();
+        }
     });
 });
 

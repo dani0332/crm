@@ -214,7 +214,7 @@
                                                                                              <p><b>Section 2: <u>Insurance Coverage Information</u></b></p>
                                                                                              <ol>
                                                                                              <li>Policy start date: {{$insurance_coverage['start_date'] ?? ''}}</li>
-                                                                                            <li>Insurance Company: {{$insurance_coverage['insurance_company_id']['name'] ?? ''}}</li>
+                                                                                            <li>Insurance Company: {{$plan_id['provider_id']['text'] ?? ''}}</li>
                                                                                             <li>Sum Insured: {{$insurance_coverage['sum_insured'] ?? ''}}</li>
                                                                                             <li>Excess: {{$insurance_coverage['excess'] ?? ''}}</li>
                                                                                             <li>Premium/Price: {{$insurance_coverage['premium_price'] ?? ''}} (incl. 5% VAT)</li>

@@ -2,11 +2,16 @@
 
 namespace App\Services;
 
+use App\Models\BusinessInsuranceType;
+use App\Models\BusinessQuote;
 use App\Models\HealthQuote;
+use App\Models\HealthQuoteRequestDetail;
 use Illuminate\Http\Request;
 use DB;
 use Auth;
 use \Carbon\Carbon;
+use Hidehalo\Nanoid\Client;
+use Config;
 
 class HealthQuoteService extends BaseService
 {
@@ -30,6 +35,7 @@ class HealthQuoteService extends BaseService
             'hqr.has_dental',
             'hqr.health_team_type',
             'hqr.has_home',
+            'hqr.premium',
             'hqr.has_worldwide_cover',
             'hqr.marital_status_id',
             'ms.TEXT AS marital_status_id_text',
@@ -42,9 +48,14 @@ class HealthQuoteService extends BaseService
             'qs.text as quote_status_id_text',
             'e.TEXT AS emirate_of_your_visa_id_text',
             'hqr.advisor_id',
-            'u.name as advisor_id_text'
+            'u.name as advisor_id_text',
+            'hqrd.next_followup_date',
+            'hqrd.notes',
+            'ls.text as lost_reason',
         )
             ->leftJoin('marital_status as ms', 'ms.id', '=', 'hqr.marital_status_id')
+            ->leftJoin('health_quote_request_detail as hqrd', 'hqrd.health_quote_request_id', '=', 'hqr.id')
+            ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'hqrd.lost_reason_id')
             ->leftJoin('health_cover_for as hcf', 'hcf.id', '=', 'hqr.cover_for_id')
             ->leftJoin('nationality as n', 'n.id', '=', 'hqr.nationality_id')
             ->leftJoin('emirates as e', 'e.id', '=', 'hqr.emirate_of_your_visa_id')
@@ -61,12 +72,38 @@ class HealthQuoteService extends BaseService
     {
         return HealthQuote::where('id', $id)->first();
     }
+
+    public function getSelectedLostReason($id)
+    {
+        $entity = HealthQuoteRequestDetail::where('health_quote_request_id', $id)->first();
+        $lostId = 0;
+        if (!is_null($entity) && $entity->lost_reason_id) {
+            $lostId = $entity->lost_reason_id;
+        }
+        return $lostId;
+    }
+
+    public function getDetailEntity($id)
+    {
+        $entity = HealthQuoteRequestDetail::where('health_quote_request_id', $id)->first();
+        if (!$entity) {
+            HealthQuoteRequestDetail::create([
+                'health_quote_request_id' => $id,
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now(),
+            ]);
+        }
+        return HealthQuoteRequestDetail::where('health_quote_request_id', $id)->first();
+    }
+
     public function getLeadsForAssignment()
     {
         return HealthQuote::orderBy('created_at', 'desc')->get();
     }
     public function saveHealthQuote(Request $request)
     {
+        $sourceName = Config::get('constants.SOURCE_NAME');
+        $appUrl = Config::get('constants.APP_URL');
         $dataArr = array(
             "firstName" => $request->first_name,
             "lastName" => $request->last_name,
@@ -74,8 +111,10 @@ class HealthQuoteService extends BaseService
             "details" => $request->details,
             "mobileNo" => $request->mobile_no,
             "preference" => $request->preference,
-            "source" => $request->source,
+            "source" => $sourceName,
             "maritalStatusId" => $request->marital_status_id,
+            "premium" => $request->premium,
+            "referenceUrl" => $appUrl,
             "dob" => $request->dob,
             "coverForId" => $request->cover_for_id,
             "nationalityId" => $request->nationality_id,
@@ -84,13 +123,18 @@ class HealthQuoteService extends BaseService
             "hasHome" => $request->has_home == 'on' ? true : false,
             "emirateOfYourVisaId" => $request->emirate_of_your_visa_id,
         );
-        if (Auth::user()->hasRole("HEALTH_ADVISOR")) $dataArr['advisorId'] = Auth::users()->id;
+        if (Auth::user()->hasRole("HEALTH_ADVISOR")) $dataArr['advisorId'] = Auth::user()->id;
         return CapiRequestService::sendCAPIRequest('/api/v1-save-health-quote', $dataArr);
     }
 
     public function getGridData($searchProperties, $request)
     {
         if ($request->ajax()) {
+            if (isset($request->assigned_to_date_start) && $request->assigned_to_date_start != '') {
+                $dateFrom = Carbon::createFromFormat('Y-m-d', $request['assigned_to_date_start'])->startOfDay()->toDateTimeString();
+                $dateTo = Carbon::createFromFormat('Y-m-d', $request['assigned_to_date_end'])->endOfDay()->toDateTimeString();
+                $this->query->whereBetween('hqrd.advisor_assigned_date', [$dateFrom, $dateTo]);
+            }
             if (in_array('created_at', $searchProperties) && isset($request->created_at) && $request->created_at != "") {
                 $dateFrom = Carbon::createFromFormat('Y-m-d', $request['created_at'])->startOfDay()->toDateTimeString();
                 $dateTo = Carbon::createFromFormat('Y-m-d', $request['created_at_end'])->endOfDay()->toDateTimeString();
@@ -98,12 +142,44 @@ class HealthQuoteService extends BaseService
             }
             foreach ($searchProperties as $item) {
                 if (!empty($request[$item]) && $item != "created_at") {
-                    $this->query->where($this->getQuerySuffix($item) . '.' . $item, $request[$item]);
+                    if ($request[$item] == 'null') {
+                        $this->query->whereNull($item);
+                    } else {
+                        $this->query->where($this->getQuerySuffix($item) . '.' . $item, $request[$item]);
+                    }
                 }
             }
         }
-        $this->query->orderBy('hqr.created_at', 'DESC');
-        return $this->query;
+        $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
+        $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';
+        if ($column != '' && $column != 0 && $direction != '') {
+            $isManagerORDeputy = Auth::user()->isManagerOrDeputy();
+            $isAdmin = Auth::user()->hasRole("ADMIN");
+            if ($isAdmin || $isManagerORDeputy == "1") {
+                if ($column == 6) {
+                    $column = "hqr.created_at";
+                }
+                if ($column == 7) {
+                    $column = "hqr.updated_at";
+                }
+                if ($column == 8) {
+                    $column = "hqrd.next_followup_date";
+                }
+            } else {
+                if ($column == 5) {
+                    $column = "hqr.created_at";
+                }
+                if ($column == 6) {
+                    $column = "hqr.updated_at";
+                }
+                if ($column == 7) {
+                    $column = "hqrd.next_followup_date";
+                }
+            }
+            return $this->query->orderBy($column, $direction);
+        } else {
+            return $this->query->orderBy('hqr.created_at', 'DESC');
+        }
     }
 
     private function getQuerySuffix($item)
@@ -152,11 +228,8 @@ class HealthQuoteService extends BaseService
             'has_worldwide_cover' => $request->has_worldwide_cover == 'on' ? true : false,
             'has_home' => $request->has_home == 'on' ? true : false,
             'emirate_of_your_visa_id' => $request->emirate_of_your_visa_id,
+            'premium' => $request->premium,
         ];
-        if (!Auth::user()->hasRole('HOME_ADVISOR')) {
-            $updateArray['email'] = $request->email;
-            $updateArray['mobile_no'] = $request->mobile_no;
-        }
         HealthQuote::where('uuid', $id)->update($updateArray);
 
         if (isset($request->return_to_view))
@@ -178,11 +251,28 @@ class HealthQuoteService extends BaseService
                 'u.name as assignedBy',
                 'hqr.updated_at',
                 'hqr.source as leadSource',
+                'hqrd.next_followup_date as nextFollowupDate',
             )
             ->leftJoin('health_quote_request_detail as hqrd', 'hqrd.health_quote_request_id', '=', 'hqr.id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'hqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'hqrd.advisor_assigned_by_id')
+            ->where('qs.text', '!=', 'Fake')
             ->where('hqr.advisor_id', Auth::user()->id);
+
+        $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
+        $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';
+        if ($column != '' && $column != 0 && $direction != '') {
+            if ($column == 3) {
+                $column = "hqr.created_at";
+            }
+            if ($column == 4) {
+                $column = "hqrd.advisor_assigned_date";
+            }
+            if ($column == 7) {
+                $column = "hqrd.next_followup_date";
+            }
+            $query->orderBy($column, $direction);
+        }
         if (isset($request->startedAt) && isset($request->endAt) && $request->startedAt != '' && $request->endAt != '') {
             $dateFrom = Carbon::createFromFormat('Y-m-d', $request->startedAt)->startOfDay()->toDateTimeString();
             $dateTo = Carbon::createFromFormat('Y-m-d', $request->endAt)->endOfDay()->toDateTimeString();
@@ -204,6 +294,7 @@ class HealthQuoteService extends BaseService
                 'hqr.id',
                 'hqr.uuid',
                 'hqr.first_name',
+                'hqr.code',
                 'hqr.last_name',
                 'hqr.created_at',
                 'u.name AS advisor_name',
@@ -226,6 +317,16 @@ class HealthQuoteService extends BaseService
         return $query;
     }
 
+    public function updateChildRecord($id)
+    {
+        $childRecord = HealthQuoteRequestDetail::where('health_quote_request_id', $id)->first();
+        if (!empty($childRecord)) {
+            $childRecord->advisor_assigned_by_id = Auth::user()->id;
+            $childRecord->advisor_assigned_date = Carbon::now();
+            $childRecord->save();
+        }
+    }
+
     public function fillModelProperties()
     {
         return array(
@@ -236,10 +337,13 @@ class HealthQuoteService extends BaseService
             "email" => "input|email|required",
             "mobile_no" => "input|title|number|required",
             "quote_status_id" => "select|title",
-            "advisor_id" => "select|title|required",
+            "advisor_id" => "select|title",
             "created_at" => "input|date|title|range",
             "updated_at" => "input|date|title",
             "dob" => "input|title|date|required",
+            "next_followup_date" => "input|text",
+            "lost_reason" => "input|text",
+            "premium" => "input|number|required",
             "preference" => "input|text",
             "details" => "input|text",
             "source" => "input|text|title",
@@ -247,7 +351,7 @@ class HealthQuoteService extends BaseService
             "marital_status_id" => "select|title|required",
             "cover_for_id" => "select|title|required",
             "nationality_id" => "select|title|required",
-            "health_team_type" => "|static|default:All|All,RM,EBP",
+            "health_team_type" => "|static|default:All|All,RM,EBP,No-Type",
             "has_dental" => "input|checkbox|title",
             "has_worldwide_cover" => "input|checkbox|title",
             "has_home" => "input|checkbox|title",
@@ -287,7 +391,7 @@ class HealthQuoteService extends BaseService
                 $title = "Assigned To";
                 break;
             case 'source':
-                $title = "Lead Source";
+                $title = "Source";
                 break;
             case 'emirate_of_your_visa_id':
                 $title = "Emirate of your visa";
@@ -316,15 +420,45 @@ class HealthQuoteService extends BaseService
     public function fillModelSkipProperties()
     {
         return [
-            "create" => "created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type",
-            "list" => "email,health_team_type,cover_for_id,has_worldwide_cover,has_home,details,preference,mobile_no,dob,marital_status_id,nationality_id,source,has_dental,emirate_of_your_visa_id",
-            "update" => "created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type",
-            "show" => "id,health_team_type",
+            "create" => "created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason",
+            "list" => "email,health_team_type,cover_for_id,has_worldwide_cover,has_home,details,preference,mobile_no,dob,marital_status_id,nationality_id,has_dental,emirate_of_your_visa_id",
+            "update" => "created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason",
+            "show" => "id,health_team_type,next_followup_date",
         ];
     }
 
     public function fillModelSearchProperties()
     {
         return ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'advisor_id', 'created_at', 'health_team_type'];
+    }
+
+    public function convertLeadToGM($lead)
+    {
+        $businessLead = new BusinessQuote();
+        $businessLead->first_name = $lead->first_name;
+        $businessLead->last_name = $lead->last_name;
+        $businessLead->email = $lead->email;
+        $businessLead->mobile_no = $lead->mobile_no;
+        $businessLead->quote_status_id = $lead->quote_status_id;
+        $businessLead->business_type_of_insurance_id = BusinessInsuranceType::where('text', '=', 'Group Medical')->first()->id;
+        $businessLead->created_at = $lead->created_at;
+        $businessLead->updated_at = $lead->updated_at;
+        $businessLead->dob = $lead->dob;
+        $businessLead->brief_details = $lead->details;
+        $businessLead->source = $lead->source;
+        $uuid = strtoupper($this->generateUUID());
+        $businessLead->uuid = $uuid;
+        $businessLead->code = 'BUS-' . $uuid;
+        $businessLead->customer_id = $lead->customer_id;
+        $businessLead->save();
+        HealthQuote::find($lead->id)->delete();
+    }
+
+    public function generateUUID()
+    {
+        $client = new Client();
+        $alphabets = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+        $nanoId = $client->formattedId($alphabets, 8);
+        return $nanoId;
     }
 }

@@ -2,7 +2,13 @@
 
 namespace App\Services;
 
+use App\Models\CarMake;
+use App\Models\CarModel;
 use App\Models\CarQuote;
+use App\Models\CarQuoteRequestDetail;
+use App\Models\InsuranceProvider;
+use App\Models\VehicleType;
+use App\Models\YearOfManufacture;
 use Illuminate\Http\Request;
 use Config;
 use DB;
@@ -35,8 +41,10 @@ class CarQuoteService extends BaseService
                 'cqr.source',
                 'cqr.created_at',
                 'cqr.updated_at',
+                'cqr.seat_capacity',
+                'cqr.cylinder',
+                'cqr.vehicle_type_id',
                 'n.TEXT AS nationality_id_text',
-                'cqr.currently_insured_with',
                 'cqr.promo_code',
                 'cqr.device',
                 'cqr.policy_number',
@@ -67,9 +75,18 @@ class CarQuoteService extends BaseService
                 'cp.provider_id AS car_plan_provider_id',
                 'cpip.text AS car_plan_provider_id_text',
                 'cqr.quote_status_id',
-                'qs.text AS quote_status_id_text'
+                'qs.text AS quote_status_id_text',
+                'cqr.year_of_manufacture AS year_of_manufacture_text',
+                'cqrd.next_followup_date',
+                'cqrd.notes',
+                'vt.text as vehicle_type_id_text',
+                'cqr.currently_insured_with',
+                'cqr.currently_insured_with as currently_insured_with_text',
+                'ls.text as lost_reason',
             )
             ->leftJoin('nationality as n', 'n.id', '=', 'cqr.nationality_id')
+            ->leftJoin('car_quote_request_detail as cqrd', 'cqrd.car_quote_request_id', '=', 'cqr.id')
+            ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'cqrd.lost_reason_id')
             ->leftJoin('car_make as cmake', 'cmake.id', '=', 'cqr.car_make_id')
             ->leftJoin('uae_license_held_for as ulhf', 'ulhf.id', '=', 'cqr.uae_license_held_for_id')
             ->leftJoin('car_model as cmodel', 'cmodel.id', '=', 'cqr.car_model_id')
@@ -80,57 +97,112 @@ class CarQuoteService extends BaseService
             ->leftJoin('car_plan as cp', 'cp.id', '=', 'cqr.plan_id')
             ->leftJoin('insurance_provider as cpip', 'cpip.id', '=', 'cp.provider_id')
             ->leftJoin('payment_status as ps', 'ps.id', '=', 'cqr.payment_status_id')
-            ->leftJoin('quote_status as qs', 'qs.id', '=', 'cqr.quote_status_id');
+            ->leftJoin('quote_status as qs', 'qs.id', '=', 'cqr.quote_status_id')
+            ->leftJoin('vehicle_type as vt', 'vt.id', '=', 'cqr.vehicle_type_id');
     }
 
     public function saveCarQuote(Request $request)
     {
-        $carQuote = new CarQuote();
-        $carQuote->first_name = $request->first_name;
-        $carQuote->last_name = $request->last_name;
-        $carQuote->email = $request->email;
-        $carQuote->details = $request->details;
-        $carQuote->mobile_no = $request->mobile_no;
-        $carQuote->preference = $request->preference;
-        $carQuote->source = $request->source;
-        $carQuote->marital_status_id = $request->marital_status_id;
-        $carQuote->dob = $request->dob;
-        $carQuote->cover_for_id = $request->cover_for_id;
-        $carQuote->nationality_id = $request->nationality_id;
-        $carQuote->has_dental = $request->has_dental == 'on' ? 1 : 0;
-        $carQuote->has_worldwide_cover = $request->has_worldwide_cover == 'on' ? 1 : 0;
-        $carQuote->has_home = $request->has_home == 'on' ? 1 : 0;
-        $carQuote->emirate_of_your_visa_id = $request->emirate_of_your_visa_id;
-        $carQuote->save();
+        $yearOfManufactureText = YearOfManufacture::where('id', '=', $request->year_of_manufacture)->value('text');
+        $insuranceProviderText = InsuranceProvider::where('id', '=', $request->currently_insured_with)->value('text');
+        $carMakeId = CarMake::where('code', '=', $request->car_make_id)->value('id');
+        $sourceName = Config::get('constants.SOURCE_NAME');
+        $appUrl = Config::get('constants.APP_URL');
+
+        $dataArr = array(
+            "firstName" => $request->first_name,
+            "lastName" => $request->last_name,
+            "email" => $request->email,
+            "address" => $request->address,
+            "mobileNo" => $request->mobile_no,
+            "dob" => $request->dob,
+            "nationalityId" => $request->nationality_id,
+            "uaeLicenseHeldForId" => $request->uae_license_held_for_id,
+            "yearOfManufacture" => $yearOfManufactureText, // TEXT
+            "emirateOfRegistrationId" => $request->emirate_of_registration_id,
+            "carTypeInsuranceId" => $request->car_type_insurance_id,
+            "claimHistoryId" => $request->claim_history_id,
+            "additionalNotes" => $request->additional_notes,
+            "carValue" => $request->car_value,
+            "seatCapacity" => $request->seat_capacity,
+            "cylinder" => $request->cylinder,
+            "vehicleTypeId" => $request->vehicle_type_id,
+            "premium" => $request->premium,
+            "carMakeId" => $carMakeId, // ID
+            "carModelId" => $request->car_model_id, // ID
+            "currentlyInsuredWith" => $insuranceProviderText, // TEXT
+            "source" => $sourceName,
+            "referenceUrl" => $appUrl,
+        );
+        if (Auth::user()->hasRole("CAR_ADVISOR")) $dataArr['advisorId'] = Auth::user()->id;
+        return CapiRequestService::sendCAPIRequest('/api/v1-save-car-quote', $dataArr);
     }
 
     public function updateCarQuote(Request $request, $id)
     {
-        $carQuote = CarQuote::find($id);
+        $carQuote = CarQuote::where('code', '=', 'CAR-' . $id)->first();
         $carQuote->first_name = $request->first_name;
         $carQuote->last_name = $request->last_name;
         $carQuote->email = $request->email;
-        $carQuote->details = $request->details;
         $carQuote->mobile_no = $request->mobile_no;
-        $carQuote->preference = $request->preference;
-        $carQuote->source = $request->source;
-        $carQuote->marital_status_id = $request->marital_status_id;
         $carQuote->dob = $request->dob;
-        $carQuote->cover_for_id = $request->cover_for_id;
         $carQuote->nationality_id = $request->nationality_id;
-        $carQuote->has_dental = $request->has_dental == 'on' ? 1 : 0;
-        $carQuote->has_worldwide_cover = $request->has_worldwide_cover == 'on' ? 1 : 0;
-        $carQuote->has_home = $request->has_home == 'on' ? 1 : 0;
-        $carQuote->emirate_of_your_visa_id = $request->emirate_of_your_visa_id;
+        $carQuote->uae_license_held_for_id = $request->uae_license_held_for_id;
+        $carQuote->year_of_manufacture = $request->year_of_manufacture;
+        $carQuote->emirate_of_registration_id = $request->emirate_of_registration_id;
+        $carQuote->car_type_insurance_id = $request->car_type_insurance_id;
+        $carQuote->claim_history_id = $request->claim_history_id;
+        $carQuote->premium = $request->premium;
+        $carQuote->car_value = $request->car_value;
+        $carQuote->seat_capacity = $request->seat_capacity;
+        $carQuote->cylinder = $request->cylinder;
+        $carQuote->vehicle_type_id = $request->vehicle_type_id;
+        $carQuote->additional_notes = $request->additional_notes;
+        $carQuote->car_make_id = CarMake::where('code', '=', $request->car_make_id)->value('id');
+        $carQuote->car_model_id = CarModel::where('code', '=', $request->car_model_id)->value('id');
+        $carQuote->currently_insured_with = $request->currently_insured_with;
         $carQuote->save();
 
         if (isset($request->return_to_view))
-            return redirect("quote/health/" . $carQuote->id)->with('success', 'Health Quote has been updated');
+            return redirect("quote/car/" . $carQuote->id)->with('success', 'Car Quote has been updated');
     }
 
     public function getEntity($id)
     {
         return $this->query->where('cqr.uuid', $id)->first();
+    }
+
+    public function updateChildRecord($id)
+    {
+        $childRecord = CarQuoteRequestDetail::where('car_quote_request_id', $id)->first();
+        if (!empty($childRecord)) {
+            $childRecord->advisor_assigned_by_id = Auth::user()->id;
+            $childRecord->advisor_assigned_date = Carbon::now();
+            $childRecord->save();
+        }
+    }
+
+    public function getSelectedLostReason($id)
+    {
+        $entity = CarQuoteRequestDetail::where('car_quote_request_id', $id)->first();
+        $lostId = 0;
+        if (!is_null($entity) && $entity->lost_reason_id) {
+            $lostId = $entity->lost_reason_id;
+        }
+        return $lostId;
+    }
+
+    public function getDetailEntity($id)
+    {
+        $entity = CarQuoteRequestDetail::where('car_quote_request_id', $id)->first();
+        if (!$entity) {
+            CarQuoteRequestDetail::create([
+                'car_quote_request_id' => $id,
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now(),
+            ]);
+        }
+        return CarQuoteRequestDetail::where('car_quote_request_id', $id)->first();
     }
 
     public function getEntityPlain($id)
@@ -148,30 +220,36 @@ class CarQuoteService extends BaseService
             "email" => "input|email|required",
             "mobile_no" => "input|title|number|required",
             "quote_status_id" => "select|title",
-            "advisor_id" => "select|title|required",
+            "advisor_id" => "select|title",
             "dob" => "input|title|date|required",
             "is_ecommerce" => "|static|title|Yes,No",
             "payment_status_id" => "select|title",
             "created_at" => "input|date|title|range",
             "updated_at" => "input|date|title",
+            "car_value" => "input|number|required",
+            "seat_capacity" => "input|number|required",
+            "next_followup_date" => "input|text",
+            "source" => "input|text",
+            "lost_reason" => "input|text",
+            "cylinder" => "input|number|required",
+            "vehicle_type_id" => "select|title|required",
             "nationality_id" => "select|title|required",
             "uae_license_held_for_id" => "select|title|required",
             "car_make_id" => "select|title|required",
             "car_model_id" => "select|title|required",
-            "year_of_manufacture" => "|static|required|2022,2021,2020,2019,2018,2017,2016,2015,2014,2013,2012,2011,2010,2009,2008,2007,2006,2005,2004,2003,2002,2001,2000,1999,1998 or older",
+            "year_of_manufacture" => "select|title|required",
             "emirate_of_registration_id" => "select|title|required",
-            "car_value" => "number|required",
-            "premium" => "number",
+            "premium" => "input|number",
             "paid_at" => "input|date",
             "payment_gateway" => "input|title",
-            "currently_insured_with" => "input",
+            "currently_insured_with" => "select|title|required",
             "promo_code" => "input|title",
             "device" => "input|title",
             "policy_number" => "input",
             "previous_quote_id" => "input",
             "order_reference" => "input",
             "payment_reference" => "input",
-            "calculated_value" => "number",
+            "calculated_value" => "input|number",
             "created_by" => "input",
             "updated_by" => "input",
             "car_type_insurance_id" => "select|title|required",
@@ -189,6 +267,9 @@ class CarQuoteService extends BaseService
         switch ($propertyName) {
             case 'dob':
                 $title = "Date of Birth";
+                break;
+            case 'currently_insured_with':
+                $title = "Currently Insured With";
                 break;
             case 'uae_license_held_for_id':
                 $title = "UAE licence held for";
@@ -253,6 +334,12 @@ class CarQuoteService extends BaseService
             case 'device':
                 $title = "Device";
                 break;
+            case 'year_of_manufacture':
+                $title = "Year of Manufacture";
+                break;
+            case 'vehicle_type_id':
+                $title = "Vehicle Type";
+                break;
             default:
                 break;
         }
@@ -274,11 +361,29 @@ class CarQuoteService extends BaseService
                 'u.name as assignedBy',
                 'cqr.updated_at',
                 'cqr.source as leadSource',
+                'cqrd.next_followup_date as nextFollowupDate',
             )
             ->leftJoin('car_quote_request_detail as cqrd', 'cqrd.car_quote_request_id', '=', 'cqr.id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'cqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'cqrd.advisor_assigned_by_id')
+            ->where('qs.text', '!=', 'Fake')
             ->where('cqr.advisor_id', Auth::user()->id);
+
+        $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
+        $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';
+        if ($column != '' && $column != 0 && $direction != '') {
+            if ($column == 3) {
+                $column = "cqr.created_at";
+            }
+            if ($column == 4) {
+                $column = "cqrd.advisor_assigned_date";
+            }
+            if ($column == 7) {
+                $column = "cqrd.next_followup_date";
+            }
+            $query->orderBy($column, $direction);
+        }
+
         if (isset($request->startedAt) && isset($request->endAt) && $request->startedAt != '' && $request->endAt != '') {
             $dateFrom = Carbon::createFromFormat('Y-m-d', $request->startedAt)->startOfDay()->toDateTimeString();
             $dateTo = Carbon::createFromFormat('Y-m-d', $request->endAt)->endOfDay()->toDateTimeString();
@@ -296,6 +401,11 @@ class CarQuoteService extends BaseService
     public function getGridData($searchProperties, $request)
     {
         if ($request->ajax()) {
+            if (isset($request->assigned_to_date_start) && $request->assigned_to_date_start != '') {
+                $dateFrom = Carbon::createFromFormat('Y-m-d', $request['assigned_to_date_start'])->startOfDay()->toDateTimeString();
+                $dateTo = Carbon::createFromFormat('Y-m-d', $request['assigned_to_date_end'])->endOfDay()->toDateTimeString();
+                $this->query->whereBetween('cqrd.advisor_assigned_date', [$dateFrom, $dateTo]);
+            }
             if (in_array('created_at', $searchProperties) && isset($request->created_at) && $request->created_at != "") {
                 $dateFrom = Carbon::createFromFormat('Y-m-d', $request['created_at'])->startOfDay()->toDateTimeString();
                 $dateTo = Carbon::createFromFormat('Y-m-d', $request['created_at_end'])->endOfDay()->toDateTimeString();
@@ -305,16 +415,48 @@ class CarQuoteService extends BaseService
                 array_push($searchProperties, 'is_ecommerce');
                 array_push($searchProperties, 'payment_status_id');
             }
-            //dd($searchProperties, $request->all());
             foreach ($searchProperties as $item) {
                 if (!empty($request[$item]) && $item != "created_at") {
-                    $searchedValue = str_contains($request[$item], 'Yes') || str_contains($request[$item], 'No') ? ($request[$item] == 'Yes' ? 1 : 0) : $request[$item];
-                    $this->query->where($this->getQuerySuffix($item) . '.' . $item, $searchedValue);
+                    if ($request[$item] == 'null') {
+                        $this->query->whereNull($item);
+                    } else {
+                        $searchedValue = str_contains($request[$item], 'Yes') || str_contains($request[$item], 'No') ? ($request[$item] == 'Yes' ? 1 : 0) : $request[$item];
+                        $this->query->where($this->getQuerySuffix($item) . '.' . $item, $searchedValue);
+                    }
                 }
             }
         }
-        $this->query->orderBy('cqr.created_at', 'DESC');
-        return $this->query;
+        $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
+        $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';
+        if ($column != '' && $column != 0 && $direction != '') {
+            $isManagerORDeputy = Auth::user()->isManagerOrDeputy();
+            $isAdmin = Auth::user()->hasRole("ADMIN");
+            if ($isAdmin || $isManagerORDeputy == "1") {
+                if ($column == 8) {
+                    $column = "cqr.created_at";
+                }
+                if ($column == 9) {
+                    $column = "cqr.updated_at";
+                }
+                if ($column == 11) {
+                    $column = "cqrd.next_followup_date";
+                }
+            } else {
+                if ($column == 7) {
+                    $column = "cqr.created_at";
+                }
+                if ($column == 8) {
+                    $column = "cqr.updated_at";
+                }
+                if ($column == 10) {
+                    $column = "cqrd.next_followup_date";
+                }
+            }
+
+            return $this->query->orderBy($column, $direction);
+        } else {
+            return $this->query->orderBy('cqr.created_at', 'DESC');
+        }
     }
 
     private function getQuerySuffix($item)
@@ -375,6 +517,7 @@ class CarQuoteService extends BaseService
                 'cqr.id',
                 'cqr.uuid',
                 'cqr.first_name',
+                'cqr.code',
                 'cqr.last_name',
                 'cqr.created_at',
                 'u.name AS advisor_name',
@@ -401,9 +544,9 @@ class CarQuoteService extends BaseService
     public function fillModelSkipProperties()
     {
         return [
-            "create" => "id,advisor_id,premium,paid_at,payment_status_id,plan_id,car_plan_provider_id,code,is_ecommerce,payment_gateway,created_at,updated_at,currently_insured_with,promo_code,car_make_id,car_model_id,quote_status_id,device,policy_number,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by",
-            "list" => "additional_notes,email,mobile_no,premium,paid_at,plan_id,car_plan_provider_id,payment_gateway,currently_insured_with,promo_code,car_make_id,car_model_id,device,policy_number,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by,nationality_id,dob,year_of_manufacture,uae_license_held_for_id,car_value,emirate_of_registration_id,claim_history_id,car_type_insurance_id",
-            "update" => "id,advisor_id,premium,paid_at,payment_status_id,plan_id,car_plan_provider_id,code,is_ecommerce,payment_gateway,created_at,updated_at,currently_insured_with,promo_code,car_make_id,car_model_id,device,policy_number,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by",
+            "create" => "id,advisor_id,paid_at,lost_reason,payment_status_id,plan_id,car_plan_provider_id,code,is_ecommerce,payment_gateway,created_at,next_followup_date,updated_at,promo_code,quote_status_id,device,policy_number,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by",
+            "list" => "additional_notes,email,mobile_no,paid_at,plan_id,car_plan_provider_id,payment_gateway,currently_insured_with,promo_code,car_make_id,car_model_id,device,policy_number,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by,nationality_id,dob,year_of_manufacture,uae_license_held_for_id,car_value,emirate_of_registration_id,claim_history_id,car_type_insurance_id",
+            "update" => "id,advisor_id,paid_at,payment_status_id,lost_reason,plan_id,car_plan_provider_id,code,is_ecommerce,payment_gateway,created_at,next_followup_date,updated_at,promo_code,device,policy_number,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by",
             "show" => "",
         ];
     }
@@ -432,7 +575,6 @@ class CarQuoteService extends BaseService
         $client = new \GuzzleHttp\Client();
 
         try {
-
             $kenRequest = $client->post(
                 $plansApiEndPoint,
                 [
@@ -472,7 +614,6 @@ class CarQuoteService extends BaseService
 
     public function getCarQuotePlanAddons($id)
     {
-
         $listCarQuotePlanAddons = DB::table('car_addon_option')
             ->select(
                 'car_addon.text AS car_addon_text',
@@ -485,5 +626,13 @@ class CarQuoteService extends BaseService
             ->leftJoin('car_quote_request', 'car_quote_request.id', '=', 'car_quote_request_addon.quote_request_id')
             ->where('car_quote_request.uuid', $id)->get();
         return $listCarQuotePlanAddons;
+    }
+
+    public function getCarQuoteVehicleType($id)
+    {
+        $vehicleTypeId = CarQuote::where('uuid', '=', $id)->value('vehicle_type_id');
+        $vehicleTypeText = VehicleType::where('id', '=', $vehicleTypeId)->value('text');
+
+        return $vehicleTypeText;
     }
 }

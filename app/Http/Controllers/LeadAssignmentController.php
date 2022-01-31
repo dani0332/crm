@@ -198,23 +198,23 @@ class LeadAssignmentController extends Controller
         foreach ($leadsIds as $tmLeadsId) {
             $id = explode('|', $tmLeadsId)[0];
             $type = strtolower(explode('|', $tmLeadsId)[1]);
-            $updateTmLead = $this->{$type . 'QuoteService'}->getEntityPlain($id);
+            $entity = $this->{$type . 'QuoteService'}->getEntityPlain($id);
             $userId = (int)$assignedToUserIdNew;
-            $updateTmLead->advisor_id = $userId;
+            if (Auth::user()->hasRole('WCU_ADVISOR')) {
+                $entity->wcu_id = $userId;
+            } else {
+                $entity->advisor_id = $userId;
+            }
             if ($type == 'car') {
                 $advisorOE = CarQuoteAdvisorToOE::where('advisor_id', $userId)->first();
                 if (!empty($advisorOE)) {
-                    $updateTmLead->oe_id = $advisorOE->oe_id;
+                    $entity->oe_id = $advisorOE->oe_id;
                 }
             }
-            $updateTmLead->save();
+            $entity->save();
         }
 
         $assignedUserName = $this->userService->getUserNameById($assignedToUserIdNew);
         return 'Leads has been Assigned To ' . $assignedUserName;
-    }
-
-    public function healthTeamAssign(Request $request)
-    {
     }
 }
