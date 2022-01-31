@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\quoteTypeCode;
 use App\Http\Requests\LeadSearch;
 use App\Models\UserTeams;
 use App\Services\CRUDService;
@@ -33,6 +34,18 @@ class LeadSearchController extends Controller
                 $managerRole = explode('_', $userRole->name)[0];
             }
         }
+        if (
+            strtolower($managerRole) == strtolower(quoteTypeCode::GM) || strtolower($managerRole == quoteTypeCode::GroupMedical)
+            || strtolower($managerRole) == strtolower(quoteTypeCode::CORPLINE)
+        ) {
+            $managerRole = 'BUSINESS';
+        }
+        if (
+            strtolower($managerRole) == strtolower(quoteTypeCode::RM) || strtolower($managerRole) == strtolower(quoteTypeCode::RetailMedical) ||
+            strtolower($managerRole) == strtolower(quoteTypeCode::EBP)
+        ) {
+            $managerRole = 'HEALTH';
+        }
         $isManager = Auth::user()->isManagerOrDeputy();
         if ($request->ajax()) {
             if (isset($leadType) && !empty($leadType)) {
@@ -60,7 +73,8 @@ class LeadSearchController extends Controller
      * Store a newly created resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\
+     * Response
      */
     public function store(Request $request)
     {
