@@ -255,8 +255,7 @@ class AMTController extends Controller
             "brief_details" => "required",
             "group_medical_type_id" => "required",
         ]);
-        $record = BusinessQuote::where([['uuid', $id], ['business_type_of_insurance_id', 5]])->first();
-        $record->update($request->all());
+        $this->crudService->updateModelByType('business', $request, $id);
         return redirect('medical/amt/' . $id)->with('success', 'Lead has been updated');
     }
 

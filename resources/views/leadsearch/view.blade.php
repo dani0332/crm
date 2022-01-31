@@ -28,7 +28,7 @@
                         data: 'id',
                         name: 'id',
                         render: function(data, type, row) {
-                            if(isAdmin || (isManager && managerRoleType == $('#leadType').val().toUpperCase())) {
+                            if(isManager && managerRoleType == $('#leadType').val().toUpperCase()) {
                                 return "<a href='/quotes/" + $("#leadType").val() + "/" + row.uuid +
                                         "'>" + row.code + "</a>"
                             }

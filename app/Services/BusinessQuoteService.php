@@ -284,6 +284,7 @@ class BusinessQuoteService extends BaseService
         $businessQuote->premium = $request->premium;
         $businessQuote->business_type_of_insurance_id = $request->business_type_of_insurance_id;
         $businessQuote->number_of_employees = $request->number_of_employees;
+        if (isset($request->group_medical_type_id)) $businessQuote->group_medical_type_id = $request->group_medical_type_id;
         $businessQuote->save();
 
         if (isset($request->return_to_view))
