@@ -72,7 +72,7 @@ class migrateCustomerToAlfred extends Command
                     'updated_at' => Carbon::now('Asia/Dubai')
                 ];
             }
-            sleep(1);
+            sleep(0.5);
 
             $bar->advance();
         }
