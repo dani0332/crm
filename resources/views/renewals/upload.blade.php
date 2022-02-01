@@ -63,13 +63,16 @@
 
                     </div>
                     <div class="item form-group">
-                        <p><h4>Required file format</h4></p>
-                        <p><ul>
-                            <li>File must be a csv or xlsx file with the following fields.</li>
-                            <li><b>Please ensure there are no commas in file.</b></li>
-                            <li>First line will be skipped while uploading.</li>
+                        <p><h4 class="required"><b>Import Instructions must be follow:</b></h4></p>
+                        <p><ul class="required" style="font-weight:bold;">
+                            <li>Download the sample csv/xlsx file, modify the data according to the recommendations for a successful import.</li>
+                            <li>File must be a csv/xlsx file with the following fields.</li>
+                            <li>Please ensure there are no commas in file.</li>
+                            <li>First row will be skipped while uploading.</li>
                             <li>Please ensure there are no spaces in start and end of columns data</li>
-                            <li>Please ensure max allowed size is 2mb (2048kb)</li>
+                            <li>Please ensure max allowed size is 2mb (2048kb) & recommend numbers 500 leads per csv/xlsx file.</li>
+                            <li>Please ensure columns header and allocation same as per given in sample csv/xlsx file.</li>
+                            <li>Please ensure all required columns data filled in the csv/xlsx file.</li>
                             <li>Arabic is not supported in CSV file upload</li>
                         </ul></p>
                     </div>
@@ -127,7 +130,8 @@
                     <div class="row">
                     <div class="col-auto mr-auto"></div>
                         <div class="col-auto">
-                        <button type="submit" class="btn btn-warning btn-sm" id="return_to_view">Upload</button>
+                        <button type="submit" class="btn btn-warning btn-sm" id="renewals-upload-button">Upload</button>
+                        <div id="renewals-upload-button-text" class="required" style="font-weight:bold;"></div>
                         </div>
                     </div>
                 </form>
