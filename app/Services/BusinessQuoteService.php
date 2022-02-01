@@ -276,19 +276,23 @@ class BusinessQuoteService extends BaseService
 
     public function updateBusinessQuote(Request $request, $id)
     {
-        $businessQuote = BusinessQuote::where('code', 'BUS-' . $id)->first();
-        $businessQuote->first_name = $request->first_name;
-        $businessQuote->last_name = $request->last_name;
-        $businessQuote->company_name = $request->company_name;
-        $businessQuote->brief_details = $request->brief_details;
-        $businessQuote->premium = $request->premium;
-        $businessQuote->business_type_of_insurance_id = $request->business_type_of_insurance_id;
-        $businessQuote->number_of_employees = $request->number_of_employees;
-        if (isset($request->group_medical_type_id)) $businessQuote->group_medical_type_id = $request->group_medical_type_id;
-        $businessQuote->save();
+        $businessQuote = BusinessQuote::where('uuid', $id)->first();
+        if ($businessQuote) {
+            $businessQuote->first_name = $request->first_name;
+            $businessQuote->last_name = $request->last_name;
+            $businessQuote->company_name = $request->company_name;
+            $businessQuote->brief_details = $request->brief_details;
+            $businessQuote->premium = $request->premium;
+            $businessQuote->business_type_of_insurance_id = $request->business_type_of_insurance_id;
+            $businessQuote->number_of_employees = $request->number_of_employees;
+            if (isset($request->group_medical_type_id)) $businessQuote->group_medical_type_id = $request->group_medical_type_id;
+            $businessQuote->save();
 
-        if (isset($request->return_to_view))
-            return redirect("quote/business/" . $businessQuote->id)->with('success', 'Business Quote has been updated');
+            if (isset($request->return_to_view))
+                return redirect("quote/business/" . $businessQuote->id)->with('success', 'Business Quote has been updated');
+        } else {
+            return redirect("quote/business")->with('message', 'Business Quote not found');
+        }
     }
 
     public function fillModelProperties()

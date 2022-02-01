@@ -419,13 +419,17 @@ class CRUDController extends Controller
         $leadsIds = array_map('intval', explode(',', $leadsIds));
         foreach ($leadsIds as $tmLeadsId) {
             $entity = $this->{strtolower($request->modelType) . 'QuoteService'}->getEntityPlain($tmLeadsId);
-            $userId = (int)$assignedToUserIdNew;
-            $entity->advisor_id = $userId;
-            $advisorOE = CarQuoteAdvisorToOE::where('advisor_id', $userId)->first();
-            if (!empty($advisorOE) && strtolower($request->modelType) == 'car') {
-                $entity->oe_id = $advisorOE->oe_id;
+            if ($entity) {
+                $userId = (int)$assignedToUserIdNew;
+                $entity->advisor_id = $userId;
+                $advisorOE = CarQuoteAdvisorToOE::where('advisor_id', $userId)->first();
+                if (!empty($advisorOE) && strtolower($request->modelType) == 'car') {
+                    $entity->oe_id = $advisorOE->oe_id;
+                }
+                $entity->save();
+            } else {
+                return redirect()->back()->with('message', 'Invalid lead selected for assignment');
             }
-            $entity->save();
         }
         $this->{strtolower($request->modelType) . 'QuoteService'}->updateChildRecord($tmLeadsId);
         $assignedUserName = $this->userService->getUserNameById($assignedToUserIdNew);
