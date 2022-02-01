@@ -13,7 +13,7 @@
                 @if(session()->has('success'))
                     <div class="alert alert-success">{{ session()->get('success') }}</div>
                 @endif
-                
+
                 @if (session()->has('failures'))
                 <div class="required"><b>Please correct below data and import it again separately, other data already imported.</b></div>
                 <br />
@@ -115,8 +115,8 @@
                                 <tr><td style="text-align: center;">15</td><td>Object</td><td>Information against the quotation</td><td style="text-align: center;">No</td><td style="text-align: center;">200</td></tr>
                                 <tr><td style="text-align: center;">16</td><td>Gross Premium</td><td>Premium amount</td><td style="text-align: center;">No</td><td style="text-align: center;">25</td></tr>
                                 <tr><td style="text-align: center;">17</td><td>Notes</td><td>Any other Information</td><td style="text-align: center;">No</td><td style="text-align: center;">200</td></tr>
-                                <tr><td style="text-align: center;">18</td><td>Make</td><td>Car Make Information</td><td style="text-align: center;">No</td><td style="text-align: center;">25</td></tr>
-                                <tr><td style="text-align: center;">19</td><td>Model</td><td>Car Model Information</td><td style="text-align: center;">No</td><td style="text-align: center;">25</td></tr>
+                                <tr><td style="text-align: center;">18</td><td>Make</td><td>Car Make Information</td><td style="text-align: center;">No</td><td style="text-align: center;">50</td></tr>
+                                <tr><td style="text-align: center;">19</td><td>Model</td><td>Car Model Information</td><td style="text-align: center;">No</td><td style="text-align: center;">50</td></tr>
                                 <tr><td style="text-align: center;">20</td><td>Year</td><td>Vehicle Year of manufacture</td><td style="text-align: center;">No</td><td style="text-align: center;">4</td></tr>
                             </tbody>
                             </table>

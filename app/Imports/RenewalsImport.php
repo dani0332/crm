@@ -36,10 +36,10 @@ class RenewalsImport implements OnEachRow, WithStartRow, WithValidation, SkipsOn
 
         $qouteType = $row[2];
 
-        $email = strtolower(trim(ltrim(rtrim($row[1]))));;        
+        $email = strtolower(trim(ltrim(rtrim($row[1]))));;
         if($email != null) {
             $quoteData = 0;
-            
+
             // customer information
             $customerName = explode(" ", $row[0], 2);
             $lastName = "";
@@ -157,7 +157,7 @@ class RenewalsImport implements OnEachRow, WithStartRow, WithValidation, SkipsOn
         return $this->rows;
     }
 
-    public function rules(): array 
+    public function rules(): array
     {
         return [
             // Customer Name
@@ -228,9 +228,6 @@ class RenewalsImport implements OnEachRow, WithStartRow, WithValidation, SkipsOn
             },
             // Advisor Email
             '*.8' => function($attribute, $value, $onFailure) {
-                if(!$value) {
-                    $onFailure('Advisor Email is required');
-                }
                 if(strlen($value) > 100) {
                     $onFailure('Advisor Email should not exceed length of 100 characters');
                 }
@@ -291,13 +288,13 @@ class RenewalsImport implements OnEachRow, WithStartRow, WithValidation, SkipsOn
             },
             // Make
             '*.17' => function($attribute, $value, $onFailure) {
-                if(strlen($value) > 25) {
+                if(strlen($value) > 50) {
                     $onFailure('Car Make should not exceed length of 25 characters');
                 }
             },
             // Model
             '*.18' => function($attribute, $value, $onFailure) {
-                if(strlen($value) > 25) {
+                if(strlen($value) > 50) {
                     $onFailure('Car Model should not exceed length of 25 characters');
                 }
             },
