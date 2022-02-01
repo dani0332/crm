@@ -44,7 +44,7 @@ class migrateCustomerToAlfred extends Command
      */
     public function handle()
     {
-        $customers = Customer::doesnthave('MyAlfredUsers')->where('has_alfred_access', 1)->where('is_we_sent', 0)->get();
+        $customers = Customer::doesnthave('MyAlfredUsers')->where('has_alfred_access', 1)->where('has_reward_access', 1)->where('is_we_sent', 0)->get();
         $customerChunk = $customers->chunk(5);
         $bar = $this->output->createProgressBar(count($customers));
 
@@ -74,7 +74,7 @@ class migrateCustomerToAlfred extends Command
             }
             $bar->advance();
         }
-        
+
         MyAlFredUser::insert($alfredInsert);
 
         $bar->finish();
