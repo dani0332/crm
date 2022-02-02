@@ -85,6 +85,7 @@ $(document).ready(function () {
     });
     $('#calculateValuation').click(function () {
         if ($('#search-valuation').valid()) {
+            $('#result').hide();
             var carMake = $('#car_make_value option:selected').val();
             var carModel = $('#car_model_value option:selected').val();
             var carTrim = $('#car_trim_value option:selected').val();
@@ -94,9 +95,11 @@ $(document).ready(function () {
                 type: "post",
                 data: { carModelDetailId: carTrim, yearOfManufacture: yom },
                 success: function (response) {
-                    $('#carValue').text(Number(response.carValue).toFixed(2));
-                    $('#uLimit').text(Number(response.carValueUpperLimit).toFixed(2));
-                    $('#lLimit').text(Number(response.carValueLowerLimit).toFixed(2));
+                    var html = '';
+                    response.forEach(element => {
+                        html += '<tr><td>' + Number(element.providerName) + '</td><td>' + Number(element.carValue) + '</td><td>' + Number(element.carValueUpperLimit) + '</td><td>' + Number(element.carValueLowerLimit) + '</td></tr>';
+                    });
+                    $('#result table tbody').html(html);
                     $('#result').show();
                 },
                 error: function (jqXHR, textStatus, errorThrown) {

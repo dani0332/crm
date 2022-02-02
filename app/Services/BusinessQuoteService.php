@@ -305,7 +305,7 @@ class BusinessQuoteService extends BaseService
             "email" => "input|email|required",
             "mobile_no" => "input|title|number|required",
             "company_name" => "input|text|required",
-            "next_followup_date" => "input|text",
+            "next_followup_date" => "input|date|text",
             "source" => "input|text",
             "lost_reason" => "input|text",
             "advisor_id" => "select|title",

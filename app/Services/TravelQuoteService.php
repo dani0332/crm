@@ -319,7 +319,7 @@ class TravelQuoteService extends BaseService
             "advisor_id" => "select|title",
             "created_at" => "input|date|title|range",
             "updated_at" => "input|date|title",
-            "next_followup_date" => "input|text",
+            "next_followup_date" => "input|date|text",
             "lost_reason" => "input|text",
             "source" => "input|text",
             "premium" => "input|number|required",
