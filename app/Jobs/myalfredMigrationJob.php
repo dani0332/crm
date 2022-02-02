@@ -43,15 +43,15 @@ class myalfredMigrationJob implements ShouldQueue
         // loop on chunk
         foreach ($this->flatCustomerArray as $item) {
 
-            // API call
-            $response = Http::withHeaders([
-                'Authorization' =>  'Basic ' . $magicUrlGeneratauthBasic
-            ])->post(env('BERLIN_API_ENDPOINT') . '/auth/generate-url');
-            $responseBody = json_decode($response->body());
-
-            //check if user doesn't exist
+            //check if user exists
             $customer = MyAlFredUser::where('customer_id', $item->id)->first();
+
             if (!$customer) {
+                // API call
+                $response = Http::withHeaders([
+                    'Authorization' =>  'Basic ' . $magicUrlGeneratauthBasic
+                ])->post(env('BERLIN_API_ENDPOINT') . '/auth/generate-url');
+                $responseBody = json_decode($response->body());
                 // create record
                 MyAlFredUser::insert([
                     'signup_url' => $responseBody->data->url,

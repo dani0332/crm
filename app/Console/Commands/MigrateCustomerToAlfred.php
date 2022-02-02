@@ -7,9 +7,6 @@ use App\Jobs\myalfredMigrationJob;
 use Illuminate\Console\Command;
 
 
-use Illuminate\Support\Arr;
-
-
 class migrateCustomerToAlfred extends Command
 {
     /**
@@ -43,17 +40,15 @@ class migrateCustomerToAlfred extends Command
      */
     public function handle()
     {
-        $customers = Customer::doesnthave('MyAlfredUsers')->where('has_alfred_access', 1)->where('has_reward_access', 1)->where('is_we_sent', 0)->get();
-        $customerChunk = $customers->chunk(100);
-        $bar = $this->output->createProgressBar(count($customers));
+        $count = Customer::where('has_alfred_access', 1)->where('has_reward_access', 1)->where('is_we_sent', 0)->count();
+        $bar = $this->output->createProgressBar($count);
         $bar->start();
 
-        foreach ($customerChunk as $customer) {
-            myalfredMigrationJob::dispatch($customer);
+        Customer::where('has_alfred_access', 1)->where('has_reward_access', 1)->where('is_we_sent', 0)->chunk(1000, function ($customerChunk) use ($bar) {
+            myalfredMigrationJob::dispatch($customerChunk);
             sleep(0.5);
-        }
-
-        $bar->advance();
+            $bar->advance();
+        });
 
         $bar->finish();
     }
