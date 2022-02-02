@@ -93,7 +93,9 @@ $(document).ready(function () {
             $.ajax({
                 url: config.routes.valuation_api_route + 'get-vehicle-value',
                 type: "post",
-                dataType: 'jsonp',
+                headers: {
+                    'x-api-token': config.routes.valuation_api_token,
+                },
                 data: { carModelDetailId: carTrim, yearOfManufacture: yom },
                 success: function (response) {
                     var html = '';
@@ -1838,11 +1840,11 @@ $(document).ready(function () {
             $('#tooltipGm').hide();
         }
     });
+});
 
-    $("#renewals-upload-button").click(function () {
-        $("#renewals-upload-button").hide();
-        $("#renewals-upload-button-text").text("Please wait until file will be uploaded. More waiting time is depending on number of records.");
-    });
 
+$("#renewals-upload-button").click(function () {
+    $("#renewals-upload-button").hide();
+    $("#renewals-upload-button-text").text("Please wait until file will be uploaded. More waiting time is depending on number of records.");
 });
 

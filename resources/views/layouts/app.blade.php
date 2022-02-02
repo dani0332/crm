@@ -192,6 +192,7 @@ $appName = Config::get('constants.APP_NAME');
                 re_issue_transaction_form: "{{ route('re_issue_transaction_form') }}",
                 aml_datatable_route: "{{ route('aml.index') }}",
                 valuation_api_route: "{{ Config::get('constants.valuation_api_route') }}",
+                valuation_api_token: "{{ Config::get('constants.valuation_api_token') }}",
                 tminsurancetype_datatable_route: "{{ route('tminsurancetype.index') }}",
                 tmcallstatus_datatable_route: "{{ route('tmcallstatus.index') }}",
                 tmleadstatus_datatable_route: "{{ route('tmleadstatus.index') }}",
