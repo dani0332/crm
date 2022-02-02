@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Http;
 use App\Models\MyAlFredUser;
 use Carbon\Carbon;
 
+
 class myalfredMigrationJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
@@ -52,10 +53,13 @@ class myalfredMigrationJob implements ShouldQueue
                     'Authorization' =>  'Basic ' . $magicUrlGeneratauthBasic
                 ])->post(env('BERLIN_API_ENDPOINT') . '/auth/generate-url');
                 $responseBody = json_decode($response->body());
+
                 // create record
                 MyAlFredUser::insert([
                     'signup_url' => $responseBody->data->url,
                     'customer_id' => $item->id,
+                    'code' => substr($responseBody->data->url, strpos($responseBody->data->url, "signup/") + 7),
+                    'source' => 'MIGRATION',
                     'created_at' => Carbon::now('Asia/Dubai'),
                     'updated_at' => Carbon::now('Asia/Dubai')
                 ]);
