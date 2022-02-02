@@ -2,7 +2,11 @@
 @section('title', 'Edit '.$model->modelType)
 @section('content')
 <script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
-
+<style>
+    .form-control:disabled, .form-control[readonly]{
+        background-color: white !important;
+    }
+</style>
 <script>
     $(document).ready(function() {
         var model = JSON.parse('<?php echo json_encode(get_object_vars($model)) ?>');
@@ -119,6 +123,7 @@
                                                 @endif
                                             </span>
                                             <input
+                                                @if(explode("|", $value)[1] == "date") readonly="readonly" @endif
                                                 @if(explode("|", $value)[1] != 'date')
                                                     type={{ explode("|", $value)[1]  }}
                                                     @endif id={{$property}}
