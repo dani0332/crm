@@ -1,7 +1,7 @@
 <script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
 <script>
     $(document).ready(function () {
-        var showFollowupStatuses = ['Qualification Pending', 'Quoted', 'FTC Pending', 'FTC Sent', 'Missing Documents Requested'];
+        var showFollowupStatuses = ['Followed Up','Qualification Pending', 'Quoted', 'FTC Pending', 'FTC Sent', 'Missing Documents Requested', 'Policy Documents Pending', 'Payment Pending', 'Pending with UW', 'Application Pending', 'In Negotiation'];
         if(showFollowupStatuses.find((str) => str == $('#leadStatus option:selected').text())){
             $('#followup-div').show();
         }
@@ -18,6 +18,10 @@
             $('#lost-reason-div').show();
         }
         var followupDate = '<?php echo $lead->next_followup_date; ?>';
+        if(followupDate != ''){
+            $('#followup-date').val(followupDate);
+            $('#followup-div').show();
+        }
         $("#nextFollowUpDate").daterangepicker({ // TM Leads
             timePicker: true,
             singleDatePicker: true,
