@@ -100,7 +100,7 @@ $(document).ready(function () {
                 success: function (response) {
                     var html = '';
                     response.forEach(element => {
-                        html += '<tr><td>' + Number(element.providerName) + '</td><td>' + Number(element.carValue) + '</td><td>' + Number(element.carValueUpperLimit) + '</td><td>' + Number(element.carValueLowerLimit) + '</td></tr>';
+                        html += '<tr><td>' + element.providerName + '</td><td>' + Number(element.carValue) + '</td><td>' + Number(element.carValueUpperLimit) + '</td><td>' + Number(element.carValueLowerLimit) + '</td></tr>';
                     });
                     $('#result table tbody').html(html);
                     $('#result').show();
