@@ -347,7 +347,6 @@ class HealthQuoteService extends BaseService
             "preference" => "input|text",
             "details" => "input|text",
             "source" => "input|text|title",
-            "dob" => 'input|date|required',
             "marital_status_id" => "select|title|required",
             "cover_for_id" => "select|title|required",
             "nationality_id" => "select|title|required",

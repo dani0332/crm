@@ -1,6 +1,11 @@
 @extends('layouts.app')
 @section('title', 'Add '.$model->modelType )
 @section('content')
+<style>
+    .form-control:disabled, .form-control[readonly]{
+        background-color: white !important;
+    }
+</style>
 <script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
 <script>
     $(document).ready(function(){
@@ -152,7 +157,7 @@
                                             <span class='required'>*</span>
                                             @endif
                                         </span>
-                                        <input type={{ explode("|", $value)[1] }} id={{$property}} name={{$property}} value="{{ old($property) }}" class="form-control">
+                                        <input @if(explode("|", $value)[1] == "date") readonly="readonly" @endif  type={{ explode("|", $value)[1] }} id={{$property}} name={{$property}} value="{{ old($property) }}" class="form-control">
                                         @if ($errors->has($property))
                                             <span class="text-danger">{{ $errors->first($property) }}</span>
                                         @endif

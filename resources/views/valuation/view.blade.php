@@ -1,4 +1,4 @@
-@extends('layouts.app') 
+@extends('layouts.app')
 @section('title','View CarQuote')
 @section('content')
 <div class="row">
@@ -51,17 +51,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="item form-group" id='result' style="display: none;">
-                    <div class="col-md-6 col-sm-6">
-                        <div class="input-group">
-                            <b><label id="error" style='display: none;'></label></b>
-                            <b>Car Value :  &nbsp; &nbsp; &nbsp;</b><label id="carValue"></label>&nbsp; &nbsp; &nbsp;
-                             <b>Car Upper Limit Value :  &nbsp; &nbsp; &nbsp;</b><label id="uLimit"></label>&nbsp; &nbsp; &nbsp;
-                             <b>Car Lower Limit Value :  &nbsp; &nbsp; &nbsp;</b><label id="lLimit"></label>&nbsp; &nbsp; &nbsp;
-                        </div>
-                    </div>
-                </div>
-                <b><label id="error" style='color: red;'></label></b>         
+
                 <div class="item form-group">
                     <div class="col-md-6 col-sm-6 ">
                         <div class="input-group">
@@ -74,6 +64,25 @@
                         </div>
                     </div>
                 </div>
+                <div class="item form-group" id='result' style="display: none;">
+                    <div class="col-md-6 col-sm-6">
+                        <div class="input-group">
+                            <b><label id="error" style='display: none;'></label></b>
+                            <table class="table table-striped jambo_table " width="100%">
+                                <thead>
+                                    <th>Provider</th>
+                                    <th>Car Value</th>
+                                    <th>Car Value Upper Limit</th>
+                                    <th>Car Value Lower Limit</th>
+                                </thead>
+                                <tbody>
+
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <b><label id="error" style='color: red;'></label></b>
             </form>
             </div>
         </div>
