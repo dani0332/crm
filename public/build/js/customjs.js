@@ -1837,5 +1837,11 @@ $(document).ready(function () {
             $('#tooltipGm').hide();
         }
     });
+
+    $("#renewals-upload-button").click(function () {
+        $("#renewals-upload-button").hide();
+        $("#renewals-upload-button-text").text("Please wait until file will be uploaded. More waiting time is depending on number of records.");
+    });
+
 });
 

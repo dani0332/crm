@@ -15,7 +15,7 @@ class RenewalsUploadController extends Controller
     public function __construct(RenewalsUploadService $renewalsUploadFileService)
     {
         $this->renewalsUploadFileService = $renewalsUploadFileService;
-    }   
+    }
 
     /**
      * renew the quote against the customer
@@ -49,7 +49,7 @@ class RenewalsUploadController extends Controller
             $renewalsUploadLead->created_by_id = Auth::user()->id;
             $renewalsUploadLead->save();
 
-            if ($renewalsUpload->failures()->isNotEmpty()) {
+            if ($renewalsUpload->failures()->isNotEmpty() || $countErrors > 50) {
                 return redirect("renewals-upload")->withFailures($renewalsUpload->failures());
             }
 
@@ -72,7 +72,7 @@ class RenewalsUploadController extends Controller
         $data = RenewalsUploadLeads::select(
             'id', 'file_name', 'file_path', 'total_records', 'good', 'cannot_upload', 'created_at', 'updated_at'
             )->orderBy('created_at','desc')->get();
-        
+
         if ($request->ajax()) {
             return DataTables::of($data)
                 ->addIndexColumn()

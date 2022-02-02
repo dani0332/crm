@@ -7,6 +7,9 @@ use App\Models\MyAlFredUser;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Http;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Arr;
+
 
 class migrateCustomerToAlfred extends Command
 {
@@ -46,24 +49,35 @@ class migrateCustomerToAlfred extends Command
         $bar = $this->output->createProgressBar(count($customers));
 
         $bar->start();
+        $magicUrlGenerateUserName = Config::get('constants.BERLIN_BASIC_AUTH_USER_NAME');
+        $magicUrlGeneratePassword = Config::get('constants.BERLIN_BASIC_AUTH_PASSWORD');
 
-        $customerChunk->each(function ($chunk) use ($bar) {
-            $chunk->each(function ($item) use ($bar) {
-                $response = Http::post(env('BERLIN_API_ENDPOINT').'/auth/generate-url');
-                $responseBody = json_decode($response->body());
-                $customer = MyAlFredUser::where('customer_id', $item->id)->first();
-                if (!$customer) {
-                    MyAlFredUser::insert([
-                        'signup_url' => $responseBody->data->url,
-                        'customer_id' => $item->id,
-                        'created_at' => Carbon::now('Asia/Dubai'),
-                        'updated_at' => Carbon::now('Asia/Dubai')
-                    ]);
+        $magicUrlGeneratauthBasic = base64_encode($magicUrlGenerateUserName . ":" . $magicUrlGeneratePassword);
+        $flatted = Arr::flatten($customerChunk, 1);
+        $alfredInsert = [];
 
-                }
-                $bar->advance();
-            });
-        });
+        foreach ($flatted as $item) {
+
+            $response = Http::withHeaders([
+                'Authorization' =>  'Basic ' . $magicUrlGeneratauthBasic
+            ])->post(env('BERLIN_API_ENDPOINT') . '/auth/generate-url');
+            $responseBody = json_decode($response->body());
+            $customer = MyAlFredUser::where('customer_id', $item->id)->first();
+            if (!$customer) {
+
+                $alfredInsert[] = [
+                    'signup_url' => $responseBody->data->url,
+                    'customer_id' => $item->id,
+                    'created_at' => Carbon::now('Asia/Dubai'),
+                    'updated_at' => Carbon::now('Asia/Dubai')
+                ];
+            }
+            sleep(1);
+
+            $bar->advance();
+        }
+
+        MyAlFredUser::insert($alfredInsert);
 
         $bar->finish();
     }
