@@ -93,6 +93,7 @@ $(document).ready(function () {
             $.ajax({
                 url: config.routes.valuation_api_route + 'get-vehicle-value',
                 type: "post",
+                dataType: 'jsonp',
                 data: { carModelDetailId: carTrim, yearOfManufacture: yom },
                 success: function (response) {
                     var html = '';
