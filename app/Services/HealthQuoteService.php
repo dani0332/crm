@@ -340,7 +340,7 @@ class HealthQuoteService extends BaseService
             "advisor_id" => "select|title",
             "created_at" => "input|date|title|range",
             "updated_at" => "input|date|title",
-            "dob" => "input|title|date|required",
+            "dob" => "input|date|title|required",
             "next_followup_date" => "input|text",
             "lost_reason" => "input|text",
             "premium" => "input|number|required",
