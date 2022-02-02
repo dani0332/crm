@@ -44,9 +44,9 @@ class migrateCustomerToAlfred extends Command
         $bar = $this->output->createProgressBar($count);
         $bar->start();
 
-        Customer::where('has_alfred_access', 1)->where('has_reward_access', 1)->where('is_we_sent', 0)->chunk(1000, function ($customerChunk) use ($bar) {
+        Customer::where('has_alfred_access', 1)->where('has_reward_access', 1)->where('is_we_sent', 0)->chunk(100, function ($customerChunk) use ($bar) {
             myalfredMigrationJob::dispatch($customerChunk);
-            sleep(0.5);
+            sleep(1);
             $bar->advance();
         });
 
