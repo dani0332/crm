@@ -43,10 +43,11 @@ class migrateCustomerToAlfred extends Command
      */
     public function handle()
     {
-        $customers = Customer::doesnthave('MyAlfredUsers')->get();
+        $customers = Customer::doesnthave('MyAlfredUsers')->where('has_alfred_access', 1)->where('has_reward_access', 1)->where('is_we_sent', 0)->get();
         $customerChunk = $customers->chunk(100);
         $bar = $this->output->createProgressBar(count($customers));
         $bar->start();
+
         foreach ($customerChunk as $customer) {
             myalfredMigrationJob::dispatch($customer);
             sleep(0.5);
