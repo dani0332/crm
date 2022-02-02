@@ -3,12 +3,8 @@
 namespace App\Console\Commands;
 
 use App\Models\Customer;
-use App\Models\MyAlFredUser;
+use App\Jobs\myalfredMigrationJob;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Http;
-use Carbon\Carbon;
-use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Arr;
 
 
 class migrateCustomerToAlfred extends Command
@@ -44,40 +40,15 @@ class migrateCustomerToAlfred extends Command
      */
     public function handle()
     {
-        $customers = Customer::doesnthave('MyAlfredUsers')->where('has_alfred_access', 1)->where('has_reward_access', 1)->where('is_we_sent', 0)->get();
-        $customerChunk = $customers->chunk(5);
-        $bar = $this->output->createProgressBar(count($customers));
-
+        $count = Customer::where('has_alfred_access', 1)->where('has_reward_access', 1)->where('is_we_sent', 0)->count();
+        $bar = $this->output->createProgressBar($count);
         $bar->start();
-        $magicUrlGenerateUserName = Config::get('constants.BERLIN_BASIC_AUTH_USER_NAME');
-        $magicUrlGeneratePassword = Config::get('constants.BERLIN_BASIC_AUTH_PASSWORD');
 
-        $magicUrlGeneratauthBasic = base64_encode($magicUrlGenerateUserName . ":" . $magicUrlGeneratePassword);
-        $flatted = Arr::flatten($customerChunk, 1);
-        $alfredInsert = [];
-
-        foreach ($flatted as $item) {
-
-            $response = Http::withHeaders([
-                'Authorization' =>  'Basic ' . $magicUrlGeneratauthBasic
-            ])->post(env('BERLIN_API_ENDPOINT') . '/auth/generate-url');
-            $responseBody = json_decode($response->body());
-            $customer = MyAlFredUser::where('customer_id', $item->id)->first();
-            if (!$customer) {
-
-                $alfredInsert[] = [
-                    'signup_url' => $responseBody->data->url,
-                    'customer_id' => $item->id,
-                    'created_at' => Carbon::now('Asia/Dubai'),
-                    'updated_at' => Carbon::now('Asia/Dubai')
-                ];
-            }
+        Customer::where('has_alfred_access', 1)->where('has_reward_access', 1)->where('is_we_sent', 0)->chunk(100, function ($customerChunk) use ($bar) {
+            myalfredMigrationJob::dispatch($customerChunk);
             sleep(1);
-
             $bar->advance();
-        }
-
-        MyAlFredUser::insert($alfredInsert);
+        });
 
         $bar->finish();
     }
