@@ -353,6 +353,7 @@ class LifeQuoteService extends BaseService
             "advisor_id" => "select|title",
             "created_at" => "input|date|title|range",
             "updated_at" => "input|date|title",
+            "dob" => "input|date|title|required",
             "sum_insured_value" => "input|number|title|required",
             "next_followup_date" => "input|text",
             "source" => "input|text",
