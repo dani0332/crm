@@ -66,10 +66,10 @@ $(document).ready(function() {
                                                 </select>
                                             </td>
                                             <td>
-                                                <input type="number" id="sss" name="sss" placeholder="Enter Premium" onfocus="this.type='number';" class="form-control" data-toggle="tooltip" data-placement="top" title="Please enter premium" onKeyDown="if(this.value.length==11)return false;" style="width: 150px;">
+                                                <input type="number" id="premium" name="premium" placeholder="Enter Premium" onfocus="this.type='number';" class="form-control" data-toggle="tooltip" data-placement="top" title="Please enter premium" onKeyDown="if(this.value.length==11)return false;" style="width: 150px;">
                                             </td>
                                             <td>
-                                                <a class="extra-fields-customer" href="#"><span class="fa fa-plus-square"></span></a>
+                                                {{-- <a class="extra-fields-customer" href="#"><span class="fa fa-plus-square"></span></a> --}}
                                             </td>
                                         </tr>
                                     </table>
