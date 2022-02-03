@@ -93,12 +93,14 @@ $(document).ready(function () {
             $.ajax({
                 url: config.routes.valuation_api_route + 'get-vehicle-value',
                 type: "post",
-                dataType: 'jsonp',
+                headers: {
+                    'x-api-token': config.routes.valuation_api_token,
+                },
                 data: { carModelDetailId: carTrim, yearOfManufacture: yom },
                 success: function (response) {
                     var html = '';
                     response.forEach(element => {
-                        html += '<tr><td>' + Number(element.providerName) + '</td><td>' + Number(element.carValue) + '</td><td>' + Number(element.carValueUpperLimit) + '</td><td>' + Number(element.carValueLowerLimit) + '</td></tr>';
+                        html += '<tr><td>' + element.providerName + '</td><td>' + Number(element.carValue) + '</td><td>' + Number(element.carValueUpperLimit) + '</td><td>' + Number(element.carValueLowerLimit) + '</td></tr>';
                     });
                     $('#result table tbody').html(html);
                     $('#result').show();
@@ -1838,11 +1840,11 @@ $(document).ready(function () {
             $('#tooltipGm').hide();
         }
     });
+});
 
-    $("#renewals-upload-button").click(function () {
-        $("#renewals-upload-button").hide();
-        $("#renewals-upload-button-text").text("Please wait until file will be uploaded. More waiting time is depending on number of records.");
-    });
 
+$("#renewals-upload-button").click(function () {
+    $("#renewals-upload-button").hide();
+    $("#renewals-upload-button-text").text("Please wait until file will be uploaded. More waiting time is depending on number of records.");
 });
 
