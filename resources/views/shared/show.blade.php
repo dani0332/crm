@@ -132,7 +132,7 @@
                                     @endif
                                     @if(str_contains($value, 'select'))
                                         @if(str_contains($value, 'customTable'))
-                                        <div class="col-md-6 col-sm-6">
+                                        <div class="col-md-6 col-sm-6" style="text-overflow: ellipsis;overflow: auto;white-space: nowrap;width: 495px;">
                                             <p class="label-align-center">{{ $customTableList[$property][0]->names }}</p>
                                         </div>
                                         @else
@@ -145,11 +145,11 @@
                                         @endif
                                     @else
                                         @if(str_contains($value, 'customTable'))
-                                        <div class="col-md-6 col-sm-6">
+                                        <div class="col-md-6 col-sm-6" style="text-overflow: ellipsis;overflow: auto;white-space: nowrap;width: 495px;">
                                             <p class="label-align-center">{{ $customTableList[$property][0]->names }}</p>
                                         </div>
                                         @else
-                                            <div class="col-md-6 col-sm-6">
+                                            <div class="col-md-6 col-sm-6" style="text-overflow: ellipsis;overflow: auto;white-space: nowrap;width: 495px;">
                                                 <p class="label-align-center">{{ $record->$property }}</p>
                                             </div>
                                         @endif
