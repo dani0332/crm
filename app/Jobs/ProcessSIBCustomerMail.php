@@ -2,19 +2,16 @@
 
 namespace App\Jobs;
 
+use App\Models\MyAlFredUser;
 use App\Services\CustomerService;
 use App\Services\CustomerWEGenerateUrlService;
 use App\Services\SendEmailCustomerService;
-use Error;
-use Exception;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
 
 class ProcessSIBCustomerMail implements ShouldQueue
 {
@@ -47,6 +44,14 @@ class ProcessSIBCustomerMail implements ShouldQueue
             $updateCustomer = $findCustomerByEmail->first();
             $updateCustomer->is_we_sent = true;
             $updateCustomer->save();
+
+            $code = substr($WEGenerateUrlResponse, strpos($WEGenerateUrlResponse, "signup/") + 7);
+            $newMyAlFredUser = new MyAlFredUser;
+            $newMyAlFredUser->signup_url = $WEGenerateUrlResponse;
+            $newMyAlFredUser->customer_id = $updateCustomer->id;
+            $newMyAlFredUser->code = $code;
+            $newMyAlFredUser->source = "CORPORATE";
+            $newMyAlFredUser->save();
         }
     }
 }
