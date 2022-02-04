@@ -41,7 +41,7 @@ $(document).ready(function() {
                 @endif
                 <form id="demo-form2" method='post' action="" enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left" autocomplete="off">
                     {{csrf_field()}}
-
+                    <input type="hidden" id="quoteUuId" name="quoteUuId" value="{{ $quoteUuId }}">
                     <div class="item form-group">
                         <div class="col-md-6 col-sm-6">
                             <div class="row">

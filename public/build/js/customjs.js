@@ -1850,7 +1850,8 @@ $("#renewals-upload-button").click(function () {
 
 $('#insurance_provider_id').on('change', function (e) {
     var insuranceProviderId = $("#insurance_provider_id option:selected").val();
-    $.get('/insurance-provider-plans?insuranceProviderId=' + insuranceProviderId, function (data) {
+    var quoteUuId = $("#quoteUuId").val();
+    $.get('/insurance-provider-plans?insuranceProviderId=' + insuranceProviderId + '&quoteUuId=' + quoteUuId, function (data) {
         var carPlan = $('#car_plan_id').empty();
         $.each(data, function (create, carPlanObj) {
             carPlan.append('<option value="' + carPlanObj.id + '">' + carPlanObj.text + ' ('+carPlanObj.repair_type+')</option>');
