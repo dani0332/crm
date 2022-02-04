@@ -13,6 +13,7 @@ use App\Models\User;
 use App\Models\CarMake;
 use App\Models\CarModel;
 use App\Models\CarModelDetail;
+use App\Models\CarPlan;
 use App\Models\InsuranceProvider;
 use App\Models\ClaimsAttachments;
 
@@ -419,5 +420,15 @@ class ClaimController extends Controller
             ->where('id', '=', $modelId)
             ->first();
         return response()->json($carModelDetail);
+    }
+
+    public function carPlansBasedOnInsuranceProvider(Request $request)
+    {
+        $insuranceProviderId = $request->insuranceProviderId;
+
+        $carPlan = CarPlan::where('provider_id', '=', $insuranceProviderId)
+        ->where('is_active', '=', 1)
+        ->get(array('id','text','repair_type'));
+        return response()->json($carPlan);
     }
 }

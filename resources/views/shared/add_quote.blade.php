@@ -53,9 +53,9 @@ $(document).ready(function() {
                                                     <option value=''>Select Provider</option>
                                                     @foreach($insuranceproviders as $insuranceprovider)
                                                         @if (old('insurance_provider_id') == $insuranceprovider->id)
-                                                            <option value="{{ $insuranceprovider->id }}" data-id="{{ $insuranceprovider->code }}" selected>{{ $insuranceprovider->text }}</option>
+                                                            <option value="{{ $insuranceprovider->id }}" selected>{{ $insuranceprovider->text }}</option>
                                                         @else
-                                                            <option value="{{ $insuranceprovider->id }}" data-id="{{ $insuranceprovider->code }}">{{ $insuranceprovider->text }}</option>
+                                                            <option value="{{ $insuranceprovider->id }}">{{ $insuranceprovider->text }}</option>
                                                         @endif
                                                     @endforeach
                                                 </select>
@@ -67,6 +67,12 @@ $(document).ready(function() {
                                             </td>
                                             <td>
                                                 <input type="number" id="premium" name="premium" placeholder="Enter Premium" onfocus="this.type='number';" class="form-control" data-toggle="tooltip" data-placement="top" title="Please enter premium" onKeyDown="if(this.value.length==11)return false;" style="width: 150px;">
+                                            </td>
+                                            <td>
+                                                <input type="number" id="value" name="value" placeholder="Enter Value" onfocus="this.type='number';" class="form-control" data-toggle="tooltip" data-placement="top" title="Please enter value" onKeyDown="if(this.value.length==11)return false;" style="width: 150px;">
+                                            </td>
+                                            <td>
+                                                <input type="number" id="excess" name="excess" placeholder="Enter Excess" onfocus="this.type='number';" class="form-control" data-toggle="tooltip" data-placement="top" title="Please enter excess" onKeyDown="if(this.value.length==11)return false;" style="width: 150px;">
                                             </td>
                                             <td>
                                                 {{-- <a class="extra-fields-customer" href="#"><span class="fa fa-plus-square"></span></a> --}}

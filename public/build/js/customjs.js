@@ -1848,3 +1848,13 @@ $("#renewals-upload-button").click(function () {
     $("#renewals-upload-button-text").text("Please wait until file will be uploaded. More waiting time is depending on number of records.");
 });
 
+$('#insurance_provider_id').on('change', function (e) {
+    var insuranceProviderId = $("#insurance_provider_id option:selected").val();
+    $.get('/insurance-provider-plans?insuranceProviderId=' + insuranceProviderId, function (data) {
+        console.log('insuranceProviderId: ',insuranceProviderId);
+        var carPlan = $('#car_plan_id').empty();
+        $.each(data, function (create, carPlanObj) {
+            carPlan.append('<option value="' + carPlanObj.id + '">' + carPlanObj.text + ' ('+carPlanObj.repair_type+')</option>');
+        });
+    });
+});
