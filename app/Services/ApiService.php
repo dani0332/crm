@@ -27,7 +27,7 @@ class ApiService
                 if(!$customer->is_we_sent)
                     return $this->generateSignupUrl($customer, $request);
                 else
-                    return response()->json(["message" => "Signup url does not exists agianst the Customer"], 404);
+                    return response()->json(["message" => "Signup url does not exists against the Customer"], 404);
             }
         }
         return response()->json(["message" => "Customer does not exists"], 404);
