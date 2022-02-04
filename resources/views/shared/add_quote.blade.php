@@ -30,7 +30,7 @@ $(document).ready(function() {
             <div class="x_title">
                 <h2>Create Car Quote</h2>
                 <ul class="nav navbar-right panel_toolbox">
-                    <li><a href="{{ url('quotes/car') }}" class="btn btn-warning btn-sm">Car List</a></li>
+                    <li><a href="{{ url('quotes/car/'.$quoteUuId.'') }}" class="btn btn-warning btn-sm">Go back</a></li>
                 </ul>
                 <div class="clearfix"></div>
             </div>
@@ -90,6 +90,7 @@ $(document).ready(function() {
                     <div class="row">
                     <div class="col-auto mr-auto"></div>
                         <div class="col-auto">
+                            <button type="submit" class="btn btn-warning btn-sm">Create Quote & Add More</button>
                             <button type="submit" class="btn btn-warning btn-sm" id="return_to_view">Create Quote</button>
                         </div>
                     </div>
