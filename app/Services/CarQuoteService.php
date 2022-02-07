@@ -559,7 +559,6 @@ class CarQuoteService extends BaseService
     public function getQuotePlans($id)
     {
         $quoteUuId = CarQuote::where('uuid', '=', $id)->value('uuid');
-
         $plansApiEndPoint = Config::get('constants.KEN_API_ENDPOINT') . '/get-car-quote-plans';
         $plansApiToken = Config::get('constants.KEN_API_TOKEN');
         $plansApiTimeout = Config::get('constants.KEN_API_TIMEOUT');
