@@ -12,6 +12,7 @@ use App\Models\TravelQuote;
 use App\Models\YachtQuote;
 use App\Models\RenewalsDump;
 use App\Services\RenewalsAddonServices;;
+
 use Hidehalo\Nanoid\Client;
 use App\Services\CheckAmlService;
 use App\Enums\quoteTypeCode;
@@ -25,7 +26,7 @@ class RenewalsUploadService
         $this->renewalsAddonService = $renewalsAddonService;
         $this->checkAMLService = $checkAMLService;
     }
-    /* 
+    /*
     * @name generateUUID()
     * @returns a 16 character UUIDv4 string
     */
@@ -37,7 +38,7 @@ class RenewalsUploadService
         return $nanoId;
     }
 
-    /* 
+    /*
     * @name createNewQuote()
     * @params $quoteData - extracted data from excel file, $qouteType - type of quote
     * @returns custom function decalred against each quote type else returns false
@@ -51,43 +52,35 @@ class RenewalsUploadService
             return false;
         }
 
-        if ($quoteType == 'BIK') 
-        {
+        if ($quoteType == 'BIK') {
             return $this->createNewBikeQuoute($quoteData);
         }
 
-        if ($quoteType == 'BUS') 
-        {
+        if ($quoteType == 'BUS') {
             return $this->createNewBusinessQuoute($quoteData);
         }
 
-        if ($quoteType == 'CAR') 
-        {
+        if ($quoteType == 'CAR') {
             return $this->createNewCarQuoute($quoteData);
         }
 
-        if ($quoteType == 'HEA') 
-        {
+        if ($quoteType == 'HEA') {
             return $this->createNewHealthQuoute($quoteData);
         }
 
-        if ($quoteType == 'HOM') 
-        {
+        if ($quoteType == 'HOM') {
             return $this->createNewHomeQuoute($quoteData);
         }
 
-        if ($quoteType == 'LIF') 
-        {
+        if ($quoteType == 'LIF') {
             return $this->createNewLifeQuoute($quoteData);
         }
 
-        if ($quoteType == 'TRA') 
-        {
+        if ($quoteType == 'TRA') {
             return $this->createNewTravelQuoute($quoteData);
         }
 
-        if ($quoteType == 'YAC') 
-        {
+        if ($quoteType == 'YAC') {
             return $this->createNewYachtQuoute($quoteData);
         }
     }
@@ -111,7 +104,7 @@ class RenewalsUploadService
             "additional_notes" => $quoteData->notes
         ]);
         $newBikeQuote->save();
-        
+
         $this->renewalsAddonService->updateBikeQuoteRequestCode($newBikeQuote->id);
         $createRenewalQuote = $this->createNewRenewalBikeQuote($newBikeQuote->id, $quoteData->advisor);
         $this->createRenewalDumpRecord('Bike', $createRenewalQuote, $quoteData);
@@ -120,7 +113,7 @@ class RenewalsUploadService
     function createNewBusinessQuoute($quoteData)
     {
         $advisorId = $this->renewalsAddonService->getUserInfo($quoteData->pAdvisor);
-  
+
         $newBusinessQuote = new BusinessQuote([
             "first_name" => $quoteData->first_name,
             "last_name" => $quoteData->last_name,
@@ -134,7 +127,7 @@ class RenewalsUploadService
             "additional_notes" => $quoteData->notes
         ]);
         $newBusinessQuote->save();
-        
+
         $this->renewalsAddonService->updateBusinessQuoteRequestCode($newBusinessQuote->id);
         $createRenewalQuote = $this->createNewRenewalBusinessQuote($newBusinessQuote->id, $quoteData->advisor);
         $this->createRenewalDumpRecord('Business', $createRenewalQuote, $quoteData);
@@ -155,7 +148,7 @@ class RenewalsUploadService
         if ($quoteData->product_type != null) {
             $carTypeOfInsurance = $this->renewalsAddonService->getCarTypeOfInsurance($quoteData->product_type)->id;
         }
-        
+
         $newCarQuote = new CarQuote([
             "first_name" => $quoteData->first_name,
             "last_name" => $quoteData->last_name,
@@ -176,7 +169,7 @@ class RenewalsUploadService
             "additional_notes" => $quoteData->notes
         ]);
         $newCarQuote->save();
-        
+
         $this->renewalsAddonService->updateCarQuoteRequestCode($newCarQuote->id);
         $createRenewalQuote = $this->createNewRenewalCarQuote($newCarQuote->id, $quoteData->advisor);
         $this->createRenewalDumpRecord('Car', $createRenewalQuote, $quoteData);
@@ -185,7 +178,7 @@ class RenewalsUploadService
     function createNewHealthQuoute($quoteData)
     {
         $advisorId = $this->renewalsAddonService->getUserInfo($quoteData->pAdvisor);
-        
+
         $newHealthQuote = new HealthQuote([
             "first_name" => $quoteData->first_name,
             "last_name" => $quoteData->last_name,
@@ -199,7 +192,7 @@ class RenewalsUploadService
             "additional_notes" => $quoteData->notes
         ]);
         $newHealthQuote->save();
-        
+
         $this->renewalsAddonService->updateHealthQuoteRequestCode($newHealthQuote->id);
         $createRenewalQuote = $this->createNewRenewalHealthQuote($newHealthQuote->id, $quoteData->advisor);
         $this->createRenewalDumpRecord('Health', $createRenewalQuote, $quoteData);
@@ -208,7 +201,7 @@ class RenewalsUploadService
     function createNewHomeQuoute($quoteData)
     {
         $advisorId = $this->renewalsAddonService->getUserInfo($quoteData->pAdvisor);
-        
+
         $newHomeQuote = new HomeQuote([
             "first_name" => $quoteData->first_name,
             "last_name" => $quoteData->last_name,
@@ -222,7 +215,7 @@ class RenewalsUploadService
             "additional_notes" => $quoteData->notes
         ]);
         $newHomeQuote->save();
-        
+
         $this->renewalsAddonService->updateHomeQuoteRequestCode($newHomeQuote->id);
         $createRenewalQuote = $this->createNewRenewalHomeQuote($newHomeQuote->id, $quoteData->advisor);
         $this->createRenewalDumpRecord('Home', $createRenewalQuote, $quoteData);
@@ -231,7 +224,7 @@ class RenewalsUploadService
     function createNewLifeQuoute($quoteData)
     {
         $advisorId = $this->renewalsAddonService->getUserInfo($quoteData->pAdvisor);
-        
+
         $newLifeQuote = new LifeQuote([
             "first_name" => $quoteData->first_name,
             "last_name" => $quoteData->last_name,
@@ -245,7 +238,7 @@ class RenewalsUploadService
             "additional_notes" => $quoteData->notes
         ]);
         $newLifeQuote->save();
-        
+
         $this->renewalsAddonService->updateLifeQuoteRequestCode($newLifeQuote->id);
         $createRenewalQuote = $this->createNewRenewalLifeQuote($newLifeQuote->id, $quoteData->advisor);
         $this->createRenewalDumpRecord('Life', $createRenewalQuote, $quoteData);
@@ -254,7 +247,7 @@ class RenewalsUploadService
     function createNewTravelQuoute($quoteData)
     {
         $advisorId = $this->renewalsAddonService->getUserInfo($quoteData->pAdvisor);
-        
+
         $newTravelQuote = new TravelQuote([
             "first_name" => $quoteData->first_name,
             "last_name" => $quoteData->last_name,
@@ -268,7 +261,7 @@ class RenewalsUploadService
             "additional_notes" => $quoteData->notes
         ]);
         $newTravelQuote->save();
-        
+
         $this->renewalsAddonService->updateTravelQuoteRequestCode($newTravelQuote->id);
         $createRenewalQuote = $this->createNewRenewalTravelQuote($newTravelQuote->id, $quoteData->advisor);
         $this->createRenewalDumpRecord('Travel', $createRenewalQuote, $quoteData);
@@ -277,7 +270,7 @@ class RenewalsUploadService
     function createNewYachtQuoute($quoteData)
     {
         $advisorId = $this->renewalsAddonService->getUserInfo($quoteData->pAdvisor);
-        
+
         $newYachtQuote = new YachtQuote([
             "first_name" => $quoteData->first_name,
             "last_name" => $quoteData->last_name,
@@ -291,7 +284,7 @@ class RenewalsUploadService
             "additional_notes" => $quoteData->notes
         ]);
         $newYachtQuote->save();
-        
+
         $this->renewalsAddonService->updateYachtQuoteRequestCode($newYachtQuote->id);
         $createRenewalQuote = $this->createNewRenewalYachtQuote($newYachtQuote->id, $quoteData->advisor);
         $this->createRenewalDumpRecord('Yacht', $createRenewalQuote, $quoteData);
@@ -316,12 +309,12 @@ class RenewalsUploadService
             "additional_notes" => $getBikeQuoteData->additional_notes,
             "previous_quote_id" => $quoteId,
             "advisor_id" => $advisorId
-        ]); 
+        ]);
 
         $createRenewalQuote->save();
-        $this->renewalsAddonService->updateBikeQuoteRequestCode($createRenewalQuote->id);   
-        
-        $this->checkAMLService->checkAml($getBikeQuoteData->first_name, $getBikeQuoteData->last_name, $createRenewalQuote->id, $quoteType->id, false, null, null); 
+        $this->renewalsAddonService->updateBikeQuoteRequestCode($createRenewalQuote->id);
+
+        $this->checkAMLService->checkAml($getBikeQuoteData->first_name, $getBikeQuoteData->last_name, $createRenewalQuote->id, $quoteType->id, false, null, null);
         return $createRenewalQuote->id;
     }
 
@@ -342,11 +335,11 @@ class RenewalsUploadService
             "additional_notes" => $getBusinessQuoteData->additional_notes,
             "previous_quote_id" => $quoteId,
             "advisor_id" => $advisorId
-        ]); 
+        ]);
 
         $createRenewalQuote->save();
-        $this->renewalsAddonService->updateBusinessQuoteRequestCode($createRenewalQuote->id);    
-        
+        $this->renewalsAddonService->updateBusinessQuoteRequestCode($createRenewalQuote->id);
+
         $this->checkAMLService->checkAml($getBusinessQuoteData->first_name, $getBusinessQuoteData->last_name, $createRenewalQuote->id, $quoteType->id, false, null, null);
         return $createRenewalQuote->id;
     }
@@ -375,11 +368,11 @@ class RenewalsUploadService
             "additional_notes" => $getCarQuoteData->additional_notes,
             "previous_quote_id" => $quoteId,
             "advisor_id" => $advisorId
-        ]); 
+        ]);
 
         $createRenewalQuote->save();
-        $this->renewalsAddonService->updateCarQuoteRequestCode($createRenewalQuote->id);    
-        
+        $this->renewalsAddonService->updateCarQuoteRequestCode($createRenewalQuote->id);
+
         $this->checkAMLService->checkAml($getCarQuoteData->first_name, $getCarQuoteData->last_name, $createRenewalQuote->id, $quoteType->id, false, null, null);
         return $createRenewalQuote->id;
     }
@@ -401,11 +394,11 @@ class RenewalsUploadService
             "additional_notes" => $getHealthQuoteData->additional_notes,
             "previous_quote_id" => $quoteId,
             "advisor_id" => $advisorId
-        ]); 
+        ]);
 
         $createRenewalQuote->save();
-        $this->renewalsAddonService->updateHealthQuoteRequestCode($createRenewalQuote->id);    
-        
+        $this->renewalsAddonService->updateHealthQuoteRequestCode($createRenewalQuote->id);
+
         $this->checkAMLService->checkAml($getHealthQuoteData->first_name, $getHealthQuoteData->last_name, $createRenewalQuote->id, $quoteType->id, false, null, null);
         return $createRenewalQuote->id;
     }
@@ -427,11 +420,11 @@ class RenewalsUploadService
             "additional_notes" => $getHomeQuoteData->additional_notes,
             "previous_quote_id" => $quoteId,
             "advisor_id" => $advisorId
-        ]); 
+        ]);
 
         $createRenewalQuote->save();
-        $this->renewalsAddonService->updateHomeQuoteRequestCode($createRenewalQuote->id);    
-        
+        $this->renewalsAddonService->updateHomeQuoteRequestCode($createRenewalQuote->id);
+
         $this->checkAMLService->checkAml($getHomeQuoteData->first_name, $getHomeQuoteData->last_name, $createRenewalQuote->id, $quoteType->id, false, null, null);
         return $createRenewalQuote->id;
     }
@@ -453,11 +446,11 @@ class RenewalsUploadService
             "additional_notes" => $getLifeQuoteData->additional_notes,
             "previous_quote_id" => $quoteId,
             "advisor_id" => $advisorId
-        ]); 
+        ]);
 
         $createRenewalQuote->save();
-        $this->renewalsAddonService->updateLifeQuoteRequestCode($createRenewalQuote->id);    
-        
+        $this->renewalsAddonService->updateLifeQuoteRequestCode($createRenewalQuote->id);
+
         $this->checkAMLService->checkAml($getLifeQuoteData->first_name, $getLifeQuoteData->last_name, $createRenewalQuote->id, $quoteType->id, false, null, null);
         return $createRenewalQuote->id;
     }
@@ -479,11 +472,11 @@ class RenewalsUploadService
             "additional_notes" => $getTravelQuoteData->additional_notes,
             "previous_quote_id" => $quoteId,
             "advisor_id" => $advisorId
-        ]); 
+        ]);
 
         $createRenewalQuote->save();
-        $this->renewalsAddonService->updateTravelQuoteRequestCode($createRenewalQuote->id);    
-        
+        $this->renewalsAddonService->updateTravelQuoteRequestCode($createRenewalQuote->id);
+
         $this->checkAMLService->checkAml($getTravelQuoteData->first_name, $getTravelQuoteData->last_name, $createRenewalQuote->id, $quoteType->id, false, null, null);
         return $createRenewalQuote->id;
     }
@@ -505,11 +498,11 @@ class RenewalsUploadService
             "additional_notes" => $getYachtQuoteData->additional_notes,
             "previous_quote_id" => $quoteId,
             "advisor_id" => $advisorId
-        ]); 
+        ]);
 
         $createRenewalQuote->save();
-        $this->renewalsAddonService->updateYachtQuoteRequestCode($createRenewalQuote->id);    
-        
+        $this->renewalsAddonService->updateYachtQuoteRequestCode($createRenewalQuote->id);
+
         $this->checkAMLService->checkAml($getYachtQuoteData->first_name, $getYachtQuoteData->last_name, $createRenewalQuote->id, $quoteType->id, false, null, null);
         return $createRenewalQuote->id;
     }
@@ -523,5 +516,4 @@ class RenewalsUploadService
         ]);
         $newRecord->save();
     }
-    
 }
