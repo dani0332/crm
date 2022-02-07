@@ -424,7 +424,7 @@ class CRUDController extends Controller
                     }
                 }
             }
-            $modelName = "Travel";
+            $modelName = TravelType::ModelType;
             return view('shared.plan_details', compact([
                 'listQuotePlanName', 'providerCode', 'providerName', 'travelType',
                 'actualPremium', 'discountPremium', 'listQuotePlanBenefitsInclusions',
