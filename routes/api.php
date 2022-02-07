@@ -15,5 +15,5 @@ use App\Http\Controllers\API\ApiController;
 */
 
 Route::middleware(['basicAuth'])->group(function () {
-    Route::get('/alfred/signupLink', [ApiController::class, 'fetchSignupUrl']);
+    Route::post('/alfred/signupLink', [ApiController::class, 'fetchSignupUrl']);
 });
