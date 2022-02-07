@@ -1,4 +1,7 @@
-@if($modelName == "Travel")
+<?php
+    use App\Enums\TravelType;
+?>
+@if($modelName == TravelType::ModelType)
 <div class="row">
         <div class="col-md-12 col-sm-12 admin-detail">
             <div class="x_panel" style="border: none">

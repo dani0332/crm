@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\HealthTeamType;
 use App\Enums\LeadStatusCode;
 use App\Enums\quoteTypeCode;
+use App\Enums\TravelType;
 use App\Models\CarQuoteAdvisorToOE;
 use App\Models\GenericModel;
 use App\Models\InsuranceProvider;
@@ -224,7 +225,7 @@ class CRUDController extends Controller
                 'ecomCarInsuranceQuoteUrl', 'carQuotePlanAddons', 'vehicleTypeText', 'leadStatuses',
                 'lostReasons', 'selectedLostReasonId'
             ]));
-        } else if ($this->genericModel->modelType == "Travel") { // Travel plans to display on detail view
+        } else if ($this->genericModel->modelType == TravelType::ModelType) { // Travel plans to display on detail view
             $listQuotePlans = '';
             $quotePlans = $this->travelQuoteService->getQuotePlans($id);
             if (isset($quotePlans->message) && $quotePlans->message != '') {
