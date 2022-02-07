@@ -402,6 +402,7 @@ class CRUDController extends Controller
 
         if (gettype($quotePlans) != 'string') {
             $listQuotePlans = $quotePlans->quotes->plans;
+            $listQuotePlansMembers = $quotePlans->quotes->members;
             foreach ($listQuotePlans as $listQuotePlan) { // Main
 
                 if ($listQuotePlan->id == $planId) {
@@ -411,12 +412,10 @@ class CRUDController extends Controller
                     $travelType = $listQuotePlan->travelType;
                     $actualPremium = $listQuotePlan->actualPremium;
                     $discountPremium = $listQuotePlan->discountPremium;
-                    // $listQuotePlanAddonss = $listQuotePlan->addons;
                     $listQuotePlanBenefitsInclusions = $listQuotePlan->benefits->inclusion;
                     $listQuotePlanBenefitsExclusions = $listQuotePlan->benefits->exclusion;
                     $listQuotePlanBenefitsFeatures = $listQuotePlan->benefits->feature;
                     $listQuotePlanBenefitsCovid19 = $listQuotePlan->benefits->covid19;
-                    // $listQuotePlanBenefitsRsas = $listQuotePlan->benefits->roadSideAssistance;
                     $listQuotePlanBenefitsPolicyDetails = $listQuotePlan->policyWordings;
 
                     foreach ($listQuotePlanBenefitsPolicyDetails as $listQuotePlanBenefitsPolicyDetail) {
@@ -429,7 +428,7 @@ class CRUDController extends Controller
                 'listQuotePlanName', 'providerCode', 'providerName', 'travelType',
                 'actualPremium', 'discountPremium', 'listQuotePlanBenefitsInclusions',
                 'listQuotePlanBenefitsExclusions', 'listQuotePlanBenefitsFeatures', 'listQuotePlanBenefitsCovid19',
-                'listQuotePlanBenefitsPolicyDetailLink','modelName'
+                'listQuotePlanBenefitsPolicyDetailLink','modelName','listQuotePlansMembers'
             ]));
         }
     }

@@ -14,13 +14,16 @@
                             <a class="nav-link active" id="general-tab" data-toggle="tab" href="#general" role="tab" aria-controls="general" aria-selected="true">General Info</a>
                         </li>
                         <li class="nav-item">
+                            <a class="nav-link" id="members-tab" data-toggle="tab" href="#members" role="tab" aria-controls="members" aria-selected="false">Members</a>
+                        </li>
+                        <li class="nav-item">
                             <a class="nav-link" id="benefits-inclusion-tab" data-toggle="tab" href="#benefits-inclusion" role="tab" aria-controls="benefits-inclusion" aria-selected="false">Inclusions</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" id="benefits-exclusion-tab" data-toggle="tab" href="#benefits-exclusion" role="tab" aria-controls="benefits-exclusion" aria-selected="false">Exclusions</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" id="covid-tab" data-toggle="tab" href="#covid" role="tab" aria-controls="covid" aria-selected="false">Covid 19</a>
+                            <a class="nav-link" id="covid-tab" data-toggle="tab" href="#covid" role="tab" aria-controls="covid" aria-selected="false">COVID-19 Cover</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" id="policy-detail-tab" data-toggle="tab" href="#policy-detail" role="tab" aria-controls="policy-detail" aria-selected="false">Policy Detail</a>
@@ -36,24 +39,30 @@
                                 <tr><td>Actual Premium:</td> <td>{{ $actualPremium }}</td></tr>
                                 <tr><td>Discount Premium:</td> <td>{{ $discountPremium }}</td></tr>
                             </table>
-                            <br /><br />
-                            <p>
-                                <strong>Features</strong>
-                                <table cellpadding="3" cellspacing="3">
-                                    <tr>
-                                        <td>
-                                            <table cellpadding="3" cellspacing="3">
-                                                @foreach ($listQuotePlanBenefitsFeatures as $key => $listQuotePlanBenefitsFeature)
-                                                    <tr><td style="width: 300px;">{{ ucwords($listQuotePlanBenefitsFeature->text) }}</td>
-                                                        <td>{{ ucwords($listQuotePlanBenefitsFeature->value) }}</td></tr>
-                                                @endforeach
-                                            </table>
-                                        </td>
-                                    </tr>
-                                </table>
-                            </p>
                         </div>
                        
+                        <div class="tab-pane fade" id="members" role="tabpanel" aria-labelledby="members-tab">
+                            <table cellpadding="3" cellspacing="3">
+                                <tr>
+                                    <td>
+                                        <table cellpadding="3" cellspacing="3">
+                                            @foreach ($listQuotePlansMembers as $key => $listQuotePlansMember)
+                                                <tr>
+                                                    <td style="width: 100px;font-weight: bold;">Member {{ $key+1 }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td style="width: 50px;">Age</td>
+                                                    <td style="width: 50px;">{{ ucwords($listQuotePlansMember->ageValue) }}</td>
+                                                    <td style="width: 50px;">DOB</td>
+                                                    <td style="width: 200px;">{{ ucwords($listQuotePlansMember->dob) }}</td>
+                                                </tr>
+                                            @endforeach
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+
                         <div class="tab-pane fade" id="benefits-inclusion" role="tabpanel" aria-labelledby="benefits-inclusion-tab">
                             <table cellpadding="3" cellspacing="3">
                                 <tr>
@@ -88,7 +97,7 @@
                                     <td>
                                         <table cellpadding="3" cellspacing="3">
                                             @foreach ($listQuotePlanBenefitsCovid19 as $key => $listQuotePlanBenefitsCovid)
-                                                <tr><td style="width: 300px;">{{ ucwords($listQuotePlanBenefitsCovid->text) }}</td>
+                                                <tr><td style="width: 500px;">{{ ucwords($listQuotePlanBenefitsCovid->text) }}</td>
                                                     <td>{{ ucwords($listQuotePlanBenefitsCovid->value) }}</td></tr>
                                             @endforeach
                                         </table>
