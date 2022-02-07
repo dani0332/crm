@@ -20,7 +20,17 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                      
+                                    @foreach ($listQuotePlans as $key => $quotePlan)
+                                            <tr>
+                                                <td>{{ ucwords($quotePlan->providerName) }}</td>
+                                                <td>{{ ucwords($quotePlan->name) }}</td>
+                                                <td>{{ $quotePlan->travelType }}</td>
+                                                <td>{{ $quotePlan->actualPremium }}</td>
+                                                <td>{{ $quotePlan->vatPremium }}</td>
+                                                <td><a href="#" planDetailUrl=""
+                                                    data-toggle="modal" data-target="#quotePlanModal" class="quotePlanModalPopup">View</a></td>
+                                            </tr>
+                                    @endforeach
                                     </tbody>
                                 </table>
                             @else
