@@ -224,7 +224,25 @@ class CRUDController extends Controller
                 'ecomCarInsuranceQuoteUrl', 'carQuotePlanAddons', 'vehicleTypeText', 'leadStatuses',
                 'lostReasons', 'selectedLostReasonId'
             ]));
-        } else {
+        } else if ($this->genericModel->modelType == "Travel") { // Travel plans to display on detail view
+            $listQuotePlans = '';
+            $quotePlans = $this->travelQuoteService->getQuotePlans($id);
+            if (isset($quotePlans->message) && $quotePlans->message != '') {
+                $listQuotePlans = $quotePlans->message;
+            } else {
+                if (gettype($quotePlans) != 'string') {
+                    $listQuotePlans = $quotePlans->quotes->plans;
+                } else {
+                    $listQuotePlans = $quotePlans;
+                }
+            }
+
+            return view('shared.show', compact([
+                'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList',
+                'leadStatuses','lostReasons', 'selectedLostReasonId'
+            ]));
+        }
+        else {
             return view('shared.show', compact(['record', 'model', 'customTitles', 'customTableList', 'advisors', 'leadStatuses', 'lostReasons', 'selectedLostReasonId']));
         }
     }

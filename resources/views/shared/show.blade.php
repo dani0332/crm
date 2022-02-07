@@ -242,4 +242,13 @@
         />
 
     @endif
+
+    @if($model->modelType == "Travel")
+        <x-travel-quote
+            :listQuotePlans="$listQuotePlans"
+            :uuidModal="$record->uuid"
+            :quoteRequestId="$record->id"
+        />
+
+    @endif
 @endsection
