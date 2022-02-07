@@ -27,7 +27,7 @@
                                                 <td>{{ $quotePlan->travelType }}</td>
                                                 <td>{{ $quotePlan->actualPremium }}</td>
                                                 <td>{{ $quotePlan->vatPremium }}</td>
-                                                <td><a href="#" planDetailUrl=""
+                                                <td><a href="#" planDetailUrl="{{ $uuidModal }}/plan_details/{{ $quotePlan->id }}"
                                                     data-toggle="modal" data-target="#quotePlanModal" class="quotePlanModalPopup">View</a></td>
                                             </tr>
                                     @endforeach

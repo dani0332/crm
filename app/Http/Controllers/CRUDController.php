@@ -396,6 +396,44 @@ class CRUDController extends Controller
         }
     }
 
+    public function travel_plan_details($quoteId, $planId)
+    {
+        $quotePlans = $this->travelQuoteService->getQuotePlans($quoteId);
+
+        if (gettype($quotePlans) != 'string') {
+            $listQuotePlans = $quotePlans->quotes->plans;
+            foreach ($listQuotePlans as $listQuotePlan) { // Main
+
+                if ($listQuotePlan->id == $planId) {
+                    $listQuotePlanName = $listQuotePlan->name;
+                    $providerCode = $listQuotePlan->providerCode;
+                    $providerName = $listQuotePlan->providerName;
+                    $travelType = $listQuotePlan->travelType;
+                    $actualPremium = $listQuotePlan->actualPremium;
+                    $discountPremium = $listQuotePlan->discountPremium;
+                    // $listQuotePlanAddonss = $listQuotePlan->addons;
+                    $listQuotePlanBenefitsInclusions = $listQuotePlan->benefits->inclusion;
+                    $listQuotePlanBenefitsExclusions = $listQuotePlan->benefits->exclusion;
+                    $listQuotePlanBenefitsFeatures = $listQuotePlan->benefits->feature;
+                    $listQuotePlanBenefitsCovid19 = $listQuotePlan->benefits->covid19;
+                    // $listQuotePlanBenefitsRsas = $listQuotePlan->benefits->roadSideAssistance;
+                    $listQuotePlanBenefitsPolicyDetails = $listQuotePlan->policyWordings;
+
+                    foreach ($listQuotePlanBenefitsPolicyDetails as $listQuotePlanBenefitsPolicyDetail) {
+                        $listQuotePlanBenefitsPolicyDetailLink = $listQuotePlanBenefitsPolicyDetail->link;
+                    }
+                }
+            }
+            $modelName = "Travel";
+            return view('shared.plan_details', compact([
+                'listQuotePlanName', 'providerCode', 'providerName', 'travelType',
+                'actualPremium', 'discountPremium', 'listQuotePlanBenefitsInclusions',
+                'listQuotePlanBenefitsExclusions', 'listQuotePlanBenefitsFeatures', 'listQuotePlanBenefitsCovid19',
+                'listQuotePlanBenefitsPolicyDetailLink','modelName'
+            ]));
+        }
+    }
+
     public function manualLeadAssign(Request $request)
     {
         $assignedToUserIdNew = $request->assigned_to_id_new;
