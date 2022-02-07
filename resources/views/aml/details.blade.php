@@ -140,6 +140,9 @@
                                     class="form-control" data-toggle="tooltip" data-placement="top" title="Please enter company name">
                                 </p>
                             </div>
+                            @if ($errors->has('company_name'))
+                                <span class="text-danger">{{ $errors->first('company_name') }}</span>
+                            @endif
                         @endif
                     </div>
                 </div>

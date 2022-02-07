@@ -438,6 +438,7 @@ class AMLController extends Controller
         $this->validate($request, [
             'first_name' => 'required|max:200',
             'last_name' => 'required|max:200',
+            'company_name' => 'regex:/^[a-zA-Z0-9 ]+$/u|max:300',
         ]);
 
         $quoteTypeCode = QuoteType::where('id', '=', $quoteTypeId)->value('code');

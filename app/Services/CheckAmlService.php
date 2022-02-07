@@ -32,8 +32,7 @@ class CheckAmlService
         }
         $checkAMLResponseIndividual = $this->checkAMLRequestIndividual($firstName, $lastName, $quoteRequestId, $quoteTypeId, $yob, $amlEndPoint, $amlUrl);
 
-
-        $isAMLResultFound = $checkAMLResponseEntity["resultsFound"] > 0 || $checkAMLResponseIndividual['resultsFound'] > 0 ? true : false;
+        $isAMLResultFound = $checkAMLResponseEntity && $checkAMLResponseEntity["resultsFound"] > 0 || $checkAMLResponseIndividual['resultsFound'] > 0 ? true : false;
 
         // Match is found
         if ($isAMLResultFound) {
@@ -91,7 +90,7 @@ class CheckAmlService
         $requestDataForIndividual['quoteTypeId'] = $quoteTypeId;
         $requestDataForIndividual['yob'] = $yob;
         //executing request
-        $amlRequest = Http::contentType("application/json")->send('POST', $amlEndPoint . '/search-entity', ['body' => json_encode($requestDataForIndividual)]);
+        $amlRequest = Http::contentType("application/json")->send('POST', $amlEndPoint . '/search', ['body' => json_encode($requestDataForIndividual)]);
         //capturing response
         $requestStatus = $amlRequest->status();
         $response = $amlRequest->json();
@@ -148,7 +147,7 @@ class CheckAmlService
     }
 
     // Match found Email
-    public function sendAMLMatchedEmailComplianceTeam($emailL_sys, $amlUrl, $resultsFound, $fullName, $quoteTypeName, $quoteCdbId)
+    public function sendAMLMatchedEmailComplianceTeam($emailL_sys, $amlUrl, $AMLResponse, $fullName, $quoteTypeName, $quoteCdbId)
     {
         $recipients = User::select('users.email as user_email')
             ->leftjoin('model_has_roles', 'users.id', 'model_has_roles.model_id')
@@ -168,7 +167,7 @@ class CheckAmlService
 
         $this->amlComplianceMail('AmlComplianceMail', [
             'amlUrl' => $amlUrl,
-            'resultsFound' => $resultsFound,
+            'resultsFound' => $AMLResponse['resultsFound'],
             'fullName' => $fullName,
             'quoteTypeName' => $quoteTypeName,
             'quoteCdbId' => $quoteCdbId,
