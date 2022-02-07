@@ -22,7 +22,7 @@ class CheckAmlService
 {
     public function checkAml($firstName,$lastName,$quoteRequestId,$quoteTypeId,$isEmailSendingEnabled, $nationality, $yob)
     {
-        $amlSearchEndPoint = Config::get('constants.AML_SEARCH_API_ENDPOINT');
+        $amlSearchEndPoint = Config::get('constants.AML_SEARCH_API_ENDPOINT').'/search';
 
         $emailL_sys = Config::get('constants.emailL_sys');
         $appUrl = env('APP_URL');
