@@ -227,7 +227,6 @@ class CRUDController extends Controller
         } else if ($this->genericModel->modelType == "Travel") { // Travel plans to display on detail view
             $listQuotePlans = '';
             $quotePlans = $this->travelQuoteService->getQuotePlans($id);
-            dd($quotePlans);
             if (isset($quotePlans->message) && $quotePlans->message != '') {
                 $listQuotePlans = $quotePlans->message;
             } else {
