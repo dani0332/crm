@@ -6,6 +6,9 @@
     content: none !important;
 }
 </style>
+<?php
+    use App\Enums\TravelType;
+?>
     <div class="row">
         <div class="col-md-12 col-sm-12 admin-detail">
             <div class="x_panel">
@@ -243,7 +246,7 @@
 
     @endif
 
-    @if($model->modelType == "Travel")
+    @if($model->modelType == TravelType::ModelType)
 
         <div class="modal fade" id="quotePlanModal" name="quotePlanModal" tabindex="-1" role="dialog" aria-labelledby="quotePlanModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
