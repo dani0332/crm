@@ -379,7 +379,14 @@ class AMLController extends Controller
 
         $quoteUpdate->save();
 
-        $this->checkAmlService->checkAml($firstName,$lastName,$quoteRequestId,$quoteTypeId, true, $nationality, $yob);
+        if($quoteTypeCode == quoteTypeCode::Business && $request->company_name != null) {
+            $companyName = $request->company_name;
+        }
+        else {
+            $companyName = null;
+        }
+
+        $this->checkAmlService->checkAml($firstName,$lastName,$quoteRequestId,$quoteTypeId, true, $nationality, $yob, $companyName);
 
         return redirect()->back()->with('success', 'Quote is updated');
     }

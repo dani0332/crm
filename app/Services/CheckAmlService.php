@@ -11,7 +11,6 @@ use App\Models\BusinessQuote;
 use App\Models\BikeQuote;
 use App\Models\YachtQuote;
 use App\Models\TravelQuote;
-use App\Models\AML;
 use App\Enums\quoteTypeCode;
 use Illuminate\Support\Facades\Http;
 use Config;
@@ -20,9 +19,10 @@ use Auth;
 
 class CheckAmlService
 {
-    public function checkAml($firstName,$lastName,$quoteRequestId,$quoteTypeId,$isEmailSendingEnabled, $nationality, $yob)
+    public function checkAml($firstName,$lastName,$quoteRequestId,$quoteTypeId,$isEmailSendingEnabled, $nationality, $yob, $companyName)
     {
-        $amlSearchEndPoint = Config::get('constants.AML_SEARCH_API_ENDPOINT').'/search';
+        // If comany name != null trigger company api otherwise indivdual
+        $amlEndPoint = Config::get('constants.AML_SEARCH_API_ENDPOINT');
 
         $emailL_sys = Config::get('constants.emailL_sys');
         $appUrl = env('APP_URL');
@@ -31,7 +31,7 @@ class CheckAmlService
         $dataArr = array("search" => $firstName." ".$lastName,"quoteRequestId" => $quoteRequestId,"quoteTypeId" => $quoteTypeId,"nationality" => $nationality,"yob" => $yob);
         $dataArrProc = json_encode($dataArr);
 
-        $chAml = Http::contentType("application/json")->send('POST',$amlSearchEndPoint, ['body' => $dataArrProc]);
+        $chAml = Http::contentType("application/json")->send('POST',$amlEndPoint.'/search', ['body' => $dataArrProc]);
         $chAmlStatus = $chAml->status();
         $chAmlMessage = $chAml->json();
 
