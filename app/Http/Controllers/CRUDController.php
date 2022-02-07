@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\HealthTeamType;
 use App\Enums\LeadStatusCode;
 use App\Enums\quoteTypeCode;
+use App\Enums\TravelType;
 use App\Models\CarQuoteAdvisorToOE;
 use App\Models\GenericModel;
 use App\Models\InsuranceProvider;
@@ -224,7 +225,25 @@ class CRUDController extends Controller
                 'ecomCarInsuranceQuoteUrl', 'carQuotePlanAddons', 'vehicleTypeText', 'leadStatuses',
                 'lostReasons', 'selectedLostReasonId'
             ]));
-        } else {
+        } else if ($this->genericModel->modelType == TravelType::ModelType) { // Travel plans to display on detail view
+            $listQuotePlans = '';
+            $quotePlans = $this->travelQuoteService->getQuotePlans($id);
+            if (isset($quotePlans->message) && $quotePlans->message != '') {
+                $listQuotePlans = $quotePlans->message;
+            } else {
+                if (gettype($quotePlans) != 'string') {
+                    $listQuotePlans = $quotePlans->quotes->plans;
+                } else {
+                    $listQuotePlans = $quotePlans;
+                }
+            }
+
+            return view('shared.show', compact([
+                'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList',
+                'leadStatuses','lostReasons', 'selectedLostReasonId'
+            ]));
+        }
+        else {
             return view('shared.show', compact(['record', 'model', 'customTitles', 'customTableList', 'advisors', 'leadStatuses', 'lostReasons', 'selectedLostReasonId']));
         }
     }
@@ -374,6 +393,43 @@ class CRUDController extends Controller
                 'actualPremium', 'discountPremium', 'listQuotePlanAddons', 'listQuotePlanAddonValues', 'listQuotePlanBenefitsInclusions',
                 'listQuotePlanBenefitsExclusions', 'listQuotePlanBenefitsFeatures', 'listQuotePlanBenefitsRsas',
                 'listQuotePlanBenefitsPolicyDetailLink', 'listQuotePlanAddonPrices'
+            ]));
+        }
+    }
+
+    public function travel_plan_details($quoteId, $planId)
+    {
+        $quotePlans = $this->travelQuoteService->getQuotePlans($quoteId);
+
+        if (gettype($quotePlans) != 'string') {
+            $listQuotePlans = $quotePlans->quotes->plans;
+            $listQuotePlansMembers = $quotePlans->quotes->members;
+            foreach ($listQuotePlans as $listQuotePlan) { // Main
+
+                if ($listQuotePlan->id == $planId) {
+                    $listQuotePlanName = $listQuotePlan->name;
+                    $providerCode = $listQuotePlan->providerCode;
+                    $providerName = $listQuotePlan->providerName;
+                    $travelType = $listQuotePlan->travelType;
+                    $actualPremium = $listQuotePlan->actualPremium;
+                    $discountPremium = $listQuotePlan->discountPremium;
+                    $listQuotePlanBenefitsInclusions = $listQuotePlan->benefits->inclusion;
+                    $listQuotePlanBenefitsExclusions = $listQuotePlan->benefits->exclusion;
+                    $listQuotePlanBenefitsFeatures = $listQuotePlan->benefits->feature;
+                    $listQuotePlanBenefitsCovid19 = $listQuotePlan->benefits->covid19;
+                    $listQuotePlanBenefitsPolicyDetails = $listQuotePlan->policyWordings;
+
+                    foreach ($listQuotePlanBenefitsPolicyDetails as $listQuotePlanBenefitsPolicyDetail) {
+                        $listQuotePlanBenefitsPolicyDetailLink = $listQuotePlanBenefitsPolicyDetail->link;
+                    }
+                }
+            }
+            $modelName = TravelType::ModelType;
+            return view('shared.plan_details', compact([
+                'listQuotePlanName', 'providerCode', 'providerName', 'travelType',
+                'actualPremium', 'discountPremium', 'listQuotePlanBenefitsInclusions',
+                'listQuotePlanBenefitsExclusions', 'listQuotePlanBenefitsFeatures', 'listQuotePlanBenefitsCovid19',
+                'listQuotePlanBenefitsPolicyDetailLink','modelName','listQuotePlansMembers'
             ]));
         }
     }
