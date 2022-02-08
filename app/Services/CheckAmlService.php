@@ -149,6 +149,9 @@ class CheckAmlService
     // Match found Email
     public function sendAMLMatchedEmailComplianceTeam($emailL_sys, $amlUrl, $AMLResponse, $fullName, $quoteTypeName, $quoteCdbId)
     {
+        if($AMLResponse['resultsFound'] == 0) {
+            return;
+        }
         $recipients = User::select('users.email as user_email')
             ->leftjoin('model_has_roles', 'users.id', 'model_has_roles.model_id')
             ->leftjoin('roles', 'model_has_roles.role_id', 'roles.id')
