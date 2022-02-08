@@ -917,6 +917,7 @@
                             <tr>
                                 <th>AML Id</th>
                                 <th>Input</th>
+                                <th>Search Type</th>
                                 <th>Screenshot</th>
                                 <th>Match Found</th>
                                 <th>Results Found</th>
@@ -930,6 +931,7 @@
                                 <tr>
                                     <td><a href="/kyc/aml/{{ $kycLog->id }}">{{ $kycLog->id }}</a></td>
                                     <td>{{ $kycLog->input }}</td>
+                                    <td>{{ $kycLog->search_type }}</td>
                                     <td><a href="{{ $kycLog->screenshot }}" target="_blank"><img class="img-responsive"
                                                 src="{{ $kycLog->screenshot }}" alt="screenshot" height="80px"
                                                 width="80px"></a></td>
