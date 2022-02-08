@@ -1002,10 +1002,11 @@ $(document).ready(function () {
 
     var amlDatatable = $('.aml-data-table').DataTable({
         ordering: false,
-        info: false,
+        info: true,
         searching: false,
         bLengthChange: false,
         serverSide: true,
+        processing: true,
         ajax: {
             url: config.routes.aml_datatable_route,
             data: function (d) {
