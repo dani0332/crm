@@ -66,13 +66,13 @@ $(document).ready(function() {
                                                 </select>
                                             </td>
                                             <td>
-                                                <input type="number" id="premium" name="premium" placeholder="Enter Premium" class="form-control" data-toggle="tooltip" data-placement="top" title="Please enter premium" onKeyDown="if(this.value.length==11) return false;" style="width: 150px">
+                                                <input type="number" id="premium" name="premium" placeholder="Enter Premium" class="form-control" data-toggle="tooltip" data-placement="top" title="Please enter premium" onKeyDown="if(this.value.length==8) return false;" style="width: 200px">
                                             </td>
                                             <td>
-                                                <input type="number" id="value" name="value" placeholder="Enter Value" class="form-control" data-toggle="tooltip" data-placement="top" title="Please enter value" onKeyDown="if(this.value.length==11) return false;" style="width: 150px">
+                                                <input type="number" id="value" name="value" placeholder="Enter Car Value" class="form-control" data-toggle="tooltip" data-placement="top" title="Please enter car value" onKeyDown="if(this.value.length==8) return false;" style="width: 200px">
                                             </td>
                                             <td>
-                                                <input type="number" id="excess" name="excess" placeholder="Enter Excess" class="form-control" data-toggle="tooltip" data-placement="top" title="Please enter excess" onKeyDown="if(this.value.length==11) return false;" style="width: 150px">
+                                                <input type="number" id="excess" name="excess" placeholder="Enter Excess" class="form-control" data-toggle="tooltip" data-placement="top" title="Please enter excess" onKeyDown="if(this.value.length==8) return false;" style="width: 200px">
                                             </td>
                                             <td>
                                                 {{-- <a class="extra-fields-customer" href="#"><span class="fa fa-plus-square"></span></a> --}}
