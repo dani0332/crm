@@ -531,4 +531,8 @@ class CRUDController extends Controller
         $entity = $this->crudService->updateQuoteStatus($request);
         return redirect()->to('/quotes/' . strtolower($request->modelType) . '/' . $entity->uuid)->with('success', ' Lead Status has been Updated');
     }
+
+    public function savePlan(Request $request) {
+        dd($request->all());
+    }
 }

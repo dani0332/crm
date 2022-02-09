@@ -39,7 +39,7 @@ $(document).ready(function() {
                 @if(session()->has('success'))
                     <div class="alert alert-success">{{ session()->get('success') }}</div>
                 @endif
-                <form id="update_car_plans" method='post' action="" enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left" autocomplete="off">
+                <form id="update_car_plans" method='post' action="{{ route('savePlan') }}" enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left" autocomplete="off">
                     {{csrf_field()}}
                     <input type="hidden" id="quoteUuId" name="quoteUuId" value="{{ $quoteUuId }}">
                     <div class="item form-group">
