@@ -637,10 +637,11 @@ class CarQuoteService extends BaseService
 
     public function planCreateUpdate($planData)
     {
-        $quoteUID = $planData['quoteUID'];
-        $insurerId = $planData['insurerId'];
+        dd($planData);
+        $carQuoteUID = $planData['carQuoteUID'];
+        $carInsurerId = $planData['carInsurerId'];
         $carPlanId = $planData['carPlanId'];
-        $premium = $planData['premium'];
+        $carPremium = $planData['carPremium'];
         $carValue = $planData['carValue'];
         $carExcess = $planData['carExcess'];
     }

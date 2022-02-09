@@ -154,7 +154,7 @@ Route::group(['middleware' =>  ['auth']], function () {
         Route::get('car/{quoteUuId}/updateDiscountedPremium', [CRUDController::class, 'updateDiscountedPremium']);
         Route::get('car/{quoteUuId}/add_quote', [CRUDController::class, 'add_quote']);
         Route::get('travel/{quoteId}/plan_details/{planId}', [CRUDController::class, 'travel_plan_details'])->name('plan_details');
-        Route::post('car/saveCarPlan', [CRUDController::class, 'saveCarPlan'])->name('saveCarPlan');
+        Route::post('car/SaveCarPlan', [CRUDController::class, 'SaveCarPlan'])->name('SaveCarPlan');
     });
 
     Route::group(['prefix' => 'transapp'], function () {
