@@ -642,6 +642,6 @@ class CarQuoteService extends BaseService
         $carPlanId = $planData['carPlanId'];
         $premium = $planData['premium'];
         $carValue = $planData['carValue'];
-        $carExcess = $planData['quoteUuId'];
+        $carExcess = $planData['carExcess'];
     }
 }
