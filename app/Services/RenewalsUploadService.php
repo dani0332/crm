@@ -166,12 +166,13 @@ class RenewalsUploadService
             "cylinder" => $carModel->cylinder ?? null,
             "vehicle_category" => $vehicleType->category ?? null,
             "advisor_id" => $advisorId,
-            "additional_notes" => $quoteData->notes
+            "additional_notes" => $quoteData->notes,
+            "renewal_batch" => $quoteData->batch
         ]);
         $newCarQuote->save();
 
         $this->renewalsAddonService->updateCarQuoteRequestCode($newCarQuote->id);
-        $createRenewalQuote = $this->createNewRenewalCarQuote($newCarQuote->id, $quoteData->advisor);
+        $createRenewalQuote = $this->createNewRenewalCarQuote($newCarQuote->id, $quoteData->advisor, $quoteData->batch);
         $this->createRenewalDumpRecord('Car', $createRenewalQuote, $quoteData);
     }
 
@@ -344,7 +345,7 @@ class RenewalsUploadService
         return $createRenewalQuote->id;
     }
 
-    function createNewRenewalCarQuote($quoteId, $newAdvisor)
+    function createNewRenewalCarQuote($quoteId, $newAdvisor, $batchNumber)
     {
         $getCarQuoteData = CarQuote::where('id', '=', $quoteId)->get()->first();
         $advisorId = $this->renewalsAddonService->getUserInfo($newAdvisor);
@@ -367,7 +368,8 @@ class RenewalsUploadService
             "vehicle_category" => $getCarQuoteData->vehicle_category,
             "additional_notes" => $getCarQuoteData->additional_notes,
             "previous_quote_id" => $quoteId,
-            "advisor_id" => $advisorId
+            "advisor_id" => $advisorId,
+            "renewal_batch" => $batchNumber
         ]);
 
         $createRenewalQuote->save();
