@@ -532,7 +532,14 @@ class CRUDController extends Controller
         return redirect()->to('/quotes/' . strtolower($request->modelType) . '/' . $entity->uuid)->with('success', ' Lead Status has been Updated');
     }
 
-    public function savePlan(Request $request) {
-        dd($request->all());
+    public function saveCarPlan(Request $request) {
+
+        $planData = array('quoteUID' => $request->quoteUuId
+            , 'insurerId' => $request->insurance_provider_id
+            , 'carPlanId' => $request->car_plan_id
+            , 'premium' => $request->premium
+            , 'carValue' => $request->value
+            , 'carExcess' => $request->excess);
+        $response = $this->carQuoteService->planCreateUpdate($planData);
     }
 }
