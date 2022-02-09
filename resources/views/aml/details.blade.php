@@ -114,22 +114,6 @@
                 </div>
                 <div class="item form-group">
                     <div class="col">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="nationality"><b>Nationality</b></label>
-                        <div class="col-md-6 col-sm-6">
-                            <p class="label-align-center">
-                                <select class="form-control" id='nationality' name='nationality'>
-                                    <option value=''></option>
-                                    @foreach($nationalityList as $nationality)
-                                        <option value="{{ $nationality }}">{{ $nationality }}</option>
-                                    @endforeach
-                                    </select>
-                                @if ($errors->has('nationality'))
-                                    <span class="text-danger">{{ $errors->first('nationality') }}</span>
-                                @endif
-                            </p>
-                        </div>
-                    </div>
-                    <div class="col">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="yob"><b>Year of Birth</b></label>
                         <div class="col-md-6 col-sm-6">
                             <p class="label-align-center">
@@ -145,6 +129,21 @@
                             </p>
                             <div style="text-align: right;"><button type="submit" class="btn btn-primary btn-sm" id="return_to_view">Update & Verify</button></div>
                         </div>
+                    </div>
+                    <div class="col">
+                        @if($quoteTypeCode == quoteTypeCode::Business)
+                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="First Name"><b> Company Name</b></label>
+                            <div class="col-md-6 col-sm-6">
+                                <p class="label-align-center">
+                                    <input type="text" id="company_name" name="company_name"
+                                    value="{{ old('company_name', ucwords(strtolower($quoteRequest->company_name))) }}"
+                                    class="form-control" data-toggle="tooltip" data-placement="top" title="Please enter company name">
+                                </p>
+                            </div>
+                            @if ($errors->has('company_name'))
+                                <span class="text-danger">{{ $errors->first('company_name') }}</span>
+                            @endif
+                        @endif
                     </div>
                 </div>
                 <div class="item form-group">
@@ -918,6 +917,7 @@
                             <tr>
                                 <th>AML Id</th>
                                 <th>Input</th>
+                                <th>Search Type</th>
                                 <th>Screenshot</th>
                                 <th>Match Found</th>
                                 <th>Results Found</th>
@@ -931,6 +931,7 @@
                                 <tr>
                                     <td><a href="/kyc/aml/{{ $kycLog->id }}">{{ $kycLog->id }}</a></td>
                                     <td>{{ $kycLog->input }}</td>
+                                    <td>{{ $kycLog->search_type }}</td>
                                     <td><a href="{{ $kycLog->screenshot }}" target="_blank"><img class="img-responsive"
                                                 src="{{ $kycLog->screenshot }}" alt="screenshot" height="80px"
                                                 width="80px"></a></td>
