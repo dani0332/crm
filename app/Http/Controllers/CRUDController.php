@@ -79,15 +79,26 @@ class CRUDController extends Controller
      */
     public function index(Request $request)
     {
+        // Getting the data for grid based on the model type
         $gridData = $this->crudService->getGridData($this->genericModel, $request);
+        // Getting the data for the advisor dropdown based on the model type
         $advisors = $this->crudService->getAdvisorsByModelType($this->genericModel->modelType);
+        // Checking if the loggedIn user has Manager or Deputy Role
         $isManagerORDeputy = Auth::user()->isManagerOrDeputy();
+        //Checking if the loggedIn user is Renewal User
+        $isRenewalUser = Auth::user()->hasAnyRole(["CAR_RENEWAL_ADVISOR", "CAR_RENEWAL_MANAGER"]);
+        if ($isRenewalUser) {
+            $renewalAdvisors = $this->crudService->fillRenewalData($this->genericModel);
+        }
         $dropdownSource = $customTitles = [];
+
         foreach ($this->genericModel->properties as $property => $value) {
             if (str_contains($value, 'title')) {
+                // Getting custom title for each property where title is mentioned in the property meta data
                 $customTitles[$property] = $this->crudService->getCustomTitleByModelType($this->genericModel->modelType, $property);
             }
             if (str_contains($value, 'select')) {
+                // Getting the dropdown source for each property where select is mentioned in the property meta data
                 $dropdownValue = $this->dropdownSourceService->getDropdownSource($property);
                 $dropdownSource[$property] = $dropdownValue;
             }
@@ -97,9 +108,9 @@ class CRUDController extends Controller
             return DataTables::of($gridData)
                 ->addIndexColumn()
                 ->make(true);
-            return view('shared.view', compact('model', 'dropdownSource', 'customTitles', 'advisors', 'isManagerORDeputy'));
+            return view('shared.view', compact('model', 'dropdownSource', 'customTitles', 'advisors', 'isManagerORDeputy', 'isRenewalUser'));
         }
-        return view('shared.view', compact('model', 'dropdownSource', 'customTitles', 'advisors', 'isManagerORDeputy'));
+        return view('shared.view', compact('model', 'dropdownSource', 'customTitles', 'advisors', 'isManagerORDeputy', 'isRenewalUser'));
     }
 
     /**
@@ -240,10 +251,9 @@ class CRUDController extends Controller
 
             return view('shared.show', compact([
                 'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList',
-                'leadStatuses','lostReasons', 'selectedLostReasonId'
+                'leadStatuses', 'lostReasons', 'selectedLostReasonId'
             ]));
-        }
-        else {
+        } else {
             return view('shared.show', compact(['record', 'model', 'customTitles', 'customTableList', 'advisors', 'leadStatuses', 'lostReasons', 'selectedLostReasonId']));
         }
     }
@@ -429,7 +439,7 @@ class CRUDController extends Controller
                 'listQuotePlanName', 'providerCode', 'providerName', 'travelType',
                 'actualPremium', 'discountPremium', 'listQuotePlanBenefitsInclusions',
                 'listQuotePlanBenefitsExclusions', 'listQuotePlanBenefitsFeatures', 'listQuotePlanBenefitsCovid19',
-                'listQuotePlanBenefitsPolicyDetailLink','modelName','listQuotePlansMembers'
+                'listQuotePlanBenefitsPolicyDetailLink', 'modelName', 'listQuotePlansMembers'
             ]));
         }
     }

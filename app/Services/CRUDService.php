@@ -168,6 +168,13 @@ class CRUDService extends BaseService
             ->getEntity($id);
     }
 
+    public function fillRenewalData($model)
+    {
+        $lowerCaseModelType = strtolower($model->modelType);
+        return $this->{in_array($lowerCaseModelType, $this->quoteTypes) ? $lowerCaseModelType . 'QuoteService' : $lowerCaseModelType . 'Service'}
+            ->fillRenewalProperties($model);
+    }
+
     public function getSelectedLostReason($modelType, $id)
     {
         $lowerCaseModelType = strtolower($modelType);

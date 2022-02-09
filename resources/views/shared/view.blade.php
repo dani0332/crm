@@ -27,6 +27,16 @@
                     $('#assigned_to_date_start').next().html('Please select assigned start date');
                     return false;
                 }
+                if($('#renewal_expiry_date').val() == '' && $('#renewal_expiry_date_end').val() != '')  {
+                    $('#renewal_expiry_date').next().html('Please select renewal start date');
+                    return false;
+                }
+
+                if($('#renewal_expiry_date').val() != '' && $('#renewal_expiry_date_end').val() == '')  {
+                    $('#renewal_expiry_date_end').next().html('Please select renewal to end date');
+                    return false;
+                }
+
                 if($('#created_at').val() != '' && $('#created_at_end').val() == '')  {
                     $('#created_at_end').next().html('Please select created end date');
                     return false;
@@ -56,6 +66,7 @@
                     value: obj[key],
                 }));
             }
+            var isRenewalUser = JSON.parse('<?php echo json_encode($isRenewalUser); ?>');
             var model = JSON.parse('<?php echo json_encode(get_object_vars($model)); ?>');
             var isAdmin = JSON.parse('<?php echo json_encode(Auth::user()->hasRole("ADMIN")); ?>');
             var isManagerOrDeputy = $("#isManagerOrDeputy").val();
@@ -63,10 +74,16 @@
                 model.searchProperties.push('is_ecommerce');
                 model.searchProperties.push('payment_status_id');
             }
+            var skipPropertiesArray = [];
+            if(isRenewalUser){
+                skipPropertiesArray = model.renewalSkipProperties['list'].split(',');
+            } else {
+
+                skipPropertiesArray = model.skipProperties['list'].split(',');
+            }
             var modelPropertiesArray = convertObjectToArray(model.properties);
             $('#modelType').val(model.modelType);
             var dataTableColumns = [];
-            var skipPropertiesArray = model.skipProperties['list'].split(',');
             for (var i = 0; i < modelPropertiesArray.length; i++) {
                 if (!skipPropertiesArray.includes(modelPropertiesArray[i].name)) {
                     if(model.modelType == 'LeadStatus' || model.modelType == 'Teams') {
@@ -195,6 +212,8 @@
                         });
                         d.assigned_to_date_start = $('#assigned_to_date_start').val();
                         d.assigned_to_date_end = $('#assigned_to_date_end').val();
+                        d.renewal_expiry_date = $('#renewal_expiry_date').val();
+                        d.renewal_expiry_date_end = $('#renewal_expiry_date_end').val();
                         if (model.properties['created_at'] && model.properties['created_at'].indexOf('range') > -1) {
                             d['created_at_end'] = $('#created_at_end').val();
                         }
@@ -338,7 +357,19 @@
                     @if (session()->has('success'))
                         <div class="alert alert-success">{{ session()->get('success') }}</div>
                     @endif
-                    @if (count($model->searchProperties) > 0)
+                    @php
+                        $searchProperties = [];
+                        $skipProperties = [];
+                        if($isRenewalUser){
+                            $searchProperties = $model->renewalSearchProperties;
+                            $skipProperties = $model->renewalSkipProperties;
+                        }
+                        else{
+                            $searchProperties = $model->searchProperties;
+                            $skipProperties = $model->skipProperties;
+                        }
+                    @endphp
+                    @if (count($searchProperties) > 0)
                         <form method="POST" id="searchTable" class="form-horizontal form-label-left" role="form"
                             data-parsley-validate="" novalidate="" autocomplete="off">
                             @if(strtolower($model->modelType) != 'teams' || strtolower($model->modelType) != 'leadstatus')
@@ -355,12 +386,12 @@
                             @endif
                             @if (Auth::user()->hasRole('ADMIN') && $model->modelType == 'Car')
                                 @php
-                                    array_push($model->searchProperties, 'is_ecommerce');
-                                    array_push($model->searchProperties, 'payment_status_id');
+                                    array_push($searchProperties, 'is_ecommerce');
+                                    array_push($searchProperties, 'payment_status_id');
                                 @endphp
                             @endif
                             @foreach ($model->properties as $property => $value)
-                                @foreach ($model->searchProperties as $searchProperty)
+                                @foreach ($searchProperties as $searchProperty)
                                     @if ($searchProperty == $property)
                                         @if (str_contains($value, 'range'))
                                             <div class="col-md-6">
@@ -391,7 +422,7 @@
                                 @endforeach
                             @endforeach
                             @foreach ($model->properties as $property => $value)
-                                @foreach ($model->searchProperties as $searchProperty)
+                                @foreach ($searchProperties as $searchProperty)
                                     @if ($searchProperty == $property && !str_contains($value, 'range'))
                                         <div @if (count($model->properties) < 6) class="col-md-12" @else class="col-md-6" @endif>
                                             @if (strpos($value, 'input') !== false && !str_contains($value, 'range'))
@@ -559,7 +590,7 @@
                                     @foreach ($model->properties as $property => $value)
                                         @if ($model->modelType != 'LeadStatus' && $model->modelType != 'Teams')
                                             @if ($property != 'id' )
-                                                @if (!in_array($property, explode(',', $model->skipProperties['list'])))
+                                                @if (!in_array($property, explode(',', $skipProperties['list'])))
                                                     <th data-type="{{ explode('|', $value)[1] }}">
                                                         @if (strpos($value, 'title'))
                                                             {{ strtoupper($customTitles[$property]) }}
@@ -571,7 +602,7 @@
                                             @endif
 
                                         @else
-                                            @if (!in_array($property, explode(',', $model->skipProperties['list'])))
+                                            @if (!in_array($property, explode(',', $skipProperties['list'])))
                                                 <th data-type="{{ explode('|', $value)[1] }}">
                                                     @if (strpos($value, 'title'))
                                                         {{ strtoupper($customTitles[$property]) }}
