@@ -6,6 +6,7 @@ namespace App\Imports;
 use App\Models\Customer;
 use App\Services\RenewalsUploadService;
 use App\Services\CustomerService;
+use Carbon\Carbon;
 use Maatwebsite\Excel\Row;
 use Maatwebsite\Excel\Concerns\Importable;
 use Maatwebsite\Excel\Concerns\OnEachRow;
@@ -69,8 +70,8 @@ class RenewalsImport implements OnEachRow, WithStartRow, WithValidation, SkipsOn
             $previousAdvisor = $row[9];
             $policy = $row[10];
             $batch = $row[11];
-            $startDate = date('Y-m-d H:i:s', strtotime(str_replace('', '', $row[12])));
-            $endDate = date('Y-m-d H:i:s', strtotime(str_replace('', '', $row[13])));
+            $startDate = Carbon::instance(\PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($row[12]))->toDateTimeString();
+            $endDate = Carbon::instance(\PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($row[13]))->toDateTimeString();
             $object = $row[14];
             $premium = $row[15];
             $notes = $row[16];

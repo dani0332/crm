@@ -11,12 +11,12 @@ use App\Models\LifeQuote;
 use App\Models\TravelQuote;
 use App\Models\YachtQuote;
 use App\Models\RenewalsDump;
-use App\Services\RenewalsAddonServices;;
-
+use App\Services\RenewalsAddonServices;
 use Hidehalo\Nanoid\Client;
 use App\Services\CheckAmlService;
 use App\Enums\quoteTypeCode;
-use App\Models\CarModel;
+use App\Enums\quoteStatusCode;
+use App\Models\QuoteStatus;
 
 class RenewalsUploadService
 {
@@ -149,6 +149,8 @@ class RenewalsUploadService
             $carTypeOfInsurance = $this->renewalsAddonService->getCarTypeOfInsurance($quoteData->product_type)->id;
         }
 
+        $quoteStatusId = QuoteStatus::where('code', '=', quoteStatusCode::TRANSACTION_APPROVED)->value('id');
+
         $newCarQuote = new CarQuote([
             "first_name" => $quoteData->first_name,
             "last_name" => $quoteData->last_name,
@@ -167,12 +169,13 @@ class RenewalsUploadService
             "vehicle_category" => $vehicleType->category ?? null,
             "advisor_id" => $advisorId,
             "additional_notes" => $quoteData->notes,
-            "renewal_batch" => $quoteData->batch
+            "renewal_batch" => $quoteData->batch,
+            "quote_status_id" => $quoteStatusId
         ]);
         $newCarQuote->save();
 
         $this->renewalsAddonService->updateCarQuoteRequestCode($newCarQuote->id);
-        $createRenewalQuote = $this->createNewRenewalCarQuote($newCarQuote->id, $quoteData->advisor, $quoteData->batch);
+        $createRenewalQuote = $this->createNewRenewalCarQuote($newCarQuote->id, $quoteData->advisor, $quoteData->batch, $quoteData->endDate);
         $this->createRenewalDumpRecord('Car', $createRenewalQuote, $quoteData);
     }
 
@@ -345,11 +348,14 @@ class RenewalsUploadService
         return $createRenewalQuote->id;
     }
 
-    function createNewRenewalCarQuote($quoteId, $newAdvisor, $batchNumber)
+    function createNewRenewalCarQuote($quoteId, $newAdvisor, $batchNumber, $endDate)
     {
         $getCarQuoteData = CarQuote::where('id', '=', $quoteId)->get()->first();
         $advisorId = $this->renewalsAddonService->getUserInfo($newAdvisor);
         $quoteType = $this->renewalsAddonService->getQuoteType(quoteTypeCode::Car);
+
+
+        $quoteStatusId = QuoteStatus::where('code', '=', quoteStatusCode::NEW_LEAD)->value('id');
 
         $createRenewalQuote = new CarQuote([
             "first_name" => $getCarQuoteData->first_name,
@@ -369,7 +375,9 @@ class RenewalsUploadService
             "additional_notes" => $getCarQuoteData->additional_notes,
             "previous_quote_id" => $quoteId,
             "advisor_id" => $advisorId,
-            "renewal_batch" => $batchNumber
+            "renewal_batch" => $batchNumber,
+            "quote_status_id" => $quoteStatusId,
+            "renewal_expiry_date" => $endDate
         ]);
 
         $createRenewalQuote->save();
