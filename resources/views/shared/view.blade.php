@@ -15,8 +15,28 @@
 
     </style>
     <script>
+        function convertObjectToArray(obj) {
+            return Object.keys(obj).map(key => ({
+                name: key,
+                value: obj[key],
+            }));
+        }
+        String.prototype.replaceAll = function(search, replacement) {
+            var target = this;
+            return target.replace(new RegExp(search, 'g'), replacement);
+        };
         $(document).ready(function() {
-
+            // Getting the required objects from laravel into javascript for checks and handling of data based on roles
+            var isRenewalUser = JSON.parse('<?php echo json_encode($isRenewalUser); ?>');
+            var model = JSON.parse('<?php echo json_encode(get_object_vars($model)); ?>');
+            var isAdmin = JSON.parse('<?php echo json_encode(Auth::user()->hasRole("ADMIN")); ?>');
+            var isManagerOrDeputy = $("#isManagerOrDeputy").val();
+            // Adding custom search fields for admin role
+            if(isAdmin) {
+                model.searchProperties.push('is_ecommerce');
+                model.searchProperties.push('payment_status_id');
+            }
+            // validation before form submit usually for date fields
             $('#searchGenericSubmit').on('click', function(e){
                 e.preventDefault();
                 if($('#assigned_to_date_start').val() != '' && $('#assigned_to_date_end').val() == '')  {
@@ -52,41 +72,23 @@
                 });
                 $('#searchTable').submit();
             });
-            var quoteTypes = ['home', 'health', 'life', 'business', 'travel'];
-            String.prototype.replaceAll = function(search, replacement) {
-                var target = this;
-                return target.replace(new RegExp(search, 'g'), replacement);
-            };
-
             var allowedModelTypes = ['home', 'health', 'life', 'business', 'travel', 'car'];
-
-            function convertObjectToArray(obj) {
-                return Object.keys(obj).map(key => ({
-                    name: key,
-                    value: obj[key],
-                }));
-            }
-            var isRenewalUser = JSON.parse('<?php echo json_encode($isRenewalUser); ?>');
-            var model = JSON.parse('<?php echo json_encode(get_object_vars($model)); ?>');
-            var isAdmin = JSON.parse('<?php echo json_encode(Auth::user()->hasRole("ADMIN")); ?>');
-            var isManagerOrDeputy = $("#isManagerOrDeputy").val();
-            if(isAdmin) {
-                model.searchProperties.push('is_ecommerce');
-                model.searchProperties.push('payment_status_id');
-            }
             var skipPropertiesArray = [];
+            // Getting the skip properties based on loggedin user role
             if(isRenewalUser){
                 skipPropertiesArray = model.renewalSkipProperties['list'].split(',');
             } else {
-
                 skipPropertiesArray = model.skipProperties['list'].split(',');
             }
+
             var modelPropertiesArray = convertObjectToArray(model.properties);
             $('#modelType').val(model.modelType);
             var dataTableColumns = [];
             for (var i = 0; i < modelPropertiesArray.length; i++) {
                 if (!skipPropertiesArray.includes(modelPropertiesArray[i].name)) {
+                    // checking if the model type is either leadstatus or teams because it needs to be handled differently
                     if(model.modelType == 'LeadStatus' || model.modelType == 'Teams') {
+                        // checking if the property is id field to add link on id field
                             if(modelPropertiesArray[i].name == 'id'){
                                 dataTableColumns.push({
                                     data: "id",
@@ -97,6 +99,7 @@
                                     },
                                 });
                             }else {
+                                // adding all columns except id field
                                 dataTableColumns.push({
                                     data: modelPropertiesArray[i].name,
                                     name: modelPropertiesArray[i].name
@@ -104,9 +107,11 @@
                             }
 
                     }else{
+                        // adding properties for all types except leadstatus and teams
                         if (modelPropertiesArray[i].name == 'id' ) {
-                            if (isManagerOrDeputy === "1" && allowedModelTypes.includes(model.modelType
-                                    .toLocaleLowerCase())) {
+                            // Handling id field
+                            if (isManagerOrDeputy === "1" && allowedModelTypes.includes(model.modelType.toLocaleLowerCase())) {
+                                // Checkboxes should be available if the user is Manager Or deputy also the model type is allowed
                                 dataTableColumns.push({
                                     data: "id",
                                     name: "id",
@@ -120,6 +125,7 @@
                                     },
                                 });
                             }
+                            // Adding link field for id field
                             var isAllowedModel = allowedModelTypes.includes(model.modelType.toLocaleLowerCase());
                             dataTableColumns.push({
                                 data: 'code',
@@ -131,7 +137,9 @@
                                 }
                             });
                         } else {
+                            // Adding all columns except id field
                             if(modelPropertiesArray[i].name !== 'code'){
+                            // Handling select field separately because there data is selected in query as field name with suffix of text
                             if (modelPropertiesArray[i].value.indexOf('select') > -1) {
                                 dataTableColumns.push({
                                     data: modelPropertiesArray[i].name + '_text',
@@ -148,6 +156,7 @@
                     }
                 }
             }
+            // Handling Sorting on Grid Column, need switch case because Manager,Deputy and Admin have different set of columns then normal user
             var disableSortColumns = [];
             switch(model.modelType.toLowerCase()) {
 
@@ -193,6 +202,7 @@
                 disableSortColumns = [];
                     break;
             }
+            // Initializing the datatable
             var vehicleTypeDataTable = $("#dtBasicExample").DataTable({
                 ordering: true,
                 info: true,
@@ -280,7 +290,7 @@
                     $(".loader").hide();
                 }, 1000);
             });
-
+            // Custom export function to export all the available rows in grid not just the visible ones
             function newexportaction(e, dt, button, config) {
                 var self = this;
                 var oldStart = dt.settings()[0]._iDisplayStart;
