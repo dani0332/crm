@@ -107,10 +107,10 @@
 
                     <thead>
                         <tr>
-                          <th>ID</th>
-                          <th>Alias</th>
-                          <th>Source</th>
-                          <th>Created At</th>
+                          <th style="width: 100px !important">ID</th>
+                          <th style="width: 100px !important">Alias</th>
+                          <th style="width: 100px !important">Source</th>
+                          <th style="width: 100px !important">Created At</th>
                         </tr>
                       </thead>
 
@@ -129,19 +129,19 @@
 
                     <thead>
                         <tr>
-                          <th>ID</th>
-                          <th>First Name</th>
-                          <th>Middle Name</th>
-                          <th>Last Name</th>
-                          <th>Alias</th>
-                          <th>Gender</th>
-                          <th>DOB</th>
-                          <th>YOB Match</th>
-                          <th>POB</th>
-                          <th>Nationality</th>
-                          <th>Nationality Match</th>
-                          <th>Source</th>
-                          <th>Created At</th>
+                          <th style="width: 100px !important">ID</th>
+                          <th style="width: 100px !important">First Name</th>
+                          <th style="width: 100px !important">Middle Name</th>
+                          <th style="width: 100px !important">Last Name</th>
+                          <th style="width: 100px !important">Alias</th>
+                          <th style="width: 100px !important">Gender</th>
+                          <th style="width: 100px !important">DOB</th>
+                          <th style="width: 100px !important">YOB Match</th>
+                          <th style="width: 100px !important">POB</th>
+                          <th style="width: 100px !important">Nationality</th>
+                          <th style="width: 100px !important">Nationality Match</th>
+                          <th style="width: 100px !important">Source</th>
+                          <th style="width: 100px !important">Created At</th>
                         </tr>
                       </thead>
 

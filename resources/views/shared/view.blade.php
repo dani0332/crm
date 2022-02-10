@@ -16,7 +16,17 @@
     </style>
     <script>
         $(document).ready(function() {
-
+            $('.additional-filters').hide();
+            $('#showlink').on('click',function() {
+                $('.showAllDiv').hide();
+                $('.additional-filters').show();
+                $('.showLessDiv').show();
+            });
+            $('#hidelink').on('click',function() {
+                $('.showAllDiv').show();
+                $('.additional-filters').hide();
+                $('.showLessDiv').hide();
+            });
             $('#searchGenericSubmit').on('click', function(e){
                 e.preventDefault();
                 if($('#assigned_to_date_start').val() != '' && $('#assigned_to_date_end').val() == '')  {
@@ -33,6 +43,14 @@
                 }
                 if($('#created_at').val() == '' && $('#created_at_end').val() != '')  {
                     $('#created_at').next().html('Please select created start date');
+                    return false;
+                }
+                if($('#next_followup_date').val() != '' && $('#next_followup_date_end').val() == '') {
+                    $('#next_followup_date_end').next().html('Please select next followup end date');
+                    return false;
+                }
+                if($('#next_followup_date').val() == '' && $('#next_followup_date_end').val() != '') {
+                    $('#next_followup_date').next().html('Please select next followup start date');
                     return false;
                 }
                 $("span").each(function (k, v) {
@@ -76,7 +94,7 @@
                                     name: "id",
                                     render: function(data, type, row) {
                                         var url = '/quotes/' + model.modelType.toLowerCase();
-                                        return "<a href='" + url + '/' + row.uuid + "'>" + row.id + "</a>";
+                                        return "<a target='_blank' href='" + url + '/' + row.uuid + "'>" + row.id + "</a>";
                                     },
                                 });
                             }else {
@@ -109,7 +127,7 @@
                                 name: 'code',
                                 render: function(data, type, row) {
                                     var url = '/quotes/' + model.modelType.toLowerCase();
-                                    var href = "<a href='" + url + '/' + row.uuid + "'>" + (isAllowedModel ? row.code : row.id) + "</a>";
+                                    var href = "<a target='_blank' href='" + url + '/' + row.uuid + "'>" + (isAllowedModel ? row.code : row.id) + "</a>";
                                     return href;
                                 }
                             });
@@ -186,7 +204,7 @@
                 serverSide: true,
                 paging: true,
                 processing: true,
-
+                scrollX: true,
                 ajax: {
                     url: '/quotes/' + model.modelType.toLowerCase(),
                     data: function(d) {
@@ -214,16 +232,23 @@
             vehicleTypeDataTable.on('draw', function() {
                 var rows = $('#dtBasicExample tr');
                 var headerRowColumns = $(rows[0]).children();
+                var nextFollowupDateColumn = -10;
                 var checkboxIndexes = [];
                 for (let i = 0; i < headerRowColumns.length; i++) {
                     const element = headerRowColumns[i];
                     if ($(element).data('type') == 'checkbox' || $(element).data('type') == 'static') {
                         checkboxIndexes.push(i);
                     }
+                    if(element.outerText == "NEXT FOLLOWUP DATE"){
+                        nextFollowupDateColumn = i;
+                    }
                 }
                 for (let index = 1; index < rows.length; index++) {
                     var columns = $(rows[index]).children();
                     for (let i = 0; i < columns.length; i++) {
+                        if(i == nextFollowupDateColumn && (new Date().toLocaleDateString() > new Date($(columns[i]).text()).toLocaleDateString())){
+                            $(rows[index]).children().eq(i).css({'color': 'white', 'background-color': 'red', 'font-weight': 'bold', 'font-size': '12px'});
+                        }
                         if (checkboxIndexes.includes(i)) {
                             const element = columns[i];
                             if ($(element).text() == '1') {
@@ -341,7 +366,8 @@
                     @if (count($model->searchProperties) > 0)
                         <form method="POST" id="searchTable" class="form-horizontal form-label-left" role="form"
                             data-parsley-validate="" novalidate="" autocomplete="off">
-                            @if(strtolower($model->modelType) != 'teams' || strtolower($model->modelType) != 'leadstatus')
+
+                            @if(strtolower($model->modelType) != 'teams' && strtolower($model->modelType) != 'leadstatus')
                                 <div class="col-md-6">
                                     <span style="font-size: 11px;" class="col-form-label col-md-6 col-sm-6" >ASSIGNED START DATE</span>
                                     <input type="date" class="form-control" id="assigned_to_date_start" name="assigned_to_date_start" />
@@ -390,10 +416,15 @@
                                     @endif
                                 @endforeach
                             @endforeach
+                            @if(strtolower($model->modelType) != 'teams' && strtolower($model->modelType) != 'leadstatus')
+                            <div class="showAllDiv" style="float: right;margin-top:20px;">
+                                <a id="showlink" style="cursor: pointer;"> Show All Filters</a>
+                            </div>
+                            @endif
                             @foreach ($model->properties as $property => $value)
                                 @foreach ($model->searchProperties as $searchProperty)
                                     @if ($searchProperty == $property && !str_contains($value, 'range'))
-                                        <div @if (count($model->properties) < 6) class="col-md-12" @else class="col-md-6" @endif>
+                                        <div @if (count($model->properties) < 6) class="col-md-12 show-less" @else class="col-md-6 additional-filters" @endif>
                                             @if (strpos($value, 'input') !== false && !str_contains($value, 'range'))
                                                 <span style="font-size: 11px;" class="col-form-label col-md-6 col-sm-6"
                                                     for="name">
@@ -433,7 +464,7 @@
                                                         </option>
                                                     @endif
                                                     @if($property == 'advisor_id')
-                                                        <option value="null">UnAssigned</option>
+                                                        <option selected value="null">UnAssigned</option>
                                                     @endif
                                                     @foreach ($dropdownSource[$property] as $item)
                                                         <option value="{{ $item->id }}">
@@ -491,6 +522,11 @@
                                     @endif
                                 @endforeach
                             @endforeach
+                            @if(strtolower($model->modelType) != 'teams' && strtolower($model->modelType) != 'leadstatus')
+                            <div class="showLessDiv" style="display: none;float: right;margin-top:20px;">
+                                <a id="hidelink" style="cursor: pointer;">Hide Additional Filter</a>
+                            </div>
+                            @endif
                             <div class="col-md-12" style="margin-top: 25px;">
                                 <div class="col">
                                     <ul class="nav navbar-right panel_toolbox">
@@ -560,7 +596,7 @@
                                         @if ($model->modelType != 'LeadStatus' && $model->modelType != 'Teams')
                                             @if ($property != 'id' )
                                                 @if (!in_array($property, explode(',', $model->skipProperties['list'])))
-                                                    <th data-type="{{ explode('|', $value)[1] }}">
+                                                    <th data-type="{{ explode('|', $value)[1] }}" style="width: 100px !important">
                                                         @if (strpos($value, 'title'))
                                                             {{ strtoupper($customTitles[$property]) }}
                                                         @else
@@ -572,7 +608,7 @@
 
                                         @else
                                             @if (!in_array($property, explode(',', $model->skipProperties['list'])))
-                                                <th data-type="{{ explode('|', $value)[1] }}">
+                                                <th data-type="{{ explode('|', $value)[1] }}" style="width: 100px !important">
                                                     @if (strpos($value, 'title'))
                                                         {{ strtoupper($customTitles[$property]) }}
                                                     @else

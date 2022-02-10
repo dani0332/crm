@@ -166,6 +166,7 @@ $(document).ready(function () {
         info: false,
         searching: false,
         bLengthChange: false,
+        scrollX: true,
     });
 
     $(".data-table").DataTable({

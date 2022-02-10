@@ -17,6 +17,14 @@
                     $('#startedAt').next().html('Please select assigned to start date');
                     return false;
                 }
+                if($('#nfdSart').val() != '' && $('#nfdEnd').val() == '') {
+                    $('#nfdEnd').next().html('Please select next followup end date');
+                    return false;
+                }
+                if($('#nfdSart').val() == '' && $('#nfdEnd').val() != '') {
+                    $('#nfdSart').next().html('Please select next followup start date');
+                    return false;
+                }
                 $("span").each(function (k, v) {
                     if($(v).hasClass('text-danger')){
                         $(v).html('');
@@ -38,6 +46,9 @@
                         d.leadStatus = $("#leadStatus").val();
                         d.startedAt = $("#startedAt").val();
                         d.endAt = $("#endAt").val();
+                        d.nfdSart = $('#nfdSart').val();
+                        d.nfdEnd = $('#nfdEnd').val();
+                        d.email = $('#email').val();
                     },
                 },
                 columnDefs: [
@@ -79,6 +90,26 @@
                         name: 'nextFollowupDate',
                     },
                 ],
+            });
+
+            myleadsTable.on('draw', function() {
+                var rows = $('#dtBasicExample tr');
+                var headerRowColumns = $(rows[0]).children();
+                var nextFollowupDateColumn = 0;
+                for (let i = 0; i < headerRowColumns.length; i++) {
+                    const element = headerRowColumns[i];
+                    if(element.outerText == "Next FollowUp Date"){
+                        nextFollowupDateColumn = i;
+                    }
+                }
+                for (let index = 1; index < rows.length; index++) {
+                    var columns = $(rows[index]).children();
+                    for (let i = 0; i < columns.length; i++) {
+                        if((i == nextFollowupDateColumn) && (new Date().toLocaleDateString() > new Date($(columns[i]).text()).toLocaleDateString())){
+                            $(rows[index]).children().eq(i).css({'color': 'white', 'background-color': 'red', 'font-weight': 'bold', 'font-size': '12px'});
+                        }
+                    }
+                }
             });
 
             $('#mylead-reset-btn').on('click', function(){
@@ -149,6 +180,26 @@
                         </div>
                         <div class="item form-group">
                             <div class="col">
+                                <label class="col-form-label col-md-4 col-sm-4" for="Start Date">NextFollowup Date Start</label>
+                                <div class="col-md-6 col-sm-6">
+                                    <div class="input-group">
+                                        <input type="date" name="nfdSart" id="nfdSart" class="form-control">
+                                        <span class="text-danger"></span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col">
+                                <label class="col-form-label col-md-4 col-sm-4" for="End Date">NextFollowup Date End</label>
+                                <div class="col-md-6 col-sm-6">
+                                    <div class="input-group">
+                                        <input type="date" name="nfdEnd" id="nfdEnd" class="form-control">
+                                        <span class="text-danger"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="item form-group">
+                            <div class="col">
                                 <label class="col-form-label col-md-4 col-sm-4" for="Start Date">CDB ID</label>
                                 <div class="col-md-6 col-sm-6">
                                     <div class="input-group">
@@ -172,7 +223,12 @@
                         </div>
                         <div class="item form-group">
                             <div class="col">
-
+                                <label class="col-form-label col-md-4 col-sm-4">Email</label>
+                                <div class="col-md-6 col-sm-6">
+                                    <div class="input-group">
+                                        <input type="text" name="email" id="email" class="form-control">
+                                    </div>
+                                </div>
                             </div>
                             <div class="col">
                                 <ul class="nav navbar-right panel_toolbox">
@@ -182,7 +238,7 @@
                             </div>
                         </div>
                     </form>
-                    <table class="table table-striped jambo_table leadSearch-data-table" style="width:100%">
+                    <table  id="dtBasicExample" class="table table-striped jambo_table leadSearch-data-table" style="width:100%">
                         <thead>
                             <tr>
                                 <th>CDB ID</th>

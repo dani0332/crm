@@ -98,7 +98,8 @@ class CarQuoteService extends BaseService
             ->leftJoin('insurance_provider as cpip', 'cpip.id', '=', 'cp.provider_id')
             ->leftJoin('payment_status as ps', 'ps.id', '=', 'cqr.payment_status_id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'cqr.quote_status_id')
-            ->leftJoin('vehicle_type as vt', 'vt.id', '=', 'cqr.vehicle_type_id');
+            ->leftJoin('vehicle_type as vt', 'vt.id', '=', 'cqr.vehicle_type_id')
+            ->where('qs.text', '!=', 'Fake');
     }
 
     public function saveCarQuote(Request $request)
@@ -228,7 +229,7 @@ class CarQuoteService extends BaseService
             "updated_at" => "input|date|title",
             "car_value" => "input|number|required",
             "seat_capacity" => "input|number|required",
-            "next_followup_date" => "input|date|text",
+            "next_followup_date" => "input|date|title|range",
             "source" => "input|text",
             "lost_reason" => "input|text",
             "cylinder" => "input|number|required",
@@ -340,6 +341,9 @@ class CarQuoteService extends BaseService
             case 'vehicle_type_id':
                 $title = "Vehicle Type";
                 break;
+            case 'next_followup_date':
+                $title = "Next Followup Date";
+                break;
             default:
                 break;
         }
@@ -389,8 +393,16 @@ class CarQuoteService extends BaseService
             $dateTo = Carbon::createFromFormat('Y-m-d', $request->endAt)->endOfDay()->toDateTimeString();
             $query->whereBetween('cqrd.advisor_assigned_date', [$dateFrom, $dateTo]);
         }
+        if (isset($request->nfdSart) && isset($request->nfdEnd) && $request->nfdSart != '' && $request->nfdEnd != '') {
+            $dateFrom = Carbon::createFromFormat('Y-m-d', $request->nfdSart)->startOfDay()->toDateTimeString();
+            $dateTo = Carbon::createFromFormat('Y-m-d', $request->nfdEnd)->endOfDay()->toDateTimeString();
+            $query->whereBetween('hqrd.next_followup_date', [$dateFrom, $dateTo]);
+        }
         if (isset($request->cdbId) && $request->cdbId != 0) {
             $query->where('cqr.code', $request->cdbId);
+        }
+        if (isset($request->email) && $request->email != '') {
+            $query->where('cqr.email', $request->email);
         }
         if (isset($request->leadStatus) && $request->leadStatus != 0) {
             $query->where('cqr.quote_status_id', $request->leadStatus);
@@ -405,6 +417,11 @@ class CarQuoteService extends BaseService
                 $dateFrom = Carbon::createFromFormat('Y-m-d', $request['assigned_to_date_start'])->startOfDay()->toDateTimeString();
                 $dateTo = Carbon::createFromFormat('Y-m-d', $request['assigned_to_date_end'])->endOfDay()->toDateTimeString();
                 $this->query->whereBetween('cqrd.advisor_assigned_date', [$dateFrom, $dateTo]);
+            }
+            if (isset($request->next_followup_date) && $request->next_followup_date != '') {
+                $dateFrom = Carbon::createFromFormat('Y-m-d', $request['next_followup_date'])->startOfDay()->toDateTimeString();
+                $dateTo = Carbon::createFromFormat('Y-m-d', $request['next_followup_date_end'])->endOfDay()->toDateTimeString();
+                $this->query->whereBetween('cqrd.next_followup_date', [$dateFrom, $dateTo]);
             }
             if (in_array('created_at', $searchProperties) && isset($request->created_at) && $request->created_at != "") {
                 $dateFrom = Carbon::createFromFormat('Y-m-d', $request['created_at'])->startOfDay()->toDateTimeString();
@@ -553,7 +570,7 @@ class CarQuoteService extends BaseService
 
     public function fillModelSearchProperties()
     {
-        return ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'advisor_id', 'created_at'];
+        return ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'advisor_id', 'created_at', 'next_followup_date'];
     }
 
     public function getQuotePlans($id)
