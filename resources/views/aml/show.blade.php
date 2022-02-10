@@ -110,10 +110,7 @@
                           <th>ID</th>
                           <th>Alias</th>
                           <th>Source</th>
-                          <th>Source ID</th>
                           <th>Created At</th>
-                          <th>Updated At</th>
-                          <th>ObjectID</th>
                         </tr>
                       </thead>
 
@@ -123,10 +120,7 @@
                           <td>{{ $amlResult->id }}</td>
                           <td>{{ $amlResult->alias }}</td>
                           <td>{{ $amlResult->source }}</td>
-                          <td>{{ $amlResult->sourceId }}</td>
                           <td>{{ date('d-M-Y h:ia', strtotime($amlResult->createdAt)) }}</td>
-                          <td>{{ date('d-M-Y h:ia', strtotime($amlResult->updatedAt)) }}</td>
-                          <td>{{ $amlResult->objectID }}</td>
                         </tr>
                         @endforeach
                       </tbody>
@@ -147,10 +141,7 @@
                           <th>Nationality</th>
                           <th>Nationality Match</th>
                           <th>Source</th>
-                          <th>Source ID</th>
                           <th>Created At</th>
-                          <th>Updated At</th>
-                          <th>ObjectID</th>
                         </tr>
                       </thead>
 
@@ -185,10 +176,7 @@
                               <td>No match found</td>
                           @endif
                           <td>{{ $amlResult->source }}</td>
-                          <td>{{ $amlResult->sourceId }}</td>
                           <td>{{ date('d-M-Y h:ia', strtotime($amlResult->createdAt)) }}</td>
-                          <td>{{ date('d-M-Y h:ia', strtotime($amlResult->updatedAt)) }}</td>
-                          <td>{{ $amlResult->objectID }}</td>
                         </tr>
                         @endforeach
                       </tbody>
