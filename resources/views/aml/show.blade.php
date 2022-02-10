@@ -1,6 +1,9 @@
 @extends('layouts.app')
 @section('title','AML Detail')
 @section('content')
+<?php
+    use App\Enums\AmlSearchType;
+?>
 <div class="row">
     <div class="col-md-12 col-sm-12 admin-detail">
         <div class="x_panel">
@@ -68,6 +71,10 @@
                             </div>
                         </div>
                         <div class="col">
+                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="Search Type"><b>Search Type</b></label>
+                            <div class="col-md-6 col-sm-6">
+                            <p class="label-align-center">{{ $aml->search_type }}</p>
+                            </div>
                         </div>
                     </div>
                     <div class="item form-group">
@@ -96,65 +103,84 @@
             <div class="x_content">
                 <br />
                 <table id="datatable" class="table table-striped jambo_table" style="width:100%">
-                    <thead>
-                      <tr>
-                        <th>ID</th>
-                        <th>First Name</th>
-                        <th>Middle Name</th>
-                        <th>Last Name</th>
-                        <th>Alias</th>
-                        <th>Gender</th>
-                        <th>DOB</th>
-                        <th>YOB Match</th>
-                        <th>POB</th>
-                        <th>Nationality</th>
-                        <th>Nationality Match</th>
-                        <th>Source</th>
-                        <th>Source ID</th>
-                        <th>Created At</th>
-                        <th>Updated At</th>
-                        <th>ObjectID</th>
-                      </tr>
-                    </thead>
+                    @if ($aml->search_type == AmlSearchType::ENTITY)
 
-                    <tbody>
-                        @foreach($amlResults as $key => $amlResult)
-                      <tr>
-                        <td>{{ $amlResult->id }}</td>
-                        <td>{{ $amlResult->firstName }}</td>
-                        <td>{{ $amlResult->middleName }}</td>
-                        <td>{{ $amlResult->lastName }}</td>
-                        <td>{{ $amlResult->alias }}</td>
-                        <td>{{ $amlResult->gender }}</td>
-                        <td>{{ $amlResult->dob }}</td>
-                        @if (isset($amlResult->yobMatch))
-                            @if ($amlResult->yobMatch == 1)
-                                <td>True</td>
-                            @else 
-                                <td>False</td>
-                            @endif
-                        @else 
-                            <td>No match found</td>
-                        @endif
-                        <td>{{ $amlResult->pob }}</td>
-                        <td>{{ $amlResult->nationality }}</td>
-                        @if (isset($amlResult->nationalityMatch))
-                            @if ($amlResult->nationalityMatch == 1)
-                                <td>True</td>
-                            @else 
-                                <td>False</td>
-                            @endif
-                        @else 
-                            <td>No match found</td>
-                        @endif
-                        <td>{{ $amlResult->source }}</td>
-                        <td>{{ $amlResult->sourceId }}</td>
-                        <td>{{ date('d-M-Y h:ia', strtotime($amlResult->createdAt)) }}</td>
-                        <td>{{ date('d-M-Y h:ia', strtotime($amlResult->updatedAt)) }}</td>
-                        <td>{{ $amlResult->objectID }}</td>
-                      </tr>
-                      @endforeach
-                    </tbody>
+                    <thead>
+                        <tr>
+                          <th>ID</th>
+                          <th>Alias</th>
+                          <th>Source</th>
+                          <th>Created At</th>
+                        </tr>
+                      </thead>
+
+                      <tbody>
+                          @foreach($amlResults as $key => $amlResult)
+                        <tr>
+                          <td>{{ $amlResult->id }}</td>
+                          <td>{{ $amlResult->alias }}</td>
+                          <td>{{ $amlResult->source }}</td>
+                          <td>{{ date('d-M-Y h:ia', strtotime($amlResult->createdAt)) }}</td>
+                        </tr>
+                        @endforeach
+                      </tbody>
+
+                    @else
+
+                    <thead>
+                        <tr>
+                          <th>ID</th>
+                          <th>First Name</th>
+                          <th>Middle Name</th>
+                          <th>Last Name</th>
+                          <th>Alias</th>
+                          <th>Gender</th>
+                          <th>DOB</th>
+                          <th>YOB Match</th>
+                          <th>POB</th>
+                          <th>Nationality</th>
+                          <th>Nationality Match</th>
+                          <th>Source</th>
+                          <th>Created At</th>
+                        </tr>
+                      </thead>
+
+                      <tbody>
+                          @foreach($amlResults as $key => $amlResult)
+                        <tr>
+                          <td>{{ $amlResult->id }}</td>
+                          <td>{{ $amlResult->firstName }}</td>
+                          <td>{{ $amlResult->middleName }}</td>
+                          <td>{{ $amlResult->lastName }}</td>
+                          <td>{{ $amlResult->alias }}</td>
+                          <td>{{ $amlResult->gender }}</td>
+                          <td>{{ $amlResult->dob }}</td>
+                          @if (isset($amlResult->yobMatch))
+                              @if ($amlResult->yobMatch == 1)
+                                  <td>True</td>
+                              @else
+                                  <td>False</td>
+                              @endif
+                          @else
+                              <td>No match found</td>
+                          @endif
+                          <td>{{ $amlResult->pob }}</td>
+                          <td>{{ $amlResult->nationality }}</td>
+                          @if (isset($amlResult->nationalityMatch))
+                              @if ($amlResult->nationalityMatch == 1)
+                                  <td>True</td>
+                              @else
+                                  <td>False</td>
+                              @endif
+                          @else
+                              <td>No match found</td>
+                          @endif
+                          <td>{{ $amlResult->source }}</td>
+                          <td>{{ date('d-M-Y h:ia', strtotime($amlResult->createdAt)) }}</td>
+                        </tr>
+                        @endforeach
+                      </tbody>
+                    @endif
                   </table>
             </div>
         </div>
