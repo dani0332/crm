@@ -216,9 +216,11 @@ class CarQuoteService extends BaseService
         return array(
             "id" => "readonly|none",
             "code" => "input|title",
-            "first_name" => "input|text|required",
-            "last_name" => "input|text|required",
             "email" => "input|email|required",
+            "last_name" => "input|text|required",
+            "first_name" => "input|text|required",
+
+
             "mobile_no" => "input|title|number|required",
             "quote_status_id" => "select|title",
             "advisor_id" => "select|title",

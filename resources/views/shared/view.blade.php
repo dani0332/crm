@@ -94,7 +94,7 @@
                                     name: "id",
                                     render: function(data, type, row) {
                                         var url = '/quotes/' + model.modelType.toLowerCase();
-                                        return "<a target='_blank' href='" + url + '/' + row.uuid + "'>" + row.id + "</a>";
+                                        return "<a href='" + url + '/' + row.uuid + "'>" + row.id + "</a>";
                                     },
                                 });
                             }else {
@@ -127,7 +127,7 @@
                                 name: 'code',
                                 render: function(data, type, row) {
                                     var url = '/quotes/' + model.modelType.toLowerCase();
-                                    var href = "<a target='_blank' href='" + url + '/' + row.uuid + "'>" + (isAllowedModel ? row.code : row.id) + "</a>";
+                                    var href = "<a href='" + url + '/' + row.uuid + "'>" + (isAllowedModel ? row.code : row.id) + "</a>";
                                     return href;
                                 }
                             });
@@ -200,7 +200,7 @@
                 searching: false,
                 dom: 'rBfrtip',
                 bLengthChange: false,
-                stateSave: false,
+                stateSave: true,
                 serverSide: true,
                 paging: true,
                 processing: true,
