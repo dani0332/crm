@@ -1851,7 +1851,7 @@ $("#renewals-upload-button").click(function () {
 
 $('#insurance_provider_id').on('change', function (e) {
     var insuranceProviderId = $("#insurance_provider_id option:selected").val();
-    var quoteUuId = $("#quoteUuId").val();
+    var quoteUuId = $("#car_quote_uuid").val();
     $.get('/insurance-provider-plans?insuranceProviderId=' + insuranceProviderId + '&quoteUuId=' + quoteUuId, function (data) {
         var carPlan = $('#car_plan_id').empty();
         $('#car_plan_id').animate({borderColor:'#007bff'}).delay(5);

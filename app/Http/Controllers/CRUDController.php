@@ -533,11 +533,16 @@ class CRUDController extends Controller
     public function SaveCarPlan(Request $request) {
 
         $planData = array('carQuoteUID' => $request->car_quote_uuid
-            , 'carInsurerId' => $request->insurance_provider_id
             , 'carPlanId' => $request->car_plan_id
             , 'carPremium' => $request->premium
             , 'carValue' => $request->value
             , 'carExcess' => $request->excess);
-        $response = $this->carQuoteService->planCreateUpdate($planData);
+        $response = $this->carQuoteService->carPlanCreateUpdate($planData);
+
+        if($response == 200) {
+            return redirect()->back()->with('success', 'Car Plan has been saved');
+        } else {
+            return redirect()->back()->with('message', 'Car Plan has not been saved. Error '.$response);
+        }
     }
 }

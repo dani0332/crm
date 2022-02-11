@@ -635,14 +635,52 @@ class CarQuoteService extends BaseService
         return $vehicleTypeText;
     }
 
-    public function planCreateUpdate($planData)
+    public function carPlanCreateUpdate($planData)
     {
-        dd($planData);
         $carQuoteUID = $planData['carQuoteUID'];
-        $carInsurerId = $planData['carInsurerId'];
         $carPlanId = $planData['carPlanId'];
         $carPremium = $planData['carPremium'];
         $carValue = $planData['carValue'];
         $carExcess = $planData['carExcess'];
+
+        $plansApiEndPoint = Config::get('constants.KEN_API_ENDPOINT') . '/save-manual-car-quote-plan';
+        $plansApiToken = Config::get('constants.KEN_API_TOKEN');
+        $plansApiTimeout = Config::get('constants.KEN_API_TIMEOUT');
+        $plansApiUserName = Config::get('constants.KEN_API_USER');
+        $plansApiPassword = Config::get('constants.KEN_API_PWD');
+        $authBasic = base64_encode($plansApiUserName . ":" . $plansApiPassword);
+
+        $carPlanDataArr = array(
+            "quoteUID" => $carQuoteUID,
+            "planId" => (int)$carPlanId,
+            "premium" => (float)$carPremium,
+            "carValue" => (float)$carValue,
+            "excess" => (float)$carExcess,
+        );
+
+        $kenClient = new \GuzzleHttp\Client();
+
+        try {
+            $kenRequest = $kenClient->post(
+                $plansApiEndPoint,
+                [
+                    'headers' => [
+                        'Content-Type' => 'application/json', 'Accept' => 'application/json',
+                        'x-api-token' => $plansApiToken,
+                        'Authorization' => 'Basic ' . $authBasic
+                    ],
+                    'body' => json_encode($carPlanDataArr),
+                    'timeout' => $plansApiTimeout,
+                ]
+            );
+
+            $kenStatusCode = $kenRequest->getStatusCode();
+
+            return $kenStatusCode;
+        } catch (\GuzzleHttp\Exception\BadResponseException $e) {
+            $kenStatusCode = $e->getResponse()->getStatusCode();
+
+            return $kenStatusCode;
+        }
     }
 }
