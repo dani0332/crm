@@ -458,7 +458,11 @@ class CarQuoteService extends BaseService
                         $this->query->whereNull($item);
                     } else {
                         $searchedValue = str_contains($request[$item], 'Yes') || str_contains($request[$item], 'No') ? ($request[$item] == 'Yes' ? 1 : 0) : $request[$item];
-                        $this->query->where($this->getQuerySuffix($item) . '.' . $item, $searchedValue);
+                        if($item == 'policy_number') {
+                            $this->query->where('previous_quote_policy_number', $searchedValue);
+                        } else {
+                            $this->query->where($this->getQuerySuffix($item) . '.' . $item, $searchedValue);
+                        }
                     }
                 }
             }
