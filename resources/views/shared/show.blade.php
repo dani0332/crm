@@ -7,7 +7,7 @@
 }
 </style>
 <?php
-    use App\Enums\TravelType;
+    use App\Enums\quoteTypeCode;
 ?>
     <div class="row">
         <div class="col-md-12 col-sm-12 admin-detail">
@@ -197,7 +197,7 @@
             :selectedlostreason="$selectedLostReasonId"
         />
     @endif
-    @if($model->modelType == "Car")
+    @if($model->modelType == quoteTypeCode::Car)
 
         <div class="modal fade" id="quotePlanModal" name="quotePlanModal" tabindex="-1" role="dialog" aria-labelledby="quotePlanModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
@@ -246,7 +246,7 @@
 
     @endif
 
-    @if($model->modelType == TravelType::ModelType)
+    @if($model->modelType == quoteTypeCode::Travel)
 
         <div class="modal fade" id="quotePlanModal" name="quotePlanModal" tabindex="-1" role="dialog" aria-labelledby="quotePlanModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
