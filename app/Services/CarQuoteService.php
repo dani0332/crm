@@ -697,9 +697,10 @@ class CarQuoteService extends BaseService
 
             return $kenStatusCode;
         } catch (\GuzzleHttp\Exception\BadResponseException $e) {
-            $kenStatusCode = $e->getResponse()->getStatusCode();
 
-            return $kenStatusCode;
+            $response = json_decode((string) $e->getResponse()->getBody());
+
+            return $response->msg;
         }
     }
 }

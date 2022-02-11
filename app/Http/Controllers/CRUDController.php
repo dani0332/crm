@@ -538,10 +538,10 @@ class CRUDController extends Controller
             , 'carExcess' => $request->excess);
         $response = $this->carQuoteService->carPlanCreateUpdate($planData);
 
-        if($response == 200) {
+        if($response == 200 || $response == 201) {
             return redirect()->back()->with('success', 'Car Plan has been saved');
         } else {
-            return redirect()->back()->with('message', 'Car Plan has not been saved. Error '.$response);
+            return redirect()->back()->with('message', $response);
         }
     }
 }
