@@ -51,7 +51,8 @@ class TravelQuoteService extends BaseService
             ->leftJoin('nationality as n', 'n.id', '=', 'tqr.nationality_id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'tqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'tqr.advisor_id')
-            ->leftJoin('region as r', 'r.id', '=', 'tqr.region_cover_for_id');
+            ->leftJoin('region as r', 'r.id', '=', 'tqr.region_cover_for_id')
+            ->where('qs.text', '!=', 'Fake');
     }
 
     public function saveTravelQuote(Request $request)
@@ -155,8 +156,16 @@ class TravelQuoteService extends BaseService
             $dateTo = Carbon::createFromFormat('Y-m-d', $request->endAt)->endOfDay()->toDateTimeString();
             $query->whereBetween('tqrd.advisor_assigned_date', [$dateFrom, $dateTo]);
         }
+        if (isset($request->nfdSart) && isset($request->nfdEnd) && $request->nfdSart != '' && $request->nfdEnd != '') {
+            $dateFrom = Carbon::createFromFormat('Y-m-d', $request->nfdSart)->startOfDay()->toDateTimeString();
+            $dateTo = Carbon::createFromFormat('Y-m-d', $request->nfdEnd)->endOfDay()->toDateTimeString();
+            $query->whereBetween('hqrd.next_followup_date', [$dateFrom, $dateTo]);
+        }
         if (isset($request->cdbId) && $request->cdbId != 0) {
             $query->where('tqr.code', $request->cdbId);
+        }
+        if (isset($request->email) && $request->email != '') {
+            $query->where('tqr.email', $request->email);
         }
         if (isset($request->leadStatus) && $request->leadStatus != 0) {
             $query->where('tqr.quote_status_id', $request->leadStatus);
@@ -177,6 +186,11 @@ class TravelQuoteService extends BaseService
                 $dateFrom = Carbon::createFromFormat('Y-m-d', $request['created_at'])->startOfDay()->toDateTimeString();
                 $dateTo = Carbon::createFromFormat('Y-m-d', $request['created_at_end'])->endOfDay()->toDateTimeString();
                 $this->query->whereBetween('tqr.created_at', [$dateFrom, $dateTo]);
+            }
+            if (isset($request->next_followup_date) && $request->next_followup_date != '') {
+                $dateFrom = Carbon::createFromFormat('Y-m-d', $request['next_followup_date'])->startOfDay()->toDateTimeString();
+                $dateTo = Carbon::createFromFormat('Y-m-d', $request['next_followup_date_end'])->endOfDay()->toDateTimeString();
+                $this->query->whereBetween('tqrd.next_followup_date', [$dateFrom, $dateTo]);
             }
             foreach ($searchProperties as $item) {
                 if (!empty($request[$item]) && $item != "created_at") {
@@ -319,7 +333,7 @@ class TravelQuoteService extends BaseService
             "advisor_id" => "select|title",
             "created_at" => "input|date|title|range",
             "updated_at" => "input|date|title",
-            "next_followup_date" => "input|date|text",
+            "next_followup_date" => "input|date|title|range",
             "lost_reason" => "input|text",
             "source" => "input|text",
             "premium" => "input|number|required",
@@ -366,6 +380,9 @@ class TravelQuoteService extends BaseService
             case 'mobile_no':
                 $title = "Mobile Number";
                 break;
+            case 'next_followup_date':
+                $title = "Next Followup Date";
+                break;
             default:
                 break;
         }
@@ -384,7 +401,7 @@ class TravelQuoteService extends BaseService
 
     public function fillModelSearchProperties()
     {
-        return ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'advisor_id', 'created_at'];
+        return ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'advisor_id', 'created_at', 'next_followup_date'];
     }
 
     public function getQuotePlans($id)

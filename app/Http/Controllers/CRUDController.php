@@ -161,7 +161,7 @@ class CRUDController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show($id)
+    public function show($id, Request $request)
     {
         $record = $this->crudService->getEntity($this->genericModel->modelType, $id);
         if (!$record) abort(404);
@@ -238,10 +238,9 @@ class CRUDController extends Controller
 
             return view('shared.show', compact([
                 'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList',
-                'leadStatuses','lostReasons', 'selectedLostReasonId'
+                'leadStatuses', 'lostReasons', 'selectedLostReasonId'
             ]));
-        }
-        else {
+        } else {
             return view('shared.show', compact(['record', 'model', 'customTitles', 'customTableList', 'advisors', 'leadStatuses', 'lostReasons', 'selectedLostReasonId']));
         }
     }
@@ -427,7 +426,7 @@ class CRUDController extends Controller
                 'listQuotePlanName', 'providerCode', 'providerName', 'travelType',
                 'actualPremium', 'discountPremium', 'listQuotePlanBenefitsInclusions',
                 'listQuotePlanBenefitsExclusions', 'listQuotePlanBenefitsFeatures', 'listQuotePlanBenefitsCovid19',
-                'listQuotePlanBenefitsPolicyDetailLink','modelName','listQuotePlansMembers'
+                'listQuotePlanBenefitsPolicyDetailLink', 'modelName', 'listQuotePlansMembers'
             ]));
         }
     }
