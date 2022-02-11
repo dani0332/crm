@@ -153,8 +153,8 @@ Route::group(['middleware' =>  ['auth']], function () {
         Route::post('health/healthTeamAssign', [CRUDController::class, 'healthTeamAssign'])->name('healthTeamAssign');
         Route::get('car/{quoteUuId}/updateDiscountedPremium', [CRUDController::class, 'updateDiscountedPremium']);
         Route::get('car/{quoteUuId}/add_quote', [CRUDController::class, 'add_quote']);
-
         Route::get('travel/{quoteId}/plan_details/{planId}', [CRUDController::class, 'travel_plan_details'])->name('plan_details');
+        Route::post('car/SaveCarPlan', [CRUDController::class, 'SaveCarPlan'])->name('SaveCarPlan');
     });
 
     Route::group(['prefix' => 'transapp'], function () {
@@ -225,6 +225,7 @@ Route::group(['middleware' =>  ['auth']], function () {
     Route::get('/getCarModelDetails', [ClaimController::class, 'getCarModelDetails']);
     Route::post('auditable', [AuditableController::class, 'loadAuditableComponent']);
     Route::get('/car-model-by-id', [ClaimController::class, 'carModelBasedOnCarMakeId']);
+    Route::get('/insurance-provider-plans', [ClaimController::class, 'carPlansBasedOnInsuranceProvider']);
 });
 
 
