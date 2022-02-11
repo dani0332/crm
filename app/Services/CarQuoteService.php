@@ -18,8 +18,11 @@ use Illuminate\Support\Facades\Auth;
 class CarQuoteService extends BaseService
 {
     protected $query;
-    public function __construct()
+    protected $httpService;
+
+    public function __construct(HttpRequestService $httpService)
     {
+        $this->httpService = $httpService;
         $this->query = DB::table('car_quote_request as cqr')
             ->select(
                 'cqr.uuid',
@@ -654,53 +657,29 @@ class CarQuoteService extends BaseService
         return $vehicleTypeText;
     }
 
-    public function carPlanCreateUpdate($planData)
+    public function carPlanCreateUpdate($requestData)
     {
-        $carQuoteUID = $planData['carQuoteUID'];
-        $carPlanId = $planData['carPlanId'];
-        $carPremium = $planData['carPremium'];
-        $carValue = $planData['carValue'];
-        $carExcess = $planData['carExcess'];
+        $apiEndPoint = Config::get('constants.KEN_API_ENDPOINT') . '/save-manual-car-quote-plan';
+        $apiToken = Config::get('constants.KEN_API_TOKEN');
+        $apiTimeout = Config::get('constants.KEN_API_TIMEOUT');
+        $apiUserName = Config::get('constants.KEN_API_USER');
+        $apiPassword = Config::get('constants.KEN_API_PWD');
 
-        $plansApiEndPoint = Config::get('constants.KEN_API_ENDPOINT') . '/save-manual-car-quote-plan';
-        $plansApiToken = Config::get('constants.KEN_API_TOKEN');
-        $plansApiTimeout = Config::get('constants.KEN_API_TIMEOUT');
-        $plansApiUserName = Config::get('constants.KEN_API_USER');
-        $plansApiPassword = Config::get('constants.KEN_API_PWD');
-        $authBasic = base64_encode($plansApiUserName . ":" . $plansApiPassword);
-
-        $carPlanDataArr = array(
-            "quoteUID" => $carQuoteUID,
-            "planId" => (int)$carPlanId,
-            "premium" => (float)$carPremium,
-            "carValue" => (float)$carValue,
-            "excess" => (float)$carExcess,
+        $carPlanData = array(
+            "quoteUID" => $requestData['carQuoteUID'],
+            "planId" => (int)$requestData['carPlanId'],
+            "premium" => (float)$requestData['carPremium'],
+            "carValue" => (float)$requestData['carValue'],
+            "excess" => (float)$requestData['carExcess'],
         );
-
-        $kenClient = new \GuzzleHttp\Client();
-
-        try {
-            $kenRequest = $kenClient->post(
-                $plansApiEndPoint,
-                [
-                    'headers' => [
-                        'Content-Type' => 'application/json', 'Accept' => 'application/json',
-                        'x-api-token' => $plansApiToken,
-                        'Authorization' => 'Basic ' . $authBasic
-                    ],
-                    'body' => json_encode($carPlanDataArr),
-                    'timeout' => $plansApiTimeout,
-                ]
-            );
-
-            $kenStatusCode = $kenRequest->getStatusCode();
-
-            return $kenStatusCode;
-        } catch (\GuzzleHttp\Exception\BadResponseException $e) {
-
-            $response = json_decode((string) $e->getResponse()->getBody());
-
-            return $response->msg;
-        }
+        $apiCreds = array(
+            "apiEndPoint" => $apiEndPoint,
+            "apiToken" => $apiToken,
+            "apiTimeout" => $apiTimeout,
+            "apiUserName" => $apiUserName,
+            "apiPassword" => $apiPassword,
+        );
+        $response = $this->httpService->processRequest($carPlanData,$apiCreds);
+        return $response;
     }
 }
