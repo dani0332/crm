@@ -657,7 +657,7 @@ class CarQuoteService extends BaseService
         return $vehicleTypeText;
     }
 
-    public function carPlanCreateUpdate($requestData)
+    public function carPlanCreateUpdate($request)
     {
         $apiEndPoint = Config::get('constants.KEN_API_ENDPOINT') . '/save-manual-car-quote-plan';
         $apiToken = Config::get('constants.KEN_API_TOKEN');
@@ -666,11 +666,11 @@ class CarQuoteService extends BaseService
         $apiPassword = Config::get('constants.KEN_API_PWD');
 
         $carPlanData = array(
-            "quoteUID" => $requestData['carQuoteUID'],
-            "planId" => (int)$requestData['carPlanId'],
-            "premium" => (float)$requestData['carPremium'],
-            "carValue" => (float)$requestData['carValue'],
-            "excess" => (float)$requestData['carExcess'],
+            "quoteUID" => $request->car_quote_uuid,
+            "planId" => (int)$request->car_plan_id,
+            "premium" => (float)$request->premium,
+            "carValue" => (float)$request->value,
+            "excess" => (float)$request->excess,
         );
         $apiCreds = array(
             "apiEndPoint" => $apiEndPoint,
