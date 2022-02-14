@@ -27,6 +27,7 @@ use App\Http\Controllers\AMTController;
 use App\Http\Controllers\BaseDiscountController;
 use App\Http\Controllers\BulkEmailProcessController;
 use App\Http\Controllers\CRUDController;
+use App\Http\Controllers\GenericCrudController;
 use App\Http\Controllers\FtcFormController;
 use App\Http\Controllers\FormController;
 use App\Http\Controllers\UploadResourceController;
@@ -155,6 +156,13 @@ Route::group(['middleware' =>  ['auth']], function () {
         Route::get('car/{quoteUuId}/add_quote', [CRUDController::class, 'add_quote']);
 
         Route::get('travel/{quoteId}/plan_details/{planId}', [CRUDController::class, 'travel_plan_details'])->name('plan_details');
+    });
+
+    Route::group(['prefix' => 'generic'], function () {
+        Route::resource('insuranceprovider', GenericCrudController::class);
+        Route::resource('carplan', GenericCrudController::class);
+        Route::post('save', [GenericCrudController::class, 'store'])->name('save');
+        Route::post('update', [GenericCrudController::class, 'update'])->name('update');
     });
 
     Route::group(['prefix' => 'transapp'], function () {

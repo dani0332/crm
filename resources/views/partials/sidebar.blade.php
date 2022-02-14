@@ -275,6 +275,9 @@
                                 @can('teams-list')
                                     <li><a href="{{ url('quotes/leadstatus') }}">Lead Status</a></li>
                                 @endcan
+                                <!-- @can('teams-list') -->
+                                    <li><a href="{{ url('generic/insuranceprovider') }}">Insurance Providers</a></li>
+                                <!-- @endcan -->
                             </ul>
                         </li>
                     </ul>
