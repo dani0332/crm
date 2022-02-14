@@ -24,7 +24,7 @@
                                     <tbody>
                                     @foreach ($plansList as $key => $plan)
                                             <tr>
-                                                <td><a href="{{ url('generic/carplan') }}">{{$plan->id}}</a></td>
+                                                <td><a href="{{ url('generic/carplan/'.$plan->id) }}">{{$plan->id}}</a></td>
                                                 <td>{{ ucwords($plan->text) }}</td>
                                                 <td>{{ ucwords($plan->text_ar) }}</td>
                                                 <td>{{ ucwords($plan->repair_type) }}</td>
