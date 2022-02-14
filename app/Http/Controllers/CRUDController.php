@@ -5,11 +5,9 @@ namespace App\Http\Controllers;
 use App\Enums\HealthTeamType;
 use App\Enums\LeadStatusCode;
 use App\Enums\quoteTypeCode;
-use App\Enums\TravelType;
 use App\Models\CarQuoteAdvisorToOE;
 use App\Models\GenericModel;
 use App\Models\InsuranceProvider;
-use App\Models\VehicleType;
 use App\Services\BusinessQuoteService;
 use Illuminate\Http\Request;
 use App\Services\DropdownSourceService;
@@ -225,7 +223,7 @@ class CRUDController extends Controller
                 'ecomCarInsuranceQuoteUrl', 'carQuotePlanAddons', 'vehicleTypeText', 'leadStatuses',
                 'lostReasons', 'selectedLostReasonId'
             ]));
-        } else if ($this->genericModel->modelType == TravelType::ModelType) { // Travel plans to display on detail view
+        } else if ($this->genericModel->modelType == quoteTypeCode::Travel) { // Travel plans to display on detail view
             $listQuotePlans = '';
             $quotePlans = $this->travelQuoteService->getQuotePlans($id);
             if (isset($quotePlans->message) && $quotePlans->message != '') {
@@ -423,7 +421,7 @@ class CRUDController extends Controller
                     }
                 }
             }
-            $modelName = TravelType::ModelType;
+            $modelName = quoteTypeCode::Travel;
             return view('shared.plan_details', compact([
                 'listQuotePlanName', 'providerCode', 'providerName', 'travelType',
                 'actualPremium', 'discountPremium', 'listQuotePlanBenefitsInclusions',
@@ -493,9 +491,10 @@ class CRUDController extends Controller
 
     public function add_quote(Request $request)
     {
+        $quoteUuId = $request->quoteUuId;
         $insuranceproviders = InsuranceProvider::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
 
-        return view('shared.add_quote', compact('insuranceproviders'));
+        return view('shared.add_quote', compact('insuranceproviders','quoteUuId'));
     }
 
     public function healthTeamAssign(Request $request)
@@ -528,5 +527,16 @@ class CRUDController extends Controller
         }
         $entity = $this->crudService->updateQuoteStatus($request);
         return redirect()->to('/quotes/' . strtolower($request->modelType) . '/' . $entity->uuid)->with('success', ' Lead Status has been Updated');
+    }
+
+    public function SaveCarPlan(Request $request) {
+
+        $response = $this->carQuoteService->carPlanCreateUpdate($request);
+
+        if($response == 200 || $response == 201) {
+            return redirect()->back()->with('success', 'Car Plan has been saved');
+        } else {
+            return redirect()->back()->with('message', $response);
+        }
     }
 }

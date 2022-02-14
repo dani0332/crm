@@ -35,11 +35,9 @@ $(document).ready(function() {
                         <span class="alert alert-success" id="quotePlansGenerateMsg" style="display: none">Copied</span>
                         <div class="col-auto">
                             <input type="hidden" id="quotePlansGenerateUrl" name="quotePlansGenerateUrl" value="{{ $uuid }}">
-                            @if($quoteIsCommerce == 0)
                                 @can('car-quotes-create')
                                     <a href="{{ url('quotes/car/'.$uuidModal.'/add_quote') }}" class="btn btn-primary btn-sm">Create Quote</a>
                                 @endcan
-                            @endif
                             @if(gettype($listQuotePlans) != 'string')
                                 <input type="hidden" id="quoteRequestUuId" name="quoteRequestUuId" value="{{ $quoteRequestId }}">
                                 <button type="submit" class="btn btn-primary btn-sm" id="update_discounted_premium" style="display:none;">Update Discounted Premium</button>

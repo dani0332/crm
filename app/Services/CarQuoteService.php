@@ -18,8 +18,11 @@ use Illuminate\Support\Facades\Auth;
 class CarQuoteService extends BaseService
 {
     protected $query;
-    public function __construct()
+    protected $httpService;
+
+    public function __construct(HttpRequestService $httpService)
     {
+        $this->httpService = $httpService;
         $this->query = DB::table('car_quote_request as cqr')
             ->select(
                 'cqr.uuid',
@@ -652,5 +655,31 @@ class CarQuoteService extends BaseService
         $vehicleTypeText = VehicleType::where('id', '=', $vehicleTypeId)->value('text');
 
         return $vehicleTypeText;
+    }
+
+    public function carPlanCreateUpdate($request)
+    {
+        $apiEndPoint = Config::get('constants.KEN_API_ENDPOINT') . '/save-manual-car-quote-plan';
+        $apiToken = Config::get('constants.KEN_API_TOKEN');
+        $apiTimeout = Config::get('constants.KEN_API_TIMEOUT');
+        $apiUserName = Config::get('constants.KEN_API_USER');
+        $apiPassword = Config::get('constants.KEN_API_PWD');
+
+        $carPlanData = array(
+            "quoteUID" => $request->car_quote_uuid,
+            "planId" => (int)$request->car_plan_id,
+            "premium" => (float)$request->premium,
+            "carValue" => (float)$request->value,
+            "excess" => (float)$request->excess,
+        );
+        $apiCreds = array(
+            "apiEndPoint" => $apiEndPoint,
+            "apiToken" => $apiToken,
+            "apiTimeout" => $apiTimeout,
+            "apiUserName" => $apiUserName,
+            "apiPassword" => $apiPassword,
+        );
+        $response = $this->httpService->processRequest($carPlanData,$apiCreds);
+        return $response;
     }
 }
