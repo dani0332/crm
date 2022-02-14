@@ -137,6 +137,7 @@ class CarQuoteService extends BaseService
             "currentlyInsuredWith" => $insuranceProviderText, // TEXT
             "source" => $sourceName,
             "referenceUrl" => $appUrl,
+            "is_quote_locked" => true,
         );
         if (Auth::user()->hasRole("CAR_ADVISOR")) $dataArr['advisorId'] = Auth::user()->id;
         return CapiRequestService::sendCAPIRequest('/api/v1-save-car-quote', $dataArr);
@@ -222,8 +223,6 @@ class CarQuoteService extends BaseService
             "email" => "input|email|required",
             "last_name" => "input|text|required",
             "first_name" => "input|text|required",
-
-
             "mobile_no" => "input|title|number|required",
             "quote_status_id" => "select|title",
             "advisor_id" => "select|title",
