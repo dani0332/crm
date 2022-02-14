@@ -12,6 +12,7 @@ class InsuranceProvider extends BaseModel implements AuditableContract
 {
     use HasFactory, Auditable;
     protected $table = 'insurance_provider';
+    protected $guarded = ['id'];
 
     public $access = [
 
