@@ -93,4 +93,11 @@
     :uuidModal="$record->id"
     :RequestId="$record->id" />
     @endif
+
+    @if($model->modelType == InsuranceProvder::PlanAddon)
+    <x-car-plan-addon
+    :plansList="$plansList" 
+    :uuidModal="$record->id"
+    :RequestId="$record->id" />
+    @endif
 @endsection

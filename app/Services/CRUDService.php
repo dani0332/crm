@@ -12,6 +12,8 @@ use App\Services\TeamService;
 use App\Services\HealthQuoteService;
 use App\Services\InsuranceProviderService;
 use App\Services\CarPlanService;
+use App\Services\CarPlanCoverageService;
+use App\Services\CarPlanAddonService;
 use Illuminate\Http\Request;
 use DB;
 use \Carbon\Carbon;
@@ -30,6 +32,7 @@ class CRUDService extends BaseService
     protected $quoteTypes;
     protected $insuranceproviderService;
     protected $carplanService;
+    protected $carplanaddonService;
     public function __construct(
         HealthQuoteService $healthQuoteService,
         TeamService $teamsService,
@@ -40,7 +43,9 @@ class CRUDService extends BaseService
         HomeQuoteService $homeQuoteService,
         BusinessQuoteService $businessQuoteService,
         InsuranceProviderService $insuranceproviderService,
-        CarPlanService $carplanService
+        CarPlanService $carplanService,
+        CarPlanCoverageService $carplancoverageService,
+        CarPlanAddonService $carplanaddonService
     ) {
         $this->healthQuoteService = $healthQuoteService;
         $this->carQuoteService = $carQuoteService;
@@ -52,6 +57,8 @@ class CRUDService extends BaseService
         $this->businessQuoteService = $businessQuoteService;
         $this->insuranceproviderService = $insuranceproviderService;
         $this->carplanService = $carplanService;
+        $this->carplancoverageService = $carplancoverageService;
+        $this->carplanaddonService = $carplanaddonService;
         $this->quoteTypes = ['home', 'health', 'life', 'business', 'travel', 'car'];
     }
     public function getGridData(GenericModel $model, Request $request)

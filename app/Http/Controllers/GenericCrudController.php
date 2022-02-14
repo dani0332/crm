@@ -8,6 +8,7 @@ use App\Services\InsuranceProviderService;
 use App\Services\CarPlanService;
 use App\Services\DropdownSourceService;
 use App\Services\CRUDService;
+use App\Services\CarPlanAddonService;
 use App\Enums\InsuranceProvder;
 use Illuminate\Http\Request;
 use DataTables;
@@ -21,18 +22,21 @@ class GenericCrudController extends Controller
     protected $insuranceProviderService;
     protected $carPlanService;
     protected $dropdownSourceService;
+    protected $carplanaddonService;
     public function __construct(
         InsuranceProviderService $insuranceProviderService,
         CRUDService $crudService,
         CarPlanService $carPlanService,
         DropdownSourceService $dropdownSourceService,
-        Request $request
+        Request $request,
+        CarPlanAddonService $carplanaddonService
     ) {
         $this->genericModel = new GenericModel();
         $this->crudService = $crudService;
         $this->dropdownSourceService = $dropdownSourceService;
         $this->insuranceProviderService = $insuranceProviderService;
         $this->carPlanService = $carPlanService;
+        $this->carplanaddonService = $carplanaddonService;
         $this->setModelType($request);
         $this->fillModelByModelType(ucwords($this->genericModel->modelType), $request);
     }
@@ -129,7 +133,7 @@ class GenericCrudController extends Controller
         if (!$record) abort(404);
         $model = $this->genericModel;
         $customTitles = $customTableList = [];
-
+dd($model);
         foreach ($model->properties as $property => $value) {
             if (str_contains($value, 'title')) {
                 $customTitles[$property] = $this->crudService->getCustomTitleByModelType($this->genericModel->modelType, $property);
@@ -142,6 +146,12 @@ class GenericCrudController extends Controller
         $serviceType = $model->modelType. 'Service';
         if ($this->genericModel->modelType == InsuranceProvder::Name) { // Travel plans to display on detail view
             $plansList = $this->carPlanService->getProvderPlans($id);
+            return view('generic.show', compact([
+                'record', 'model', 'customTitles', 'plansList', 'customTableList'
+            ]));
+        }
+        if ($this->genericModel->modelType == InsuranceProvder::PlanAddon) { // Travel plans to display on detail view
+            $plansList = $this->carplanaddonService->getPlanAddon($id);
             return view('generic.show', compact([
                 'record', 'model', 'customTitles', 'plansList', 'customTableList'
             ]));

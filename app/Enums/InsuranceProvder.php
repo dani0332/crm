@@ -12,5 +12,6 @@ use BenSampo\Enum\Enum;
 final class InsuranceProvder extends Enum
 {
     const PlanName =   "CarPlan";
+    const PlanAddon =   "CarPlanAddon";
     const Name =   "InsuranceProvider";
 }
