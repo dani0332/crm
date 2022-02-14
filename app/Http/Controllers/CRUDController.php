@@ -120,6 +120,10 @@ class CRUDController extends Controller
      */
     public function create(Request $request)
     {
+        $isRenewalUser = Auth::user()->hasAnyRole(["CAR_RENEWAL_ADVISOR", "CAR_RENEWAL_MANAGER"]);
+        if ($isRenewalUser) {
+            $renewalAdvisors = $this->crudService->fillRenewalData($this->genericModel);
+        }
         $customTitles = $dropdownSource = [];
         foreach ($this->genericModel->properties as $property => $value) {
             if (str_contains($value, 'title')) {
@@ -131,7 +135,7 @@ class CRUDController extends Controller
             }
         }
         $model = $this->genericModel;
-        return view('shared.add', compact('model', 'dropdownSource', 'customTitles'));
+        return view('shared.add', compact('model', 'dropdownSource', 'customTitles', 'isRenewalUser'));
     }
 
     /**
@@ -266,6 +270,10 @@ class CRUDController extends Controller
      */
     public function edit($id)
     {
+        $isRenewalUser = Auth::user()->hasAnyRole(["CAR_RENEWAL_ADVISOR", "CAR_RENEWAL_MANAGER"]);
+        if ($isRenewalUser) {
+            $renewalAdvisors = $this->crudService->fillRenewalData($this->genericModel);
+        }
         $record = $this->crudService->getEntity($this->genericModel->modelType, $id);
         $model = $this->genericModel;
         $dropdownSource = [];
@@ -284,7 +292,7 @@ class CRUDController extends Controller
                 $customLists[$property] = $data;
             }
         }
-        return view('shared.edit', compact(['record', 'model', 'dropdownSource', 'customTitles', 'customLists']));
+        return view('shared.edit', compact(['record', 'model', 'dropdownSource', 'customTitles', 'customLists', 'isRenewalUser']));
     }
 
     /**
@@ -507,7 +515,7 @@ class CRUDController extends Controller
         $quoteUuId = $request->quoteUuId;
         $insuranceproviders = InsuranceProvider::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
 
-        return view('shared.add_quote', compact('insuranceproviders','quoteUuId'));
+        return view('shared.add_quote', compact('insuranceproviders', 'quoteUuId'));
     }
 
     public function healthTeamAssign(Request $request)
@@ -542,11 +550,12 @@ class CRUDController extends Controller
         return redirect()->to('/quotes/' . strtolower($request->modelType) . '/' . $entity->uuid)->with('success', ' Lead Status has been Updated');
     }
 
-    public function SaveCarPlan(Request $request) {
+    public function SaveCarPlan(Request $request)
+    {
 
         $response = $this->carQuoteService->carPlanCreateUpdate($request);
 
-        if($response == 200 || $response == 201) {
+        if ($response == 200 || $response == 201) {
             return redirect()->back()->with('success', 'Car Plan has been saved');
         } else {
             return redirect()->back()->with('message', $response);

@@ -131,19 +131,31 @@
                     @endif
                     <form id="demo-form2" autocomplete="off" action="{{ route('saveQuote') }}" method='post' enctype="multipart/form-data"
                         data-parsley-validate class="form-horizontal form-label-left" autocomplete="off">
+                        @php
+                        $index = 0;
+                        $searchProperties = [];
+                        $skipProperties = [];
+                        if($isRenewalUser){
+                            $searchProperties = $model->renewalSearchProperties;
+                            $skipProperties = $model->renewalSkipProperties;
+                        }
+                        else{
+                            $searchProperties = $model->searchProperties;
+                            $skipProperties = $model->skipProperties;
+                        }
+                        @endphp
+
                         {{ csrf_field() }}
                         <input type="hidden" name="model" value={{ json_encode($model->properties) }} />
-                        <input type="hidden" name="modelSkipProperties" value={{ json_encode($model->skipProperties) }} />
+                        <input type="hidden" name="modelSkipProperties" value={{ json_encode($skipProperties) }} />
                         <input type="hidden" name="modelType" value={{ json_encode($model->modelType) }} />
 
-                        @php
-                        $index = 0
-                        @endphp
+
 
                         @foreach($model->properties as $property => $value)
                             @if(strpos($value, 'checkbox'))
                             @else
-                                @if(!str_contains($model->skipProperties['create'], $property))
+                                @if(!str_contains($skipProperties['create'], $property))
                                     @if(strpos($value, 'input') !== false )
                                     <div @if(count($model->properties) < 6) class="col-md-12" @else class="col-md-6" @endif id={{$property.'_div'}}>
                                     <div class="col">
@@ -250,7 +262,7 @@
                             $index++
                             @endphp
                         @endforeach
-                        @if(count($model->skipProperties) != 0)
+                        @if(count($skipProperties) != 0)
                             </div>
                         @endif
 

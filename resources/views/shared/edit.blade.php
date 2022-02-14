@@ -99,15 +99,27 @@
                         autocomplete="off">
                         {{ csrf_field() }}
                         @method('PUT')
+                        @php
+                        $searchProperties = [];
+                        $skipProperties = [];
+                        if($isRenewalUser){
+                            $searchProperties = $model->renewalSearchProperties;
+                            $skipProperties = $model->renewalSkipProperties;
+                        }
+                        else{
+                            $searchProperties = $model->searchProperties;
+                            $skipProperties = $model->skipProperties;
+                        }
+                        @endphp
 
                         <input type="hidden" name="model" value={{ json_encode($model->properties) }} />
                         <input type="hidden" name="modelType" value={{ json_encode($model->modelType) }} />
-                        <input type="hidden" name="modelSkipProperties" id="skip" value={{ json_encode($model->modelSkipProperties) }} />
+                        <input type="hidden" name="modelSkipProperties" id="skip" value={{ json_encode($skipProperties) }} />
                         @php
                         $index = 0;
                         @endphp
                         @foreach($model->properties as $property => $value)
-                            @if(!str_contains($model->skipProperties['update'], $property))
+                            @if(!str_contains($skipProperties['update'], $property))
                                 @if($index == 0 || strpos($value, 'checkbox'))
                                 @else
                                     <div @if(count($model->properties) <6) class="col-md-12" @else class="col-md-6" @endif id={{$property.'_div'}}>
@@ -207,7 +219,7 @@
                         @endforeach
 
                         @foreach ($model->properties as $property => $value)
-                            @if(!str_contains($model->skipProperties['update'], $property))
+                            @if(!str_contains($skipProperties['update'], $property))
                                 @if (strpos($value, 'checkbox'))
                                     <div class="col-md-2" id={{$property.'_div'}}>
                                         <div class="col-md-9">
