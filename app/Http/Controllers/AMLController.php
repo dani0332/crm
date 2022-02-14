@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use DataTables;
 use Auth;
 use App\Enums\quoteTypeCode;
+use App\Models\ApplicationStorage;
 use App\Services\CheckAmlService;
 use App\Services\QuoteStatusService;
 use App\Models\CarQuote;
@@ -25,6 +26,7 @@ use App\Models\QuoteStatus;
 use App\Models\SanctionListDownloads;
 use App\Models\UAEAMLListUploads;
 use App\Services\SanctionListService;
+use Illuminate\Support\Facades\Config;
 
 class AMLController extends Controller
 {
@@ -150,7 +152,7 @@ class AMLController extends Controller
         $quoteType = QuoteType::where('id', '=', $quoteTypeId)->get(array('code', 'text'));
         $quoteTypeCode = $quoteType[0]->code;
         $quoteTypeText = $quoteType[0]->text;
-
+        $isCompanySearchEnabled = ApplicationStorage::where('key_name', '=', 'IS_AML_ENTITY_SEARCH_ENABLED')->value('value');
         if ($quoteTypeCode != "") {
 
             $kycLogs = AML::where('quote_request_id', '=', $quoteRequestId)
@@ -392,7 +394,8 @@ class AMLController extends Controller
                 "quoteTypeId",
                 "getAMLNumRows",
                 "nationalityList",
-                "yearsList"
+                "yearsList",
+                "isCompanySearchEnabled"
             ));
         } else {
             return view("aml.details", compact(
@@ -409,7 +412,8 @@ class AMLController extends Controller
                 "quoteTypeId",
                 "getAMLNumRows",
                 "nationalityList",
-                "yearsList"
+                "yearsList",
+                "isCompanySearchEnabled"
             ));
         }
     }
