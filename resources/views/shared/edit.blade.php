@@ -8,10 +8,44 @@
     }
 </style>
 <script>
+    function getCarMakes(id)
+    {
+        $.get('/car-make', function (data) {
+            var carMake = $('#car_make_id').empty();
+            $.each(data, function (create, carmodelObj) {
+                if(carmodelObj.id == id){
+                    carMake.append('<option ata-id="' + carmodelObj.code + '"value="' + carmodelObj.id + '" selected>' + carmodelObj.text + '</option>');
+                }else{
+                carMake.append('<option data-id="' + carmodelObj.code + '" value="' + carmodelObj.id + '">' + carmodelObj.text + '</option>');
+                }
+            });
+        });
+    }
+    function getCarModels(makeId, modelId)
+    {
+        $.get('/car-model-by-id?id=' + makeId, function (data) {
+            var carmodel = $('#car_model_id').empty();
+            $.each(data, function (create, carmodelObj) {
+                if(carmodelObj.id == modelId){
+                    carmodel.append('<option data-id="' + carmodelObj.code + '" value="' + carmodelObj.id + '" selected>' + carmodelObj.text + '</option>');
+                }else{
+                    carmodel.append('<option data-id="' + carmodelObj.code + '" value="' + carmodelObj.id + '">' + carmodelObj.text + '</option>');
+                }
+            });
+        });
+    }
     $(document).ready(function() {
         var model = JSON.parse('<?php echo json_encode(get_object_vars($model)) ?>');
         var modelPropertiesArray = convertObjectToArray(model.properties);
         var modelSkipProperties = convertObjectToArray(model.skipProperties);
+        var oldCarModelId = JSON.parse('<?php echo json_encode($record->car_model_id) ?>');
+        var oldCarMakeId = JSON.parse('<?php echo json_encode($record->car_make_id) ?>');
+        if(oldCarMakeId != '') {
+            getCarMakes(oldCarMakeId);
+        }
+        if(oldCarModelId != '') {
+            getCarModels(oldCarMakeId, oldCarModelId);
+        }
         var result = modelSkipProperties.filter(obj => {
             return obj.name === 'update'
             });
@@ -41,7 +75,6 @@
 
             });
             $('#iam_possesion_type_id').on('change',function(){
-                debugger;
                 if($("#iam_possesion_type_id option:selected").text() == 'A landlord'){
                     $('#has_building_div').show();
                 }
@@ -51,15 +84,12 @@
             });
 
             $('#has_personal_belongings').on('change',function(){
-                debugger;
                 this.checked ? $('#personal_belongings_aed_div').show() : $('#personal_belongings_aed_div').hide();
             });
             $('#has_building').on('change',function(){
-                debugger;
                 this.checked ? $('#building_aed_div').show() : $('#building_aed_div').hide();
             });
             $('#has_contents').on('change',function(){
-                debugger;
                 if(this.checked){
                     if($("#iam_possesion_type_id option:selected").text() == 'A landlord'){
                         $('#has_building_div').show();

@@ -132,6 +132,24 @@ class CRUDService extends BaseService
         return $query->orderBy('r.name')->distinct()->get();
     }
 
+    public function getRenewalAdvisorsByModelType($modelType)
+    {
+        $query = DB::table('users as u')
+            ->join('model_has_roles as mr', 'mr.model_id', '=', 'u.id')
+            ->join('roles as r', 'r.id', '=', 'mr.role_id')
+            ->select('u.id', DB::raw("CONCAT(u.name,' - ',r.name) AS name"));
+        if (strtolower($modelType) == strtolower(quoteTypeCode::Car)) {
+            $query->whereIn('r.name', [strtoupper($modelType) . '_RENEWAL_ADVISOR', 'advisor']);
+        } else if (strtolower($modelType) ==  strtolower(quoteTypeCode::Health)) {
+            $query->whereIn('r.name', [strtoupper($modelType) . '_WCU_ADVISOR', 'RM_ADVISOR', 'EBP_ADVISOR']);
+        } else if (strtolower($modelType) ==  strtolower(quoteTypeCode::Business)) {
+            $query->whereIn('r.name', ['CORPLINE_ADVISOR']);
+        } else {
+            $query->where('r.name', strtoupper($modelType) . '_ADVISOR');
+        }
+        return $query->orderBy('r.name')->distinct()->get();
+    }
+
     public function getEBPAndRMAdvisors()
     {
         $query = DB::table('users as u')

@@ -158,14 +158,15 @@ class CarQuoteService extends BaseService
         $carQuote->emirate_of_registration_id = $request->emirate_of_registration_id;
         $carQuote->car_type_insurance_id = $request->car_type_insurance_id;
         $carQuote->claim_history_id = $request->claim_history_id;
+        $carQuote->quote_status_id = $request->quote_status_id;
         $carQuote->premium = $request->premium;
         $carQuote->car_value = $request->car_value;
         $carQuote->seat_capacity = $request->seat_capacity;
         $carQuote->cylinder = $request->cylinder;
         $carQuote->vehicle_type_id = $request->vehicle_type_id;
         $carQuote->additional_notes = $request->additional_notes;
-        $carQuote->car_make_id = CarMake::where('code', '=', $request->car_make_id)->value('id');
-        $carQuote->car_model_id = CarModel::where('code', '=', $request->car_model_id)->value('id');
+        $carQuote->car_make_id = $request->car_make_id;
+        $carQuote->car_model_id = $request->car_model_id;
         $carQuote->currently_insured_with = $request->currently_insured_with;
         $carQuote->save();
 

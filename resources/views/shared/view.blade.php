@@ -612,9 +612,12 @@
                                             <label class="col-form-label col-md-2 col-sm-2" for="Assign To">Assign
                                                 To</label>
                                             <div class="col-md-6 col-sm-6">
+                                                @php
+                                                    $updatedAdvisors = $isRenewalUser ? $renewalAdvisors : $advisors;
+                                                @endphp
                                                 <select class="form-control" id="assigned_to_id_new"
                                                     name="assigned_to_id_new">
-                                                    @foreach ($advisors as $handler)
+                                                    @foreach ($updatedAdvisors as $handler)
                                                         <option value="{{ $handler->id }}">{{ $handler->name }}
                                                         </option>
                                                     @endforeach

@@ -80,7 +80,8 @@ class CRUDController extends Controller
         //Checking if the loggedIn user is Renewal User
         $isRenewalUser = Auth::user()->hasAnyRole(["CAR_RENEWAL_ADVISOR", "CAR_RENEWAL_MANAGER"]);
         if ($isRenewalUser) {
-            $renewalAdvisors = $this->crudService->fillRenewalData($this->genericModel);
+            $this->crudService->fillRenewalData($this->genericModel);
+            $renewalAdvisors = $this->crudService->getRenewalAdvisorsByModelType($this->genericModel->modelType);
         }
 
         // Getting the data for grid based on the model type
@@ -108,9 +109,9 @@ class CRUDController extends Controller
             return DataTables::of($gridData)
                 ->addIndexColumn()
                 ->make(true);
-            return view('shared.view', compact('model', 'dropdownSource', 'customTitles', 'advisors', 'isManagerORDeputy', 'isRenewalUser'));
+            return view('shared.view', compact('model', 'dropdownSource', 'customTitles', 'advisors', 'isManagerORDeputy', 'isRenewalUser', 'renewalAdvisors'));
         }
-        return view('shared.view', compact('model', 'dropdownSource', 'customTitles', 'advisors', 'isManagerORDeputy', 'isRenewalUser'));
+        return view('shared.view', compact('model', 'dropdownSource', 'customTitles', 'advisors', 'isManagerORDeputy', 'isRenewalUser', 'renewalAdvisors'));
     }
 
     /**

@@ -29,9 +29,6 @@
                     car_model_id: car_model_id
                 },
                 success: function(data){
-                        console.log("cylinder: ",data.cylinder);
-                        console.log("seat_capacity: ",data.seat_capacity);
-                        console.log("vehicle_type_id: ",data.vehicle_type_id);
                     if(data.cylinder || data.seat_capacity || data.vehicle_type_id){
                         $('#cylinder').val(data.cylinder);
                         $('#seat_capacity').val(data.seat_capacity);
@@ -56,7 +53,6 @@
         var modelPropertiesArray = convertObjectToArray(model.properties);
         if(model.modelType == "Home") {
             $('#has_personal_belongings_div,#personal_belongings_aed_div,#has_building_div,#building_aed_div,#contents_aed_div').each(function(){
-                debugger;
                 if($('#'+$(this).attr('id').replace('_div', '')).attr('type') == 'checkbox'){
                     if(!$('#'+$(this).attr('id').replace('_div', '')).is(':checked')) {
                         $(this).hide();
@@ -69,7 +65,6 @@
                 }
             });
             $('#iam_possesion_type_id').on('change',function(){
-                debugger;
                 if($("#iam_possesion_type_id option:selected").text() == 'A landlord'){
                     $('#has_building_div').show();
                 }
