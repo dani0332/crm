@@ -39,7 +39,7 @@
             var isAdmin = JSON.parse('<?php echo json_encode(Auth::user()->hasRole("ADMIN")); ?>');
             var isManagerOrDeputy = $("#isManagerOrDeputy").val();
             // Adding custom search fields for admin role
-            if(isAdmin) {
+            if(isAdmin && !isRenewalUser) {
                 model.searchProperties.push('is_ecommerce');
                 model.searchProperties.push('payment_status_id');
             }
@@ -246,6 +246,7 @@
                     url: '/quotes/' + model.modelType.toLowerCase(),
                     data: function(d) {
                         var carProps = isRenewalUser ? model.renewalSearchProperties : model.searchProperties;
+                        carProps = [...new Set(carProps)];
                         carProps.forEach(element => {
                             d[element] = $('#' + element).val();
                         });
@@ -438,6 +439,7 @@
                                 @php
                                     array_push($searchProperties, 'is_ecommerce');
                                     array_push($searchProperties, 'payment_status_id');
+                                    $searchProperties = array_unique($searchProperties);
                                 @endphp
                             @endif
                             @foreach ($model->properties as $property => $value)
