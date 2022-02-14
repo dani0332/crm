@@ -104,7 +104,7 @@
                         <input type="hidden" name="modelType" value={{ json_encode($model->modelType) }} />
                         <input type="hidden" name="modelSkipProperties" id="skip" value={{ json_encode($model->modelSkipProperties) }} />
                         @php
-                        $index = 0
+                        $index = 0;
                         @endphp
                         @foreach($model->properties as $property => $value)
                             @if(!str_contains($model->skipProperties['update'], $property))

@@ -37,9 +37,9 @@ class TeamService extends BaseService
         return Team::find($team->id)->uuid;
     }
 
-    public function getGridData($searchProperties, $request)
+    public function getGridData($model, $request)
     {
-
+        $searchProperties = $model->searchProperties;
         if ($request->ajax()) {
             foreach ($searchProperties as $item) {
                 if (!empty($request[$item])) {

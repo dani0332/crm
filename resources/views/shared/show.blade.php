@@ -7,7 +7,7 @@
 }
 </style>
 <?php
-    use App\Enums\TravelType;
+    use App\Enums\quoteTypeCode;
 ?>
     <div class="row">
         <div class="col-md-12 col-sm-12 admin-detail">
@@ -23,7 +23,7 @@
                 <div class="x_title">
                     <h2>{{(str_contains(strtolower($model->modelType), 'team') ? 'Team' : (str_contains(strtolower($model->modelType), 'leadstatus') ? 'Lead Status' : $model->modelType)). ' Detail' }}</h2>
                     <ul class="nav navbar-right panel_toolbox">
-                        <li><a href="{{ url('quotes/'.strtolower($model->modelType)) }}" class="btn btn-warning btn-sm">{{(str_contains(strtolower($model->modelType), 'team') ? 'Team' : (str_contains(strtolower($model->modelType), 'leadstatus') ? 'Lead Status' : $model->modelType)). ' List' }}</a></li>
+                        <li><a href="javascript:history.back()" class="btn btn-warning btn-sm">{{(str_contains(strtolower($model->modelType), 'team') ? 'Team' : (str_contains(strtolower($model->modelType), 'leadstatus') ? 'Lead Status' : $model->modelType)). ' List' }}</a></li>
                     </ul>
                     <div class="clearfix"></div>
                 </div>
@@ -197,7 +197,7 @@
             :selectedlostreason="$selectedLostReasonId"
         />
     @endif
-    @if($model->modelType == "Car")
+    @if($model->modelType == quoteTypeCode::Car)
 
         <div class="modal fade" id="quotePlanModal" name="quotePlanModal" tabindex="-1" role="dialog" aria-labelledby="quotePlanModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
@@ -246,7 +246,7 @@
 
     @endif
 
-    @if($model->modelType == TravelType::ModelType)
+    @if($model->modelType == quoteTypeCode::Travel)
 
         <div class="modal fade" id="quotePlanModal" name="quotePlanModal" tabindex="-1" role="dialog" aria-labelledby="quotePlanModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered modal-lg" role="document">

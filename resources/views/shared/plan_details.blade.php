@@ -1,7 +1,7 @@
 <?php
-    use App\Enums\TravelType;
+    use App\Enums\quoteTypeCode;
 ?>
-@if($modelName == TravelType::ModelType)
+@if(isset($modelName) && $modelName == quoteTypeCode::Travel)
 <div class="row">
         <div class="col-md-12 col-sm-12 admin-detail">
             <div class="x_panel" style="border: none">
@@ -43,7 +43,7 @@
                                 <tr><td>Discount Premium:</td> <td>{{ $discountPremium }}</td></tr>
                             </table>
                         </div>
-                       
+
                         <div class="tab-pane fade" id="members" role="tabpanel" aria-labelledby="members-tab">
                             <table cellpadding="3" cellspacing="3">
                                 <tr>

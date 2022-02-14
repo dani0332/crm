@@ -51,7 +51,7 @@ class CRUDService extends BaseService
         $lowerCaseModelType = strtolower($model->modelType);
 
         return $this->{in_array($lowerCaseModelType, $this->quoteTypes) ? $lowerCaseModelType . 'QuoteService' : $lowerCaseModelType . 'Service'}
-            ->getGridData($model->searchProperties, $request);
+            ->getGridData($model, $request);
     }
 
     public function getLeads($CDBID, $email, $mobile_no, $leadType)

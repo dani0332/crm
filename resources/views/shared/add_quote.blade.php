@@ -30,7 +30,7 @@ $(document).ready(function() {
             <div class="x_title">
                 <h2>Create Car Quote</h2>
                 <ul class="nav navbar-right panel_toolbox">
-                    <li><a href="{{ url('quotes/car') }}" class="btn btn-warning btn-sm">Car List</a></li>
+                    <li><a href="{{ url('quotes/car/'.$quoteUuId.'') }}" class="btn btn-warning btn-sm">Go back</a></li>
                 </ul>
                 <div class="clearfix"></div>
             </div>
@@ -39,9 +39,12 @@ $(document).ready(function() {
                 @if(session()->has('success'))
                     <div class="alert alert-success">{{ session()->get('success') }}</div>
                 @endif
-                <form id="demo-form2" method='post' action="" enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left" autocomplete="off">
+                @if(session()->has('message'))
+                    <div class="alert alert-danger">{{ session()->get('message') }}</div>
+                @endif
+                <form id="update_car_plans" method='post' action="{{ route('SaveCarPlan') }}" enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left" autocomplete="off">
                     {{csrf_field()}}
-
+                    <input type="hidden" id="car_quote_uuid" name="car_quote_uuid" value="{{ $quoteUuId }}">
                     <div class="item form-group">
                         <div class="col-md-6 col-sm-6">
                             <div class="row">
@@ -49,24 +52,30 @@ $(document).ready(function() {
                                     <table cellspacing="5" cellpadding="5">
                                         <tr>
                                             <td>
-                                                <select class="form-control" id='insurance_provider_id' name='insurance_provider_id' data-toggle="tooltip" data-placement="top" title="Please select insurance provider" style="width: auto;">
+                                                <select class="form-control" id='insurance_provider_id' name='insurance_provider_id' data-toggle="tooltip" data-placement="top" title="Please select insurance provider" style="width: 250px">
                                                     <option value=''>Select Provider</option>
                                                     @foreach($insuranceproviders as $insuranceprovider)
                                                         @if (old('insurance_provider_id') == $insuranceprovider->id)
-                                                            <option value="{{ $insuranceprovider->id }}" data-id="{{ $insuranceprovider->code }}" selected>{{ $insuranceprovider->text }}</option>
+                                                            <option value="{{ $insuranceprovider->id }}" selected>{{ $insuranceprovider->text }}</option>
                                                         @else
-                                                            <option value="{{ $insuranceprovider->id }}" data-id="{{ $insuranceprovider->code }}">{{ $insuranceprovider->text }}</option>
+                                                            <option value="{{ $insuranceprovider->id }}">{{ $insuranceprovider->text }}</option>
                                                         @endif
                                                     @endforeach
                                                 </select>
                                             </td>
                                             <td>
-                                                <select class="form-control" id="car_plan_id" name="car_plan_id" data-toggle="tooltip" data-placement="top" title="Please select plan" style="width: auto;">
+                                                <select class="form-control" id="car_plan_id" name="car_plan_id" data-toggle="tooltip" data-placement="top" title="Please select plan" style="width: 250px">
                                                     <option value="">Select Plan</option>
                                                 </select>
                                             </td>
                                             <td>
-                                                <input type="number" id="premium" name="premium" placeholder="Enter Premium" onfocus="this.type='number';" class="form-control" data-toggle="tooltip" data-placement="top" title="Please enter premium" onKeyDown="if(this.value.length==11)return false;" style="width: 150px;">
+                                                <input type="number" id="premium" name="premium" placeholder="Enter Premium (without VAT)" class="form-control" data-toggle="tooltip" data-placement="top" title="Please enter premium (without VAT)" onKeyDown="if(this.value.length==8) return false;" style="width: 200px">
+                                            </td>
+                                            <td>
+                                                <input type="number" id="value" name="value" placeholder="Enter Car Value" class="form-control" data-toggle="tooltip" data-placement="top" title="Please enter car value" onKeyDown="if(this.value.length==8) return false;" style="width: 200px">
+                                            </td>
+                                            <td>
+                                                <input type="number" id="excess" name="excess" placeholder="Enter Excess" class="form-control" data-toggle="tooltip" data-placement="top" title="Please enter excess" onKeyDown="if(this.value.length==8) return false;" style="width: 200px">
                                             </td>
                                             <td>
                                                 {{-- <a class="extra-fields-customer" href="#"><span class="fa fa-plus-square"></span></a> --}}
@@ -84,7 +93,7 @@ $(document).ready(function() {
                     <div class="row">
                     <div class="col-auto mr-auto"></div>
                         <div class="col-auto">
-                            <button type="submit" class="btn btn-warning btn-sm" id="return_to_view">Create Quote</button>
+                            <button type="submit" class="btn btn-warning btn-sm">Create Quote</button>
                         </div>
                     </div>
                 </form>
