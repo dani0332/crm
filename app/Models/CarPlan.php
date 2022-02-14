@@ -5,8 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\BaseModel;
-
-class CarPlan extends BaseModel
+use OwenIt\Auditing\Auditable;
+use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
+class CarPlan extends BaseModel implements AuditableContract
 {
     use HasFactory;
     protected $table = 'car_plan';

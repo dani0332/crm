@@ -161,6 +161,7 @@ Route::group(['middleware' =>  ['auth']], function () {
     Route::group(['prefix' => 'generic'], function () {
         Route::resource('insuranceprovider', GenericCrudController::class);
         Route::resource('carplan', GenericCrudController::class);
+        Route::resource('carplancoverage', GenericCrudController::class);
         Route::post('save', [GenericCrudController::class, 'store'])->name('save');
         Route::post('update', [GenericCrudController::class, 'update'])->name('update');
     });
