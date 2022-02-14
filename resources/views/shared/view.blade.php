@@ -15,6 +15,13 @@
 
     </style>
     <script>
+        function formatedDate(date) {
+            var newDate = new Date(date);
+            var offset = newDate.getTimezoneOffset();
+            newDate = new Date(newDate.getTime() - (offset*60*1000));
+            newDate = newDate.toISOString().split('T')[0];
+            return newDate;
+        }
         $(document).ready(function() {
             $('.additional-filters').hide();
             $('#showlink').on('click',function() {
@@ -243,11 +250,14 @@
                         nextFollowupDateColumn = i;
                     }
                 }
+
                 for (let index = 1; index < rows.length; index++) {
                     var columns = $(rows[index]).children();
                     for (let i = 0; i < columns.length; i++) {
-                        if(i == nextFollowupDateColumn && (new Date().toLocaleDateString() > new Date($(columns[i]).text()).toLocaleDateString())){
-                            $(rows[index]).children().eq(i).css({'color': 'white', 'background-color': 'red', 'font-weight': 'bold', 'font-size': '12px'});
+                        if(i == nextFollowupDateColumn && $(columns[i]).text() != ""){
+                            if(formatedDate(new Date()) > formatedDate(new Date($(columns[i]).text()))){
+                                $(rows[index]).children().eq(i).css({'color': 'white', 'background-color': 'red', 'font-weight': 'bold', 'font-size': '12px'});
+                            }
                         }
                         if (checkboxIndexes.includes(i)) {
                             const element = columns[i];
