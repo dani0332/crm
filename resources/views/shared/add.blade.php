@@ -157,7 +157,20 @@
                                             <span class='required'>*</span>
                                             @endif
                                         </span>
-                                        <input @if(explode("|", $value)[1] == "date") readonly="readonly" @endif  type={{ explode("|", $value)[1] }} id={{$property}} name={{$property}} value="{{ old($property) }}" class="form-control">
+                                        @php
+                                            $title = '';
+                                            if(str_contains($value, 'title')){
+                                                $title = 'Please confirm '. strtolower($customTitles[$property]);
+                                            }else{
+                                                $title = 'Please confirm '. str_replace("_"," ",strtolower($property));
+                                            }
+                                        @endphp
+                                        <input @if(explode("|", $value)[1] == "date") readonly="readonly" @endif
+                                        type={{ explode("|", $value)[1] }} id={{$property}} name={{$property}} value="{{ old($property) }}"
+                                        @if($property == 'seat_capacity' || $property == 'cylinder')
+                                        data-toggle="tooltip" data-placement="top" title="{{$title}}"
+                                        @endif
+                                        class="form-control">
                                         @if ($errors->has($property))
                                             <span class="text-danger">{{ $errors->first($property) }}</span>
                                         @endif
@@ -177,11 +190,23 @@
                                             <span class='required'>*</span>
                                             @endif
                                         </span>
-                                        <select @if(strpos($value, 'multiple')) name="{{$property.'[]'}}" multiple="multiple" class="form-control select2 select-roles" @else class="form-control" name="{{$property}}" @endif id="{{$property}}" >
+                                        @php
+                                            $title = '';
+                                            if(str_contains($value, 'title')){
+                                                $title = 'Please select '. strtolower($customTitles[$property]);
+                                            }else{
+                                                $title = 'Please select '. str_replace("_"," ",strtolower($property));
+                                            }
+                                        @endphp
+                                        <select @if(strpos($value, 'multiple')) name="{{$property.'[]'}}" multiple="multiple" class="form-control select2 select-roles" @else class="form-control" name="{{$property}}" @endif
+                                            @if($property == 'vehicle_type_id')
+                                            data-toggle="tooltip" data-placement="top" title="{{$title}}"
+                                            @endif
+                                            id="{{$property}}" >
                                             @if(strpos($value, 'title'))
-                                                <option value="">{{"Please select ".$customTitles[$property] }}</option>
+                                                <option value="">{{"Please confirm ".$customTitles[$property] }}</option>
                                             @else
-                                                <option value="">{{"Please select ".str_replace("id"," ",str_replace("_"," ",$property)) }}</option>
+                                                <option value="">{{"Please confirm ".str_replace("id"," ",str_replace("_"," ",$property)) }}</option>
                                             @endif
                                             @foreach($dropdownSource[$property] as $item)
 

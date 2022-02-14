@@ -219,36 +219,37 @@ class CarQuoteService extends BaseService
         return array(
             "id" => "readonly|none",
             "code" => "input|title",
-            "email" => "input|email|required",
-            "last_name" => "input|text|required",
             "first_name" => "input|text|required",
-
-
+            "last_name" => "input|text|required",
+            "email" => "input|email|required",
             "mobile_no" => "input|title|number|required",
-            "quote_status_id" => "select|title",
-            "advisor_id" => "select|title",
             "dob" => "input|date|title|date|required",
-            "is_ecommerce" => "|static|title|Yes,No",
-            "payment_status_id" => "select|title",
-            "created_at" => "input|date|title|range",
-            "updated_at" => "input|date|title",
-            "car_value" => "input|number|required",
-            "seat_capacity" => "input|number|required",
-            "next_followup_date" => "input|date|title|range",
-            "source" => "input|text",
-            "lost_reason" => "input|text",
-            "cylinder" => "input|number|required",
-            "vehicle_type_id" => "select|title|required",
             "nationality_id" => "select|title|required",
             "uae_license_held_for_id" => "select|title|required",
             "car_make_id" => "select|title|required",
             "car_model_id" => "select|title|required",
             "year_of_manufacture" => "select|title|required",
+            "car_value" => "input|number|required",
+            "vehicle_type_id" => "select|title|required",
+            "seat_capacity" => "input|number|title|required",
+            "cylinder" => "input|number|title|required",
+            "car_type_insurance_id" => "select|title|required",
             "emirate_of_registration_id" => "select|title|required",
+            "currently_insured_with" => "select|title|required",
+            "claim_history_id" => "select|title|required",
+            "source" => "input|text",
+            "additional_notes" => "textarea|required",
+            "quote_status_id" => "select|title",
+            "advisor_id" => "select|title",
+            "is_ecommerce" => "|static|title|Yes,No",
+            "payment_status_id" => "select|title",
+            "created_at" => "input|date|title|range",
+            "updated_at" => "input|date|title",
+            "next_followup_date" => "input|date|title|range",
+            "lost_reason" => "input|text",
             "premium" => "input|number",
             "paid_at" => "input|date",
             "payment_gateway" => "input|title",
-            "currently_insured_with" => "select|title|required",
             "promo_code" => "input|title",
             "device" => "input|title",
             "policy_number" => "input",
@@ -258,9 +259,6 @@ class CarQuoteService extends BaseService
             "calculated_value" => "input|number",
             "created_by" => "input",
             "updated_by" => "input",
-            "car_type_insurance_id" => "select|title|required",
-            "claim_history_id" => "select|title|required",
-            "additional_notes" => "textarea|required",
             "plan_id" => "select|title",
             "car_plan_provider_id" => "select|title",
             "quote_status_id" => "select|title",
@@ -348,6 +346,12 @@ class CarQuoteService extends BaseService
                 break;
             case 'next_followup_date':
                 $title = "Next Followup Date";
+                break;
+            case 'seat_capacity':
+                $title = "Seat Capacity";
+                break;
+            case 'cylinder':
+                $title = "Cylinder";
                 break;
             default:
                 break;
@@ -566,9 +570,9 @@ class CarQuoteService extends BaseService
     public function fillModelSkipProperties()
     {
         return [
-            "create" => "id,advisor_id,paid_at,lost_reason,payment_status_id,plan_id,car_plan_provider_id,code,is_ecommerce,payment_gateway,created_at,next_followup_date,updated_at,promo_code,quote_status_id,device,policy_number,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by",
+            "create" => "id,advisor_id,paid_at,lost_reason,payment_status_id,plan_id,premium,car_plan_provider_id,code,is_ecommerce,payment_gateway,created_at,next_followup_date,updated_at,promo_code,quote_status_id,device,policy_number,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by",
             "list" => "additional_notes,email,mobile_no,paid_at,plan_id,car_plan_provider_id,payment_gateway,currently_insured_with,promo_code,car_make_id,car_model_id,device,policy_number,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by,nationality_id,dob,year_of_manufacture,uae_license_held_for_id,car_value,emirate_of_registration_id,claim_history_id,car_type_insurance_id",
-            "update" => "id,advisor_id,paid_at,payment_status_id,lost_reason,plan_id,car_plan_provider_id,code,is_ecommerce,payment_gateway,created_at,next_followup_date,updated_at,promo_code,device,policy_number,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by",
+            "update" => "id,advisor_id,paid_at,payment_status_id,lost_reason,plan_id,premium,car_plan_provider_id,code,is_ecommerce,payment_gateway,created_at,next_followup_date,updated_at,promo_code,device,policy_number,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by",
             "show" => "",
         ];
     }
@@ -679,7 +683,7 @@ class CarQuoteService extends BaseService
             "apiUserName" => $apiUserName,
             "apiPassword" => $apiPassword,
         );
-        $response = $this->httpService->processRequest($carPlanData,$apiCreds);
+        $response = $this->httpService->processRequest($carPlanData, $apiCreds);
         return $response;
     }
 }
