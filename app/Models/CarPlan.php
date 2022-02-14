@@ -10,6 +10,7 @@ class CarPlan extends BaseModel
 {
     use HasFactory;
     protected $table = 'car_plan';
+    protected $guarded = ['id'];
 
     public $access = [
 
