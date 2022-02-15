@@ -7,7 +7,7 @@
 }
 </style>
 <?php
-    use App\Enums\InsuranceProvder;
+    use App\Enums\InsuranceProvderConstants;
 ?>
     <div class="row">
         <div class="col-md-12 col-sm-12 admin-detail">
@@ -87,28 +87,28 @@
             </div>
         </div>
     </div>
-    @if($model->modelType == InsuranceProvder::Name)
+    @if($model->modelType == InsuranceProvderConstants::NAME)
         <x-provider-car-plans 
         :plansList="$plansList" 
         :uuidModal="$record->id"
         :RequestId="$record->id"
         :model="$model" />
     @endif
-    @if($model->modelType == InsuranceProvder::PlanName)
+    @if($model->modelType == InsuranceProvderConstants::PLANNAME)
         <x-provider-car-plans-coverage 
         :coverageList="$coverageList" 
         :uuidModal="$record->id"
         :RequestId="$record->id"
         :model="$model" />
     @endif
-    @if($model->modelType == InsuranceProvder::Coverage)
+    @if($model->modelType == InsuranceProvderConstants::COVERAGE)
         <x-car-plan-addon
         :plansList="$plansList" 
         :uuidModal="$record->id"
         :RequestId="$record->id"
         :model="$model" />
     @endif
-    @if($model->modelType == InsuranceProvder::PlanAddon)
+    @if($model->modelType == InsuranceProvderConstants::PLANADDON)
         <x-car-plan-add-on-option
         :plansList="$plansList" 
         :uuidModal="$record->id"

@@ -11,7 +11,7 @@ use App\Services\CRUDService;
 use App\Services\CarPlanCoverageService;
 use App\Services\CarPlanAddOnService;
 use App\Services\CarPlanAddOnOptionService;
-use App\Enums\InsuranceProvder;
+use App\Enums\InsuranceProvderConstants;
 use Illuminate\Http\Request;
 use DataTables;
 use Illuminate\Support\Facades\Auth;
@@ -150,26 +150,26 @@ class GenericCrudController extends Controller
             }
         }
         $serviceType = $model->modelType. 'Service';
-        if ($this->genericModel->modelType == InsuranceProvder::Name) {
+        if ($this->genericModel->modelType == InsuranceProvderConstants::NAME) {
             $plansList = $this->carPlanService->getProvderPlans($id);
             return view('generic.show', compact([
                 'record', 'model', 'customTitles', 'plansList', 'customTableList'
             ]));
         }
-        if ($this->genericModel->modelType == InsuranceProvder::PlanName) {
+        if ($this->genericModel->modelType == InsuranceProvderConstants::PLANNAME) {
             $coverageList = $this->carPlanCoverageService->getPlanCoverage($id);
             return view('generic.show', compact([
                 'record', 'model', 'customTitles', 'coverageList', 'customTableList'
             ]));
         }
-        if ($this->genericModel->modelType == InsuranceProvder::Coverage) {
+        if ($this->genericModel->modelType == InsuranceProvderConstants::COVERAGE) {
             $plansList = $this->carPlanAddOnService->getPlanAddon($record->plan_id);
 
             return view('generic.show', compact([
                 'record', 'model', 'customTitles', 'plansList', 'customTableList'
             ]));
         }
-        if ($this->genericModel->modelType == InsuranceProvder::PlanAddon) {
+        if ($this->genericModel->modelType == InsuranceProvderConstants::PLANADDON) {
             $plansList = $this->carPlanAddOnOptionService->getPlanAddonOption($record->addon_id);
 
             return view('generic.show', compact([
