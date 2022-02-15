@@ -190,12 +190,16 @@
 
                 case 'car':
                     if(isRenewalUser){
+                        if(isManagerOrDeputy){
                         disableSortColumns = [-1,1,2,3,4,5,6,7,8,9,10,14,15,16,17,18];
+                        }else{
+                            disableSortColumns = [-1,1,2,3,4,5,6,7,8,9,13,14,15,16,17];
+                        }
                     }
                     else if(isManagerOrDeputy || isAdmin){
-                        disableSortColumns = [-1,1,2,3,4,5,6,7,8,9,10,11,12,16,17,18,19];
+                        disableSortColumns = [-1,1,2,3,4,5,6,7,8,9,10,11,15,16];
                     }else {
-                        disableSortColumns = [-1,1,2,3,4,5,6,9,11,12,13,14,15];
+                        disableSortColumns = [-1,1,2,3,4,5,6,7,8,9,10,14,15];
                     }
                     break;
                 case 'home':
