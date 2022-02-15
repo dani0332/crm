@@ -493,13 +493,13 @@ class CarQuoteService extends BaseService
             $isManagerORDeputy = Auth::user()->isManagerOrDeputy();
             $isAdmin = Auth::user()->hasRole("ADMIN");
             if ($isAdmin || $isManagerORDeputy == "1") {
-                if ($column == 8) {
+                if ($column == 14) {
                     $column = "cqr.created_at";
                 }
-                if ($column == 9) {
+                if ($column == 15) {
                     $column = "cqr.updated_at";
                 }
-                if ($column == 11) {
+                if ($column == 16) {
                     $column = "cqrd.next_followup_date";
                 }
             } else {

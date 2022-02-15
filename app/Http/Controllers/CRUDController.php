@@ -77,6 +77,7 @@ class CRUDController extends Controller
      */
     public function index(Request $request)
     {
+        $renewalAdvisors = [];
         //Checking if the loggedIn user is Renewal User
         $isRenewalUser = Auth::user()->hasAnyRole(["CAR_RENEWAL_ADVISOR", "CAR_RENEWAL_MANAGER"]);
         if ($isRenewalUser) {
