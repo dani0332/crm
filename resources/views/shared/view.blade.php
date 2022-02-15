@@ -189,8 +189,11 @@
             switch(model.modelType.toLowerCase()) {
 
                 case 'car':
-                    if(isManagerOrDeputy || isAdmin){
-                        disableSortColumns = [-1,1,2,3,4,5,6,7,8,9,10,11,12,13,17,18,19,20,21];
+                    if(isRenewalUser){
+                        disableSortColumns = [-1,1,2,3,4,5,6,7,8,9,10,14,15,16,17,18];
+                    }
+                    else if(isManagerOrDeputy || isAdmin){
+                        disableSortColumns = [-1,1,2,3,4,5,6,7,8,9,10,11,12,16,17,18,19];
                     }else {
                         disableSortColumns = [-1,1,2,3,4,5,6,9,11,12,13,14,15];
                     }

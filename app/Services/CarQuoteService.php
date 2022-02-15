@@ -402,26 +402,18 @@ class CarQuoteService extends BaseService
         $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
         $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';
         if ($column != '' && $column != 0 && $direction != '') {
-            if ($column == 3) {
-                $column = "cqr.created_at";
-            }
-            if ($column == 4) {
-                $column = "cqrd.advisor_assigned_date";
-            }
-            if ($column == 7) {
-                $column = "cqrd.next_followup_date";
-            }
-            $query->orderBy($column, $direction);
+            $columnName = $request->get('columns')[$column]['name'];
+            $query->orderBy($this->getSortingColumnNameWithPrefix($columnName), $direction);
         }
 
         if (isset($request->startedAt) && isset($request->endAt) && $request->startedAt != '' && $request->endAt != '') {
-            $dateFrom = Carbon::createFromFormat('Y-m-d', $request->startedAt)->startOfDay()->toDateTimeString();
-            $dateTo = Carbon::createFromFormat('Y-m-d', $request->endAt)->endOfDay()->toDateTimeString();
+            $dateFrom = $this->parseDate($request->startedAt, true);
+            $dateTo = $this->parseDate($request->endAt, false);
             $query->whereBetween('cqrd.advisor_assigned_date', [$dateFrom, $dateTo]);
         }
         if (isset($request->nfdSart) && isset($request->nfdEnd) && $request->nfdSart != '' && $request->nfdEnd != '') {
-            $dateFrom = Carbon::createFromFormat('Y-m-d', $request->nfdSart)->startOfDay()->toDateTimeString();
-            $dateTo = Carbon::createFromFormat('Y-m-d', $request->nfdEnd)->endOfDay()->toDateTimeString();
+            $dateFrom = $this->parseDate($request->nfdSart, true);
+            $dateTo = $this->parseDate($request->nfdEnd, false);
             $query->whereBetween('hqrd.next_followup_date', [$dateFrom, $dateTo]);
         }
         if (isset($request->cdbId) && $request->cdbId != 0) {
@@ -435,11 +427,21 @@ class CarQuoteService extends BaseService
         }
         return $query;
     }
+    private function parseDate($date, $isStartOfDay)
+    {
+        if ($date != '') {
+            if ($isStartOfDay) {
+                return Carbon::createFromFormat('Y-m-d', $date)->startOfDay()->toDateTimeString();
+            } else {
+                return Carbon::createFromFormat('Y-m-d', $date)->endOfDay()->toDateTimeString();
+            }
+        }
+    }
 
     public function getGridData($model, $request)
     {
         $searchProperties = [];
-        $isRenewalUser = Auth::user()->hasAnyRole(["CAR_RENEWAL_ADVISOR", "CAR_RENEWAL_MANAGER"]);
+        $isRenewalUser = Auth::user()->isRenewalUser();;
         if ($isRenewalUser) {
             $searchProperties = $model->renewalSearchProperties;
         } else {
@@ -448,23 +450,23 @@ class CarQuoteService extends BaseService
 
         if ($request->ajax()) {
             if (isset($request->assigned_to_date_start) && $request->assigned_to_date_start != '') {
-                $dateFrom = Carbon::createFromFormat('Y-m-d', $request['assigned_to_date_start'])->startOfDay()->toDateTimeString();
-                $dateTo = Carbon::createFromFormat('Y-m-d', $request['assigned_to_date_end'])->endOfDay()->toDateTimeString();
+                $dateFrom = $this->parseDate($request['assigned_to_date_start'], true);
+                $dateTo = $this->parseDate($request['assigned_to_date_end'], false);
                 $this->query->whereBetween('cqrd.advisor_assigned_date', [$dateFrom, $dateTo]);
             }
             if (isset($request->renewal_expiry_date) && $request->renewal_expiry_date != '') {
-                $dateFrom = Carbon::createFromFormat('Y-m-d', $request['renewal_expiry_date'])->startOfDay()->toDateTimeString();
-                $dateTo = Carbon::createFromFormat('Y-m-d', $request['renewal_expiry_date_end'])->endOfDay()->toDateTimeString();
+                $dateFrom = $this->parseDate($request['renewal_expiry_date'], true);
+                $dateTo = $this->parseDate($request['renewal_expiry_date_end'], false);
                 $this->query->whereBetween('cqr.renewal_expiry_date', [$dateFrom, $dateTo]);
             }
             if (isset($request->next_followup_date) && $request->next_followup_date != '') {
-                $dateFrom = Carbon::createFromFormat('Y-m-d', $request['next_followup_date'])->startOfDay()->toDateTimeString();
-                $dateTo = Carbon::createFromFormat('Y-m-d', $request['next_followup_date_end'])->endOfDay()->toDateTimeString();
+                $dateFrom = $this->parseDate($request['next_followup_date'], true);
+                $dateTo = $this->parseDate($request['next_followup_date_end'], false);
                 $this->query->whereBetween('cqrd.next_followup_date', [$dateFrom, $dateTo]);
             }
             if (in_array('created_at', $searchProperties) && isset($request->created_at) && $request->created_at != "") {
-                $dateFrom = Carbon::createFromFormat('Y-m-d', $request['created_at'])->startOfDay()->toDateTimeString();
-                $dateTo = Carbon::createFromFormat('Y-m-d', $request['created_at_end'])->endOfDay()->toDateTimeString();
+                $dateFrom = $this->parseDate($request['created_at'], true);
+                $dateTo = $this->parseDate($request['created_at_end'], false);
                 $this->query->whereBetween('cqr.created_at', [$dateFrom, $dateTo]);
             }
             if (Auth::user()->hasRole('ADMIN')) {
@@ -487,45 +489,49 @@ class CarQuoteService extends BaseService
                 }
             }
         }
+
         $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
         $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';
         if ($column != '' && $column != 0 && $direction != '') {
-            $isManagerORDeputy = Auth::user()->isManagerOrDeputy();
-            $isAdmin = Auth::user()->hasRole("ADMIN");
-            if ($isAdmin || $isManagerORDeputy == "1") {
-                if ($column == 14) {
-                    $column = "cqr.created_at";
-                }
-                if ($column == 15) {
-                    $column = "cqr.updated_at";
-                }
-                if ($column == 16) {
-                    $column = "cqrd.next_followup_date";
-                }
-            } else {
-                if ($column == 7) {
-                    $column = "cqr.created_at";
-                }
-                if ($column == 8) {
-                    $column = "cqr.updated_at";
-                }
-                if ($column == 10) {
-                    $column = "cqrd.next_followup_date";
-                }
-            }
-
-            return $this->query->orderBy($column, $direction);
+            $columnName = $request->get('columns')[$column]['name'];
+            return $this->query->orderBy($this->getSortingColumnNameWithPrefix($columnName), $direction);
         } else {
-            if (Auth::user()->hasAnyRole(["CAR_RENEWAL_MANAGER", "CAR_RENEWAL_ADVISOR"])) {
+            if (Auth::user()->isRenewalUser()) {
                 return $this->query->whereNotNull('cqr.previous_quote_id')->latest();
             }
             return $this->query->orderBy('cqr.created_at', 'DESC');
         }
     }
 
+    private function getSortingColumnNameWithPrefix($columnName)
+    {
+        switch ($columnName) {
+            case 'created_at':
+                return 'cqr.created_at';
+                break;
+            case 'updated_at':
+                return 'cqr.updated_at';
+                break;
+            case 'next_followup_date':
+                return 'cqrd.next_followup_date';
+                break;
+            default:
+                break;
+        }
+    }
+
     private function getQuerySuffix($item)
     {
         switch ($item) {
+            case 'created_at':
+                return 'cqr.created_at';
+                break;
+            case 'updated_at':
+                return 'cqr.updated_at';
+                break;
+            case 'next_followup_date':
+                return 'cqrd.next_followup_date';
+                break;
             case 'uae_license_held_for':
                 return 'ulhf';
                 break;
@@ -625,7 +631,7 @@ class CarQuoteService extends BaseService
         $model->renewalSearchProperties = ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'advisor_id', 'created_at', 'vehicle_type_id', 'renewal_expiry_date', 'is_ecommerce', 'payment_status_id', 'policy_number', 'renewal_batch', 'car_type_insurance_id', 'currently_insured_with'];
         $model->renewalSkipProperties = [
             "create" => "id,advisor_id,paid_at,renewal_expiry_date,renewal_batch,lost_reason,payment_status_id,plan_id,premium,car_plan_provider_id,code,is_ecommerce,payment_gateway,created_at,next_followup_date,updated_at,promo_code,quote_status_id,device,policy_number,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by",
-            "list" => "additional_notes,email,mobile_no,paid_at,plan_id,car_plan_provider_id,payment_gateway,promo_code,car_make_id,car_model_id,device,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by,nationality_id,dob,year_of_manufacture,uae_license_held_for_id,car_value,emirate_of_registration_id,claim_history_id",
+            "list" => "additional_notes,email,mobile_no,paid_at,plan_id,car_plan_provider_id,payment_gateway,promo_code,source,seat_capacity,cylinder,car_make_id,car_model_id,device,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by,nationality_id,dob,year_of_manufacture,uae_license_held_for_id,car_value,emirate_of_registration_id,claim_history_id",
             "update" => "id,advisor_id,paid_at,payment_status_id,renewal_batch,lost_reason,plan_id,car_plan_provider_id,code,is_ecommerce,payment_gateway,created_at,next_followup_date,updated_at,promo_code,device,policy_number,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by,renewal_expiry_date",
             "show" => "",
         ];

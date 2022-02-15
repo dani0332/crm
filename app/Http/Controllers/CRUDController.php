@@ -79,7 +79,7 @@ class CRUDController extends Controller
     {
         $renewalAdvisors = [];
         //Checking if the loggedIn user is Renewal User
-        $isRenewalUser = Auth::user()->hasAnyRole(["CAR_RENEWAL_ADVISOR", "CAR_RENEWAL_MANAGER"]);
+        $isRenewalUser = Auth::user()->isRenewalUser();
         if ($isRenewalUser) {
             $this->crudService->fillRenewalData($this->genericModel);
             $renewalAdvisors = $this->crudService->getRenewalAdvisorsByModelType($this->genericModel->modelType);
@@ -122,7 +122,7 @@ class CRUDController extends Controller
      */
     public function create(Request $request)
     {
-        $isRenewalUser = Auth::user()->hasAnyRole(["CAR_RENEWAL_ADVISOR", "CAR_RENEWAL_MANAGER"]);
+        $isRenewalUser = Auth::user()->isRenewalUser();
         if ($isRenewalUser) {
             $renewalAdvisors = $this->crudService->fillRenewalData($this->genericModel);
         }
@@ -272,7 +272,7 @@ class CRUDController extends Controller
      */
     public function edit($id)
     {
-        $isRenewalUser = Auth::user()->hasAnyRole(["CAR_RENEWAL_ADVISOR", "CAR_RENEWAL_MANAGER"]);
+        $isRenewalUser = Auth::user()->isRenewalUser();
         if ($isRenewalUser) {
             $renewalAdvisors = $this->crudService->fillRenewalData($this->genericModel);
         }
