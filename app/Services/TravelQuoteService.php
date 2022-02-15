@@ -173,9 +173,9 @@ class TravelQuoteService extends BaseService
         return $query;
     }
 
-    public function getGridData($searchProperties, $request)
+    public function getGridData($model, $request)
     {
-
+        $searchProperties = $model->searchProperties;
         if ($request->ajax()) {
             if (isset($request->assigned_to_date_start) && $request->assigned_to_date_start != '') {
                 $dateFrom = Carbon::createFromFormat('Y-m-d', $request['assigned_to_date_start'])->startOfDay()->toDateTimeString();

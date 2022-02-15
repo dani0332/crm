@@ -32,6 +32,7 @@ use App\Models\VehicleType;
 use App\Models\YearOfManufacture;
 use DB;
 use Faker\Provider\ar_SA\Payment;
+use Illuminate\Support\Facades\Auth;
 
 class DropdownSourceService extends BaseService
 {
@@ -135,6 +136,9 @@ class DropdownSourceService extends BaseService
                 $data = YearOfManufacture::select('id', 'text')->get();
                 break;
             case 'advisor_id':
+                if (Auth::user()->hasAnyRole(["CAR_RENEWAL_ADVISOR", "CAR_RENEWAL_MANAGER"])) {
+                    $advisorType = $advisorType . '_RENEWAL';
+                }
                 if (strtolower($advisorType) == strtolower(quoteTypeCode::Health)) {
                     $data = DB::table('users as u')->select('u.id', DB::raw("CONCAT(u.name,' - ',r.name) AS name"))
                         ->join('model_has_roles as mhr', 'mhr.model_id', '=', 'u.id')
