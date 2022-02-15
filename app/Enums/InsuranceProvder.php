@@ -13,4 +13,5 @@ final class InsuranceProvder extends Enum
 {
     const PlanName =   "CarPlan";
     const Name =   "InsuranceProvider";
+    const Coverage = "CarPlanCoverage";
 }

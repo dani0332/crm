@@ -100,10 +100,11 @@
                                                     @endforeach
                                                 @else
                                                 @foreach($dropdownSource[$property] as $item)
-                                                if(gettype($record->$property) != 'string')
+                                                @if(gettype($record->$property) != 'string')
                                                     <option value="{{$item->id}}" {{ $item->id == old($item->id, $record->$property) ? 'selected' : ''}}>{{ $item->text ?? $item->name }}</option>
-                                                else
+                                                @else
                                                 <option value="{{$item->id}}" {{ $item->text == old($item->text, $record->$property) ? 'selected' : ''}}>{{ $item->text ?? $item->name }}</option>
+                                                @endif
                                                 @endforeach
 
                                                 @endif

@@ -8,6 +8,7 @@ use App\Services\InsuranceProviderService;
 use App\Services\CarPlanService;
 use App\Services\DropdownSourceService;
 use App\Services\CRUDService;
+use App\Services\CarPlanCoverageService;
 use App\Enums\InsuranceProvder;
 use Illuminate\Http\Request;
 use DataTables;
@@ -21,18 +22,21 @@ class GenericCrudController extends Controller
     protected $insuranceProviderService;
     protected $carPlanService;
     protected $dropdownSourceService;
+    protected $carPlanCoverageService;
     public function __construct(
         InsuranceProviderService $insuranceProviderService,
         CRUDService $crudService,
         CarPlanService $carPlanService,
         DropdownSourceService $dropdownSourceService,
-        Request $request
+        Request $request,
+        CarPlanCoverageService $carPlanCoverageService
     ) {
         $this->genericModel = new GenericModel();
         $this->crudService = $crudService;
         $this->dropdownSourceService = $dropdownSourceService;
         $this->insuranceProviderService = $insuranceProviderService;
         $this->carPlanService = $carPlanService;
+        $this->carPlanCoverageService = $carPlanCoverageService;
         $this->setModelType($request);
         $this->fillModelByModelType(ucwords($this->genericModel->modelType), $request);
     }
@@ -140,10 +144,16 @@ class GenericCrudController extends Controller
         }
        
         $serviceType = $model->modelType. 'Service';
-        if ($this->genericModel->modelType == InsuranceProvder::Name) { // Travel plans to display on detail view
+        if ($this->genericModel->modelType == InsuranceProvder::Name) {
             $plansList = $this->carPlanService->getProvderPlans($id);
             return view('generic.show', compact([
                 'record', 'model', 'customTitles', 'plansList', 'customTableList'
+            ]));
+        }
+        if ($this->genericModel->modelType == InsuranceProvder::PlanName) {
+            $coverageList = $this->carPlanCoverageService->getPlanCoverage($id);
+            return view('generic.show', compact([
+                'record', 'model', 'customTitles', 'coverageList', 'customTableList'
             ]));
         }
         return view('generic.show', compact(['record', 'model', 'customTitles', 'customTableList']));
@@ -208,6 +218,7 @@ class GenericCrudController extends Controller
         $url = strpos($request->fullUrl(), '?') ? explode('?', $request->fullUrl())[0] : $request->fullUrl();
         if (strpos($url, 'insuranceprovider')) $this->genericModel->modelType = 'InsuranceProvider';
         if (strpos($url, 'carplan')) $this->genericModel->modelType = 'CarPlan';
+        if (strpos($url, 'carplancoverage')) $this->genericModel->modelType = 'CarPlanCoverage';
     }
 
     private function fillModelByModelType($type, Request $request)
