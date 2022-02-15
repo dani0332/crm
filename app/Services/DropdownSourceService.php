@@ -136,7 +136,7 @@ class DropdownSourceService extends BaseService
                 $data = YearOfManufacture::select('id', 'text')->get();
                 break;
             case 'advisor_id':
-                if (Auth::user()->hasAnyRole(["CAR_RENEWAL_ADVISOR", "CAR_RENEWAL_MANAGER"])) {
+                if (Auth::user()->isRenewalUser()) {
                     $advisorType = $advisorType . '_RENEWAL';
                 }
                 if (strtolower($advisorType) == strtolower(quoteTypeCode::Health)) {
