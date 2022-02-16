@@ -92,27 +92,31 @@
         :plansList="$plansList" 
         :uuidModal="$record->id"
         :RequestId="$record->id"
-        :model="$model" />
+        :model="$model" 
+        :record="$record"/>
     @endif
     @if($model->modelType == InsuranceProvderConstants::PLANNAME)
         <x-provider-car-plans-coverage 
         :coverageList="$coverageList" 
         :uuidModal="$record->id"
         :RequestId="$record->id"
-        :model="$model" />
+        :model="$model"
+        :record="$record" />
     @endif
     @if($model->modelType == InsuranceProvderConstants::COVERAGE)
         <x-car-plan-addon
         :plansList="$plansList" 
         :uuidModal="$record->id"
         :RequestId="$record->id"
-        :model="$model" />
+        :model="$model"
+        :record="$record" />
     @endif
     @if($model->modelType == InsuranceProvderConstants::PLANADDON)
         <x-car-plan-add-on-option
         :plansList="$plansList" 
         :uuidModal="$record->id"
         :RequestId="$record->id"
-        :model="$model" />
+        :model="$model"
+        :record="$record" />
     @endif
 @endsection

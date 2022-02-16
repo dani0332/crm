@@ -86,6 +86,7 @@ class GenericCrudController extends Controller
      */
     public function create(Request $request)
     {
+        $id = '';
         $customTitles = $dropdownSource = [];
         foreach ($this->genericModel->properties as $property => $value) {
             if (str_contains($value, 'title')) {
@@ -97,7 +98,9 @@ class GenericCrudController extends Controller
             }
         }
         $model = $this->genericModel;
-        return view('generic.add', compact('model', 'dropdownSource', 'customTitles'));
+        if($request->has('id'))
+            $id = $request->id;
+        return view('generic.add', compact('model', 'dropdownSource', 'customTitles','id'));
     }
 
     /**
@@ -122,11 +125,13 @@ class GenericCrudController extends Controller
         if (isset($record->message) && str_contains($record->message, 'Error')) {
             return Redirect::back()->with('message', $record->message)->withInput();
         } else {
-            if (!isset($record->id)) {
-                return redirect('/generic/' . strtolower($modelType))->with('success',  $modelType . ' has been stored');
-            } else {
-                return redirect('/generic/' . strtolower($modelType) . '/' . $record->id)->with('success', $modelType . ' has been stored');
-            }
+            if($request->has('modelType') && $request->modelType == "CarPlanCoverage")
+                return redirect('/generic/' . strtolower($modelType) . '/create')->with('success', $modelType . ' has been stored');
+            // if (!isset($record->id)) {
+            //     return redirect('/generic/' . strtolower($modelType))->with('success',  $modelType . ' has been stored');
+            // } else {
+            //     return redirect('/generic/' . strtolower($modelType) . '/' . $record->id)->with('success', $modelType . ' has been stored');
+            // }
         }
     }
 

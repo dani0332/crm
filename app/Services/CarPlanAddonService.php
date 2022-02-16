@@ -129,7 +129,6 @@ class CarPlanAddonService extends BaseService
             'type' => $request->type,
         ];
         $record = CarAddOn::where('id', $id)->update($updateArray);
-        dd($record);
         return $record;
     }
 
@@ -143,8 +142,8 @@ class CarPlanAddonService extends BaseService
             "created_at" => "input|title|date|range",
             "updated_at" => "input|title|date",
             "type" => "input|title",
-            "plan_id" => "select|title",
-            "addon_id" => "select|title"
+            "plan_id" => "select|title"
+            // "addon_id" => "select|title"
         );
     }
 
@@ -162,10 +161,10 @@ class CarPlanAddonService extends BaseService
                 $title = "Last Modified Date";
                 break;
             case 'text':
-                $title = "Plan Coverage Name";
+                $title = "Plan Addon Name";
                 break;
             case 'text_ar':
-                $title = "Plan Coverage Name (Arabic)";
+                $title = "Plan Addon Name (Arabic)";
                 break;
             case 'type':
                 $title = "Type";
@@ -173,9 +172,9 @@ class CarPlanAddonService extends BaseService
             case 'plan_id':
                 $title = "Plan";
                 break;
-            case 'addon_id':
-                $title = "Addon Id";
-                break;
+            // case 'addon_id':
+            //     $title = "Addon Id";
+            //     break;
             default:
                 break;
         }
