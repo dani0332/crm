@@ -32,6 +32,9 @@ class TransAppService extends BaseService
 
                     $response = CustomerExtendSubscriptionService::extendCustomerSubscription($customerId);
 
+                    $listId = Config::get('constants.SIB_MYALFRED_CONTACTS_LIST_ID');
+                    $responseContactCreateUpdate = CreateUpdateContactService::contactCreateUpdate($listId, $request->first_name, $request->last_name, $request->email);
+
                     if($response == 422) {
                         $customerToken = MyAlFredUser::select('code')->where('customer_id', '=', $customerId)->orderBy('created_at','asc')->first();
                         $message = "Customer trying to extend subscription but not exist in myAflred<br>
