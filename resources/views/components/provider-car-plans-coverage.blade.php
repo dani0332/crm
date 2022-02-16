@@ -4,7 +4,7 @@
                 <div class="x_title">
                     <h2>Available Plans Coverage</h2>
                     <ul class="nav navbar-right panel_toolbox">
-                        <li><a href="{{ url('generic/carplancoverage/create') }}" class="btn btn-warning btn-sm">Create Plan Coverage</a></li>
+                        <li><a href="{{ url('generic/carplancoverage/create?id='.$record->id) }}" class="btn btn-warning btn-sm">Create Plan Coverage</a></li>
                     </ul>
                     <div class="clearfix"></div>
                 </div>

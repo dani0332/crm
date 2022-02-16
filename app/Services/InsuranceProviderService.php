@@ -25,7 +25,7 @@ class InsuranceProviderService extends BaseService
                 'ip.text_ar',
                 'ip.is_active',
                 'ip.sort_order'
-            );
+            )->where('ip.is_active', 1);
     }
 
     public function getEntity($id)
@@ -37,7 +37,7 @@ class InsuranceProviderService extends BaseService
     {
         $searchProperties = $model->searchProperties;
         if ($request->ajax()) {
-            
+
             if (in_array('created_at', $searchProperties) && isset($request->created_at) && $request->created_at != "") {
                 $dateFrom = Carbon::createFromFormat('Y-m-d', $request['created_at'])->startOfDay()->toDateTimeString();
                 $dateTo = Carbon::createFromFormat('Y-m-d', $request['created_at_end'])->endOfDay()->toDateTimeString();
@@ -63,21 +63,21 @@ class InsuranceProviderService extends BaseService
         $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
         $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';
         if ($column != '' && $column != 0 && $direction != '') {
-                if ($column == 1) {
-                    $column = "ip.code";
-                }
-                if ($column == 2) {
-                    $column = "ip.text";
-                }
-                if ($column == 3) {
-                    $column = "ip.text_ar";
-                }     
-                if ($column == 4) {
-                    $column = "ip.created_at";
-                }
-                if ($column == 5) {
-                    $column = "ip.updated_at";
-                }
+            if ($column == 1) {
+                $column = "ip.code";
+            }
+            if ($column == 2) {
+                $column = "ip.text";
+            }
+            if ($column == 3) {
+                $column = "ip.text_ar";
+            }
+            if ($column == 4) {
+                $column = "ip.created_at";
+            }
+            if ($column == 5) {
+                $column = "ip.updated_at";
+            }
             return $this->query->orderBy($column, $direction);
         } else {
             return $this->query->orderBy('ip.created_at', 'DESC');
@@ -154,6 +154,6 @@ class InsuranceProviderService extends BaseService
 
     public function fillModelSearchProperties()
     {
-        return ['code', 'text', 'text_ar','created_at'];
+        return ['code', 'text', 'text_ar', 'created_at'];
     }
 }
