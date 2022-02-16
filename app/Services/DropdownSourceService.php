@@ -189,7 +189,7 @@ class DropdownSourceService extends BaseService
                 $data = CarPlan::select('id', 'text')->get();
                 break;
             case 'provider_id':
-                $data = InsuranceProvider::select('id', 'text')->get();
+                $data = InsuranceProvider::select('id', 'text')->where('is_active', true)->get();
                 break;
             case 'vehicle_type_id':
                 $data = VehicleType::select('id', 'text')->get();

@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Models\CarAddOn;
+use App\Models\CarPlanAddonBridge;
 use App\Models\CarPlanCoverage;
 use Illuminate\Http\Request;
 use DB;
@@ -33,7 +35,7 @@ class CarPlanAddonService extends BaseService
 
     public function getEntity($id)
     {
-        return $this->query->where('cpa.id', $id)->first();
+        return $this->query->where('ca.id', $id)->first();
     }
     public function getPlanAddon($id)
     {
@@ -44,7 +46,7 @@ class CarPlanAddonService extends BaseService
     {
         $searchProperties = $model->searchProperties;
         if ($request->ajax()) {
-            
+
             if (in_array('created_at', $searchProperties) && isset($request->created_at) && $request->created_at != "") {
                 $dateFrom = Carbon::createFromFormat('Y-m-d', $request['created_at'])->startOfDay()->toDateTimeString();
                 $dateTo = Carbon::createFromFormat('Y-m-d', $request['created_at_end'])->endOfDay()->toDateTimeString();
@@ -73,24 +75,24 @@ class CarPlanAddonService extends BaseService
         $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
         $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';
         if ($column != '' && $column != 0 && $direction != '') {
-                if ($column == 1) {
-                    $column = "cpa.code";
-                }
-                if ($column == 2) {
-                    $column = "cpa.text";
-                }
-                if ($column == 3) {
-                    $column = "cpa.text_ar";
-                }
-                if ($column == 4) {
-                    $column = "cpa.type";
-                }     
-                if ($column == 5) {
-                    $column = "cpa.created_at";
-                }
-                if ($column == 6) {
-                    $column = "cpa.updated_at";
-                }
+            if ($column == 1) {
+                $column = "cpa.code";
+            }
+            if ($column == 2) {
+                $column = "cpa.text";
+            }
+            if ($column == 3) {
+                $column = "cpa.text_ar";
+            }
+            if ($column == 4) {
+                $column = "cpa.type";
+            }
+            if ($column == 5) {
+                $column = "cpa.created_at";
+            }
+            if ($column == 6) {
+                $column = "cpa.updated_at";
+            }
             return $this->query->orderBy($column, $direction);
         } else {
             return $this->query->orderBy('cpa.created_at', 'DESC');
@@ -103,12 +105,19 @@ class CarPlanAddonService extends BaseService
             'text' => $request->text,
             'text_ar' => $request->text_ar,
             'code' => $request->code,
-            'value' => $request->value,
-            'value_ar' => $request->value_ar,
             'type' => $request->type,
-            'plan_id' => $request->plan_id
         ];
-        return CarPlanCoverage::create($data);
+        $record = CarAddOn::create($data);
+        $addonData = [
+            'plan_id' => $request->plan_id,
+            'addon_id' => $record->id,
+            'is_active' => true,
+            'created_at' => Carbon::now(),
+            'updated_at' => Carbon::now(),
+        ];
+        $carPlanAddonBridge = new CarPlanAddonBridge();
+        $carPlanAddonBridge->create($addonData);
+        return $record;
     }
 
     public function updateCarPlanAddon(Request $request, $id)
@@ -117,13 +126,11 @@ class CarPlanAddonService extends BaseService
             'text' => $request->text,
             'text_ar' => $request->text_ar,
             'code' => $request->code,
-            'value' => $request->value,
-            'value_ar' => $request->value_ar,
             'type' => $request->type,
-            'plan_id' => $request->plan_id
         ];
-        CarPlanCoverage::where('id', $id)->update($updateArray);
-        return true;
+        $record = CarAddOn::where('id', $id)->update($updateArray);
+        dd($record);
+        return $record;
     }
 
     public function fillModelProperties()
@@ -187,6 +194,6 @@ class CarPlanAddonService extends BaseService
 
     public function fillModelSearchProperties()
     {
-        return ['code', 'text', 'text_ar','created_at','type'];
+        return ['code', 'text', 'text_ar', 'created_at', 'type'];
     }
 }
