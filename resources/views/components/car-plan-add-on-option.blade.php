@@ -2,40 +2,38 @@
         <div class="col-md-12 col-sm-12">
             <div class="x_panel">
                 <div class="x_title">
-                    <h2>Available Plans Coverage</h2>
+                    <h2>Available Plans Addons Option</h2>
                     <ul class="nav navbar-right panel_toolbox">
-                        <li><a href="{{ url('generic/carplancoverage/create') }}" class="btn btn-warning btn-sm">Create Plan Coverage</a></li>
+                        <li><a href="{{ url('generic/carplanaddonoption/create') }}" class="btn btn-warning btn-sm">Create PlanAddon Option</a></li>
                     </ul>
                     <div class="clearfix"></div>
                 </div>
                 <div class="x_content">
                     <div id="quote-plans">
-                        @if($coverageList)
+                        @if($plansList)
                                 <table id="datatable" class="table table-striped jambo_table" style="width:100%">
                                     <thead>
                                         <tr>
                                             <th>Id</th>
-                                            <th>Plan Coverage Name</th>
-                                            <th>Plan Coverage Name (Arabic)</th>
                                             <th>Value</th>
                                             <th>Value (Arabic)</th>
-                                            <th>Code</th>
-                                            <th>Type</th>
+                                            <th>Price</th>
+                                            <th>Addon Id</th>
+                                            <th>Sort Order</th>
                                             <th>Created At</th>
                                             <th>Updated At</th>
                                             <!-- <th>Action</th> -->
                                         </tr>
                                     </thead>
                                     <tbody>
-                                    @foreach ($coverageList as $key => $plan)
+                                    @foreach ($plansList as $key => $plan)
                                             <tr>
-                                                <td><a href="{{ url('generic/carplancoverage/'.$plan->id) }}">{{$plan->id}}</a></td>
-                                                <td>{{ ucwords($plan->text) }}</td>
-                                                <td>{{ ucwords($plan->text_ar) }}</td>
+                                                <td><a href="{{ url('generic/carplanaddonoption/'.$plan->id) }}">{{$plan->id}}</a></td>
                                                 <td>{{ ucwords($plan->value) }}</td>
                                                 <td>{{ ucwords($plan->value_ar) }}</td>
-                                                <td>{{ ucwords($plan->code) }}</td>
-                                                <td>{{ ucwords($plan->type) }}</td>
+                                                <td>{{ $plan->price }}</td>
+                                                <td>{{ $plan->addon_id }}</td>
+                                                <td>{{ $plan->sort_order }}</td>
                                                 <td>{{ $plan->created_at }}</td>
                                                 <td>{{ $plan->updated_at }}</td>
                                                
@@ -48,12 +46,11 @@
                                 <thead>
                                     <tr>
                                         <th>Id</th>
-                                        <th>Plan Coverage Name</th>
-                                        <th>Plan Coverage Name (Arabic)</th>
                                         <th>Value</th>
                                         <th>Value (Arabic)</th>
-                                        <th>Code</th>
-                                        <th>Type</th>
+                                        <th>Price</th>
+                                        <th>Addon Id</th>
+                                        <th>Sort Order</th>
                                         <th>Created At</th>
                                         <th>Updated At</th>
                                     </tr>

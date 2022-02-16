@@ -30,6 +30,7 @@ use App\Models\UAELicenseHeldFor;
 use App\Models\User;
 use App\Models\VehicleType;
 use App\Models\YearOfManufacture;
+use App\Models\CarAddOn;
 use DB;
 use Faker\Provider\ar_SA\Payment;
 use Illuminate\Support\Facades\Auth;
@@ -204,6 +205,9 @@ class DropdownSourceService extends BaseService
                 break;
             case 'payment_status_id':
                 $data = PaymentStatus::select('id', 'text')->get();
+                break;
+            case 'addon_id':
+                $data = CarAddOn::select('id', 'text')->get();
                 break;
             default:
                 break;
