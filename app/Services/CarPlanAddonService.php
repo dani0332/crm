@@ -40,8 +40,9 @@ class CarPlanAddonService extends BaseService
         return $this->query->where('cpa.plan_id', $id)->get();
     }
 
-    public function getGridData($searchProperties, $request)
+    public function getGridData($model, $request)
     {
+        $searchProperties = $model->searchProperties;
         if ($request->ajax()) {
             
             if (in_array('created_at', $searchProperties) && isset($request->created_at) && $request->created_at != "") {

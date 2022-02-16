@@ -33,8 +33,9 @@ class InsuranceProviderService extends BaseService
         return $this->query->where('ip.id', $id)->first();
     }
 
-    public function getGridData($searchProperties, $request)
+    public function getGridData($model, $request)
     {
+        $searchProperties = $model->searchProperties;
         if ($request->ajax()) {
             
             if (in_array('created_at', $searchProperties) && isset($request->created_at) && $request->created_at != "") {
