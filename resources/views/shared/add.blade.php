@@ -15,11 +15,10 @@
         };
 
         var oldCarModelId = JSON.parse('<?php echo json_encode(old("car_model_id")) ?>');
-
-        if(oldCarModelId != '') {
-            getCarModels(oldCarModelId);
+        var oldCarMakeId = JSON.parse('<?php echo json_encode(old("car_make_id")) ?>');
+        if(oldCarMakeId != '') {
+            getCarModels(oldCarMakeId, oldCarModelId);
         }
-
         $('#car_model_id').on('change',function(){
             var car_model_id = $('#car_model_id').val();
             $.ajax({
@@ -94,13 +93,17 @@
         }
     });
 
-    function getCarModels(id)
+    function getCarModels(makeId, modelId)
     {
-        $.get('/car-model-by-id?id=' + id, function (data) {
+        $.get('/car-model-by-id?id=' + makeId, function (data) {
             var carmodel = $('#car_model_id').empty();
             $.each(data, function (create, carmodelObj) {
-                var option = $('<option/>', { id: create, value: carmodelObj });
+                if(carmodelObj.id == modelId){
+                carmodel.append('<option selected data-id="' + carmodelObj.code + '" value="' + carmodelObj.id + '">' + carmodelObj.text + '</option>');
+                }else{
                 carmodel.append('<option data-id="' + carmodelObj.code + '" value="' + carmodelObj.id + '">' + carmodelObj.text + '</option>');
+                }
+
             });
         });
     }
@@ -264,15 +267,15 @@
                                             $staticOptionString = end($propertyLastIndex);
                                             $staticOptions = explode(',', $staticOptionString);
                                         @endphp
-
+                                        @if ($errors->has($property))
+                                        <span class="text-danger">{{ $errors->first($property) }}</span>
+                                        @endif
                                         <select @if(strpos($value, 'multiple')) name="{{$property.'[]'}}" multiple="multiple" class="form-control select2 select-roles" @else class="form-control" name="{{$property}}" @endif id="{{$property}}" >
                                             @foreach($staticOptions as $item)
                                             <option value="{{ $item }}">{{ $item }}</option>
                                             @endforeach
                                         </select>
-                                        @if ($errors->has($property))
-                                        <span class="text-danger">{{ $errors->first($property) }}</span>
-                                        @endif
+
                                     </div>
                                     </div>
                                     @endif

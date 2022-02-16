@@ -410,6 +410,9 @@ class ClaimController extends Controller
     {
         $make_id = $request->id;
         $carMakeCode = DB::table('car_make')->where('id', '=', $make_id)->value('code');
+        if (!$carMakeCode) {
+            $carMakeCode = $make_id;
+        }
         $carmodel = DB::table('car_model')->where('car_make_code', '=', $carMakeCode)->get(array('id', 'text', 'code'));
         return response()->json($carmodel);
     }
