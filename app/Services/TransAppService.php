@@ -11,7 +11,6 @@ use App\Models\CarQuotePaymentHistory;
 use App\Models\MyAlFredUser;
 use Carbon\Carbon;
 use Config;
-use Illuminate\Support\Facades\Log;
 use LookUpModel;
 
 class TransAppService extends BaseService
@@ -25,7 +24,7 @@ class TransAppService extends BaseService
             $existingCustomer = CustomerService::getCustomerByEmail($request->email)->first();
             $sendWelcomeEmail = ($existingCustomer && !$existingCustomer->is_we_sent) || !$existingCustomer ? true : false;
             $customerId = CustomerService::getCustomerIdAndCreateIfNotExists($request->first_name, $request->last_name, $request->email);
-            $status_id = DB::table('statuses')->where('name', 'Active')->value('id');
+            $statusId = DB::table('statuses')->where('name', 'Active')->value('id');
 
             if($existingCustomer != null) { // Existing customer
                 if($existingCustomer->is_we_sent == 1) { // is_we_sent is true
@@ -33,14 +32,13 @@ class TransAppService extends BaseService
                     $response = CustomerExtendSubscriptionService::extendCustomerSubscription($customerId);
 
                     $listId = Config::get('constants.SIB_MYALFRED_CONTACTS_LIST_ID');
-                    $responseContactCreateUpdate = CreateUpdateContactService::contactCreateUpdate($listId, $request->first_name, $request->last_name, $request->email);
+                    CreateUpdateContactService::contactCreateUpdate($listId, $request->first_name, $request->last_name, $request->email);
 
                     if($response == 422) {
                         $customerToken = MyAlFredUser::select('code')->where('customer_id', '=', $customerId)->orderBy('created_at','asc')->first();
                         $message = "Customer trying to extend subscription but not exist in myAflred<br>
                         Customer Email: ".$request->email."<br>
                         Token: ".$customerToken;
-                        //Log::error($message);
                     }
                 }
             }
@@ -54,7 +52,7 @@ class TransAppService extends BaseService
             $transaction->payment_mode_id = $request->paymentmode;
             $transaction->risk_details = $request->risk_detail;
             $transaction->amount_paid = $request->amount_paid;
-            $transaction->status_id = $status_id;
+            $transaction->status_id = $statusId;
             $transaction->save();
             $approvalCode = generate_code('T').$transaction->id;
             Transaction::where('id',$transaction->id)->update(['approval_code'=>$approvalCode]);
