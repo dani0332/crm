@@ -44,7 +44,7 @@ class CarPlanCoverageService extends BaseService
     {
         $searchProperties = $model->searchProperties;
         if ($request->ajax()) {
-            
+
             if (in_array('created_at', $searchProperties) && isset($request->created_at) && $request->created_at != "") {
                 $dateFrom = Carbon::createFromFormat('Y-m-d', $request['created_at'])->startOfDay()->toDateTimeString();
                 $dateTo = Carbon::createFromFormat('Y-m-d', $request['created_at_end'])->endOfDay()->toDateTimeString();
@@ -79,33 +79,33 @@ class CarPlanCoverageService extends BaseService
         $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
         $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';
         if ($column != '' && $column != 0 && $direction != '') {
-                if ($column == 1) {
-                    $column = "cpv.code";
-                }
-                if ($column == 2) {
-                    $column = "cpv.text";
-                }
-                if ($column == 3) {
-                    $column = "cpv.text_ar";
-                } 
-                if ($column == 4) {
-                    $column = "cpv.value";
-                } 
-                if ($column == 5) {
-                    $column = "cpv.value_ar";
-                } 
-                if ($column == 6) {
-                    $column = "cpv.type";
-                }     
-                if ($column == 7) {
-                    $column = "cpv.created_at";
-                }
-                if ($column == 8) {
-                    $column = "cpv.updated_at";
-                }
-                if ($column == 9) {
-                    $column = "cpv.plan_id";
-                }
+            if ($column == 1) {
+                $column = "cpv.code";
+            }
+            if ($column == 2) {
+                $column = "cpv.text";
+            }
+            if ($column == 3) {
+                $column = "cpv.text_ar";
+            }
+            if ($column == 4) {
+                $column = "cpv.value";
+            }
+            if ($column == 5) {
+                $column = "cpv.value_ar";
+            }
+            if ($column == 6) {
+                $column = "cpv.type";
+            }
+            if ($column == 7) {
+                $column = "cpv.created_at";
+            }
+            if ($column == 8) {
+                $column = "cpv.updated_at";
+            }
+            if ($column == 9) {
+                $column = "cpv.plan_id";
+            }
             return $this->query->orderBy($column, $direction);
         } else {
             return $this->query->orderBy('cpv.created_at', 'DESC');
@@ -206,6 +206,6 @@ class CarPlanCoverageService extends BaseService
 
     public function fillModelSearchProperties()
     {
-        return ['code', 'text', 'text_ar','created_at','value','value_ar','type'];
+        return ['code', 'text', 'text_ar', 'created_at', 'value', 'value_ar', 'type'];
     }
 }

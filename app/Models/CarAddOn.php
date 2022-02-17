@@ -9,32 +9,35 @@ class CarAddOn extends Model
 {
     use HasFactory;
     protected $table = 'car_addon';
+    protected $fillable = ['text', 'text_ar', 'type', 'created_at', 'updated_at', 'code'];
     public $access = [
 
         'write' => ['advisor', 'oe'],
         'update' => ['advisor', 'oe'],
         'delete' => ['advisor', 'oe'],
         'access' => [
-            "pa" => [ ],
-            "advisor" => [ ],
-            "oe" => [ ],
-            "admin" => [  ],
-            "invoicing" => [ ]
+            "pa" => [],
+            "advisor" => [],
+            "oe" => [],
+            "admin" => [],
+            "invoicing" => []
         ],
         "list" => [
-            "pa" => ['id','text', 'description' ],
-            "advisor" => ['id','text', 'description' ],
-            "oe" => ['id','text', 'description' ],
-            "admin" => ['id','text', 'description' ],
-            "invoicing" => ['id','text', 'description' ],
+            "pa" => ['id', 'text', 'description'],
+            "advisor" => ['id', 'text', 'description'],
+            "oe" => ['id', 'text', 'description'],
+            "admin" => ['id', 'text', 'description'],
+            "invoicing" => ['id', 'text', 'description'],
         ]
     ];
-   
-    public function relations() {
+
+    public function relations()
+    {
         return [];
     }
 
-    public function processGetDSL($filters, $update) {
+    public function processGetDSL($filters, $update)
+    {
         return self::processGetBaseDSL($filters, $update);
     }
 }

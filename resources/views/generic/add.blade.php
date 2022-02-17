@@ -79,9 +79,10 @@
                                             @else
                                                 <option value="">{{"Please select ".str_replace("id"," ",str_replace("_"," ",$property)) }}</option>
                                             @endif
+                                            
                                             @foreach($dropdownSource[$property] as $item)
 
-                                                <option value="{{ $item->id }}"  @if(old($property) == $item->id) selected @endif>{{ $item->text ?? $item->name }}</option>
+                                                <option value="{{ $item->id }}"  @if(old($property) == $item->id) selected @endif @if($id == $item->id) selected @endif>{{ $item->text ?? $item->name }}</option>
                                             @endforeach
                                         </select>
                                         @if ($errors->has($property))
@@ -187,7 +188,9 @@
                             <div class="col-auto mr-auto"></div>
                             <div class="col-auto">
                                 <button
-                                    type="submit" class="btn btn-warning btn-sm">Create</button>
+                                    type="submit" value ="add" class="btn btn-warning btn-sm">Create</button>
+                                <!-- <button
+                                    type="submit" name ="create_another" class="btn btn-warning btn-sm">Create And Add Another</button> -->
                             </div>
                         </div>
                     </form>

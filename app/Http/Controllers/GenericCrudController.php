@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
 use Config;
 use DB;
+
 class GenericCrudController extends Controller
 {
     protected $genericModel;
@@ -49,7 +50,7 @@ class GenericCrudController extends Controller
         $this->fillModelByModelType(ucwords($this->genericModel->modelType), $request);
     }
 
-      /**
+    /**
      * Display a listing of the resource.
      *
      * @return \Illuminate\Http\Response
@@ -68,7 +69,7 @@ class GenericCrudController extends Controller
             }
         }
         $model = $this->genericModel;
-        
+
         if ($request->ajax()) {
             return DataTables::of($gridData)
                 ->addIndexColumn()
@@ -85,6 +86,7 @@ class GenericCrudController extends Controller
      */
     public function create(Request $request)
     {
+        $id = '';
         $customTitles = $dropdownSource = [];
         foreach ($this->genericModel->properties as $property => $value) {
             if (str_contains($value, 'title')) {
@@ -96,10 +98,12 @@ class GenericCrudController extends Controller
             }
         }
         $model = $this->genericModel;
-        return view('generic.add', compact('model', 'dropdownSource', 'customTitles'));
+        if($request->has('id'))
+            $id = $request->id;
+        return view('generic.add', compact('model', 'dropdownSource', 'customTitles','id'));
     }
 
-        /**
+    /**
      * Store a newly created resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
@@ -121,15 +125,17 @@ class GenericCrudController extends Controller
         if (isset($record->message) && str_contains($record->message, 'Error')) {
             return Redirect::back()->with('message', $record->message)->withInput();
         } else {
-            if (!isset($record->id)) {
-                return redirect('/generic/' . strtolower($modelType))->with('success',  $modelType. ' has been stored');
-            } else {
-                return redirect('/generic/' . strtolower($modelType) . '/' . $record->id)->with('success', $modelType. ' has been stored');
-            }
+            if($request->has('modelType') && $request->modelType == "CarPlanCoverage")
+                return redirect('/generic/' . strtolower($modelType) . '/create')->with('success', $modelType . ' has been stored');
+            // if (!isset($record->id)) {
+            //     return redirect('/generic/' . strtolower($modelType))->with('success',  $modelType . ' has been stored');
+            // } else {
+            //     return redirect('/generic/' . strtolower($modelType) . '/' . $record->id)->with('success', $modelType . ' has been stored');
+            // }
         }
     }
 
-        /**
+    /**
      * Display the specified resource.
      *
      * @param  int  $id
@@ -149,7 +155,7 @@ class GenericCrudController extends Controller
                 $customTableList[$property] = $this->dropdownSourceService->getOnlySelectedItemName($property, $id);
             }
         }
-        $serviceType = $model->modelType. 'Service';
+        $serviceType = $model->modelType . 'Service';
         if ($this->genericModel->modelType == InsuranceProvderConstants::NAME) {
             $plansList = $this->carPlanService->getProvderPlans($id);
             return view('generic.show', compact([
@@ -179,7 +185,7 @@ class GenericCrudController extends Controller
         return view('generic.show', compact(['record', 'model', 'customTitles', 'customTableList']));
     }
 
-        /**
+    /**
      * Show the form for editing the specified resource.
      *
      * @param  int  $id

@@ -4,7 +4,7 @@
                 <div class="x_title">
                     <h2>Available Plans Addons Option</h2>
                     <ul class="nav navbar-right panel_toolbox">
-                        <li><a href="{{ url('generic/carplanaddonoption/create') }}" class="btn btn-warning btn-sm">Create PlanAddon Option</a></li>
+                        <li><a href="{{ url('generic/carplanaddonoption/create?id='.$record->id) }}" class="btn btn-warning btn-sm">Create Plan Addon Option</a></li>
                     </ul>
                     <div class="clearfix"></div>
                 </div>
