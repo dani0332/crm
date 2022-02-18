@@ -11,6 +11,7 @@ use App\Models\CarQuotePaymentHistory;
 use App\Models\MyAlFredUser;
 use Carbon\Carbon;
 use Config;
+use Illuminate\Support\Facades\Log;
 use LookUpModel;
 
 class TransAppService extends BaseService
@@ -29,16 +30,23 @@ class TransAppService extends BaseService
             if($existingCustomer != null) { // Existing customer
                 if($existingCustomer->is_we_sent == 1) { // is_we_sent is true
 
-                    $response = CustomerExtendSubscriptionService::extendCustomerSubscription($customerId);
+                    $responseExtend = CustomerExtendSubscriptionService::extendCustomerSubscription($customerId);
 
                     $listId = Config::get('constants.SIB_MYALFRED_CONTACTS_LIST_ID');
-                    CreateUpdateContactService::contactCreateUpdate($listId, $request->first_name, $request->last_name, $request->email, $WEGenerateUrlResponse);
+                    $responseContact = CreateUpdateContactService::contactCreateUpdate($listId, $request->first_name, $request->last_name, $request->email, $WEGenerateUrlResponse);
 
-                    if($response == 422) {
+                    if($responseContact != 201 && $responseContact != 204) {
+                        $message = "myAlfred signup link to issued policy cases (SIB API)<br>
+                        Customer Email: ".$request->email;
+                        Log::channel('daily')->info($message);
+                    }
+
+                    if($responseExtend != 201) {
                         $customerToken = MyAlFredUser::select('code')->where('customer_id', '=', $customerId)->orderBy('created_at','asc')->first();
                         $message = "Customer trying to extend subscription but not exist in myAflred<br>
                         Customer Email: ".$request->email."<br>
                         Token: ".$customerToken;
+                        Log::channel('daily')->info($message);
                     }
                 }
             }
