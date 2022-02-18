@@ -32,7 +32,7 @@ class TransAppService extends BaseService
                     $response = CustomerExtendSubscriptionService::extendCustomerSubscription($customerId);
 
                     $listId = Config::get('constants.SIB_MYALFRED_CONTACTS_LIST_ID');
-                    CreateUpdateContactService::contactCreateUpdate($listId, $request->first_name, $request->last_name, $request->email);
+                    CreateUpdateContactService::contactCreateUpdate($listId, $request->first_name, $request->last_name, $request->email, $WEGenerateUrlResponse);
 
                     if($response == 422) {
                         $customerToken = MyAlFredUser::select('code')->where('customer_id', '=', $customerId)->orderBy('created_at','asc')->first();

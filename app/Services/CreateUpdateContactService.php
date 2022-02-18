@@ -6,7 +6,7 @@ use Config;
 
 class CreateUpdateContactService extends BaseService
 {
-	public static function contactCreateUpdate($listId, $firstName, $lastName, $email)
+	public static function contactCreateUpdate($listId, $firstName, $lastName, $email, $signupLink)
     {
         $endPointUrl = Config::get('constants.SIB_CONTACTS_API_ENDPOINT_URL');
         $apiKey = Config::get('constants.SENDINBLUE_KEY');
@@ -15,7 +15,8 @@ class CreateUpdateContactService extends BaseService
             "email" => $email,
             "attributes" => array(
                 "FIRSTNAME" => $firstName,
-                "LASTNAME" => $lastName),
+                "LASTNAME" => $lastName,
+                "WEBSITE" => $signupLink),
             "listIds" => [(int)$listId],
             "updateEnabled" => true,
         ]);
