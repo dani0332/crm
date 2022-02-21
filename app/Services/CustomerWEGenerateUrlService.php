@@ -1,7 +1,6 @@
 <?php
 
 namespace App\Services;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Config;
 
 class CustomerWEGenerateUrlService extends BaseService
@@ -27,15 +26,11 @@ class CustomerWEGenerateUrlService extends BaseService
                 ]
             );
 
-            $getStatusCode = $berlinRequest->getStatusCode();
-
-            if ($getStatusCode == 200) {
-                $getContents = $berlinRequest->getBody();
-                $getdecodeContents = json_decode($getContents);
+            if ($berlinRequest->getStatusCode() == 200) {
+                $getdecodeContents = json_decode($berlinRequest->getBody());
                 $getResponseUrl = $getdecodeContents->data->url;
             }
         } catch (\GuzzleHttp\Exception\BadResponseException $e) {
-            //Log::error($e->getLine() ." ".$e->getMessage() ." ".$e->getFile());
             $responseErrorCode = $e->getResponse()->getStatusCode();
         }
 

@@ -365,7 +365,7 @@ class HealthQuoteService extends BaseService
             "marital_status_id" => "select|title|required",
             "cover_for_id" => "select|title|required",
             "nationality_id" => "select|title|required",
-            "health_team_type" => "|static|default:All|All,RM,EBP,No-Type",
+            "health_team_type" => "|static|default:All|All,RM-NB,RM-Speed,EBP,No-Type",
             "has_dental" => "input|checkbox|title",
             "has_worldwide_cover" => "input|checkbox|title",
             "has_home" => "input|checkbox|title",
