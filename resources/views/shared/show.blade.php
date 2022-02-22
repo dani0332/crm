@@ -6,6 +6,9 @@
     content: none !important;
 }
 </style>
+<?php
+    use App\Enums\quoteTypeCode;
+?>
     <div class="row">
         <div class="col-md-12 col-sm-12 admin-detail">
             <div class="x_panel">
@@ -68,7 +71,8 @@
                                     name="assign_team">
                                         <option value="">Select Team</option>
                                         <option value="EBP" >EBP</option>
-                                        <option value="RM">RM</option>
+                                        <option value="RM-NB">RM-NB</option>
+                                        <option value="RM-Speed">RM-Speed</option>
                                         <option value="GM">Group Medical</option>
                                     </select>
                                     <label id='teamAssignValidation' style="display: none;color:red;">Please select a team for assignment</label>
@@ -194,7 +198,7 @@
             :selectedlostreason="$selectedLostReasonId"
         />
     @endif
-    @if($model->modelType == "Car")
+    @if($model->modelType == quoteTypeCode::Car)
 
         <div class="modal fade" id="quotePlanModal" name="quotePlanModal" tabindex="-1" role="dialog" aria-labelledby="quotePlanModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
@@ -239,6 +243,35 @@
             :uuidModal="$record->uuid"
             :quoteRequestId="$record->id"
             :quoteIsCommerce="$record->is_ecommerce"
+        />
+
+    @endif
+
+    @if($model->modelType == quoteTypeCode::Travel)
+
+        <div class="modal fade" id="quotePlanModal" name="quotePlanModal" tabindex="-1" role="dialog" aria-labelledby="quotePlanModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+                <div class="modal-content" style="height: 40vw;">
+                    <div class="modal-header" style="border-bottom: none;">
+                        <h5 class="modal-title" id="quotePlanModalLabel"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-grid-3x3-gap-fill" viewBox="0 0 16 16" style="vertical-align: unset;">
+                            <path d="M1 2a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2zm5 0a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V2zm5 0a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1V2zM1 7a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V7zm5 0a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7zm5 0a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1V7zM1 12a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1v-2zm5 0a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1v-2zm5 0a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1v-2z"/>
+                        </svg> <strong>Plan Details</strong></h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                    </div>
+                    <div class="quote-plan-modal-body"> </div>
+                    <div class="modal-footer" style="border: none">
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <x-travel-quote
+            :listQuotePlans="$listQuotePlans"
+            :uuidModal="$record->uuid"
+            :quoteRequestId="$record->id"
         />
 
     @endif

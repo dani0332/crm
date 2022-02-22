@@ -60,7 +60,8 @@ class HealthQuoteService extends BaseService
             ->leftJoin('nationality as n', 'n.id', '=', 'hqr.nationality_id')
             ->leftJoin('emirates as e', 'e.id', '=', 'hqr.emirate_of_your_visa_id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'hqr.quote_status_id')
-            ->leftJoin('users as u', 'u.id', '=', 'hqr.advisor_id');
+            ->leftJoin('users as u', 'u.id', '=', 'hqr.advisor_id')
+            ->where('qs.text', '!=', 'Fake');
     }
 
     public function getEntity($id)
@@ -127,13 +128,19 @@ class HealthQuoteService extends BaseService
         return CapiRequestService::sendCAPIRequest('/api/v1-save-health-quote', $dataArr);
     }
 
-    public function getGridData($searchProperties, $request)
+    public function getGridData($model, $request)
     {
+        $searchProperties = $model->searchProperties;
         if ($request->ajax()) {
             if (isset($request->assigned_to_date_start) && $request->assigned_to_date_start != '') {
                 $dateFrom = Carbon::createFromFormat('Y-m-d', $request['assigned_to_date_start'])->startOfDay()->toDateTimeString();
                 $dateTo = Carbon::createFromFormat('Y-m-d', $request['assigned_to_date_end'])->endOfDay()->toDateTimeString();
                 $this->query->whereBetween('hqrd.advisor_assigned_date', [$dateFrom, $dateTo]);
+            }
+            if (isset($request->next_followup_date) && $request->next_followup_date != '') {
+                $dateFrom = Carbon::createFromFormat('Y-m-d', $request['next_followup_date'])->startOfDay()->toDateTimeString();
+                $dateTo = Carbon::createFromFormat('Y-m-d', $request['next_followup_date_end'])->endOfDay()->toDateTimeString();
+                $this->query->whereBetween('hqrd.next_followup_date', [$dateFrom, $dateTo]);
             }
             if (in_array('created_at', $searchProperties) && isset($request->created_at) && $request->created_at != "") {
                 $dateFrom = Carbon::createFromFormat('Y-m-d', $request['created_at'])->startOfDay()->toDateTimeString();
@@ -278,8 +285,16 @@ class HealthQuoteService extends BaseService
             $dateTo = Carbon::createFromFormat('Y-m-d', $request->endAt)->endOfDay()->toDateTimeString();
             $query->whereBetween('hqrd.advisor_assigned_date', [$dateFrom, $dateTo]);
         }
+        if (isset($request->nfdSart) && isset($request->nfdEnd) && $request->nfdSart != '' && $request->nfdEnd != '') {
+            $dateFrom = Carbon::createFromFormat('Y-m-d', $request->nfdSart)->startOfDay()->toDateTimeString();
+            $dateTo = Carbon::createFromFormat('Y-m-d', $request->nfdEnd)->endOfDay()->toDateTimeString();
+            $query->whereBetween('hqrd.next_followup_date', [$dateFrom, $dateTo]);
+        }
         if (isset($request->cdbId) && $request->cdbId != 0) {
             $query->where('hqr.code', $request->cdbId);
+        }
+        if (isset($request->email) && $request->email != '') {
+            $query->where('hqr.email', $request->email);
         }
         if (isset($request->leadStatus) && $request->leadStatus != 0) {
             $query->where('hqr.quote_status_id', $request->leadStatus);
@@ -341,7 +356,7 @@ class HealthQuoteService extends BaseService
             "created_at" => "input|date|title|range",
             "updated_at" => "input|date|title",
             "dob" => "input|date|title|required",
-            "next_followup_date" => "input|text",
+            "next_followup_date" => "input|date|title|range",
             "lost_reason" => "input|text",
             "premium" => "input|number|required",
             "preference" => "input|text",
@@ -350,7 +365,7 @@ class HealthQuoteService extends BaseService
             "marital_status_id" => "select|title|required",
             "cover_for_id" => "select|title|required",
             "nationality_id" => "select|title|required",
-            "health_team_type" => "|static|default:All|All,RM,EBP,No-Type",
+            "health_team_type" => "|static|default:All|All,RM-NB,RM-Speed,EBP,No-Type",
             "has_dental" => "input|checkbox|title",
             "has_worldwide_cover" => "input|checkbox|title",
             "has_home" => "input|checkbox|title",
@@ -410,6 +425,9 @@ class HealthQuoteService extends BaseService
             case 'health_team_type':
                 $title = "Health Team Type";
                 break;
+            case 'next_followup_date':
+                $title = "Next Followup Date";
+                break;
             default:
                 break;
         }
@@ -420,7 +438,7 @@ class HealthQuoteService extends BaseService
     {
         return [
             "create" => "created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason",
-            "list" => "email,health_team_type,cover_for_id,has_worldwide_cover,has_home,details,preference,mobile_no,dob,marital_status_id,nationality_id,has_dental,emirate_of_your_visa_id",
+            "list" => "email,cover_for_id,has_worldwide_cover,has_home,details,preference,mobile_no,dob,marital_status_id,nationality_id,has_dental,emirate_of_your_visa_id",
             "update" => "created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason",
             "show" => "id,health_team_type,next_followup_date",
         ];
@@ -428,7 +446,7 @@ class HealthQuoteService extends BaseService
 
     public function fillModelSearchProperties()
     {
-        return ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'advisor_id', 'created_at', 'health_team_type'];
+        return ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'advisor_id', 'created_at', 'health_team_type', 'next_followup_date'];
     }
 
     public function convertLeadToGM($lead)

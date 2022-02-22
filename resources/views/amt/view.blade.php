@@ -194,6 +194,24 @@
                     </div>
                     <div class="item form-group">
                         <div class="col">
+                            <label class="col-form-label col-md-2 col-sm-2" for="searchfield">Next Followup Date Start</label>
+                            <div class="col-md-6 col-sm-6">
+                                <div class="input-group">
+                                    <input type="date" class="form-control" name="next_followup_date" id="next_followup_date" >
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <label class="col-form-label col-md-2 col-sm-2" for="searchfield">Next Followup Date Start</label>
+                            <div class="col-md-6 col-sm-6">
+                                <div class="input-group">
+                                    <input type="date" class="form-control" name="next_followup_date_end" id="next_followup_date_end" >
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="item form-group">
+                        <div class="col">
                             <label class="col-form-label col-md-2 col-sm-2" for="searchfield">CDB ID</label>
                             <div class="col-md-6 col-sm-6">
                                 <div class="input-group">

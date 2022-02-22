@@ -41,8 +41,8 @@ class LeadSearchController extends Controller
             $managerRole = 'BUSINESS';
         }
         if (
-            strtolower($managerRole) == strtolower(quoteTypeCode::RM) || strtolower($managerRole) == strtolower(quoteTypeCode::RetailMedical) ||
-            strtolower($managerRole) == strtolower(quoteTypeCode::EBP)
+            strtolower($managerRole) == strtolower(quoteTypeCode::RM_NB) || strtolower($managerRole) == strtolower(quoteTypeCode::RM_SPEED) ||
+            strtolower($managerRole) == strtolower(quoteTypeCode::RetailMedical) || strtolower($managerRole) == strtolower(quoteTypeCode::EBP)
         ) {
             $managerRole = 'HEALTH';
         }

@@ -12,6 +12,7 @@ use BenSampo\Enum\Enum;
 final class HealthTeamType extends Enum
 {
     const EBP = "RBP";
-    const RM = "RM";
+    const RM_NB = "RM-NB";
+    const RM_SPEED = "RM-SPEED";
     const GROUP_MEDICAL = "Group Medical";
 }

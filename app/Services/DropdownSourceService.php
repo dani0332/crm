@@ -30,8 +30,10 @@ use App\Models\UAELicenseHeldFor;
 use App\Models\User;
 use App\Models\VehicleType;
 use App\Models\YearOfManufacture;
+use App\Models\CarAddOn;
 use DB;
 use Faker\Provider\ar_SA\Payment;
+use Illuminate\Support\Facades\Auth;
 
 class DropdownSourceService extends BaseService
 {
@@ -135,6 +137,9 @@ class DropdownSourceService extends BaseService
                 $data = YearOfManufacture::select('id', 'text')->get();
                 break;
             case 'advisor_id':
+                if (Auth::user()->isRenewalUser()) {
+                    $advisorType = $advisorType . '_RENEWAL';
+                }
                 if (strtolower($advisorType) == strtolower(quoteTypeCode::Health)) {
                     $data = DB::table('users as u')->select('u.id', DB::raw("CONCAT(u.name,' - ',r.name) AS name"))
                         ->join('model_has_roles as mhr', 'mhr.model_id', '=', 'u.id')
@@ -183,6 +188,9 @@ class DropdownSourceService extends BaseService
             case 'plan_id':
                 $data = CarPlan::select('id', 'text')->get();
                 break;
+            case 'provider_id':
+                $data = InsuranceProvider::select('id', 'text')->where('is_active', true)->get();
+                break;
             case 'vehicle_type_id':
                 $data = VehicleType::select('id', 'text')->get();
                 break;
@@ -197,6 +205,9 @@ class DropdownSourceService extends BaseService
                 break;
             case 'payment_status_id':
                 $data = PaymentStatus::select('id', 'text')->get();
+                break;
+            case 'addon_id':
+                $data = CarAddOn::select('id', 'text')->get();
                 break;
             default:
                 break;

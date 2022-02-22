@@ -66,7 +66,8 @@ class LifeQuoteService extends BaseService
             ->leftJoin('life_number_of_year as liy', 'liy.id', '=', 'lqr.number_of_years_id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'lqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'lqr.advisor_id')
-            ->leftJoin('nationality as n', 'n.id', '=', 'lqr.nationality_id');
+            ->leftJoin('nationality as n', 'n.id', '=', 'lqr.nationality_id')
+            ->where('qs.text', '!=', 'Fake');
     }
     public function saveLifeQuote(Request $request)
     {
@@ -134,8 +135,9 @@ class LifeQuoteService extends BaseService
     {
         return LifeQuote::orderBy('created_at', 'desc')->get();
     }
-    public function getGridData($searchProperties, $request)
+    public function getGridData($model, $request)
     {
+        $searchProperties = $model->searchProperties;
         if ($request->ajax()) {
             if (isset($request->assigned_to_date_start) && $request->assigned_to_date_start != '') {
                 $dateFrom = Carbon::createFromFormat('Y-m-d', $request['assigned_to_date_start'])->startOfDay()->toDateTimeString();
@@ -146,6 +148,11 @@ class LifeQuoteService extends BaseService
                 $dateFrom = Carbon::createFromFormat('Y-m-d', $request['created_at'])->startOfDay()->toDateTimeString();
                 $dateTo = Carbon::createFromFormat('Y-m-d', $request['created_at_end'])->endOfDay()->toDateTimeString();
                 $this->query->whereBetween('lqr.created_at', [$dateFrom, $dateTo]);
+            }
+            if (isset($request->next_followup_date) && $request->next_followup_date != '') {
+                $dateFrom = Carbon::createFromFormat('Y-m-d', $request['next_followup_date'])->startOfDay()->toDateTimeString();
+                $dateTo = Carbon::createFromFormat('Y-m-d', $request['next_followup_date_end'])->endOfDay()->toDateTimeString();
+                $this->query->whereBetween('lqrd.next_followup_date', [$dateFrom, $dateTo]);
             }
             foreach ($searchProperties as $item) {
                 if (!empty($request[$item]) && $item != "created_at") {
@@ -289,8 +296,16 @@ class LifeQuoteService extends BaseService
             $dateTo = Carbon::createFromFormat('Y-m-d', $request->endAt)->endOfDay()->toDateTimeString();
             $query->whereBetween('lqrd.advisor_assigned_date', [$dateFrom, $dateTo]);
         }
+        if (isset($request->nfdSart) && isset($request->nfdEnd) && $request->nfdSart != '' && $request->nfdEnd != '') {
+            $dateFrom = Carbon::createFromFormat('Y-m-d', $request->nfdSart)->startOfDay()->toDateTimeString();
+            $dateTo = Carbon::createFromFormat('Y-m-d', $request->nfdEnd)->endOfDay()->toDateTimeString();
+            $query->whereBetween('hqrd.next_followup_date', [$dateFrom, $dateTo]);
+        }
         if (isset($request->cdbId) && $request->cdbId != 0) {
             $query->where('lqr.code', $request->cdbId);
+        }
+        if (isset($request->email) && $request->email != '') {
+            $query->where('bqr.email', $request->email);
         }
         if (isset($request->leadStatus) && $request->leadStatus != 0) {
             $query->where('lqr.quote_status_id', $request->leadStatus);
@@ -355,7 +370,7 @@ class LifeQuoteService extends BaseService
             "updated_at" => "input|date|title",
             "dob" => "input|date|title|required",
             "sum_insured_value" => "input|number|title|required",
-            "next_followup_date" => "input|text",
+            "next_followup_date" => "input|date|title|range",
             "source" => "input|text",
             "lost_reason" => "input|text",
             "premium" => "input|number|required",
@@ -423,6 +438,9 @@ class LifeQuoteService extends BaseService
             case 'marital_status_id':
                 $title = "Marital Status";
                 break;
+            case 'next_followup_date':
+                $title = "Next Followup Date";
+                break;
             default:
                 break;
         }
@@ -441,6 +459,6 @@ class LifeQuoteService extends BaseService
 
     public function fillModelSearchProperties()
     {
-        return ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'advisor_id', 'created_at'];
+        return ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'advisor_id', 'created_at', 'next_followup_date'];
     }
 }

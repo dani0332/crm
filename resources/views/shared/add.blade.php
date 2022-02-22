@@ -15,11 +15,10 @@
         };
 
         var oldCarModelId = JSON.parse('<?php echo json_encode(old("car_model_id")) ?>');
-
-        if(oldCarModelId != '') {
-            getCarModels(oldCarModelId);
+        var oldCarMakeId = JSON.parse('<?php echo json_encode(old("car_make_id")) ?>');
+        if(oldCarMakeId != '') {
+            getCarModels(oldCarMakeId, oldCarModelId);
         }
-
         $('#car_model_id').on('change',function(){
             var car_model_id = $('#car_model_id').val();
             $.ajax({
@@ -29,9 +28,6 @@
                     car_model_id: car_model_id
                 },
                 success: function(data){
-                        console.log("cylinder: ",data.cylinder);
-                        console.log("seat_capacity: ",data.seat_capacity);
-                        console.log("vehicle_type_id: ",data.vehicle_type_id);
                     if(data.cylinder || data.seat_capacity || data.vehicle_type_id){
                         $('#cylinder').val(data.cylinder);
                         $('#seat_capacity').val(data.seat_capacity);
@@ -56,7 +52,6 @@
         var modelPropertiesArray = convertObjectToArray(model.properties);
         if(model.modelType == "Home") {
             $('#has_personal_belongings_div,#personal_belongings_aed_div,#has_building_div,#building_aed_div,#contents_aed_div').each(function(){
-                debugger;
                 if($('#'+$(this).attr('id').replace('_div', '')).attr('type') == 'checkbox'){
                     if(!$('#'+$(this).attr('id').replace('_div', '')).is(':checked')) {
                         $(this).hide();
@@ -69,7 +64,6 @@
                 }
             });
             $('#iam_possesion_type_id').on('change',function(){
-                debugger;
                 if($("#iam_possesion_type_id option:selected").text() == 'A landlord'){
                     $('#has_building_div').show();
                 }
@@ -99,13 +93,17 @@
         }
     });
 
-    function getCarModels(id)
+    function getCarModels(makeId, modelId)
     {
-        $.get('/car-model-by-id?id=' + id, function (data) {
+        $.get('/car-model-by-id?id=' + makeId, function (data) {
             var carmodel = $('#car_model_id').empty();
             $.each(data, function (create, carmodelObj) {
-                var option = $('<option/>', { id: create, value: carmodelObj });
+                if(carmodelObj.id == modelId){
+                carmodel.append('<option selected data-id="' + carmodelObj.code + '" value="' + carmodelObj.id + '">' + carmodelObj.text + '</option>');
+                }else{
                 carmodel.append('<option data-id="' + carmodelObj.code + '" value="' + carmodelObj.id + '">' + carmodelObj.text + '</option>');
+                }
+
             });
         });
     }
@@ -131,19 +129,31 @@
                     @endif
                     <form id="demo-form2" autocomplete="off" action="{{ route('saveQuote') }}" method='post' enctype="multipart/form-data"
                         data-parsley-validate class="form-horizontal form-label-left" autocomplete="off">
+                        @php
+                        $index = 0;
+                        $searchProperties = [];
+                        $skipProperties = [];
+                        if($isRenewalUser){
+                            $searchProperties = $model->renewalSearchProperties;
+                            $skipProperties = $model->renewalSkipProperties;
+                        }
+                        else{
+                            $searchProperties = $model->searchProperties;
+                            $skipProperties = $model->skipProperties;
+                        }
+                        @endphp
+
                         {{ csrf_field() }}
                         <input type="hidden" name="model" value={{ json_encode($model->properties) }} />
-                        <input type="hidden" name="modelSkipProperties" value={{ json_encode($model->skipProperties) }} />
+                        <input type="hidden" name="modelSkipProperties" value={{ json_encode($skipProperties) }} />
                         <input type="hidden" name="modelType" value={{ json_encode($model->modelType) }} />
 
-                        @php
-                        $index = 0
-                        @endphp
+
 
                         @foreach($model->properties as $property => $value)
                             @if(strpos($value, 'checkbox'))
                             @else
-                                @if(!str_contains($model->skipProperties['create'], $property))
+                                @if(!str_contains($skipProperties['create'], $property))
                                     @if(strpos($value, 'input') !== false )
                                     <div @if(count($model->properties) < 6) class="col-md-12" @else class="col-md-6" @endif id={{$property.'_div'}}>
                                     <div class="col">
@@ -157,7 +167,20 @@
                                             <span class='required'>*</span>
                                             @endif
                                         </span>
-                                        <input @if(explode("|", $value)[1] == "date") readonly="readonly" @endif  type={{ explode("|", $value)[1] }} id={{$property}} name={{$property}} value="{{ old($property) }}" class="form-control">
+                                        @php
+                                            $title = '';
+                                            if(str_contains($value, 'title')){
+                                                $title = 'Please confirm '. strtolower($customTitles[$property]);
+                                            }else{
+                                                $title = 'Please confirm '. str_replace("_"," ",strtolower($property));
+                                            }
+                                        @endphp
+                                        <input @if(explode("|", $value)[1] == "date") readonly="readonly" @endif
+                                        type={{ explode("|", $value)[1] }} id={{$property}} name={{$property}} value="{{ old($property) }}"
+                                        @if($property == 'seat_capacity' || $property == 'cylinder')
+                                        data-toggle="tooltip" data-placement="top" title="{{$title}}"
+                                        @endif
+                                        class="form-control">
                                         @if ($errors->has($property))
                                             <span class="text-danger">{{ $errors->first($property) }}</span>
                                         @endif
@@ -177,11 +200,23 @@
                                             <span class='required'>*</span>
                                             @endif
                                         </span>
-                                        <select @if(strpos($value, 'multiple')) name="{{$property.'[]'}}" multiple="multiple" class="form-control select2 select-roles" @else class="form-control" name="{{$property}}" @endif id="{{$property}}" >
+                                        @php
+                                            $title = '';
+                                            if(str_contains($value, 'title')){
+                                                $title = 'Please select '. strtolower($customTitles[$property]);
+                                            }else{
+                                                $title = 'Please select '. str_replace("_"," ",strtolower($property));
+                                            }
+                                        @endphp
+                                        <select @if(strpos($value, 'multiple')) name="{{$property.'[]'}}" multiple="multiple" class="form-control select2 select-roles" @else class="form-control" name="{{$property}}" @endif
+                                            @if($property == 'vehicle_type_id')
+                                            data-toggle="tooltip" data-placement="top" title="{{$title}}"
+                                            @endif
+                                            id="{{$property}}" >
                                             @if(strpos($value, 'title'))
-                                                <option value="">{{"Please select ".$customTitles[$property] }}</option>
+                                                <option value="">{{"Please confirm ".$customTitles[$property] }}</option>
                                             @else
-                                                <option value="">{{"Please select ".str_replace("id"," ",str_replace("_"," ",$property)) }}</option>
+                                                <option value="">{{"Please confirm ".str_replace("id"," ",str_replace("_"," ",$property)) }}</option>
                                             @endif
                                             @foreach($dropdownSource[$property] as $item)
 
@@ -232,15 +267,15 @@
                                             $staticOptionString = end($propertyLastIndex);
                                             $staticOptions = explode(',', $staticOptionString);
                                         @endphp
-
+                                        @if ($errors->has($property))
+                                        <span class="text-danger">{{ $errors->first($property) }}</span>
+                                        @endif
                                         <select @if(strpos($value, 'multiple')) name="{{$property.'[]'}}" multiple="multiple" class="form-control select2 select-roles" @else class="form-control" name="{{$property}}" @endif id="{{$property}}" >
                                             @foreach($staticOptions as $item)
                                             <option value="{{ $item }}">{{ $item }}</option>
                                             @endforeach
                                         </select>
-                                        @if ($errors->has($property))
-                                        <span class="text-danger">{{ $errors->first($property) }}</span>
-                                        @endif
+
                                     </div>
                                     </div>
                                     @endif
@@ -250,7 +285,7 @@
                             $index++
                             @endphp
                         @endforeach
-                        @if(count($model->skipProperties) != 0)
+                        @if(count($skipProperties) != 0)
                             </div>
                         @endif
 

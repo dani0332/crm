@@ -18,4 +18,6 @@ final class quoteStatusCode extends Enum
     const approvalRequired = "approvalRequired";
     const AMLScreeningCleared = "AMLScreeningCleared";
     const AMLScreeningFailed = "AMLScreeningFailed";
+    const NEW_LEAD = "New Lead";
+    const TRANSACTION_APPROVED = "transaction_approved";
 }

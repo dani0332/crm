@@ -12,16 +12,15 @@ use App\Models\RentACar;
 use App\Models\User;
 use App\Models\CarMake;
 use App\Models\CarModel;
-use App\Models\CarModelDetail;
+use App\Models\CarPlan;
 use App\Models\InsuranceProvider;
-use App\Models\ClaimsAttachments;
 
 use Illuminate\Http\Request;
 use Auth;
 use DataTables;
-use Spatie\Permission\Models\Role;
 use DB;
 use Config;
+use App\Services\CarQuoteService;
 
 class ClaimController extends Controller
 {
@@ -30,12 +29,15 @@ class ClaimController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    function __construct()
+    protected $carQuoteService;
+
+    function __construct(CarQuoteService $carQuoteService)
     {
         $this->middleware('permission:claim-list|claim-create|claim-edit|claim-delete', ['only' => ['index', 'store']]);
         $this->middleware('permission:claim-create', ['only' => ['create', 'store']]);
         $this->middleware('permission:claim-edit', ['only' => ['edit', 'update']]);
         $this->middleware('permission:claim-delete', ['only' => ['destroy']]);
+        $this->carQuoteService = $carQuoteService;
     }
 
     public function index(Request $request)
@@ -407,17 +409,51 @@ class ClaimController extends Controller
     public function carModelBasedOnCarMakeId(Request $request)
     {
         $make_id = $request->id;
-        $carmodel = DB::table('car_model')->where('id', '=', $make_id)->get(array('id', 'text', 'code'));
+        $carMakeCode = DB::table('car_make')->where('id', '=', $make_id)->value('code');
+        if (!$carMakeCode) {
+            $carMakeCode = $make_id;
+        }
+        $carmodel = DB::table('car_model')->where('car_make_code', '=', $carMakeCode)->get(array('id', 'text', 'code'));
         return response()->json($carmodel);
+    }
+    public function getCarMake()
+    {
+        $carMakes = DB::table('car_make')->get(array('id', 'text', 'code'));
+        return response()->json($carMakes);
     }
 
     public function getCarModelDetails(Request $request)
     {
         $modelId = $request->car_model_id;
         $carModelDetail = DB::table('car_model')
-            ->select('cylinder','seat_capacity','vehicle_type_id')
+            ->select('cylinder', 'seat_capacity', 'vehicle_type_id')
             ->where('id', '=', $modelId)
             ->first();
         return response()->json($carModelDetail);
+    }
+
+    public function carPlansBasedOnInsuranceProvider(Request $request)
+    {
+        $insuranceProviderId = $request->insuranceProviderId;
+        $quoteUuId = $request->quoteUuId;
+
+        $quotePlans = $this->carQuoteService->getQuotePlans($quoteUuId);
+
+        $quotePlanId = [];
+        $listQuotePlans = [];
+        if (isset($quotePlans->quotes->plans)) {
+            $listQuotePlans = $quotePlans->quotes->plans;
+        }
+
+        foreach ($listQuotePlans as $key => $quotePlan) {
+            $quotePlanId[] = $quotePlan->id;
+        }
+
+        $carPlan = CarPlan::where('provider_id', '=', $insuranceProviderId)
+            ->where('is_active', '=', 1)
+            ->whereNotIn('id', $quotePlanId)
+            ->get(array('id', 'text', 'repair_type'));
+
+        return response()->json($carPlan);
     }
 }

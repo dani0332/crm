@@ -51,7 +51,8 @@ class TravelQuoteService extends BaseService
             ->leftJoin('nationality as n', 'n.id', '=', 'tqr.nationality_id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'tqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'tqr.advisor_id')
-            ->leftJoin('region as r', 'r.id', '=', 'tqr.region_cover_for_id');
+            ->leftJoin('region as r', 'r.id', '=', 'tqr.region_cover_for_id')
+            ->where('qs.text', '!=', 'Fake');
     }
 
     public function saveTravelQuote(Request $request)
@@ -155,8 +156,16 @@ class TravelQuoteService extends BaseService
             $dateTo = Carbon::createFromFormat('Y-m-d', $request->endAt)->endOfDay()->toDateTimeString();
             $query->whereBetween('tqrd.advisor_assigned_date', [$dateFrom, $dateTo]);
         }
+        if (isset($request->nfdSart) && isset($request->nfdEnd) && $request->nfdSart != '' && $request->nfdEnd != '') {
+            $dateFrom = Carbon::createFromFormat('Y-m-d', $request->nfdSart)->startOfDay()->toDateTimeString();
+            $dateTo = Carbon::createFromFormat('Y-m-d', $request->nfdEnd)->endOfDay()->toDateTimeString();
+            $query->whereBetween('hqrd.next_followup_date', [$dateFrom, $dateTo]);
+        }
         if (isset($request->cdbId) && $request->cdbId != 0) {
             $query->where('tqr.code', $request->cdbId);
+        }
+        if (isset($request->email) && $request->email != '') {
+            $query->where('tqr.email', $request->email);
         }
         if (isset($request->leadStatus) && $request->leadStatus != 0) {
             $query->where('tqr.quote_status_id', $request->leadStatus);
@@ -164,9 +173,9 @@ class TravelQuoteService extends BaseService
         return $query;
     }
 
-    public function getGridData($searchProperties, $request)
+    public function getGridData($model, $request)
     {
-
+        $searchProperties = $model->searchProperties;
         if ($request->ajax()) {
             if (isset($request->assigned_to_date_start) && $request->assigned_to_date_start != '') {
                 $dateFrom = Carbon::createFromFormat('Y-m-d', $request['assigned_to_date_start'])->startOfDay()->toDateTimeString();
@@ -177,6 +186,11 @@ class TravelQuoteService extends BaseService
                 $dateFrom = Carbon::createFromFormat('Y-m-d', $request['created_at'])->startOfDay()->toDateTimeString();
                 $dateTo = Carbon::createFromFormat('Y-m-d', $request['created_at_end'])->endOfDay()->toDateTimeString();
                 $this->query->whereBetween('tqr.created_at', [$dateFrom, $dateTo]);
+            }
+            if (isset($request->next_followup_date) && $request->next_followup_date != '') {
+                $dateFrom = Carbon::createFromFormat('Y-m-d', $request['next_followup_date'])->startOfDay()->toDateTimeString();
+                $dateTo = Carbon::createFromFormat('Y-m-d', $request['next_followup_date_end'])->endOfDay()->toDateTimeString();
+                $this->query->whereBetween('tqrd.next_followup_date', [$dateFrom, $dateTo]);
             }
             foreach ($searchProperties as $item) {
                 if (!empty($request[$item]) && $item != "created_at") {
@@ -319,7 +333,7 @@ class TravelQuoteService extends BaseService
             "advisor_id" => "select|title",
             "created_at" => "input|date|title|range",
             "updated_at" => "input|date|title",
-            "next_followup_date" => "input|date|text",
+            "next_followup_date" => "input|date|title|range",
             "lost_reason" => "input|text",
             "source" => "input|text",
             "premium" => "input|number|required",
@@ -366,6 +380,9 @@ class TravelQuoteService extends BaseService
             case 'mobile_no':
                 $title = "Mobile Number";
                 break;
+            case 'next_followup_date':
+                $title = "Next Followup Date";
+                break;
             default:
                 break;
         }
@@ -384,6 +401,61 @@ class TravelQuoteService extends BaseService
 
     public function fillModelSearchProperties()
     {
-        return ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'advisor_id', 'created_at'];
+        return ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'advisor_id', 'created_at', 'next_followup_date'];
+    }
+
+    public function getQuotePlans($id)
+    {
+        $quoteUuId = TravelQuote::where('uuid', '=', $id)->value('uuid');
+        $plansApiEndPoint = Config::get('constants.KEN_API_ENDPOINT') . '/get-travel-quote-plans';
+        $plansApiToken = Config::get('constants.KEN_API_TOKEN');
+        $plansApiTimeout = Config::get('constants.KEN_API_TIMEOUT');
+        $plansApiUserName = Config::get('constants.KEN_API_USER');
+        $plansApiPassword = Config::get('constants.KEN_API_PWD');
+        $authBasic = base64_encode($plansApiUserName . ":" . $plansApiPassword);
+
+        $plansDataArr = array(
+            "quoteUID" => $quoteUuId,
+            "lang" => "en",
+        );
+
+        $client = new \GuzzleHttp\Client();
+
+        try {
+            $kenRequest = $client->post(
+                $plansApiEndPoint,
+                [
+                    'headers' => [
+                        'Content-Type' => 'application/json', 'Accept' => 'application/json',
+                        'x-api-token' => $plansApiToken,
+                        'Authorization' => 'Basic ' . $authBasic
+                    ],
+                    'body' => json_encode($plansDataArr),
+                    'timeout' => $plansApiTimeout,
+                ]
+            );
+
+            $getStatusCode = $kenRequest->getStatusCode();
+
+            if ($getStatusCode == 200) {
+                $getContents = $kenRequest->getBody();
+                $getdecodeContents = json_decode($getContents);
+                return $getdecodeContents;
+            }
+        } catch (\GuzzleHttp\Exception\BadResponseException $e) {
+            $response = $e->getResponse();
+            $contents = (string) $response->getBody();
+            $response = json_decode($contents);
+
+            if (isset($response->message)) {
+                $responseBodyAsString = $response->message;
+            } else if (isset($response->error)) {
+                $responseBodyAsString = $response->error;
+            } else {
+                $responseBodyAsString = $response->msg;
+            }
+
+            return $responseBodyAsString;
+        }
     }
 }

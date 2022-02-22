@@ -10,6 +10,11 @@ use App\Models\QuoteStatusLog;
 use App\Models\User;
 use App\Services\TeamService;
 use App\Services\HealthQuoteService;
+use App\Services\InsuranceProviderService;
+use App\Services\CarPlanService;
+use App\Services\CarPlanCoverageService;
+use App\Services\CarPlanAddonService;
+use App\Services\CarPlanAddOnOptionService;
 use Illuminate\Http\Request;
 use DB;
 use \Carbon\Carbon;
@@ -26,6 +31,11 @@ class CRUDService extends BaseService
     protected $homeQuoteService;
     protected $businessQuoteService;
     protected $quoteTypes;
+    protected $insuranceproviderService;
+    protected $carplancoverageService;
+    protected $carplanService;
+    protected $carplanaddonService;
+    protected $carplanaddonoptionService;
     public function __construct(
         HealthQuoteService $healthQuoteService,
         TeamService $teamsService,
@@ -34,7 +44,12 @@ class CRUDService extends BaseService
         TravelQuoteService $travelQuoteService,
         LifeQuoteService $lifeQuoteService,
         HomeQuoteService $homeQuoteService,
-        BusinessQuoteService $businessQuoteService
+        BusinessQuoteService $businessQuoteService,
+        InsuranceProviderService $insuranceproviderService,
+        CarPlanService $carplanService,
+        CarPlanCoverageService $carplancoverageService,
+        CarPlanAddonService $carplanaddonService,
+        CarPlanAddOnOptionService $carplanaddonoptionService
     ) {
         $this->healthQuoteService = $healthQuoteService;
         $this->carQuoteService = $carQuoteService;
@@ -44,6 +59,11 @@ class CRUDService extends BaseService
         $this->lifeQuoteService = $lifeQuoteService;
         $this->homeQuoteService = $homeQuoteService;
         $this->businessQuoteService = $businessQuoteService;
+        $this->insuranceproviderService = $insuranceproviderService;
+        $this->carplanService = $carplanService;
+        $this->carplancoverageService = $carplancoverageService;
+        $this->carplanaddonService = $carplanaddonService;
+        $this->carplanaddonoptionService = $carplanaddonoptionService;
         $this->quoteTypes = ['home', 'health', 'life', 'business', 'travel', 'car'];
     }
     public function getGridData(GenericModel $model, Request $request)
@@ -51,7 +71,7 @@ class CRUDService extends BaseService
         $lowerCaseModelType = strtolower($model->modelType);
 
         return $this->{in_array($lowerCaseModelType, $this->quoteTypes) ? $lowerCaseModelType . 'QuoteService' : $lowerCaseModelType . 'Service'}
-            ->getGridData($model->searchProperties, $request);
+            ->getGridData($model, $request);
     }
 
     public function getLeads($CDBID, $email, $mobile_no, $leadType)
@@ -124,6 +144,24 @@ class CRUDService extends BaseService
         return $query->orderBy('r.name')->distinct()->get();
     }
 
+    public function getRenewalAdvisorsByModelType($modelType)
+    {
+        $query = DB::table('users as u')
+            ->join('model_has_roles as mr', 'mr.model_id', '=', 'u.id')
+            ->join('roles as r', 'r.id', '=', 'mr.role_id')
+            ->select('u.id', DB::raw("CONCAT(u.name,' - ',r.name) AS name"));
+        if (strtolower($modelType) == strtolower(quoteTypeCode::Car)) {
+            $query->whereIn('r.name', [strtoupper($modelType) . '_RENEWAL_ADVISOR', 'advisor']);
+        } else if (strtolower($modelType) ==  strtolower(quoteTypeCode::Health)) {
+            $query->whereIn('r.name', [strtoupper($modelType) . '_WCU_ADVISOR', 'RM_ADVISOR', 'EBP_ADVISOR']);
+        } else if (strtolower($modelType) ==  strtolower(quoteTypeCode::Business)) {
+            $query->whereIn('r.name', ['CORPLINE_ADVISOR']);
+        } else {
+            $query->where('r.name', strtoupper($modelType) . '_ADVISOR');
+        }
+        return $query->orderBy('r.name')->distinct()->get();
+    }
+
     public function getEBPAndRMAdvisors()
     {
         $query = DB::table('users as u')
@@ -166,6 +204,13 @@ class CRUDService extends BaseService
 
         return $this->{in_array($lowerCaseModelType, $this->quoteTypes) ? $lowerCaseModelType . 'QuoteService' : $lowerCaseModelType . 'Service'}
             ->getEntity($id);
+    }
+
+    public function fillRenewalData($model)
+    {
+        $lowerCaseModelType = strtolower($model->modelType);
+        return $this->{in_array($lowerCaseModelType, $this->quoteTypes) ? $lowerCaseModelType . 'QuoteService' : $lowerCaseModelType . 'Service'}
+            ->fillRenewalProperties($model);
     }
 
     public function getSelectedLostReason($modelType, $id)
