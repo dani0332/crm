@@ -14,11 +14,18 @@
         return target.replace(new RegExp(search, 'g'), replacement);
         };
 
-        var oldCarModelId = JSON.parse('<?php echo json_encode(old("car_model_id")) ?>');
-        var oldCarMakeId = JSON.parse('<?php echo json_encode(old("car_make_id")) ?>');
-        if(oldCarMakeId != '') {
-            getCarModels(oldCarMakeId, oldCarModelId);
+        var oldCarModelId = '';
+        var oldCarMakeId = '';
+        var model = JSON.parse('<?php echo json_encode(get_object_vars($model)) ?>');
+        var modelPropertiesArray = convertObjectToArray(model.properties);
+        if(model.modelType.toLowerCase() == 'car'){
+            oldCarModelId = JSON.parse('<?php echo json_encode(old("car_model_id")) ?>');
+            oldCarMakeId = JSON.parse('<?php echo json_encode(old("car_make_id")) ?>');
+            if(oldCarMakeId != '') {
+             getCarModels(oldCarMakeId, oldCarModelId);
+            }
         }
+        
         $('#car_model_id').on('change',function(){
             var car_model_id = $('#car_model_id').val();
             $.ajax({
@@ -48,8 +55,7 @@
             value: obj[key],
             }));
         }
-        var model = JSON.parse('<?php echo json_encode(get_object_vars($model)) ?>');
-        var modelPropertiesArray = convertObjectToArray(model.properties);
+        
         if(model.modelType == "Home") {
             $('#has_personal_belongings_div,#personal_belongings_aed_div,#has_building_div,#building_aed_div,#contents_aed_div').each(function(){
                 if($('#'+$(this).attr('id').replace('_div', '')).attr('type') == 'checkbox'){
@@ -133,7 +139,7 @@
                         $index = 0;
                         $searchProperties = [];
                         $skipProperties = [];
-                        if($isRenewalUser){
+                        if($isRenewalUser && strtolower($model->modelType) == 'car'){
                             $searchProperties = $model->renewalSearchProperties;
                             $skipProperties = $model->renewalSkipProperties;
                         }

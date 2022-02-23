@@ -103,7 +103,7 @@
             var allowedModelTypes = ['home', 'health', 'life', 'business', 'travel', 'car'];
             var skipPropertiesArray = [];
             // Getting the skip properties based on loggedin user role
-            if(isRenewalUser){
+            if(isRenewalUser && model.modelType.toLowerCase() == 'car'){
                 skipPropertiesArray = model.renewalSkipProperties['list'].split(',');
             } else {
                 skipPropertiesArray = model.skipProperties['list'].split(',');
@@ -421,7 +421,7 @@
                     @php
                         $searchProperties = [];
                         $skipProperties = [];
-                        if($isRenewalUser){
+                        if($isRenewalUser && strtolower($model->modelType) == 'car'){
                             $searchProperties = $model->renewalSearchProperties;
                             $skipProperties = $model->renewalSkipProperties;
                         }
