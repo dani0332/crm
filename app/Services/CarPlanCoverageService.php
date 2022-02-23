@@ -25,6 +25,7 @@ class CarPlanCoverageService extends BaseService
                 'cpv.type',
                 'cpv.value_ar',
                 'cpv.plan_id',
+                'cp.text as planName',
                 'cpv.updated_at',
                 'cpv.created_at'
             )
@@ -152,7 +153,8 @@ class CarPlanCoverageService extends BaseService
             "created_at" => "input|title|date|range",
             "updated_at" => "input|title|date",
             "type" => "input|title",
-            "plan_id" => "select|title"
+            "plan_id" => "select|title",
+            "planName" => "readonly|title"
         );
     }
 
@@ -187,6 +189,9 @@ class CarPlanCoverageService extends BaseService
             case 'plan_id':
                 $title = "Plan";
                 break;
+            case 'planName':
+                $title = "Plan Name";
+                break;
             default:
                 break;
         }
@@ -196,9 +201,9 @@ class CarPlanCoverageService extends BaseService
     public function fillModelSkipProperties()
     {
         return [
-            "create" => "created_at,updated_at",
+            "create" => "created_at,updated_at,planName",
             "list" => "",
-            "update" => "id,created_at,updated_at",
+            "update" => "id,created_at,updated_at,planName",
             "show" => "",
         ];
     }

@@ -4,14 +4,14 @@
                 <div class="x_title">
                     <h2>Available Plans Addons</h2>
                     <ul class="nav navbar-right panel_toolbox">
-                        <li><a href="{{ url('generic/carplanaddon/create?id='.$record->plan_id) }}" class="btn btn-warning btn-sm">Create Plan Addon</a></li>
+                        <li><a href="{{ url('generic/carplanaddon/create?id='.$record->id) }}" class="btn btn-warning btn-sm">Create Plan Addon</a></li>
                     </ul>
                     <div class="clearfix"></div>
                 </div>
                 <div class="x_content">
                     <div id="quote-plans">
                         @if($plansList)
-                                <table id="datatable" class="table table-striped jambo_table" style="width:100%">
+                                <table id="addon-datatable" class="table table-striped jambo_table" style="width:100%">
                                     <thead>
                                         <tr>
                                             <th>Id</th>
@@ -40,7 +40,7 @@
                                     </tbody>
                                 </table>
                             @else
-                            <table id="datatable" class="table table-striped jambo_table" style="width:100%">
+                            <table id="addon-datatable" class="table table-striped jambo_table" style="width:100%">
                                 <thead>
                                     <tr>
                                         <th>Id</th>

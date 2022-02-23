@@ -25,6 +25,7 @@ class CarPlanAddonService extends BaseService
                 'ca.code',
                 'ca.text',
                 'ca.text_ar',
+                'cp.text as planName',
                 'ca.type',
                 'ca.created_at',
                 'ca.updated_at'
@@ -141,8 +142,8 @@ class CarPlanAddonService extends BaseService
             "created_at" => "input|title|date|range",
             "updated_at" => "input|title|date",
             "type" => "input|title",
-            "plan_id" => "select|title"
-            // "addon_id" => "select|title"
+            "plan_id" => "select|title",
+            "planName" => "readonly|title"
         );
     }
 
@@ -171,9 +172,9 @@ class CarPlanAddonService extends BaseService
             case 'plan_id':
                 $title = "Plan";
                 break;
-            // case 'addon_id':
-            //     $title = "Addon Id";
-            //     break;
+            case 'planName':
+                $title = "Plan Name";
+                break;
             default:
                 break;
         }
@@ -183,9 +184,9 @@ class CarPlanAddonService extends BaseService
     public function fillModelSkipProperties()
     {
         return [
-            "create" => "created_at,updated_at",
+            "create" => "created_at,updated_at,planName",
             "list" => "",
-            "update" => "id,created_at,updated_at",
+            "update" => "id,created_at,updated_at,planName",
             "show" => "",
         ];
     }
