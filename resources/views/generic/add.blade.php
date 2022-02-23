@@ -189,8 +189,6 @@
                             <div class="col-auto">
                                 <button type="submit" class="btn btn-warning btn-sm">Create </button>
                                 <button type="submit" name="return_to_view" value="1" class="btn btn-warning btn-sm">Create & Add New</button>
-                                <!-- <button
-                                    type="submit" name ="create_another" class="btn btn-warning btn-sm">Create And Add Another</button> -->
                             </div>
                         </div>
                     </form>
