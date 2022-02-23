@@ -57,9 +57,9 @@ class TeamService extends BaseService
 
     public function updateTeams(Request $request, $id)
     {
-        Team::where('uuid', $id)->update(
-            ['name' => $request->name]
-        );
+        $team = Team::where('uuid', $id)->first();
+        $team->name = $request->name;
+        $team->save();
         if (isset($request->return_to_view))
             return redirect("/quotes/teams/" . $id)->with('success', 'Team has been updated');
     }
