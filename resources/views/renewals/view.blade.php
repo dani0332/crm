@@ -23,6 +23,7 @@
                           <th>Total Records</th>
                           <th>Good</th>
                           <th>Bad</th>
+                          <th>Status</th>
                           <th>Created At</th>
                           <th>Updated At</th>
                         </tr>
