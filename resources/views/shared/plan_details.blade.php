@@ -1,34 +1,35 @@
+<meta name="csrf-token" content="{{ csrf_token() }}" />
 <?php
     use App\Enums\quoteTypeCode;
 ?>
 <script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
 <script>
+    $.ajaxSetup({
+        headers: {
+            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+        }
+    });
     $('#update_car_plan' ).submit(
-
-    function( e ) {
-        var actual_premium = $('#actual_premium').val();
-        var discount_premium = $('#discount_premium').val();
-        var car_value = $('#car_value').val();
-        var excess = $('#excess').val();
-        console.log(actual_premium, discount_premium, car_value ,excess);
-        $.ajax( {
-            url: "{{ url('/UpdateCarPlan') }}",
-            type: 'POST',
-            data: {
-                actual_premium: actual_premium,
-                discount_premium: discount_premium,
-                car_value: car_value,
-                excess: excess
-            },
-            processData: false,
-            contentType: false,
-            success: function(result){
-                alert('form submitted');
-            }
-        } );
-        e.preventDefault();
-    }
-);
+        function(e) {
+            $.ajax( {
+                url: "{{ url('/UpdateCarPlan') }}",
+                type: 'post',
+                data: {
+                    car_quote_uuid: $('#car_quote_uuid').val(),
+                    plan_id: $('#plan_id').val(),
+                    actual_premium: $('#actual_premium').val(),
+                    discount_premium: $('#discount_premium').val(),
+                    car_value: $('#car_value').val(),
+                    excess: $('#excess').val(),
+                    _token: '{{ csrf_token() }}'
+                },
+                success: function(result){
+                    alert('form submitted: '+result);
+                }
+            } );
+            e.preventDefault();
+        }
+    );
 </script>
 @if(isset($modelName) && $modelName == quoteTypeCode::Travel)
 <div class="row">
@@ -185,8 +186,10 @@
 
                     <div class="tab-content" style="padding-top: 20px;">
                         <div class="tab-pane fade show active" id="general" role="tabpanel" aria-labelledby="general-tab">
-                            <form id="update_car_plan" method='post' action="{{ route('SaveCarPlan') }}" enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left" autocomplete="off">
+                            <form id="update_car_plan" method='post' enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left" autocomplete="off">
                                 {{csrf_field()}}
+                                <input type="hidden" id="plan_id" name="plan_id" value="{{ $planId }}">
+                                <input type="hidden" id="car_quote_uuid" name="car_quote_uuid" value="{{ $quoteId }}">
                                 <table cellpadding="3" cellspacing="3">
                                     <tr><td style="width: 150px;">Provider Code:</td> <td>{{ $providerCode }}</td></tr>
                                     <tr><td>Provider Name:</td> <td>{{ $providerName }}</td></tr>
@@ -297,5 +300,3 @@
         </div>
     </div>
 @endif
-
-

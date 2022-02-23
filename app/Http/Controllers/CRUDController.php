@@ -415,7 +415,7 @@ class CRUDController extends Controller
                 'listQuotePlanName', 'providerCode', 'providerName', 'repairType',
                 'actualPremium', 'discountPremium', 'listQuotePlanAddons', 'listQuotePlanAddonValues', 'listQuotePlanBenefitsInclusions',
                 'listQuotePlanBenefitsExclusions', 'listQuotePlanBenefitsFeatures', 'listQuotePlanBenefitsRsas',
-                'listQuotePlanBenefitsPolicyDetailLink', 'listQuotePlanAddonPrices', 'excess', 'carValue'
+                'listQuotePlanBenefitsPolicyDetailLink', 'listQuotePlanAddonPrices', 'excess', 'carValue', 'planId', 'quoteId'
             ]));
         }
     }

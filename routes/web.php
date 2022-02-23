@@ -238,6 +238,7 @@ Route::group(['middleware' =>  ['auth']], function () {
     Route::post('auditable', [AuditableController::class, 'loadAuditableComponent']);
     Route::get('/car-model-by-id', [ClaimController::class, 'carModelBasedOnCarMakeId']);
     Route::get('/insurance-provider-plans', [ClaimController::class, 'carPlansBasedOnInsuranceProvider']);
+    Route::post('/UpdateCarPlan', [ClaimController::class, 'UpdateCarPlan']);
 });
 
 

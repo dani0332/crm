@@ -456,4 +456,9 @@ class ClaimController extends Controller
 
         return response()->json($carPlan);
     }
+
+    public function UpdateCarPlan(Request $request)
+    {
+        dd('sss');
+    }
 }
