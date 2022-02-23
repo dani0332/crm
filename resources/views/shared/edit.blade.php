@@ -38,13 +38,16 @@
         var model = JSON.parse('<?php echo json_encode(get_object_vars($model)) ?>');
         var modelPropertiesArray = convertObjectToArray(model.properties);
         var modelSkipProperties = convertObjectToArray(model.skipProperties);
-        var oldCarModelId = JSON.parse('<?php echo json_encode($record->car_model_id) ?>');
-        var oldCarMakeId = JSON.parse('<?php echo json_encode($record->car_make_id) ?>');
-        if(oldCarMakeId != '') {
-            getCarMakes(oldCarMakeId);
-        }
-        if(oldCarModelId != '') {
-            getCarModels(oldCarMakeId, oldCarModelId);
+        debugger;
+        if(model.modelType.toLowerCase() == 'car'){
+            var oldCarModelId = JSON.parse('<?php echo json_encode(isset($record->car_model_id) ? $record->car_model_id : 0) ?>');
+            var oldCarMakeId = JSON.parse('<?php echo json_encode(isset($record->car_make_id) ? $record->car_make_id : 0) ?>');
+            if(oldCarMakeId != '') {
+                getCarMakes(oldCarMakeId);
+            }
+            if(oldCarModelId != '') {
+                getCarModels(oldCarMakeId, oldCarModelId);
+            }
         }
         var result = modelSkipProperties.filter(obj => {
             return obj.name === 'update'
@@ -132,7 +135,7 @@
                         @php
                         $searchProperties = [];
                         $skipProperties = [];
-                        if($isRenewalUser){
+                        if($isRenewalUser && strtolower($model->modelType) == 'car'){
                             $searchProperties = $model->renewalSearchProperties;
                             $skipProperties = $model->renewalSkipProperties;
                         }

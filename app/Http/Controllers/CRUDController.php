@@ -80,7 +80,7 @@ class CRUDController extends Controller
         $renewalAdvisors = [];
         //Checking if the loggedIn user is Renewal User
         $isRenewalUser = Auth::user()->isRenewalUser();
-        if ($isRenewalUser) {
+        if ($isRenewalUser && strtolower($this->genericModel->modelType) == strtolower(quoteTypeCode::Car)) {
             $this->crudService->fillRenewalData($this->genericModel);
             $renewalAdvisors = $this->crudService->getRenewalAdvisorsByModelType($this->genericModel->modelType);
         }
@@ -123,7 +123,7 @@ class CRUDController extends Controller
     public function create(Request $request)
     {
         $isRenewalUser = Auth::user()->isRenewalUser();
-        if ($isRenewalUser) {
+        if ($isRenewalUser && strtolower($this->genericModel->modelType) == strtolower(quoteTypeCode::Car)) {
             $renewalAdvisors = $this->crudService->fillRenewalData($this->genericModel);
         }
         $customTitles = $dropdownSource = [];
@@ -274,7 +274,7 @@ class CRUDController extends Controller
     public function edit($id)
     {
         $isRenewalUser = Auth::user()->isRenewalUser();
-        if ($isRenewalUser) {
+        if ($isRenewalUser && strtolower($this->genericModel->modelType) == strtolower(quoteTypeCode::Car)) {
             $renewalAdvisors = $this->crudService->fillRenewalData($this->genericModel);
         }
         $record = $this->crudService->getEntity($this->genericModel->modelType, $id);
