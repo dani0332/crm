@@ -156,27 +156,25 @@
 
                     <div class="tab-content" style="padding-top: 20px;">
                         <div class="tab-pane fade show active" id="general" role="tabpanel" aria-labelledby="general-tab">
-                            <table cellpadding="3" cellspacing="3">
-                                <tr><td style="width: 150px;">Provider Code:</td> <td>{{ $providerCode }}</td></tr>
-                                <tr><td>Provider Name:</td> <td>{{ $providerName }}</td></tr>
-                                <tr><td>Repair Type:</td> <td>{{ $repairType }}</td></tr>
-                                <tr><td>Actual Premium:</td> <td>{{ $actualPremium }}</td></tr>
-                                <tr><td>Discount Premium:</td> <td>{{ $discountPremium }}</td></tr>
-                            </table>
-                            <br /><br />
+                            <form id="update_car_plan" method='post' action="{{ route('SaveCarPlan') }}" enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left" autocomplete="off">
+                                {{csrf_field()}}
+                                <table cellpadding="3" cellspacing="3">
+                                    <tr><td style="width: 150px;">Provider Code:</td> <td>{{ $providerCode }}</td></tr>
+                                    <tr><td>Provider Name:</td> <td>{{ $providerName }}</td></tr>
+                                    <tr><td>Repair Type:</td> <td>{{ $repairType }}</td></tr>
+                                    <tr><td>Actual Premium:</td> <td><input type="number" id="actual_premium" name="actual_premium" value="{{ old('actual_premium', $actualPremium) }}" class="form-control"></td><td>Discount Premium:</td> <td><input type="number" id="discount_premium" name="discount_premium" value="{{ old('discount_premium', $discountPremium) }}" class="form-control"></td></tr>
+                                    <tr><td>Car value:</td> <td><input type="number" id="car_value" name="car_value" value="{{ old('car_value', $carValue) }}" class="form-control"></td><td>Excess:</td> <td><input type="number" id="excess" name="excess" value="{{ old('excess', $excess) }}" class="form-control"></td></tr>
+                                    <tr><td> </td> <td> </td><td> </td> <td align="right"><button type="submit" class="btn btn-warning btn-sm">Update</button></td></tr>
+                                </table>
+                            </form>
+                            <br />
                             <p>
                                 <strong>Features</strong>
                                 <table cellpadding="3" cellspacing="3">
-                                    <tr>
-                                        <td>
-                                            <table cellpadding="3" cellspacing="3">
-                                                @foreach ($listQuotePlanBenefitsFeatures as $key => $listQuotePlanBenefitsFeature)
-                                                    <tr><td style="width: 300px;">{{ ucwords($listQuotePlanBenefitsFeature->text) }}</td>
-                                                        <td>{{ ucwords($listQuotePlanBenefitsFeature->value) }}</td></tr>
-                                                @endforeach
-                                            </table>
-                                        </td>
-                                    </tr>
+                                    @foreach ($listQuotePlanBenefitsFeatures as $key => $listQuotePlanBenefitsFeature)
+                                        <tr><td style="width: 300px;">{{ ucwords($listQuotePlanBenefitsFeature->text) }}</td>
+                                            <td>{{ ucwords($listQuotePlanBenefitsFeature->value) }}</td></tr>
+                                    @endforeach
                                 </table>
                             </p>
                         </div>

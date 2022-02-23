@@ -389,6 +389,8 @@ class CRUDController extends Controller
                     $repairType = $listQuotePlan->repairType;
                     $actualPremium = $listQuotePlan->actualPremium;
                     $discountPremium = $listQuotePlan->discountPremium;
+                    if(isset($listQuotePlan->excess)) { $excess = $listQuotePlan->excess; } else { $excess = 0; }
+                    if(isset($listQuotePlan->carValue)) { $carValue = $listQuotePlan->carValue; } else { $carValue = 0; }
                     $listQuotePlanAddonss = $listQuotePlan->addons;
                     $listQuotePlanBenefitsInclusions = $listQuotePlan->benefits->inclusion;
                     $listQuotePlanBenefitsExclusions = $listQuotePlan->benefits->exclusion;
@@ -413,7 +415,7 @@ class CRUDController extends Controller
                 'listQuotePlanName', 'providerCode', 'providerName', 'repairType',
                 'actualPremium', 'discountPremium', 'listQuotePlanAddons', 'listQuotePlanAddonValues', 'listQuotePlanBenefitsInclusions',
                 'listQuotePlanBenefitsExclusions', 'listQuotePlanBenefitsFeatures', 'listQuotePlanBenefitsRsas',
-                'listQuotePlanBenefitsPolicyDetailLink', 'listQuotePlanAddonPrices'
+                'listQuotePlanBenefitsPolicyDetailLink', 'listQuotePlanAddonPrices', 'excess', 'carValue'
             ]));
         }
     }
