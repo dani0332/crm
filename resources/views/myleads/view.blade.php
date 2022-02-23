@@ -3,6 +3,13 @@
 @section('content')
     <script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
     <script>
+        function formatedDate(date) {
+            var newDate = new Date(date);
+            var offset = newDate.getTimezoneOffset();
+            newDate = new Date(newDate.getTime() - (offset*60*1000));
+            newDate = newDate.toISOString().split('T')[0];
+            return newDate;
+        }
         var userId = JSON.parse('<?php echo json_encode(Auth::user()->id); ?>');
         var isAdmin = JSON.parse('<?php echo json_encode(Auth::user()->hasRole('ADMIN')); ?>');
         var teamUserIds = JSON.parse('<?php echo json_encode(Auth::user()->getTeamUserIds()); ?>');
@@ -105,8 +112,10 @@
                 for (let index = 1; index < rows.length; index++) {
                     var columns = $(rows[index]).children();
                     for (let i = 0; i < columns.length; i++) {
-                        if((i == nextFollowupDateColumn) && (new Date().toLocaleDateString() > new Date($(columns[i]).text()).toLocaleDateString())){
-                            $(rows[index]).children().eq(i).css({'color': 'white', 'background-color': 'red', 'font-weight': 'bold', 'font-size': '12px'});
+                        if(i == nextFollowupDateColumn && $(columns[i]).text() != ""){
+                            if(formatedDate(new Date()) > formatedDate(new Date($(columns[i]).text()))){
+                                $(rows[index]).children().eq(i).css({'color': 'white', 'background-color': 'red', 'font-weight': 'bold', 'font-size': '12px'});
+                            }
                         }
                     }
                 }

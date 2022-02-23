@@ -23,7 +23,7 @@
                 <div class="x_title">
                     <h2>{{(str_contains(strtolower($model->modelType), 'team') ? 'Team' : (str_contains(strtolower($model->modelType), 'leadstatus') ? 'Lead Status' : $model->modelType)). ' Detail' }}</h2>
                     <ul class="nav navbar-right panel_toolbox">
-                        <li><a href="javascript:history.back()" class="btn btn-warning btn-sm">{{(str_contains(strtolower($model->modelType), 'team') ? 'Team' : (str_contains(strtolower($model->modelType), 'leadstatus') ? 'Lead Status' : $model->modelType)). ' List' }}</a></li>
+                        <li><a href="{{ url('quotes/'.strtolower($model->modelType)) }}" class="btn btn-warning btn-sm">{{(str_contains(strtolower($model->modelType), 'team') ? 'Team' : (str_contains(strtolower($model->modelType), 'leadstatus') ? 'Lead Status' : $model->modelType)). ' List' }}</a></li>
                     </ul>
                     <div class="clearfix"></div>
                 </div>
@@ -71,7 +71,8 @@
                                     name="assign_team">
                                         <option value="">Select Team</option>
                                         <option value="EBP" >EBP</option>
-                                        <option value="RM">RM</option>
+                                        <option value="RM-NB">RM-NB</option>
+                                        <option value="RM-Speed">RM-Speed</option>
                                         <option value="GM">Group Medical</option>
                                     </select>
                                     <label id='teamAssignValidation' style="display: none;color:red;">Please select a team for assignment</label>

@@ -77,15 +77,30 @@ class CRUDController extends Controller
      */
     public function index(Request $request)
     {
+        $renewalAdvisors = [];
+        //Checking if the loggedIn user is Renewal User
+        $isRenewalUser = Auth::user()->isRenewalUser();
+        if ($isRenewalUser) {
+            $this->crudService->fillRenewalData($this->genericModel);
+            $renewalAdvisors = $this->crudService->getRenewalAdvisorsByModelType($this->genericModel->modelType);
+        }
+
+        // Getting the data for grid based on the model type
         $gridData = $this->crudService->getGridData($this->genericModel, $request);
+        // Getting the data for the advisor dropdown based on the model type
         $advisors = $this->crudService->getAdvisorsByModelType($this->genericModel->modelType);
+        // Checking if the loggedIn user has Manager or Deputy Role
         $isManagerORDeputy = Auth::user()->isManagerOrDeputy();
+
         $dropdownSource = $customTitles = [];
+
         foreach ($this->genericModel->properties as $property => $value) {
             if (str_contains($value, 'title')) {
+                // Getting custom title for each property where title is mentioned in the property meta data
                 $customTitles[$property] = $this->crudService->getCustomTitleByModelType($this->genericModel->modelType, $property);
             }
             if (str_contains($value, 'select')) {
+                // Getting the dropdown source for each property where select is mentioned in the property meta data
                 $dropdownValue = $this->dropdownSourceService->getDropdownSource($property);
                 $dropdownSource[$property] = $dropdownValue;
             }
@@ -95,9 +110,9 @@ class CRUDController extends Controller
             return DataTables::of($gridData)
                 ->addIndexColumn()
                 ->make(true);
-            return view('shared.view', compact('model', 'dropdownSource', 'customTitles', 'advisors', 'isManagerORDeputy'));
+            return view('shared.view', compact('model', 'dropdownSource', 'customTitles', 'advisors', 'isManagerORDeputy', 'isRenewalUser', 'renewalAdvisors'));
         }
-        return view('shared.view', compact('model', 'dropdownSource', 'customTitles', 'advisors', 'isManagerORDeputy'));
+        return view('shared.view', compact('model', 'dropdownSource', 'customTitles', 'advisors', 'isManagerORDeputy', 'isRenewalUser', 'renewalAdvisors'));
     }
 
     /**
@@ -107,6 +122,10 @@ class CRUDController extends Controller
      */
     public function create(Request $request)
     {
+        $isRenewalUser = Auth::user()->isRenewalUser();
+        if ($isRenewalUser) {
+            $renewalAdvisors = $this->crudService->fillRenewalData($this->genericModel);
+        }
         $customTitles = $dropdownSource = [];
         foreach ($this->genericModel->properties as $property => $value) {
             if (str_contains($value, 'title')) {
@@ -118,7 +137,7 @@ class CRUDController extends Controller
             }
         }
         $model = $this->genericModel;
-        return view('shared.add', compact('model', 'dropdownSource', 'customTitles'));
+        return view('shared.add', compact('model', 'dropdownSource', 'customTitles', 'isRenewalUser'));
     }
 
     /**
@@ -181,7 +200,8 @@ class CRUDController extends Controller
             $selectedLostReasonId = $this->crudService->getSelectedLostReason($this->genericModel->modelType, $record->id);
         }
 
-        if (strtolower($this->genericModel->modelType) == strtolower(quoteTypeCode::Health) && ($record->health_team_type == HealthTeamType::EBP || $record->health_team_type == HealthTeamType::RM)) {
+        if (strtolower($this->genericModel->modelType) == strtolower(quoteTypeCode::Health) && ($record->health_team_type == HealthTeamType::EBP ||
+        $record->health_team_type == HealthTeamType::RM_NB || $record->health_team_type == HealthTeamType::RM_SPEED)) {
             $advisors = $this->crudService->getEBPAndRMAdvisors();
         } else if (strtolower($this->genericModel->modelType) == 'business') {
             $advisors = $this->crudService->getRMAndBusinessAdvisors();
@@ -253,6 +273,10 @@ class CRUDController extends Controller
      */
     public function edit($id)
     {
+        $isRenewalUser = Auth::user()->isRenewalUser();
+        if ($isRenewalUser) {
+            $renewalAdvisors = $this->crudService->fillRenewalData($this->genericModel);
+        }
         $record = $this->crudService->getEntity($this->genericModel->modelType, $id);
         $model = $this->genericModel;
         $dropdownSource = [];
@@ -271,7 +295,7 @@ class CRUDController extends Controller
                 $customLists[$property] = $data;
             }
         }
-        return view('shared.edit', compact(['record', 'model', 'dropdownSource', 'customTitles', 'customLists']));
+        return view('shared.edit', compact(['record', 'model', 'dropdownSource', 'customTitles', 'customLists', 'isRenewalUser']));
     }
 
     /**
@@ -494,7 +518,7 @@ class CRUDController extends Controller
         $quoteUuId = $request->quoteUuId;
         $insuranceproviders = InsuranceProvider::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
 
-        return view('shared.add_quote', compact('insuranceproviders','quoteUuId'));
+        return view('shared.add_quote', compact('insuranceproviders', 'quoteUuId'));
     }
 
     public function healthTeamAssign(Request $request)
@@ -529,11 +553,12 @@ class CRUDController extends Controller
         return redirect()->to('/quotes/' . strtolower($request->modelType) . '/' . $entity->uuid)->with('success', ' Lead Status has been Updated');
     }
 
-    public function SaveCarPlan(Request $request) {
+    public function SaveCarPlan(Request $request)
+    {
 
         $response = $this->carQuoteService->carPlanCreateUpdate($request);
 
-        if($response == 200 || $response == 201) {
+        if ($response == 200 || $response == 201) {
             return redirect()->back()->with('success', 'Car Plan has been saved');
         } else {
             return redirect()->back()->with('message', $response);

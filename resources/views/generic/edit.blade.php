@@ -7,111 +7,13 @@
         background-color: white !important;
     }
 </style>
-<script>
-    function getCarMakes(id)
-    {
-        $.get('/car-make', function (data) {
-            var carMake = $('#car_make_id').empty();
-            $.each(data, function (create, carmodelObj) {
-                if(carmodelObj.id == id){
-                    carMake.append('<option ata-id="' + carmodelObj.code + '"value="' + carmodelObj.id + '" selected>' + carmodelObj.text + '</option>');
-                }else{
-                carMake.append('<option data-id="' + carmodelObj.code + '" value="' + carmodelObj.id + '">' + carmodelObj.text + '</option>');
-                }
-            });
-        });
-    }
-    function getCarModels(makeId, modelId)
-    {
-        $.get('/car-model-by-id?id=' + makeId, function (data) {
-            var carmodel = $('#car_model_id').empty();
-            $.each(data, function (create, carmodelObj) {
-                if(carmodelObj.id == modelId){
-                    carmodel.append('<option data-id="' + carmodelObj.code + '" value="' + carmodelObj.id + '" selected>' + carmodelObj.text + '</option>');
-                }else{
-                    carmodel.append('<option data-id="' + carmodelObj.code + '" value="' + carmodelObj.id + '">' + carmodelObj.text + '</option>');
-                }
-            });
-        });
-    }
-    $(document).ready(function() {
-        var model = JSON.parse('<?php echo json_encode(get_object_vars($model)) ?>');
-        var modelPropertiesArray = convertObjectToArray(model.properties);
-        var modelSkipProperties = convertObjectToArray(model.skipProperties);
-        var oldCarModelId = JSON.parse('<?php echo json_encode($record->car_model_id) ?>');
-        var oldCarMakeId = JSON.parse('<?php echo json_encode($record->car_make_id) ?>');
-        if(oldCarMakeId != '') {
-            getCarMakes(oldCarMakeId);
-        }
-        if(oldCarModelId != '') {
-            getCarModels(oldCarMakeId, oldCarModelId);
-        }
-        var result = modelSkipProperties.filter(obj => {
-            return obj.name === 'update'
-            });
-        $('#skip').val(result[0].value);
-        var record = JSON.parse('<?php echo json_encode($record) ?>');
-        String.prototype.replaceAll = function(search, replacement) {
-            var target = this;
-            return target.replace(new RegExp(search, 'g'), replacement);
-            };
-
-
-            function convertObjectToArray(obj) {
-            return Object.keys(obj).map(key => ({
-                name: key,
-                value: obj[key],
-                }));
-            }
-
-        if(model.modelType == "Home") {
-            $('#has_personal_belongings_div,#personal_belongings_aed_div,#has_building_div,#building_aed_div,#contents_aed_div').each(function(){
-                if($(this).find('input').length > 0 && $(this).find('input').val() == ''){
-                    $(this).hide();
-                }
-                if($(this).find('input').attr('type') == 'checkbox' > 0 && $(this).find('input').val() == 'off'){
-                    $(this).hide();
-                }
-
-            });
-            $('#iam_possesion_type_id').on('change',function(){
-                if($("#iam_possesion_type_id option:selected").text() == 'A landlord'){
-                    $('#has_building_div').show();
-                }
-                else{
-                    $('#has_building_div').hide();
-                }
-            });
-
-            $('#has_personal_belongings').on('change',function(){
-                this.checked ? $('#personal_belongings_aed_div').show() : $('#personal_belongings_aed_div').hide();
-            });
-            $('#has_building').on('change',function(){
-                this.checked ? $('#building_aed_div').show() : $('#building_aed_div').hide();
-            });
-            $('#has_contents').on('change',function(){
-                if(this.checked){
-                    if($("#iam_possesion_type_id option:selected").text() == 'A landlord'){
-                        $('#has_building_div').show();
-                    }
-                    $('#contents_aed_div').show();
-                    $('#has_personal_belongings_div').show();
-                }
-                else{
-                    $('#contents_aed_div').hide();
-                    $('#has_personal_belongings_div').hide();
-                }
-            });
-        }
-});
-</script>
     <div class="row">
         <div class="col-md-12 col-sm-12">
             <div class="x_panel">
                 <div class="x_title">
-                    <h2>{{'Edit '.(str_contains(strtolower($model->modelType), 'team') ? 'Team' : (str_contains(strtolower($model->modelType), 'leadstatus') ? 'Lead Status' : $model->modelType))}}</h2>
+                    <h2>Edit {{$model->modelType}}</h2>
                     <ul class="nav navbar-right panel_toolbox">
-                        <li><a href="{{ url('quotes/'.strtolower($model->modelType)) }}" class="btn btn-warning btn-sm">{{(str_contains(strtolower($model->modelType), 'team') ? 'Team' : (str_contains(strtolower($model->modelType), 'leadstatus') ? 'Lead Status' : $model->modelType)).' List'}}</a></li>
+                        <li><a href="{{ url('generic/'.strtolower($model->modelType)) }}" class="btn btn-warning btn-sm">{{(str_contains(strtolower($model->modelType), 'team') ? 'Team' : (str_contains(strtolower($model->modelType), 'leadstatus') ? 'Lead Status' : $model->modelType)).' List'}}</a></li>
                     </ul>
                     <div class="clearfix"></div>
                 </div>
@@ -124,32 +26,20 @@
                         <div class="alert alert-danger">{{ session()->get('message') }}</div>
                     @endif
                     <form id="demo-form2" method='post'
-                        action="{{ route(strtolower($model->modelType).'.update', $record->uuid) }}"
+                        action="{{ route(strtolower($model->modelType).'.update', $record->id) }}"
                         enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left"
                         autocomplete="off">
                         {{ csrf_field() }}
                         @method('PUT')
-                        @php
-                        $searchProperties = [];
-                        $skipProperties = [];
-                        if($isRenewalUser){
-                            $searchProperties = $model->renewalSearchProperties;
-                            $skipProperties = $model->renewalSkipProperties;
-                        }
-                        else{
-                            $searchProperties = $model->searchProperties;
-                            $skipProperties = $model->skipProperties;
-                        }
-                        @endphp
 
                         <input type="hidden" name="model" value={{ json_encode($model->properties) }} />
                         <input type="hidden" name="modelType" value={{ json_encode($model->modelType) }} />
-                        <input type="hidden" name="modelSkipProperties" id="skip" value={{ json_encode($skipProperties) }} />
+                        <input type="hidden" name="modelSkipProperties" id="skip" value={{ json_encode($model->modelSkipProperties) }} />
                         @php
-                        $index = 0;
+                        $index = 0
                         @endphp
                         @foreach($model->properties as $property => $value)
-                            @if(!str_contains($skipProperties['update'], $property))
+                            @if(!str_contains($model->skipProperties['update'], $property))
                                 @if($index == 0 || strpos($value, 'checkbox'))
                                 @else
                                     <div @if(count($model->properties) <6) class="col-md-12" @else class="col-md-6" @endif id={{$property.'_div'}}>
@@ -210,7 +100,11 @@
                                                     @endforeach
                                                 @else
                                                 @foreach($dropdownSource[$property] as $item)
+                                                @if(gettype($record->$property) != 'string')
                                                     <option value="{{$item->id}}" {{ $item->id == old($item->id, $record->$property) ? 'selected' : ''}}>{{ $item->text ?? $item->name }}</option>
+                                                @else
+                                                <option value="{{$item->id}}" {{ $item->text == old($item->text, $record->$property) ? 'selected' : ''}}>{{ $item->text ?? $item->name }}</option>
+                                                @endif
                                                 @endforeach
 
                                                 @endif
@@ -249,7 +143,7 @@
                         @endforeach
 
                         @foreach ($model->properties as $property => $value)
-                            @if(!str_contains($skipProperties['update'], $property))
+                            @if(!str_contains($model->skipProperties['update'], $property))
                                 @if (strpos($value, 'checkbox'))
                                     <div class="col-md-2" id={{$property.'_div'}}>
                                         <div class="col-md-9">

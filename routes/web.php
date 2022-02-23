@@ -27,6 +27,7 @@ use App\Http\Controllers\AMTController;
 use App\Http\Controllers\BaseDiscountController;
 use App\Http\Controllers\BulkEmailProcessController;
 use App\Http\Controllers\CRUDController;
+use App\Http\Controllers\GenericCrudController;
 use App\Http\Controllers\FtcFormController;
 use App\Http\Controllers\FormController;
 use App\Http\Controllers\UploadResourceController;
@@ -157,6 +158,16 @@ Route::group(['middleware' =>  ['auth']], function () {
         Route::post('car/SaveCarPlan', [CRUDController::class, 'SaveCarPlan'])->name('SaveCarPlan');
     });
 
+    Route::group(['prefix' => 'generic'], function () {
+        Route::resource('insuranceprovider', GenericCrudController::class);
+        Route::resource('carplan', GenericCrudController::class);
+        Route::resource('carplancoverage', GenericCrudController::class);
+        Route::resource('carplanaddon', GenericCrudController::class);
+        Route::resource('carplanaddonoption', GenericCrudController::class);
+        Route::post('save', [GenericCrudController::class, 'store'])->name('save');
+        Route::post('update', [GenericCrudController::class, 'update'])->name('update');
+    });
+
     Route::group(['prefix' => 'transapp'], function () {
         Route::resource('insurancecompany', InsuranceCompanyController::class);
         Route::resource('handler', HandlerController::class);
@@ -222,6 +233,7 @@ Route::group(['middleware' =>  ['auth']], function () {
     });
 
     Route::get('/car-model', [ClaimController::class, 'carModelBasedOnCarMake']);
+    Route::get('/car-make', [ClaimController::class, 'getCarMake']);
     Route::get('/getCarModelDetails', [ClaimController::class, 'getCarModelDetails']);
     Route::post('auditable', [AuditableController::class, 'loadAuditableComponent']);
     Route::get('/car-model-by-id', [ClaimController::class, 'carModelBasedOnCarMakeId']);

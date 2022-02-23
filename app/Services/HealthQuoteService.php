@@ -128,8 +128,9 @@ class HealthQuoteService extends BaseService
         return CapiRequestService::sendCAPIRequest('/api/v1-save-health-quote', $dataArr);
     }
 
-    public function getGridData($searchProperties, $request)
+    public function getGridData($model, $request)
     {
+        $searchProperties = $model->searchProperties;
         if ($request->ajax()) {
             if (isset($request->assigned_to_date_start) && $request->assigned_to_date_start != '') {
                 $dateFrom = Carbon::createFromFormat('Y-m-d', $request['assigned_to_date_start'])->startOfDay()->toDateTimeString();
@@ -364,7 +365,7 @@ class HealthQuoteService extends BaseService
             "marital_status_id" => "select|title|required",
             "cover_for_id" => "select|title|required",
             "nationality_id" => "select|title|required",
-            "health_team_type" => "|static|default:All|All,RM,EBP,No-Type",
+            "health_team_type" => "|static|default:All|All,RM-NB,RM-Speed,EBP,No-Type",
             "has_dental" => "input|checkbox|title",
             "has_worldwide_cover" => "input|checkbox|title",
             "has_home" => "input|checkbox|title",
@@ -437,7 +438,7 @@ class HealthQuoteService extends BaseService
     {
         return [
             "create" => "created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason",
-            "list" => "email,health_team_type,cover_for_id,has_worldwide_cover,has_home,details,preference,mobile_no,dob,marital_status_id,nationality_id,has_dental,emirate_of_your_visa_id",
+            "list" => "email,cover_for_id,has_worldwide_cover,has_home,details,preference,mobile_no,dob,marital_status_id,nationality_id,has_dental,emirate_of_your_visa_id",
             "update" => "created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason",
             "show" => "id,health_team_type,next_followup_date",
         ];

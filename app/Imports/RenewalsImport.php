@@ -6,6 +6,7 @@ namespace App\Imports;
 use App\Models\Customer;
 use App\Services\RenewalsUploadService;
 use App\Services\CustomerService;
+use Carbon\Carbon;
 use Maatwebsite\Excel\Row;
 use Maatwebsite\Excel\Concerns\Importable;
 use Maatwebsite\Excel\Concerns\OnEachRow;
@@ -69,11 +70,19 @@ class RenewalsImport implements OnEachRow, WithStartRow, WithValidation, SkipsOn
             $previousAdvisor = $row[9];
             $policy = $row[10];
             $batch = $row[11];
-            $startDate = date('Y-m-d H:i:s', strtotime(str_replace('', '', $row[12])));
-            $endDate = date('Y-m-d H:i:s', strtotime(str_replace('', '', $row[13])));
+            $startDate = Carbon::instance(\PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($row[12]))->toDateTimeString();
+            $endDate = Carbon::instance(\PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($row[13]))->toDateTimeString();
             $object = $row[14];
             $premium = $row[15];
             $notes = $row[16];
+
+            $emailResult = $this->sanitizeEmail($email);
+            $phoneResult = $this->sanitizePhoneNumber($customerPhone);
+
+            $email = $emailResult['0']; // assign the sanitized email to the email variable
+            $customerPhone = $phoneResult['0']; // assign the sanitized phone number to the phone variable
+            $notes = $emailResult['1'] != '' ? $notes . $emailResult['1'] : $notes; // if the notes variable is not empty, add the notes from the email sanitization to the notes variable
+            $notes = $phoneResult['1'] != '' ? $notes . $phoneResult['1'] : $notes; // if the notes variable is not empty, add the notes from the phone sanitization to the notes variable
 
             $findCustomerByEmail = CustomerService::getCustomerByEmail($email);
             if($findCustomerByEmail->isEmpty()) {
@@ -137,9 +146,50 @@ class RenewalsImport implements OnEachRow, WithStartRow, WithValidation, SkipsOn
                     "notes" => $notes,
                 );
             }
+           
             return $this->renewalsUploadService->createNewQuote($quoteData, $qouteType);
         }
 
+    }
+
+    function sanitizePhoneNumber($phone)
+    {
+        $delimiterArray = [',', ':', '/', ';', '-'];
+        $phone = str_replace(' ', '', $phone); // Replaces all spaces with hyphens.
+        $phone = preg_replace('/[^A-Za-z0-9\-]/', '', $phone); // Removes special chars.
+        $cleanPhone = '';
+        $notes = '';
+        foreach ($delimiterArray as $delimiter) {
+            if(strpos($phone, $delimiter) !== false) {
+                $phoneNumberArray = explode($delimiter, $phone);
+                $cleanPhone = $phoneNumberArray[0];
+                $notes = " - Additional phone numbers from phone column : ". $phoneNumberArray[1];
+                break;
+            }
+            else{
+                $cleanPhone = $phone;
+            }
+        }
+        return [$cleanPhone, $notes];
+    }
+
+    function sanitizeEmail($email)
+    {
+        $delimiterArray = [',', ':', '/', ';', '-'];	// delimiters
+        $cleanEmail = '';
+        $notes = '';
+        foreach ($delimiterArray as $delimiter) {
+            if(strpos($email, $delimiter) !== false) {
+                $emailArray = explode($delimiter, $email);
+                $cleanEmail = $emailArray[0];
+                $notes = " - Additional Emails from email column : ". $emailArray[1];
+                break;
+            }
+            else{
+                $cleanEmail = $email;
+            }
+        }
+        return [$cleanEmail, $notes];
     }
 
     public function startRow(): int

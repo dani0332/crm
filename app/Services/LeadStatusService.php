@@ -38,8 +38,9 @@ class LeadStatusService extends BaseService
             return redirect("quote/leadstatus/" . $id)->with('success', 'Lead Status has been updated');
     }
 
-    public function getGridData($searchProperties, $request)
+    public function getGridData($model, $request)
     {
+        $searchProperties = $model->searchProperties;
         if ($request->ajax()) {
             foreach ($searchProperties as $item) {
                 if (!empty($request[$item])) {

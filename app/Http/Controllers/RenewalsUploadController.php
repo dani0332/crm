@@ -27,8 +27,12 @@ class RenewalsUploadController extends Controller
         $this->validate($request, [
             'file_name' => 'required|mimetypes:text/csv,text/plain,application/csv,text/comma-separated-values,text/anytext,application/octet-stream,application/txt,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet|max:2048',
         ]);
-
+        
         if ($request->hasFile('file_name')) {
+            $existingFile = RenewalsUploadLeads::where('file_name', $request->file_name->getClientOriginalName())->first();
+            if($existingFile){
+                return redirect("renewals-upload")->with('message', 'File already been uploaded. Please try again with different file.');
+            }
             $renewalsUpload = new RenewalsImport($this->renewalsUploadFileService);
             $renewalsUpload->import(request()->file('file_name'));
 

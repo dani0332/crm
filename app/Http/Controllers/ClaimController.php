@@ -409,15 +409,24 @@ class ClaimController extends Controller
     public function carModelBasedOnCarMakeId(Request $request)
     {
         $make_id = $request->id;
-        $carmodel = DB::table('car_model')->where('id', '=', $make_id)->get(array('id', 'text', 'code'));
+        $carMakeCode = DB::table('car_make')->where('id', '=', $make_id)->value('code');
+        if (!$carMakeCode) {
+            $carMakeCode = $make_id;
+        }
+        $carmodel = DB::table('car_model')->where('car_make_code', '=', $carMakeCode)->get(array('id', 'text', 'code'));
         return response()->json($carmodel);
+    }
+    public function getCarMake()
+    {
+        $carMakes = DB::table('car_make')->get(array('id', 'text', 'code'));
+        return response()->json($carMakes);
     }
 
     public function getCarModelDetails(Request $request)
     {
         $modelId = $request->car_model_id;
         $carModelDetail = DB::table('car_model')
-            ->select('cylinder','seat_capacity','vehicle_type_id')
+            ->select('cylinder', 'seat_capacity', 'vehicle_type_id')
             ->where('id', '=', $modelId)
             ->first();
         return response()->json($carModelDetail);
@@ -432,19 +441,18 @@ class ClaimController extends Controller
 
         $quotePlanId = [];
         $listQuotePlans = [];
-        if(isset($quotePlans->quotes->plans)) {
+        if (isset($quotePlans->quotes->plans)) {
             $listQuotePlans = $quotePlans->quotes->plans;
         }
 
-        foreach ($listQuotePlans as $key => $quotePlan)
-        {
+        foreach ($listQuotePlans as $key => $quotePlan) {
             $quotePlanId[] = $quotePlan->id;
         }
 
         $carPlan = CarPlan::where('provider_id', '=', $insuranceProviderId)
-        ->where('is_active', '=', 1)
-        ->whereNotIn('id', $quotePlanId)
-        ->get(array('id','text','repair_type'));
+            ->where('is_active', '=', 1)
+            ->whereNotIn('id', $quotePlanId)
+            ->get(array('id', 'text', 'repair_type'));
 
         return response()->json($carPlan);
     }

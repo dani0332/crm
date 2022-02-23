@@ -131,7 +131,7 @@
                         </div>
                     </div>
                     <div class="col">
-                        @if($quoteTypeCode == quoteTypeCode::Business)
+                        @if($quoteTypeCode == quoteTypeCode::Business && $isCompanySearchEnabled == 1)
                             <label class="col-form-label col-md-3 col-sm-3 label-align" for="First Name"><b> Company Name</b></label>
                             <div class="col-md-6 col-sm-6">
                                 <p class="label-align-center">
