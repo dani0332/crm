@@ -169,6 +169,16 @@ $(document).ready(function () {
         scrollX: true,
     });
 
+    $("#addon-datatable").DataTable().destroy();
+    $("#addon-datatable").DataTable({
+        // "paging": false,
+        ordering: false,
+        info: false,
+        searching: false,
+        bLengthChange: false,
+        scrollX: true,
+    });
+
     $(".data-table").DataTable({
         ordering: false,
         info: false,
