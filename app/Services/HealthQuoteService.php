@@ -221,23 +221,22 @@ class HealthQuoteService extends BaseService
 
     public function updateHealthQuote(Request $request, $id)
     {
-        $updateArray = [
-            'first_name' => $request->first_name,
-            'last_name' => $request->last_name,
-            'details' => $request->details,
-            'preference' => $request->preference,
-            'source' => $request->source,
-            'marital_status_id' => $request->marital_status_id,
-            'dob' => $request->dob,
-            'cover_for_id' => $request->cover_for_id,
-            'nationality_id' => $request->nationality_id,
-            'has_dental' => $request->has_dental == 'on' ? true : false,
-            'has_worldwide_cover' => $request->has_worldwide_cover == 'on' ? true : false,
-            'has_home' => $request->has_home == 'on' ? true : false,
-            'emirate_of_your_visa_id' => $request->emirate_of_your_visa_id,
-            'premium' => $request->premium,
-        ];
-        HealthQuote::where('uuid', $id)->update($updateArray);
+        $healthQuote = HealthQuote::where('uuid', $id)->first();
+        $healthQuote->first_name = $request->first_name;
+        $healthQuote->last_name = $request->last_name;
+        $healthQuote->details = $request->details;
+        $healthQuote->preference = $request->preference;
+        $healthQuote->source = $request->source;
+        $healthQuote->marital_status_id = $request->marital_status_id;
+        $healthQuote->dob = $request->dob;
+        $healthQuote->cover_for_id = $request->cover_for_id;
+        $healthQuote->nationality_id = $request->nationality_id;
+        $healthQuote->has_dental = $request->has_dental == 'on' ? true : false;
+        $healthQuote->has_worldwide_cover = $request->has_worldwide_cover == 'on' ? true : false;
+        $healthQuote->has_home = $request->has_home == 'on' ? true : false;
+        $healthQuote->emirate_of_your_visa_id = $request->emirate_of_your_visa_id;
+        $healthQuote->premium = $request->premium;
+        $healthQuote->save();
 
         if (isset($request->return_to_view))
             return redirect("quote/health/" . $id)->with('success', 'Health Quote has been updated');

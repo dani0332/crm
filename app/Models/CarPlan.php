@@ -9,7 +9,7 @@ use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 class CarPlan extends BaseModel implements AuditableContract
 {
-    use HasFactory;
+    use HasFactory, Auditable;
     protected $table = 'car_plan';
     protected $guarded = ['id'];
 
