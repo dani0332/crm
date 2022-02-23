@@ -125,13 +125,10 @@ class GenericCrudController extends Controller
         if (isset($record->message) && str_contains($record->message, 'Error')) {
             return Redirect::back()->with('message', $record->message)->withInput();
         } else {
-            if($request->has('modelType') && $request->modelType == "CarPlanCoverage")
+            if(isset($request->return_to_view)) {
                 return redirect('/generic/' . strtolower($modelType) . '/create')->with('success', $modelType . ' has been stored');
-            // if (!isset($record->id)) {
-            //     return redirect('/generic/' . strtolower($modelType))->with('success',  $modelType . ' has been stored');
-            // } else {
-            //     return redirect('/generic/' . strtolower($modelType) . '/' . $record->id)->with('success', $modelType . ' has been stored');
-            // }
+            }
+                return redirect('/generic/' . strtolower($modelType) . '/'.$record->id)->with('success', $modelType . ' has been stored');
         }
     }
 
