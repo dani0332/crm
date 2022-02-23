@@ -164,17 +164,18 @@ class GenericCrudController extends Controller
         }
         if ($this->genericModel->modelType == InsuranceProvderConstants::PLANNAME) {
             $coverageList = $this->carPlanCoverageService->getPlanCoverage($id);
+            $plansList = $this->carPlanAddOnService->getPlanAddon($id);
             return view('generic.show', compact([
-                'record', 'model', 'customTitles', 'coverageList', 'customTableList'
+                'record', 'model', 'customTitles', 'coverageList', 'customTableList','plansList'
             ]));
         }
-        if ($this->genericModel->modelType == InsuranceProvderConstants::COVERAGE) {
-            $plansList = $this->carPlanAddOnService->getPlanAddon($record->plan_id);
+        // if ($this->genericModel->modelType == InsuranceProvderConstants::COVERAGE) {
+            
 
-            return view('generic.show', compact([
-                'record', 'model', 'customTitles', 'plansList', 'customTableList'
-            ]));
-        }
+        //     return view('generic.show', compact([
+        //         'record', 'model', 'customTitles', 'plansList', 'customTableList'
+        //     ]));
+        // }
         if ($this->genericModel->modelType == InsuranceProvderConstants::PLANADDON) {
             $plansList = $this->carPlanAddOnOptionService->getPlanAddonOption($record->addon_id);
 

@@ -102,15 +102,16 @@
         :RequestId="$record->id"
         :model="$model"
         :record="$record" />
-    @endif
-    @if($model->modelType == InsuranceProvderConstants::COVERAGE)
+
         <x-car-plan-addon
         :plansList="$plansList" 
         :uuidModal="$record->id"
         :RequestId="$record->id"
         :model="$model"
         :record="$record" />
+        
     @endif
+    
     @if($model->modelType == InsuranceProvderConstants::PLANADDON)
         <x-car-plan-add-on-option
         :plansList="$plansList" 

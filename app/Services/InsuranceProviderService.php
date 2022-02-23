@@ -63,6 +63,9 @@ class InsuranceProviderService extends BaseService
         $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
         $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';
         if ($column != '' && $column != 0 && $direction != '') {
+            if ($column == 0) {
+                $column = "ip.id";
+            }
             if ($column == 1) {
                 $column = "ip.code";
             }
