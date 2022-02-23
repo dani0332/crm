@@ -46,7 +46,7 @@ $(document).ready(function () {
         }
     }
 
-    $("#next_followup_date").daterangepicker({ // TM Leads
+    $("#next_followup_date_field > #next_followup_date").daterangepicker({ // TM Leads
         timePicker: true,
         singleDatePicker: true,
         timePicker24Hour: true,

@@ -110,14 +110,13 @@ class CarPlanAddOnOptionService extends BaseService
 
     public function updateCarPlanAddon(Request $request, $id)
     {
-        $updateArray = [
-            'addon_id' => $request->addon_id,
-            'price' => $request->price,
-            'value' => $request->value,
-            'value_ar' => $request->value_ar,
-            'sort_order' => $request->sort_order
-        ];
-        CarAddOnOption::where('id', $id)->update($updateArray);
+        $carAdddonOption = CarAddOnOption::where('id', $id)->first();
+        $carAdddonOption->addon_id = $request->addon_id;
+        $carAdddonOption->price = $request->price;
+        $carAdddonOption->value = $request->value;
+        $carAdddonOption->value_ar = $request->value_ar;
+        $carAdddonOption->sort_order = $request->sort_order;
+        $carAdddonOption->save();
         return true;
     }
 
