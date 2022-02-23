@@ -12,8 +12,8 @@
         var excess = $('#excess').val();
         console.log(actual_premium, discount_premium, car_value ,excess);
         $.ajax( {
-            url: "{{ url('/getCarModelDetails') }}",
-            type: 'GET',
+            url: "{{ url('/UpdateCarPlan') }}",
+            type: 'POST',
             data: {
                 actual_premium: actual_premium,
                 discount_premium: discount_premium,
