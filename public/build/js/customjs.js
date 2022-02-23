@@ -46,7 +46,7 @@ $(document).ready(function () {
         }
     }
 
-    $("#next_followup_date").daterangepicker({ // TM Leads
+    $("#next_followup_date_field > #next_followup_date").daterangepicker({ // TM Leads
         timePicker: true,
         singleDatePicker: true,
         timePicker24Hour: true,
@@ -161,6 +161,16 @@ $(document).ready(function () {
     });
     $("#datatable").DataTable().destroy();
     $("#datatable").DataTable({
+        // "paging": false,
+        ordering: false,
+        info: false,
+        searching: false,
+        bLengthChange: false,
+        scrollX: true,
+    });
+
+    $("#addon-datatable").DataTable().destroy();
+    $("#addon-datatable").DataTable({
         // "paging": false,
         ordering: false,
         info: false,
