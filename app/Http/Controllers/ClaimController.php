@@ -459,6 +459,6 @@ class ClaimController extends Controller
 
     public function UpdateCarPlan(Request $request)
     {
-        dd('sss');
+        return 'Car Plan is updated';
     }
 }

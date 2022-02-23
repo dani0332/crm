@@ -24,9 +24,9 @@
                     _token: '{{ csrf_token() }}'
                 },
                 success: function(result){
-                    alert('form submitted: '+result);
+                    alert(result);
                 }
-            } );
+            });
             e.preventDefault();
         }
     );
