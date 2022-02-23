@@ -1,6 +1,35 @@
 <?php
     use App\Enums\quoteTypeCode;
 ?>
+<script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
+<script>
+    $('#update_car_plan' ).submit(
+
+    function( e ) {
+        var actual_premium = $('#actual_premium').val();
+        var discount_premium = $('#discount_premium').val();
+        var car_value = $('#car_value').val();
+        var excess = $('#excess').val();
+        console.log(actual_premium, discount_premium, car_value ,excess);
+        $.ajax( {
+            url: "{{ url('/getCarModelDetails') }}",
+            type: 'GET',
+            data: {
+                actual_premium: actual_premium,
+                discount_premium: discount_premium,
+                car_value: car_value,
+                excess: excess
+            },
+            processData: false,
+            contentType: false,
+            success: function(result){
+                alert('form submitted');
+            }
+        } );
+        e.preventDefault();
+    }
+);
+</script>
 @if(isset($modelName) && $modelName == quoteTypeCode::Travel)
 <div class="row">
         <div class="col-md-12 col-sm-12 admin-detail">
