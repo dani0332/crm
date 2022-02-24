@@ -82,7 +82,7 @@
                                             @endif
                                             @foreach($dropdownSource[$property] as $item)
                                             
-                                                <option value="{{ $item->id }}">{{ $item->text ?? $item->name }}</option>
+                                                <option value="{{ $item->id }}" @if(old($property) == $item->id) selected @endif @if($id == $item->id) selected @endif>{{ $item->text ?? $item->name }}</option>
                                             @endforeach
                                         </select>
                                         @if ($errors->has($property))
