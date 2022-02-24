@@ -93,7 +93,7 @@ class InsuranceProviderService extends BaseService
             'text' => $request->text,
             'text_ar' => $request->text_ar,
             'code' => $request->code,
-            'is_active' => $request->has("is_active") ? $request->is_active : 0
+            'is_active' => $request->has("is_active") ? 1 : 0
         ];
         return InsuranceProvider::create($data);
     }

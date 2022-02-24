@@ -116,7 +116,7 @@ class CarPlanService extends BaseService
             'repair_type' => $request->repair_type,
             'insurance_type' => $request->insurance_type,
             'provider_id' => $request->provider_id,
-            'is_active' => $request->has("is_active") ? $request->is_active : 0 
+            'is_active' => $request->has("is_active") ? 1 : 0 
         ];
         return CarPlan::create($data);
     }

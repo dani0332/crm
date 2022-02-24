@@ -174,7 +174,7 @@
                                             @endif
                                         </div>
                                         <div class="col-md-2">
-                                            <input type={{ explode("|", $value)[1]  }} {{ old($property) ? 'checked' : '' }} style="float: right;" id={{$property}} name={{$property}}>
+                                            <input type={{ explode("|", $value)[1]  }} {{ old($property) ? 'checked' : '' }} style="float: right;" id={{$property}} name={{$property}} >
                                         </div>
                                     </div>
                                     <br />
