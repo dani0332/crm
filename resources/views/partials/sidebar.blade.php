@@ -21,14 +21,14 @@
                         </li>
                     </ul>
                 @endif
-                @can('crm-admin')
+                {{-- @can('crm-admin')
                     <ul class="nav side-menu">
                         <li> <a><i class="fa fa-dashboard"></i> Dashboard <span class="fa fa-chevron-down"></span></a>
                             <ul class="nav child_menu">
                                 <li><a href="{{ url('dashboard') }}">Over All Dashboard</a></li>
                             </ul>
                     </ul>
-                @endcan
+                @endcan --}}
                 @can('rewards-list')
                     <ul class="nav side-menu">
                         <li><a><i class="fa fa-gift"></i> Rewards <span class="fa fa-chevron-down"></span></a>

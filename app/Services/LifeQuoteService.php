@@ -234,21 +234,20 @@ class LifeQuoteService extends BaseService
 
     public function updateLifeQuote(Request $request, $id)
     {
-        $updateArray = [
-            'first_name' => $request->first_name,
-            'last_name' => $request->last_name,
-            'dob' => $request->dob,
-            'sum_insured_value' => $request->sum_insured_value,
-            'sum_insured_currency_id' => $request->sum_insured_currency_id,
-            'marital_status_id' => $request->marital_status_id,
-            'purpose_of_insurance_id' => $request->purpose_of_insurance_id,
-            'children_id' => $request->children_id,
-            'premium' => $request->premium,
-            'tenure_of_insurance_id' => $request->tenure_of_insurance_id,
-            'number_of_years_id' => $request->number_of_years_id,
-            'others_info' => $request->others_info,
-        ];
-        LifeQuote::where('uuid', $id)->update($updateArray);
+        $lifeQuote = LifeQuote::where('uuid', $id)->first();
+        $lifeQuote->first_name = $request->first_name;
+        $lifeQuote->last_name = $request->last_name;
+        $lifeQuote->dob = $request->dob;
+        $lifeQuote->sum_insured_value = $request->sum_insured_value;
+        $lifeQuote->sum_insured_currency_id = $request->sum_insured_currency_id;
+        $lifeQuote->marital_status_id = $request->marital_status_id;
+        $lifeQuote->purpose_of_insurance_id = $request->purpose_of_insurance_id;
+        $lifeQuote->children_id = $request->children_id;
+        $lifeQuote->premium = $request->premium;
+        $lifeQuote->tenure_of_insurance_id = $request->tenure_of_insurance_id;
+        $lifeQuote->number_of_years_id = $request->number_of_years_id;
+        $lifeQuote->others_info = $request->others_info;
+        $lifeQuote->save();
 
         if (isset($request->return_to_view))
             return redirect("quotes/life")->with('success', 'Life Quote has been updated');

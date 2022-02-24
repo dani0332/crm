@@ -22,6 +22,7 @@ class CarPlanAddOnOptionService extends BaseService
                 'cao.addon_id',
                 'cao.id',
                 'cao.price',
+                'ca.text',
                 'cao.sort_order',
                 'cao.created_at',
                 'cao.updated_at'
@@ -109,14 +110,13 @@ class CarPlanAddOnOptionService extends BaseService
 
     public function updateCarPlanAddon(Request $request, $id)
     {
-        $updateArray = [
-            'addon_id' => $request->addon_id,
-            'price' => $request->price,
-            'value' => $request->value,
-            'value_ar' => $request->value_ar,
-            'sort_order' => $request->sort_order
-        ];
-        CarAddOnOption::where('id', $id)->update($updateArray);
+        $carAdddonOption = CarAddOnOption::where('id', $id)->first();
+        $carAdddonOption->addon_id = $request->addon_id;
+        $carAdddonOption->price = $request->price;
+        $carAdddonOption->value = $request->value;
+        $carAdddonOption->value_ar = $request->value_ar;
+        $carAdddonOption->sort_order = $request->sort_order;
+        $carAdddonOption->save();
         return true;
     }
 
@@ -129,7 +129,8 @@ class CarPlanAddOnOptionService extends BaseService
             "price" => "input|text|title|required",
             "created_at" => "input|title|date|range",
             "updated_at" => "input|title|date",
-            "addon_id" => "select|title"
+            "addon_id" => "select|title",
+            "text" => "readonly|title"
         );
     }
 
@@ -153,7 +154,10 @@ class CarPlanAddOnOptionService extends BaseService
                 $title = "Price";
                 break;
             case 'addon_id':
-                $title = "Addon Id";
+                $title = "Addon";
+                break;
+            case 'text':
+                $title = "Addon Name";
                 break;
             default:
                 break;
@@ -164,9 +168,9 @@ class CarPlanAddOnOptionService extends BaseService
     public function fillModelSkipProperties()
     {
         return [
-            "create" => "created_at,updated_at",
+            "create" => "created_at,updated_at,text",
             "list" => "",
-            "update" => "id,created_at,updated_at",
+            "update" => "id,created_at,updated_at,text",
             "show" => "",
         ];
     }

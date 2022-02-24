@@ -25,6 +25,7 @@ class CarPlanCoverageService extends BaseService
                 'cpv.type',
                 'cpv.value_ar',
                 'cpv.plan_id',
+                'cp.text as planName',
                 'cpv.updated_at',
                 'cpv.created_at'
             )
@@ -128,16 +129,15 @@ class CarPlanCoverageService extends BaseService
 
     public function updateCarPlanCoverage(Request $request, $id)
     {
-        $updateArray = [
-            'text' => $request->text,
-            'text_ar' => $request->text_ar,
-            'code' => $request->code,
-            'value' => $request->value,
-            'value_ar' => $request->value_ar,
-            'type' => $request->type,
-            'plan_id' => $request->plan_id
-        ];
-        CarPlanCoverage::where('id', $id)->update($updateArray);
+        $carPlanCoverage = CarPlanCoverage::where('id', $id)->first();
+        $carPlanCoverage->text = $request->text;
+        $carPlanCoverage->text_ar = $request->text_ar;
+        $carPlanCoverage->code = $request->code;
+        $carPlanCoverage->value = $request->value;
+        $carPlanCoverage->value_ar = $request->value_ar;
+        $carPlanCoverage->type = $request->type;
+        $carPlanCoverage->plan_id = $request->plan_id;
+        $carPlanCoverage->save();
         return true;
     }
 
@@ -153,7 +153,8 @@ class CarPlanCoverageService extends BaseService
             "created_at" => "input|title|date|range",
             "updated_at" => "input|title|date",
             "type" => "input|title",
-            "plan_id" => "select|title"
+            "plan_id" => "select|title",
+            "planName" => "readonly|title"
         );
     }
 
@@ -188,6 +189,9 @@ class CarPlanCoverageService extends BaseService
             case 'plan_id':
                 $title = "Plan";
                 break;
+            case 'planName':
+                $title = "Plan Name";
+                break;
             default:
                 break;
         }
@@ -197,9 +201,9 @@ class CarPlanCoverageService extends BaseService
     public function fillModelSkipProperties()
     {
         return [
-            "create" => "created_at,updated_at",
+            "create" => "created_at,updated_at,planName",
             "list" => "",
-            "update" => "id,created_at,updated_at",
+            "update" => "id,created_at,updated_at,planName",
             "show" => "",
         ];
     }

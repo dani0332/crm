@@ -30,9 +30,9 @@ class LeadStatusService extends BaseService
 
     public function updateLeadStatus(Request $request, $id)
     {
-        QuoteStatus::where('uuid', $id)->update(
-            ['text' => $request->text]
-        );
+        $quoteStatus = QuoteStatus::where('uuid', $id)->first();
+        $quoteStatus->text = $request->text;
+        $quoteStatus->save();
 
         if (isset($request->return_to_view))
             return redirect("quote/leadstatus/" . $id)->with('success', 'Lead Status has been updated');
