@@ -16,6 +16,7 @@ use Hidehalo\Nanoid\Client;
 use App\Services\CheckAmlService;
 use App\Enums\quoteTypeCode;
 use App\Enums\quoteStatusCode;
+use App\Jobs\CheckAMLJob;
 use App\Models\QuoteStatus;
 
 class RenewalsUploadService
@@ -317,8 +318,7 @@ class RenewalsUploadService
 
         $createRenewalQuote->save();
         $this->renewalsAddonService->updateBikeQuoteRequestCode($createRenewalQuote->id);
-
-        $this->checkAMLService->checkAml($getBikeQuoteData->first_name, $getBikeQuoteData->last_name, $createRenewalQuote->id, $quoteType->id, false, null, null);
+        dispatch(new CheckAMLJob($getBikeQuoteData->first_name, $getBikeQuoteData->last_name, $createRenewalQuote->id, $quoteType->id, false, null, null));
         return $createRenewalQuote->id;
     }
 
@@ -343,8 +343,7 @@ class RenewalsUploadService
 
         $createRenewalQuote->save();
         $this->renewalsAddonService->updateBusinessQuoteRequestCode($createRenewalQuote->id);
-
-        $this->checkAMLService->checkAml($getBusinessQuoteData->first_name, $getBusinessQuoteData->last_name, $createRenewalQuote->id, $quoteType->id, false, null, null);
+        dispatch(new CheckAMLJob($getBusinessQuoteData->first_name, $getBusinessQuoteData->last_name, $createRenewalQuote->id, $quoteType->id, false, null, null));
         return $createRenewalQuote->id;
     }
 
@@ -383,8 +382,7 @@ class RenewalsUploadService
 
         $createRenewalQuote->save();
         $this->renewalsAddonService->updateCarQuoteRequestCode($createRenewalQuote->id);
-
-        $this->checkAMLService->checkAml($getCarQuoteData->first_name, $getCarQuoteData->last_name, $createRenewalQuote->id, $quoteType->id, false, null, null);
+        dispatch(new CheckAMLJob($getCarQuoteData->first_name, $getCarQuoteData->last_name, $createRenewalQuote->id, $quoteType->id, false, null, null));
         return $createRenewalQuote->id;
     }
 
@@ -409,8 +407,7 @@ class RenewalsUploadService
 
         $createRenewalQuote->save();
         $this->renewalsAddonService->updateHealthQuoteRequestCode($createRenewalQuote->id);
-
-        $this->checkAMLService->checkAml($getHealthQuoteData->first_name, $getHealthQuoteData->last_name, $createRenewalQuote->id, $quoteType->id, false, null, null);
+        dispatch(new CheckAMLJob($getHealthQuoteData->first_name, $getHealthQuoteData->last_name, $createRenewalQuote->id, $quoteType->id, false, null, null));
         return $createRenewalQuote->id;
     }
 
@@ -435,8 +432,7 @@ class RenewalsUploadService
 
         $createRenewalQuote->save();
         $this->renewalsAddonService->updateHomeQuoteRequestCode($createRenewalQuote->id);
-
-        $this->checkAMLService->checkAml($getHomeQuoteData->first_name, $getHomeQuoteData->last_name, $createRenewalQuote->id, $quoteType->id, false, null, null);
+        dispatch(new CheckAMLJob($getHomeQuoteData->first_name, $getHomeQuoteData->last_name, $createRenewalQuote->id, $quoteType->id, false, null, null));
         return $createRenewalQuote->id;
     }
 
@@ -461,8 +457,7 @@ class RenewalsUploadService
 
         $createRenewalQuote->save();
         $this->renewalsAddonService->updateLifeQuoteRequestCode($createRenewalQuote->id);
-
-        $this->checkAMLService->checkAml($getLifeQuoteData->first_name, $getLifeQuoteData->last_name, $createRenewalQuote->id, $quoteType->id, false, null, null);
+        dispatch(new CheckAMLJob($getLifeQuoteData->first_name, $getLifeQuoteData->last_name, $createRenewalQuote->id, $quoteType->id, false, null, null));
         return $createRenewalQuote->id;
     }
 
@@ -487,8 +482,7 @@ class RenewalsUploadService
 
         $createRenewalQuote->save();
         $this->renewalsAddonService->updateTravelQuoteRequestCode($createRenewalQuote->id);
-
-        $this->checkAMLService->checkAml($getTravelQuoteData->first_name, $getTravelQuoteData->last_name, $createRenewalQuote->id, $quoteType->id, false, null, null);
+        dispatch(new CheckAMLJob($getTravelQuoteData->first_name, $getTravelQuoteData->last_name, $createRenewalQuote->id, $quoteType->id, false, null, null));
         return $createRenewalQuote->id;
     }
 
@@ -513,8 +507,7 @@ class RenewalsUploadService
 
         $createRenewalQuote->save();
         $this->renewalsAddonService->updateYachtQuoteRequestCode($createRenewalQuote->id);
-
-        $this->checkAMLService->checkAml($getYachtQuoteData->first_name, $getYachtQuoteData->last_name, $createRenewalQuote->id, $quoteType->id, false, null, null);
+        dispatch(new CheckAMLJob($getYachtQuoteData->first_name, $getYachtQuoteData->last_name, $createRenewalQuote->id, $quoteType->id, false, null, null));
         return $createRenewalQuote->id;
     }
 
