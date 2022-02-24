@@ -225,7 +225,10 @@ class GenericCrudController extends Controller
         }
         $this->validate($request, $validateArray);
         $this->crudService->updateModelByType(json_decode($request->modelType, true), $request, $id);
-        return redirect('/generic/' . strtolower(str_replace('"', '', $request->modelType)) . '/' . $id)->with('success', json_decode($request->modelType, true) . ' has been updated');
+        if($request->has("is_active"))
+            return redirect('/generic/' . strtolower(str_replace('"', '', $request->modelType)) . '/' . $id)->with('success', json_decode($request->modelType, true) . ' has been updated');
+        else
+            return redirect('/generic/' . strtolower(str_replace('"', '', $request->modelType)))->with('success', json_decode($request->modelType, true) . ' has been updated');
     }
 
 

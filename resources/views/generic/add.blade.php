@@ -6,7 +6,6 @@
         background-color: white !important;
     }
 </style>
-
     <div class="row">
         <div class="col-md-12 col-sm-12">
             <div class="x_panel">
@@ -61,6 +60,7 @@
                                     </div>
                                     @endif
                                     @if(strpos($value, 'select') !== false)
+                                    
                                     <div @if(count($model->properties) <6) class="col-md-12" @else class="col-md-6" @endif id={{$property.'_div'}}>
                                     <div class="col">
                                         <span class="col-form-label col-md-6 col-sm-6" for="name">
@@ -73,16 +73,16 @@
                                             <span class='required'>*</span>
                                             @endif
                                         </span>
+                                        
                                         <select @if(strpos($value, 'multiple')) name="{{$property.'[]'}}" multiple="multiple" class="form-control select2 select-roles" @else class="form-control" name="{{$property}}" @endif id="{{$property}}" >
                                             @if(strpos($value, 'title'))
                                                 <option value="">{{"Please select ".$customTitles[$property] }}</option>
                                             @else
                                                 <option value="">{{"Please select ".str_replace("id"," ",str_replace("_"," ",$property)) }}</option>
                                             @endif
-                                            
                                             @foreach($dropdownSource[$property] as $item)
-
-                                                <option value="{{ $item->id }}"  @if(old($property) == $item->id) selected @endif @if($id == $item->id) selected @endif>{{ $item->text ?? $item->name }}</option>
+                                            
+                                                <option value="{{ $item->id }}">{{ $item->text ?? $item->name }}</option>
                                             @endforeach
                                         </select>
                                         @if ($errors->has($property))

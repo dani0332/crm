@@ -146,7 +146,7 @@ class CarPlanCoverageService extends BaseService
     {
         return array(
             "id" => "readonly|none",
-            "code" => "input|title|required",
+            "code" => "select|title|required",
             "text" => "input|text|title|required",
             "text_ar" => "input|text|title|required",
             "value" => "input|text|title|required",

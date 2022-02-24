@@ -92,7 +92,8 @@ class InsuranceProviderService extends BaseService
         $data = [
             'text' => $request->text,
             'text_ar' => $request->text_ar,
-            'code' => $request->code
+            'code' => $request->code,
+            'is_active' => $request->has("is_active") ? $request->is_active : 0
         ];
         return InsuranceProvider::create($data);
     }
@@ -102,7 +103,8 @@ class InsuranceProviderService extends BaseService
         $updateArray = [
             'text' => $request->text,
             'text_ar' => $request->text_ar,
-            'code' => $request->code
+            'code' => $request->code,
+            'is_active' => $request->has("is_active") ? $request->is_active : 0
         ];
         InsuranceProvider::where('id', $id)->update($updateArray);
         return true;
@@ -116,7 +118,8 @@ class InsuranceProviderService extends BaseService
             "text" => "input|text|title|required",
             "text_ar" => "input|text|title|required",
             "created_at" => "input|title|date|range",
-            "updated_at" => "input|title|date"
+            "updated_at" => "input|title|date",
+            "is_active" => "input|checkbox"
         );
     }
 
@@ -138,6 +141,9 @@ class InsuranceProviderService extends BaseService
                 break;
             case 'text_ar':
                 $title = "Insurance Provider Name (Arabic)";
+                break;
+            case 'is_active':
+                $title = "Is Active";
                 break;
             default:
                 break;
