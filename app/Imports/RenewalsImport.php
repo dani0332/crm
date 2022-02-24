@@ -2,11 +2,13 @@
 
 namespace App\Imports;
 
-
+use App\Jobs\RenewalImportJob;
+use App\Jobs\VerifyRenewalInDatabase;
 use App\Models\Customer;
 use App\Services\RenewalsUploadService;
 use App\Services\CustomerService;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Bus;
 use Maatwebsite\Excel\Row;
 use Maatwebsite\Excel\Concerns\Importable;
 use Maatwebsite\Excel\Concerns\OnEachRow;
@@ -21,9 +23,12 @@ class RenewalsImport implements OnEachRow, WithStartRow, WithValidation, SkipsOn
     use Importable, SkipsFailures;
     private $rows = 0;
     private $renewalsUploadService;
-    function __construct(RenewalsUploadService $renewalsUploadService)
+    private $totalRows;
+    private $fileName;
+    function __construct(RenewalsUploadService $renewalsUploadService, $fileName)
     {
         $this->renewalsUploadService = $renewalsUploadService;
+        $this->fileName = $fileName;
     }
 
     /**
@@ -32,7 +37,6 @@ class RenewalsImport implements OnEachRow, WithStartRow, WithValidation, SkipsOn
     public function onRow(Row $row)
     {
         ++$this->rows;
-
         $row = $row->toArray();
 
         $qouteType = $row[2];
@@ -146,23 +150,24 @@ class RenewalsImport implements OnEachRow, WithStartRow, WithValidation, SkipsOn
                     "notes" => $notes,
                 );
             }
-           
-            return $this->renewalsUploadService->createNewQuote($quoteData, $qouteType);
+            
+            Bus::chain([
+                new RenewalImportJob($quoteData, $qouteType, $this->renewalsUploadService, $this->fileName),
+                new VerifyRenewalInDatabase($this->fileName),
+            ])->dispatch();
         }
-
     }
 
     function sanitizePhoneNumber($phone)
     {
         $delimiterArray = [',', ':', '/', ';', '-'];
         $phone = str_replace(' ', '', $phone); // Replaces all spaces with hyphens.
-        $phone = preg_replace('/[^A-Za-z0-9\-]/', '', $phone); // Removes special chars.
         $cleanPhone = '';
         $notes = '';
         foreach ($delimiterArray as $delimiter) {
             if(strpos($phone, $delimiter) !== false) {
                 $phoneNumberArray = explode($delimiter, $phone);
-                $cleanPhone = $phoneNumberArray[0];
+                $cleanPhone = preg_replace('/[^A-Za-z0-9\-]/', '', $phoneNumberArray[0]); // Removes special chars.
                 $notes = " - Additional phone numbers from phone column : ". $phoneNumberArray[1];
                 break;
             }

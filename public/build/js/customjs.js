@@ -1690,6 +1690,7 @@ $(document).ready(function () {
             { data: "total_records", name: "total_records" },
             { data: "good", name: "good" },
             { data: "cannot_upload", name: "cannot_upload" },
+            { data: "status", name: "status" },
             { data: "created_at", name: "created_at" },
             { data: "updated_at", name: "updated_at" },
         ],
