@@ -46,7 +46,7 @@ $(document).ready(function () {
         }
     }
 
-    $("#next_followup_date").daterangepicker({ // TM Leads
+    $("#next_followup_date_field > #next_followup_date").daterangepicker({ // TM Leads
         timePicker: true,
         singleDatePicker: true,
         timePicker24Hour: true,
@@ -1690,6 +1690,7 @@ $(document).ready(function () {
             { data: "total_records", name: "total_records" },
             { data: "good", name: "good" },
             { data: "cannot_upload", name: "cannot_upload" },
+            { data: "status", name: "status" },
             { data: "created_at", name: "created_at" },
             { data: "updated_at", name: "updated_at" },
         ],

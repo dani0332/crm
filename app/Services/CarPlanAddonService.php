@@ -123,14 +123,13 @@ class CarPlanAddonService extends BaseService
 
     public function updateCarPlanAddon(Request $request, $id)
     {
-        $updateArray = [
-            'text' => $request->text,
-            'text_ar' => $request->text_ar,
-            'code' => $request->code,
-            'type' => $request->type,
-        ];
-        $record = CarAddOn::where('id', $id)->update($updateArray);
-        return $record;
+        $carAddon = CarAddOn::where('id', $id)->first();
+        $carAddon->text = $request->text;
+        $carAddon->text_ar = $request->text_ar;
+        $carAddon->code = $request->code;
+        $carAddon->type = $request->type;
+        $carAddon->save();
+        return $carAddon;
     }
 
     public function fillModelProperties()

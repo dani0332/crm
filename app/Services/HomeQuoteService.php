@@ -299,26 +299,25 @@ class HomeQuoteService extends BaseService
 
     public function updateHomeQuote(Request $request, $id)
     {
-        $updateArray = [
-            'first_name' => $request->first_name,
-            'last_name' => $request->last_name,
-            'address' => $request->address,
-            'contents_aed' => $request->contents_aed,
-            'iam_possesion_type_id' => $request->iam_possesion_type_id,
-            'ilivein_accommodation_type_id' => $request->ilivein_accommodation_type_id,
-            'personal_belongings_aed' => $request->personal_belongings_aed,
-            'building_aed' => $request->building_aed,
-            'has_contents' => $request->has_contents == 'on' ?  true : false,
-            'nationality_id' => $request->nationality_id,
-            'premium' => $request->premium,
-            'has_building' => $request->has_building == 'on' ? true : false,
-            'has_personal_belongings' => $request->has_personal_belongings == 'on' ?  true : false,
-        ];
+        $homeQuote = HomeQuote::where('uuid', $id)->first();
+        $homeQuote->first_name = $request->first_name;
+        $homeQuote->last_name = $request->last_name;
+        $homeQuote->address = $request->address;
+        $homeQuote->contents_aed = $request->contents_aed;
+        $homeQuote->iam_possesion_type_id = $request->iam_possesion_type_id;
+        $homeQuote->ilivein_accommodation_type_id = $request->ilivein_accommodation_type_id;
+        $homeQuote->personal_belongings_aed = $request->personal_belongings_aed;
+        $homeQuote->building_aed = $request->building_aed;
+        $homeQuote->has_contents = $request->has_contents == 'on' ?  true : false;
+        $homeQuote->nationality_id = $request->nationality_id;
+        $homeQuote->premium = $request->premium;
+        $homeQuote->has_building = $request->has_building == 'on' ? true : false;
+        $homeQuote->has_personal_belongings = $request->has_personal_belongings == 'on' ?  true : false;
         if (!Auth::user()->hasRole('HOME_ADVISOR')) {
-            $updateArray['email'] = $request->email;
-            $updateArray['mobile_no'] = $request->mobile_no;
+            $homeQuote->email = $request->email;
+            $homeQuote->mobile_no = $request->mobile_no;
         }
-        HomeQuote::where('uuid', $id)->update($updateArray);
+        $homeQuote->save();
 
         if (isset($request->return_to_view))
             return redirect("quote/home/" . $id)->with('success', 'Home Quote has been updated');

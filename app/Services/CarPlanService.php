@@ -123,16 +123,15 @@ class CarPlanService extends BaseService
 
     public function updateCarPlan(Request $request, $id)
     {
-        $updateArray = [
-            'text' => $request->text,
-            'text_ar' => $request->text_ar,
-            'code' => $request->code,
-            'repair_type' => $request->repair_type,
-            'insurance_type' => $request->insurance_type,
-            'provider_id' => $request->provider_id,
-            'is_active' => $request->has("is_active") ? $request->is_active : 0
-        ];
-        CarPlan::where('id', $id)->update($updateArray);
+
+        $carPlan = CarPlan::where('id', $id)->first();
+        $carPlan->text = $request->text;
+        $carPlan->text_ar = $request->text_ar;
+        $carPlan->code = $request->code;
+        $carPlan->repair_type = $request->repair_type;
+        $carPlan->insurance_type = $request->insurance_type;
+        $carPlan->provider_id = $request->provider_id;
+        $carPlan->save();
         return true;
     }
 

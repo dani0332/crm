@@ -303,19 +303,18 @@ class TravelQuoteService extends BaseService
 
     public function updateTravelQuote(Request $request, $id)
     {
-        $updateArray = [
-            'first_name' => $request->first_name,
-            'last_name' => $request->last_name,
-            'details' => $request->details,
-            'travel_cover_for_id' => $request->travel_cover_for_id,
-            'nationality_id' => $request->nationality_id,
-            'days_cover_for' => $request->days_cover_for,
-            'premium' => $request->premium,
-            'destination' => $request->destination,
-            'region_cover_for_id' => $request->region_cover_for_id,
-            'details' => $request->details,
-        ];
-        TravelQuote::where('uuid', $id)->update($updateArray);
+        $travelQuote = TravelQuote::where('uuid', $id)->first();
+        $travelQuote->first_name = $request->first_name;
+        $travelQuote->last_name = $request->last_name;
+        $travelQuote->details = $request->details;
+        $travelQuote->travel_cover_for_id = $request->travel_cover_for_id;
+        $travelQuote->nationality_id = $request->nationality_id;
+        $travelQuote->days_cover_for = $request->days_cover_for;
+        $travelQuote->premium = $request->premium;
+        $travelQuote->destination = $request->destination;
+        $travelQuote->region_cover_for_id = $request->region_cover_for_id;
+        $travelQuote->details = $request->details;
+        $travelQuote->save();
         if (isset($request->return_to_view))
             return redirect("quote/travel/" . $id)->with('success', 'Travel Quote has been updated');
     }
