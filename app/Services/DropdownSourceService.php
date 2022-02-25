@@ -31,6 +31,7 @@ use App\Models\User;
 use App\Models\VehicleType;
 use App\Models\YearOfManufacture;
 use App\Models\CarAddOn;
+use App\Models\CarPlanCoverage;
 use DB;
 use Faker\Provider\ar_SA\Payment;
 use Illuminate\Support\Facades\Auth;
@@ -208,6 +209,9 @@ class DropdownSourceService extends BaseService
                 break;
             case 'addon_id':
                 $data = CarAddOn::select('id', 'text')->get();
+                break;
+            case 'code':
+                $data = DB::table("car_plan_coverage")->distinct()->select('car_plan_coverage.code as id','car_plan_coverage.code as text')->whereNotNull('code')->whereNotNull('text')->get();
                 break;
             default:
                 break;
