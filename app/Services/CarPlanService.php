@@ -29,7 +29,8 @@ class CarPlanService extends BaseService
                 'cp.text_ar',
                 'cp.is_active'
             )
-            ->leftJoin('insurance_provider as ip', 'cp.provider_id', '=', 'ip.id');
+            ->leftJoin('insurance_provider as ip', 'cp.provider_id', '=', 'ip.id')
+            ->where('cp.is_active', 1);
     }
 
     public function getEntity($id)
