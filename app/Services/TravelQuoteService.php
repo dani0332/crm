@@ -74,9 +74,7 @@ class TravelQuoteService extends BaseService
             "source" => $sourceName,
             "referenceUrl" => $appUrl,
         );
-        if (Auth::user()->hasRole("TRAVEL_ADVISOR")) {
-            $dataArr['advisorId'] = Auth::user()->id;
-        }
+        if (!Auth::user()->hasRole("ADMIN")) $dataArr['advisorId'] = Auth::user()->id;
         return CapiRequestService::sendCAPIRequest('/api/v1-save-travel-quote', $dataArr);
     }
 
@@ -202,10 +200,11 @@ class TravelQuoteService extends BaseService
                 }
             }
         }
+        $isManagerORDeputy = Auth::user()->isManagerOrDeputy();
         $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
         $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';
         if ($column != '' && $column != 0 && $direction != '') {
-            $isManagerORDeputy = Auth::user()->isManagerOrDeputy();
+            
             $isAdmin = Auth::user()->hasRole("ADMIN");
             if ($isAdmin || $isManagerORDeputy == "1") {
                 if ($column == 6) {

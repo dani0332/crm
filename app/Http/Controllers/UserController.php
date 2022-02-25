@@ -56,6 +56,7 @@ class UserController extends Controller
                                             ,u1.created_at
                                             ,u1.updated_at");
             $filteredData = $users;
+            
             if (!empty($request->email)) {
                 $collection = collect($filteredData);
                 $filteredData = $collection->filter(function ($value, $key) use ($request) {
@@ -84,9 +85,17 @@ class UserController extends Controller
      */
     public function create()
     {
-        $roles = Role::pluck('name', 'name')->all();
-        $teams = Team::orderBy('name', 'asc')->get();
-        return view('user.add', compact('roles', 'teams'));
+        $roles = Role::pluck('name', 'name')->all(); // get all roles
+        $teams = Team::orderBy('name', 'asc')->get(); // get all teams
+        $additionalTeams = [];
+        $user = User::where('id', '!=', Auth::user()->id)->first(); // get current user
+        if ($user) {
+            if($user->additional_team_ids != '') {
+                $additionalTeamIds = explode(',', $user->additional_team_ids);
+                $additionalTeams = Team::whereIn('id', $additionalTeamIds)->get()->pluck('name', 'id'); // get all additional teams
+            }
+        }
+        return view('user.add', compact('roles', 'teams', 'additionalTeams'));
     }
     /**
      * Store a newly created resource in storage.
@@ -107,13 +116,21 @@ class UserController extends Controller
         $user->name = $request->name;
         $user->email = $request->email;
         $user->password = bcrypt($request->password);
+        if ($request->manager != "0") $user->manager_id = $request->manager;
+        if(isset($request->additionalTeams)) {
+            if(count((array)$request->additionalTeams) > 0) {
+                $user->additional_team_ids = implode(',', $request->additionalTeams);
+            }
+            else{
+                $user->additional_team_ids = $request->additionalTeams[0];
+            }
+        }
         $user->save();
-
 
         $userTeam = new UserTeams();
         $userTeam->team_id = $request->team;
         $userTeam->user_id = $user->id;
-        if ($request->manager != "0") $userTeam->manager_id = $request->manager;
+
         $userTeam->save();
 
         $user->assignRole($request->input('roles'));
@@ -128,6 +145,7 @@ class UserController extends Controller
      */
     public function show(User $user)
     {
+        // getting current user's team names
         $teamQuery = DB::select("SELECT group_concat(name) as name
                                 FROM teams t
                                 INNER JOIN user_team ut ON ut.team_id = t.id
@@ -143,19 +161,30 @@ class UserController extends Controller
      */
     public function edit(User $user)
     {
-        $roles = Role::pluck('name', 'name')->all();
-        $userRole = $user->roles->pluck('name', 'name')->all();
-        $teams = Team::orderBy('name', 'asc')->get();
+        $roles = Role::pluck('name', 'name')->all(); // get all roles
 
-        $userTeam = UserTeams::where('user_id', $user->id)->get()->first();
+        $userRole = $user->roles->pluck('name', 'name')->all(); // get all roles of current user
+
+        $teams = Team::orderBy('name', 'asc')->get(); // get all teams
+
+        $userTeam = UserTeams::where('user_id', $user->id)->get()->first(); // get all teams of current user
+        
         $managers = [];
+        // get all managers of current user team
         if ($userTeam != null && $userTeam->team_id != null) {
-            $managerIds = UserTeams::where('team_id', $userTeam->team_id)->where('manager_id', null)->where('user_id', '!=', $user->id)->get()->pluck('user_id');
-            $managers = User::whereIn('id', $managerIds)->get();
+            $teamUserIds = UserTeams::where('team_id', $userTeam->team_id)
+                            ->get()->pluck('user_id');
+
+            $managers = User::whereIn('id', $teamUserIds)->whereNotNull('manager_id')->get();
         }
-        $selectedTeam = $userTeam ? $userTeam->team_id : 0;
-        $selectedManager = $userTeam ? $userTeam->manager_id : 0;
-        return view('user.edit', compact('user', 'roles', 'userRole', 'teams', 'selectedTeam', 'managers', 'selectedManager'));
+
+        $selectedAdditionalTeams = $user->additional_team_ids; // get all additional teams of current user
+
+        $selectedTeam = $userTeam ? $userTeam->team_id : 0; // current user team
+
+        $selectedManager = $userTeam ? $userTeam->manager_id : 0; // current user manager
+
+        return view('user.edit', compact('user', 'roles', 'userRole', 'teams', 'selectedTeam', 'managers', 'selectedManager', 'selectedAdditionalTeams'));	
     }
     /**
      * Update the specified resource in storage.
@@ -171,17 +200,35 @@ class UserController extends Controller
             'roles' => 'required',
             'team' => 'required'
         ]);
+        
+        // Updating user
         $user->name = $request->name;
         $user->email = $request->email;
         $user->password = bcrypt($request->password);
-        $user->save();
-        $userTeamDataArray = ['team_id' => $request->team];
-        if ($request->manager != 0 && $request->manager != '') {
-            $userTeamDataArray['manager_id'] = $request->manager;
+        if ($request->manager != "0") $user->manager_id = $request->manager;
+        if(isset($request->additionalTeams)) {
+            if(count((array)$request->additionalTeams) > 0) {
+                $user->additional_team_ids = implode(',', $request->additionalTeams);
+            }
+            else{
+                $user->additional_team_ids = $request->additionalTeams[0];
+            }
         }
-        UserTeams::updateOrCreate(['user_id' => $user->id], $userTeamDataArray);
+        $user->save();
+
+        // Updating user teams
+        if($request->team){
+            $userTeam = UserTeams::where('user_id', $user->id)->get()->first();
+            if($userTeam){
+                $userTeam->team_id = $request->team;
+                $userTeam->save();
+            }
+        }
+
+        // Updating user roles
         DB::table('model_has_roles')->where('model_id', $user->id)->delete();
         $user->assignRole($request->input('roles'));
+
         if (isset($request->return_to_view))
             return redirect("admin/users/" . $user->id)->with('success', 'User has been updated');
     }
@@ -205,8 +252,11 @@ class UserController extends Controller
     public function getTeamManagers(Request $request)
     {
         $teamId = $request->query()['teamId'];
-        $managerIds = UserTeams::where('team_id', $teamId)->where('manager_id', null)->get()->pluck('user_id');
-        $managers = User::whereIn('id', $managerIds)->get();
+        // getting all user ids of team
+        $teamUserIds = UserTeams::where('team_id', $teamId)
+                        ->get()->pluck('user_id');
+        // getting all managers of team
+        $managers = User::whereIn('id', $teamUserIds)->whereNotNull('manager_id')->get();
         return $managers;
     }
 }

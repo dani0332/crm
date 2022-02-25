@@ -2,24 +2,50 @@
 @section('title','Add User')
 @section('content')
 <script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
-<script>
-    $(document).ready(function(){
-        $("#user-team-select").on('change', function(){
-            $(".loader").show();
-            $.ajax({
-                    url: '/getTeamManagers?teamId=' + this.value,
-                    type: "get",
-                    success: function(response) {
-                        $('#user-manager-select').find('option').remove().end().append('<option value="0" selected="selected">None</option>');
-                        for (let index = 0; index < response.length; index++) {
-                            const element = response[index];
-                            $('#user-manager-select').append($("<option></option>").attr("value", element.id).text(element.name));
-                        }
-                        $('.select-manager').removeAttr('disabled');
-                        $(".loader").hide();
-                    },
-                });
+<style>
+    .select2-results__option[aria-selected=true] { display: none;}
 
+    </style>
+<script>
+    function loadAdditionalTeams(additionalTeams){
+        additionalTeams.forEach(element => {
+            var select  = $("#additionalTeams-select");
+            if(element.id != $("#user-team-select").val()){
+                select.append('<option value="'+element.id+'">'+element.name+'</option>');
+            }
+        });
+    }
+
+    function loadManagerByTeam(team_id){
+        $(".loader").show();
+        $.ajax({
+                url: '/getTeamManagers?teamId=' + team_id,
+                type: "get",
+                success: function(response) {
+                    $('#user-manager-select').find('option').remove().end().append('<option value="0" selected="selected">None</option>');
+                    for (let index = 0; index < response.length; index++) {
+                        const element = response[index];
+                        $('#user-manager-select').append($("<option></option>").attr("value", element.id).text(element.name));
+                    }
+                    $('.select-manager').removeAttr('disabled');
+                    $(".loader").hide();
+                },
+            });
+    }
+
+    $(document).ready(function(){
+        loadManagerByTeam($("#user-team-select").val());
+        $('#additionalTeams-select').select2({
+            placeholder: 'Select Additional Teams against user',
+            width: '100%',
+            allowClear: true
+        });
+        var additionalTeams = JSON.parse('<?php echo json_encode($teams); ?>');
+        loadAdditionalTeams(additionalTeams);
+        $("#user-team-select").on('change', function(){
+            $("#additionalTeams-select").empty();
+            loadAdditionalTeams(additionalTeams);      
+            loadManagerByTeam(this.value);
         });
     });
 
@@ -89,7 +115,7 @@
                     </div>
 
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="roles">Team <span class="required">*</span></label>
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="roles">Parent Team <span class="required">*</span></label>
                         <div class="col-md-6 col-sm-6 ">
                             <select name="team" id="user-team-select" class="form-control">
                                 @foreach ($teams as $team)
@@ -99,6 +125,19 @@
                                 @else
                                 <option value="{{ $team->id }}">{{ $team->name }}</option>
                                 @endif
+                                @endforeach
+                            </select>
+                            @if ($errors->has('team'))
+                                <span class="text-danger">{{ $errors->first('team') }}</span>
+                            @endif
+                        </div>
+                    </div>
+                    <div class="item form-group">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="roles">Additional Teams</label>
+                        <div class="col-md-6 col-sm-6 ">
+                            <select name="additionalTeams[]" id="additionalTeams-select" class="form-control select2 " multiple="multiple">
+                                @foreach ($additionalTeams as $team)
+                                <option value="{{ $team->id }}">{{ $team->name }}</option>
                                 @endforeach
                             </select>
                             @if ($errors->has('team'))

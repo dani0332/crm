@@ -4,6 +4,11 @@
 <script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
 <script>
     $(document).ready(function(){
+        $('#additionalTeams-select').select2({
+            placeholder: 'Select Additional Teams against user',
+            width: '100%',
+            allowClear: true
+        });
         $("#user-team-select").on('change', function(){
             $(".loader").show();
             $.ajax({
@@ -89,11 +94,25 @@
                     </div>
 
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="roles">Team <span class="required">*</span></label>
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="roles">Parent Team <span class="required">*</span></label>
                         <div class="col-md-6 col-sm-6 ">
                             <select name="team" id=user-team-select class="form-control select2">
                                 @foreach ($teams as $team)
                                 <option value="{{ $team->id }}" @if ($team->id == $selectedTeam) selected="selected" @endif>{{ $team->name }}</option>
+                                @endforeach
+                            </select>
+                            @if ($errors->has('team'))
+                                <span class="text-danger">{{ $errors->first('team') }}</span>
+                            @endif
+                        </div>
+                    </div>
+
+                    <div class="item form-group">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="roles">Additional Teams</label>
+                        <div class="col-md-6 col-sm-6 ">
+                            <select name="additionalTeams[]" id="additionalTeams-select" class="form-control select2 " multiple="multiple">
+                                @foreach ($teams as $team)
+                                <option value="{{ $team->id }}" @if(str_contains($selectedAdditionalTeams, $team->id)) selected="selected" @endif>{{ $team->name }}</option>
                                 @endforeach
                             </select>
                             @if ($errors->has('team'))
