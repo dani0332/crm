@@ -19,6 +19,7 @@ class RenewalImportJob implements ShouldQueue
     protected $quoteType;
     protected $renewalsUploadService;
     protected $fileName;
+    
     /**
      * Create a new job instance.
      *
@@ -39,9 +40,18 @@ class RenewalImportJob implements ShouldQueue
      */
     public function handle()
     {
-        $quoteData = $this->quoteData;
-        $quoteType = $this->quoteType;
-        // Sending request with data to create renewal and normal quote
-        $this->renewalsUploadService->createNewQuote($quoteData, $quoteType, $this->fileName);        
+        try{
+            $quoteData = $this->quoteData;
+            $quoteType = $this->quoteType;
+            // Sending request with data to create renewal and normal quote
+            $this->renewalsUploadService->createNewQuote($quoteData, $quoteType, $this->fileName);
+        }
+        catch(\Exception $e){
+            Log::info("message: ".$e->getMessage());
+            if ($this->attempts() < 4) {
+                $delayInSeconds = 5 * 60;
+                $this->release($delayInSeconds);
+            }
+        }      
     }
 }
