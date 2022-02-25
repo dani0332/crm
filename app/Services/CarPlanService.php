@@ -116,13 +116,14 @@ class CarPlanService extends BaseService
             'repair_type' => $request->repair_type,
             'insurance_type' => $request->insurance_type,
             'provider_id' => $request->provider_id,
-            'is_active' => 1
+            'is_active' => $request->has("is_active") ? 1 : 0 
         ];
         return CarPlan::create($data);
     }
 
     public function updateCarPlan(Request $request, $id)
     {
+
         $carPlan = CarPlan::where('id', $id)->first();
         $carPlan->text = $request->text;
         $carPlan->text_ar = $request->text_ar;
@@ -146,7 +147,7 @@ class CarPlanService extends BaseService
             "provider_id" => "select|title",
             "created_at" => "input|title|date|range",
             "updated_at" => "input|title|date",
-            "is_active" => "readonly|title"
+            "is_active" => "input|checkbox"
         );
     }
 

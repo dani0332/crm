@@ -158,7 +158,7 @@
                                             </label>
                                         </div>
                                         <div class="col-md-3">
-                                            <input type="checkbox" {{ $record->$property ? 'checked' : '' }} style="float: right;" id={{$property}} name={{$property}}>                                        </div>
+                                            <input type="checkbox" {{ $record->$property ? 'checked' : '' }} style="float: right;" id={{$property}} name={{$property}} value={{$record->$property}}>                                        </div>
                                     </div>
                                     <br />
                                     @if ($errors->has($property))
