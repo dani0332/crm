@@ -3,13 +3,10 @@
 namespace App\Imports;
 
 use App\Jobs\RenewalImportJob;
-use App\Jobs\VerifyRenewalInDatabase;
 use App\Models\Customer;
-use App\Models\RenewalsUploadLeads;
 use App\Services\RenewalsUploadService;
 use App\Services\CustomerService;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Bus;
 use Maatwebsite\Excel\Row;
 use Maatwebsite\Excel\Concerns\Importable;
 use Maatwebsite\Excel\Concerns\OnEachRow;
@@ -151,24 +148,7 @@ class RenewalsImport implements OnEachRow, WithStartRow, WithValidation, SkipsOn
                     "notes" => $notes,
                 );
             }
-            
-            Bus::chain([
-                new RenewalImportJob($quoteData, $qouteType, $this->renewalsUploadService, $this->fileName),
-                function (){
-                    $record = RenewalsUploadLeads::where('file_name', $this->fileName)->first();
-                    if($record)
-                    {
-                        // if record exists, update the number of rows uploaded
-                        $record->good = $record->good + 1;
-                        $record->save();
-                    }
-                    if(($record->good + $record->cannot_upload) == $record->total_records){
-                        // if all records are uploaded, update the status to completed
-                            $record->status = 'Completed';
-                            $record->save();
-                    }
-                },
-            ])->dispatch();
+            dispatch(new RenewalImportJob($quoteData, $qouteType, $this->renewalsUploadService, $this->fileName));
         }
     }
 

@@ -42,6 +42,6 @@ class RenewalImportJob implements ShouldQueue
         $quoteData = $this->quoteData;
         $quoteType = $this->quoteType;
         // Sending request with data to create renewal and normal quote
-        $this->renewalsUploadService->createNewQuote($quoteData, $quoteType);        
+        $this->renewalsUploadService->createNewQuote($quoteData, $quoteType, $this->fileName);        
     }
 }
