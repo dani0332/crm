@@ -19,6 +19,9 @@ class RenewalImportJob implements ShouldQueue
     protected $quoteType;
     protected $renewalsUploadService;
     protected $fileName;
+
+    public $maxTries = 5;
+    public $timeout = 180;
     
     /**
      * Create a new job instance.
