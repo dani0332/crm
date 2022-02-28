@@ -10,7 +10,9 @@
     function loadAdditionalTeams(additionalTeams){
         additionalTeams.forEach(element => {
             var select  = $("#additionalTeams-select");
-            if(element.id != $("#user-team-select").val()){
+            var parentTeamId = $("#user-team-select").val();
+            debugger;
+            if(element.id != parentTeamId){
                 select.append('<option value="'+element.id+'">'+element.name+'</option>');
             }
         });

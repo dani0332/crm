@@ -3,13 +3,26 @@
 @section('content')
 <script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
 <script>
+    function loadAdditionalTeams(additionalTeams){
+        $("#additionalTeams-select").empty();
+        additionalTeams.forEach(element => {
+            var select  = $("#additionalTeams-select");
+            var parentTeamId = $("#user-team-select").val();
+            if(parseInt(element.id) !== parseInt(parentTeamId)){
+                select.append('<option value="'+element.id+'">'+element.name+'</option>');
+            }
+        });
+    }
     $(document).ready(function(){
+        var additionalTeams = JSON.parse('<?php echo json_encode($teams); ?>');
+        loadAdditionalTeams(additionalTeams);
         $('#additionalTeams-select').select2({
             placeholder: 'Select Additional Teams against user',
             width: '100%',
             allowClear: true
         });
         $("#user-team-select").on('change', function(){
+            loadAdditionalTeams(additionalTeams);
             $(".loader").show();
             $.ajax({
                     url: '/getTeamManagers?teamId=' + this.value,
