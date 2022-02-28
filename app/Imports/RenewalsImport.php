@@ -3,12 +3,10 @@
 namespace App\Imports;
 
 use App\Jobs\RenewalImportJob;
-use App\Jobs\VerifyRenewalInDatabase;
 use App\Models\Customer;
 use App\Services\RenewalsUploadService;
 use App\Services\CustomerService;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Bus;
 use Maatwebsite\Excel\Row;
 use Maatwebsite\Excel\Concerns\Importable;
 use Maatwebsite\Excel\Concerns\OnEachRow;
@@ -150,11 +148,7 @@ class RenewalsImport implements OnEachRow, WithStartRow, WithValidation, SkipsOn
                     "notes" => $notes,
                 );
             }
-            
-            Bus::chain([
-                new RenewalImportJob($quoteData, $qouteType, $this->renewalsUploadService, $this->fileName),
-                new VerifyRenewalInDatabase($this->fileName),
-            ])->dispatch();
+            dispatch(new RenewalImportJob($quoteData, $qouteType, $this->renewalsUploadService, $this->fileName));
         }
     }
 

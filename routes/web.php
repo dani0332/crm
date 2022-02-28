@@ -164,6 +164,7 @@ Route::group(['middleware' =>  ['auth']], function () {
         Route::resource('carplancoverage', GenericCrudController::class);
         Route::resource('carplanaddon', GenericCrudController::class);
         Route::resource('carplanaddonoption', GenericCrudController::class);
+        Route::resource('applicationstorage', GenericCrudController::class);
         Route::post('save', [GenericCrudController::class, 'store'])->name('save');
         Route::post('update', [GenericCrudController::class, 'update'])->name('update');
     });

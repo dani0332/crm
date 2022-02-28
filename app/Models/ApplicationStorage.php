@@ -7,8 +7,9 @@ use Illuminate\Database\Eloquent\Model;
 use Config;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
+use App\Models\BaseModel;
 
-class ApplicationStorage extends Model implements AuditableContract
+class ApplicationStorage extends BaseModel implements AuditableContract
 {
     use HasFactory, Auditable;
     protected $table = 'application_storage';

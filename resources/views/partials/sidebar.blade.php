@@ -280,6 +280,16 @@
                         </li>
                     </ul>
                 @endcan
+
+                @can('application-storage-list')
+                    <ul class="nav side-menu">
+                        <li><a><i class="fa fa-user"></i> Admin <span class="fa fa-chevron-down"></span></a>
+                            <ul class="nav child_menu">
+                                <li><a href="{{ url('generic/applicationstorage') }}">Application Storage</a></li>
+                            </ul>
+                        </li>
+                    </ul>
+                @endcan
             </div>
         </div>
         <!-- /sidebar menu -->
