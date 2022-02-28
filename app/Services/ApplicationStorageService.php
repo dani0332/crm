@@ -23,7 +23,7 @@ class ApplicationStorageService extends BaseService
                 'as.updated_at',
                 'as.created_at',
                 'as.is_active'
-            )->where('as.is_active', 1);
+            );
     }
 
     public function getEntity($id)
