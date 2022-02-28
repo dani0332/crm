@@ -87,7 +87,7 @@ class ApplicationStorageService extends BaseService
         $applicationStorage = new ApplicationStorage();
         $applicationStorage->key_name = $request->key_name;
         $applicationStorage->value = $request->value;
-        $applicationStorage->is_active = $request->has("is_active") ? 1 : 0;
+        $applicationStorage->is_active = 1;
         $applicationStorage->save();
 
         return $applicationStorage;
@@ -98,7 +98,7 @@ class ApplicationStorageService extends BaseService
         $applicationStorage = ApplicationStorage::where('id', $id)->first();
         $applicationStorage->key_name = $request->key_name;
         $applicationStorage->value = $request->value;
-        $applicationStorage->is_active = $request->has("is_active") ? $request->is_active : 0;
+        $applicationStorage->is_active = $request->has("is_active") ? 1 : 0;
         $applicationStorage->save();
 
         return true;
