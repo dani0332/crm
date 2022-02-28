@@ -453,7 +453,7 @@ class CarQuoteService extends BaseService
     public function getGridData($model, $request)
     {
         $searchProperties = [];
-        $isRenewalUser = Auth::user()->isRenewalUser();;
+        $isRenewalUser = Auth::user()->isRenewalUser();
         if ($isRenewalUser) {
             $searchProperties = $model->renewalSearchProperties;
         } else {
