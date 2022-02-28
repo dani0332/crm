@@ -1,22 +1,3 @@
-<script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
-<script>
-$(document).ready(function() {
-    $(".editDIV").click(function() {
-        $(this).find("span")[0].style.display="none";
-        $(this).find("input")[0].style.display="block";
-        $(this).find("input")[0].focus();
-    });
-    $(".editINPUT").blur(function() {
-        $(this)[0].style.display="none";
-        $(this).prev()[0].innerText=$(this)[0].value;
-        $(this).prev().show(300);
-    });
-
-    $("input[type='number'][name='discountedPremium[]']").on('input', function() {
-        $("#update_discounted_premium").show(300);
-    });
-});
-</script>
 <?php
     use App\Enums\CarPlanFeaturesCode;
     use App\Enums\CarPlanAddonsCode;
@@ -72,7 +53,12 @@ $(document).ready(function() {
                                     <tbody>
                                         @foreach ($listQuotePlans as $key => $quotePlan)
                                             <tr>
-                                                <td>{{ ucwords($quotePlan->providerName) }}</td>
+                                                <td>{{ ucwords($quotePlan->providerName) }}
+                                                    <br>
+                                                    @if($quotePlan->isDisabled)
+                                                        <span class="badge badge-danger">Disabled</span>
+                                                    @endif
+                                                </td>
                                                 <td>{{ ucwords($quotePlan->name) }}</td>
                                                 <td>{{ $quotePlan->repairType }}</td>
                                                 <td>

@@ -391,6 +391,7 @@ class CRUDController extends Controller
                     $discountPremium = $listQuotePlan->discountPremium;
                     if(isset($listQuotePlan->excess)) { $excess = $listQuotePlan->excess; } else { $excess = 0; }
                     if(isset($listQuotePlan->carValue)) { $carValue = $listQuotePlan->carValue; } else { $carValue = 0; }
+                    if(isset($listQuotePlan->isDisabled)) { $isDisabled = $listQuotePlan->isDisabled; } else { $isDisabled = 0; }
                     $listQuotePlanAddonss = $listQuotePlan->addons;
                     $listQuotePlanBenefitsInclusions = $listQuotePlan->benefits->inclusion;
                     $listQuotePlanBenefitsExclusions = $listQuotePlan->benefits->exclusion;
@@ -409,13 +410,14 @@ class CRUDController extends Controller
                     foreach ($listQuotePlanBenefitsPolicyDetails as $listQuotePlanBenefitsPolicyDetail) {
                         $listQuotePlanBenefitsPolicyDetailLink = $listQuotePlanBenefitsPolicyDetail->link;
                     }
+                    if(isset($listQuotePlanBenefitsPolicyDetailLink)) { $listQuotePlanBenefitsPolicyDetailLink = $listQuotePlanBenefitsPolicyDetailLink; } else { $listQuotePlanBenefitsPolicyDetailLink = ''; }
                 }
             }
             return view('shared.plan_details', compact([
                 'listQuotePlanName', 'providerCode', 'providerName', 'repairType',
                 'actualPremium', 'discountPremium', 'listQuotePlanAddons', 'listQuotePlanAddonValues', 'listQuotePlanBenefitsInclusions',
                 'listQuotePlanBenefitsExclusions', 'listQuotePlanBenefitsFeatures', 'listQuotePlanBenefitsRsas',
-                'listQuotePlanBenefitsPolicyDetailLink', 'listQuotePlanAddonPrices', 'excess', 'carValue', 'planId', 'quoteId'
+                'listQuotePlanBenefitsPolicyDetailLink', 'listQuotePlanAddonPrices', 'excess', 'carValue', 'planId', 'quoteId', 'isDisabled'
             ]));
         }
     }
@@ -555,10 +557,9 @@ class CRUDController extends Controller
         return redirect()->to('/quotes/' . strtolower($request->modelType) . '/' . $entity->uuid)->with('success', ' Lead Status has been Updated');
     }
 
-    public function SaveCarPlan(Request $request)
+    public function CarPlanManualProcess(Request $request)
     {
-
-        $response = $this->carQuoteService->carPlanCreateUpdate($request);
+        $response = $this->carQuoteService->carPlanModify($request);
 
         if ($response == 200 || $response == 201) {
             return redirect()->back()->with('success', 'Car Plan has been saved');

@@ -457,8 +457,14 @@ class ClaimController extends Controller
         return response()->json($carPlan);
     }
 
-    public function UpdateCarPlan(Request $request)
+    public function CarPlanUpdateManualProcess(Request $request)
     {
-        return 'Car Plan is updated';
+        $response = $this->carQuoteService->carPlanModify($request);
+        if($response == 200){
+            $message = 'Car Plan has been updated';
+        } else {
+            $message = 'Car Plan has not been updated '.$response;
+        }
+        return $message;
     }
 }
