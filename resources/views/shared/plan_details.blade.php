@@ -11,52 +11,28 @@
     });
     $('#update_car_plan_button').on('click', function (e) {
         e.preventDefault();
-        $.ajax( {
-                url: "{{ url('/CarPlanUpdateManualProcess') }}",
-                type: 'post',
-                data: {
-                    car_quote_uuid: $('#car_quote_uuid').val(),
-                    car_plan_id: $('#car_plan_id').val(),
-                    actual_premium: $('#actual_premium').val(),
-                    discounted_premium: $('#discounted_premium').val(),
-                    car_value: $('#car_value').val(),
-                    excess: $('#excess').val(),
-                    is_disabled: $('#is_disabled').val(),
-                    is_create: $('#is_create').val(),
-                    _token: '{{ csrf_token() }}'
-                },
-                success: function(result) {
-                    $('#car_plan_manual_process_text').show();
-                    $("#car_plan_manual_process_text").text(result);
-                    $('#car_plan_manual_process_text').hide(2000);
-                }
-            });
+        $.ajax({
+            url: "{{ url('/CarPlanUpdateManualProcess') }}",
+            type: 'post',
+            data: {
+                car_quote_uuid: $('#car_quote_uuid').val(),
+                car_plan_id: $('#car_plan_id').val(),
+                actual_premium: $('#actual_premium').val(),
+                discounted_premium: $('#discounted_premium').val(),
+                car_value: $('#car_value').val(),
+                excess: $('#excess').val(),
+                is_disabled: $('#is_disabled').val(),
+                is_create: $('#is_create').val(),
+                _token: '{{ csrf_token() }}'
+            },
+            success: function(result) {
+                $('#car_plan_manual_process_text').show();
+                $("#car_plan_manual_process_text").text(result);
+                $('#car_plan_manual_process_text').hide(2000);
+                location.reload();
+            }
+        });
     });
-    // $('#update_car_plan' ).submit(
-    //     function(e) {
-    //         $.ajax( {
-    //             url: "{{ url('/CarPlanUpdateManualProcess') }}",
-    //             type: 'post',
-    //             data: {
-    //                 car_quote_uuid: $('#car_quote_uuid').val(),
-    //                 car_plan_id: $('#car_plan_id').val(),
-    //                 actual_premium: $('#actual_premium').val(),
-    //                 discounted_premium: $('#discounted_premium').val(),
-    //                 car_value: $('#car_value').val(),
-    //                 excess: $('#excess').val(),
-    //                 is_disabled: $('#is_disabled').val(),
-    //                 is_create: $('#is_create').val(),
-    //                 _token: '{{ csrf_token() }}'
-    //             },
-    //             success: function(result) {
-    //                 $('#car_plan_manual_process_text').show();
-    //                 $("#car_plan_manual_process_text").text(result);
-    //                 $('#car_plan_manual_process_text').hide(2000);
-    //             }
-    //         });
-    //         e.preventDefault();
-    //     }
-    // );
 </script>
 @if(isset($modelName) && $modelName == quoteTypeCode::Travel)
 <div class="row">
