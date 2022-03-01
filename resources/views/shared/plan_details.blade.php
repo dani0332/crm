@@ -10,6 +10,17 @@
         }
     });
     $('#update_car_plan_button').on('click', function (e) {
+
+        var actual_premium = $("#actual_premium").val();
+        var discounted_premium = $("#discounted_premium").val();
+        var car_value = $("#car_value").val();
+        var excess = $("#excess").val();
+
+        if(actual_premium == '' || discounted_premium == '' || car_value == '' || excess == '') {
+            alert('Please fill all the fields');
+            return false;
+        }
+
         e.preventDefault();
         $.ajax({
             url: "{{ url('/CarPlanUpdateManualProcess') }}",
@@ -28,7 +39,7 @@
             success: function(result) {
                 $('#car_plan_manual_process_text').show();
                 $("#car_plan_manual_process_text").text(result);
-                $('#car_plan_manual_process_text').hide(2000);
+                $('#car_plan_manual_process_text').hide(5000);
                 location.reload();
             }
         });

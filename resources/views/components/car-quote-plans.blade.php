@@ -77,7 +77,7 @@
                                                     @endforeach
                                                 </td>
                                                 <td>
-                                                    <table style="margin-left: -10px;margin-top: -10px;">
+                                                    <table style="margin-left: -10px;margin-top: -10px !important;">
                                                         @foreach ($quotePlan->addons as $quotePlanAddon)
                                                             @foreach ($quotePlanAddon->carAddonOption as $quotePlanOptions)
                                                                 @if(isset($quotePlanAddon->code))
@@ -100,7 +100,7 @@
                                                     </table>
                                                 </td>
                                                 <td>
-                                                    <table style="margin-left: -10px;margin-top: -10px;">
+                                                    <table style="margin-left: -10px;margin-top: -10px !important;">
                                                         @foreach ($quotePlan->benefits->roadSideAssistance as $quotePlanRsa)
                                                             <tr style="background-color: transparent;">
                                                                 <td style="border-top: none !important;">{{ $quotePlanRsa->text }}:</td>
@@ -110,7 +110,7 @@
                                                     </table>
                                                 </td>
                                                 <td>
-                                                    <table style="margin-left: -10px;margin-top: -10px;">
+                                                    <table style="margin-left: -10px;margin-top: -10px !important;">
                                                     @foreach ($quotePlan->benefits->exclusion as $key => $quotePlanExclusion)
                                                         @if(isset($quotePlanExclusion->code) && ($quotePlanExclusion->code == CarPlanExclusionsCode::TPL_OMAN_COVER || $quotePlanExclusion->code == CarPlanExclusionsCode::OMAN_COVER))
                                                             <tr style="background-color: transparent;">
