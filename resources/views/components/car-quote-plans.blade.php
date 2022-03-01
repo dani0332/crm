@@ -55,9 +55,11 @@
                                             <tr>
                                                 <td>{{ ucwords($quotePlan->providerName) }}
                                                     <br>
-                                                    @if($quotePlan->isDisabled)
-                                                        <span class="badge badge-danger">Disabled</span>
-                                                    @endif
+                                                    @isset($name)
+                                                        @if($quotePlan->isDisabled)
+                                                            <span class="badge badge-danger">Disabled</span>
+                                                        @endif
+                                                    @endisset
                                                 </td>
                                                 <td>{{ ucwords($quotePlan->name) }}</td>
                                                 <td>{{ $quotePlan->repairType }}</td>
