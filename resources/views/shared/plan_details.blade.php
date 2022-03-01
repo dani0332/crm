@@ -9,9 +9,9 @@
             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
         }
     });
-    $('#update_car_plan' ).submit(
-        function(e) {
-            $.ajax( {
+    $('#update_car_plan_button').on('click', function (e) {
+        e.preventDefault();
+        $.ajax( {
                 url: "{{ url('/CarPlanUpdateManualProcess') }}",
                 type: 'post',
                 data: {
@@ -28,12 +28,35 @@
                 success: function(result) {
                     $('#car_plan_manual_process_text').show();
                     $("#car_plan_manual_process_text").text(result);
-                    //location.reload();
+                    $('#car_plan_manual_process_text').hide(2000);
                 }
             });
-            e.preventDefault();
-        }
-    );
+    });
+    // $('#update_car_plan' ).submit(
+    //     function(e) {
+    //         $.ajax( {
+    //             url: "{{ url('/CarPlanUpdateManualProcess') }}",
+    //             type: 'post',
+    //             data: {
+    //                 car_quote_uuid: $('#car_quote_uuid').val(),
+    //                 car_plan_id: $('#car_plan_id').val(),
+    //                 actual_premium: $('#actual_premium').val(),
+    //                 discounted_premium: $('#discounted_premium').val(),
+    //                 car_value: $('#car_value').val(),
+    //                 excess: $('#excess').val(),
+    //                 is_disabled: $('#is_disabled').val(),
+    //                 is_create: $('#is_create').val(),
+    //                 _token: '{{ csrf_token() }}'
+    //             },
+    //             success: function(result) {
+    //                 $('#car_plan_manual_process_text').show();
+    //                 $("#car_plan_manual_process_text").text(result);
+    //                 $('#car_plan_manual_process_text').hide(2000);
+    //             }
+    //         });
+    //         e.preventDefault();
+    //     }
+    // );
 </script>
 @if(isset($modelName) && $modelName == quoteTypeCode::Travel)
 <div class="row">
@@ -209,7 +232,7 @@
                                             <div id="car_plan_manual_process_text" style="display: none;font-weight:bold;"></div>
                                         </td>
                                         <td> </td>
-                                        <td align="right"><button type="submit" class="btn btn-warning btn-sm">Update</button></td></tr>
+                                        <td align="right"><button type="submit" class="btn btn-warning btn-sm" id="update_car_plan_button">Update</button></td></tr>
                                 </table>
                             </form>
                             <br />

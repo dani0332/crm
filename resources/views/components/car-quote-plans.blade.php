@@ -55,7 +55,7 @@
                                             <tr>
                                                 <td>{{ ucwords($quotePlan->providerName) }}
                                                     <br>
-                                                    @isset($name)
+                                                    @isset($quotePlan->isDisabled)
                                                         @if($quotePlan->isDisabled)
                                                             <span class="badge badge-danger">Disabled</span>
                                                         @endif
