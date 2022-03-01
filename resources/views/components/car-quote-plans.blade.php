@@ -66,7 +66,7 @@
                                                 <td>
                                                     @foreach ($quotePlan->benefits->feature as $quotePlanFeatures)
                                                         @if(isset($quotePlanFeatures->code))
-                                                            @if($quotePlanFeatures->code == CarPlanFeaturesCode::TPL_DAMAGE_LIMIT)
+                                                            @if($quotePlanFeatures->code == CarPlanFeaturesCode::TPL_DAMAGE_LIMIT || $quotePlanFeatures->code == CarPlanFeaturesCode::DAMAGE_LIMIT)
                                                                 {{ $quotePlanFeatures->value }}
                                                             @endif
                                                         @else
@@ -112,7 +112,7 @@
                                                 <td>
                                                     <table style="margin-left: -10px;margin-top: -10px;">
                                                     @foreach ($quotePlan->benefits->exclusion as $key => $quotePlanExclusion)
-                                                        @if(isset($quotePlanExclusion->code) && $quotePlanExclusion->code == CarPlanExclusionsCode::TPL_OMAN_COVER)
+                                                        @if(isset($quotePlanExclusion->code) && ($quotePlanExclusion->code == CarPlanExclusionsCode::TPL_OMAN_COVER || $quotePlanExclusion->code == CarPlanExclusionsCode::OMAN_COVER))
                                                             <tr style="background-color: transparent;">
                                                                 <td style="border-top: none !important;">{{ $quotePlanExclusion->text }}:</td>
                                                                 <td style="border-top: none !important;">{{ $quotePlanExclusion->value }}</td>
@@ -120,7 +120,7 @@
                                                         @endif
                                                     @endforeach
                                                     @foreach ($quotePlan->benefits->inclusion as $key => $quotePlanInclusion)
-                                                        @if(isset($quotePlanExclusion->code) && $quotePlanInclusion->code == CarPlanExclusionsCode::TPL_OMAN_COVER)
+                                                        @if(isset($quotePlanExclusion->code) && ($quotePlanInclusion->code == CarPlanExclusionsCode::TPL_OMAN_COVER || $quotePlanInclusion->code == CarPlanExclusionsCode::OMAN_COVER))
                                                             <tr style="background-color: transparent;">
                                                                 <td style="border-top: none !important;">{{ $quotePlanInclusion->text }}:</td>
                                                                 <td style="border-top: none !important;">{{ $quotePlanInclusion->value }}</td>

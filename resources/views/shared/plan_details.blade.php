@@ -28,7 +28,7 @@
                 success: function(result) {
                     $('#car_plan_manual_process_text').show();
                     $("#car_plan_manual_process_text").text(result);
-                    location.reload();
+                    //location.reload();
                 }
             });
             e.preventDefault();
