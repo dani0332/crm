@@ -718,7 +718,7 @@ class CarQuoteService extends BaseService
         return $vehicleTypeText;
     }
 
-    public function carPlanCreateUpdate($request)
+    public function carPlanModify($request)
     {
         $apiEndPoint = Config::get('constants.KEN_API_ENDPOINT') . '/save-manual-car-quote-plan';
         $apiToken = Config::get('constants.KEN_API_TOKEN');
@@ -726,13 +726,34 @@ class CarQuoteService extends BaseService
         $apiUserName = Config::get('constants.KEN_API_USER');
         $apiPassword = Config::get('constants.KEN_API_PWD');
 
+        if(isset($request->is_disabled)) {
+            $isDisabled = $request->is_disabled;
+        } else {
+            $isDisabled = 0;
+        }
+
+        if(isset($request->is_create)) {
+            if($request->is_create == 1) {
+                $discountedPremium = $request->actual_premium;
+            } else {
+                $discountedPremium = $request->discounted_premium;
+            }
+        } else {
+            $discountedPremium = $request->actual_premium;
+        }
+
         $carPlanData = array(
             "quoteUID" => $request->car_quote_uuid,
-            "planId" => (int)$request->car_plan_id,
-            "premium" => (float)$request->premium,
-            "carValue" => (float)$request->value,
-            "excess" => (float)$request->excess,
+            "plans" => array(
+                ["planId" => (int)$request->car_plan_id,
+                "actualPremium" => (float)$request->actual_premium,
+                "carValue" => (float)$request->car_value,
+                "excess" => (float)$request->excess,
+                "discountPremium" => (float)$discountedPremium,
+                "isDisabled" => $isDisabled]
+            )
         );
+
         $apiCreds = array(
             "apiEndPoint" => $apiEndPoint,
             "apiToken" => $apiToken,

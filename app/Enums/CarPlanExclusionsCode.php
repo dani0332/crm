@@ -12,4 +12,5 @@ use BenSampo\Enum\Enum;
 final class CarPlanExclusionsCode extends Enum
 {
     const TPL_OMAN_COVER = "tplOmanCover";
+    const OMAN_COVER = "omanCover";
 }
