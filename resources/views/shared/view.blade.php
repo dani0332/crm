@@ -138,7 +138,7 @@
                         // adding properties for all types except leadstatus and teams
                         if (modelPropertiesArray[i].name == 'id' ) {
                             // Handling id field
-                            if (isManagerOrDeputy === "1" && allowedModelTypes.includes(model.modelType.toLocaleLowerCase())) {
+                            if (isManagerOrDeputy === "1" && allowedModelTypes.includes(model.modelType.toLocaleLowerCase()) && model.modelType.toLocaleLowerCase() != 'car') {
                                 // Checkboxes should be available if the user is Manager Or deputy also the model type is allowed
                                 dataTableColumns.push({
                                     data: "id",
@@ -393,6 +393,12 @@
                     <h2>{{ str_contains(strtolower($model->modelType), 'teams') ? 'Teams' : (str_contains(strtolower($model->modelType), 'leadstatus') ? 'Lead Status' : $model->modelType) }}
                         List</h2>
                     <ul class="nav navbar-right panel_toolbox">
+                        @if(str_contains(strtolower($model->modelType), 'teams') || str_contains(strtolower($model->modelType), 'leadstatus'))
+                            <li><a href="{{ url('quotes/' . strtolower($model->modelType) . '/create') }}"
+                                class="btn btn-warning btn-sm">Create
+                                    {{ str_contains(strtolower($model->modelType), 'teams') ? 'Team' : (str_contains(strtolower($model->modelType), 'leadstatus') ? 'Lead Status' : 'Lead') }}</a>
+                            </li>
+                        @endif
                         @if(strtolower($model->modelType) == 'business')
                         @can('corpline-quotes-create')
                             <li><a href="{{ url('quotes/' . strtolower($model->modelType) . '/create') }}"

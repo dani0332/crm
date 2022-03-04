@@ -26,8 +26,8 @@ class MyLeadsController extends Controller
      */
     public function index(Request $request)
     {
-        $userTeam = DB::table('user_team')->where('user_id', Auth::user()->id)->first();
-        $team = DB::table('teams')->where('id', $userTeam->team_id)->first();
+        $user = User::where('id', Auth::user()->id)->first();
+        $team = DB::table('teams')->where('id', $user->team_id)->first();
         $teamName = $team->name;
         if (strtolower($teamName) == strtolower(quoteTypeCode::RetailMedical) || strtolower($teamName) == strtolower(quoteTypeCode::EBP)) {
             $teamName = 'health';

@@ -21,7 +21,8 @@ class RenewalImportJob implements ShouldQueue
     protected $fileName;
 
     public $maxTries = 5;
-    public $timeout = 180;
+    public $timeout = 300;
+    public $backoff = 3;
     
     /**
      * Create a new job instance.
