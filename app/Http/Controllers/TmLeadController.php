@@ -319,16 +319,6 @@ class TmLeadController extends Controller
         return redirect()->route("tmleads.index")->with("message", "TM Lead has been deleted");
     }
 
-    public function carModelBasedOnCarMake(Request $request)
-    {
-        $make_code = $request->make_code;
-        $carmodel = DB::table('car_model')
-        ->where('car_make_code', '=', $make_code)
-        ->where('is_active', '=', 1)
-        ->select('id', 'text', 'code')->get();
-        return response()->json($carmodel);
-    }
-
     public function tmLeadUpdate(Request $request)
     {
         $currentDateTime = date('Y-m-d H:i:s');
