@@ -405,7 +405,7 @@ class ClaimController extends Controller
         $carmodel = DB::table('car_model')
         ->where('car_make_code', '=', $make_code)
         ->where('is_active', '=', 1)
-        ->get(array('id', 'text', 'code'));
+        ->select('id', 'text', 'code')->get();
         return response()->json($carmodel);
     }
 
@@ -419,14 +419,14 @@ class ClaimController extends Controller
         $carmodel = DB::table('car_model')
         ->where('car_make_code', '=', $carMakeCode)
         ->where('is_active', '=', 1)
-        ->get(array('id', 'text', 'code'));
+        ->select('id', 'text', 'code')->get();
         return response()->json($carmodel);
     }
     public function getCarMake()
     {
         $carMakes = DB::table('car_make')
         ->where('is_active', '=', 1)
-        ->get(array('id', 'text', 'code'));
+        ->select('id', 'text', 'code')->get();
         return response()->json($carMakes);
     }
 

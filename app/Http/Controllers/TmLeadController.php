@@ -325,7 +325,7 @@ class TmLeadController extends Controller
         $carmodel = DB::table('car_model')
         ->where('car_make_code', '=', $make_code)
         ->where('is_active', '=', 1)
-        ->get(array('id', 'text', 'code'));
+        ->select('id', 'text', 'code')->get();
         return response()->json($carmodel);
     }
 
