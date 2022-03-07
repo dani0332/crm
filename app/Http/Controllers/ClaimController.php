@@ -402,7 +402,10 @@ class ClaimController extends Controller
     public function carModelBasedOnCarMake(Request $request)
     {
         $make_code = $request->make_code;
-        $carmodel = DB::table('car_model')->where('car_make_code', '=', $make_code)->get(array('id', 'text', 'code'));
+        $carmodel = DB::table('car_model')
+        ->where('car_make_code', '=', $make_code)
+        ->where('is_active', '=', 1)
+        ->select('id', 'text', 'code')->get();
         return response()->json($carmodel);
     }
 
@@ -413,12 +416,17 @@ class ClaimController extends Controller
         if (!$carMakeCode) {
             $carMakeCode = $make_id;
         }
-        $carmodel = DB::table('car_model')->where('car_make_code', '=', $carMakeCode)->get(array('id', 'text', 'code'));
+        $carmodel = DB::table('car_model')
+        ->where('car_make_code', '=', $carMakeCode)
+        ->where('is_active', '=', 1)
+        ->select('id', 'text', 'code')->get();
         return response()->json($carmodel);
     }
     public function getCarMake()
     {
-        $carMakes = DB::table('car_make')->get(array('id', 'text', 'code'));
+        $carMakes = DB::table('car_make')
+        ->where('is_active', '=', 1)
+        ->select('id', 'text', 'code')->get();
         return response()->json($carMakes);
     }
 
@@ -455,5 +463,18 @@ class ClaimController extends Controller
             ->get(array('id', 'text', 'repair_type'));
 
         return response()->json($carPlan);
+    }
+
+    public function CarPlanUpdateManualProcess(Request $request)
+    {
+        $response = $this->carQuoteService->carPlanModify($request);
+
+        if (gettype($response) == 'integer' && ($response == 200 || $response == 201)) {
+            $message = 'Car Plan has been updated';
+        } else {
+            $message = 'Car Plan has not been updated '.$response;
+        }
+
+        return $message;
     }
 }
