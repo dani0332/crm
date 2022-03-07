@@ -189,12 +189,14 @@
                         </div>
                     </div>
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="roles">LOB Visibility </label>
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="roles">LOB Visibility  </label>
                         <div class="col-md-6 col-sm-6 ">
                             <select name="additionalTeams[]" id="additionalTeams-select" class="form-control select2 " multiple="multiple">
-                            </select>
+                            </select>    
                         </div>
-                        <i class="fa fa-info-circle" style="margin-top: 13px;margin-left: 15px;" id="tooltipGm" title="Additional teams selection helps advisor see leads from selected teams as well" ></i>
+                        <div class="col-md-3 col-sm-3">
+                            <i class="fa fa-info-circle" id="tooltipGm" style="margin-top: 13px;" title="Additional teams selection helps advisor see leads from selected teams as well" ></i>
+                        </div>
                     </div>
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="roles">Manager</label>

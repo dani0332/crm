@@ -166,15 +166,19 @@
                             </select>
                         </div>
                     </div>
+                    
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="roles">LOB Visibility</label>
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="roles">LOB Visibility</label> 
                         <div class="col-md-6 col-sm-6 ">
                             <select name="additionalTeams[]" id="additionalTeams-select" class="form-control select2 " multiple="multiple">
                                 @foreach ($teams as $team)
                                 <option value="{{ $team->id }}" @if(str_contains($selectedAdditionalTeams, $team->id)) selected="selected" @endif>{{ $team->name }}</option>
                                 @endforeach
                             </select>
-                            <i class="fa fa-info-circle" style="margin-top: 13px;margin-left: 15px;" id="tooltipGm" title="Additional teams selection helps advisor see leads from selected teams as well" ></i>
+                            
+                        </div>
+                        <div class="col-md-3 col-sm-3">
+                            <i class="fa fa-info-circle" id="tooltipGm" style="margin-top: 35px;" title="Additional teams selection helps advisor see leads from selected teams as well" ></i>
                         </div>
                     </div>
                     <div class="item form-group">
@@ -183,8 +187,9 @@
                             <select name="manager_id" id=user-manager-select class="form-control">
                                 <option @if(count($managers) == 0) selected="selected" @endif value="0">None</option>
                                 @foreach ($managers as $manager)
-                                <option value="{{ $manager['id'] }}"
-                                {{ $manager['id'] == old('manager_id',$user->manager_id) ? 'selected' : ''}}>{{ $manager['name'] }}</option>
+                                    <option value="{{ $manager['id'] }}" {{ $manager['id'] == old('manager_id', $user->manager_id) ? 'selected' : '' }}>
+                                        {{ $manager['name'] }}
+                                    </option>
                                 @endforeach
                             </select>
                             @if ($errors->has('manager_id'))

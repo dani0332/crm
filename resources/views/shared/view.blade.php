@@ -538,7 +538,7 @@
                                                         </option>
                                                     @endif
                                                     @if($property == 'advisor_id')
-                                                        <option selected value="null">UnAssigned</option>
+                                                        <option value="null">UnAssigned</option>
                                                     @endif
                                                     @foreach ($dropdownSource[$property] as $item)
                                                         <option value="{{ $item->id }}">
