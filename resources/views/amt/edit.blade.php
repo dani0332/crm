@@ -48,7 +48,7 @@
                             <div class="col">
                                 <span class="col-form-label col-md-6 col-sm-6">Email<span
                                     class="required">*</span></span>
-                            <input type="text" id="email" name="email" value="{{ old('email', $record->email) }}"
+                            <input type="text" id="email" name="email" disabled="disabled" value="{{ old('email', $record->email) }}"
                                 class="form-control">
                             @if ($errors->has('email'))
                                 <span class="text-danger">{{ $errors->first('email') }}</span>
@@ -57,7 +57,7 @@
                             <div class="col">
                                 <span class="col-form-label col-md-6 col-sm-6">Mobile Number<span
                                         class="required">*</span></span>
-                                <input type="text" id="mobile_no" name="mobile_no" value="{{ old('mobile_no', $record->mobile_no) }}"
+                                <input type="text" id="mobile_no" name="mobile_no" disabled="disabled" value="{{ old('mobile_no', $record->mobile_no) }}"
                                     class="form-control">
                                 @if ($errors->has('mobile_no'))
                                     <span class="text-danger">{{ $errors->first('mobile_no') }}</span>
