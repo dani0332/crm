@@ -1,22 +1,3 @@
-<script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
-<script>
-$(document).ready(function() {
-    $(".editDIV").click(function() {
-        $(this).find("span")[0].style.display="none";
-        $(this).find("input")[0].style.display="block";
-        $(this).find("input")[0].focus();
-    });
-    $(".editINPUT").blur(function() {
-        $(this)[0].style.display="none";
-        $(this).prev()[0].innerText=$(this)[0].value;
-        $(this).prev().show(300);
-    });
-
-    $("input[type='number'][name='discountedPremium[]']").on('input', function() {
-        $("#update_discounted_premium").show(300);
-    });
-});
-</script>
 <?php
     use App\Enums\CarPlanFeaturesCode;
     use App\Enums\CarPlanAddonsCode;
@@ -72,13 +53,20 @@ $(document).ready(function() {
                                     <tbody>
                                         @foreach ($listQuotePlans as $key => $quotePlan)
                                             <tr>
-                                                <td>{{ ucwords($quotePlan->providerName) }}</td>
+                                                <td>{{ ucwords($quotePlan->providerName) }}
+                                                    <br>
+                                                    @isset($quotePlan->isDisabled)
+                                                        @if($quotePlan->isDisabled)
+                                                            <span class="badge badge-danger">Disabled</span>
+                                                        @endif
+                                                    @endisset
+                                                </td>
                                                 <td>{{ ucwords($quotePlan->name) }}</td>
                                                 <td>{{ $quotePlan->repairType }}</td>
                                                 <td>
                                                     @foreach ($quotePlan->benefits->feature as $quotePlanFeatures)
                                                         @if(isset($quotePlanFeatures->code))
-                                                            @if($quotePlanFeatures->code == CarPlanFeaturesCode::TPL_DAMAGE_LIMIT)
+                                                            @if($quotePlanFeatures->code == CarPlanFeaturesCode::TPL_DAMAGE_LIMIT || $quotePlanFeatures->code == CarPlanFeaturesCode::DAMAGE_LIMIT)
                                                                 {{ $quotePlanFeatures->value }}
                                                             @endif
                                                         @else
@@ -89,7 +77,7 @@ $(document).ready(function() {
                                                     @endforeach
                                                 </td>
                                                 <td>
-                                                    <table style="margin-left: -10px;margin-top: -10px;">
+                                                    <table style="margin-left: -10px;margin-top: -10px !important;">
                                                         @foreach ($quotePlan->addons as $quotePlanAddon)
                                                             @foreach ($quotePlanAddon->carAddonOption as $quotePlanOptions)
                                                                 @if(isset($quotePlanAddon->code))
@@ -112,7 +100,7 @@ $(document).ready(function() {
                                                     </table>
                                                 </td>
                                                 <td>
-                                                    <table style="margin-left: -10px;margin-top: -10px;">
+                                                    <table style="margin-left: -10px;margin-top: -10px !important;">
                                                         @foreach ($quotePlan->benefits->roadSideAssistance as $quotePlanRsa)
                                                             <tr style="background-color: transparent;">
                                                                 <td style="border-top: none !important;">{{ $quotePlanRsa->text }}:</td>
@@ -122,9 +110,9 @@ $(document).ready(function() {
                                                     </table>
                                                 </td>
                                                 <td>
-                                                    <table style="margin-left: -10px;margin-top: -10px;">
+                                                    <table style="margin-left: -10px;margin-top: -10px !important;">
                                                     @foreach ($quotePlan->benefits->exclusion as $key => $quotePlanExclusion)
-                                                        @if(isset($quotePlanExclusion->code) && $quotePlanExclusion->code == CarPlanExclusionsCode::TPL_OMAN_COVER)
+                                                        @if(isset($quotePlanExclusion->code) && ($quotePlanExclusion->code == CarPlanExclusionsCode::TPL_OMAN_COVER || $quotePlanExclusion->code == CarPlanExclusionsCode::OMAN_COVER))
                                                             <tr style="background-color: transparent;">
                                                                 <td style="border-top: none !important;">{{ $quotePlanExclusion->text }}:</td>
                                                                 <td style="border-top: none !important;">{{ $quotePlanExclusion->value }}</td>
@@ -132,7 +120,7 @@ $(document).ready(function() {
                                                         @endif
                                                     @endforeach
                                                     @foreach ($quotePlan->benefits->inclusion as $key => $quotePlanInclusion)
-                                                        @if(isset($quotePlanExclusion->code) && $quotePlanInclusion->code == CarPlanExclusionsCode::TPL_OMAN_COVER)
+                                                        @if(isset($quotePlanExclusion->code) && ($quotePlanInclusion->code == CarPlanExclusionsCode::TPL_OMAN_COVER || $quotePlanInclusion->code == CarPlanExclusionsCode::OMAN_COVER))
                                                             <tr style="background-color: transparent;">
                                                                 <td style="border-top: none !important;">{{ $quotePlanInclusion->text }}:</td>
                                                                 <td style="border-top: none !important;">{{ $quotePlanInclusion->value }}</td>

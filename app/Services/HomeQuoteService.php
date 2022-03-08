@@ -108,7 +108,7 @@ class HomeQuoteService extends BaseService
             "source" => $sourceName,
             "referenceUrl" => $appUrl,
         );
-        if (Auth::user()->hasRole("HOME_ADVISOR")) $dataArr['advisorId'] = Auth::user()->id;
+        if (!Auth::user()->hasRole("ADMIN")) $dataArr['advisorId'] = Auth::user()->id;
         return CapiRequestService::sendCAPIRequest('/api/v1-save-home-quote', $dataArr);
     }
 
@@ -313,10 +313,6 @@ class HomeQuoteService extends BaseService
         $homeQuote->premium = $request->premium;
         $homeQuote->has_building = $request->has_building == 'on' ? true : false;
         $homeQuote->has_personal_belongings = $request->has_personal_belongings == 'on' ?  true : false;
-        if (!Auth::user()->hasRole('HOME_ADVISOR')) {
-            $homeQuote->email = $request->email;
-            $homeQuote->mobile_no = $request->mobile_no;
-        }
         $homeQuote->save();
 
         if (isset($request->return_to_view))
@@ -395,9 +391,9 @@ class HomeQuoteService extends BaseService
     public function fillModelSkipProperties()
     {
         return [
-            "create" => "id,code,quote_status_id,advisor_id,created_at,updated_at,next_followup_date,lost_reason",
+            "create" => "id,code,quote_status_id,advisor_id,created_at,updated_at,next_followup_date,lost_reason,premium,source",
             "list" => "email,address,iam_possesion_type_id,ilivein_accommodation_type_id,mobile_no,personal_belongings_aed,building_aed,contents_aed,has_contents,has_personal_belongings,has_building,address",
-            "update" => "id,code,quote_status_id,advisor_id,created_at,updated_at,next_followup_date,lost_reason",
+            "update" => "id,code,quote_status_id,advisor_id,created_at,updated_at,next_followup_date,lost_reason,source",
             "show" => "id,next_followup_date,lost_reason",
         ];
     }

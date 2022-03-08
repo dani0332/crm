@@ -12,12 +12,13 @@ class TeamService extends BaseService
     public function __construct()
     {
         $this->query = DB::table('teams as t')
-            ->select('t.id', 't.uuid', 't.name AS name');
+            ->leftJoin('teams as pt', 'pt.id', '=', 't.parent_team_id')
+            ->select('t.id', 't.uuid', 't.name AS name', 't.parent_team_id', 'pt.name AS parent_team_id_text');
     }
 
     public function getEntity($id)
     {
-        return $this->query->where('t.uuid', $id)->first();
+        return $this->query->where('t.id', $id)->first();
     }
 
     public function getEntityPlain($id)
@@ -33,8 +34,11 @@ class TeamService extends BaseService
         }
         $team = new Team();
         $team->name = $request->name;
+        if(isset($request->parent_team_id)){
+            $team->parent_team_id = $request->parent_team_id;
+        }
         $team->save();
-        return Team::find($team->id)->uuid;
+        return $team;
     }
 
     public function getGridData($model, $request)
@@ -57,7 +61,7 @@ class TeamService extends BaseService
 
     public function updateTeams(Request $request, $id)
     {
-        $team = Team::where('uuid', $id)->first();
+        $team = Team::where('id', $id)->first();
         $team->name = $request->name;
         $team->save();
         if (isset($request->return_to_view))
@@ -69,6 +73,7 @@ class TeamService extends BaseService
         return array(
             "id" => "readonly|none",
             "name" => "input|text|required|title",
+            "parent_team_id" => "select|title",
         );
     }
 
@@ -78,6 +83,9 @@ class TeamService extends BaseService
         switch ($propertyName) {
             case 'name':
                 $title = "Team Name";
+                break;
+            case 'parent_team_id':
+                $title = "Parent Team";
                 break;
             default:
                 break;

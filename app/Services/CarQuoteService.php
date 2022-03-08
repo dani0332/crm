@@ -7,6 +7,8 @@ use App\Models\CarModel;
 use App\Models\CarQuote;
 use App\Models\CarQuoteRequestDetail;
 use App\Models\InsuranceProvider;
+use App\Models\User;
+use App\Models\UserTeams;
 use App\Models\VehicleType;
 use App\Models\YearOfManufacture;
 use Illuminate\Http\Request;
@@ -19,7 +21,7 @@ class CarQuoteService extends BaseService
 {
     protected $query;
     protected $httpService;
-
+    protected $childUserIds = [];
     public function __construct(HttpRequestService $httpService)
     {
         $this->httpService = $httpService;
@@ -139,7 +141,7 @@ class CarQuoteService extends BaseService
             "source" => $sourceName,
             "referenceUrl" => $appUrl,
         );
-        if (Auth::user()->hasRole("CAR_ADVISOR")) $dataArr['advisorId'] = Auth::user()->id;
+        if (!Auth::user()->hasRole("ADMIN")) $dataArr['advisorId'] = Auth::user()->id;
         return CapiRequestService::sendCAPIRequest('/api/v1-save-car-quote', $dataArr);
     }
 
@@ -148,8 +150,6 @@ class CarQuoteService extends BaseService
         $carQuote = CarQuote::where('uuid', $id)->first();
         $carQuote->first_name = $request->first_name;
         $carQuote->last_name = $request->last_name;
-        $carQuote->email = $request->email;
-        $carQuote->mobile_no = $request->mobile_no;
         $carQuote->dob = $request->dob;
         $carQuote->nationality_id = $request->nationality_id;
         $carQuote->uae_license_held_for_id = $request->uae_license_held_for_id;
@@ -436,11 +436,22 @@ class CarQuoteService extends BaseService
             }
         }
     }
+    
+    public function walkTree ($userId) {
+        $childs = User::where('manager_id', $userId)->pluck('id');
+        foreach ($childs as $child) {
+            $nextChilds = User::where('manager_id', $child)->pluck('id');
+            if(count($nextChilds) > 0) {
+                $this->walkTree($child);
+            }
+            array_push($this->childUserIds, $child);
+        }
+    }
 
     public function getGridData($model, $request)
     {
         $searchProperties = [];
-        $isRenewalUser = Auth::user()->isRenewalUser();;
+        $isRenewalUser = Auth::user()->isRenewalUser();
         if ($isRenewalUser) {
             $searchProperties = $model->renewalSearchProperties;
         } else {
@@ -448,8 +459,13 @@ class CarQuoteService extends BaseService
         }
 
         if ($request->ajax()) {
+            if(Auth::user()->isManagerOrDeputy()){
+                $this->walkTree(Auth::user()->id); // get all childs of the user
+                array_push($this->childUserIds, Auth::user()->id); // add the user id to the array to fetch directly assigned leads as well 
+                $this->query->whereIn('cqr.advisor_id', $this->childUserIds);	// fetch leads assigned to the user or his childs
+            }
             if (!isset($request->email) && $request->email == '') {
-                $this->query->where('qs.text', '!=', 'Fake');
+                //$this->query->where('qs.text', '!=', 'Fake');
             }
             if (isset($request->assigned_to_date_start) && $request->assigned_to_date_start != '') {
                 $dateFrom = $this->parseDate($request['assigned_to_date_start'], true);
@@ -616,9 +632,9 @@ class CarQuoteService extends BaseService
     public function fillModelSkipProperties()
     {
         return [
-            "create" => "id,advisor_id,paid_at,lost_reason,payment_status_id,plan_id,premium,car_plan_provider_id,code,is_ecommerce,payment_gateway,created_at,next_followup_date,updated_at,promo_code,quote_status_id,device,policy_number,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by,renewal_expiry_date,renewal_batch",
+            "create" => "id,advisor_id,paid_at,lost_reason,payment_status_id,plan_id,premium,car_plan_provider_id,code,is_ecommerce,payment_gateway,created_at,next_followup_date,updated_at,promo_code,quote_status_id,device,policy_number,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by,renewal_expiry_date,renewal_batch,premium,source",
             "list" => "additional_notes,email,mobile_no,paid_at,renewal_batch,renewal_expiry_date,plan_id,car_plan_provider_id,payment_gateway,currently_insured_with,promo_code,car_make_id,car_model_id,device,policy_number,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by,nationality_id,dob,year_of_manufacture,uae_license_held_for_id,car_value,emirate_of_registration_id,claim_history_id,car_type_insurance_id",
-            "update" => "id,advisor_id,paid_at,renewal_expiry_date,payment_status_id,lost_reason,plan_id,premium,car_plan_provider_id,code,is_ecommerce,payment_gateway,created_at,next_followup_date,updated_at,promo_code,device,policy_number,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by,renewal_batch",
+            "update" => "id,advisor_id,paid_at,renewal_expiry_date,payment_status_id,lost_reason,plan_id,premium,car_plan_provider_id,code,is_ecommerce,payment_gateway,created_at,next_followup_date,updated_at,promo_code,device,policy_number,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by,renewal_batch,source",
             "show" => "",
         ];
     }
@@ -632,9 +648,9 @@ class CarQuoteService extends BaseService
     {
         $model->renewalSearchProperties = ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'advisor_id', 'created_at', 'vehicle_type_id', 'renewal_expiry_date', 'is_ecommerce', 'payment_status_id', 'policy_number', 'renewal_batch', 'car_type_insurance_id', 'currently_insured_with'];
         $model->renewalSkipProperties = [
-            "create" => "id,advisor_id,paid_at,renewal_expiry_date,renewal_batch,lost_reason,payment_status_id,plan_id,premium,car_plan_provider_id,code,is_ecommerce,payment_gateway,created_at,next_followup_date,updated_at,promo_code,quote_status_id,device,policy_number,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by",
+            "create" => "id,advisor_id,paid_at,renewal_expiry_date,renewal_batch,lost_reason,payment_status_id,plan_id,premium,car_plan_provider_id,code,is_ecommerce,payment_gateway,created_at,next_followup_date,updated_at,promo_code,quote_status_id,device,policy_number,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by,premium,source",
             "list" => "additional_notes,email,mobile_no,paid_at,plan_id,car_plan_provider_id,payment_gateway,promo_code,source,seat_capacity,cylinder,device,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by,nationality_id,dob,year_of_manufacture,uae_license_held_for_id,car_value,emirate_of_registration_id,claim_history_id",
-            "update" => "id,advisor_id,paid_at,payment_status_id,lost_reason,plan_id,car_plan_provider_id,code,is_ecommerce,payment_gateway,created_at,next_followup_date,updated_at,promo_code,device,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by,renewal_expiry_date",
+            "update" => "id,advisor_id,paid_at,payment_status_id,lost_reason,plan_id,car_plan_provider_id,code,is_ecommerce,payment_gateway,created_at,next_followup_date,updated_at,promo_code,device,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by,renewal_expiry_date,source",
             "show" => "",
         ];
     }
@@ -718,7 +734,7 @@ class CarQuoteService extends BaseService
         return $vehicleTypeText;
     }
 
-    public function carPlanCreateUpdate($request)
+    public function carPlanModify($request)
     {
         $apiEndPoint = Config::get('constants.KEN_API_ENDPOINT') . '/save-manual-car-quote-plan';
         $apiToken = Config::get('constants.KEN_API_TOKEN');
@@ -726,13 +742,34 @@ class CarQuoteService extends BaseService
         $apiUserName = Config::get('constants.KEN_API_USER');
         $apiPassword = Config::get('constants.KEN_API_PWD');
 
+        if(isset($request->is_disabled)) {
+            $isDisabled = $request->is_disabled;
+        } else {
+            $isDisabled = 0;
+        }
+
+        if(isset($request->is_create)) {
+            if($request->is_create == 1) {
+                $discountedPremium = $request->actual_premium;
+            } else {
+                $discountedPremium = $request->discounted_premium;
+            }
+        } else {
+            $discountedPremium = $request->actual_premium;
+        }
+
         $carPlanData = array(
             "quoteUID" => $request->car_quote_uuid,
-            "planId" => (int)$request->car_plan_id,
-            "premium" => (float)$request->premium,
-            "carValue" => (float)$request->value,
-            "excess" => (float)$request->excess,
+            "plans" => array(
+                ["planId" => (int)$request->car_plan_id,
+                "actualPremium" => (float)$request->actual_premium,
+                "carValue" => (float)$request->car_value,
+                "excess" => (float)$request->excess,
+                "discountPremium" => (float)$discountedPremium,
+                "isDisabled" => $isDisabled]
+            )
         );
+
         $apiCreds = array(
             "apiEndPoint" => $apiEndPoint,
             "apiToken" => $apiToken,

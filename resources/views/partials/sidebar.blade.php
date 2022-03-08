@@ -270,12 +270,22 @@
                                     <li><a href="{{ url('admin/roles') }}">Roles</a></li>
                                 @endcan
                                 @can('teams-list')
-                                    <li><a href="{{ url('quotes/teams') }}">Teams</a></li>
+                                    <li><a href="{{ url('generic/teams') }}">Teams</a></li>
                                 @endcan
                                 @can('teams-list')
                                     <li><a href="{{ url('quotes/leadstatus') }}">Lead Status</a></li>
                                 @endcan
                                 <li><a href="{{ url('generic/insuranceprovider') }}">Insurance Providers</a></li>
+                            </ul>
+                        </li>
+                    </ul>
+                @endcan
+
+                @can('application-storage-list')
+                    <ul class="nav side-menu">
+                        <li><a><i class="fa fa-user"></i> Admin <span class="fa fa-chevron-down"></span></a>
+                            <ul class="nav child_menu">
+                                <li><a href="{{ url('generic/applicationstorage') }}">Application Storage</a></li>
                             </ul>
                         </li>
                     </ul>

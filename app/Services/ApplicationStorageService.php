@@ -2,35 +2,33 @@
 
 namespace App\Services;
 
-use App\Models\InsuranceProvider;
+use App\Models\ApplicationStorage;
 use Illuminate\Http\Request;
 use DB;
 use Auth;
 use \Carbon\Carbon;
 use Config;
 
-class InsuranceProviderService extends BaseService
+class ApplicationStorageService extends BaseService
 {
     protected $query;
 
     public function __construct()
     {
-        $this->query = DB::table('insurance_provider as ip')
+        $this->query = DB::table('application_storage as as')
             ->select(
-                'ip.id',
-                'ip.code',
-                'ip.text',
-                'ip.updated_at',
-                'ip.created_at',
-                'ip.text_ar',
-                'ip.is_active',
-                'ip.sort_order'
-            )->where('ip.is_active', 1);
+                'as.id',
+                'as.key_name',
+                'as.value',
+                'as.updated_at',
+                'as.created_at',
+                'as.is_active'
+            );
     }
 
     public function getEntity($id)
     {
-        return $this->query->where('ip.id', $id)->first();
+        return $this->query->where('as.id', $id)->first();
     }
 
     public function getGridData($model, $request)
@@ -41,16 +39,13 @@ class InsuranceProviderService extends BaseService
             if (in_array('created_at', $searchProperties) && isset($request->created_at) && $request->created_at != "") {
                 $dateFrom = Carbon::createFromFormat('Y-m-d', $request['created_at'])->startOfDay()->toDateTimeString();
                 $dateTo = Carbon::createFromFormat('Y-m-d', $request['created_at_end'])->endOfDay()->toDateTimeString();
-                $this->query->whereBetween('ip.created_at', [$dateFrom, $dateTo]);
+                $this->query->whereBetween('as.created_at', [$dateFrom, $dateTo]);
             }
-            if (in_array('text_ar', $searchProperties) && isset($request->text_ar) && $request->text_ar != "") {
-                $this->query->Where('text_ar', 'like', '%' . $request->text_ar . '%');
+            if (in_array('key_name', $searchProperties) && isset($request->key_name) && $request->key_name != "") {
+                $this->query->Where('key_name', 'like', '%' . $request->key_name . '%');
             }
-            if (in_array('text', $searchProperties) && isset($request->text) && $request->text != "") {
-                $this->query->Where('text', 'like', '%' . $request->text . '%');
-            }
-            if (in_array('code', $searchProperties) && isset($request->code) && $request->code != "") {
-                $this->query->Where('code', 'like', '%' . $request->code . '%');
+            if (in_array('value', $searchProperties) && isset($request->value) && $request->value != "") {
+                $this->query->Where('value', 'like', '%' . $request->value . '%');
             }
             foreach ($searchProperties as $item) {
                 if (!empty($request[$item]) && $item != "created_at") {
@@ -64,49 +59,48 @@ class InsuranceProviderService extends BaseService
         $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';
         if ($column != '' && $column != 0 && $direction != '') {
             if ($column == 0) {
-                $column = "ip.id";
+                $column = "as.id";
             }
             if ($column == 1) {
-                $column = "ip.code";
+                $column = "as.key_name";
             }
             if ($column == 2) {
-                $column = "ip.text";
+                $column = "as.value";
             }
             if ($column == 3) {
-                $column = "ip.text_ar";
+                $column = "as.created_at";
             }
             if ($column == 4) {
-                $column = "ip.created_at";
+                $column = "as.updated_at";
             }
             if ($column == 5) {
-                $column = "ip.updated_at";
+                $column = "as.is_active";
             }
             return $this->query->orderBy($column, $direction);
         } else {
-            return $this->query->orderBy('ip.created_at', 'DESC');
+            return $this->query->orderBy('as.created_at', 'DESC');
         }
     }
 
-    public function saveInsuranceProvider(Request $request)
+    public function saveApplicationStorage(Request $request)
     {
-        $data = [
-            'text' => $request->text,
-            'text_ar' => $request->text_ar,
-            'code' => $request->code,
-            'is_active' => $request->has("is_active") ? 1 : 0
-        ];
-        return InsuranceProvider::create($data);
+        $applicationStorage = new ApplicationStorage();
+        $applicationStorage->key_name = $request->key_name;
+        $applicationStorage->value = $request->value;
+        $applicationStorage->is_active = 1;
+        $applicationStorage->save();
+
+        return $applicationStorage;
     }
 
-    public function updateInsuranceProvider(Request $request, $id)
+    public function updateApplicationStorage(Request $request, $id)
     {
-        $updateArray = [
-            'text' => $request->text,
-            'text_ar' => $request->text_ar,
-            'code' => $request->code,
-            'is_active' => $request->has("is_active") ? $request->is_active : 0
-        ];
-        InsuranceProvider::where('id', $id)->update($updateArray);
+        $applicationStorage = ApplicationStorage::where('id', $id)->first();
+        $applicationStorage->key_name = $request->key_name;
+        $applicationStorage->value = $request->value;
+        $applicationStorage->is_active = $request->has("is_active") ? 1 : 0;
+        $applicationStorage->save();
+
         return true;
     }
 
@@ -114,9 +108,8 @@ class InsuranceProviderService extends BaseService
     {
         return array(
             "id" => "readonly|none",
-            "code" => "input|title|required",
-            "text" => "input|text|title|required",
-            "text_ar" => "input|text|title|required",
+            "key_name" => "input|title|required",
+            "value" => "input|text|title|required",
             "created_at" => "input|title|date|range",
             "updated_at" => "input|title|date",
             "is_active" => "input|checkbox"
@@ -127,8 +120,8 @@ class InsuranceProviderService extends BaseService
     {
         $title = "";
         switch ($propertyName) {
-            case 'code':
-                $title = "Code";
+            case 'key_name':
+                $title = "Key Name";
                 break;
             case 'created_at':
                 $title = "Created Date";
@@ -136,11 +129,8 @@ class InsuranceProviderService extends BaseService
             case 'updated_at':
                 $title = "Last Modified Date";
                 break;
-            case 'text':
-                $title = "Insurance Provider Name";
-                break;
-            case 'text_ar':
-                $title = "Insurance Provider Name (Arabic)";
+            case 'value':
+                $title = "Value";
                 break;
             case 'is_active':
                 $title = "Is Active";
@@ -163,6 +153,6 @@ class InsuranceProviderService extends BaseService
 
     public function fillModelSearchProperties()
     {
-        return ['code', 'text', 'text_ar', 'created_at'];
+        return ['key_name', 'value', 'created_at'];
     }
 }

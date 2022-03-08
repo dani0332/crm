@@ -124,7 +124,7 @@ class HealthQuoteService extends BaseService
             "hasHome" => $request->has_home == 'on' ? true : false,
             "emirateOfYourVisaId" => $request->emirate_of_your_visa_id,
         );
-        if (Auth::user()->hasAnyRole(["HEALTH_ADVISOR", "RM_ADVISOR", "EBP_ADVISOR"])) $dataArr['advisorId'] = Auth::user()->id;
+        if (!Auth::user()->hasRole("ADMIN")) $dataArr['advisorId'] = Auth::user()->id;
         return CapiRequestService::sendCAPIRequest('/api/v1-save-health-quote', $dataArr);
     }
 
@@ -436,9 +436,9 @@ class HealthQuoteService extends BaseService
     public function fillModelSkipProperties()
     {
         return [
-            "create" => "created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason",
+            "create" => "created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,premium,source",
             "list" => "email,cover_for_id,has_worldwide_cover,has_home,details,preference,mobile_no,dob,marital_status_id,nationality_id,has_dental,emirate_of_your_visa_id",
-            "update" => "created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason",
+            "update" => "created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,source",
             "show" => "id,health_team_type,next_followup_date",
         ];
     }

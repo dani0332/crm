@@ -11,7 +11,9 @@ use App\Services\CRUDService;
 use App\Services\CarPlanCoverageService;
 use App\Services\CarPlanAddOnService;
 use App\Services\CarPlanAddOnOptionService;
+use App\Services\ApplicationStorageService;
 use App\Enums\InsuranceProvderConstants;
+use App\Services\TeamService;
 use Illuminate\Http\Request;
 use DataTables;
 use Illuminate\Support\Facades\Auth;
@@ -28,6 +30,8 @@ class GenericCrudController extends Controller
     protected $carPlanAddOnService;
     protected $carPlanCoverageService;
     protected $carPlanAddOnOptionService;
+    protected $applicationStorageService;
+    protected $teamsService;
     public function __construct(
         InsuranceProviderService $insuranceProviderService,
         CRUDService $crudService,
@@ -36,7 +40,9 @@ class GenericCrudController extends Controller
         Request $request,
         CarPlanAddOnService $carPlanAddOnService,
         CarPlanCoverageService $carPlanCoverageService,
-        CarPlanAddOnOptionService $carPlanAddOnOptionService
+        CarPlanAddOnOptionService $carPlanAddOnOptionService,
+        ApplicationStorageService $applicationStorageService,
+        TeamService $teamsService
     ) {
         $this->genericModel = new GenericModel();
         $this->crudService = $crudService;
@@ -46,6 +52,8 @@ class GenericCrudController extends Controller
         $this->carPlanAddOnService = $carPlanAddOnService;
         $this->carPlanCoverageService = $carPlanCoverageService;
         $this->carPlanAddOnOptionService = $carPlanAddOnOptionService;
+        $this->applicationStorageService = $applicationStorageService;
+        $this->teamsService = $teamsService;
         $this->setModelType($request);
         $this->fillModelByModelType(ucwords($this->genericModel->modelType), $request);
     }
@@ -225,7 +233,10 @@ class GenericCrudController extends Controller
         }
         $this->validate($request, $validateArray);
         $this->crudService->updateModelByType(json_decode($request->modelType, true), $request, $id);
-        return redirect('/generic/' . strtolower(str_replace('"', '', $request->modelType)) . '/' . $id)->with('success', json_decode($request->modelType, true) . ' has been updated');
+        if($request->has("is_active"))
+            return redirect('/generic/' . strtolower(str_replace('"', '', $request->modelType)) . '/' . $id)->with('success', json_decode($request->modelType, true) . ' has been updated');
+        else
+            return redirect('/generic/' . strtolower(str_replace('"', '', $request->modelType)))->with('success', json_decode($request->modelType, true) . ' has been updated');
     }
 
 
@@ -238,6 +249,8 @@ class GenericCrudController extends Controller
         if (strpos($url, 'carplancoverage')) $this->genericModel->modelType = 'CarPlanCoverage';
         if (strpos($url, 'carplanaddon')) $this->genericModel->modelType = 'CarPlanAddOn';
         if (strpos($url, 'carplanaddonoption')) $this->genericModel->modelType = 'CarPlanAddOnOption';
+        if (strpos($url, 'applicationstorage')) $this->genericModel->modelType = 'ApplicationStorage';
+        if (strpos($url, 'teams')) $this->genericModel->modelType = 'Teams';
     }
 
     private function fillModelByModelType($type, Request $request)
