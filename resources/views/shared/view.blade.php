@@ -43,19 +43,6 @@
                 model.searchProperties.push('is_ecommerce');
                 model.searchProperties.push('payment_status_id');
             }
-
-            $('.additional-filters').hide();
-            $('#showlink').on('click',function() {
-                $('.showAllDiv').hide();
-                $('.additional-filters').show();
-                $('.showLessDiv').show();
-            });
-            $('#hidelink').on('click',function() {
-                $('.showAllDiv').show();
-                $('.additional-filters').hide();
-                $('.showLessDiv').hide();
-            });
-
             // validation before form submit usually for date fields
             $('#searchGenericSubmit').on('click', function(e){
                 e.preventDefault();
@@ -138,7 +125,7 @@
                         // adding properties for all types except leadstatus and teams
                         if (modelPropertiesArray[i].name == 'id' ) {
                             // Handling id field
-                            if (isManagerOrDeputy === "1" && allowedModelTypes.includes(model.modelType.toLocaleLowerCase()) && model.modelType.toLocaleLowerCase() != 'car') {
+                            if (isManagerOrDeputy === "1" && allowedModelTypes.includes(model.modelType.toLocaleLowerCase())) {
                                 // Checkboxes should be available if the user is Manager Or deputy also the model type is allowed
                                 dataTableColumns.push({
                                     data: "id",
@@ -490,11 +477,6 @@
                                     @endif
                                 @endforeach
                             @endforeach
-                            @if(strtolower($model->modelType) != 'teams' && strtolower($model->modelType) != 'leadstatus')
-                            <div class="showAllDiv" style="float: right;margin-top:20px;">
-                                <a id="showlink" style="cursor: pointer;"> Show All Filters</a>
-                            </div>
-                            @endif
                             @foreach ($model->properties as $property => $value)
                                 @foreach ($searchProperties as $searchProperty)
                                     @if ($searchProperty == $property && !str_contains($value, 'range'))
@@ -596,11 +578,6 @@
                                     @endif
                                 @endforeach
                             @endforeach
-                            @if(strtolower($model->modelType) != 'teams' && strtolower($model->modelType) != 'leadstatus')
-                            <div class="showLessDiv" style="display: none;float: right;margin-top:20px;">
-                                <a id="hidelink" style="cursor: pointer;">Hide Additional Filter</a>
-                            </div>
-                            @endif
                             <div class="col-md-12" style="margin-top: 25px;">
                                 <div class="col">
                                     <ul class="nav navbar-right panel_toolbox">

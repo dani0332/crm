@@ -175,12 +175,11 @@ class UserController extends Controller
             'roles' => 'required',
             'team' => 'required'
         ]);
-        
         // Updating user
         $user->name = $request->name;
         $user->email = $request->email;
         $user->password = bcrypt($request->password);
-        if ($request->manager != "0") $user->manager_id = $request->manager_id;
+        if ($request->manager_id != "0") $user->manager_id = $request->manager_id;
         if(isset($request->additionalTeams)) {
             if(count((array)$request->additionalTeams) > 1) {
                 $user->additional_team_ids = implode(',', $request->additionalTeams);
@@ -190,7 +189,7 @@ class UserController extends Controller
             }
         }
         $user->sub_team_id = $request->sub_team_id;
-        $user->team_id = $request->team;
+        $user->team_id = $request->team;       
         $user->save();
 
         // Updating user roles
