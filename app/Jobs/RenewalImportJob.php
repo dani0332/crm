@@ -51,7 +51,7 @@ class RenewalImportJob implements ShouldQueue
             $this->renewalsUploadService->createNewQuote($quoteData, $quoteType, $this->fileName);
         }
         catch(\Exception $e){
-            Log::info("message: ".$e->getMessage());
+            Log::channel('daily')->info("message: ".$e->getMessage());
             if ($this->attempts() < 4) {
                 $delayInSeconds = 5 * 60;
                 $this->release($delayInSeconds);

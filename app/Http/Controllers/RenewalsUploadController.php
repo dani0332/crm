@@ -71,6 +71,7 @@ class RenewalsUploadController extends Controller
         $renewalsUploadLead->file_path = $fileNameAzure;
         $renewalsUploadLead->file_name = $fileName;
         $renewalsUploadLead->status = 'Pending';
+        $renewalsUploadLead->good = 0;
         $renewalsUploadLead->created_by_id = Auth::user()->id;
         $renewalsUploadLead->save();
 
