@@ -134,12 +134,24 @@ class UserController extends Controller
     public function show(User $user)
     {
         // getting current user's team names
-        $teamQuery = DB::select("SELECT group_concat(name) as name
-                                FROM teams t
-                                INNER JOIN user_team ut ON ut.team_id = t.id
-                                WHERE ut.user_id = " . $user->id);
-        $teamName = $teamQuery[0]->name;
-        return view('user.show', compact('user', 'teamName'));
+        $teamName = "";
+        $subTeamName = "";
+        $additionalTeamNames = "";
+        $managerName = "";
+        if($user->manager_id) {
+            $managerName = User::find($user->manager_id)->name;
+        }
+        if($user->additional_team_ids != "") {
+            $additionalTeamNamesArray = Team::whereIn('id', explode(',', $user->additional_team_ids))->pluck('name')->toArray();
+            $additionalTeamNames = implode(', ', $additionalTeamNamesArray);
+        }
+        if($user->sub_team_id){
+            $subTeamName = Team::find($user->sub_team_id)->name;
+        }
+        if($user->team_id){ 
+            $teamName = Team::find($user->team_id)->name;
+        }
+        return view('user.show', compact('user', 'teamName', 'subTeamName', 'additionalTeamNames', 'managerName'));
     }
     /**
      * Show the form for editing the specified resource.
@@ -188,8 +200,8 @@ class UserController extends Controller
                 $user->additional_team_ids = $request->additionalTeams[0];
             }
         }
-        $user->sub_team_id = $request->sub_team_id;
-        $user->team_id = $request->team;       
+        if ($request->sub_team_id != "0") $user->sub_team_id = $request->sub_team_id;
+        if ($request->team != "0" || $request->team != null) $user->team_id = $request->team;       
         $user->save();
 
         // Updating user roles

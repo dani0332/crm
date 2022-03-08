@@ -8,6 +8,26 @@
     }
 </style>
 <script>
+    function loadManagers(teamId, manager_id){
+        $.ajax({
+                url: '/getTeamManagers?teamId=' + teamId,
+                type: "get",
+                success: function(response) {
+                    $('#user-manager-select').find('option').remove().end().append('<option value="0" selected="selected">None</option>');
+                    for (let index = 0; index < response.length; index++) {
+                        const element = response[index];
+                        if(manager_id == element.id){
+                            $('#user-manager-select').append('<option value="'+element.id+'" selected="selected">'+element.name+'</option>');
+                        }
+                        else{
+                        $('#user-manager-select').append($("<option></option>").attr("value", element.id).text(element.name));
+                        }
+                    }
+                    $('.select-manager').removeAttr('disabled');
+                    $(".loader").hide();
+                },
+            });
+    }
     function loadAdditionalTeams(additionalTeams){
         $("#additionalTeams-select").empty();
         additionalTeams.forEach(element => {
@@ -38,38 +58,25 @@
     }
     $(document).ready(function(){
         var additionalTeams = JSON.parse('<?php echo json_encode($teams); ?>');
-
         var previous_sub_team_id = JSON.parse('<?php echo json_encode("$user->sub_team_id"); ?>');
         var previous_selected_additional_teams = JSON.parse('<?php echo json_encode("$user->additional_team_ids"); ?>');
-        var previous_selected_manager = JSON.parse('<?php echo json_encode(old("$user->manager")); ?>');
-
-        console.log(previous_selected_additional_teams, previous_selected_manager, previous_sub_team_id , previous_selected_additional_teams);
-
+        var previous_selected_manager = JSON.parse('<?php echo json_encode("$user->manager_id"); ?>');
+        var previous_selected_teamId = JSON.parse('<?php echo json_encode("$user->team_id"); ?>');
         loadAdditionalTeams(additionalTeams);
         $('#additionalTeams-select').select2({
             placeholder: 'Select teams for MyLeads Tab visiblity',
             width: '100%',
             allowClear: true
         });
+        loadManagers(previous_selected_teamId, previous_selected_manager);
         $('#additionalTeams-select').val(previous_selected_additional_teams.split(',')).trigger('change');
         $("#user-team-select").on('change', function(){
+            $(".loader").show();
             loadAdditionalTeams(additionalTeams);
             loadSubTeams($(this).val(), previous_sub_team_id);
-            $(".loader").show();
-            $.ajax({
-                    url: '/getTeamManagers?teamId=' + this.value,
-                    type: "get",
-                    success: function(response) {
-                        $('#user-manager-select').find('option').remove().end().append('<option value="0" selected="selected">None</option>');
-                        for (let index = 0; index < response.length; index++) {
-                            const element = response[index];
-                            $('#user-manager-select').append($("<option></option>").attr("value", element.id).text(element.name));
-                        }
-                        $('.select-manager').removeAttr('disabled');
-                        $(".loader").hide();
-                    },
-                });
-
+            
+            loadManagers($(this).val(), previous_selected_manager);
+            $(".loader").hide();
         });
     });
 
@@ -155,6 +162,7 @@
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="roles">Sub-teams</label>
                         <div class="col-md-6 col-sm-6 ">
                             <select name="sub_team_id" id="sub-team" class="form-control">
+                                <option @if($user->sub_team_id == null) selected="selected" @endif value="0">None</option>
                                 @foreach ($subTeams as $team)
 
                                 @if ($user->sub_team_id == $team->id)
