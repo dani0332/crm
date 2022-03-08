@@ -52,13 +52,13 @@
                 <table class="table table-striped jambo_table user-data-table" style="width:100%">
                     <thead>
                     <tr>
-                        <th>id</th>
-                        <th>Name</th>
-                        <th>Email</th>
-                        <th>Roles</th>
-                        <th>Team Name</th>
-                        <th>Created At</th>
-                        <th>Updated At</th>
+                        <th style="width: 100px !important">id</th>
+                        <th style="width: 100px !important">Name</th>
+                        <th style="width: 100px !important">Email</th>
+                        <th style="width: 100px !important">Roles</th>
+                        <th style="width: 100px !important">Primary Team Name</th>
+                        <th style="width: 100px !important">Created At</th>
+                        <th style="width: 100px !important">Updated At</th>
                     </tr>
                     </thead>
                     <tbody>

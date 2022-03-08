@@ -13,6 +13,7 @@ use App\Services\CarPlanAddOnService;
 use App\Services\CarPlanAddOnOptionService;
 use App\Services\ApplicationStorageService;
 use App\Enums\InsuranceProvderConstants;
+use App\Services\TeamService;
 use Illuminate\Http\Request;
 use DataTables;
 use Illuminate\Support\Facades\Auth;
@@ -30,6 +31,7 @@ class GenericCrudController extends Controller
     protected $carPlanCoverageService;
     protected $carPlanAddOnOptionService;
     protected $applicationStorageService;
+    protected $teamsService;
     public function __construct(
         InsuranceProviderService $insuranceProviderService,
         CRUDService $crudService,
@@ -39,7 +41,8 @@ class GenericCrudController extends Controller
         CarPlanAddOnService $carPlanAddOnService,
         CarPlanCoverageService $carPlanCoverageService,
         CarPlanAddOnOptionService $carPlanAddOnOptionService,
-        ApplicationStorageService $applicationStorageService
+        ApplicationStorageService $applicationStorageService,
+        TeamService $teamsService
     ) {
         $this->genericModel = new GenericModel();
         $this->crudService = $crudService;
@@ -50,6 +53,7 @@ class GenericCrudController extends Controller
         $this->carPlanCoverageService = $carPlanCoverageService;
         $this->carPlanAddOnOptionService = $carPlanAddOnOptionService;
         $this->applicationStorageService = $applicationStorageService;
+        $this->teamsService = $teamsService;
         $this->setModelType($request);
         $this->fillModelByModelType(ucwords($this->genericModel->modelType), $request);
     }
@@ -246,6 +250,7 @@ class GenericCrudController extends Controller
         if (strpos($url, 'carplanaddon')) $this->genericModel->modelType = 'CarPlanAddOn';
         if (strpos($url, 'carplanaddonoption')) $this->genericModel->modelType = 'CarPlanAddOnOption';
         if (strpos($url, 'applicationstorage')) $this->genericModel->modelType = 'ApplicationStorage';
+        if (strpos($url, 'teams')) $this->genericModel->modelType = 'Teams';
     }
 
     private function fillModelByModelType($type, Request $request)

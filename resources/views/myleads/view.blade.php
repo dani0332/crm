@@ -56,6 +56,7 @@
                         d.nfdSart = $('#nfdSart').val();
                         d.nfdEnd = $('#nfdEnd').val();
                         d.email = $('#email').val();
+                        d.teamType = $('#teamType').val();
                     },
                 },
                 columnDefs: [
@@ -238,6 +239,22 @@
                                         <input type="text" name="email" id="email" class="form-control">
                                     </div>
                                 </div>
+                            </div>
+                            <div class="col">
+                                <label class="col-form-label col-md-4 col-sm-4" for="Start Date">Lead Type</label>
+                                <div class="col-md-6 col-sm-6">
+                                    <div class="input-group">
+                                        <select class="form-control" id="teamType" name="teamType">
+                                            @foreach ($allowedTeamTypes as $item)
+                                                <option @if($item['id'] == $parentTeamId) selected @endif value="{{$item['name']}}">{{$item['name']}}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="item form-group">
+                            <div  class="col">
                             </div>
                             <div class="col">
                                 <ul class="nav navbar-right panel_toolbox">

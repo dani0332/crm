@@ -105,6 +105,7 @@ Route::group(['middleware' =>  ['auth']], function () {
     ]);
     Route::get('getAdvisors', [LeadAssignmentController::class, 'getAdvisors'])->name('getAdvisors');
     Route::get('getTeamManagers', [UserController::class, 'getTeamManagers'])->name('getTeamManagers');
+    Route::get('getSubTeams', [UserController::class, 'getSubTeams'])->name('getSubTeams');
     Route::resource('customer', CustomerController::class);
     Route::get('/customer-upload', [CustomerController::class, 'uploadCustomers']);
     Route::post('/customer-process', [CustomerController::class, 'processCustomerCSV']);
@@ -165,6 +166,7 @@ Route::group(['middleware' =>  ['auth']], function () {
         Route::resource('carplanaddon', GenericCrudController::class);
         Route::resource('carplanaddonoption', GenericCrudController::class);
         Route::resource('applicationstorage', GenericCrudController::class);
+        Route::resource('teams', GenericCrudController::class);
         Route::post('save', [GenericCrudController::class, 'store'])->name('save');
         Route::post('update', [GenericCrudController::class, 'update'])->name('update');
     });

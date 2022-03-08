@@ -7,6 +7,8 @@ use App\Models\CarModel;
 use App\Models\CarQuote;
 use App\Models\CarQuoteRequestDetail;
 use App\Models\InsuranceProvider;
+use App\Models\User;
+use App\Models\UserTeams;
 use App\Models\VehicleType;
 use App\Models\YearOfManufacture;
 use Illuminate\Http\Request;
@@ -19,7 +21,7 @@ class CarQuoteService extends BaseService
 {
     protected $query;
     protected $httpService;
-
+    protected $childUserIds = [];
     public function __construct(HttpRequestService $httpService)
     {
         $this->httpService = $httpService;
@@ -139,7 +141,7 @@ class CarQuoteService extends BaseService
             "source" => $sourceName,
             "referenceUrl" => $appUrl,
         );
-        if (Auth::user()->hasRole("CAR_ADVISOR")) $dataArr['advisorId'] = Auth::user()->id;
+        if (!Auth::user()->hasRole("ADMIN")) $dataArr['advisorId'] = Auth::user()->id;
         return CapiRequestService::sendCAPIRequest('/api/v1-save-car-quote', $dataArr);
     }
 
@@ -436,11 +438,22 @@ class CarQuoteService extends BaseService
             }
         }
     }
+    
+    public function walkTree ($userId) {
+        $childs = User::where('manager_id', $userId)->pluck('id');
+        foreach ($childs as $child) {
+            $nextChilds = User::where('manager_id', $child)->pluck('id');
+            if(count($nextChilds) > 0) {
+                $this->walkTree($child);
+            }
+            array_push($this->childUserIds, $child);
+        }
+    }
 
     public function getGridData($model, $request)
     {
         $searchProperties = [];
-        $isRenewalUser = Auth::user()->isRenewalUser();;
+        $isRenewalUser = Auth::user()->isRenewalUser();
         if ($isRenewalUser) {
             $searchProperties = $model->renewalSearchProperties;
         } else {
@@ -448,8 +461,13 @@ class CarQuoteService extends BaseService
         }
 
         if ($request->ajax()) {
+            if(Auth::user()->isManagerOrDeputy()){
+                $this->walkTree(Auth::user()->id); // get all childs of the user
+                array_push($this->childUserIds, Auth::user()->id); // add the user id to the array to fetch directly assigned leads as well 
+                $this->query->whereIn('cqr.advisor_id', $this->childUserIds);	// fetch leads assigned to the user or his childs
+            }
             if (!isset($request->email) && $request->email == '') {
-                $this->query->where('qs.text', '!=', 'Fake');
+                //$this->query->where('qs.text', '!=', 'Fake');
             }
             if (isset($request->assigned_to_date_start) && $request->assigned_to_date_start != '') {
                 $dateFrom = $this->parseDate($request['assigned_to_date_start'], true);

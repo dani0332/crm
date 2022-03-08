@@ -270,7 +270,7 @@
                                     <li><a href="{{ url('admin/roles') }}">Roles</a></li>
                                 @endcan
                                 @can('teams-list')
-                                    <li><a href="{{ url('quotes/teams') }}">Teams</a></li>
+                                    <li><a href="{{ url('generic/teams') }}">Teams</a></li>
                                 @endcan
                                 @can('teams-list')
                                     <li><a href="{{ url('quotes/leadstatus') }}">Lead Status</a></li>
