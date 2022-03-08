@@ -173,7 +173,10 @@ class RenewalsUploadService
         }
 
         if ($quoteData->product_type != null) {
-            $carTypeOfInsurance = $this->renewalsAddonService->getCarTypeOfInsurance($quoteData->product_type)->id;
+            $carTypeOfInsuranceInstance = $this->renewalsAddonService->getCarTypeOfInsurance($quoteData->product_type);	
+            if($carTypeOfInsuranceInstance){
+                $carTypeOfInsurance = $carTypeOfInsuranceInstance->id;
+            }
         }
 
         $quoteStatusId = QuoteStatus::where('code', '=', quoteStatusCode::TRANSACTION_APPROVED)->value('id');
