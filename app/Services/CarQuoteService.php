@@ -150,8 +150,6 @@ class CarQuoteService extends BaseService
         $carQuote = CarQuote::where('uuid', $id)->first();
         $carQuote->first_name = $request->first_name;
         $carQuote->last_name = $request->last_name;
-        $carQuote->email = $request->email;
-        $carQuote->mobile_no = $request->mobile_no;
         $carQuote->dob = $request->dob;
         $carQuote->nationality_id = $request->nationality_id;
         $carQuote->uae_license_held_for_id = $request->uae_license_held_for_id;
