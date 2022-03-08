@@ -3,7 +3,7 @@
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use App\Enums\quoteTypeCode;
-
+use App\Models\HealthQuote;
 if (!function_exists('generate_code')) {
 
     /**
@@ -81,3 +81,39 @@ function cleanString($string) {
     $string = str_replace(' ', '', $string); // Replaces all spaces with hyphens.
     return preg_replace('/[^A-Za-z0-9\-]/', '', $string); // Removes special chars.
  }
+
+ function getDataAgainstStatus($modelType, $statusId) {
+    $result = [];
+    if(!$modelType)
+        return $result;
+    $nameSpace = '\\App\\Models\\';
+    $modelType = $nameSpace .$modelType."Quote";
+    $result["total_leads"] = $modelType::where("quote_status_id", $statusId)->count();
+    $result["total_premium"] = $modelType::where("quote_status_id", $statusId)->sum("premium");
+    $result["leads_list"] = $modelType::where("quote_status_id", $statusId)->paginate(2);
+    return $result;
+}
+
+function getDataAgainstEveryStatus($modelType, $request) {
+    $result = [];
+    if(!$modelType)
+        return $result;
+    $nameSpace = '\\App\\Models\\';
+    $modelType = $nameSpace .$modelType."Quote";
+    $result["leads_list"] = $modelType::where("quote_status_id", $request->status)->paginate(2);
+   
+    return $result;
+}
+
+function getDataAgainstSearchTerm($modelType, $term, $status) {
+    $result = [];
+    if(!$term)
+        return $result;
+    $nameSpace = '\\App\\Models\\';
+    $modelType = $nameSpace .$modelType."Quote";
+    $result["leads_list"] = $modelType::where("quote_status_id", $status)
+    ->Where('code', 'like', '%' . $term )->get();
+   
+    return $result;
+}
+

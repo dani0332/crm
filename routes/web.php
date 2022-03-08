@@ -156,6 +156,10 @@ Route::group(['middleware' =>  ['auth']], function () {
         Route::get('car/{quoteUuId}/add_quote', [CRUDController::class, 'add_quote']);
         Route::get('travel/{quoteId}/plan_details/{planId}', [CRUDController::class, 'travel_plan_details'])->name('plan_details');
         Route::post('car/SaveCarPlan', [CRUDController::class, 'SaveCarPlan'])->name('SaveCarPlan');
+        Route::get('{leadId}/lead_details', [CRUDController::class, 'leadDetails'])->name('lead_details');
+        Route::post('UpdateLeadManualProcess', [CRUDController::class, 'UpdateLeadManualProcess'])->name('UpdateLeadManualProcess');
+        Route::post('records', [CRUDController::class, 'loadMoreRecords'])->name('loadMoreRecords');
+        Route::post('records/search', [CRUDController::class, 'searchLead'])->name('searchLead');
     });
 
     Route::group(['prefix' => 'generic'], function () {
