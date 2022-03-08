@@ -153,7 +153,8 @@ class UserController extends Controller
         $userRole = $user->roles->pluck('name', 'name')->all(); // get all roles of current user
         $teams = Team::whereNull('parent_team_id')->orderBy('name', 'asc')->get(); // get all teams
         $subTeams = Team::whereNotNull('parent_team_id')->orderBy('name', 'asc')->get();;
-        $managers = $this->getManagersBasedOnTeamId($user->team_id); // get all managers based on current user's team
+        $managers = [];
+        if($user->teamId)  $managers = $this->getManagersBasedOnTeamId($user->team_id); // get all managers based on current user's team
         $selectedAdditionalTeams = $user->additional_team_ids; // get all additional teams of current user
         $selectedTeam = $user->team_id; // current user team
         $selectedManager = $user->manager_id; // current user manager

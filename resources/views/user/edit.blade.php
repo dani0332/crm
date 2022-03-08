@@ -178,7 +178,7 @@
                             
                         </div>
                         <div class="col-md-3 col-sm-3">
-                            <i class="fa fa-info-circle" id="tooltipGm" style="margin-top: 35px;" title="Additional teams selection helps advisor see leads from selected teams as well" ></i>
+                            <i class="fa fa-info-circle" id="tooltipGm" style="margin-top: 15px;" title="Additional teams selection helps advisor see leads from selected teams as well" ></i>
                         </div>
                     </div>
                     <div class="item form-group">
