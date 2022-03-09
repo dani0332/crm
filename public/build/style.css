@@ -271,3 +271,6 @@ ul.drag-inner-list, ul.drag-list {
     visibility: visible;
     height: auto;
   }
+.change-layout.active {
+    background: #4183bd !important;
+}

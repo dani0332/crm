@@ -387,12 +387,16 @@
             $(".toggle-btn").on("click", function() {
                 $(".show-visual-cards").addClass("showme");
                 $(".show-container").removeClass("showme");
-                $(".show-container").addClass("hideme")
+                $(".show-container").addClass("hideme");
+                $(this).addClass("active");
+                $(".toggle-btn-2").removeClass("active");
             });
             $(".toggle-btn-2").on("click", function() {
                 $(".show-visual-cards").addClass("hideme");
-                $(".show-visual-cards").removeClass("showme")
-                $(".show-container").addClass("showme")
+                $(".show-visual-cards").removeClass("showme");
+                $(".show-container").addClass("showme");
+                $(this).addClass("active");
+                $(".toggle-btn").removeClass("active");
             });
 
         });
@@ -470,6 +474,9 @@
                     console.log('Server error occured');
                 });
         }
+        window.onload = function () {
+            window.localStorage.clear();
+        }
     </script>
     <div class="row">
         <div class="col-md-12 col-sm-12 ">
@@ -500,8 +507,8 @@
                 @php $dynamicClass = "showme"; @endphp
                 @if(strtolower($model->modelType) == 'travel' || strtolower($model->modelType) == 'home' || strtolower($model->modelType) == 'health' || strtolower($model->modelType) == 'business' || strtolower($model->modelType) == 'life')
                 @php $dynamicClass = "hideme"; @endphp
-                <button type="button" class="btn btn-warning btn-sm toggle-btn active">Cards</button>
-                <button type="button" class="btn btn-warning btn-sm toggle-btn-2">List</button>    
+                <button type="button" class="btn btn-warning btn-sm toggle-btn active float-right change-layout">Cards View</button>
+                <button type="button" class="btn btn-warning btn-sm toggle-btn-2 float-right change-layout">List View</button>    
                 <div class="show-visual-cards showme">
                         <x-leads-visual-card
                             :model="$model"
