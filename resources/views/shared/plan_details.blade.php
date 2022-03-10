@@ -1,6 +1,13 @@
 <meta name="csrf-token" content="{{ csrf_token() }}" />
 <?php
     use App\Enums\quoteTypeCode;
+
+if($repairType == 'TPL') {
+    $readonlyFieldCss = "pointer-events: none;background-color: #f6f6f6;";
+}
+else {
+    $readonlyFieldCss = "";
+}
 ?>
 <script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
 <script>
@@ -212,8 +219,8 @@
                                         <td>Discounted Premium:</td> <td><input type="number" id="discounted_premium" name="discounted_premium" value="{{ old('discounted_premium', $discountPremium) }}" class="form-control" onKeyDown="if(this.value.length==8) return false;"></td>
                                     </tr>
                                     <tr>
-                                        <td>Car value:</td> <td><input type="number" id="car_value" name="car_value" value="{{ old('car_value', $carValue) }}" class="form-control" onKeyDown="if(this.value.length==8) return false;" {{ $repairType == 'TPL' ? 'style="sssssssss"' : '' }}></td>
-                                        <td>Excess:</td> <td><input type="number" id="excess" name="excess" value="{{ old('excess', $excess) }}" class="form-control" onKeyDown="if(this.value.length==8) return false;"></td>
+                                        <td>Car value:</td> <td><input type="number" id="car_value" name="car_value" value="{{ old('car_value', $carValue) }}" class="form-control" onKeyDown="if(this.value.length==8) return false;" $readonlyFieldCss></td>
+                                        <td>Excess:</td> <td><input type="number" id="excess" name="excess" value="{{ old('excess', $excess) }}" class="form-control" onKeyDown="if(this.value.length==8) return false;" $readonlyFieldCss></td>
                                     </tr>
                                     <tr><td>Disabled?</td>
                                         <td><select class="form-control" id='is_disabled' name="is_disabled">
