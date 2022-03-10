@@ -117,6 +117,15 @@
 
                         <div class="item form-group">
                             <div class="col">
+                                <span class="col-form-label col-md-6 col-sm-6">Premium<span
+                                    class="required">*</span></span>
+                                <input type="number" id="premium"  name="premium" value="{{ old('premium', $record->premium) }}"
+                                    class="form-control">
+                                @if ($errors->has('premium'))
+                                    <span class="text-danger">{{ $errors->first('premium') }}</span>
+                                @endif
+                            </div>
+                            <div class="col">
                                 <span class="col-form-label col-md-6 col-sm-6">Brief Details<span
                                         class="required">*</span></span>
                                 <textarea type="text" id="brief_details" name="brief_details"
@@ -126,8 +135,7 @@
                                 @endif
                             </div>
 
-                            <div class="col">
-                            </div>
+                           
                         </div>
 
                         <div id='redirect_to_view_div'></div>
