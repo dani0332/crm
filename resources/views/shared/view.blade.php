@@ -1,6 +1,7 @@
 @extends('layouts.app')
 @section('title', 'View ' . $model->modelType)
 @section('content')
+<?php use App\Enums\LeadsQuoteStatus; ?>
 <meta name="csrf-token" content="{{ csrf_token() }}" />
     <script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
