@@ -565,31 +565,6 @@ class CRUDController extends Controller
         }
     }
 
-    public function leadDetails(Request $request) {
-        if($request->has('modelType') && $request->modelType)
-        {
-            $leadId = $request->leadId;
-            $entity = '';
-            $drop_down_list = $this->dropdownSourceService->getDropdownSource('quote_status_id');
-            switch ($request->modelType) {
-                case "Home":
-                    $entity = $this->homeQuoteService->getEntityPlain($request->leadId);
-                  break;
-                case "blue":
-                  echo "Your favorite color is blue!";
-                  break;
-                case "green":
-                  echo "Your favorite color is green!";
-                  break;
-                default:
-                  echo "Your favorite color is neither red, blue, nor green!";
-              }
-              return view('shared.lead_details', compact([
-                  'drop_down_list','entity'
-              ]));
-        }
-    }
-
     public function loadMoreRecords(Request $request) {
 
         if($request->has('modelType') && $request->modelType && $request->status)

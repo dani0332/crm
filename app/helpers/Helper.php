@@ -3,7 +3,6 @@
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use App\Enums\quoteTypeCode;
-use App\Models\HealthQuote;
 if (!function_exists('generate_code')) {
 
     /**
