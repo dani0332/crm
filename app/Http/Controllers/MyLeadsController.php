@@ -8,6 +8,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use DataTables;
 use App\Enums\quoteTypeCode;
+use App\Models\Team;
+use App\Models\User;
 use DB;
 
 class MyLeadsController extends Controller
@@ -24,22 +26,38 @@ class MyLeadsController extends Controller
      */
     public function index(Request $request)
     {
-        $userTeam = DB::table('user_team')->where('user_id', Auth::user()->id)->first();
-        $team = DB::table('teams')->where('id', $userTeam->team_id)->first();
+        $user = User::where('id', Auth::user()->id)->first();
+        $team = DB::table('teams')->where('id', $user->team_id)->first();
         $teamName = $team->name;
         if (strtolower($teamName) == strtolower(quoteTypeCode::RetailMedical) || strtolower($teamName) == strtolower(quoteTypeCode::EBP)) {
             $teamName = 'health';
         } else if (strtolower($teamName) == strtolower(quoteTypeCode::CORPLINE) || strtolower($teamName) == strtolower(quoteTypeCode::GroupMedical) || strtolower($teamName) == strtolower(quoteTypeCode::GM)) {
             $teamName = 'business';
         }
+        $parentTeamId = $team->id;
         $leadStatusList = QuoteStatus::select('id', 'text')->get();
+        $allowedTeamTypes = [];
+        array_push($allowedTeamTypes, ['id' => $team->id, 'name' => $teamName]);
+        $userAdditionalTeams = User::where('id', Auth::user()->id)->first()->additional_team_ids;
+        if (!empty($userAdditionalTeams)) {
+            if(str_contains($userAdditionalTeams, ',')) {
+                $userAdditionalTeamsIds = explode(',', $userAdditionalTeams);
+                $allowedTeamTypes = Team::whereIn('id', $userAdditionalTeamsIds)->pluck('id', 'name')->toArray();
+            }else{
+                $additionalTeam = Team::where('id', $userAdditionalTeams)->first();
+                array_push($allowedTeamTypes, ['id' => $additionalTeam->id, 'name' => $additionalTeam->name]);
+            }
+        }
         if ($request->ajax()) {
+            if(isset($request->teamType)){
+                $teamName = strtolower($request->teamType); 
+            }
             $gridData = $this->crudService->getAdvisorLeads($request, $teamName);
             return DataTables::of($gridData)
                 ->addIndexColumn()
                 ->make(true);
         }
-        return view('myleads.view', compact('teamName', 'leadStatusList'));
+        return view('myleads.view', compact('teamName', 'leadStatusList', 'allowedTeamTypes', 'parentTeamId'));
     }
 
     /**

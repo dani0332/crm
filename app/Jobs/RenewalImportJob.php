@@ -21,7 +21,8 @@ class RenewalImportJob implements ShouldQueue
     protected $fileName;
 
     public $maxTries = 5;
-    public $timeout = 180;
+    public $timeout = 300;
+    public $backoff = 3;
     
     /**
      * Create a new job instance.
@@ -50,7 +51,7 @@ class RenewalImportJob implements ShouldQueue
             $this->renewalsUploadService->createNewQuote($quoteData, $quoteType, $this->fileName);
         }
         catch(\Exception $e){
-            Log::info("message: ".$e->getMessage());
+            Log::channel('daily')->info("message: ".$e->getMessage());
             if ($this->attempts() < 4) {
                 $delayInSeconds = 5 * 60;
                 $this->release($delayInSeconds);

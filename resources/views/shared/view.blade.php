@@ -45,19 +45,6 @@
                 model.searchProperties.push('is_ecommerce');
                 model.searchProperties.push('payment_status_id');
             }
-
-            $('.additional-filters').hide();
-            $('#showlink').on('click',function() {
-                $('.showAllDiv').hide();
-                $('.additional-filters').show();
-                $('.showLessDiv').show();
-            });
-            $('#hidelink').on('click',function() {
-                $('.showAllDiv').show();
-                $('.additional-filters').hide();
-                $('.showLessDiv').hide();
-            });
-
             // validation before form submit usually for date fields
             $('#searchGenericSubmit').on('click', function(e){
                 e.preventDefault();
@@ -486,6 +473,12 @@
                     <h2>{{ str_contains(strtolower($model->modelType), 'teams') ? 'Teams' : (str_contains(strtolower($model->modelType), 'leadstatus') ? 'Lead Status' : $model->modelType) }}
                         List</h2>
                     <ul class="nav navbar-right panel_toolbox">
+                        @if(str_contains(strtolower($model->modelType), 'teams') || str_contains(strtolower($model->modelType), 'leadstatus'))
+                            <li><a href="{{ url('quotes/' . strtolower($model->modelType) . '/create') }}"
+                                class="btn btn-warning btn-sm">Create
+                                    {{ str_contains(strtolower($model->modelType), 'teams') ? 'Team' : (str_contains(strtolower($model->modelType), 'leadstatus') ? 'Lead Status' : 'Lead') }}</a>
+                            </li>
+                        @endif
                         @if(strtolower($model->modelType) == 'business')
                         @can('corpline-quotes-create')
                             <li><a href="{{ url('quotes/' . strtolower($model->modelType) . '/create') }}"
@@ -671,6 +664,41 @@
                                                         <option value="">
                                                             {{ 'Please select ' . str_replace('id', ' ', str_replace('_', ' ', $property)) }}
                                                         </option>
+                                                    @endif
+                                                    @if($property == 'advisor_id')
+                                                        <option value="null">UnAssigned</option>
+                                                    @endif
+                                                    @foreach ($dropdownSource[$property] as $item)
+                                                        <option value="{{ $item->id }}">
+                                                            {{ $item->text ?? $item->name }}
+                                                        </option>
+                                                    @endforeach
+                                                </select>
+                                                @if ($errors->has($property))
+                                                    <span class="text-danger">{{ $errors->first($property) }}</span>
+                                                @endif
+                                            @endif
+                                            @if (strpos($value, 'static') !== false)
+                                                <span style="font-size: 11px;" class="col-form-label col-md-6 col-sm-6"
+                                                    for="name">
+                                                    @if (strpos($value, 'title'))
+                                                        {{ strtoupper($customTitles[$property]) }}
+                                                    @else
+                                                        {{ str_replace('_', ' ', strtoupper($property)) }}
+                                                    @endif
+                                                    @if (strpos($value, 'required') == true)
+                                                        <span class='required'>*</span>
+                                                    @endif
+                                                </span>
+                                                @php
+                                                    $propertyLastIndex = explode('|', $model->properties[$property]);
+                                                    $staticOptionString = end($propertyLastIndex);
+                                                    $staticOptions = explode(',', $staticOptionString);
+                                                @endphp
+                                                <select @if (strpos($value, 'multiple')) name="{{ $property . '[]' }}" multiple="multiple" class="form-control select2 select-roles" @else class="form-control" name="{{ $property }}" @endif id="{{ $property }}">
+                                                    <option value="">
+                                                        {{ 'Please select ' . str_replace('id', ' ', str_replace('_', ' ', $property)) }}
+                                                    </option>
 
                                                         @foreach ($staticOptions as $item)
                                                             @if (str_contains($model->properties[$property], 'default') && $item == explode('|', explode('default:', $model->properties[$property])[1])[0])
@@ -696,9 +724,18 @@
                                         @endif
                                     @endforeach
                                 @endforeach
+
                                 @if(strtolower($model->modelType) != 'teams' && strtolower($model->modelType) != 'leadstatus')
                                 <div class="showLessDiv" style="display: none;float: right;margin-top:20px;">
                                     <a id="hidelink" style="cursor: pointer;">Hide Additional Filter</a>
+                            @endforeach
+                            <div class="col-md-12" style="margin-top: 25px;">
+                                <div class="col">
+                                    <ul class="nav navbar-right panel_toolbox">
+                                        <li><input type="submit" value="Search" id="searchGenericSubmit" class="btn btn-warning btn-sm"></li>
+                                        <li><input type="reset" id="reset-btn-generic" class="btn btn-warning btn-sm">
+                                        </li>
+                                    </ul>
                                 </div>
                                 @endif
                                 <div class="col-md-12" style="margin-top: 25px;">

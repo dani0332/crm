@@ -1,6 +1,48 @@
+<meta name="csrf-token" content="{{ csrf_token() }}" />
 <?php
     use App\Enums\quoteTypeCode;
 ?>
+<script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
+<script>
+    $.ajaxSetup({
+        headers: {
+            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+        }
+    });
+    $('#update_car_plan_button').on('click', function (e) {
+
+        var actual_premium = $("#actual_premium").val();
+        var discounted_premium = $("#discounted_premium").val();
+        var car_value = $("#car_value").val();
+        var excess = $("#excess").val();
+
+        if(actual_premium == '' || discounted_premium == '' || car_value == '' || excess == '') {
+            alert('Please fill all the fields');
+            return false;
+        }
+
+        e.preventDefault();
+        $.ajax({
+            url: "{{ url('/CarPlanUpdateManualProcess') }}",
+            type: 'post',
+            data: {
+                car_quote_uuid: $('#car_quote_uuid').val(),
+                car_plan_id: $('#car_plan_id').val(),
+                actual_premium: $('#actual_premium').val(),
+                discounted_premium: $('#discounted_premium').val(),
+                car_value: $('#car_value').val(),
+                excess: $('#excess').val(),
+                is_disabled: $('#is_disabled').val(),
+                is_create: $('#is_create').val(),
+                _token: '{{ csrf_token() }}'
+            },
+            success: function(result) {
+                $('#car_plan_manual_process_text').show();
+                $("#car_plan_manual_process_text").text(result);
+            }
+        });
+    });
+</script>
 @if(isset($modelName) && $modelName == quoteTypeCode::Travel)
 <div class="row">
         <div class="col-md-12 col-sm-12 admin-detail">
@@ -156,27 +198,36 @@
 
                     <div class="tab-content" style="padding-top: 20px;">
                         <div class="tab-pane fade show active" id="general" role="tabpanel" aria-labelledby="general-tab">
-                            <table cellpadding="3" cellspacing="3">
-                                <tr><td style="width: 150px;">Provider Code:</td> <td>{{ $providerCode }}</td></tr>
-                                <tr><td>Provider Name:</td> <td>{{ $providerName }}</td></tr>
-                                <tr><td>Repair Type:</td> <td>{{ $repairType }}</td></tr>
-                                <tr><td>Actual Premium:</td> <td>{{ $actualPremium }}</td></tr>
-                                <tr><td>Discount Premium:</td> <td>{{ $discountPremium }}</td></tr>
-                            </table>
-                            <br /><br />
+                            <form id="update_car_plan" method='post' enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left" autocomplete="off">
+                                {{csrf_field()}}
+                                <input type="hidden" id="car_plan_id" name="car_plan_id" value="{{ $planId }}">
+                                <input type="hidden" id="car_quote_uuid" name="car_quote_uuid" value="{{ $quoteId }}">
+                                <input type="hidden" id="is_create" name="is_create" value="0">
+                                <table cellpadding="3" cellspacing="3">
+                                    <tr><td style="width: 150px;">Provider Code:</td> <td>{{ $providerCode }}</td></tr>
+                                    <tr><td>Provider Name:</td> <td>{{ $providerName }}</td></tr>
+                                    <tr><td>Repair Type:</td> <td>{{ $repairType }}</td></tr>
+                                    <tr><td>Actual Premium:</td> <td><input type="number" id="actual_premium" name="actual_premium" value="{{ old('actual_premium', $actualPremium) }}" class="form-control" onKeyDown="if(this.value.length==8) return false;"></td><td>Discounted Premium:</td> <td><input type="number" id="discounted_premium" name="discounted_premium" value="{{ old('discounted_premium', $discountPremium) }}" class="form-control" onKeyDown="if(this.value.length==8) return false;"></td></tr>
+                                    <tr><td>Car value:</td> <td><input type="number" id="car_value" name="car_value" value="{{ old('car_value', $carValue) }}" class="form-control" onKeyDown="if(this.value.length==8) return false;"></td><td>Excess:</td> <td><input type="number" id="excess" name="excess" value="{{ old('excess', $excess) }}" class="form-control" onKeyDown="if(this.value.length==8) return false;"></td></tr>
+                                    <tr><td>Disabled?</td>
+                                        <td><select class="form-control" id='is_disabled' name="is_disabled">
+                                                <option value="0" {{ $isDisabled == 0 ? 'selected="selected"' : '' }}>False</option>
+                                                <option value="1" {{ $isDisabled == 1 ? 'selected="selected"' : '' }}>True</option>
+                                            </select>
+                                            <div id="car_plan_manual_process_text" style="display: none;font-weight:bold;"></div>
+                                        </td>
+                                        <td> </td>
+                                        <td align="right"><button type="submit" class="btn btn-warning btn-sm" id="update_car_plan_button">Update</button></td></tr>
+                                </table>
+                            </form>
+                            <br />
                             <p>
                                 <strong>Features</strong>
                                 <table cellpadding="3" cellspacing="3">
-                                    <tr>
-                                        <td>
-                                            <table cellpadding="3" cellspacing="3">
-                                                @foreach ($listQuotePlanBenefitsFeatures as $key => $listQuotePlanBenefitsFeature)
-                                                    <tr><td style="width: 300px;">{{ ucwords($listQuotePlanBenefitsFeature->text) }}</td>
-                                                        <td>{{ ucwords($listQuotePlanBenefitsFeature->value) }}</td></tr>
-                                                @endforeach
-                                            </table>
-                                        </td>
-                                    </tr>
+                                    @foreach ($listQuotePlanBenefitsFeatures as $key => $listQuotePlanBenefitsFeature)
+                                        <tr><td style="width: 300px;">{{ ucwords($listQuotePlanBenefitsFeature->text) }}</td>
+                                            <td>{{ ucwords($listQuotePlanBenefitsFeature->value) }}</td></tr>
+                                    @endforeach
                                 </table>
                             </p>
                         </div>
@@ -270,5 +321,3 @@
         </div>
     </div>
 @endif
-
-

@@ -7,6 +7,7 @@ use App\Models\Customer;
 use App\Services\RenewalsUploadService;
 use App\Services\CustomerService;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Row;
 use Maatwebsite\Excel\Concerns\Importable;
 use Maatwebsite\Excel\Concerns\OnEachRow;
@@ -258,6 +259,9 @@ class RenewalsImport implements OnEachRow, WithStartRow, WithValidation, SkipsOn
             '*.5' => function($attribute, $value, $onFailure) {
                 if(strlen($value) > 100) {
                     $onFailure('Product Type should not exceed length of 100 characters');
+                }
+                if($value != 'Comprehensive' && $value != 'Third Party Only') {
+                    $onFailure('Product Type should be either Comprehensive or Third Party  Only');
                 }
             },
             // Sales Channel

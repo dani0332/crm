@@ -90,10 +90,7 @@ class User extends Authenticatable implements AuditableContract
             }
         }
         if ($isManager) {
-            $team_members = UserTeams::where('manager_id', $this->id)->get();
-            $user_ids = $team_members->pluck('user_id');
-            $users = User::whereIn('id', $user_ids)->get();
-            $userIds = $users->pluck('id');
+            $userIds = User::where('manager_id', $this->id)->get()->pluck('id');
             return $userIds->implode(',');
         } else {
             return 0;
@@ -131,22 +128,13 @@ class User extends Authenticatable implements AuditableContract
 
     public function isAdmin()
     {
-        $userRoles = Auth::user()->usersroles()->get();
-        $isAdmin = false;
-        foreach ($userRoles as $userRole) {
-            if (str_contains(strtolower($userRole->name), 'ADMIN')) {
-                $isAdmin = true;
-            }
-        }
-        return $isAdmin;
+        return Auth::user()->hasRole("ADMIN");
     }
 
     public function getUserTeams($userId)
     {
-        $userTeams = UserTeams::where('user_id', $userId)->get();
-        $teamIds = $userTeams->pluck('team_id');
-        $teams = Team::whereIn('id', $teamIds)->get();
-        return $teams->pluck('name');
+        $userTeamIds = UserTeams::where('user_id', $userId)->get()->pluck('team_id');
+        return Team::whereIn('id', $userTeamIds)->get()->pluck('name');
     }
 
     public function processGetDSL($filters = [])

@@ -1892,3 +1892,7 @@ $("#update_car_plans").submit(function (e) {
     }
 
 });
+
+$('#quotePlanModal').on('hidden.bs.modal', function () {
+    location.reload();
+});

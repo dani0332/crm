@@ -105,6 +105,7 @@ Route::group(['middleware' =>  ['auth']], function () {
     ]);
     Route::get('getAdvisors', [LeadAssignmentController::class, 'getAdvisors'])->name('getAdvisors');
     Route::get('getTeamManagers', [UserController::class, 'getTeamManagers'])->name('getTeamManagers');
+    Route::get('getSubTeams', [UserController::class, 'getSubTeams'])->name('getSubTeams');
     Route::resource('customer', CustomerController::class);
     Route::get('/customer-upload', [CustomerController::class, 'uploadCustomers']);
     Route::post('/customer-process', [CustomerController::class, 'processCustomerCSV']);
@@ -155,11 +156,14 @@ Route::group(['middleware' =>  ['auth']], function () {
         Route::get('car/{quoteUuId}/updateDiscountedPremium', [CRUDController::class, 'updateDiscountedPremium']);
         Route::get('car/{quoteUuId}/add_quote', [CRUDController::class, 'add_quote']);
         Route::get('travel/{quoteId}/plan_details/{planId}', [CRUDController::class, 'travel_plan_details'])->name('plan_details');
+
         Route::post('car/SaveCarPlan', [CRUDController::class, 'SaveCarPlan'])->name('SaveCarPlan');
         Route::get('{leadId}/lead_details', [CRUDController::class, 'leadDetails'])->name('lead_details');
         Route::post('UpdateLeadManualProcess', [CRUDController::class, 'UpdateLeadManualProcess'])->name('UpdateLeadManualProcess');
         Route::post('records', [CRUDController::class, 'loadMoreRecords'])->name('loadMoreRecords');
         Route::post('records/search', [CRUDController::class, 'searchLead'])->name('searchLead');
+
+        Route::post('car/CarPlanManualProcess', [CRUDController::class, 'CarPlanManualProcess'])->name('CarPlanManualProcess');
     });
 
     Route::group(['prefix' => 'generic'], function () {
@@ -169,6 +173,7 @@ Route::group(['middleware' =>  ['auth']], function () {
         Route::resource('carplanaddon', GenericCrudController::class);
         Route::resource('carplanaddonoption', GenericCrudController::class);
         Route::resource('applicationstorage', GenericCrudController::class);
+        Route::resource('teams', GenericCrudController::class);
         Route::post('save', [GenericCrudController::class, 'store'])->name('save');
         Route::post('update', [GenericCrudController::class, 'update'])->name('update');
     });
@@ -243,6 +248,7 @@ Route::group(['middleware' =>  ['auth']], function () {
     Route::post('auditable', [AuditableController::class, 'loadAuditableComponent']);
     Route::get('/car-model-by-id', [ClaimController::class, 'carModelBasedOnCarMakeId']);
     Route::get('/insurance-provider-plans', [ClaimController::class, 'carPlansBasedOnInsuranceProvider']);
+    Route::post('/CarPlanUpdateManualProcess', [ClaimController::class, 'CarPlanUpdateManualProcess']);
 });
 
 

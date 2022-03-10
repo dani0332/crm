@@ -40,9 +40,27 @@
                         </div>
                     </div>
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Updated At"><b>User's Team</b></label>
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Updated At"><b>Main Team</b></label>
                         <div class="col-md-6 col-sm-6">
                             <p class="label-align-center">{{ $teamName }}</p>
+                        </div>
+                    </div>
+                    <div class="item form-group">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Updated At"><b>Sub Teams</b></label>
+                        <div class="col-md-6 col-sm-6">
+                            <p class="label-align-center">{{ $subTeamName }}</p>
+                        </div>
+                    </div>
+                    <div class="item form-group">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Updated At"><b>LOB Visisblity Team</b></label>
+                        <div class="col-md-6 col-sm-6">
+                            <p class="label-align-center">{{ $additionalTeamNames }}</p>
+                        </div>
+                    </div>
+                    <div class="item form-group">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Updated At"><b>Manager</b></label>
+                        <div class="col-md-6 col-sm-6">
+                            <p class="label-align-center">{{ $managerName }}</p>
                         </div>
                     </div>
                     <div class="item form-group">

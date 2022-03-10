@@ -32,6 +32,7 @@ use App\Models\VehicleType;
 use App\Models\YearOfManufacture;
 use App\Models\CarAddOn;
 use App\Models\CarPlanCoverage;
+use App\Models\Team;
 use DB;
 use Faker\Provider\ar_SA\Payment;
 use Illuminate\Support\Facades\Auth;
@@ -84,6 +85,9 @@ class DropdownSourceService extends BaseService
         $advisorType = strtoupper(explode('/', $_SERVER["REQUEST_URI"])[2]);
         $data = '';
         switch ($type) {
+            case 'parent_team_id':
+                $data = Team::whereNull('parent_team_id')->get();
+                break;
             case 'marital_status_id':
                 $data = MartialStatus::select('id', 'text')->get();
                 break;

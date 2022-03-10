@@ -42,9 +42,11 @@ $(document).ready(function() {
                 @if(session()->has('message'))
                     <div class="alert alert-danger">{{ session()->get('message') }}</div>
                 @endif
-                <form id="update_car_plans" method='post' action="{{ route('SaveCarPlan') }}" enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left" autocomplete="off">
+                <form id="update_car_plans" method='post' action="{{ route('CarPlanManualProcess') }}" enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left" autocomplete="off">
                     {{csrf_field()}}
                     <input type="hidden" id="car_quote_uuid" name="car_quote_uuid" value="{{ $quoteUuId }}">
+                    <input type="hidden" id="is_disabled" name="is_disabled" value="0">
+                    <input type="hidden" id="isCreate" name="isCreate" value="1">
                     <div class="item form-group">
                         <div class="col-md-6 col-sm-6">
                             <div class="row">
@@ -69,10 +71,10 @@ $(document).ready(function() {
                                                 </select>
                                             </td>
                                             <td>
-                                                <input type="number" id="premium" name="premium" placeholder="Enter Premium (without VAT)" class="form-control" data-toggle="tooltip" data-placement="top" title="Please enter premium (without VAT)" onKeyDown="if(this.value.length==8) return false;" style="width: 200px">
+                                                <input type="number" id="actual_premium" name="actual_premium" placeholder="Enter Premium (without VAT)" class="form-control" data-toggle="tooltip" data-placement="top" title="Please enter premium (without VAT)" onKeyDown="if(this.value.length==8) return false;" style="width: 200px">
                                             </td>
                                             <td>
-                                                <input type="number" id="value" name="value" placeholder="Enter Car Value" class="form-control" data-toggle="tooltip" data-placement="top" title="Please enter car value" onKeyDown="if(this.value.length==8) return false;" style="width: 200px">
+                                                <input type="number" id="car_value" name="car_value" placeholder="Enter Car Value" class="form-control" data-toggle="tooltip" data-placement="top" title="Please enter car value" onKeyDown="if(this.value.length==8) return false;" style="width: 200px">
                                             </td>
                                             <td>
                                                 <input type="number" id="excess" name="excess" placeholder="Enter Excess" class="form-control" data-toggle="tooltip" data-placement="top" title="Please enter excess" onKeyDown="if(this.value.length==8) return false;" style="width: 200px">

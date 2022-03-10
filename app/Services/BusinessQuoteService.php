@@ -205,7 +205,7 @@ class BusinessQuoteService extends BaseService
             "source" => $sourceName,
             "referenceUrl" => $appUrl,
         );
-        if (Auth::user()->hasAnyRole(["BUSINESS_ADVISOR", "GM_ADVISOR", "CORPLINE_ADVISOR"])) $dataArr['advisorId'] = Auth::user()->id;
+        if (!Auth::user()->hasRole("ADMIN")) $dataArr['advisorId'] = Auth::user()->id;
         $response  = CapiRequestService::sendCAPIRequest('/api/v1-save-business-quote', $dataArr);
         return $response;
     }
@@ -377,9 +377,9 @@ class BusinessQuoteService extends BaseService
     public function fillModelSkipProperties()
     {
         return [
-            "create" => "id,advisor_id,quote_status_id,code,updated_at,created_at,next_followup_date,lost_reason",
+            "create" => "id,advisor_id,quote_status_id,code,updated_at,created_at,next_followup_date,lost_reason,premium,source",
             "list" => "email,mobile_no,brief_details,dob",
-            "update" => "id,advisor_id,quote_status_id,code,updated_at,created_at,next_followup_date,lost_reason",
+            "update" => "id,advisor_id,quote_status_id,code,updated_at,created_at,next_followup_date,lost_reason,source",
             "show" => "",
         ];
     }
