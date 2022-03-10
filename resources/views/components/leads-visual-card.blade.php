@@ -1,11 +1,15 @@
-<?php use App\Enums\LeadsQuoteStatus; ?>
+<?php 
+use App\Enums\quoteStatusCode; 
+use App\Enums\quoteTypeCode;
+?>
 <div class="drag-container">
         <ul class="drag-list">
         @foreach ($model->properties as $property => $value)
             @if (strpos($value, 'select') !== false && $property == "quote_status_id")
                 @foreach ($dropdownSource[$property] as $item)
-                    @if(strtolower($model->modelType) == 'travel' || strtolower($model->modelType) == 'home' || strtolower($model->modelType) == 'health' )
-                        @if($item->text == LeadsQuoteStatus::NEWLEAD || $item->text == LeadsQuoteStatus::QUOTED || $item->text == LeadsQuoteStatus::FOLLOWEDUP || $item->text == LeadsQuoteStatus::NEGOTIATION || $item->text == LeadsQuoteStatus::PAYMENTPENDING)
+                    @if($model->modelType == quoteTypeCode::Travel || $model->modelType == quoteTypeCode::Home || $model->modelType == quoteTypeCode::Health )
+                        @if($item->text == quoteStatusCode::NEWLEAD || $item->text == quoteStatusCode::QUOTED || $item->text == quoteStatusCode::FOLLOWEDUP || $item->text == quoteStatusCode::NEGOTIATION || $item->text == quoteStatusCode::PAYMENTPENDING)
+                        
                         <x-visual-card-leads
                             :item="$item"
                             :model="$model"
@@ -14,8 +18,8 @@
                         @endif
                     @endif
 
-                    @if(strtolower($model->modelType) == 'business')
-                        @if($item->text == LeadsQuoteStatus::NEWLEAD || $item->text == LeadsQuoteStatus::QUOTED || $item->text == LeadsQuoteStatus::PAYMENTPENDING || $item->text == LeadsQuoteStatus::QUALIFIED || $item->text == LeadsQuoteStatus::APPLICATION_PENDING || $item->text == LeadsQuoteStatus::MISSING_DOCUMENTS || $item->text == LeadsQuoteStatus::PENDINGUW || $item->text == LeadsQuoteStatus::PLOICY_DOCUMENTS_PENDING)
+                    @if($model->modelType == quoteTypeCode::Business)
+                        @if($item->text == quoteStatusCode::NEWLEAD || $item->text == quoteStatusCode::QUOTED || $item->text == quoteStatusCode::PAYMENTPENDING || $item->text == quoteStatusCode::QUALIFIED || $item->text == quoteStatusCode::APPLICATION_PENDING || $item->text == quoteStatusCode::MISSING_DOCUMENTS || $item->text == quoteStatusCode::PENDINGUW || $item->text == quoteStatusCode::PLOICY_DOCUMENTS_PENDING)
                         <x-visual-card-leads
                             :item="$item"
                             :model="$model"
@@ -23,8 +27,8 @@
                         @endif
                     @endif
                     
-                    @if(strtolower($model->modelType) == 'life')
-                        @if($item->text == LeadsQuoteStatus::NEWLEAD || $item->text == LeadsQuoteStatus::QUOTED || $item->text == LeadsQuoteStatus::FOLLOWEDUP || $item->text == LeadsQuoteStatus::NEGOTIATION || $item->text == LeadsQuoteStatus::TRANSACTION_APPROVED)
+                    @if($model->modelType == quoteTypeCode::Life)
+                        @if($item->text == quoteStatusCode::NEWLEAD || $item->text == quoteStatusCode::QUOTED || $item->text == quoteStatusCode::FOLLOWEDUP || $item->text == quoteStatusCode::NEGOTIATION || $item->text == quoteStatusCode::TRANSACTIONAPPROVED)
                         <x-visual-card-leads
                             :item="$item"
                             :model="$model"
@@ -32,8 +36,8 @@
                         @endif
                     @endif
 
-                    @if(strtolower($model->modelType) == 'health')
-                        @if($item->text == LeadsQuoteStatus::APPLICATION_PENDING || $item->text == LeadsQuoteStatus::PENDINGUW || $item->text == LeadsQuoteStatus::PLOICY_DOCUMENTS_PENDING || $item->text == LeadsQuoteStatus::TRANSACTION_APPROVED)
+                    @if($model->modelType == quoteTypeCode::Health)
+                        @if($item->text == quoteStatusCode::APPLICATION_PENDING || $item->text == quoteStatusCode::PENDINGUW || $item->text == quoteStatusCode::PLOICY_DOCUMENTS_PENDING || $item->text == quoteStatusCode::TRANSACTIONAPPROVED)
                         <x-visual-card-leads
                             :item="$item"
                             :model="$model"
