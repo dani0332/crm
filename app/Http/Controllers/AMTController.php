@@ -247,13 +247,12 @@ class AMTController extends Controller
         $this->validate($request, [
             'first_name' => 'required|max:150',
             'last_name' => 'required|max:150',
-            'email' => 'required|email',
-            'mobile_no' => 'required',
             'business_type_of_insurance_id' => 'required',
             'company_name' => 'required|max:150',
             'number_of_employees' => 'required',
             "brief_details" => "required",
             "group_medical_type_id" => "required",
+            "premium" => "required",
         ]);
         $this->crudService->updateModelByType('business', $request, $id);
         return redirect('medical/amt/' . $id)->with('success', 'Lead has been updated');
