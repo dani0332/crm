@@ -567,4 +567,62 @@ class CRUDController extends Controller
             return redirect()->back()->with('message', $response);
         }
     }
+
+    public function loadMoreRecords(Request $request) {
+
+        if($request->has('modelType') && $request->modelType && $request->status)
+        {
+            $results = getDataAgainstEveryStatus($request->modelType, $request);
+           
+            $html = '';
+            if($results) {
+                foreach($results['leads_list'] as $result) {
+                    $html .=' <li data-block-id="53" class="drag-item">
+                    <div class="lead-block rotten">
+                        <div class="lead-title">'.$result->code.'</div>
+                        <span class="float-right">
+                            <a href="#" planDetailUrl="'.$result->id.'/lead_details?modelType='.$request->modelType.'" data-toggle="modal" data-target="#quoteModal" class="quotePlanModalPopup"><i class="fa fa-pencil" aria-hidden="true"></i></a></span>
+                        <div class="pad-5"></div>
+                        <div class="lead-person"><i class="fa fa-user font-1" aria-hidden="true"></i>
+                        '.$result->first_name.' '.$result->last_name.'
+                        </div>
+                        <div class="pad-5"></div>
+                        <div class="lead-cost"><i class="fa fa-usd font-1"></i>&nbsp;'.$result->premium.'
+                        </div>
+                    </div>
+                </li>';
+                }
+            }
+            return $html;
+        }
+    }
+
+    public function searchLead(Request $request) {
+
+        if($request->has('modelType') && $request->modelType && $request->term && $request->status)
+        {
+            $results = getDataAgainstSearchTerm($request->modelType, $request->term, $request->status);
+           
+            $html = '';
+            if($results) {
+                foreach($results['leads_list'] as $result) {
+                    $html .=' <li data-block-id="53" class="drag-item">
+                    <div class="lead-block rotten">
+                        <div class="lead-title">'.$result->code.'</div>
+                        <span class="float-right">
+                            <a href="#" planDetailUrl="'.$result->id.'/lead_details?modelType='.$request->modelType.'" data-toggle="modal" data-target="#quoteModal" class="quotePlanModalPopup"><i class="fa fa-pencil" aria-hidden="true"></i></a></span>
+                        <div class="pad-5"></div>
+                        <div class="lead-person"><i class="fa fa-user font-1" aria-hidden="true"></i>
+                        '.$result->first_name.' '.$result->last_name.'    
+                        </div>
+                        <div class="pad-5"></div>
+                        <div class="lead-cost"><i class="fa fa-usd font-1"></i>&nbsp;'.$result->premium.'
+                        </div>
+                    </div>
+                </li>';
+                }
+            }
+            return $html;
+        }
+    }
 }
