@@ -4,7 +4,7 @@
             @if (strpos($value, 'select') !== false && $property == "quote_status_id")
                 @foreach ($dropdownSource[$property] as $item)
                     @if(strtolower($model->modelType) == 'travel' || strtolower($model->modelType) == 'home' || strtolower($model->modelType) == 'health' )
-                        @if($item->text == "New Lead" || $item->text == "Quoted" || $item->text == "Followed Up" || $item->text == "In Negotiation" || $item->text == "Payment Pending")
+                        @if($item->text == "New Lead" || $item->text == "Quoted" || $item->text == "Followed Up" || $item->text == "In Negotiation" || $item->text == "Payment Pending")
                         <x-visual-card-leads
                             :item="$item"
                             :model="$model"
@@ -14,7 +14,7 @@
                     @endif
 
                     @if(strtolower($model->modelType) == 'business')
-                        @if($item->text == "New Lead" || $item->text == "Quoted" || $item->text == "Payment Pending" || $item->text == "Qualified" || $item->text == "Application Pending" || $item->text == "Missing Documents Requested"|| $item->text == "Pending with UW"|| $item->text == "Policy Documents Pending")
+                        @if($item->text == "New Lead" || $item->text == "Quoted" || $item->text == "Payment Pending" || $item->text == "Qualified" || $item->text == "Application Pending" || $item->text == "Missing Documents Requested"|| $item->text == "Pending with UW"|| $item->text == "Policy Documents Pending")
                         <x-visual-card-leads
                             :item="$item"
                             :model="$model"
