@@ -1,3 +1,4 @@
+<?php use App\Enums\LeadsQuoteStatus; ?>
 <div class="drag-container">
         <ul class="drag-list">
         @foreach ($model->properties as $property => $value)
