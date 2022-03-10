@@ -260,7 +260,7 @@ class RenewalsImport implements OnEachRow, WithStartRow, WithValidation, SkipsOn
                 if(strlen($value) > 100) {
                     $onFailure('Product Type should not exceed length of 100 characters');
                 }
-                if($value != 'Comprehensive' && $value != 'Third Party Only') {
+                if(strlen($value) > 0 && $value != 'Comprehensive' && $value != 'Third Party Only') {
                     $onFailure('Product Type should be either Comprehensive or Third Party  Only');
                 }
             },
