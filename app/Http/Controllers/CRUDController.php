@@ -389,6 +389,8 @@ class CRUDController extends Controller
                     $repairType = $listQuotePlan->repairType;
                     $actualPremium = $listQuotePlan->actualPremium;
                     $discountPremium = $listQuotePlan->discountPremium;
+                    if(isset($listQuotePlan->carValueLowerLimit)) { $carValueLowerLimit = $listQuotePlan->carValueLowerLimit; } else { $carValueLowerLimit = 0; }
+                    if(isset($listQuotePlan->carValueUpperLimit)) { $carValueUpperLimit = $listQuotePlan->carValueUpperLimit; } else { $carValueUpperLimit = 0; }
                     if(isset($listQuotePlan->excess)) { $excess = $listQuotePlan->excess; } else { $excess = 0; }
                     if(isset($listQuotePlan->carValue)) { $carValue = $listQuotePlan->carValue; } else { $carValue = 0; }
                     if(isset($listQuotePlan->isDisabled)) { $isDisabled = $listQuotePlan->isDisabled; } else { $isDisabled = 0; }
@@ -417,7 +419,8 @@ class CRUDController extends Controller
                 'listQuotePlanName', 'providerCode', 'providerName', 'repairType',
                 'actualPremium', 'discountPremium', 'listQuotePlanAddons', 'listQuotePlanAddonValues', 'listQuotePlanBenefitsInclusions',
                 'listQuotePlanBenefitsExclusions', 'listQuotePlanBenefitsFeatures', 'listQuotePlanBenefitsRsas',
-                'listQuotePlanBenefitsPolicyDetailLink', 'listQuotePlanAddonPrices', 'excess', 'carValue', 'planId', 'quoteId', 'isDisabled'
+                'listQuotePlanBenefitsPolicyDetailLink', 'listQuotePlanAddonPrices', 'excess', 'carValue', 'planId', 'quoteId', 'isDisabled',
+                'carValueLowerLimit', 'carValueUpperLimit'
             ]));
         }
     }
