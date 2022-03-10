@@ -9,14 +9,14 @@
             @endphp
             
             </h2>
-            <h4>
+            <span>
             Total Leads
                 <span class="float-right">&nbsp; {{$result ? $result['total_leads'] : 0}} </span>
-            </h4>
-            <h4>
+            </span><br />
+            <span>
             Total Premium
                 <span class="float-right">&nbsp; {{$result ? $result['total_premium'] : 0}} </span>
-            </h4>
+            </span>
             
             </div>
         </span>
@@ -31,14 +31,14 @@
                                 <a target="_blank" href="{{strtolower($model->modelType)}}/{{$lead->uuid}}"><i class="fa fa-pencil" aria-hidden="true"></i></a>
                             </span>
                             <div class="pad-5"></div>
-                            <div class="lead-person"><i class="fa fa-user font-1" aria-hidden="true"></i>
+                            <div class="lead-person"><i class="fa fa-user font-1" aria-hidden="true"></i> &nbsp;
                             {{$lead->first_name}} {{$lead->last_name}} 
                             </div>
                             <div class="pad-5"></div>
-                            <div class="lead-cost"><i class="fa fa-usd font-1"></i>&nbsp;{{$lead->premium}}
+                            <div class="lead-cost"><i class="fa fa-usd font-1"></i>&nbsp; {{$lead->premium}}
                             </div>
                         </div>
-                    </li>
+                    </li> 
                 @endforeach
                 @if($result["total_leads"])
                     <a href="#" onclick="(loadMore({{$item->id}}))" class="quotePlanModalPopup load_more_btn" id="load_more_btn{{$item->id}}">Load More</a></span>

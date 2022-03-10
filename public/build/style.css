@@ -135,7 +135,7 @@ input {
     grid-gap: 10px;
     color: #546e7a;
     display: grid;
-    grid-auto-columns: minmax(320px,auto);
+    grid-auto-columns: minmax(200px,auto);
     grid-auto-flow: column;
     height: calc(100% - 10px);
     margin-bottom: 10px;
@@ -170,7 +170,7 @@ ul.drag-inner-list, ul.drag-list {
 }
 .drag-column .drag-column-header>div h2 {
     color: #263238;
-    font-size: 18px;
+    font-size: 13px;
     font-weight: bold;
     margin: 0 0 10px;
 }
@@ -213,7 +213,7 @@ ul.drag-inner-list, ul.drag-list {
 .drag-item .lead-block .lead-title {
     color: #263238;
     display: inline-block;
-    font-size: 16px;
+    font-size: 13px;
     font-weight: 500;
     line-break: anywhere;
     width: calc(100% - 45px);
@@ -274,3 +274,4 @@ ul.drag-inner-list, ul.drag-list {
 .change-layout.active {
     background: #4183bd !important;
 }
+
