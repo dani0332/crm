@@ -67,7 +67,7 @@
         var car_value_lower_limit = $("#car_value_lower_limit").val();
         var carPlanTypeComp = JSON.parse('<?php echo json_encode($carPlanTypeComp) ?>');
 
-        if(repair_type == carPlanTypeComp && car_value < car_value_lower_limit) {
+        if(repair_type == carPlanTypeComp && parseInt(car_value) < parseInt(car_value_lower_limit)) {
             alert("Car Value should be greater than or equal to " + car_value_lower_limit);
             return false;
         }
