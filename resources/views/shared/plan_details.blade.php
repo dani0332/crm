@@ -1,13 +1,55 @@
 <meta name="csrf-token" content="{{ csrf_token() }}" />
+
 <?php
     use App\Enums\quoteTypeCode;
+    use App\Enums\CarPlanType;
 
-if($repairType == 'TPL') {
-    $readonlyFieldCss = "pointer-events: none;background-color: #f6f6f6;";
-} else {
-    $readonlyFieldCss = "";
-}
+    foreach ($listQuotePlans as $listQuotePlan) { // Main
+
+        if ($listQuotePlan->id == $planId) {
+            $listQuotePlanName = $listQuotePlan->name;
+            $providerCode = $listQuotePlan->providerCode;
+            $providerName = $listQuotePlan->providerName;
+            $repairType = $listQuotePlan->repairType;
+            $actualPremium = $listQuotePlan->actualPremium;
+            $discountPremium = $listQuotePlan->discountPremium;
+            if(isset($listQuotePlan->carValueLowerLimit)) { $carValueLowerLimit = $listQuotePlan->carValueLowerLimit; } else { $carValueLowerLimit = 0; }
+            if(isset($listQuotePlan->carValueUpperLimit)) { $carValueUpperLimit = $listQuotePlan->carValueUpperLimit; } else { $carValueUpperLimit = 0; }
+            if(isset($listQuotePlan->excess)) { $excess = $listQuotePlan->excess; } else { $excess = 0; }
+            if(isset($listQuotePlan->carValue)) { $carValue = $listQuotePlan->carValue; } else { $carValue = 0; }
+            if(isset($listQuotePlan->isDisabled)) { $isDisabled = $listQuotePlan->isDisabled; } else { $isDisabled = 0; }
+            $listQuotePlanAddonss = $listQuotePlan->addons;
+            $listQuotePlanBenefitsInclusions = $listQuotePlan->benefits->inclusion;
+            $listQuotePlanBenefitsExclusions = $listQuotePlan->benefits->exclusion;
+            $listQuotePlanBenefitsFeatures = $listQuotePlan->benefits->feature;
+            $listQuotePlanBenefitsRsas = $listQuotePlan->benefits->roadSideAssistance;
+            $listQuotePlanBenefitsPolicyDetails = $listQuotePlan->policyWordings;
+
+            foreach ($listQuotePlanAddonss as $listQuotePlanAddon) {
+                $listQuotePlanAddons[] = $listQuotePlanAddon; // Get Addons Names
+
+                foreach ($listQuotePlanAddon->carAddonOption as $listQuotePlanAddonsOptions) {
+                    $listQuotePlanAddonValues[] = $listQuotePlanAddonsOptions->value;
+                    $listQuotePlanAddonPrices[] = $listQuotePlanAddonsOptions->price;
+                }
+            }
+            foreach ($listQuotePlanBenefitsPolicyDetails as $listQuotePlanBenefitsPolicyDetail) {
+                $listQuotePlanBenefitsPolicyDetailLink = $listQuotePlanBenefitsPolicyDetail->link;
+            }
+            if(isset($listQuotePlanBenefitsPolicyDetailLink)) { $listQuotePlanBenefitsPolicyDetailLink = $listQuotePlanBenefitsPolicyDetailLink; } else { $listQuotePlanBenefitsPolicyDetailLink = ''; }
+        }
+    }
+
+    if($repairType == CarPlanType::TPL) {
+        $readonlyFieldCss = "pointer-events: none;background-color: #f6f6f6;";
+    } else {
+        $readonlyFieldCss = "";
+    }
+
+    $carPlanTypeComp = CarPlanType::COMP;
+
 ?>
+
 <script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
 <script>
     $.ajaxSetup({
@@ -24,8 +66,9 @@ if($repairType == 'TPL') {
         var repair_type = $("#repair_type").val();
         var car_value_lower_limit = $("#car_value_lower_limit").val();
         var car_value_upper_limit = $("#car_value_upper_limit").val();
+        var carPlanTypeComp = JSON.parse('<?php echo json_encode($carPlanTypeComp) ?>');
 
-        if(repair_type == 'COMP' && (car_value < car_value_lower_limit || car_value > car_value_upper_limit)) {
+        if(repair_type == carPlanTypeComp && (car_value < car_value_lower_limit || car_value > car_value_upper_limit)) {
             alert("Value must be in between AED " + car_value_lower_limit + " to AED " + car_value_upper_limit);
             return false;
         }
@@ -232,7 +275,7 @@ if($repairType == 'TPL') {
                                     </tr>
                                     <tr>
                                         <td valign="top">Car value:</td> <td><input type="number" id="car_value" name="car_value" value="{{ old('car_value', $carValue) }}" class="form-control" onKeyDown="if(this.value.length==8) return false;" style="{{ $readonlyFieldCss }}">
-                                            @if($repairType == 'COMP')
+                                            @if($repairType == CarPlanType::COMP)
                                                 <span style="font-size: 10px;">Min: AED {{ number_format($carValueLowerLimit) }} - Max: AED {{ number_format($carValueUpperLimit) }}</span>
                                             @endif
                                         </td>
