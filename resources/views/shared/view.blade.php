@@ -1,8 +1,8 @@
 @extends('layouts.app')
 @section('title', 'View ' . $model->modelType)
 @section('content')
-<?php 
-use App\Enums\quoteTypeCode; 
+<?php
+use App\Enums\quoteTypeCode;
 ?>
 <meta name="csrf-token" content="{{ csrf_token() }}" />
     <script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
@@ -390,7 +390,7 @@ use App\Enums\quoteTypeCode;
             });
 
         });
-        
+
         var ENDPOINT = "{{ url('/') }}";
         var page;
         var temp_status = '';
@@ -398,7 +398,7 @@ use App\Enums\quoteTypeCode;
             if(localStorage.getItem('page'+status) == null)
                 page = 2;
             else
-                page = localStorage.getItem('page'+status);     
+                page = localStorage.getItem('page'+status);
             infinteLoadMore(page,status);
         }
         function infinteLoadMore(page,status) {
@@ -432,7 +432,7 @@ use App\Enums\quoteTypeCode;
                     console.log('Server error occured');
                 });
         }
-         
+
         function searchTerm(element) {
             var term = $(element).val();
             var status = $(element).attr('name');
@@ -503,16 +503,16 @@ use App\Enums\quoteTypeCode;
                 @php $dynamicClass = "showme"; @endphp
                 @if($model->modelType == quoteTypeCode::Travel || $model->modelType == quoteTypeCode::Home || $model->modelType == quoteTypeCode::Health || $model->modelType == quoteTypeCode::Business || $model->modelType == quoteTypeCode::Life)
                 @php $dynamicClass = "hideme"; @endphp
-                <button type="button" class="btn btn-warning btn-sm toggle-btn active float-right change-layout">Cards View</button>
-                <button type="button" class="btn btn-warning btn-sm toggle-btn-2 float-right change-layout">List View</button>    
-                <div class="show-visual-cards showme">
-                        <x-leads-visual-card
+                <button type="button" class="btn btn-warning btn-sm toggle-btn active float-right change-layout hideme">Cards View</button>
+                <button type="button" class="btn btn-warning btn-sm toggle-btn-2 float-right change-layout hideme">List View</button>
+                <div class="show-visual-cards hideme">
+                        {{-- <x-leads-visual-card
                             :model="$model"
                             :dropdownSource="$dropdownSource"
-                        />
+                        /> --}}
                     </div>
                 @endif
-                    <div class="show-container {{$dynamicClass}}">
+                    <div class="show-container showme">
                     @if (session()->has('message'))
                         <div class="alert alert-danger">{{ session()->get('message') }}</div>
                     @endif
