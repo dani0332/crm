@@ -24,6 +24,8 @@ class InsuranceProviderService extends BaseService
                 'ip.created_at',
                 'ip.text_ar',
                 'ip.is_active',
+                'ip.lower_limit',
+                'ip.upper_limit',
                 'ip.sort_order'
             )->where('ip.is_active', 1);
     }
@@ -119,6 +121,8 @@ class InsuranceProviderService extends BaseService
             "text_ar" => "input|text|title|required",
             "created_at" => "input|title|date|range",
             "updated_at" => "input|title|date",
+            "lower_limit" => "input|number|title|required",
+            "upper_limit" => "input|number|title|required",        
             "is_active" => "input|checkbox"
         );
     }
@@ -129,6 +133,12 @@ class InsuranceProviderService extends BaseService
         switch ($propertyName) {
             case 'code':
                 $title = "Code";
+                break;
+            case 'lower_limit':
+                $title = "Lower Limit";
+                break;
+            case 'upper_limit':
+                $title = "Upper Limit";
                 break;
             case 'created_at':
                 $title = "Created Date";
