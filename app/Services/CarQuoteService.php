@@ -436,7 +436,7 @@ class CarQuoteService extends BaseService
             }
         }
     }
-    
+
     public function walkTree ($userId) {
         $childs = User::where('manager_id', $userId)->pluck('id');
         foreach ($childs as $child) {
@@ -461,7 +461,7 @@ class CarQuoteService extends BaseService
         if ($request->ajax()) {
             if(Auth::user()->isManagerOrDeputy()){
                 $this->walkTree(Auth::user()->id); // get all childs of the user
-                array_push($this->childUserIds, Auth::user()->id); // add the user id to the array to fetch directly assigned leads as well 
+                array_push($this->childUserIds, Auth::user()->id); // add the user id to the array to fetch directly assigned leads as well
                 $this->query->whereIn('cqr.advisor_id', $this->childUserIds);	// fetch leads assigned to the user or his childs
             }
             if (!isset($request->email) && $request->email == '') {
@@ -744,8 +744,13 @@ class CarQuoteService extends BaseService
 
         if(isset($request->is_disabled)) {
             $isDisabled = $request->is_disabled;
+            if($isDisabled == '1') {
+                $isDisabled = true;
+            } else {
+                $isDisabled = false;
+            }
         } else {
-            $isDisabled = 0;
+            $isDisabled = false;
         }
 
         if(isset($request->is_create)) {

@@ -94,7 +94,7 @@
             success: function(result) {
                 $('#car_plan_manual_process_text').show();
                 $("#car_plan_manual_process_text").text(result);
-                $('#car_plan_manual_process_text').hide(6000);
+                $("#car_plan_manual_process_text").delay(3200).fadeOut(300);
             }
         });
     });
