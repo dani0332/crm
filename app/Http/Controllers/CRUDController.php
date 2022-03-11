@@ -374,51 +374,14 @@ class CRUDController extends Controller
         return $recordName;
     }
 
-    public function plan_details($quoteId, $planId)
+    public function carQuotePlanDetails($quoteId, $planId)
     {
         $quotePlans = $this->carQuoteService->getQuotePlans($quoteId);
 
         if (gettype($quotePlans) != 'string') {
             $listQuotePlans = $quotePlans->quotes->plans;
-            foreach ($listQuotePlans as $listQuotePlan) { // Main
 
-                if ($listQuotePlan->id == $planId) {
-                    $listQuotePlanName = $listQuotePlan->name;
-                    $providerCode = $listQuotePlan->providerCode;
-                    $providerName = $listQuotePlan->providerName;
-                    $repairType = $listQuotePlan->repairType;
-                    $actualPremium = $listQuotePlan->actualPremium;
-                    $discountPremium = $listQuotePlan->discountPremium;
-                    if(isset($listQuotePlan->excess)) { $excess = $listQuotePlan->excess; } else { $excess = 0; }
-                    if(isset($listQuotePlan->carValue)) { $carValue = $listQuotePlan->carValue; } else { $carValue = 0; }
-                    if(isset($listQuotePlan->isDisabled)) { $isDisabled = $listQuotePlan->isDisabled; } else { $isDisabled = 0; }
-                    $listQuotePlanAddonss = $listQuotePlan->addons;
-                    $listQuotePlanBenefitsInclusions = $listQuotePlan->benefits->inclusion;
-                    $listQuotePlanBenefitsExclusions = $listQuotePlan->benefits->exclusion;
-                    $listQuotePlanBenefitsFeatures = $listQuotePlan->benefits->feature;
-                    $listQuotePlanBenefitsRsas = $listQuotePlan->benefits->roadSideAssistance;
-                    $listQuotePlanBenefitsPolicyDetails = $listQuotePlan->policyWordings;
-
-                    foreach ($listQuotePlanAddonss as $listQuotePlanAddon) {
-                        $listQuotePlanAddons[] = $listQuotePlanAddon; // Get Addons Names
-
-                        foreach ($listQuotePlanAddon->carAddonOption as $listQuotePlanAddonsOptions) {
-                            $listQuotePlanAddonValues[] = $listQuotePlanAddonsOptions->value;
-                            $listQuotePlanAddonPrices[] = $listQuotePlanAddonsOptions->price;
-                        }
-                    }
-                    foreach ($listQuotePlanBenefitsPolicyDetails as $listQuotePlanBenefitsPolicyDetail) {
-                        $listQuotePlanBenefitsPolicyDetailLink = $listQuotePlanBenefitsPolicyDetail->link;
-                    }
-                    if(isset($listQuotePlanBenefitsPolicyDetailLink)) { $listQuotePlanBenefitsPolicyDetailLink = $listQuotePlanBenefitsPolicyDetailLink; } else { $listQuotePlanBenefitsPolicyDetailLink = ''; }
-                }
-            }
-            return view('shared.plan_details', compact([
-                'listQuotePlanName', 'providerCode', 'providerName', 'repairType',
-                'actualPremium', 'discountPremium', 'listQuotePlanAddons', 'listQuotePlanAddonValues', 'listQuotePlanBenefitsInclusions',
-                'listQuotePlanBenefitsExclusions', 'listQuotePlanBenefitsFeatures', 'listQuotePlanBenefitsRsas',
-                'listQuotePlanBenefitsPolicyDetailLink', 'listQuotePlanAddonPrices', 'excess', 'carValue', 'planId', 'quoteId', 'isDisabled'
-            ]));
+            return view('shared.plan_details', compact(['listQuotePlans', 'quoteId', 'planId']));
         }
     }
 
@@ -517,7 +480,7 @@ class CRUDController extends Controller
         return Redirect::back()->with('success', ' Lead has been Assigned To ' . $assignedUserName);
     }
 
-    public function add_quote(Request $request)
+    public function addCarQuotePlan(Request $request)
     {
         $quoteUuId = $request->quoteUuId;
         $insuranceproviders = InsuranceProvider::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
@@ -573,7 +536,7 @@ class CRUDController extends Controller
         if($request->has('modelType') && $request->modelType && $request->status)
         {
             $results = getDataAgainstEveryStatus($request->modelType, $request);
-           
+
             $html = '';
             if($results) {
                 foreach($results['leads_list'] as $result) {
@@ -602,7 +565,7 @@ class CRUDController extends Controller
         if($request->has('modelType') && $request->modelType && $request->term && $request->status)
         {
             $results = getDataAgainstSearchTerm($request->modelType, $request->term, $request->status);
-           
+
             $html = '';
             if($results) {
                 foreach($results['leads_list'] as $result) {
@@ -613,7 +576,7 @@ class CRUDController extends Controller
                             <a href="#" planDetailUrl="'.$result->id.'/lead_details?modelType='.$request->modelType.'" data-toggle="modal" data-target="#quoteModal" class="quotePlanModalPopup"><i class="fa fa-pencil" aria-hidden="true"></i></a></span>
                         <div class="pad-5"></div>
                         <div class="lead-person"><i class="fa fa-user font-1" aria-hidden="true"></i>
-                        '.$result->first_name.' '.$result->last_name.'    
+                        '.$result->first_name.' '.$result->last_name.'
                         </div>
                         <div class="pad-5"></div>
                         <div class="lead-cost"><i class="fa fa-usd font-1"></i>&nbsp;'.$result->premium.'

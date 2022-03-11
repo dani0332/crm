@@ -472,7 +472,7 @@ class ClaimController extends Controller
         if (gettype($response) == 'integer' && ($response == 200 || $response == 201)) {
             $message = 'Car Plan has been updated';
         } else {
-            $message = 'Car Plan has not been updated '.$response;
+            $message = 'Car Plan has not been updated '.$response->message;
         }
 
         return $message;
