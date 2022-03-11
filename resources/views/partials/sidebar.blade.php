@@ -259,28 +259,30 @@
                         </li>
                     </ul>
                 @endcan
-                @can('crm-admin')
-                    <ul class="nav side-menu">
-                        <li><a><i class="fa fa-user"></i> Admin <span class="fa fa-chevron-down"></span></a>
-                            <ul class="nav child_menu">
-                                @can('users-list')
-                                    <li><a href="{{ url('admin/users') }}">Users</a></li>
-                                @endcan
-                                @can('role-list')
-                                    <li><a href="{{ url('admin/roles') }}">Roles</a></li>
-                                @endcan
-                                @can('teams-list')
-                                    <li><a href="{{ url('generic/teams') }}">Teams</a></li>
-                                @endcan
-                                @can('teams-list')
-                                    <li><a href="{{ url('quotes/leadstatus') }}">Lead Status</a></li>
-                                @endcan
-                                <li><a href="{{ url('generic/insuranceprovider') }}">Insurance Providers</a></li>
-                            </ul>
-                        </li>
-                    </ul>
-                @endcan
-
+                @canany(['users-list', 'role-list', 'teams-list', 'inusrance-provider-list'])
+                <ul class="nav side-menu">
+                    <li><a><i class="fa fa-user"></i> Admin <span class="fa fa-chevron-down"></span></a>
+                        <ul class="nav child_menu">
+                            @can('users-list')
+                                <li><a href="{{ url('admin/users') }}">Users</a></li>
+                            @endcan
+                            @can('role-list')
+                                <li><a href="{{ url('admin/roles') }}">Roles</a></li>
+                            @endcan
+                            @can('teams-list')
+                                <li><a href="{{ url('generic/teams') }}">Teams</a></li>
+                            @endcan
+                            @can('teams-list')
+                                <li><a href="{{ url('quotes/leadstatus') }}">Lead Status</a></li>
+                            @endcan
+                            @can('inusrance-provider-list')
+                             <li><a href="{{ url('generic/insuranceprovider') }}">Insurance Providers</a></li>
+                            @endcan
+                            
+                        </ul>
+                    </li>
+                </ul>
+                @endcanany
                 @can('application-storage-list')
                     <ul class="nav side-menu">
                         <li><a><i class="fa fa-user"></i> Admin <span class="fa fa-chevron-down"></span></a>
