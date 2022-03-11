@@ -480,7 +480,7 @@ class CRUDController extends Controller
         return Redirect::back()->with('success', ' Lead has been Assigned To ' . $assignedUserName);
     }
 
-    public function add_quote(Request $request)
+    public function addCarQuotePlan(Request $request)
     {
         $quoteUuId = $request->quoteUuId;
         $insuranceproviders = InsuranceProvider::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
