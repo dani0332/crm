@@ -282,8 +282,8 @@
                                     </tr>
                                     <tr><td valign="top">Disabled?</td>
                                         <td><select class="form-control" id='is_disabled' name="is_disabled">
-                                                <option value="0" {{ $isDisabled == 0 ? 'selected="selected"' : '' }}>False</option>
-                                                <option value="1" {{ $isDisabled == 1 ? 'selected="selected"' : '' }}>True</option>
+                                                <option value="false" {{ $isDisabled == false ? 'selected="selected"' : '' }}>False</option>
+                                                <option value="true" {{ $isDisabled == true ? 'selected="selected"' : '' }}>True</option>
                                             </select>
                                             <div id="car_plan_manual_process_text" style="display: none;font-weight:bold;"></div>
                                         </td>

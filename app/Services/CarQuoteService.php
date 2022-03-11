@@ -742,17 +742,6 @@ class CarQuoteService extends BaseService
         $apiUserName = Config::get('constants.KEN_API_USER');
         $apiPassword = Config::get('constants.KEN_API_PWD');
 
-        if(isset($request->is_disabled)) {
-            $isDisabled = $request->is_disabled;
-            if($isDisabled == '1') {
-                $isDisabled = true;
-            } else {
-                $isDisabled = false;
-            }
-        } else {
-            $isDisabled = false;
-        }
-
         if(isset($request->is_create)) {
             if($request->is_create == 1) {
                 $discountedPremium = $request->actual_premium;
@@ -771,7 +760,7 @@ class CarQuoteService extends BaseService
                 "carValue" => (float)$request->car_value,
                 "excess" => (float)$request->excess,
                 "discountPremium" => (float)$discountedPremium,
-                "isDisabled" => $isDisabled]
+                "isDisabled" => filter_var($request->is_disabled, FILTER_VALIDATE_BOOLEAN)]
             )
         );
 
