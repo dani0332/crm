@@ -56,6 +56,8 @@ class RenewalImportJob implements ShouldQueue
                 $delayInSeconds = 5 * 60;
                 $this->release($delayInSeconds);
             }
-        }      
+        }
+        Log::info('RenewalImportJobCron 1');
+        Log::channel('daily')->info('RenewalImportJobCron 2');
     }
 }
