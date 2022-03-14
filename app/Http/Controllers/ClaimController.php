@@ -21,6 +21,7 @@ use DataTables;
 use DB;
 use Config;
 use App\Services\CarQuoteService;
+use Illuminate\Support\Facades\Log;
 
 class ClaimController extends Controller
 {
@@ -180,11 +181,6 @@ class ClaimController extends Controller
         $claim->modified_by_id = Auth::user()->id;
         $claim->is_rent_a_car = $request->is_rent_a_car == 'on' ? 1 : 0;
         $claim->save();
-
-        \Log::info('Claim1: Created 1');
-        \Log::channel('daily')->info('Claim1: Created 2');
-        \Log::channel('customlog')->info('Claim3: Created 3');
-
 
         if (isset($request->return_to_view)) {
             return redirect("claim/claims/" . $claim->id)->with('success', 'Claim has been stored');
@@ -386,6 +382,10 @@ class ClaimController extends Controller
         }
 
         $claim->save();
+
+        Log::info('ClaimUpdated 1');
+        Log::channel('daily')->info('ClaimUpdated 2');
+
         if (isset($request->return_to_view)) {
             return redirect("claim/claims/" . $claim->id)->with('success', 'Claim has been updated');
         }
