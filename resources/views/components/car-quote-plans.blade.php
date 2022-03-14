@@ -16,7 +16,7 @@
                         <span class="alert alert-success" id="quotePlansGenerateMsg" style="display: none">Copied</span>
                         <div class="col-auto">
                             <input type="hidden" id="quotePlansGenerateUrl" name="quotePlansGenerateUrl" value="{{ $uuid }}">
-                                @can('car-quotes-create')
+                                @can('car-quotes-plans-create')
                                     <a href="{{ url('quotes/car/'.$uuidModal.'/add_quote') }}" class="btn btn-primary btn-sm">Create Quote</a>
                                 @endcan
                             @if(gettype($listQuotePlans) != 'string')

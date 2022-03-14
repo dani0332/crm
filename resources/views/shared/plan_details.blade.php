@@ -65,11 +65,10 @@
         var excess = $("#excess").val();
         var repair_type = $("#repair_type").val();
         var car_value_lower_limit = $("#car_value_lower_limit").val();
-        var car_value_upper_limit = $("#car_value_upper_limit").val();
         var carPlanTypeComp = JSON.parse('<?php echo json_encode($carPlanTypeComp) ?>');
 
-        if(repair_type == carPlanTypeComp && (car_value < car_value_lower_limit || car_value > car_value_upper_limit)) {
-            alert("Value must be in between AED " + car_value_lower_limit + " to AED " + car_value_upper_limit);
+        if(repair_type == carPlanTypeComp && parseInt(car_value) < parseInt(car_value_lower_limit)) {
+            alert("Car Value should be greater than or equal to " + car_value_lower_limit);
             return false;
         }
         if(actual_premium == '' || discounted_premium == '' || car_value == '' || excess == '') {
@@ -95,7 +94,7 @@
             success: function(result) {
                 $('#car_plan_manual_process_text').show();
                 $("#car_plan_manual_process_text").text(result);
-                $('#car_plan_manual_process_text').hide(5000);
+                $("#car_plan_manual_process_text").delay(3200).fadeOut(300);
             }
         });
     });
@@ -283,8 +282,8 @@
                                     </tr>
                                     <tr><td valign="top">Disabled?</td>
                                         <td><select class="form-control" id='is_disabled' name="is_disabled">
-                                                <option value="0" {{ $isDisabled == 0 ? 'selected="selected"' : '' }}>False</option>
-                                                <option value="1" {{ $isDisabled == 1 ? 'selected="selected"' : '' }}>True</option>
+                                                <option value="false" {{ $isDisabled == false ? 'selected="selected"' : '' }}>False</option>
+                                                <option value="true" {{ $isDisabled == true ? 'selected="selected"' : '' }}>True</option>
                                             </select>
                                             <div id="car_plan_manual_process_text" style="display: none;font-weight:bold;"></div>
                                         </td>
