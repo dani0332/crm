@@ -44,6 +44,7 @@ class TravelQuoteService extends BaseService
             'tqrd.next_followup_date',
             'ls.text as lost_reason',
             'tqrd.notes',
+            'tqr.currently_located_in_id',
             'cli.text as currently_located_in_id_text'
         )
             ->leftJoin('travel_cover_for as tcf', 'tcf.id', '=', 'tqr.travel_cover_for_id')
