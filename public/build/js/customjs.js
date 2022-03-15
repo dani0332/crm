@@ -742,6 +742,7 @@ $(document).ready(function () {
         },
         { data: 'car_make_text', name: 'car_make_text' },
         { data: 'car_model_text', name: 'car_model_text' },
+        { data: 'ip_text', name: 'ip_text' },
         { data: 'first_year', name: 'first_year' },
         { data: 'second_year', name: 'first_year' },
         { data: 'third_year', name: 'first_year' },
