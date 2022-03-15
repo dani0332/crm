@@ -1,61 +1,68 @@
-FROM php:7.4-fpm
-LABEL maintainer="dev@chialab.io"
+FROM php:8.0-fpm
 
-# Download script to install PHP extensions and dependencies
-ADD https://raw.githubusercontent.com/mlocati/docker-php-extension-installer/master/install-php-extensions /usr/local/bin/
+# Set working directory
+WORKDIR /var/www
 
-RUN chmod uga+x /usr/local/bin/install-php-extensions && sync
+# Add docker php ext repo
+ADD https://github.com/mlocati/docker-php-extension-installer/releases/latest/download/install-php-extensions /usr/local/bin/
 
-RUN DEBIAN_FRONTEND=noninteractive apt-get update -q \
-    && DEBIAN_FRONTEND=noninteractive apt-get install -qq -y \
-      curl \
-      git \
-      zip unzip \
-    && install-php-extensions \
-      bcmath \
-      bz2 \
-      calendar \
-      exif \
-      gd \
-      intl \
-      ldap \
-      memcached \
-      mysqli \
-      opcache \
-      pdo_mysql \
-      pdo_pgsql \
-      pgsql \
-      redis \
-      soap \
-      xsl \
-      zip \
-      sockets
+# Install php extensions
+RUN chmod +x /usr/local/bin/install-php-extensions && sync && \
+    install-php-extensions mbstring pdo_mysql zip exif pcntl gd memcached
 
-RUN apt-get update && \
-    apt-get clean
+# Install dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    libpng-dev \
+    libjpeg62-turbo-dev \
+    libfreetype6-dev \
+    locales \
+    zip \
+    jpegoptim optipng pngquant gifsicle \
+    unzip \
+    git \
+    curl \
+    lua-zlib-dev \
+    libmemcached-dev \
+    nginx \
+    wget \
+    gnupg
+    
+RUN (curl -Ls https://cli.doppler.com/install.sh || wget -qO- https://cli.doppler.com/install.sh) | sh
 
-RUN curl -sL https://deb.nodesource.com/setup_12.x  | bash -
-RUN apt-get -y install nodejs
-RUN npm install --global yarn
-ENV PATH=$PATH:/root/composer2/vendor/bin:/root/composer1/vendor/bin \
-  COMPOSER_ALLOW_SUPERUSER=1 \
-  COMPOSER_HOME=/root/composer2 \
-  COMPOSER1_HOME=/root/composer
-RUN cd /opt \
-  # Download installer and check for its integrity.
-  && curl -sSL https://getcomposer.org/installer > composer-setup.php \
-  && curl -sSL https://composer.github.io/installer.sha384sum > composer-setup.sha384sum \
-  && sha384sum --check composer-setup.sha384sum \
-  # Install Composer 2 and expose `composer` as a symlink to it.
-  && php composer-setup.php --install-dir=/usr/local/bin --filename=composer2 --2 \
-  && ln -s /usr/local/bin/composer2 /usr/local/bin/composer \
-  # Install Composer 1, make it point to a different `$COMPOSER_HOME` directory than Composer 2, install `hirak/prestissimo` plugin.
-  && php composer-setup.php --install-dir=/usr/local/bin --filename=.composer1 --1 \
-  && printf "#!/bin/sh\nCOMPOSER_HOME=\$COMPOSER1_HOME\nexec /usr/local/bin/.composer1 \$@" > /usr/local/bin/composer1 \
-  && chmod 755 /usr/local/bin/composer1 \
-  && composer1 global require hirak/prestissimo \
-  # Remove installer files.
-  && rm /opt/composer-setup.php /opt/composer-setup.sha384sum
+# Install supervisor
+RUN apt-get install -y supervisor
 
+# Install composer
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
-EXPOSE 9000
+# Clear cache
+RUN apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Add user for laravel application
+RUN groupadd -g 1000 www
+RUN useradd -u 1000 -ms /bin/bash -g www www
+
+# Copy code to /var/www
+COPY --chown=www:www-data . /var/www
+
+# add root to www group
+RUN chmod -R ug+w /var/www/storage
+
+# Copy nginx/php/supervisor configs
+RUN cp docker/supervisor.conf /etc/supervisord.conf
+RUN cp docker/tokyo.ini /usr/local/etc/php/conf.d/app.ini
+RUN cp docker/nginx.conf /etc/nginx/sites-enabled/default
+
+RUN doppler configure set token dp.st.stg.Ul4wzAREcvYod6Ul2zVPwF0bgo1owrovhZQf8IsykGl
+
+# PHP Error Log Files
+RUN mkdir /var/log/php
+RUN touch /var/log/php/errors.log && chmod 777 /var/log/php/errors.log
+
+# Deployment steps
+RUN composer install --optimize-autoloader --no-dev
+RUN chmod +x /var/www/docker/run.sh
+
+EXPOSE 80
+ENTRYPOINT ["/var/www/docker/run.sh"]
