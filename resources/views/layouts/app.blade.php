@@ -182,7 +182,7 @@ $appName = Config::get('constants.APP_NAME');
                 customer_data_table_route: "{{ route('customer.index') }}",
                 discount_base_data_table_route: "{{ route('base.index') }}",
                 load_auditable: "{{ url('auditable') }}",
-                load_dashboard_stats: "{{ url('dashboard-stats') }}",
+                //load_dashboard_stats: "{{ url('dashboard-stats') }}",
                 insurancecompany_datatable_route: "{{ route('insurancecompany.index') }}",
                 handler_datatable_route: "{{ route('handler.index') }}",
                 reason_datatable_route: "{{ route('reason.index') }}",

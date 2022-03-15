@@ -43,7 +43,9 @@ class TravelQuoteService extends BaseService
             'r.TEXT AS region_cover_for_id_text',
             'tqrd.next_followup_date',
             'ls.text as lost_reason',
-            'tqrd.notes'
+            'tqrd.notes',
+            // 'tqr.currently_located_in_id',
+            // 'cli.text as currently_located_in_id_text'
         )
             ->leftJoin('travel_cover_for as tcf', 'tcf.id', '=', 'tqr.travel_cover_for_id')
             ->leftJoin('travel_quote_request_detail as tqrd', 'tqr.id', '=', 'tqrd.travel_quote_request_id')
@@ -52,6 +54,7 @@ class TravelQuoteService extends BaseService
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'tqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'tqr.advisor_id')
             ->leftJoin('region as r', 'r.id', '=', 'tqr.region_cover_for_id')
+            // ->leftJoin('currently_located_in as cli', 'cli.id', '=', 'tqr.currently_located_in_id')
             ->where('qs.text', '!=', 'Fake');
     }
 
@@ -73,6 +76,7 @@ class TravelQuoteService extends BaseService
             "regionCoverForId" => $request->region_cover_for_i,
             "source" => $sourceName,
             "referenceUrl" => $appUrl,
+            // "currentlyLocatedInId" => $request->currently_located_in_id,
         );
         if (!Auth::user()->hasRole("ADMIN")) $dataArr['advisorId'] = Auth::user()->id;
         return CapiRequestService::sendCAPIRequest('/api/v1-save-travel-quote', $dataArr);
@@ -127,7 +131,7 @@ class TravelQuoteService extends BaseService
                 'u.name as assignedBy',
                 'tqr.updated_at',
                 'tqr.source as leadSource',
-                'tqrd.next_followup_date as nextFollowupDate',
+                'tqrd.next_followup_date as nextFollowupDate'
             )
             ->leftJoin('travel_quote_request_detail as tqrd', 'tqrd.travel_quote_request_id', '=', 'tqr.id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'tqr.quote_status_id')
@@ -313,6 +317,7 @@ class TravelQuoteService extends BaseService
         $travelQuote->destination = $request->destination;
         $travelQuote->region_cover_for_id = $request->region_cover_for_id;
         $travelQuote->details = $request->details;
+        // $travelQuote->currently_located_in_id = $request->currently_located_in_id;
         $travelQuote->save();
         if (isset($request->return_to_view))
             return redirect("quote/travel/" . $id)->with('success', 'Travel Quote has been updated');
@@ -340,7 +345,8 @@ class TravelQuoteService extends BaseService
             "nationality_id" => "select|title|required",
             "region_cover_for_id" => "select|title|required",
             "travel_cover_for_id" => "select|title|required",
-            "details" => "textarea|text|required"
+            "details" => "textarea|text|required",
+            // "currently_located_in_id" => "select|title|required"
         );
     }
 
@@ -372,9 +378,12 @@ class TravelQuoteService extends BaseService
             case 'nationality_id':
                 $title = "Nationality";
                 break;
-            case 'travel_cover_for_id':
-                $title = "Who would you like cover for?";
+            case 'next_followup_date':
+                $title = "Next Followup Date";
                 break;
+            // case 'currently_located_in_id':
+            //     $title = "Currently Located In ";
+            //     break;
             case 'mobile_no':
                 $title = "Mobile Number";
                 break;
@@ -455,5 +464,9 @@ class TravelQuoteService extends BaseService
 
             return $responseBodyAsString;
         }
+    }
+    public function getMembersDetail($id)
+    {
+        return DB::table("travel_quote_request_member_details")->where('travel_quote_request_id', $id)->get();
     }
 }

@@ -256,9 +256,12 @@ class CRUDController extends Controller
                 }
             }
 
+            // $members_detail = $this->travelQuoteService->getMembersDetail($record->id);
+            $members_detail = [];
+
             return view('shared.show', compact([
                 'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList',
-                'leadStatuses', 'lostReasons', 'selectedLostReasonId'
+                'leadStatuses', 'lostReasons', 'selectedLostReasonId', 'members_detail'
             ]));
         } else {
             return view('shared.show', compact(['record', 'model', 'customTitles', 'customTableList', 'advisors', 'leadStatuses', 'lostReasons', 'selectedLostReasonId']));
