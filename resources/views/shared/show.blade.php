@@ -267,9 +267,9 @@
                 </div>
             </div>
         </div>
-        <x-travel-quote-members-detail
+        <!-- <x-travel-quote-members-detail
             :members="$members_detail"
-        />
+        /> -->
         <x-travel-quote
             :listQuotePlans="$listQuotePlans"
             :uuidModal="$record->uuid"
