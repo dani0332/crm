@@ -6,4 +6,4 @@ cd /var/www
 php artisan cache:clear
 php artisan route:cache
 
-doppler -- run /usr/bin/supervisord -c /etc/supervisord.conf
+doppler run -- /usr/bin/supervisord -c /etc/supervisord.conf
