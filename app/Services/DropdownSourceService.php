@@ -217,6 +217,9 @@ class DropdownSourceService extends BaseService
             case 'code':
                 $data = DB::table("car_plan_coverage")->distinct()->select('car_plan_coverage.code as id','car_plan_coverage.code as text')->whereNotNull('code')->whereNotNull('text')->get();
                 break;
+            case 'currently_located_in_id':
+                $data = DB::table("currently_located_in")->select('id','text')->where("is_active", true)->orderBy('sort_order', 'asc')->get();
+                break;
             default:
                 break;
         }

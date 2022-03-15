@@ -436,7 +436,7 @@ class CarQuoteService extends BaseService
             }
         }
     }
-    
+
     public function walkTree ($userId) {
         $childs = User::where('manager_id', $userId)->pluck('id');
         foreach ($childs as $child) {
@@ -461,7 +461,7 @@ class CarQuoteService extends BaseService
         if ($request->ajax()) {
             if(Auth::user()->isManagerOrDeputy()){
                 $this->walkTree(Auth::user()->id); // get all childs of the user
-                array_push($this->childUserIds, Auth::user()->id); // add the user id to the array to fetch directly assigned leads as well 
+                array_push($this->childUserIds, Auth::user()->id); // add the user id to the array to fetch directly assigned leads as well
                 $this->query->whereIn('cqr.advisor_id', $this->childUserIds);	// fetch leads assigned to the user or his childs
             }
             if (!isset($request->email) && $request->email == '') {
@@ -742,12 +742,6 @@ class CarQuoteService extends BaseService
         $apiUserName = Config::get('constants.KEN_API_USER');
         $apiPassword = Config::get('constants.KEN_API_PWD');
 
-        if(isset($request->is_disabled)) {
-            $isDisabled = $request->is_disabled;
-        } else {
-            $isDisabled = 0;
-        }
-
         if(isset($request->is_create)) {
             if($request->is_create == 1) {
                 $discountedPremium = $request->actual_premium;
@@ -766,7 +760,7 @@ class CarQuoteService extends BaseService
                 "carValue" => (float)$request->car_value,
                 "excess" => (float)$request->excess,
                 "discountPremium" => (float)$discountedPremium,
-                "isDisabled" => $isDisabled]
+                "isDisabled" => filter_var($request->is_disabled, FILTER_VALIDATE_BOOLEAN)]
             )
         );
 
