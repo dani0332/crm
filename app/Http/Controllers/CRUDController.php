@@ -256,7 +256,8 @@ class CRUDController extends Controller
                 }
             }
 
-            $members_detail = $this->travelQuoteService->getMembersDetail($record->id);
+            // $members_detail = $this->travelQuoteService->getMembersDetail($record->id);
+            $members_detail = [];
 
             return view('shared.show', compact([
                 'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList',
