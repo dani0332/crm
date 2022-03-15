@@ -267,12 +267,13 @@
                 </div>
             </div>
         </div>
-
+        <x-travel-quote-members-detail
+            :members="$members_detail"
+        />
         <x-travel-quote
             :listQuotePlans="$listQuotePlans"
             :uuidModal="$record->uuid"
             :quoteRequestId="$record->id"
         />
-
     @endif
 @endsection

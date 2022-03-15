@@ -465,4 +465,8 @@ class TravelQuoteService extends BaseService
             return $responseBodyAsString;
         }
     }
+    public function getMembersDetail($id)
+    {
+        return DB::table("travel_quote_request_member_details")->where('travel_quote_request_id', $id)->get();
+    }
 }
