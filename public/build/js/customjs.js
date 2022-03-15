@@ -864,18 +864,18 @@ $(document).ready(function () {
     });
 
     // Claims-EditView: Populate models of selected car make
-    var make_code = $("#edit_car_make_model #car_make_id option:selected").attr('data-id');
-    var old_car_model_id = $("#edit_car_make_model #old_car_model_id").val();
-    $.get('/car-model?make_code=' + make_code, function (data) {
-        var carmodel = $('#edit_car_make_model #car_model_id').empty();
-        $.each(data, function (create, carmodelObj) {
-            var option = $('<option/>', { id: create, value: carmodelObj });
-            if (old_car_model_id == carmodelObj.id)
-                carmodel.append('<option selected data-id="' + carmodelObj.code + '" value="' + carmodelObj.id + '">' + carmodelObj.text + '</option>');
-            else
-                carmodel.append('<option  data-id="' + carmodelObj.code + '" value="' + carmodelObj.id + '">' + carmodelObj.text + '</option>');
-        });
-    });
+    // var make_code = $("#edit_car_make_model #car_make_id option:selected").attr('data-id');
+    // var old_car_model_id = $("#edit_car_make_model #old_car_model_id").val();
+    // $.get('/car-model?make_code=' + make_code, function (data) {
+    //     var carmodel = $('#edit_car_make_model #car_model_id').empty();
+    //     $.each(data, function (create, carmodelObj) {
+    //         var option = $('<option/>', { id: create, value: carmodelObj });
+    //         if (old_car_model_id == carmodelObj.id)
+    //             carmodel.append('<option selected data-id="' + carmodelObj.code + '" value="' + carmodelObj.id + '">' + carmodelObj.text + '</option>');
+    //         else
+    //             carmodel.append('<option  data-id="' + carmodelObj.code + '" value="' + carmodelObj.id + '">' + carmodelObj.text + '</option>');
+    //     });
+    // });
 
     $("#sub_type_of_insurance").hide();
     $("#car_fields").hide();
@@ -1649,16 +1649,16 @@ $(document).ready(function () {
             },
         });
     });
-    dateRangePickerChange("", "");
-    $(".x_panel transparent > .applyBtn, .ranges li").click(function () {
-        setTimeout(() => {
-            var date = $("#reportrange span").html();
-            var dateAsArray = date.split("-");
-            var startDate = moment(dateAsArray[0]).format("YYYY-MM-DD");
-            var endDate = moment(dateAsArray[1]).format("YYYY-MM-DD");
-            dateRangePickerChange(startDate, endDate);
-        }, 1000);
-    });
+    // dateRangePickerChange("", "");
+    // $(".x_panel transparent > .applyBtn, .ranges li").click(function () {
+    //     setTimeout(() => {
+    //         var date = $("#reportrange span").html();
+    //         var dateAsArray = date.split("-");
+    //         var startDate = moment(dateAsArray[0]).format("YYYY-MM-DD");
+    //         var endDate = moment(dateAsArray[1]).format("YYYY-MM-DD");
+    //         dateRangePickerChange(startDate, endDate);
+    //     }, 1000);
+    // });
     $("#return_to_view").click(function (e) {
         e.preventDefault();
         var input = '<input name="return_to_view" type="hidden" value="1"/>';
@@ -1773,23 +1773,23 @@ $(document).ready(function () {
 
     });
 
-    function dateRangePickerChange(startDate, endDate) {
-        $(".loader").show();
-        $.ajax({
-            url: config.routes.load_dashboard_stats,
-            method: "POST",
-            data: { startDate, endDate, _token: config._token },
-            success: function (data) {
-                console.log("request ", data);
-                $(".customer-count").html(data.totalCustomers);
-                $(".carquote-count").html(data.totalCarQuotes);
-                $(".ecomleads-count").html(data.totalEcommerceLeads);
-                $(".fakeleads-count").html(data.totalFakeLeads);
-                $(".duration").html(startDate + " - " + endDate);
-                $(".loader").hide();
-            },
-        });
-    }
+    // function dateRangePickerChange(startDate, endDate) {
+    //     $(".loader").show();
+    //     $.ajax({
+    //         url: config.routes.load_dashboard_stats,
+    //         method: "POST",
+    //         data: { startDate, endDate, _token: config._token },
+    //         success: function (data) {
+    //             console.log("request ", data);
+    //             $(".customer-count").html(data.totalCustomers);
+    //             $(".carquote-count").html(data.totalCarQuotes);
+    //             $(".ecomleads-count").html(data.totalEcommerceLeads);
+    //             $(".fakeleads-count").html(data.totalFakeLeads);
+    //             $(".duration").html(startDate + " - " + endDate);
+    //             $(".loader").hide();
+    //         },
+    //     });
+    // }
     var corpLineDataTable = $(".corpline-data-table").DataTable({
         ordering: false,
         info: false,
