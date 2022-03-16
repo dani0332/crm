@@ -233,15 +233,17 @@ class CRUDController extends Controller
             } else {
                 if (gettype($quotePlans) != 'string') {
                     $listQuotePlans = $quotePlans->quotes->plans;
+                    $listQuote = $quotePlans->quotes;
                 } else {
                     $listQuotePlans = $quotePlans;
+                    $listQuote = null;
                 }
             }
 
             return view('shared.show', compact([
                 'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList',
                 'ecomCarInsuranceQuoteUrl', 'carQuotePlanAddons', 'vehicleTypeText', 'leadStatuses',
-                'lostReasons', 'selectedLostReasonId'
+                'lostReasons', 'selectedLostReasonId', 'listQuote'
             ]));
         } else if ($this->genericModel->modelType == quoteTypeCode::Travel) { // Travel plans to display on detail view
             $listQuotePlans = '';
