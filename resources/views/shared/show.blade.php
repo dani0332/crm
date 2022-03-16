@@ -225,6 +225,7 @@
         :vehicleTypeText="$vehicleTypeText"
         :caqQuoteCylinder="$record->cylinder"
         :caqQuoteSeatCapacity="$record->seat_capacity"
+        :listQuote="$listQuote"
         />
 
         <x-car-ecom-detail
