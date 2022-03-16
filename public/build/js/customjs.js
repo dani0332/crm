@@ -455,11 +455,19 @@ $(document).ready(function () {
     });
 
     var transactionsDatatable = $('.transaction-data-table').DataTable({
+        dom: 'Bfrtip',
+        "buttons": [{
+            "extend": 'csv',
+            "text": '<i class="fa fa-download" style="color:orange;" id="transapp-export"></i><div id="transapp-export-text" class="required" style="font-weight:bold;"></div>',
+            "titleAttr": 'Download CSV',
+            "action": newexportaction
+        }],
         ordering: false,
         info: false,
         searching: false,
         bLengthChange: false,
         serverSide: true,
+        processing: true,
         ajax: {
             url: config.routes.transaction_datatable_route,
             data: function (d) {
@@ -489,13 +497,22 @@ $(document).ready(function () {
         ]
     });
 
+    $("#transapp-export").hide();
     $("#search-transactions").submit(function (e) {
-        e.preventDefault();
-        $(".loader").show();
-        transactionsDatatable.draw();
-        setTimeout(() => {
-            $(".loader").hide();
-        }, 1000);
+        var transappStartDate = $("#transapp_start_date").val();
+        var transappStopDate = $("#transapp_stop_date").val();
+
+        var transappStartDateVar = new Date(transappStartDate);
+        var transappStopDateVar = new Date(transappStopDate);
+        var timeDifference = transappStopDateVar.getTime() - transappStartDateVar.getTime();
+        var daysDifference = timeDifference / (1000 * 60 * 60 * 24);
+
+        // e.preventDefault();
+        // $(".loader").show();
+        // transactionsDatatable.draw();
+        // setTimeout(() => {
+        //     $(".loader").hide();
+        // }, 1000);
     });
 
     $("#search-users").submit(function (e) {
@@ -1906,4 +1923,10 @@ $("#update_car_plans").submit(function (e) {
 
 $('#quotePlanModal').on('hidden.bs.modal', function () {
     location.reload();
+});
+
+$("#transapp-export").click(function () {
+    $("#transapp-export").hide();
+    $("#transapp-export-text").text("Please wait until csv file will be downloaded. More waiting time is depending on number of records.");
+    $('#transapp-export-text').show().delay(10000).fadeOut();
 });

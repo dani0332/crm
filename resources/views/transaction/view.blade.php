@@ -144,6 +144,7 @@
                         </div>
                     </div>
                 </form>
+                <input type="hidden" id="isTransappAdmin" name="isTransappAdmin" value="{{ $isTransappAdmin }}">
                 <table class="table table-striped jambo_table transaction-data-table" style="width:100%">
                       <thead>
                         <tr>
