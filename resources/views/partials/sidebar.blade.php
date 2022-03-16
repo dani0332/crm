@@ -279,7 +279,7 @@
                              <li><a href="{{ url('generic/insuranceprovider') }}">Insurance Providers</a></li>
                             @endcan
                             @can('application-storage-list')
-                            <li><a href="{{ url('generic/applicationstorage') }}">Application Storage</a></li>
+                            <li><a href="{{ url('generic/applicationstorage') }}">Application Storage</a></li> 
                             @endcan
                         </ul>
                     </li>
