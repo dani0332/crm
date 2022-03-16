@@ -32,6 +32,7 @@
                                 <div class="input-group">
                                 <input type="text" name="transapp_stop_date" id="transapp_stop_date" class="form-control">
                                 </div>
+                                <div id="message" style="color:red;"></div>
                             </div>
                         </div>
                     </div>
@@ -94,14 +95,6 @@
                         </div>
                     </div>
                     <div class="item form-group">
-                        {{-- <div class="col">
-                            <label class="col-form-label col-md-2 col-sm-2" id='omer_name' for="Customer Name ">Customer Name</label>
-                            <div class="col-md-6 col-sm-6">
-                                <div class="input-group">
-                                <input type="text" name="transapp_customer_name" id="customer_name" class="form-control">
-                                </div>
-                            </div>
-                        </div> --}}
                         <div class="col">
                             <label class="col-form-label col-md-2 col-sm-2" id='customer_email_label' for="Customer Email ">Customer Email</label>
                             <div class="col-md-6 col-sm-6">
@@ -138,8 +131,8 @@
                     <div class="item form-group">
                         <div class="col">
                             <ul class="nav navbar-right panel_toolbox">
-                            <li><input type="submit" class="btn btn-warning btn-sm"></li>
-                            <li><input type="reset" class="btn btn-warning btn-sm"></li>
+                                <li><input type="submit" class="btn btn-warning btn-sm"></li>
+                                <li><input type="reset" class="btn btn-warning btn-sm"></li>
                             </ul>
                         </div>
                     </div>

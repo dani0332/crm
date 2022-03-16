@@ -499,20 +499,66 @@ $(document).ready(function () {
 
     $("#transapp-export").hide();
     $("#search-transactions").submit(function (e) {
-        var transappStartDate = $("#transapp_start_date").val();
-        var transappStopDate = $("#transapp_stop_date").val();
+        e.preventDefault();
+        var tmLeadsStartDate = $("#transapp_start_date");
+        var tmLeadsEndDate = $("#transapp_stop_date");
+        var message = $("#message");
+        var transappExport = $("#transapp-export");
+        
+        var tmLeadsStartDateVal = tmLeadsStartDate.val();
+        var tmLeadsEndDateVal = tmLeadsEndDate.val();
 
-        var transappStartDateVar = new Date(transappStartDate);
-        var transappStopDateVar = new Date(transappStopDate);
-        var timeDifference = transappStopDateVar.getTime() - transappStartDateVar.getTime();
-        var daysDifference = timeDifference / (1000 * 60 * 60 * 24);
+        var tmLeadsStartDateVar = new Date(tmLeadsStartDateVal);
+        var tmLeadsEndDateVar = new Date(tmLeadsEndDateVal);
+        var timeDiff = tmLeadsEndDateVar.getTime() - tmLeadsStartDateVar.getTime();
+        var daysDiff = timeDiff / (1000 * 60 * 60 * 24);
 
-        // e.preventDefault();
-        // $(".loader").show();
-        // transactionsDatatable.draw();
-        // setTimeout(() => {
-        //     $(".loader").hide();
-        // }, 1000);
+        if((tmLeadsStartDateVal == "") || (tmLeadsEndDateVal == "")) {
+            message.html("Please select start & stop dates");
+            tmLeadsStartDate.css('border-color', 'red');
+            tmLeadsEndDate.css('border-color', 'red');
+            transappExport.hide();
+            return false
+        }
+        if(tmLeadsStartDateVal > tmLeadsEndDateVal) {
+            message.html("Start date must be equal or less than stop date");
+            tmLeadsStartDate.css('border-color', 'red');
+            tmLeadsEndDate.css('border-color', 'red');
+            transappExport.hide();
+            return false
+        }
+        if(daysDiff > 30) {
+            message.html("Allowed number of days between start & stop dates are 30 days.");
+            tmLeadsStartDate.css('border-color', 'red');
+            tmLeadsEndDate.css('border-color', 'red');
+            transappExport.hide();
+            return false
+        }
+        else {
+            transactionsDatatable.draw();
+            $(".loader").show();
+            message.html("");
+            tmLeadsStartDate.css('border-color', '');
+            tmLeadsEndDate.css('border-color', '');
+            transappExport.show();
+            setTimeout(() => {
+                $(".loader").hide();
+            }, 1000);
+
+            var isTransappAdmin = $("#isTransappAdmin").val();
+            if(isTransappAdmin == 1) {
+                $("a[title='Download CSV']").show();
+            } else {
+                $("a[title='Download CSV']").hide();
+            }
+        }
+    });
+
+    $("#transapp-export").click(function () {
+        console.log('clicked on export-export');
+        $("#transapp-export").hide();
+        $("#transapp-export-text").text("Please wait until csv file will be downloaded. More waiting time is depending on number of records.");
+        $('#transapp-export-text').show().delay(10000).fadeOut();
     });
 
     $("#search-users").submit(function (e) {
@@ -1923,10 +1969,4 @@ $("#update_car_plans").submit(function (e) {
 
 $('#quotePlanModal').on('hidden.bs.modal', function () {
     location.reload();
-});
-
-$("#transapp-export").click(function () {
-    $("#transapp-export").hide();
-    $("#transapp-export-text").text("Please wait until csv file will be downloaded. More waiting time is depending on number of records.");
-    $('#transapp-export-text').show().delay(10000).fadeOut();
 });
