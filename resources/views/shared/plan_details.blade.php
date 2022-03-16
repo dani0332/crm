@@ -269,26 +269,26 @@
                                     </tr>
                                     <tr><td valign="top">Repair Type:</td> <td>{{ $repairType }}</td><td> </td></tr>
                                     <tr>
-                                        <td valign="top">Actual Premium:</td> <td><input type="number" id="actual_premium" name="actual_premium" value="{{ old('actual_premium', $actualPremium) }}" class="form-control" onKeyDown="if(this.value.length==8) return false;"></td>
-                                        <td valign="top">Discounted Premium:</td> <td><input type="number" id="discounted_premium" name="discounted_premium" value="{{ old('discounted_premium', $discountPremium) }}" class="form-control" onKeyDown="if(this.value.length==8) return false;"></td>
+                                        <td valign="top">Actual Premium:</td> <td><input disabled type="number" id="actual_premium" name="actual_premium" value="{{ old('actual_premium', $actualPremium) }}" class="form-control" onKeyDown="if(this.value.length==8) return false;"></td>
+                                        <td valign="top">Discounted Premium:</td> <td><input disabled type="number" id="discounted_premium" name="discounted_premium" value="{{ old('discounted_premium', $discountPremium) }}" class="form-control" onKeyDown="if(this.value.length==8) return false;"></td>
                                     </tr>
                                     <tr>
-                                        <td valign="top">Car value:</td> <td><input type="number" id="car_value" name="car_value" value="{{ old('car_value', $carValue) }}" class="form-control" onKeyDown="if(this.value.length==8) return false;" style="{{ $readonlyFieldCss }}">
+                                        <td valign="top">Car value:</td> <td><input disabled type="number" id="car_value" name="car_value" value="{{ old('car_value', $carValue) }}" class="form-control" onKeyDown="if(this.value.length==8) return false;" style="{{ $readonlyFieldCss }}">
                                             @if($repairType == CarPlanType::COMP)
                                                 <span style="font-size: 10px;">Min: AED {{ number_format($carValueLowerLimit) }} - Max: AED {{ number_format($carValueUpperLimit) }}</span>
                                             @endif
                                         </td>
-                                        <td valign="top">Excess:</td> <td><input type="number" id="excess" name="excess" value="{{ old('excess', $excess) }}" class="form-control" onKeyDown="if(this.value.length==8) return false;" style="{{ $readonlyFieldCss }}"></td>
+                                        <td valign="top">Excess:</td> <td><input disabled type="number" id="excess" name="excess" value="{{ old('excess', $excess) }}" class="form-control" onKeyDown="if(this.value.length==8) return false;" style="{{ $readonlyFieldCss }}"></td>
                                     </tr>
                                     <tr><td valign="top">Disabled?</td>
-                                        <td><select class="form-control" id='is_disabled' name="is_disabled">
+                                        <td><select class="form-control" id='is_disabled' name="is_disabled" disabled>
                                                 <option value="false" {{ $isDisabled == false ? 'selected="selected"' : '' }}>False</option>
                                                 <option value="true" {{ $isDisabled == true ? 'selected="selected"' : '' }}>True</option>
                                             </select>
                                             <div id="car_plan_manual_process_text" style="display: none;font-weight:bold;"></div>
                                         </td>
                                         <td> </td>
-                                        <td align="right"><button type="submit" class="btn btn-warning btn-sm" id="update_car_plan_button">Update</button></td></tr>
+                                        <td align="right"><button type="submit" class="btn btn-warning btn-sm" id="update_car_plan_button" style="display:none;">Update</button></td></tr>
                                 </table>
                             </form>
                             <br />
