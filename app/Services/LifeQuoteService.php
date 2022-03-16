@@ -154,6 +154,10 @@ class LifeQuoteService extends BaseService
                 $dateTo = Carbon::createFromFormat('Y-m-d', $request['next_followup_date_end'])->endOfDay()->toDateTimeString();
                 $this->query->whereBetween('lqrd.next_followup_date', [$dateFrom, $dateTo]);
             }
+            if(Auth::user()->isSpecificTeamAdvisor('Life')){
+                // if user has advisor Role then fetch leads assigned to the user only
+                $this->query->where('lqr.advisor_id', Auth::user()->id);	// fetch leads assigned to the user
+            }
             foreach ($searchProperties as $item) {
                 if (!empty($request[$item]) && $item != "created_at") {
                     if ($request[$item] == 'null') {
