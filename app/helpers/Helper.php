@@ -89,7 +89,7 @@ function cleanString($string) {
     $modelType = $nameSpace .$modelType."Quote";
     $result["total_leads"] = $modelType::where("quote_status_id", $statusId)->count();
     $result["total_premium"] = $modelType::where("quote_status_id", $statusId)->sum("premium");
-    $result["leads_list"] = $modelType::where("quote_status_id", $statusId)->paginate(2);
+    $result["leads_list"] = $modelType::where("quote_status_id", $statusId)->paginate(10);
     return $result;
 }
 
@@ -99,7 +99,7 @@ function getDataAgainstEveryStatus($modelType, $request) {
         return $result;
     $nameSpace = '\\App\\Models\\';
     $modelType = $nameSpace .$modelType."Quote";
-    $result["leads_list"] = $modelType::where("quote_status_id", $request->status)->paginate(2);
+    $result["leads_list"] = $modelType::where("quote_status_id", $request->status)->paginate(10);
    
     return $result;
 }
