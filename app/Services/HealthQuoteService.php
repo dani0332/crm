@@ -147,6 +147,10 @@ class HealthQuoteService extends BaseService
                 $dateTo = Carbon::createFromFormat('Y-m-d', $request['created_at_end'])->endOfDay()->toDateTimeString();
                 $this->query->whereBetween('hqr.created_at', [$dateFrom, $dateTo]);
             }
+            if(Auth::user()->isSpecificTeamAdvisor('Health') || Auth::user()->isSpecificTeamAdvisor('EBP') || Auth::user()->isSpecificTeamAdvisor('RM')){
+                // if user has advisor Role then fetch leads assigned to the user only
+                $this->query->where('hqr.advisor_id', Auth::user()->id);	// fetch leads assigned to the user
+            }
             foreach ($searchProperties as $item) {
                 if (!empty($request[$item]) && $item != "created_at") {
                     if ($request[$item] == 'null') {

@@ -66,7 +66,7 @@
                         data: 'id',
                         name: 'id',
                         render: function(data, type, row) {
-                            return "<a href='/quotes/" + $("#modelType").val().toLowerCase() + '/' + row.uuid + "'>" + row.code + "</a>"
+                            return "<a target='_blank' href='/quotes/" + $("#modelType").val().toLowerCase() + '/' + row.uuid + "'>" + row.code + "</a>"
                         }
                     },
                     {

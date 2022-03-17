@@ -464,6 +464,12 @@ class CarQuoteService extends BaseService
                 array_push($this->childUserIds, Auth::user()->id); // add the user id to the array to fetch directly assigned leads as well
                 $this->query->whereIn('cqr.advisor_id', $this->childUserIds);	// fetch leads assigned to the user or his childs
             }
+
+            if(Auth::user()->isSpecificTeamAdvisor('Car')){
+                // if user has advisor Role then fetch leads assigned to the user only
+                $this->query->where('cqr.advisor_id', Auth::user()->id);	// fetch leads assigned to the user
+            }
+            
             if (!isset($request->email) && $request->email == '') {
                 //$this->query->where('qs.text', '!=', 'Fake');
             }
