@@ -331,6 +331,7 @@ use App\Enums\quoteTypeCode;
                 setTimeout(() => {
                     $(".loader").hide();
                 }, 1000);
+                location.reload();
             });
             // Custom export function to export all the available rows in grid not just the visible ones
             function newexportaction(e, dt, button, config) {
