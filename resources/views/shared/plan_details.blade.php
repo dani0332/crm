@@ -3,6 +3,20 @@
 <?php
     use App\Enums\quoteTypeCode;
     use App\Enums\CarPlanType;
+    use App\Models\ApplicationStorage;
+
+    $carQuoteEditSwitch = ApplicationStorage::select('value')
+    ->where([['key_name', 'IMCRM_CAR_QUOTE_PLANS_EDIT_IS_DISABLED'], ['is_active', 1]])
+    ->get()->first();
+    if(isset($carQuoteEditSwitch->value)) {
+        if($carQuoteEditSwitch->value == '1') {
+            $carQuoteEditDisable = 'disabled';
+        } else {
+            $carQuoteEditDisable = '';
+        }
+    } else {
+        $carQuoteEditDisable = 'disabled';
+    }
 
     foreach ($listQuotePlans as $listQuotePlan) { // Main
 
@@ -269,26 +283,26 @@
                                     </tr>
                                     <tr><td valign="top">Repair Type:</td> <td>{{ $repairType }}</td><td> </td></tr>
                                     <tr>
-                                        <td valign="top">Actual Premium:</td> <td><input disabled type="number" id="actual_premium" name="actual_premium" value="{{ old('actual_premium', $actualPremium) }}" class="form-control" onKeyDown="if(this.value.length==8) return false;"></td>
-                                        <td valign="top">Discounted Premium:</td> <td><input disabled type="number" id="discounted_premium" name="discounted_premium" value="{{ old('discounted_premium', $discountPremium) }}" class="form-control" onKeyDown="if(this.value.length==8) return false;"></td>
+                                        <td valign="top">Actual Premium:</td> <td><input type="number" id="actual_premium" name="actual_premium" value="{{ old('actual_premium', $actualPremium) }}" class="form-control" onKeyDown="if(this.value.length==8) return false;" {{ $carQuoteEditDisable }}></td>
+                                        <td valign="top">Discounted Premium:</td> <td><input type="number" id="discounted_premium" name="discounted_premium" value="{{ old('discounted_premium', $discountPremium) }}" class="form-control" onKeyDown="if(this.value.length==8) return false;" {{ $carQuoteEditDisable }}></td>
                                     </tr>
                                     <tr>
-                                        <td valign="top">Car value:</td> <td><input disabled type="number" id="car_value" name="car_value" value="{{ old('car_value', $carValue) }}" class="form-control" onKeyDown="if(this.value.length==8) return false;" style="{{ $readonlyFieldCss }}">
+                                        <td valign="top">Car value:</td> <td><input type="number" id="car_value" name="car_value" value="{{ old('car_value', $carValue) }}" class="form-control" onKeyDown="if(this.value.length==8) return false;" style="{{ $readonlyFieldCss }}" {{ $carQuoteEditDisable }}>
                                             @if($repairType == CarPlanType::COMP)
                                                 <span style="font-size: 10px;">Min: AED {{ number_format($carValueLowerLimit) }} - Max: AED {{ number_format($carValueUpperLimit) }}</span>
                                             @endif
                                         </td>
-                                        <td valign="top">Excess:</td> <td><input disabled type="number" id="excess" name="excess" value="{{ old('excess', $excess) }}" class="form-control" onKeyDown="if(this.value.length==8) return false;" style="{{ $readonlyFieldCss }}"></td>
+                                        <td valign="top">Excess:</td> <td><input type="number" id="excess" name="excess" value="{{ old('excess', $excess) }}" class="form-control" onKeyDown="if(this.value.length==8) return false;" style="{{ $readonlyFieldCss }}" {{ $carQuoteEditDisable }}></td>
                                     </tr>
                                     <tr><td valign="top">Disabled?</td>
-                                        <td><select class="form-control" id='is_disabled' name="is_disabled" disabled>
+                                        <td><select class="form-control" id='is_disabled' name="is_disabled" {{ $carQuoteEditDisable }}>
                                                 <option value="false" {{ $isDisabled == false ? 'selected="selected"' : '' }}>False</option>
                                                 <option value="true" {{ $isDisabled == true ? 'selected="selected"' : '' }}>True</option>
                                             </select>
                                             <div id="car_plan_manual_process_text" style="display: none;font-weight:bold;"></div>
                                         </td>
                                         <td> </td>
-                                        <td align="right"><button type="submit" class="btn btn-warning btn-sm" id="update_car_plan_button" style="display:none;">Update</button></td></tr>
+                                        <td align="right"><button type="submit" class="btn btn-warning btn-sm" id="update_car_plan_button" {{ $carQuoteEditDisable }}>Update</button></td></tr>
                                 </table>
                             </form>
                             <br />
