@@ -15,7 +15,7 @@
             </span><br />
             <span>
             Total Premium
-                <span class="float-right">&nbsp; {{$result ? $result['total_premium'] : 0}} </span>
+                <span class="float-right">&nbsp; {{$result ? floor($result['total_premium']) : 0}} AED </span>
             </span>
             
             </div>
@@ -35,7 +35,7 @@
                             {{$lead->first_name}} {{$lead->last_name}} 
                             </div>
                             <div class="pad-5"></div>
-                            <div class="lead-cost"><i class="fa fa-usd font-1"></i>&nbsp; {{$lead->premium}}
+                            <div class="lead-cost"><i class="fa fa-usd font-1"></i>&nbsp; {{$lead->premium ? floor($lead->premium) : 0}} AED
                             </div>
                         </div>
                     </li> 

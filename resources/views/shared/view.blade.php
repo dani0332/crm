@@ -506,16 +506,16 @@ use App\Enums\quoteTypeCode;
                 @php $dynamicClass = "showme"; @endphp
                 @if($model->modelType == quoteTypeCode::Travel || $model->modelType == quoteTypeCode::Home || $model->modelType == quoteTypeCode::Health || $model->modelType == quoteTypeCode::Business || $model->modelType == quoteTypeCode::Life)
                 @php $dynamicClass = "hideme"; @endphp
-                <button type="button" class="btn btn-warning btn-sm toggle-btn active float-right change-layout hideme">Cards View</button>
-                <button type="button" class="btn btn-warning btn-sm toggle-btn-2 float-right change-layout hideme">List View</button>
-                <div class="show-visual-cards hideme">
-                        {{-- <x-leads-visual-card
+                <button type="button" class="btn btn-warning btn-sm toggle-btn active float-right change-layout">Cards View</button>
+                <button type="button" class="btn btn-warning btn-sm toggle-btn-2 float-right change-layout">List View</button>
+                <div class="show-visual-cards showme">
+                        <x-leads-visual-card
                             :model="$model"
                             :dropdownSource="$dropdownSource"
-                        /> --}}
+                        />
                     </div>
                 @endif
-                    <div class="show-container showme">
+                    <div class="show-container {{$dynamicClass}}">
                     @if (session()->has('message'))
                         <div class="alert alert-danger">{{ session()->get('message') }}</div>
                     @endif
