@@ -54,7 +54,7 @@ RUN cp docker/supervisor.conf /etc/supervisord.conf
 RUN cp docker/blanka.ini /usr/local/etc/php/conf.d/app.ini
 RUN cp docker/nginx.conf /etc/nginx/sites-enabled/default
 
-RUN doppler configure set token dp.st.dev.FsOMnBkjOZE6ESDZ8Q1FoQo0lMJxJt5MW3zq5gRVQnp
+RUN doppler configure set token dp.st.localenvs_ammad.sYSx1QUvofiQUmCXiUHKt6y9hlijdTwg3vvY4wZDlef
 
 # PHP Error Log Files
 RUN mkdir /var/log/php
