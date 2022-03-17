@@ -73,8 +73,8 @@
                                 <div class="input-group">
                                     <select class="form-control" name="insurance_company" id="insurance_company_value">
                                         <option value="">Select</option>
-                                        @foreach ($insurance_companies as $insurance_company)
-                                            <option value="{{ $insurance_company->id }}">{{ $insurance_company->name }}</option>
+                                        @foreach ($insuranceCompanies as $insuranceCompany)
+                                            <option value="{{ $insuranceCompany->id }}">{{ $insuranceCompany->name }}</option>
                                         @endforeach
                                     </select>
                                 </div>
@@ -119,8 +119,8 @@
                                 <div class="input-group">
                                     <select class="form-control" name="payment_mode" id="payment_mode_value">
                                         <option value="">Select</option>
-                                        @foreach ($payment_modes as $payment_mode)
-                                            <option value="{{ $payment_mode->id }}">{{ $payment_mode->name }}</option>
+                                        @foreach ($paymentModes as $paymentMode)
+                                            <option value="{{ $paymentMode->id }}">{{ $paymentMode->name }}</option>
                                         @endforeach
                                     </select>
                                 </div>
