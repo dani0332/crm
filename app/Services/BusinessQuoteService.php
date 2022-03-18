@@ -237,6 +237,11 @@ class BusinessQuoteService extends BaseService
                 if (!empty($request[$item]) && $item != "created_at") {
                     if ($request[$item] == 'null') {
                         $this->query->whereNull($item);
+                    } else if ($item == 'advisor_id') {
+                        $this->query->whereIn('advisor_id', $request[$item]);
+                    }
+                    else if ($item == 'quote_status_id') {
+                        $this->query->whereIn('quote_status_id', $request[$item]);
                     } else {
                         $this->query->where($this->getQuerySuffix($item) . '.' . $item, $request[$item]);
                     }
@@ -327,8 +332,8 @@ class BusinessQuoteService extends BaseService
             "next_followup_date" => "input|date|title|range",
             "source" => "input|text",
             "lost_reason" => "input|text",
-            "advisor_id" => "select|title",
-            "quote_status_id" => "select|title",
+            "advisor_id" => "select|title|multiple",
+            "quote_status_id" => "select|title|multiple",
             "created_at" => "input|date|title|range",
             "updated_at" => "input|date|title",
             "premium" => "input|number|required",
