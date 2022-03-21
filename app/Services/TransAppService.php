@@ -272,7 +272,7 @@ class TransAppService extends BaseService
         ->where('approval_code', $approvalCode)
         ->first();
 
-        return $transappAssignedToId;
+        return $transappAssignedToId->assigned_to_id;
     }
 
     public function getTransappIsCancelledByApprovalCode($approvalCode)
