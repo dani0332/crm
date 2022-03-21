@@ -281,13 +281,21 @@ class TransAppService extends BaseService
         ->where('approval_code', $approvalCode)
         ->first();
 
-        return $isCancelled;
+        return $isCancelled->is_cancelled;
     }
 
     public function getTransactionByApprovalCode($approvalCode)
     {
         $transaction = Transaction::where('approval_code', $approvalCode)
         ->get();
+
+        return $transaction;
+    }
+
+    public function getPreviousTransactionByApprovalCode($approvalCode)
+    {
+        $transaction = Transaction::where('approval_code', $approvalCode)
+        ->first();
 
         return $transaction;
     }
@@ -308,7 +316,7 @@ class TransAppService extends BaseService
         ->where('name', $status)
         ->first();
 
-        return $statusId;
+        return $statusId->id;
     }
 
     public function getTransappApprovalCodeById($transappId)
@@ -317,6 +325,6 @@ class TransAppService extends BaseService
         ->where('id', $transappId)
         ->first();
 
-        return $approvalCode;
+        return $approvalCode->approval_code;
     }
 }

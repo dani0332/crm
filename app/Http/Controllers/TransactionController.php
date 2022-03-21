@@ -28,9 +28,6 @@ class TransactionController extends Controller
         $this->transactionService = $service;
         $this->customerService = $cusService;
         $this->reasonService = $reasService;
-        $this->middleware('permission:transapp-list|transapp-create|transapp-edit|transapp-delete', ['only' => ['index', 'store']]);
-        $this->middleware('permission:transapp-edit', ['only' => ['edit', 'update']]);
-        $this->middleware('permission:transapp-delete', ['only' => ['destroy']]);
     }
 
     /**
@@ -383,7 +380,7 @@ class TransactionController extends Controller
         $inactiveStatusId = $this->transactionService->getStatusId('Inactive');
         $activeStatusId = $this->transactionService->getStatusId('Active');
 
-        $previousTransaction = $this->transactionService->getTransactionByApprovalCode($request->approval_code);
+        $previousTransaction = $this->transactionService->getPreviousTransactionByApprovalCode($request->approval_code);
         $previousTransaction->is_cancelled = true;
         $previousTransaction->status_id = $inactiveStatusId;
         $previousTransaction->save();

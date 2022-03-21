@@ -184,7 +184,7 @@ Route::group(['middleware' =>  ['auth']], function () {
         Route::resource('reason', ReasonController::class);
         Route::resource('status', StatusController::class);
         Route::resource('paymentmode', PaymentModeController::class);
-        Route::resource('transaction', TransactionController::class);
+        Route::resource('transaction', TransactionController::class)->middleware('permission:transapp-list|transapp-create|transapp-edit|transapp-delete');
         Route::get('home', [TransactionController::class, 'transectionHome'])->name('home');
         Route::get('showtransaction', [TransactionController::class, 'showTransaction'])->name('showtransaction');
         Route::get('re-issue-transaction', [TransactionController::class, 'cancelAndReIssueTransectionView'])->name('reissue_view');
