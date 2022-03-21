@@ -186,16 +186,15 @@ class TransactionController extends Controller
     public function edit(Transaction $transaction)
     {
         $isTransappNonAdmin = $this->transactionService->checkTransappNonAdmin();
+        $insuranceCompanies = $this->transactionService->getInsuranceCompanies();
+        $paymentModes = $this->transactionService->getPaymentModes();
+        $handlers = $this->transactionService->getHandlers();
 
         if($isTransappNonAdmin == "1") {
             if(Auth::user()->id != $transaction->assigned_to_id) {
                 return redirect()->route('transaction.index')->with('message','Access Forbidden');
             }
         }
-
-        $insuranceCompanies = $this->transactionService->getInsuranceCompanies();
-        $paymentModes = $this->transactionService->getPaymentModes();
-        $handlers = $this->transactionService->getHandlers();
 
         return view('transaction.edit', compact('transaction', 'insuranceCompanies', 'handlers', 'paymentmodes'));
     }
@@ -209,6 +208,8 @@ class TransactionController extends Controller
      */
     public function update(Request $request, Transaction $transaction)
     {
+        $customer = $this->customerService->getCustomerByEmail($request->email);
+
         $this->validate($request, [
             'insurance_company' => 'required',
             'first_name' => 'required|max:150',
@@ -221,7 +222,6 @@ class TransactionController extends Controller
         ]);
 
         $transaction->insurance_company_id = $request->insurance_company;
-        $customer = $this->customerService->getCustomerByEmail($request->email);
         $transaction->customer_id = $customer->id;
         $transaction->assigned_to_id = $request->assigned_to_id;
         $transaction->payment_mode_id = $request->paymentmode;
@@ -314,6 +314,13 @@ class TransactionController extends Controller
         $isTransappNonAdmin = $this->transactionService->checkTransappNonAdmin();
         $transappAssignedToId = $this->transactionService->getTransappAssignedToIdByApprovalCode($request->approval_code);
         $isCancelled = $this->transactionService->getTransappIsCancelledByApprovalCode($request->approval_code);
+        $transaction = $this->transactionService->getTransactionByApprovalCode($request->approval_code);
+        $insuranceCompanies = $this->transactionService->getInsuranceCompanies();
+        $paymentModes = $this->transactionService->getPaymentModes();
+        $reasons = $this->transactionService->getReasons();
+        $statuses = $this->transactionService->getStatuses();
+        $typeOfInsurances = $this->transactionService->getTypeOfInsurances();
+        $handlers = $this->transactionService->getHandlers();
 
         $route = '';
         $title = '';
@@ -341,14 +348,6 @@ class TransactionController extends Controller
                 ],
             ]);
         }
-        
-        $transaction = $this->transactionService->getTransactionByApprovalCode($request->approval_code);
-        $insuranceCompanies = $this->transactionService->getInsuranceCompanies();
-        $paymentModes = $this->transactionService->getPaymentModes();
-        $reasons = $this->transactionService->getReasons();
-        $statuses = $this->transactionService->getStatuses();
-        $typeOfInsurances = $this->transactionService->getTypeOfInsurances();
-        $handlers = $this->transactionService->getHandlers();
 
         if (count($transaction) > 0) {
             $transaction = $transaction[0];
