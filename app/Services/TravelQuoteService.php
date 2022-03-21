@@ -82,6 +82,32 @@ class TravelQuoteService extends BaseService
         return CapiRequestService::sendCAPIRequest('/api/v1-save-travel-quote', $dataArr);
     }
 
+    public function getBusinessOverDueFollowups()
+    {
+        $query = DB::table('travel_quote_request as tqr')
+            ->select(
+                'tqr.id',
+                'tqr.uuid',
+                'tqr.code',
+                DB::raw("CONCAT_WS(' ',tqr.first_name,tqr.last_name) AS clientName"),
+                'qs.text as leadStatus',
+                'tqr.created_at as createdAt',
+                'tqr.quote_status_id',
+                'tqrd.advisor_assigned_date as assignedDate',
+                'u.name as assignedBy',
+                'tqr.updated_at',
+                'tqr.source as leadSource',
+                'tqrd.next_followup_date as nextFollowupDate'
+            )
+            ->leftJoin('travel_quote_request_detail as tqrd', 'tqrd.travel_quote_request_id', '=', 'tqr.id')
+            ->leftJoin('quote_status as qs', 'qs.id', '=', 'tqr.quote_status_id')
+            ->leftJoin('users as u', 'u.id', '=', 'tqrd.advisor_assigned_by_id')
+            ->where('qs.text', '!=', 'Fake')
+            ->where('tqrd.next_followup_date', '<', date('Y-m-d'))
+            ->where('tqr.advisor_id', Auth::user()->id);
+            return $query;
+    }
+
     public function getLeads($CDBID, $email, $mobile_no, $lead_type)
     {
         $query = DB::table('travel_quote_request as tqr')
@@ -137,6 +163,7 @@ class TravelQuoteService extends BaseService
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'tqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'tqrd.advisor_assigned_by_id')
             ->where('qs.text', '!=', 'Fake')
+            ->where('tqrd.next_followup_date', '>', date('Y-m-d'))
             ->where('tqr.advisor_id', Auth::user()->id);
 
         $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';

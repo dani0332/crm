@@ -375,6 +375,32 @@ class CarQuoteService extends BaseService
         return $title;
     }
 
+    public function getCarOverDueFollowups()
+    {
+        $query = DB::table('car_quote_request as cqr')
+            ->select(
+                'cqr.id',
+                'cqr.uuid',
+                'cqr.code',
+                DB::raw("CONCAT_WS(' ',cqr.first_name,cqr.last_name) AS clientName"),
+                'qs.text as leadStatus',
+                'cqr.created_at as createdAt',
+                'cqr.quote_status_id',
+                'cqrd.advisor_assigned_date as assignedDate',
+                'u.name as assignedBy',
+                'cqr.updated_at',
+                'cqr.source as leadSource',
+                'cqrd.next_followup_date as nextFollowupDate',
+            )
+            ->leftJoin('car_quote_request_detail as cqrd', 'cqrd.car_quote_request_id', '=', 'cqr.id')
+            ->leftJoin('quote_status as qs', 'qs.id', '=', 'cqr.quote_status_id')
+            ->leftJoin('users as u', 'u.id', '=', 'cqrd.advisor_assigned_by_id')
+            ->where('qs.text', '!=', 'Fake')
+            ->where('cqrd.next_followup_date', '<', date('Y-m-d'))
+            ->where('cqr.advisor_id', Auth::user()->id);
+        return $query;
+    }
+
     public function getCarLeadsForAdvisor($request)
     {
         $query = DB::table('car_quote_request as cqr')
@@ -396,6 +422,7 @@ class CarQuoteService extends BaseService
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'cqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'cqrd.advisor_assigned_by_id')
             ->where('qs.text', '!=', 'Fake')
+            ->where('cqrd.next_followup_date', '>', date('Y-m-d'))
             ->where('cqr.advisor_id', Auth::user()->id);
 
         $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';

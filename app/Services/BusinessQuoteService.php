@@ -85,6 +85,34 @@ class BusinessQuoteService extends BaseService
         return $query;
     }
 
+    public function getBusinessOverDueFollowups()
+    {
+        $query = DB::table('business_quote_request as bqr')
+            ->select(
+                'bqr.id',
+                'bqr.uuid',
+                'bqr.code',
+                DB::raw("CONCAT_WS(' ',bqr.first_name,bqr.last_name) AS clientName"),
+                'qs.text as leadStatus',
+                'bqr.created_at as createdAt',
+                'bqr.quote_status_id',
+                'bqrd.advisor_assigned_date as assignedDate',
+                'u.name as assignedBy',
+                'bqr.updated_at',
+                'bqr.source as leadSource',
+                'bqr.company_name',
+                'bqr.premium',
+                'bqrd.next_followup_date as nextFollowupDate',
+            )
+            ->leftJoin('business_quote_request_detail as bqrd', 'bqrd.business_quote_request_id', '=', 'bqr.id')
+            ->leftJoin('quote_status as qs', 'qs.id', '=', 'bqr.quote_status_id')
+            ->leftJoin('users as u', 'u.id', '=', 'bqrd.advisor_assigned_by_id')
+            ->where('bqr.advisor_id', Auth::user()->id)
+            ->where('bqrd.next_followup_date', '<', date('Y-m-d'))
+            ->where('qs.text', '!=', 'Fake');
+        return $query;
+    }
+
     public function getBusinessLeadsForAdvisor($request)
     {
         $query = DB::table('business_quote_request as bqr')
@@ -108,6 +136,7 @@ class BusinessQuoteService extends BaseService
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'bqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'bqrd.advisor_assigned_by_id')
             ->where('bqr.advisor_id', Auth::user()->id)
+            ->where('bqrd.next_followup_date', '>', date('Y-m-d'))
             ->where('qs.text', '!=', 'Fake');
         if (isset($request->startedAt) && isset($request->endAt) && $request->startedAt != '' && $request->endAt != '') {
             $dateFrom = Carbon::createFromFormat('Y-m-d', $request->startedAt)->startOfDay()->toDateTimeString();

@@ -203,6 +203,32 @@ class HomeQuoteService extends BaseService
         }
     }
 
+    public function getBusinessOverDueFollowups()
+    {
+        $query = DB::table('home_quote_request as hqr')
+            ->select(
+                'hqr.id',
+                'hqr.uuid',
+                'hqr.code',
+                DB::raw("CONCAT_WS(' ',hqr.first_name,hqr.last_name) AS clientName"),
+                'qs.text as leadStatus',
+                'hqr.created_at as createdAt',
+                'hqr.quote_status_id',
+                'hqrd.advisor_assigned_date as assignedDate',
+                'u.name as assignedBy',
+                'hqr.updated_at',
+                'hqr.source as leadSource',
+                'hqrd.next_followup_date as nextFollowupDate',
+            )
+            ->leftJoin('home_quote_request_detail as hqrd', 'hqrd.home_quote_request_id', '=', 'hqr.id')
+            ->leftJoin('quote_status as qs', 'qs.id', '=', 'hqr.quote_status_id')
+            ->leftJoin('users as u', 'u.id', '=', 'hqrd.advisor_assigned_by_id')
+            ->where('qs.text', '!=', 'Fake')
+            ->where('hqrd.next_followup_date', '<', date('Y-m-d'))
+            ->where('hqr.advisor_id', Auth::user()->id);
+            return $query;
+    }
+
     public function getHomeLeadsForAdvisor($request)
     {
         $query = DB::table('home_quote_request as hqr')
@@ -224,6 +250,7 @@ class HomeQuoteService extends BaseService
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'hqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'hqrd.advisor_assigned_by_id')
             ->where('qs.text', '!=', 'Fake')
+            ->where('hqrd.next_followup_date', '>', date('Y-m-d'))
             ->where('hqr.advisor_id', Auth::user()->id);
         $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
         $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';

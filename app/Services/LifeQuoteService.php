@@ -262,6 +262,32 @@ class LifeQuoteService extends BaseService
             return redirect("quotes/life")->with('success', 'Life Quote has been updated');
     }
 
+    public function getBusinessOverDueFollowups()
+    {
+        $query = DB::table('life_quote_request as lqr')
+            ->select(
+                'lqr.id',
+                'lqr.uuid',
+                'lqr.code',
+                DB::raw("CONCAT_WS(' ',lqr.first_name,lqr.last_name) AS clientName"),
+                'qs.text as leadStatus',
+                'lqr.created_at as createdAt',
+                'lqr.quote_status_id',
+                'lqrd.advisor_assigned_date as assignedDate',
+                'u.name as assignedBy',
+                'lqr.updated_at',
+                'lqr.source as leadSource',
+                'lqrd.next_followup_date as nextFollowupDate',
+            )
+            ->leftJoin('life_quote_request_detail as lqrd', 'lqrd.life_quote_request_id', '=', 'lqr.id')
+            ->leftJoin('quote_status as qs', 'qs.id', '=', 'lqr.quote_status_id')
+            ->leftJoin('users as u', 'u.id', '=', 'lqrd.advisor_assigned_by_id')
+            ->where('qs.text', '!=', 'Fake')
+            ->where('lqrd.next_followup_date', '<', date('Y-m-d'))
+            ->where('lqr.advisor_id', Auth::user()->id);
+            return $query;
+    }
+
     public function getLifeLeadsForAdvisor($request)
     {
         $query = DB::table('life_quote_request as lqr')
@@ -283,6 +309,7 @@ class LifeQuoteService extends BaseService
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'lqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'lqrd.advisor_assigned_by_id')
             ->where('qs.text', '!=', 'Fake')
+            ->where('lqrd.next_followup_date', '>', date('Y-m-d'))
             ->where('lqr.advisor_id', Auth::user()->id);
 
         $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
