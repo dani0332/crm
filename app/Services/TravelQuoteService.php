@@ -42,7 +42,7 @@ class TravelQuoteService extends BaseService
             'tqr.region_cover_for_id',
             'r.TEXT AS region_cover_for_id_text',
             'tqrd.next_followup_date',
-            'tqrd.tranapp_code',
+            'tqrd.transapp_code',
             'ls.text as lost_reason',
             'tqrd.notes',
             // 'tqr.currently_located_in_id',
