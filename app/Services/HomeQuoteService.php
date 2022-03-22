@@ -140,6 +140,9 @@ class HomeQuoteService extends BaseService
                     if ($request[$item] == 'null') {
                         $this->query->whereNull($item);
                     } else if ($item == 'advisor_id' && is_array($request[$item]) && !empty($request[$item])) {
+                        if($request[$item][0] == 'null')
+                        $this->query->whereNull('advisor_id');
+                    else
                         $this->query->whereIn('advisor_id', $request[$item]);
                     }
                     else if ($item == 'quote_status_id' && is_array($request[$item]) && !empty($request[$item])) {
