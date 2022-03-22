@@ -45,6 +45,7 @@ class HomeQuoteService extends BaseService
             'hqr.iam_possesion_type_id',
             'hpt.TEXT AS iam_possesion_type_id_text',
             'hqrd.next_followup_date',
+            'hqrd.transapp_code',
             'hqrd.notes',
             'ls.text as lost_reason',
         )
@@ -53,8 +54,7 @@ class HomeQuoteService extends BaseService
             ->leftJoin('home_accommodation_type as hat', 'hat.id', '=', 'hqr.ilivein_accommodation_type_id')
             ->leftJoin('home_possession_type as hpt', 'hpt.id', '=', 'hqr.iam_possesion_type_id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'hqr.quote_status_id')
-            ->leftJoin('users as u', 'u.id', '=', 'hqr.advisor_id')
-            ->where('qs.text', '!=', 'Fake');
+            ->leftJoin('users as u', 'u.id', '=', 'hqr.advisor_id');
     }
 
     public function getEntity($id)
@@ -206,6 +206,32 @@ class HomeQuoteService extends BaseService
         }
     }
 
+    public function getBusinessOverDueFollowups()
+    {
+        $query = DB::table('home_quote_request as hqr')
+            ->select(
+                'hqr.id',
+                'hqr.uuid',
+                'hqr.code',
+                DB::raw("CONCAT_WS(' ',hqr.first_name,hqr.last_name) AS clientName"),
+                'qs.text as leadStatus',
+                'hqr.created_at as createdAt',
+                'hqr.quote_status_id',
+                'hqrd.advisor_assigned_date as assignedDate',
+                'u.name as assignedBy',
+                'hqr.updated_at',
+                'hqr.source as leadSource',
+                'hqrd.next_followup_date as nextFollowupDate',
+            )
+            ->leftJoin('home_quote_request_detail as hqrd', 'hqrd.home_quote_request_id', '=', 'hqr.id')
+            ->leftJoin('quote_status as qs', 'qs.id', '=', 'hqr.quote_status_id')
+            ->leftJoin('users as u', 'u.id', '=', 'hqrd.advisor_assigned_by_id')
+            ->where('qs.text', '!=', 'Fake')
+            ->where('hqrd.next_followup_date', '<', date('Y-m-d'))
+            ->where('hqr.advisor_id', Auth::user()->id);
+            return $query;
+    }
+
     public function getHomeLeadsForAdvisor($request)
     {
         $query = DB::table('home_quote_request as hqr')
@@ -227,6 +253,7 @@ class HomeQuoteService extends BaseService
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'hqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'hqrd.advisor_assigned_by_id')
             ->where('qs.text', '!=', 'Fake')
+            ->where('hqrd.next_followup_date', '>', date('Y-m-d'))
             ->where('hqr.advisor_id', Auth::user()->id);
         $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
         $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';
@@ -345,6 +372,7 @@ class HomeQuoteService extends BaseService
             "created_at" => "input|date|title|range",
             "updated_at" => "input|date|title",
             "next_followup_date" => "input|date|title|range",
+            "transapp_code" => "readonly|none",
             "source" => "input|text|required",
             "lost_reason" => "input|text",
             "premium" => "input|number|required",
@@ -403,9 +431,9 @@ class HomeQuoteService extends BaseService
     public function fillModelSkipProperties()
     {
         return [
-            "create" => "id,code,quote_status_id,advisor_id,created_at,updated_at,next_followup_date,lost_reason,premium,source",
+            "create" => "id,code,quote_status_id,advisor_id,created_at,updated_at,next_followup_date,lost_reason,premium,source,transapp_code",
             "list" => "email,address,iam_possesion_type_id,ilivein_accommodation_type_id,mobile_no,personal_belongings_aed,building_aed,contents_aed,has_contents,has_personal_belongings,has_building,address",
-            "update" => "id,code,quote_status_id,advisor_id,created_at,updated_at,next_followup_date,lost_reason,source",
+            "update" => "id,code,quote_status_id,advisor_id,created_at,updated_at,next_followup_date,lost_reason,source,transapp_code",
             "show" => "id,next_followup_date,lost_reason",
         ];
     }

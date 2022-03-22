@@ -84,6 +84,7 @@ Route::middleware(['auth'])->get('/home', function () {
 
 Route::group(['middleware' =>  ['auth']], function () {
     Route::resource('myleads', MyLeadsController::class);
+    Route::get('getOverDueFollowupLeads', [MyLeadsController::class, 'getOverDueFollowupLeads'])->name('getOverDueFollowupLeads');
 
     Route::resource('leadsearch', LeadSearchController::class)->names([
         'index' => 'leadsearch.index',
@@ -244,6 +245,7 @@ Route::group(['middleware' =>  ['auth']], function () {
 
     Route::get('/car-model', [ClaimController::class, 'carModelBasedOnCarMake']);
     Route::get('/car-make', [ClaimController::class, 'getCarMake']);
+    Route::get('/getoverdueleads', [ClaimController::class, 'getoverdueleads']);
     Route::get('/getCarModelDetails', [ClaimController::class, 'getCarModelDetails']);
     Route::post('auditable', [AuditableController::class, 'loadAuditableComponent']);
     Route::get('/car-model-by-id', [ClaimController::class, 'carModelBasedOnCarMakeId']);
