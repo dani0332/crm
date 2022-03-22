@@ -50,6 +50,7 @@ class HealthQuoteService extends BaseService
             'hqr.advisor_id',
             'u.name as advisor_id_text',
             'hqrd.next_followup_date',
+            'hqrd.transapp_code',
             'hqrd.notes',
             'ls.text as lost_reason',
         )
@@ -392,6 +393,7 @@ class HealthQuoteService extends BaseService
             "updated_at" => "input|date|title",
             "dob" => "input|date|title|required",
             "next_followup_date" => "input|date|title|range",
+            "transapp_code" => "readonly|none",
             "lost_reason" => "input|text",
             "premium" => "input|number|required",
             "preference" => "input|text",
@@ -472,9 +474,9 @@ class HealthQuoteService extends BaseService
     public function fillModelSkipProperties()
     {
         return [
-            "create" => "created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,premium,source",
+            "create" => "created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,premium,source,transapp_code",
             "list" => "email,cover_for_id,has_worldwide_cover,has_home,details,preference,mobile_no,dob,marital_status_id,nationality_id,has_dental,emirate_of_your_visa_id",
-            "update" => "created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,source",
+            "update" => "created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,source,transapp_code",
             "show" => "id,health_team_type,next_followup_date",
         ];
     }

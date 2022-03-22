@@ -45,6 +45,7 @@ class HomeQuoteService extends BaseService
             'hqr.iam_possesion_type_id',
             'hpt.TEXT AS iam_possesion_type_id_text',
             'hqrd.next_followup_date',
+            'hqrd.transapp_code',
             'hqrd.notes',
             'ls.text as lost_reason',
         )
@@ -369,6 +370,7 @@ class HomeQuoteService extends BaseService
             "created_at" => "input|date|title|range",
             "updated_at" => "input|date|title",
             "next_followup_date" => "input|date|title|range",
+            "transapp_code" => "readonly|none",
             "source" => "input|text|required",
             "lost_reason" => "input|text",
             "premium" => "input|number|required",
@@ -427,9 +429,9 @@ class HomeQuoteService extends BaseService
     public function fillModelSkipProperties()
     {
         return [
-            "create" => "id,code,quote_status_id,advisor_id,created_at,updated_at,next_followup_date,lost_reason,premium,source",
+            "create" => "id,code,quote_status_id,advisor_id,created_at,updated_at,next_followup_date,lost_reason,premium,source,transapp_code",
             "list" => "email,address,iam_possesion_type_id,ilivein_accommodation_type_id,mobile_no,personal_belongings_aed,building_aed,contents_aed,has_contents,has_personal_belongings,has_building,address",
-            "update" => "id,code,quote_status_id,advisor_id,created_at,updated_at,next_followup_date,lost_reason,source",
+            "update" => "id,code,quote_status_id,advisor_id,created_at,updated_at,next_followup_date,lost_reason,source,transapp_code",
             "show" => "id,next_followup_date,lost_reason",
         ];
     }

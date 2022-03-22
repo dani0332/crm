@@ -39,6 +39,7 @@ class BusinessQuoteService extends BaseService
                 'bqr.premium',
                 'bqrd.next_followup_date',
                 'bqrd.notes',
+                'bqrd.transapp_code',
                 'ls.text as lost_reason',
                 'bqr.source',
             )
@@ -359,6 +360,7 @@ class BusinessQuoteService extends BaseService
             "mobile_no" => "input|title|number|required",
             "company_name" => "input|text|required",
             "next_followup_date" => "input|date|title|range",
+            "transapp_code" => "readonly|none",
             "source" => "input|text",
             "lost_reason" => "input|text",
             "advisor_id" => "select|title|multiple",
@@ -415,9 +417,9 @@ class BusinessQuoteService extends BaseService
     public function fillModelSkipProperties()
     {
         return [
-            "create" => "id,advisor_id,quote_status_id,code,updated_at,created_at,next_followup_date,lost_reason,premium,source",
+            "create" => "id,advisor_id,quote_status_id,code,updated_at,created_at,next_followup_date,lost_reason,premium,source,transapp_code",
             "list" => "email,mobile_no,brief_details,dob",
-            "update" => "id,advisor_id,quote_status_id,code,updated_at,created_at,next_followup_date,lost_reason,source",
+            "update" => "id,advisor_id,quote_status_id,code,updated_at,created_at,next_followup_date,lost_reason,source,transapp_code",
             "show" => "",
         ];
     }

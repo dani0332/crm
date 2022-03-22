@@ -53,6 +53,7 @@ class LifeQuoteService extends BaseService
                 'lqr.nationality_id',
                 'n.TEXT AS nationality_id_text',
                 'lqrd.next_followup_date',
+                'lqrd.transapp_code',
                 'lqrd.notes',
                 'ls.text as lost_reason',
             )
@@ -406,6 +407,7 @@ class LifeQuoteService extends BaseService
             "dob" => "input|date|title|required",
             "sum_insured_value" => "input|number|title|required",
             "next_followup_date" => "input|date|title|range",
+            "transapp_code" => "readonly|none",
             "source" => "input|text",
             "lost_reason" => "input|text",
             "premium" => "input|number|required",
@@ -485,9 +487,9 @@ class LifeQuoteService extends BaseService
     public function fillModelSkipProperties()
     {
         return [
-            "create" => "id,advisor_id,quote_status_id,code,created_at,updated_at,next_followup_date,lost_reason,premium,source",
+            "create" => "id,advisor_id,quote_status_id,code,created_at,updated_at,next_followup_date,lost_reason,premium,source,transapp_code",
             "list" => "email,mobile_no,others_info,dob,sum_insured_value,sum_insured_currency_id,purpose_of_insurance_id,marital_status_id,children_id,tenure_of_insurance_id,number_of_years_id,gender,is_smoker,others_info",
-            "update" => "id,advisor_id,quote_status_id,code,created_at,updated_at,next_followup_date,lost_reason,source",
+            "update" => "id,advisor_id,quote_status_id,code,created_at,updated_at,next_followup_date,lost_reason,source,transapp_code",
             "show" => "",
         ];
     }
