@@ -5,62 +5,65 @@
     use App\Enums\CarPlanType;
     use App\Models\ApplicationStorage;
 
-    $carQuoteEditSwitch = ApplicationStorage::select('value')
-    ->where([['key_name', 'IMCRM_CAR_QUOTE_PLANS_EDIT_IS_DISABLED'], ['is_active', 1]])
-    ->get()->first();
-    if(isset($carQuoteEditSwitch->value)) {
-        if($carQuoteEditSwitch->value == '1') {
-            $carQuoteEditDisable = 'disabled';
+    if (!isset($modelName)) {
+
+        $carQuoteEditSwitch = ApplicationStorage::select('value')
+        ->where([['key_name', 'IMCRM_CAR_QUOTE_PLANS_EDIT_IS_DISABLED'], ['is_active', 1]])
+        ->get()->first();
+        if(isset($carQuoteEditSwitch->value)) {
+            if($carQuoteEditSwitch->value == '1') {
+                $carQuoteEditDisable = 'disabled';
+            } else {
+                $carQuoteEditDisable = '';
+            }
         } else {
-            $carQuoteEditDisable = '';
+            $carQuoteEditDisable = 'disabled';
         }
-    } else {
-        $carQuoteEditDisable = 'disabled';
-    }
-
-    foreach ($listQuotePlans as $listQuotePlan) { // Main
-
-        if ($listQuotePlan->id == $planId) {
-            $listQuotePlanName = $listQuotePlan->name;
-            $providerCode = $listQuotePlan->providerCode;
-            $providerName = $listQuotePlan->providerName;
-            $repairType = $listQuotePlan->repairType;
-            $actualPremium = $listQuotePlan->actualPremium;
-            $discountPremium = $listQuotePlan->discountPremium;
-            if(isset($listQuotePlan->carValueLowerLimit)) { $carValueLowerLimit = $listQuotePlan->carValueLowerLimit; } else { $carValueLowerLimit = 0; }
-            if(isset($listQuotePlan->carValueUpperLimit)) { $carValueUpperLimit = $listQuotePlan->carValueUpperLimit; } else { $carValueUpperLimit = 0; }
-            if(isset($listQuotePlan->excess)) { $excess = $listQuotePlan->excess; } else { $excess = 0; }
-            if(isset($listQuotePlan->carValue)) { $carValue = $listQuotePlan->carValue; } else { $carValue = 0; }
-            if(isset($listQuotePlan->isDisabled)) { $isDisabled = $listQuotePlan->isDisabled; } else { $isDisabled = 0; }
-            $listQuotePlanAddonss = $listQuotePlan->addons;
-            $listQuotePlanBenefitsInclusions = $listQuotePlan->benefits->inclusion;
-            $listQuotePlanBenefitsExclusions = $listQuotePlan->benefits->exclusion;
-            $listQuotePlanBenefitsFeatures = $listQuotePlan->benefits->feature;
-            $listQuotePlanBenefitsRsas = $listQuotePlan->benefits->roadSideAssistance;
-            $listQuotePlanBenefitsPolicyDetails = $listQuotePlan->policyWordings;
-
-            foreach ($listQuotePlanAddonss as $listQuotePlanAddon) {
-                $listQuotePlanAddons[] = $listQuotePlanAddon; // Get Addons Names
-
-                foreach ($listQuotePlanAddon->carAddonOption as $listQuotePlanAddonsOptions) {
-                    $listQuotePlanAddonValues[] = $listQuotePlanAddonsOptions->value;
-                    $listQuotePlanAddonPrices[] = $listQuotePlanAddonsOptions->price;
+    
+        foreach ($listQuotePlans as $listQuotePlan) { // Main
+    
+            if ($listQuotePlan->id == $planId) {
+                $listQuotePlanName = $listQuotePlan->name;
+                $providerCode = $listQuotePlan->providerCode;
+                $providerName = $listQuotePlan->providerName;
+                $repairType = $listQuotePlan->repairType;
+                $actualPremium = $listQuotePlan->actualPremium;
+                $discountPremium = $listQuotePlan->discountPremium;
+                if(isset($listQuotePlan->carValueLowerLimit)) { $carValueLowerLimit = $listQuotePlan->carValueLowerLimit; } else { $carValueLowerLimit = 0; }
+                if(isset($listQuotePlan->carValueUpperLimit)) { $carValueUpperLimit = $listQuotePlan->carValueUpperLimit; } else { $carValueUpperLimit = 0; }
+                if(isset($listQuotePlan->excess)) { $excess = $listQuotePlan->excess; } else { $excess = 0; }
+                if(isset($listQuotePlan->carValue)) { $carValue = $listQuotePlan->carValue; } else { $carValue = 0; }
+                if(isset($listQuotePlan->isDisabled)) { $isDisabled = $listQuotePlan->isDisabled; } else { $isDisabled = 0; }
+                $listQuotePlanAddonss = $listQuotePlan->addons;
+                $listQuotePlanBenefitsInclusions = $listQuotePlan->benefits->inclusion;
+                $listQuotePlanBenefitsExclusions = $listQuotePlan->benefits->exclusion;
+                $listQuotePlanBenefitsFeatures = $listQuotePlan->benefits->feature;
+                $listQuotePlanBenefitsRsas = $listQuotePlan->benefits->roadSideAssistance;
+                $listQuotePlanBenefitsPolicyDetails = $listQuotePlan->policyWordings;
+    
+                foreach ($listQuotePlanAddonss as $listQuotePlanAddon) {
+                    $listQuotePlanAddons[] = $listQuotePlanAddon; // Get Addons Names
+    
+                    foreach ($listQuotePlanAddon->carAddonOption as $listQuotePlanAddonsOptions) {
+                        $listQuotePlanAddonValues[] = $listQuotePlanAddonsOptions->value;
+                        $listQuotePlanAddonPrices[] = $listQuotePlanAddonsOptions->price;
+                    }
                 }
+                foreach ($listQuotePlanBenefitsPolicyDetails as $listQuotePlanBenefitsPolicyDetail) {
+                    $listQuotePlanBenefitsPolicyDetailLink = $listQuotePlanBenefitsPolicyDetail->link;
+                }
+                if(isset($listQuotePlanBenefitsPolicyDetailLink)) { $listQuotePlanBenefitsPolicyDetailLink = $listQuotePlanBenefitsPolicyDetailLink; } else { $listQuotePlanBenefitsPolicyDetailLink = ''; }
             }
-            foreach ($listQuotePlanBenefitsPolicyDetails as $listQuotePlanBenefitsPolicyDetail) {
-                $listQuotePlanBenefitsPolicyDetailLink = $listQuotePlanBenefitsPolicyDetail->link;
-            }
-            if(isset($listQuotePlanBenefitsPolicyDetailLink)) { $listQuotePlanBenefitsPolicyDetailLink = $listQuotePlanBenefitsPolicyDetailLink; } else { $listQuotePlanBenefitsPolicyDetailLink = ''; }
         }
+    
+        if($repairType == CarPlanType::TPL) {
+            $readonlyFieldCss = "pointer-events: none;background-color: #f6f6f6;";
+        } else {
+            $readonlyFieldCss = "";
+        }
+    
+        $carPlanTypeComp = CarPlanType::COMP;   
     }
-
-    if($repairType == CarPlanType::TPL) {
-        $readonlyFieldCss = "pointer-events: none;background-color: #f6f6f6;";
-    } else {
-        $readonlyFieldCss = "";
-    }
-
-    $carPlanTypeComp = CarPlanType::COMP;
 
 ?>
 
