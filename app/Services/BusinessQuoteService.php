@@ -237,10 +237,10 @@ class BusinessQuoteService extends BaseService
                 if (!empty($request[$item]) && $item != "created_at") {
                     if ($request[$item] == 'null') {
                         $this->query->whereNull($item);
-                    } else if ($item == 'advisor_id') {
+                    } else if ($item == 'advisor_id' && is_array($request[$item]) && !empty($request[$item])) {
                         $this->query->whereIn('advisor_id', $request[$item]);
                     }
-                    else if ($item == 'quote_status_id') {
+                    else if ($item == 'quote_status_id' && is_array($request[$item]) && !empty($request[$item])) {
                         $this->query->whereIn('quote_status_id', $request[$item]);
                     } else {
                         $this->query->where($this->getQuerySuffix($item) . '.' . $item, $request[$item]);
