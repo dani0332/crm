@@ -50,6 +50,7 @@ class HealthQuoteService extends BaseService
             'hqr.advisor_id',
             'u.name as advisor_id_text',
             'hqrd.next_followup_date',
+            'hqrd.transapp_code',
             'hqrd.notes',
             'ls.text as lost_reason',
         )
@@ -256,6 +257,32 @@ class HealthQuoteService extends BaseService
             return redirect("quote/health/" . $id)->with('success', 'Health Quote has been updated');
     }
 
+    public function getBusinessOverDueFollowups()
+    {
+        $query = DB::table('health_quote_request as hqr')
+            ->select(
+                'hqr.id',
+                'hqr.uuid',
+                'hqr.code',
+                DB::raw("CONCAT_WS(' ',hqr.first_name,hqr.last_name) AS clientName"),
+                'qs.text as leadStatus',
+                'hqr.created_at as createdAt',
+                'hqr.quote_status_id',
+                'hqrd.advisor_assigned_date as assignedDate',
+                'u.name as assignedBy',
+                'hqr.updated_at',
+                'hqr.source as leadSource',
+                'hqrd.next_followup_date as nextFollowupDate',
+            )
+            ->leftJoin('health_quote_request_detail as hqrd', 'hqrd.health_quote_request_id', '=', 'hqr.id')
+            ->leftJoin('quote_status as qs', 'qs.id', '=', 'hqr.quote_status_id')
+            ->leftJoin('users as u', 'u.id', '=', 'hqrd.advisor_assigned_by_id')
+            ->where('qs.text', '!=', 'Fake')
+            ->where('hqrd.next_followup_date', '<', date('Y-m-d'))
+            ->where('hqr.advisor_id', Auth::user()->id);
+            return $query;
+    }
+
     public function getHealthLeadsForAdvisor($request)
     {
         $query = DB::table('health_quote_request as hqr')
@@ -277,6 +304,7 @@ class HealthQuoteService extends BaseService
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'hqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'hqrd.advisor_assigned_by_id')
             ->where('qs.text', '!=', 'Fake')
+            ->where('hqrd.next_followup_date', '>', date('Y-m-d'))
             ->where('hqr.advisor_id', Auth::user()->id);
 
         $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
@@ -370,6 +398,7 @@ class HealthQuoteService extends BaseService
             "updated_at" => "input|date|title",
             "dob" => "input|date|title|required",
             "next_followup_date" => "input|date|title|range",
+            "transapp_code" => "readonly|none",
             "lost_reason" => "input|text",
             "premium" => "input|number|required",
             "preference" => "input|text",
@@ -450,9 +479,9 @@ class HealthQuoteService extends BaseService
     public function fillModelSkipProperties()
     {
         return [
-            "create" => "created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,premium,source",
+            "create" => "created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,premium,source,transapp_code",
             "list" => "email,cover_for_id,has_worldwide_cover,has_home,details,preference,mobile_no,dob,marital_status_id,nationality_id,has_dental,emirate_of_your_visa_id",
-            "update" => "created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,source",
+            "update" => "created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,source,transapp_code",
             "show" => "id,health_team_type,next_followup_date",
         ];
     }
