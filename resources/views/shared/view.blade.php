@@ -104,6 +104,7 @@ use App\Enums\quoteTypeCode;
             $('#modelType').val(model.modelType);
             var dataTableColumns = [];
             for (var i = 0; i < modelPropertiesArray.length; i++) {
+                var isAllowedModel = allowedModelTypes.includes(model.modelType.toLocaleLowerCase());
                 if (!skipPropertiesArray.includes(modelPropertiesArray[i].name)) {
                     // checking if the model type is either leadstatus or teams because it needs to be handled differently
                     if(model.modelType == 'LeadStatus' || model.modelType == 'Teams') {
@@ -131,21 +132,23 @@ use App\Enums\quoteTypeCode;
                             // Handling id field
                             if (isManagerOrDeputy === "1" && allowedModelTypes.includes(model.modelType.toLocaleLowerCase())) {
                                 // Checkboxes should be available if the user is Manager Or deputy also the model type is allowed
-                                dataTableColumns.push({
+                                if(model.modelType.toLocaleLowerCase() != 'car'){
+                                    dataTableColumns.push({
                                     data: "id",
                                     name: "id",
-                                    render: function(data, type, row, meta) {
+                                        render: function(data, type, row, meta) {
 
-                                        return (
-                                            '<input type="checkbox" id="tmLeadID" class="tmleadCheckbox" name="tmLeadID" value="' +
-                                            data + '">'
-                                        );
+                                            return (
+                                                '<input type="checkbox" id="tmLeadID" class="tmleadCheckbox" name="tmLeadID" value="' +
+                                                data + '">'
+                                            );
 
-                                    },
-                                });
+                                        },
+                                    });
+                                }
                             }
                             // Adding link field for id field
-                            var isAllowedModel = allowedModelTypes.includes(model.modelType.toLocaleLowerCase());
+                            
                             dataTableColumns.push({
                                 data: 'code',
                                 name: 'code',
@@ -331,6 +334,7 @@ use App\Enums\quoteTypeCode;
                 setTimeout(() => {
                     $(".loader").hide();
                 }, 1000);
+                location.reload();
             });
             // Custom export function to export all the available rows in grid not just the visible ones
             function newexportaction(e, dt, button, config) {
@@ -751,8 +755,10 @@ use App\Enums\quoteTypeCode;
                             <thead>
                                 <tr>
                                     @if ($isManagerORDeputy == '1' && str_contains('home,health,life,business,travel,car', strtolower($model->modelType)))
+                                        @if($model->modelType != 'Car')
                                         <th style="width: 15px;"><input type="checkbox" id="checkAllTmLeads"
                                                 name="checkAllTmLeads" value=""></th>
+                                        @endif
                                     @endif
                                     @foreach ($model->properties as $property => $value)
                                         @if ($model->modelType != 'LeadStatus' && $model->modelType != 'Teams')

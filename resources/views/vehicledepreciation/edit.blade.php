@@ -28,6 +28,25 @@
                         @method('PUT')
                         <div class="item form-group">
                             <div class="col">
+                                <div id="car_model">
+                                    <span class="col-form-label col-md-6 col-sm-6">Insurance Provider</span>
+                                    <select class="form-control" id='insurance_provider' name='insurance_provider_value'>
+                                        <option value=''>Select</option>
+                                        @foreach ($insuranceProviders as $item)
+                                            <option value="{{ $item->id }}"
+                                                {{ $item->id == old('insurance_provider_value', $vehicledepreciation->insurance_provider_id) ? 'selected' : '' }}>
+                                                {{ $item->text }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    <span class="text-danger" id="car_model_value_msg"></span>
+                                    @if ($errors->has('insurance_provider_value'))
+                                        <span
+                                            class="text-danger">{{ $errors->first('insurance_provider_value') }}</span>
+                                    @endif
+                                </div>
+                            </div>
+                            <div class="col">
                                 <div id="car_make">
                                     <span class="col-form-label col-md-6 col-sm-6">Car Make</span>
                                     <select class="form-control" id='car_make_value' name='car_make_value'>
@@ -64,25 +83,7 @@
                                 </div>
                             </div>
 
-                            <div class="col">
-                                <div id="car_model">
-                                    <span class="col-form-label col-md-6 col-sm-6">Insurance Provider</span>
-                                    <select class="form-control" id='insurance_provider' name='insurance_provider_value'>
-                                        <option value=''>Select</option>
-                                        @foreach ($insuranceProviders as $item)
-                                            <option value="{{ $item->id }}"
-                                                {{ $item->id == old('insurance_provider_value', $vehicledepreciation->insurance_provider_id) ? 'selected' : '' }}>
-                                                {{ $item->text }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                    <span class="text-danger" id="car_model_value_msg"></span>
-                                    @if ($errors->has('insurance_provider_value'))
-                                        <span
-                                            class="text-danger">{{ $errors->first('insurance_provider_value') }}</span>
-                                    @endif
-                                </div>
-                            </div>
+                            
                         </div>
                         <div class="item form-group">
                             <div class="col">

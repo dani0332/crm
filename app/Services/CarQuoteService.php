@@ -242,7 +242,7 @@ class CarQuoteService extends BaseService
             "source" => "input|text",
             "additional_notes" => "textarea|required",
             "quote_status_id" => "select|title",
-            "advisor_id" => "select|title",
+            "advisor_id" => "select|title||multiple",
             "is_ecommerce" => "|static|title|Yes,No",
             "payment_status_id" => "select|title",
             "created_at" => "input|date|title|range",
@@ -265,7 +265,7 @@ class CarQuoteService extends BaseService
             "updated_by" => "input",
             "plan_id" => "select|title",
             "car_plan_provider_id" => "select|title",
-            "quote_status_id" => "select|title",
+            "quote_status_id" => "select|title|multiple",
         );
     }
 
@@ -464,6 +464,12 @@ class CarQuoteService extends BaseService
                 array_push($this->childUserIds, Auth::user()->id); // add the user id to the array to fetch directly assigned leads as well
                 $this->query->whereIn('cqr.advisor_id', $this->childUserIds);	// fetch leads assigned to the user or his childs
             }
+
+            if(Auth::user()->isSpecificTeamAdvisor('Car')){
+                // if user has advisor Role then fetch leads assigned to the user only
+                $this->query->where('cqr.advisor_id', Auth::user()->id);	// fetch leads assigned to the user
+            }
+            
             if (!isset($request->email) && $request->email == '') {
                 //$this->query->where('qs.text', '!=', 'Fake');
             }
@@ -496,11 +502,17 @@ class CarQuoteService extends BaseService
                 if (!empty($request[$item]) && $item != "created_at" && $item != "renewal_expiry_date") {
                     if ($request[$item] == 'null') {
                         $this->query->whereNull($item);
+                    } else if ($item == 'advisor_id') {
+                        $this->query->whereIn('advisor_id', $request[$item]);
+                    }
+                    else if ($item == 'quote_status_id') {
+                        $this->query->whereIn('quote_status_id', $request[$item]);
                     } else {
                         $searchedValue = str_contains($request[$item], 'Yes') || str_contains($request[$item], 'No') ? ($request[$item] == 'Yes' ? 1 : 0) : $request[$item];
                         if ($item == 'policy_number') {
                             $this->query->where('previous_quote_policy_number', $searchedValue);
-                        } else {
+                        }
+                        else {
                             $this->query->where($this->getQuerySuffix($item) . '.' . $item, $searchedValue);
                         }
                     }

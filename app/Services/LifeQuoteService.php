@@ -154,10 +154,19 @@ class LifeQuoteService extends BaseService
                 $dateTo = Carbon::createFromFormat('Y-m-d', $request['next_followup_date_end'])->endOfDay()->toDateTimeString();
                 $this->query->whereBetween('lqrd.next_followup_date', [$dateFrom, $dateTo]);
             }
+            if(Auth::user()->isSpecificTeamAdvisor('Life')){
+                // if user has advisor Role then fetch leads assigned to the user only
+                $this->query->where('lqr.advisor_id', Auth::user()->id);	// fetch leads assigned to the user
+            }
             foreach ($searchProperties as $item) {
                 if (!empty($request[$item]) && $item != "created_at") {
                     if ($request[$item] == 'null') {
                         $this->query->whereNull($item);
+                    } else if ($item == 'advisor_id') {
+                        $this->query->whereIn('advisor_id', $request[$item]);
+                    }
+                    else if ($item == 'quote_status_id') {
+                        $this->query->whereIn('quote_status_id', $request[$item]);
                     } else {
                         $this->query->where($this->getQuerySuffix($item) . '.' . $item, $request[$item]);
                     }
@@ -363,8 +372,8 @@ class LifeQuoteService extends BaseService
             "last_name" => "input|text|required",
             "email" => "input|email|required",
             "mobile_no" => "input|title|number|required",
-            "quote_status_id" => "select|title",
-            "advisor_id" => "select|title",
+            "quote_status_id" => "select|title|multiple",
+            "advisor_id" => "select|title|multiple",
             "created_at" => "input|date|title|range",
             "updated_at" => "input|date|title",
             "dob" => "input|date|title|required",
