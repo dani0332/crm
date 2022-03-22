@@ -53,9 +53,8 @@ class TravelQuoteService extends BaseService
             ->leftJoin('nationality as n', 'n.id', '=', 'tqr.nationality_id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'tqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'tqr.advisor_id')
-            ->leftJoin('region as r', 'r.id', '=', 'tqr.region_cover_for_id')
-            // ->leftJoin('currently_located_in as cli', 'cli.id', '=', 'tqr.currently_located_in_id')
-            ->where('qs.text', '!=', 'Fake');
+            ->leftJoin('region as r', 'r.id', '=', 'tqr.region_cover_for_id');
+            // ->leftJoin('currently_located_in as cli', 'cli.id', '=', 'tqr.currently_located_in_id');
     }
 
     public function saveTravelQuote(Request $request)
@@ -179,6 +178,9 @@ class TravelQuoteService extends BaseService
     {
         $searchProperties = $model->searchProperties;
         if ($request->ajax()) {
+            if (!isset($request->email) && $request->email == '') {
+                $this->query->where('qs.text', '!=', 'Fake');
+            }
             if (isset($request->assigned_to_date_start) && $request->assigned_to_date_start != '') {
                 $dateFrom = Carbon::createFromFormat('Y-m-d', $request['assigned_to_date_start'])->startOfDay()->toDateTimeString();
                 $dateTo = Carbon::createFromFormat('Y-m-d', $request['assigned_to_date_end'])->endOfDay()->toDateTimeString();

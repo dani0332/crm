@@ -66,8 +66,7 @@ class LifeQuoteService extends BaseService
             ->leftJoin('life_number_of_year as liy', 'liy.id', '=', 'lqr.number_of_years_id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'lqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'lqr.advisor_id')
-            ->leftJoin('nationality as n', 'n.id', '=', 'lqr.nationality_id')
-            ->where('qs.text', '!=', 'Fake');
+            ->leftJoin('nationality as n', 'n.id', '=', 'lqr.nationality_id');
     }
     public function saveLifeQuote(Request $request)
     {
@@ -139,6 +138,9 @@ class LifeQuoteService extends BaseService
     {
         $searchProperties = $model->searchProperties;
         if ($request->ajax()) {
+            if (!isset($request->email) && $request->email == '') {
+                $this->query->where('qs.text', '!=', 'Fake');
+            }
             if (isset($request->assigned_to_date_start) && $request->assigned_to_date_start != '') {
                 $dateFrom = Carbon::createFromFormat('Y-m-d', $request['assigned_to_date_start'])->startOfDay()->toDateTimeString();
                 $dateTo = Carbon::createFromFormat('Y-m-d', $request['assigned_to_date_end'])->endOfDay()->toDateTimeString();

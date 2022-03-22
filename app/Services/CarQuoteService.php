@@ -471,7 +471,7 @@ class CarQuoteService extends BaseService
             }
             
             if (!isset($request->email) && $request->email == '') {
-                //$this->query->where('qs.text', '!=', 'Fake');
+                $this->query->where('qs.text', '!=', 'Fake');
             }
             if (isset($request->assigned_to_date_start) && $request->assigned_to_date_start != '') {
                 $dateFrom = $this->parseDate($request['assigned_to_date_start'], true);
