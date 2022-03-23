@@ -5,7 +5,7 @@
     use App\Enums\CarPlanType;
     use App\Models\ApplicationStorage;
 
-    if (!isset($modelName)) {
+    if(!isset($modelName)) {
 
         $carQuoteEditSwitch = ApplicationStorage::select('value')
         ->where([['key_name', 'IMCRM_CAR_QUOTE_PLANS_EDIT_IS_DISABLED'], ['is_active', 1]])
@@ -20,7 +20,7 @@
             $carQuoteEditDisable = 'disabled';
         }
     
-        foreach ($listQuotePlans as $listQuotePlan) { // Main
+        foreach ($listQuotePlans as $listQuotePlan) { // Car quote plans
     
             if ($listQuotePlan->id == $planId) {
                 $listQuotePlanName = $listQuotePlan->name;
@@ -64,7 +64,6 @@
     
         $carPlanTypeComp = CarPlanType::COMP;   
     }
-
 ?>
 
 <script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
@@ -126,7 +125,6 @@
                 </div>
 
                 <div class="x_content">
-
                     <ul class="nav nav-tabs" id="myTab" role="tablist" style="font-weight: bold;">
                         <li class="nav-item">
                             <a class="nav-link active" id="general-tab" data-toggle="tab" href="#general" role="tab" aria-controls="general" aria-selected="true">General Info</a>
@@ -247,7 +245,6 @@
                 </div>
 
                 <div class="x_content">
-
                     <ul class="nav nav-tabs" id="myTab" role="tablist" style="font-weight: bold;">
                         <li class="nav-item">
                             <a class="nav-link active" id="general-tab" data-toggle="tab" href="#general" role="tab" aria-controls="general" aria-selected="true">General Info</a>
