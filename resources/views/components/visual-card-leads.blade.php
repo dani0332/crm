@@ -35,12 +35,16 @@
                             {{$lead->first_name}} {{$lead->last_name}} 
                             </div>
                             <div class="pad-5"></div>
+                            <div class="lead-person"><i class="fa fa-building font-1" aria-hidden="true"></i> &nbsp;
+                            {{$lead->company_name}}
+                            </div>
+                            <div class="pad-5"></div>
                             <div class="lead-cost"><i class="fa fa-usd font-1"></i>&nbsp; {{$lead->premium}}
                             </div>
                         </div>
                     </li> 
                 @endforeach
-                @if($result["total_leads"])
+                @if($result["total_leads"] && $result["total_leads"] > 10)
                     <a href="#" onclick="(loadMore({{$item->id}}))" class="quotePlanModalPopup load_more_btn" id="load_more_btn{{$item->id}}">Load More</a></span>
                 @endif
                 @endif

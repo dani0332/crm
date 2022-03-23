@@ -111,7 +111,9 @@ function getDataAgainstSearchTerm($modelType, $term, $status) {
     $nameSpace = '\\App\\Models\\';
     $modelType = $nameSpace .$modelType."Quote";
     $result["leads_list"] = $modelType::where("quote_status_id", $status)
-    ->Where('code', 'like', '%' . $term )->get();
+    ->Where('code', 'like', '%' . $term )
+    ->orWhere('mobile_no', 'like', '%' . $term )
+    ->orWhere('email', 'like', '%' . $term )->get();
    
     return $result;
 }

@@ -556,6 +556,10 @@ class CRUDController extends Controller
                         '.$result->first_name.' '.$result->last_name.'
                         </div>
                         <div class="pad-5"></div>
+                        <div class="lead-person"><i class="fa fa-building font-1" aria-hidden="true"></i>
+                        '.$result->company_name.'
+                        </div>
+                        <div class="pad-5"></div>
                         <div class="lead-cost"><i class="fa fa-usd font-1"></i>&nbsp;'.$result->premium.'
                         </div>
                     </div>
@@ -584,6 +588,10 @@ class CRUDController extends Controller
                         <div class="pad-5"></div>
                         <div class="lead-person"><i class="fa fa-user font-1" aria-hidden="true"></i>
                         '.$result->first_name.' '.$result->last_name.'
+                        </div>
+                        <div class="pad-5"></div>
+                        <div class="lead-person"><i class="fa fa-building font-1" aria-hidden="true"></i>
+                        '.$result->company_name.'
                         </div>
                         <div class="pad-5"></div>
                         <div class="lead-cost"><i class="fa fa-usd font-1"></i>&nbsp;'.$result->premium.'
