@@ -1,6 +1,16 @@
 @extends('layouts.app')
 @section('title','View Transactions')
 @section('content')
+<style>
+    div.dt-buttons {
+        position: relative;
+        float: left;
+    }
+
+    td {
+        word-wrap: break-word;
+    }
+</style>
 <div class="row">
     <div class="col-md-12 col-sm-12">
         <div class="x_panel">
@@ -73,8 +83,8 @@
                                 <div class="input-group">
                                     <select class="form-control" name="insurance_company" id="insurance_company_value">
                                         <option value="">Select</option>
-                                        @foreach ($insurance_companies as $insurance_company)
-                                            <option value="{{ $insurance_company->id }}">{{ $insurance_company->name }}</option>
+                                        @foreach ($insuranceCompanies as $insuranceCompany)
+                                            <option value="{{ $insuranceCompany->id }}">{{ $insuranceCompany->name }}</option>
                                         @endforeach
                                     </select>
                                 </div>
@@ -119,8 +129,8 @@
                                 <div class="input-group">
                                     <select class="form-control" name="payment_mode" id="payment_mode_value">
                                         <option value="">Select</option>
-                                        @foreach ($payment_modes as $payment_mode)
-                                            <option value="{{ $payment_mode->id }}">{{ $payment_mode->name }}</option>
+                                        @foreach ($paymentModes as $paymentMode)
+                                            <option value="{{ $paymentMode->id }}">{{ $paymentMode->name }}</option>
                                         @endforeach
                                     </select>
                                 </div>
@@ -138,19 +148,19 @@
                     </div>
                 </form>
                 <input type="hidden" id="isTransappAdmin" name="isTransappAdmin" value="{{ $isTransappAdmin }}">
-                <table class="table table-striped jambo_table transaction-data-table" style="width:100%">
+                <table class="table table-striped jambo_table transaction-data-table" style="table-layout: fixed;" width="100%">
                       <thead>
                         <tr>
-                          <th>Approval<br>Code</th>
-                          <th>Transaction<br>Date</th>
-                          <th>Insurance<br>Company</th>
-                          <th>Premium</th>
-                          <th>Name</th>
-                          <th>Risk Detail</th>
-                          <th>Transactor</th>
-                          <th>Advisor</th>
-                          <th>Payment mode</th>
-                          <th>Prev Approval Code</th>
+                          <th style="width: 100px !important">Approval Code</th>
+                          <th style="width: 100px !important">Transaction Date</th>
+                          <th style="width: 100px !important">Insurance Company</th>
+                          <th style="width: 100px !important">Premium</th>
+                          <th style="width: 100px !important">Name</th>
+                          <th style="width: 100px !important">Risk Detail</th>
+                          <th style="width: 100px !important">Transactor</th>
+                          <th style="width: 100px !important">Advisor</th>
+                          <th style="width: 100px !important">Payment mode</th>
+                          <th style="width: 100px !important">Previous Approval Code</th>
                         </tr>
                       </thead>
 
