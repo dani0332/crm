@@ -41,7 +41,7 @@ class MyLeadsController extends Controller
         
         $parentTeamId = $team->id;
         
-        $leadStatusList = QuoteStatus::select('id', 'text')->get();
+        $leadStatusList = QuoteStatus::select('id', 'text')->orderBy('sort_order', 'asc')->get();
         
         array_push($allowedTeamTypes, ['id' => $team->id, 'name' => $teamName]);
         
