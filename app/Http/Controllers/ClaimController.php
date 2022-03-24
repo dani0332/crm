@@ -490,9 +490,17 @@ class ClaimController extends Controller
 
     public function getoverdueleads(Request $request)
     {
-        $gridData = $this->crudService->getOverDueFollowups($request, $request->teamName)->get();
-        return DataTables::of($gridData)
+        $allowedTypes = ['car', 'home', 'travel', 'health', 'life', 'travel'];
+        if(!in_array($request->type, $allowedTypes)){
+            return DataTables::of([])
                 ->addIndexColumn()
                 ->make(true);
+        }else{
+            $gridData = $this->crudService->getOverDueFollowups($request, $request->teamName)->get();
+            return DataTables::of($gridData)
+                    ->addIndexColumn()
+                    ->make(true);
+        }
+        
     }
 }
