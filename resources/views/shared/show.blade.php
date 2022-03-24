@@ -5,6 +5,16 @@
 #quote-plans table.dataTable thead .sorting_asc:after {
     content: none !important;
 }
+.modal-dialog,
+.modal-content {
+    /* 80% of window height */
+    height: 200px !important;
+}
+
+.modal-body {
+    /* 100% = dialog height, 120px = header + footer */
+    max-height: 100px !important;
+}
 </style>
 <?php
     use App\Enums\quoteTypeCode;
@@ -23,6 +33,7 @@
                 <div class="x_title">
                     <h2>{{(str_contains(strtolower($model->modelType), 'team') ? 'Team' : (str_contains(strtolower($model->modelType), 'leadstatus') ? 'Lead Status' : $model->modelType)). ' Detail' }}</h2>
                     <ul class="nav navbar-right panel_toolbox">
+                        <li> <a id="duplicateLeadModalBtn" class="btn btn-warning btn-sm">Duplicate Lead</a> </li>
                         <li><a href="{{ url('quotes/'.strtolower($model->modelType)) }}" class="btn btn-warning btn-sm">{{(str_contains(strtolower($model->modelType), 'team') ? 'Team' : (str_contains(strtolower($model->modelType), 'leadstatus') ? 'Lead Status' : $model->modelType)). ' List' }}</a></li>
                     </ul>
                     <div class="clearfix"></div>
@@ -198,6 +209,32 @@
             :selectedlostreason="$selectedLostReasonId"
         />
     @endif
+    <div class="modal fade" id="duplicateLeadModal" name="duplicateLeadModal" tabindex="-1" role="dialog" aria-labelledby="duplicateLeadModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-sm" role="document">
+            <div class="modal-content" style="height: 40vw;">
+                <div class="modal-header" style="border-bottom: none;">
+                    <h5 class="modal-title" id="duplicateLeadModalLabel" style="font-size: 16px !important;"><span class="fa fa-clone"></span>
+                        <strong style="margin-left: 13px;">Duplicate Lead</strong></h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                </div>
+                <div class="modal-body">
+                    <select class="form-control"  id="lob_team"
+                    name="lob_team">
+                        <option value="">Select LOB For Duplication</option>
+                        <option value="EBP" >EBP</option>
+                        <option value="RM-NB">RM-NB</option>
+                        <option value="RM-Speed">RM-Speed</option>
+                        <option value="GM">Group Medical</option>
+                    </select>
+                </div>
+                <div class="modal-footer" style="height: 50px;">
+                    <button type="button"  class="btn btn-sm btn-success">Create Duplicate</button>
+                </div>
+            </div>
+        </div>
+    </div>
     @if($model->modelType == quoteTypeCode::Car)
 
         <div class="modal fade" id="quotePlanModal" name="quotePlanModal" tabindex="-1" role="dialog" aria-labelledby="quotePlanModalLabel" aria-hidden="true">

@@ -1700,6 +1700,10 @@ $(document).ready(function () {
             $('#quotePlanModal').modal({ show: true });
         });
     });
+    $('#duplicateLeadModalBtn').on('click', function (e) {
+        e.preventDefault();
+        $('#duplicateLeadModal').modal({ show: true });;
+    });
 
     $("#quotePlansGenerateButton").click(function () {
         var quotePlansGenerateUrl = $('#quotePlansGenerateUrl').val();

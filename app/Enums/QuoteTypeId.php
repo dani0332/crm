@@ -3,6 +3,7 @@
 namespace App\Enums;
 
 use BenSampo\Enum\Enum;
+use ReflectionClass;
 
 /**
  * @method static static OptionOne()
@@ -19,4 +20,14 @@ final class QuoteTypeId extends Enum
     const Bike = 6;
     const Yacht = 7;
     const Travel = 8;
+    public static function getOptions() 
+    {
+        $oClass = new ReflectionClass(__CLASS__);
+        $constants = $oClass->getConstants();
+        $retval = array();
+        foreach($constants as $name => $val) {
+                $retval[$val] = $name;
+        }
+        return $retval;
+    }
 }
