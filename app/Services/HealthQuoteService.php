@@ -262,7 +262,7 @@ class HealthQuoteService extends BaseService
             return redirect("quote/health/" . $id)->with('success', 'Health Quote has been updated');
     }
 
-    public function getBusinessOverDueFollowups()
+    public function getHealthOverDueFollowups()
     {
         $query = DB::table('health_quote_request as hqr')
             ->select(

@@ -268,7 +268,7 @@ class LifeQuoteService extends BaseService
             return redirect("quotes/life")->with('success', 'Life Quote has been updated');
     }
 
-    public function getBusinessOverDueFollowups()
+    public function getLifeOverDueFollowups()
     {
         $query = DB::table('life_quote_request as lqr')
             ->select(

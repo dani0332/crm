@@ -136,7 +136,6 @@ class BusinessQuoteService extends BaseService
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'bqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'bqrd.advisor_assigned_by_id')
             ->where('bqr.advisor_id', Auth::user()->id)
-            ->where('bqrd.next_followup_date', '>', date('Y-m-d'))
             ->where('qs.text', '!=', 'Fake');
         if (isset($request->startedAt) && isset($request->endAt) && $request->startedAt != '' && $request->endAt != '') {
             $dateFrom = Carbon::createFromFormat('Y-m-d', $request->startedAt)->startOfDay()->toDateTimeString();

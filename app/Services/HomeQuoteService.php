@@ -206,7 +206,7 @@ class HomeQuoteService extends BaseService
         }
     }
 
-    public function getBusinessOverDueFollowups()
+    public function getHomeOverDueFollowups()
     {
         $query = DB::table('home_quote_request as hqr')
             ->select(
