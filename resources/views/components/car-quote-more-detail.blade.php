@@ -38,7 +38,75 @@
                     <div class="col">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="Is Vehicle modified?"><b>Is Vehicle modified?</b></label>
                         <div class="col-md-6 col-sm-6">
-                        <p class="label-align-center">No</p>
+                        <p class="label-align-center">
+                            @isset($listQuote->isModified)
+                                @if($listQuote->isModified)
+                                    Yes
+                                @else
+                                    No
+                                @endif
+                            @endisset
+                        </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="item form-group">
+                    <div class="col">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Bank Financed"><b>Bank Financed</b></label>
+                        <div class="col-md-6 col-sm-6">
+                        <p class="label-align-center">
+                            @isset($listQuote->isBankFinanced)
+                                @if($listQuote->isBankFinanced)
+                                    Yes
+                                @else
+                                    No
+                                @endif
+                            @endisset
+                        </p>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="GCC Standard"><b>GCC Standard</b></label>
+                        <div class="col-md-6 col-sm-6">
+                        <p class="label-align-center">
+                            @isset($listQuote->isGccStandard)
+                                @if($listQuote->isGccStandard)
+                                    Yes
+                                @else
+                                    No
+                                @endif
+                            @endisset
+                        </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="item form-group">
+                    <div class="col">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Current Insurance"><b>Current Insurance</b></label>
+                        <div class="col-md-6 col-sm-6">
+                        <p class="label-align-center">
+                            @isset($listQuote->currentInsuranceStatus)
+                                @if($listQuote->currentInsuranceStatus == 'ACTIVE_TPL')
+                                    Active (Third Party Only)
+                                @endif
+                                @if($listQuote->currentInsuranceStatus == 'ACTIVE_COMP')
+                                    Active (Comprehensive)
+                                @endif
+                                @if($listQuote->currentInsuranceStatus == 'EXPIRED')
+                                    Expired
+                                @endif
+                            @endisset
+                        </p>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Year Of First Registration"><b>Year Of First Registration</b></label>
+                        <div class="col-md-6 col-sm-6">
+                        <p class="label-align-center">
+                            @isset($listQuote->isGccStandard)
+                                {{ $listQuote->yearOfFirstRegistration }}
+                            @endisset
+                        </p>
                         </div>
                     </div>
                 </div>

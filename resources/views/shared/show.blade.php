@@ -225,6 +225,7 @@
         :vehicleTypeText="$vehicleTypeText"
         :caqQuoteCylinder="$record->cylinder"
         :caqQuoteSeatCapacity="$record->seat_capacity"
+        :listQuote="$listQuote"
         />
 
         <x-car-ecom-detail
@@ -267,12 +268,21 @@
                 </div>
             </div>
         </div>
-
+        <!-- <x-travel-quote-members-detail
+            :members="$members_detail"
+        /> -->
         <x-travel-quote
             :listQuotePlans="$listQuotePlans"
             :uuidModal="$record->uuid"
             :quoteRequestId="$record->id"
         />
-
     @endif
+
+    @can('auditable')
+        <div id="auditable">
+            <button id='auditablebtn' class="btn btn-warning btn-sm auditablebtn" data-id="{{ $record->id }}" data-model="App\Models\{{$model_name}}">
+                View Audit Logs
+            </button>
+        </div>
+    @endcan
 @endsection

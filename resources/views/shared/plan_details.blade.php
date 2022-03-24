@@ -3,53 +3,67 @@
 <?php
     use App\Enums\quoteTypeCode;
     use App\Enums\CarPlanType;
+    use App\Models\ApplicationStorage;
 
-    foreach ($listQuotePlans as $listQuotePlan) { // Main
+    if(!isset($modelName)) {
 
-        if ($listQuotePlan->id == $planId) {
-            $listQuotePlanName = $listQuotePlan->name;
-            $providerCode = $listQuotePlan->providerCode;
-            $providerName = $listQuotePlan->providerName;
-            $repairType = $listQuotePlan->repairType;
-            $actualPremium = $listQuotePlan->actualPremium;
-            $discountPremium = $listQuotePlan->discountPremium;
-            if(isset($listQuotePlan->carValueLowerLimit)) { $carValueLowerLimit = $listQuotePlan->carValueLowerLimit; } else { $carValueLowerLimit = 0; }
-            if(isset($listQuotePlan->carValueUpperLimit)) { $carValueUpperLimit = $listQuotePlan->carValueUpperLimit; } else { $carValueUpperLimit = 0; }
-            if(isset($listQuotePlan->excess)) { $excess = $listQuotePlan->excess; } else { $excess = 0; }
-            if(isset($listQuotePlan->carValue)) { $carValue = $listQuotePlan->carValue; } else { $carValue = 0; }
-            if(isset($listQuotePlan->isDisabled)) { $isDisabled = $listQuotePlan->isDisabled; } else { $isDisabled = 0; }
-            $listQuotePlanAddonss = $listQuotePlan->addons;
-            $listQuotePlanBenefitsInclusions = $listQuotePlan->benefits->inclusion;
-            $listQuotePlanBenefitsExclusions = $listQuotePlan->benefits->exclusion;
-            $listQuotePlanBenefitsFeatures = $listQuotePlan->benefits->feature;
-            $listQuotePlanBenefitsRsas = $listQuotePlan->benefits->roadSideAssistance;
-            $listQuotePlanBenefitsPolicyDetails = $listQuotePlan->policyWordings;
-
-            foreach ($listQuotePlanAddonss as $listQuotePlanAddon) {
-                $listQuotePlanAddons[] = $listQuotePlanAddon; // Get Addons Names
-
-                foreach ($listQuotePlanAddon->carAddonOption as $listQuotePlanAddonsOptions) {
-                    $listQuotePlanAddonValues[] = $listQuotePlanAddonsOptions->value;
-                    $listQuotePlanAddonPrices[] = $listQuotePlanAddonsOptions->price;
-                }
+        $carQuoteEditSwitch = ApplicationStorage::select('value')
+        ->where([['key_name', 'IMCRM_CAR_QUOTE_PLANS_EDIT_IS_DISABLED'], ['is_active', 1]])
+        ->get()->first();
+        if(isset($carQuoteEditSwitch->value)) {
+            if($carQuoteEditSwitch->value == '1') {
+                $carQuoteEditDisable = 'disabled';
+            } else {
+                $carQuoteEditDisable = '';
             }
-            foreach ($listQuotePlanBenefitsPolicyDetails as $listQuotePlanBenefitsPolicyDetail) {
-                $listQuotePlanBenefitsPolicyDetailLink = $listQuotePlanBenefitsPolicyDetail->link;
-            }
-            if(isset($listQuotePlanBenefitsPolicyDetailLink)) { $listQuotePlanBenefitsPolicyDetailLink = $listQuotePlanBenefitsPolicyDetailLink; } else { $listQuotePlanBenefitsPolicyDetailLink = ''; }
+        } else {
+            $carQuoteEditDisable = 'disabled';
         }
-    }
-
-    if($repairType == CarPlanType::TPL) {
-        $readonlyFieldCss = "pointer-events: none;background-color: #f6f6f6;";
-    } else {
-        $readonlyFieldCss = "";
-    }
-
-    $carPlanTypeComp = CarPlanType::COMP;
-
+    
+        foreach ($listQuotePlans as $listQuotePlan) { // Car quote plans
+    
+            if ($listQuotePlan->id == $planId) {
+                $listQuotePlanName = $listQuotePlan->name;
+                $providerCode = $listQuotePlan->providerCode;
+                $providerName = $listQuotePlan->providerName;
+                $repairType = $listQuotePlan->repairType;
+                $actualPremium = $listQuotePlan->actualPremium;
+                $discountPremium = $listQuotePlan->discountPremium;
+                if(isset($listQuotePlan->carValueLowerLimit)) { $carValueLowerLimit = $listQuotePlan->carValueLowerLimit; } else { $carValueLowerLimit = 0; }
+                if(isset($listQuotePlan->carValueUpperLimit)) { $carValueUpperLimit = $listQuotePlan->carValueUpperLimit; } else { $carValueUpperLimit = 0; }
+                if(isset($listQuotePlan->excess)) { $excess = $listQuotePlan->excess; } else { $excess = 0; }
+                if(isset($listQuotePlan->carValue)) { $carValue = $listQuotePlan->carValue; } else { $carValue = 0; }
+                if(isset($listQuotePlan->isDisabled)) { $isDisabled = $listQuotePlan->isDisabled; } else { $isDisabled = 0; }
+                $listQuotePlanAddonss = $listQuotePlan->addons;
+                $listQuotePlanBenefitsInclusions = $listQuotePlan->benefits->inclusion;
+                $listQuotePlanBenefitsExclusions = $listQuotePlan->benefits->exclusion;
+                $listQuotePlanBenefitsFeatures = $listQuotePlan->benefits->feature;
+                $listQuotePlanBenefitsRsas = $listQuotePlan->benefits->roadSideAssistance;
+                $listQuotePlanBenefitsPolicyDetails = $listQuotePlan->policyWordings;
+    
+                foreach ($listQuotePlanAddonss as $listQuotePlanAddon) {
+                    $listQuotePlanAddons[] = $listQuotePlanAddon; // Get Addons Names
+    
+                    foreach ($listQuotePlanAddon->carAddonOption as $listQuotePlanAddonsOptions) {
+                        $listQuotePlanAddonValues[] = $listQuotePlanAddonsOptions->value;
+                        $listQuotePlanAddonPrices[] = $listQuotePlanAddonsOptions->price;
+                    }
+                }
+                foreach ($listQuotePlanBenefitsPolicyDetails as $listQuotePlanBenefitsPolicyDetail) {
+                    $listQuotePlanBenefitsPolicyDetailLink = $listQuotePlanBenefitsPolicyDetail->link;
+                }
+                if(isset($listQuotePlanBenefitsPolicyDetailLink)) { $listQuotePlanBenefitsPolicyDetailLink = $listQuotePlanBenefitsPolicyDetailLink; } else { $listQuotePlanBenefitsPolicyDetailLink = ''; }
+            }
+        }
+    
+        if($repairType == CarPlanType::TPL) {
+            $readonlyFieldCss = "pointer-events: none;background-color: #f6f6f6;";
+        } else {
+            $readonlyFieldCss = "";
+        }
+    
+        $carPlanTypeComp = CarPlanType::COMP;
 ?>
-
 <script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
 <script>
     $.ajaxSetup({
@@ -99,6 +113,10 @@
         });
     });
 </script>
+<?php
+    }
+?>
+
 @if(isset($modelName) && $modelName == quoteTypeCode::Travel)
 <div class="row">
         <div class="col-md-12 col-sm-12 admin-detail">
@@ -109,7 +127,6 @@
                 </div>
 
                 <div class="x_content">
-
                     <ul class="nav nav-tabs" id="myTab" role="tablist" style="font-weight: bold;">
                         <li class="nav-item">
                             <a class="nav-link active" id="general-tab" data-toggle="tab" href="#general" role="tab" aria-controls="general" aria-selected="true">General Info</a>
@@ -230,7 +247,6 @@
                 </div>
 
                 <div class="x_content">
-
                     <ul class="nav nav-tabs" id="myTab" role="tablist" style="font-weight: bold;">
                         <li class="nav-item">
                             <a class="nav-link active" id="general-tab" data-toggle="tab" href="#general" role="tab" aria-controls="general" aria-selected="true">General Info</a>
@@ -269,26 +285,26 @@
                                     </tr>
                                     <tr><td valign="top">Repair Type:</td> <td>{{ $repairType }}</td><td> </td></tr>
                                     <tr>
-                                        <td valign="top">Actual Premium:</td> <td><input type="number" id="actual_premium" name="actual_premium" value="{{ old('actual_premium', $actualPremium) }}" class="form-control" onKeyDown="if(this.value.length==8) return false;"></td>
-                                        <td valign="top">Discounted Premium:</td> <td><input type="number" id="discounted_premium" name="discounted_premium" value="{{ old('discounted_premium', $discountPremium) }}" class="form-control" onKeyDown="if(this.value.length==8) return false;"></td>
+                                        <td valign="top">Actual Premium:</td> <td><input type="number" id="actual_premium" name="actual_premium" value="{{ old('actual_premium', $actualPremium) }}" class="form-control" onKeyDown="if(this.value.length==8) return false;" {{ $carQuoteEditDisable }}></td>
+                                        <td valign="top">Discounted Premium:</td> <td><input type="number" id="discounted_premium" name="discounted_premium" value="{{ old('discounted_premium', $discountPremium) }}" class="form-control" onKeyDown="if(this.value.length==8) return false;" {{ $carQuoteEditDisable }}></td>
                                     </tr>
                                     <tr>
-                                        <td valign="top">Car value:</td> <td><input type="number" id="car_value" name="car_value" value="{{ old('car_value', $carValue) }}" class="form-control" onKeyDown="if(this.value.length==8) return false;" style="{{ $readonlyFieldCss }}">
+                                        <td valign="top">Car value:</td> <td><input type="number" id="car_value" name="car_value" value="{{ old('car_value', $carValue) }}" class="form-control" onKeyDown="if(this.value.length==8) return false;" style="{{ $readonlyFieldCss }}" {{ $carQuoteEditDisable }}>
                                             @if($repairType == CarPlanType::COMP)
                                                 <span style="font-size: 10px;">Min: AED {{ number_format($carValueLowerLimit) }} - Max: AED {{ number_format($carValueUpperLimit) }}</span>
                                             @endif
                                         </td>
-                                        <td valign="top">Excess:</td> <td><input type="number" id="excess" name="excess" value="{{ old('excess', $excess) }}" class="form-control" onKeyDown="if(this.value.length==8) return false;" style="{{ $readonlyFieldCss }}"></td>
+                                        <td valign="top">Excess:</td> <td><input type="number" id="excess" name="excess" value="{{ old('excess', $excess) }}" class="form-control" onKeyDown="if(this.value.length==8) return false;" style="{{ $readonlyFieldCss }}" {{ $carQuoteEditDisable }}></td>
                                     </tr>
                                     <tr><td valign="top">Disabled?</td>
-                                        <td><select class="form-control" id='is_disabled' name="is_disabled">
+                                        <td><select class="form-control" id='is_disabled' name="is_disabled" {{ $carQuoteEditDisable }}>
                                                 <option value="false" {{ $isDisabled == false ? 'selected="selected"' : '' }}>False</option>
                                                 <option value="true" {{ $isDisabled == true ? 'selected="selected"' : '' }}>True</option>
                                             </select>
                                             <div id="car_plan_manual_process_text" style="display: none;font-weight:bold;"></div>
                                         </td>
                                         <td> </td>
-                                        <td align="right"><button type="submit" class="btn btn-warning btn-sm" id="update_car_plan_button">Update</button></td></tr>
+                                        <td align="right"><button type="submit" class="btn btn-warning btn-sm" id="update_car_plan_button" {{ $carQuoteEditDisable }}>Update</button></td></tr>
                                 </table>
                             </form>
                             <br />

@@ -113,6 +113,7 @@ class UserController extends Controller
         if($request->sub_team_id != "0") $user->sub_team_id = $request->sub_team_id;
         
         if ($request->manager != "0") $user->manager_id = $request->manager;
+        else $user->manager_id = null;
 
         if(isset($request->additionalTeams)) {
             if(count((array)$request->additionalTeams) > 0)  $user->additional_team_ids = implode(',', $request->additionalTeams);
@@ -192,6 +193,7 @@ class UserController extends Controller
         $user->email = $request->email;
         $user->password = bcrypt($request->password);
         if ($request->manager_id != "0") $user->manager_id = $request->manager_id;
+        else $user->manager_id = null;
         if(isset($request->additionalTeams)) {
             if(count((array)$request->additionalTeams) > 1) {
                 $user->additional_team_ids = implode(',', $request->additionalTeams);

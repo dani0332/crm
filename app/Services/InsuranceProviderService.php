@@ -95,6 +95,8 @@ class InsuranceProviderService extends BaseService
             'text' => $request->text,
             'text_ar' => $request->text_ar,
             'code' => $request->code,
+            'lower_limit' => $request->lower_limit,
+            'upper_limit' => $request->upper_limit,
             'is_active' => $request->has("is_active") ? 1 : 0
         ];
         return InsuranceProvider::create($data);
@@ -106,6 +108,8 @@ class InsuranceProviderService extends BaseService
             'text' => $request->text,
             'text_ar' => $request->text_ar,
             'code' => $request->code,
+            'lower_limit' => $request->lower_limit,
+            'upper_limit' => $request->upper_limit,
             'is_active' => $request->has("is_active") ? $request->is_active : 0
         ];
         InsuranceProvider::where('id', $id)->update($updateArray);
@@ -121,8 +125,8 @@ class InsuranceProviderService extends BaseService
             "text_ar" => "input|text|title|required",
             "created_at" => "input|title|date|range",
             "updated_at" => "input|title|date",
-            "lower_limit" => "input|number|title|required",
-            "upper_limit" => "input|number|title|required",        
+            "lower_limit" => "input|number|title|required|min:0",
+            "upper_limit" => "input|number|title|required|min:0",        
             "is_active" => "input|checkbox"
         );
     }

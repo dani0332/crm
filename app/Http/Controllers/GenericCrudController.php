@@ -16,10 +16,7 @@ use App\Enums\InsuranceProvderConstants;
 use App\Services\TeamService;
 use Illuminate\Http\Request;
 use DataTables;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
-use Config;
-use DB;
 
 class GenericCrudController extends Controller
 {
@@ -125,7 +122,13 @@ class GenericCrudController extends Controller
         $validateArray = [];
         foreach ($modelPropertiesList as $property => $value) {
             if (strpos($value, 'required') && $property != 'id' && !strpos($modelSkipPropertiesList['create'], $property)) {
-                $validateArray[$property] = 'required';
+                if(strpos($value, 'min')){
+                    $min = explode(':', $value)[1]; 
+                    $validateArray[$property] = 'required|numeric|min:'.$min;
+                }else{
+                    $validateArray[$property] = 'required';
+                }
+                
             }
         }
         $this->validate($request, $validateArray);
@@ -228,7 +231,12 @@ class GenericCrudController extends Controller
         $validateArray = [];
         foreach ($modelPropertiesList as $property => $value) {
             if (strpos($value, 'required') && $property != 'id' && $property != 'code' && $property != 'email' && $property != 'mobile_no' && !strpos($modelSkipPropertiesList, $property)) {
-                $validateArray[$property] = 'required';
+                if(strpos($value, 'min')){
+                    $min = explode(':', $value)[1]; 
+                    $validateArray[$property] = 'required|numeric|min:'.$min;
+                }else{
+                    $validateArray[$property] = 'required';
+                }
             }
         }
         $this->validate($request, $validateArray);

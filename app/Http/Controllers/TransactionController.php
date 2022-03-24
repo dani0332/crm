@@ -2,19 +2,19 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Http\Request;
+use Auth;
+use DataTables;
+use DB;
 use App\Models\InsuranceCompany;
 use App\Models\PaymentMode;
 use App\Models\Reason;
 use App\Models\Status;
 use App\Models\Transaction;
 use App\Models\TypeOfInsurance;
-use Auth;
-use DataTables;
-use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\CarQuote;
 use App\Services\CustomerService;
-use DB;
 use App\Services\TransAppService;
 use App\Services\ReasonService;
 
@@ -43,7 +43,7 @@ class TransactionController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index(Request $request)
+    public function index(Request $request, Transaction $transaction, Datatables $datatables)
     {
         $transactors = User::select('users.*')
         ->leftjoin('model_has_roles','users.id','model_has_roles.model_id')
@@ -59,9 +59,15 @@ class TransactionController extends Controller
         $payment_modes = PaymentMode::where('is_active', '=', 1)->where('is_deleted', 0)->orderBy('name', 'asc')->get();
         $reasons = Reason::where('is_active', '=', 1)->where('is_deleted', 0)->orderBy('name', 'asc')->get();
 
+        if (Auth::user()->hasRole('TRANSAPP_ADMIN')) {
+            $isTransappAdmin = "1";
+        } else {
+            $isTransappAdmin = "0";
+        }
+
         if ($request->ajax()) {
 
-            $data = Transaction::select('transactions.*', 'statuses.name as status', 'insurance_companies.name as insurance', 'type_of_insurances.text as type_of_insurance',
+            $dataTransapp = $transaction::select('transactions.*', 'statuses.name as status', 'insurance_companies.name as insurance', 'type_of_insurances.text as type_of_insurance',
             'handlers.name as handler_name', 'creaters.name as created_by_name', 'payment_modes.name as payment_mode', DB::raw('CONCAT(customer.first_name, " ", customer.last_name) AS customer_name'))
             ->leftjoin('customer', 'customer.id', 'transactions.customer_id')
             ->leftjoin('insurance_companies', 'insurance_companies.id', 'transactions.insurance_company_id')
@@ -72,51 +78,48 @@ class TransactionController extends Controller
             ->leftjoin('type_of_insurances', 'type_of_insurances.id', 'transactions.type_of_insurance_id')
             ->where('transactions.is_deleted', 0);
 
-            if(Auth::user()->hasRole('TRANSAPP_ADVISOR') || Auth::user()->hasRole('TRANSAPP_APPROVER')) {
-                $data->where('transactions.assigned_to_id', Auth::user()->id);
+            if(Auth::user()->hasAnyRole(['TRANSAPP_ADVISOR','TRANSAPP_APPROVER'])) {
+                $dataTransapp->where('transactions.assigned_to_id', Auth::user()->id);
             }
 
             if (isset($request->transapp_start_date) && !empty($request->transapp_start_date)
             && isset($request->transapp_stop_date) && !empty($request->transapp_stop_date)) {
-                $data->whereBetween('transactions.created_at', [\Carbon\Carbon::parse($request->transapp_start_date)->format('Y-m-d')." 00:00:00", \Carbon\Carbon::parse($request->transapp_stop_date)->format('Y-m-d')." 23:59:59"]);
+                $dataTransapp->whereBetween('transactions.created_at', [\Carbon\Carbon::parse($request->transapp_start_date)->format('Y-m-d')." 00:00:00", \Carbon\Carbon::parse($request->transapp_stop_date)->format('Y-m-d')." 23:59:59"]);
             }
             if(!empty($request->transapp_approval_code)){
-                $data->where('transactions.approval_code', $request->transapp_approval_code)->orWhere('transactions.prev_approval_code', $request->transapp_approval_code);
+                $dataTransapp->where('transactions.approval_code', $request->transapp_approval_code)->orWhere('transactions.prev_approval_code', $request->transapp_approval_code);
             }
 
             if(!empty($request->transapp_customer_email)){
-                $data->where('customer.email', $request->transapp_customer_email);
+                $dataTransapp->where('customer.email', $request->transapp_customer_email);
             }
 
             if(!empty($request->transapp_customer_name)){
-                $data->where('customer.first_name', 'like', '%' . $request->transapp_customer_name . '%')->orWhere('customer.last_name', 'like', '%' . $request->transapp_customer_name . '%');
+                $dataTransapp->where('customer.first_name', 'like', '%' . $request->transapp_customer_name . '%')->orWhere('customer.last_name', 'like', '%' . $request->transapp_customer_name . '%');
             }
 
             if(isset($request->transactor) && !empty($request->transactor)) {
-                $data->where('transactions.created_by_id', $request->transactor);
+                $dataTransapp->where('transactions.created_by_id', $request->transactor);
             }
             if(isset($request->handler) && !empty($request->handler)) {
-                $data->where('transactions.assigned_to_id', $request->handler);
+                $dataTransapp->where('transactions.assigned_to_id', $request->handler);
             }
             if(isset($request->insurance_company) && !empty($request->insurance_company)) {
-                $data->where('transactions.insurance_company_id', $request->insurance_company);
+                $dataTransapp->where('transactions.insurance_company_id', $request->insurance_company);
             }
             if(isset($request->reason) && !empty($request->reason)) {
-                $data->where('transactions.reason_id', $request->reason);
+                $dataTransapp->where('transactions.reason_id', $request->reason);
             }
             if(isset($request->payment_mode) && !empty($request->payment_mode)) {
-                $data->where('transactions.payment_mode_id', $request->payment_mode);
+                $dataTransapp->where('transactions.payment_mode_id', $request->payment_mode);
             }
 
-            return Datatables::of($data)
+            return $datatables::of($dataTransapp)
             ->addIndexColumn()
-            ->addColumn('action', function ($row) {
-                return view('transaction.actions', compact('row'))->render();
-            })
-            ->rawColumns(['action'])
             ->make(true);
         }
-        return view('transaction.view',compact('transactors','handlers','insurance_companies','payment_modes','reasons'));
+
+        return view('transaction.view',compact('transactors','handlers','insurance_companies','payment_modes','reasons','isTransappAdmin'));
     }
 
     /**
@@ -183,7 +186,7 @@ class TransactionController extends Controller
      */
     public function show(Transaction $transaction)
     {
-        if(Auth::user()->hasRole('TRANSAPP_ADVISOR') || Auth::user()->hasRole('TRANSAPP_APPROVER')) {
+        if(Auth::user()->hasAnyRole(['TRANSAPP_ADVISOR','TRANSAPP_APPROVER'])) {
             if(Auth::user()->id != $transaction->assigned_to_id) {
                 return redirect()->route('transaction.index')->with('message','Access Forbidden');
             }
@@ -198,7 +201,7 @@ class TransactionController extends Controller
         ->leftjoin('type_of_insurances', 'type_of_insurances.id', 'transactions.type_of_insurance_id')
         ->where('transactions.id', $transaction->id)->where('transactions.is_deleted', 0)->first();
 
-        if(Auth::user()->hasRole('TRANSAPP_ADVISOR') || Auth::user()->hasRole('TRANSAPP_APPROVER')) {
+        if(Auth::user()->hasAnyRole(['TRANSAPP_ADVISOR','TRANSAPP_APPROVER'])) {
             $transaction->where('transactions.assigned_to_id', Auth::user()->id);
         }
         return view('transaction.show', compact('transaction'));
@@ -212,7 +215,7 @@ class TransactionController extends Controller
      */
     public function edit(Transaction $transaction)
     {
-        if(Auth::user()->hasRole('TRANSAPP_ADVISOR') || Auth::user()->hasRole('TRANSAPP_APPROVER')) {
+        if(Auth::user()->hasAnyRole(['TRANSAPP_ADVISOR','TRANSAPP_APPROVER'])) {
             if(Auth::user()->id != $transaction->assigned_to_id) {
                 return redirect()->route('transaction.index')->with('message','Access Forbidden');
             }
@@ -296,16 +299,14 @@ class TransactionController extends Controller
         ->leftjoin('payment_modes', 'payment_modes.id', 'transactions.payment_mode_id')
         ->where('approval_code', $request->approval_code)->where('transactions.is_deleted', 0)->where('transactions.is_deleted', 0)->first();
 
-        if(Auth::user()->hasRole('TRANSAPP_ADVISOR') || Auth::user()->hasRole('TRANSAPP_APPROVER')) {
+        if(Auth::user()->hasAnyRole(['TRANSAPP_ADVISOR','TRANSAPP_APPROVER'])) {
             $transaction->where('transactions.assigned_to_id', Auth::user()->id);
         }
 
-        if(Auth::user()->hasRole('TRANSAPP_ADVISOR') || Auth::user()->hasRole('TRANSAPP_APPROVER')) {
+        if(Auth::user()->hasAnyRole(['TRANSAPP_ADVISOR','TRANSAPP_APPROVER'])) {
             if(Auth::user()->id != $transaction->assigned_to_id) {
                 return redirect('transapp/home')->withErrors([
-                    'approval_code' => [__('Access Forbidden'),
-                ],
-                ]);
+                    'approval_code' => [__('Access Forbidden'),],]);
             }
         }
 
@@ -363,12 +364,10 @@ class TransactionController extends Controller
         if($route == 're_issue') { $route_to = 'reissue_view'; }
         if($route == 'cancel') { $route_to = 'cancel_view'; }
 
-        if(Auth::user()->hasRole('TRANSAPP_ADVISOR') || Auth::user()->hasRole('TRANSAPP_APPROVER')) {
+        if(Auth::user()->hasAnyRole(['TRANSAPP_ADVISOR','TRANSAPP_APPROVER'])) {
             if(Auth::user()->id != $trans_assigned_to_id) {
                 return redirect()->route($route_to)->withErrors([
-                    'approval_code' => [__('Access Forbidden'),
-                ],
-                ]);
+                    'approval_code' => [__('Access Forbidden'),],]);
             }
         }
 

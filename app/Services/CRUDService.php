@@ -93,6 +93,11 @@ class CRUDService extends BaseService
         return $this->{strtolower($leadType) . 'QuoteService'}->{'get' . ucwords($leadType) . 'LeadsForAdvisor'}($request);
     }
 
+    public function getOverDueFollowups($request, $leadType)
+    {
+        return $this->{strtolower($leadType) . 'QuoteService'}->{'get' . ucwords($leadType) . 'OverDueFollowups'}($request);
+    }
+
     public function getCustomTitleByModelType($modelType, $propertyName)
     {
         $lowerCaseModelType = strtolower($modelType);

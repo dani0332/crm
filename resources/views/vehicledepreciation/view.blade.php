@@ -22,8 +22,9 @@
                   <thead>
                     <tr>
                       <th>Id</th>
-                      <th>Car Model Id</th>
                       <th>Car Make Id</th>
+                      <th>Car Model Id</th>
+                      <th>Insurance Provider</th>
                       <th>First Year</th>
                       <th>Second Year</th>
                       <th>Third Year</th>

@@ -59,6 +59,9 @@
                                                 @if(explode("|", $value)[1] != 'date')
                                                     type={{ explode("|", $value)[1]  }}
                                                     @endif id={{$property}}
+                                                    @if(strpos($value, 'min') !== false)
+                                                        min="{{explode(":", $value)[1]}}"
+                                                    @endif
                                                 name={{$property}}
                                                 @if($property == 'email' || $property == 'mobile_no') disabled="disabled" @endif
                                                 value="{{ old($property, $record->$property) }}"

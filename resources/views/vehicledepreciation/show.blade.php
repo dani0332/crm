@@ -23,20 +23,27 @@
                         <div class="col">
                             <label class="col-form-label col-md-3 col-sm-3 label-align" for="text"><b>Car Make</b></label>
                             <div class="col-md-6 col-sm-6">
-                               @foreach($carMake as $item)
-                               <p class="label-align-center">{{ $item->text }}</p>
-                               @endforeach
+                                <p class="label-align-center">{{ $carMake }}</p>
                                
                            </div>
                        </div>
                        <div class="col">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="text"><b>Car Model</b></label>
                         <div class="col-md-6 col-sm-6">
-                            @foreach($carModel as $item)
-                            <p class="label-align-center">{{ $item->text }}</p>
-                            @endforeach
+                            <p class="label-align-center">{{ $carModel }}</p>
                             
                         </div>
+                    </div>
+                </div>
+                <div class="item form-group">
+                    <div class="col">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="text"><b>Insurance Provider</b></label>
+                        <div class="col-md-6 col-sm-6">
+                            <p class="label-align-center">{{ $insuranceProvider ? $insuranceProvider->text : '' }}</p>
+                            
+                        </div>
+                    </div>
+                    <div class="col">
                     </div>
                 </div>
                 <div class="item form-group">

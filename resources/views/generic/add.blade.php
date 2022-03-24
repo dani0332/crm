@@ -52,7 +52,12 @@
                                             <span class='required'>*</span>
                                             @endif
                                         </span>
-                                        <input @if(explode("|", $value)[1] == "date") readonly="readonly" @endif  type={{ explode("|", $value)[1] }} id={{$property}} name={{$property}} value="{{ old($property) }}" class="form-control">
+                                        <input @if(explode("|", $value)[1] == "date") readonly="readonly" @endif  
+                                        @if(strpos($value, 'min') !== false)
+                                            
+                                            min="{{explode(":", $value)[1]}}"
+                                        @endif
+                                        type={{ explode("|", $value)[1] }} id={{$property}} name={{$property}} value="{{ old($property) }}" class="form-control">
                                         @if ($errors->has($property))
                                             <span class="text-danger">{{ $errors->first($property) }}</span>
                                         @endif
