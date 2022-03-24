@@ -55,9 +55,13 @@ class MyLeadsController extends Controller
                 array_push($allowedTeamTypes, ['id' => $additionalTeam->id, 'name' => $additionalTeam->name]);
             }
         }
-
-        $overdueLeads = $this->crudService->getOverDueFollowups($request, $teamName)->get();
-
+        
+        $allowedTypes = ['car', 'home', 'travel', 'health', 'life', 'travel'];
+        if(!in_array(strtolower($request->teamName), $allowedTypes)){
+            $overdueLeads = [];
+        }else{
+            $overdueLeads = $this->crudService->getOverDueFollowups($request, $teamName)->get();
+        }
         if ($request->ajax()) {
             
             if(isset($request->teamType)){
