@@ -141,7 +141,7 @@
                     <div class="item form-group">
                         <div class="col">
                             <ul class="nav navbar-right panel_toolbox">
-                                <li><input type="submit" class="btn btn-warning btn-sm"></li>
+                                <li><input type="submit" class="btn btn-warning btn-sm" value="Search"></li>
                                 <li><input type="reset" class="btn btn-warning btn-sm"></li>
                             </ul>
                         </div>
