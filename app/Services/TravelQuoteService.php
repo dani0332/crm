@@ -82,7 +82,7 @@ class TravelQuoteService extends BaseService
         return CapiRequestService::sendCAPIRequest('/api/v1-save-travel-quote', $dataArr);
     }
 
-    public function getBusinessOverDueFollowups()
+    public function getTravelOverDueFollowups()
     {
         $query = DB::table('travel_quote_request as tqr')
             ->select(
