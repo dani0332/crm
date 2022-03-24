@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\LeadSourceTypes;
 use App\Models\BusinessInsuranceType;
 use App\Models\BusinessQuote;
 use App\Models\HealthQuote;
@@ -36,6 +37,7 @@ class HealthQuoteService extends BaseService
             'hqr.health_team_type',
             'hqr.has_home',
             'hqr.premium',
+            'hqr.is_ebp_renewal',
             'hqr.has_worldwide_cover',
             'hqr.marital_status_id',
             'ms.TEXT AS marital_status_id_text',
@@ -50,6 +52,7 @@ class HealthQuoteService extends BaseService
             'hqr.advisor_id',
             'u.name as advisor_id_text',
             'hqrd.next_followup_date',
+            'hqrd.transapp_code',
             'hqrd.notes',
             'ls.text as lost_reason',
         )
@@ -60,8 +63,7 @@ class HealthQuoteService extends BaseService
             ->leftJoin('nationality as n', 'n.id', '=', 'hqr.nationality_id')
             ->leftJoin('emirates as e', 'e.id', '=', 'hqr.emirate_of_your_visa_id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'hqr.quote_status_id')
-            ->leftJoin('users as u', 'u.id', '=', 'hqr.advisor_id')
-            ->where('qs.text', '!=', 'Fake');
+            ->leftJoin('users as u', 'u.id', '=', 'hqr.advisor_id');
     }
 
     public function getEntity($id)
@@ -103,7 +105,7 @@ class HealthQuoteService extends BaseService
     }
     public function saveHealthQuote(Request $request)
     {
-        $sourceName = Config::get('constants.SOURCE_NAME');
+        $sourceName = $request->is_ebp_renewal == 'on' ? LeadSourceTypes::EBPRENEWALS : Config::get('constants.SOURCE_NAME');
         $appUrl = Config::get('constants.APP_URL');
         $dataArr = array(
             "firstName" => $request->first_name,
@@ -117,6 +119,7 @@ class HealthQuoteService extends BaseService
             "premium" => $request->premium,
             "referenceUrl" => $appUrl,
             "dob" => $request->dob,
+            "is_ebp_renewal" => $request->is_ebp_renewal == 'on' ? true : false,
             "coverForId" => $request->cover_for_id,
             "nationalityId" => $request->nationality_id,
             "hasDental" => $request->has_dental == 'on' ? true : false,
@@ -132,6 +135,9 @@ class HealthQuoteService extends BaseService
     {
         $searchProperties = $model->searchProperties;
         if ($request->ajax()) {
+            if (!isset($request->email) && $request->email == '') {
+                $this->query->where('qs.text', '!=', 'Fake');
+            }
             if (isset($request->assigned_to_date_start) && $request->assigned_to_date_start != '') {
                 $dateFrom = Carbon::createFromFormat('Y-m-d', $request['assigned_to_date_start'])->startOfDay()->toDateTimeString();
                 $dateTo = Carbon::createFromFormat('Y-m-d', $request['assigned_to_date_end'])->endOfDay()->toDateTimeString();
@@ -233,16 +239,18 @@ class HealthQuoteService extends BaseService
 
     public function updateHealthQuote(Request $request, $id)
     {
+        $sourceName = $request->is_ebp_renewal == 'on' ? LeadSourceTypes::EBPRENEWALS : Config::get('constants.SOURCE_NAME');
         $healthQuote = HealthQuote::where('uuid', $id)->first();
         $healthQuote->first_name = $request->first_name;
         $healthQuote->last_name = $request->last_name;
         $healthQuote->details = $request->details;
         $healthQuote->preference = $request->preference;
-        $healthQuote->source = $request->source;
+        $healthQuote->source = $sourceName;
         $healthQuote->marital_status_id = $request->marital_status_id;
         $healthQuote->dob = $request->dob;
         $healthQuote->cover_for_id = $request->cover_for_id;
         $healthQuote->nationality_id = $request->nationality_id;
+        $healthQuote->is_ebp_renewal = $request->is_ebp_renewal == 'on' ? true : false;
         $healthQuote->has_dental = $request->has_dental == 'on' ? true : false;
         $healthQuote->has_worldwide_cover = $request->has_worldwide_cover == 'on' ? true : false;
         $healthQuote->has_home = $request->has_home == 'on' ? true : false;
@@ -252,6 +260,32 @@ class HealthQuoteService extends BaseService
 
         if (isset($request->return_to_view))
             return redirect("quote/health/" . $id)->with('success', 'Health Quote has been updated');
+    }
+
+    public function getHealthOverDueFollowups()
+    {
+        $query = DB::table('health_quote_request as hqr')
+            ->select(
+                'hqr.id',
+                'hqr.uuid',
+                'hqr.code',
+                DB::raw("CONCAT_WS(' ',hqr.first_name,hqr.last_name) AS clientName"),
+                'qs.text as leadStatus',
+                'hqr.created_at as createdAt',
+                'hqr.quote_status_id',
+                'hqrd.advisor_assigned_date as assignedDate',
+                'u.name as assignedBy',
+                'hqr.updated_at',
+                'hqr.source as leadSource',
+                'hqrd.next_followup_date as nextFollowupDate',
+            )
+            ->leftJoin('health_quote_request_detail as hqrd', 'hqrd.health_quote_request_id', '=', 'hqr.id')
+            ->leftJoin('quote_status as qs', 'qs.id', '=', 'hqr.quote_status_id')
+            ->leftJoin('users as u', 'u.id', '=', 'hqrd.advisor_assigned_by_id')
+            ->where('qs.text', '!=', 'Fake')
+            ->where('hqrd.next_followup_date', '<', date('Y-m-d'))
+            ->where('hqr.advisor_id', Auth::user()->id);
+            return $query;
     }
 
     public function getHealthLeadsForAdvisor($request)
@@ -275,6 +309,7 @@ class HealthQuoteService extends BaseService
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'hqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'hqrd.advisor_assigned_by_id')
             ->where('qs.text', '!=', 'Fake')
+            ->where('hqrd.next_followup_date', '>', date('Y-m-d'))
             ->where('hqr.advisor_id', Auth::user()->id);
 
         $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
@@ -368,10 +403,12 @@ class HealthQuoteService extends BaseService
             "updated_at" => "input|date|title",
             "dob" => "input|date|title|required",
             "next_followup_date" => "input|date|title|range",
+            "transapp_code" => "readonly|none",
             "lost_reason" => "input|text",
             "premium" => "input|number|required",
             "preference" => "input|text",
             "details" => "input|text",
+            "is_ebp_renewal"  => "input|checkbox|title",
             "source" => "input|text|title",
             "marital_status_id" => "select|title|required",
             "cover_for_id" => "select|title|required",
@@ -399,6 +436,9 @@ class HealthQuoteService extends BaseService
                 break;
             case 'nationality_id':
                 $title = "Nationality";
+                break;
+            case 'is_ebp_renewal':
+                $title = 'Is EBP Renewal';
                 break;
             case 'mobile_no':
                 $title = "Mobile Number";
@@ -448,9 +488,9 @@ class HealthQuoteService extends BaseService
     public function fillModelSkipProperties()
     {
         return [
-            "create" => "created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,premium,source",
-            "list" => "email,cover_for_id,has_worldwide_cover,has_home,details,preference,mobile_no,dob,marital_status_id,nationality_id,has_dental,emirate_of_your_visa_id",
-            "update" => "created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,source",
+            "create" => "created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,premium,source,transapp_code",
+            "list" => "email,cover_for_id,has_worldwide_cover,has_home,details,preference,mobile_no,dob,marital_status_id,nationality_id,has_dental,emirate_of_your_visa_id,is_ebp_renewal",
+            "update" => "created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,source,transapp_code",
             "show" => "id,health_team_type,next_followup_date",
         ];
     }

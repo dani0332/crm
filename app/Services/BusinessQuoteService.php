@@ -39,6 +39,7 @@ class BusinessQuoteService extends BaseService
                 'bqr.premium',
                 'bqrd.next_followup_date',
                 'bqrd.notes',
+                'bqrd.transapp_code',
                 'ls.text as lost_reason',
                 'bqr.source',
             )
@@ -46,8 +47,7 @@ class BusinessQuoteService extends BaseService
             ->leftJoin('business_quote_request_detail as bqrd', 'bqrd.business_quote_request_id', '=', 'bqr.id')
             ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'bqrd.lost_reason_id')
             ->leftJoin('users as u', 'u.id', '=', 'bqr.advisor_id')
-            ->leftJoin('quote_status as qs', 'qs.id', '=', 'bqr.quote_status_id')
-            ->where('qs.text', '!=', 'Fake');
+            ->leftJoin('quote_status as qs', 'qs.id', '=', 'bqr.quote_status_id');
     }
 
     public function getEntity($id)
@@ -82,6 +82,34 @@ class BusinessQuoteService extends BaseService
         if (!empty($mobile_no)) {
             $query->where('bqr.mobile_no', '=', $mobile_no);
         }
+        return $query;
+    }
+
+    public function getBusinessOverDueFollowups()
+    {
+        $query = DB::table('business_quote_request as bqr')
+            ->select(
+                'bqr.id',
+                'bqr.uuid',
+                'bqr.code',
+                DB::raw("CONCAT_WS(' ',bqr.first_name,bqr.last_name) AS clientName"),
+                'qs.text as leadStatus',
+                'bqr.created_at as createdAt',
+                'bqr.quote_status_id',
+                'bqrd.advisor_assigned_date as assignedDate',
+                'u.name as assignedBy',
+                'bqr.updated_at',
+                'bqr.source as leadSource',
+                'bqr.company_name',
+                'bqr.premium',
+                'bqrd.next_followup_date as nextFollowupDate',
+            )
+            ->leftJoin('business_quote_request_detail as bqrd', 'bqrd.business_quote_request_id', '=', 'bqr.id')
+            ->leftJoin('quote_status as qs', 'qs.id', '=', 'bqr.quote_status_id')
+            ->leftJoin('users as u', 'u.id', '=', 'bqrd.advisor_assigned_by_id')
+            ->where('bqr.advisor_id', Auth::user()->id)
+            ->where('bqrd.next_followup_date', '<', date('Y-m-d'))
+            ->where('qs.text', '!=', 'Fake');
         return $query;
     }
 
@@ -214,6 +242,9 @@ class BusinessQuoteService extends BaseService
     {
         $searchProperties = $model->searchProperties;
         if ($request->ajax()) {
+            if (!isset($request->email) && $request->email == '') {
+                $this->query->where('qs.text', '!=', 'Fake');
+            }
             if (isset($request->assigned_to_date_start) && $request->assigned_to_date_start != '') {
                 $dateFrom = Carbon::createFromFormat('Y-m-d', $request['assigned_to_date_start'])->startOfDay()->toDateTimeString();
                 $dateTo = Carbon::createFromFormat('Y-m-d', $request['assigned_to_date_end'])->endOfDay()->toDateTimeString();
@@ -333,6 +364,7 @@ class BusinessQuoteService extends BaseService
             "mobile_no" => "input|title|number|required",
             "company_name" => "input|text|required",
             "next_followup_date" => "input|date|title|range",
+            "transapp_code" => "readonly|none",
             "source" => "input|text",
             "lost_reason" => "input|text",
             "advisor_id" => "select|title|multiple",
@@ -389,9 +421,9 @@ class BusinessQuoteService extends BaseService
     public function fillModelSkipProperties()
     {
         return [
-            "create" => "id,advisor_id,quote_status_id,code,updated_at,created_at,next_followup_date,lost_reason,premium,source",
+            "create" => "id,advisor_id,quote_status_id,code,updated_at,created_at,next_followup_date,lost_reason,premium,source,transapp_code",
             "list" => "email,mobile_no,brief_details,dob",
-            "update" => "id,advisor_id,quote_status_id,code,updated_at,created_at,next_followup_date,lost_reason,source",
+            "update" => "id,advisor_id,quote_status_id,code,updated_at,created_at,next_followup_date,lost_reason,source,transapp_code",
             "show" => "",
         ];
     }
