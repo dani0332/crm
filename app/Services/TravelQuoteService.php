@@ -42,7 +42,7 @@ class TravelQuoteService extends BaseService
             'tqr.region_cover_for_id',
             'r.TEXT AS region_cover_for_id_text',
             'tqrd.next_followup_date',
-            'tqrd.tranapp_code',
+            'tqrd.transapp_code',
             'ls.text as lost_reason',
             'tqrd.notes',
             // 'tqr.currently_located_in_id',
@@ -82,7 +82,7 @@ class TravelQuoteService extends BaseService
         return CapiRequestService::sendCAPIRequest('/api/v1-save-travel-quote', $dataArr);
     }
 
-    public function getBusinessOverDueFollowups()
+    public function getTravelOverDueFollowups()
     {
         $query = DB::table('travel_quote_request as tqr')
             ->select(

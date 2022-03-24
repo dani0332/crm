@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\LeadSourceTypes;
 use App\Models\BusinessInsuranceType;
 use App\Models\BusinessQuote;
 use App\Models\HealthQuote;
@@ -36,6 +37,7 @@ class HealthQuoteService extends BaseService
             'hqr.health_team_type',
             'hqr.has_home',
             'hqr.premium',
+            'hqr.is_ebp_renewal',
             'hqr.has_worldwide_cover',
             'hqr.marital_status_id',
             'ms.TEXT AS marital_status_id_text',
@@ -103,7 +105,7 @@ class HealthQuoteService extends BaseService
     }
     public function saveHealthQuote(Request $request)
     {
-        $sourceName = Config::get('constants.SOURCE_NAME');
+        $sourceName = $request->is_ebp_renewal == 'on' ? LeadSourceTypes::EBPRENEWALS : Config::get('constants.SOURCE_NAME');
         $appUrl = Config::get('constants.APP_URL');
         $dataArr = array(
             "firstName" => $request->first_name,
@@ -117,6 +119,7 @@ class HealthQuoteService extends BaseService
             "premium" => $request->premium,
             "referenceUrl" => $appUrl,
             "dob" => $request->dob,
+            "is_ebp_renewal" => $request->is_ebp_renewal == 'on' ? true : false,
             "coverForId" => $request->cover_for_id,
             "nationalityId" => $request->nationality_id,
             "hasDental" => $request->has_dental == 'on' ? true : false,
@@ -236,16 +239,18 @@ class HealthQuoteService extends BaseService
 
     public function updateHealthQuote(Request $request, $id)
     {
+        $sourceName = $request->is_ebp_renewal == 'on' ? LeadSourceTypes::EBPRENEWALS : Config::get('constants.SOURCE_NAME');
         $healthQuote = HealthQuote::where('uuid', $id)->first();
         $healthQuote->first_name = $request->first_name;
         $healthQuote->last_name = $request->last_name;
         $healthQuote->details = $request->details;
         $healthQuote->preference = $request->preference;
-        $healthQuote->source = $request->source;
+        $healthQuote->source = $sourceName;
         $healthQuote->marital_status_id = $request->marital_status_id;
         $healthQuote->dob = $request->dob;
         $healthQuote->cover_for_id = $request->cover_for_id;
         $healthQuote->nationality_id = $request->nationality_id;
+        $healthQuote->is_ebp_renewal = $request->is_ebp_renewal == 'on' ? true : false;
         $healthQuote->has_dental = $request->has_dental == 'on' ? true : false;
         $healthQuote->has_worldwide_cover = $request->has_worldwide_cover == 'on' ? true : false;
         $healthQuote->has_home = $request->has_home == 'on' ? true : false;
@@ -257,7 +262,7 @@ class HealthQuoteService extends BaseService
             return redirect("quote/health/" . $id)->with('success', 'Health Quote has been updated');
     }
 
-    public function getBusinessOverDueFollowups()
+    public function getHealthOverDueFollowups()
     {
         $query = DB::table('health_quote_request as hqr')
             ->select(
@@ -403,6 +408,7 @@ class HealthQuoteService extends BaseService
             "premium" => "input|number|required",
             "preference" => "input|text",
             "details" => "input|text",
+            "is_ebp_renewal"  => "input|checkbox|title",
             "source" => "input|text|title",
             "marital_status_id" => "select|title|required",
             "cover_for_id" => "select|title|required",
@@ -430,6 +436,9 @@ class HealthQuoteService extends BaseService
                 break;
             case 'nationality_id':
                 $title = "Nationality";
+                break;
+            case 'is_ebp_renewal':
+                $title = 'Is EBP Renewal';
                 break;
             case 'mobile_no':
                 $title = "Mobile Number";
@@ -480,7 +489,7 @@ class HealthQuoteService extends BaseService
     {
         return [
             "create" => "created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,premium,source,transapp_code",
-            "list" => "email,cover_for_id,has_worldwide_cover,has_home,details,preference,mobile_no,dob,marital_status_id,nationality_id,has_dental,emirate_of_your_visa_id",
+            "list" => "email,cover_for_id,has_worldwide_cover,has_home,details,preference,mobile_no,dob,marital_status_id,nationality_id,has_dental,emirate_of_your_visa_id,is_ebp_renewal",
             "update" => "created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,source,transapp_code",
             "show" => "id,health_team_type,next_followup_date",
         ];
