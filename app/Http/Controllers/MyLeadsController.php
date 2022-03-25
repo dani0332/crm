@@ -26,23 +26,18 @@ class MyLeadsController extends Controller
      */
     public function index(Request $request)
     {
-        $allowedTeamTypes = $followupLeads = [];
-        
         $user = User::where('id', Auth::user()->id)->first();
-        
         $team = DB::table('teams')->where('id', $user->team_id)->first();
-        
         $teamName = $team->name;
         if (strtolower($teamName) == strtolower(quoteTypeCode::RetailMedical) || strtolower($teamName) == strtolower(quoteTypeCode::EBP)) {
             $teamName = 'health';
         } else if (strtolower($teamName) == strtolower(quoteTypeCode::CORPLINE) || strtolower($teamName) == strtolower(quoteTypeCode::GroupMedical) || strtolower($teamName) == strtolower(quoteTypeCode::GM)) {
             $teamName = 'business';
         }
-        
         $parentTeamId = $team->id;
-        
         $leadStatusList = QuoteStatus::select('id', 'text')->get();
-        
+        $allowedTeamTypes = [];
+        $overdueLeads = [];
         array_push($allowedTeamTypes, ['id' => $team->id, 'name' => $teamName]);
         
         $userAdditionalTeams = User::where('id', Auth::user()->id)->first()->additional_team_ids;
@@ -55,24 +50,11 @@ class MyLeadsController extends Controller
                 array_push($allowedTeamTypes, ['id' => $additionalTeam->id, 'name' => $additionalTeam->name]);
             }
         }
-        
-        $allowedTypes = ['car', 'home', 'travel', 'health', 'life', 'travel'];
-        if(!in_array(strtolower($request->teamName), $allowedTypes)){
-            $overdueLeads = [];
-        }else{
-            $overdueLeads = $this->crudService->getOverDueFollowups($request, $teamName)->get();
-        }
         if ($request->ajax()) {
-            
             if(isset($request->teamType)){
                 $teamName = strtolower($request->teamType); 
             }
-            $allowedTypes = ['car', 'home', 'travel', 'health', 'life', 'travel'];
-            $gridData = [];
-            if(in_array(strtolower($teamName), $allowedTypes)){
-                $gridData = $this->crudService->getAdvisorLeads($request, $teamName); 
-            }
-            
+            $gridData = $this->crudService->getAdvisorLeads($request, $teamName);
             return DataTables::of($gridData)
                 ->addIndexColumn()
                 ->make(true);
