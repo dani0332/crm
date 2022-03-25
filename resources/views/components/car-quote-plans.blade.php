@@ -137,7 +137,7 @@
                                                         <input type="number" id="discountedPremium[]" name="discountedPremium[]" value="{{ $quotePlan->discountPremium }}" class="editINPUT" style="display:none;" size="8" maxlength="8">
                                                     </div>
                                                 </td>
-                                                <td>{{ $quotePlan->discountPremium + $quotePlan->vatPremium ? $quotePlan->vatPremium : 0 }}</td>
+                                                <td>{{ $quotePlan->discountPremium + $quotePlan->vatPremium }}</td>
                                                 <td><a href="#" planDetailUrl="{{ $uuidModal }}/plan_details/{{ $quotePlan->id }}"
                                                     data-toggle="modal" data-target="#quotePlanModal" class="quotePlanModalPopup">View</a></td>
                                             </tr>
