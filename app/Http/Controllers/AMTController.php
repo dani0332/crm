@@ -71,6 +71,7 @@ class AMTController extends Controller
             ->whereIn('r.name', ['GM_ADVISOR'])
             ->select('u.id', DB::raw("CONCAT(u.name,' - ',r.name) AS name"))->orderBy('r.name')->distinct()->get();
         $isManagerORDeputy = Auth::user()->isManagerORDeputy();
+        $model = 'Business';
         if ($request->ajax()) {
 
             if (isset($request->first_name) && $request->first_name != '') {
@@ -118,9 +119,9 @@ class AMTController extends Controller
             return DataTables::of($data)
                 ->addIndexColumn()
                 ->make(true);
-            return view('amt.view', compact('leadStatuses', 'advisors', 'isManagerORDeputy'));
+            return view('amt.view', compact('model', 'leadStatuses', 'advisors', 'isManagerORDeputy'));
         }
-        return view('amt.view', compact('leadStatuses', 'advisors', 'isManagerORDeputy'));
+        return view('amt.view', compact('model', 'leadStatuses', 'advisors', 'isManagerORDeputy'));
     }
 
     /**
