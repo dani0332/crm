@@ -37,15 +37,13 @@ class MyLeadsController extends Controller
         $parentTeamId = $team->id;
         $leadStatusList = QuoteStatus::select('id', 'text')->get();
         $allowedTeamTypes = [];
-        $overdueLeads = [];
         array_push($allowedTeamTypes, ['id' => $team->id, 'name' => $teamName]);
-        
         $userAdditionalTeams = User::where('id', Auth::user()->id)->first()->additional_team_ids;
         if (!empty($userAdditionalTeams)) {
             if(str_contains($userAdditionalTeams, ',')) {
                 $userAdditionalTeamsIds = explode(',', $userAdditionalTeams);
                 $allowedTeamTypes = Team::whereIn('id', $userAdditionalTeamsIds)->pluck('id', 'name')->toArray();
-            } else {
+            }else{
                 $additionalTeam = Team::where('id', $userAdditionalTeams)->first();
                 array_push($allowedTeamTypes, ['id' => $additionalTeam->id, 'name' => $additionalTeam->name]);
             }
@@ -59,7 +57,7 @@ class MyLeadsController extends Controller
                 ->addIndexColumn()
                 ->make(true);
         }
-        return view('myleads.view', compact('teamName', 'leadStatusList', 'allowedTeamTypes', 'parentTeamId', 'overdueLeads'));
+        return view('myleads.view', compact('teamName', 'leadStatusList', 'allowedTeamTypes', 'parentTeamId'));
     }
 
     /**
