@@ -550,10 +550,15 @@ class CRUDController extends Controller
                     <div class="lead-block rotten">
                         <div class="lead-title">'.$result->code.'</div>
                         <span class="float-right">
-                            <a href="#" planDetailUrl="'.$result->id.'/lead_details?modelType='.$request->modelType.'" data-toggle="modal" data-target="#quoteModal" class="quotePlanModalPopup"><i class="fa fa-pencil" aria-hidden="true"></i></a></span>
+                        <a target="_blank" href="'.strtolower($request->modelType).'/'.$result->uuid.'"><i class="fa fa-pencil" aria-hidden="true"></i></a>
+                        </span>
                         <div class="pad-5"></div>
                         <div class="lead-person"><i class="fa fa-user font-1" aria-hidden="true"></i>
                         '.$result->first_name.' '.$result->last_name.'
+                        </div>
+                        <div class="pad-5"></div>
+                        <div class="lead-person"><i class="fa fa-building font-1" aria-hidden="true"></i>
+                        '.$result->company_name.'
                         </div>
                         <div class="pad-5"></div>
                         <div class="lead-cost"><i class="fa fa-usd font-1"></i>&nbsp;'.$result->premium.'
@@ -579,10 +584,15 @@ class CRUDController extends Controller
                     <div class="lead-block rotten">
                         <div class="lead-title">'.$result->code.'</div>
                         <span class="float-right">
-                            <a href="#" planDetailUrl="'.$result->id.'/lead_details?modelType='.$request->modelType.'" data-toggle="modal" data-target="#quoteModal" class="quotePlanModalPopup"><i class="fa fa-pencil" aria-hidden="true"></i></a></span>
+                        <a target="_blank" href="'.strtolower($request->modelType).'/'.$result->uuid.'"><i class="fa fa-pencil" aria-hidden="true"></i></a>
+                        </span>
                         <div class="pad-5"></div>
                         <div class="lead-person"><i class="fa fa-user font-1" aria-hidden="true"></i>
                         '.$result->first_name.' '.$result->last_name.'
+                        </div>
+                        <div class="pad-5"></div>
+                        <div class="lead-person"><i class="fa fa-building font-1" aria-hidden="true"></i>
+                        '.$result->company_name.'
                         </div>
                         <div class="pad-5"></div>
                         <div class="lead-cost"><i class="fa fa-usd font-1"></i>&nbsp;'.$result->premium.'
