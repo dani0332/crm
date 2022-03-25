@@ -53,7 +53,7 @@ RUN chmod -R ugo+w /var/www/storage
 RUN cp docker/supervisor.conf /etc/supervisord.conf
 RUN cp docker/blanka.ini /usr/local/etc/php/conf.d/app.ini
 RUN cp docker/nginx.conf /etc/nginx/sites-enabled/default
-RUN cp -r /docker/*.pem /etc/nginx/conf.d/
+RUN cp -r docker/*.pem /etc/nginx/conf.d/
 
 RUN doppler configure set token ${IMCRM_TOKEN}
 
