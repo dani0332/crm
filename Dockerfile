@@ -53,7 +53,7 @@ RUN chmod -R ugo+w /var/www/storage
 RUN cp docker/supervisor.conf /etc/supervisord.conf
 RUN cp docker/blanka.ini /usr/local/etc/php/conf.d/app.ini
 RUN cp docker/nginx.conf /etc/nginx/sites-enabled/default
-Run cp -r /etc/letsencrypt/live/crmdocker.alfred.ae /etc/nginx/conf.d/
+COPY /etc/letsencrypt/live/crmdocker.alfred.ae /etc/nginx/conf.d/
 
 RUN doppler configure set token ${IMCRM_TOKEN}
 
