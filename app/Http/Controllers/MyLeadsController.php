@@ -67,8 +67,11 @@ class MyLeadsController extends Controller
             if(isset($request->teamType)){
                 $teamName = strtolower($request->teamType); 
             }
-            
-            $gridData = $this->crudService->getAdvisorLeads($request, $teamName);
+            $allowedTypes = ['car', 'home', 'travel', 'health', 'life', 'travel'];
+            $gridData = [];
+            if(in_array(strtolower($teamName), $allowedTypes)){
+                $gridData = $this->crudService->getAdvisorLeads($request, $teamName); 
+            }
             
             return DataTables::of($gridData)
                 ->addIndexColumn()
