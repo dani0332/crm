@@ -24,8 +24,8 @@
                         <div class="col-md-6 col-sm-6">
                             <select class="form-control" id="insurance_company" name="insurance_company">
                                 <option value="">Select</option>
-                                @foreach ($insurancecompanies as $insurancecompany )
-                                    <option {{ $transaction->insurance_company_id == $insurancecompany->id ? 'selected' : ''}} value="{{ $insurancecompany->id }}">{{ $insurancecompany->name }}</option>
+                                @foreach ($insuranceCompanies as $insuranceCompany )
+                                    <option {{ $transaction->insurance_company_id == $insuranceCompany->id ? 'selected' : ''}} value="{{ $insuranceCompany->id }}">{{ $insuranceCompany->name }}</option>
                                 @endforeach
                             </select>
                             @if ($errors->has('insurance_company'))

@@ -283,4 +283,12 @@
             :quoteRequestId="$record->id"
         />
     @endif
+
+    @can('auditable')
+        <div id="auditable">
+            <button id='auditablebtn' class="btn btn-warning btn-sm auditablebtn" data-id="{{ $record->id }}" data-model="App\Models\{{$model_name}}">
+                View Audit Logs
+            </button>
+        </div>
+    @endcan
 @endsection

@@ -53,6 +53,7 @@ class LifeQuoteService extends BaseService
                 'lqr.nationality_id',
                 'n.TEXT AS nationality_id_text',
                 'lqrd.next_followup_date',
+                'lqrd.transapp_code',
                 'lqrd.notes',
                 'ls.text as lost_reason',
             )
@@ -66,8 +67,7 @@ class LifeQuoteService extends BaseService
             ->leftJoin('life_number_of_year as liy', 'liy.id', '=', 'lqr.number_of_years_id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'lqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'lqr.advisor_id')
-            ->leftJoin('nationality as n', 'n.id', '=', 'lqr.nationality_id')
-            ->where('qs.text', '!=', 'Fake');
+            ->leftJoin('nationality as n', 'n.id', '=', 'lqr.nationality_id');
     }
     public function saveLifeQuote(Request $request)
     {
@@ -139,6 +139,9 @@ class LifeQuoteService extends BaseService
     {
         $searchProperties = $model->searchProperties;
         if ($request->ajax()) {
+            if (!isset($request->email) && $request->email == '') {
+                $this->query->where('qs.text', '!=', 'Fake');
+            }
             if (isset($request->assigned_to_date_start) && $request->assigned_to_date_start != '') {
                 $dateFrom = Carbon::createFromFormat('Y-m-d', $request['assigned_to_date_start'])->startOfDay()->toDateTimeString();
                 $dateTo = Carbon::createFromFormat('Y-m-d', $request['assigned_to_date_end'])->endOfDay()->toDateTimeString();
@@ -162,10 +165,13 @@ class LifeQuoteService extends BaseService
                 if (!empty($request[$item]) && $item != "created_at") {
                     if ($request[$item] == 'null') {
                         $this->query->whereNull($item);
-                    } else if ($item == 'advisor_id') {
-                        $this->query->whereIn('advisor_id', $request[$item]);
+                    } else if ($item == 'advisor_id' && is_array($request[$item]) && !empty($request[$item])) {
+                        if($request[$item][0] == 'null')
+                            $this->query->whereNull('advisor_id');
+                        else
+                            $this->query->whereIn('advisor_id', $request[$item]);
                     }
-                    else if ($item == 'quote_status_id') {
+                    else if ($item == 'quote_status_id' && is_array($request[$item]) && !empty($request[$item])) {
                         $this->query->whereIn('quote_status_id', $request[$item]);
                     } else {
                         $this->query->where($this->getQuerySuffix($item) . '.' . $item, $request[$item]);
@@ -260,6 +266,33 @@ class LifeQuoteService extends BaseService
 
         if (isset($request->return_to_view))
             return redirect("quotes/life")->with('success', 'Life Quote has been updated');
+    }
+
+    public function getLifeOverDueFollowups()
+    {
+        $query = DB::table('life_quote_request as lqr')
+            ->select(
+                'lqr.id',
+                'lqr.uuid',
+                'lqr.code',
+                DB::raw("CONCAT_WS(' ',lqr.first_name,lqr.last_name) AS clientName"),
+                'qs.text as leadStatus',
+                'lqr.created_at as createdAt',
+                'lqr.quote_status_id',
+                'lqrd.advisor_assigned_date as assignedDate',
+                'u.name as assignedBy',
+                'lqr.updated_at',
+                'lqr.source as leadSource',
+                'lqrd.next_followup_date as nextFollowupDate',
+            )
+            ->leftJoin('life_quote_request_detail as lqrd', 'lqrd.life_quote_request_id', '=', 'lqr.id')
+            ->leftJoin('quote_status as qs', 'qs.id', '=', 'lqr.quote_status_id')
+            ->leftJoin('users as u', 'u.id', '=', 'lqrd.advisor_assigned_by_id')
+            ->where('qs.text', '!=', 'Fake')
+            ->where('lqrd.next_followup_date', '>', date('Y-m-d'))
+            ->whereIn('qs.text', ['Followed Up','Qualification Pending', 'Quoted', 'FTC Pending', 'FTC Sent', 'Missing Documents Requested', 'Policy Documents Pending', 'Payment Pending', 'Pending with UW', 'Application Pending', 'In Negotiation'])
+            ->where('lqr.advisor_id', Auth::user()->id);
+            return $query;
     }
 
     public function getLifeLeadsForAdvisor($request)
@@ -379,6 +412,7 @@ class LifeQuoteService extends BaseService
             "dob" => "input|date|title|required",
             "sum_insured_value" => "input|number|title|required",
             "next_followup_date" => "input|date|title|range",
+            "transapp_code" => "readonly|none",
             "source" => "input|text",
             "lost_reason" => "input|text",
             "premium" => "input|number|required",
@@ -458,9 +492,9 @@ class LifeQuoteService extends BaseService
     public function fillModelSkipProperties()
     {
         return [
-            "create" => "id,advisor_id,quote_status_id,code,created_at,updated_at,next_followup_date,lost_reason,premium,source",
+            "create" => "id,advisor_id,quote_status_id,code,created_at,updated_at,next_followup_date,lost_reason,premium,source,transapp_code",
             "list" => "email,mobile_no,others_info,dob,sum_insured_value,sum_insured_currency_id,purpose_of_insurance_id,marital_status_id,children_id,tenure_of_insurance_id,number_of_years_id,gender,is_smoker,others_info",
-            "update" => "id,advisor_id,quote_status_id,code,created_at,updated_at,next_followup_date,lost_reason,source",
+            "update" => "id,advisor_id,quote_status_id,code,created_at,updated_at,next_followup_date,lost_reason,source,transapp_code",
             "show" => "",
         ];
     }

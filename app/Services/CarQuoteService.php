@@ -85,6 +85,7 @@ class CarQuoteService extends BaseService
                 'qs.text AS quote_status_id_text',
                 'cqr.year_of_manufacture AS year_of_manufacture_text',
                 'cqrd.next_followup_date',
+                'cqrd.transapp_code',
                 'cqrd.notes',
                 'vt.text as vehicle_type_id_text',
                 'cqr.currently_insured_with',
@@ -248,6 +249,7 @@ class CarQuoteService extends BaseService
             "created_at" => "input|date|title|range",
             "updated_at" => "input|date|title",
             "next_followup_date" => "input|date|title|range",
+            "transapp_code" => "readonly|none",
             "lost_reason" => "input|text",
             "premium" => "input|number",
             "paid_at" => "input|date",
@@ -375,6 +377,33 @@ class CarQuoteService extends BaseService
         return $title;
     }
 
+    public function getCarOverDueFollowups()
+    {
+        $query = DB::table('car_quote_request as cqr')
+            ->select(
+                'cqr.id',
+                'cqr.uuid',
+                'cqr.code',
+                DB::raw("CONCAT_WS(' ',cqr.first_name,cqr.last_name) AS clientName"),
+                'qs.text as leadStatus',
+                'cqr.created_at as createdAt',
+                'cqr.quote_status_id',
+                'cqrd.advisor_assigned_date as assignedDate',
+                'u.name as assignedBy',
+                'cqr.updated_at',
+                'cqr.source as leadSource',
+                'cqrd.next_followup_date as nextFollowupDate',
+            )
+            ->leftJoin('car_quote_request_detail as cqrd', 'cqrd.car_quote_request_id', '=', 'cqr.id')
+            ->leftJoin('quote_status as qs', 'qs.id', '=', 'cqr.quote_status_id')
+            ->leftJoin('users as u', 'u.id', '=', 'cqrd.advisor_assigned_by_id')
+            ->where('qs.text', '!=', 'Fake')
+            ->where('cqrd.next_followup_date', '<', date('Y-m-d'))
+            ->whereIn('qs.text', ['Followed Up','Qualification Pending', 'Quoted', 'FTC Pending', 'FTC Sent', 'Missing Documents Requested', 'Policy Documents Pending', 'Payment Pending', 'Pending with UW', 'Application Pending', 'In Negotiation'])
+            ->where('cqr.advisor_id', Auth::user()->id);
+        return $query;
+    }
+
     public function getCarLeadsForAdvisor($request)
     {
         $query = DB::table('car_quote_request as cqr')
@@ -471,7 +500,7 @@ class CarQuoteService extends BaseService
             }
             
             if (!isset($request->email) && $request->email == '') {
-                //$this->query->where('qs.text', '!=', 'Fake');
+                $this->query->where('qs.text', '!=', 'Fake');
             }
             if (isset($request->assigned_to_date_start) && $request->assigned_to_date_start != '') {
                 $dateFrom = $this->parseDate($request['assigned_to_date_start'], true);
@@ -502,10 +531,13 @@ class CarQuoteService extends BaseService
                 if (!empty($request[$item]) && $item != "created_at" && $item != "renewal_expiry_date") {
                     if ($request[$item] == 'null') {
                         $this->query->whereNull($item);
-                    } else if ($item == 'advisor_id') {
-                        $this->query->whereIn('advisor_id', $request[$item]);
+                    } else if ($item == 'advisor_id' && is_array($request[$item]) && !empty($request[$item])) {
+                        if($request[$item][0] == 'null')
+                            $this->query->whereNull('advisor_id');
+                        else
+                            $this->query->whereIn('advisor_id', $request[$item]);
                     }
-                    else if ($item == 'quote_status_id') {
+                    else if ($item == 'quote_status_id' && is_array($request[$item]) && !empty($request[$item])) {
                         $this->query->whereIn('quote_status_id', $request[$item]);
                     } else {
                         $searchedValue = str_contains($request[$item], 'Yes') || str_contains($request[$item], 'No') ? ($request[$item] == 'Yes' ? 1 : 0) : $request[$item];
@@ -644,9 +676,9 @@ class CarQuoteService extends BaseService
     public function fillModelSkipProperties()
     {
         return [
-            "create" => "id,advisor_id,paid_at,lost_reason,payment_status_id,plan_id,premium,car_plan_provider_id,code,is_ecommerce,payment_gateway,created_at,next_followup_date,updated_at,promo_code,quote_status_id,device,policy_number,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by,renewal_expiry_date,renewal_batch,premium,source",
+            "create" => "id,advisor_id,paid_at,lost_reason,payment_status_id,plan_id,premium,car_plan_provider_id,code,is_ecommerce,payment_gateway,created_at,next_followup_date,updated_at,promo_code,quote_status_id,device,policy_number,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by,renewal_expiry_date,renewal_batch,premium,source,transapp_code",
             "list" => "additional_notes,email,mobile_no,paid_at,renewal_batch,renewal_expiry_date,plan_id,car_plan_provider_id,payment_gateway,currently_insured_with,promo_code,car_make_id,car_model_id,device,policy_number,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by,nationality_id,dob,year_of_manufacture,uae_license_held_for_id,car_value,emirate_of_registration_id,claim_history_id,car_type_insurance_id",
-            "update" => "id,advisor_id,paid_at,renewal_expiry_date,payment_status_id,lost_reason,plan_id,premium,car_plan_provider_id,code,is_ecommerce,payment_gateway,created_at,next_followup_date,updated_at,promo_code,device,policy_number,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by,renewal_batch,source",
+            "update" => "id,advisor_id,paid_at,renewal_expiry_date,payment_status_id,lost_reason,plan_id,premium,car_plan_provider_id,code,is_ecommerce,payment_gateway,created_at,next_followup_date,updated_at,promo_code,device,policy_number,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by,renewal_batch,source,transapp_code",
             "show" => "",
         ];
     }
@@ -660,9 +692,9 @@ class CarQuoteService extends BaseService
     {
         $model->renewalSearchProperties = ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'advisor_id', 'created_at', 'vehicle_type_id', 'renewal_expiry_date', 'is_ecommerce', 'payment_status_id', 'policy_number', 'renewal_batch', 'car_type_insurance_id', 'currently_insured_with'];
         $model->renewalSkipProperties = [
-            "create" => "id,advisor_id,paid_at,renewal_expiry_date,renewal_batch,lost_reason,payment_status_id,plan_id,premium,car_plan_provider_id,code,is_ecommerce,payment_gateway,created_at,next_followup_date,updated_at,promo_code,quote_status_id,device,policy_number,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by,premium,source",
-            "list" => "additional_notes,email,mobile_no,paid_at,plan_id,car_plan_provider_id,payment_gateway,promo_code,source,seat_capacity,cylinder,device,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by,nationality_id,dob,year_of_manufacture,uae_license_held_for_id,car_value,emirate_of_registration_id,claim_history_id",
-            "update" => "id,advisor_id,paid_at,payment_status_id,lost_reason,plan_id,car_plan_provider_id,code,is_ecommerce,payment_gateway,created_at,next_followup_date,updated_at,promo_code,device,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by,renewal_expiry_date,source",
+            "create" => "id,advisor_id,paid_at,renewal_expiry_date,renewal_batch,lost_reason,payment_status_id,plan_id,premium,car_plan_provider_id,code,is_ecommerce,payment_gateway,created_at,next_followup_date,updated_at,promo_code,quote_status_id,device,policy_number,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by,premium,source,transapp_code",
+            "list" => "additional_notes,email,mobile_no,paid_at,plan_id,car_plan_provider_id,payment_gateway,promo_code,source,seat_capacity,cylinder,device,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by,nationality_id,dob,year_of_manufacture,uae_license_held_for_id,car_value,emirate_of_registration_id,claim_history_id,transapp_code",
+            "update" => "id,advisor_id,paid_at,payment_status_id,lost_reason,plan_id,car_plan_provider_id,code,is_ecommerce,payment_gateway,created_at,next_followup_date,updated_at,promo_code,device,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by,renewal_expiry_date,source,transapp_code",
             "show" => "",
         ];
     }

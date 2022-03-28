@@ -47,6 +47,7 @@ class TravelQuoteService extends BaseService
             'tqr.region_cover_for_id',
             'r.TEXT AS region_cover_for_id_text',
             'tqrd.next_followup_date',
+            'tqrd.transapp_code',
             'ls.text as lost_reason',
             'tqrd.notes',
             // 'tqr.currently_located_in_id',
@@ -87,6 +88,33 @@ class TravelQuoteService extends BaseService
         );
         if (!Auth::user()->hasRole("ADMIN")) $dataArr['advisorId'] = Auth::user()->id;
         return CapiRequestService::sendCAPIRequest('/api/v1-save-travel-quote', $dataArr);
+    }
+
+    public function getTravelOverDueFollowups()
+    {
+        $query = DB::table('travel_quote_request as tqr')
+            ->select(
+                'tqr.id',
+                'tqr.uuid',
+                'tqr.code',
+                DB::raw("CONCAT_WS(' ',tqr.first_name,tqr.last_name) AS clientName"),
+                'qs.text as leadStatus',
+                'tqr.created_at as createdAt',
+                'tqr.quote_status_id',
+                'tqrd.advisor_assigned_date as assignedDate',
+                'u.name as assignedBy',
+                'tqr.updated_at',
+                'tqr.source as leadSource',
+                'tqrd.next_followup_date as nextFollowupDate'
+            )
+            ->leftJoin('travel_quote_request_detail as tqrd', 'tqrd.travel_quote_request_id', '=', 'tqr.id')
+            ->leftJoin('quote_status as qs', 'qs.id', '=', 'tqr.quote_status_id')
+            ->leftJoin('users as u', 'u.id', '=', 'tqrd.advisor_assigned_by_id')
+            ->where('qs.text', '!=', 'Fake')
+            ->where('tqrd.next_followup_date', '>', date('Y-m-d'))
+            ->whereIn('qs.text', ['Followed Up','Qualification Pending', 'Quoted', 'FTC Pending', 'FTC Sent', 'Missing Documents Requested', 'Policy Documents Pending', 'Payment Pending', 'Pending with UW', 'Application Pending', 'In Negotiation'])
+            ->where('tqr.advisor_id', Auth::user()->id);
+            return $query;
     }
 
     public function getLeads($CDBID, $email, $mobile_no, $lead_type)
@@ -186,6 +214,9 @@ class TravelQuoteService extends BaseService
     {
         $searchProperties = $model->searchProperties;
         if ($request->ajax()) {
+            if (!isset($request->email) && $request->email == '') {
+                $this->query->where('qs.text', '!=', 'Fake');
+            }
             if (isset($request->assigned_to_date_start) && $request->assigned_to_date_start != '') {
                 $dateFrom = Carbon::createFromFormat('Y-m-d', $request['assigned_to_date_start'])->startOfDay()->toDateTimeString();
                 $dateTo = Carbon::createFromFormat('Y-m-d', $request['assigned_to_date_end'])->endOfDay()->toDateTimeString();
@@ -209,10 +240,13 @@ class TravelQuoteService extends BaseService
                 if (!empty($request[$item]) && $item != "created_at") {
                     if ($request[$item] == 'null') {
                         $this->query->whereNull($item);
-                    } else if ($item == 'advisor_id') {
-                        $this->query->whereIn('advisor_id', $request[$item]);
+                    } else if ($item == 'advisor_id' && is_array($request[$item]) && !empty($request[$item])) {
+                        if($request[$item][0] == 'null')
+                            $this->query->whereNull('advisor_id');
+                        else
+                            $this->query->whereIn('advisor_id', $request[$item]);
                     }
-                    else if ($item == 'quote_status_id') {
+                    else if ($item == 'quote_status_id' && is_array($request[$item]) && !empty($request[$item])) {
                         $this->query->whereIn('quote_status_id', $request[$item]);
                     } else {
                         $this->query->where($this->getQuerySuffix($item) . '.' . $item, $request[$item]);
@@ -353,6 +387,7 @@ class TravelQuoteService extends BaseService
             "created_at" => "input|date|title|range",
             "updated_at" => "input|date|title",
             "next_followup_date" => "input|date|title|range",
+            "transapp_code" => "readonly|none",
             "lost_reason" => "input|text",
             "source" => "input|text",
             "premium" => "input|number|required",
@@ -415,9 +450,9 @@ class TravelQuoteService extends BaseService
     public function fillModelSkipProperties()
     {
         return [
-            "create" => "id,created_at,id,code,advisor_id,updated_at,quote_status_id,next_followup_date,lost_reason,premium,source",
+            "create" => "id,created_at,id,code,advisor_id,updated_at,quote_status_id,next_followup_date,lost_reason,premium,source,transapp_code",
             "list" => "email,mobile_no,region_cover_for_id,travel_cover_for_id,details,nationality_id,destination,days_cover_for",
-            "update" => 'created_at,id,code,advisor_id,updated_at,quote_status_id,next_followup_date,lost_reason,source',
+            "update" => 'created_at,id,code,advisor_id,updated_at,quote_status_id,next_followup_date,lost_reason,source,transapp_code',
             "show" => "",
         ];
     }
