@@ -1934,6 +1934,11 @@ $(document).ready(function () {
             $('#tooltipGm').hide();
         }
     });
+    $('#lob_team').select2({
+        placeholder: "Select LOB For Duplication",
+        allowClear: true,
+        width: '100%',
+    });
 });
 
 

@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\LeadSourceTypes;
+use App\Enums\QuoteTypeId;
 use App\Models\BusinessInsuranceType;
 use App\Models\BusinessQuote;
 use App\Models\HealthQuote;
@@ -528,5 +529,26 @@ class HealthQuoteService extends BaseService
         $alphabets = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
         $nanoId = $client->formattedId($alphabets, 8);
         return $nanoId;
+    }
+
+    public function getDuplicateEntityByCode($code)
+    {
+        return HealthQuote::where('parent_duplicate_quote_id', $code)->first();
+    }
+
+    public function createDuplicate($parentRecord)
+    {
+        $quote = new HealthQuote();
+        $quote->parent_duplicate_quote_id = $parentRecord->code;
+        $response = CapiRequestService::getUUID(QuoteTypeId::Health);
+        if($response) {
+            $quote->uuid = $response->uuid;
+            $quote->code = 'HEA-'. $response->uuid;
+        }
+        $quote->first_name = $parentRecord->first_name;
+        $quote->last_name = $parentRecord->last_name;
+        $quote->email = $parentRecord->email;
+        $quote->mobile_no = $parentRecord->mobile_no;
+        $quote->save();
     }
 }

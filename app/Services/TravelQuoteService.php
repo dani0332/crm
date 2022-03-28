@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\QuoteTypeId;
 use App\Models\TravelQuote;
 use App\Models\TravelQuoteRequestDetail;
 use Illuminate\Http\Request;
@@ -511,5 +512,26 @@ class TravelQuoteService extends BaseService
     public function getMembersDetail($id)
     {
         return DB::table("travel_quote_request_member_details")->where('travel_quote_request_id', $id)->get();
+    }
+
+    public function getDuplicateEntityByCode($code)
+    {
+        return TravelQuote::where('parent_duplicate_quote_id', $code)->first();
+    }
+
+    public function createDuplicate($parentRecord)
+    {
+        $quote = new TravelQuote();
+        $quote->parent_duplicate_quote_id = $parentRecord->code;
+        $response = CapiRequestService::getUUID(QuoteTypeId::Travel);
+        if($response) {
+            $quote->uuid = $response->uuid;
+            $quote->code = 'TRA-'. $response->uuid;
+        }
+        $quote->first_name = $parentRecord->first_name;
+        $quote->last_name = $parentRecord->last_name;
+        $quote->email = $parentRecord->email;
+        $quote->mobile_no = $parentRecord->mobile_no;
+        $quote->save();
     }
 }
