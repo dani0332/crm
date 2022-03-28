@@ -1,6 +1,7 @@
 @extends('layouts.app')
 @section('title', 'My Leads')
 @section('content')
+<meta name="csrf-token" content="{{ csrf_token() }}" />
     <script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
     <script>
         function formatedDate(date) {
@@ -226,16 +227,119 @@
                 followupLeadsTable.draw();
                 $(".loader").hide();
             });
+
+            $(".toggle-btn").on("click", function() {
+                $(".show-visual-cards").addClass("showme");
+                $(".show-container").removeClass("showme");
+                $(".show-container").addClass("hideme");
+                $(this).addClass("active");
+                $(".toggle-btn-2").removeClass("active");
+            });
+            $(".toggle-btn-2").on("click", function() {
+                $(".show-visual-cards").addClass("hideme");
+                $(".show-visual-cards").removeClass("showme");
+                $(".show-container").addClass("showme");
+                $(this).addClass("active");
+                $(".toggle-btn").removeClass("active");
+            });
         });
+
+        var ENDPOINT = "{{ url('/') }}";
+        var page;
+        var temp_status = '';
+        function loadMore(status) {
+            if(localStorage.getItem('page'+status) == null)
+                page = 2;
+            else
+                page = localStorage.getItem('page'+status);
+            infinteLoadMore(page,status);
+        }
+        function infinteLoadMore(page,status) {
+            $.ajaxSetup({
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                }
+            });
+            $.ajax({
+                    url: ENDPOINT + "/quotes/records?page=" + page +"&modelType=" + "Business" + "&status=" + status,
+                    datatype: "html",
+                    type: "post",
+                    beforeSend: function () {
+                        $('.loader').show();
+                    }
+                })
+                .done(function (response) {
+                    $('.loader').hide();
+                    if (response.length == 0) {
+                        localStorage.removeItem('page'+status, page);
+                        $("#load_more_btn"+status).hide();
+                        alert("Nothing to Show");
+                        return;
+                    }
+                    $(".status_list"+status+" li:last").append(response);
+                    temp_status = status;
+                    page = parseInt(page) + 1;
+                    localStorage.setItem('page'+status, page);
+                })
+                .fail(function (jqXHR, ajaxOptions, thrownError) {
+                    console.log('Server error occured');
+                });
+        }
+        function searchTerm(element) {
+            var term = $(element).val();
+            var status = $(element).attr('name');
+            if(term) {
+                $.ajaxSetup({
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                }
+            });
+            $.ajax({
+                    url: ENDPOINT + "/quotes/records/search?term=" + term + "&status=" + status +"&modelType=" + "Business",
+                    datatype: "html",
+                    type: "post",
+                    beforeSend: function () {
+                        $('.loader').show();
+                    }
+                })
+                .done(function (response) {
+                    $("#load_more_btn"+status).hide();
+                    $(element).val('');
+                    $('.loader').hide();
+                    if (response.length == 0) {
+                        alert("Nothing to Show");
+                        return;
+                    }
+                    $(".status_list"+status).empty();
+                    $(".status_list"+status).append(response);
+                })
+                .fail(function (jqXHR, ajaxOptions, thrownError) {
+                    console.log('Server error occured');
+                });
+            }
+        }
+        window.onload = function () {
+            window.localStorage.clear();
+        }
+
     </script>
     <div class="row">
         <div class="col-md-12 col-sm-12 ">
-            <div class="x_panel">
+            <div class="x_panel" style="overflow:hidden">
                 <div class="x_title">
                     <h2>My Leads</h2>
                     <div class="clearfix"></div>
                 </div>
                 <div class="x_content">
+                <button type="button" class="hideme btn btn-warning btn-sm toggle-btn active float-right change-layout">Cards View</button>
+                <button type="button" class="hideme btn btn-warning btn-sm toggle-btn-2 float-right change-layout">List View</button>
+                <div class="show-visual-cards hideme">
+                    <x-my-leads-visual-card
+                        :teamName="$teamName"
+                        :leadStatuses="$leadStatusList"
+                    />
+                </div>
+                <div class="show-container showme">
                     @if (session()->has('message'))
                         <div class="alert alert-danger">{{ session()->get('message') }}</div>
                     @endif
@@ -398,6 +502,7 @@
                             </tr>
                         </tbody>
                     </table>
+                </div>
                 </div>
             </div>
         </div>
