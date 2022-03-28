@@ -270,6 +270,7 @@ ul.drag-inner-list, ul.drag-list {
 .showme {
     visibility: visible;
     height: auto;
+    margin-top:48px;
   }
 .change-layout.active {
     background: #4183bd !important;
