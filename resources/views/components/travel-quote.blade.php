@@ -27,9 +27,9 @@
                                                 <td>{{ $quotePlan->travelType }}</td>
                                                 <td>{{ $quotePlan->actualPremium }}</td>
                                                 <td>
-                                                    @isset($quotePlan->vatPremium)
-                                                        {{ $quotePlan->vatPremium }}
-                                                    @endisset
+                                                    @if(isset($quotePlan->discountPremium) && isset($quotePlan->vat))
+                                                        {{ $quotePlan->discountPremium + $quotePlan->vat }}
+                                                    @endif
                                                 </td>
                                                 <td><a href="#" planDetailUrl="{{ $uuidModal }}/plan_details/{{ $quotePlan->id }}"
                                                     data-toggle="modal" data-target="#quotePlanModal" class="quotePlanModalPopup">View</a></td>

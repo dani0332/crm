@@ -448,7 +448,7 @@
                             </div>
                         </div>
                     </form>
-                    <div id="accordion" style="width: 98%;margin-left: 20px;">
+                    <div id="accordion" style="width: 98%;margin-left: 20px; display:none   ">
                         <div class="card">
                           <div class="card-header" id="headingOne" style="background-color: #4183BD;">
                             <h5 class="mb-0">

@@ -268,7 +268,7 @@ class LifeQuoteService extends BaseService
             return redirect("quotes/life")->with('success', 'Life Quote has been updated');
     }
 
-    public function getBusinessOverDueFollowups()
+    public function getLifeOverDueFollowups()
     {
         $query = DB::table('life_quote_request as lqr')
             ->select(
@@ -289,7 +289,8 @@ class LifeQuoteService extends BaseService
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'lqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'lqrd.advisor_assigned_by_id')
             ->where('qs.text', '!=', 'Fake')
-            ->where('lqrd.next_followup_date', '<', date('Y-m-d'))
+            ->where('lqrd.next_followup_date', '>', date('Y-m-d'))
+            ->whereIn('qs.text', ['Followed Up','Qualification Pending', 'Quoted', 'FTC Pending', 'FTC Sent', 'Missing Documents Requested', 'Policy Documents Pending', 'Payment Pending', 'Pending with UW', 'Application Pending', 'In Negotiation'])
             ->where('lqr.advisor_id', Auth::user()->id);
             return $query;
     }
@@ -315,7 +316,6 @@ class LifeQuoteService extends BaseService
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'lqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'lqrd.advisor_assigned_by_id')
             ->where('qs.text', '!=', 'Fake')
-            ->where('lqrd.next_followup_date', '>', date('Y-m-d'))
             ->where('lqr.advisor_id', Auth::user()->id);
 
         $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
