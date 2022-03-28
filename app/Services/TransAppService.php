@@ -2,17 +2,23 @@
 
 namespace App\Services;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Auth;
 use DB;
+use Config;
+use LookUpModel;
+use Carbon\Carbon;
 use App\Models\Transaction;
 use App\Models\CarQuote;
 use App\Models\CarQuotePolicy;
 use App\Models\CarQuotePaymentHistory;
 use App\Models\MyAlFredUser;
-use Carbon\Carbon;
-use Config;
-use Illuminate\Support\Facades\Log;
-use LookUpModel;
+use App\Models\User;
+use App\Models\PaymentMode;
+use App\Models\InsuranceCompany;
+use App\Models\Reason;
+use App\Models\TypeOfInsurance;
+use App\Models\Status;
 
 class TransAppService extends BaseService
 {
@@ -130,5 +136,195 @@ class TransAppService extends BaseService
             $newMyAlFredUser->source = "TRANSAPP";
             $newMyAlFredUser->save();
         }
+    }
+
+    public function getTransactors()
+    {
+        $transactors = User::select('users.id','users.name')
+        ->leftjoin('model_has_roles','users.id','model_has_roles.model_id')
+        ->leftjoin('roles','roles.id','model_has_roles.role_id')
+        ->whereIn('roles.name', ['TRANSAPP_ADVISOR','TRANSAPP_APPROVER','TRANSAPP_ADMIN'])
+        ->orderBy('users.name','asc')
+        ->get();
+
+        return $transactors;
+    }
+
+    public function getHandlers()
+    {
+        $handlers = User::select('users.id','users.name')
+        ->leftjoin('model_has_roles','users.id','model_has_roles.model_id')
+        ->leftjoin('roles','roles.id','model_has_roles.role_id')
+        ->whereIn('roles.name', ['TRANSAPP_ADVISOR', 'TRANSAPP_APPROVER', 'TRANSAPP_ADMIN', 'advisor', 'invoicing'])
+        ->orderBy('users.name', 'asc')
+        ->get();
+
+        return $handlers;
+    }
+
+    public function getInsuranceCompanies()
+    {
+        $insuranceCompanies = InsuranceCompany::select('id','name')
+        ->where(['is_active' => 1, 'is_deleted' => 0])
+        ->orderBy('name', 'asc')
+        ->get();
+
+        return $insuranceCompanies;
+    }
+
+    public function getPaymentModes()
+    {
+        $paymentModes = PaymentMode::select('id','name')
+        ->where(['is_active' => 1, 'is_deleted' => 0])
+        ->orderBy('name', 'asc')
+        ->get();
+
+        return $paymentModes;
+    }
+
+    public function getReasons()
+    {
+        $reasons = Reason::select('id','name')
+        ->where(['is_active' => 1, 'is_deleted' => 0])
+        ->orderBy('name', 'asc')
+        ->get();
+
+        return $reasons;
+    }
+
+    public function checkTransappAdmin()
+    {
+        if(Auth::user()->hasRole('TRANSAPP_ADMIN')) {
+            $isTransappAdmin = "1";
+        } else {
+            $isTransappAdmin = "0";
+        }
+
+        return $isTransappAdmin;
+    }
+
+    public function checkTransappNonAdmin()
+    {
+        if(Auth::user()->hasAnyRole(['TRANSAPP_ADVISOR','TRANSAPP_APPROVER'])) {
+            $isTransappNonAdmin = "1";
+        } else {
+            $isTransappNonAdmin = "0";
+        }
+
+        return $isTransappNonAdmin;
+    }
+
+    public function getTypeOfInsurances()
+    {
+        $typeofinsurances = TypeOfInsurance::select('id','text')
+        ->where(['is_active' => 1, 'is_deleted' => 0])
+        ->orderBy('text', 'asc')
+        ->get();
+
+        return $typeofinsurances;
+    }
+
+    public function getTransactionDetailById($transappId)
+    {
+        $isTransappNonAdmin = $this->checkTransappNonAdmin();
+
+        $transaction = Transaction::select('transactions.*', 'insurance_companies.name as insurance',
+        'handlers.name as handler_name', 'creaters.name as created_by_name', 'payment_modes.name as payment_mode', 'type_of_insurances.text as type_of_insurance')
+        ->leftjoin('insurance_companies', 'insurance_companies.id', 'transactions.insurance_company_id')
+        ->leftjoin('users as handlers', 'transactions.assigned_to_id','handlers.id')
+        ->leftjoin('users as creaters', 'transactions.created_by_id','creaters.id')
+        ->leftjoin('payment_modes', 'payment_modes.id', 'transactions.payment_mode_id')
+        ->leftjoin('type_of_insurances', 'type_of_insurances.id', 'transactions.type_of_insurance_id')
+        ->where(['transactions.id' => $transappId, 'transactions.is_deleted' => 0])
+        ->first();
+
+        if($isTransappNonAdmin == "1") {
+            $transaction->where('transactions.assigned_to_id', Auth::user()->id);
+        }
+
+        return $transaction;
+    }
+
+    public function getTransactionDetailByApprovalCode($approvalCode)
+    {
+        $isTransappNonAdmin = $this->checkTransappNonAdmin();
+
+        $transaction = Transaction::select('transactions.*', 'insurance_companies.name as insurance',
+        'handlers.name as handler_name', 'creaters.name as created_by_name', 'payment_modes.name as payment_mode')
+        ->leftjoin('insurance_companies', 'insurance_companies.id', 'transactions.insurance_company_id')
+        ->leftjoin('users as handlers', 'transactions.assigned_to_id','handlers.id')
+        ->leftjoin('users as creaters', 'transactions.created_by_id','creaters.id')
+        ->leftjoin('payment_modes', 'payment_modes.id', 'transactions.payment_mode_id')
+        ->where(['approval_code' => $approvalCode, 'transactions.is_deleted' => 0])
+        ->where('approval_code', $approvalCode)
+        ->first();
+
+        if($isTransappNonAdmin == "1") {
+            $transaction->where('transactions.assigned_to_id', Auth::user()->id);
+        }
+
+        return $transaction;
+    }
+
+    public function getTransappAssignedToIdByApprovalCode($approvalCode)
+    {
+        $transappAssignedToId = Transaction::select('assigned_to_id')
+        ->where('approval_code', $approvalCode)
+        ->first();
+
+        return $transappAssignedToId->assigned_to_id;
+    }
+
+    public function getTransappIsCancelledByApprovalCode($approvalCode)
+    {
+        $isCancelled = Transaction::select('is_cancelled')
+        ->where('approval_code', $approvalCode)
+        ->first();
+
+        return $isCancelled->is_cancelled;
+    }
+
+    public function getTransactionByApprovalCode($approvalCode)
+    {
+        $transaction = Transaction::where('approval_code', $approvalCode)
+        ->get();
+
+        return $transaction;
+    }
+
+    public function getPreviousTransactionByApprovalCode($approvalCode)
+    {
+        $transaction = Transaction::where('approval_code', $approvalCode)
+        ->first();
+
+        return $transaction;
+    }
+
+    public function getStatuses()
+    {
+        $statuses = Status::select('id','name')
+        ->where(['is_active' => 1, 'is_deleted' => 0])
+        ->orderBy('name', 'asc')
+        ->get();
+
+        return $statuses;
+    }
+
+    public function getStatusId($status)
+    {
+        $statusId = Status::select('id')
+        ->where('name', $status)
+        ->first();
+
+        return $statusId->id;
+    }
+
+    public function getTransappApprovalCodeById($transappId)
+    {
+        $approvalCode = Transaction::select('approval_code')
+        ->where('id', $transappId)
+        ->first();
+
+        return $approvalCode->approval_code;
     }
 }

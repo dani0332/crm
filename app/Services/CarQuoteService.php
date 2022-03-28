@@ -399,6 +399,7 @@ class CarQuoteService extends BaseService
             ->leftJoin('users as u', 'u.id', '=', 'cqrd.advisor_assigned_by_id')
             ->where('qs.text', '!=', 'Fake')
             ->where('cqrd.next_followup_date', '<', date('Y-m-d'))
+            ->whereIn('qs.text', ['Followed Up','Qualification Pending', 'Quoted', 'FTC Pending', 'FTC Sent', 'Missing Documents Requested', 'Policy Documents Pending', 'Payment Pending', 'Pending with UW', 'Application Pending', 'In Negotiation'])
             ->where('cqr.advisor_id', Auth::user()->id);
         return $query;
     }
@@ -424,7 +425,6 @@ class CarQuoteService extends BaseService
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'cqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'cqrd.advisor_assigned_by_id')
             ->where('qs.text', '!=', 'Fake')
-            ->where('cqrd.next_followup_date', '>', date('Y-m-d'))
             ->where('cqr.advisor_id', Auth::user()->id);
 
         $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';

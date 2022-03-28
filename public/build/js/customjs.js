@@ -468,6 +468,9 @@ $(document).ready(function () {
         bLengthChange: false,
         serverSide: true,
         processing: true,
+        stateSave: true,
+        scrollX: true,
+        paging: true,
         ajax: {
             url: config.routes.transaction_datatable_route,
             data: function (d) {
