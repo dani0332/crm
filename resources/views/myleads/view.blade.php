@@ -334,9 +334,9 @@
                 <button type="button" class="btn btn-warning btn-sm toggle-btn active float-right change-layout">Cards View</button>
                 <button type="button" class="btn btn-warning btn-sm toggle-btn-2 float-right change-layout">List View</button>
                 <div class="show-visual-cards showme">
-                    <x-group-medical-visual
-                        :model="$model"
-                        :dropdownSource="$leadStatuses"
+                    <x-my-leads-visual-card
+                        :teamName="$teamName"
+                        :leadStatuses="$leadStatusList"
                     />
                 </div>
                 <div class="show-container hideme">
