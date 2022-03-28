@@ -327,6 +327,12 @@
                 </div>
             </div>
         </div>
+        <x-travel-ecom-detail
+            :travelQuotePremium="$record->premium"
+            :travelQuotePaidAt="$record->paid_at"
+            :travelQuotePaymentStatus="$record->payment_status_id_text"
+            :travelQuotePlanName="$record->plan_id_text"
+        />
         <!-- <x-travel-quote-members-detail
                 :members="$members_detail"
             /> -->

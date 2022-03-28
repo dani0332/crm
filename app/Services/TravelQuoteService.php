@@ -33,6 +33,7 @@ class TravelQuoteService extends BaseService
             'tqr.email',
             'tqr.mobile_no',
             'tqr.premium',
+            'tqr.paid_at',
             'tqr.source',
             'tqr.nationality_id',
             'n.TEXT AS nationality_id_text',
@@ -40,6 +41,10 @@ class TravelQuoteService extends BaseService
             'qs.text as quote_status_id_text',
             'u.id as advisor_id',
             'u.name as advisor_id_text',
+            'tqr.payment_status_id',
+            'ps.text AS payment_status_id_text',
+            'tqr.plan_id',
+            'tp.text AS plan_id_text',
             'tqr.region_cover_for_id',
             'r.TEXT AS region_cover_for_id_text',
             'tqrd.next_followup_date',
@@ -55,8 +60,11 @@ class TravelQuoteService extends BaseService
             ->leftJoin('nationality as n', 'n.id', '=', 'tqr.nationality_id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'tqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'tqr.advisor_id')
-            ->leftJoin('region as r', 'r.id', '=', 'tqr.region_cover_for_id');
-            // ->leftJoin('currently_located_in as cli', 'cli.id', '=', 'tqr.currently_located_in_id');
+            ->leftJoin('travel_plan as tp', 'tp.id', '=', 'tqr.plan_id')
+            ->leftJoin('region as r', 'r.id', '=', 'tqr.region_cover_for_id')
+            // ->leftJoin('currently_located_in as cli', 'cli.id', '=', 'tqr.currently_located_in_id')
+            ->leftJoin('payment_status as ps', 'ps.id', '=', 'tqr.payment_status_id')
+            ->where('qs.text', '!=', 'Fake');
     }
 
     public function saveTravelQuote(Request $request)

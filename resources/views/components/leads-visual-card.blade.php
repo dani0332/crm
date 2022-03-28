@@ -44,7 +44,6 @@ use App\Enums\quoteTypeCode;
                         />  
                         @endif
                     @endif
-
                 @endforeach
             @endif
         @endforeach
