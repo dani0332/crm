@@ -331,15 +331,15 @@
                     <div class="clearfix"></div>
                 </div>
                 <div class="x_content">
-                <button type="button" class="btn btn-warning btn-sm toggle-btn active float-right change-layout">Cards View</button>
-                <button type="button" class="btn btn-warning btn-sm toggle-btn-2 float-right change-layout">List View</button>
-                <div class="show-visual-cards showme">
+                <button type="button" class="hideme btn btn-warning btn-sm toggle-btn active float-right change-layout">Cards View</button>
+                <button type="button" class="hideme btn btn-warning btn-sm toggle-btn-2 float-right change-layout">List View</button>
+                <div class="show-visual-cards hideme">
                     <x-my-leads-visual-card
                         :teamName="$teamName"
                         :leadStatuses="$leadStatusList"
                     />
                 </div>
-                <div class="show-container hideme">
+                <div class="show-container showme">
                     @if (session()->has('message'))
                         <div class="alert alert-danger">{{ session()->get('message') }}</div>
                     @endif
