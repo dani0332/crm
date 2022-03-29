@@ -206,9 +206,9 @@ use App\Enums\quoteTypeCode;
                     break;
                 case 'health':
                     if(isManagerOrDeputy == '1' || isAdmin)
-                        disableSortColumns = [-1,1,2,3,4,5,9,10];
+                        disableSortColumns = [-1,1,2,3,4,5,8,10];
                     else
-                        disableSortColumns = [-1,0,1,2,3,4,8,9,10];
+                        disableSortColumns = [-1,0,1,2,3,4,7,9,10];
                     break;
                 case 'life':
                     if(isManagerOrDeputy == '1' || isAdmin)
