@@ -5,6 +5,8 @@ namespace App\Services;
 use App\Enums\QuoteTypeId;
 use App\Models\HomeQuote;
 use App\Models\HomeQuoteRequestDetail;
+use App\Models\LeadStatus;
+use App\Models\QuoteStatus;
 use Illuminate\Http\Request;
 use DB;
 use Illuminate\Support\Facades\Auth;
@@ -510,6 +512,7 @@ class HomeQuoteService extends BaseService
             $quote->uuid = $response->uuid;
             $quote->code = 'HOM-'. $response->uuid;
         }
+        $quote->quote_status_id = QuoteStatus::where('text', 'New Lead')->first()->id;
         $quote->first_name = $parentRecord->first_name;
         $quote->last_name = $parentRecord->last_name;
         $quote->email = $parentRecord->email;

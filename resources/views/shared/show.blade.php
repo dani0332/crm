@@ -21,8 +21,7 @@
         }
 
         .modal-body {
-            /* 100% = dialog height, 120px = header + footer */
-            max-height: 100px !important;
+            max-height: 140px !important;
         }
 
     </style>
@@ -232,7 +231,7 @@
         aria-labelledby="duplicateLeadModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
            
-                <div class="modal-content" style="height: 300px !important;display: grid;">
+                <div class="modal-content" style="display: grid;    height: 260px !important;">
                     <form method="post" action="/quotes/createDuplicate" autocomplete="off">
                         {{ csrf_field() }}
                         @method('POST')
@@ -241,7 +240,7 @@
                         <input type="hidden" value="{{ strtolower($record->id) }}" name="entityId">
                         <input type="hidden" value="{{ strtolower($record->code) }}" name="entityCode">
                         <input type="hidden" value="{{ strtolower($record->uuid) }}" name="entityUId">
-                    <div class="modal-header" style="border-bottom: none;">
+                    <div class="modal-header">
                         <h5 class="modal-title" id="duplicateLeadModalLabel" style="font-size: 16px !important;"><span
                                 class="fa fa-clone"></span>
                             <strong style="margin-left: 13px;">Duplicate Lead</strong>
@@ -250,7 +249,7 @@
                             <span aria-hidden="true">&times;</span>
                         </button>
                     </div>
-                    <div class="modal-body">
+                    <div class="modal-body" style="height: 138px;">
                         <select class="form-control select2" multiple="multiple" id="lob_team" name="lob_team[]">
                             @foreach ($allowedDuplicateLOB as $item)
                                 <option value="{{ $item }}">{{ $item }}</option>
@@ -258,7 +257,7 @@
                         </select>
                     </div>
                     <div class="modal-footer" style="justify-content: center; padding : 0px !important;">
-                        <button type="submit" class="btn btn-sm btn-success">Create Duplicate</button>
+                        <button type="submit" style="margin-top: 13px;" class="btn btn-sm btn-success">Create Duplicate</button>
                     </div>
                 </form>
                 </div>

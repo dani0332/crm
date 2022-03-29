@@ -3,8 +3,10 @@
 namespace App\Services;
 
 use App\Enums\QuoteTypeId;
+use App\Models\LeadStatus;
 use App\Models\LifeQuote;
 use App\Models\LifeQuoteRequestDetail;
+use App\Models\QuoteStatus;
 use Illuminate\Http\Request;
 use DB;
 use Auth;
@@ -519,6 +521,7 @@ class LifeQuoteService extends BaseService
             $quote->uuid = $response->uuid;
             $quote->code = 'LIF-'. $response->uuid;
         }
+        $quote->quote_status_id = QuoteStatus::where('text', 'New Lead')->first()->id;
         $quote->first_name = $parentRecord->first_name;
         $quote->last_name = $parentRecord->last_name;
         $quote->email = $parentRecord->email;

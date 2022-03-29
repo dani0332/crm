@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Enums\QuoteTypeId;
+use App\Models\LeadStatus;
+use App\Models\QuoteStatus;
 use App\Models\TravelQuote;
 use App\Models\TravelQuoteRequestDetail;
 use Illuminate\Http\Request;
@@ -536,6 +538,7 @@ class TravelQuoteService extends BaseService
             $quote->uuid = $response->uuid;
             $quote->code = 'TRA-'. $response->uuid;
         }
+        $quote->quote_status_id = QuoteStatus::where('text', 'New Lead')->first()->id;
         $quote->first_name = $parentRecord->first_name;
         $quote->last_name = $parentRecord->last_name;
         $quote->email = $parentRecord->email;

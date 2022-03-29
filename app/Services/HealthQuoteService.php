@@ -8,6 +8,8 @@ use App\Models\BusinessInsuranceType;
 use App\Models\BusinessQuote;
 use App\Models\HealthQuote;
 use App\Models\HealthQuoteRequestDetail;
+use App\Models\LeadStatus;
+use App\Models\QuoteStatus;
 use Illuminate\Http\Request;
 use DB;
 use Auth;
@@ -545,6 +547,7 @@ class HealthQuoteService extends BaseService
             $quote->uuid = $response->uuid;
             $quote->code = 'HEA-'. $response->uuid;
         }
+        $quote->quote_status_id = QuoteStatus::where('text', 'New Lead')->first()->id;
         $quote->first_name = $parentRecord->first_name;
         $quote->last_name = $parentRecord->last_name;
         $quote->email = $parentRecord->email;
