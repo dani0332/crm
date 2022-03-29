@@ -2,8 +2,11 @@
 
 namespace App\Services;
 
+use App\Enums\QuoteTypeId;
 use App\Models\HomeQuote;
 use App\Models\HomeQuoteRequestDetail;
+use App\Models\LeadStatus;
+use App\Models\QuoteStatus;
 use Illuminate\Http\Request;
 use DB;
 use Illuminate\Support\Facades\Auth;
@@ -494,5 +497,26 @@ class HomeQuoteService extends BaseService
     public function getEntityPlain($id)
     {
         return HomeQuote::where('id', $id)->first();
+    }
+    public function getDuplicateEntityByCode($code)
+    {
+        return HomeQuote::where('parent_duplicate_quote_id', $code)->first();
+    }
+
+    public function createDuplicate($parentRecord)
+    {
+        $quote = new HomeQuote();
+        $quote->parent_duplicate_quote_id = $parentRecord->code;
+        $response = CapiRequestService::getUUID(QuoteTypeId::Home);
+        if($response) {
+            $quote->uuid = $response->uuid;
+            $quote->code = 'HOM-'. $response->uuid;
+        }
+        $quote->quote_status_id = QuoteStatus::where('text', 'New Lead')->first()->id;
+        $quote->first_name = $parentRecord->first_name;
+        $quote->last_name = $parentRecord->last_name;
+        $quote->email = $parentRecord->email;
+        $quote->mobile_no = $parentRecord->mobile_no;
+        $quote->save();
     }
 }

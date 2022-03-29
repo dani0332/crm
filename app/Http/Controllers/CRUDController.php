@@ -20,6 +20,7 @@ use App\Services\LifeQuoteService;
 use App\Services\TeamService;
 use App\Services\TravelQuoteService;
 use App\Services\UserService;
+use BenSampo\Enum\Rules\EnumValue;
 use DataTables;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
@@ -209,7 +210,6 @@ class CRUDController extends Controller
         } else {
             $advisors = $this->crudService->getAdvisorsByModelType($this->genericModel->modelType);
         }
-
         foreach ($model->properties as $property => $value) {
             if (str_contains($value, 'title')) {
                 $customTitles[$property] = $this->crudService->getCustomTitleByModelType($this->genericModel->modelType, $property);
@@ -220,7 +220,7 @@ class CRUDController extends Controller
         }
         $quoteTypes = 'Health,Car,Travel,Life,Home,Business';
         $serviceType = str_contains($quoteTypes, ucwords($model->modelType)) ? strtolower($model->modelType) . 'QuoteService' : lcfirst(ucwords($model->modelType)) . 'Service';
-
+        $allowedDuplicateLOB = $this->crudService->getAllowedDuplicateLOB($model->modelType, $record->code);
         if ($this->genericModel->modelType == "Car") { // Car plans to display on detail view
 
             $listQuotePlans = '';
@@ -244,7 +244,7 @@ class CRUDController extends Controller
             return view('shared.show', compact([
                 'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList',
                 'ecomCarInsuranceQuoteUrl', 'carQuotePlanAddons', 'vehicleTypeText', 'leadStatuses',
-                'lostReasons', 'selectedLostReasonId', 'listQuote','model_name'
+                'lostReasons', 'selectedLostReasonId', 'listQuote','model_name', 'allowedDuplicateLOB'
             ]));
         } else if ($this->genericModel->modelType == quoteTypeCode::Travel) { // Travel plans to display on detail view
             $listQuotePlans = '';
@@ -264,10 +264,10 @@ class CRUDController extends Controller
 
             return view('shared.show', compact([
                 'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList',
-                'leadStatuses', 'lostReasons', 'selectedLostReasonId', 'members_detail','model_name'
+                'leadStatuses', 'lostReasons', 'selectedLostReasonId', 'members_detail','model_name', 'allowedDuplicateLOB'
             ]));
         } else {
-            return view('shared.show', compact(['record', 'model', 'customTitles', 'customTableList', 'advisors', 'leadStatuses', 'lostReasons', 'selectedLostReasonId','model_name']));
+            return view('shared.show', compact(['record', 'model', 'customTitles', 'customTableList', 'advisors', 'leadStatuses', 'lostReasons', 'selectedLostReasonId','model_name', 'allowedDuplicateLOB']));
         }
     }
 
@@ -603,5 +603,11 @@ class CRUDController extends Controller
             }
             return $html;
         }
+    }
+
+    public function createDuplicate(Request $request)
+    {   
+        $this->crudService->createDuplicate($request);
+        return redirect()->to('/quotes/' . strtolower($request->parentType) . '/' . $request->entityUId)->with('success', ' Lead has been Duplicated');
     }
 }

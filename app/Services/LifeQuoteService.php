@@ -2,8 +2,11 @@
 
 namespace App\Services;
 
+use App\Enums\QuoteTypeId;
+use App\Models\LeadStatus;
 use App\Models\LifeQuote;
 use App\Models\LifeQuoteRequestDetail;
+use App\Models\QuoteStatus;
 use Illuminate\Http\Request;
 use DB;
 use Auth;
@@ -503,4 +506,27 @@ class LifeQuoteService extends BaseService
     {
         return ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'advisor_id', 'created_at', 'next_followup_date'];
     }
+
+    public function getDuplicateEntityByCode($code)
+    {
+        return LifeQuote::where('parent_duplicate_quote_id', $code)->first();
+    }
+
+    public function createDuplicate($parentRecord)
+    {
+        $quote = new LifeQuote();
+        $quote->parent_duplicate_quote_id = $parentRecord->code;
+        $response = CapiRequestService::getUUID(QuoteTypeId::Life);
+        if($response) {
+            $quote->uuid = $response->uuid;
+            $quote->code = 'LIF-'. $response->uuid;
+        }
+        $quote->quote_status_id = QuoteStatus::where('text', 'New Lead')->first()->id;
+        $quote->first_name = $parentRecord->first_name;
+        $quote->last_name = $parentRecord->last_name;
+        $quote->email = $parentRecord->email;
+        $quote->mobile_no = $parentRecord->mobile_no;
+        $quote->save();
+    }
+
 }
