@@ -65,8 +65,7 @@ class TravelQuoteService extends BaseService
             ->leftJoin('travel_plan as tp', 'tp.id', '=', 'tqr.plan_id')
             ->leftJoin('region as r', 'r.id', '=', 'tqr.region_cover_for_id')
             // ->leftJoin('currently_located_in as cli', 'cli.id', '=', 'tqr.currently_located_in_id')
-            ->leftJoin('payment_status as ps', 'ps.id', '=', 'tqr.payment_status_id')
-            ->where('qs.text', '!=', 'Fake');
+            ->leftJoin('payment_status as ps', 'ps.id', '=', 'tqr.payment_status_id');
     }
 
     public function saveTravelQuote(Request $request)
