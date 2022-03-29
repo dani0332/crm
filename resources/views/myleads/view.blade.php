@@ -228,19 +228,19 @@
                 $(".loader").hide();
             });
 
-            $(".toggle-btn").on("click", function() {
-                $(".show-visual-cards").addClass("showme");
-                $(".show-container").removeClass("showme");
-                $(".show-container").addClass("hideme");
-                $(this).addClass("active");
-                $(".toggle-btn-2").removeClass("active");
-            });
             $(".toggle-btn-2").on("click", function() {
                 $(".show-visual-cards").addClass("hideme");
                 $(".show-visual-cards").removeClass("showme");
                 $(".show-container").addClass("showme");
                 $(this).addClass("active");
                 $(".toggle-btn").removeClass("active");
+            });
+            $(".toggle-btn").on("click", function() {
+                $(".show-visual-cards").addClass("showme");
+                $(".show-visual-cards").removeClass("hideme");
+                $(".show-container").addClass("hideme");
+                $(this).addClass("active");
+                $(".toggle-btn-2").removeClass("active");
             });
         });
 
@@ -331,8 +331,8 @@
                     <div class="clearfix"></div>
                 </div>
                 <div class="x_content">
-                <button type="button" class="hideme btn btn-warning btn-sm toggle-btn active float-right change-layout">Cards View</button>
-                <button type="button" class="hideme btn btn-warning btn-sm toggle-btn-2 float-right change-layout">List View</button>
+                <button type="button" class="showme btn btn-warning btn-sm toggle-btn  float-right change-layout">Cards View</button>
+                <button type="button" class="showme btn btn-warning btn-sm toggle-btn-2 active float-right change-layout">List View</button>
                 <div class="show-visual-cards hideme">
                     <x-my-leads-visual-card
                         :teamName="$teamName"
@@ -348,7 +348,7 @@
                     @endif
 
                     <form method="POST" id="my-leads-form" class="form-horizontal form-label-left" role="form"
-                        data-parsley-validate="" novalidate="" autocomplete="off">
+                        data-parsley-validate="" novalidate="" autocomplete="off" style="margin-top:80px">
                         {{ csrf_field() }}
                         @method('POST')
                         <input type="hidden" name="modelType" id="modelType" value="{{ $teamName }}">
