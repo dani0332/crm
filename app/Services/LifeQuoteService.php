@@ -319,6 +319,10 @@ class LifeQuoteService extends BaseService
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'lqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'lqrd.advisor_assigned_by_id')
             ->where('qs.text', '!=', 'Fake')
+            ->where(function ($query) {
+                $query->where('hqrd.next_followup_date', '>', date('Y-m-d'))
+                      ->orWhereNull('hqrd.next_followup_date');
+            })
             ->where('lqr.advisor_id', Auth::user()->id);
 
         $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
