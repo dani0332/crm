@@ -53,6 +53,8 @@ class TravelQuoteService extends BaseService
             'tqrd.transapp_code',
             'ls.text as lost_reason',
             'tqrd.notes',
+            'tqr.currently_located_in_id',
+            'cli.text as currently_located_in_id_text'
             // 'tqr.currently_located_in_id',
             // 'cli.text as currently_located_in_id_text',
             'tqr.destination_id',
@@ -64,11 +66,12 @@ class TravelQuoteService extends BaseService
             ->leftJoin('nationality as n', 'n.id', '=', 'tqr.nationality_id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'tqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'tqr.advisor_id')
+            ->leftJoin('region as r', 'r.id', '=', 'tqr.region_cover_for_id')
+            ->leftJoin('currently_located_in as cli', 'cli.id', '=', 'tqr.currently_located_in_id')
             // ->leftJoin('currently_located_in as cli', 'cli.id', '=', 'tqr.currently_located_in_id')
-            ->leftJoin('country', 'country.id', '=', 'tqr.destination_id');
+            ->leftJoin('country', 'country.id', '=', 'tqr.destination_id')
             ->leftJoin('travel_plan as tp', 'tp.id', '=', 'tqr.plan_id')
             ->leftJoin('region as r', 'r.id', '=', 'tqr.region_cover_for_id')
-            // ->leftJoin('currently_located_in as cli', 'cli.id', '=', 'tqr.currently_located_in_id')
             ->leftJoin('payment_status as ps', 'ps.id', '=', 'tqr.payment_status_id');
     }
 
@@ -90,6 +93,7 @@ class TravelQuoteService extends BaseService
             "regionCoverForId" => $request->region_cover_for_i,
             "source" => $sourceName,
             "referenceUrl" => $appUrl,
+            "currentlyLocatedInId" => $request->currently_located_in_id,
             // "currentlyLocatedInId" => $request->currently_located_in_id,
             // "destinationId" => $request->destination_id,
         );
@@ -374,6 +378,7 @@ class TravelQuoteService extends BaseService
         $travelQuote->destination = $request->destination;
         $travelQuote->region_cover_for_id = $request->region_cover_for_id;
         $travelQuote->details = $request->details;
+        $travelQuote->currently_located_in_id = $request->currently_located_in_id;
         // $travelQuote->currently_located_in_id = $request->currently_located_in_id;
         $travelQuote->destination_id = $request->destination_id;
         $travelQuote->save();
@@ -406,8 +411,8 @@ class TravelQuoteService extends BaseService
             "region_cover_for_id" => "select|title|required",
             "travel_cover_for_id" => "select|title|required",
             "details" => "textarea|text|required",
+            "currently_located_in_id" => "select|title|required"
             // "currently_located_in_id" => "select|title|required",
-            
         );
     }
 
@@ -442,6 +447,8 @@ class TravelQuoteService extends BaseService
             case 'next_followup_date':
                 $title = "Next Followup Date";
                 break;
+            case 'currently_located_in_id':
+                $title = "Currently Located In ";
             // case 'currently_located_in_id':
             //     $title = "Currently Located In ";
             //     break;
