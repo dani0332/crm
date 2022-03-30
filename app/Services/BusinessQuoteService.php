@@ -2,8 +2,12 @@
 
 namespace App\Services;
 
+use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Models\BusinessQuote;
 use App\Models\BusinessQuoteRequestDetail;
+use App\Models\LeadStatus;
+use App\Models\QuoteStatus;
 use Illuminate\Http\Request;
 use DB;
 use Config;
@@ -39,6 +43,7 @@ class BusinessQuoteService extends BaseService
                 'bqr.premium',
                 'bqrd.next_followup_date',
                 'bqrd.notes',
+                'bqrd.transapp_code',
                 'ls.text as lost_reason',
                 'bqr.source',
             )
@@ -46,8 +51,7 @@ class BusinessQuoteService extends BaseService
             ->leftJoin('business_quote_request_detail as bqrd', 'bqrd.business_quote_request_id', '=', 'bqr.id')
             ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'bqrd.lost_reason_id')
             ->leftJoin('users as u', 'u.id', '=', 'bqr.advisor_id')
-            ->leftJoin('quote_status as qs', 'qs.id', '=', 'bqr.quote_status_id')
-            ->where('qs.text', '!=', 'Fake');
+            ->leftJoin('quote_status as qs', 'qs.id', '=', 'bqr.quote_status_id');
     }
 
     public function getEntity($id)
@@ -82,6 +86,35 @@ class BusinessQuoteService extends BaseService
         if (!empty($mobile_no)) {
             $query->where('bqr.mobile_no', '=', $mobile_no);
         }
+        return $query;
+    }
+
+    public function getBusinessOverDueFollowups()
+    {
+        $query = DB::table('business_quote_request as bqr')
+            ->select(
+                'bqr.id',
+                'bqr.uuid',
+                'bqr.code',
+                DB::raw("CONCAT_WS(' ',bqr.first_name,bqr.last_name) AS clientName"),
+                'qs.text as leadStatus',
+                'bqr.created_at as createdAt',
+                'bqr.quote_status_id',
+                'bqrd.advisor_assigned_date as assignedDate',
+                'u.name as assignedBy',
+                'bqr.updated_at',
+                'bqr.source as leadSource',
+                'bqr.company_name',
+                'bqr.premium',
+                'bqrd.next_followup_date as nextFollowupDate',
+            )
+            ->leftJoin('business_quote_request_detail as bqrd', 'bqrd.business_quote_request_id', '=', 'bqr.id')
+            ->leftJoin('quote_status as qs', 'qs.id', '=', 'bqr.quote_status_id')
+            ->leftJoin('users as u', 'u.id', '=', 'bqrd.advisor_assigned_by_id')
+            ->where('bqr.advisor_id', Auth::user()->id)
+            ->where('bqrd.next_followup_date', '<', date('Y-m-d'))
+            ->whereIn('qs.text', ['Followed Up','Qualification Pending', 'Quoted', 'FTC Pending', 'FTC Sent', 'Missing Documents Requested', 'Policy Documents Pending', 'Payment Pending', 'Pending with UW', 'Application Pending', 'In Negotiation'])
+            ->where('qs.text', '!=', 'Fake');
         return $query;
     }
 
@@ -214,6 +247,9 @@ class BusinessQuoteService extends BaseService
     {
         $searchProperties = $model->searchProperties;
         if ($request->ajax()) {
+            if (!isset($request->email) && $request->email == '') {
+                $this->query->where('qs.text', '!=', 'Fake');
+            }
             if (isset($request->assigned_to_date_start) && $request->assigned_to_date_start != '') {
                 $dateFrom = Carbon::createFromFormat('Y-m-d', $request['assigned_to_date_start'])->startOfDay()->toDateTimeString();
                 $dateTo = Carbon::createFromFormat('Y-m-d', $request['assigned_to_date_end'])->endOfDay()->toDateTimeString();
@@ -237,10 +273,13 @@ class BusinessQuoteService extends BaseService
                 if (!empty($request[$item]) && $item != "created_at") {
                     if ($request[$item] == 'null') {
                         $this->query->whereNull($item);
-                    } else if ($item == 'advisor_id') {
-                        $this->query->whereIn('advisor_id', $request[$item]);
+                    } else if ($item == 'advisor_id' && is_array($request[$item]) && !empty($request[$item])) {
+                        if($request[$item][0] == 'null')
+                            $this->query->whereNull('advisor_id');
+                        else
+                            $this->query->whereIn('advisor_id', $request[$item]);
                     }
-                    else if ($item == 'quote_status_id') {
+                    else if ($item == 'quote_status_id' && is_array($request[$item]) && !empty($request[$item])) {
                         $this->query->whereIn('quote_status_id', $request[$item]);
                     } else {
                         $this->query->where($this->getQuerySuffix($item) . '.' . $item, $request[$item]);
@@ -330,6 +369,7 @@ class BusinessQuoteService extends BaseService
             "mobile_no" => "input|title|number|required",
             "company_name" => "input|text|required",
             "next_followup_date" => "input|date|title|range",
+            "transapp_code" => "readonly|none",
             "source" => "input|text",
             "lost_reason" => "input|text",
             "advisor_id" => "select|title|multiple",
@@ -386,9 +426,9 @@ class BusinessQuoteService extends BaseService
     public function fillModelSkipProperties()
     {
         return [
-            "create" => "id,advisor_id,quote_status_id,code,updated_at,created_at,next_followup_date,lost_reason,premium,source",
+            "create" => "id,advisor_id,quote_status_id,code,updated_at,created_at,next_followup_date,lost_reason,premium,source,transapp_code",
             "list" => "email,mobile_no,brief_details,dob",
-            "update" => "id,advisor_id,quote_status_id,code,updated_at,created_at,next_followup_date,lost_reason,source",
+            "update" => "id,advisor_id,quote_status_id,code,updated_at,created_at,next_followup_date,lost_reason,source,transapp_code",
             "show" => "",
         ];
     }
@@ -396,5 +436,29 @@ class BusinessQuoteService extends BaseService
     public function fillModelSearchProperties()
     {
         return ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'advisor_id', 'created_at', 'company_name', 'business_type_of_insurance_id', 'next_followup_date'];
+    }
+
+    public function getDuplicateEntityByCode($code)
+    {
+        return BusinessQuote::where('parent_duplicate_quote_id', $code)->first();
+    }
+
+    public function createDuplicate($parentRecord)
+    {
+        $quote = new BusinessQuote();
+        
+        $quote->parent_duplicate_quote_id = $parentRecord->code;
+
+        $response = CapiRequestService::getUUID(QuoteTypeId::Business);
+        if($response) {
+            $quote->uuid = $response->uuid;
+            $quote->code = 'BUS-'. $response->uuid;
+        }
+        $quote->quote_status_id = QuoteStatus::where('text', 'New Lead')->first()->id;
+        $quote->first_name = $parentRecord->first_name;
+        $quote->last_name = $parentRecord->last_name;
+        $quote->email = $parentRecord->email;
+        $quote->mobile_no = $parentRecord->mobile_no;
+        $quote->save();
     }
 }

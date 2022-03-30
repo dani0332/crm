@@ -21,6 +21,7 @@ use DataTables;
 use DB;
 use Config;
 use App\Services\CarQuoteService;
+use App\Services\CRUDService;
 use Illuminate\Support\Facades\Log;
 
 class ClaimController extends Controller
@@ -31,14 +32,16 @@ class ClaimController extends Controller
      * @return \Illuminate\Http\Response
      */
     protected $carQuoteService;
+    protected $crudService;
 
-    function __construct(CarQuoteService $carQuoteService)
+    function __construct(CarQuoteService $carQuoteService, CRUDService $crudService)
     {
         $this->middleware('permission:claim-list|claim-create|claim-edit|claim-delete', ['only' => ['index', 'store']]);
         $this->middleware('permission:claim-create', ['only' => ['create', 'store']]);
         $this->middleware('permission:claim-edit', ['only' => ['edit', 'update']]);
         $this->middleware('permission:claim-delete', ['only' => ['destroy']]);
         $this->carQuoteService = $carQuoteService;
+        $this->crudService = $crudService;  
     }
 
     public function index(Request $request)
@@ -482,5 +485,26 @@ class ClaimController extends Controller
         }
 
         return $message;
+    }
+
+
+    public function getoverdueleads(Request $request)
+    {
+        return DataTables::of([])
+        ->addIndexColumn()
+        ->make(true);
+        
+        $allowedTypes = ['car', 'home', 'travel', 'health', 'life', 'travel'];
+        if(!in_array(strtolower($request->teamName), $allowedTypes)){
+            return DataTables::of([])
+                ->addIndexColumn()
+                ->make(true);
+        }else{
+            $gridData = $this->crudService->getOverDueFollowups($request, $request->teamName)->get();
+            return DataTables::of($gridData)
+                    ->addIndexColumn()
+                    ->make(true);
+        }
+        
     }
 }

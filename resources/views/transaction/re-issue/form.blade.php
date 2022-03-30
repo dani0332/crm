@@ -42,8 +42,8 @@
                             <select id="insurance_company" name="insurance_company" class="form-control">
                             @endif
                                 <option value="">Select</option>
-                                @foreach ($insurancecompanies as $insurancecompany )
-                                    <option {{ $transaction->insurance_company_id == $insurancecompany->id ? 'selected':'' }} value="{{ $insurancecompany->id }}">{{ $insurancecompany->name }}</option>
+                                @foreach ($insuranceCompanies as $insuranceCompany )
+                                    <option {{ $transaction->insurance_company_id == $insuranceCompany->id ? 'selected':'' }} value="{{ $insuranceCompany->id }}">{{ $insuranceCompany->name }}</option>
                                 @endforeach
                             </select>
                             <small class="text-muted">Please select Insurance Company Name</small><br/>
@@ -76,8 +76,8 @@
                             <select id="paymentmode" name="paymentmode" class="form-control">
                             @endif
                                 <option value="">Select</option>
-                                @foreach ($paymentmodes as $paymentmode )
-                                    <option {{ $transaction->payment_mode_id == $paymentmode->id ? 'selected':'' }} value="{{ $paymentmode->id }}">{{ $paymentmode->name }}</option>
+                                @foreach ($paymentModes as $paymentMode)
+                                    <option {{ $transaction->payment_mode_id == $paymentMode->id ? 'selected':'' }} value="{{ $paymentMode->id }}">{{ $paymentMode->name }}</option>
                                 @endforeach
                             </select>
                             <small class="text-muted">Please select Payment mode</small><br/>

@@ -1,11 +1,18 @@
-<li class="drag-column drag-column-New">
+<?php 
+use App\Enums\quoteStatusCode; 
+?>
+<div class="drag-container">
+    <ul class="drag-list">
+    @foreach ($dropdownSource as $item)
+    @if($item->text == quoteStatusCode::NEWLEAD || $item->text == quoteStatusCode::QUOTED || $item->text == quoteStatusCode::FOLLOWEDUP || $item->text == quoteStatusCode::NEGOTIATION || $item->text == quoteStatusCode::PAYMENTPENDING || $item->text == quoteStatusCode::APPLICATION_PENDING || $item->text == quoteStatusCode::PLOICY_DOCUMENTS_PENDING || $item->text == quoteStatusCode::TRANSACTIONAPPROVED)
+    <li class="drag-column drag-column-New">
         <span class="drag-column-header">
             <div>
             <input class="search_status" type="text" placeholder="Search.." name="{{$item->id}}" onblur="searchTerm(this)">
             <h2>
             {{ $item->text ?? $item->name }}
             @php 
-            $result = getDataAgainstStatus($model->modelType, $item->id);
+            $result = getDataAgainstStatus("Business", $item->id);
             @endphp
             
             </h2>
@@ -28,14 +35,14 @@
                         <div class="lead-block rotten">
                             <div class="lead-title">{{$lead->code}}</div>
                             <span class="float-right">
-                                <a target="_blank" href="{{strtolower($model->modelType)}}/{{$lead->uuid}}"><i class="fa fa-pencil" aria-hidden="true"></i></a>
+                                <a target="_blank" href="{{strtolower('Business')}}/{{$lead->uuid}}"><i class="fa fa-pencil" aria-hidden="true"></i></a>
                             </span>
                             <div class="pad-5"></div>
                             <div class="lead-person"><i class="fa fa-user font-1" aria-hidden="true"></i> &nbsp;
                             {{$lead->first_name}} {{$lead->last_name}} 
                             </div>
                             <div class="pad-5"></div>
-                            <div class="lead-person"><i class="fa fa-building font-1" aria-hidden="true"></i> &nbsp;
+                            <div class="lead-person"><i class="fa fa-building font-1" aria-hidden="true"></i>
                             {{$lead->company_name}}
                             </div>
                             <div class="pad-5"></div>
@@ -51,3 +58,7 @@
         </ul>
         <div class="drag-column-footer"></div>
     </li>
+    @endif
+    @endforeach
+    </ul>
+</div>
