@@ -11,7 +11,7 @@ variables:
   
 steps:
 
-- script: docker build --build-arg IMCRM_TOKEN=$(IMCRM_DEV_TOKEN) -f Dockerfile -t $(acrName).azurecr.io/$(imageName) .
+- script: docker build --build-arg IMCRM_TOKEN=$(IMCRM_DEV_TOKEN) --build-arg NGINX_FILE=$(DEV_NGINX)-f Dockerfile -t $(acrName).azurecr.io/$(imageName) .
   displayName: 'docker build'
 - script: docker login -u $(dockerId) -p $(dockerPassword) $(acrName).azurecr.io
   displayName: 'docker login'
