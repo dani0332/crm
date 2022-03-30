@@ -147,6 +147,7 @@ Route::group(['middleware' =>  ['auth']], function () {
         Route::resource('leadstatus', CRUDController::class);
         Route::post('save', [CRUDController::class, 'store'])->name('saveQuote');
         Route::post('update', [CRUDController::class, 'update'])->name('updateQuote');
+        Route::post('createDuplicate', [CRUDController::class, 'createDuplicate'])->name('createDuplicate');
         Route::get('getvalues/{modelType}/{propertyName}/{recordId}', [CRUDController::class, 'getDropdownSourceNameForDisplay']);
         Route::get('car/{quoteId}/plan_details/{planId}', [CRUDController::class, 'carQuotePlanDetails']);
         Route::post('manualLeadAssign', [CRUDController::class, 'manualLeadAssign'])->name('manualLeadAssign');
@@ -185,7 +186,7 @@ Route::group(['middleware' =>  ['auth']], function () {
         Route::resource('reason', ReasonController::class);
         Route::resource('status', StatusController::class);
         Route::resource('paymentmode', PaymentModeController::class);
-        Route::resource('transaction', TransactionController::class);
+        Route::resource('transaction', TransactionController::class)->middleware('permission:transapp-list|transapp-create|transapp-edit|transapp-delete');
         Route::get('home', [TransactionController::class, 'transectionHome'])->name('home');
         Route::get('showtransaction', [TransactionController::class, 'showTransaction'])->name('showtransaction');
         Route::get('re-issue-transaction', [TransactionController::class, 'cancelAndReIssueTransectionView'])->name('reissue_view');

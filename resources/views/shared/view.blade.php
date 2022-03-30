@@ -104,7 +104,6 @@ use App\Enums\quoteTypeCode;
             $('#modelType').val(model.modelType);
             var dataTableColumns = [];
             for (var i = 0; i < modelPropertiesArray.length; i++) {
-                var isAllowedModel = allowedModelTypes.includes(model.modelType.toLocaleLowerCase());
                 if (!skipPropertiesArray.includes(modelPropertiesArray[i].name)) {
                     // checking if the model type is either leadstatus or teams because it needs to be handled differently
                     if(model.modelType == 'LeadStatus' || model.modelType == 'Teams') {
@@ -132,23 +131,21 @@ use App\Enums\quoteTypeCode;
                             // Handling id field
                             if (isManagerOrDeputy === "1" && allowedModelTypes.includes(model.modelType.toLocaleLowerCase())) {
                                 // Checkboxes should be available if the user is Manager Or deputy also the model type is allowed
-                                if(model.modelType.toLocaleLowerCase() != 'car'){
-                                    dataTableColumns.push({
+                                dataTableColumns.push({
                                     data: "id",
                                     name: "id",
-                                        render: function(data, type, row, meta) {
+                                    render: function(data, type, row, meta) {
 
-                                            return (
-                                                '<input type="checkbox" id="tmLeadID" class="tmleadCheckbox" name="tmLeadID" value="' +
-                                                data + '">'
-                                            );
+                                        return (
+                                            '<input type="checkbox" id="tmLeadID" class="tmleadCheckbox" name="tmLeadID" value="' +
+                                            data + '">'
+                                        );
 
-                                        },
-                                    });
-                                }
+                                    },
+                                });
                             }
                             // Adding link field for id field
-                            
+                            var isAllowedModel = allowedModelTypes.includes(model.modelType.toLocaleLowerCase());
                             dataTableColumns.push({
                                 data: 'code',
                                 name: 'code',
@@ -378,19 +375,19 @@ use App\Enums\quoteTypeCode;
                 });
                 dt.ajax.reload();
             }
-            $(".toggle-btn").on("click", function() {
-                $(".show-visual-cards").addClass("showme");
-                $(".show-container").removeClass("showme");
-                $(".show-container").addClass("hideme");
-                $(this).addClass("active");
-                $(".toggle-btn-2").removeClass("active");
-            });
             $(".toggle-btn-2").on("click", function() {
                 $(".show-visual-cards").addClass("hideme");
                 $(".show-visual-cards").removeClass("showme");
                 $(".show-container").addClass("showme");
                 $(this).addClass("active");
                 $(".toggle-btn").removeClass("active");
+            });
+            $(".toggle-btn").on("click", function() {
+                $(".show-visual-cards").addClass("showme");
+                $(".show-visual-cards").removeClass("hideme");
+                $(".show-container").addClass("hideme");
+                $(this).addClass("active");
+                $(".toggle-btn-2").removeClass("active");
             });
 
         });
@@ -440,7 +437,8 @@ use App\Enums\quoteTypeCode;
         function searchTerm(element) {
             var term = $(element).val();
             var status = $(element).attr('name');
-            $.ajaxSetup({
+            if(term) {
+                $.ajaxSetup({
                 headers: {
                     'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                 }
@@ -467,6 +465,8 @@ use App\Enums\quoteTypeCode;
                 .fail(function (jqXHR, ajaxOptions, thrownError) {
                     console.log('Server error occured');
                 });
+            }
+
         }
         window.onload = function () {
             window.localStorage.clear();
@@ -504,16 +504,14 @@ use App\Enums\quoteTypeCode;
                     <div class="clearfix"></div>
                 </div>
                 <div class="x_content">
-                @php $dynamicClass = "showme"; @endphp
                 @if($model->modelType == quoteTypeCode::Travel || $model->modelType == quoteTypeCode::Home || $model->modelType == quoteTypeCode::Health || $model->modelType == quoteTypeCode::Business || $model->modelType == quoteTypeCode::Life)
-                @php $dynamicClass = "hideme"; @endphp
-                <button type="button" class="btn btn-warning btn-sm toggle-btn active float-right change-layout hideme">Cards View</button>
-                <button type="button" class="btn btn-warning btn-sm toggle-btn-2 float-right change-layout hideme">List View</button>
+                <button type="button" class="btn btn-warning btn-sm toggle-btn  float-right change-layout">Cards View</button>
+                <button type="button" class="btn btn-warning btn-sm toggle-btn-2 active float-right change-layout">List View</button>
                 <div class="show-visual-cards hideme">
-                        {{-- <x-leads-visual-card
+                        <x-leads-visual-card
                             :model="$model"
                             :dropdownSource="$dropdownSource"
-                        /> --}}
+                        />
                     </div>
                 @endif
                     <div class="show-container showme">
@@ -755,10 +753,8 @@ use App\Enums\quoteTypeCode;
                             <thead>
                                 <tr>
                                     @if ($isManagerORDeputy == '1' && str_contains('home,health,life,business,travel,car', strtolower($model->modelType)))
-                                        @if($model->modelType != 'Car')
                                         <th style="width: 15px;"><input type="checkbox" id="checkAllTmLeads"
                                                 name="checkAllTmLeads" value=""></th>
-                                        @endif
                                     @endif
                                     @foreach ($model->properties as $property => $value)
                                         @if ($model->modelType != 'LeadStatus' && $model->modelType != 'Teams')

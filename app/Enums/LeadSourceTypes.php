@@ -9,10 +9,7 @@ use BenSampo\Enum\Enum;
  * @method static static OptionTwo()
  * @method static static OptionThree()
  */
-final class HealthTeamType extends Enum
+final class LeadSourceTypes extends Enum
 {
-    const EBP = "EBP";
-    const RM_NB = "RM-NB";
-    const RM_SPEED = "RM-SPEED";
-    const GROUP_MEDICAL = "Group Medical";
+    const EBPRENEWALS = "EBP_RENEWALS";
 }

@@ -23,10 +23,10 @@
                         <div class="col-md-6 col-sm-6">
                             <select class="form-control" id="insurance_company" name="insurance_company" {{ isset($carQuote['insurance_coverage']["id"] ) ? 'readonly' : '' }}>
                                 <option value="">Select</option>
-                                @foreach ($insurancecompanies as $insurancecompany )
-                                    <option {{ old('insurance_company') == $insurancecompany->id ? "selected":""  }} value="{{ $insurancecompany->id }}">{{ $insurancecompany->name }}</option>
-                                    @if ( isset($carQuote['insurance_coverage']['insurance_company_id']['insurance_company_id']) && $carQuote['insurance_coverage']['insurance_company_id']['insurance_company_id'] == $insurancecompany->id )
-                                        <option   selected="selected"   value="{{ $insurancecompany->id }}">{{ $insurancecompany->name }}</option>
+                                @foreach ($insuranceCompanies as $insuranceCompany )
+                                    <option {{ old('insurance_company') == $insuranceCompany->id ? "selected":""  }} value="{{ $insuranceCompany->id }}">{{ $insuranceCompany->name }}</option>
+                                    @if ( isset($carQuote['insurance_coverage']['insurance_company_id']['insurance_company_id']) && $carQuote['insurance_coverage']['insurance_company_id']['insurance_company_id'] == $insuranceCompany->id )
+                                        <option   selected="selected"   value="{{ $insuranceCompany->id }}">{{ $insuranceCompany->name }}</option>
                                     @endif
                                 @endforeach
                             </select>
@@ -99,11 +99,10 @@
                         <div class="col-md-6 col-sm-6">
                             <select class="form-control" id="paymentmode" name="paymentmode" {{ isset($carQuote['payment_detail']["mode_id"] ) ? 'readonly' : '' }}>
                                 <option value="">Select</option>
-                                @foreach ($paymentmodes as $paymentmode )
-                                    <option {{ old('paymentmode') == $paymentmode->id ? "selected":""  }} value="{{ $paymentmode->id }}">{{ $paymentmode->name }}</option>
-
-                                    @if (isset($carQuote['payment_detail']['mode_id']) && $carQuote['payment_detail']['mode_id'] == $paymentmode->id )
-                                        <option  selected="selected"   value="{{ $paymentmode->id }}">{{ $paymentmode->name }}</option>
+                                @foreach ($paymentModes as $paymentMode)
+                                    <option {{ old('paymentmode') == $paymentMode->id ? "selected":"" }} value="{{ $paymentMode->id }}">{{ $paymentMode->name }}</option>
+                                    @if (isset($carQuote['payment_detail']['mode_id']) && $carQuote['payment_detail']['mode_id'] == $paymentMode->id )
+                                        <option  selected="selected"   value="{{ $paymentMode->id }}">{{ $paymentMode->name }}</option>
                                     @endif
                                 @endforeach
                             </select>

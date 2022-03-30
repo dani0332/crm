@@ -62,10 +62,8 @@
             $readonlyFieldCss = "";
         }
     
-        $carPlanTypeComp = CarPlanType::COMP;   
-    }
+        $carPlanTypeComp = CarPlanType::COMP;
 ?>
-
 <script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
 <script>
     $.ajaxSetup({
@@ -115,6 +113,10 @@
         });
     });
 </script>
+<?php
+    }
+?>
+
 @if(isset($modelName) && $modelName == quoteTypeCode::Travel)
 <div class="row">
         <div class="col-md-12 col-sm-12 admin-detail">
