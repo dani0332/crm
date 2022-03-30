@@ -1,5 +1,6 @@
 FROM php:8.0-fpm
 ARG IMCRM_TOKEN
+ARG NGINX_FILE
 # Set working directory
 WORKDIR /var/www
 
@@ -52,7 +53,7 @@ RUN chmod -R ugo+w /var/www/storage
 # Copy nginx/php/supervisor configs
 RUN cp docker/supervisor.conf /etc/supervisord.conf
 RUN cp docker/blanka.ini /usr/local/etc/php/conf.d/app.ini
-RUN cp docker/nginx.conf /etc/nginx/sites-enabled/default
+RUN cp docker/${NGINX_FILE} /etc/nginx/sites-enabled/default
 RUN cp -r docker/*.pem /etc/nginx/conf.d/
 
 RUN doppler configure set token ${IMCRM_TOKEN}
