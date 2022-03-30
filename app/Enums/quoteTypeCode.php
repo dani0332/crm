@@ -3,13 +3,14 @@
 namespace App\Enums;
 
 use BenSampo\Enum\Enum;
+use ReflectionClass;
 
 /**
  * @method static static OptionOne()
  * @method static static OptionTwo()
  * @method static static OptionThree()
  */
-final class quoteTypeCode extends Enum
+class quoteTypeCode extends Enum
 {
     const Car = "Car";
     const Home = "Home";
@@ -26,4 +27,15 @@ final class quoteTypeCode extends Enum
     const CORPLINE = "CORPLINE";
     const GM = "GM";
     const GroupMedical = "Group Medical";
+
+    public static function getOptions() 
+    {
+        $oClass = new ReflectionClass(__CLASS__);
+        $constants = $oClass->getConstants();
+        $retval = array();
+        foreach($constants as $name => $val) {
+                $retval[$val] = $name;
+        }
+        return $retval;
+    }
 }

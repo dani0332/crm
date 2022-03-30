@@ -2,6 +2,9 @@
 
 namespace App\Services;
 
+use App\Enums\QuoteTypeId;
+use App\Models\LeadStatus;
+use App\Models\QuoteStatus;
 use App\Models\TravelQuote;
 use App\Models\TravelQuoteRequestDetail;
 use Illuminate\Http\Request;
@@ -32,6 +35,7 @@ class TravelQuoteService extends BaseService
             'tqr.email',
             'tqr.mobile_no',
             'tqr.premium',
+            'tqr.paid_at',
             'tqr.source',
             'tqr.nationality_id',
             'n.TEXT AS nationality_id_text',
@@ -39,6 +43,10 @@ class TravelQuoteService extends BaseService
             'qs.text as quote_status_id_text',
             'u.id as advisor_id',
             'u.name as advisor_id_text',
+            'tqr.payment_status_id',
+            'ps.text AS payment_status_id_text',
+            'tqr.plan_id',
+            'tp.text AS plan_id_text',
             'tqr.region_cover_for_id',
             'r.TEXT AS region_cover_for_id_text',
             'tqrd.next_followup_date',
@@ -56,9 +64,12 @@ class TravelQuoteService extends BaseService
             ->leftJoin('nationality as n', 'n.id', '=', 'tqr.nationality_id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'tqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'tqr.advisor_id')
-            ->leftJoin('region as r', 'r.id', '=', 'tqr.region_cover_for_id')
             // ->leftJoin('currently_located_in as cli', 'cli.id', '=', 'tqr.currently_located_in_id')
             ->leftJoin('country', 'country.id', '=', 'tqr.destination_id');
+            ->leftJoin('travel_plan as tp', 'tp.id', '=', 'tqr.plan_id')
+            ->leftJoin('region as r', 'r.id', '=', 'tqr.region_cover_for_id')
+            // ->leftJoin('currently_located_in as cli', 'cli.id', '=', 'tqr.currently_located_in_id')
+            ->leftJoin('payment_status as ps', 'ps.id', '=', 'tqr.payment_status_id');
     }
 
     public function saveTravelQuote(Request $request)
@@ -86,7 +97,7 @@ class TravelQuoteService extends BaseService
         return CapiRequestService::sendCAPIRequest('/api/v1-save-travel-quote', $dataArr);
     }
 
-    public function getBusinessOverDueFollowups()
+    public function getTravelOverDueFollowups()
     {
         $query = DB::table('travel_quote_request as tqr')
             ->select(
@@ -107,7 +118,8 @@ class TravelQuoteService extends BaseService
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'tqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'tqrd.advisor_assigned_by_id')
             ->where('qs.text', '!=', 'Fake')
-            ->where('tqrd.next_followup_date', '<', date('Y-m-d'))
+            ->where('tqrd.next_followup_date', '>', date('Y-m-d'))
+            ->whereIn('qs.text', ['Followed Up','Qualification Pending', 'Quoted', 'FTC Pending', 'FTC Sent', 'Missing Documents Requested', 'Policy Documents Pending', 'Payment Pending', 'Pending with UW', 'Application Pending', 'In Negotiation'])
             ->where('tqr.advisor_id', Auth::user()->id);
             return $query;
     }
@@ -167,7 +179,6 @@ class TravelQuoteService extends BaseService
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'tqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'tqrd.advisor_assigned_by_id')
             ->where('qs.text', '!=', 'Fake')
-            ->where('tqrd.next_followup_date', '>', date('Y-m-d'))
             ->where('tqr.advisor_id', Auth::user()->id);
 
         $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
@@ -521,5 +532,27 @@ class TravelQuoteService extends BaseService
     public function getMembersDetail($id)
     {
         return DB::table("travel_quote_request_member_details")->where('travel_quote_request_id', $id)->get();
+    }
+
+    public function getDuplicateEntityByCode($code)
+    {
+        return TravelQuote::where('parent_duplicate_quote_id', $code)->first();
+    }
+
+    public function createDuplicate($parentRecord)
+    {
+        $quote = new TravelQuote();
+        $quote->parent_duplicate_quote_id = $parentRecord->code;
+        $response = CapiRequestService::getUUID(QuoteTypeId::Travel);
+        if($response) {
+            $quote->uuid = $response->uuid;
+            $quote->code = 'TRA-'. $response->uuid;
+        }
+        $quote->quote_status_id = QuoteStatus::where('text', 'New Lead')->first()->id;
+        $quote->first_name = $parentRecord->first_name;
+        $quote->last_name = $parentRecord->last_name;
+        $quote->email = $parentRecord->email;
+        $quote->mobile_no = $parentRecord->mobile_no;
+        $quote->save();
     }
 }

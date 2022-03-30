@@ -1,49 +1,22 @@
 version: "3"
+
 services:
-
-  app:
-    build: .
-    restart: unless-stopped
-    ports:
-      - 9101:9101
-    volumes:
-      - ./:/var/www/html
-      - ./docker/var/php-fpm/php.ini:/usr/local/etc/php/php.ini
-    networks:
-      - afia_insurance
-    depends_on:
-      - mysql
-
-  nginx:
-    image: nginx:alpine
-    restart: unless-stopped
-    ports:
-      - 8000:80
-    volumes:
-      - ./:/var/www/html
-      - ./docker/var/nginx/logs:/var/log/nginx
-      - ./docker/var/nginx:/etc/nginx/conf.d/
-    networks:
-      - afia_insurance
-
-  mysql:
-    image: "mysql:5.7.22"
-    ports:
-      - "3306:3306"
+  laravel:
+    #build: 
+    # context: .
+    # dockerfile: Dockerfile
+    image: ${ACRNAME}.azurecr.io/imcrm${DOCKERENV}:Build.BuildId 
+    
     environment:
-      - MYSQL_ROOT_PASSWORD=${DB_USERNAME}
-      - MYSQL_PASSWORD=${DB_PASSWORD}
-      - MYSQL_DATABASE=default
+     - DOPPLER_TOKEN 
+    ports:
+      - "${WEB_PORT}:443"
     volumes:
-      - "afia_insurance_5.72:/var/lib/mysql"
-    networks:
-      - afia_insurance
-
-networks:
-  afia_insurance:
-    driver: bridge
-
+      #- /home/azureuser/imcrm/${LOGS}:/app/log
+      - .:/var/www/html
+    restart: unless-stopped
+  
 volumes:
-  afia_insurance_5.72:
-    driver: local
-
+  logs:
+  devlogs:
+  stglogs:  

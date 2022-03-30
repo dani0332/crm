@@ -2,8 +2,11 @@
 
 namespace App\Services;
 
+use App\Enums\QuoteTypeId;
 use App\Models\HomeQuote;
 use App\Models\HomeQuoteRequestDetail;
+use App\Models\LeadStatus;
+use App\Models\QuoteStatus;
 use Illuminate\Http\Request;
 use DB;
 use Illuminate\Support\Facades\Auth;
@@ -206,7 +209,7 @@ class HomeQuoteService extends BaseService
         }
     }
 
-    public function getBusinessOverDueFollowups()
+    public function getHomeOverDueFollowups()
     {
         $query = DB::table('home_quote_request as hqr')
             ->select(
@@ -227,7 +230,8 @@ class HomeQuoteService extends BaseService
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'hqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'hqrd.advisor_assigned_by_id')
             ->where('qs.text', '!=', 'Fake')
-            ->where('hqrd.next_followup_date', '<', date('Y-m-d'))
+            ->where('hqrd.next_followup_date', '>', date('Y-m-d'))
+            ->whereIn('qs.text', ['Followed Up','Qualification Pending', 'Quoted', 'FTC Pending', 'FTC Sent', 'Missing Documents Requested', 'Policy Documents Pending', 'Payment Pending', 'Pending with UW', 'Application Pending', 'In Negotiation'])
             ->where('hqr.advisor_id', Auth::user()->id);
             return $query;
     }
@@ -253,7 +257,6 @@ class HomeQuoteService extends BaseService
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'hqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'hqrd.advisor_assigned_by_id')
             ->where('qs.text', '!=', 'Fake')
-            ->where('hqrd.next_followup_date', '>', date('Y-m-d'))
             ->where('hqr.advisor_id', Auth::user()->id);
         $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
         $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';
@@ -494,5 +497,26 @@ class HomeQuoteService extends BaseService
     public function getEntityPlain($id)
     {
         return HomeQuote::where('id', $id)->first();
+    }
+    public function getDuplicateEntityByCode($code)
+    {
+        return HomeQuote::where('parent_duplicate_quote_id', $code)->first();
+    }
+
+    public function createDuplicate($parentRecord)
+    {
+        $quote = new HomeQuote();
+        $quote->parent_duplicate_quote_id = $parentRecord->code;
+        $response = CapiRequestService::getUUID(QuoteTypeId::Home);
+        if($response) {
+            $quote->uuid = $response->uuid;
+            $quote->code = 'HOM-'. $response->uuid;
+        }
+        $quote->quote_status_id = QuoteStatus::where('text', 'New Lead')->first()->id;
+        $quote->first_name = $parentRecord->first_name;
+        $quote->last_name = $parentRecord->last_name;
+        $quote->email = $parentRecord->email;
+        $quote->mobile_no = $parentRecord->mobile_no;
+        $quote->save();
     }
 }
