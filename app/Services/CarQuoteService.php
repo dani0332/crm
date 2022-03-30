@@ -2,11 +2,14 @@
 
 namespace App\Services;
 
+use App\Enums\QuoteTypeId;
 use App\Models\CarMake;
 use App\Models\CarModel;
 use App\Models\CarQuote;
 use App\Models\CarQuoteRequestDetail;
 use App\Models\InsuranceProvider;
+use App\Models\LeadStatus;
+use App\Models\QuoteStatus;
 use App\Models\User;
 use App\Models\UserTeams;
 use App\Models\VehicleType;
@@ -425,10 +428,6 @@ class CarQuoteService extends BaseService
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'cqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'cqrd.advisor_assigned_by_id')
             ->where('qs.text', '!=', 'Fake')
-            ->where(function ($query) use ($request) {
-                $query->where('cqrd.next_followup_date', '>', date('Y-m-d'));
-                $query->orwhereNull('cqrd.next_followup_date');
-            })
             ->where('cqr.advisor_id', Auth::user()->id);
 
         $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
@@ -822,4 +821,27 @@ class CarQuoteService extends BaseService
         $response = $this->httpService->processRequest($carPlanData, $apiCreds);
         return $response;
     }
+
+    public function getDuplicateEntityByCode($code)
+    {
+        return CarQuote::where('parent_duplicate_quote_id', $code)->first();
+    }
+
+    public function createDuplicate($parentRecord)
+    {
+        $quote = new CarQuote();
+        $quote->parent_duplicate_quote_id = $parentRecord->code;
+        $response = CapiRequestService::getUUID(QuoteTypeId::Car);
+        if($response) {
+            $quote->uuid = $response->uuid;
+            $quote->code = 'CAR-'. $response->uuid;
+        }
+        $quote->quote_status_id = QuoteStatus::where('text', 'New Lead')->first()->id;
+        $quote->first_name = $parentRecord->first_name;
+        $quote->last_name = $parentRecord->last_name;
+        $quote->email = $parentRecord->email;
+        $quote->mobile_no = $parentRecord->mobile_no;
+        $quote->save();
+    }
+    
 }

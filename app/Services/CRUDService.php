@@ -105,6 +105,39 @@ class CRUDService extends BaseService
         return $this->{in_array($lowerCaseModelType, $this->quoteTypes) ? $lowerCaseModelType . 'QuoteService' : $lowerCaseModelType . 'Service'}
             ->getCustomTitleByProperty($propertyName);
     }
+
+    public function getAllowedDuplicateLOB($modelType, $leadCode)
+    {
+        $allowedLeadTypes = ['home', 'health', 'life', 'business', 'travel', 'car'];
+        $allowedLeadTypes = array_filter($allowedLeadTypes, function ($item) use ($modelType) {
+            if ($item != strtolower($modelType)) {
+                return $item;
+            }
+        });
+        foreach ($allowedLeadTypes as $leadType) {
+            $duplicateRecord =  $this->{strtolower($leadType) . 'QuoteService'}->getDuplicateEntityByCode($leadCode);
+            if($duplicateRecord) {
+                $allowedLeadTypes = array_filter($allowedLeadTypes, function ($item) use ($leadType) {
+                    if ($item != $leadType) {
+                        return $item;
+                    }
+                });
+            }
+        }
+        return $allowedLeadTypes;
+    }
+
+    public function createDuplicate(Request $request)
+    {
+        $lob_teams = $request->lob_team;
+        $parentRecord = $this->{strtolower($request->parentType) . 'QuoteService'}->getEntityPlain($request->entityId);
+        if(!empty($lob_teams)) {
+            foreach ($lob_teams as $lob_team) {
+                $this->{strtolower($lob_team) . 'QuoteService'}->createDuplicate($parentRecord);
+            }
+        }
+    }
+
     public function updateQuoteStatus(Request $request)
     {
         $entity = $this->{strtolower($request->modelType) . 'QuoteService'}->getEntityPlain($request->leadId);

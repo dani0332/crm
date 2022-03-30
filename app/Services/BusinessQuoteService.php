@@ -2,8 +2,12 @@
 
 namespace App\Services;
 
+use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Models\BusinessQuote;
 use App\Models\BusinessQuoteRequestDetail;
+use App\Models\LeadStatus;
+use App\Models\QuoteStatus;
 use Illuminate\Http\Request;
 use DB;
 use Config;
@@ -136,10 +140,6 @@ class BusinessQuoteService extends BaseService
             ->leftJoin('business_quote_request_detail as bqrd', 'bqrd.business_quote_request_id', '=', 'bqr.id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'bqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'bqrd.advisor_assigned_by_id')
-            ->where(function ($query) use ($request) {
-                $query->where('bqrd.next_followup_date', '>', date('Y-m-d'));
-                $query->orwhereNull('bqrd.next_followup_date');
-            })
             ->where('bqr.advisor_id', Auth::user()->id)
             ->where('qs.text', '!=', 'Fake');
         if (isset($request->startedAt) && isset($request->endAt) && $request->startedAt != '' && $request->endAt != '') {
@@ -436,5 +436,29 @@ class BusinessQuoteService extends BaseService
     public function fillModelSearchProperties()
     {
         return ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'advisor_id', 'created_at', 'company_name', 'business_type_of_insurance_id', 'next_followup_date'];
+    }
+
+    public function getDuplicateEntityByCode($code)
+    {
+        return BusinessQuote::where('parent_duplicate_quote_id', $code)->first();
+    }
+
+    public function createDuplicate($parentRecord)
+    {
+        $quote = new BusinessQuote();
+        
+        $quote->parent_duplicate_quote_id = $parentRecord->code;
+
+        $response = CapiRequestService::getUUID(QuoteTypeId::Business);
+        if($response) {
+            $quote->uuid = $response->uuid;
+            $quote->code = 'BUS-'. $response->uuid;
+        }
+        $quote->quote_status_id = QuoteStatus::where('text', 'New Lead')->first()->id;
+        $quote->first_name = $parentRecord->first_name;
+        $quote->last_name = $parentRecord->last_name;
+        $quote->email = $parentRecord->email;
+        $quote->mobile_no = $parentRecord->mobile_no;
+        $quote->save();
     }
 }

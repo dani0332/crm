@@ -375,19 +375,19 @@ use App\Enums\quoteTypeCode;
                 });
                 dt.ajax.reload();
             }
-            $(".toggle-btn").on("click", function() {
-                $(".show-visual-cards").addClass("showme");
-                $(".show-container").removeClass("showme");
-                $(".show-container").addClass("hideme");
-                $(this).addClass("active");
-                $(".toggle-btn-2").removeClass("active");
-            });
             $(".toggle-btn-2").on("click", function() {
                 $(".show-visual-cards").addClass("hideme");
                 $(".show-visual-cards").removeClass("showme");
                 $(".show-container").addClass("showme");
                 $(this).addClass("active");
                 $(".toggle-btn").removeClass("active");
+            });
+            $(".toggle-btn").on("click", function() {
+                $(".show-visual-cards").addClass("showme");
+                $(".show-visual-cards").removeClass("hideme");
+                $(".show-container").addClass("hideme");
+                $(this).addClass("active");
+                $(".toggle-btn-2").removeClass("active");
             });
 
         });
@@ -504,19 +504,17 @@ use App\Enums\quoteTypeCode;
                     <div class="clearfix"></div>
                 </div>
                 <div class="x_content">
-                @php $dynamicClass = "showme"; @endphp
                 @if($model->modelType == quoteTypeCode::Travel || $model->modelType == quoteTypeCode::Home || $model->modelType == quoteTypeCode::Health || $model->modelType == quoteTypeCode::Business || $model->modelType == quoteTypeCode::Life)
-                @php $dynamicClass = "hideme"; @endphp
-                <button type="button" class="btn btn-warning btn-sm toggle-btn active float-right change-layout">Cards View</button>
-                <button type="button" class="btn btn-warning btn-sm toggle-btn-2 float-right change-layout">List View</button>
-                <div class="show-visual-cards showme">
+                <button type="button" class="btn btn-warning btn-sm toggle-btn  float-right change-layout">Cards View</button>
+                <button type="button" class="btn btn-warning btn-sm toggle-btn-2 active float-right change-layout">List View</button>
+                <div class="show-visual-cards hideme">
                         <x-leads-visual-card
                             :model="$model"
                             :dropdownSource="$dropdownSource"
                         />
                     </div>
                 @endif
-                    <div class="show-container {{$dynamicClass}}">
+                    <div class="show-container showme">
                     @if (session()->has('message'))
                         <div class="alert alert-danger">{{ session()->get('message') }}</div>
                     @endif

@@ -490,7 +490,10 @@ class ClaimController extends Controller
 
     public function getoverdueleads(Request $request)
     {
-       
+        return DataTables::of([])
+        ->addIndexColumn()
+        ->make(true);
+        
         $allowedTypes = ['car', 'home', 'travel', 'health', 'life', 'travel'];
         if(!in_array(strtolower($request->teamName), $allowedTypes)){
             return DataTables::of([])
