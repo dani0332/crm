@@ -138,11 +138,16 @@ class CRUDService extends BaseService
         }
     }
 
+    public function getLeadAuditHistory($leadType, $leadId)
+    {
+        return $this->{strtolower($leadType) . 'QuoteService'}->getLeadAuditHistory($leadId);
+    }
+
     public function updateQuoteStatus(Request $request)
     {
-        $entity = $this->{strtolower($request->modelType) . 'QuoteService'}->getEntityPlain($request->leadId);
+       
         $quoteDetailEntity = $this->{strtolower($request->modelType) . 'QuoteService'}->getDetailEntity($request->leadId);
-        $entity->quote_status_id = $request->leadStatus;
+       
         if (isset($request->lostReason) && $request->lostReason != '') {
             $quoteDetailEntity->lost_reason_id = $request->lostReason;
         }
@@ -157,14 +162,20 @@ class CRUDService extends BaseService
         }
 
         $quoteDetailEntity->save();
+
+        $entity = $this->{strtolower($request->modelType) . 'QuoteService'}->getEntityPlain($request->leadId);
+        $previousQuoteStatus = $entity->quote_status_id;
+        $entity->quote_status_id = $request->leadStatus;
+        
         $entity->save();
-        QuoteStatusLog::create([
+        QuoteStatusLog::create(array(
             'quote_type_id' => QuoteTypeId::Car,
             'quote_request_id' => $entity->id,
             'current_quote_status_id' => $request->leadStatus,
+            'previous_quote_status_id' => $previousQuoteStatus,
             'created_at' => Carbon::now(),
             'updated_at' => Carbon::now()
-        ]);
+        ));
         return $entity;
     }
 

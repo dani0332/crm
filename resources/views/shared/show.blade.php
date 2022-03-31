@@ -299,6 +299,9 @@
             :carQuotePlanAddons="$carQuotePlanAddons" :carQuotePlanProvider="$record->car_plan_provider_id_text"
             :carQuotePaymentMethod="$record->payment_gateway" />
 
+            <x-lead-history 
+            :audits="$audits" />
+
         <x-car-quote-plans :listQuotePlans="$listQuotePlans" :uuid="$ecomCarInsuranceQuoteUrl.$record->uuid"
             :uuidModal="$record->uuid" :quoteRequestId="$record->id" :quoteIsCommerce="$record->is_ecommerce" />
     @endif
@@ -337,6 +340,8 @@
             /> -->
         <x-travel-quote :listQuotePlans="$listQuotePlans" :uuidModal="$record->uuid" :quoteRequestId="$record->id" />
     @endif
+
+    
 
     @can('auditable')
         <div id="auditable">

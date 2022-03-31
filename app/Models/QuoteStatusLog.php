@@ -10,7 +10,7 @@ class QuoteStatusLog extends Model
 {
     use HasFactory;
     protected $table = 'quote_status_log';
-    protected $fillable = ['quote_type_id', 'quote_request_id', 'current_quote_status_id', 'created_at', 'updated_at'];
+    protected $fillable = ['quote_type_id', 'quote_request_id', 'current_quote_status_id', 'created_at', 'updated_at', 'previous_quote_status_id'];
 
     public function getCreatedAtAttribute($table)
     {
