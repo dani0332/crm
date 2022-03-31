@@ -222,6 +222,9 @@
     </div>
     </div>
     </div>
+    @if (strtolower($model->modelType) == "home")
+        </div>
+    @endif
     @if (strtolower($model->modelType) != 'teams' && strtolower($model->modelType) != 'leadstatus')
         <x-lead-status-update :lead="$record" :modeltype="$model->modelType" :status="$record->quote_status_id"
             :statuses="$leadStatuses" :lostreasons="$lostReasons" :selectedlostreason="$selectedLostReasonId" />
@@ -332,10 +335,13 @@
             :travelQuotePaymentStatus="$record->payment_status_id_text"
             :travelQuotePlanName="$record->plan_id_text"
         />
-        <!-- <x-travel-quote-members-detail
-                :members="$members_detail"
-            /> -->
-        <x-travel-quote :listQuotePlans="$listQuotePlans" :uuidModal="$record->uuid" :quoteRequestId="$record->id" />
+        <x-travel-quote-members-detail
+            :members="$members_detail"
+        />
+        <x-travel-quote
+            :listQuotePlans="$listQuotePlans"
+            :uuidModal="$record->uuid"
+            :quoteRequestId="$record->id" />
     @endif
 
     @can('auditable')
