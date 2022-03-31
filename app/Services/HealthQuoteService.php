@@ -3,10 +3,13 @@
 namespace App\Services;
 
 use App\Enums\LeadSourceTypes;
+use App\Enums\QuoteTypeId;
 use App\Models\BusinessInsuranceType;
 use App\Models\BusinessQuote;
 use App\Models\HealthQuote;
 use App\Models\HealthQuoteRequestDetail;
+use App\Models\LeadStatus;
+use App\Models\QuoteStatus;
 use Illuminate\Http\Request;
 use DB;
 use Auth;
@@ -54,6 +57,8 @@ class HealthQuoteService extends BaseService
             'hqrd.next_followup_date',
             'hqrd.transapp_code',
             'hqrd.notes',
+            'hqr.lead_type_id',
+            'lt.TEXT AS lead_type_id_text',
             'ls.text as lost_reason',
         )
             ->leftJoin('marital_status as ms', 'ms.id', '=', 'hqr.marital_status_id')
@@ -63,6 +68,7 @@ class HealthQuoteService extends BaseService
             ->leftJoin('nationality as n', 'n.id', '=', 'hqr.nationality_id')
             ->leftJoin('emirates as e', 'e.id', '=', 'hqr.emirate_of_your_visa_id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'hqr.quote_status_id')
+            ->leftJoin('health_lead_type as lt', 'lt.id', '=', 'hqr.lead_type_id')
             ->leftJoin('users as u', 'u.id', '=', 'hqr.advisor_id');
     }
 
@@ -117,6 +123,7 @@ class HealthQuoteService extends BaseService
             "source" => $sourceName,
             "maritalStatusId" => $request->marital_status_id,
             "premium" => $request->premium,
+            "leadTypeId" => $request->lead_type_id,
             "referenceUrl" => $appUrl,
             "dob" => $request->dob,
             "is_ebp_renewal" => $request->is_ebp_renewal == 'on' ? true : false,
@@ -402,6 +409,7 @@ class HealthQuoteService extends BaseService
             "created_at" => "input|date|title|range",
             "updated_at" => "input|date|title",
             "dob" => "input|date|title|required",
+            "health_team_type" => "|static|default:All|All,RM-NB,RM-Speed,EBP,No-Type",
             "next_followup_date" => "input|date|title|range",
             "transapp_code" => "readonly|none",
             "lost_reason" => "input|text",
@@ -413,7 +421,7 @@ class HealthQuoteService extends BaseService
             "marital_status_id" => "select|title|required",
             "cover_for_id" => "select|title|required",
             "nationality_id" => "select|title|required",
-            "health_team_type" => "|static|default:All|All,RM-NB,RM-Speed,EBP,No-Type",
+            "lead_type_id" => "select|title|required",
             "has_dental" => "input|checkbox|title",
             "has_worldwide_cover" => "input|checkbox|title",
             "has_home" => "input|checkbox|title",
@@ -455,6 +463,9 @@ class HealthQuoteService extends BaseService
             case 'advisor_id':
                 $title = "Assigned To";
                 break;
+            case 'lead_type_id':
+                $title = "Lead Type";
+                break;
             case 'source':
                 $title = "Source";
                 break;
@@ -491,7 +502,7 @@ class HealthQuoteService extends BaseService
             "create" => "created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,premium,source,transapp_code",
             "list" => "email,cover_for_id,has_worldwide_cover,has_home,details,preference,mobile_no,dob,marital_status_id,nationality_id,has_dental,emirate_of_your_visa_id,is_ebp_renewal",
             "update" => "created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,source,transapp_code",
-            "show" => "id,health_team_type,next_followup_date",
+            "show" => "id,next_followup_date",
         ];
     }
 
@@ -528,5 +539,27 @@ class HealthQuoteService extends BaseService
         $alphabets = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
         $nanoId = $client->formattedId($alphabets, 8);
         return $nanoId;
+    }
+
+    public function getDuplicateEntityByCode($code)
+    {
+        return HealthQuote::where('parent_duplicate_quote_id', $code)->first();
+    }
+
+    public function createDuplicate($parentRecord)
+    {
+        $quote = new HealthQuote();
+        $quote->parent_duplicate_quote_id = $parentRecord->code;
+        $response = CapiRequestService::getUUID(QuoteTypeId::Health);
+        if($response) {
+            $quote->uuid = $response->uuid;
+            $quote->code = 'HEA-'. $response->uuid;
+        }
+        $quote->quote_status_id = QuoteStatus::where('text', 'New Lead')->first()->id;
+        $quote->first_name = $parentRecord->first_name;
+        $quote->last_name = $parentRecord->last_name;
+        $quote->email = $parentRecord->email;
+        $quote->mobile_no = $parentRecord->mobile_no;
+        $quote->save();
     }
 }

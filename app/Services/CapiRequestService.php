@@ -47,4 +47,11 @@ class CapiRequestService
             return "API failed";
         }
     }
+
+    public static function getUUID($type)
+    {
+        $response = CapiRequestService::sendCAPIRequest('/api/v1-get-uuid', array("quoteTypeId" => $type));
+        if($response) return $response;
+        else return false;
+    }
 }

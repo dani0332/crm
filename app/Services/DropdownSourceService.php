@@ -126,6 +126,9 @@ class DropdownSourceService extends BaseService
             case 'sum_insured_currency_id':
                 $data = CurrencyType::select('id', 'text')->get();
                 break;
+            case 'lead_type_id':
+                $data = DB::table('health_lead_type')->select('id', 'text')->get();
+                break;
             case 'purpose_of_insurance_id':
                 $data = LifePurposeOfInsurance::select('id', 'text')->get();
                 break;
@@ -219,6 +222,9 @@ class DropdownSourceService extends BaseService
                 break;
             case 'currently_located_in_id':
                 $data = DB::table("currently_located_in")->select('id','text')->where("is_active", true)->orderBy('sort_order', 'asc')->get();
+                break;
+            case 'destination_id':
+                $data = DB::table("country")->select('id','text')->where("is_active", true)->orderBy('sort_order', 'asc')->get();
                 break;
             default:
                 break;
