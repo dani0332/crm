@@ -232,12 +232,14 @@
                 $(".show-visual-cards").addClass("hideme");
                 $(".show-visual-cards").removeClass("showme");
                 $(".show-container").addClass("showme");
+                $(".show-container").removeClass("hideme");
                 $(this).addClass("active");
                 $(".toggle-btn").removeClass("active");
             });
             $(".toggle-btn").on("click", function() {
                 $(".show-visual-cards").addClass("showme");
                 $(".show-visual-cards").removeClass("hideme");
+                $(".show-container").removeClass("showme");
                 $(".show-container").addClass("hideme");
                 $(this).addClass("active");
                 $(".toggle-btn-2").removeClass("active");
@@ -261,7 +263,7 @@
                 }
             });
             $.ajax({
-                    url: ENDPOINT + "/quotes/records?page=" + page +"&modelType=" + "Business" + "&status=" + status,
+                    url: ENDPOINT + "/quotes/records?page=" + page +"&modelType=" + "Business" + "&status=" + status+ "&myleads=myleads",
                     datatype: "html",
                     type: "post",
                     beforeSend: function () {
@@ -295,7 +297,7 @@
                 }
             });
             $.ajax({
-                    url: ENDPOINT + "/quotes/records/search?term=" + term + "&status=" + status +"&modelType=" + "Business",
+                    url: ENDPOINT + "/quotes/records/search?term=" + term + "&status=" + status +"&modelType=" + "Business"+ "&myleads=myleads",
                     datatype: "html",
                     type: "post",
                     beforeSend: function () {

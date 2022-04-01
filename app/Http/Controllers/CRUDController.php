@@ -573,7 +573,7 @@ class CRUDController extends Controller
 
         if($request->has('modelType') && $request->modelType && $request->term && $request->status)
         {
-            $results = getDataAgainstSearchTerm($request->modelType, $request->term, $request->status);
+            $results = getDataAgainstSearchTerm($request->modelType, $request);
 
             $html = '';
             if($results) {
