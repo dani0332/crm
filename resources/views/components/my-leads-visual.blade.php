@@ -5,7 +5,7 @@
     <h2>
     {{ $item->text ?? $item->name }}
     @php 
-    $result = getDataAgainstStatus($model, $item->id);
+    $result = getDataAgainstStatus($model, $item->id, "myleads");
     @endphp
     
     </h2>
@@ -40,7 +40,7 @@
                 </div>
             </li> 
         @endforeach
-        @if($result["total_leads"])
+        @if($result["total_leads"] && $result["total_leads"] > 10)
             <a href="#" onclick="(loadMore({{$item->id}}))" class="quotePlanModalPopup load_more_btn" id="load_more_btn{{$item->id}}">Load More</a></span>
         @endif
         @endif
