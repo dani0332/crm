@@ -1491,6 +1491,13 @@ $(document).ready(function () {
     // TM Leads: Select tm leads id and store in hidden field
     $("#tmLeadsAssignToUser").click(function () {
         var tmLeadIDs = [];
+        if($('#healthTeamTypeAssignDiv').length > 0){
+            if($('#assign_team').val() == "") {
+                $("#teamErrorSpan").show().fadeOut(5000);
+                return false;
+            }
+        }
+        
         if (!$('#checkAllTmLeads').is(":checked")) {
             $.each($("input[name='tmLeadID']:checked"), function () {
                 tmLeadIDs.push($(this).val());

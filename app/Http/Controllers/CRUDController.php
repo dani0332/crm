@@ -431,6 +431,7 @@ class CRUDController extends Controller
         $assignedToUserIdNew = $request->assigned_to_id_new;
         $leadsIds = $request->selectTmLeadId;
         $leadsIds = array_map('intval', explode(',', $leadsIds));
+        
         if ($assignedToUserIdNew == '' || $assignedToUserIdNew == null) {
             return redirect()->back()->with('message', 'Please select user to assign leads');
         }
@@ -449,6 +450,9 @@ class CRUDController extends Controller
                 $advisorOE = CarQuoteAdvisorToOE::where('advisor_id', $userId)->first();
                 if (!empty($advisorOE) && strtolower($request->modelType) == 'car') {
                     $entity->oe_id = $advisorOE->oe_id;
+                }
+                if(strtolower($request->modelType) == 'health'){
+                    $entity->health_team_type = $request->assign_team;
                 }
                 $entity->save();
                 $this->{strtolower($request->modelType) . 'QuoteService'}->updateChildRecord($tmLeadsId);
