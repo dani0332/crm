@@ -1,0 +1,28 @@
+trigger:
+- develop
+
+pool:
+  vmImage: 'Ubuntu 20.04'
+
+variables:
+  - group: stg
+  - name: imageName
+    value: 'imcrmstg:$(Build.BuildId)'
+  
+steps:
+
+- script: docker build --build-arg IMCRM_TOKEN=$(IMCRM_STG_TOKEN) --build-arg NGINX_FILE=$(STG_NGINX) -f Dockerfile -t $(acrName).azurecr.io/$(imageName) .
+  displayName: 'docker build'
+- script: docker login -u $(dockerId) -p $(dockerPassword) $(acrName).azurecr.io
+  displayName: 'docker login'
+- script: docker push $(acrName).azurecr.io/$(imageName)
+  displayName: 'docker push'
+
+- task: PublishBuildArtifacts@1
+  displayName: 'publish yaml folder as an artifact'
+#  inputs:
+#    artifactName: 'yaml'
+#    pathToPublish: 'manifest.yml'
+
+- publish: '$(System.DefaultWorkingDirectory)'
+  artifact: imcrmstg
