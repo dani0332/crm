@@ -548,7 +548,7 @@ class CRUDController extends Controller
                     <div class="lead-block rotten">
                         <div class="lead-title">'.$result->code.'</div>
                         <span class="float-right">
-                        <a target="_blank" href="'.strtolower($request->modelType).'/'.$result->uuid.'"><i class="fa fa-pencil" aria-hidden="true"></i></a>
+                        <a target="_blank" href="/quotes/'.strtolower($request->modelType).'/'.$result->uuid.'"><i class="fa fa-pencil" aria-hidden="true"></i></a>
                         </span>
                         <div class="pad-5"></div>
                         <div class="lead-person"><i class="fa fa-user font-1" aria-hidden="true"></i>
@@ -573,7 +573,7 @@ class CRUDController extends Controller
 
         if($request->has('modelType') && $request->modelType && $request->term && $request->status)
         {
-            $results = getDataAgainstSearchTerm($request->modelType, $request->term, $request->status);
+            $results = getDataAgainstSearchTerm($request->modelType, $request);
 
             $html = '';
             if($results) {
@@ -582,7 +582,7 @@ class CRUDController extends Controller
                     <div class="lead-block rotten">
                         <div class="lead-title">'.$result->code.'</div>
                         <span class="float-right">
-                        <a target="_blank" href="'.strtolower($request->modelType).'/'.$result->uuid.'"><i class="fa fa-pencil" aria-hidden="true"></i></a>
+                        <a target="_blank" href="/quotes/'.strtolower($request->modelType).'/'.$result->uuid.'"><i class="fa fa-pencil" aria-hidden="true"></i></a>
                         </span>
                         <div class="pad-5"></div>
                         <div class="lead-person"><i class="fa fa-user font-1" aria-hidden="true"></i>
