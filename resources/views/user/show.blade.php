@@ -32,6 +32,18 @@
                         </div>
                     </div>
                     <div class="item form-group">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Mobile"><b>Mobile Number</b></label>
+                        <div class="col-md-6 col-sm-6">
+                            <p class="label-align-center">{{ $user->mobile_no }}</p>
+                        </div>
+                    </div>
+                    <div class="item form-group">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Landline"><b>Landline Number</b></label>
+                        <div class="col-md-6 col-sm-6">
+                            <p class="label-align-center">{{ $user->landline_no }}</p>
+                        </div>
+                    </div>
+                    <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="Roles"><b>Roles</b></label>
                         <div class="col-md-6 col-sm-6">
                             @foreach($user->usersroles as $userrole)
