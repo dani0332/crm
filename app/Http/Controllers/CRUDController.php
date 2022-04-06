@@ -84,6 +84,11 @@ class CRUDController extends Controller
         if ($isRenewalUser && strtolower($this->genericModel->modelType) == strtolower(quoteTypeCode::Car)) {
             $this->crudService->fillRenewalData($this->genericModel);
             $renewalAdvisors = $this->crudService->getRenewalAdvisorsByModelType($this->genericModel->modelType);
+        }else if(Auth::user()->isRenewalAdvisor())
+        {
+            $isRenewalUser = Auth::user()->isRenewalAdvisor();
+            $this->crudService->fillRenewalData($this->genericModel);
+            $renewalAdvisors = $this->crudService->getRenewalAdvisorsByModelType($this->genericModel->modelType); 
         }
 
         // Getting the data for grid based on the model type

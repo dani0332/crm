@@ -96,13 +96,15 @@ use App\Enums\quoteTypeCode;
             // Getting the skip properties based on loggedin user role
             if(isRenewalUser && model.modelType.toLowerCase() == 'car'){
                 skipPropertiesArray = model.renewalSkipProperties['list'].split(',');
+            }else if(isRenewalUser && model.modelType.toLowerCase() != 'car'){
+                skipPropertiesArray = model.renewalSkipProperties['list'].split(',');
             } else {
                 skipPropertiesArray = model.skipProperties['list'].split(',');
             }
-
             var modelPropertiesArray = convertObjectToArray(model.properties);
             $('#modelType').val(model.modelType);
             var dataTableColumns = [];
+
             for (var i = 0; i < modelPropertiesArray.length; i++) {
                 if (!skipPropertiesArray.includes(modelPropertiesArray[i].name)) {
                     // checking if the model type is either leadstatus or teams because it needs to be handled differently
@@ -205,7 +207,10 @@ use App\Enums\quoteTypeCode;
                     break;
                     break;
                 case 'health':
-                    if(isManagerOrDeputy == '1' || isAdmin)
+                    if(isRenewalUser){
+                        disableSortColumns = [-1,0,1,2,3,4,5,6];
+                    }
+                    else if(isManagerOrDeputy == '1' || isAdmin)
                         disableSortColumns = [-1,1,2,3,4,5,9,10];
                     else
                         disableSortColumns = [-1,0,1,2,3,4,8,9,10];
@@ -234,7 +239,7 @@ use App\Enums\quoteTypeCode;
             }
             // Initializing the datatable
             var vehicleTypeDataTable = $("#dtBasicExample").DataTable({
-                ordering: true,
+                ordering: false,
                 info: true,
                 searching: false,
                 dom: 'rBfrtip',
@@ -527,6 +532,10 @@ use App\Enums\quoteTypeCode;
                         $searchProperties = [];
                         $skipProperties = [];
                         if($isRenewalUser && strtolower($model->modelType) == 'car'){
+                            $searchProperties = $model->renewalSearchProperties;
+                            $skipProperties = $model->renewalSkipProperties;
+                        }
+                        else if($isRenewalUser && strtolower($model->modelType) != 'car'){
                             $searchProperties = $model->renewalSearchProperties;
                             $skipProperties = $model->renewalSkipProperties;
                         }

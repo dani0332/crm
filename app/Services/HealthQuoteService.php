@@ -40,6 +40,7 @@ class HealthQuoteService extends BaseService
             'hqr.health_team_type',
             'hqr.has_home',
             'hqr.premium',
+            'hqr.policy_number',
             'hqr.is_ebp_renewal',
             'hqr.has_worldwide_cover',
             'hqr.marital_status_id',
@@ -140,7 +141,13 @@ class HealthQuoteService extends BaseService
 
     public function getGridData($model, $request)
     {
-        $searchProperties = $model->searchProperties;
+        $searchProperties = [];
+        $isRenewalAdvisor = Auth::user()->isRenewalAdvisor();
+        if ($isRenewalAdvisor) {
+            $searchProperties = $model->renewalSearchProperties;
+        } else {
+            $searchProperties = $model->searchProperties;
+        }
         if ($request->ajax()) {
             if (!isset($request->email) && $request->email == '') {
                 $this->query->where('qs.text', '!=', 'Fake');
@@ -210,7 +217,10 @@ class HealthQuoteService extends BaseService
             }
             return $this->query->orderBy($column, $direction);
         } else {
-            return $this->query->orderBy('hqr.created_at', 'DESC');
+                if (Auth::user()->isRenewalAdvisor()) {
+                    return $this->query->whereNotNull('hqr.previous_quote_id')->latest();
+                }
+                return $this->query->orderBy('hqr.created_at', 'DESC');
         }
     }
 
@@ -414,6 +424,7 @@ class HealthQuoteService extends BaseService
             "transapp_code" => "readonly|none",
             "lost_reason" => "input|text",
             "premium" => "input|number|required",
+            "policy_number" => "input|number|required",
             "preference" => "input|text",
             "details" => "input|text",
             "is_ebp_renewal"  => "input|checkbox|title",
@@ -427,6 +438,17 @@ class HealthQuoteService extends BaseService
             "has_home" => "input|checkbox|title",
             "emirate_of_your_visa_id" => "select|title|required"
         );
+    }
+
+    public function fillRenewalProperties($model)
+    {
+        $model->renewalSearchProperties = ['created_at', 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'policy_number'];
+        $model->renewalSkipProperties = [
+            "create" => "created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,premium,source,transapp_code",
+            "list" => "email,cover_for_id,has_worldwide_cover,has_home,details,preference,mobile_no,dob,marital_status_id,nationality_id,has_dental,emirate_of_your_visa_id,is_ebp_renewal,health_team_type,next_followup_date,lost_reason,source,transapp_code,premium,lead_type_id",
+            "update" => "created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,source,transapp_code",
+            "show" => "id,next_followup_date",
+        ];
     }
 
     public function getCustomTitleByProperty($propertyName)
