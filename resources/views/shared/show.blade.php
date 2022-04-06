@@ -54,6 +54,34 @@
                 </div>
                 @hasanyrole('ADMIN|HEALTH_MANAGER|WCU_ADVISOR|HEALTH_DEPUTY')
                     @if (strtolower($model->modelType) == 'health' && $record->health_team_type != '')
+                    <form method="post" id="healthTeamAssignForm" action="healthTeamAssign"
+                            class="form-horizontal form-label-left" autocomplete="off">
+                            {{ csrf_field() }}
+                            <input type="hidden" value="{{ strtolower($model->modelType) }}" name="modelType">
+                            <input type="hidden" value="{{ $record->id }}" id="entityId" name="entityId">
+                            <div class="col-md-6">
+                                <div class="col-md-4">
+                                    <h2><b>Assign Lead Team</b></h2>
+                                </div>
+                                <div class="col-md-4">
+                                    <select class="form-control" id="assign_team" name="assign_team">
+                                        <option value="">Select Team</option>
+                                        <option @if($record->health_team_type == "EBP") selected="selected" @endif value="EBP">EBP</option>
+                                        <option @if($record->health_team_type == "RM-NB") selected="selected" @endif value="RM-NB">RM-NB</option>
+                                        <option @if($record->health_team_type == "RM-Speed") selected="selected" @endif value="RM-Speed">RM-Speed</option>
+                                        <option @if($record->health_team_type == "GM") selected="selected" @endif value="GM">Group Medical</option>
+                                    </select>
+                                    <label id='teamAssignValidation' style="display: none;color:red;">Please select a team for
+                                        assignment</label>
+                                </div>
+                                <div class="col-md-4">
+                                    <button type="submit" id="assignTeamBtn" name="assignTeamBtn"
+                                        class="btn btn-warning btn-sm">Assign Team</button>
+                                </div>
+                            </div>
+                            <div class="clearfix">
+                            </div>
+                        </form>
                         <form method="post" action="manualLeadAssignAfterTeamAssign" class="form-horizontal form-label-left"
                             autocomplete="off">
                             {{ csrf_field() }}
@@ -83,35 +111,7 @@
                             <div class="clearfix">
                             </div>
                         </form>
-                    @elseif (strtolower($model->modelType) == 'health' && ($record->health_team_type == '' || $record->health_team_type == null))
-                        <form method="post" id="healthTeamAssignForm" action="healthTeamAssign"
-                            class="form-horizontal form-label-left" autocomplete="off">
-                            {{ csrf_field() }}
-                            <input type="hidden" value="{{ strtolower($model->modelType) }}" name="modelType">
-                            <input type="hidden" value="{{ $record->id }}" id="entityId" name="entityId">
-                            <div class="col-md-6">
-                                <div class="col-md-4">
-                                    <h2><b>Assign Lead Team</b></h2>
-                                </div>
-                                <div class="col-md-4">
-                                    <select class="form-control" id="assign_team" name="assign_team">
-                                        <option value="">Select Team</option>
-                                        <option value="EBP">EBP</option>
-                                        <option value="RM-NB">RM-NB</option>
-                                        <option value="RM-Speed">RM-Speed</option>
-                                        <option value="GM">Group Medical</option>
-                                    </select>
-                                    <label id='teamAssignValidation' style="display: none;color:red;">Please select a team for
-                                        assignment</label>
-                                </div>
-                                <div class="col-md-4">
-                                    <button type="submit" id="assignTeamBtn" name="assignTeamBtn"
-                                        class="btn btn-warning btn-sm">Assign Team</button>
-                                </div>
-                            </div>
-                            <div class="clearfix">
-                            </div>
-                        </form>
+                        
                     @endif
                 @endcan
                 @if (strtolower($model->modelType) == 'business' && Auth::user()->hasAnyRole(['ADMIN', 'BUSINESS_MANAGER', 'WCU_ADVISOR', 'BUSINESS_DEPUTY']) && ($record->business_type_of_insurance_id_text = 'Group Medical'))
