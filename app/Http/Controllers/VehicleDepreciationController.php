@@ -84,8 +84,6 @@ class VehicleDepreciationController extends Controller
             'eighth_year' => 'required|numeric|min:1',
             'ninth_year' => 'required|numeric|min:1',
             'tenth_year' => 'required|numeric|min:1',
-            'upper_limit' => 'required|numeric|min:0',
-            'lower_limit' => 'required|numeric|min:0',
         ]);
         if($request->car_make_value || $request->car_model_value || $request->insurance_provider_value)
         {
@@ -109,11 +107,9 @@ class VehicleDepreciationController extends Controller
         $depreciation->eighth_year = $request->eighth_year;
         $depreciation->ninth_year = $request->ninth_year;
         $depreciation->tenth_year = $request->tenth_year;
-        $depreciation->upper_limit = $request->upper_limit;
-        $depreciation->lower_limit = $request->lower_limit;
-        if( $request->car_model_value) $depreciation->car_model_id =  $request->car_model_value;
-        if( $request->car_make_value && !$request->car_model_value) $depreciation->car_make_id =  $request->car_make_value;
-        if( $request->insurance_provider_value && !$request->car_model_value && !$request->car_make_value) $depreciation->insurance_provider_id =  $request->insurance_provider_value;
+        if( $request->car_model_id) $depreciation->car_model_id =  $request->car_model_value;
+        if( $request->car_make_value) $depreciation->car_make_id =  $request->car_make_value;
+        if( $request->insurance_provider_value) $depreciation->insurance_provider_id =  $request->insurance_provider_value;
         $depreciation->save();
 
         if(isset($request->return_to_view)) {
@@ -170,8 +166,6 @@ class VehicleDepreciationController extends Controller
             'eighth_year' => 'required|numeric|min:1',
             'ninth_year' => 'required|numeric|min:1',
             'tenth_year' => 'required|numeric|min:1',
-            'upper_limit' => 'required|numeric|min:0',
-            'lower_limit' => 'required|numeric|min:0',
         ]);
         $vehicledepreciation->first_year = $request->first_year;
         $vehicledepreciation->second_year = $request->second_year;
@@ -183,12 +177,10 @@ class VehicleDepreciationController extends Controller
         $vehicledepreciation->eighth_year = $request->eighth_year;
         $vehicledepreciation->ninth_year = $request->ninth_year;
         $vehicledepreciation->tenth_year = $request->tenth_year;
-        $vehicledepreciation->upper_limit = $request->upper_limit;
-        $vehicledepreciation->lower_limit = $request->lower_limit;
 
-        if( $request->car_model_value) $vehicledepreciation->car_model_id =  $request->car_model_value;
-        if( $request->car_make_value && !$request->car_model_value) $vehicledepreciation->car_make_id =  $request->car_make_value;
-        if( $request->insurance_provider_value && !$request->car_model_value && !$request->car_make_value) $vehicledepreciation->insurance_provider_id =  $request->insurance_provider_value;
+        if( $request->car_model_id) $vehicledepreciation->car_model_id =  $request->car_model_value;
+        if( $request->car_make_value) $vehicledepreciation->car_make_id =  $request->car_make_value;
+        if( $request->insurance_provider_value) $vehicledepreciation->insurance_provider_id =  $request->insurance_provider_value;
         
         $vehicledepreciation->save();
         if(isset($request->return_to_view)) {

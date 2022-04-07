@@ -8,10 +8,10 @@ use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 use Config;
 
-class VehicleDepreciation extends Model implements AuditableContract
+class VehicleValue extends Model implements AuditableContract
 {
     use HasFactory, Auditable;
-    protected $table = 'vehicle_depreciation';
+    protected $table = 'vehicle_value';
 
     public function carmake()
     {

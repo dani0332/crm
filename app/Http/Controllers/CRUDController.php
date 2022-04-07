@@ -24,6 +24,7 @@ use BenSampo\Enum\Rules\EnumValue;
 use DataTables;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
+use Illuminate\Support\Facades\Log;
 use Config;
 use DB;
 
@@ -318,7 +319,9 @@ class CRUDController extends Controller
         if ($modelType == 'Home') {
             $validateArray = $this->homeQuoteService->getValidationArray($modelPropertiesList, $request, $modelSkipPropertiesList);
         } else {
+            Log::channel('daily')->info("update quote with id " . $id. " and modelproperties " . json_encode($modelPropertiesList));
             foreach ($modelPropertiesList as $property => $value) {
+                
                 if (strpos($value, 'required') && $property != 'id' && $property != 'code' && $property != 'email' && $property != 'mobile_no' && !strpos($modelSkipPropertiesList, $property)) {
                     $validateArray[$property] = 'required';
                 }
