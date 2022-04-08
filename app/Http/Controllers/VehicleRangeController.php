@@ -61,6 +61,7 @@ class VehicleRangeController extends Controller
         $this->validate($request,[
             'lower_limit' => 'required|numeric|min:0',
             'upper_limit' => 'required|numeric|min:0',
+            'insurance_provider_value' => 'required',
         ]);
         if($request->car_make_value || $request->car_model_value || $request->insurance_provider_value)
         {
@@ -127,6 +128,7 @@ class VehicleRangeController extends Controller
         $this->validate($request,[
             'lower_limit' => 'required|numeric|min:0',
             'upper_limit' => 'required|numeric|min:0',
+            'insurance_provider_value' => 'required',
         ]);
         $vehiclerange->lower_limit = $request->lower_limit;
         $vehiclerange->upper_limit = $request->upper_limit;

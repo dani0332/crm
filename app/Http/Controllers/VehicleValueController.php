@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use DataTables;
 use App\Models\CarMake;
 use App\Models\CarModel;
+use App\Models\CarModelDetail;
 use App\Models\InsuranceProvider;
 use App\Models\VehicleValue;
 use Illuminate\Http\Request;
@@ -25,7 +26,7 @@ class VehicleValueController extends Controller
             ->leftJoin('insurance_provider as ip', 'ip.id', '=', 'vehicle_value.insurance_provider_id')
             ->leftjoin('car_make','vehicle_value.car_make_id','car_make.id')
             ->leftjoin('car_model','vehicle_value.car_model_id','car_model.id')
-            ->leftjoin('car_model_detail','vehicle_value.car_model_detail_id','car_model.id')
+            ->leftjoin('car_model_detail','vehicle_value.car_model_detail_id','car_model_detail.id')
             ->orderBy('created_at','desc');
             if(isset($request->carmake) && !empty($request->carmake))
                 $data->where('car_make_id', $request->carmake);
@@ -35,7 +36,7 @@ class VehicleValueController extends Controller
                     ->addIndexColumn()
                     ->make(true);
         }
-        return view('VehicleValue.view');
+        return view('vehiclevalue.view');
     }
 
     /**
@@ -48,7 +49,7 @@ class VehicleValueController extends Controller
         $carmakes = CarMake::where('is_active', '=', 1)->select('id', 'text', 'code')->orderBy('sort_order', 'asc')->get();
         $carmodels = CarModel::where('is_active', '=', 1)->select('id', 'text')->orderBy('sort_order', 'asc')->get();
         $insuranceProviders = InsuranceProvider::where('is_active', '=', 1)->select('id', 'text')->orderBy('sort_order', 'asc')->get();
-        return view('VehicleValue.add',compact('carmakes', 'carmodels', 'insuranceProviders'));
+        return view('vehiclevalue.add',compact('carmakes', 'carmodels', 'insuranceProviders'));
     }
 
     /**
@@ -60,30 +61,32 @@ class VehicleValueController extends Controller
     public function store(Request $request)
     {
         $this->validate($request,[
-            'lower_limit' => 'required|numeric|min:0',
-            'upper_limit' => 'required|numeric|min:0',
+            'current_value' => 'required|numeric|min:1',
+            'insurance_provider_value' => 'required',
+            'car_model_value' => 'required',
+            'car_make_value' => 'required',
+            'car_trim_value' => 'required',
         ]);
-        if($request->car_make_value || $request->car_model_value || $request->insurance_provider_value)
+        
+        $existingValue = VehicleValue::where('car_make_id', $request->car_make_value)
+                                    ->where('car_model_id', $request->car_model_value)
+                                    ->where('car_model_detail_id', $request->car_trim_value)
+                                    ->where('insurance_provider_id', $request->insurance_provider_value)
+                                    ->first();
+        if($existingValue)
         {
-            $existingValue = VehicleValue::where('car_make_id', $request->car_make_value)
-                                                        ->where('car_model_id', $request->car_model_value)
-                                                        ->where('insurance_provider_id', $request->insurance_provider_value)
-                                                        ->first();
-            if($existingValue)
-            {
-                return redirect()->back()->with('message', 'Vechile Value with same Make, Model, Insurer already exists.')->withInput($request->input());
-            }
+            return redirect()->back()->with('message', 'Vechile Value with same Make, Model, Insurer already exists.')->withInput($request->input());
         }
         $range = new VehicleValue();
-        $range->lower_limit = $request->lower_limit;
-        $range->upper_limit = $request->upper_limit;
-        if( $request->car_model_id) $range->car_model_id =  $request->car_model_value;
-        if( $request->car_make_value) $range->car_make_id =   $request->car_make_value;
-        if( $request->insurance_provider_value) $range->insurance_provider_id =  $request->insurance_provider_value;
+        $range->current_value = $request->current_value;
+        $range->car_model_id =  $request->car_model_value;
+        $range->car_make_id =   $request->car_make_value;
+        $range->car_model_detail_id =   $request->car_trim_value;
+        $range->insurance_provider_id =  $request->insurance_provider_value;
         $range->save();
 
         if(isset($request->return_to_view)) {
-            return redirect("valuation/VehicleValue/".$range->id)->with('success', 'Vechile Value has been stored');
+            return redirect("valuation/vehiclevalue/".$range->id)->with('success', 'Vechile Value has been stored');
         }
         return redirect()->back()->with('success', 'Vechile Value has been stored');
     }
@@ -94,12 +97,13 @@ class VehicleValueController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show(VehicleValue $VehicleValue)
+    public function show(VehicleValue $vehiclevalue)
     {
-        $carMake = CarMake::where('id', '=', $VehicleValue->car_make_id)->select('id', 'text')->first();
-        $carModel = CarModel::where('id', '=', $VehicleValue->car_model_id)->select('id', 'text')->first();
-        $insuranceProvider = InsuranceProvider::where('id', '=', $VehicleValue->insurance_provider_id)->first();
-        return view('VehicleValue.show',compact('VehicleValue', 'carMake', 'carModel', 'insuranceProvider'));
+        $carMake = CarMake::where('id', '=', $vehiclevalue->car_make_id)->select('id', 'text')->first();
+        $carModel = CarModel::where('id', '=', $vehiclevalue->car_model_id)->select('id', 'text')->first();
+        $carModelDetail = CarModelDetail::where('id', '=', $vehiclevalue->car_model_detail_id)->select('id', 'text')->first();
+        $insuranceProvider = InsuranceProvider::where('id', '=', $vehiclevalue->insurance_provider_id)->first();
+        return view('vehiclevalue.show',compact('vehiclevalue', 'carMake', 'carModel', 'carModelDetail', 'insuranceProvider'));
     }
 
     /**
@@ -108,12 +112,17 @@ class VehicleValueController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function edit(VehicleValue $VehicleValue)
+    public function edit(Request $request, VehicleValue $vehiclevalue)
     {
         $carMakes = CarMake::where('is_active', '=', 1)->select('id', 'text', 'code')->orderBy('sort_order', 'asc')->get();
-        $carModels = CarModel::where('is_active', '=', 1)->select('id', 'text')->orderBy('sort_order', 'asc')->get();
+        $selectedCarMake = CarMake::where('id', '=', $vehiclevalue->car_make_id)->select('id', 'text', 'code')->first();
+        
+        $carModels = CarModel::where('car_make_code', '=', $selectedCarMake->code)->where('is_active', '=', 1)->select('id', 'text')->orderBy('sort_order', 'asc')->get();
+
+        $carModelDetails = CarModelDetail::where('car_model_id', '=', $vehiclevalue->car_model_id)->select('id', 'text')->get();
         $insuranceProviders = InsuranceProvider::where('is_active', '=', 1)->select('id', 'text')->orderBy('sort_order', 'asc')->get();
-        return view('VehicleValue.edit',compact('VehicleValue','carMakes','carModels', 'insuranceProviders'));
+
+        return view('vehiclevalue.edit',compact('vehiclevalue','carMakes','carModels', 'carModelDetails', 'insuranceProviders'));
     }
 
     /**
@@ -126,19 +135,20 @@ class VehicleValueController extends Controller
     public function update(Request $request, VehicleValue $VehicleValue)
     {
         $this->validate($request,[
-            'lower_limit' => 'required|numeric|min:0',
-            'upper_limit' => 'required|numeric|min:0',
+            'current_value' => 'required|numeric|min:1',
+            'insurance_provider_value' => 'required',
+            'car_model_value' => 'required',
+            'car_make_value' => 'required',
+            'car_trim_value' => 'required',
         ]);
-        $VehicleValue->lower_limit = $request->lower_limit;
-        $VehicleValue->upper_limit = $request->upper_limit;
-       
-        if( $request->car_model_id) $VehicleValue->car_model_id =  $request->car_model_value;
-        if( $request->car_make_value) $VehicleValue->car_make_id =  $request->car_make_value;
-        if( $request->insurance_provider_value) $VehicleValue->insurance_provider_id =  $request->insurance_provider_value;
-
+        $VehicleValue->current_value = $request->current_value;
+        $VehicleValue->car_model_id =  $request->car_model_value;
+        $VehicleValue->car_make_id =   $request->car_make_value;
+        $VehicleValue->car_model_detail_id =   $request->car_trim_value;
+        $VehicleValue->insurance_provider_id =  $request->insurance_provider_value;
         $VehicleValue->save();
         if(isset($request->return_to_view)) {
-            return redirect("valuation/VehicleValue/".$VehicleValue->id)->with('success', 'Vehicle Value has been updated');
+            return redirect("valuation/vehiclevalue/".$VehicleValue->id)->with('success', 'Vehicle Value has been updated');
         }
         return redirect()->back()->with('success', 'Vehicle Value has been updated');
     }
@@ -149,9 +159,10 @@ class VehicleValueController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function destroy(VehicleValue $VehicleValue)
+    public function destroy($id, VehicleValue $VehicleValue)
     {
-        $VehicleValue->delete();
-        return redirect()->route('VehicleValue.index')->with('message','Vehicle Value has been deleted');
+        $vehiclevalue = VehicleValue::find($id);
+        $vehiclevalue->delete();
+        return redirect()->route('vehiclevalue.index')->with('message','Vehicle Value has been deleted');
     }
 }

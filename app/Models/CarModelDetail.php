@@ -8,9 +8,10 @@ use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
-class CarModelDetail extends BaseModel implements AuditableContract
+class CarModelDetail extends Model implements AuditableContract
 {
     use HasFactory;
+    use Auditable;
     protected $table = 'car_model_detail';
 
     public function carModel()

@@ -84,6 +84,7 @@ class VehicleDepreciationController extends Controller
             'eighth_year' => 'required|numeric|min:1',
             'ninth_year' => 'required|numeric|min:1',
             'tenth_year' => 'required|numeric|min:1',
+            'insurance_provider_value' => 'required',
         ]);
         if($request->car_make_value || $request->car_model_value || $request->insurance_provider_value)
         {
@@ -166,6 +167,7 @@ class VehicleDepreciationController extends Controller
             'eighth_year' => 'required|numeric|min:1',
             'ninth_year' => 'required|numeric|min:1',
             'tenth_year' => 'required|numeric|min:1',
+            'insurance_provider_value' => 'required',
         ]);
         $vehicledepreciation->first_year = $request->first_year;
         $vehicledepreciation->second_year = $request->second_year;

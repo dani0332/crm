@@ -26,7 +26,8 @@
                         <div class="item form-group">
                             <div class="col">
                                 <div id="car_make">
-                                    <span class="col-form-label col-md-6 col-sm-6">Insurance Provider</span>
+                                    <span class="col-form-label col-md-6 col-sm-6">Insurance Provider<span
+                                        class="required">*</span></span>
                                     <select class="form-control" id='insurance_provider_id'
                                         name='insurance_provider_value'>
                                         <option value=''>Select</option>
@@ -44,7 +45,8 @@
                             </div>
                             <div class="col">
                                 <div id="car_make">
-                                    <span class="col-form-label col-md-6 col-sm-6">Car Make</span>
+                                    <span class="col-form-label col-md-6 col-sm-6">Car Make<span
+                                        class="required">*</span></span>
                                     <select class="form-control" id='car_make_value' name='car_make_value'>
                                         <option value=''>Select</option>
                                         @foreach ($carmakes as $item)
@@ -65,7 +67,8 @@
                             </div>
                             <div class="col">
                                 <div id="car_make">
-                                    <span class="col-form-label col-md-6 col-sm-6">Car Model</span>
+                                    <span class="col-form-label col-md-6 col-sm-6">Car Model<span
+                                        class="required">*</span></span>
                                     <select class="form-control" id='car_model_value' name='car_model_value'>
                                         <option value="">Select</option>
                                         @foreach ($carmodels as $item)
@@ -88,7 +91,8 @@
                         <div class="item form-group">
                             <div class="col">
                                 <div id="car_make">
-                                    <span class="col-form-label col-md-6 col-sm-6">Car Model</span>
+                                    <span class="col-form-label col-md-6 col-sm-6">Car Trim<span
+                                        class="required">*</span></span>
                                     <select class="form-control" id='car_trim_value' name='car_trim_value'>
                                         <option value="">Select Car Trim</option>
                                     </select>
