@@ -194,7 +194,7 @@ class HealthQuoteService extends BaseService
                 if ($column == 7) {
                     $column = "hqr.updated_at";
                 }
-                if ($column == 8) {
+                if ($column == 9) {
                     $column = "hqrd.next_followup_date";
                 }
             } else {
@@ -204,7 +204,7 @@ class HealthQuoteService extends BaseService
                 if ($column == 6) {
                     $column = "hqr.updated_at";
                 }
-                if ($column == 7) {
+                if ($column == 8) {
                     $column = "hqrd.next_followup_date";
                 }
             }
