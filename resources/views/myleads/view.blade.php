@@ -96,6 +96,10 @@
                         data: 'nextFollowupDate',
                         name: 'nextFollowupDate',
                     },
+                    {
+                        data: 'premium',
+                        name: 'premium',
+                    },
                 ],
             });
             var myleadsTable = $(".leadSearch-data-table").DataTable({
@@ -156,6 +160,10 @@
                         data: 'nextFollowupDate',
                         name: 'nextFollowupDate',
                     },
+                    {
+                        data: 'premium',
+                        name: 'premium',
+                    },
                 ],
             });
            
@@ -209,7 +217,7 @@
                     }
                 });
                 $(':input', '#my-leads-form')
-                    .not(':button, :submit, :reset, :hidden')
+                    .not(':button, :submit, :reset, :hidden')was
                     .val('')
                     .prop('checked', false)
                     .prop('selected', false);
@@ -473,6 +481,7 @@
                                         <th>Assigned By</th>
                                         <th>Lead Source</th>
                                         <th>Next FollowUp Date</th>
+                                        <th>Premium</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -496,6 +505,7 @@
                                 <th>Assigned By</th>
                                 <th>Lead Source</th>
                                 <th>Next FollowUp Date</th>
+                                <th>Premium</th>
                             </tr>
                         </thead>
                         <tbody>
