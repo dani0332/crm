@@ -1488,6 +1488,14 @@ $(document).ready(function () {
         }
     });
 
+    $('#assign_team').on('change', function(){
+        if($(this).val() == "GM") {
+            $('#assigned_to_id_new').attr('disabled', true);
+        }else{
+            $('#assigned_to_id_new').attr('disabled', false);
+        }
+    });
+
     // TM Leads: Select tm leads id and store in hidden field
     $("#tmLeadsAssignToUser").click(function () {
         var tmLeadIDs = [];

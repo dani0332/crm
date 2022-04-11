@@ -525,6 +525,7 @@ class LifeQuoteService extends BaseService
         $quote->first_name = $parentRecord->first_name;
         $quote->last_name = $parentRecord->last_name;
         $quote->email = $parentRecord->email;
+        $quote->advisor_id = Auth::user()->id;
         $quote->mobile_no = $parentRecord->mobile_no;
         $quote->save();
     }

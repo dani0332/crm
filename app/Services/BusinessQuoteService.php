@@ -459,6 +459,7 @@ class BusinessQuoteService extends BaseService
         $quote->last_name = $parentRecord->last_name;
         $quote->email = $parentRecord->email;
         $quote->mobile_no = $parentRecord->mobile_no;
+        $quote->advisor_id = Auth::user()->id;
         $quote->save();
     }
 }

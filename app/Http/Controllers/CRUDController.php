@@ -431,29 +431,46 @@ class CRUDController extends Controller
         $assignedToUserIdNew = $request->assigned_to_id_new;
         $leadsIds = $request->selectTmLeadId;
         $leadsIds = array_map('intval', explode(',', $leadsIds));
+        if ($leadsIds == '' || $leadsIds == null) {
+            return redirect()->back()->with('message', 'Please select lead(s) to assign');
+        }
+        if(strtolower($request->modelType) == 'health' && $request->assign_team == 'GM'){
+            foreach ($leadsIds as $tmLeadsId) {
+                $userId = (int)$assignedToUserIdNew;
+                $entity = $this->{strtolower($request->modelType) . 'QuoteService'}->getEntityPlain($tmLeadsId);
+                if($entity){
+                    if($request->assign_team == 'GM'){
+                        $entity->health_team_type = $request->assign_team;
+                    }
+                    $entity->save();
+                    return Redirect::back()->with('success', $request->modelType . ' Team has been Assigned');
+                }
+            }
+        }
         
         if ($assignedToUserIdNew == '' || $assignedToUserIdNew == null) {
             return redirect()->back()->with('message', 'Please select user to assign leads');
         }
-        if ($leadsIds == '' || $leadsIds == null) {
-            return redirect()->back()->with('message', 'Please select lead(s) to assign');
-        }
+        
         foreach ($leadsIds as $tmLeadsId) {
             $userId = (int)$assignedToUserIdNew;
             $entity = $this->{strtolower($request->modelType) . 'QuoteService'}->getEntityPlain($tmLeadsId);
             if ($entity) {
-                if (Auth::user()->hasRole('WCU_ADVISOR')) {
-                    $entity->wcu_id = $userId;
-                } else {
-                    $entity->advisor_id = $userId;
-                }
-                $advisorOE = CarQuoteAdvisorToOE::where('advisor_id', $userId)->first();
-                if (!empty($advisorOE) && strtolower($request->modelType) == 'car') {
-                    $entity->oe_id = $advisorOE->oe_id;
-                }
-                if(strtolower($request->modelType) == 'health'){
+                if(strtolower($request->modelType) == 'health' && $request->assign_team == 'GM'){
                     $entity->health_team_type = $request->assign_team;
                 }
+                else{
+                    $entity->health_team_type = $request->assign_team;
+                    if (Auth::user()->hasRole('WCU_ADVISOR')) {
+                        $entity->wcu_id = $userId;
+                    } else {
+                        $entity->advisor_id = $userId;
+                    }
+                    $advisorOE = CarQuoteAdvisorToOE::where('advisor_id', $userId)->first();
+                    if (!empty($advisorOE) && strtolower($request->modelType) == 'car') {
+                        $entity->oe_id = $advisorOE->oe_id;
+                    }
+                }            
                 $entity->save();
                 $this->{strtolower($request->modelType) . 'QuoteService'}->updateChildRecord($tmLeadsId);
             } else {
