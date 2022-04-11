@@ -485,7 +485,7 @@
                                 </thead>
                                 <tbody>
                                     <tr class="odd">
-                                        <td valign="top" colspan="8" class="dataTables_empty">No data available in table</td>
+                                        <td valign="top" colspan="9" class="dataTables_empty">No data available in table</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -509,7 +509,7 @@
                         </thead>
                         <tbody>
                             <tr class="odd">
-                                <td valign="top" colspan="8" class="dataTables_empty">No data available in table</td>
+                                <td valign="top" colspan="9" class="dataTables_empty">No data available in table</td>
                             </tr>
                         </tbody>
                     </table>
