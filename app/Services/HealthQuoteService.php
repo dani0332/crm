@@ -60,6 +60,10 @@ class HealthQuoteService extends BaseService
             'hqr.lead_type_id',
             'lt.TEXT AS lead_type_id_text',
             'ls.text as lost_reason',
+            'hqr.salary_band_id',
+            'sb.text as salary_band_id_text',
+            'hqr.member_category_id',
+            'mc.text as member_category_id_text'
         )
             ->leftJoin('marital_status as ms', 'ms.id', '=', 'hqr.marital_status_id')
             ->leftJoin('health_quote_request_detail as hqrd', 'hqrd.health_quote_request_id', '=', 'hqr.id')
@@ -69,7 +73,9 @@ class HealthQuoteService extends BaseService
             ->leftJoin('emirates as e', 'e.id', '=', 'hqr.emirate_of_your_visa_id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'hqr.quote_status_id')
             ->leftJoin('health_lead_type as lt', 'lt.id', '=', 'hqr.lead_type_id')
-            ->leftJoin('users as u', 'u.id', '=', 'hqr.advisor_id');
+            ->leftJoin('users as u', 'u.id', '=', 'hqr.advisor_id')
+            ->leftJoin('salary_band as sb', 'sb.id', '=', 'hqr.salary_band_id')
+            ->leftJoin('member_category as mc', 'mc.id', '=', 'hqr.member_category_id');
     }
 
     public function getEntity($id)
@@ -133,6 +139,8 @@ class HealthQuoteService extends BaseService
             "hasWorldwideCover" => $request->has_worldwide_cover == 'on' ?  true : false,
             "hasHome" => $request->has_home == 'on' ? true : false,
             "emirateOfYourVisaId" => $request->emirate_of_your_visa_id,
+            "salaryBandId" => $request->salary_band_id,
+            "memberCategoryId" => $request->member_category_id
         );
         if (!Auth::user()->hasRole("ADMIN")) $dataArr['advisorId'] = Auth::user()->id;
         return CapiRequestService::sendCAPIRequest('/api/v1-save-health-quote', $dataArr);
@@ -263,6 +271,8 @@ class HealthQuoteService extends BaseService
         $healthQuote->has_home = $request->has_home == 'on' ? true : false;
         $healthQuote->emirate_of_your_visa_id = $request->emirate_of_your_visa_id;
         $healthQuote->premium = $request->premium;
+        $healthQuote->salary_band_id = $request->salary_band_id;
+        $healthQuote->member_category_id = $request->member_category_id;
         $healthQuote->save();
 
         if (isset($request->return_to_view))
@@ -425,7 +435,9 @@ class HealthQuoteService extends BaseService
             "has_dental" => "input|checkbox|title",
             "has_worldwide_cover" => "input|checkbox|title",
             "has_home" => "input|checkbox|title",
-            "emirate_of_your_visa_id" => "select|title|required"
+            "emirate_of_your_visa_id" => "select|title|required",
+            "salary_band_id" => "select|title|required",
+            "member_category_id" => "select|title|required"
         );
     }
 
@@ -490,6 +502,12 @@ class HealthQuoteService extends BaseService
             case 'next_followup_date':
                 $title = "Next Followup Date";
                 break;
+            case 'salary_band_id':
+                $title = "Salary Band";
+                break;
+            case 'member_category_id':
+                $title = "Member Category";
+                break;
             default:
                 break;
         }
@@ -500,7 +518,7 @@ class HealthQuoteService extends BaseService
     {
         return [
             "create" => "created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,premium,source,transapp_code",
-            "list" => "email,cover_for_id,has_worldwide_cover,has_home,details,preference,mobile_no,dob,marital_status_id,nationality_id,has_dental,emirate_of_your_visa_id,is_ebp_renewal",
+            "list" => "email,cover_for_id,has_worldwide_cover,has_home,details,preference,mobile_no,dob,marital_status_id,nationality_id,has_dental,emirate_of_your_visa_id,is_ebp_renewal,salary_band_id,member_category_id",
             "update" => "created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,source,transapp_code",
             "show" => "id,next_followup_date",
         ];

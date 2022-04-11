@@ -395,10 +395,10 @@ class CRUDController extends Controller
 
         if (gettype($quotePlans) != 'string') {
             $listQuotePlans = $quotePlans->quotes->plans;
-            $listQuotePlansMembers = $quotePlans->quotes->members;
             foreach ($listQuotePlans as $listQuotePlan) { // Main
 
                 if ($listQuotePlan->id == $planId) {
+                    $listQuotePlansMembers = $listQuotePlan->memberPremiumBreakdown;
                     $listQuotePlanName = $listQuotePlan->name;
                     $providerCode = $listQuotePlan->providerCode;
                     $providerName = $listQuotePlan->providerName;
