@@ -118,6 +118,24 @@
                         </div>
                     </div>
                     <div class="item form-group">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="mobile_no">Mobile Number </label>
+                        <div class="col-md-6 col-sm-6 ">
+                            <input type="text" id="mobile_no" name="mobile_no" value="{{ $user->mobile_no }}" class="form-control" pattern="^(?:\+971|00971|0)(?!2)((?:2|3|4|5|6|7|9|50|51|52|55|56)[0-9]{7,})$">
+                            @if ($errors->has('mobile_no'))
+                                <span class="text-danger">{{ $errors->first('mobile_no') }}</span>
+                            @endif
+                        </div>
+                    </div>
+                    <div class="item form-group">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="landline_no">Landline Number </label>
+                        <div class="col-md-6 col-sm-6 ">
+                            <input type="text" id="landline_no" name="landline_no" value="{{ $user->landline_no }}" class="form-control" pattern="^(?:\+971|00971|0)((?:2|3|4|5|6|7|9|50|51|52|55|56)[0-9]{7,})$">
+                            @if ($errors->has('landline_no'))
+                                <span class="text-danger">{{ $errors->first('landline_no') }}</span>
+                            @endif
+                        </div>
+                    </div>
+                    <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="password">Password</label>
                         <div class="col-md-6 col-sm-6 ">
                             <input type="password" id="password" name="password" value="{{ $user->password }}" class="form-control">

@@ -45,13 +45,17 @@ class ProcessSIBCustomerMail implements ShouldQueue
             $updateCustomer->is_we_sent = true;
             $updateCustomer->save();
 
-            $code = substr($WEGenerateUrlResponse, strpos($WEGenerateUrlResponse, "signup/") + 7);
-            $newMyAlFredUser = new MyAlFredUser;
-            $newMyAlFredUser->signup_url = $WEGenerateUrlResponse;
-            $newMyAlFredUser->customer_id = $updateCustomer->id;
-            $newMyAlFredUser->code = $code;
-            $newMyAlFredUser->source = "CORPORATE";
-            $newMyAlFredUser->save();
+            $existingCustomer = MyAlFredUser::where('customer_id', '=', $updateCustomer->id)->get();
+
+            if($existingCustomer->isEmpty()) {
+                $code = substr($WEGenerateUrlResponse, strpos($WEGenerateUrlResponse, "signup/") + 7);
+                $newMyAlFredUser = new MyAlFredUser;
+                $newMyAlFredUser->signup_url = $WEGenerateUrlResponse;
+                $newMyAlFredUser->customer_id = $updateCustomer->id;
+                $newMyAlFredUser->code = $code;
+                $newMyAlFredUser->source = "CORPORATE";
+                $newMyAlFredUser->save();
+            }
         }
     }
 }

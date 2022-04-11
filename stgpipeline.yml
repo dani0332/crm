@@ -1,17 +1,17 @@
 trigger:
-- none 
+- develop
 
 pool:
   vmImage: 'Ubuntu 20.04'
 
 variables:
-  - group: dev
+  - group: stg
   - name: imageName
-    value: 'imcrmdev:$(Build.BuildId)'
+    value: 'imcrmstg:$(Build.BuildId)'
   
 steps:
 
-- script: docker build --build-arg IMCRM_TOKEN=$(IMCRM_DEV_TOKEN) --build-arg NGINX_FILE=$(DEV_NGINX) -f Dockerfile -t $(acrName).azurecr.io/$(imageName) .
+- script: docker build --build-arg IMCRM_TOKEN=$(IMCRM_STG_TOKEN) --build-arg NGINX_FILE=$(STG_NGINX) -f Dockerfile -t $(acrName).azurecr.io/$(imageName) .
   displayName: 'docker build'
 - script: docker login -u $(dockerId) -p $(dockerPassword) $(acrName).azurecr.io
   displayName: 'docker login'
@@ -25,4 +25,4 @@ steps:
 #    pathToPublish: 'manifest.yml'
 
 - publish: '$(System.DefaultWorkingDirectory)'
-  artifact: imcrmdev
+  artifact: imcrmstg

@@ -260,9 +260,7 @@ class CRUDController extends Controller
                 }
             }
 
-            // $members_detail = $this->travelQuoteService->getMembersDetail($record->id);
-            $members_detail = [];
-
+            $members_detail = $this->travelQuoteService->getMembersDetail($record->id);
             return view('shared.show', compact([
                 'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList',
                 'leadStatuses', 'lostReasons', 'selectedLostReasonId', 'members_detail','model_name', 'allowedDuplicateLOB', 'audits'
@@ -398,10 +396,10 @@ class CRUDController extends Controller
 
         if (gettype($quotePlans) != 'string') {
             $listQuotePlans = $quotePlans->quotes->plans;
-            $listQuotePlansMembers = $quotePlans->quotes->members;
             foreach ($listQuotePlans as $listQuotePlan) { // Main
 
                 if ($listQuotePlan->id == $planId) {
+                    $listQuotePlansMembers = $listQuotePlan->memberPremiumBreakdown;
                     $listQuotePlanName = $listQuotePlan->name;
                     $providerCode = $listQuotePlan->providerCode;
                     $providerName = $listQuotePlan->providerName;
@@ -551,7 +549,7 @@ class CRUDController extends Controller
                     <div class="lead-block rotten">
                         <div class="lead-title">'.$result->code.'</div>
                         <span class="float-right">
-                        <a target="_blank" href="'.strtolower($request->modelType).'/'.$result->uuid.'"><i class="fa fa-pencil" aria-hidden="true"></i></a>
+                        <a target="_blank" href="/quotes/'.strtolower($request->modelType).'/'.$result->uuid.'"><i class="fa fa-pencil" aria-hidden="true"></i></a>
                         </span>
                         <div class="pad-5"></div>
                         <div class="lead-person"><i class="fa fa-user font-1" aria-hidden="true"></i>
@@ -576,7 +574,7 @@ class CRUDController extends Controller
 
         if($request->has('modelType') && $request->modelType && $request->term && $request->status)
         {
-            $results = getDataAgainstSearchTerm($request->modelType, $request->term, $request->status);
+            $results = getDataAgainstSearchTerm($request->modelType, $request);
 
             $html = '';
             if($results) {
@@ -585,7 +583,7 @@ class CRUDController extends Controller
                     <div class="lead-block rotten">
                         <div class="lead-title">'.$result->code.'</div>
                         <span class="float-right">
-                        <a target="_blank" href="'.strtolower($request->modelType).'/'.$result->uuid.'"><i class="fa fa-pencil" aria-hidden="true"></i></a>
+                        <a target="_blank" href="/quotes/'.strtolower($request->modelType).'/'.$result->uuid.'"><i class="fa fa-pencil" aria-hidden="true"></i></a>
                         </span>
                         <div class="pad-5"></div>
                         <div class="lead-person"><i class="fa fa-user font-1" aria-hidden="true"></i>

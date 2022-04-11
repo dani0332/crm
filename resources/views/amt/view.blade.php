@@ -114,20 +114,22 @@
             amtDataTable.draw();
         });
 
-        $(".toggle-btn").on("click", function() {
+            $(".toggle-btn-2").on("click", function() {
+                $(".show-visual-cards").addClass("hideme");
+                $(".show-visual-cards").removeClass("showme");
+                $(".show-container").addClass("showme");
+                $(".show-container").removeClass("hideme");
+                $(this).addClass("active");
+                $(".toggle-btn").removeClass("active");
+            });
+            $(".toggle-btn").on("click", function() {
                 $(".show-visual-cards").addClass("showme");
+                $(".show-visual-cards").removeClass("hideme");
                 $(".show-container").removeClass("showme");
                 $(".show-container").addClass("hideme");
                 $(this).addClass("active");
                 $(".toggle-btn-2").removeClass("active");
             });
-        $(".toggle-btn-2").on("click", function() {
-            $(".show-visual-cards").addClass("hideme");
-            $(".show-visual-cards").removeClass("showme");
-            $(".show-container").addClass("showme");
-            $(this).addClass("active");
-            $(".toggle-btn").removeClass("active");
-        });
     });
 
     var ENDPOINT = "{{ url('/') }}";
@@ -264,15 +266,15 @@
                 <div class="clearfix"></div>
             </div>
             <div class="x_content">
-                <button type="button" class="btn btn-warning btn-sm toggle-btn active float-right change-layout">Cards View</button>
-                <button type="button" class="btn btn-warning btn-sm toggle-btn-2 float-right change-layout">List View</button>
-                <div class="show-visual-cards showme">
+                <button type="button" class="btn btn-warning btn-sm toggle-btn  float-right change-layout">Cards View</button>
+                <button type="button" class="btn btn-warning btn-sm toggle-btn-2 active float-right change-layout">List View</button>
+                <div class="show-visual-cards hideme">
                     <x-group-medical-visual
                         :model="$model"
                         :dropdownSource="$leadStatuses"
                     />
                 </div>
-                <div class="show-container hideme">
+                <div class="show-container showme">
                     @if (session()->has('message'))
                         <div class="alert alert-danger">{{ session()->get('message') }}</div>
                     @endif
