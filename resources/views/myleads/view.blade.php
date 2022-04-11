@@ -18,7 +18,6 @@
         var isAdmin = JSON.parse('<?php echo json_encode(Auth::user()->hasRole('ADMIN')); ?>');
         var teamUserIds = JSON.parse('<?php echo json_encode(Auth::user()->getTeamUserIds()); ?>');
         $(document).ready(function() {
-            $('#collapseOne').collapse('hide');
             $('#handler').find('i').toggleClass("fa-angle-double-down fa-angle-double-up");
             $('#mylead-search-submit-btn').on('click', function (e){
                 e.preventDefault();
@@ -458,7 +457,7 @@
                             </div>
                         </div>
                     </form>
-                    <div id="accordion" style="width: 98%;margin-left: 20px; display:none   ">
+                    <div id="accordion" style="width: 98%;margin-left: 20px;">
                         <div class="card">
                           <div class="card-header" id="headingOne" style="background-color: #4183BD;">
                             <h5 class="mb-0">
