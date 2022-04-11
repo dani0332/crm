@@ -21,7 +21,7 @@
                                 @foreach ($members as $key => $member)
                                         <tr>
                                             <td>Traveler {{$key+1}}</td>
-                                            <td>{{ $member->dob }}</td>
+                                            <td>{{ \Carbon\Carbon::createFromTimestamp(strtotime($member->dob))->format('d-m-Y')}}</td>
                                             <td>{{ $member->created_at }}</td>
                                             <td>{{ $member->updated_at }}</td>
                                         </tr>
