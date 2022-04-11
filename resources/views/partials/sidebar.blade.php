@@ -98,6 +98,8 @@
                             <ul class="nav child_menu">
                                 <li><a href="{{ route('calculatevaluation') }}">Valuation</a></li>
                                 <li><a href="{{ url('valuation/vehicledepreciation') }}">Vehicle Depreciation</a></li>
+                                <li><a href="{{ url('valuation/vehiclerange') }}">Vehicle Range</a></li>
+                                <li><a href="{{ url('valuation/vehiclevalue') }}">Vehicle Value</a></li>
                             </ul>
                         </li>
                     </ul>

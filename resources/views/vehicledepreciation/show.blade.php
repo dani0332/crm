@@ -23,14 +23,14 @@
                         <div class="col">
                             <label class="col-form-label col-md-3 col-sm-3 label-align" for="text"><b>Car Make</b></label>
                             <div class="col-md-6 col-sm-6">
-                                <p class="label-align-center">{{ $carMake }}</p>
+                                <p class="label-align-center">{{ isset($carMake) ? $carMake->text : '' }}</p>
                                
                            </div>
                        </div>
                        <div class="col">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="text"><b>Car Model</b></label>
                         <div class="col-md-6 col-sm-6">
-                            <p class="label-align-center">{{ $carModel }}</p>
+                            <p class="label-align-center">{{ isset($carModel) ? $carModel->text : '' }}</p>
                             
                         </div>
                     </div>
