@@ -36,6 +36,7 @@ class HomeQuoteService extends BaseService
             'hqr.has_building',
             'hqr.building_aed',
             'hqr.source',
+            'hqr.policy_number',
             'hqr.ilivein_accommodation_type_id',
             'hqr.quote_status_id',
             'qs.text as quote_status_id_text',
@@ -379,6 +380,7 @@ class HomeQuoteService extends BaseService
             "source" => "input|text|required",
             "lost_reason" => "input|text",
             "premium" => "input|number|required",
+            "policy_number" => "input|number|required",
             "contents_aed" => "input|number|required",
             "personal_belongings_aed" => "input|number|required",
             "building_aed" => "input|number|required",
@@ -444,6 +446,17 @@ class HomeQuoteService extends BaseService
     public function fillModelSearchProperties()
     {
         return ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'advisor_id', 'created_at', 'next_followup_date'];
+    }
+
+    public function fillRenewalProperties($model)
+    {
+        $model->renewalSearchProperties = ['created_at', 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'policy_number'];
+        $model->renewalSkipProperties = [
+            "create" => "id,code,quote_status_id,advisor_id,created_at,updated_at,next_followup_date,lost_reason,premium,source,transapp_code",
+            "list" => "email,address,iam_possesion_type_id,ilivein_accommodation_type_id,mobile_no,personal_belongings_aed,building_aed,contents_aed,has_contents,has_personal_belongings,has_building,address,next_followup_date,lost_reason,premium,source,transapp_code",
+            "update" => "id,code,quote_status_id,advisor_id,created_at,updated_at,next_followup_date,lost_reason,source,transapp_code",
+            "show" => "id,next_followup_date,lost_reason",
+        ];
     }
 
     public function getValidationArray($modelPropertiesList, $request, $modelSkipPropertiesList)

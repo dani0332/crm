@@ -37,6 +37,7 @@ class TravelQuoteService extends BaseService
             'tqr.premium',
             'tqr.paid_at',
             'tqr.source',
+            'tqr.policy_number',
             'tqr.nationality_id',
             'n.TEXT AS nationality_id_text',
             'qs.id as quote_status_id',
@@ -288,6 +289,9 @@ class TravelQuoteService extends BaseService
             }
             return $this->query->orderBy($column, $direction);
         } else {
+            if (Auth::user()->isRenewalAdvisor()) {
+                return $this->query->whereNotNull('hqr.previous_quote_id')->latest();
+            }
             return $this->query->orderBy('tqr.created_at', 'DESC');
         }
     }
@@ -397,6 +401,7 @@ class TravelQuoteService extends BaseService
             "lost_reason" => "input|text",
             "source" => "input|text",
             "premium" => "input|number|required",
+            "policy_number" => "input|number|required",
             "days_cover_for" => "input|number|title|required",
             "nationality_id" => "select|title|required",
             "destination_id" => "select|title|required",
@@ -469,6 +474,17 @@ class TravelQuoteService extends BaseService
     public function fillModelSearchProperties()
     {
         return ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'advisor_id', 'created_at', 'next_followup_date'];
+    }
+
+    public function fillRenewalProperties($model)
+    {
+        $model->renewalSearchProperties = ['created_at', 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'policy_number'];
+        $model->renewalSkipProperties = [
+            "create" => "id,created_at,id,code,advisor_id,updated_at,quote_status_id,next_followup_date,lost_reason,premium,source,transapp_code",
+            "list" => "email,mobile_no,region_cover_for_id,travel_cover_for_id,details,nationality_id,days_cover_for,next_followup_date,lost_reason,premium,source,transapp_code,currently_located_in_id,destination_id",
+            "update" => 'created_at,id,code,advisor_id,updated_at,quote_status_id,next_followup_date,lost_reason,source,transapp_code',
+            "show" => "",
+        ];
     }
 
     public function getQuotePlans($id)

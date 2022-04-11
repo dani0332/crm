@@ -200,7 +200,10 @@ use App\Enums\quoteTypeCode;
                     }
                     break;
                 case 'home':
-                    if(isManagerOrDeputy == '1' || isAdmin)
+                    if(isRenewalUser){
+                        disableSortColumns = [-1,0,1,2,3,4,5,6];
+                    }
+                    else if(isManagerOrDeputy == '1' || isAdmin)
                         disableSortColumns = [-1,1,2,3,4,5,9,10];
                     else
                         disableSortColumns = [-1,0,1,2,3,4,8,9,10];
@@ -216,19 +219,28 @@ use App\Enums\quoteTypeCode;
                         disableSortColumns = [-1,0,1,2,3,4,8,9,10];
                     break;
                 case 'life':
-                    if(isManagerOrDeputy == '1' || isAdmin)
+                    if(isRenewalUser){
+                        disableSortColumns = [-1,0,1,2,3,4,5,6];
+                    }
+                    else if(isManagerOrDeputy == '1' || isAdmin)
                         disableSortColumns = [-1,1,2,3,4,5,9,10];
                     else
                         disableSortColumns = [-1,0,1,2,3,4,8,9,10];
                     break;
                 case 'business':
-                    if(isManagerOrDeputy == '1' || isAdmin)
+                    if(isRenewalUser){
+                        disableSortColumns = [-1,0,1,2,3,4,5,6];
+                    }
+                    else if(isManagerOrDeputy == '1' || isAdmin)
                         disableSortColumns = [-1,1,2,3,4,6,7,8,9,12,13];
                     else
                         disableSortColumns = [-1,0,1,2,3,5,6,7,8,11,12,13];
                     break;
                 case 'travel':
-                    if(isManagerOrDeputy == '1' || isAdmin)
+                    if(isRenewalUser){
+                        disableSortColumns = [-1,0,1,2,3,4,5,6];
+                    }
+                    else if(isManagerOrDeputy == '1' || isAdmin)
                         disableSortColumns = [-1,1,2,3,4,5,9,10];
                     else
                         disableSortColumns = [-1,0,1,2,3,4,8,9,10];

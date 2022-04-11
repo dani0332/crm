@@ -37,6 +37,7 @@ class LifeQuoteService extends BaseService
                 'lqr.sum_insured_value',
                 'lqr.source',
                 'lqr.premium',
+                'lqr.policy_number',
                 'lqr.sum_insured_currency_id',
                 'ct.TEXT AS sum_insured_currency_id_text',
                 'lqr.marital_status_id',
@@ -210,6 +211,9 @@ class LifeQuoteService extends BaseService
             }
             return $this->query->orderBy($column, $direction);
         } else {
+            if (Auth::user()->isRenewalAdvisor()) {
+                return $this->query->whereNotNull('hqr.previous_quote_id')->latest();
+            }
             return $this->query->orderBy('lqr.created_at', 'DESC');
         }
     }
@@ -419,6 +423,7 @@ class LifeQuoteService extends BaseService
             "source" => "input|text",
             "lost_reason" => "input|text",
             "premium" => "input|number|required",
+            "policy_number" => "input|number|required",
             "sum_insured_currency_id" => "select|title|required",
             "purpose_of_insurance_id" => "select|title|required",
             "marital_status_id" => "select|title|required",
@@ -505,6 +510,17 @@ class LifeQuoteService extends BaseService
     public function fillModelSearchProperties()
     {
         return ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'advisor_id', 'created_at', 'next_followup_date'];
+    }
+
+    public function fillRenewalProperties($model)
+    {
+        $model->renewalSearchProperties = ['created_at', 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'policy_number'];
+        $model->renewalSkipProperties = [
+            "create" => "id,advisor_id,quote_status_id,code,created_at,updated_at,next_followup_date,lost_reason,premium,source,transapp_code",
+            "list" => "email,mobile_no,others_info,dob,sum_insured_value,sum_insured_currency_id,purpose_of_insurance_id,marital_status_id,children_id,tenure_of_insurance_id,number_of_years_id,gender,is_smoker,others_info,next_followup_date,lost_reason,source,transapp_code",
+            "update" => "id,advisor_id,quote_status_id,code,created_at,updated_at,next_followup_date,lost_reason,source,transapp_code",
+            "show" => "",
+        ];
     }
 
     public function getDuplicateEntityByCode($code)

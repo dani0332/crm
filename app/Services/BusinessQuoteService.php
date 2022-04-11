@@ -46,6 +46,7 @@ class BusinessQuoteService extends BaseService
                 'bqrd.transapp_code',
                 'ls.text as lost_reason',
                 'bqr.source',
+                'bqr.policy_number'
             )
             ->leftJoin('business_type_of_insurance as bti', 'bti.id', '=', 'bqr.business_type_of_insurance_id')
             ->leftJoin('business_quote_request_detail as bqrd', 'bqrd.business_quote_request_id', '=', 'bqr.id')
@@ -371,6 +372,7 @@ class BusinessQuoteService extends BaseService
             "next_followup_date" => "input|date|title|range",
             "transapp_code" => "readonly|none",
             "source" => "input|text",
+            "policy_number" => "input|number|required",
             "lost_reason" => "input|text",
             "advisor_id" => "select|title|multiple",
             "quote_status_id" => "select|title|multiple",
@@ -438,6 +440,16 @@ class BusinessQuoteService extends BaseService
         return ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'advisor_id', 'created_at', 'company_name', 'business_type_of_insurance_id', 'next_followup_date'];
     }
 
+    public function fillRenewalProperties($model)
+    {
+        $model->renewalSearchProperties = ['created_at', 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'policy_number'];
+        $model->renewalSkipProperties = [
+            "create" => "id,advisor_id,quote_status_id,code,updated_at,created_at,next_followup_date,lost_reason,premium,source,transapp_code",
+            "list" => "email,mobile_no,brief_details,dob,next_followup_date,lost_reason,source,transapp_code,business_type_of_insurance_id,premium,number_of_employees,company_name",
+            "update" => "id,advisor_id,quote_status_id,code,updated_at,created_at,next_followup_date,lost_reason,source,transapp_code",
+            "show" => "",
+        ];
+    }
     public function getDuplicateEntityByCode($code)
     {
         return BusinessQuote::where('parent_duplicate_quote_id', $code)->first();
