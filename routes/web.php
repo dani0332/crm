@@ -201,8 +201,8 @@ Route::group(['middleware' =>  ['auth']], function () {
     Route::group(['prefix' => 'valuation'], function () {
         Route::get('calculatevaluation', [ValuationController::class, 'calculateValuation'])->name('calculatevaluation');
         Route::resource('vehicledepreciation', VehicleDepreciationController::class);
-        Route::resource('vehiclerange', VehicleRangeController::class);
-        Route::resource('vehiclevalue', VehicleValueController::class);
+        // Route::resource('vehiclerange', VehicleRangeController::class);
+        // Route::resource('vehiclevalue', VehicleValueController::class);
     });
     Route::get('/valuation/car-models', [ValuationController::class, 'carModelBasedOnCarMake']);
     Route::get('/valuation/car-model-detail', [ValuationController::class, 'carTrimBasedOnCarModel']);
