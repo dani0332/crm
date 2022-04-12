@@ -24,6 +24,7 @@ use BenSampo\Enum\Rules\EnumValue;
 use DataTables;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
+use Illuminate\Support\Facades\Log;
 use Config;
 use DB;
 
@@ -221,6 +222,7 @@ class CRUDController extends Controller
         $quoteTypes = 'Health,Car,Travel,Life,Home,Business';
         $serviceType = str_contains($quoteTypes, ucwords($model->modelType)) ? strtolower($model->modelType) . 'QuoteService' : lcfirst(ucwords($model->modelType)) . 'Service';
         $allowedDuplicateLOB = $this->crudService->getAllowedDuplicateLOB($model->modelType, $record->code);
+        $audits = [];
         if ($this->genericModel->modelType == "Car") { // Car plans to display on detail view
 
             $listQuotePlans = '';
@@ -244,7 +246,7 @@ class CRUDController extends Controller
             return view('shared.show', compact([
                 'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList',
                 'ecomCarInsuranceQuoteUrl', 'carQuotePlanAddons', 'vehicleTypeText', 'leadStatuses',
-                'lostReasons', 'selectedLostReasonId', 'listQuote','model_name', 'allowedDuplicateLOB'
+                'lostReasons', 'selectedLostReasonId', 'listQuote','model_name', 'allowedDuplicateLOB', 'audits'
             ]));
         } else if ($this->genericModel->modelType == quoteTypeCode::Travel) { // Travel plans to display on detail view
             $listQuotePlans = '';
@@ -262,10 +264,10 @@ class CRUDController extends Controller
             $members_detail = $this->travelQuoteService->getMembersDetail($record->id);
             return view('shared.show', compact([
                 'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList',
-                'leadStatuses', 'lostReasons', 'selectedLostReasonId', 'members_detail','model_name', 'allowedDuplicateLOB'
+                'leadStatuses', 'lostReasons', 'selectedLostReasonId', 'members_detail','model_name', 'allowedDuplicateLOB', 'audits'
             ]));
         } else {
-            return view('shared.show', compact(['record', 'model', 'customTitles', 'customTableList', 'advisors', 'leadStatuses', 'lostReasons', 'selectedLostReasonId','model_name', 'allowedDuplicateLOB']));
+            return view('shared.show', compact(['record', 'model', 'customTitles', 'customTableList', 'advisors', 'leadStatuses', 'lostReasons', 'selectedLostReasonId','model_name', 'allowedDuplicateLOB', 'audits']));
         }
     }
 
@@ -318,7 +320,9 @@ class CRUDController extends Controller
         if ($modelType == 'Home') {
             $validateArray = $this->homeQuoteService->getValidationArray($modelPropertiesList, $request, $modelSkipPropertiesList);
         } else {
+            Log::channel('daily')->info("update quote with id " . $id. " and modelproperties " . json_encode($modelPropertiesList));
             foreach ($modelPropertiesList as $property => $value) {
+                
                 if (strpos($value, 'required') && $property != 'id' && $property != 'code' && $property != 'email' && $property != 'mobile_no' && !strpos($modelSkipPropertiesList, $property)) {
                     $validateArray[$property] = 'required';
                 }
@@ -431,25 +435,46 @@ class CRUDController extends Controller
         $assignedToUserIdNew = $request->assigned_to_id_new;
         $leadsIds = $request->selectTmLeadId;
         $leadsIds = array_map('intval', explode(',', $leadsIds));
-        if ($assignedToUserIdNew == '' || $assignedToUserIdNew == null) {
-            return redirect()->back()->with('message', 'Please select user to assign leads');
-        }
         if ($leadsIds == '' || $leadsIds == null) {
             return redirect()->back()->with('message', 'Please select lead(s) to assign');
         }
+        if(strtolower($request->modelType) == 'health' && $request->assign_team == 'GM'){
+            foreach ($leadsIds as $tmLeadsId) {
+                $userId = (int)$assignedToUserIdNew;
+                $entity = $this->{strtolower($request->modelType) . 'QuoteService'}->getEntityPlain($tmLeadsId);
+                if($entity){
+                    if($request->assign_team == 'GM'){
+                        $entity->health_team_type = $request->assign_team;
+                    }
+                    $entity->save();
+                    return Redirect::back()->with('success', $request->modelType . ' Team has been Assigned');
+                }
+            }
+        }
+        
+        if ($assignedToUserIdNew == '' || $assignedToUserIdNew == null) {
+            return redirect()->back()->with('message', 'Please select user to assign leads');
+        }
+        
         foreach ($leadsIds as $tmLeadsId) {
             $userId = (int)$assignedToUserIdNew;
             $entity = $this->{strtolower($request->modelType) . 'QuoteService'}->getEntityPlain($tmLeadsId);
             if ($entity) {
-                if (Auth::user()->hasRole('WCU_ADVISOR')) {
-                    $entity->wcu_id = $userId;
-                } else {
-                    $entity->advisor_id = $userId;
+                if(strtolower($request->modelType) == 'health' && $request->assign_team == 'GM'){
+                    $entity->health_team_type = $request->assign_team;
                 }
-                $advisorOE = CarQuoteAdvisorToOE::where('advisor_id', $userId)->first();
-                if (!empty($advisorOE) && strtolower($request->modelType) == 'car') {
-                    $entity->oe_id = $advisorOE->oe_id;
-                }
+                else{
+                    $entity->health_team_type = $request->assign_team;
+                    if (Auth::user()->hasRole('WCU_ADVISOR')) {
+                        $entity->wcu_id = $userId;
+                    } else {
+                        $entity->advisor_id = $userId;
+                    }
+                    $advisorOE = CarQuoteAdvisorToOE::where('advisor_id', $userId)->first();
+                    if (!empty($advisorOE) && strtolower($request->modelType) == 'car') {
+                        $entity->oe_id = $advisorOE->oe_id;
+                    }
+                }            
                 $entity->save();
                 $this->{strtolower($request->modelType) . 'QuoteService'}->updateChildRecord($tmLeadsId);
             } else {
@@ -567,6 +592,12 @@ class CRUDController extends Controller
             }
             return $html;
         }
+    }
+
+    public function getLeadHistory(Request $request)
+    {
+        $leadHistory = $this->crudService->getLeadAuditHistory($request->modelType, $request->recordId);
+        return $leadHistory;
     }
 
     public function searchLead(Request $request) {

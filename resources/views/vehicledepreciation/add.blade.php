@@ -185,26 +185,6 @@
                                 @endif
                             </div>
                         </div>
-                        <div class="item form-group">
-                            <div class="col">
-                                <span class="col-form-label col-md-2 col-sm-2">Upper Limit<span class="required"> *
-                                    </span></span>
-                                <input type="text" class="form-control" type="number" value="{{ old('upper_limit') }}"
-                                    name="upper_limit" id="upper_limit">
-                                @if ($errors->has('upper_limit'))
-                                    <span class="text-danger">{{ $errors->first('upper_limit') }}</span>
-                                @endif
-                            </div>
-                            <div class="col">
-                                <span class="col-form-label col-md-2 col-sm-2">Lower Limit<span class="required"> *
-                                    </span></span>
-                                <input type="text" class="form-control" type="number" value="{{ old('lower_limit') }}"
-                                    name="lower_limit" id="lower_limit">
-                                @if ($errors->has('lower_limit'))
-                                    <span class="text-danger">{{ $errors->first('lower_limit') }}</span>
-                                @endif
-                            </div>
-                        </div>
 
                         <div id='redirect_to_view_div'></div>
                         <div class="ln_solid"></div>

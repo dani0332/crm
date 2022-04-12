@@ -18,7 +18,6 @@
         var isAdmin = JSON.parse('<?php echo json_encode(Auth::user()->hasRole('ADMIN')); ?>');
         var teamUserIds = JSON.parse('<?php echo json_encode(Auth::user()->getTeamUserIds()); ?>');
         $(document).ready(function() {
-            $('#collapseOne').collapse('hide');
             $('#handler').find('i').toggleClass("fa-angle-double-down fa-angle-double-up");
             $('#mylead-search-submit-btn').on('click', function (e){
                 e.preventDefault();
@@ -96,6 +95,10 @@
                         data: 'nextFollowupDate',
                         name: 'nextFollowupDate',
                     },
+                    {
+                        data: 'premium',
+                        name: 'premium',
+                    },
                 ],
             });
             var myleadsTable = $(".leadSearch-data-table").DataTable({
@@ -156,6 +159,10 @@
                         data: 'nextFollowupDate',
                         name: 'nextFollowupDate',
                     },
+                    {
+                        data: 'premium',
+                        name: 'premium',
+                    },
                 ],
             });
            
@@ -209,7 +216,7 @@
                     }
                 });
                 $(':input', '#my-leads-form')
-                    .not(':button, :submit, :reset, :hidden')
+                    .not(':button, :submit, :reset, :hidden')was
                     .val('')
                     .prop('checked', false)
                     .prop('selected', false);
@@ -450,7 +457,7 @@
                             </div>
                         </div>
                     </form>
-                    <div id="accordion" style="width: 98%;margin-left: 20px; display:none   ">
+                    <div id="accordion" style="width: 98%;margin-left: 20px;">
                         <div class="card">
                           <div class="card-header" id="headingOne" style="background-color: #4183BD;">
                             <h5 class="mb-0">
@@ -473,11 +480,12 @@
                                         <th>Assigned By</th>
                                         <th>Lead Source</th>
                                         <th>Next FollowUp Date</th>
+                                        <th>Premium</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <tr class="odd">
-                                        <td valign="top" colspan="8" class="dataTables_empty">No data available in table</td>
+                                        <td valign="top" colspan="9" class="dataTables_empty">No data available in table</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -496,11 +504,12 @@
                                 <th>Assigned By</th>
                                 <th>Lead Source</th>
                                 <th>Next FollowUp Date</th>
+                                <th>Premium</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr class="odd">
-                                <td valign="top" colspan="8" class="dataTables_empty">No data available in table</td>
+                                <td valign="top" colspan="9" class="dataTables_empty">No data available in table</td>
                             </tr>
                         </tbody>
                     </table>
