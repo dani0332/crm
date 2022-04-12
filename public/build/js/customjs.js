@@ -1973,27 +1973,27 @@ $(document).ready(function () {
         { data: 'current_value', name: 'current_value' },
         ]
     });
-    $('.vehiclerange-data-table').DataTable({
-        ordering: false,
-        info: false,
-        searching: false,
-        bLengthChange: false,
-        serverSide: true,
-        ajax: config.routes.vehiclerange_datatable_route,
-        columns: [{
-            data: 'id',
-            name: 'id',
-            render: function (data, type, row) {
-                return "<a href='" + config.routes.vehiclerange_datatable_route + '/' + row.id + "'>" + row.id + "</a>"
-            }
-        },
-        { data: 'car_make_text', name: 'car_make_text' },
-        { data: 'car_model_text', name: 'car_model_text' },
-        { data: 'ip_text', name: 'ip_text' },
-        { data: 'lower_limit', name: 'lower_limit' },
-        { data: 'upper_limit', name: 'upper_limit' },
-        ]
-    });
+    // $('.vehiclerange-data-table').DataTable({
+    //     ordering: false,
+    //     info: false,
+    //     searching: false,
+    //     bLengthChange: false,
+    //     serverSide: true,
+    //     ajax: config.routes.vehiclerange_datatable_route,
+    //     columns: [{
+    //         data: 'id',
+    //         name: 'id',
+    //         render: function (data, type, row) {
+    //             return "<a href='" + config.routes.vehiclerange_datatable_route + '/' + row.id + "'>" + row.id + "</a>"
+    //         }
+    //     },
+    //     { data: 'car_make_text', name: 'car_make_text' },
+    //     { data: 'car_model_text', name: 'car_model_text' },
+    //     { data: 'ip_text', name: 'ip_text' },
+    //     { data: 'lower_limit', name: 'lower_limit' },
+    //     { data: 'upper_limit', name: 'upper_limit' },
+    //     ]
+    // });
 
     $('#loadHistoryDataBtn').on('click', function (e) {
         e.preventDefault();
