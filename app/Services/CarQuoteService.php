@@ -206,13 +206,42 @@ class CarQuoteService extends BaseService
     {
         $entity = CarQuoteRequestDetail::where('car_quote_request_id', $id)->first();
         if (!$entity) {
-            CarQuoteRequestDetail::create([
+            $entity = CarQuoteRequestDetail::create([
                 'car_quote_request_id' => $id,
                 'created_at' => Carbon::now(),
                 'updated_at' => Carbon::now(),
             ]);
         }
-        return CarQuoteRequestDetail::where('car_quote_request_id', $id)->first();
+        return $entity;
+    }
+
+    public function getLeadAuditHistory($id)
+    {
+        $audits = DB::table('car_quote_request as cqr')
+        ->select(
+            'a.created_at as ModifiedAt',
+            DB::raw('(SELECT name from users where id = a.user_id) as ModifiedBy'),
+            DB::raw("(SELECT TEXT FROM quote_status WHERE id = JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.quote_status_id'))) AS NewStatus"),
+            DB::raw("(SELECT NAME FROM users WHERE id = JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.advisor_id'))) AS NewAdvisor"),
+            DB::raw("JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.notes')) AS NewNotes")
+        )
+        ->join('car_quote_request_detail as cqrd', 'cqrd.car_quote_request_id', '=', 'cqr.id')
+        ->join("audits as a",function($query){
+            $query->on("a.auditable_id","=","cqr.id")
+                ->orOn("a.auditable_id","=","cqrd.id");
+        })
+        ->where(function ($query) {
+            $query->where('a.auditable_type', 'App\Models\CarQuote')
+            ->orWhere('a.auditable_type', 'App\Models\CarQuoteRequestDetail');
+        })
+        ->where(function ($query) {
+           return  $query->whereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.quote_status_id')"))
+            ->orWhereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.notes')"))
+            ->orWhereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.advisor_id')"));
+        })
+        ->where('cqr.id', $id)
+        ->orderBy('a.created_at', 'DESC')->get();
+        return $audits;
     }
 
     public function getEntityPlain($id)
@@ -428,6 +457,10 @@ class CarQuoteService extends BaseService
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'cqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'cqrd.advisor_assigned_by_id')
             ->where('qs.text', '!=', 'Fake')
+            ->where(function ($query) {
+                $query->where('cqrd.next_followup_date', '>', date('Y-m-d'))
+                      ->orWhereNull('cqrd.next_followup_date');
+            })
             ->where('cqr.advisor_id', Auth::user()->id);
 
         $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
@@ -841,6 +874,7 @@ class CarQuoteService extends BaseService
         $quote->last_name = $parentRecord->last_name;
         $quote->email = $parentRecord->email;
         $quote->mobile_no = $parentRecord->mobile_no;
+        $quote->advisor_id = Auth::user()->id;
         $quote->save();
     }
     

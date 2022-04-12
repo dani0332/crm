@@ -819,8 +819,6 @@ $(document).ready(function () {
         { data: 'eighth_year', name: 'first_year' },
         { data: 'ninth_year', name: 'first_year' },
         { data: 'tenth_year', name: 'first_year' },
-        { data: 'upper_limit', name: 'first_year' },
-        { data: 'lower_limit', name: 'first_year' },
         ]
     });
 
@@ -1478,9 +1476,24 @@ $(document).ready(function () {
         }
     });
 
+    $('#assign_team').on('change', function(){
+        if($(this).val() == "GM") {
+            $('#assigned_to_id_new').attr('disabled', true);
+        }else{
+            $('#assigned_to_id_new').attr('disabled', false);
+        }
+    });
+
     // TM Leads: Select tm leads id and store in hidden field
     $("#tmLeadsAssignToUser").click(function () {
         var tmLeadIDs = [];
+        if($('#healthTeamTypeAssignDiv').length > 0){
+            if($('#assign_team').val() == "") {
+                $("#teamErrorSpan").show().fadeOut(5000);
+                return false;
+            }
+        }
+        
         if (!$('#checkAllTmLeads').is(":checked")) {
             $.each($("input[name='tmLeadID']:checked"), function () {
                 tmLeadIDs.push($(this).val());
@@ -1928,6 +1941,79 @@ $(document).ready(function () {
         placeholder: "Select LOB For Duplication",
         allowClear: true,
         width: '100%',
+    });  
+    $('.vehiclevalue-data-table').DataTable({
+        ordering: false,
+        info: false,
+        searching: false,
+        bLengthChange: false,
+        serverSide: true,
+        ajax: config.routes.vehiclevalue_datatable_route,
+        columns: [{
+            data: 'id',
+            name: 'id',
+            render: function (data, type, row) {
+                return "<a href='" + config.routes.vehiclevalue_datatable_route + '/' + row.id + "'>" + row.id + "</a>"
+            }
+        },
+        { data: 'car_make_text', name: 'car_make_text' },
+        { data: 'car_model_text', name: 'car_model_text' },
+        { data: 'car_trim_text', name: 'car_trim_text' },
+        { data: 'ip_text', name: 'ip_text' },
+        { data: 'current_value', name: 'current_value' },
+        ]
+    });
+    // $('.vehiclerange-data-table').DataTable({
+    //     ordering: false,
+    //     info: false,
+    //     searching: false,
+    //     bLengthChange: false,
+    //     serverSide: true,
+    //     ajax: config.routes.vehiclerange_datatable_route,
+    //     columns: [{
+    //         data: 'id',
+    //         name: 'id',
+    //         render: function (data, type, row) {
+    //             return "<a href='" + config.routes.vehiclerange_datatable_route + '/' + row.id + "'>" + row.id + "</a>"
+    //         }
+    //     },
+    //     { data: 'car_make_text', name: 'car_make_text' },
+    //     { data: 'car_model_text', name: 'car_model_text' },
+    //     { data: 'ip_text', name: 'ip_text' },
+    //     { data: 'lower_limit', name: 'lower_limit' },
+    //     { data: 'upper_limit', name: 'upper_limit' },
+    //     ]
+    // });
+
+    $('#loadHistoryDataBtn').on('click', function (e) {
+        e.preventDefault();
+        var modelType = $('input[name=modelType]').val().toLowerCase();
+        var leadId = $('input[name=leadId]').val();
+
+        $.ajax({
+            url: '/quotes/getLeadHistory?modelType=' + modelType + '&recordId=' + leadId,
+            type: "GET",
+            success: function (response) {
+                var html = '';
+                if(response.length > 0 ){
+                    for (let i = 0; i < response.length; i++) {
+                        const element = response[i];
+                        element.ModifiedAt = element.ModifiedAt == null ? '' : element.ModifiedAt;
+                        element.ModifiedBy = element.ModifiedBy == null ? '' : element.ModifiedBy;
+                        element.NewAdvisor = element.NewAdvisor == null ? '' : element.NewAdvisor;
+                        element.NewNotes = element.NewNotes == null ? '' : element.NewNotes;
+                        element.NewStatus = element.NewStatus == null ? '' : element.NewStatus;
+                        html = html + '<tr><td>'+element.ModifiedAt+'</td><td>'+element.ModifiedBy+'</td><td>'+element.NewAdvisor+'</td><td>'+element.NewNotes+'</td><td>'+element.NewStatus+'</td></tr>' ;
+                    }
+                }else{
+                    html = '<tr><td colspan="5" style="text-align: center">No data available</td></tr>';
+                }
+                $('#leadhistorydatatable tbody').html(html);
+            },
+            error: function (jqXHR, textStatus, errorThrown) {
+                console.log(jqXHR, textStatus, errorThrown);
+            },
+        });
     });
 });
 

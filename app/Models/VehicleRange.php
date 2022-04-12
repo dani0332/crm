@@ -4,14 +4,28 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use OwenIt\Auditing\Auditable;
+use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 use Config;
 
-class QuoteStatusLog extends Model
+class VehicleRange extends Model implements AuditableContract
 {
-    use HasFactory;
-    protected $table = 'quote_status_log';
-    protected $fillable = ['quote_type_id', 'quote_request_id', 'current_quote_status_id', 'created_at', 'updated_at', 'previous_quote_status_id'];
+    use HasFactory, Auditable;
+    protected $table = 'vehicle_valuation_range';
 
+    public function carmake()
+    {
+        return $this->belongsTo(CarMake::class,'car_make_id','id');
+    }
+    public function insuranceprovider()
+    {
+        return $this->belongsTo(InsuranceProvider::class,'insurance_provider_id','id');
+    }
+    public function carmodel()
+    {
+        return $this->belongsTo(CarModel::class,'car_model_id','id');
+    }
+    
     public function getCreatedAtAttribute($table)
     {
         $date_time_format = Config::get('constants.datetime_format');
