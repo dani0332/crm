@@ -279,6 +279,36 @@ class HealthQuoteService extends BaseService
             return redirect("quote/health/" . $id)->with('success', 'Health Quote has been updated');
     }
 
+    public function getLeadAuditHistory($id)
+    {
+        $audits = DB::table('car_quote_request as cqr')
+        ->select(
+            'a.created_at as ModifiedAt',
+            DB::raw('(SELECT name from users where id = a.user_id) as ModifiedBy'),
+            DB::raw("(SELECT TEXT FROM quote_status WHERE id = JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.quote_status_id'))) AS NewStatus"),
+            DB::raw("(SELECT NAME FROM users WHERE id = JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.advisor_id'))) AS NewAdvisor"),
+            DB::raw("JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.notes')) AS NewNotes")
+        )
+        ->join('health_quote_request_detail as cqrd', 'cqrd.health_quote_request_id', '=', 'cqr.id')
+        ->join("audits as a",function($query){
+            $query->on("a.auditable_id","=","cqr.id")
+                ->orOn("a.auditable_id","=","cqrd.id");
+        })
+        ->where(function ($query) {
+            $query->where('a.auditable_type', 'App\Models\HealthQuote')
+            ->orWhere('a.auditable_type', 'App\Models\HealthQuoteRequestDetail');
+        })
+        ->where(function ($query) {
+            $query->whereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.quote_status_id')"))
+            ->orWhereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.notes')"))
+            ->orWhereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.advisor_id')"));
+        })
+        ->where('cqr.id', $id)
+        ->where('a.new_values', 'like', '%%')
+        ->orderBy('a.created_at', 'DESC')->get();
+        return $audits;
+    }
+
     public function getHealthOverDueFollowups()
     {
         $query = DB::table('health_quote_request as hqr')

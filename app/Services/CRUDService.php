@@ -108,13 +108,19 @@ class CRUDService extends BaseService
 
     public function getAllowedDuplicateLOB($modelType, $leadCode)
     {
-        $allowedLeadTypes = ['home', 'health', 'life', 'business', 'travel', 'car'];
+        $allowedLeadTypes = ['Home', 'Health', 'Life', 'Corpline', 'Group Medical', 'Travel', 'Car'];
+        if(strtolower($modelType) == 'business') {
+            $modelType = 'Corpline';
+        }
         $allowedLeadTypes = array_filter($allowedLeadTypes, function ($item) use ($modelType) {
-            if ($item != strtolower($modelType)) {
+            if (strtolower($item) != strtolower($modelType)) {
                 return $item;
             }
         });
         foreach ($allowedLeadTypes as $leadType) {
+            if($leadType == 'Corpline' || $leadType = 'Group Medical'){
+                $leadType = 'Business';
+            }
             $duplicateRecord =  $this->{strtolower($leadType) . 'QuoteService'}->getDuplicateEntityByCode($leadCode);
             if($duplicateRecord) {
                 $allowedLeadTypes = array_filter($allowedLeadTypes, function ($item) use ($leadType) {

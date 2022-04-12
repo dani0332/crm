@@ -234,6 +234,11 @@ class CarQuoteService extends BaseService
             $query->where('a.auditable_type', 'App\Models\CarQuote')
             ->orWhere('a.auditable_type', 'App\Models\CarQuoteRequestDetail');
         })
+        ->where(function ($query) {
+           return  $query->whereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.quote_status_id')"))
+            ->orWhereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.notes')"))
+            ->orWhereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.advisor_id')"));
+        })
         ->where('cqr.id', $id)
         ->orderBy('a.created_at', 'DESC')->get();
         return $audits;

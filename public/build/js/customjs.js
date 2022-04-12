@@ -1939,6 +1939,36 @@ $(document).ready(function () {
         allowClear: true,
         width: '100%',
     });
+    $('#loadHistoryDataBtn').on('click', function (e) {
+        e.preventDefault();
+        var modelType = $('input[name=modelType]').val().toLowerCase();
+        var leadId = $('input[name=leadId]').val();
+
+        $.ajax({
+            url: '/quotes/getLeadHistory?modelType=' + modelType + '&recordId=' + leadId,
+            type: "GET",
+            success: function (response) {
+                var html = '';
+                if(response.length > 0 ){
+                    for (let i = 0; i < response.length; i++) {
+                        const element = response[i];
+                        element.ModifiedAt = element.ModifiedAt == null ? '' : element.ModifiedAt;
+                        element.ModifiedBy = element.ModifiedBy == null ? '' : element.ModifiedBy;
+                        element.NewAdvisor = element.NewAdvisor == null ? '' : element.NewAdvisor;
+                        element.NewNotes = element.NewNotes == null ? '' : element.NewNotes;
+                        element.NewStatus = element.NewStatus == null ? '' : element.NewStatus;
+                        html = html + '<tr><td>'+element.ModifiedAt+'</td><td>'+element.ModifiedBy+'</td><td>'+element.NewAdvisor+'</td><td>'+element.NewNotes+'</td><td>'+element.NewStatus+'</td></tr>' ;
+                    }
+                }else{
+                    html = '<tr><td colspan="5" style="text-align: center">No data available</td></tr>';
+                }
+                $('#leadhistorydatatable tbody').html(html);
+            },
+            error: function (jqXHR, textStatus, errorThrown) {
+                console.log(jqXHR, textStatus, errorThrown);
+            },
+        });
+    });
 });
 
 

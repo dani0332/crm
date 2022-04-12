@@ -221,7 +221,7 @@ class CRUDController extends Controller
         $quoteTypes = 'Health,Car,Travel,Life,Home,Business';
         $serviceType = str_contains($quoteTypes, ucwords($model->modelType)) ? strtolower($model->modelType) . 'QuoteService' : lcfirst(ucwords($model->modelType)) . 'Service';
         $allowedDuplicateLOB = $this->crudService->getAllowedDuplicateLOB($model->modelType, $record->code);
-        $audits = $this->crudService->getLeadAuditHistory($model->modelType, $record->id);
+        $audits = [];
         if ($this->genericModel->modelType == "Car") { // Car plans to display on detail view
 
             $listQuotePlans = '';
@@ -568,6 +568,12 @@ class CRUDController extends Controller
             }
             return $html;
         }
+    }
+
+    public function getLeadHistory(Request $request)
+    {
+        $leadHistory = $this->crudService->getLeadAuditHistory($request->modelType, $request->recordId);
+        return $leadHistory;
     }
 
     public function searchLead(Request $request) {

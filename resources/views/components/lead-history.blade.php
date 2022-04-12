@@ -7,7 +7,7 @@
                 </div>
                 <div class="x_content">
                     <div id="lead-history-div">
-                        <table id="datatable" class="table table-striped jambo_table" style="width:100%">
+                        <table id="datatabless" class="table table-striped jambo_table" style="width:100%">
                             <thead>
                                 <tr>
                                     <th>Modified At</th>
