@@ -407,7 +407,7 @@ class BusinessQuoteService extends BaseService
             "created_at" => "input|date|title|range",
             "updated_at" => "input|date|title",
             "premium" => "input|number|required",
-            "number_of_employees" => "input|title|number",
+            "number_of_employees" => "input|number|title",
             "business_type_of_insurance_id" => "select|title|required",
             "brief_details" => 'textarea|required',
         );
