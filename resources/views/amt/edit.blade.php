@@ -78,7 +78,7 @@
                             <div class="col">
                                 <span class="col-form-label col-md-6 col-sm-6">Number Of Employees<span
                                         class="required">*</span></span>
-                                <input type="text" id="number_of_employees" name="number_of_employees" value="{{ old('number_of_employees', $record->number_of_employees) }}"
+                                <input type="number" id="number_of_employees" name="number_of_employees" value="{{ old('number_of_employees', $record->number_of_employees) }}"
                                     class="form-control">
                                 @if ($errors->has('number_of_employees'))
                                     <span class="text-danger">{{ $errors->first('number_of_employees') }}</span>
