@@ -155,7 +155,7 @@ class RenewalsImport implements OnEachRow, WithStartRow, WithValidation, SkipsOn
 
     function sanitizePhoneNumber($phone)
     {
-        $delimiterArray = [',', ':', '/', ';', '-'];
+        $delimiterArray = [',', ':', '/', ';'];
         $phone = str_replace(' ', '', $phone); // Replaces all spaces with hyphens.
         $cleanPhone = '';
         $notes = '';
@@ -175,7 +175,7 @@ class RenewalsImport implements OnEachRow, WithStartRow, WithValidation, SkipsOn
 
     function sanitizeEmail($email)
     {
-        $delimiterArray = [',', ':', '/', ';', '-'];	// delimiters
+        $delimiterArray = [',', ':', '/', ';'];	// delimiters
         $cleanEmail = '';
         $notes = '';
         foreach ($delimiterArray as $delimiter) {

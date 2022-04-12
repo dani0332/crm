@@ -362,6 +362,36 @@ class BusinessQuoteService extends BaseService
         }
     }
 
+    public function getLeadAuditHistory($id)
+    {
+        $audits = DB::table('car_quote_request as cqr')
+        ->select(
+            'a.created_at as ModifiedAt',
+            DB::raw('(SELECT name from users where id = a.user_id) as ModifiedBy'),
+            DB::raw("(SELECT TEXT FROM quote_status WHERE id = JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.quote_status_id'))) AS NewStatus"),
+            DB::raw("(SELECT NAME FROM users WHERE id = JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.advisor_id'))) AS NewAdvisor"),
+            DB::raw("JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.notes')) AS NewNotes")
+        )
+        ->join('business_quote_request_detail as cqrd', 'cqrd.business_quote_request_id', '=', 'cqr.id')
+        ->join("audits as a",function($query){
+            $query->on("a.auditable_id","=","cqr.id")
+                ->orOn("a.auditable_id","=","cqrd.id");
+        })
+        ->where(function ($query) {
+            $query->where('a.auditable_type', 'App\Models\BusinessQuote')
+            ->orWhere('a.auditable_type', 'App\Models\BusinessQuoteRequestDetail');
+        })
+        ->where(function ($query) {
+            $query->whereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.quote_status_id')"))
+            ->orWhereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.notes')"))
+            ->orWhereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.advisor_id')"));
+        })
+        ->where('cqr.id', $id)
+        ->where('a.new_values', 'like', '%%')
+        ->orderBy('a.created_at', 'DESC')->get();
+        return $audits;
+    }
+
     public function fillModelProperties()
     {
         return array(
@@ -381,7 +411,7 @@ class BusinessQuoteService extends BaseService
             "created_at" => "input|date|title|range",
             "updated_at" => "input|date|title",
             "premium" => "input|number|required",
-            "number_of_employees" => "input|title|number",
+            "number_of_employees" => "input|number|title",
             "business_type_of_insurance_id" => "select|title|required",
             "brief_details" => 'textarea|required',
         );
@@ -452,7 +482,7 @@ class BusinessQuoteService extends BaseService
         $quote = new BusinessQuote();
         
         $quote->parent_duplicate_quote_id = $parentRecord->code;
-
+        
         $response = CapiRequestService::getUUID(QuoteTypeId::Business);
         if($response) {
             $quote->uuid = $response->uuid;
