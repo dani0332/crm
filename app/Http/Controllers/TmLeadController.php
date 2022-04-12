@@ -6,7 +6,6 @@ use App\Models\TmLead;
 use Illuminate\Http\Request;
 use DataTables;
 use Auth;
-use DB;
 use App\Enums\tmLeadStatusCode;
 use App\Services\TMLeadsService;
 use App\Models\TmInsuranceType;
@@ -327,6 +326,7 @@ class TmLeadController extends Controller
         $this->validate($request, [
             'tm_lead_statuses_id' => 'required',
             'notes' => 'max:500',
+            //'next_followup_date' => 'required|after:' . Carbon::now()->format('Y-m-d H:i:s'),
         ]);
 
         if ((($tmLeadStatusCode == tmLeadStatusCode::NoAnswer || $tmLeadStatusCode == tmLeadStatusCode::SwitchedOff) && $request->no_answer_count < "3")
