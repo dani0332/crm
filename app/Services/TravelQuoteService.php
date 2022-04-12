@@ -56,7 +56,7 @@ class TravelQuoteService extends BaseService
             'tqr.currently_located_in_id',
             'cli.text as currently_located_in_id_text',
             'tqr.destination_id',
-            'country.text as destination_id_text'
+            'nationality.text as destination_id_text'
         )
             ->leftJoin('travel_cover_for as tcf', 'tcf.id', '=', 'tqr.travel_cover_for_id')
             ->leftJoin('travel_quote_request_detail as tqrd', 'tqr.id', '=', 'tqrd.travel_quote_request_id')
@@ -66,7 +66,7 @@ class TravelQuoteService extends BaseService
             ->leftJoin('users as u', 'u.id', '=', 'tqr.advisor_id')
             ->leftJoin('region as r', 'r.id', '=', 'tqr.region_cover_for_id')
             ->leftJoin('currently_located_in as cli', 'cli.id', '=', 'tqr.currently_located_in_id')
-            ->leftJoin('country', 'country.id', '=', 'tqr.destination_id')
+            ->leftJoin('nationality', 'nationality.id', '=', 'tqr.destination_id')
             ->leftJoin('travel_plan as tp', 'tp.id', '=', 'tqr.plan_id')
             ->leftJoin('payment_status as ps', 'ps.id', '=', 'tqr.payment_status_id');
     }
