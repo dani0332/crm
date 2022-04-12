@@ -31,15 +31,6 @@ $(document).ready(function () {
         yearRange: "-80:+00"
     });
 
-    var tmLeadEditFormNextFollowupDate = $('#tmLeadEditFormNextFollowupDate').val();
-    if (tmLeadEditFormNextFollowupDate != "") {
-        minDateTime = tmLeadEditFormNextFollowupDate;
-    } else {
-        minDateTime = new Date();
-    }
-
-    console.log("indexOf: ", window.location.href.indexOf('tmleads'));
-    console.log("navigation: ", performance.navigation.type);
     if (window.location.href.indexOf('tmleads') > -1) {
         if (performance.navigation.type == 2) {
             location.reload(true);
@@ -50,7 +41,6 @@ $(document).ready(function () {
         timePicker: true,
         singleDatePicker: true,
         timePicker24Hour: true,
-        minDate: minDateTime,
         locale: {
             format: 'YYYY-MM-DD HH:mm:ss'
         }
