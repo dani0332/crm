@@ -424,6 +424,7 @@ class CarQuoteService extends BaseService
                 'u.name as assignedBy',
                 'cqr.updated_at',
                 'cqr.source as leadSource',
+                'cqr.premium',
                 'cqrd.next_followup_date as nextFollowupDate',
             )
             ->leftJoin('car_quote_request_detail as cqrd', 'cqrd.car_quote_request_id', '=', 'cqr.id')
@@ -452,6 +453,7 @@ class CarQuoteService extends BaseService
                 'cqr.updated_at',
                 'cqr.source as leadSource',
                 'cqrd.next_followup_date as nextFollowupDate',
+                'cqr.premium'
             )
             ->leftJoin('car_quote_request_detail as cqrd', 'cqrd.car_quote_request_id', '=', 'cqr.id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'cqr.quote_status_id')

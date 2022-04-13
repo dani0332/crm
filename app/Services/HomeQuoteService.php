@@ -223,6 +223,7 @@ class HomeQuoteService extends BaseService
                 'hqrd.advisor_assigned_date as assignedDate',
                 'u.name as assignedBy',
                 'hqr.updated_at',
+                'hqr.premium',
                 'hqr.source as leadSource',
                 'hqrd.next_followup_date as nextFollowupDate',
             )
@@ -251,6 +252,7 @@ class HomeQuoteService extends BaseService
                 'u.name as assignedBy',
                 'hqr.updated_at',
                 'hqr.source as leadSource',
+                'hqr.premium',
                 'hqrd.next_followup_date as nextFollowupDate',
             )
             ->leftJoin('home_quote_request_detail as hqrd', 'hqrd.home_quote_request_id', '=', 'hqr.id')

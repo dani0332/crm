@@ -324,6 +324,7 @@ class HealthQuoteService extends BaseService
                 'u.name as assignedBy',
                 'hqr.updated_at',
                 'hqr.source as leadSource',
+                'hqr.premium',
                 'hqrd.next_followup_date as nextFollowupDate',
             )
             ->leftJoin('health_quote_request_detail as hqrd', 'hqrd.health_quote_request_id', '=', 'hqr.id')
@@ -338,6 +339,7 @@ class HealthQuoteService extends BaseService
 
     public function getHealthLeadsForAdvisor($request)
     {
+        dd('test');
         $query = DB::table('health_quote_request as hqr')
             ->select(
                 'hqr.id',
@@ -351,6 +353,7 @@ class HealthQuoteService extends BaseService
                 'u.name as assignedBy',
                 'hqr.updated_at',
                 'hqr.source as leadSource',
+                'hqr.premium',
                 'hqrd.next_followup_date as nextFollowupDate',
             )
             ->leftJoin('health_quote_request_detail as hqrd', 'hqrd.health_quote_request_id', '=', 'hqr.id')
