@@ -212,7 +212,7 @@ class LifeQuoteService extends BaseService
             return $this->query->orderBy($column, $direction);
         } else {
             if (Auth::user()->isRenewalAdvisor()) {
-                return $this->query->whereNotNull('hqr.previous_quote_id')->latest();
+                return $this->query->whereNotNull('hqr.previous_quote_id');
             }
             return $this->query->orderBy('lqr.created_at', 'DESC');
         }
@@ -315,8 +315,11 @@ class LifeQuoteService extends BaseService
                 'lqr.quote_status_id',
                 'lqrd.advisor_assigned_date as assignedDate',
                 'u.name as assignedBy',
-                'lqr.updated_at',
+                'lqr.updated_at as updatedAt',
                 'lqr.source as leadSource',
+                'lqr.policy_number as policy_number',
+                'lqr.email',
+                'lqr.mobile_no',
                 'lqrd.next_followup_date as nextFollowupDate',
             )
             ->leftJoin('life_quote_request_detail as lqrd', 'lqrd.life_quote_request_id', '=', 'lqr.id')
@@ -357,6 +360,9 @@ class LifeQuoteService extends BaseService
         }
         if (isset($request->leadStatus) && $request->leadStatus != 0) {
             $query->where('lqr.quote_status_id', $request->leadStatus);
+        }
+        if (Auth::user()->isRenewalAdvisor()) {
+            return $query->whereNotNull('lqr.previous_quote_id');
         }
         return $query;
     }

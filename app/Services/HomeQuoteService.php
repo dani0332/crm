@@ -139,6 +139,9 @@ class HomeQuoteService extends BaseService
                 // if user has advisor Role then fetch leads assigned to the user only
                 $this->query->where('hqr.advisor_id', Auth::user()->id);	// fetch leads assigned to the user
             }
+            if (Auth::user()->isRenewalAdvisor()) {
+                return $this->query->whereNotNull('hqr.previous_quote_id');
+            }
             foreach ($searchProperties as $item) {
                 if (!empty($request[$item]) && $item != "created_at") {
                     if ($request[$item] == 'null') {
@@ -247,10 +250,13 @@ class HomeQuoteService extends BaseService
                 DB::raw("CONCAT_WS(' ',hqr.first_name,hqr.last_name) AS clientName"),
                 'qs.text as leadStatus',
                 'hqr.created_at as createdAt',
+                'hqr.updated_at as updatedAt',
                 'hqr.quote_status_id',
                 'hqrd.advisor_assigned_date as assignedDate',
                 'u.name as assignedBy',
-                'hqr.updated_at',
+                'hqr.policy_number as policy_number',
+                'hqr.email',
+                'hqr.mobile_no',
                 'hqr.source as leadSource',
                 'hqrd.next_followup_date as nextFollowupDate',
             )
@@ -291,6 +297,9 @@ class HomeQuoteService extends BaseService
         }
         if (isset($request->leadStatus) && $request->leadStatus != 0) {
             $query->where('hqr.quote_status_id', $request->leadStatus);
+        }
+        if (Auth::user()->isRenewalAdvisor()) {
+            return $query->whereNotNull('hqr.previous_quote_id');
         }
         return $query;
     }

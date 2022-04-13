@@ -218,7 +218,7 @@ class HealthQuoteService extends BaseService
             return $this->query->orderBy($column, $direction);
         } else {
                 if (Auth::user()->isRenewalAdvisor()) {
-                    return $this->query->whereNotNull('hqr.previous_quote_id')->latest();
+                    return $this->query->whereNotNull('hqr.previous_quote_id');
                 }
                 return $this->query->orderBy('hqr.created_at', 'DESC');
         }
@@ -319,7 +319,11 @@ class HealthQuoteService extends BaseService
                 'hqr.quote_status_id',
                 'hqrd.advisor_assigned_date as assignedDate',
                 'u.name as assignedBy',
-                'hqr.updated_at',
+                'hqr.updated_at as updatedAt',
+                'hqr.company_name as company_name',
+                'hqr.premium as premium',
+                'hqr.email as email',
+                'hqr.mobile_no as mobile_no',
                 'hqr.source as leadSource',
                 'hqrd.next_followup_date as nextFollowupDate',
             )
@@ -361,6 +365,10 @@ class HealthQuoteService extends BaseService
         }
         if (isset($request->leadStatus) && $request->leadStatus != 0) {
             $query->where('hqr.quote_status_id', $request->leadStatus);
+        }
+
+        if (Auth::user()->isRenewalAdvisor()) {
+            return $query->whereNotNull('hqr.previous_quote_id');
         }
         return $query;
     }

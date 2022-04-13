@@ -170,7 +170,11 @@ class TravelQuoteService extends BaseService
                 'tqr.quote_status_id',
                 'tqrd.advisor_assigned_date as assignedDate',
                 'u.name as assignedBy',
-                'tqr.updated_at',
+                'tqr.updated_at as updatedAt',
+                'tqr.premium as premium',
+                'tqr.email as email',
+                'tqr.mobile_no as mobile_no',
+                'tqr.company_name as company_name',
                 'tqr.source as leadSource',
                 'tqrd.next_followup_date as nextFollowupDate'
             )
@@ -212,6 +216,10 @@ class TravelQuoteService extends BaseService
         }
         if (isset($request->leadStatus) && $request->leadStatus != 0) {
             $query->where('tqr.quote_status_id', $request->leadStatus);
+        }
+
+        if (Auth::user()->isRenewalAdvisor()) {
+            return $query->whereNotNull('tqr.previous_quote_id');
         }
         return $query;
     }
@@ -290,7 +298,7 @@ class TravelQuoteService extends BaseService
             return $this->query->orderBy($column, $direction);
         } else {
             if (Auth::user()->isRenewalAdvisor()) {
-                return $this->query->whereNotNull('hqr.previous_quote_id')->latest();
+                return $this->query->whereNotNull('hqr.previous_quote_id');
             }
             return $this->query->orderBy('tqr.created_at', 'DESC');
         }

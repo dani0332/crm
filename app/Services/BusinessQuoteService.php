@@ -121,6 +121,7 @@ class BusinessQuoteService extends BaseService
 
     public function getBusinessLeadsForAdvisor($request)
     {
+        
         $query = DB::table('business_quote_request as bqr')
             ->select(
                 'bqr.id',
@@ -132,10 +133,12 @@ class BusinessQuoteService extends BaseService
                 'bqr.quote_status_id',
                 'bqrd.advisor_assigned_date as assignedDate',
                 'u.name as assignedBy',
-                'bqr.updated_at',
+                'bqr.updated_at as updatedAt',
                 'bqr.source as leadSource',
                 'bqr.company_name',
                 'bqr.premium',
+                'bqr.email',
+                'bqr.mobile_no',
                 'bqrd.next_followup_date as nextFollowupDate',
             )
             ->leftJoin('business_quote_request_detail as bqrd', 'bqrd.business_quote_request_id', '=', 'bqr.id')
@@ -175,6 +178,22 @@ class BusinessQuoteService extends BaseService
         }
         if (isset($request->leadStatus) && $request->leadStatus != 0) {
             $query->where('bqr.quote_status_id', $request->leadStatus);
+        }
+        if (isset($request->premium) && $request->premium != '') {
+            $query->where('bqr.premium', $request->premium);
+        }
+        if (isset($request->clientName) && $request->clientName != '') {
+            $query->where('clientName', $request->clientName);
+        }
+        if (isset($request->policy_number) && $request->policy_number != '') {
+            $query->where('bqr.policy_number', $request->policy_number);
+        }
+        if (isset($request->mobile_no) && $request->mobile_no != '') {
+            $query->where('bqr.mobile_no', $request->mobile_no);
+        }
+
+        if (Auth::user()->isRenewalAdvisor()) {
+            return $query->whereNotNull('bqr.previous_quote_id');
         }
         return $query;
     }
@@ -287,6 +306,9 @@ class BusinessQuoteService extends BaseService
                     }
                 }
             }
+        }
+        if (Auth::user()->isRenewalAdvisor()) {
+            return $this->query->whereNotNull('bqr.previous_quote_id');
         }
         $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
         $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';
