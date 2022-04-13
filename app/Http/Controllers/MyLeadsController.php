@@ -29,15 +29,16 @@ class MyLeadsController extends Controller
         $user = User::where('id', Auth::user()->id)->first();
         $team = DB::table('teams')->where('id', $user->team_id)->first();
         $teamName = $team->name;
-        if (strtolower($teamName) == strtolower(quoteTypeCode::RetailMedical) || strtolower($teamName) == strtolower(quoteTypeCode::EBP)) {
+        if (strtolower($teamName) == strtolower(quoteTypeCode::RetailMedical) || strtolower($teamName) == strtolower(quoteTypeCode::EBP) || strtolower($teamName) == strtolower(quoteTypeCode::RM)) {
             $teamName = 'health';
-        } else if (strtolower($teamName) == strtolower(quoteTypeCode::CORPLINE) || strtolower($teamName) == strtolower(quoteTypeCode::GroupMedical) || strtolower($teamName) == strtolower(quoteTypeCode::GM)) {
+        }
+        if (strtolower($teamName) == strtolower(quoteTypeCode::CORPLINE) || strtolower($teamName) == strtolower(quoteTypeCode::GroupMedical) || strtolower($teamName) == strtolower(quoteTypeCode::GM)) {
             $teamName = 'business';
         }
         $parentTeamId = $team->id;
         $leadStatusList = QuoteStatus::select('id', 'text')->get();
         $allowedTeamTypes = [];
-        array_push($allowedTeamTypes, ['id' => $team->id, 'name' => $teamName]);
+        array_push($allowedTeamTypes, ['id' => $team->id, 'name' => $teamName]);        
         $userAdditionalTeams = User::where('id', Auth::user()->id)->first()->additional_team_ids;
         if (!empty($userAdditionalTeams)) {
             if(str_contains($userAdditionalTeams, ',')) {
@@ -53,7 +54,7 @@ class MyLeadsController extends Controller
             if(isset($request->teamType)){
                 $teamName = strtolower($request->teamType); 
             }
-            $allowedTypes = ['car', 'home', 'travel', 'health', 'life', 'travel'];
+            $allowedTypes = ['car', 'home', 'business', 'health', 'life', 'travel'];
             $gridData = in_array($teamName, $allowedTypes) ? $this->crudService->getAdvisorLeads($request, $teamName) : [];
             return DataTables::of($gridData)
                 ->addIndexColumn()
