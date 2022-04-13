@@ -110,7 +110,7 @@ class TravelQuoteService extends BaseService
                 'u.name as assignedBy',
                 'tqr.updated_at',
                 'tqr.source as leadSource',
-                'hqr.premium',
+                'tqr.premium',
                 'tqrd.next_followup_date as nextFollowupDate'
             )
             ->leftJoin('travel_quote_request_detail as tqrd', 'tqrd.travel_quote_request_id', '=', 'tqr.id')
@@ -172,7 +172,7 @@ class TravelQuoteService extends BaseService
                 'u.name as assignedBy',
                 'tqr.updated_at',
                 'tqr.source as leadSource',
-                'hqr.premium',
+                'tqr.premium',
                 'tqrd.next_followup_date as nextFollowupDate'
             )
             ->leftJoin('travel_quote_request_detail as tqrd', 'tqrd.travel_quote_request_id', '=', 'tqr.id')
@@ -180,8 +180,8 @@ class TravelQuoteService extends BaseService
             ->leftJoin('users as u', 'u.id', '=', 'tqrd.advisor_assigned_by_id')
             ->where('qs.text', '!=', 'Fake')
             ->where(function ($query) {
-                $query->where('hqrd.next_followup_date', '>', date('Y-m-d'))
-                      ->orWhereNull('hqrd.next_followup_date');
+                $query->where('tqrd.next_followup_date', '>', date('Y-m-d'))
+                      ->orWhereNull('tqrd.next_followup_date');
             })
             ->where('tqr.advisor_id', Auth::user()->id);
 
