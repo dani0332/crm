@@ -116,7 +116,7 @@ class TravelQuoteService extends BaseService
             ->leftJoin('travel_quote_request_detail as tqrd', 'tqrd.travel_quote_request_id', '=', 'tqr.id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'tqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'tqrd.advisor_assigned_by_id')
-            ->where('tqrd.next_followup_date', '<', date('Y-m-d'))
+            ->where('tqrd.next_followup_date', '<', date('Y-m-d H:i:s'))
             ->whereIn('qs.text', ['Followed Up','Qualification Pending', 'Quoted', 'FTC Pending', 'FTC Sent', 'Missing Documents Requested', 'Policy Documents Pending', 'Payment Pending', 'Pending with UW', 'Application Pending', 'In Negotiation'])
             ->where('tqr.advisor_id', Auth::user()->id);
             return $query;
@@ -179,7 +179,7 @@ class TravelQuoteService extends BaseService
             ->leftJoin('users as u', 'u.id', '=', 'tqrd.advisor_assigned_by_id')
             ->where('qs.text', '!=', 'Fake')
             ->where(function ($query) {
-                $query->where('tqrd.next_followup_date', '>', date('Y-m-d'))
+                $query->where('tqrd.next_followup_date', '>', date('Y-m-d H:i:s'))
                       ->orWhereNull('tqrd.next_followup_date');
             })
             ->where('tqr.advisor_id', Auth::user()->id);
