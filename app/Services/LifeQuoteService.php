@@ -212,7 +212,7 @@ class LifeQuoteService extends BaseService
             return $this->query->orderBy($column, $direction);
         } else {
             if (Auth::user()->isRenewalAdvisor()) {
-                return $this->query->whereNotNull('hqr.previous_quote_id');
+                return $this->query->whereNotNull('lqr.previous_quote_id');
             }
             return $this->query->orderBy('lqr.created_at', 'DESC');
         }

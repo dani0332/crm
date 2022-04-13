@@ -298,7 +298,7 @@ class TravelQuoteService extends BaseService
             return $this->query->orderBy($column, $direction);
         } else {
             if (Auth::user()->isRenewalAdvisor()) {
-                return $this->query->whereNotNull('hqr.previous_quote_id');
+                return $this->query->whereNotNull('tqr.previous_quote_id');
             }
             return $this->query->orderBy('tqr.created_at', 'DESC');
         }
