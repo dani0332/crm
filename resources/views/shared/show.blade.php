@@ -52,8 +52,8 @@
                     </ul>
                     <div class="clearfix"></div>
                 </div>
-                @hasanyrole('ADMIN|HEALTH_MANAGER|WCU_ADVISOR|HEALTH_DEPUTY')
-                    @if (strtolower($model->modelType) == 'health' && $record->health_team_type != '')
+                @hasanyrole('ADMIN|HEALTH_MANAGER|HEALTH_WCU_ADVISOR|HEALTH_DEPUTY_MANAGER')
+                    @if (strtolower($model->modelType) == 'health')
                     <form method="post" id="healthTeamAssignForm" action="healthTeamAssign"
                             class="form-horizontal form-label-left" autocomplete="off">
                             {{ csrf_field() }}
@@ -301,44 +301,42 @@
             :carQuotePaymentStatus="$record->payment_status_id_text" :carQuotePlanName="$record->plan_id_text"
             :carQuotePlanAddons="$carQuotePlanAddons" :carQuotePlanProvider="$record->car_plan_provider_id_text"
             :carQuotePaymentMethod="$record->payment_gateway" />
-
- 
-
-            <div class="row" st>
-                <div class="col-md-12 col-sm-12">
-                    <div class="x_panel">
-                        <div class="x_title">
-                            <h2>Lead History</h2>
-                            <div class="clearfix"></div>
-                        </div>
-                        <div class="x_content">
-                            <div id="lead-history-div">
-                                <table id="leadhistorydatatable" class="table table-striped jambo_table" style="width:100%">
-                                    <thead>
-                                        <tr>
-                                            <th>Modified At</th>
-                                            <th>Modified By</th>
-                                            <th>Lead Status</th>
-                                            <th>Advisor</th>
-                                            <th>Notes</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr>
-                                            <td colspan="5" style="text-align: center"> <button id="loadHistoryDataBtn" class="btn btn-success btn-sm">Load History Data</button></td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
         
 
         <x-car-quote-plans :listQuotePlans="$listQuotePlans" :uuid="$ecomCarInsuranceQuoteUrl.$record->uuid"
             :uuidModal="$record->uuid" :quoteRequestId="$record->id" :quoteIsCommerce="$record->is_ecommerce" />
     @endif
+
+    <div class="row" st>
+        <div class="col-md-12 col-sm-12">
+            <div class="x_panel">
+                <div class="x_title">
+                    <h2>Lead History</h2>
+                    <div class="clearfix"></div>
+                </div>
+                <div class="x_content">
+                    <div id="lead-history-div">
+                        <table id="leadhistorydatatable" class="table table-striped jambo_table" style="width:100%">
+                            <thead>
+                                <tr>
+                                    <th>Modified At</th>
+                                    <th>Modified By</th>
+                                    <th>Lead Status</th>
+                                    <th>Advisor</th>
+                                    <th>Notes</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td colspan="5" style="text-align: center"> <button id="loadHistoryDataBtn" class="btn btn-success btn-sm">Load History Data</button></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     @if ($model->modelType == quoteTypeCode::Travel)
         <div class="modal fade" id="quotePlanModal" name="quotePlanModal" tabindex="-1" role="dialog"
