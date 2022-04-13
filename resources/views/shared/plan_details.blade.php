@@ -169,10 +169,10 @@
                                                     <td style="width: 100px;font-weight: bold;">Member {{ $key+1 }}</td>
                                                 </tr>
                                                 <tr>
-                                                    <td style="width: 50px;">Age</td>
-                                                    <td style="width: 50px;">{{ ucwords($listQuotePlansMember->ageValue) }}</td>
+                                                    <td style="width: 50px;">Premium</td>
+                                                    <td style="width: 50px;">{{ $listQuotePlansMember->premium }}</td>
                                                     <td style="width: 50px;">DOB</td>
-                                                    <td style="width: 200px;">{{ ucwords($listQuotePlansMember->dob) }}</td>
+                                                    <td style="width: 200px;">{{ \Carbon\Carbon::createFromTimestamp(strtotime($listQuotePlansMember->dob))->format('d-m-Y')}}</td>
                                                 </tr>
                                             @endforeach
                                         </table>

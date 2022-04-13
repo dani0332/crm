@@ -28,7 +28,7 @@
                         <div class="lead-block rotten">
                             <div class="lead-title">{{$lead->code}}</div>
                             <span class="float-right">
-                                <a target="_blank" href="{{strtolower($model->modelType)}}/{{$lead->uuid}}"><i class="fa fa-pencil" aria-hidden="true"></i></a>
+                                <a target="_blank" href="/quotes/{{strtolower($model->modelType)}}/{{$lead->uuid}}"><i class="fa fa-pencil" aria-hidden="true"></i></a>
                             </span>
                             <div class="pad-5"></div>
                             <div class="lead-person"><i class="fa fa-user font-1" aria-hidden="true"></i> &nbsp;

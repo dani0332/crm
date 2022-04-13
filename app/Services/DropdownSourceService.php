@@ -224,7 +224,13 @@ class DropdownSourceService extends BaseService
                 $data = DB::table("currently_located_in")->select('id','text')->where("is_active", true)->orderBy('sort_order', 'asc')->get();
                 break;
             case 'destination_id':
-                $data = DB::table("country")->select('id','text')->where("is_active", true)->orderBy('sort_order', 'asc')->get();
+                $data = DB::table("nationality")->select('id','country_name as text')->where("is_active", true)->orderBy('sort_order', 'asc')->get();
+                break;
+            case 'salary_band_id':
+                $data = DB::table("salary_band")->select('id','text')->where("is_active", true)->orderBy('sort_order', 'asc')->get();
+                break;
+            case 'member_category_id':
+                $data = DB::table("member_category")->select('id','text')->where("is_active", true)->orderBy('sort_order', 'asc')->get();
                 break;
             default:
                 break;

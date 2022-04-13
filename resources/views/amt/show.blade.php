@@ -7,6 +7,9 @@
             <div class="x_title">
                 <h2>Group Medical Lead Detail</h2>
                 <ul class="nav navbar-right panel_toolbox">
+                    @if(count($allowedDuplicateLOB) > 0)
+                    <li> <a id="duplicateLeadModalBtn" class="btn btn-warning btn-sm">Duplicate Lead</a> </li>
+                    @endif
                     <li><a href="{{ url('medical/amt') }}" class="btn btn-warning btn-sm">Group Medical List</a></li>
                 </ul>
                 <div class="clearfix"></div>
@@ -182,9 +185,81 @@
             :statuses="$leadStatuses"
             :lostreasons="$lostReasons"
             :selectedlostreason="$selectedLostReasonId"
-        />
+        />  
+
+            <div class="row" st>
+                <div class="col-md-12 col-sm-12">
+                    <div class="x_panel">
+                        <div class="x_title">
+                            <h2>Lead History</h2>
+                            <div class="clearfix"></div>
+                        </div>
+                        <div class="x_content">
+                            <div id="lead-history-div">
+                                <table id="leadhistorydatatable" class="table table-striped jambo_table" style="width:100%">
+                                    <thead>
+                                        <tr>
+                                            <th>Modified At</th>
+                                            <th>Modified By</th>
+                                            <th>Lead Status</th>
+                                            <th>Advisor</th>
+                                            <th>Notes</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td colspan="5" style="text-align: center"> <button id="loadHistoryDataBtn" class="btn btn-success btn-sm">Load History Data</button></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+           
 
         </div>
+        @if(count($allowedDuplicateLOB) > 0)
+        <div class="modal fade" id="duplicateLeadModal" name="duplicateLeadModal" tabindex="-1" role="dialog"
+            aria-labelledby="duplicateLeadModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+               
+                    <div class="modal-content" style="display: grid;    height: 260px !important;">
+                        <form method="post" action="/quotes/createDuplicate" autocomplete="off">
+                            {{ csrf_field() }}
+                            @method('POST')
+                            <input type="hidden" value="{{ strtolower($modeltype) }}" name="modelType">
+                            <input type="hidden" value="{{ strtolower($modeltype) }}" name="parentType">
+                            <input type="hidden" value="{{ strtolower($record->id) }}" name="entityId">
+                            <input type="hidden" value="{{ strtolower($record->code) }}" name="entityCode">
+                            <input type="hidden" value="{{ strtolower($record->uuid) }}" name="entityUId">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="duplicateLeadModalLabel" style="font-size: 16px !important;"><span
+                                    class="fa fa-clone"></span>
+                                <strong style="margin-left: 13px;">Duplicate Lead</strong>
+                            </h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body" style="height: 138px;">
+                            <select class="form-control select2" multiple="multiple" id="lob_team" name="lob_team[]">
+                                @foreach ($allowedDuplicateLOB as $item)
+                                    <option value="{{ $item }}">{{ $item }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="modal-footer" style="justify-content: center; padding : 0px !important;">
+                            <button type="submit" style="margin-top: 13px;" class="btn btn-sm btn-success">Create Duplicate</button>
+                        </div>
+                    </form>
+                    </div>
+               
+            </div>
+        </div>
+        @endif
     </div>
 </div>
 @endsection

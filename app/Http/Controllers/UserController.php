@@ -108,6 +108,8 @@ class UserController extends Controller
         $user = new User();
         $user->name = $request->name;
         $user->email = $request->email;
+        $user->mobile_no = $request->mobile_no;
+        $user->landline_no = $request->landline_no;
         $user->password = bcrypt($request->password);
 
         if($request->sub_team_id != "0") $user->sub_team_id = $request->sub_team_id;
@@ -191,6 +193,8 @@ class UserController extends Controller
         // Updating user
         $user->name = $request->name;
         $user->email = $request->email;
+        $user->mobile_no = $request->mobile_no;
+        $user->landline_no = $request->landline_no;
         $user->password = bcrypt($request->password);
         if ($request->manager_id != "0") $user->manager_id = $request->manager_id;
         else $user->manager_id = null;

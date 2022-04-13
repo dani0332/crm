@@ -81,15 +81,24 @@ function cleanString($string) {
     return preg_replace('/[^A-Za-z0-9\-]/', '', $string); // Removes special chars.
  }
 
- function getDataAgainstStatus($modelType, $statusId) {
+ function getDataAgainstStatus($modelType, $statusId, $myleads = null) {
     $result = [];
     if(!$modelType)
         return $result;
     $nameSpace = '\\App\\Models\\';
     $modelType = $nameSpace .$modelType."Quote";
-    $result["total_leads"] = $modelType::where("quote_status_id", $statusId)->count();
-    $result["total_premium"] = $modelType::where("quote_status_id", $statusId)->sum("premium");
-    $result["leads_list"] = $modelType::where("quote_status_id", $statusId)->paginate(10);
+    
+    if($myleads)
+    {
+        $result["total_leads"] = $modelType::where("quote_status_id", $statusId)->where("advisor_id", \Auth::user()->id)->count();
+        $result["total_premium"] = $modelType::where("quote_status_id", $statusId)->where("advisor_id", \Auth::user()->id)->sum("premium");
+        $result["leads_list"] = $modelType::where("quote_status_id", $statusId)->where("advisor_id", \Auth::user()->id)->paginate(10);
+    }else {
+        $result["total_leads"] = $modelType::where("quote_status_id", $statusId)->count();
+        $result["total_premium"] = $modelType::where("quote_status_id", $statusId)->sum("premium");
+        $result["leads_list"] = $modelType::where("quote_status_id", $statusId)->paginate(10);
+    }
+
     return $result;
 }
 
@@ -99,33 +108,49 @@ function getDataAgainstEveryStatus($modelType, $request) {
         return $result;
     $nameSpace = '\\App\\Models\\';
     $modelType = $nameSpace .$modelType."Quote";
-    $result["leads_list"] = $modelType::where("quote_status_id", $request->status)->paginate(10);
+    if($request->has("myleads"))
+        $result["leads_list"] = $modelType::where("quote_status_id", $request->status)->where("advisor_id", \Auth::user()->id)->paginate(10);
+    else
+        $result["leads_list"] = $modelType::where("quote_status_id", $request->status)->paginate(10);
    
     return $result;
 }
 
-function getDataAgainstSearchTerm($modelType, $term, $status) {
+function getDataAgainstSearchTerm($modelType,  $request) {
     $result = [];
-    if(!$term)
+    if(!$request->term)
         return $result;
     $nameSpace = '\\App\\Models\\';
     $modelType = $nameSpace .$modelType."Quote";
     if($modelType == "Business")
     {
-        $result["leads_list"] = $modelType::where("quote_status_id", $status)
-        ->Where('code', 'like', '%' . $term )
-        ->orWhere('mobile_no', 'like', '%' . $term )
-        ->orWhere('email', 'like', '%' . $term )
-        ->orWhere('first_name', 'like', '%' . $term )
-        ->orWhere('last_name', 'like', '%' . $term )
-        ->orWhere('company_name', 'like', '%' . $term )->get();
+        if($request->has("myleads") && $request->myleads)
+        {
+            $result["leads_list"] = $modelType::where("quote_status_id", $request->status)
+            ->Where('code', 'like', '%' . $request->term )
+            ->orWhere('mobile_no', 'like', '%' . $request->term )
+            ->orWhere('email', 'like', '%' . $request->term )
+            ->orWhere('first_name', 'like', '%' . $request->term )
+            ->orWhere('last_name', 'like', '%' . $request->term )
+            ->orWhere('company_name', 'like', '%' . $request->term )
+            ->where("advisor_id", \Auth::user()->id)
+            ->get();
+        }else {
+            $result["leads_list"] = $modelType::where("quote_status_id", $status)
+            ->Where('code', 'like', '%' . $request->term )
+            ->orWhere('mobile_no', 'like', '%' . $request->term )
+            ->orWhere('email', 'like', '%' . $request->term )
+            ->orWhere('first_name', 'like', '%' . $request->term )
+            ->orWhere('last_name', 'like', '%' . $request->term )
+            ->orWhere('company_name', 'like', '%' . $request->term )->get();
+        }
     }else {
-        $result["leads_list"] = $modelType::where("quote_status_id", $status)
-        ->Where('code', 'like', '%' . $term )
-        ->orWhere('mobile_no', 'like', '%' . $term )
-        ->orWhere('email', 'like', '%' . $term )
-        ->orWhere('first_name', 'like', '%' . $term )
-        ->orWhere('last_name', 'like', '%' . $term )->get();
+        $result["leads_list"] = $modelType::where("quote_status_id", $request->status)
+        ->Where('code', 'like', '%' . $request->term )
+        ->orWhere('mobile_no', 'like', '%' . $request->term )
+        ->orWhere('email', 'like', '%' . $request->term )
+        ->orWhere('first_name', 'like', '%' . $request->term )
+        ->orWhere('last_name', 'like', '%' . $request->term )->get();
     }
    
     return $result;

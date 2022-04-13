@@ -17,6 +17,10 @@ class VehicleDepreciation extends Model implements AuditableContract
     {
         return $this->belongsTo(CarMake::class,'car_make_id','id');
     }
+    public function insuranceprovider()
+    {
+        return $this->belongsTo(InsuranceProvider::class,'insurance_provider_id','id');
+    }
     public function carmodel()
     {
         return $this->belongsTo(CarModel::class,'car_model_id','id');

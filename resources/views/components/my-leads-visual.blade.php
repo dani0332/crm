@@ -5,7 +5,7 @@
     <h2>
     {{ $item->text ?? $item->name }}
     @php 
-    $result = getDataAgainstStatus($model, $item->id);
+    $result = getDataAgainstStatus($model, $item->id, "myleads");
     @endphp
     
     </h2>
@@ -28,7 +28,7 @@
                 <div class="lead-block rotten">
                     <div class="lead-title">{{$lead->code}}</div>
                     <span class="float-right">
-                        <a target="_blank" href="{{strtolower($model)}}/{{$lead->uuid}}"><i class="fa fa-pencil" aria-hidden="true"></i></a>
+                        <a target="_blank" href="/quotes/{{strtolower($model)}}/{{$lead->uuid}}"><i class="fa fa-pencil" aria-hidden="true"></i></a>
                     </span>
                     <div class="pad-5"></div>
                     <div class="lead-person"><i class="fa fa-user font-1" aria-hidden="true"></i> &nbsp;
@@ -40,7 +40,7 @@
                 </div>
             </li> 
         @endforeach
-        @if($result["total_leads"])
+        @if($result["total_leads"] && $result["total_leads"] > 10)
             <a href="#" onclick="(loadMore({{$item->id}}))" class="quotePlanModalPopup load_more_btn" id="load_more_btn{{$item->id}}">Load More</a></span>
         @endif
         @endif
