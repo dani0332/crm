@@ -331,7 +331,7 @@ class HealthQuoteService extends BaseService
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'hqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'hqrd.advisor_assigned_by_id')
             ->whereIn('qs.text', ['Followed Up','Qualification Pending', 'Quoted', 'FTC Pending', 'FTC Sent', 'Missing Documents Requested', 'Policy Documents Pending', 'Payment Pending', 'Pending with UW', 'Application Pending', 'In Negotiation'])
-            ->where('hqrd.next_followup_date', '<', date('Y-m-d'))
+            ->where('hqrd.next_followup_date', '<', date('Y-m-d H:i:s'))
             ->where('hqr.advisor_id', Auth::user()->id);
             return $query;
     }
@@ -359,7 +359,7 @@ class HealthQuoteService extends BaseService
             ->leftJoin('users as u', 'u.id', '=', 'hqrd.advisor_assigned_by_id')
             ->where('qs.text', '!=', 'Fake')
             ->where(function ($query) {
-                $query->where('hqrd.next_followup_date', '>', date('Y-m-d'))
+                $query->where('hqrd.next_followup_date', '>', date('Y-m-d H:i:s'))
                       ->orWhereNull('hqrd.next_followup_date');
             })
             ->where('hqr.advisor_id', Auth::user()->id);

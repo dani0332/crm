@@ -3,6 +3,9 @@
 @section('content')
 <meta name="csrf-token" content="{{ csrf_token() }}" />
     <script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.2/moment.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment-timezone/0.5.34/moment-timezone.min.js"></script>
+    
     <script>
         function formatedDate(date) {
             var newDate = new Date(date);
@@ -180,7 +183,7 @@
                     var columns = $(rows[index]).children();
                     for (let i = 0; i < columns.length; i++) {
                         if(i == nextFollowupDateColumn && $(columns[i]).text() != ""){
-                            if(formatedDate(new Date()) > formatedDate(new Date($(columns[i]).text()))){
+                            if(moment().format('YYYY-MM-DD HH:mm:ss').toString() > $(columns[i]).text()){
                                 $(rows[index]).children().eq(i).css({'color': 'white', 'background-color': 'red', 'font-weight': 'bold', 'font-size': '12px'});
                             }
                         }
