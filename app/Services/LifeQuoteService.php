@@ -286,7 +286,7 @@ class LifeQuoteService extends BaseService
                 'u.name as assignedBy',
                 'lqr.updated_at',
                 'lqr.source as leadSource',
-                'hqr.premium',
+                'lqr.premium',
                 'lqrd.next_followup_date as nextFollowupDate',
             )
             ->leftJoin('life_quote_request_detail as lqrd', 'lqrd.life_quote_request_id', '=', 'lqr.id')
@@ -314,7 +314,7 @@ class LifeQuoteService extends BaseService
                 'u.name as assignedBy',
                 'lqr.updated_at',
                 'lqr.source as leadSource',
-                'hqr.premium',
+                'lqr.premium',
                 'lqrd.next_followup_date as nextFollowupDate',
             )
             ->leftJoin('life_quote_request_detail as lqrd', 'lqrd.life_quote_request_id', '=', 'lqr.id')
