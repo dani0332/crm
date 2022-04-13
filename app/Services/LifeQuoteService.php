@@ -165,6 +165,24 @@ class LifeQuoteService extends BaseService
                 // if user has advisor Role then fetch leads assigned to the user only
                 $this->query->where('lqr.advisor_id', Auth::user()->id);	// fetch leads assigned to the user
             }
+            if (isset($request->code) && $request->code != '') {
+                $this->query->where('lqr.code', $request->code);
+            }
+            if (isset($request->first_name) && $request->first_name != '') {
+                $this->query->where('lqr.first_name', $request->first_name);
+            }
+            if (isset($request->last_name) && $request->last_name != '') {
+                $this->query->where('lqr.last_name', $request->last_name);
+            }
+            if (isset($request->email) && $request->email != '') {
+                $this->query->where('lqr.email', $request->email);
+            }
+            if (isset($request->mobile_no) && $request->mobile_no != '') {
+                $this->query->where('lqr.mobile_no', $request->mobile_no);
+            }
+            if (isset($request->policy_number) && $request->policy_number != '') {
+                $this->query->where('lqr.policy_number', $request->policy_number);
+            }
             foreach ($searchProperties as $item) {
                 if (!empty($request[$item]) && $item != "created_at") {
                     if ($request[$item] == 'null') {
@@ -429,7 +447,7 @@ class LifeQuoteService extends BaseService
             "source" => "input|text",
             "lost_reason" => "input|text",
             "premium" => "input|number|required",
-            "policy_number" => "input|number|required",
+            "policy_number" => "input|text|required",
             "sum_insured_currency_id" => "select|title|required",
             "purpose_of_insurance_id" => "select|title|required",
             "marital_status_id" => "select|title|required",

@@ -246,6 +246,25 @@ class TravelQuoteService extends BaseService
                 $dateTo = Carbon::createFromFormat('Y-m-d', $request['next_followup_date_end'])->endOfDay()->toDateTimeString();
                 $this->query->whereBetween('tqrd.next_followup_date', [$dateFrom, $dateTo]);
             }
+
+            if (isset($request->code) && $request->code != '') {
+                $this->query->where('tqr.code', $request->code);
+            }
+            if (isset($request->first_name) && $request->first_name != '') {
+                $this->query->where('tqr.first_name', $request->first_name);
+            }
+            if (isset($request->last_name) && $request->last_name != '') {
+                $this->query->where('tqr.last_name', $request->last_name);
+            }
+            if (isset($request->email) && $request->email != '') {
+                $this->query->where('tqr.email', $request->email);
+            }
+            if (isset($request->mobile_no) && $request->mobile_no != '') {
+                $this->query->where('tqr.mobile_no', $request->mobile_no);
+            }
+            if (isset($request->policy_number) && $request->policy_number != '') {
+                $this->query->where('tqr.policy_number', $request->policy_number);
+            }
             if(Auth::user()->isSpecificTeamAdvisor('Travel')){
                 // if user has advisor Role then fetch leads assigned to the user only
                 $this->query->where('tqr.advisor_id', Auth::user()->id);	// fetch leads assigned to the user
@@ -409,7 +428,7 @@ class TravelQuoteService extends BaseService
             "lost_reason" => "input|text",
             "source" => "input|text",
             "premium" => "input|number|required",
-            "policy_number" => "input|number|required",
+            "policy_number" => "input|text|required",
             "days_cover_for" => "input|number|title|required",
             "nationality_id" => "select|title|required",
             "destination_id" => "select|title|required",
