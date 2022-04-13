@@ -339,7 +339,6 @@ class HealthQuoteService extends BaseService
 
     public function getHealthLeadsForAdvisor($request)
     {
-        dd('test');
         $query = DB::table('health_quote_request as hqr')
             ->select(
                 'hqr.id',
