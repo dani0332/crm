@@ -26,6 +26,7 @@ class quoteTypeCode extends Enum
     const EBP = "EBP";
     const CORPLINE = "CORPLINE";
     const GM = "GM";
+    const RM = "RM";
     const GroupMedical = "Group Medical";
 
     public static function getOptions() 
