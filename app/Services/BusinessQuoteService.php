@@ -112,7 +112,7 @@ class BusinessQuoteService extends BaseService
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'bqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'bqrd.advisor_assigned_by_id')
             ->where('bqr.advisor_id', Auth::user()->id)
-            ->where('bqrd.next_followup_date', '<', date('Y-m-d'))
+            ->where('bqrd.next_followup_date', '<', date('Y-m-d H:i:s'))
             ->whereIn('qs.text', ['Followed Up','Qualification Pending', 'Quoted', 'FTC Pending', 'FTC Sent', 'Missing Documents Requested', 'Policy Documents Pending', 'Payment Pending', 'Pending with UW', 'Application Pending', 'In Negotiation']);
         return $query;
     }
@@ -142,7 +142,7 @@ class BusinessQuoteService extends BaseService
             ->where('bqr.advisor_id', Auth::user()->id)
             ->where('qs.text', '!=', 'Fake')
             ->where(function ($query) {
-                $query->where('bqrd.next_followup_date', '>', date('Y-m-d'))
+                $query->where('bqrd.next_followup_date', '>', date('Y-m-d H:i:s'))
                       ->orWhereNull('bqrd.next_followup_date');
             });
         if (isset($request->startedAt) && isset($request->endAt) && $request->startedAt != '' && $request->endAt != '') {
