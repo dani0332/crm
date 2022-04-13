@@ -136,22 +136,22 @@ class HomeQuoteService extends BaseService
                 $this->query->whereBetween('hqrd.next_followup_date', [$dateFrom, $dateTo]);
             }
             if (isset($request->code) && $request->code != '') {
-                $this->query->where('hqrd.code', $request->code);
+                $this->query->where('hqr.code', $request->code);
             }
             if (isset($request->first_name) && $request->first_name != '') {
-                $this->query->where('hqrd.first_name', $request->first_name);
+                $this->query->where('hqr.first_name', $request->first_name);
             }
             if (isset($request->last_name) && $request->last_name != '') {
-                $this->query->where('hqrd.last_name', $request->last_name);
+                $this->query->where('hqr.last_name', $request->last_name);
             }
             if (isset($request->email) && $request->email != '') {
-                $this->query->where('hqrd.email', $request->email);
+                $this->query->where('hqr.email', $request->email);
             }
             if (isset($request->mobile_no) && $request->mobile_no != '') {
-                $this->query->where('hqrd.mobile_no', $request->mobile_no);
+                $this->query->where('hqr.mobile_no', $request->mobile_no);
             }
             if (isset($request->policy_number) && $request->policy_number != '') {
-                $this->query->where('hqrd.policy_number', $request->policy_number);
+                $this->query->where('hqr.policy_number', $request->policy_number);
             }
             if(Auth::user()->isSpecificTeamAdvisor('Home')){
                 // if user has advisor Role then fetch leads assigned to the user only
