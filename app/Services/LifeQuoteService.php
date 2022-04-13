@@ -292,8 +292,7 @@ class LifeQuoteService extends BaseService
             ->leftJoin('life_quote_request_detail as lqrd', 'lqrd.life_quote_request_id', '=', 'lqr.id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'lqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'lqrd.advisor_assigned_by_id')
-            ->where('qs.text', '!=', 'Fake')
-            ->where('lqrd.next_followup_date', '>', date('Y-m-d'))
+            ->where('lqrd.next_followup_date', '<', date('Y-m-d'))
             ->whereIn('qs.text', ['Followed Up','Qualification Pending', 'Quoted', 'FTC Pending', 'FTC Sent', 'Missing Documents Requested', 'Policy Documents Pending', 'Payment Pending', 'Pending with UW', 'Application Pending', 'In Negotiation'])
             ->where('lqr.advisor_id', Auth::user()->id);
             return $query;
