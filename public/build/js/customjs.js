@@ -1502,6 +1502,21 @@ $(document).ready(function () {
         }
     });
 
+    $("#assignAfterTeam").click(function () {
+        var tmLeadIDs = [];
+        if($('#assign_team').val() == "") {
+            $("#teamAssignValidation").show().fadeOut(5000);
+            return false;
+        }
+        
+        if (!$('#checkAllTmLeads').is(":checked")) {
+            $.each($("input[name='tmLeadID']:checked"), function () {
+                tmLeadIDs.push($(this).val());
+            });
+            $('#selectTmLeadId').val(tmLeadIDs);
+        }
+    });
+
     // TM: Selecting a single record should also enable manual allocation
     $(document).on("change", "#tmLeadID", function () {
         var idsArray = $('#selectTmLeadId').val();

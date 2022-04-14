@@ -50,7 +50,7 @@
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="File">File <span class="required">*</span></label>
                         <div class="col-md-6 col-sm-6 ">
-                            <input type="file" id="file_name" name="file_name" class="form-control form-control-sm" accept='.csv,.xlsx' data-toggle="tooltip" data-placement="top" title="Please select .csv or .xlsx file to upload" />
+                            <input type="file" id="file_name" name="file_name" class="form-control form-control-sm" accept='.xlsx' data-toggle="tooltip" data-placement="top" title="Please select .xlsx file to upload" />
                             @if ($errors->has('file_name'))
                                 <span class="text-danger">{{ $errors->first('file_name') }}</span>
                             @endif
@@ -65,21 +65,18 @@
                     <div class="item form-group">
                         <p><h4 class="required"><b>Import Instructions must be follow:</b></h4></p>
                         <p><ul class="required" style="font-weight:bold;">
-                            <li>Download the sample csv/xlsx file, modify the data according to the recommendations for a successful import.</li>
-                            <li>File must be a csv/xlsx file with the following fields.</li>
+                            <li>Download the sample xlsx file, modify the data according to the recommendations for a successful import.</li>
+                            <li>File must be a xlsx file with the following fields.</li>
                             <li>Please ensure there are no commas in file.</li>
                             <li>First row will be skipped while uploading.</li>
                             <li>Please ensure there are no spaces in start and end of columns data</li>
-                            <li>Please ensure max allowed size is 2mb (2048kb) & recommend numbers 500 leads per csv/xlsx file.</li>
-                            <li>Please ensure columns header and allocation same as per given in sample csv/xlsx file.</li>
-                            <li>Please ensure all required columns data filled in the csv/xlsx file.</li>
-                            <li>Arabic is not supported in CSV file upload</li>
+                            <li>Please ensure max allowed size is 2mb (2048kb) & recommend numbers 500 leads per xlsx file.</li>
+                            <li>Please ensure columns header and allocation same as per given in sample xlsx file.</li>
+                            <li>Please ensure all required columns data filled in the xlsx file.</li>
+                            <li>Arabic is not supported in xlsx file upload</li>
                         </ul></p>
                     </div>
                     <div class="item form-group">
-                        <div class="col-md-3">
-                            Download Sample CSV <a href="https://myalfreddev.blob.core.windows.net/myrewards/861A9EF7-37A4-2DAC-646F-127EC51D73BA_sampleRenewals.csv"><img src="https://i.ibb.co/cv5WptT/csv.png" alt="csv" border="0" /></a>
-                        </div>
                         <div class="col-md-3">
                             Download Sample XLSX <a href="https://myalfreddev.blob.core.windows.net/myrewards/7F781868-0124-F309-5390-D7AE1DF79412_sample1.xlsx"><img src="https://img.icons8.com/color/40/000000/ms-excel.png" alt="xlsx" border="0" /></a>
                         </div>
