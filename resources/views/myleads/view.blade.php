@@ -22,6 +22,7 @@
         var teamUserIds = JSON.parse('<?php echo json_encode(Auth::user()->getTeamUserIds()); ?>');
         $(document).ready(function() {
             $('#handler').find('i').toggleClass("fa-angle-double-down fa-angle-double-up");
+            $('#collapseOne').collapse();
             $('#mylead-search-submit-btn').on('click', function (e){
                 e.preventDefault();
                 if($('#startedAt').val() != '' && $('#endAt').val() == '') {
@@ -460,14 +461,37 @@
                             </div>
                         </div>
                     </form>
-                    <div id="accordion" style="width: 98%;margin-left: 20px;">
+                    <table  id="dtBasicExample-leadsearch" class="table table-striped jambo_table leadSearch-data-table" style="width:100%">
+                        <thead>
+                            <tr>
+                                <th>CDB ID</th>
+                                <th>Client Name</th>
+                                <th>Lead Status</th>
+                                <th>Created Date</th>
+                                <th>Assigned Date</th>
+                                <th>Assigned By</th>
+                                <th>Lead Source</th>
+                                <th>Next FollowUp Date</th>
+                                <th>Premium</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="odd">
+                                <td valign="top" colspan="9" class="dataTables_empty">No data available in table</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div id="accordion" style="width: 98%;margin-left: 20px;margin-top: 50px">
                         <div class="card">
                           <div class="card-header" id="headingOne" style="background-color: #4183BD;">
                             <h5 class="mb-0">
                               <a style="background-color: transparent;color: white;border: 0px;" onclick="javascript:changeIcon(this)" id="handler" data-toggle="collapse" data-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
                                 <i class="fa fa-angle-double-up" aria-hidden="true"></i> Over Due Leads
                               </a>
+                              
                             </h5>
+                            <h5><a style="color: floralwhite;float: right;margin-top: -24px;font-size: 25px;">Search filters doesn't apply on this grid.</a></h5>
                           </div>
                         </div>
                     <div id="collapseOne" class="collapse show" aria-labelledby="headingOne" data-parent="#accordion">
@@ -496,26 +520,7 @@
                       </div>
                     </div>
                     
-                    <table  id="dtBasicExample-leadsearch" class="table table-striped jambo_table leadSearch-data-table" style="width:100%">
-                        <thead>
-                            <tr>
-                                <th>CDB ID</th>
-                                <th>Client Name</th>
-                                <th>Lead Status</th>
-                                <th>Created Date</th>
-                                <th>Assigned Date</th>
-                                <th>Assigned By</th>
-                                <th>Lead Source</th>
-                                <th>Next FollowUp Date</th>
-                                <th>Premium</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr class="odd">
-                                <td valign="top" colspan="9" class="dataTables_empty">No data available in table</td>
-                            </tr>
-                        </tbody>
-                    </table>
+                    
                 </div>
                 </div>
             </div>
