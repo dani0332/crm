@@ -425,6 +425,16 @@
                                     </div>
                                 </div>
                             </div>
+                            @if (Auth::user()->isRenewalAdvisor())
+                            <div class="col">
+                                <label class="col-form-label col-md-2 col-sm-2" for="company_name">Company Name</label>
+                                <div class="col-md-6 col-sm-6">
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" name="company_name" id="company_name" >
+                                    </div>
+                                </div>
+                            </div>
+                            @endif
                             @if (!Auth::user()->isRenewalAdvisor())
                             <div class="col">
                                 <label class="col-form-label col-md-2 col-sm-2" for="searchfield">EMAIL</label>
