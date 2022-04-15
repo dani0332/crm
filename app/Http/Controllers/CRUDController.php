@@ -231,6 +231,7 @@ class CRUDController extends Controller
             $ecomCarInsuranceQuoteUrl = Config::get('constants.ECOM_CAR_INSURANCE_QUOTE_URL');
             $vehicleTypeText = $this->carQuoteService->getCarQuoteVehicleType($id);
 
+            $listQuote = null;
             if (isset($quotePlans->message) && $quotePlans->message != '') {
                 $listQuotePlans = $quotePlans->message;
             } else {
@@ -239,7 +240,6 @@ class CRUDController extends Controller
                     $listQuote = $quotePlans->quotes;
                 } else {
                     $listQuotePlans = $quotePlans;
-                    $listQuote = null;
                 }
             }
 
@@ -431,7 +431,7 @@ class CRUDController extends Controller
     }
 
     public function manualLeadAssign(Request $request)
-    { 
+    {
         $assignedToUserIdNew = $request->assigned_to_id_new;
         $leadsIds = $request->selectTmLeadId;
         $leadsIds = array_map('intval', explode(',', $leadsIds));
@@ -464,9 +464,7 @@ class CRUDController extends Controller
                     $entity->health_team_type = $request->assign_team;
                 }
                 else{
-                    if(strtolower($request->modelType) == 'health'){
-                        $entity->health_team_type = $request->assign_team;
-                    }
+                    $entity->health_team_type = $request->assign_team;
                     if (Auth::user()->hasRole('WCU_ADVISOR')) {
                         $entity->wcu_id = $userId;
                     } else {

@@ -78,7 +78,7 @@
                     </div>
                     <div class="item form-group">
                         <div class="col-md-3">
-                            Download Sample XLSX <a href="https://myalfreddev.blob.core.windows.net/myrewards/7F781868-0124-F309-5390-D7AE1DF79412_sample1.xlsx"><img src="https://img.icons8.com/color/40/000000/ms-excel.png" alt="xlsx" border="0" /></a>
+                            Download Sample XLSX <a href="https://myalfreddev.blob.core.windows.net/myrewards/94152CB2-D304-B775-9D49-6B09791F904B_sample1.xlsx"><img src="https://img.icons8.com/color/40/000000/ms-excel.png" alt="xlsx" border="0" /></a>
                         </div>
                     </div>
                     <div class="item form-group">
