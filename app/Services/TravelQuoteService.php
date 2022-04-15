@@ -30,6 +30,7 @@ class TravelQuoteService extends BaseService
             'tqr.destination',
             'tqr.travel_cover_for_id',
             'tcf.TEXT AS travel_cover_for_id_text',
+            'tqr.dob',
             'tqr.first_name',
             'tqr.last_name',
             'tqr.email',
@@ -79,14 +80,13 @@ class TravelQuoteService extends BaseService
             "firstName" => $request->first_name,
             "lastName" => $request->last_name,
             "email" => $request->email,
-            "details" => $request->details,
             "mobileNo" => $request->mobile_no,
             "travelCoverForId" => $request->travel_cover_for_id,
             "premium" => $request->premium,
             "nationalityId" => $request->nationality_id,
             "daysCoverFor" => $request->days_cover_for,
             "destinationId" => $request->destination_id,
-            "regionCoverForId" => $request->region_cover_for_i,
+            "regionCoverForId" => $request->region_cover_for_id,
             "source" => $sourceName,
             "referenceUrl" => $appUrl,
             "currentlyLocatedInId" => $request->currently_located_in_id
@@ -369,14 +369,12 @@ class TravelQuoteService extends BaseService
         $travelQuote = TravelQuote::where('uuid', $id)->first();
         $travelQuote->first_name = $request->first_name;
         $travelQuote->last_name = $request->last_name;
-        $travelQuote->details = $request->details;
         $travelQuote->travel_cover_for_id = $request->travel_cover_for_id;
         $travelQuote->nationality_id = $request->nationality_id;
         $travelQuote->days_cover_for = $request->days_cover_for;
         $travelQuote->premium = $request->premium;
         $travelQuote->destination = $request->destination;
         $travelQuote->region_cover_for_id = $request->region_cover_for_id;
-        $travelQuote->details = $request->details;
         $travelQuote->currently_located_in_id = $request->currently_located_in_id;
         $travelQuote->destination_id = $request->destination_id;
         $travelQuote->save();
@@ -397,6 +395,7 @@ class TravelQuoteService extends BaseService
             "advisor_id" => "select|title|multiple",
             "created_at" => "input|date|title|range",
             "updated_at" => "input|date|title",
+            "dob" => "input|date|title",
             "next_followup_date" => "input|date|title|range",
             "transapp_code" => "readonly|none",
             "lost_reason" => "input|text",
@@ -407,7 +406,6 @@ class TravelQuoteService extends BaseService
             "destination_id" => "select|title|required",
             "region_cover_for_id" => "select|title|required",
             "travel_cover_for_id" => "select|title|required",
-            "details" => "textarea|text|required",
             "currently_located_in_id" => "select|title|required"
         );
     }
@@ -434,6 +432,9 @@ class TravelQuoteService extends BaseService
             case 'updated_at':
                 $title = "Last Modified Date";
                 break;
+            case 'dob':
+                $title = "Date of Birth";
+                break;
             case 'region_cover_for_id':
                 $title = "Which regions do you need cover for?";
                 break;
@@ -445,6 +446,9 @@ class TravelQuoteService extends BaseService
                 break;
             case 'currently_located_in_id':
                 $title = "Currently Located In ";
+                break;
+            case 'travel_cover_for_id':
+                $title = "Who would you like cover for?";
                 break;
             case 'destination_id':
                 $title = "Destination";
