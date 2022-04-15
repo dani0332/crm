@@ -178,10 +178,6 @@ class TravelQuoteService extends BaseService
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'tqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'tqrd.advisor_assigned_by_id')
             ->where('qs.text', '!=', 'Fake')
-            ->where(function ($query) {
-                $query->where('tqrd.next_followup_date', '>', date('Y-m-d H:i:s'))
-                      ->orWhereNull('tqrd.next_followup_date');
-            })
             ->where('tqr.advisor_id', Auth::user()->id);
 
         $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
