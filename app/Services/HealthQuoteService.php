@@ -358,10 +358,6 @@ class HealthQuoteService extends BaseService
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'hqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'hqrd.advisor_assigned_by_id')
             ->where('qs.text', '!=', 'Fake')
-            ->where(function ($query) {
-                $query->where('hqrd.next_followup_date', '>', date('Y-m-d H:i:s'))
-                      ->orWhereNull('hqrd.next_followup_date');
-            })
             ->where('hqr.advisor_id', Auth::user()->id);
 
         $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
@@ -454,7 +450,7 @@ class HealthQuoteService extends BaseService
             "created_at" => "input|date|title|range",
             "updated_at" => "input|date|title",
             "dob" => "input|date|title|required",
-            "health_team_type" => "|static|default:All|All,RM-NB,RM-Speed,EBP,No-Type",
+            "health_team_type" => "|static|default:All|All,RM-NB,RM-Speed,EBP,Wow-Call,No-Type",
             "next_followup_date" => "input|date|title|range",
             "transapp_code" => "readonly|none",
             "lost_reason" => "input|text",

@@ -231,6 +231,7 @@ class CRUDController extends Controller
             $ecomCarInsuranceQuoteUrl = Config::get('constants.ECOM_CAR_INSURANCE_QUOTE_URL');
             $vehicleTypeText = $this->carQuoteService->getCarQuoteVehicleType($id);
 
+            $listQuote = null;
             if (isset($quotePlans->message) && $quotePlans->message != '') {
                 $listQuotePlans = $quotePlans->message;
             } else {
@@ -239,7 +240,6 @@ class CRUDController extends Controller
                     $listQuote = $quotePlans->quotes;
                 } else {
                     $listQuotePlans = $quotePlans;
-                    $listQuote = null;
                 }
             }
 
@@ -464,6 +464,7 @@ class CRUDController extends Controller
                     $entity->health_team_type = $request->assign_team;
                 }
                 else{
+                    $entity->health_team_type = $request->assign_team;
                     if (Auth::user()->hasRole('WCU_ADVISOR')) {
                         $entity->wcu_id = $userId;
                     } else {
