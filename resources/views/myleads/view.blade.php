@@ -92,10 +92,6 @@
                         name: "assignedBy"
                     },
                     {
-                        data: 'leadSource',
-                        name: 'leadSource'
-                    },
-                    {
                         data: 'nextFollowupDate',
                         name: 'nextFollowupDate',
                     },
@@ -154,10 +150,6 @@
                     {
                         data: "assignedBy",
                         name: "assignedBy"
-                    },
-                    {
-                        data: 'leadSource',
-                        name: 'leadSource'
                     },
                     {
                         data: 'nextFollowupDate',
@@ -470,7 +462,6 @@
                                 <th>Created Date</th>
                                 <th>Assigned Date</th>
                                 <th>Assigned By</th>
-                                <th>Lead Source</th>
                                 <th>Next FollowUp Date</th>
                                 <th>Premium</th>
                             </tr>
@@ -505,7 +496,6 @@
                                         <th>Created Date</th>
                                         <th>Assigned Date</th>
                                         <th>Assigned By</th>
-                                        <th>Lead Source</th>
                                         <th>Next FollowUp Date</th>
                                         <th>Premium</th>
                                     </tr>
