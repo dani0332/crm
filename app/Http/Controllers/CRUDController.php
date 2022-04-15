@@ -431,7 +431,7 @@ class CRUDController extends Controller
     }
 
     public function manualLeadAssign(Request $request)
-    {
+    { 
         $assignedToUserIdNew = $request->assigned_to_id_new;
         $leadsIds = $request->selectTmLeadId;
         $leadsIds = array_map('intval', explode(',', $leadsIds));
@@ -464,6 +464,9 @@ class CRUDController extends Controller
                     $entity->health_team_type = $request->assign_team;
                 }
                 else{
+                    if(strtolower($request->modelType) == 'health'){
+                        $entity->health_team_type = $request->assign_team;
+                    }
                     if (Auth::user()->hasRole('WCU_ADVISOR')) {
                         $entity->wcu_id = $userId;
                     } else {

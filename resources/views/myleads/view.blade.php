@@ -49,58 +49,58 @@
                 $('#my-leads-form').submit();
             });
             
-            var followupLeadsTable = $("#overDueFollowups").DataTable({
-                ordering: true,
-                info: false,
-                searching: false,
-                bLengthChange: false,
-                serverSide: true,
-                ajax: {
-                    url: '/getoverdueleads',
-                    data: function(d) {
-                        d.teamName = $("#teamType").val();
-                    },
-                },
-                columnDefs: [
-                    { orderable: false, targets: [1,2,5,6,] }
-                    ],
-                columns: [{
-                        data: 'id',
-                        name: 'id',
-                        render: function(data, type, row) {
-                            return "<a target='_blank' href='/quotes/" + $("#modelType").val().toLowerCase() + '/' + row.uuid + "'>" + row.code + "</a>"
-                        }
-                    },
-                    {
-                        data: "clientName",
-                        name: "clientName"
-                    },
-                    {
-                        data: "leadStatus",
-                        name: "leadStatus"
-                    },
-                    {
-                        data: "createdAt",
-                        name: "createdAt"
-                    },
-                    {
-                        data: "assignedDate",
-                        name: "assignedDate"
-                    },
-                    {
-                        data: "assignedBy",
-                        name: "assignedBy"
-                    },
-                    {
-                        data: 'nextFollowupDate',
-                        name: 'nextFollowupDate',
-                    },
-                    {
-                        data: 'premium',
-                        name: 'premium',
-                    },
-                ],
-            });
+            // var followupLeadsTable = $("#overDueFollowups").DataTable({
+            //     ordering: true,
+            //     info: false,
+            //     searching: false,
+            //     bLengthChange: false,
+            //     serverSide: true,
+            //     ajax: {
+            //         url: '/getoverdueleads',
+            //         data: function(d) {
+            //             d.teamName = $("#teamType").val();
+            //         },
+            //     },
+            //     columnDefs: [
+            //         { orderable: false, targets: [1,2,5,6,] }
+            //         ],
+            //     columns: [{
+            //             data: 'id',
+            //             name: 'id',
+            //             render: function(data, type, row) {
+            //                 return "<a target='_blank' href='/quotes/" + $("#modelType").val().toLowerCase() + '/' + row.uuid + "'>" + row.code + "</a>"
+            //             }
+            //         },
+            //         {
+            //             data: "clientName",
+            //             name: "clientName"
+            //         },
+            //         {
+            //             data: "leadStatus",
+            //             name: "leadStatus"
+            //         },
+            //         {
+            //             data: "createdAt",
+            //             name: "createdAt"
+            //         },
+            //         {
+            //             data: "assignedDate",
+            //             name: "assignedDate"
+            //         },
+            //         {
+            //             data: "assignedBy",
+            //             name: "assignedBy"
+            //         },
+            //         {
+            //             data: 'nextFollowupDate',
+            //             name: 'nextFollowupDate',
+            //         },
+            //         {
+            //             data: 'premium',
+            //             name: 'premium',
+            //         },
+            //     ],
+            // });
             var myleadsTable = $("#dtBasicExample-leadsearch").DataTable({
                 ordering: true,
                 info: false,
@@ -162,27 +162,27 @@
                 ],
             });
            
-            followupLeadsTable.on( 'draw', function () {
-                var rows = $('#overDueFollowups tr');
-                var headerRowColumns = $(rows[0]).children();
-                var nextFollowupDateColumn = 0;
-                for (let i = 0; i < headerRowColumns.length; i++) {
-                    const element = headerRowColumns[i];
-                    if(element.outerText == "Next FollowUp Date"){
-                        nextFollowupDateColumn = i;
-                    }
-                }
-                for (let index = 1; index < rows.length; index++) {
-                    var columns = $(rows[index]).children();
-                    for (let i = 0; i < columns.length; i++) {
-                        if(i == nextFollowupDateColumn && $(columns[i]).text() != ""){
-                            if(moment().format('YYYY-MM-DD HH:mm:ss').toString() > $(columns[i]).text()){
-                                $(rows[index]).children().eq(i).css({'color': 'white', 'background-color': 'red', 'font-weight': 'bold', 'font-size': '12px'});
-                            }
-                        }
-                    }
-                }
-            } );
+            // followupLeadsTable.on( 'draw', function () {
+            //     var rows = $('#overDueFollowups tr');
+            //     var headerRowColumns = $(rows[0]).children();
+            //     var nextFollowupDateColumn = 0;
+            //     for (let i = 0; i < headerRowColumns.length; i++) {
+            //         const element = headerRowColumns[i];
+            //         if(element.outerText == "Next FollowUp Date"){
+            //             nextFollowupDateColumn = i;
+            //         }
+            //     }
+            //     for (let index = 1; index < rows.length; index++) {
+            //         var columns = $(rows[index]).children();
+            //         for (let i = 0; i < columns.length; i++) {
+            //             if(i == nextFollowupDateColumn && $(columns[i]).text() != ""){
+            //                 if(moment().format('YYYY-MM-DD HH:mm:ss').toString() > $(columns[i]).text()){
+            //                     $(rows[index]).children().eq(i).css({'color': 'white', 'background-color': 'red', 'font-weight': 'bold', 'font-size': '12px'});
+            //                 }
+            //             }
+            //         }
+            //     }
+            // } );
             myleadsTable.on('draw', function() {
                 var rows = $('#dtBasicExample-leadsearch tr');
                 var headerRowColumns = $(rows[0]).children();
@@ -227,7 +227,7 @@
                 e.preventDefault();
                 $(".loader").show();
                 myleadsTable.draw();
-                followupLeadsTable.draw();
+                //followupLeadsTable.draw();
                 $(".loader").hide();
             });
 
@@ -473,7 +473,7 @@
                         </tbody>
                     </table>
 
-                    <div id="accordion" style="width: 98%;margin-left: 20px;margin-top: 50px">
+                    <div id="accordion" style="width: 98%;margin-left: 20px;margin-top: 50px;display:none">
                         <div class="card">
                           <div class="card-header" id="headingOne" style="background-color: #4183BD;">
                             <h5 class="mb-0">
@@ -485,7 +485,7 @@
                             <h5><a style="color: floralwhite;float: right;margin-top: -24px;font-size: 25px;">Search filters doesn't apply on this grid.</a></h5>
                           </div>
                         </div>
-                    <div id="collapseOne" class="collapse show" aria-labelledby="headingOne" data-parent="#accordion">
+                    <div id="collapseOne" class="collapse show" style="display:none" aria-labelledby="headingOne" data-parent="#accordion">
                         <div class="card-body" style="border: 1px solid #ced4da;margin-bottom: 25px;">
                             <table  id="overDueFollowups" class="table table-striped jambo_table" style="width:100%">
                                 <thead>

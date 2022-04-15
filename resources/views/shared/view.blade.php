@@ -751,6 +751,7 @@
                                                         <option value="EBP">EBP</option>
                                                         <option value="RM-NB">RM-NB</option>
                                                         <option value="RM-Speed">RM-Speed</option>
+                                                        <option value="Wow-Call">Wow Call </option>
                                                         <option value="GM">Group Medical</option>
                                                     </select>
                                                     <span class="text-danger" id="teamErrorSpan" style="display: none;font-size: 15px;margin-left: 6px;font-weight: bolder;">Health Team Type must be selected</span>
