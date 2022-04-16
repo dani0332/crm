@@ -464,7 +464,7 @@ class CRUDController extends Controller
                     $entity->health_team_type = $request->assign_team;
                 }
                 else{
-                    $entity->health_team_type = $request->assign_team;
+                    //$entity->health_team_type = $request->assign_team;
                     if (Auth::user()->hasRole('WCU_ADVISOR')) {
                         $entity->wcu_id = $userId;
                     } else {
