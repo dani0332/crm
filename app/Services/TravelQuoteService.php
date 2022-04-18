@@ -89,7 +89,8 @@ class TravelQuoteService extends BaseService
             "regionCoverForId" => $request->region_cover_for_id,
             "source" => $sourceName,
             "referenceUrl" => $appUrl,
-            "currentlyLocatedInId" => $request->currently_located_in_id
+            "currentlyLocatedInId" => $request->currently_located_in_id,
+            "dob" => $request->dob
         );
         if (!Auth::user()->hasRole("ADMIN")) $dataArr['advisorId'] = Auth::user()->id;
         return CapiRequestService::sendCAPIRequest('/api/v1-save-travel-quote', $dataArr);
@@ -377,6 +378,7 @@ class TravelQuoteService extends BaseService
         $travelQuote->region_cover_for_id = $request->region_cover_for_id;
         $travelQuote->currently_located_in_id = $request->currently_located_in_id;
         $travelQuote->destination_id = $request->destination_id;
+        $travelQuote->dob = $request->dob;
         $travelQuote->save();
         if (isset($request->return_to_view))
             return redirect("quote/travel/" . $id)->with('success', 'Travel Quote has been updated');
