@@ -60,6 +60,7 @@ class LifeQuoteService extends BaseService
                 'lqrd.transapp_code',
                 'lqrd.notes',
                 'ls.text as lost_reason',
+                'lqr.previous_quote_id'
             )
             ->leftJoin('life_quote_request_detail as lqrd', 'lqrd.life_quote_request_id', 'lqr.id')
             ->leftJoin('currency_type as ct', 'ct.id', '=', 'lqr.sum_insured_currency_id')
@@ -183,6 +184,9 @@ class LifeQuoteService extends BaseService
             if (isset($request->policy_number) && $request->policy_number != '') {
                 $this->query->where('lqr.policy_number', $request->policy_number);
             }
+            if (Auth::user()->isRenewalAdvisor()) {
+                $this->query->whereNotNull('lqr.previous_quote_id');
+            }
             foreach ($searchProperties as $item) {
                 if (!empty($request[$item]) && $item != "created_at") {
                     if ($request[$item] == 'null') {
@@ -201,6 +205,7 @@ class LifeQuoteService extends BaseService
                 }
             }
         }
+      
         $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
         $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';
         if ($column != '' && $column != 0 && $direction != '') {
@@ -229,9 +234,6 @@ class LifeQuoteService extends BaseService
             }
             return $this->query->orderBy($column, $direction);
         } else {
-            if (Auth::user()->isRenewalAdvisor()) {
-                return $this->query->whereNotNull('lqr.previous_quote_id');
-            }
             return $this->query->orderBy('lqr.created_at', 'DESC');
         }
     }
@@ -339,6 +341,7 @@ class LifeQuoteService extends BaseService
                 'lqr.email',
                 'lqr.mobile_no',
                 'lqrd.next_followup_date as nextFollowupDate',
+                'lqr.previous_quote_id'
             )
             ->leftJoin('life_quote_request_detail as lqrd', 'lqrd.life_quote_request_id', '=', 'lqr.id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'lqr.quote_status_id')
@@ -380,7 +383,7 @@ class LifeQuoteService extends BaseService
             $query->where('lqr.quote_status_id', $request->leadStatus);
         }
         if (Auth::user()->isRenewalAdvisor()) {
-            return $query->whereNotNull('lqr.previous_quote_id');
+           $query->whereNotNull('lqr.previous_quote_id');
         }
         return $query;
     }

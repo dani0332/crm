@@ -30,6 +30,7 @@ class TravelQuoteService extends BaseService
             'tqr.destination',
             'tqr.travel_cover_for_id',
             'tcf.TEXT AS travel_cover_for_id_text',
+            'tqr.previous_quote_id',
             'tqr.first_name',
             'tqr.last_name',
             'tqr.email',
@@ -176,7 +177,8 @@ class TravelQuoteService extends BaseService
                 'tqr.mobile_no as mobile_no',
                 'tqr.company_name as company_name',
                 'tqr.source as leadSource',
-                'tqrd.next_followup_date as nextFollowupDate'
+                'tqrd.next_followup_date as nextFollowupDate',
+                'tqr.previous_quote_id'
             )
             ->leftJoin('travel_quote_request_detail as tqrd', 'tqrd.travel_quote_request_id', '=', 'tqr.id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'tqr.quote_status_id')
@@ -219,7 +221,7 @@ class TravelQuoteService extends BaseService
         }
 
         if (Auth::user()->isRenewalAdvisor()) {
-            return $query->whereNotNull('tqr.previous_quote_id');
+            $query->whereNotNull('tqr.previous_quote_id');
         }
         return $query;
     }
@@ -269,6 +271,9 @@ class TravelQuoteService extends BaseService
                 // if user has advisor Role then fetch leads assigned to the user only
                 $this->query->where('tqr.advisor_id', Auth::user()->id);	// fetch leads assigned to the user
             }
+            if (Auth::user()->isRenewalAdvisor()) {
+                $this->query->whereNotNull('tqr.previous_quote_id');
+            }
             foreach ($searchProperties as $item) {
                 if (!empty($request[$item]) && $item != "created_at") {
                     if ($request[$item] == 'null') {
@@ -287,6 +292,7 @@ class TravelQuoteService extends BaseService
                 }
             }
         }
+       
         $isManagerORDeputy = Auth::user()->isManagerOrDeputy();
         $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
         $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';
@@ -315,10 +321,7 @@ class TravelQuoteService extends BaseService
                 }
             }
             return $this->query->orderBy($column, $direction);
-        } else {
-            if (Auth::user()->isRenewalAdvisor()) {
-                return $this->query->whereNotNull('tqr.previous_quote_id');
-            }
+        } else {   
             return $this->query->orderBy('tqr.created_at', 'DESC');
         }
     }

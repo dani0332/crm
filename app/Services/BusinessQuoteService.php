@@ -46,7 +46,8 @@ class BusinessQuoteService extends BaseService
                 'bqrd.transapp_code',
                 'ls.text as lost_reason',
                 'bqr.source',
-                'bqr.policy_number'
+                'bqr.policy_number',
+                'bqr.previous_quote_id'
             )
             ->leftJoin('business_type_of_insurance as bti', 'bti.id', '=', 'bqr.business_type_of_insurance_id')
             ->leftJoin('business_quote_request_detail as bqrd', 'bqrd.business_quote_request_id', '=', 'bqr.id')
@@ -140,6 +141,7 @@ class BusinessQuoteService extends BaseService
                 'bqr.email',
                 'bqr.mobile_no',
                 'bqrd.next_followup_date as nextFollowupDate',
+                'bqr.previous_quote_id'
             )
             ->leftJoin('business_quote_request_detail as bqrd', 'bqrd.business_quote_request_id', '=', 'bqr.id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'bqr.quote_status_id')
@@ -193,7 +195,7 @@ class BusinessQuoteService extends BaseService
         }
 
         if (Auth::user()->isRenewalAdvisor()) {
-            return $query->whereNotNull('bqr.previous_quote_id');
+            $query->whereNotNull('bqr.previous_quote_id');
         }
         return $query;
     }
@@ -326,7 +328,7 @@ class BusinessQuoteService extends BaseService
             }
         }
         if (Auth::user()->isRenewalAdvisor()) {
-            return $this->query->whereNotNull('bqr.previous_quote_id');
+            $this->query->whereNotNull('bqr.previous_quote_id');
         }
         $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
         $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';

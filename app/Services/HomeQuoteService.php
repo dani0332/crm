@@ -52,6 +52,7 @@ class HomeQuoteService extends BaseService
             'hqrd.transapp_code',
             'hqrd.notes',
             'ls.text as lost_reason',
+            'hqr.previous_quote_id'
         )
             ->leftJoin('home_quote_request_detail as hqrd', 'hqrd.home_quote_request_id', '=', 'hqr.id')
             ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'hqrd.lost_reason_id')
@@ -158,7 +159,7 @@ class HomeQuoteService extends BaseService
                 $this->query->where('hqr.advisor_id', Auth::user()->id);	// fetch leads assigned to the user
             }
             if (Auth::user()->isRenewalAdvisor()) {
-                return $this->query->whereNotNull('hqr.previous_quote_id');
+                $this->query->whereNotNull('hqr.previous_quote_id');
             }
             foreach ($searchProperties as $item) {
                 if (!empty($request[$item]) && $item != "created_at") {
@@ -277,6 +278,7 @@ class HomeQuoteService extends BaseService
                 'hqr.mobile_no',
                 'hqr.source as leadSource',
                 'hqrd.next_followup_date as nextFollowupDate',
+                'hqr.previous_quote_id'
             )
             ->leftJoin('home_quote_request_detail as hqrd', 'hqrd.home_quote_request_id', '=', 'hqr.id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'hqr.quote_status_id')
@@ -317,7 +319,7 @@ class HomeQuoteService extends BaseService
             $query->where('hqr.quote_status_id', $request->leadStatus);
         }
         if (Auth::user()->isRenewalAdvisor()) {
-            return $query->whereNotNull('hqr.previous_quote_id');
+            $query->whereNotNull('hqr.previous_quote_id');
         }
         return $query;
     }

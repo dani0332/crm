@@ -61,6 +61,7 @@ class HealthQuoteService extends BaseService
             'hqr.lead_type_id',
             'lt.TEXT AS lead_type_id_text',
             'ls.text as lost_reason',
+            'hqr.previous_quote_id'
         )
             ->leftJoin('marital_status as ms', 'ms.id', '=', 'hqr.marital_status_id')
             ->leftJoin('health_quote_request_detail as hqrd', 'hqrd.health_quote_request_id', '=', 'hqr.id')
@@ -189,6 +190,9 @@ class HealthQuoteService extends BaseService
             if (isset($request->policy_number) && $request->policy_number != '') {
                 $this->query->where('hqr.policy_number', $request->policy_number);
             }
+            if (Auth::user()->isRenewalAdvisor()) {
+                $this->query->whereNotNull('hqr.previous_quote_id');
+            }
             foreach ($searchProperties as $item) {
                 if (!empty($request[$item]) && $item != "created_at") {
                     if ($request[$item] == 'null') {
@@ -235,9 +239,7 @@ class HealthQuoteService extends BaseService
             }
             return $this->query->orderBy($column, $direction);
         } else {
-                if (Auth::user()->isRenewalAdvisor()) {
-                    return $this->query->whereNotNull('hqr.previous_quote_id');
-                }
+               
                 return $this->query->orderBy('hqr.created_at', 'DESC');
         }
     }
@@ -344,6 +346,7 @@ class HealthQuoteService extends BaseService
                 'hqr.mobile_no as mobile_no',
                 'hqr.source as leadSource',
                 'hqrd.next_followup_date as nextFollowupDate',
+                'hqr.previous_quote_id'
             )
             ->leftJoin('health_quote_request_detail as hqrd', 'hqrd.health_quote_request_id', '=', 'hqr.id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'hqr.quote_status_id')
@@ -386,7 +389,7 @@ class HealthQuoteService extends BaseService
         }
 
         if (Auth::user()->isRenewalAdvisor()) {
-            return $query->whereNotNull('hqr.previous_quote_id');
+            $query->whereNotNull('hqr.previous_quote_id');
         }
         return $query;
     }
