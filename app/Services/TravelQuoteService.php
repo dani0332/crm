@@ -273,6 +273,7 @@ class TravelQuoteService extends BaseService
             }
             if (Auth::user()->isRenewalAdvisor()) {
                 $this->query->whereNotNull('tqr.previous_quote_id');
+                $this->query->where('tqr.advisor_id', Auth::user()->id);
             }
             foreach ($searchProperties as $item) {
                 if (!empty($request[$item]) && $item != "created_at") {
@@ -438,7 +439,8 @@ class TravelQuoteService extends BaseService
             "region_cover_for_id" => "select|title|required",
             "travel_cover_for_id" => "select|title|required",
             "details" => "textarea|text|required",
-            "currently_located_in_id" => "select|title|required"
+            "currently_located_in_id" => "select|title|required",
+            "previous_quote_id" => "readonly|none"
         );
     }
 
@@ -494,10 +496,10 @@ class TravelQuoteService extends BaseService
     public function fillModelSkipProperties()
     {
         return [
-            "create" => "id,created_at,id,code,advisor_id,updated_at,quote_status_id,next_followup_date,lost_reason,premium,source,transapp_code",
-            "list" => "email,mobile_no,region_cover_for_id,travel_cover_for_id,details,nationality_id,days_cover_for",
-            "update" => 'created_at,id,code,advisor_id,updated_at,quote_status_id,next_followup_date,lost_reason,source,transapp_code',
-            "show" => "",
+            "create" => "previous_quote_id,id,created_at,id,code,advisor_id,updated_at,quote_status_id,next_followup_date,lost_reason,premium,source,transapp_code",
+            "list" => "previous_quote_id,email,mobile_no,region_cover_for_id,travel_cover_for_id,details,nationality_id,days_cover_for",
+            "update" => 'previous_quote_id,created_at,id,code,advisor_id,updated_at,quote_status_id,next_followup_date,lost_reason,source,transapp_code',
+            "show" => "previous_quote_id",
         ];
     }
 
@@ -510,9 +512,9 @@ class TravelQuoteService extends BaseService
     {
         $model->renewalSearchProperties = ['created_at', 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'policy_number','premium'];
         $model->renewalSkipProperties = [
-            "create" => "id,created_at,id,code,advisor_id,updated_at,quote_status_id,next_followup_date,lost_reason,premium,source,transapp_code",
-            "list" => "email,mobile_no,region_cover_for_id,travel_cover_for_id,details,nationality_id,days_cover_for,next_followup_date,lost_reason,source,transapp_code,currently_located_in_id,destination_id",
-            "update" => 'created_at,id,code,advisor_id,updated_at,quote_status_id,next_followup_date,lost_reason,source,transapp_code',
+            "create" => "previous_quote_id,id,created_at,id,code,advisor_id,updated_at,quote_status_id,next_followup_date,lost_reason,premium,source,transapp_code",
+            "list" => "previous_quote_id,email,mobile_no,region_cover_for_id,travel_cover_for_id,details,nationality_id,days_cover_for,next_followup_date,lost_reason,source,transapp_code,currently_located_in_id,destination_id",
+            "update" => 'previous_quote_id,created_at,id,code,advisor_id,updated_at,quote_status_id,next_followup_date,lost_reason,source,transapp_code',
             "show" => "",
         ];
     }

@@ -222,9 +222,7 @@
     </div>
     </div>
     </div>
-    @if (strtolower($model->modelType) == "home")
-        </div>
-    @endif
+
     @if (strtolower($model->modelType) != 'teams' && strtolower($model->modelType) != 'leadstatus')
         <x-lead-status-update :lead="$record" :modeltype="$model->modelType" :status="$record->quote_status_id"
             :statuses="$leadStatuses" :lostreasons="$lostReasons" :selectedlostreason="$selectedLostReasonId" />

@@ -329,6 +329,7 @@ class BusinessQuoteService extends BaseService
         }
         if (Auth::user()->isRenewalAdvisor()) {
             $this->query->whereNotNull('bqr.previous_quote_id');
+            $this->query->where('bqr.advisor_id', Auth::user()->id);
         }
         $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
         $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';
@@ -424,6 +425,7 @@ class BusinessQuoteService extends BaseService
             "number_of_employees" => "input|title|number",
             "business_type_of_insurance_id" => "select|title|required",
             "brief_details" => 'textarea|required',
+            "previous_quote_id" => "readonly|none"
         );
     }
 
@@ -470,10 +472,10 @@ class BusinessQuoteService extends BaseService
     public function fillModelSkipProperties()
     {
         return [
-            "create" => "id,advisor_id,quote_status_id,code,updated_at,created_at,next_followup_date,lost_reason,premium,source,transapp_code",
-            "list" => "email,mobile_no,brief_details,dob",
-            "update" => "id,advisor_id,quote_status_id,code,updated_at,created_at,next_followup_date,lost_reason,source,transapp_code",
-            "show" => "",
+            "create" => "previous_quote_id,id,advisor_id,quote_status_id,code,updated_at,created_at,next_followup_date,lost_reason,premium,source,transapp_code",
+            "list" => "previous_quote_id,email,mobile_no,brief_details,dob",
+            "update" => "previous_quote_id,id,advisor_id,quote_status_id,code,updated_at,created_at,next_followup_date,lost_reason,source,transapp_code",
+            "show" => "previous_quote_id",
         ];
     }
 
@@ -486,9 +488,9 @@ class BusinessQuoteService extends BaseService
     {
         $model->renewalSearchProperties = ['created_at', 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'policy_number'];
         $model->renewalSkipProperties = [
-            "create" => "id,advisor_id,quote_status_id,code,updated_at,created_at,next_followup_date,lost_reason,premium,source,transapp_code",
-            "list" => "email,mobile_no,brief_details,dob,next_followup_date,lost_reason,source,transapp_code,business_type_of_insurance_id,premium,number_of_employees",
-            "update" => "id,advisor_id,quote_status_id,code,updated_at,created_at,next_followup_date,lost_reason,source,transapp_code",
+            "create" => "previous_quote_id,id,advisor_id,quote_status_id,code,updated_at,created_at,next_followup_date,lost_reason,premium,source,transapp_code",
+            "list" => "previous_quote_id,email,mobile_no,brief_details,dob,next_followup_date,lost_reason,source,transapp_code,business_type_of_insurance_id,premium,number_of_employees",
+            "update" => "previous_quote_id,id,advisor_id,quote_status_id,code,updated_at,created_at,next_followup_date,lost_reason,source,transapp_code",
             "show" => "",
         ];
     }
