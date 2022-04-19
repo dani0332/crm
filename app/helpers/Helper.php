@@ -90,13 +90,55 @@ function cleanString($string) {
     
     if($myleads)
     {
-        $result["total_leads"] = $modelType::where("quote_status_id", $statusId)->where("advisor_id", \Auth::user()->id)->count();
-        $result["total_premium"] = $modelType::where("quote_status_id", $statusId)->where("advisor_id", \Auth::user()->id)->sum("premium");
-        $result["leads_list"] = $modelType::where("quote_status_id", $statusId)->where("advisor_id", \Auth::user()->id)->paginate(10);
+        if (Auth::user()->isRenewalAdvisor()) {
+            $query = $modelType::where("quote_status_id", $statusId)
+            ->where("advisor_id", \Auth::user()->id)
+            ->whereNotNull("previous_quote_id")
+            ->count();
+
+            $result["total_leads"] = 
+            $result["total_premium"] = $modelType::where("quote_status_id", $statusId)
+            ->where("advisor_id", \Auth::user()->id)
+            ->whereNotNull("previous_quote_id")
+            ->sum("premium");
+
+            $result["leads_list"] = $modelType::where("quote_status_id", $statusId)
+            ->where("advisor_id", \Auth::user()->id)
+            ->whereNotNull("previous_quote_id")
+            ->paginate(10);
+
+        }else {
+            $result["total_leads"] = $modelType::where("quote_status_id", $statusId)
+            ->where("advisor_id", \Auth::user()->id)
+            ->count();
+            $result["total_premium"] = $modelType::where("quote_status_id", $statusId)
+            ->where("advisor_id", \Auth::user()->id)
+            ->sum("premium");
+            $result["leads_list"] = $modelType::where("quote_status_id", $statusId)
+            ->where("advisor_id", \Auth::user()->id)
+            ->paginate(10);
+        }
     }else {
-        $result["total_leads"] = $modelType::where("quote_status_id", $statusId)->count();
-        $result["total_premium"] = $modelType::where("quote_status_id", $statusId)->sum("premium");
-        $result["leads_list"] = $modelType::where("quote_status_id", $statusId)->paginate(10);
+
+        if (Auth::user()->isRenewalAdvisor()) {
+
+            $result["total_leads"] = $modelType::where("quote_status_id", $statusId)
+            ->where("advisor_id", \Auth::user()->id)
+            ->whereNotNull("previous_quote_id")->count();
+
+            $result["total_premium"] = $modelType::where("quote_status_id", $statusId)
+            ->where("advisor_id", \Auth::user()->id)
+            ->whereNotNull("previous_quote_id")->sum("premium");
+
+            $result["leads_list"] = $modelType::where("quote_status_id", $statusId)
+            ->where("advisor_id", \Auth::user()->id)
+            ->whereNotNull("previous_quote_id")->paginate(10);
+
+        } else {
+            $result["total_leads"] = $modelType::where("quote_status_id", $statusId)->count();
+            $result["total_premium"] = $modelType::where("quote_status_id", $statusId)->sum("premium");
+            $result["leads_list"] = $modelType::where("quote_status_id", $statusId)->paginate(10);
+        }
     }
 
     return $result;
@@ -109,10 +151,30 @@ function getDataAgainstEveryStatus($modelType, $request) {
     $nameSpace = '\\App\\Models\\';
     $modelType = $nameSpace .$modelType."Quote";
     if($request->has("myleads"))
-        $result["leads_list"] = $modelType::where("quote_status_id", $request->status)->where("advisor_id", \Auth::user()->id)->paginate(10);
-    else
-        $result["leads_list"] = $modelType::where("quote_status_id", $request->status)->paginate(10);
-   
+    {
+        if (Auth::user()->isRenewalAdvisor()) {
+
+            $result["leads_list"] = $modelType::where("quote_status_id", $request->status)
+            ->where("advisor_id", \Auth::user()->id)
+            ->whereNotNull("previous_quote_id")
+            ->paginate(10);
+
+        }else {
+            $result["leads_list"] = $modelType::where("quote_status_id", $request->status)->where("advisor_id", \Auth::user()->id)->paginate(10);
+        }
+    }
+    else {
+        if (Auth::user()->isRenewalAdvisor()) {
+
+            $result["leads_list"] = $modelType::where("quote_status_id", $request->status)
+            ->where("advisor_id", \Auth::user()->id)
+            ->whereNotNull("previous_quote_id")
+            ->paginate(10);
+
+        } else {
+            $result["leads_list"] = $modelType::where("quote_status_id", $request->status)->paginate(10);
+        }
+    }
     return $result;
 }
 
@@ -126,18 +188,43 @@ function getDataAgainstSearchTerm($modelType,  $request) {
     {
         if($request->has("myleads") && $request->myleads)
         {
+            if (Auth::user()->isRenewalAdvisor()) {
+                $result["leads_list"] = $modelType::where("quote_status_id", $request->status)
+                ->whereRaw('MATCH (company_name, first_name, last_name, code, mobile_no, email) AGAINST (?)' , array($request->term.'*'))
+                ->where("advisor_id", \Auth::user()->id)
+                ->whereNotNull("previous_quote_id")
+                ->get();
+            }else {
+                $result["leads_list"] = $modelType::where("quote_status_id", $request->status)
+                ->whereRaw('MATCH (company_name, first_name, last_name, code, mobile_no, email) AGAINST (?)' , array($request->term.'*'))
+                ->where("advisor_id", \Auth::user()->id)
+                ->get();
+            }
+        }else {
+            if (Auth::user()->isRenewalAdvisor()) {
+                $result["leads_list"] = $modelType::where("quote_status_id", $status)
+                ->whereRaw('MATCH (company_name, first_name, last_name, code, mobile_no, email) AGAINST (?)' , array($request->term.'*'))
+                ->whereNotNull("previous_quote_id")
+                ->where("advisor_id", \Auth::user()->id)
+                ->get();
+            }else {
+                $result["leads_list"] = $modelType::where("quote_status_id", $status)
+                ->whereRaw('MATCH (company_name, first_name, last_name, code, mobile_no, email) AGAINST (?)' , array($request->term.'*'))
+                ->get();
+            }
+        }
+    }else {
+        if (Auth::user()->isRenewalAdvisor()) {
             $result["leads_list"] = $modelType::where("quote_status_id", $request->status)
-            ->whereRaw('MATCH (company_name, first_name, last_name, code, mobile_no, email) AGAINST (?)' , array($request->term))
+            ->whereRaw('MATCH (first_name, last_name, code, mobile_no, email) AGAINST (?)' , array($request->term.'*'))
+            ->whereNotNull("previous_quote_id")
             ->where("advisor_id", \Auth::user()->id)
             ->get();
         }else {
-            $result["leads_list"] = $modelType::where("quote_status_id", $status)
-            ->whereRaw('MATCH (company_name, first_name, last_name, code, mobile_no, email) AGAINST (?)' , array($request->term))
-            ->get();
+            $result["leads_list"] = $modelType::where("quote_status_id", $request->status)
+            ->whereRaw('MATCH (first_name, last_name, code, mobile_no, email) AGAINST (?)' , array($request->term.'*'))->get();
         }
-    }else {
-        $result["leads_list"] = $modelType::where("quote_status_id", $request->status)
-        ->whereRaw('MATCH (first_name, last_name, code, mobile_no, email) AGAINST (?)' , array($request->term))->get();
+       
     }
    
     return $result;
