@@ -143,12 +143,6 @@ class HealthQuoteService extends BaseService
     public function getGridData($model, $request)
     {
         $searchProperties = [];
-        $isRenewalAdvisor = Auth::user()->isRenewalAdvisor();
-        if ($isRenewalAdvisor) {
-            $searchProperties = $model->renewalSearchProperties;
-        } else {
-            $searchProperties = $model->searchProperties;
-        }
         if ($request->ajax()) {
             if (!isset($request->email) && $request->email == '') {
                 $this->query->where('qs.text', '!=', 'Fake');
@@ -241,7 +235,7 @@ class HealthQuoteService extends BaseService
             return $this->query->orderBy($column, $direction);
         } else {
                
-                return $this->query->orderBy('hqr.created_at', 'DESC');
+            return $this->query->orderBy('hqr.created_at', 'DESC');
         }
     }
 
@@ -478,7 +472,7 @@ class HealthQuoteService extends BaseService
             "create" => "previous_quote_id,created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,premium,source,transapp_code",
             "list" => "previous_quote_id,email,cover_for_id,has_worldwide_cover,has_home,details,preference,mobile_no,dob,marital_status_id,nationality_id,has_dental,emirate_of_your_visa_id,is_ebp_renewal,health_team_type,next_followup_date,lost_reason,source,transapp_code,premium,lead_type_id",
             "update" => "previous_quote_id,created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,source,transapp_code",
-            "show" => "id,next_followup_date,previous_quote_id",
+            "show" => "id,next_followup_date",
         ];
     }
 
