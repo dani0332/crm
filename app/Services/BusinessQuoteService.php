@@ -425,7 +425,7 @@ class BusinessQuoteService extends BaseService
             "number_of_employees" => "input|title|number",
             "business_type_of_insurance_id" => "select|title|required",
             "brief_details" => 'textarea|required',
-            "previous_quote_id" => "readonly|none"
+            "previous_quote_id" => "readonly|title"
         );
     }
 
@@ -462,6 +462,9 @@ class BusinessQuoteService extends BaseService
                 break;
             case 'quote_status_id':
                 $title = "Lead Status";
+                break;
+            case 'previous_quote_id':
+                $title = "Previous Quote Id";
                 break;
             default:
                 break;

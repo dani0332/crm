@@ -420,7 +420,7 @@ class HomeQuoteService extends BaseService
             "has_personal_belongings" => "input|checkbox|required",
             "has_building" => "input|checkbox|required",
             "address" => 'textarea|required',
-            "previous_quote_id" => "readonly|none"
+            "previous_quote_id" => "readonly|title"
         );
     }
 

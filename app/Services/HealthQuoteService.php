@@ -461,7 +461,7 @@ class HealthQuoteService extends BaseService
             "has_worldwide_cover" => "input|checkbox|title",
             "has_home" => "input|checkbox|title",
             "emirate_of_your_visa_id" => "select|title|required",
-            "previous_quote_id" => "readonly|none"
+            "previous_quote_id" => "readonly|title"
         );
     }
 
@@ -524,6 +524,9 @@ class HealthQuoteService extends BaseService
                 break;
             case 'quote_status_id':
                 $title = "Lead Status";
+                break;
+            case 'previous_quote_id':
+                $title = "Previous Quote Id";
                 break;
             case 'updated_at':
                 $title = "Last Modified Date";

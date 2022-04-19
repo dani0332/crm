@@ -440,7 +440,7 @@ class TravelQuoteService extends BaseService
             "travel_cover_for_id" => "select|title|required",
             "details" => "textarea|text|required",
             "currently_located_in_id" => "select|title|required",
-            "previous_quote_id" => "readonly|none"
+            "previous_quote_id" => "readonly|title"
         );
     }
 
@@ -486,6 +486,9 @@ class TravelQuoteService extends BaseService
                 break;
             case 'next_followup_date':
                 $title = "Next Followup Date";
+                break;
+            case 'previous_quote_id':
+                $title = "Previous Quote Id";
                 break;
             default:
                 break;

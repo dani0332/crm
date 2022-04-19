@@ -464,7 +464,7 @@ class LifeQuoteService extends BaseService
             "gender" => "|static|Male,Female",
             "is_smoker" => "|static|title|Yes,No",
             "others_info" => "textarea",
-            "previous_quote_id" => "readonly|none"
+            "previous_quote_id" => "readonly|title"
         );
     }
 
@@ -522,6 +522,9 @@ class LifeQuoteService extends BaseService
                 break;
             case 'next_followup_date':
                 $title = "Next Followup Date";
+                break;
+            case 'previous_quote_id':
+                $title = "Previous Quote Id";
                 break;
             default:
                 break;
