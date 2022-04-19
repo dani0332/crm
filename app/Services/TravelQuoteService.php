@@ -58,7 +58,7 @@ class TravelQuoteService extends BaseService
             'tqr.currently_located_in_id',
             'cli.text as currently_located_in_id_text',
             'tqr.destination_id',
-            'country.text as destination_id_text'
+            'nationality.text as destination_id_text'
         )
             ->leftJoin('travel_cover_for as tcf', 'tcf.id', '=', 'tqr.travel_cover_for_id')
             ->leftJoin('travel_quote_request_detail as tqrd', 'tqr.id', '=', 'tqrd.travel_quote_request_id')
@@ -68,7 +68,7 @@ class TravelQuoteService extends BaseService
             ->leftJoin('users as u', 'u.id', '=', 'tqr.advisor_id')
             ->leftJoin('region as r', 'r.id', '=', 'tqr.region_cover_for_id')
             ->leftJoin('currently_located_in as cli', 'cli.id', '=', 'tqr.currently_located_in_id')
-            ->leftJoin('country', 'country.id', '=', 'tqr.destination_id')
+            ->leftJoin('nationality', 'nationality.id', '=', 'tqr.destination_id')
             ->leftJoin('travel_plan as tp', 'tp.id', '=', 'tqr.plan_id')
             ->leftJoin('payment_status as ps', 'ps.id', '=', 'tqr.payment_status_id');
     }
@@ -81,17 +81,17 @@ class TravelQuoteService extends BaseService
             "firstName" => $request->first_name,
             "lastName" => $request->last_name,
             "email" => $request->email,
-            "details" => $request->details,
             "mobileNo" => $request->mobile_no,
             "travelCoverForId" => $request->travel_cover_for_id,
             "premium" => $request->premium,
             "nationalityId" => $request->nationality_id,
             "daysCoverFor" => $request->days_cover_for,
             "destinationId" => $request->destination_id,
-            "regionCoverForId" => $request->region_cover_for_i,
+            "regionCoverForId" => $request->region_cover_for_id,
             "source" => $sourceName,
             "referenceUrl" => $appUrl,
-            "currentlyLocatedInId" => $request->currently_located_in_id
+            "currentlyLocatedInId" => $request->currently_located_in_id,
+            "dob" => $request->dob
         );
         if (!Auth::user()->hasRole("ADMIN")) $dataArr['advisorId'] = Auth::user()->id;
         return CapiRequestService::sendCAPIRequest('/api/v1-save-travel-quote', $dataArr);
@@ -112,13 +112,13 @@ class TravelQuoteService extends BaseService
                 'u.name as assignedBy',
                 'tqr.updated_at',
                 'tqr.source as leadSource',
+                'tqr.premium',
                 'tqrd.next_followup_date as nextFollowupDate'
             )
             ->leftJoin('travel_quote_request_detail as tqrd', 'tqrd.travel_quote_request_id', '=', 'tqr.id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'tqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'tqrd.advisor_assigned_by_id')
-            ->where('qs.text', '!=', 'Fake')
-            ->where('tqrd.next_followup_date', '>', date('Y-m-d'))
+            ->where('tqrd.next_followup_date', '<', date('Y-m-d H:i:s'))
             ->whereIn('qs.text', ['Followed Up','Qualification Pending', 'Quoted', 'FTC Pending', 'FTC Sent', 'Missing Documents Requested', 'Policy Documents Pending', 'Payment Pending', 'Pending with UW', 'Application Pending', 'In Negotiation'])
             ->where('tqr.advisor_id', Auth::user()->id);
             return $query;
@@ -399,16 +399,15 @@ class TravelQuoteService extends BaseService
         $travelQuote = TravelQuote::where('uuid', $id)->first();
         $travelQuote->first_name = $request->first_name;
         $travelQuote->last_name = $request->last_name;
-        $travelQuote->details = $request->details;
         $travelQuote->travel_cover_for_id = $request->travel_cover_for_id;
         $travelQuote->nationality_id = $request->nationality_id;
         $travelQuote->days_cover_for = $request->days_cover_for;
         $travelQuote->premium = $request->premium;
         $travelQuote->destination = $request->destination;
         $travelQuote->region_cover_for_id = $request->region_cover_for_id;
-        $travelQuote->details = $request->details;
         $travelQuote->currently_located_in_id = $request->currently_located_in_id;
         $travelQuote->destination_id = $request->destination_id;
+        $travelQuote->dob = $request->dob;
         $travelQuote->save();
         if (isset($request->return_to_view))
             return redirect("quote/travel/" . $id)->with('success', 'Travel Quote has been updated');
@@ -427,6 +426,7 @@ class TravelQuoteService extends BaseService
             "advisor_id" => "select|title|multiple",
             "created_at" => "input|date|title|range",
             "updated_at" => "input|date|title",
+            "dob" => "input|date|title",
             "next_followup_date" => "input|date|title|range",
             "transapp_code" => "readonly|none",
             "lost_reason" => "input|text",
@@ -466,6 +466,9 @@ class TravelQuoteService extends BaseService
             case 'updated_at':
                 $title = "Last Modified Date";
                 break;
+            case 'dob':
+                $title = "Date of Birth";
+                break;
             case 'region_cover_for_id':
                 $title = "Which regions do you need cover for?";
                 break;
@@ -477,6 +480,9 @@ class TravelQuoteService extends BaseService
                 break;
             case 'currently_located_in_id':
                 $title = "Currently Located In ";
+                break;
+            case 'travel_cover_for_id':
+                $title = "Who would you like cover for?";
                 break;
             case 'destination_id':
                 $title = "Destination";
@@ -599,7 +605,38 @@ class TravelQuoteService extends BaseService
         $quote->first_name = $parentRecord->first_name;
         $quote->last_name = $parentRecord->last_name;
         $quote->email = $parentRecord->email;
+        $quote->advisor_id = Auth::user()->id;
         $quote->mobile_no = $parentRecord->mobile_no;
         $quote->save();
+    }
+
+    public function getLeadAuditHistory($id)
+    {
+        $audits = DB::table('car_quote_request as cqr')
+        ->select(
+            'a.created_at as ModifiedAt',
+            DB::raw('(SELECT name from users where id = a.user_id) as ModifiedBy'),
+            DB::raw("(SELECT TEXT FROM quote_status WHERE id = JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.quote_status_id'))) AS NewStatus"),
+            DB::raw("(SELECT NAME FROM users WHERE id = JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.advisor_id'))) AS NewAdvisor"),
+            DB::raw("JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.notes')) AS NewNotes")
+        )
+        ->join('travel_quote_request_detail as cqrd', 'cqrd.travel_quote_request_id', '=', 'cqr.id')
+        ->join("audits as a",function($query){
+            $query->on("a.auditable_id","=","cqr.id")
+                ->orOn("a.auditable_id","=","cqrd.id");
+        })
+        ->where(function ($query) {
+            $query->where('a.auditable_type', 'App\Models\TravelQuote')
+            ->orWhere('a.auditable_type', 'App\Models\TravelQuoteRequestDetail');
+        })
+        ->where(function ($query) {
+            $query->whereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.quote_status_id')"))
+            ->orWhereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.notes')"))
+            ->orWhereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.advisor_id')"));
+        })
+        ->where('cqr.id', $id)
+        ->where('a.new_values', 'like', '%%')
+        ->orderBy('a.created_at', 'DESC')->get();
+        return $audits;
     }
 }

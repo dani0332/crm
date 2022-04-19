@@ -314,13 +314,13 @@ class LifeQuoteService extends BaseService
                 'u.name as assignedBy',
                 'lqr.updated_at',
                 'lqr.source as leadSource',
+                'lqr.premium',
                 'lqrd.next_followup_date as nextFollowupDate',
             )
             ->leftJoin('life_quote_request_detail as lqrd', 'lqrd.life_quote_request_id', '=', 'lqr.id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'lqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'lqrd.advisor_assigned_by_id')
-            ->where('qs.text', '!=', 'Fake')
-            ->where('lqrd.next_followup_date', '>', date('Y-m-d'))
+            ->where('lqrd.next_followup_date', '<', date('Y-m-d H:i:s'))
             ->whereIn('qs.text', ['Followed Up','Qualification Pending', 'Quoted', 'FTC Pending', 'FTC Sent', 'Missing Documents Requested', 'Policy Documents Pending', 'Payment Pending', 'Pending with UW', 'Application Pending', 'In Negotiation'])
             ->where('lqr.advisor_id', Auth::user()->id);
             return $query;
@@ -576,8 +576,39 @@ class LifeQuoteService extends BaseService
         $quote->first_name = $parentRecord->first_name;
         $quote->last_name = $parentRecord->last_name;
         $quote->email = $parentRecord->email;
+        $quote->advisor_id = Auth::user()->id;
         $quote->mobile_no = $parentRecord->mobile_no;
         $quote->save();
+    }
+
+    public function getLeadAuditHistory($id)
+    {
+        $audits = DB::table('car_quote_request as cqr')
+        ->select(
+            'a.created_at as ModifiedAt',
+            DB::raw('(SELECT name from users where id = a.user_id) as ModifiedBy'),
+            DB::raw("(SELECT TEXT FROM quote_status WHERE id = JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.quote_status_id'))) AS NewStatus"),
+            DB::raw("(SELECT NAME FROM users WHERE id = JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.advisor_id'))) AS NewAdvisor"),
+            DB::raw("JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.notes')) AS NewNotes")
+        )
+        ->join('life_quote_request_detail as cqrd', 'cqrd.life_quote_request_id', '=', 'cqr.id')
+        ->join("audits as a",function($query){
+            $query->on("a.auditable_id","=","cqr.id")
+                ->orOn("a.auditable_id","=","cqrd.id");
+        })
+        ->where(function ($query) {
+            $query->where('a.auditable_type', 'App\Models\LifeQuote')
+            ->orWhere('a.auditable_type', 'App\Models\LifeQuoteRequestDetail');
+        })
+        ->where(function ($query) {
+            $query->whereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.quote_status_id')"))
+            ->orWhereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.notes')"))
+            ->orWhereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.advisor_id')"));
+        })
+        ->where('cqr.id', $id)
+        ->where('a.new_values', 'like', '%%')
+        ->orderBy('a.created_at', 'DESC')->get();
+        return $audits;
     }
 
 }

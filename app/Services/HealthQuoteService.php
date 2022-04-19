@@ -71,7 +71,9 @@ class HealthQuoteService extends BaseService
             ->leftJoin('emirates as e', 'e.id', '=', 'hqr.emirate_of_your_visa_id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'hqr.quote_status_id')
             ->leftJoin('health_lead_type as lt', 'lt.id', '=', 'hqr.lead_type_id')
-            ->leftJoin('users as u', 'u.id', '=', 'hqr.advisor_id');
+            ->leftJoin('users as u', 'u.id', '=', 'hqr.advisor_id')
+            ->leftJoin('salary_band as sb', 'sb.id', '=', 'hqr.salary_band_id')
+            ->leftJoin('member_category as mc', 'mc.id', '=', 'hqr.member_category_id');
     }
 
     public function getEntity($id)
@@ -135,6 +137,8 @@ class HealthQuoteService extends BaseService
             "hasWorldwideCover" => $request->has_worldwide_cover == 'on' ?  true : false,
             "hasHome" => $request->has_home == 'on' ? true : false,
             "emirateOfYourVisaId" => $request->emirate_of_your_visa_id,
+            "salaryBandId" => $request->salary_band_id,
+            "memberCategoryId" => $request->member_category_id
         );
         if (!Auth::user()->hasRole("ADMIN")) $dataArr['advisorId'] = Auth::user()->id;
         return CapiRequestService::sendCAPIRequest('/api/v1-save-health-quote', $dataArr);
@@ -218,7 +222,7 @@ class HealthQuoteService extends BaseService
                 if ($column == 7) {
                     $column = "hqr.updated_at";
                 }
-                if ($column == 8) {
+                if ($column == 9) {
                     $column = "hqrd.next_followup_date";
                 }
             } else {
@@ -228,7 +232,7 @@ class HealthQuoteService extends BaseService
                 if ($column == 6) {
                     $column = "hqr.updated_at";
                 }
-                if ($column == 7) {
+                if ($column == 8) {
                     $column = "hqrd.next_followup_date";
                 }
             }
@@ -288,10 +292,42 @@ class HealthQuoteService extends BaseService
         $healthQuote->has_home = $request->has_home == 'on' ? true : false;
         $healthQuote->emirate_of_your_visa_id = $request->emirate_of_your_visa_id;
         $healthQuote->premium = $request->premium;
+        $healthQuote->salary_band_id = $request->salary_band_id;
+        $healthQuote->member_category_id = $request->member_category_id;
         $healthQuote->save();
 
         if (isset($request->return_to_view))
             return redirect("quote/health/" . $id)->with('success', 'Health Quote has been updated');
+    }
+
+    public function getLeadAuditHistory($id)
+    {
+        $audits = DB::table('car_quote_request as cqr')
+        ->select(
+            'a.created_at as ModifiedAt',
+            DB::raw('(SELECT name from users where id = a.user_id) as ModifiedBy'),
+            DB::raw("(SELECT TEXT FROM quote_status WHERE id = JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.quote_status_id'))) AS NewStatus"),
+            DB::raw("(SELECT NAME FROM users WHERE id = JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.advisor_id'))) AS NewAdvisor"),
+            DB::raw("JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.notes')) AS NewNotes")
+        )
+        ->join('health_quote_request_detail as cqrd', 'cqrd.health_quote_request_id', '=', 'cqr.id')
+        ->join("audits as a",function($query){
+            $query->on("a.auditable_id","=","cqr.id")
+                ->orOn("a.auditable_id","=","cqrd.id");
+        })
+        ->where(function ($query) {
+            $query->where('a.auditable_type', 'App\Models\HealthQuote')
+            ->orWhere('a.auditable_type', 'App\Models\HealthQuoteRequestDetail');
+        })
+        ->where(function ($query) {
+            $query->whereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.quote_status_id')"))
+            ->orWhereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.notes')"))
+            ->orWhereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.advisor_id')"));
+        })
+        ->where('cqr.id', $id)
+        ->where('a.new_values', 'like', '%%')
+        ->orderBy('a.created_at', 'DESC')->get();
+        return $audits;
     }
 
     public function getHealthOverDueFollowups()
@@ -309,14 +345,14 @@ class HealthQuoteService extends BaseService
                 'u.name as assignedBy',
                 'hqr.updated_at',
                 'hqr.source as leadSource',
+                'hqr.premium',
                 'hqrd.next_followup_date as nextFollowupDate',
             )
             ->leftJoin('health_quote_request_detail as hqrd', 'hqrd.health_quote_request_id', '=', 'hqr.id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'hqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'hqrd.advisor_assigned_by_id')
-            ->where('qs.text', '!=', 'Fake')
             ->whereIn('qs.text', ['Followed Up','Qualification Pending', 'Quoted', 'FTC Pending', 'FTC Sent', 'Missing Documents Requested', 'Policy Documents Pending', 'Payment Pending', 'Pending with UW', 'Application Pending', 'In Negotiation'])
-            ->where('hqrd.next_followup_date', '<', date('Y-m-d'))
+            ->where('hqrd.next_followup_date', '<', date('Y-m-d H:i:s'))
             ->where('hqr.advisor_id', Auth::user()->id);
             return $query;
     }
@@ -340,6 +376,7 @@ class HealthQuoteService extends BaseService
                 'hqr.email as email',
                 'hqr.mobile_no as mobile_no',
                 'hqr.source as leadSource',
+                'hqr.premium',
                 'hqrd.next_followup_date as nextFollowupDate',
                 'hqr.previous_quote_id'
             )
@@ -443,7 +480,7 @@ class HealthQuoteService extends BaseService
             "created_at" => "input|date|title|range",
             "updated_at" => "input|date|title",
             "dob" => "input|date|title|required",
-            "health_team_type" => "|static|default:All|All,RM-NB,RM-Speed,EBP,No-Type",
+            "health_team_type" => "|static|default:All|All,RM-NB,RM-Speed,EBP,Wow-Call,No-Type",
             "next_followup_date" => "input|date|title|range",
             "transapp_code" => "readonly|none",
             "lost_reason" => "input|text",
@@ -540,6 +577,12 @@ class HealthQuoteService extends BaseService
             case 'next_followup_date':
                 $title = "Next Followup Date";
                 break;
+            case 'salary_band_id':
+                $title = "Salary Band";
+                break;
+            case 'member_category_id':
+                $title = "Member Category";
+                break;
             default:
                 break;
         }
@@ -609,6 +652,7 @@ class HealthQuoteService extends BaseService
         $quote->first_name = $parentRecord->first_name;
         $quote->last_name = $parentRecord->last_name;
         $quote->email = $parentRecord->email;
+        $quote->advisor_id = Auth::user()->id;
         $quote->mobile_no = $parentRecord->mobile_no;
         $quote->save();
     }

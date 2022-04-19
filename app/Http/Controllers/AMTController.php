@@ -206,16 +206,17 @@ class AMTController extends Controller
             $assignedUserName = $assignedUser->name;
         }
         $modeltype = 'business';
+        $allowedDuplicateLOB = $this->crudService->getAllowedDuplicateLOB('Group Medical', $record->code);
         $advisors = DB::table('users as u')
             ->join('model_has_roles as mr', 'mr.model_id', '=', 'u.id')
             ->join('roles as r', 'r.id', '=', 'mr.role_id')
-            ->whereIn('r.name', ['RM_ADVISOR', 'GM_ADVISOR'])
+            ->whereIn('r.name', ['RM_ADVISOR', 'GM_ADVISOR', 'HEALTH_WCU_ADVISOR'])
             ->select('u.id', DB::raw("CONCAT(u.name,' - ',r.name) AS name"))->orderBy('r.name')->distinct()->get();
 
         if ($selectedLeadStatus != '') {
             $selectedLeadStatus = $selectedLeadStatus->text;
         }
-        return view('amt.show', compact('businessInsuranceType', 'record', 'selectedLeadStatus', 'advisors', 'assignedUserName', 'assignedGMType', 'leadStatuses', 'lostReasons', 'selectedLostReasonId', 'modeltype'));
+        return view('amt.show', compact('businessInsuranceType', 'record', 'selectedLeadStatus', 'advisors', 'assignedUserName', 'assignedGMType', 'leadStatuses', 'lostReasons', 'selectedLostReasonId', 'modeltype', 'allowedDuplicateLOB'));
     }
 
     /**

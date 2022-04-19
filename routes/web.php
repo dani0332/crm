@@ -53,6 +53,8 @@ use App\Http\Controllers\TmLeadController;
 use App\Http\Controllers\TmUploadLeadController;
 use App\Http\Controllers\RenewalsUploadController;
 use App\Http\Controllers\RewardSliderController;
+use App\Http\Controllers\VehicleRangeController;
+use App\Http\Controllers\VehicleValueController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -164,7 +166,7 @@ Route::group(['middleware' =>  ['auth']], function () {
         Route::post('UpdateLeadManualProcess', [CRUDController::class, 'UpdateLeadManualProcess'])->name('UpdateLeadManualProcess');
         Route::post('records', [CRUDController::class, 'loadMoreRecords'])->name('loadMoreRecords');
         Route::post('records/search', [CRUDController::class, 'searchLead'])->name('searchLead');
-
+        Route::get('getLeadHistory', [CRUDController::class, 'getLeadHistory'])->name('getLeadHistory');
         Route::post('car/CarPlanManualProcess', [CRUDController::class, 'CarPlanManualProcess'])->name('CarPlanManualProcess');
     });
 
@@ -199,6 +201,8 @@ Route::group(['middleware' =>  ['auth']], function () {
     Route::group(['prefix' => 'valuation'], function () {
         Route::get('calculatevaluation', [ValuationController::class, 'calculateValuation'])->name('calculatevaluation');
         Route::resource('vehicledepreciation', VehicleDepreciationController::class);
+        // Route::resource('vehiclerange', VehicleRangeController::class);
+        // Route::resource('vehiclevalue', VehicleValueController::class);
     });
     Route::get('/valuation/car-models', [ValuationController::class, 'carModelBasedOnCarMake']);
     Route::get('/valuation/car-model-detail', [ValuationController::class, 'carTrimBasedOnCarModel']);

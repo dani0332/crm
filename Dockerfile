@@ -1,6 +1,8 @@
 FROM php:8.0-fpm
 ARG IMCRM_TOKEN
 ARG NGINX_FILE
+#ARG NEW_RELIC_LICENSE_KEY
+#ARG NEW_RELIC_APP_NAME
 # Set working directory
 WORKDIR /var/www
 
@@ -65,6 +67,19 @@ RUN touch /var/log/php/errors.log && chmod 777 /var/log/php/errors.log
 # Deployment steps
 RUN composer install --optimize-autoloader --no-dev
 RUN chmod +x /var/www/docker/run.sh
+
+RUN \
+  curl -L https://download.newrelic.com/php_agent/release/newrelic-php5-9.20.0.310-linux.tar.gz | tar -C /tmp -zx && \
+  export NR_INSTALL_USE_CP_NOT_LN=1 && \
+  export NR_INSTALL_SILENT=1 && \
+  /tmp/newrelic-php5-*/newrelic-install install && \
+  rm -rf /tmp/newrelic-php5-* /tmp/nrinstall* && \
+  sed -i \
+      -e 's/"REPLACE_WITH_REAL_KEY"/"${NEW_RELIC_LICENSE_KEY}"/' \
+      -e 's/newrelic.appname = "PHP Application"/newrelic.appname = "${NEW_RELIC_APP_NAME}"/' \
+      -e 's/;newrelic.daemon.app_connect_timeout =.*/newrelic.daemon.app_connect_timeout=15s/' \
+      -e 's/;newrelic.daemon.start_timeout =.*/newrelic.daemon.start_timeout=5s/' \
+      /usr/local/etc/php/conf.d/newrelic.ini
 
 EXPOSE 80
 EXPOSE 443

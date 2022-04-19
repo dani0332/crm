@@ -52,8 +52,36 @@
                     </ul>
                     <div class="clearfix"></div>
                 </div>
-                @hasanyrole('ADMIN|HEALTH_MANAGER|WCU_ADVISOR|HEALTH_DEPUTY')
-                    @if (strtolower($model->modelType) == 'health' && $record->health_team_type != '')
+                @hasanyrole('ADMIN|HEALTH_MANAGER|HEALTH_WCU_ADVISOR|HEALTH_DEPUTY_MANAGER')
+                    @if (strtolower($model->modelType) == 'health')
+                    <form method="post" id="healthTeamAssignForm" action="healthTeamAssign"
+                            class="form-horizontal form-label-left" autocomplete="off">
+                            {{ csrf_field() }}
+                            <input type="hidden" value="{{ strtolower($model->modelType) }}" name="modelType">
+                            <input type="hidden" value="{{ $record->id }}" id="entityId" name="entityId">
+                            <div class="col-md-6">
+                                <div class="col-md-4">
+                                    <h2><b>Assign Lead Team</b></h2>
+                                </div>
+                                <div class="col-md-4">
+                                    <select class="form-control" id="assign_team" name="assign_team">
+                                        <option value="">Select Team</option>
+                                        <option @if($record->health_team_type == "EBP") selected="selected" @endif value="EBP">EBP</option>
+                                        <option @if($record->health_team_type == "RM-NB") selected="selected" @endif value="RM-NB">RM-NB</option>
+                                        <option @if($record->health_team_type == "RM-Speed") selected="selected" @endif value="RM-Speed">RM-Speed</option>
+                                        <option @if($record->health_team_type == "GM") selected="selected" @endif value="GM">Group Medical</option>
+                                    </select>
+                                    <label id='teamAssignValidation' style="display: none;color:red;">Please select a team for
+                                        assignment</label>
+                                </div>
+                                <div class="col-md-4">
+                                    <button type="submit" id="assignTeamBtn" name="assignTeamBtn"
+                                        class="btn btn-warning btn-sm">Assign Team</button>
+                                </div>
+                            </div>
+                            <div class="clearfix">
+                            </div>
+                        </form>
                         <form method="post" action="manualLeadAssignAfterTeamAssign" class="form-horizontal form-label-left"
                             autocomplete="off">
                             {{ csrf_field() }}
@@ -83,35 +111,7 @@
                             <div class="clearfix">
                             </div>
                         </form>
-                    @elseif (strtolower($model->modelType) == 'health' && ($record->health_team_type == '' || $record->health_team_type == null))
-                        <form method="post" id="healthTeamAssignForm" action="healthTeamAssign"
-                            class="form-horizontal form-label-left" autocomplete="off">
-                            {{ csrf_field() }}
-                            <input type="hidden" value="{{ strtolower($model->modelType) }}" name="modelType">
-                            <input type="hidden" value="{{ $record->id }}" id="entityId" name="entityId">
-                            <div class="col-md-6">
-                                <div class="col-md-4">
-                                    <h2><b>Assign Lead Team</b></h2>
-                                </div>
-                                <div class="col-md-4">
-                                    <select class="form-control" id="assign_team" name="assign_team">
-                                        <option value="">Select Team</option>
-                                        <option value="EBP">EBP</option>
-                                        <option value="RM-NB">RM-NB</option>
-                                        <option value="RM-Speed">RM-Speed</option>
-                                        <option value="GM">Group Medical</option>
-                                    </select>
-                                    <label id='teamAssignValidation' style="display: none;color:red;">Please select a team for
-                                        assignment</label>
-                                </div>
-                                <div class="col-md-4">
-                                    <button type="submit" id="assignTeamBtn" name="assignTeamBtn"
-                                        class="btn btn-warning btn-sm">Assign Team</button>
-                                </div>
-                            </div>
-                            <div class="clearfix">
-                            </div>
-                        </form>
+                        
                     @endif
                 @endcan
                 @if (strtolower($model->modelType) == 'business' && Auth::user()->hasAnyRole(['ADMIN', 'BUSINESS_MANAGER', 'WCU_ADVISOR', 'BUSINESS_DEPUTY']) && ($record->business_type_of_insurance_id_text = 'Group Medical'))
@@ -299,10 +299,42 @@
             :carQuotePaymentStatus="$record->payment_status_id_text" :carQuotePlanName="$record->plan_id_text"
             :carQuotePlanAddons="$carQuotePlanAddons" :carQuotePlanProvider="$record->car_plan_provider_id_text"
             :carQuotePaymentMethod="$record->payment_gateway" />
+        
 
         <x-car-quote-plans :listQuotePlans="$listQuotePlans" :uuid="$ecomCarInsuranceQuoteUrl.$record->uuid"
             :uuidModal="$record->uuid" :quoteRequestId="$record->id" :quoteIsCommerce="$record->is_ecommerce" />
     @endif
+
+    <div class="row" st>
+        <div class="col-md-12 col-sm-12">
+            <div class="x_panel">
+                <div class="x_title">
+                    <h2>Lead History</h2>
+                    <div class="clearfix"></div>
+                </div>
+                <div class="x_content">
+                    <div id="lead-history-div">
+                        <table id="leadhistorydatatable" class="table table-striped jambo_table" style="width:100%">
+                            <thead>
+                                <tr>
+                                    <th>Modified At</th>
+                                    <th>Modified By</th>
+                                    <th>Lead Status</th>
+                                    <th>Advisor</th>
+                                    <th>Notes</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td colspan="5" style="text-align: center"> <button id="loadHistoryDataBtn" class="btn btn-success btn-sm">Load History Data</button></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     @if ($model->modelType == quoteTypeCode::Travel)
         <div class="modal fade" id="quotePlanModal" name="quotePlanModal" tabindex="-1" role="dialog"
@@ -341,6 +373,8 @@
             :uuidModal="$record->uuid"
             :quoteRequestId="$record->id" />
     @endif
+
+    
 
     @can('auditable')
         <div id="auditable">
