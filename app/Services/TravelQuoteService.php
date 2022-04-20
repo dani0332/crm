@@ -509,7 +509,7 @@ class TravelQuoteService extends BaseService
             "create" => "previous_quote_id,id,created_at,id,code,advisor_id,updated_at,quote_status_id,next_followup_date,lost_reason,premium,source,transapp_code",
             "list" => "previous_quote_id,email,mobile_no,region_cover_for_id,travel_cover_for_id,details,nationality_id,days_cover_for",
             "update" => 'previous_quote_id,created_at,id,code,advisor_id,updated_at,quote_status_id,next_followup_date,lost_reason,source,transapp_code',
-            "show" => "previous_quote_id",
+            "show" => "",
         ];
     }
 

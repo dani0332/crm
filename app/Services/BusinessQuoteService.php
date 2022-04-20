@@ -507,7 +507,7 @@ class BusinessQuoteService extends BaseService
             "create" => "previous_quote_id,id,advisor_id,quote_status_id,code,updated_at,created_at,next_followup_date,lost_reason,premium,source,transapp_code",
             "list" => "previous_quote_id,email,mobile_no,brief_details,dob",
             "update" => "previous_quote_id,id,advisor_id,quote_status_id,code,updated_at,created_at,next_followup_date,lost_reason,source,transapp_code",
-            "show" => "previous_quote_id",
+            "show" => "",
         ];
     }
 
