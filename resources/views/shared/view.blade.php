@@ -401,7 +401,7 @@
                 });
                 dt.ajax.reload();
             }
-            $(".toggle-btn").on("click", function() {
+            $(".toggle-btn-2").on("click", function() {
                 $(".show-visual-cards").addClass("hideme");
                 $(".show-visual-cards").removeClass("showme");
                 $(".show-container").addClass("showme");
@@ -409,13 +409,13 @@
                 $(this).addClass("active");
                 $(".toggle-btn").removeClass("active");
             });
-            $(".toggle-btn-2").on("click", function() {
+            $(".toggle-btn").on("click", function() {
                 $(".show-visual-cards").addClass("showme");
                 $(".show-visual-cards").removeClass("hideme");
                 $(".show-container").removeClass("showme");
                 $(".show-container").addClass("hideme");
                 $(this).addClass("active");
-                $(".toggle-btn-2").removeClass("active");
+                $(".toggle-btn").removeClass("active");
             });
 
         });
@@ -545,7 +545,7 @@
                             <x-leads-visual-card :model="$model" :dropdownSource="$dropdownSource" />
                         </div>
                     @endif
-                        <div class="show-conatiner showme">
+                        <div class="show-container showme">
                         @if (session()->has('message'))
                             <div class="alert alert-danger">{{ session()->get('message') }}</div>
                         @endif
