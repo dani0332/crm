@@ -102,29 +102,10 @@
             //         },
             //     ],
             // });
-            var myleadsTable = $("#dtBasicExample-leadsearch").DataTable({
-                ordering: true,
-                info: false,
-                searching: false,
-                bLengthChange: false,
-                serverSide: true,
-                ajax: {
-                    url: config.routes.myleadsDataTable,
-                    data: function(d) {
-                        d.leadType = $("#modelType").val();
-                        d.cdbId = $("#cdbId").val();
-                        d.leadStatus = $("#leadStatus").val();
-                        d.startedAt = $("#startedAt").val();
-                        d.endAt = $("#endAt").val();
-                        d.nfdSart = $('#nfdSart').val();
-                        d.nfdEnd = $('#nfdEnd').val();
-                        d.email = $('#email').val();
-                        d.teamType = $('#teamType').val();
-                    },
-                    columnDefs: [
-                        // { orderable: false, targets: [1,2,5,6,] }
-                        ],
-                    columns: [{
+            var Columns = [];
+            if(isRenewalUser && $("#modelType").val() != "Business")
+            {
+                Columns.push({
                             data: 'id',
                             name: 'id',
                             render: function(data, type, row) {
@@ -156,51 +137,75 @@
                             name: 'policy_number'
                         },
                         {
-                            data: 'company_name',
-                            name: 'company_name'
+                            data: 'premium',
+                            name: 'premium',
+                        });
+            }else if(isRenewalUser && $("#modelType").val() == "Business")
+            {
+                Columns.push({
+                            data: 'id',
+                            name: 'id',
+                            render: function(data, type, row) {
+                                return "<a target='_blank' href='/quotes/" + $("#modelType").val().toLowerCase() + '/' + row.uuid + "'>" + row.code + "</a>"
+                            }
+                        },
+                        {
+                            data: "clientName",
+                            name: "clientName"
+                        },
+                        {
+                            data: "leadStatus",
+                            name: "leadStatus"
+                        },
+                        {
+                            data: "createdAt",
+                            name: "createdAt"
+                        },
+                        {
+                            data: "updatedAt",
+                            name: "updatedAt"
+                        },
+                        {
+                            data: "assignedBy",
+                            name: "assignedBy"
+                        },
+                        {
+                            data: 'policy_number',
+                            name: 'policy_number'
                         },
                         {
                             data: 'premium',
                             name: 'premium',
+                        },{
+                            data: 'company_name',
+                            name: 'company_name',
+                        });
+            }
+            var myleadsTable = $("#dtBasicExample-leadsearch").DataTable({
+                ordering: false,
+                info: false,
+                searching: false,
+                bLengthChange: false,
+                serverSide: true,
+                ajax: {
+                        url: config.routes.myleadsDataTable,
+                        data: function(d) {
+                            d.leadType = $("#modelType").val();
+                            d.cdbId = $("#cdbId").val();
+                            d.leadStatus = $("#leadStatus").val();
+                            d.startedAt = $("#startedAt").val();
+                            d.endAt = $("#endAt").val();
+                            d.nfdSart = $('#nfdSart').val();
+                            d.nfdEnd = $('#nfdEnd').val();
+                            d.email = $('#email').val();
+                            d.teamType = $('#teamType').val();
                         },
-                    ],
-                columns: [{
-                        data: 'id',
-                        name: 'id',
-                        render: function(data, type, row) {
-                            return "<a target='_blank' href='/quotes/" + $("#modelType").val().toLowerCase() + '/' + row.uuid + "'>" + row.code + "</a>"
-                        }
                     },
-                    {
-                        data: "clientName",
-                        name: "clientName"
-                    },
-                    {
-                        data: "leadStatus",
-                        name: "leadStatus"
-                    },
-                    {
-                        data: "createdAt",
-                        name: "createdAt"
-                    },
-                    {
-                        data: "assignedDate",
-                        name: "assignedDate"
-                    },
-                    {
-                        data: "assignedBy",
-                        name: "assignedBy"
-                    },
-                    {
-                        data: 'nextFollowupDate',
-                        name: 'nextFollowupDate',
-                    },
-                    {
-                        data: 'premium',
-                        name: 'premium',
-                    },
-                ],
-            });
+                    columnDefs: [
+                        // { orderable: false, targets: [1,2,5,6,] }
+                        ],
+                    columns: Columns
+                });
            
             // followupLeadsTable.on( 'draw', function () {
             //     var rows = $('#overDueFollowups tr');
@@ -242,8 +247,8 @@
                             }
                         }
                     }
-                });
-            }
+                }
+            });
            
            
 
@@ -505,6 +510,7 @@
                                         </div>
                                     </div>
                                 </div>
+                                @if (Auth::user()->isRenewalAdvisor() && $teamName =="Business")
                                 <div class="col">
                                     <label class="col-form-label col-md-4 col-sm-4" for="company">Company Name</label>
                                     <div class="col-md-6 col-sm-6">
@@ -513,6 +519,7 @@
                                         </div>
                                     </div>
                                 </div>
+                                @endif
                             </div>
 
                             <div class="item form-group">
@@ -524,18 +531,20 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="col">
-                                    <label class="col-form-label col-md-4 col-sm-4" for="is_renewal">Is Renewal</label>
-                                    <div class="col-md-6 col-sm-6">
-                                        <div class="input-group">
-                                            <select class="form-control" id="is_renewal" name="is_renewal">
-                                            <option>Please Select</option>
-                                            <option value="1">Yes</option>
-                                            <option value="0">No</option>
-                                            </select>
+                                @if (!Auth::user()->isRenewalAdvisor())
+                                    <div class="col">
+                                        <label class="col-form-label col-md-4 col-sm-4" for="is_renewal">Is Renewal</label>
+                                        <div class="col-md-6 col-sm-6">
+                                            <div class="input-group">
+                                                <select class="form-control" id="is_renewal" name="is_renewal">
+                                                <option>Please Select</option>
+                                                <option value="1">Yes</option>
+                                                <option value="0">No</option>
+                                                </select>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
+                                @endif
                             </div>
 
                         @endif
@@ -583,10 +592,13 @@
                                 <th>Client Name</th>
                                 <th>Lead Status</th>
                                 <th>Created Date</th>
-                                <th>Assigned Date</th>
+                                @if (!Auth::user()->isRenewalAdvisor())<th>Assigned Date</th>@endif
+                                @if (Auth::user()->isRenewalAdvisor()) <th>Last Updated Date</th> @endif
                                 <th>Assigned By</th>
-                                <th>Next FollowUp Date</th>
-                                <th>Premium</th>
+                                @if (!Auth::user()->isRenewalAdvisor()) <th>Next FollowUp Date</th> @endif
+                                @if (Auth::user()->isRenewalAdvisor()) <th>Policy Number</th> @endif
+                                @if (Auth::user()->isRenewalAdvisor())<th>Premium</th>@endif
+                                @if (Auth::user()->isRenewalAdvisor() && $teamName == "Business")<th>Company Name</th>@endif
                             </tr>
                         </thead>
                         <tbody>

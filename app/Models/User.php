@@ -118,7 +118,6 @@ class User extends Authenticatable implements AuditableContract
     {
         return Auth::user()->hasAnyRole(["CAR_RENEWAL_ADVISOR","TRAVEL_RENEWAL_ADVISOR","HEALTH_RENEWAL_ADVISOR","HOME_RENEWAL_ADVISOR","LIFE_RENEWAL_ADVISOR","GM_RENEWAL_ADVISOR","CORPLINE_RENEWAL_ADVISOR"]);
     }
-
     public function isAdvisor()
     {
         $userRoles = Auth::user()->usersroles()->get();

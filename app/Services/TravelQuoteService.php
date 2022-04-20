@@ -176,7 +176,6 @@ class TravelQuoteService extends BaseService
                 'tqr.premium as premium',
                 'tqr.email as email',
                 'tqr.mobile_no as mobile_no',
-                'tqr.company_name as company_name',
                 'tqr.source as leadSource',
                 'tqrd.next_followup_date as nextFollowupDate',
                 'tqr.previous_quote_id'
