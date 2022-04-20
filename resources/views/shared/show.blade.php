@@ -192,8 +192,7 @@
                                 @endif
                             </div>
                             @if (count($model->properties) == $count && $count % 2 != 0)
-                                <div class="col"></div>
-                </div>
+                                <div class="col"></div></div>
             @elseif($count % 2 == 0)
             </div>
             @endif
