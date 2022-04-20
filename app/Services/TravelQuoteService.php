@@ -35,6 +35,7 @@ class TravelQuoteService extends BaseService
             'tqr.last_name',
             'tqr.email',
             'tqr.mobile_no',
+            'tqr.dob',
             'tqr.premium',
             'tqr.paid_at',
             'tqr.source',
