@@ -180,6 +180,38 @@
                             data: 'company_name',
                             name: 'company_name',
                         });
+            } else {
+                Columns.push({
+                        data: 'id',
+                        name: 'id',
+                        render: function(data, type, row) {
+                            return "<a target='_blank' href='/quotes/" + $("#modelType").val().toLowerCase() + '/' + row.uuid + "'>" + row.code + "</a>"
+                        }
+                    },
+                    {
+                        data: "clientName",
+                        name: "clientName"
+                    },
+                    {
+                        data: "leadStatus",
+                        name: "leadStatus"
+                    },
+                    {
+                        data: "createdAt",
+                        name: "createdAt"
+                    },
+                    {
+                        data: "assignedDate",
+                        name: "assignedDate"
+                    },
+                    {
+                        data: "assignedBy",
+                        name: "assignedBy"
+                    },
+                    {
+                        data: 'nextFollowupDate',
+                        name: 'nextFollowupDate',
+                    });
             }
             var myleadsTable = $("#dtBasicExample-leadsearch").DataTable({
                 ordering: false,
