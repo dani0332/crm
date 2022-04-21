@@ -195,33 +195,33 @@ function getDataAgainstSearchTerm($modelType,  $request) {
                 ->get();
             }else {
                 $result["leads_list"] = $modelType::where("quote_status_id", $request->status)
-                ->whereRaw('MATCH (company_name, first_name, last_name, code, mobile_no, email) AGAINST (?)' , array($request->term.'*'))
+                ->whereRaw('MATCH (company_name, first_name, last_name, code, mobile_no, email) AGAINST (? IN BOOLEAN MODE)' , array($request->term.'*'))
                 ->where("advisor_id", \Auth::user()->id)
                 ->get();
             }
         }else {
             if (Auth::user()->isRenewalAdvisor()) {
                 $result["leads_list"] = $modelType::where("quote_status_id", $status)
-                ->whereRaw('MATCH (company_name, first_name, last_name, code, mobile_no, email) AGAINST (?)' , array($request->term.'*'))
+                ->whereRaw('MATCH (company_name, first_name, last_name, code, mobile_no, email) AGAINST (? IN BOOLEAN MODE)' , array($request->term.'*'))
                 ->whereNotNull("previous_quote_id")
                 ->where("advisor_id", \Auth::user()->id)
                 ->get();
             }else {
                 $result["leads_list"] = $modelType::where("quote_status_id", $status)
-                ->whereRaw('MATCH (company_name, first_name, last_name, code, mobile_no, email) AGAINST (?)' , array($request->term.'*'))
+                ->whereRaw('MATCH (company_name, first_name, last_name, code, mobile_no, email) AGAINST (? IN BOOLEAN MODE)' , array($request->term.'*'))
                 ->get();
             }
         }
     }else {
         if (Auth::user()->isRenewalAdvisor()) {
             $result["leads_list"] = $modelType::where("quote_status_id", $request->status)
-            ->whereRaw('MATCH (first_name, last_name, code, mobile_no, email) AGAINST (?)' , array($request->term.'*'))
+            ->whereRaw('MATCH (first_name, last_name, code, mobile_no, email) AGAINST (? IN BOOLEAN MODE)' , array($request->term.'*'))
             ->whereNotNull("previous_quote_id")
             ->where("advisor_id", \Auth::user()->id)
             ->get();
         }else {
             $result["leads_list"] = $modelType::where("quote_status_id", $request->status)
-            ->whereRaw('MATCH (first_name, last_name, code, mobile_no, email) AGAINST (?)' , array($request->term.'*'))->get();
+            ->whereRaw('MATCH (first_name, last_name, code, mobile_no, email) AGAINST (? IN BOOLEAN MODE)' , array($request->term.'*'))->get();
         }
        
     }
