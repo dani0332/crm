@@ -202,6 +202,18 @@
             @endphp
             @endif
             @endforeach
+
+            @if (strtolower($model->modelType) == 'health')
+                <div class="item form-group">
+                    <div class="col">
+                        <label class="col-form-label col-md-3 col-sm-3" for="Status Description"><b>Gender</b></label>
+                        <div class="col-md-4 col-sm-4"
+                            style="text-overflow: ellipsis;overflow: auto;white-space: nowrap;width: 495px;">
+                            <p class="label-align-center">{{ $record->gender }}</p>
+                        </div>
+                    </div>
+                </div>
+            @endif
             <div class="ln_solid"></div>
             <div class="row">
                 <div class="col-auto mr-auto"></div>
