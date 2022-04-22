@@ -36,6 +36,7 @@ class HealthQuoteService extends BaseService
             'hqr.details',
             'hqr.source',
             'hqr.dob',
+            'hqr.gender',
             'hqr.has_dental',
             'hqr.health_team_type',
             'hqr.has_home',
@@ -130,6 +131,7 @@ class HealthQuoteService extends BaseService
             "leadTypeId" => $request->lead_type_id,
             "referenceUrl" => $appUrl,
             "dob" => $request->dob,
+            "gender" => $request->gender,
             "is_ebp_renewal" => $request->is_ebp_renewal == 'on' ? true : false,
             "coverForId" => $request->cover_for_id,
             "nationalityId" => $request->nationality_id,
@@ -284,6 +286,7 @@ class HealthQuoteService extends BaseService
         $healthQuote->source = $sourceName;
         $healthQuote->marital_status_id = $request->marital_status_id;
         $healthQuote->dob = $request->dob;
+        $healthQuote->gender = $request->gender;
         $healthQuote->cover_for_id = $request->cover_for_id;
         $healthQuote->nationality_id = $request->nationality_id;
         $healthQuote->is_ebp_renewal = $request->is_ebp_renewal == 'on' ? true : false;
@@ -507,7 +510,7 @@ class HealthQuoteService extends BaseService
         $model->renewalSearchProperties = ['created_at', 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'policy_number'];
         $model->renewalSkipProperties = [
             "create" => "previous_quote_id,created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,premium,source,transapp_code",
-            "list" => "previous_quote_id,email,cover_for_id,has_worldwide_cover,has_home,details,preference,mobile_no,dob,marital_status_id,nationality_id,has_dental,emirate_of_your_visa_id,is_ebp_renewal,health_team_type,next_followup_date,lost_reason,source,transapp_code,premium,lead_type_id",
+            "list" => "email,cover_for_id,has_worldwide_cover,has_home,details,preference,mobile_no,dob,marital_status_id,nationality_id,has_dental,emirate_of_your_visa_id,is_ebp_renewal,health_team_type,next_followup_date,lost_reason,source,transapp_code,premium,lead_type_id",
             "update" => "previous_quote_id,created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,source,transapp_code",
             "show" => "id,next_followup_date",
         ];
@@ -593,7 +596,7 @@ class HealthQuoteService extends BaseService
     {
         return [
             "create" => "previous_quote_id,created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,premium,source,transapp_code",
-            "list" => "previous_quote_id,email,cover_for_id,has_worldwide_cover,has_home,details,preference,mobile_no,dob,marital_status_id,nationality_id,has_dental,emirate_of_your_visa_id,is_ebp_renewal",
+            "list" => "gender,previous_quote_id,email,cover_for_id,has_worldwide_cover,has_home,details,preference,mobile_no,dob,marital_status_id,nationality_id,has_dental,emirate_of_your_visa_id,is_ebp_renewal",
             "update" => "previous_quote_id,created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,source,transapp_code",
             "show" => "id,next_followup_date",
         ];

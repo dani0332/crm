@@ -99,7 +99,9 @@ class TransAppService extends BaseService
             $customer->myalfred_expiry_date = $expiryDate;
             $customer->save();
 
-            if($sendWelcomeEmail && Config::get('constants.ENABLE_TRANSAPP_WE') == '1') {
+            $isCustomerExisting = MyAlFredUser::where('customer_id', '=', $customerId)->get();
+
+            if($sendWelcomeEmail && Config::get('constants.ENABLE_TRANSAPP_WE') == '1' && $isCustomerExisting->isEmpty()) {
                 TransAppService::sendWelcomeEmail($customerId, $WEGenerateUrlResponse, $tag='transapp-myalfred-we');
             }
             return $approvalCode;
