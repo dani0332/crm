@@ -194,6 +194,10 @@ class HealthQuoteService extends BaseService
                 $this->query->whereNotNull('hqr.previous_quote_id');
                 $this->query->where('hqr.advisor_id', Auth::user()->id);
             }
+            if (Auth::user()->isRenewalManager()) {
+                $ids = walkTree(Auth::user()->id);
+                $this->query->whereIn('hqr.advisor_id', $ids);
+            }
             foreach ($searchProperties as $item) {
                 if (!empty($request[$item]) && $item != "created_at") {
                     if ($request[$item] == 'null') {
@@ -244,7 +248,7 @@ class HealthQuoteService extends BaseService
             return $this->query->orderBy('hqr.created_at', 'DESC');
         }
     }
-
+   
     private function getQuerySuffix($item)
     {
         switch ($item) {

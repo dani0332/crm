@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use App\Enums\quoteTypeCode;
+use App\Models\User;
 if (!function_exists('generate_code')) {
 
     /**
@@ -133,7 +134,8 @@ function cleanString($string) {
             ->where("advisor_id", \Auth::user()->id)
             ->whereNotNull("previous_quote_id")->paginate(10);
 
-        } else {
+        }
+        else {
             $result["total_leads"] = $modelType::where("quote_status_id", $statusId)->count();
             $result["total_premium"] = $modelType::where("quote_status_id", $statusId)->sum("premium");
             $result["leads_list"] = $modelType::where("quote_status_id", $statusId)->paginate(10);
@@ -227,5 +229,19 @@ function getDataAgainstSearchTerm($modelType,  $request) {
     }
    
     return $result;
+}
+
+function walkTree ($userId) {
+    $childUserIds = [];
+    $childs = User::where('manager_id', $userId)->pluck('id');
+    foreach ($childs as $child) {
+        $nextChilds = User::where('manager_id', $child)->pluck('id');
+        if(count($nextChilds) > 0) {
+            walkTree($child);
+        }
+        array_push($childUserIds, $child);
+    }
+    array_push($childUserIds, $userId);
+    return $childUserIds;
 }
 
