@@ -300,7 +300,7 @@
                                     <select class="form-control" name="gender" required>
                                         <option value="">Select Gender</option>
                                         <option value="Male">Male</option>
-                                        <option value="Femail">Female</option>
+                                        <option value="Female">Female</option>
                                     </select>
                                 </div>
                             </div>
