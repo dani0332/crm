@@ -64,7 +64,8 @@ class HealthQuoteService extends BaseService
             'hqr.salary_band_id',
             'sb.text as salary_band_id_text',
             'hqr.member_category_id',
-            'mc.text as member_category_id_text'
+            'mc.text as member_category_id_text',
+            'hqr.insurer_quote_no'
         )
             ->leftJoin('marital_status as ms', 'ms.id', '=', 'hqr.marital_status_id')
             ->leftJoin('health_quote_request_detail as hqrd', 'hqrd.health_quote_request_id', '=', 'hqr.id')
@@ -471,7 +472,8 @@ class HealthQuoteService extends BaseService
             "has_home" => "input|checkbox|title",
             "emirate_of_your_visa_id" => "select|title|required",
             "salary_band_id" => "select|title|required",
-            "member_category_id" => "select|title|required"
+            "member_category_id" => "select|title|required",
+            "insurer_quote_no" => "readonly|none"
         );
     }
 
@@ -551,9 +553,9 @@ class HealthQuoteService extends BaseService
     public function fillModelSkipProperties()
     {
         return [
-            "create" => "created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,premium,source,transapp_code",
-            "list" => "gender,email,cover_for_id,has_worldwide_cover,has_home,details,preference,mobile_no,dob,marital_status_id,nationality_id,has_dental,emirate_of_your_visa_id,is_ebp_renewal,salary_band_id,member_category_id",
-            "update" => "created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,source,transapp_code",
+            "create" => "created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,premium,source,transapp_codeinsurer_quote_no",
+            "list" => "gender,email,cover_for_id,has_worldwide_cover,has_home,details,preference,mobile_no,dob,marital_status_id,nationality_id,has_dental,emirate_of_your_visa_id,is_ebp_renewal,salary_band_id,member_category_id,insurer_quote_no",
+            "update" => "created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,source,transapp_code,insurer_quote_no",
             "show" => "id,next_followup_date",
         ];
     }

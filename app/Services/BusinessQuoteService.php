@@ -46,6 +46,7 @@ class BusinessQuoteService extends BaseService
                 'bqrd.transapp_code',
                 'ls.text as lost_reason',
                 'bqr.source',
+                'bqr.insurer_quote_no'
             )
             ->leftJoin('business_type_of_insurance as bti', 'bti.id', '=', 'bqr.business_type_of_insurance_id')
             ->leftJoin('business_quote_request_detail as bqrd', 'bqrd.business_quote_request_id', '=', 'bqr.id')
@@ -409,6 +410,7 @@ class BusinessQuoteService extends BaseService
             "number_of_employees" => "input|number|title",
             "business_type_of_insurance_id" => "select|title|required",
             "brief_details" => 'textarea|required',
+            "insurer_quote_no" => "readonly|none"
         );
     }
 
@@ -455,9 +457,9 @@ class BusinessQuoteService extends BaseService
     public function fillModelSkipProperties()
     {
         return [
-            "create" => "id,advisor_id,quote_status_id,code,updated_at,created_at,next_followup_date,lost_reason,premium,source,transapp_code",
-            "list" => "email,mobile_no,brief_details,dob",
-            "update" => "id,advisor_id,quote_status_id,code,updated_at,created_at,next_followup_date,lost_reason,source,transapp_code",
+            "create" => "id,advisor_id,quote_status_id,code,updated_at,created_at,next_followup_date,lost_reason,premium,source,transapp_code,insurer_quote_no",
+            "list" => "email,mobile_no,brief_details,dob,insurer_quote_no",
+            "update" => "id,advisor_id,quote_status_id,code,updated_at,created_at,next_followup_date,lost_reason,source,transapp_code,insurer_quote_no",
             "show" => "",
         ];
     }
