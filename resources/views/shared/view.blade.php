@@ -85,6 +85,7 @@
                     $('#next_followup_date').next().html('Please select next followup start date');
                     return false;
                 }
+                
                 $("span").each(function(k, v) {
                     if ($(v).hasClass('text-danger')) {
                         $(v).html('');

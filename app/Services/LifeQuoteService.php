@@ -12,11 +12,12 @@ use DB;
 use Auth;
 use \Carbon\Carbon;
 use Config;
+use App\Traits\GetUserTree;
 
 class LifeQuoteService extends BaseService
 {
     protected $query;
-
+    use GetUserTree;
     public function __construct()
     {
         $this->query = DB::table('life_quote_request as lqr')
@@ -187,6 +188,16 @@ class LifeQuoteService extends BaseService
             if (Auth::user()->isRenewalAdvisor()) {
                 $this->query->whereNotNull('lqr.previous_quote_id');
                 $this->query->where('lqr.advisor_id', Auth::user()->id);
+            }
+            if (Auth::user()->isRenewalManager()) {
+                $ids = $this->walkTree(Auth::user()->id);
+                $this->query->whereIn('lqr.advisor_id', $ids);
+            }
+            if (isset($request->is_renewal) && $request->is_renewal != '') {
+                if($request->is_renewal == "Yes")
+                    $this->query->whereNotNull('lqr.previous_quote_id');
+                if($request->is_renewal == "No")
+                    $this->query->whereNull('lqr.previous_quote_id');
             }
             foreach ($searchProperties as $item) {
                 if (!empty($request[$item]) && $item != "created_at") {
@@ -464,7 +475,8 @@ class LifeQuoteService extends BaseService
             "gender" => "|static|Male,Female",
             "is_smoker" => "|static|title|Yes,No",
             "others_info" => "textarea",
-            "previous_quote_id" => "readonly|title"
+            "previous_quote_id" => "readonly|title",
+            "is_renewal" => "|static|title|Yes,No",
         );
     }
 

@@ -16,10 +16,12 @@ use Auth;
 use \Carbon\Carbon;
 use Hidehalo\Nanoid\Client;
 use Config;
+use App\Traits\GetUserTree;
 
 class HealthQuoteService extends BaseService
 {
     protected $query;
+    use GetUserTree;
     public function __construct()
     {
         $this->query = DB::table('health_quote_request as hqr')->select(
@@ -195,8 +197,14 @@ class HealthQuoteService extends BaseService
                 $this->query->where('hqr.advisor_id', Auth::user()->id);
             }
             if (Auth::user()->isRenewalManager()) {
-                $ids = walkTree(Auth::user()->id);
+                $ids = $this->walkTree(Auth::user()->id);
                 $this->query->whereIn('hqr.advisor_id', $ids);
+            }
+            if (isset($request->is_renewal) && $request->is_renewal != '') {
+                if($request->is_renewal == "Yes")
+                    $this->query->whereNotNull('hqr.previous_quote_id');
+                if($request->is_renewal == "No")
+                    $this->query->whereNull('hqr.previous_quote_id');
             }
             foreach ($searchProperties as $item) {
                 if (!empty($request[$item]) && $item != "created_at") {
@@ -505,18 +513,19 @@ class HealthQuoteService extends BaseService
             "has_worldwide_cover" => "input|checkbox|title",
             "has_home" => "input|checkbox|title",
             "emirate_of_your_visa_id" => "select|title|required",
-            "previous_quote_id" => "readonly|title"
+            "previous_quote_id" => "readonly|title",
+            "is_renewal" => "|static|Yes,No",
         );
     }
 
     public function fillRenewalProperties($model)
     {
-        $model->renewalSearchProperties = ['created_at', 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'policy_number'];
+        $model->renewalSearchProperties = ['created_at', 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'policy_number','is_renewal'];
         $model->renewalSkipProperties = [
-            "create" => "previous_quote_id,created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,premium,source,transapp_code",
-            "list" => "email,cover_for_id,has_worldwide_cover,has_home,details,preference,mobile_no,dob,marital_status_id,nationality_id,has_dental,emirate_of_your_visa_id,is_ebp_renewal,health_team_type,next_followup_date,lost_reason,source,transapp_code,premium,lead_type_id",
-            "update" => "previous_quote_id,created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,source,transapp_code",
-            "show" => "id,next_followup_date",
+            "create" => "is_renewal,previous_quote_id,created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,premium,source,transapp_code",
+            "list" => "is_renewal,email,cover_for_id,has_worldwide_cover,has_home,details,preference,mobile_no,dob,marital_status_id,nationality_id,has_dental,emirate_of_your_visa_id,is_ebp_renewal,health_team_type,next_followup_date,lost_reason,source,transapp_code,premium,lead_type_id",
+            "update" => "is_renewal,previous_quote_id,created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,source,transapp_code",
+            "show" => "is_renewal,id,next_followup_date",
         ];
     }
 
@@ -599,10 +608,10 @@ class HealthQuoteService extends BaseService
     public function fillModelSkipProperties()
     {
         return [
-            "create" => "previous_quote_id,created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,premium,source,transapp_code",
-            "list" => "gender,previous_quote_id,email,cover_for_id,has_worldwide_cover,has_home,details,preference,mobile_no,dob,marital_status_id,nationality_id,has_dental,emirate_of_your_visa_id,is_ebp_renewal",
-            "update" => "previous_quote_id,created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,source,transapp_code",
-            "show" => "id,next_followup_date",
+            "create" => "is_renewal,previous_quote_id,created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,premium,source,transapp_code",
+            "list" => "is_renewal,gender,previous_quote_id,email,cover_for_id,has_worldwide_cover,has_home,details,preference,mobile_no,dob,marital_status_id,nationality_id,has_dental,emirate_of_your_visa_id,is_ebp_renewal",
+            "update" => "is_renewal,previous_quote_id,created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,source,transapp_code",
+            "show" => "is_renewal,id,next_followup_date",
         ];
     }
 

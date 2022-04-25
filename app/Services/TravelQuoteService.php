@@ -12,11 +12,12 @@ use DB;
 use Auth;
 use \Carbon\Carbon;
 use Config;
-
+use App\Traits\GetUserTree;
 class TravelQuoteService extends BaseService
 {
 
     protected $query;
+    use GetUserTree;
     public function __construct()
     {
         $this->query = DB::table('travel_quote_request as tqr')->select(
@@ -223,6 +224,10 @@ class TravelQuoteService extends BaseService
         if (Auth::user()->isRenewalAdvisor()) {
             $query->whereNotNull('tqr.previous_quote_id');
         }
+        if (Auth::user()->isRenewalManager()) {
+            $ids = $this->walkTree(Auth::user()->id);
+            $this->query->whereIn('hqr.advisor_id', $ids);
+        }
         return $query;
     }
 
@@ -274,6 +279,12 @@ class TravelQuoteService extends BaseService
             if (Auth::user()->isRenewalAdvisor()) {
                 $this->query->whereNotNull('tqr.previous_quote_id');
                 $this->query->where('tqr.advisor_id', Auth::user()->id);
+            }
+            if (isset($request->is_renewal) && $request->is_renewal != '') {
+                if($request->is_renewal == "Yes")
+                    $this->query->whereNotNull('tqr.previous_quote_id');
+                if($request->is_renewal == "No")
+                    $this->query->whereNull('tqr.previous_quote_id');
             }
             foreach ($searchProperties as $item) {
                 if (!empty($request[$item]) && $item != "created_at") {
@@ -440,7 +451,8 @@ class TravelQuoteService extends BaseService
             "travel_cover_for_id" => "select|title|required",
             "details" => "textarea|text|required",
             "currently_located_in_id" => "select|title|required",
-            "previous_quote_id" => "readonly|title"
+            "previous_quote_id" => "readonly|title",
+            "is_renewal" => "|static|Yes,No",
         );
     }
 
@@ -505,10 +517,10 @@ class TravelQuoteService extends BaseService
     public function fillModelSkipProperties()
     {
         return [
-            "create" => "previous_quote_id,id,created_at,id,code,advisor_id,updated_at,quote_status_id,next_followup_date,lost_reason,premium,source,transapp_code",
-            "list" => "previous_quote_id,email,mobile_no,region_cover_for_id,travel_cover_for_id,details,nationality_id,days_cover_for",
-            "update" => 'previous_quote_id,created_at,id,code,advisor_id,updated_at,quote_status_id,next_followup_date,lost_reason,source,transapp_code',
-            "show" => "",
+            "create" => "is_renewal,previous_quote_id,id,created_at,id,code,advisor_id,updated_at,quote_status_id,next_followup_date,lost_reason,premium,source,transapp_code",
+            "list" => "is_renewal,previous_quote_id,email,mobile_no,region_cover_for_id,travel_cover_for_id,details,nationality_id,days_cover_for",
+            "update" => 'is_renewal,previous_quote_id,created_at,id,code,advisor_id,updated_at,quote_status_id,next_followup_date,lost_reason,source,transapp_code',
+            "show" => "is_renewal",
         ];
     }
 
@@ -519,12 +531,12 @@ class TravelQuoteService extends BaseService
 
     public function fillRenewalProperties($model)
     {
-        $model->renewalSearchProperties = ['created_at', 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'policy_number','premium'];
+        $model->renewalSearchProperties = ['created_at', 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'policy_number','premium','is_renewal'];
         $model->renewalSkipProperties = [
-            "create" => "previous_quote_id,id,created_at,id,code,advisor_id,updated_at,quote_status_id,next_followup_date,lost_reason,premium,source,transapp_code",
-            "list" => "dob,email,mobile_no,region_cover_for_id,travel_cover_for_id,details,nationality_id,days_cover_for,next_followup_date,lost_reason,source,transapp_code,currently_located_in_id,destination_id",
-            "update" => 'previous_quote_id,created_at,id,code,advisor_id,updated_at,quote_status_id,next_followup_date,lost_reason,source,transapp_code',
-            "show" => "",
+            "create" => "is_renewal,previous_quote_id,id,created_at,id,code,advisor_id,updated_at,quote_status_id,next_followup_date,lost_reason,premium,source,transapp_code",
+            "list" => "is_renewal,dob,email,mobile_no,region_cover_for_id,travel_cover_for_id,details,nationality_id,days_cover_for,next_followup_date,lost_reason,source,transapp_code,currently_located_in_id,destination_id",
+            "update" => 'is_renewal,previous_quote_id,created_at,id,code,advisor_id,updated_at,quote_status_id,next_followup_date,lost_reason,source,transapp_code',
+            "show" => "is_renewal",
         ];
     }
 
