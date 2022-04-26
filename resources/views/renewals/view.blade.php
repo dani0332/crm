@@ -19,7 +19,6 @@
                         <tr>
                           <th>id</th>
                           <th>File Name</th>
-                          <th>File Path</th>
                           <th>Total Records</th>
                           <th>Good</th>
                           <th>Bad</th>

@@ -8,6 +8,7 @@ use App\Services\RenewalsUploadService;
 use App\Imports\RenewalsImport;
 use Auth;
 use App\Models\RenewalsUploadLeads;
+use Config;
 
 class RenewalsUploadController extends Controller
 {
@@ -41,8 +42,11 @@ class RenewalsUploadController extends Controller
             // Generating name for file for azure usage
             $fileNameAzure = get_guid().'_'.$fileNameOriginal;
 
+            // Uploading file to Azure
+            $filePathAzure = $request->file('file_name')->storeAs('/', $fileNameAzure, 'azureForRenewals');
+
             // creating upload record in database before upload start
-            $this->createRenewalUploadLeadRecord($fileNameAzure, $fileNameOriginal);
+            $this->createRenewalUploadLeadRecord($fileNameAzure, $fileNameOriginal, $filePathAzure);
 
             $renewalsUpload = new RenewalsImport($this->renewalsUploadFileService, $request->file_name->getClientOriginalName()); // Send the file name to the import class
             $renewalsUpload->import(request()->file('file_name')); // Initiate the import
@@ -66,15 +70,16 @@ class RenewalsUploadController extends Controller
         }
     }
 
-    private function createRenewalUploadLeadRecord($fileNameAzure, $fileName) {
+    private function createRenewalUploadLeadRecord($fileNameAzure, $fileName, $filePathAzure) {
+
+        $azureStorageUrl = Config::get('constants.azure_storage_url');
         $renewalsUploadLead = new RenewalsUploadLeads();
-        $renewalsUploadLead->file_path = $fileNameAzure;
         $renewalsUploadLead->file_name = $fileName;
+        $renewalsUploadLead->file_path = $azureStorageUrl.'renewals/'.$filePathAzure;
         $renewalsUploadLead->status = 'Pending';
         $renewalsUploadLead->good = 0;
         $renewalsUploadLead->created_by_id = Auth::user()->id;
         $renewalsUploadLead->save();
-
     }
 
     public function uploadRenewals() {
