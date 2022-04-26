@@ -69,6 +69,15 @@ return [
             'url'       => env('AZURE_RYU_STORAGE_URL'),
             'prefix'    => null,
         ],
+
+        'azureForRenewals' => [
+            'driver'    => 'azure',
+            'name'      => env('AZURE_STORAGE_NAME'),
+            'key'       => env('AZURE_STORAGE_KEY'),
+            'container' => 'renewals',
+            'url'       => env('AZURE_STORAGE_URL'),
+            'prefix'    => null,
+        ],
     ],
 
     /*
