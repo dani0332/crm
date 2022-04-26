@@ -450,7 +450,7 @@
                     <div class="modal-header">
                         <h5 class="modal-title" id="duplicateLeadModalLabel" style="font-size: 16px !important;"><img
                                 src="https://i.ibb.co/SRHGR0S/system.png" height="30px" width="30px" />
-                            <strong style="margin-left: 13px;">Lead Activity</strong>
+                            <strong style="margin-left: 13px;">New Activity</strong>
                         </h5>
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                             <span aria-hidden="true">&times;</span>
