@@ -255,7 +255,7 @@ class UserController extends Controller
         // devicing role name based on primary team name as we have to show manager name based on primary team name
         $roleNames = [];
         if($teamName == strtoupper(quoteTypeCode::Health)){
-            $roleNames = ['RM_MANAGER', 'RM_DEPUTY_MANAGER', 'EBP_MANAGER', 'EBP_DEPUTY_MANAGER', 'HEALTH_MANAGER', 'HEALTH_DEPUTY_MANAGER'];
+            $roleNames = ['RM_MANAGER', 'RM_DEPUTY_MANAGER', 'EBP_MANAGER', 'EBP_DEPUTY_MANAGER', 'HEALTH_MANAGER', 'HEALTH_DEPUTY_MANAGER','HEALTH_RENEWAL_MANAGER'];
         }
         else if($teamName == strtoupper(quoteTypeCode::Business)){
             $roleNames = ['GM_MANAGER', 'GM_DEPUTY_MANAGER', 'CORPLINE_MANAGER', 'CORPLINE_DEPUTY_MANAGER', 'BUSINESS_MANAGER', 'BUSINESS_DEPUTY_MANAGER'];
