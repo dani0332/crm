@@ -206,6 +206,7 @@ $appName = Config::get('constants.APP_NAME');
                 leadassignmentDataTable: "{{ route('leadassignment.index') }}",
                 myleadsDataTable: "{{ route('myleads.index') }}",
                 amtDataTable: "{{ route('amt.index') }}",
+                activitiesDataTable :"{{ route('activities.index') }}",
             },
             _token: "{{ csrf_token() }}",
             image_path: "{{ \Config::get('constants.azure_storage_url') . 'myrewards/' }}",

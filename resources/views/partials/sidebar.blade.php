@@ -52,6 +52,11 @@
                         </li>
                     </ul>
                 @endcan
+               @can('activities-list')
+                <ul class="nav side-menu">
+                    <li> <a href="{{ url('/activities') }}"> <i class="fa fa-list-alt" aria-hidden="true"></i> Activities</a></li>
+                </ul>
+                @endcan
                 @canany(['car-quotes-list', 'health-quotes-list', 'travel-quotes-list', 'life-quotes-list', 'home-quotes-list'])
                 <ul class="nav side-menu">
                     <li><a><i class="fa fa-quote-left"></i> Personal Quotes <span class="fa fa-chevron-down"></span></a>

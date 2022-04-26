@@ -14,15 +14,20 @@
             display: none;
         }
 
-        .modal-dialog,
-        .modal-content {
-            /* 80% of window height */
-            height: 200px !important;
+        .modal-tall .modal-body {
+            position: relative;
+            min-height: 600px;
+            padding: 15px;
         }
+        .custom-checkbox { cursor: pointer; display:block; font-size: 16px; line-height: 26px; margin: 0 0 20px; padding: 0 0 0 40px; position: relative; }
 
-        .modal-body {
-            max-height: 140px !important;
-        }
+.custom-checkbox input[type="checkbox"] { display: none; }
+
+.custom-checkbox span.checkbox { background-color: #fff; border: solid 2px #cccccc; border-radius:50%; cursor: pointer; display: block; height: 26px; margin: 0px; position: absolute; left: 0; top: 0px; width: 26px; }
+
+.custom-checkbox input[type='checkbox']:checked + span.checkbox { background: #26B99A; border-color: #169F85; text-align:center; }
+
+.custom-checkbox input[type='checkbox']:checked + span.checkbox:before { content:"\f00c"; color:#fff; font: normal normal normal 20px/1 FontAwesome;}
 
     </style>
     <?php
@@ -43,8 +48,8 @@
                     <h2>{{ (str_contains(strtolower($model->modelType), 'team')? 'Team': (str_contains(strtolower($model->modelType), 'leadstatus')? 'Lead Status': $model->modelType)) . ' Detail' }}
                     </h2>
                     <ul class="nav navbar-right panel_toolbox">
-                        @if(count($allowedDuplicateLOB) > 0)
-                        <li> <a id="duplicateLeadModalBtn" class="btn btn-warning btn-sm">Duplicate Lead</a> </li>
+                        @if (count($allowedDuplicateLOB) > 0)
+                            <li> <a id="duplicateLeadModalBtn" class="btn btn-warning btn-sm">Duplicate Lead</a> </li>
                         @endif
                         <li><a href="{{ url('quotes/' . strtolower($model->modelType)) }}"
                                 class="btn btn-warning btn-sm">{{ (str_contains(strtolower($model->modelType), 'team')? 'Team': (str_contains(strtolower($model->modelType), 'leadstatus')? 'Lead Status': $model->modelType)) . ' List' }}</a>
@@ -54,7 +59,7 @@
                 </div>
                 @hasanyrole('ADMIN|HEALTH_MANAGER|HEALTH_WCU_ADVISOR|HEALTH_DEPUTY_MANAGER')
                     @if (strtolower($model->modelType) == 'health')
-                    <form method="post" id="healthTeamAssignForm" action="healthTeamAssign"
+                        <form method="post" id="healthTeamAssignForm" action="healthTeamAssign"
                             class="form-horizontal form-label-left" autocomplete="off">
                             {{ csrf_field() }}
                             <input type="hidden" value="{{ strtolower($model->modelType) }}" name="modelType">
@@ -66,10 +71,14 @@
                                 <div class="col-md-4">
                                     <select class="form-control" id="assign_team" name="assign_team">
                                         <option value="">Select Team</option>
-                                        <option @if($record->health_team_type == "EBP") selected="selected" @endif value="EBP">EBP</option>
-                                        <option @if($record->health_team_type == "RM-NB") selected="selected" @endif value="RM-NB">RM-NB</option>
-                                        <option @if($record->health_team_type == "RM-Speed") selected="selected" @endif value="RM-Speed">RM-Speed</option>
-                                        <option @if($record->health_team_type == "GM") selected="selected" @endif value="GM">Group Medical</option>
+                                        <option @if ($record->health_team_type == 'EBP') selected="selected" @endif value="EBP">EBP
+                                        </option>
+                                        <option @if ($record->health_team_type == 'RM-NB') selected="selected" @endif value="RM-NB">RM-NB
+                                        </option>
+                                        <option @if ($record->health_team_type == 'RM-Speed') selected="selected" @endif value="RM-Speed">
+                                            RM-Speed</option>
+                                        <option @if ($record->health_team_type == 'GM') selected="selected" @endif value="GM">Group
+                                            Medical</option>
                                     </select>
                                     <label id='teamAssignValidation' style="display: none;color:red;">Please select a team for
                                         assignment</label>
@@ -111,7 +120,7 @@
                             <div class="clearfix">
                             </div>
                         </form>
-                        
+
                     @endif
                 @endcan
                 @if (strtolower($model->modelType) == 'business' && Auth::user()->hasAnyRole(['ADMIN', 'BUSINESS_MANAGER', 'WCU_ADVISOR', 'BUSINESS_DEPUTY']) && ($record->business_type_of_insurance_id_text = 'Group Medical'))
@@ -208,12 +217,14 @@
                 <div class="col-auto">
                     @if (strtolower($model->modelType) == 'business')
                         @can('corpline-quotes-edit')
-                            <a id="texta" href="{{ url('quotes/' . strtolower($model->modelType) . '/' . $record->uuid . '/edit') }}"
+                            <a id="texta"
+                                href="{{ url('quotes/' . strtolower($model->modelType) . '/' . $record->uuid . '/edit') }}"
                                 class='btn btn-warning btn-sm'>Edit</a>
                         @endcan
                     @endif
                     @can(strtolower($model->modelType) . '-quotes-edit')
-                        <a id="texta" href="{{ url('quotes/' . strtolower($model->modelType) . '/' . $record->uuid . '/edit') }}"
+                        <a id="texta"
+                            href="{{ url('quotes/' . strtolower($model->modelType) . '/' . $record->uuid . '/edit') }}"
                             class='btn btn-warning btn-sm'>Edit</a>
                     @endcan
                 </div>
@@ -222,18 +233,20 @@
     </div>
     </div>
     </div>
-    @if (strtolower($model->modelType) == "home")
+    @if (strtolower($model->modelType) == 'home')
         </div>
     @endif
     @if (strtolower($model->modelType) != 'teams' && strtolower($model->modelType) != 'leadstatus')
-        <x-lead-status-update :lead="$record" :modeltype="$model->modelType" :status="$record->quote_status_id"
-            :statuses="$leadStatuses" :lostreasons="$lostReasons" :selectedlostreason="$selectedLostReasonId" />
+        <x-lead-status-update :lead="$record" :modeltype="$model->modelType" :status="$record->quote_status_id" :statuses="$leadStatuses" :lostreasons="$lostReasons"
+            :selectedlostreason="$selectedLostReasonId" :activityassignees="$advisors" />
     @endif
-    @if(count($allowedDuplicateLOB) > 0)
-    <div class="modal fade" id="duplicateLeadModal" name="duplicateLeadModal" tabindex="-1" role="dialog"
-        aria-labelledby="duplicateLeadModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
-           
+    <x-lead-activities :lead="$record" :modeltype="$model->modelType" :activities="$activities" />
+    <x-lead-activity-modal :advisors="$advisors" :modeltype="$model->modelType" :record="$record" />
+    @if (count($allowedDuplicateLOB) > 0)
+        <div class="modal fade" id="duplicateLeadModal" name="duplicateLeadModal" tabindex="-1" role="dialog"
+            aria-labelledby="duplicateLeadModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+
                 <div class="modal-content" style="display: grid;    height: 260px !important;">
                     <form method="post" action="/quotes/createDuplicate" autocomplete="off">
                         {{ csrf_field() }}
@@ -243,30 +256,31 @@
                         <input type="hidden" value="{{ strtolower($record->id) }}" name="entityId">
                         <input type="hidden" value="{{ strtolower($record->code) }}" name="entityCode">
                         <input type="hidden" value="{{ strtolower($record->uuid) }}" name="entityUId">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="duplicateLeadModalLabel" style="font-size: 16px !important;"><span
-                                class="fa fa-clone"></span>
-                            <strong style="margin-left: 13px;">Duplicate Lead</strong>
-                        </h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>
-                    <div class="modal-body" style="height: 138px;">
-                        <select class="form-control select2" multiple="multiple" id="lob_team" name="lob_team[]">
-                            @foreach ($allowedDuplicateLOB as $item)
-                                <option value="{{ $item }}">{{ $item }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="modal-footer" style="justify-content: center; padding : 0px !important;">
-                        <button type="submit" style="margin-top: 13px;" class="btn btn-sm btn-success">Create Duplicate</button>
-                    </div>
-                </form>
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="duplicateLeadModalLabel" style="font-size: 16px !important;">
+                                <span class="fa fa-clone"></span>
+                                <strong style="margin-left: 13px;">Duplicate Lead</strong>
+                            </h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body" style="height: 138px;">
+                            <select class="form-control select2" multiple="multiple" id="lob_team" name="lob_team[]">
+                                @foreach ($allowedDuplicateLOB as $item)
+                                    <option value="{{ $item }}">{{ $item }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="modal-footer" style="justify-content: center; padding : 0px !important;">
+                            <button type="submit" style="margin-top: 13px;" class="btn btn-sm btn-success">Create
+                                Duplicate</button>
+                        </div>
+                    </form>
                 </div>
-           
+
+            </div>
         </div>
-    </div>
     @endif
     @if ($model->modelType == quoteTypeCode::Car)
         <div class="modal fade" id="quotePlanModal" name="quotePlanModal" tabindex="-1" role="dialog"
@@ -294,17 +308,13 @@
 
 
 
-        <x-car-quote-more-detail :vehicleTypeText="$vehicleTypeText" :caqQuoteCylinder="$record->cylinder"
-            :caqQuoteSeatCapacity="$record->seat_capacity" :listQuote="$listQuote" />
+        <x-car-quote-more-detail :vehicleTypeText="$vehicleTypeText" :caqQuoteCylinder="$record->cylinder" :caqQuoteSeatCapacity="$record->seat_capacity" :listQuote="$listQuote" />
 
-        <x-car-ecom-detail :carQuotePremium="$record->premium" :carQuotePaidAt="$record->paid_at"
-            :carQuotePaymentStatus="$record->payment_status_id_text" :carQuotePlanName="$record->plan_id_text"
-            :carQuotePlanAddons="$carQuotePlanAddons" :carQuotePlanProvider="$record->car_plan_provider_id_text"
-            :carQuotePaymentMethod="$record->payment_gateway" />
-        
+        <x-car-ecom-detail :carQuotePremium="$record->premium" :carQuotePaidAt="$record->paid_at" :carQuotePaymentStatus="$record->payment_status_id_text" :carQuotePlanName="$record->plan_id_text" :carQuotePlanAddons="$carQuotePlanAddons"
+            :carQuotePlanProvider="$record->car_plan_provider_id_text" :carQuotePaymentMethod="$record->payment_gateway" />
 
-        <x-car-quote-plans :listQuotePlans="$listQuotePlans" :uuid="$ecomCarInsuranceQuoteUrl.$record->uuid"
-            :uuidModal="$record->uuid" :quoteRequestId="$record->id" :quoteIsCommerce="$record->is_ecommerce" />
+
+        <x-car-quote-plans :listQuotePlans="$listQuotePlans" :uuid="$ecomCarInsuranceQuoteUrl . $record->uuid" :uuidModal="$record->uuid" :quoteRequestId="$record->id" :quoteIsCommerce="$record->is_ecommerce" />
     @endif
 
     <div class="row" st>
@@ -328,7 +338,8 @@
                             </thead>
                             <tbody>
                                 <tr>
-                                    <td colspan="5" style="text-align: center"> <button id="loadHistoryDataBtn" class="btn btn-success btn-sm">Load History Data</button></td>
+                                    <td colspan="5" style="text-align: center"> <button id="loadHistoryDataBtn"
+                                            class="btn btn-success btn-sm">Load History Data</button></td>
                                 </tr>
                             </tbody>
                         </table>
@@ -361,22 +372,12 @@
                 </div>
             </div>
         </div>
-        <x-travel-ecom-detail
-            :travelQuotePremium="$record->premium"
-            :travelQuotePaidAt="$record->paid_at"
-            :travelQuotePaymentStatus="$record->payment_status_id_text"
-            :travelQuotePlanName="$record->plan_id_text"
-        />
-        <x-travel-quote-members-detail
-            :members="$members_detail"
-        />
-        <x-travel-quote
-            :listQuotePlans="$listQuotePlans"
-            :uuidModal="$record->uuid"
-            :quoteRequestId="$record->id" />
+        <x-travel-ecom-detail :travelQuotePremium="$record->premium" :travelQuotePaidAt="$record->paid_at" :travelQuotePaymentStatus="$record->payment_status_id_text" :travelQuotePlanName="$record->plan_id_text" />
+        <x-travel-quote-members-detail :members="$members_detail" />
+        <x-travel-quote :listQuotePlans="$listQuotePlans" :uuidModal="$record->uuid" :quoteRequestId="$record->id" />
     @endif
 
-    
+
 
     @can('auditable')
         <div id="auditable">
