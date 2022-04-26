@@ -28,7 +28,7 @@ use App\Enums\quoteTypeCode;
                     @endif
                     
                     @if($model->modelType == quoteTypeCode::Life)
-                        @if($item->text == quoteStatusCode::NEWLEAD || $item->text == quoteStatusCode::QUOTED || $item->text == quoteStatusCode::FOLLOWEDUP || $item->text == quoteStatusCode::NEGOTIATION || $item->text == quoteStatusCode::TRANSACTIONAPPROVED)
+                        @if($item->text == quoteStatusCode::NEWLEAD || $item->text == quoteStatusCode::QUOTED || $item->text == quoteStatusCode::FOLLOWEDUP || $item->text == quoteStatusCode::NEGOTIATION || $item->text == quoteStatusCode::FOLLOWEDUP)
                         <x-visual-card-leads
                             :item="$item"
                             :model="$model"
@@ -37,7 +37,7 @@ use App\Enums\quoteTypeCode;
                     @endif
 
                     @if($model->modelType == quoteTypeCode::Health)
-                        @if($item->text == quoteStatusCode::APPLICATION_PENDING || $item->text == quoteStatusCode::PENDINGUW || $item->text == quoteStatusCode::PLOICY_DOCUMENTS_PENDING || $item->text == quoteStatusCode::TRANSACTIONAPPROVED)
+                        @if($item->text == quoteStatusCode::APPLICATION_PENDING || $item->text == quoteStatusCode::PENDINGUW || $item->text == quoteStatusCode::PLOICY_DOCUMENTS_PENDING || $item->text == quoteStatusCode::TRANSACTIONAPPROVED || $item->text == quoteStatusCode::FOLLOWEDUP || $item->text == quoteStatusCode::PLOICY_DOCUMENTS_PENDING)
                         <x-visual-card-leads
                             :item="$item"
                             :model="$model"
