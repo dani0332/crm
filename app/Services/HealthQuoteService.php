@@ -471,7 +471,8 @@ class HealthQuoteService extends BaseService
             "has_home" => "input|checkbox|title",
             "emirate_of_your_visa_id" => "select|title|required",
             "salary_band_id" => "select|title|required",
-            "member_category_id" => "select|title|required"
+            "member_category_id" => "select|title|required",
+            "gender" => "|static|Male,Female",
         );
     }
 
