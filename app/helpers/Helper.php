@@ -127,30 +127,17 @@ function getDataAgainstSearchTerm($modelType,  $request) {
         if($request->has("myleads") && $request->myleads)
         {
             $result["leads_list"] = $modelType::where("quote_status_id", $request->status)
-            ->Where('code', 'like', '%' . $request->term )
-            ->orWhere('mobile_no', 'like', '%' . $request->term )
-            ->orWhere('email', 'like', '%' . $request->term )
-            ->orWhere('first_name', 'like', '%' . $request->term )
-            ->orWhere('last_name', 'like', '%' . $request->term )
-            ->orWhere('company_name', 'like', '%' . $request->term )
+            ->whereRaw('MATCH (company_name, first_name, last_name, code, mobile_no, email) AGAINST (?)' , array($request->term))
             ->where("advisor_id", \Auth::user()->id)
             ->get();
         }else {
             $result["leads_list"] = $modelType::where("quote_status_id", $status)
-            ->Where('code', 'like', '%' . $request->term )
-            ->orWhere('mobile_no', 'like', '%' . $request->term )
-            ->orWhere('email', 'like', '%' . $request->term )
-            ->orWhere('first_name', 'like', '%' . $request->term )
-            ->orWhere('last_name', 'like', '%' . $request->term )
-            ->orWhere('company_name', 'like', '%' . $request->term )->get();
+            ->whereRaw('MATCH (company_name, first_name, last_name, code, mobile_no, email) AGAINST (?)' , array($request->term))
+            ->get();
         }
     }else {
         $result["leads_list"] = $modelType::where("quote_status_id", $request->status)
-        ->Where('code', 'like', '%' . $request->term )
-        ->orWhere('mobile_no', 'like', '%' . $request->term )
-        ->orWhere('email', 'like', '%' . $request->term )
-        ->orWhere('first_name', 'like', '%' . $request->term )
-        ->orWhere('last_name', 'like', '%' . $request->term )->get();
+        ->whereRaw('MATCH (first_name, last_name, code, mobile_no, email) AGAINST (?)' , array($request->term))->get();
     }
    
     return $result;

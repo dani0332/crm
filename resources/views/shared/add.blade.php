@@ -294,7 +294,6 @@
                         @if(count($skipProperties) != 0)
                             </div>
                         @endif
-
                             @foreach ($model->properties as $property => $value)
                                 @if (strpos($value, 'checkbox'))
 
@@ -325,6 +324,7 @@
 
                                 @endif
                             @endforeach
+                            
                         <div style="clear: both;"></div>
                         <div id='redirect_to_view_div'></div>
                         <div class="ln_solid"></div>
