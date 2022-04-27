@@ -473,7 +473,8 @@ class HealthQuoteService extends BaseService
             "emirate_of_your_visa_id" => "select|title|required",
             "salary_band_id" => "select|title|required",
             "member_category_id" => "select|title|required",
-            "insurer_quote_no" => "readonly|none"
+            "insurer_quote_no" => "readonly|none",
+            "gender" => "|static|Male,Female",
         );
     }
 
