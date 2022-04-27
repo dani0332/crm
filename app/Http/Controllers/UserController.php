@@ -261,7 +261,7 @@ class UserController extends Controller
             $roleNames = ['GM_MANAGER', 'GM_DEPUTY_MANAGER', 'CORPLINE_MANAGER', 'CORPLINE_DEPUTY_MANAGER', 'BUSINESS_MANAGER', 'BUSINESS_DEPUTY_MANAGER'];
         }
         else{
-            $roleNames = [$teamName . '_MANAGER', $teamName . '_DEPUTY_MANAGER'];
+            $roleNames = [$teamName . '_MANAGER', $teamName . '_DEPUTY_MANAGER', $teamName . '_RENEWAL_MANAGER'];
         }
         $teamManagers = [];
         foreach ($teamUsers as $teamUser) {            
