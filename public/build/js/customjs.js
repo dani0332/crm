@@ -1792,6 +1792,7 @@ $(document).ready(function () {
             { data: "good", name: "good" },
             { data: "cannot_upload", name: "cannot_upload" },
             { data: "status", name: "status" },
+            { data: "uploaded_by", name: "uploaded_by" },
             { data: "created_at", name: "created_at" },
             { data: "updated_at", name: "updated_at" },
         ],
