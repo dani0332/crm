@@ -439,7 +439,8 @@ class RenewalsUploadService
             "advisor_id" => $advisorId,
             "renewal_batch" => $batchNumber,
             "previous_quote_policy_number" => $policy,
-            "quote_status_id" => $newLeadId
+            "quote_status_id" => $newLeadId,
+            "is_quote_locked" => true
         ]);
         $createRenewalQuote->save();
 

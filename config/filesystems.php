@@ -74,7 +74,7 @@ return [
             'driver'    => 'azure',
             'name'      => env('AZURE_STORAGE_NAME'),
             'key'       => env('AZURE_STORAGE_KEY'),
-            'container' => 'renewals',
+            'container' => env('AZURE_RENEWALS_STORAGE_CONTAINER'),
             'url'       => env('AZURE_STORAGE_URL'),
             'prefix'    => null,
         ],
