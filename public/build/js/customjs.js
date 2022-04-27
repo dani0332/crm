@@ -1776,12 +1776,14 @@ $(document).ready(function () {
         }, 500);
     });
 
-    var renewalsLeadsUpload = $(".renewals-leads-data-table").DataTable({
+    $(".renewals-leads-data-table").DataTable({
         ordering: false,
         info: true,
         searching: false,
         bLengthChange: false,
-        serverSide: true,
+        processing: true,
+        stateSave: true,
+        paging: true,
         ajax: config.routes.renewals_leads_datatable_route,
         columns: [
             { data: "id", name: "id" },
@@ -1790,6 +1792,7 @@ $(document).ready(function () {
             { data: "good", name: "good" },
             { data: "cannot_upload", name: "cannot_upload" },
             { data: "status", name: "status" },
+            { data: "uploaded_by", name: "uploaded_by" },
             { data: "created_at", name: "created_at" },
             { data: "updated_at", name: "updated_at" },
         ],
