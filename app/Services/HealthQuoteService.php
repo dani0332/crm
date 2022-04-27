@@ -64,7 +64,11 @@ class HealthQuoteService extends BaseService
             'hqr.lead_type_id',
             'lt.TEXT AS lead_type_id_text',
             'ls.text as lost_reason',
-            'hqr.previous_quote_id'
+            'hqr.previous_quote_id',
+            'hqr.salary_band_id',
+            'sb.text as salary_band_id_text',
+            'hqr.member_category_id',
+            'mc.text as member_category_id_text'
         )
             ->leftJoin('marital_status as ms', 'ms.id', '=', 'hqr.marital_status_id')
             ->leftJoin('health_quote_request_detail as hqrd', 'hqrd.health_quote_request_id', '=', 'hqr.id')
