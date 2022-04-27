@@ -257,8 +257,8 @@ class RenewalsImport implements OnEachRow, WithStartRow, WithValidation, SkipsOn
             },
             // Product Type
             '*.5' => function($attribute, $value, $onFailure) {
-                if(strlen($value) > 100) {
-                    $onFailure('Product Type should not exceed length of 100 characters');
+                if(strlen($value) > 50) {
+                    $onFailure('Product Type should not exceed length of 50 characters');
                 }
                 if(strlen($value) > 0 && $value != 'Comprehensive' && $value != 'Third Party Only') {
                     $onFailure('Product Type should be either Comprehensive or Third Party  Only');
@@ -308,8 +308,8 @@ class RenewalsImport implements OnEachRow, WithStartRow, WithValidation, SkipsOn
             },
             // Start Date
             '*.12' => function($attribute, $value, $onFailure) {
-                if(strlen($value) > 100) {
-                    $onFailure('Start Date should not exceed length of 100 characters');
+                if(strlen($value) > 10) {
+                    $onFailure('Start Date should not exceed length of 10 characters');
                 }
             },
             // End Date
@@ -317,8 +317,8 @@ class RenewalsImport implements OnEachRow, WithStartRow, WithValidation, SkipsOn
                 if(!$value) {
                     $onFailure('End Date is required');
                 }
-                if(strlen($value) > 100) {
-                    $onFailure('End Date should not exceed length of 100 characters');
+                if(strlen($value) > 10) {
+                    $onFailure('End Date should not exceed length of 10 characters');
                 }
             },
             // Object
@@ -342,13 +342,13 @@ class RenewalsImport implements OnEachRow, WithStartRow, WithValidation, SkipsOn
             // Make
             '*.17' => function($attribute, $value, $onFailure) {
                 if(strlen($value) > 50) {
-                    $onFailure('Car Make should not exceed length of 25 characters');
+                    $onFailure('Car Make should not exceed length of 50 characters');
                 }
             },
             // Model
             '*.18' => function($attribute, $value, $onFailure) {
                 if(strlen($value) > 50) {
-                    $onFailure('Car Model should not exceed length of 25 characters');
+                    $onFailure('Car Model should not exceed length of 50 characters');
                 }
             },
             // Year

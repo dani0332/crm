@@ -12,32 +12,36 @@ use App\Models\TravelQuote;
 use App\Models\YachtQuote;
 use App\Models\RenewalsDump;
 use App\Services\RenewalsAddonServices;
-use Hidehalo\Nanoid\Client;
 use App\Services\CheckAmlService;
+use App\Services\CapiRequestService;
 use App\Enums\quoteTypeCode;
 use App\Enums\quoteStatusCode;
-use App\Jobs\CheckAMLJob;
+use App\Enums\QuoteTypeId;
 use App\Models\QuoteStatus;
 use App\Models\RenewalsUploadLeads;
 
 class RenewalsUploadService
 {
-    protected $renewalsAddonService, $checkAMLService;
-    function __construct(RenewalsAddonServices $renewalsAddonService, CheckAmlService $checkAMLService)
+    protected $renewalsAddonService, $checkAMLService, $capiRequestService;
+    
+    function __construct(RenewalsAddonServices $renewalsAddonService, CheckAmlService $checkAMLService, CapiRequestService $capiRequestService)
     {
         $this->renewalsAddonService = $renewalsAddonService;
         $this->checkAMLService = $checkAMLService;
+        $this->capiRequestService = $capiRequestService;
     }
+
     /*
     * @name generateUUID()
     * @returns a 16 character UUIDv4 string
     */
-    public function generateUUID()
+    public function generateUUID($quoteTypeId)
     {
-        $client = new Client();
-        $alphabets = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
-        $nanoId = $client->formattedId($alphabets, 16);
-        return $nanoId;
+        $response = $this->capiRequestService->getUUID($quoteTypeId);
+
+        if($response) {
+            return $response->uuid;
+        }
     }
 
     /*
@@ -54,44 +58,39 @@ class RenewalsUploadService
             return false;
         }
 
+        $transApprovedId = $this->getquoteStatusIdbyCode(quoteStatusCode::TRANSACTION_APPROVED);
+        $newLeadId = $this->getquoteStatusIdbyCode(quoteStatusCode::NEW_LEAD);
+
         if ($quoteType == 'BIK') {
-            $this->createNewBikeQuoute($quoteData);
+            $this->createNewBikeQuoute($quoteData, $transApprovedId, $newLeadId);
             $this->updateRenewalUploadLeadRecord($fileName);
-            
         }
-
         if ($quoteType == 'BUS') {
-            $this->createNewBusinessQuoute($quoteData);
+            $this->createNewBusinessQuoute($quoteData, $transApprovedId, $newLeadId);
             $this->updateRenewalUploadLeadRecord($fileName);
         }
-
         if ($quoteType == 'CAR') {
-            $this->createNewCarQuoute($quoteData);
+            $this->createNewCarQuoute($quoteData, $transApprovedId, $newLeadId);
             $this->updateRenewalUploadLeadRecord($fileName);
         }
-
         if ($quoteType == 'HEA') {
-            $this->createNewHealthQuoute($quoteData);
+            $this->createNewHealthQuoute($quoteData, $transApprovedId, $newLeadId);
             $this->updateRenewalUploadLeadRecord($fileName);
         }
-
         if ($quoteType == 'HOM') {
-            $this->createNewHomeQuoute($quoteData);
+            $this->createNewHomeQuoute($quoteData, $transApprovedId, $newLeadId);
             $this->updateRenewalUploadLeadRecord($fileName);
         }
-
         if ($quoteType == 'LIF') {
-            $this->createNewLifeQuoute($quoteData);
+            $this->createNewLifeQuoute($quoteData, $transApprovedId, $newLeadId);
             $this->updateRenewalUploadLeadRecord($fileName);
         }
-
         if ($quoteType == 'TRA') {
-            $this->createNewTravelQuoute($quoteData);
+            $this->createNewTravelQuoute($quoteData, $transApprovedId, $newLeadId);
             $this->updateRenewalUploadLeadRecord($fileName);
         }
-
         if ($quoteType == 'YAC') {
-            $this->createNewYachtQuoute($quoteData);
+            $this->createNewYachtQuoute($quoteData, $transApprovedId, $newLeadId);
             $this->updateRenewalUploadLeadRecord($fileName);
         }
     }
@@ -112,63 +111,70 @@ class RenewalsUploadService
         }
     }
 
-    function createNewBikeQuoute($quoteData)
+    function createNewBikeQuoute($quoteData, $transApprovedId, $newLeadId)
     {
         $advisorId = $this->renewalsAddonService->getUserInfo($quoteData->pAdvisor);
-        $quoteStatusId = QuoteStatus::where('code', '=', quoteStatusCode::TRANSACTION_APPROVED)->value('id');
+        $quoteUuid = $this->generateUUID(QuoteTypeId::Bike);
+
         $newBikeQuote = new BikeQuote([
             "first_name" => $quoteData->first_name,
             "last_name" => $quoteData->last_name,
             "customer_id" => $quoteData->customer_id,
             "email" => $quoteData->email,
             "mobile_no" => $quoteData->phoneNumber,
-            "uuid" => $this->generateUUID(),
+            "uuid" => $quoteUuid,
+            "code" => 'BIK-'.$quoteUuid,
             "source" => $quoteData->source,
             "currently_insured_with" => $quoteData->insurer,
             "year_of_manufacture" => $quoteData->year,
             "policy_number" => $quoteData->policy,
             "advisor_id" => $advisorId,
             "additional_notes" => $quoteData->notes,
-            "quote_status_id" => $quoteStatusId
+            "renewal_batch" => $quoteData->batch,
+            "renewal_expiry_date" => $quoteData->endDate,
+            "quote_status_id" => $transApprovedId
         ]);
         $newBikeQuote->save();
 
-        $this->renewalsAddonService->updateBikeQuoteRequestCode($newBikeQuote->id);
-        $createRenewalQuote = $this->createNewRenewalBikeQuote($newBikeQuote->id, $quoteData->advisor);
+        $createRenewalQuote = $this->createNewRenewalBikeQuote($newBikeQuote->id, $quoteData->advisor, $quoteData->batch, $quoteData->policy, $newLeadId);
         $this->createRenewalDumpRecord('Bike', $createRenewalQuote, $quoteData);
     }
 
-    function createNewBusinessQuoute($quoteData)
+    function createNewBusinessQuoute($quoteData, $transApprovedId, $newLeadId)
     {
         $advisorId = $this->renewalsAddonService->getUserInfo($quoteData->pAdvisor);
-        $quoteStatusId = QuoteStatus::where('code', '=', quoteStatusCode::TRANSACTION_APPROVED)->value('id');
+        $quoteUuid = $this->generateUUID(QuoteTypeId::Business);
+
         $newBusinessQuote = new BusinessQuote([
             "first_name" => $quoteData->first_name,
             "last_name" => $quoteData->last_name,
             "customer_id" => $quoteData->customer_id,
             "email" => $quoteData->email,
             "mobile_no" => $quoteData->phoneNumber,
-            "uuid" => $this->generateUUID(),
+            "uuid" => $quoteUuid,
+            "code" => 'BUS-'.$quoteUuid,
             "source" => $quoteData->source,
             "policy_number" => $quoteData->policy,
             "advisor_id" => $advisorId,
             "additional_notes" => $quoteData->notes,
-            "quote_status_id" => $quoteStatusId
+            "renewal_batch" => $quoteData->batch,
+            "renewal_expiry_date" => $quoteData->endDate,
+            "quote_status_id" => $transApprovedId
         ]);
         $newBusinessQuote->save();
 
-        $this->renewalsAddonService->updateBusinessQuoteRequestCode($newBusinessQuote->id);
-        $createRenewalQuote = $this->createNewRenewalBusinessQuote($newBusinessQuote->id, $quoteData->advisor);
+        $createRenewalQuote = $this->createNewRenewalBusinessQuote($newBusinessQuote->id, $quoteData->advisor, $quoteData->batch, $quoteData->policy, $newLeadId);
         $this->createRenewalDumpRecord('Business', $createRenewalQuote, $quoteData);
     }
 
-    function createNewCarQuoute($quoteData)
+    function createNewCarQuoute($quoteData, $transApprovedId, $newLeadId)
     {
         $carTypeOfInsurance = null;
         $carMake = $this->renewalsAddonService->getCarMake($quoteData->make);
         $carModel = $this->renewalsAddonService->getCarModel($quoteData->model);
         $vehicleType = null;
         $advisorId = $this->renewalsAddonService->getUserInfo($quoteData->pAdvisor);
+        $quoteUuid = $this->generateUUID(QuoteTypeId::Car);
 
         if ($carModel) {
             $vehicleType = $this->renewalsAddonService->getVehicleType($carModel->vehicle_type_id);
@@ -181,15 +187,14 @@ class RenewalsUploadService
             }
         }
 
-        $quoteStatusId = QuoteStatus::where('code', '=', quoteStatusCode::TRANSACTION_APPROVED)->value('id');
-
         $newCarQuote = new CarQuote([
             "first_name" => $quoteData->first_name,
             "last_name" => $quoteData->last_name,
             "customer_id" => $quoteData->customer_id,
             "email" => $quoteData->email,
             "mobile_no" => $quoteData->phoneNumber,
-            "uuid" => $this->generateUUID(),
+            "uuid" => $quoteUuid,
+            "code" => 'CAR-'.$quoteUuid,
             "source" => $quoteData->source,
             "currently_insured_with" => $quoteData->insurer,
             "car_type_insurance_id" => $carTypeOfInsurance,
@@ -202,195 +207,216 @@ class RenewalsUploadService
             "advisor_id" => $advisorId,
             "additional_notes" => $quoteData->notes,
             "renewal_batch" => $quoteData->batch,
-            "quote_status_id" => $quoteStatusId
+            "quote_status_id" => $transApprovedId,
+            "renewal_expiry_date" => $quoteData->endDate
         ]);
         $newCarQuote->save();
 
-        $this->renewalsAddonService->updateCarQuoteRequestCode($newCarQuote->id);
-        $createRenewalQuote = $this->createNewRenewalCarQuote($newCarQuote->id, $quoteData->advisor, $quoteData->batch, $quoteData->endDate, $quoteData->policy);
+        $createRenewalQuote = $this->createNewRenewalCarQuote($newCarQuote->id, $quoteData->advisor, $quoteData->batch, $quoteData->policy, $newLeadId);
         $this->createRenewalDumpRecord('Car', $createRenewalQuote, $quoteData);
     }
 
-    function createNewHealthQuoute($quoteData)
+    function createNewHealthQuoute($quoteData, $transApprovedId, $newLeadId)
     {
         $advisorId = $this->renewalsAddonService->getUserInfo($quoteData->pAdvisor);
-        $quoteStatusId = QuoteStatus::where('code', '=', quoteStatusCode::TRANSACTION_APPROVED)->value('id');
+        $quoteUuid = $this->generateUUID(QuoteTypeId::Health);
+
         $newHealthQuote = new HealthQuote([
             "first_name" => $quoteData->first_name,
             "last_name" => $quoteData->last_name,
             "customer_id" => $quoteData->customer_id,
             "email" => $quoteData->email,
             "mobile_no" => $quoteData->phoneNumber,
-            "uuid" => $this->generateUUID(),
+            "uuid" => $quoteUuid,
+            "code" => 'HEA-'.$quoteUuid,
             "source" => $quoteData->source,
             "policy_number" => $quoteData->policy,
             "advisor_id" => $advisorId,
             "additional_notes" => $quoteData->notes,
-            "quote_status_id" => $quoteStatusId
+            "renewal_batch" => $quoteData->batch,
+            "renewal_expiry_date" => $quoteData->endDate,
+            "quote_status_id" => $transApprovedId
         ]);
         $newHealthQuote->save();
 
-        $this->renewalsAddonService->updateHealthQuoteRequestCode($newHealthQuote->id);
-        $createRenewalQuote = $this->createNewRenewalHealthQuote($newHealthQuote->id, $quoteData->advisor);
+        $createRenewalQuote = $this->createNewRenewalHealthQuote($newHealthQuote->id, $quoteData->advisor, $quoteData->batch, $quoteData->policy, $newLeadId);
         $this->createRenewalDumpRecord('Health', $createRenewalQuote, $quoteData);
     }
 
-    function createNewHomeQuoute($quoteData)
+    function createNewHomeQuoute($quoteData, $transApprovedId, $newLeadId)
     {
         $advisorId = $this->renewalsAddonService->getUserInfo($quoteData->pAdvisor);
-        $quoteStatusId = QuoteStatus::where('code', '=', quoteStatusCode::TRANSACTION_APPROVED)->value('id');
+        $quoteUuid = $this->generateUUID(QuoteTypeId::Home);
+
         $newHomeQuote = new HomeQuote([
             "first_name" => $quoteData->first_name,
             "last_name" => $quoteData->last_name,
             "customer_id" => $quoteData->customer_id,
             "email" => $quoteData->email,
             "mobile_no" => $quoteData->phoneNumber,
-            "uuid" => $this->generateUUID(),
+            "uuid" => $quoteUuid,
+            "code" => 'HOM-'.$quoteUuid,
             "source" => $quoteData->source,
             "policy_number" => $quoteData->policy,
             "advisor_id" => $advisorId,
             "additional_notes" => $quoteData->notes,
-            "quote_status_id" => $quoteStatusId
+            "renewal_batch" => $quoteData->batch,
+            "renewal_expiry_date" => $quoteData->endDate,
+            "quote_status_id" => $transApprovedId
         ]);
         $newHomeQuote->save();
 
-        $this->renewalsAddonService->updateHomeQuoteRequestCode($newHomeQuote->id);
-        $createRenewalQuote = $this->createNewRenewalHomeQuote($newHomeQuote->id, $quoteData->advisor);
+        $createRenewalQuote = $this->createNewRenewalHomeQuote($newHomeQuote->id, $quoteData->advisor, $quoteData->batch, $quoteData->policy, $newLeadId);
         $this->createRenewalDumpRecord('Home', $createRenewalQuote, $quoteData);
     }
 
-    function createNewLifeQuoute($quoteData)
+    function createNewLifeQuoute($quoteData, $transApprovedId, $newLeadId)
     {
         $advisorId = $this->renewalsAddonService->getUserInfo($quoteData->pAdvisor);
-        $quoteStatusId = QuoteStatus::where('code', '=', quoteStatusCode::TRANSACTION_APPROVED)->value('id');
+        $quoteUuid = $this->generateUUID(QuoteTypeId::Life);
+
         $newLifeQuote = new LifeQuote([
             "first_name" => $quoteData->first_name,
             "last_name" => $quoteData->last_name,
             "customer_id" => $quoteData->customer_id,
             "email" => $quoteData->email,
             "mobile_no" => $quoteData->phoneNumber,
-            "uuid" => $this->generateUUID(),
+            "uuid" => $quoteUuid,
+            "code" => 'LIF-'.$quoteUuid,
             "source" => $quoteData->source,
             "policy_number" => $quoteData->policy,
             "advisor_id" => $advisorId,
             "additional_notes" => $quoteData->notes,
-            "quote_status_id" => $quoteStatusId
+            "renewal_batch" => $quoteData->batch,
+            "renewal_expiry_date" => $quoteData->endDate,
+            "quote_status_id" => $transApprovedId
         ]);
         $newLifeQuote->save();
 
-        $this->renewalsAddonService->updateLifeQuoteRequestCode($newLifeQuote->id);
-        $createRenewalQuote = $this->createNewRenewalLifeQuote($newLifeQuote->id, $quoteData->advisor);
+        $createRenewalQuote = $this->createNewRenewalLifeQuote($newLifeQuote->id, $quoteData->advisor, $quoteData->batch, $quoteData->policy, $newLeadId);
         $this->createRenewalDumpRecord('Life', $createRenewalQuote, $quoteData);
     }
 
-    function createNewTravelQuoute($quoteData)
+    function createNewTravelQuoute($quoteData, $transApprovedId, $newLeadId)
     {
         $advisorId = $this->renewalsAddonService->getUserInfo($quoteData->pAdvisor);
-        $quoteStatusId = QuoteStatus::where('code', '=', quoteStatusCode::TRANSACTION_APPROVED)->value('id');
+        $quoteUuid = $this->generateUUID(QuoteTypeId::Travel);
+
         $newTravelQuote = new TravelQuote([
             "first_name" => $quoteData->first_name,
             "last_name" => $quoteData->last_name,
             "customer_id" => $quoteData->customer_id,
             "email" => $quoteData->email,
             "mobile_no" => $quoteData->phoneNumber,
-            "uuid" => $this->generateUUID(),
+            "uuid" => $quoteUuid,
+            "code" => 'TRA-'.$quoteUuid,
             "source" => $quoteData->source,
             "policy_number" => $quoteData->policy,
             "advisor_id" => $advisorId,
             "additional_notes" => $quoteData->notes,
-            "quote_status_id" => $quoteStatusId
+            "renewal_batch" => $quoteData->batch,
+            "renewal_expiry_date" => $quoteData->endDate,
+            "quote_status_id" => $transApprovedId
         ]);
         $newTravelQuote->save();
 
-        $this->renewalsAddonService->updateTravelQuoteRequestCode($newTravelQuote->id);
-        $createRenewalQuote = $this->createNewRenewalTravelQuote($newTravelQuote->id, $quoteData->advisor);
+        $createRenewalQuote = $this->createNewRenewalTravelQuote($newTravelQuote->id, $quoteData->advisor, $quoteData->batch, $quoteData->policy, $newLeadId);
         $this->createRenewalDumpRecord('Travel', $createRenewalQuote, $quoteData);
     }
 
-    function createNewYachtQuoute($quoteData)
+    function createNewYachtQuoute($quoteData, $transApprovedId, $newLeadId)
     {
         $advisorId = $this->renewalsAddonService->getUserInfo($quoteData->pAdvisor);
-        $quoteStatusId = QuoteStatus::where('code', '=', quoteStatusCode::TRANSACTION_APPROVED)->value('id');
+        $quoteUuid = $this->generateUUID(QuoteTypeId::Yacht);
+
         $newYachtQuote = new YachtQuote([
             "first_name" => $quoteData->first_name,
             "last_name" => $quoteData->last_name,
             "customer_id" => $quoteData->customer_id,
             "email" => $quoteData->email,
             "mobile_no" => $quoteData->phoneNumber,
-            "uuid" => $this->generateUUID(),
+            "uuid" => $quoteUuid,
+            "code" => 'YAC-'.$quoteUuid,
             "source" => $quoteData->source,
             "policy_number" => $quoteData->policy,
             "advisor_id" => $advisorId,
             "additional_notes" => $quoteData->notes,
-            "quote_status_id" => $quoteStatusId
+            "renewal_batch" => $quoteData->batch,
+            "renewal_expiry_date" => $quoteData->endDate,
+            "quote_status_id" => $transApprovedId
         ]);
         $newYachtQuote->save();
 
-        $this->renewalsAddonService->updateYachtQuoteRequestCode($newYachtQuote->id);
-        $createRenewalQuote = $this->createNewRenewalYachtQuote($newYachtQuote->id, $quoteData->advisor);
+        $createRenewalQuote = $this->createNewRenewalYachtQuote($newYachtQuote->id, $quoteData->advisor, $quoteData->batch, $quoteData->policy, $newLeadId);
         $this->createRenewalDumpRecord('Yacht', $createRenewalQuote, $quoteData);
     }
 
-    function createNewRenewalBikeQuote($quoteId, $newAdvisor)
+    function createNewRenewalBikeQuote($quoteId, $newAdvisor, $batchNumber, $policy, $newLeadId)
     {
         $getBikeQuoteData = BikeQuote::where('id', '=', $quoteId)->get()->first();
         $advisorId = $this->renewalsAddonService->getUserInfo($newAdvisor);
         $quoteType = $this->renewalsAddonService->getQuoteType(quoteTypeCode::Bike);
-        $quoteStatusId = QuoteStatus::where('code', '=', quoteStatusCode::NEW_LEAD)->value('id');
+        $quoteUuid = $this->generateUUID(QuoteTypeId::Bike);
+
         $createRenewalQuote = new BikeQuote([
             "first_name" => $getBikeQuoteData->first_name,
             "last_name" => $getBikeQuoteData->last_name,
             "customer_id" => $getBikeQuoteData->customer_id,
             "email" => $getBikeQuoteData->email,
             "mobile_no" => $getBikeQuoteData->mobile_no,
-            "uuid" => $this->generateUUID(),
+            "uuid" => $quoteUuid,
+            "code" => 'BIK-'.$quoteUuid,
             "source" => $getBikeQuoteData->source,
             "currently_insured_with" => $getBikeQuoteData->currently_insured_with,
             "year_of_manufacture" => $getBikeQuoteData->year_of_manufacture,
             "additional_notes" => $getBikeQuoteData->additional_notes,
             "previous_quote_id" => $quoteId,
             "advisor_id" => $advisorId,
-            "quote_status_id" => $quoteStatusId
+            "renewal_batch" => $batchNumber,
+            "previous_quote_policy_number" => $policy,
+            "quote_status_id" => $newLeadId
         ]);
-
         $createRenewalQuote->save();
-        $this->renewalsAddonService->updateBikeQuoteRequestCode($createRenewalQuote->id);
+
         $this->checkAMLService->checkAML($getBikeQuoteData->first_name, $getBikeQuoteData->last_name, $createRenewalQuote->id, $quoteType->id, false, null, null);
         return $createRenewalQuote->id;
     }
 
-    function createNewRenewalBusinessQuote($quoteId, $newAdvisor)
+    function createNewRenewalBusinessQuote($quoteId, $newAdvisor, $batchNumber, $policy, $newLeadId)
     {
         $getBusinessQuoteData = BusinessQuote::where('id', '=', $quoteId)->get()->first();
         $advisorId = $this->renewalsAddonService->getUserInfo($newAdvisor);
         $quoteType = $this->renewalsAddonService->getQuoteType(quoteTypeCode::Business);
-        $quoteStatusId = QuoteStatus::where('code', '=', quoteStatusCode::NEW_LEAD)->value('id');
+        $quoteUuid = $this->generateUUID(QuoteTypeId::Business);
+
         $createRenewalQuote = new BusinessQuote([
             "first_name" => $getBusinessQuoteData->first_name,
             "last_name" => $getBusinessQuoteData->last_name,
             "customer_id" => $getBusinessQuoteData->customer_id,
             "email" => $getBusinessQuoteData->email,
             "mobile_no" => $getBusinessQuoteData->mobile_no,
-            "uuid" => $this->generateUUID(),
+            "uuid" => $quoteUuid,
+            "code" => 'BUS-'.$quoteUuid,
             "source" => $getBusinessQuoteData->source,
             "additional_notes" => $getBusinessQuoteData->additional_notes,
             "previous_quote_id" => $quoteId,
             "advisor_id" => $advisorId,
-            "quote_status_id" => $quoteStatusId
+            "renewal_batch" => $batchNumber,
+            "previous_quote_policy_number" => $policy,
+            "quote_status_id" => $newLeadId
         ]);
-
         $createRenewalQuote->save();
-        $this->renewalsAddonService->updateBusinessQuoteRequestCode($createRenewalQuote->id);
+
         $this->checkAMLService->checkAML($getBusinessQuoteData->first_name, $getBusinessQuoteData->last_name, $createRenewalQuote->id, $quoteType->id, false, null, null);
         return $createRenewalQuote->id;
     }
 
-    function createNewRenewalCarQuote($quoteId, $newAdvisor, $batchNumber, $endDate, $policy)
+    function createNewRenewalCarQuote($quoteId, $newAdvisor, $batchNumber, $policy, $newLeadId)
     {
         $getCarQuoteData = CarQuote::where('id', '=', $quoteId)->get()->first();
         $advisorId = $this->renewalsAddonService->getUserInfo($newAdvisor);
         $quoteType = $this->renewalsAddonService->getQuoteType(quoteTypeCode::Car);
-        $quoteStatusId = QuoteStatus::where('code', '=', quoteStatusCode::NEW_LEAD)->value('id');
+        $quoteUuid = $this->generateUUID(QuoteTypeId::Car);
 
         $createRenewalQuote = new CarQuote([
             "first_name" => $getCarQuoteData->first_name,
@@ -398,7 +424,8 @@ class RenewalsUploadService
             "customer_id" => $getCarQuoteData->customer_id,
             "email" => $getCarQuoteData->email,
             "mobile_no" => $getCarQuoteData->mobile_no,
-            "uuid" => $this->generateUUID(),
+            "uuid" => $quoteUuid,
+            "code" => 'CAR-'.$quoteUuid,
             "source" => $getCarQuoteData->source,
             "currently_insured_with" => $getCarQuoteData->currently_insured_with,
             "car_type_insurance_id" => $getCarQuoteData->car_type_insurance_id,
@@ -411,144 +438,157 @@ class RenewalsUploadService
             "previous_quote_id" => $quoteId,
             "advisor_id" => $advisorId,
             "renewal_batch" => $batchNumber,
-            "quote_status_id" => $quoteStatusId,
-            "renewal_expiry_date" => $endDate,
             "previous_quote_policy_number" => $policy,
-            "quote_status_id" => $quoteStatusId
+            "quote_status_id" => $newLeadId,
+            "is_quote_locked" => true
         ]);
-
         $createRenewalQuote->save();
-        $this->renewalsAddonService->updateCarQuoteRequestCode($createRenewalQuote->id);
+
         $this->checkAMLService->checkAML($getCarQuoteData->first_name, $getCarQuoteData->last_name, $createRenewalQuote->id, $quoteType->id, false, null, null);
         return $createRenewalQuote->id;
     }
 
-    function createNewRenewalHealthQuote($quoteId, $newAdvisor)
+    function createNewRenewalHealthQuote($quoteId, $newAdvisor, $batchNumber, $policy, $newLeadId)
     {
         $getHealthQuoteData = HealthQuote::where('id', '=', $quoteId)->get()->first();
         $advisorId = $this->renewalsAddonService->getUserInfo($newAdvisor);
         $quoteType = $this->renewalsAddonService->getQuoteType(quoteTypeCode::Health);
-        $quoteStatusId = QuoteStatus::where('code', '=', quoteStatusCode::NEW_LEAD)->value('id');
+        $quoteUuid = $this->generateUUID(QuoteTypeId::Health);
+
         $createRenewalQuote = new HealthQuote([
             "first_name" => $getHealthQuoteData->first_name,
             "last_name" => $getHealthQuoteData->last_name,
             "customer_id" => $getHealthQuoteData->customer_id,
             "email" => $getHealthQuoteData->email,
             "mobile_no" => $getHealthQuoteData->mobile_no,
-            "uuid" => $this->generateUUID(),
+            "uuid" => $quoteUuid,
+            "code" => 'HEA-'.$quoteUuid,
             "source" => $getHealthQuoteData->source,
             "additional_notes" => $getHealthQuoteData->additional_notes,
             "previous_quote_id" => $quoteId,
             "advisor_id" => $advisorId,
-            "quote_status_id" => $quoteStatusId
+            "renewal_batch" => $batchNumber,
+            "previous_quote_policy_number" => $policy,
+            "quote_status_id" => $newLeadId
         ]);
-
         $createRenewalQuote->save();
-        $this->renewalsAddonService->updateHealthQuoteRequestCode($createRenewalQuote->id);
+
         $this->checkAMLService->checkAML($getHealthQuoteData->first_name, $getHealthQuoteData->last_name, $createRenewalQuote->id, $quoteType->id, false, null, null);
         return $createRenewalQuote->id;
     }
 
-    function createNewRenewalHomeQuote($quoteId, $newAdvisor)
+    function createNewRenewalHomeQuote($quoteId, $newAdvisor, $batchNumber, $policy, $newLeadId)
     {
         $getHomeQuoteData = HomeQuote::where('id', '=', $quoteId)->get()->first();
         $advisorId = $this->renewalsAddonService->getUserInfo($newAdvisor);
         $quoteType = $this->renewalsAddonService->getQuoteType(quoteTypeCode::Home);
-        $quoteStatusId = QuoteStatus::where('code', '=', quoteStatusCode::NEW_LEAD)->value('id');
+        $quoteUuid = $this->generateUUID(QuoteTypeId::Home);
+
         $createRenewalQuote = new HomeQuote([
             "first_name" => $getHomeQuoteData->first_name,
             "last_name" => $getHomeQuoteData->last_name,
             "customer_id" => $getHomeQuoteData->customer_id,
             "email" => $getHomeQuoteData->email,
             "mobile_no" => $getHomeQuoteData->mobile_no,
-            "uuid" => $this->generateUUID(),
+            "uuid" => $quoteUuid,
+            "code" => 'HOM-'.$quoteUuid,
             "source" => $getHomeQuoteData->source,
             "additional_notes" => $getHomeQuoteData->additional_notes,
             "previous_quote_id" => $quoteId,
             "advisor_id" => $advisorId,
-            "quote_status_id" => $quoteStatusId
+            "renewal_batch" => $batchNumber,
+            "previous_quote_policy_number" => $policy,
+            "quote_status_id" => $newLeadId
         ]);
-
         $createRenewalQuote->save();
-        $this->renewalsAddonService->updateHomeQuoteRequestCode($createRenewalQuote->id);
+
         $this->checkAMLService->checkAML($getHomeQuoteData->first_name, $getHomeQuoteData->last_name, $createRenewalQuote->id, $quoteType->id, false, null, null);
         return $createRenewalQuote->id;
     }
 
-    function createNewRenewalLifeQuote($quoteId, $newAdvisor)
+    function createNewRenewalLifeQuote($quoteId, $newAdvisor, $batchNumber, $policy, $newLeadId)
     {
         $getLifeQuoteData = LifeQuote::where('id', '=', $quoteId)->get()->first();
         $advisorId = $this->renewalsAddonService->getUserInfo($newAdvisor);
         $quoteType = $this->renewalsAddonService->getQuoteType(quoteTypeCode::Life);
-        $quoteStatusId = QuoteStatus::where('code', '=', quoteStatusCode::NEW_LEAD)->value('id');
+        $quoteUuid = $this->generateUUID(QuoteTypeId::Life);
+
         $createRenewalQuote = new LifeQuote([
             "first_name" => $getLifeQuoteData->first_name,
             "last_name" => $getLifeQuoteData->last_name,
             "customer_id" => $getLifeQuoteData->customer_id,
             "email" => $getLifeQuoteData->email,
             "mobile_no" => $getLifeQuoteData->mobile_no,
-            "uuid" => $this->generateUUID(),
+            "uuid" => $quoteUuid,
+            "code" => 'LIF-'.$quoteUuid,
             "source" => $getLifeQuoteData->source,
             "additional_notes" => $getLifeQuoteData->additional_notes,
             "previous_quote_id" => $quoteId,
             "advisor_id" => $advisorId,
-            "quote_status_id" => $quoteStatusId
+            "renewal_batch" => $batchNumber,
+            "previous_quote_policy_number" => $policy,
+            "quote_status_id" => $newLeadId
         ]);
-
         $createRenewalQuote->save();
-        $this->renewalsAddonService->updateLifeQuoteRequestCode($createRenewalQuote->id);
+
         $this->checkAMLService->checkAML($getLifeQuoteData->first_name, $getLifeQuoteData->last_name, $createRenewalQuote->id, $quoteType->id, false, null, null);
         return $createRenewalQuote->id;
     }
 
-    function createNewRenewalTravelQuote($quoteId, $newAdvisor)
+    function createNewRenewalTravelQuote($quoteId, $newAdvisor, $batchNumber, $policy, $newLeadId)
     {
         $getTravelQuoteData = TravelQuote::where('id', '=', $quoteId)->get()->first();
         $advisorId = $this->renewalsAddonService->getUserInfo($newAdvisor);
         $quoteType = $this->renewalsAddonService->getQuoteType(quoteTypeCode::Travel);
-        $quoteStatusId = QuoteStatus::where('code', '=', quoteStatusCode::NEW_LEAD)->value('id');
+        $quoteUuid = $this->generateUUID(QuoteTypeId::Travel);
+
         $createRenewalQuote = new TravelQuote([
             "first_name" => $getTravelQuoteData->first_name,
             "last_name" => $getTravelQuoteData->last_name,
             "customer_id" => $getTravelQuoteData->customer_id,
             "email" => $getTravelQuoteData->email,
             "mobile_no" => $getTravelQuoteData->mobile_no,
-            "uuid" => $this->generateUUID(),
+            "uuid" => $quoteUuid,
+            "code" => 'TRA-'.$quoteUuid,
             "source" => $getTravelQuoteData->source,
             "additional_notes" => $getTravelQuoteData->additional_notes,
             "previous_quote_id" => $quoteId,
             "advisor_id" => $advisorId,
-            "quote_status_id" => $quoteStatusId
+            "renewal_batch" => $batchNumber,
+            "previous_quote_policy_number" => $policy,
+            "quote_status_id" => $newLeadId
         ]);
-
         $createRenewalQuote->save();
-        $this->renewalsAddonService->updateTravelQuoteRequestCode($createRenewalQuote->id);
+
         $this->checkAMLService->checkAML($getTravelQuoteData->first_name, $getTravelQuoteData->last_name, $createRenewalQuote->id, $quoteType->id, false, null, null);
         return $createRenewalQuote->id;
     }
 
-    function createNewRenewalYachtQuote($quoteId, $newAdvisor)
+    function createNewRenewalYachtQuote($quoteId, $newAdvisor, $batchNumber, $policy, $newLeadId)
     {
         $getYachtQuoteData = YachtQuote::where('id', '=', $quoteId)->get()->first();
         $advisorId = $this->renewalsAddonService->getUserInfo($newAdvisor);
         $quoteType = $this->renewalsAddonService->getQuoteType(quoteTypeCode::Yacht);
-        $quoteStatusId = QuoteStatus::where('code', '=', quoteStatusCode::NEW_LEAD)->value('id');
+        $quoteUuid = $this->generateUUID(QuoteTypeId::Yacht);
+
         $createRenewalQuote = new YachtQuote([
             "first_name" => $getYachtQuoteData->first_name,
             "last_name" => $getYachtQuoteData->last_name,
             "customer_id" => $getYachtQuoteData->customer_id,
             "email" => $getYachtQuoteData->email,
             "mobile_no" => $getYachtQuoteData->mobile_no,
-            "uuid" => $this->generateUUID(),
+            "uuid" => $quoteUuid,
+            "code" => 'YAC-'.$quoteUuid,
             "source" => $getYachtQuoteData->source,
             "additional_notes" => $getYachtQuoteData->additional_notes,
             "previous_quote_id" => $quoteId,
             "advisor_id" => $advisorId,
-            "quote_status_id" => $quoteStatusId
+            "renewal_batch" => $batchNumber,
+            "previous_quote_policy_number" => $policy,
+            "quote_status_id" => $newLeadId
         ]);
-
         $createRenewalQuote->save();
-        $this->renewalsAddonService->updateYachtQuoteRequestCode($createRenewalQuote->id);
+
         $this->checkAMLService->checkAML($getYachtQuoteData->first_name, $getYachtQuoteData->last_name, $createRenewalQuote->id, $quoteType->id, false, null, null);
         return $createRenewalQuote->id;
     }
@@ -561,5 +601,10 @@ class RenewalsUploadService
             'data' => json_encode($data)
         ]);
         $newRecord->save();
+    }
+
+    function getquoteStatusIdbyCode($quoteStatus)
+    {
+        return QuoteStatus::where('code', '=', $quoteStatus)->value('id');
     }
 }

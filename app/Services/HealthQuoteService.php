@@ -515,6 +515,9 @@ class HealthQuoteService extends BaseService
             "emirate_of_your_visa_id" => "select|title|required",
             "previous_quote_id" => "readonly|title",
             "is_renewal" => "|static|Yes,No",
+            "salary_band_id" => "select|title|required",
+            "member_category_id" => "select|title|required",
+            "gender" => "|static|Male,Female",
         );
     }
 

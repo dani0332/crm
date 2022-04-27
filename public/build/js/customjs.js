@@ -1778,14 +1778,14 @@ $(document).ready(function () {
 
     var renewalsLeadsUpload = $(".renewals-leads-data-table").DataTable({
         ordering: false,
-        info: false,
+        info: true,
         searching: false,
         bLengthChange: false,
+        serverSide: true,
         ajax: config.routes.renewals_leads_datatable_route,
         columns: [
             { data: "id", name: "id" },
             { data: "file_name", name: "file_name" },
-            { data: "file_path", name: "file_path" },
             { data: "total_records", name: "total_records" },
             { data: "good", name: "good" },
             { data: "cannot_upload", name: "cannot_upload" },
