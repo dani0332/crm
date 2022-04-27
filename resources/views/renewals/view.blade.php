@@ -8,18 +8,12 @@
                 <div class="clearfix"></div>
             </div>
             <div class="x_content">
-                {{-- <div id="success_message" class="alert alert-success" style="display:none"></div>
-                <div id="error_message" class="alert alert-danger" style="display:none"></div> --}}
-                <br />
-
-
-                <br/>
-                <table  class="table table-striped jambo_table renewals-leads-data-table" style="width:100%">
+                <table class="table table-striped jambo_table renewals-leads-data-table" style="width:100%">
                       <thead>
                         <tr>
                           <th>id</th>
                           <th>File Name</th>
-                          <th>Total Records</th>
+                          <th>Total</th>
                           <th>Good</th>
                           <th>Bad</th>
                           <th>Status</th>
@@ -27,11 +21,7 @@
                           <th>Updated At</th>
                         </tr>
                       </thead>
-
-
                       <tbody>
-
-
 
                       </tbody>
                     </table>

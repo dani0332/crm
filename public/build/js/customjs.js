@@ -1776,12 +1776,14 @@ $(document).ready(function () {
         }, 500);
     });
 
-    var renewalsLeadsUpload = $(".renewals-leads-data-table").DataTable({
+    $(".renewals-leads-data-table").DataTable({
         ordering: false,
         info: true,
         searching: false,
         bLengthChange: false,
-        serverSide: true,
+        processing: true,
+        stateSave: true,
+        paging: true,
         ajax: config.routes.renewals_leads_datatable_route,
         columns: [
             { data: "id", name: "id" },

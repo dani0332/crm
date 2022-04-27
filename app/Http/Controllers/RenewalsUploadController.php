@@ -43,10 +43,10 @@ class RenewalsUploadController extends Controller
             $fileNameAzure = get_guid().'_'.$fileNameOriginal;
 
             // Uploading file to Azure
-            $filePathAzure = $request->file('file_name')->storeAs('/', $fileNameAzure, 'azureForRenewals');
+            $filePathAzure = $request->file('file_name')->storeAs('renewals', $fileNameAzure, 'azureIM');
 
             // creating upload record in database before upload start
-            $this->createRenewalUploadLeadRecord($fileNameAzure, $fileNameOriginal, $filePathAzure);
+            $this->createRenewalUploadLeadRecord($fileNameOriginal, $filePathAzure);
 
             $renewalsUpload = new RenewalsImport($this->renewalsUploadFileService, $request->file_name->getClientOriginalName()); // Send the file name to the import class
             $renewalsUpload->import(request()->file('file_name')); // Initiate the import
@@ -70,12 +70,14 @@ class RenewalsUploadController extends Controller
         }
     }
 
-    private function createRenewalUploadLeadRecord($fileNameAzure, $fileName, $filePathAzure) {
+    private function createRenewalUploadLeadRecord($fileName, $filePathAzure) {
 
-        $azureStorageUrl = Config::get('constants.azure_storage_url');
+        $azureStorageUrl = Config::get('constants.AZURE_IM_STORAGE_URL');
+        $azureStorageContainer = Config::get('constants.AZURE_IM_STORAGE_CONTAINER');
+
         $renewalsUploadLead = new RenewalsUploadLeads();
         $renewalsUploadLead->file_name = $fileName;
-        $renewalsUploadLead->file_path = $azureStorageUrl.'renewals/'.$filePathAzure;
+        $renewalsUploadLead->file_path = $azureStorageUrl.$azureStorageContainer.'/'.$filePathAzure;
         $renewalsUploadLead->status = 'Pending';
         $renewalsUploadLead->good = 0;
         $renewalsUploadLead->created_by_id = Auth::user()->id;
@@ -93,20 +95,17 @@ class RenewalsUploadController extends Controller
      */
     public function index(Request $request)
     {
-        $data =[];
-        $data = RenewalsUploadLeads::select(
+        $dataRenewalFiles = [];
+        $dataRenewalFiles = RenewalsUploadLeads::select(
             'id', 'file_name', 'file_path', 'total_records', 'good', 'cannot_upload', 'created_at', 'updated_at', 'status',
             )->orderBy('created_at','desc')->get();
 
         if ($request->ajax()) {
-            return DataTables::of($data)
+            return DataTables::of($dataRenewalFiles)
                 ->addIndexColumn()
-                ->addColumn('action', function ($row) {
-                    return view('renewals.actions', compact('row'))->render();
-                })
-                ->rawColumns(['action'])
                 ->make(true);
         }
+
         return view('renewals.view');
     }
 }
