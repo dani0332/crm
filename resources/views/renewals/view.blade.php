@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title','View Customer')
+@section('title','Uploaded Renewal Leads Files')
 @section('content')
 <style>
     div.dt-buttons {
