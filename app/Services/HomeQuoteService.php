@@ -51,6 +51,7 @@ class HomeQuoteService extends BaseService
             'hqrd.transapp_code',
             'hqrd.notes',
             'ls.text as lost_reason',
+            'hqr.insurer_quote_no'
         )
             ->leftJoin('home_quote_request_detail as hqrd', 'hqrd.home_quote_request_id', '=', 'hqr.id')
             ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'hqrd.lost_reason_id')
@@ -389,6 +390,7 @@ class HomeQuoteService extends BaseService
             "has_personal_belongings" => "input|checkbox|required",
             "has_building" => "input|checkbox|required",
             "address" => 'textarea|required',
+            "insurer_quote_no" => "readonly|none"
         );
     }
 
@@ -435,9 +437,9 @@ class HomeQuoteService extends BaseService
     public function fillModelSkipProperties()
     {
         return [
-            "create" => "id,code,quote_status_id,advisor_id,created_at,updated_at,next_followup_date,lost_reason,premium,source,transapp_code",
-            "list" => "email,address,iam_possesion_type_id,ilivein_accommodation_type_id,mobile_no,personal_belongings_aed,building_aed,contents_aed,has_contents,has_personal_belongings,has_building,address",
-            "update" => "id,code,quote_status_id,advisor_id,created_at,updated_at,next_followup_date,lost_reason,source,transapp_code",
+            "create" => "id,code,quote_status_id,advisor_id,created_at,updated_at,next_followup_date,lost_reason,premium,source,transapp_code,insurer_quote_no",
+            "list" => "email,address,iam_possesion_type_id,ilivein_accommodation_type_id,mobile_no,personal_belongings_aed,building_aed,contents_aed,has_contents,has_personal_belongings,has_building,address,insurer_quote_no",
+            "update" => "id,code,quote_status_id,advisor_id,created_at,updated_at,next_followup_date,lost_reason,source,transapp_code,insurer_quote_no",
             "show" => "id,next_followup_date,lost_reason",
         ];
     }

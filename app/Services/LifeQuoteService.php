@@ -59,6 +59,7 @@ class LifeQuoteService extends BaseService
                 'lqrd.transapp_code',
                 'lqrd.notes',
                 'ls.text as lost_reason',
+                'lqr.insurer_quote_no'
             )
             ->leftJoin('life_quote_request_detail as lqrd', 'lqrd.life_quote_request_id', 'lqr.id')
             ->leftJoin('currency_type as ct', 'ct.id', '=', 'lqr.sum_insured_currency_id')
@@ -429,6 +430,7 @@ class LifeQuoteService extends BaseService
             "gender" => "|static|Male,Female",
             "is_smoker" => "|static|title|Yes,No",
             "others_info" => "textarea",
+            "insurer_quote_no" => "readonly|none"
         );
     }
 
@@ -496,9 +498,9 @@ class LifeQuoteService extends BaseService
     public function fillModelSkipProperties()
     {
         return [
-            "create" => "id,advisor_id,quote_status_id,code,created_at,updated_at,next_followup_date,lost_reason,premium,source,transapp_code",
-            "list" => "email,mobile_no,others_info,dob,sum_insured_value,sum_insured_currency_id,purpose_of_insurance_id,marital_status_id,children_id,tenure_of_insurance_id,number_of_years_id,gender,is_smoker,others_info",
-            "update" => "id,advisor_id,quote_status_id,code,created_at,updated_at,next_followup_date,lost_reason,source,transapp_code",
+            "create" => "id,advisor_id,quote_status_id,code,created_at,updated_at,next_followup_date,lost_reason,premium,source,transapp_code,insurer_quote_no",
+            "list" => "email,mobile_no,others_info,dob,sum_insured_value,sum_insured_currency_id,purpose_of_insurance_id,marital_status_id,children_id,tenure_of_insurance_id,number_of_years_id,gender,is_smoker,others_info,insurer_quote_no",
+            "update" => "id,advisor_id,quote_status_id,code,created_at,updated_at,next_followup_date,lost_reason,source,transapp_code,insurer_quote_no",
             "show" => "",
         ];
     }
