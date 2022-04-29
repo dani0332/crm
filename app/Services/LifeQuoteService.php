@@ -61,7 +61,7 @@ class LifeQuoteService extends BaseService
                 'lqrd.transapp_code',
                 'lqrd.notes',
                 'ls.text as lost_reason',
-                'lqr.previous_quote_id'
+                'lqr.previous_quote_id',
                 'lqr.insurer_quote_no'
             )
             ->leftJoin('life_quote_request_detail as lqrd', 'lqrd.life_quote_request_id', 'lqr.id')
