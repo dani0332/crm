@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\RenewalsUploadLeads;
 use App\Services\RenewalsUploadService;
 use App\Imports\RenewalsImport;
+use App\Models\CarQuote;
 use DataTables;
 use Auth;
 use Config;
@@ -40,6 +41,23 @@ class RenewalsUploadController extends Controller
                 return back()->withInput()->with('message', 'File already been uploaded. Please try again with different file.');
             }
 
+            // Check upload type
+            if($request->renewals_upload_type == 'create') {
+                $uploadType = 'Create';
+            } else {
+                $uploadType = 'Update';
+                $this->validate($request, [
+                    'renewal_import_code' => 'required',
+                ]);
+
+                // Check leads against renewal_import_code
+                $carQuoteRequest = CarQuote::where('renewal_import_code', '=', $request->renewal_import_code)->get();
+                $carQuoteRequestCount = $carQuoteRequest->count();
+                if($carQuoteRequestCount == 0) {
+                    return back()->withInput()->with('message', 'No leads found for renewal import code: '.$request->renewal_import_code);
+                }
+            }
+
             // Getting file name only
             $fileNameOriginal = $request->file_name->getClientOriginalName();
             // Generating name for file for azure usage
@@ -66,10 +84,11 @@ class RenewalsUploadController extends Controller
             $renewalsUploadLead->total_records = $totalRows;
             $renewalsUploadLead->cannot_upload = $countErrors;
             $renewalsUploadLead->renewal_import_code = $renewalImportCode;
+            $renewalsUploadLead->renewal_import_type = $uploadType;
             $renewalsUploadLead->save();
 
             // Redirect back to the upload page if there are errors
-            if ($renewalsUpload->failures()->isNotEmpty() || $countErrors > 50) {
+            if ($renewalsUpload->failures()->isNotEmpty() || $countErrors > 30) {
                 return redirect("renewals/upload")->withFailures($renewalsUpload->failures());
             }
 
@@ -135,6 +154,10 @@ class RenewalsUploadController extends Controller
         $azureStorageUrl = Config::get('constants.AZURE_IM_STORAGE_URL');
         $azureStorageContainer = Config::get('constants.AZURE_IM_STORAGE_CONTAINER');
 
-        return view('renewals.update',compact('azureStorageUrl','azureStorageContainer'));
+        $renewalsUploads = RenewalsUploadLeads::where('renewal_import_type', '=', 'Create')
+        ->where('renewal_import_code', '!=', '')
+        ->orderBy('created_at', 'desc')->get();
+
+        return view('renewals.update',compact('azureStorageUrl','azureStorageContainer','renewalsUploads'));
     }
 }

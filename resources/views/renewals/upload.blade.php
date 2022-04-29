@@ -124,8 +124,9 @@
                     <div class="row">
                     <div class="col-auto mr-auto"></div>
                         <div class="col-auto">
-                        <button type="submit" class="btn btn-warning btn-sm" id="renewals-upload-button">Upload</button>
-                        <div id="renewals-upload-button-text" class="required" style="font-weight:bold;"></div>
+                            <input type="hidden" id="renewals_upload_type" name="renewals_upload_type" value="create" />
+                            <button type="submit" class="btn btn-warning btn-sm" id="renewals-upload-button">Upload</button>
+                            <div id="renewals-upload-button-text" class="required" style="font-weight:bold;"></div>
                         </div>
                     </div>
                 </form>

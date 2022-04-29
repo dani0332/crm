@@ -2,7 +2,7 @@
 @section('title','Upload & Update Renewals')
 @section('content')
 <div class="row">
-    <div class="col-md-12 col-sm-12 ">
+    <div class="col-md-12 col-sm-12">
         <div class="x_panel">
             <div class="x_title">
                 <h2>Upload & Update Renewals (for motor only)</h2>
@@ -45,14 +45,32 @@
                 <form id="demo-form2" method='post' action="{{ url('renewals/upload-process') }}" enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left" autocomplete="off">
                 {{csrf_field()}}
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="File">File <span class="required">*</span></label>
-                        <div class="col-md-6 col-sm-6 ">
+                        <div class="col">
+                            <span class="col-form-label col-md-6 col-sm-6">File <span class="required">*</span></span>
                             <input type="file" id="file_name" name="file_name" class="form-control form-control-sm" accept='.xlsx' data-toggle="tooltip" data-placement="top" title="Please select .xlsx file to upload" />
                             @if ($errors->has('file_name'))
                                 <span class="text-danger">{{ $errors->first('file_name') }}</span>
                             @endif
                         </div>
+                        <div class="col">
+                            <span class="col-form-label col-md-6 col-sm-6">Import Code <span class="required">*</span></span>
+                            <select class="form-control" id="renewal_import_code" name="renewal_import_code" data-toggle="tooltip" data-placement="top" title="Please select import code">
+                                    <option value="">Select</option>
+                                    @foreach($renewalsUploads as $renewalsUpload)
+                                        @if (old('renewal_import_code') == $renewalsUpload->renewal_import_code)
+                                            <option value="{{ $renewalsUpload->renewal_import_code }}" selected>{{ $renewalsUpload->renewal_import_code }}</option>
+                                        @else
+                                            <option value="{{ $renewalsUpload->renewal_import_code }}">{{ $renewalsUpload->renewal_import_code }} ({{ $renewalsUpload->created_at }})</option>
+                                        @endif
+                                    @endforeach
+                            </select>
+                            @if ($errors->has('renewal_import_code'))
+                                <span class="text-danger">{{ $errors->first('renewal_import_code') }}</span>
+                            @endif
+                        </div>
+                        <a href="javascript:void(0);" class="remove_additional_btn" id="add_additional_btn" title="Add field"><img src="/image/add-icon.png"/></a>
                     </div>
+
                     <div class="item form-group">
 
                     </div>
@@ -114,8 +132,9 @@
                     <div class="row">
                     <div class="col-auto mr-auto"></div>
                         <div class="col-auto">
-                        <button type="submit" class="btn btn-warning btn-sm" id="renewals-upload-button">Upload</button>
-                        <div id="renewals-upload-button-text" class="required" style="font-weight:bold;"></div>
+                            <input type="hidden" id="renewals_upload_type" name="renewals_upload_type" value="update" />
+                            <button type="submit" class="btn btn-warning btn-sm" id="renewals-upload-button">Upload</button>
+                            <div id="renewals-upload-button-text" class="required" style="font-weight:bold;"></div>
                         </div>
                     </div>
                 </form>
