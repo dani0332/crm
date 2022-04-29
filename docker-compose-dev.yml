@@ -1,0 +1,22 @@
+version: "3"
+
+services:
+  laravel:
+    #build: 
+    # context: .
+    # dockerfile: Dockerfile
+    #image: ${ACRNAME}.azurecr.io/imcrm${DOCKERENV}:Build.BuildId 
+    image: imcrm${DOCKERENV}:latest
+    environment:
+     - DOPPLER_TOKEN 
+    ports:
+      - "${WEB_PORT}:443"
+    volumes:
+      #- /home/azureuser/imcrm/${LOGS}:/app/log
+      - .:/var/www/html
+    restart: unless-stopped
+  
+volumes:
+  logs:
+  devlogs:
+  stglogs:  
