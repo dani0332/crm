@@ -47,7 +47,7 @@ class BusinessQuoteService extends BaseService
                 'ls.text as lost_reason',
                 'bqr.source',
                 'bqr.policy_number',
-                'bqr.previous_quote_id'
+                'bqr.previous_quote_id',
                 'bqr.insurer_quote_no'
             )
             ->leftJoin('business_type_of_insurance as bti', 'bti.id', '=', 'bqr.business_type_of_insurance_id')
