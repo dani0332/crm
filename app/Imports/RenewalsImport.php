@@ -19,14 +19,18 @@ use Maatwebsite\Excel\Concerns\WithChunkReading;
 class RenewalsImport implements OnEachRow, WithStartRow, WithValidation, SkipsOnFailure, WithChunkReading
 {
     use Importable, SkipsFailures;
+
     private $rows = 0;
     private $renewalsUploadService;
     private $totalRows;
     private $fileName;
-    function __construct(RenewalsUploadService $renewalsUploadService, $fileName)
+    private $renewalImportCode;
+
+    function __construct(RenewalsUploadService $renewalsUploadService, $fileName, $renewalImportCode)
     {
         $this->renewalsUploadService = $renewalsUploadService;
         $this->fileName = $fileName;
+        $this->renewalImportCode = $renewalImportCode;
     }
 
     /**
@@ -67,8 +71,8 @@ class RenewalsImport implements OnEachRow, WithStartRow, WithValidation, SkipsOn
 
             // other information
             $customerPhone = $row[7];
-            $advisor = $row[8];
-            $previousAdvisor = $row[9];
+            $advisor = preg_replace('/\s/', '', strtolower(trim(ltrim(rtrim($row[8])))));
+            $previousAdvisor = preg_replace('/\s/', '', strtolower(trim(ltrim(rtrim($row[9])))));
             $policy = $row[10];
             $batch = $row[11];
             $startDate = Carbon::instance(\PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($row[12]))->toDateTimeString();
@@ -154,7 +158,7 @@ class RenewalsImport implements OnEachRow, WithStartRow, WithValidation, SkipsOn
                     "other_email_ids" => $otherEmailIds,
                 );
             }
-            dispatch(new RenewalImportJob($quoteData, $qouteType, $this->renewalsUploadService, $this->fileName));
+            dispatch(new RenewalImportJob($quoteData, $qouteType, $this->renewalsUploadService, $this->fileName, $this->renewalImportCode));
         }
     }
 

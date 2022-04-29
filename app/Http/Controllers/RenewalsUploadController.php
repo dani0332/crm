@@ -48,10 +48,13 @@ class RenewalsUploadController extends Controller
             // Uploading file to Azure
             $filePathAzure = $request->file('file_name')->storeAs('renewals', $fileNameAzure, 'azureIM');
 
+            // Generate unique code for file record
+            $renewalImportCode = $this->renewalsUploadFileService->generateRandomString();
+
             // creating upload record in database before upload start
             $this->createRenewalUploadLeadRecord($fileNameOriginal, $filePathAzure);
 
-            $renewalsUpload = new RenewalsImport($this->renewalsUploadFileService, $request->file_name->getClientOriginalName()); // Send the file name to the import class
+            $renewalsUpload = new RenewalsImport($this->renewalsUploadFileService, $request->file_name->getClientOriginalName(), $renewalImportCode); // Send the file name to the import class
             $renewalsUpload->import(request()->file('file_name')); // Initiate the import
 
             $countRows = $renewalsUpload->getRowCount(); // Get the number of rows imported
@@ -62,6 +65,7 @@ class RenewalsUploadController extends Controller
             $renewalsUploadLead = RenewalsUploadLeads::where('file_name', $fileNameOriginal)->first();
             $renewalsUploadLead->total_records = $totalRows;
             $renewalsUploadLead->cannot_upload = $countErrors;
+            $renewalsUploadLead->renewal_import_code = $renewalImportCode;
             $renewalsUploadLead->save();
 
             // Redirect back to the upload page if there are errors
