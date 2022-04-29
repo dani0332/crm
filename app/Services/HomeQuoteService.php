@@ -52,7 +52,7 @@ class HomeQuoteService extends BaseService
             'hqrd.transapp_code',
             'hqrd.notes',
             'ls.text as lost_reason',
-            'hqr.previous_quote_id'
+            'hqr.previous_quote_id',
             'hqr.insurer_quote_no'
         )
             ->leftJoin('home_quote_request_detail as hqrd', 'hqrd.home_quote_request_id', '=', 'hqr.id')
