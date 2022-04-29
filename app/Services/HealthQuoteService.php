@@ -68,7 +68,8 @@ class HealthQuoteService extends BaseService
             'hqr.salary_band_id',
             'sb.text as salary_band_id_text',
             'hqr.member_category_id',
-            'mc.text as member_category_id_text'
+            'mc.text as member_category_id_text',
+            'hqr.insurer_quote_no'
         )
             ->leftJoin('marital_status as ms', 'ms.id', '=', 'hqr.marital_status_id')
             ->leftJoin('health_quote_request_detail as hqrd', 'hqrd.health_quote_request_id', '=', 'hqr.id')
@@ -521,6 +522,7 @@ class HealthQuoteService extends BaseService
             "is_renewal" => "|static|Yes,No",
             "salary_band_id" => "select|title|required",
             "member_category_id" => "select|title|required",
+            "insurer_quote_no" => "readonly|none",
             "gender" => "|static|Male,Female",
         );
     }

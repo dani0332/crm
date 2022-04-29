@@ -48,6 +48,7 @@ class BusinessQuoteService extends BaseService
                 'bqr.source',
                 'bqr.policy_number',
                 'bqr.previous_quote_id'
+                'bqr.insurer_quote_no'
             )
             ->leftJoin('business_type_of_insurance as bti', 'bti.id', '=', 'bqr.business_type_of_insurance_id')
             ->leftJoin('business_quote_request_detail as bqrd', 'bqrd.business_quote_request_id', '=', 'bqr.id')
@@ -467,6 +468,7 @@ class BusinessQuoteService extends BaseService
             "brief_details" => 'textarea|required',
             "previous_quote_id" => "readonly|title",
             "is_renewal" => "|static|Yes,No",
+            "insurer_quote_no" => "readonly|none"
         );
     }
 
@@ -519,7 +521,7 @@ class BusinessQuoteService extends BaseService
             "create" => "is_renewal,previous_quote_id,id,advisor_id,quote_status_id,code,updated_at,created_at,next_followup_date,lost_reason,premium,source,transapp_code",
             "list" => "is_renewal,previous_quote_id,email,mobile_no,brief_details,dob",
             "update" => "is_renewal,previous_quote_id,id,advisor_id,quote_status_id,code,updated_at,created_at,next_followup_date,lost_reason,source,transapp_code",
-            "show" => "is_renewal",
+            "show" => "is_renewal"
         ];
     }
 

@@ -53,6 +53,7 @@ class HomeQuoteService extends BaseService
             'hqrd.notes',
             'ls.text as lost_reason',
             'hqr.previous_quote_id'
+            'hqr.insurer_quote_no'
         )
             ->leftJoin('home_quote_request_detail as hqrd', 'hqrd.home_quote_request_id', '=', 'hqr.id')
             ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'hqrd.lost_reason_id')
@@ -433,6 +434,7 @@ class HomeQuoteService extends BaseService
             "address" => 'textarea|required',
             "previous_quote_id" => "readonly|title",
             "is_renewal" => "|static|Yes,No",
+            "insurer_quote_no" => "readonly|none"
         );
     }
 
@@ -485,7 +487,7 @@ class HomeQuoteService extends BaseService
             "create" => "is_renewal,previous_quote_id,id,code,quote_status_id,advisor_id,created_at,updated_at,next_followup_date,lost_reason,premium,source,transapp_code",
             "list" => "is_renewal,previous_quote_id,email,address,iam_possesion_type_id,ilivein_accommodation_type_id,mobile_no,personal_belongings_aed,building_aed,contents_aed,has_contents,has_personal_belongings,has_building,address",
             "update" => "is_renewal,previous_quote_id,id,code,quote_status_id,advisor_id,created_at,updated_at,next_followup_date,lost_reason,source,transapp_code",
-            "show" => "is_renewal,id,next_followup_date,lost_reason",
+            "show" => "is_renewal,id,next_followup_date,lost_reason"
         ];
     }
 

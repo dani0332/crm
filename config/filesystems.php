@@ -70,14 +70,22 @@ return [
             'prefix'    => null,
         ],
 
-        'azureForRenewals' => [
+        'azureIM' => [
             'driver'    => 'azure',
-            'name'      => env('AZURE_STORAGE_NAME'),
-            'key'       => env('AZURE_STORAGE_KEY'),
-            'container' => env('AZURE_RENEWALS_STORAGE_CONTAINER'),
-            'url'       => env('AZURE_STORAGE_URL'),
+            'name'      => env('AZURE_IM_STORAGE_NAME'),
+            'key'       => env('AZURE_IM_STORAGE_KEY'),
+            'container' => env('AZURE_IM_STORAGE_CONTAINER'),
+            'url'       => env('AZURE_IM_STORAGE_URL'),
             'prefix'    => null,
         ],
+        // 'azureForRenewals' => [
+        //     'driver'    => 'azure',
+        //     'name'      => env('AZURE_STORAGE_NAME'),
+        //     'key'       => env('AZURE_STORAGE_KEY'),
+        //     'container' => env('AZURE_RENEWALS_STORAGE_CONTAINER'),
+        //     'url'       => env('AZURE_STORAGE_URL'),
+        //     'prefix'    => null,
+        // ],
     ],
 
     /*

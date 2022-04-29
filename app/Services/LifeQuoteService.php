@@ -62,6 +62,7 @@ class LifeQuoteService extends BaseService
                 'lqrd.notes',
                 'ls.text as lost_reason',
                 'lqr.previous_quote_id'
+                'lqr.insurer_quote_no'
             )
             ->leftJoin('life_quote_request_detail as lqrd', 'lqrd.life_quote_request_id', 'lqr.id')
             ->leftJoin('currency_type as ct', 'ct.id', '=', 'lqr.sum_insured_currency_id')
@@ -477,6 +478,7 @@ class LifeQuoteService extends BaseService
             "others_info" => "textarea",
             "previous_quote_id" => "readonly|title",
             "is_renewal" => "|static|title|Yes,No",
+            "insurer_quote_no" => "readonly|none"
         );
     }
 
