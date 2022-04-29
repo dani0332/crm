@@ -92,7 +92,7 @@ class AddRenewalColumnsToAllLinesTables extends Migration
 
         Schema::table('business_quote_request', function (Blueprint $table) {
             if(!Schema::hasColumn('business_quote_request', 'other_email_addresses')) {
-                $table->tinyText('other_email_addresses','355')->nullable();
+                $table->text('other_email_addresses')->nullable();
                 $table->index('other_email_addresses', 'idx_other_email_addresses');
             }
             if(!Schema::hasColumn('business_quote_request', 'renewal_import_code')) {
