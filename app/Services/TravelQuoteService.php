@@ -234,7 +234,14 @@ class TravelQuoteService extends BaseService
 
     public function getGridData($model, $request)
     {
-        $searchProperties = $model->searchProperties;
+        $searchProperties = [];
+        $isRenewalUser = Auth::user()->isRenewalUser();
+        $isRenewalManager = Auth::user()->isRenewalManager();
+        if ($isRenewalUser || $isRenewalManager) {
+            $searchProperties = $model->renewalSearchProperties;
+        } else {
+            $searchProperties = $model->searchProperties;
+        }
         if ($request->ajax()) {
             if (!isset($request->email) && $request->email == '') {
                 $this->query->where('qs.text', '!=', 'Fake');
@@ -280,6 +287,10 @@ class TravelQuoteService extends BaseService
             if (Auth::user()->isRenewalAdvisor()) {
                 $this->query->whereNotNull('tqr.previous_quote_id');
                 $this->query->where('tqr.advisor_id', Auth::user()->id);
+            }
+            if (Auth::user()->isRenewalManager()) {
+                $ids = $this->walkTree(Auth::user()->id);
+                $this->query->whereIn('tqr.advisor_id', $ids);
             }
             if (isset($request->is_renewal) && $request->is_renewal != '') {
                 if($request->is_renewal == "Yes")
