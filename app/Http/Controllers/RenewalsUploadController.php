@@ -27,7 +27,7 @@ class RenewalsUploadController extends Controller
     {
         // validate the file extension
         $this->validate($request, [
-            'file_name' => 'required|mimetypes:text/csv,text/plain,application/csv,text/comma-separated-values,text/anytext,application/octet-stream,application/txt,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet|max:2048',
+            'file_name'=> 'required|file|mimetypes:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/excel|max:2048'
         ]);
 
         if ($request->hasFile('file_name')) {
@@ -90,7 +90,10 @@ class RenewalsUploadController extends Controller
 
     public function uploadRenewals()
     {
-        return view('renewals.upload');
+        $azureStorageUrl = Config::get('constants.AZURE_IM_STORAGE_URL');
+        $azureStorageContainer = Config::get('constants.AZURE_IM_STORAGE_CONTAINER');
+
+        return view('renewals.upload',compact('azureStorageUrl','azureStorageContainer'));
     }
 
     /**
@@ -121,5 +124,13 @@ class RenewalsUploadController extends Controller
         }
 
         return view('renewals.view');
+    }
+
+    public function updateRenewals()
+    {
+        $azureStorageUrl = Config::get('constants.AZURE_IM_STORAGE_URL');
+        $azureStorageContainer = Config::get('constants.AZURE_IM_STORAGE_CONTAINER');
+
+        return view('renewals.update',compact('azureStorageUrl','azureStorageContainer'));
     }
 }

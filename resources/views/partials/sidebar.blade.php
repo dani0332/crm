@@ -174,8 +174,9 @@
                     <ul class="nav side-menu">
                         <li><a><i class="fa fa-quote-left"></i> Renewals <span class="fa fa-chevron-down"></span></a>
                             <ul class="nav child_menu">
-                                <li><a href="{{ url('renewals/upload') }}">Upload</a></li>
+                                <li><a href="{{ url('renewals/upload') }}">Upload & Create</a></li>
                                 <li><a href="{{ url('renewals/uploaded-leads') }}">Uploaded Leads</a></li>
+                                <li><a href="{{ url('renewals/update') }}">Upload & Update</a></li>
                                 <!-- <li><a href="{{ url('renewals/batches') }}">Batches</a></li> -->
                             </ul>
                         </li>
