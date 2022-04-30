@@ -57,7 +57,8 @@ class TravelQuoteService extends BaseService
             'tqr.currently_located_in_id',
             'cli.text as currently_located_in_id_text',
             'tqr.destination_id',
-            'nationality.text as destination_id_text'
+            'nationality.text as destination_id_text',
+            'tqr.insurer_quote_no'
         )
             ->leftJoin('travel_cover_for as tcf', 'tcf.id', '=', 'tqr.travel_cover_for_id')
             ->leftJoin('travel_quote_request_detail as tqrd', 'tqr.id', '=', 'tqrd.travel_quote_request_id')
@@ -404,7 +405,8 @@ class TravelQuoteService extends BaseService
             "destination_id" => "select|title|required",
             "region_cover_for_id" => "select|title|required",
             "travel_cover_for_id" => "select|title|required",
-            "currently_located_in_id" => "select|title|required"
+            "currently_located_in_id" => "select|title|required",
+            "insurer_quote_no" => "readonly|none"
         );
     }
 
@@ -466,9 +468,9 @@ class TravelQuoteService extends BaseService
     public function fillModelSkipProperties()
     {
         return [
-            "create" => "id,created_at,id,code,advisor_id,updated_at,quote_status_id,next_followup_date,lost_reason,premium,source,transapp_code",
-            "list" => "email,mobile_no,region_cover_for_id,travel_cover_for_id,details,nationality_id,days_cover_for",
-            "update" => 'created_at,id,code,advisor_id,updated_at,quote_status_id,next_followup_date,lost_reason,source,transapp_code',
+            "create" => "id,created_at,id,code,advisor_id,updated_at,quote_status_id,next_followup_date,lost_reason,premium,source,transapp_code,insurer_quote_no",
+            "list" => "email,mobile_no,region_cover_for_id,travel_cover_for_id,details,nationality_id,days_cover_for,insurer_quote_no",
+            "update" => 'created_at,id,code,advisor_id,updated_at,quote_status_id,next_followup_date,lost_reason,source,transapp_code,insurer_quote_no',
             "show" => "",
         ];
     }
