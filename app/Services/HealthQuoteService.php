@@ -688,4 +688,59 @@ class HealthQuoteService extends BaseService
         $quote->mobile_no = $parentRecord->mobile_no;
         $quote->save();
     }
+
+    public function getQuotePlans($id)
+    {
+        $quoteUuId = HealthQuote::where('uuid', '=', $id)->value('uuid');
+        $plansApiEndPoint = Config::get('constants.KEN_API_ENDPOINT') . '/get-health-quote-plans';
+        $plansApiToken = Config::get('constants.KEN_API_TOKEN');
+        $plansApiTimeout = Config::get('constants.KEN_API_TIMEOUT');
+        $plansApiUserName = Config::get('constants.KEN_API_USER');
+        $plansApiPassword = Config::get('constants.KEN_API_PWD');
+        $authBasic = base64_encode($plansApiUserName . ":" . $plansApiPassword);
+
+        $plansDataArr = array(
+            "quoteUID" =>'E5UV78H6',
+            "lang" => "en",
+        );
+
+        $client = new \GuzzleHttp\Client();
+
+        try {
+            $kenRequest = $client->post(
+                $plansApiEndPoint,
+                [
+                    'headers' => [
+                        'Content-Type' => 'application/json', 'Accept' => 'application/json',
+                        'x-api-token' => $plansApiToken,
+                        'Authorization' => 'Basic ' . $authBasic
+                    ],
+                    'body' => json_encode($plansDataArr),
+                    'timeout' => $plansApiTimeout,
+                ]
+            );
+
+            $getStatusCode = $kenRequest->getStatusCode();
+
+            if ($getStatusCode == 200) {
+                $getContents = $kenRequest->getBody();
+                $getdecodeContents = json_decode($getContents);
+                return $getdecodeContents;
+            }
+        } catch (\GuzzleHttp\Exception\BadResponseException $e) {
+            $response = $e->getResponse();
+            $contents = (string) $response->getBody();
+            $response = json_decode($contents);
+
+            if (isset($response->message)) {
+                $responseBodyAsString = $response->message;
+            } else if (isset($response->error)) {
+                $responseBodyAsString = $response->error;
+            } else {
+                $responseBodyAsString = $response->msg;
+            }
+
+            return $responseBodyAsString;
+        }
+    }
 }
