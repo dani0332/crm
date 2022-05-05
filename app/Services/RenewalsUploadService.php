@@ -15,6 +15,10 @@ use App\Models\EmailActivity;
 use App\Models\QuoteStatus;
 use App\Models\RenewalsBatchEmails;
 use App\Models\RenewalsUploadLeads;
+use App\Models\CarMake;
+use App\Models\CarModel;
+use App\Models\CarTypeInsurance;
+use App\Models\User;
 use App\Services\RenewalsAddonServices;
 use App\Services\CheckAmlService;
 use App\Services\CapiRequestService;
@@ -24,10 +28,6 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypeShortCode;
 use App\Enums\RenewalsUploadType;
 use App\Enums\ProcessStatusCode;
-use App\Models\CarMake;
-use App\Models\CarModel;
-use App\Models\CarTypeInsurance;
-use App\Models\User;
 use Exception;
 use Config;
 use Illuminate\Support\Facades\Log;
@@ -847,6 +847,9 @@ class RenewalsUploadService
                     'timeout' => 10000,
                 ]
             );
+
+            $getMsgDetail = json_decode($clientRequest->getBody()->getContents());
+            Log::channel('daily')->info("messageId: ".$getMsgDetail->messageId);
 
             $getStatusCode = $clientRequest->getStatusCode();
             $getResponse = json_encode($clientRequest->getStatusCode()." ".$clientRequest->getBody()->getContents());
