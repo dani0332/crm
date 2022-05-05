@@ -20,13 +20,13 @@
                 <table class="table table-striped jambo_table renewals-leads-data-table" style="table-layout: fixed;" width="100%">
                       <thead>
                         <tr>
-                          <th style="width: 40px !important">id</th>
-                          <th style="width: 100px !important">File Name</th>
+                          <th style="width: 30px !important">id</th>
+                          <th style="width: 120px !important">File Name</th>
                           <th style="width: 40px !important">Total</th>
                           <th style="width: 40px !important">Good</th>
                           <th style="width: 40px !important">Bad</th>
-                          <th style="width: 40px !important">Status</th>
-                          <th style="width: 100px !important">Uploaded By</th>
+                          <th style="width: 60px !important">Status</th>
+                          <th style="width: 60px !important">Uploaded By</th>
                           <th style="width: 100px !important">Uploaded At</th>
                           <th style="width: 100px !important">Updated At</th>
                         </tr>

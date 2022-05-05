@@ -113,10 +113,14 @@ Route::group(['middleware' =>  ['auth']], function () {
     Route::get('/customer-upload', [CustomerController::class, 'uploadCustomers']);
     Route::post('/customer-process', [CustomerController::class, 'processCustomerCSV']);
 
-    Route::resource('renewals', RenewalsUploadController::class);
-    Route::get('/renewals-list', [RenewalsUploadController::class, 'index']);
-    Route::get('/renewals-upload', [RenewalsUploadController::class, 'uploadRenewals']);
-    Route::post('/renewals-process', [RenewalsUploadController::class, 'processRenewalsCSV']);
+    Route::group(['prefix' => 'renewals'], function () {
+        Route::resource('uploaded-leads', RenewalsUploadController::class);
+        Route::get('upload', [RenewalsUploadController::class, 'uploadRenewals']);
+        Route::get('batches', [RenewalsUploadController::class, 'listRenewalBatches'])->name('listRenewalBatches');
+        Route::get('batches/{id}', [RenewalsUploadController::class, 'batchDetail'])->name('batchDetail');
+        Route::get('batches/{id}/batch-process', [RenewalsUploadController::class, 'runBatchProcess'])->name('runBatchProcess');
+        Route::post('upload-process', [RenewalsUploadController::class, 'processRenewalsCSV']);
+    });
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
@@ -160,7 +164,7 @@ Route::group(['middleware' =>  ['auth']], function () {
         Route::get('car/{quoteUuId}/updateDiscountedPremium', [CRUDController::class, 'updateDiscountedPremium']);
         Route::get('car/{quoteUuId}/add_quote', [CRUDController::class, 'addCarQuotePlan']);
         Route::get('travel/{quoteId}/plan_details/{planId}', [CRUDController::class, 'travel_plan_details'])->name('plan_details');
-
+        Route::get('health/{quoteId}/plan_details/{planId}', [CRUDController::class, 'health_plan_details'])->name('plan_details');
         Route::post('car/SaveCarPlan', [CRUDController::class, 'SaveCarPlan'])->name('SaveCarPlan');
         Route::get('{leadId}/lead_details', [CRUDController::class, 'leadDetails'])->name('lead_details');
         Route::post('UpdateLeadManualProcess', [CRUDController::class, 'UpdateLeadManualProcess'])->name('UpdateLeadManualProcess');

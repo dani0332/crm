@@ -14,7 +14,7 @@
                 <ul class="nav side-menu">
                     <li> <a href="{{ url('/leadsearch') }}"><i class="fa fa-home"></i> Home</a></li>
                 </ul>
-                @if (Auth::user()->hasAnyRole(['ADMIN','CAR_ADVISOR', 'BUSINESS_ADVISOR', 'HEALTH_ADVISOR','HOME_ADVISOR','LIFE_ADVISOR','TRAVEL_ADVISOR', 'GM_ADVISOR', 'RM_ADVISOR', 'CORPLINE_ADVISOR', 'EBP_ADVISOR', 'HEALTH_WCU_ADVISOR']))
+                @if (Auth::user()->hasAnyRole(['ADMIN','CAR_ADVISOR', 'BUSINESS_ADVISOR', 'HEALTH_ADVISOR','HOME_ADVISOR','LIFE_ADVISOR','TRAVEL_ADVISOR', 'GM_ADVISOR', 'RM_ADVISOR', 'CORPLINE_ADVISOR', 'EBP_ADVISOR', 'HEALTH_WCU_ADVISOR','HEALTH_RENEWAL_ADVISOR','TRAVEL_RENEWAL_ADVISOR','LIFE_RENEWAL_ADVISOR','HOME_RENEWAL_ADVISOR','GM_RENEWAL_ADVISOR','CORPLINE_RENEWAL_ADVISOR']))
                     <ul class="nav side-menu">
                         <li>
                             <a  href="{{ url('/myleads') }}"><i class="fa fa-inbox"></i> My Leads</a>
@@ -174,8 +174,9 @@
                     <ul class="nav side-menu">
                         <li><a><i class="fa fa-quote-left"></i> Renewals <span class="fa fa-chevron-down"></span></a>
                             <ul class="nav child_menu">
-                                <li><a href="{{ url('renewals-upload') }}">Upload</a></li>
-                                <li><a href="{{ url('renewals-list') }}">Uploaded Leads</a></li>
+                                <li><a href="{{ url('renewals/upload') }}">Upload</a></li>
+                                <li><a href="{{ url('renewals/uploaded-leads') }}">Uploaded Leads</a></li>
+                                <!-- <li><a href="{{ url('renewals/batches') }}">Batches</a></li> -->
                             </ul>
                         </li>
                     </ul>

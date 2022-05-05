@@ -29,7 +29,7 @@ class RenewalsUploadController extends Controller
         $this->validate($request, [
             'file_name' => 'required|mimetypes:text/csv,text/plain,application/csv,text/comma-separated-values,text/anytext,application/octet-stream,application/txt,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet|max:2048',
         ]);
-        
+
         if ($request->hasFile('file_name')) {
 
             // Check if file already uploaded
@@ -37,7 +37,7 @@ class RenewalsUploadController extends Controller
 
             if($existingFile) {
                 // Returning with error message if file already uploaded
-                return redirect("renewals-upload")->with('message', 'File already been uploaded. Please try again with different file.');
+                return back()->withInput()->with('message', 'File already been uploaded. Please try again with different file.');
             }
 
             // Getting file name only
@@ -66,11 +66,11 @@ class RenewalsUploadController extends Controller
 
             // Redirect back to the upload page if there are errors
             if ($renewalsUpload->failures()->isNotEmpty() || $countErrors > 50) {
-                return redirect("renewals-upload")->withFailures($renewalsUpload->failures());
+                return redirect("renewals/upload")->withFailures($renewalsUpload->failures());
             }
 
             // Redirect back to the upload page if there are no errors
-            return redirect("renewals-upload")->with('success', 'Uploaded renewals records has been stored');
+            return redirect('renewals/upload')->with('success', 'Uploaded renewals records has been stored');
         }
     }
 
