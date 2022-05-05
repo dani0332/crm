@@ -28,6 +28,7 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypeShortCode;
 use App\Enums\RenewalsUploadType;
 use App\Enums\ProcessStatusCode;
+use App\Models\EmailStatus;
 use Exception;
 use Config;
 use Illuminate\Support\Facades\Log;
@@ -782,7 +783,15 @@ class RenewalsUploadService
             'ecomUrl' => $ecomUrl
         );
 
-        $getStatusCode = $this->sendRenewalEmail($emailData);
+        $getmessageId = $this->sendRenewalEmail($emailData);
+        Log::channel('daily')->info("messageId_2: ".$getmessageId);
+
+        $newEmailStatus = new EmailStatus();
+        $newEmailStatus->quote_type_id = 1;
+        $newEmailStatus->quote_id = $carQuote->id;
+        $newEmailStatus->email_address = $carQuote->email;
+        $newEmailStatus->msg_id = $getmessageId;
+        $newEmailStatus->save();
 
         $this->updateRenewalBatchRecord($batchEmailId);
     }
@@ -849,7 +858,7 @@ class RenewalsUploadService
             );
 
             $getMsgDetail = json_decode($clientRequest->getBody()->getContents());
-            Log::channel('daily')->info("messageId: ".$getMsgDetail->messageId);
+            Log::channel('daily')->info("messageId_1: ".$getMsgDetail->messageId);
 
             $getStatusCode = $clientRequest->getStatusCode();
             $getResponse = json_encode($clientRequest->getStatusCode()." ".$clientRequest->getBody()->getContents());
@@ -875,6 +884,8 @@ class RenewalsUploadService
         $newEmailActivity->successful = $isEmailSent;
         $newEmailActivity->email = $emailData['customerEmail'];
         $newEmailActivity->save();
+
+        return $getMsgDetail->messageId;
     }
 
     public function updateRenewalBatchRecord($batchEmailId)
