@@ -8,6 +8,7 @@
     $(document).ready(function() {
         var isAdmin = JSON.parse('<?php echo json_encode(Auth::user()->hasRole("ADMIN")); ?>');
         var isManagerOrDeputy = $("#isManagerOrDeputy").val();
+        var isRenewalUser = JSON.parse('<?php echo json_encode(Auth::user()->hasRole("GM_RENEWAL_ADVISOR")); ?>');
         $(document).on("change", "#amtLeadID", function () {
             var idsArray = $('#selectTmLeadId').val();
             idsArray = idsArray+ ',' + $(this).val() + ',';
@@ -36,6 +37,81 @@
         });
 
         var dataTableColumns = [];
+
+        if(isRenewalUser) {
+
+        if (isManagerOrDeputy === "1") {
+            dataTableColumns.push({
+                data: "id",
+                name: "id",
+                render: function(data, type, row, meta) {
+                    return (
+                        '<input type="checkbox" id="amtLeadID" class="tmleadCheckbox" name="amtLeadID" value="' +
+                        data + '">'
+                    );
+                },
+            });
+        }
+        dataTableColumns.push({
+                data: 'code',
+                name: 'code',
+                render: function (data, type, row) {
+                    var type = row.code && row.code.indexOf('HEA-') > -1 ? 'health' : 'business';
+                    var href = '/medical/amt/' + row.uuid;
+                    return "<a href='" + href + "'>" + row.code + "</a>";
+                }
+            },
+            { data: "first_name", name: "first_name" },
+            { data: "last_name", name: "last_name" },
+            { data: "leadStatus", name: "leadStatus" },
+            { data: "advisor_id_text", name: "advisor_id_text" },
+            { data: "premium", name: "premium" },
+            { data: "company_name", name: "company_name" },
+            // { data: "next_followup_date", name: "next_followup_date" },
+            // { data: "lost_reason", name: "lost_reason" },
+            // { data: "source", name: "source" },
+            { data: "policy_number", name: "policy_number" },
+            { data: "created_at", name: "created_at" },
+            { data: "updated_at", name: "updated_at" },
+
+            );
+            var buttons = [];
+            var amtDataTable = $(".amt-data-table").DataTable({
+                ordering: false,
+                info: true,
+                searching: false,
+                dom: 'rBfrtip',
+                bLengthChange: false,
+                serverSide: true,
+                paging: true,
+                processing: true,
+                columnDefs: [
+                        // { orderable: false, targets: [1,2,3,4,5,6,7,9,10] }
+                        ],
+                buttons: isAdmin || isManagerOrDeputy ? [{
+                        extend: 'excel',
+                        text: '<i class="fa fa-file-excel-o" style="color:green;" ></i><div style="font-weight:bold;">Export</div>',
+                        title: 'Group Medical Listing',
+                        action: newexportaction
+                    }] : [],
+                ajax: {
+                    url: config.routes.amtDataTable,
+                    data: function (d) {
+                        d.created_at_start = $("#created_at_start").val();
+                        d.created_at_end = $("#created_at_end").val();
+                        d.first_name = $("#first_name").val();
+                        d.last_name = $("#last_name").val();
+                        // d.email = $("#email").val();
+                        // d.mobile_no = $("#mobile_no").val();
+                        d.leadStatus = $("#leadStatus").val();
+                        d.advisor_id = $("#advisor_id").val();
+                        d.code = $("#code").val();
+                    },
+                },
+                columns: dataTableColumns,
+            });
+
+        } else {
         if (isManagerOrDeputy === "1") {
             dataTableColumns.push({
                 data: "id",
@@ -71,40 +147,42 @@
 
             );
             var buttons = [];
-        var amtDataTable = $(".amt-data-table").DataTable({
-            ordering: true,
-            info: true,
-            searching: false,
-            dom: 'rBfrtip',
-            bLengthChange: false,
-            serverSide: true,
-            paging: true,
-            processing: true,
-            columnDefs: [
-                    { orderable: false, targets: [1,2,3,4,5,6,7,9,10] }
-                    ],
-            buttons: isAdmin || isManagerOrDeputy ? [{
-                    extend: 'excel',
-                    text: '<i class="fa fa-file-excel-o" style="color:green;" ></i><div style="font-weight:bold;">Export</div>',
-                    title: 'Group Medical Listing',
-                    action: newexportaction
-                }] : [],
-            ajax: {
-                url: config.routes.amtDataTable,
-                data: function (d) {
-                    d.created_at_start = $("#created_at_start").val();
-                    d.created_at_end = $("#created_at_end").val();
-                    d.first_name = $("#first_name").val();
-                    d.last_name = $("#last_name").val();
-                    d.email = $("#email").val();
-                    d.mobile_no = $("#mobile_no").val();
-                    d.leadStatus = $("#leadStatus").val();
-                    d.advisor_id = $("#advisor_id").val();
-                    d.code = $("#code").val();
+            var amtDataTable = $(".amt-data-table").DataTable({
+                ordering: true,
+                info: true,
+                searching: false,
+                dom: 'rBfrtip',
+                bLengthChange: false,
+                serverSide: true,
+                paging: true,
+                processing: true,
+                columnDefs: [
+                        { orderable: false, targets: [1,2,3,4,5,6,7,9,10] }
+                        ],
+                buttons: isAdmin || isManagerOrDeputy ? [{
+                        extend: 'excel',
+                        text: '<i class="fa fa-file-excel-o" style="color:green;" ></i><div style="font-weight:bold;">Export</div>',
+                        title: 'Group Medical Listing',
+                        action: newexportaction
+                    }] : [],
+                ajax: {
+                    url: config.routes.amtDataTable,
+                    data: function (d) {
+                        d.created_at_start = $("#created_at_start").val();
+                        d.created_at_end = $("#created_at_end").val();
+                        d.first_name = $("#first_name").val();
+                        d.last_name = $("#last_name").val();
+                        d.email = $("#email").val();
+                        d.mobile_no = $("#mobile_no").val();
+                        d.leadStatus = $("#leadStatus").val();
+                        d.advisor_id = $("#advisor_id").val();
+                        d.code = $("#code").val();
+                    },
                 },
-            },
-            columns: dataTableColumns,
-        });
+                columns: dataTableColumns,
+            });
+        }
+
         $('#amt_sbmt').on('click', function(e) {
             e.preventDefault();
             amtDataTable.draw();
@@ -300,6 +378,7 @@
                                 </div>
                             </div>
                         </div>
+                        @if (!Auth::user()->isRenewalAdvisor())
                         <div class="item form-group">
                             <div class="col">
                                 <label class="col-form-label col-md-2 col-sm-2" for="searchfield">Next Followup Date Start</label>
@@ -318,6 +397,7 @@
                                 </div>
                             </div>
                         </div>
+                        @endif
                         <div class="item form-group">
                             <div class="col">
                                 <label class="col-form-label col-md-2 col-sm-2" for="searchfield">CDB ID</label>
@@ -345,6 +425,17 @@
                                     </div>
                                 </div>
                             </div>
+                            @if (Auth::user()->isRenewalAdvisor())
+                            <div class="col">
+                                <label class="col-form-label col-md-2 col-sm-2" for="company_name">Company Name</label>
+                                <div class="col-md-6 col-sm-6">
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" name="company_name" id="company_name" >
+                                    </div>
+                                </div>
+                            </div>
+                            @endif
+                            @if (!Auth::user()->isRenewalAdvisor())
                             <div class="col">
                                 <label class="col-form-label col-md-2 col-sm-2" for="searchfield">EMAIL</label>
                                 <div class="col-md-6 col-sm-6">
@@ -353,6 +444,7 @@
                                     </div>
                                 </div>
                             </div>
+                            @endif
                         </div>
                         <div class="item form-group">
                             <div class="col">
@@ -363,6 +455,7 @@
                                     </div>
                                 </div>
                             </div>
+                            @if (!Auth::user()->isRenewalAdvisor())
                             <div class="col">
                                 <label class="col-form-label col-md-2 col-sm-2" for="searchfield">ASSIGNED TO</label>
                                 <div class="col-md-6 col-sm-6">
@@ -377,7 +470,9 @@
                                     </div>
                                 </div>
                             </div>
+                            @endif
                         </div>
+                        @if (!Auth::user()->isRenewalAdvisor())
                         <div class="item form-group">
                             <div class="col">
                                 <label class="col-form-label col-md-2 col-sm-2" for="searchfield">LEAD STATUS</label>
@@ -396,6 +491,7 @@
 
                             </div>
                         </div>
+                        @endif
                         <div class="item form-group">
                             <div class="col">
 
@@ -466,9 +562,10 @@
                                 <th>Assigned To</th>
                                 <th>Premium</th>
                                 <th>Company Name</th>
-                                <th>Next FollowUp Date</th>
-                                <th>Lost Reason</th>
-                                <th>Source</th>
+                                @if (Auth::user()->isRenewalAdvisor())<th>Policy Number</th>@endif
+                                @if (!Auth::user()->isRenewalAdvisor())<th>Next FollowUp Date</th>@endif
+                                @if (!Auth::user()->isRenewalAdvisor())<th>Lost Reason</th>@endif
+                                @if (!Auth::user()->isRenewalAdvisor())<th>Source</th>@endif
                                 <th>Created At</th>
                                 <th>Updated At</th>
                             </tr>

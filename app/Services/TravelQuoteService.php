@@ -12,11 +12,12 @@ use DB;
 use Auth;
 use \Carbon\Carbon;
 use Config;
-
+use App\Traits\GetUserTree;
 class TravelQuoteService extends BaseService
 {
 
     protected $query;
+    use GetUserTree;
     public function __construct()
     {
         $this->query = DB::table('travel_quote_request as tqr')->select(
@@ -30,14 +31,16 @@ class TravelQuoteService extends BaseService
             'tqr.destination',
             'tqr.travel_cover_for_id',
             'tcf.TEXT AS travel_cover_for_id_text',
-            'tqr.dob',
+            'tqr.previous_quote_id',
             'tqr.first_name',
             'tqr.last_name',
             'tqr.email',
             'tqr.mobile_no',
+            'tqr.dob',
             'tqr.premium',
             'tqr.paid_at',
             'tqr.source',
+            'tqr.policy_number',
             'tqr.nationality_id',
             'n.TEXT AS nationality_id_text',
             'qs.id as quote_status_id',
@@ -171,10 +174,13 @@ class TravelQuoteService extends BaseService
                 'tqr.quote_status_id',
                 'tqrd.advisor_assigned_date as assignedDate',
                 'u.name as assignedBy',
-                'tqr.updated_at',
+                'tqr.updated_at as updatedAt',
+                'tqr.premium as premium',
+                'tqr.email as email',
+                'tqr.mobile_no as mobile_no',
                 'tqr.source as leadSource',
-                'tqr.premium',
-                'tqrd.next_followup_date as nextFollowupDate'
+                'tqrd.next_followup_date as nextFollowupDate',
+                'tqr.previous_quote_id'
             )
             ->leftJoin('travel_quote_request_detail as tqrd', 'tqrd.travel_quote_request_id', '=', 'tqr.id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'tqr.quote_status_id')
@@ -215,12 +221,27 @@ class TravelQuoteService extends BaseService
         if (isset($request->leadStatus) && $request->leadStatus != 0) {
             $query->where('tqr.quote_status_id', $request->leadStatus);
         }
+
+        if (Auth::user()->isRenewalAdvisor()) {
+            $query->whereNotNull('tqr.previous_quote_id');
+        }
+        if (Auth::user()->isRenewalManager()) {
+            $ids = $this->walkTree(Auth::user()->id);
+            $this->query->whereIn('hqr.advisor_id', $ids);
+        }
         return $query;
     }
 
     public function getGridData($model, $request)
     {
-        $searchProperties = $model->searchProperties;
+        $searchProperties = [];
+        $isRenewalUser = Auth::user()->isRenewalUser();
+        $isRenewalManager = Auth::user()->isRenewalManager();
+        if ($isRenewalUser || $isRenewalManager) {
+            $searchProperties = $model->renewalSearchProperties;
+        } else {
+            $searchProperties = $model->searchProperties;
+        }
         if ($request->ajax()) {
             if (!isset($request->email) && $request->email == '') {
                 $this->query->where('qs.text', '!=', 'Fake');
@@ -240,9 +261,42 @@ class TravelQuoteService extends BaseService
                 $dateTo = Carbon::createFromFormat('Y-m-d', $request['next_followup_date_end'])->endOfDay()->toDateTimeString();
                 $this->query->whereBetween('tqrd.next_followup_date', [$dateFrom, $dateTo]);
             }
+
+            if (isset($request->code) && $request->code != '') {
+                $this->query->where('tqr.code', $request->code);
+            }
+            if (isset($request->first_name) && $request->first_name != '') {
+                $this->query->where('tqr.first_name', $request->first_name);
+            }
+            if (isset($request->last_name) && $request->last_name != '') {
+                $this->query->where('tqr.last_name', $request->last_name);
+            }
+            if (isset($request->email) && $request->email != '') {
+                $this->query->where('tqr.email', $request->email);
+            }
+            if (isset($request->mobile_no) && $request->mobile_no != '') {
+                $this->query->where('tqr.mobile_no', $request->mobile_no);
+            }
+            if (isset($request->policy_number) && $request->policy_number != '') {
+                $this->query->where('tqr.policy_number', $request->policy_number);
+            }
             if(Auth::user()->isSpecificTeamAdvisor('Travel')){
                 // if user has advisor Role then fetch leads assigned to the user only
                 $this->query->where('tqr.advisor_id', Auth::user()->id);	// fetch leads assigned to the user
+            }
+            if (Auth::user()->isRenewalAdvisor()) {
+                $this->query->whereNotNull('tqr.previous_quote_id');
+                $this->query->where('tqr.advisor_id', Auth::user()->id);
+            }
+            if (Auth::user()->isRenewalManager()) {
+                $ids = $this->walkTree(Auth::user()->id);
+                $this->query->whereIn('tqr.advisor_id', $ids);
+            }
+            if (isset($request->is_renewal) && $request->is_renewal != '') {
+                if($request->is_renewal == "Yes")
+                    $this->query->whereNotNull('tqr.previous_quote_id');
+                if($request->is_renewal == "No")
+                    $this->query->whereNull('tqr.previous_quote_id');
             }
             foreach ($searchProperties as $item) {
                 if (!empty($request[$item]) && $item != "created_at") {
@@ -262,6 +316,7 @@ class TravelQuoteService extends BaseService
                 }
             }
         }
+       
         $isManagerORDeputy = Auth::user()->isManagerOrDeputy();
         $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
         $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';
@@ -290,7 +345,7 @@ class TravelQuoteService extends BaseService
                 }
             }
             return $this->query->orderBy($column, $direction);
-        } else {
+        } else {   
             return $this->query->orderBy('tqr.created_at', 'DESC');
         }
     }
@@ -399,12 +454,17 @@ class TravelQuoteService extends BaseService
             "transapp_code" => "readonly|none",
             "lost_reason" => "input|text",
             "source" => "input|text",
-            "premium" => "input|number|required",
+            "premium" => "input|number",
+            "policy_number" => "input|text",
             "days_cover_for" => "input|number|title|required",
             "nationality_id" => "select|title|required",
             "destination_id" => "select|title|required",
             "region_cover_for_id" => "select|title|required",
             "travel_cover_for_id" => "select|title|required",
+            "details" => "textarea|text|required",
+            "currently_located_in_id" => "select|title|required",
+            "previous_quote_id" => "readonly|title",
+            "is_renewal" => "|static|Yes,No",
             "currently_located_in_id" => "select|title|required",
             "insurer_quote_no" => "readonly|none"
         );
@@ -459,6 +519,9 @@ class TravelQuoteService extends BaseService
             case 'next_followup_date':
                 $title = "Next Followup Date";
                 break;
+            case 'previous_quote_id':
+                $title = "Previous Quote Id";
+                break;
             default:
                 break;
         }
@@ -468,16 +531,27 @@ class TravelQuoteService extends BaseService
     public function fillModelSkipProperties()
     {
         return [
-            "create" => "id,created_at,id,code,advisor_id,updated_at,quote_status_id,next_followup_date,lost_reason,premium,source,transapp_code,insurer_quote_no",
-            "list" => "email,mobile_no,region_cover_for_id,travel_cover_for_id,details,nationality_id,days_cover_for,insurer_quote_no",
-            "update" => 'created_at,id,code,advisor_id,updated_at,quote_status_id,next_followup_date,lost_reason,source,transapp_code,insurer_quote_no',
-            "show" => "",
+            "create" => "is_renewal,previous_quote_id,id,created_at,id,code,advisor_id,updated_at,quote_status_id,next_followup_date,lost_reason,premium,source,transapp_code",
+            "list" => "is_renewal,previous_quote_id,email,mobile_no,region_cover_for_id,travel_cover_for_id,details,nationality_id,days_cover_for",
+            "update" => 'is_renewal,previous_quote_id,created_at,id,code,advisor_id,updated_at,quote_status_id,next_followup_date,lost_reason,source,transapp_code',
+            "show" => "is_renewal"
         ];
     }
 
     public function fillModelSearchProperties()
     {
         return ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'advisor_id', 'created_at', 'next_followup_date'];
+    }
+
+    public function fillRenewalProperties($model)
+    {
+        $model->renewalSearchProperties = ['created_at', 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'policy_number','premium','is_renewal'];
+        $model->renewalSkipProperties = [
+            "create" => "insurer_quote_no,is_renewal,previous_quote_id,id,created_at,id,code,advisor_id,updated_at,quote_status_id,next_followup_date,lost_reason,premium,source,transapp_code",
+            "list" => "insurer_quote_no,is_renewal,dob,email,mobile_no,region_cover_for_id,travel_cover_for_id,details,nationality_id,days_cover_for,next_followup_date,lost_reason,source,transapp_code,currently_located_in_id,destination_id",
+            "update" => 'insurer_quote_no,is_renewal,previous_quote_id,created_at,id,code,advisor_id,updated_at,quote_status_id,next_followup_date,lost_reason,source,transapp_code',
+            "show" => "insurer_quote_no,is_renewal",
+        ];
     }
 
     public function getQuotePlans($id)
