@@ -49,10 +49,14 @@ class MyLeadsController extends Controller
                 array_push($allowedTeamTypes, ['id' => $additionalTeam->id, 'name' => $additionalTeam->name]);
             }
         }
-        
+       
         if ($request->ajax()) {
+            
             if(isset($request->teamType)){
                 $teamName = strtolower($request->teamType); 
+            }
+            if(Auth::user()->isRenewalAdvisor()){
+                $teamName = strtolower($request->leadType); 
             }
             $allowedTypes = ['car', 'home', 'business', 'health', 'life', 'travel'];
             $gridData = in_array($teamName, $allowedTypes) ? $this->crudService->getAdvisorLeads($request, $teamName) : [];

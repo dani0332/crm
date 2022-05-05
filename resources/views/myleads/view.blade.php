@@ -20,6 +20,7 @@
         var userId = JSON.parse('<?php echo json_encode(Auth::user()->id); ?>');
         var isAdmin = JSON.parse('<?php echo json_encode(Auth::user()->hasRole('ADMIN')); ?>');
         var teamUserIds = JSON.parse('<?php echo json_encode(Auth::user()->getTeamUserIds()); ?>');
+        var isRenewalUser = JSON.parse('<?php echo json_encode(Auth::user()->isRenewalAdvisor()); ?>');
         $(document).ready(function() {
             $('#handler').find('i').toggleClass("fa-angle-double-down fa-angle-double-up");
             $('#collapseOne').collapse();
@@ -101,30 +102,86 @@
             //         },
             //     ],
             // });
-            var myleadsTable = $("#dtBasicExample-leadsearch").DataTable({
-                ordering: true,
-                info: false,
-                searching: false,
-                bLengthChange: false,
-                serverSide: true,
-                ajax: {
-                    url: config.routes.myleadsDataTable,
-                    data: function(d) {
-                        d.leadType = $("#modelType").val();
-                        d.cdbId = $("#cdbId").val();
-                        d.leadStatus = $("#leadStatus").val();
-                        d.startedAt = $("#startedAt").val();
-                        d.endAt = $("#endAt").val();
-                        d.nfdSart = $('#nfdSart').val();
-                        d.nfdEnd = $('#nfdEnd').val();
-                        d.email = $('#email').val();
-                        d.teamType = $('#teamType').val();
-                    },
-                },
-                columnDefs: [
-                    { orderable: false, targets: [1,2,5,6,] }
-                    ],
-                columns: [{
+            var Columns = [];
+            if(isRenewalUser && $("#modelType").val() != "Business")
+            {
+                Columns.push({
+                            data: 'id',
+                            name: 'id',
+                            render: function(data, type, row) {
+                                return "<a target='_blank' href='/quotes/" + $("#modelType").val().toLowerCase() + '/' + row.uuid + "'>" + row.code + "</a>"
+                            }
+                        },
+                        {
+                            data: "clientName",
+                            name: "clientName"
+                        },
+                        {
+                            data: "leadStatus",
+                            name: "leadStatus"
+                        },
+                        {
+                            data: "createdAt",
+                            name: "createdAt"
+                        },
+                        {
+                            data: "updatedAt",
+                            name: "updatedAt"
+                        },
+                        {
+                            data: "assignedBy",
+                            name: "assignedBy"
+                        },
+                        {
+                            data: 'policy_number',
+                            name: 'policy_number'
+                        },
+                        {
+                            data: 'premium',
+                            name: 'premium',
+                        });
+            }else if(isRenewalUser && $("#modelType").val() == "Business")
+            {
+                Columns.push({
+                            data: 'id',
+                            name: 'id',
+                            render: function(data, type, row) {
+                                return "<a target='_blank' href='/quotes/" + $("#modelType").val().toLowerCase() + '/' + row.uuid + "'>" + row.code + "</a>"
+                            }
+                        },
+                        {
+                            data: "clientName",
+                            name: "clientName"
+                        },
+                        {
+                            data: "leadStatus",
+                            name: "leadStatus"
+                        },
+                        {
+                            data: "createdAt",
+                            name: "createdAt"
+                        },
+                        {
+                            data: "updatedAt",
+                            name: "updatedAt"
+                        },
+                        {
+                            data: "assignedBy",
+                            name: "assignedBy"
+                        },
+                        {
+                            data: 'policy_number',
+                            name: 'policy_number'
+                        },
+                        {
+                            data: 'premium',
+                            name: 'premium',
+                        },{
+                            data: 'company_name',
+                            name: 'company_name',
+                        });
+            } else {
+                Columns.push({
                         data: 'id',
                         name: 'id',
                         render: function(data, type, row) {
@@ -154,13 +211,34 @@
                     {
                         data: 'nextFollowupDate',
                         name: 'nextFollowupDate',
+                    });
+            }
+            var myleadsTable = $("#dtBasicExample-leadsearch").DataTable({
+                ordering: false,
+                info: false,
+                searching: false,
+                bLengthChange: false,
+                serverSide: true,
+                ajax: {
+                        url: config.routes.myleadsDataTable,
+                        data: function(d) {
+                            d.leadType = $("#modelType").val();
+                            d.cdbId = $("#cdbId").val();
+                            d.leadStatus = $("#leadStatus").val();
+                            d.startedAt = $("#startedAt").val();
+                            d.endAt = $("#endAt").val();
+                            d.nfdSart = $('#nfdSart').val();
+                            d.nfdEnd = $('#nfdEnd').val();
+                            d.email = $('#email').val();
+                            d.teamType = $('#teamType').val();
+                        },
                     },
-                    {
-                        data: 'premium',
-                        name: 'premium',
-                    },
-                ],
-            });
+                    columnDefs: [
+                        // { orderable: false, targets: [1,2,5,6,] }
+                        ],
+                    columns: Columns
+                });
+           
             myleadsTable.on('draw', function() {
                 var rows = $('#dtBasicExample-leadsearch tr');
                 var headerRowColumns = $(rows[0]).children();
@@ -172,6 +250,8 @@
                     }
                 }
             });
+           
+           
 
             $('#mylead-reset-btn').on('click', function(){
                 $("span").each(function (k, v) {
@@ -345,6 +425,7 @@
                                 </div>
                             </div>
                         </div>
+                        @if (!Auth::user()->isRenewalAdvisor())
                         <div class="item form-group">
                             <div class="col">
                                 <label class="col-form-label col-md-4 col-sm-4" for="Start Date">NextFollowup Date Start</label>
@@ -365,6 +446,7 @@
                                 </div>
                             </div>
                         </div>
+                        @endif
                         <div class="item form-group">
                             <div class="col">
                                 <label class="col-form-label col-md-4 col-sm-4" for="Start Date">CDB ID</label>
@@ -374,6 +456,7 @@
                                     </div>
                                 </div>
                             </div>
+                            @if (!Auth::user()->isRenewalAdvisor())
                             <div class="col">
                                 <label class="col-form-label col-md-4 col-sm-4" for="Start Date">Lead Status</label>
                                 <div class="col-md-6 col-sm-6">
@@ -387,8 +470,88 @@
                                     </div>
                                 </div>
                             </div>
+                            @else
+                            <div class="col">
+                                <label class="col-form-label col-md-4 col-sm-4" for="policy_number">Policy Number</label>
+                                <div class="col-md-6 col-sm-6">
+                                    <div class="input-group">
+                                     <input type="text" name="policy_number" id="policy_number" class="form-control">
+                                    </div>
+                                </div>
+                            </div>
+                           
+                            @endif
                         </div>
+                        @if (Auth::user()->isRenewalAdvisor())
+                            <div class="item form-group">
+                                <div class="col">
+                                    <label class="col-form-label col-md-4 col-sm-4" for="clientName">Name</label>
+                                    <div class="col-md-6 col-sm-6">
+                                        <div class="input-group">
+                                        <input type="text" name="clientName" id="clientName" class="form-control">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col">
+                                    <label class="col-form-label col-md-4 col-sm-4" for="mobile_no">Phone</label>
+                                    <div class="col-md-6 col-sm-6">
+                                        <div class="input-group">
+                                        <input type="text" name="mobile_no" id="mobile_no" class="form-control">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="item form-group">
+                                <div class="col">
+                                    <label class="col-form-label col-md-4 col-sm-4" for="premium">Premium</label>
+                                    <div class="col-md-6 col-sm-6">
+                                        <div class="input-group">
+                                        <input type="text" name="premium" id="premium" class="form-control">
+                                        </div>
+                                    </div>
+                                </div>
+                                @if (Auth::user()->isRenewalAdvisor() && $teamName =="Business")
+                                <div class="col">
+                                    <label class="col-form-label col-md-4 col-sm-4" for="company">Company Name</label>
+                                    <div class="col-md-6 col-sm-6">
+                                        <div class="input-group">
+                                        <input type="text" name="company" id="company" class="form-control">
+                                        </div>
+                                    </div>
+                                </div>
+                                @endif
+                            </div>
+
+                            <div class="item form-group">
+                                <div class="col">
+                                    <label class="col-form-label col-md-4 col-sm-4" for="email">Email</label>
+                                    <div class="col-md-6 col-sm-6">
+                                        <div class="input-group">
+                                        <input type="text" name="email" id="email" class="form-control">
+                                        </div>
+                                    </div>
+                                </div>
+                                @if (!Auth::user()->isRenewalAdvisor())
+                                    <div class="col">
+                                        <label class="col-form-label col-md-4 col-sm-4" for="is_renewal">Is Renewal</label>
+                                        <div class="col-md-6 col-sm-6">
+                                            <div class="input-group">
+                                                <select class="form-control" id="is_renewal" name="is_renewal">
+                                                <option>Please Select</option>
+                                                <option value="1">Yes</option>
+                                                <option value="0">No</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endif
+                            </div>
+
+                        @endif
+                        @if (!Auth::user()->isRenewalAdvisor())
                         <div class="item form-group">
+                            
                             <div class="col">
                                 <label class="col-form-label col-md-4 col-sm-4">Email</label>
                                 <div class="col-md-6 col-sm-6">
@@ -397,6 +560,7 @@
                                     </div>
                                 </div>
                             </div>
+                            
                             <div class="col">
                                 <label class="col-form-label col-md-4 col-sm-4" for="Start Date">Lead Type</label>
                                 <div class="col-md-6 col-sm-6">
@@ -410,6 +574,7 @@
                                 </div>
                             </div>
                         </div>
+                        @endif
                         <div class="item form-group">
                             <div  class="col">
                             </div>
@@ -428,10 +593,13 @@
                                 <th>Client Name</th>
                                 <th>Lead Status</th>
                                 <th>Created Date</th>
-                                <th>Assigned Date</th>
+                                @if (!Auth::user()->isRenewalAdvisor())<th>Assigned Date</th>@endif
+                                @if (Auth::user()->isRenewalAdvisor()) <th>Last Updated Date</th> @endif
                                 <th>Assigned By</th>
-                                <th>Next FollowUp Date</th>
-                                <th>Premium</th>
+                                @if (!Auth::user()->isRenewalAdvisor()) <th>Next FollowUp Date</th> @endif
+                                @if (Auth::user()->isRenewalAdvisor()) <th>Policy Number</th> @endif
+                                @if (Auth::user()->isRenewalAdvisor())<th>Premium</th>@endif
+                                @if (Auth::user()->isRenewalAdvisor() && $teamName == "Business")<th>Company Name</th>@endif
                             </tr>
                         </thead>
                         <tbody>

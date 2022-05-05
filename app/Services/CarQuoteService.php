@@ -593,7 +593,7 @@ class CarQuoteService extends BaseService
             return $this->query->orderBy($this->getSortingColumnNameWithPrefix($columnName), $direction);
         } else {
             if (Auth::user()->isRenewalUser()) {
-                return $this->query->whereNotNull('cqr.previous_quote_id')->latest();
+                return $this->query->whereNotNull('cqr.previous_quote_id');
             }
             return $this->query->orderBy('cqr.created_at', 'DESC');
         }
