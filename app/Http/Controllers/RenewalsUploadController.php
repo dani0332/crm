@@ -2,13 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\ProcessStatusCode;
+use App\Enums\quoteStatusCode;
 use App\Enums\RenewalsUploadType;
 use Illuminate\Http\Request;
 use App\Models\RenewalsUploadLeads;
 use App\Services\RenewalsUploadService;
 use App\Imports\RenewalsImport;
 use App\Imports\RenewalsImportUpdate;
+use App\Jobs\RenewalBatchEmailJob;
 use App\Models\CarQuote;
+use App\Models\RenewalsBatchEmails;
 use DataTables;
 use Auth;
 use Config;
@@ -121,7 +125,7 @@ class RenewalsUploadController extends Controller
         $renewalsUploadLead = new RenewalsUploadLeads();
         $renewalsUploadLead->file_name = $fileName;
         $renewalsUploadLead->file_path = $azureStorageUrl.$azureStorageContainer.'/'.$filePathAzure;
-        $renewalsUploadLead->status = 'Pending';
+        $renewalsUploadLead->status = ProcessStatusCode::PENDING;
         $renewalsUploadLead->good = 0;
         $renewalsUploadLead->created_by_id = Auth::user()->id;
         $renewalsUploadLead->save();
@@ -170,7 +174,7 @@ class RenewalsUploadController extends Controller
         $azureStorageUrl = Config::get('constants.AZURE_IM_STORAGE_URL');
         $azureStorageContainer = Config::get('constants.AZURE_IM_STORAGE_CONTAINER');
 
-        $renewalsUploads = RenewalsUploadLeads::where('renewal_import_type', '=', 'create')
+        $renewalsUploads = RenewalsUploadLeads::where('renewal_import_type', '=', RenewalsUploadType::CREATE_LEADS)
         ->where('renewal_import_code', '!=', '')
         ->orderBy('created_at', 'desc')->get();
 
@@ -192,5 +196,47 @@ class RenewalsUploadController extends Controller
         }
 
         return view('renewals.batches');
+    }
+
+    public function batchDetail($batch)
+    {
+        $batchEmails = RenewalsBatchEmails::select('batch','total_leads','total_sent','total_bounced','status','created_at','created_by_id')
+        ->where('batch', $batch)
+        ->orderBy('created_at','desc')
+        ->get();
+
+        return view('renewals.batch_detail', compact('batch','batchEmails'));
+    }
+
+    public function runBatchProcess($batch)
+    {
+        $batchLeads = CarQuote::select('car_quote_request.id as id')
+        ->leftjoin('quote_status as qs', 'qs.id', 'car_quote_request.quote_status_id')
+        ->whereNotNull('car_quote_request.previous_quote_id')
+        ->where(['car_quote_request.renewal_batch' => $batch, 'qs.code' => quoteStatusCode::NEW_LEAD])
+        //->where(['car_quote_request.renewal_batch' => $batch, 'qs.code' => quoteStatusCode::NEW_LEAD, 'car_quote_request.advisor_id' => Auth::user()->id])
+        ->get();
+
+        $batchLeadsCount = $batchLeads->count();
+
+        if($batchLeadsCount == 0) {
+            return redirect('renewals/batches/'.$batch)->with('message', 'No leads found for this batch');
+            //return redirect('renewals/batches/'.$batch)->with('message', 'No leads assigned and pending for this batch');
+        }
+
+        $renewalsBatchStatus = new RenewalsBatchEmails();
+        $renewalsBatchStatus->batch = $batch;
+        $renewalsBatchStatus->status = ProcessStatusCode::PENDING;
+        $renewalsBatchStatus->total_leads = $batchLeadsCount;
+        $renewalsBatchStatus->total_sent = 0;
+        $renewalsBatchStatus->total_bounced = 0;
+        $renewalsBatchStatus->created_by_id = Auth::user()->id;
+        $renewalsBatchStatus->save();
+
+        foreach($batchLeads as $batchLead) {
+            dispatch(new RenewalBatchEmailJob($batchLead->id, $this->renewalsUploadFileService, $renewalsBatchStatus->id));
+        }
+
+        return redirect('renewals/batches/'.$batch)->with('success', 'Batch has been created and emails are being sent');
     }
 }

@@ -11,6 +11,10 @@ use App\Models\LifeQuote;
 use App\Models\TravelQuote;
 use App\Models\YachtQuote;
 use App\Models\RenewalsDump;
+use App\Models\EmailActivity;
+use App\Models\QuoteStatus;
+use App\Models\RenewalsBatchEmails;
+use App\Models\RenewalsUploadLeads;
 use App\Services\RenewalsAddonServices;
 use App\Services\CheckAmlService;
 use App\Services\CapiRequestService;
@@ -19,8 +23,14 @@ use App\Enums\quoteStatusCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypeShortCode;
 use App\Enums\RenewalsUploadType;
-use App\Models\QuoteStatus;
-use App\Models\RenewalsUploadLeads;
+use App\Enums\ProcessStatusCode;
+use App\Models\CarMake;
+use App\Models\CarModel;
+use App\Models\CarTypeInsurance;
+use App\Models\User;
+use Exception;
+use Config;
+use Illuminate\Support\Facades\Log;
 
 class RenewalsUploadService
 {
@@ -115,7 +125,7 @@ class RenewalsUploadService
         }
         if(($record->good + $record->cannot_upload) == $record->total_records){
             // if all records are uploaded, update the status to completed
-                $record->status = 'Completed';
+                $record->status = ProcessStatusCode::COMPLETED;
                 $record->save();
         }
     }
@@ -709,5 +719,171 @@ class RenewalsUploadService
         $updateCarQuoteRenewal->vehicle_category = $vehicleType->category ?? null;
         $updateCarQuoteRenewal->year_of_manufacture = $quoteData->year ?? null;
         $updateCarQuoteRenewal->save();
+    }
+
+    public function renewalBatchEmailProcess($batchLeadId, $batchEmailId)
+    {
+        $carQuote = CarQuote::find($batchLeadId);
+
+        if(isset($carQuote->renewal_expiry_date)) {
+            $renewalExpiryDate = date('d/m/Y', strtotime($carQuote->renewal_expiry_date));
+        } else {
+            $renewalExpiryDate = '';
+        }
+
+        if(isset($carQuote->car_type_insurance_id)) {
+            $carTypeInsurance = CarTypeInsurance::where('id', '=', $carQuote->car_type_insurance_id)->value('text');
+        } else {
+            $carTypeInsurance = '';
+        }
+
+        if(isset($carQuote->car_make_id)) {
+            $carMake = CarMake::where('id', '=', $carQuote->car_make_id)->value('text');
+        } else {
+            $carMake = '';
+        }
+
+        if(isset($carQuote->car_model_id)) {
+            $carModel = CarModel::where('id', '=', $carQuote->car_model_id)->value('text');
+        } else {
+            $carModel = '';
+        }
+
+        if(isset($carQuote->advisor_id)) {
+            $advisorModel = User::where('id', '=', $carQuote->advisor_id)->first();
+            $advisorName = $advisorModel->name;
+            $advisorEmail = $advisorModel->email;
+            $advisorMobile = $advisorModel->mobile_no;
+            $advisorLandline = $advisorModel->landline_no;
+        } else {
+            $advisorName = '';
+            $advisorEmail = '';
+            $advisorMobile = '';
+            $advisorLandline = '';
+        }
+
+        $ecomUrl = Config::get('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$carQuote->uuid;
+
+        // Send Email
+        $emailData = array(
+            'customerName' => $carQuote->first_name . ' ' . $carQuote->last_name,
+            'customerEmail' => $carQuote->email,
+            'cdbId' => $carQuote->code,
+            'policyNumber' => $carQuote->previous_quote_policy_number,
+            'expiryDate' => $renewalExpiryDate,
+            'insurerName' => $carQuote->currently_insured_with,
+            'planType' => $carTypeInsurance,
+            'carMake' => $carMake,
+            'carModel' => $carModel,
+            'advisorName' => $advisorName,
+            'advisorEmail' => $advisorEmail,
+            'advisorMobile' => $advisorMobile,
+            'advisorLandline' => $advisorLandline,
+            'ecomUrl' => $ecomUrl
+        );
+
+        $getStatusCode = $this->sendRenewalEmail($emailData);
+
+        $this->updateRenewalBatchRecord($batchEmailId);
+    }
+
+    public function sendRenewalEmail($emailData)
+    {
+        try {
+            $apiKey = Config::get('constants.SENDINBLUE_KEY');
+            $url = Config::get('constants.SIB_URL');
+            $appEnv = Config::get('constants.APP_ENV');
+            $emailTemplateId = (int)Config::get('constants.SIB_CAR_RENEWALS_TEMPLATE_ID');
+            $tag = 'renewal';
+
+            if($appEnv == 'production') {
+                $tag = $tag;
+            } else {
+                $tag = $appEnv.'-'.$tag;
+            }
+
+            $headers = [
+                'Accept' => 'application/json',
+                'api-key' => $apiKey,
+                'Content-Type' => 'application/json'
+            ];
+
+            $body = json_encode([
+                "to" => array([
+                    "email" => $emailData['customerEmail'],
+                    "name" => $emailData['customerName'],
+                ]),
+                "templateId" => $emailTemplateId,
+                "params" => [
+                    "customerName" => $emailData['customerName'],
+                    "customerEmail" => $emailData['customerEmail'],
+                    "cdbId" => $emailData['cdbId'],
+                    "policyNumber" => $emailData['policyNumber'],
+                    "expiryDate" => $emailData['expiryDate'],
+                    "insurerName" => $emailData['insurerName'],
+                    "planType" => $emailData['planType'],
+                    "carMake" => $emailData['carMake'],
+                    "carModel" => $emailData['carModel'],
+                    "advisorName" => $emailData['advisorName'],
+                    "advisorEmail" => $emailData['advisorEmail'],
+                    "advisorMobile" => $emailData['advisorMobile'],
+                    "advisorLandline" => $emailData['advisorLandline'],
+                    "ecomUrl" => $emailData['ecomUrl'],
+                ],
+                "replyTo" => [
+                    "email" => $emailData['advisorEmail'],
+                ],
+                "tags" => [
+                    $tag,
+                ],
+            ]);
+
+            $client = new \GuzzleHttp\Client();
+            $clientRequest = $client->post(
+                $url,
+                [
+                    'headers' => $headers,
+                    'body' => $body,
+                    'timeout' => 10000,
+                ]
+            );
+
+            $getStatusCode = $clientRequest->getStatusCode();
+            $getResponse = json_encode($clientRequest->getStatusCode()." ".$clientRequest->getBody()->getContents());
+
+            if($getStatusCode == 201) {
+                $isEmailSent = 1;
+            } else {
+                $errorMessage = "SIB Error:  ".$getStatusCode." ".$emailData['customerEmail']." ".get_class();
+                Log::channel('daily')->error("message: ".$errorMessage);
+                $isEmailSent = 0;
+            }
+        }
+        catch(Exception $ex) {
+            $errorMessage = "SIB Failed Error: ".$ex->getCode()." ".$ex->getMessage()." ".get_class();
+            Log::channel('daily')->info("message: ".$errorMessage);
+            $getStatusCode = $ex->getCode();
+            $getResponse = json_encode($ex->getCode()." ".$ex->getMessage());
+            $isEmailSent = 0;
+        }
+
+        $newEmailActivity = new EmailActivity();
+        $newEmailActivity->api_response = $getResponse;
+        $newEmailActivity->successful = $isEmailSent;
+        $newEmailActivity->email = $emailData['customerEmail'];
+        $newEmailActivity->save();
+    }
+
+    public function updateRenewalBatchRecord($batchEmailId)
+    {
+        $renewalsBatchStatus = RenewalsBatchEmails::where('id', $batchEmailId)->first();
+        if($renewalsBatchStatus) { // if record exists, update the number of rows uploaded
+            $renewalsBatchStatus->total_sent = $renewalsBatchStatus->total_sent + 1;
+            $renewalsBatchStatus->save();
+        }
+        if(($renewalsBatchStatus->total_sent + $renewalsBatchStatus->total_bounced) == $renewalsBatchStatus->total_leads) { // if all records are uploaded, update the status to completed
+            $renewalsBatchStatus->status = ProcessStatusCode::COMPLETED;
+            $renewalsBatchStatus->save();
+        }
     }
 }
