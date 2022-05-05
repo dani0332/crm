@@ -251,7 +251,6 @@ class RenewalsUploadService
     {
         $advisorId = $this->renewalsAddonService->getUserInfo($quoteData->pAdvisor);
         $quoteUuid = $this->generateUUID(QuoteTypeId::Home);
-
         $newHomeQuote = new HomeQuote([
             "first_name" => $quoteData->first_name,
             "last_name" => $quoteData->last_name,
@@ -279,7 +278,6 @@ class RenewalsUploadService
     {
         $advisorId = $this->renewalsAddonService->getUserInfo($quoteData->pAdvisor);
         $quoteUuid = $this->generateUUID(QuoteTypeId::Life);
-
         $newLifeQuote = new LifeQuote([
             "first_name" => $quoteData->first_name,
             "last_name" => $quoteData->last_name,
@@ -365,7 +363,6 @@ class RenewalsUploadService
         $advisorId = $this->renewalsAddonService->getUserInfo($newAdvisor);
         $quoteType = $this->renewalsAddonService->getQuoteType(quoteTypeCode::Bike);
         $quoteUuid = $this->generateUUID(QuoteTypeId::Bike);
-
         $createRenewalQuote = new BikeQuote([
             "first_name" => $getBikeQuoteData->first_name,
             "last_name" => $getBikeQuoteData->last_name,
@@ -525,7 +522,6 @@ class RenewalsUploadService
         $advisorId = $this->renewalsAddonService->getUserInfo($newAdvisor);
         $quoteType = $this->renewalsAddonService->getQuoteType(quoteTypeCode::Life);
         $quoteUuid = $this->generateUUID(QuoteTypeId::Life);
-
         $createRenewalQuote = new LifeQuote([
             "first_name" => $getLifeQuoteData->first_name,
             "last_name" => $getLifeQuoteData->last_name,
@@ -555,7 +551,6 @@ class RenewalsUploadService
         $advisorId = $this->renewalsAddonService->getUserInfo($newAdvisor);
         $quoteType = $this->renewalsAddonService->getQuoteType(quoteTypeCode::Travel);
         $quoteUuid = $this->generateUUID(QuoteTypeId::Travel);
-
         $createRenewalQuote = new TravelQuote([
             "first_name" => $getTravelQuoteData->first_name,
             "last_name" => $getTravelQuoteData->last_name,
