@@ -10,11 +10,11 @@
                         <table id="datatabless" class="table table-striped jambo_table" style="width:100%">
                             <thead>
                                 <tr>
-                                    <th>Modified At</th>
-                                    <th>Modified By</th>
-                                    <th>Lead Status</th>
-                                    <th>Advisor</th>
-                                    <th>Notes</th>
+                                    <th style="width: 10%;">Modified At</th>
+                                    <th style="width: 10%;">Modified By</th>
+                                    <th style="width: 10%;">Lead Status</th>
+                                    <th style="width: 10%;">Advisor</th>
+                                    <th style="width: 60%;">Notes</th>
                                 </tr>
                             </thead>
                             <tbody>
