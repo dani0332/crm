@@ -2,6 +2,8 @@
 
 namespace App\Imports;
 
+use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeShortCode;
 use App\Jobs\RenewalImportJob;
 use App\Services\RenewalsUploadService;
 use Maatwebsite\Excel\Row;
@@ -42,7 +44,7 @@ class RenewalsImportUpdate implements OnEachRow, WithStartRow, WithValidation, S
         $quoteType = $row[0];
         $policy = $row[4];
 
-        if (!empty($policy) && $quoteType == 'CAR') {
+        if (!empty($policy) && $quoteType == QuoteTypeShortCode::CAR) {
 
             $quoteData = 0;
 

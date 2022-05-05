@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\RenewalsUploadType;
 use Illuminate\Http\Request;
 use App\Models\RenewalsUploadLeads;
 use App\Services\RenewalsUploadService;
@@ -43,12 +44,10 @@ class RenewalsUploadController extends Controller
             }
 
             // Check upload type
-            if($request->renewals_upload_type == 'create') {
-                $uploadType = 'Create';
+            if($request->renewals_upload_type == RenewalsUploadType::CREATE_LEADS) {
                 // Generate unique code for file record
                 $renewalImportCode = $this->renewalsUploadFileService->generateRandomString();
             } else {
-                $uploadType = 'Update';
                 $renewalImportCode = $request->renewal_import_code;
 
                 $this->validate($request, [
@@ -74,11 +73,12 @@ class RenewalsUploadController extends Controller
             // creating upload record in database before upload start
             $this->createRenewalUploadLeadRecord($fileNameOriginal, $filePathAzure);
 
-            if($request->renewals_upload_type == 'create') {
-                $renewalsUpload = new RenewalsImport($this->renewalsUploadFileService, $request->file_name->getClientOriginalName(), $renewalImportCode, $uploadType); // Send the file name to the import class
+            if($request->renewals_upload_type == RenewalsUploadType::CREATE_LEADS) {
+                $renewalsUpload = new RenewalsImport($this->renewalsUploadFileService, $request->file_name->getClientOriginalName(), $renewalImportCode, $request->renewals_upload_type); // Send the file name to the import class
             } else {
-                $renewalsUpload = new RenewalsImportUpdate($this->renewalsUploadFileService, $request->file_name->getClientOriginalName(), $renewalImportCode, $uploadType); // Send the file name to the import class
+                $renewalsUpload = new RenewalsImportUpdate($this->renewalsUploadFileService, $request->file_name->getClientOriginalName(), $renewalImportCode, $request->renewals_upload_type); // Send the file name to the import class
             }
+
             $renewalsUpload->import(request()->file('file_name')); // Initiate the import
 
             $countRows = $renewalsUpload->getRowCount(); // Get the number of rows imported
@@ -90,16 +90,26 @@ class RenewalsUploadController extends Controller
             $renewalsUploadLead->total_records = $totalRows;
             $renewalsUploadLead->cannot_upload = $countErrors;
             $renewalsUploadLead->renewal_import_code = $renewalImportCode;
-            $renewalsUploadLead->renewal_import_type = $uploadType;
+            $renewalsUploadLead->renewal_import_type = $request->renewals_upload_type;
             $renewalsUploadLead->save();
 
             // Redirect back to the upload page if there are errors
             if ($renewalsUpload->failures()->isNotEmpty() || $countErrors > 30) {
-                return redirect("renewals/upload")->withFailures($renewalsUpload->failures());
+                if($request->renewals_upload_type == RenewalsUploadType::CREATE_LEADS) {
+                    return redirect("renewals/upload")->withFailures($renewalsUpload->failures());
+                } 
+                if($request->renewals_upload_type == RenewalsUploadType::UPDATE_LEADS) {
+                    return redirect("renewals/update")->withFailures($renewalsUpload->failures());
+                }
             }
 
             // Redirect back to the upload page if there are no errors
-            return redirect('renewals/upload')->with('success', 'Uploaded renewals records has been stored');
+            if($request->renewals_upload_type == RenewalsUploadType::CREATE_LEADS) {
+                return redirect('renewals/upload')->with('success', 'Uploaded renewals records has been stored');
+            } 
+            if($request->renewals_upload_type == RenewalsUploadType::UPDATE_LEADS) {
+                return redirect('renewals/update')->with('success', 'Uploaded renewals records has been stored');
+            }
         }
     }
 

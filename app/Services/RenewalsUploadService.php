@@ -17,6 +17,8 @@ use App\Services\CapiRequestService;
 use App\Enums\quoteTypeCode;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypeShortCode;
+use App\Enums\RenewalsUploadType;
 use App\Models\QuoteStatus;
 use App\Models\RenewalsUploadLeads;
 
@@ -61,42 +63,42 @@ class RenewalsUploadService
         $transApprovedId = $this->getquoteStatusIdbyCode(quoteStatusCode::TRANSACTION_APPROVED);
         $newLeadId = $this->getquoteStatusIdbyCode(quoteStatusCode::NEW_LEAD);
 
-        if ($quoteType == 'BIK') {
+        if ($quoteType == QuoteTypeShortCode::BIK) {
             $this->createNewBikeQuoute($quoteData, $transApprovedId, $newLeadId, $renewalImportCode);
             $this->updateRenewalUploadLeadRecord($fileName);
         }
-        if ($quoteType == 'BUS') {
+        if ($quoteType == QuoteTypeShortCode::BUS) {
             $this->createNewBusinessQuoute($quoteData, $transApprovedId, $newLeadId, $renewalImportCode);
             $this->updateRenewalUploadLeadRecord($fileName);
         }
-        if ($quoteType == 'CAR') {
-            if ($uploadType == 'Create') {
+        if ($quoteType == QuoteTypeShortCode::CAR) {
+            if ($uploadType == RenewalsUploadType::CREATE_LEADS) {
                 $this->createNewCarQuoute($quoteData, $transApprovedId, $newLeadId, $renewalImportCode);
                 $this->updateRenewalUploadLeadRecord($fileName);
             }
-            if ($uploadType == 'Update') {
+            if ($uploadType == RenewalsUploadType::UPDATE_LEADS) {
                 $this->updateExistingCarQuote($quoteData, $renewalImportCode);
                 $this->updateRenewalUploadLeadRecord($fileName);
             }
         }
         
-        if ($quoteType == 'HEA') {
+        if ($quoteType == QuoteTypeShortCode::HEA) {
             $this->createNewHealthQuoute($quoteData, $transApprovedId, $newLeadId, $renewalImportCode);
             $this->updateRenewalUploadLeadRecord($fileName);
         }
-        if ($quoteType == 'HOM') {
+        if ($quoteType == QuoteTypeShortCode::HOM) {
             $this->createNewHomeQuoute($quoteData, $transApprovedId, $newLeadId, $renewalImportCode);
             $this->updateRenewalUploadLeadRecord($fileName);
         }
-        if ($quoteType == 'LIF') {
+        if ($quoteType == QuoteTypeShortCode::LIF) {
             $this->createNewLifeQuoute($quoteData, $transApprovedId, $newLeadId, $renewalImportCode);
             $this->updateRenewalUploadLeadRecord($fileName);
         }
-        if ($quoteType == 'TRA') {
+        if ($quoteType == QuoteTypeShortCode::TRA) {
             $this->createNewTravelQuoute($quoteData, $transApprovedId, $newLeadId, $renewalImportCode);
             $this->updateRenewalUploadLeadRecord($fileName);
         }
-        if ($quoteType == 'YAC') {
+        if ($quoteType == QuoteTypeShortCode::YAC) {
             $this->createNewYachtQuoute($quoteData, $transApprovedId, $newLeadId, $renewalImportCode);
             $this->updateRenewalUploadLeadRecord($fileName);
         }
