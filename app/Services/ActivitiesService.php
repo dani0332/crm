@@ -37,16 +37,20 @@ class ActivitiesService extends BaseService
     public function getGridData(Request $request)
     {
         $activities = $this->getAllActivitesBasedOnUser();
+        
         if($request->period == null){
             $request->period = 'today';
         }
         if (isset($request->period) && $request->period != '') {
             switch ($request->period) {
                 case 'custom':
-                    $activities = $activities->whereBetween('created_at', [$request->startDate, $request->endDate]);
+                    $activities = $activities->whereBetween('due_date', [$request->startDate, $request->endDate]);
                     break;
                 case 'overdue':
                     $activities = $activities->where('due_date', '<', Carbon::now()->toDateTimeString());
+                    break;
+                case 'tomorrow':
+                    $activities = $activities->whereBetween('due_date', [Carbon::tomorrow()->startOfDay()->toDateTimeString(), Carbon::tomorrow()->endOfDay()->toDateTimeString()]);
                     break;
                 case 'today':
                     $activities = $activities->whereBetween('due_date', [Carbon::today()->startOfDay()->toDateTimeString(), Carbon::today()->endOfDay()->toDateTimeString()]);
@@ -55,22 +59,26 @@ class ActivitiesService extends BaseService
                     $activities = $activities->whereBetween('due_date', [Carbon::yesterday()->startOfDay()->toDateTimeString(), Carbon::yesterday()->endOfDay()->toDateTimeString()]);
                     break;
                case 'this_week':
-                    $activities = $activities->whereBetween('due_date', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()])->orWhereBetween('updated_at', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()]);
+                    $activities = $activities->whereBetween('due_date', [Carbon::now()->startOfWeek()->startOfDay()->toDateTimeString(), Carbon::now()->endOfWeek()->endOfDay()->toDateTimeString()]);
                     break;
                 case 'this_month':
-                    $activities = $activities->whereBetween('due_date', [Carbon::now()->startOfMonth(), Carbon::now()->endOfMonth()])->orWhereBetween('updated_at', [Carbon::now()->startOfMonth(), Carbon::now()->endOfMonth()]);
+                    $activities = $activities->whereBetween('due_date', [Carbon::now()->startOfMonth()->startOfDay()->toDateTimeString(), Carbon::now()->endOfMonth()->endOfDay()->toDateTimeString()]);
                     break;
                 default:
                     $activities = $activities;
                     break;
             }
         }
-
         if (isset($request->assignee_id) && $request->assignee_id != '') {
             $activities = $activities->where('assignee_id', $request->assignee_id);
         }
-
-        return $activities->get();
+        $rawActivities = $activities->get();
+        foreach($rawActivities as $act)
+        {
+            $act->assignee_name = User::where('id', $act->assignee_id)->first()->name;
+            
+        }
+        return $rawActivities->orderBy('created_at', 'desc');
     }
 
     private function parseDate($date, $isStartOfDay)
@@ -159,11 +167,7 @@ class ActivitiesService extends BaseService
         $subOrdinateIds = $this->helperService->walkTree(Auth::user()->id);
         array_push($subOrdinateIds, Auth::user()->id);
         $activites = Activities::whereIn('assignee_id', $subOrdinateIds);
-        foreach($activites as $activity)
-        {
-            $activity->assignee_name = User::where('id', $activity->assignee_id)->first()->name;
-            
-        }
+        
         return $activites;
     }
 

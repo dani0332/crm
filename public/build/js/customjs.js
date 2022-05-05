@@ -2174,7 +2174,8 @@ function submitUpdateActivity(el) {
 
 function deleteActivity1 (el)
 {
-    var id = $(el).attr('data-record-id');
+    if(confirm('Are you sure you want to delete this activity?')){
+        var id = $(el).attr('data-record-id');
     var quote_uuid = $(el).attr('data-quote-uuid');
     var type = $(el).attr('data-type');
     $.ajax({
@@ -2190,6 +2191,11 @@ function deleteActivity1 (el)
             window.location.reload();
         },
     });
+    }
+    else{
+        return false;
+    }
+    
 }
 
 function disabledDoneActivities(){

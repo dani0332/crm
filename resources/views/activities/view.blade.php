@@ -55,24 +55,6 @@
 
     </style>
     <script>
-        function deleteActivity(uuid) {
-            var id = $(el).attr('data-record-id');
-            var quote_uuid = $(el).attr('data-quote-uuid');
-            var type = $(el).attr('data-type');
-            $.ajax({
-                url: '/activities/' + id + '/delete',
-                method: "POST",
-                data: {
-                    isLeadView: 1,
-                    quote_uuid: quote_uuid,
-                    _token: $('input[name=_token]').val(),
-                    quoteType: type,
-                },
-                success: function(data) {
-                    window.location.reload();
-                },
-            });
-        }
 
         var count = 1;
 
@@ -85,7 +67,7 @@
             });
         }
 
-        function updateStatus(id) {
+        function updateStatus(id, e) {
             $.ajax({
                 url: '/activities/updateStatus',
                 method: "POST",
@@ -176,6 +158,7 @@
         }
 
         function deleteActivity(el) {
+            if(confirm('Are you sure you want to delete this activity?')) {
             var id = $(el).attr('data-record-id');
             var quote_uuid = $(el).attr('data-quote-uuid');
             var type = $(el).attr('data-type');
@@ -191,6 +174,7 @@
                     window.location.reload();
                 },
             });
+        }
         }
 
         function submitUpdateActivity(el) {
@@ -216,6 +200,13 @@
                 });
             } else return false;
 
+        }
+        function formatedDate(date) {
+            var newDate = new Date(date);
+            var offset = newDate.getTimezoneOffset();
+            newDate = new Date(newDate.getTime() - (offset*60*1000));
+            newDate = newDate.toISOString().split('T')[0];
+            return newDate;
         }
 
         function addActivity() {
@@ -253,6 +244,7 @@
                 info: false,
                 searching: false,
                 bLengthChange: false,
+                serverSide: true,
                 ajax: {
                     url: config.routes.activitiesDataTable,
                     data: function(d) {
@@ -304,7 +296,7 @@
                             var checkbox = `
                     <label class="custom-checkbox"><input type="checkbox" ` + ischecked +
                                 ` class="activityChk" onclick="updateStatus('` + row.id +
-                                `')" name="activityChk" value="` + row.id + `">
+                                `, this')" name="activityChk" value="` + row.id + `">
                     <span class="checkbox"></span>
                     </label>`;
                             var url = '/activities/' + row.uuid;
@@ -326,8 +318,31 @@
                         }
                     },
                 ],
+                drawCallback: function (settings) {
+                    debugger;
+                    $("#totalActivites").text("Total Activites: " + settings._iRecordsTotal);
+                }
             });
             activitiesTable.on('draw', function() {
+                var rows = $('.activities-datatable tr');
+                var headerRowColumns = $(rows[0]).children();
+                var nextFollowupDateColumn = 0;
+                for (let i = 0; i < headerRowColumns.length; i++) {
+                    const element = headerRowColumns[i];
+                    if(element.outerText == "Followup Date"){
+                        nextFollowupDateColumn = i;
+                    }
+                }
+                for (let index = 1; index < rows.length; index++) {
+                    var columns = $(rows[index]).children();
+                    for (let i = 0; i < columns.length; i++) {
+                        if(i == nextFollowupDateColumn && $(columns[i]).text() != ""){
+                            if(formatedDate(new Date()) > formatedDate(new Date($(columns[i]).text()))){
+                                $(rows[index]).children().eq(i).css({'color': 'white', 'background-color': 'red', 'font-weight': 'bold', 'font-size': '12px'});
+                            }
+                        }
+                    }
+                }
                 $('.activityChk').each(function(index, el) {
                     if ($(el).is(':checked') == true) {
                         $(el).attr('disabled', true);
@@ -366,7 +381,7 @@
                                 for="Payment mode">Assigned To</label>
                             <div class="col-md-6 col-sm-6">
                                 <div class="input-group">
-                                    <select class="form-control" name="assignee_id" id="assignee_id">
+                                    <select class="form-control" @iF(Auth::user()->isAdvisor()) disabled="disabled" @endif name="assignee_id" id="assignee_id">
                                         <option value="">Select Assigned To</option>
                                         @foreach ($advisors as $advisor)
                                             <option value="{{ $advisor['id'] }}">{{ $advisor['name'] }}</option>
@@ -395,8 +410,8 @@
                 <div class="" id="filters-div" style="float: right;">
                     <button data-period="overdue" onclick="javascript:filterActivites(this)">Overdue</button><button
                         data-period="today" style="background-color: #030303; color: white;" id="today"
-                        onclick="javascript:filterActivites(this)">Today</button><button data-period="yesterday"
-                        onclick="javascript:filterActivites(this)">Yesterday</button><button data-period="this_week"
+                        onclick="javascript:filterActivites(this)">Today</button><button data-period="tomorrow"
+                        onclick="javascript:filterActivites(this)">Tomorrow</button><button data-period="this_week"
                         onclick="javascript:filterActivites(this)">This Week</button><button data-period="this_month"
                         onclick="javascript:filterActivites(this)">This Month</button>
                     <button type="button" id="hiddenField" value="Custom" class="datepicker">Custom</button>
@@ -407,6 +422,7 @@
             <div class="x_content">
                 <div class="alert alert-success" style="display: none" id="sucess-div"></div>
                 <table class="table table-striped jambo_table activities-datatable" style="width:100%">
+                    <label id="totalActivites" style="font-weight: bold;margin-left: 18px;"></label>
                     <thead>
                         <tr>
 

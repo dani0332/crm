@@ -38,7 +38,7 @@
                                         aria-label="Select Assignee">
                                         <option selected>Select Assignee</option>
                                         @foreach ($advisors as $advisor)
-                                            <option value="{{ $advisor->id }}">{{ $advisor->name }}</option>
+                                            <option @if(Auth::user()->id == $advisor->id) selected="selected" @endif value="{{ $advisor->id }}">{{ $advisor->name }}</option>
                                         @endforeach
                                     </select>
                                 </div>

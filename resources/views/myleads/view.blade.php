@@ -161,28 +161,6 @@
                     },
                 ],
             });
-           
-            // followupLeadsTable.on( 'draw', function () {
-            //     var rows = $('#overDueFollowups tr');
-            //     var headerRowColumns = $(rows[0]).children();
-            //     var nextFollowupDateColumn = 0;
-            //     for (let i = 0; i < headerRowColumns.length; i++) {
-            //         const element = headerRowColumns[i];
-            //         if(element.outerText == "Next FollowUp Date"){
-            //             nextFollowupDateColumn = i;
-            //         }
-            //     }
-            //     for (let index = 1; index < rows.length; index++) {
-            //         var columns = $(rows[index]).children();
-            //         for (let i = 0; i < columns.length; i++) {
-            //             if(i == nextFollowupDateColumn && $(columns[i]).text() != ""){
-            //                 if(moment().format('YYYY-MM-DD HH:mm:ss').toString() > $(columns[i]).text()){
-            //                     $(rows[index]).children().eq(i).css({'color': 'white', 'background-color': 'red', 'font-weight': 'bold', 'font-size': '12px'});
-            //                 }
-            //             }
-            //         }
-            //     }
-            // } );
             myleadsTable.on('draw', function() {
                 var rows = $('#dtBasicExample-leadsearch tr');
                 var headerRowColumns = $(rows[0]).children();
@@ -191,16 +169,6 @@
                     const element = headerRowColumns[i];
                     if(element.outerText == "Next FollowUp Date"){
                         nextFollowupDateColumn = i;
-                    }
-                }
-                for (let index = 1; index < rows.length; index++) {
-                    var columns = $(rows[index]).children();
-                    for (let i = 0; i < columns.length; i++) {
-                        if(i == nextFollowupDateColumn && $(columns[i]).text() != ""){
-                            if(formatedDate(new Date()) > formatedDate(new Date($(columns[i]).text()))){
-                                $(rows[index]).children().eq(i).css({'color': 'white', 'background-color': 'red', 'font-weight': 'bold', 'font-size': '12px'});
-                            }
-                        }
                     }
                 }
             });

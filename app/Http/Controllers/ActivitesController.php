@@ -165,7 +165,7 @@ class ActivitesController extends Controller
         $advisors = [];
         if(isset($request->quote_uuid)){
             $quoteRecord = $this->crudService->getEntityByUUID($request->quote_uuid, $request->quoteType);
-            $advisors  = $this->getAdvisorsForActivity($request->quoteType, $quoteRecord->health_team_type);
+            $advisors  = $this->getAdvisorsForActivity($request->quoteType, isset($quoteRecord->health_team_type) ? $quoteRecord->health_team_type : '');
         }
         
         return view('activities.edit', compact('record', 'advisors'));

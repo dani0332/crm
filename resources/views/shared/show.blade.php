@@ -30,6 +30,11 @@
 .custom-checkbox input[type='checkbox']:checked + span.checkbox:before { content:"\f00c"; color:#fff; font: normal normal normal 20px/1 FontAwesome;}
 
     </style>
+    <script>
+         $('#add-activity-btn').on('click', function(){
+            $('#activityModal').modal({ show: true });
+        });
+    </script>
     <?php
     use App\Enums\quoteTypeCode;
     ?>
