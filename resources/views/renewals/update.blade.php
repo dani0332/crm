@@ -68,7 +68,6 @@
                                 <span class="text-danger">{{ $errors->first('renewal_import_code') }}</span>
                             @endif
                         </div>
-                        <a href="javascript:void(0);" class="remove_additional_btn" id="add_additional_btn" title="Add field"><img src="/image/add-icon.png"/></a>
                     </div>
 
                     <div class="item form-group">
