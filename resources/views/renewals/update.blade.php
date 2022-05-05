@@ -112,8 +112,8 @@
                                 <th>Max size</th></tr>
                             </thead>
                             <tbody>
-                                <tr><td>1</td><td>Product Type</td><td>Type of Insurance | Comprehensive or Third Party Only</td><td>No</td><td>50</td></tr>
-                                <tr><td>2</td><td>Sales Channel</td><td>Source of the quotation</td><td>Yes</td><td>100</td></tr>
+                                <tr><td>1</td><td>Type</td><td>Insurance Type</td><td>Yes</td><td>4</td></tr>
+                                <tr><td>2</td><td>Product Type</td><td>Type of Insurance | Comprehensive or Third Party Only</td><td>No</td><td>50</td></tr>
                                 <tr><td>3</td><td>Advisor</td><td>Advisor Email</td><td>No</td><td>100</td></tr>
                                 <tr><td>4</td><td>Previous Advisor</td><td>Previosuly assigned Advisor Email</td><td>No</td><td>100</td></tr>
                                 <tr><td>5</td><td>Policy</td><td>Policy number assigned</td><td>Yes</td><td>100</td></tr>

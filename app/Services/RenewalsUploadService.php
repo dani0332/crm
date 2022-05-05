@@ -45,11 +45,11 @@ class RenewalsUploadService
     }
 
     /*
-    * @name createNewQuote()
+    * @name createUpdateQuote()
     * @params $quoteData - extracted data from excel file, $qouteType - type of quote
     * @returns custom function decalred against each quote type else returns false
     */
-    public function createNewQuote($quoteData, $quoteType, $fileName, $renewalImportCode)
+    public function createUpdateQuote($quoteData, $quoteType, $fileName, $renewalImportCode, $uploadType)
     {
         if (!$quoteData) {
             return false;
@@ -70,9 +70,16 @@ class RenewalsUploadService
             $this->updateRenewalUploadLeadRecord($fileName);
         }
         if ($quoteType == 'CAR') {
-            $this->createNewCarQuoute($quoteData, $transApprovedId, $newLeadId, $renewalImportCode);
-            $this->updateRenewalUploadLeadRecord($fileName);
+            if ($uploadType == 'Create') {
+                $this->createNewCarQuoute($quoteData, $transApprovedId, $newLeadId, $renewalImportCode);
+                $this->updateRenewalUploadLeadRecord($fileName);
+            }
+            if ($uploadType == 'Update') {
+                $this->updateExistingCarQuote($quoteData, $renewalImportCode);
+                $this->updateRenewalUploadLeadRecord($fileName);
+            }
         }
+        
         if ($quoteType == 'HEA') {
             $this->createNewHealthQuoute($quoteData, $transApprovedId, $newLeadId, $renewalImportCode);
             $this->updateRenewalUploadLeadRecord($fileName);
@@ -649,4 +656,61 @@ class RenewalsUploadService
         }
         return $randomString;
      }
+
+     function updateExistingCarQuote($quoteData, $renewalImportCode)
+    {
+        $carTypeOfInsurance = null;
+        $carMake = $this->renewalsAddonService->getCarMake($quoteData->make);
+        $carModel = $this->renewalsAddonService->getCarModel($quoteData->model);
+        $vehicleType = null;
+        $previousAdvisorId = $this->renewalsAddonService->getUserInfo($quoteData->pAdvisor);
+        $advisorId = $this->renewalsAddonService->getUserInfo($quoteData->advisor);
+
+        if ($carModel) {
+            $vehicleType = $this->renewalsAddonService->getVehicleType($carModel->vehicle_type_id);
+        }
+
+        if ($quoteData->product_type != null) {
+            $carTypeOfInsuranceInstance = $this->renewalsAddonService->getCarTypeOfInsurance($quoteData->product_type);
+            if($carTypeOfInsuranceInstance){
+                $carTypeOfInsurance = $carTypeOfInsuranceInstance->id;
+            }
+        }
+
+        // Previous Car Lead
+        $updateCarQuote = CarQuote::where('renewal_import_code', $renewalImportCode)
+        ->where('policy_number', $quoteData->policy)->first();
+
+        $previousAdvisorEmail = 'Previous Advisor Email Id : '. $quoteData->pAdvisor;
+        $carMakeModel = 'Car Make/Model/Year : '. $quoteData->make.' '.$quoteData->year;
+        $notes = $previousAdvisorId == '' ? $updateCarQuote->additional_notes.' - '.$carMakeModel.' - '.$previousAdvisorEmail.' - '.$quoteData->notes : $updateCarQuote->additional_notes.' - '.$carMakeModel.' - '.$quoteData->notes;
+
+        $updateCarQuote->car_type_insurance_id = $carTypeOfInsurance;
+        $updateCarQuote->advisor_id = $previousAdvisorId;
+        $updateCarQuote->renewal_batch = $quoteData->batch;
+        $updateCarQuote->additional_notes = $notes;
+        $updateCarQuote->car_make_id = $carMake->id ?? null;
+        $updateCarQuote->car_model_id = $carModel->id ?? null;
+        $updateCarQuote->cylinder = $carModel->cylinder ?? null;
+        $updateCarQuote->vehicle_category = $vehicleType->category ?? null;
+        $updateCarQuote->year_of_manufacture = $quoteData->year ?? null;
+        $updateCarQuote->save();
+
+        // Renewal Car Lead
+        $updateCarQuoteRenewal = CarQuote::where('renewal_import_code', $renewalImportCode)
+        ->where('previous_quote_policy_number', $quoteData->policy)->first();
+
+        $notes = $updateCarQuoteRenewal->additional_notes.' - '.$carMakeModel.' - '.$quoteData->notes;
+
+        $updateCarQuoteRenewal->car_type_insurance_id = $carTypeOfInsurance;
+        $updateCarQuoteRenewal->advisor_id = $advisorId;
+        $updateCarQuoteRenewal->renewal_batch = $quoteData->batch;
+        $updateCarQuoteRenewal->additional_notes = $notes;
+        $updateCarQuoteRenewal->car_make_id = $carMake->id ?? null;
+        $updateCarQuoteRenewal->car_model_id = $carModel->id ?? null;
+        $updateCarQuoteRenewal->cylinder = $carModel->cylinder ?? null;
+        $updateCarQuoteRenewal->vehicle_category = $vehicleType->category ?? null;
+        $updateCarQuoteRenewal->year_of_manufacture = $quoteData->year ?? null;
+        $updateCarQuoteRenewal->save();
+    }
 }

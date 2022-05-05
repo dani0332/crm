@@ -19,6 +19,7 @@ class RenewalImportJob implements ShouldQueue
     protected $renewalsUploadService;
     protected $fileName;
     protected $renewalImportCode;
+    protected $uploadType;
 
     public $maxTries = 5;
     public $timeout = 300;
@@ -29,13 +30,14 @@ class RenewalImportJob implements ShouldQueue
      *
      * @return void
      */
-    public function __construct($quoteData, $quoteType, RenewalsUploadService $renewalsUploadService, $fileName, $renewalImportCode)
+    public function __construct($quoteData, $quoteType, RenewalsUploadService $renewalsUploadService, $fileName, $renewalImportCode, $uploadType)
     {
         $this->quoteType = $quoteType;
         $this->quoteData = $quoteData;
         $this->renewalsUploadService = $renewalsUploadService;
         $this->fileName = $fileName;
         $this->renewalImportCode = $renewalImportCode;
+        $this->uploadType = $uploadType;
     }
 
     /**
@@ -50,7 +52,7 @@ class RenewalImportJob implements ShouldQueue
             $quoteType = $this->quoteType;
 
             // Sending request with data to create renewal and normal quote
-            $this->renewalsUploadService->createNewQuote($quoteData, $quoteType, $this->fileName, $this->renewalImportCode);
+            $this->renewalsUploadService->createUpdateQuote($quoteData, $quoteType, $this->fileName, $this->renewalImportCode, $this->uploadType);
         }
         catch(\Exception $e) {
             Log::channel('daily')->info("message: ".$e->getMessage());

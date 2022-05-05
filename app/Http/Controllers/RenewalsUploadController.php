@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\RenewalsUploadLeads;
 use App\Services\RenewalsUploadService;
 use App\Imports\RenewalsImport;
+use App\Imports\RenewalsImportUpdate;
 use App\Models\CarQuote;
 use DataTables;
 use Auth;
@@ -44,8 +45,12 @@ class RenewalsUploadController extends Controller
             // Check upload type
             if($request->renewals_upload_type == 'create') {
                 $uploadType = 'Create';
+                // Generate unique code for file record
+                $renewalImportCode = $this->renewalsUploadFileService->generateRandomString();
             } else {
                 $uploadType = 'Update';
+                $renewalImportCode = $request->renewal_import_code;
+
                 $this->validate($request, [
                     'renewal_import_code' => 'required',
                 ]);
@@ -66,13 +71,14 @@ class RenewalsUploadController extends Controller
             // Uploading file to Azure
             $filePathAzure = $request->file('file_name')->storeAs('renewals', $fileNameAzure, 'azureIM');
 
-            // Generate unique code for file record
-            $renewalImportCode = $this->renewalsUploadFileService->generateRandomString();
-
             // creating upload record in database before upload start
             $this->createRenewalUploadLeadRecord($fileNameOriginal, $filePathAzure);
 
-            $renewalsUpload = new RenewalsImport($this->renewalsUploadFileService, $request->file_name->getClientOriginalName(), $renewalImportCode); // Send the file name to the import class
+            if($request->renewals_upload_type == 'create') {
+                $renewalsUpload = new RenewalsImport($this->renewalsUploadFileService, $request->file_name->getClientOriginalName(), $renewalImportCode, $uploadType); // Send the file name to the import class
+            } else {
+                $renewalsUpload = new RenewalsImportUpdate($this->renewalsUploadFileService, $request->file_name->getClientOriginalName(), $renewalImportCode, $uploadType); // Send the file name to the import class
+            }
             $renewalsUpload->import(request()->file('file_name')); // Initiate the import
 
             $countRows = $renewalsUpload->getRowCount(); // Get the number of rows imported

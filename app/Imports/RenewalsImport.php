@@ -25,12 +25,14 @@ class RenewalsImport implements OnEachRow, WithStartRow, WithValidation, SkipsOn
     private $totalRows;
     private $fileName;
     private $renewalImportCode;
+    private $uploadType;
 
-    function __construct(RenewalsUploadService $renewalsUploadService, $fileName, $renewalImportCode)
+    function __construct(RenewalsUploadService $renewalsUploadService, $fileName, $renewalImportCode, $uploadType)
     {
         $this->renewalsUploadService = $renewalsUploadService;
         $this->fileName = $fileName;
         $this->renewalImportCode = $renewalImportCode;
+        $this->uploadType = $uploadType;
     }
 
     /**
@@ -43,7 +45,7 @@ class RenewalsImport implements OnEachRow, WithStartRow, WithValidation, SkipsOn
         $qouteType = $row[2];
         $email = preg_replace('/\s/', '', strtolower(trim(ltrim(rtrim($row[1])))));
 
-        if($email != null) {
+        if(!empty($email)) {
 
             $quoteData = 0;
 
@@ -158,7 +160,8 @@ class RenewalsImport implements OnEachRow, WithStartRow, WithValidation, SkipsOn
                     "other_email_ids" => $otherEmailIds,
                 );
             }
-            dispatch(new RenewalImportJob($quoteData, $qouteType, $this->renewalsUploadService, $this->fileName, $this->renewalImportCode));
+
+            dispatch(new RenewalImportJob($quoteData, $qouteType, $this->renewalsUploadService, $this->fileName, $this->renewalImportCode, $this->uploadType));
         }
     }
 
