@@ -666,8 +666,10 @@ class HealthQuoteService extends BaseService
                 $responseBodyAsString = $response->message;
             } else if (isset($response->error)) {
                 $responseBodyAsString = $response->error;
-            } else {
+            } else if (isset($response->msg)) {
                 $responseBodyAsString = $response->msg;
+            }else {
+                $responseBodyAsString = "Something went wrong. Please try again later";
             }
 
             return $responseBodyAsString;
