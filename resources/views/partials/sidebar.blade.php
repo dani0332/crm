@@ -177,7 +177,7 @@
                                 <li><a href="{{ url('renewals/upload') }}">Upload & Create</a></li>
                                 <li><a href="{{ url('renewals/uploaded-leads') }}">Uploaded Leads</a></li>
                                 <li><a href="{{ url('renewals/update') }}">Upload & Update</a></li>
-                                <!-- <li><a href="{{ url('renewals/batches') }}">Batches</a></li> -->
+                                <li><a href="{{ url('renewals/batches') }}">Batches</a></li>
                             </ul>
                         </li>
                     </ul>

@@ -2076,3 +2076,23 @@ $("#update_car_plans").submit(function (e) {
 $('#quotePlanModal').on('hidden.bs.modal', function () {
     location.reload();
 });
+
+$(".renewals-batches-data-table").DataTable({
+    ordering: false,
+    info: false,
+    searching: false,
+    bLengthChange: false,
+    serverSide: true,
+    stateSave: true,
+    paging: true,
+    processing: true,
+    ajax: config.routes.renewals_batches_datatable_route,
+    columns: [{
+        data: 'renewal_batch',
+        name: 'renewal_batch',
+        render: function (data, type, row) {
+            return "<a href='" + config.routes.renewals_batches_datatable_route + '/' + row.renewal_batch + "'>" + row.renewal_batch + "</a>"
+        }
+    },
+    ],
+});

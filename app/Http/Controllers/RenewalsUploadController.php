@@ -170,10 +170,27 @@ class RenewalsUploadController extends Controller
         $azureStorageUrl = Config::get('constants.AZURE_IM_STORAGE_URL');
         $azureStorageContainer = Config::get('constants.AZURE_IM_STORAGE_CONTAINER');
 
-        $renewalsUploads = RenewalsUploadLeads::where('renewal_import_type', '=', 'Create')
+        $renewalsUploads = RenewalsUploadLeads::where('renewal_import_type', '=', 'create')
         ->where('renewal_import_code', '!=', '')
         ->orderBy('created_at', 'desc')->get();
 
         return view('renewals.update',compact('azureStorageUrl','azureStorageContainer','renewalsUploads'));
+    }
+
+    public function listRenewalBatches(Request $request, CarQuote $carQuote, Datatables $datatables)
+    {
+        if($request->ajax()) {
+
+            $datalRenewalsBatches = $carQuote::select('renewal_batch')
+            ->whereNotNull(['renewal_batch','renewal_import_code'])
+            ->groupBy('renewal_batch')
+            ->orderBy('created_at','desc');
+
+            return $datatables::of($datalRenewalsBatches)
+                ->addIndexColumn()
+                ->make(true);
+        }
+
+        return view('renewals.batches');
     }
 }
