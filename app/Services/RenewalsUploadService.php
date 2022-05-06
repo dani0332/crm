@@ -749,11 +749,12 @@ class RenewalsUploadService
             $finalEmails = explode(",",$allEmails);
 
             foreach($finalEmails as $finalEmail) {
-                Log::channel('daily')->info("CDBID: ".$carQuote->code." RenewalBatch: ".$carQuote->renewal_batch." PreviousQuoteId: ".$carQuote->previous_quote_id." Email: ".$carQuote->email." finalEmail: ".$finalEmail);
 
-                //////////
-                if(isset($carQuote->renewal_expiry_date)) {
-                    $renewalExpiryDate = date('d/m/Y', strtotime($carQuote->renewal_expiry_date));
+                $previousCarQuote = CarQuote::find($carQuote->previous_quote_id);
+                Log::channel('daily')->info("CDBID: ".$carQuote->code." RenewalBatch: ".$carQuote->renewal_batch." PreviousQuoteId: ".$carQuote->previous_quote_id." Email: ".$carQuote->email." finalEmail: ".$finalEmail." ecomUrl: ".$ecomUrl." renewal_expiry_date: ".$previousCarQuote->renewal_expiry_date);
+
+                if(isset($previousCarQuote->renewal_expiry_date)) {
+                    $renewalExpiryDate = date('d/m/Y', strtotime($previousCarQuote->renewal_expiry_date));
                 } else {
                     $renewalExpiryDate = '';
                 }
@@ -816,13 +817,7 @@ class RenewalsUploadService
                 $newEmailStatus->msg_id = $getmessageId;
                 $newEmailStatus->email_status = ProcessStatusCode::PENDING;
                 $newEmailStatus->save();
-                //////////
             }
-
-            // $otherEmailAddresses = explode(",", $carQuote->other_email_addresses);
-            // foreach($otherEmailAddresses as $otherEmailAddress) {
-            //     Log::channel('daily')->info("CDBID: ".$carQuote->code." RenewalBatch: ".$carQuote->renewal_batch." PreviousQuoteId: ".$carQuote->previous_quote_id." Email: ".$carQuote->email." otherEmailAddress: ".$otherEmailAddress);
-            // }
         }
 
         $this->updateRenewalBatchRecord($batchEmailId);
