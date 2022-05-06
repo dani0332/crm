@@ -61,7 +61,8 @@ class TravelQuoteService extends BaseService
             'cli.text as currently_located_in_id_text',
             'tqr.destination_id',
             'nationality.text as destination_id_text',
-            'tqr.insurer_quote_no'
+            'tqr.insurer_quote_no',
+            'tqr.is_ecommerce',
         )
             ->leftJoin('travel_cover_for as tcf', 'tcf.id', '=', 'tqr.travel_cover_for_id')
             ->leftJoin('travel_quote_request_detail as tqrd', 'tqr.id', '=', 'tqrd.travel_quote_request_id')
@@ -466,7 +467,8 @@ class TravelQuoteService extends BaseService
             "previous_quote_id" => "readonly|title",
             "is_renewal" => "|static|Yes,No",
             "currently_located_in_id" => "select|title|required",
-            "insurer_quote_no" => "readonly|none"
+            "insurer_quote_no" => "readonly|none",
+            "is_ecommerce" => "|static|title|Yes,No"
         );
     }
 
@@ -522,6 +524,9 @@ class TravelQuoteService extends BaseService
             case 'previous_quote_id':
                 $title = "Previous Quote Id";
                 break;
+            case 'is_ecommerce':
+                $title = "Ecommerce";
+                break;
             default:
                 break;
         }
@@ -531,26 +536,26 @@ class TravelQuoteService extends BaseService
     public function fillModelSkipProperties()
     {
         return [
-            "create" => "is_renewal,previous_quote_id,id,created_at,id,code,advisor_id,updated_at,quote_status_id,next_followup_date,lost_reason,premium,source,transapp_code",
+            "create" => "is_ecommerce,is_renewal,previous_quote_id,id,created_at,id,code,advisor_id,updated_at,quote_status_id,next_followup_date,lost_reason,premium,source,transapp_code",
             "list" => "is_renewal,previous_quote_id,email,mobile_no,region_cover_for_id,travel_cover_for_id,details,nationality_id,days_cover_for",
-            "update" => 'is_renewal,previous_quote_id,created_at,id,code,advisor_id,updated_at,quote_status_id,next_followup_date,lost_reason,source,transapp_code',
+            "update" => 'is_ecommerce,is_renewal,previous_quote_id,created_at,id,code,advisor_id,updated_at,quote_status_id,next_followup_date,lost_reason,source,transapp_code',
             "show" => "is_renewal"
         ];
     }
 
     public function fillModelSearchProperties()
     {
-        return ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'advisor_id', 'created_at', 'next_followup_date'];
+        return ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'advisor_id', 'created_at', 'next_followup_date','is_ecommerce'];
     }
 
     public function fillRenewalProperties($model)
     {
         $model->renewalSearchProperties = ['created_at', 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'policy_number','premium','is_renewal'];
         $model->renewalSkipProperties = [
-            "create" => "insurer_quote_no,is_renewal,previous_quote_id,id,created_at,id,code,advisor_id,updated_at,quote_status_id,next_followup_date,lost_reason,premium,source,transapp_code",
-            "list" => "insurer_quote_no,is_renewal,dob,email,mobile_no,region_cover_for_id,travel_cover_for_id,details,nationality_id,days_cover_for,next_followup_date,lost_reason,source,transapp_code,currently_located_in_id,destination_id",
-            "update" => 'insurer_quote_no,is_renewal,previous_quote_id,created_at,id,code,advisor_id,updated_at,quote_status_id,next_followup_date,lost_reason,source,transapp_code',
-            "show" => "insurer_quote_no,is_renewal",
+            "create" => "is_ecommerce,insurer_quote_no,is_renewal,previous_quote_id,id,created_at,id,code,advisor_id,updated_at,quote_status_id,next_followup_date,lost_reason,premium,source,transapp_code",
+            "list" => "is_ecommerce,insurer_quote_no,is_renewal,dob,email,mobile_no,region_cover_for_id,travel_cover_for_id,details,nationality_id,days_cover_for,next_followup_date,lost_reason,source,transapp_code,currently_located_in_id,destination_id",
+            "update" => 'is_ecommerce,insurer_quote_no,is_renewal,previous_quote_id,created_at,id,code,advisor_id,updated_at,quote_status_id,next_followup_date,lost_reason,source,transapp_code',
+            "show" => "is_ecommerce,insurer_quote_no,is_renewal",
         ];
     }
 
