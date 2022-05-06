@@ -2,10 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\ProcessStatusCode;
+use App\Enums\quoteStatusCode;
+use App\Enums\RenewalsUploadType;
 use Illuminate\Http\Request;
 use App\Models\RenewalsUploadLeads;
 use App\Services\RenewalsUploadService;
 use App\Imports\RenewalsImport;
+use App\Imports\RenewalsImportUpdate;
+use App\Jobs\RenewalBatchEmailJob;
+use App\Models\CarQuote;
+use App\Models\RenewalsBatchEmails;
 use DataTables;
 use Auth;
 use Config;
@@ -27,7 +34,7 @@ class RenewalsUploadController extends Controller
     {
         // validate the file extension
         $this->validate($request, [
-            'file_name' => 'required|mimetypes:text/csv,text/plain,application/csv,text/comma-separated-values,text/anytext,application/octet-stream,application/txt,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet|max:2048',
+            'file_name'=> 'required|file|mimetypes:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/excel|max:2048'
         ]);
 
         if ($request->hasFile('file_name')) {
@@ -38,6 +45,25 @@ class RenewalsUploadController extends Controller
             if($existingFile) {
                 // Returning with error message if file already uploaded
                 return back()->withInput()->with('message', 'File already been uploaded. Please try again with different file.');
+            }
+
+            // Check upload type
+            if($request->renewals_upload_type == RenewalsUploadType::CREATE_LEADS) {
+                // Generate unique code for file record
+                $renewalImportCode = $this->renewalsUploadFileService->generateRandomString();
+            } else {
+                $renewalImportCode = $request->renewal_import_code;
+
+                $this->validate($request, [
+                    'renewal_import_code' => 'required',
+                ]);
+
+                // Check leads against renewal_import_code
+                $carQuoteRequest = CarQuote::where('renewal_import_code', '=', $request->renewal_import_code)->get();
+                $carQuoteRequestCount = $carQuoteRequest->count();
+                if($carQuoteRequestCount == 0) {
+                    return back()->withInput()->with('message', 'No leads found for renewal import code: '.$request->renewal_import_code);
+                }
             }
 
             // Getting file name only
@@ -51,7 +77,12 @@ class RenewalsUploadController extends Controller
             // creating upload record in database before upload start
             $this->createRenewalUploadLeadRecord($fileNameOriginal, $filePathAzure);
 
-            $renewalsUpload = new RenewalsImport($this->renewalsUploadFileService, $request->file_name->getClientOriginalName()); // Send the file name to the import class
+            if($request->renewals_upload_type == RenewalsUploadType::CREATE_LEADS) {
+                $renewalsUpload = new RenewalsImport($this->renewalsUploadFileService, $request->file_name->getClientOriginalName(), $renewalImportCode, $request->renewals_upload_type); // Send the file name to the import class
+            } else {
+                $renewalsUpload = new RenewalsImportUpdate($this->renewalsUploadFileService, $request->file_name->getClientOriginalName(), $renewalImportCode, $request->renewals_upload_type); // Send the file name to the import class
+            }
+
             $renewalsUpload->import(request()->file('file_name')); // Initiate the import
 
             $countRows = $renewalsUpload->getRowCount(); // Get the number of rows imported
@@ -62,15 +93,27 @@ class RenewalsUploadController extends Controller
             $renewalsUploadLead = RenewalsUploadLeads::where('file_name', $fileNameOriginal)->first();
             $renewalsUploadLead->total_records = $totalRows;
             $renewalsUploadLead->cannot_upload = $countErrors;
+            $renewalsUploadLead->renewal_import_code = $renewalImportCode;
+            $renewalsUploadLead->renewal_import_type = $request->renewals_upload_type;
             $renewalsUploadLead->save();
 
             // Redirect back to the upload page if there are errors
-            if ($renewalsUpload->failures()->isNotEmpty() || $countErrors > 50) {
-                return redirect("renewals/upload")->withFailures($renewalsUpload->failures());
+            if ($renewalsUpload->failures()->isNotEmpty() || $countErrors > 30) {
+                if($request->renewals_upload_type == RenewalsUploadType::CREATE_LEADS) {
+                    return redirect("renewals/upload")->withFailures($renewalsUpload->failures());
+                } 
+                if($request->renewals_upload_type == RenewalsUploadType::UPDATE_LEADS) {
+                    return redirect("renewals/update")->withFailures($renewalsUpload->failures());
+                }
             }
 
             // Redirect back to the upload page if there are no errors
-            return redirect('renewals/upload')->with('success', 'Uploaded renewals records has been stored');
+            if($request->renewals_upload_type == RenewalsUploadType::CREATE_LEADS) {
+                return redirect('renewals/upload')->with('success', 'Uploaded renewals records has been stored');
+            } 
+            if($request->renewals_upload_type == RenewalsUploadType::UPDATE_LEADS) {
+                return redirect('renewals/update')->with('success', 'Uploaded renewals records has been stored');
+            }
         }
     }
 
@@ -82,7 +125,7 @@ class RenewalsUploadController extends Controller
         $renewalsUploadLead = new RenewalsUploadLeads();
         $renewalsUploadLead->file_name = $fileName;
         $renewalsUploadLead->file_path = $azureStorageUrl.$azureStorageContainer.'/'.$filePathAzure;
-        $renewalsUploadLead->status = 'Pending';
+        $renewalsUploadLead->status = ProcessStatusCode::PENDING;
         $renewalsUploadLead->good = 0;
         $renewalsUploadLead->created_by_id = Auth::user()->id;
         $renewalsUploadLead->save();
@@ -90,7 +133,10 @@ class RenewalsUploadController extends Controller
 
     public function uploadRenewals()
     {
-        return view('renewals.upload');
+        $azureStorageUrl = Config::get('constants.AZURE_IM_STORAGE_URL');
+        $azureStorageContainer = Config::get('constants.AZURE_IM_STORAGE_CONTAINER');
+
+        return view('renewals.upload',compact('azureStorageUrl','azureStorageContainer'));
     }
 
     /**
@@ -121,5 +167,75 @@ class RenewalsUploadController extends Controller
         }
 
         return view('renewals.view');
+    }
+
+    public function updateRenewals()
+    {
+        $azureStorageUrl = Config::get('constants.AZURE_IM_STORAGE_URL');
+        $azureStorageContainer = Config::get('constants.AZURE_IM_STORAGE_CONTAINER');
+
+        $renewalsUploads = RenewalsUploadLeads::where('renewal_import_type', '=', RenewalsUploadType::CREATE_LEADS)
+        ->where('renewal_import_code', '!=', '')
+        ->orderBy('created_at', 'desc')->get();
+
+        return view('renewals.update',compact('azureStorageUrl','azureStorageContainer','renewalsUploads'));
+    }
+
+    public function listRenewalBatches(Request $request, CarQuote $carQuote, Datatables $datatables)
+    {
+        if($request->ajax()) {
+
+            $datalRenewalsBatches = $carQuote::select('renewal_batch')
+            ->whereNotNull(['renewal_batch','renewal_import_code'])
+            ->groupBy('renewal_batch')
+            ->orderBy('created_at','desc');
+
+            return $datatables::of($datalRenewalsBatches)
+                ->addIndexColumn()
+                ->make(true);
+        }
+
+        return view('renewals.batches');
+    }
+
+    public function batchDetail($batch)
+    {
+        $batchEmails = RenewalsBatchEmails::select('batch','total_leads','total_sent','total_bounced','status','created_at','created_by_id')
+        ->where('batch', $batch)
+        ->orderBy('created_at','desc')
+        ->get();
+
+        return view('renewals.batch_detail', compact('batch','batchEmails'));
+    }
+
+    public function runBatchProcess($batch)
+    {
+        $batchLeads = CarQuote::select('car_quote_request.id as id')
+        ->leftjoin('quote_status as qs', 'qs.id', 'car_quote_request.quote_status_id')
+        ->whereNotNull('car_quote_request.previous_quote_id')
+        ->where(['car_quote_request.renewal_batch' => $batch, 'qs.code' => quoteStatusCode::NEW_LEAD])
+        //->where(['car_quote_request.renewal_batch' => $batch, 'qs.code' => quoteStatusCode::NEW_LEAD, 'car_quote_request.advisor_id' => Auth::user()->id])
+        ->get();
+
+        $batchLeadsCount = $batchLeads->count();
+
+        if($batchLeadsCount == 0) {
+            return redirect('renewals/batches/'.$batch)->with('message', 'No leads found for this batch');
+        }
+
+        $renewalsBatchStatus = new RenewalsBatchEmails();
+        $renewalsBatchStatus->batch = $batch;
+        $renewalsBatchStatus->status = ProcessStatusCode::PENDING;
+        $renewalsBatchStatus->total_leads = $batchLeadsCount;
+        $renewalsBatchStatus->total_sent = 0;
+        $renewalsBatchStatus->total_bounced = 0;
+        $renewalsBatchStatus->created_by_id = Auth::user()->id;
+        $renewalsBatchStatus->save();
+
+        foreach($batchLeads as $batchLead) {
+            dispatch(new RenewalBatchEmailJob($batchLead->id, $this->renewalsUploadFileService, $renewalsBatchStatus->id));
+        }
+
+        return redirect('renewals/batches/'.$batch)->with('success', 'Batch has been created and emails are being sent');
     }
 }
