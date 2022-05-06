@@ -1787,6 +1787,8 @@ $(document).ready(function () {
         ajax: config.routes.renewals_leads_datatable_route,
         columns: [
             { data: "id", name: "id" },
+            { data: "renewal_import_type", name: "renewal_import_type" },
+            { data: "renewal_import_code", name: "renewal_import_code" },
             { data: "file_name", name: "file_name" },
             { data: "total_records", name: "total_records" },
             { data: "good", name: "good" },

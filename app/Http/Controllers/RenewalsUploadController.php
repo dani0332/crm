@@ -150,6 +150,8 @@ class RenewalsUploadController extends Controller
 
             $dataRenewalUpload = $renewalsUploadLeads::select(
                 'renewals_upload_leads.id as id',
+                'renewals_upload_leads.renewal_import_type as renewal_import_type',
+                'renewals_upload_leads.renewal_import_code as renewal_import_code',
                 'renewals_upload_leads.file_name as file_name',
                 'renewals_upload_leads.total_records as total_records',
                 'renewals_upload_leads.good as good',
@@ -200,7 +202,7 @@ class RenewalsUploadController extends Controller
 
     public function batchDetail($batch)
     {
-        $batchEmails = RenewalsBatchEmails::select('batch','total_leads','total_sent','total_bounced','status','created_at','created_by_id')
+        $batchEmails = RenewalsBatchEmails::select('id','batch','total_leads','total_sent','total_bounced','status','created_at','created_by_id')
         ->where('batch', $batch)
         ->orderBy('created_at','desc')
         ->get();
