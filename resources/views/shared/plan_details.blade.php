@@ -285,6 +285,17 @@
                                                 <tr><td style="width: 300px;">{{ ucwords($listQuotePlanBenefitsInclusion->text) }}</td>
                                                     <td>{{ ucwords($listQuotePlanBenefitsInclusion->value) }}</td></tr>
                                             @endforeach
+                                            @if(isset($listQuotePlanBenefitstravelInconvenienceCover))
+                                                @foreach ($listQuotePlanBenefitstravelInconvenienceCover as $key => $listQuotePlanBenefitstravelInconvenience)
+                                                    <tr><td style="width: 300px;">{{ ucwords($listQuotePlanBenefitstravelInconvenience->text) }}</td>
+                                                        <td>{{ ucwords($listQuotePlanBenefitstravelInconvenience->value) }}</td></tr>
+                                                @endforeach
+
+                                                @foreach ($listQuotePlanBenefitsemergencyMedicalCover as $key => $listQuotePlanBenefitsemergencyMedical)
+                                                    <tr><td style="width: 300px;">{{ ucwords($listQuotePlanBenefitsemergencyMedical->text) }}</td>
+                                                        <td>{{ ucwords($listQuotePlanBenefitsemergencyMedical->value) }}</td></tr>
+                                                @endforeach
+                                            @endif
                                         </table>
                                     </td>
                                 </tr>
