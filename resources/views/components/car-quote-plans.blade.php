@@ -60,6 +60,11 @@
                                                             <span class="badge badge-danger">Disabled</span>
                                                         @endif
                                                     @endisset
+                                                    @isset($quotePlan->isRenewal)
+                                                        @if($quotePlan->isRenewal)
+                                                            <span class="badge badge-success">Renewal</span>
+                                                        @endif
+                                                    @endisset
                                                 </td>
                                                 <td>{{ ucwords($quotePlan->name) }}</td>
                                                 <td>{{ $quotePlan->repairType }}</td>
