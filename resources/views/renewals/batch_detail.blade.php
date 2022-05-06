@@ -26,26 +26,26 @@
                     <table id="datatable" class="table table-striped jambo_table" style="width:100%">
                             <thead>
                                 <tr>
+                                    <th>Id</th>
                                     <th>Batch</th>
                                     <th>Total Leads</th>
-                                    <th>Total Sent</th>
-                                    <th>Total Bounced</th>
                                     <th>Status</th>
-                                    <th>Sent By</th>
-                                    <th>Sent At</th>
+                                    <th>User</th>
+                                    <th>Created At</th>
+                                    <th>Updated At</th>
                                 </tr>
                             </thead>
 
                             <tbody>
                                 @foreach ($batchEmails as $key => $batchEmail)
                                     <tr>
+                                        <td>{{ $batchEmail->id }}</td>
                                         <td>{{ $batchEmail->batch }}</td>
                                         <td>{{ $batchEmail->total_leads }}</td>
-                                        <td>{{ $batchEmail->total_sent }}</td>
-                                        <td>{{ $batchEmail->total_bounced }}</td>
                                         <td>{{ $batchEmail->status }}</td>
                                         <td>{{ $batchEmail->createdby ? $batchEmail->createdby->email : '' }}</td>
                                         <td>{{ $batchEmail->created_at }}</td>
+                                        <td>{{ $batchEmail->updated_at }}</td>
                                     </tr>
                                 @endforeach
                             </tbody>
