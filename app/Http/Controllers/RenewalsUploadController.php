@@ -221,7 +221,6 @@ class RenewalsUploadController extends Controller
 
         if($batchLeadsCount == 0) {
             return redirect('renewals/batches/'.$batch)->with('message', 'No leads found for this batch');
-            //return redirect('renewals/batches/'.$batch)->with('message', 'No leads assigned and pending for this batch');
         }
 
         $renewalsBatchStatus = new RenewalsBatchEmails();

@@ -154,7 +154,8 @@ class RenewalsUploadService
             "renewal_expiry_date" => $quoteData->endDate,
             "quote_status_id" => $transApprovedId,
             "other_email_addresses" => $quoteData->other_email_ids,
-            "renewal_import_code" => $renewalImportCode
+            "renewal_import_code" => $renewalImportCode,
+            "premium" => $quoteData->gross_premium
         ]);
         $newBikeQuote->save();
 
@@ -183,7 +184,8 @@ class RenewalsUploadService
             "renewal_expiry_date" => $quoteData->endDate,
             "quote_status_id" => $transApprovedId,
             "other_email_addresses" => $quoteData->other_email_ids,
-            "renewal_import_code" => $renewalImportCode
+            "renewal_import_code" => $renewalImportCode,
+            "premium" => $quoteData->gross_premium
         ]);
         $newBusinessQuote->save();
 
@@ -234,7 +236,8 @@ class RenewalsUploadService
             "quote_status_id" => $transApprovedId,
             "renewal_expiry_date" => $quoteData->endDate,
             "other_email_addresses" => $quoteData->other_email_ids,
-            "renewal_import_code" => $renewalImportCode
+            "renewal_import_code" => $renewalImportCode,
+            "premium" => $quoteData->gross_premium
         ]);
         $newCarQuote->save();
 
@@ -263,7 +266,8 @@ class RenewalsUploadService
             "renewal_expiry_date" => $quoteData->endDate,
             "quote_status_id" => $transApprovedId,
             "other_email_addresses" => $quoteData->other_email_ids,
-            "renewal_import_code" => $renewalImportCode
+            "renewal_import_code" => $renewalImportCode,
+            "premium" => $quoteData->gross_premium
         ]);
         $newHealthQuote->save();
 
@@ -291,7 +295,8 @@ class RenewalsUploadService
             "renewal_expiry_date" => $quoteData->endDate,
             "quote_status_id" => $transApprovedId,
             "other_email_addresses" => $quoteData->other_email_ids,
-            "renewal_import_code" => $renewalImportCode
+            "renewal_import_code" => $renewalImportCode,
+            "premium" => $quoteData->gross_premium
         ]);
         $newHomeQuote->save();
 
@@ -319,7 +324,8 @@ class RenewalsUploadService
             "renewal_expiry_date" => $quoteData->endDate,
             "quote_status_id" => $transApprovedId,
             "other_email_addresses" => $quoteData->other_email_ids,
-            "renewal_import_code" => $renewalImportCode
+            "renewal_import_code" => $renewalImportCode,
+            "premium" => $quoteData->gross_premium
         ]);
         $newLifeQuote->save();
 
@@ -348,7 +354,8 @@ class RenewalsUploadService
             "renewal_expiry_date" => $quoteData->endDate,
             "quote_status_id" => $transApprovedId,
             "other_email_addresses" => $quoteData->other_email_ids,
-            "renewal_import_code" => $renewalImportCode
+            "renewal_import_code" => $renewalImportCode,
+            "premium" => $quoteData->gross_premium
         ]);
         $newTravelQuote->save();
 
@@ -377,7 +384,8 @@ class RenewalsUploadService
             "renewal_expiry_date" => $quoteData->endDate,
             "quote_status_id" => $transApprovedId,
             "other_email_addresses" => $quoteData->other_email_ids,
-            "renewal_import_code" => $renewalImportCode
+            "renewal_import_code" => $renewalImportCode,
+            "premium" => $quoteData->gross_premium
         ]);
         $newYachtQuote->save();
 
@@ -725,6 +733,7 @@ class RenewalsUploadService
     public function renewalBatchEmailProcess($batchLeadId, $batchEmailId)
     {
         $carQuote = CarQuote::find($batchLeadId);
+        Log::channel('daily')->info("code: ".$carQuote->code." Email: ".$carQuote->email." other_email_addresses: ".$carQuote->other_email_addresses);
 
         if(isset($carQuote->renewal_expiry_date)) {
             $renewalExpiryDate = date('d/m/Y', strtotime($carQuote->renewal_expiry_date));
@@ -791,6 +800,7 @@ class RenewalsUploadService
         $newEmailStatus->quote_id = $carQuote->id;
         $newEmailStatus->email_address = $carQuote->email;
         $newEmailStatus->msg_id = $getmessageId;
+        $newEmailStatus->email_status = ProcessStatusCode::PENDING;
         $newEmailStatus->save();
 
         $this->updateRenewalBatchRecord($batchEmailId);
