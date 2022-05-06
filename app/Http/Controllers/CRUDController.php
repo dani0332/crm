@@ -449,6 +449,7 @@ class CRUDController extends Controller
                     }
                 }
             }
+           
             $modelName = quoteTypeCode::Travel;
             return view('shared.plan_details', compact([
                 'listQuotePlanName', 'providerCode', 'providerName', 'travelType',
