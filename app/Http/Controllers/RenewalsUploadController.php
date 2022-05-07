@@ -227,7 +227,7 @@ class RenewalsUploadController extends Controller
 
         $renewalsBatchStatus = new RenewalsBatchEmails();
         $renewalsBatchStatus->batch = $batch;
-        $renewalsBatchStatus->status = ProcessStatusCode::PENDING;
+        $renewalsBatchStatus->status = ProcessStatusCode::PROCEED;
         $renewalsBatchStatus->total_leads = $batchLeadsCount;
         $renewalsBatchStatus->total_sent = 0;
         $renewalsBatchStatus->total_bounced = 0;
