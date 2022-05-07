@@ -37,17 +37,17 @@
                                 <table id="datatable" class="table table-striped jambo_table" style="width:100%">
                                     <thead>
                                         <tr>
-                                            <th>Provider Name</th>
-                                            <th>Plan Name</th>
-                                            <th>Repair Type</th>
-                                            <th>TPL Limit</th>
-                                            <th>PAB cover</th>
-                                            <th>Roadside assistance</th>
-                                            <th>Oman cover TPL</th>
-                                            <th>Actual Premium</th>
-                                            <th>Discounted Premium</th>
-                                            <th>Premium with VAT</th>
-                                            <th>Action</th>
+                                            <th style="width: 100px !important">Provider Name</th>
+                                            <th style="width: 100px !important">Plan Name</th>
+                                            <th style="width: 80px !important">Repair Type</th>
+                                            <th style="width: 100px !important">TPL Limit</th>
+                                            <th style="width: 100px !important">PAB cover</th>
+                                            <th style="width: 100px !important">Roadside assistance</th>
+                                            <th style="width: 100px !important">Oman cover TPL</th>
+                                            <th style="width: 100px !important">Actual Premium</th>
+                                            <th style="width: 100px !important">Discounted Premium</th>
+                                            <th style="width: 100px !important">Premium with VAT</th>
+                                            <th style="width: 50px !important">Action</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -66,7 +66,8 @@
                                                         @endif
                                                     @endisset
                                                 </td>
-                                                <td>{{ ucwords($quotePlan->name) }}</td>
+                                                <td><a href="#" planDetailUrl="{{ $uuidModal }}/plan_details/{{ $quotePlan->id }}"
+                                                    data-toggle="modal" data-target="#quotePlanModal" class="quotePlanModalPopup">{{ ucwords($quotePlan->name) }}</a></td>
                                                 <td>{{ $quotePlan->repairType }}</td>
                                                 <td>
                                                     @foreach ($quotePlan->benefits->feature as $quotePlanFeatures)
