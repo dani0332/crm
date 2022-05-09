@@ -186,11 +186,11 @@
                                 <tr>
                                     <td>
                                         <table cellpadding="3" cellspacing="3">
-                                            @if(isset($listQuotePlanBenefitsInclusions) && !empty($listQuotePlanBenefitsInclusions))
-                                                <tr><td><h6 style="font-weight: bold;">Benefits Inclusions</h6></td></tr>
-                                                @foreach ($listQuotePlanBenefitsInclusions as $key => $listQuotePlanBenefitsInclusion)
-                                                    <tr><td style="width: 300px;">{{ ucwords($listQuotePlanBenefitsInclusion->text) }}</td>
-                                                        <td>{{ ucwords($listQuotePlanBenefitsInclusion->value) }}</td></tr>
+                                            @if(isset($listQuotePlanBenefitsFeatures) && !empty($listQuotePlanBenefitsFeatures))
+                                                <tr><td><h6 style="font-weight: bold;">Features & Benefits</h6></td></tr>
+                                                @foreach ($listQuotePlanBenefitsFeatures as $key => $listQuotePlanBenefitsFeature)
+                                                    <tr><td style="width: 300px;">{{ ucwords($listQuotePlanBenefitsFeature->text) }}</td>
+                                                        <td>{{ ucwords($listQuotePlanBenefitsFeature->value) }}</td></tr>
                                                 @endforeach
                                             @endif
                                             @if(isset($listQuotePlanBenefitstravelInconvenienceCover) && !empty($listQuotePlanBenefitstravelInconvenienceCover))
@@ -205,6 +205,13 @@
                                                 @foreach ($listQuotePlanBenefitsemergencyMedicalCover as $key => $listQuotePlanBenefitsemergencyMedical)
                                                     <tr><td style="width: 300px;">{{ ucwords($listQuotePlanBenefitsemergencyMedical->text) }}</td>
                                                         <td>{{ ucwords($listQuotePlanBenefitsemergencyMedical->value) }}</td></tr>
+                                                @endforeach
+                                            @endif
+                                            @if(isset($listQuotePlanBenefitsInclusions) && !empty($listQuotePlanBenefitsInclusions))
+                                                <tr><td><h6 style="font-weight: bold;">Included in the plan</h6></td></tr>
+                                                @foreach ($listQuotePlanBenefitsInclusions as $key => $listQuotePlanBenefitsInclusion)
+                                                    <tr><td style="width: 300px;">{{ ucwords($listQuotePlanBenefitsInclusion->text) }}</td>
+                                                        <td>{{ ucwords($listQuotePlanBenefitsInclusion->value) }}</td></tr>
                                                 @endforeach
                                             @endif
                                         </table>
