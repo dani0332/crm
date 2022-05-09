@@ -131,6 +131,7 @@ Route::group(['middleware' =>  ['auth']], function () {
         Route::get('batches/{id}', [RenewalsUploadController::class, 'batchDetail'])->name('batchDetail');
         Route::get('batches/{id}/batch-process', [RenewalsUploadController::class, 'runBatchProcess'])->name('runBatchProcess');
         Route::post('upload-process', [RenewalsUploadController::class, 'processRenewalsCSV']);
+        Route::get('update', [RenewalsUploadController::class, 'updateRenewals']);
     });
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
