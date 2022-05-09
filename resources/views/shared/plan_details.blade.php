@@ -186,7 +186,7 @@
                                 <tr>
                                     <td>
                                         <table cellpadding="3" cellspacing="3">
-                                            @if(isset($listQuotePlanBenefitsInclusions) && !empty($listQuotePlanBenefitsInclusion))
+                                            @if(isset($listQuotePlanBenefitsInclusions) && !empty($listQuotePlanBenefitsInclusions))
                                                 <tr><td><h6 style="font-weight: bold;">Benefits Inclusions</h6></td></tr>
                                                 @foreach ($listQuotePlanBenefitsInclusions as $key => $listQuotePlanBenefitsInclusion)
                                                     <tr><td style="width: 300px;">{{ ucwords($listQuotePlanBenefitsInclusion->text) }}</td>
