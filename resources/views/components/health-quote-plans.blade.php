@@ -32,7 +32,7 @@
                                     </tbody>
                                 </table>
                             @else
-                            <table id="datatable" class="table table-striped jambo_table" style="width:100%">
+                            <table id="" class="table table-striped jambo_table" style="width:100%">
                                 <thead>
                                     <tr>
                                         <th>Provider Name</th>
