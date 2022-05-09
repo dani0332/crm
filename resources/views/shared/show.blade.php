@@ -1,6 +1,7 @@
 @extends('layouts.app')
 @section('title', $model->modelType . ' Detail')
 @section('content')
+<script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
     <style>
         #quote-plans table.dataTable thead .sorting_asc:after {
             content: none !important;
