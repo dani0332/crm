@@ -201,7 +201,7 @@
             } else return false;
 
         }
-        function formatedDate(date) {
+        function OldformatedDate(date) {
             var newDate = new Date(date);
             var offset = newDate.getTimezoneOffset();
             newDate = new Date(newDate.getTime() - (offset*60*1000));
@@ -211,6 +211,25 @@
 
         function addActivity() {
             $('#activityModal').modal('show');
+        }
+        function padTo2Digits(num) {
+        return num.toString().padStart(2, '0');
+        }
+
+        function NewformatDate(date) {
+        return (
+            [
+            date.getFullYear(),
+            padTo2Digits(date.getMonth() + 1),
+            padTo2Digits(date.getDate()),
+            ].join('-') +
+            ' ' +
+            [
+            padTo2Digits(date.getHours()),
+            padTo2Digits(date.getMinutes()),
+            padTo2Digits(date.getSeconds()),
+            ].join(':')
+        );
         }
         $(document).ready(function() {
             $("#hiddenField").daterangepicker({
@@ -337,7 +356,7 @@
                     var columns = $(rows[index]).children();
                     for (let i = 0; i < columns.length; i++) {
                         if(i == nextFollowupDateColumn && $(columns[i]).text() != ""){
-                            if(formatedDate(new Date()) > formatedDate(new Date($(columns[i]).text()))){
+                            if( NewformatDate(new Date()) > $(columns[i]).text() ) {
                                 $(rows[index]).children().eq(i).css({'color': 'white', 'background-color': 'red', 'font-weight': 'bold', 'font-size': '12px'});
                             }
                         }
