@@ -253,6 +253,9 @@ class RenewalsImport implements OnEachRow, WithStartRow, WithValidation, SkipsOn
         else if(strpos($insurerName, 'insurance house') !== false){
             $insurerinCdb = 'Insurance House';
         }
+        else if(strpos($insurerName, 'other') !== false){
+            $insurerinCdb = 'Other';
+        }
         else {
             $insurerinCdb = $insurerName;
         }
@@ -319,11 +322,11 @@ class RenewalsImport implements OnEachRow, WithStartRow, WithValidation, SkipsOn
                 }
             },
             '*.5' => function($attribute, $value, $onFailure) { // Product Type
-                if(strlen($value) > 50) {
-                    $onFailure('Product Type should not exceed length of 50 characters');
+                if(strlen($value) > 100) {
+                    $onFailure('Product Type should not exceed length of 100 characters');
                 }
                 if(strlen($value) > 0 && $value != 'Comprehensive' && $value != 'Third Party Only') {
-                    $onFailure('Product Type should be either Comprehensive or Third Party  Only');
+                    //$onFailure('Product Type should be either Comprehensive or Third Party  Only');
                 }
             },
             '*.6' => function($attribute, $value, $onFailure) { // Sales Channel
