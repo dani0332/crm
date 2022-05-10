@@ -78,7 +78,7 @@ class ActivitiesService extends BaseService
             $act->assignee_name = User::where('id', $act->assignee_id)->first()->name;
             
         }
-        return $rawActivities->orderBy('created_at', 'desc');
+        return $rawActivities;
     }
 
     private function parseDate($date, $isStartOfDay)
