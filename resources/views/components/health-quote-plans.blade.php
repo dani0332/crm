@@ -13,7 +13,6 @@
                                         <tr>
                                             <th>Provider Name</th>
                                             <th>Plan Name</th>
-                                            <th>Travel Type</th>
                                             <th>Actual Premium</th>
                                             <th>Premium with VAT</th>
                                             <th>Action</th>
@@ -24,13 +23,8 @@
                                             <tr>
                                                 <td>{{ ucwords($quotePlan->providerName) }}</td>
                                                 <td>{{ ucwords($quotePlan->name) }}</td>
-                                                <td>{{ $quotePlan->travelType }}</td>
                                                 <td>{{ $quotePlan->actualPremium }}</td>
-                                                <td>
-                                                    @if(isset($quotePlan->discountPremium) && isset($quotePlan->vat))
-                                                        {{ $quotePlan->discountPremium + $quotePlan->vat }}
-                                                    @endif
-                                                </td>
+                                                <td> {{ $quotePlan->discountPremium + $quotePlan->vat }}</td>
                                                 <td><a href="#" planDetailUrl="{{ $uuidModal }}/plan_details/{{ $quotePlan->id }}"
                                                     data-toggle="modal" data-target="#quotePlanModal" class="quotePlanModalPopup">View</a></td>
                                             </tr>
@@ -43,7 +37,7 @@
                                     <tr>
                                         <th>Provider Name</th>
                                         <th>Plan Name</th>
-                                        <th>Travel Type</th>
+                                        <!-- <th>Travel Type</th> -->
                                         <th>Actual Premium</th>
                                         <th>Premium with VAT</th>
                                         <th>Action</th>

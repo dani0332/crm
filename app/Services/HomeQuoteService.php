@@ -5,18 +5,17 @@ namespace App\Services;
 use App\Enums\QuoteTypeId;
 use App\Models\HomeQuote;
 use App\Models\HomeQuoteRequestDetail;
-use App\Models\LeadStatus;
 use App\Models\QuoteStatus;
 use Illuminate\Http\Request;
 use DB;
 use Illuminate\Support\Facades\Auth;
 use \Carbon\Carbon;
 use Config;
-
+use App\Traits\GetUserTree;
 class HomeQuoteService extends BaseService
 {
     protected $query;
-
+    use GetUserTree;
     public function __construct()
     {
 
@@ -36,6 +35,7 @@ class HomeQuoteService extends BaseService
             'hqr.has_building',
             'hqr.building_aed',
             'hqr.source',
+            'hqr.policy_number',
             'hqr.ilivein_accommodation_type_id',
             'hqr.quote_status_id',
             'qs.text as quote_status_id_text',
@@ -51,7 +51,8 @@ class HomeQuoteService extends BaseService
             'hqrd.transapp_code',
             'hqrd.notes',
             'ls.text as lost_reason',
-            'hqr.insurer_quote_no'
+            'hqr.previous_quote_id',
+            'hqr.renewal_expiry_date'
         )
             ->leftJoin('home_quote_request_detail as hqrd', 'hqrd.home_quote_request_id', '=', 'hqr.id')
             ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'hqrd.lost_reason_id')
@@ -118,7 +119,14 @@ class HomeQuoteService extends BaseService
 
     public function getGridData($model, $request)
     {
-        $searchProperties = $model->searchProperties;
+        $searchProperties = [];
+        $isRenewalUser = Auth::user()->isRenewalUser();
+        $isRenewalManager = Auth::user()->isRenewalManager();
+        if ($isRenewalUser || $isRenewalManager) {
+            $searchProperties = $model->renewalSearchProperties;
+        } else {
+            $searchProperties = $model->searchProperties;
+        }
         if ($request->ajax()) {
             if (isset($request->assigned_to_date_start) && $request->assigned_to_date_start != '') {
                 $dateFrom = Carbon::createFromFormat('Y-m-d', $request['assigned_to_date_start'])->startOfDay()->toDateTimeString();
@@ -135,9 +143,41 @@ class HomeQuoteService extends BaseService
                 $dateTo = Carbon::createFromFormat('Y-m-d', $request['next_followup_date_end'])->endOfDay()->toDateTimeString();
                 $this->query->whereBetween('hqrd.next_followup_date', [$dateFrom, $dateTo]);
             }
+            if (isset($request->code) && $request->code != '') {
+                $this->query->where('hqr.code', $request->code);
+            }
+            if (isset($request->first_name) && $request->first_name != '') {
+                $this->query->where('hqr.first_name', $request->first_name);
+            }
+            if (isset($request->last_name) && $request->last_name != '') {
+                $this->query->where('hqr.last_name', $request->last_name);
+            }
+            if (isset($request->email) && $request->email != '') {
+                $this->query->where('hqr.email', $request->email);
+            }
+            if (isset($request->mobile_no) && $request->mobile_no != '') {
+                $this->query->where('hqr.mobile_no', $request->mobile_no);
+            }
+            if (isset($request->policy_number) && $request->policy_number != '') {
+                $this->query->where('hqr.policy_number', $request->policy_number);
+            }
             if(Auth::user()->isSpecificTeamAdvisor('Home')){
                 // if user has advisor Role then fetch leads assigned to the user only
                 $this->query->where('hqr.advisor_id', Auth::user()->id);	// fetch leads assigned to the user
+            }
+            if (Auth::user()->isRenewalAdvisor()) {
+                $this->query->whereNotNull('hqr.previous_quote_id');
+                $this->query->where('hqr.advisor_id', Auth::user()->id);
+            }
+            if (Auth::user()->isRenewalManager()) {
+                $ids = $this->walkTree(Auth::user()->id);
+                $this->query->whereIn('hqr.advisor_id', $ids);
+            }
+            if (isset($request->is_renewal) && $request->is_renewal != '') {
+                if($request->is_renewal == "Yes")
+                    $this->query->whereNotNull('hqr.previous_quote_id');
+                if($request->is_renewal == "No")
+                    $this->query->whereNull('hqr.previous_quote_id');
             }
             foreach ($searchProperties as $item) {
                 if (!empty($request[$item]) && $item != "created_at") {
@@ -152,6 +192,10 @@ class HomeQuoteService extends BaseService
                     else if ($item == 'quote_status_id' && is_array($request[$item]) && !empty($request[$item])) {
                         $this->query->whereIn('quote_status_id', $request[$item]);
                     } else {
+                        $skipped = array('is_renewal');
+                        if(in_array($item, $skipped)){
+                            continue;
+                        }
                         $this->query->where($this->getQuerySuffix($item) . '.' . $item, $request[$item]);
                     }
                 }
@@ -247,13 +291,17 @@ class HomeQuoteService extends BaseService
                 DB::raw("CONCAT_WS(' ',hqr.first_name,hqr.last_name) AS clientName"),
                 'qs.text as leadStatus',
                 'hqr.created_at as createdAt',
+                'hqr.updated_at as updatedAt',
                 'hqr.quote_status_id',
                 'hqrd.advisor_assigned_date as assignedDate',
                 'u.name as assignedBy',
-                'hqr.updated_at',
+                'hqr.policy_number as policy_number',
+                'hqr.email',
+                'hqr.mobile_no',
                 'hqr.source as leadSource',
                 'hqr.premium',
                 'hqrd.next_followup_date as nextFollowupDate',
+                'hqr.previous_quote_id'
             )
             ->leftJoin('home_quote_request_detail as hqrd', 'hqrd.home_quote_request_id', '=', 'hqr.id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'hqr.quote_status_id')
@@ -292,6 +340,9 @@ class HomeQuoteService extends BaseService
         }
         if (isset($request->leadStatus) && $request->leadStatus != 0) {
             $query->where('hqr.quote_status_id', $request->leadStatus);
+        }
+        if (Auth::user()->isRenewalAdvisor()) {
+            $query->whereNotNull('hqr.previous_quote_id');
         }
         return $query;
     }
@@ -380,7 +431,8 @@ class HomeQuoteService extends BaseService
             "transapp_code" => "readonly|none",
             "source" => "input|text|required",
             "lost_reason" => "input|text",
-            "premium" => "input|number|required",
+            "premium" => "input|number",
+            "policy_number" => "input|text",
             "contents_aed" => "input|number|required",
             "personal_belongings_aed" => "input|number|required",
             "building_aed" => "input|number|required",
@@ -390,7 +442,9 @@ class HomeQuoteService extends BaseService
             "has_personal_belongings" => "input|checkbox|required",
             "has_building" => "input|checkbox|required",
             "address" => 'textarea|required',
-            "insurer_quote_no" => "readonly|none"
+            "previous_quote_id" => "readonly|title",
+            "is_renewal" => "|static|Yes,No",
+            "renewal_expiry_date" => "input|date|title|range"
         );
     }
 
@@ -428,6 +482,12 @@ class HomeQuoteService extends BaseService
             case 'next_followup_date':
                 $title = "Next Followup Date";
                 break;
+            case 'previous_quote_id':
+                $title = "Previous Quote ID";
+                break;
+            case 'renewal_expiry_date':
+                $title = "Renewal Expiry Date";
+                break;
             default:
                 break;
         }
@@ -437,16 +497,27 @@ class HomeQuoteService extends BaseService
     public function fillModelSkipProperties()
     {
         return [
-            "create" => "id,code,quote_status_id,advisor_id,created_at,updated_at,next_followup_date,lost_reason,premium,source,transapp_code,insurer_quote_no",
-            "list" => "email,address,iam_possesion_type_id,ilivein_accommodation_type_id,mobile_no,personal_belongings_aed,building_aed,contents_aed,has_contents,has_personal_belongings,has_building,address,insurer_quote_no",
-            "update" => "id,code,quote_status_id,advisor_id,created_at,updated_at,next_followup_date,lost_reason,source,transapp_code,insurer_quote_no",
-            "show" => "id,next_followup_date,lost_reason",
+            "create" => "is_renewal,previous_quote_id,id,code,quote_status_id,advisor_id,created_at,updated_at,next_followup_date,lost_reason,premium,source,transapp_code,renewal_expiry_date",
+            "list" => "is_renewal,previous_quote_id,email,address,iam_possesion_type_id,ilivein_accommodation_type_id,mobile_no,personal_belongings_aed,building_aed,contents_aed,has_contents,has_personal_belongings,has_building,address,renewal_expiry_date",
+            "update" => "is_renewal,previous_quote_id,id,code,quote_status_id,advisor_id,created_at,updated_at,next_followup_date,lost_reason,source,transapp_code,renewal_expiry_date",
+            "show" => "is_renewal,id,next_followup_date,lost_reason"
         ];
     }
 
     public function fillModelSearchProperties()
     {
         return ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'advisor_id', 'created_at', 'next_followup_date'];
+    }
+
+    public function fillRenewalProperties($model)
+    {
+        $model->renewalSearchProperties = ['created_at', 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'policy_number','is_renewal'];
+        $model->renewalSkipProperties = [
+            "create" => "is_renewal,previous_quote_id,id,code,quote_status_id,advisor_id,created_at,updated_at,next_followup_date,lost_reason,premium,source,transapp_code,renewal_expiry_date",
+            "list" => "is_renewal,email,address,iam_possesion_type_id,ilivein_accommodation_type_id,mobile_no,personal_belongings_aed,building_aed,contents_aed,has_contents,has_personal_belongings,has_building,address,next_followup_date,lost_reason,premium,source,transapp_code,renewal_expiry_date",
+            "update" => "is_renewal,previous_quote_id,id,code,quote_status_id,advisor_id,created_at,updated_at,next_followup_date,lost_reason,source,transapp_code,renewal_expiry_date",
+            "show" => "id,next_followup_date,lost_reason,is_renewal",
+        ];
     }
 
     public function getValidationArray($modelPropertiesList, $request, $modelSkipPropertiesList)

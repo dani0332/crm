@@ -86,7 +86,18 @@ class CRUDController extends Controller
             $this->crudService->fillRenewalData($this->genericModel);
             $renewalAdvisors = $this->crudService->getRenewalAdvisorsByModelType($this->genericModel->modelType);
         }
-
+        else if(Auth::user()->isRenewalAdvisor())
+        {
+            $isRenewalUser = Auth::user()->isRenewalAdvisor();
+            $this->crudService->fillRenewalData($this->genericModel);
+            $renewalAdvisors = $this->crudService->getRenewalAdvisorsByModelType($this->genericModel->modelType); 
+        }
+        else if(Auth::user()->isRenewalManager())
+        {
+            $isRenewalUser = Auth::user()->isRenewalManager();
+            $this->crudService->fillRenewalData($this->genericModel);
+            $renewalAdvisors = $this->crudService->getRenewalAdvisorsByModelType($this->genericModel->modelType); 
+        }
         // Getting the data for grid based on the model type
         $gridData = $this->crudService->getGridData($this->genericModel, $request);
         // Getting the data for the advisor dropdown based on the model type
@@ -266,6 +277,22 @@ class CRUDController extends Controller
                 'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList',
                 'leadStatuses', 'lostReasons', 'selectedLostReasonId', 'members_detail','model_name', 'allowedDuplicateLOB', 'audits'
             ]));
+        }else if ($this->genericModel->modelType == quoteTypeCode::Health) { // Health plans to display on detail view
+            $listQuotePlans = '';
+            $quotePlans = $this->healthQuoteService->getQuotePlans($id);
+            if (isset($quotePlans->message) && $quotePlans->message != '') {
+                $listQuotePlans = $quotePlans->message;
+            } else {
+                if (gettype($quotePlans) != 'string') {
+                    $listQuotePlans = $quotePlans->quote->plans;
+                } else {
+                    $listQuotePlans = $quotePlans;
+                }
+            }
+            return view('shared.show', compact([
+                'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList',
+                'leadStatuses', 'lostReasons', 'selectedLostReasonId','model_name', 'allowedDuplicateLOB', 'audits','advisors'
+            ]));
         } else {
             return view('shared.show', compact(['record', 'model', 'customTitles', 'customTableList', 'advisors', 'leadStatuses', 'lostReasons', 'selectedLostReasonId','model_name', 'allowedDuplicateLOB', 'audits']));
         }
@@ -410,6 +437,8 @@ class CRUDController extends Controller
                     $actualPremium = $listQuotePlan->actualPremium;
                     $discountPremium = $listQuotePlan->discountPremium;
                     $listQuotePlanBenefitsInclusions = $listQuotePlan->benefits->inclusion;
+                    $listQuotePlanBenefitstravelInconvenienceCover = $listQuotePlan->benefits->travelInconvenienceCover;
+                    $listQuotePlanBenefitsemergencyMedicalCover = $listQuotePlan->benefits->emergencyMedicalCover;
                     $listQuotePlanBenefitsExclusions = $listQuotePlan->benefits->exclusion;
                     $listQuotePlanBenefitsFeatures = $listQuotePlan->benefits->feature;
                     $listQuotePlanBenefitsCovid19 = $listQuotePlan->benefits->covid19;
@@ -420,12 +449,48 @@ class CRUDController extends Controller
                     }
                 }
             }
+           
             $modelName = quoteTypeCode::Travel;
             return view('shared.plan_details', compact([
                 'listQuotePlanName', 'providerCode', 'providerName', 'travelType',
                 'actualPremium', 'discountPremium', 'listQuotePlanBenefitsInclusions',
                 'listQuotePlanBenefitsExclusions', 'listQuotePlanBenefitsFeatures', 'listQuotePlanBenefitsCovid19',
-                'listQuotePlanBenefitsPolicyDetailLink', 'modelName', 'listQuotePlansMembers'
+                'listQuotePlanBenefitsPolicyDetailLink', 'modelName', 'listQuotePlansMembers',
+                'listQuotePlanBenefitstravelInconvenienceCover','listQuotePlanBenefitsemergencyMedicalCover'
+            ]));
+        }
+    }
+
+    public function health_plan_details($quoteId, $planId)
+    {
+        $quotePlans = $this->healthQuoteService->getQuotePlans($quoteId);
+
+        if (gettype($quotePlans) != 'string') {
+            $listQuotePlans = $quotePlans->quote->plans;
+            foreach ($listQuotePlans as $listQuotePlan) { // Main
+
+                if ($listQuotePlan->id == $planId) {
+                    $listQuotePlanName = $listQuotePlan->name;
+                    $providerCode = $listQuotePlan->providerCode;
+                    $providerName = $listQuotePlan->providerName;
+                    $actualPremium = $listQuotePlan->actualPremium;
+                    $discountPremium = $listQuotePlan->discountPremium;
+                    $listQuotePlanBenefitsInclusions = $listQuotePlan->benefits->inclusion;
+                    $listQuotePlanBenefitsExclusions = $listQuotePlan->benefits->exclusion;
+                    $listQuotePlanBenefitsFeatures = $listQuotePlan->benefits->feature;
+                    $listQuotePlanBenefitsPolicyDetails = $listQuotePlan->policyWordings;
+
+                    foreach ($listQuotePlanBenefitsPolicyDetails as $listQuotePlanBenefitsPolicyDetail) {
+                        $listQuotePlanBenefitsPolicyDetailLink = $listQuotePlanBenefitsPolicyDetail->link;
+                    }
+                }
+            }
+            $modelName = quoteTypeCode::Health;
+            return view('shared.plan_details', compact([
+                'listQuotePlanName', 'providerCode', 'providerName',
+                'actualPremium', 'discountPremium', 'listQuotePlanBenefitsInclusions',
+                'listQuotePlanBenefitsExclusions', 'listQuotePlanBenefitsFeatures',
+                'listQuotePlanBenefitsPolicyDetailLink', 'modelName'
             ]));
         }
     }

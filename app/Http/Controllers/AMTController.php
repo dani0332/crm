@@ -58,10 +58,15 @@ class AMTController extends Controller
                 'bqr.premium',
                 'bqr.company_name',
                 'bqrd.next_followup_date',
+                'bqr.policy_number',
             )->orderBy('bqr.advisor_id', 'asc');
 
         if (Auth::user()->isAdvisor()) {
             $data = $data->where('bqr.advisor_id', Auth::user()->id);
+        }
+
+        if (Auth::user()->isRenewalAdvisor()) {
+            $data = $data->whereNotNull('bqr.previous_quote_id');
         }
 
         $leadStatuses = DB::table('quote_status')->select('id', 'text')->orderBy('sort_order', 'asc')->get();
