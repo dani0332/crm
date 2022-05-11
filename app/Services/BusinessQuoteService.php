@@ -341,6 +341,10 @@ class BusinessQuoteService extends BaseService
                     else if ($item == 'quote_status_id' && is_array($request[$item]) && !empty($request[$item])) {
                         $this->query->whereIn('quote_status_id', $request[$item]);
                     } else {
+                        $skipped = array('is_renewal');
+                        if(in_array($item, $skipped)){
+                            continue;
+                        }
                         $this->query->where($this->getQuerySuffix($item) . '.' . $item, $request[$item]);
                     }
                 }
