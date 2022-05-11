@@ -19,14 +19,20 @@ use Maatwebsite\Excel\Concerns\WithChunkReading;
 class RenewalsImport implements OnEachRow, WithStartRow, WithValidation, SkipsOnFailure, WithChunkReading
 {
     use Importable, SkipsFailures;
+
     private $rows = 0;
     private $renewalsUploadService;
     private $totalRows;
     private $fileName;
-    function __construct(RenewalsUploadService $renewalsUploadService, $fileName)
+    private $renewalImportCode;
+    private $uploadType;
+
+    function __construct(RenewalsUploadService $renewalsUploadService, $fileName, $renewalImportCode, $uploadType)
     {
         $this->renewalsUploadService = $renewalsUploadService;
         $this->fileName = $fileName;
+        $this->renewalImportCode = $renewalImportCode;
+        $this->uploadType = $uploadType;
     }
 
     /**
@@ -39,7 +45,7 @@ class RenewalsImport implements OnEachRow, WithStartRow, WithValidation, SkipsOn
         $qouteType = $row[2];
         $email = preg_replace('/\s/', '', strtolower(trim(ltrim(rtrim($row[1])))));
 
-        if($email != null) {
+        if(!empty($email)) {
 
             $quoteData = 0;
 
@@ -67,8 +73,8 @@ class RenewalsImport implements OnEachRow, WithStartRow, WithValidation, SkipsOn
 
             // other information
             $customerPhone = $row[7];
-            $advisor = $row[8];
-            $previousAdvisor = $row[9];
+            $advisor = preg_replace('/\s/', '', strtolower(trim(ltrim(rtrim($row[8])))));
+            $previousAdvisor = preg_replace('/\s/', '', strtolower(trim(ltrim(rtrim($row[9])))));
             $policy = $row[10];
             $batch = $row[11];
             $startDate = Carbon::instance(\PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($row[12]))->toDateTimeString();
@@ -154,7 +160,8 @@ class RenewalsImport implements OnEachRow, WithStartRow, WithValidation, SkipsOn
                     "other_email_ids" => $otherEmailIds,
                 );
             }
-            dispatch(new RenewalImportJob($quoteData, $qouteType, $this->renewalsUploadService, $this->fileName));
+
+            dispatch(new RenewalImportJob($quoteData, $qouteType, $this->renewalsUploadService, $this->fileName, $this->renewalImportCode, $this->uploadType));
         }
     }
 
@@ -246,6 +253,9 @@ class RenewalsImport implements OnEachRow, WithStartRow, WithValidation, SkipsOn
         else if(strpos($insurerName, 'insurance house') !== false){
             $insurerinCdb = 'Insurance House';
         }
+        else if(strpos($insurerName, 'other') !== false){
+            $insurerinCdb = 'Other';
+        }
         else {
             $insurerinCdb = $insurerName;
         }
@@ -312,11 +322,11 @@ class RenewalsImport implements OnEachRow, WithStartRow, WithValidation, SkipsOn
                 }
             },
             '*.5' => function($attribute, $value, $onFailure) { // Product Type
-                if(strlen($value) > 50) {
-                    $onFailure('Product Type should not exceed length of 50 characters');
+                if(strlen($value) > 100) {
+                    $onFailure('Product Type should not exceed length of 100 characters');
                 }
                 if(strlen($value) > 0 && $value != 'Comprehensive' && $value != 'Third Party Only') {
-                    $onFailure('Product Type should be either Comprehensive or Third Party  Only');
+                    //$onFailure('Product Type should be either Comprehensive or Third Party  Only');
                 }
             },
             '*.6' => function($attribute, $value, $onFailure) { // Sales Channel

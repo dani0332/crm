@@ -1787,6 +1787,8 @@ $(document).ready(function () {
         ajax: config.routes.renewals_leads_datatable_route,
         columns: [
             { data: "id", name: "id" },
+            { data: "renewal_import_type", name: "renewal_import_type" },
+            { data: "renewal_import_code", name: "renewal_import_code" },
             { data: "file_name", name: "file_name" },
             { data: "total_records", name: "total_records" },
             { data: "good", name: "good" },
@@ -2076,4 +2078,24 @@ $("#update_car_plans").submit(function (e) {
 
 $('#quotePlanModal').on('hidden.bs.modal', function () {
     location.reload();
+});
+
+$(".renewals-batches-data-table").DataTable({
+    ordering: false,
+    info: false,
+    searching: false,
+    bLengthChange: false,
+    serverSide: true,
+    stateSave: true,
+    paging: true,
+    processing: true,
+    ajax: config.routes.renewals_batches_datatable_route,
+    columns: [{
+        data: 'renewal_batch',
+        name: 'renewal_batch',
+        render: function (data, type, row) {
+            return "<a href='" + config.routes.renewals_batches_datatable_route + '/' + row.renewal_batch + "'>" + row.renewal_batch + "</a>"
+        }
+    },
+    ],
 });

@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Enums\QuoteTypeId;
-use App\Models\LeadStatus;
 use App\Models\QuoteStatus;
 use App\Models\TravelQuote;
 use App\Models\TravelQuoteRequestDetail;
@@ -61,8 +60,9 @@ class TravelQuoteService extends BaseService
             'cli.text as currently_located_in_id_text',
             'tqr.destination_id',
             'nationality.text as destination_id_text',
-            'tqr.insurer_quote_no',
             'tqr.is_ecommerce',
+            'tqr.renewal_expiry_date',
+            'tqr.renewal_batch',
         )
             ->leftJoin('travel_cover_for as tcf', 'tcf.id', '=', 'tqr.travel_cover_for_id')
             ->leftJoin('travel_quote_request_detail as tqrd', 'tqr.id', '=', 'tqrd.travel_quote_request_id')
@@ -299,6 +299,12 @@ class TravelQuoteService extends BaseService
                 if($request->is_renewal == "No")
                     $this->query->whereNull('tqr.previous_quote_id');
             }
+            if (isset($request->is_ecommerce) && $request->is_ecommerce != '') {
+                if($request->is_ecommerce == "Yes")
+                    $this->query->where('tqr.is_ecommerce', 1);
+                if($request->is_ecommerce == "No")
+                    $this->query->where('tqr.is_ecommerce', 0);
+            }
             foreach ($searchProperties as $item) {
                 if (!empty($request[$item]) && $item != "created_at") {
                     if ($request[$item] == 'null') {
@@ -312,6 +318,10 @@ class TravelQuoteService extends BaseService
                     else if ($item == 'quote_status_id' && is_array($request[$item]) && !empty($request[$item])) {
                         $this->query->whereIn('quote_status_id', $request[$item]);
                     } else {
+                        $skipped = array('is_renewal','is_ecommerce');
+                        if(in_array($item, $skipped)) {
+                            continue;
+                        }
                         $this->query->where($this->getQuerySuffix($item) . '.' . $item, $request[$item]);
                     }
                 }
@@ -465,10 +475,11 @@ class TravelQuoteService extends BaseService
             "details" => "textarea|text|required",
             "currently_located_in_id" => "select|title|required",
             "previous_quote_id" => "readonly|title",
+            "renewal_expiry_date" => "input|date|title|range",
             "is_renewal" => "|static|Yes,No",
             "currently_located_in_id" => "select|title|required",
-            "insurer_quote_no" => "readonly|none",
-            "is_ecommerce" => "|static|title|Yes,No"
+            "is_ecommerce" => "|static|title|Yes,No",
+            "renewal_batch" => "input|number|title"
         );
     }
 
@@ -527,6 +538,12 @@ class TravelQuoteService extends BaseService
             case 'is_ecommerce':
                 $title = "Ecommerce";
                 break;
+            case 'renewal_expiry_date':
+                $title = "Renewal Expiry Date";
+                break;
+            case 'renewal_batch':
+                $title = "Renewal Batch #";
+                break;
             default:
                 break;
         }
@@ -536,9 +553,9 @@ class TravelQuoteService extends BaseService
     public function fillModelSkipProperties()
     {
         return [
-            "create" => "is_ecommerce,is_renewal,previous_quote_id,id,created_at,id,code,advisor_id,updated_at,quote_status_id,next_followup_date,lost_reason,premium,source,transapp_code",
-            "list" => "is_renewal,previous_quote_id,email,mobile_no,region_cover_for_id,travel_cover_for_id,details,nationality_id,days_cover_for",
-            "update" => 'is_ecommerce,is_renewal,previous_quote_id,created_at,id,code,advisor_id,updated_at,quote_status_id,next_followup_date,lost_reason,source,transapp_code',
+            "create" => "is_ecommerce,is_renewal,previous_quote_id,id,created_at,id,code,advisor_id,updated_at,quote_status_id,next_followup_date,lost_reason,premium,source,transapp_code,renewal_batch",
+            "list" => "is_renewal,previous_quote_id,email,mobile_no,region_cover_for_id,travel_cover_for_id,details,nationality_id,days_cover_for,renewal_batch",
+            "update" => 'is_ecommerce,is_renewal,previous_quote_id,created_at,id,code,advisor_id,updated_at,quote_status_id,next_followup_date,lost_reason,source,transapp_code,renewal_batch',
             "show" => "is_renewal"
         ];
     }
@@ -552,10 +569,10 @@ class TravelQuoteService extends BaseService
     {
         $model->renewalSearchProperties = ['created_at', 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'policy_number','premium','is_renewal'];
         $model->renewalSkipProperties = [
-            "create" => "is_ecommerce,insurer_quote_no,is_renewal,previous_quote_id,id,created_at,id,code,advisor_id,updated_at,quote_status_id,next_followup_date,lost_reason,premium,source,transapp_code",
-            "list" => "is_ecommerce,insurer_quote_no,is_renewal,dob,email,mobile_no,region_cover_for_id,travel_cover_for_id,details,nationality_id,days_cover_for,next_followup_date,lost_reason,source,transapp_code,currently_located_in_id,destination_id",
-            "update" => 'is_ecommerce,insurer_quote_no,is_renewal,previous_quote_id,created_at,id,code,advisor_id,updated_at,quote_status_id,next_followup_date,lost_reason,source,transapp_code',
-            "show" => "is_ecommerce,insurer_quote_no,is_renewal",
+            "create" => "is_ecommerce,is_renewal,previous_quote_id,id,created_at,id,code,advisor_id,updated_at,quote_status_id,next_followup_date,lost_reason,premium,source,transapp_code,renewal_batch",
+            "list" => "is_ecommerce,is_renewal,dob,email,mobile_no,region_cover_for_id,travel_cover_for_id,details,nationality_id,days_cover_for,next_followup_date,lost_reason,source,transapp_code,currently_located_in_id,destination_id,renewal_batch",
+            "update" => 'is_ecommerce,is_renewal,previous_quote_id,created_at,id,code,advisor_id,updated_at,quote_status_id,next_followup_date,lost_reason,source,transapp_code,renewal_batch',
+            "show" => "is_ecommerce,is_renewal",
         ];
     }
 
