@@ -62,7 +62,7 @@ class TravelQuoteService extends BaseService
             'tqr.currently_located_in_id',
             'cli.text as currently_located_in_id_text',
             'tqr.destination_id',
-            'nationality.text as destination_id_text',
+            'nationality.country_name as destination_id_text',
             'tqr.is_ecommerce',
             'tqr.renewal_expiry_date',
             'tqr.renewal_batch',
