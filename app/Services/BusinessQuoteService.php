@@ -138,7 +138,8 @@ class BusinessQuoteService extends BaseService
                 'bqr.email',
                 'bqr.mobile_no',
                 'bqrd.next_followup_date as nextFollowupDate',
-                'bqr.previous_quote_id'
+                'bqr.previous_quote_id',
+                'bqr.payment_status_id as paymentStatus'
             )
             ->leftJoin('business_quote_request_detail as bqrd', 'bqrd.business_quote_request_id', '=', 'bqr.id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'bqr.quote_status_id')
