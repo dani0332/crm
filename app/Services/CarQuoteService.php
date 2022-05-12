@@ -453,11 +453,12 @@ class CarQuoteService extends BaseService
                 'cqr.source as leadSource',
                 'cqrd.next_followup_date as nextFollowupDate',
                 'cqr.premium',
-                'cqr.payment_status_id as paymentStatus'
+                'ps.text as paymentStatus'
             )
             ->leftJoin('car_quote_request_detail as cqrd', 'cqrd.car_quote_request_id', '=', 'cqr.id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'cqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'cqrd.advisor_assigned_by_id')
+            ->leftJoin('paymentstatus as ps', 'ps.id', '=', 'cqr.payment_status_id')
             ->where('qs.text', '!=', 'Fake')->where('cqr.advisor_id', Auth::user()->id);
 
         $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
