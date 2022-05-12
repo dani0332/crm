@@ -215,7 +215,7 @@ class TravelQuoteService extends BaseService
         if (isset($request->nfdSart) && isset($request->nfdEnd) && $request->nfdSart != '' && $request->nfdEnd != '') {
             $dateFrom = Carbon::createFromFormat('Y-m-d', $request->nfdSart)->startOfDay()->toDateTimeString();
             $dateTo = Carbon::createFromFormat('Y-m-d', $request->nfdEnd)->endOfDay()->toDateTimeString();
-            $query->whereBetween('hqrd.next_followup_date', [$dateFrom, $dateTo]);
+            $query->whereBetween('tqrd.next_followup_date', [$dateFrom, $dateTo]);
         }
         if (isset($request->cdbId) && $request->cdbId != 0) {
             $query->where('tqr.code', $request->cdbId);
@@ -226,13 +226,15 @@ class TravelQuoteService extends BaseService
         if (isset($request->leadStatus) && $request->leadStatus != 0) {
             $query->where('tqr.quote_status_id', $request->leadStatus);
         }
-
         if (Auth::user()->isRenewalAdvisor()) {
             $query->whereNotNull('tqr.previous_quote_id');
         }
         if (Auth::user()->isRenewalManager()) {
             $ids = $this->walkTree(Auth::user()->id);
-            $this->query->whereIn('hqr.advisor_id', $ids);
+            $this->query->whereIn('tqr.advisor_id', $ids);
+        }
+        if (isset($request->paymentStatus)) {
+            $query->where('tqr.payment_status_id', $request->paymentStatus);
         }
         return $query;
     }
