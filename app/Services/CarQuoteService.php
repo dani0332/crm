@@ -474,7 +474,7 @@ class CarQuoteService extends BaseService
         if (isset($request->nfdSart) && isset($request->nfdEnd) && $request->nfdSart != '' && $request->nfdEnd != '') {
             $dateFrom = $this->parseDate($request->nfdSart, true);
             $dateTo = $this->parseDate($request->nfdEnd, false);
-            $query->whereBetween('hqrd.next_followup_date', [$dateFrom, $dateTo]);
+            $query->whereBetween('cqrd.next_followup_date', [$dateFrom, $dateTo]);
         }
         if (isset($request->cdbId) && $request->cdbId != 0) {
             $query->where('cqr.code', $request->cdbId);
@@ -484,6 +484,9 @@ class CarQuoteService extends BaseService
         }
         if (isset($request->leadStatus) && $request->leadStatus != 0) {
             $query->where('cqr.quote_status_id', $request->leadStatus);
+        }
+        if (isset($request->paymentStatus)) {
+            $query->where('cqr.payment_status_id', $request->paymentStatus);
         }
         return $query;
     }

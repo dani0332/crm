@@ -396,19 +396,22 @@ class LifeQuoteService extends BaseService
         if (isset($request->nfdSart) && isset($request->nfdEnd) && $request->nfdSart != '' && $request->nfdEnd != '') {
             $dateFrom = Carbon::createFromFormat('Y-m-d', $request->nfdSart)->startOfDay()->toDateTimeString();
             $dateTo = Carbon::createFromFormat('Y-m-d', $request->nfdEnd)->endOfDay()->toDateTimeString();
-            $query->whereBetween('hqrd.next_followup_date', [$dateFrom, $dateTo]);
+            $query->whereBetween('lqrd.next_followup_date', [$dateFrom, $dateTo]);
         }
         if (isset($request->cdbId) && $request->cdbId != 0) {
             $query->where('lqr.code', $request->cdbId);
         }
         if (isset($request->email) && $request->email != '') {
-            $query->where('bqr.email', $request->email);
+            $query->where('lqr.email', $request->email);
         }
         if (isset($request->leadStatus) && $request->leadStatus != 0) {
             $query->where('lqr.quote_status_id', $request->leadStatus);
         }
         if (Auth::user()->isRenewalAdvisor()) {
            $query->whereNotNull('lqr.previous_quote_id');
+        }
+        if (isset($request->paymentStatus)) {
+            $query->where('lqr.payment_status_id', $request->paymentStatus);
         }
         return $query;
     }

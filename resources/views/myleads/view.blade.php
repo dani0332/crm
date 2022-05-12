@@ -231,6 +231,7 @@
                             d.nfdEnd = $('#nfdEnd').val();
                             d.email = $('#email').val();
                             d.teamType = $('#teamType').val();
+                            d.paymentStatus = $('#paymentStatus').val();
                         },
                     },
                     columnDefs: [
@@ -598,6 +599,24 @@
                             </div>
                         </div>
                         @endif
+                        <div class="item form-group">
+                            <div class="col">
+                                <label class="col-form-label col-md-4 col-sm-4" for="Payment Status">Payment Status</label>
+                                <div class="col-md-6 col-sm-6">
+                                    <div class="input-group">
+                                        <select class="form-control" id="paymentStatus" name="paymentStatus">
+                                            <option value="" selected="selected">Select Payment Status</option>
+                                            @foreach ($paymentStatusList as $item)
+                                                <option  value="{{$item->id}}">{{$item->text}}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col">
+                               
+                            </div>
+                        </div>
                         <div class="item form-group">
                             <div  class="col">
                             </div>
