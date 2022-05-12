@@ -367,11 +367,12 @@ class LifeQuoteService extends BaseService
                 'lqr.mobile_no',
                 'lqrd.next_followup_date as nextFollowupDate',
                 'lqr.previous_quote_id',
-                'lqr.payment_status_id as paymentStatus'
+                'ps.text as paymentStatus'
             )
             ->leftJoin('life_quote_request_detail as lqrd', 'lqrd.life_quote_request_id', '=', 'lqr.id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'lqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'lqrd.advisor_assigned_by_id')
+            ->leftJoin('payment_status as ps', 'ps.id', '=', 'lqr.payment_status_id')
             ->where('qs.text', '!=', 'Fake')
             ->where('lqr.advisor_id', Auth::user()->id);
 

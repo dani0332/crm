@@ -409,11 +409,12 @@ class HealthQuoteService extends BaseService
                 'hqr.premium',
                 'hqrd.next_followup_date as nextFollowupDate',
                 'hqr.previous_quote_id',
-                'hqr.payment_status_id as paymentStatus'
+                'ps.text as paymentStatus'
             )
             ->leftJoin('health_quote_request_detail as hqrd', 'hqrd.health_quote_request_id', '=', 'hqr.id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'hqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'hqrd.advisor_assigned_by_id')
+            ->leftJoin('payment_status as ps', 'ps.id', '=', 'hqr.payment_status_id')
             ->where('qs.text', '!=', 'Fake')
             ->where('hqr.advisor_id', Auth::user()->id);
 
