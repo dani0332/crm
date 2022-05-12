@@ -192,6 +192,10 @@ class HomeQuoteService extends BaseService
                     else if ($item == 'quote_status_id' && is_array($request[$item]) && !empty($request[$item])) {
                         $this->query->whereIn('quote_status_id', $request[$item]);
                     } else {
+                        $skipped = array('is_renewal');
+                        if(in_array($item, $skipped)){
+                            continue;
+                        }
                         $this->query->where($this->getQuerySuffix($item) . '.' . $item, $request[$item]);
                     }
                 }
@@ -297,11 +301,13 @@ class HomeQuoteService extends BaseService
                 'hqr.source as leadSource',
                 'hqr.premium',
                 'hqrd.next_followup_date as nextFollowupDate',
-                'hqr.previous_quote_id'
+                'hqr.previous_quote_id',
+                'ps.text as paymentStatus'
             )
             ->leftJoin('home_quote_request_detail as hqrd', 'hqrd.home_quote_request_id', '=', 'hqr.id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'hqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'hqrd.advisor_assigned_by_id')
+            ->leftJoin('payment_status as ps', 'ps.id', '=', 'hqr.payment_status_id')
             ->where('qs.text', '!=', 'Fake')
             ->where('hqr.advisor_id', Auth::user()->id);
         $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
@@ -339,6 +345,9 @@ class HomeQuoteService extends BaseService
         }
         if (Auth::user()->isRenewalAdvisor()) {
             $query->whereNotNull('hqr.previous_quote_id');
+        }
+        if (isset($request->paymentStatus)) {
+            $query->where('hqr.payment_status_id', $request->paymentStatus);
         }
         return $query;
     }

@@ -452,11 +452,13 @@ class CarQuoteService extends BaseService
                 'cqr.updated_at',
                 'cqr.source as leadSource',
                 'cqrd.next_followup_date as nextFollowupDate',
-                'cqr.premium'
+                'cqr.premium',
+                'ps.text as paymentStatus'
             )
             ->leftJoin('car_quote_request_detail as cqrd', 'cqrd.car_quote_request_id', '=', 'cqr.id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'cqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'cqrd.advisor_assigned_by_id')
+            ->leftJoin('payment_status as ps', 'ps.id', '=', 'cqr.payment_status_id')
             ->where('qs.text', '!=', 'Fake')->where('cqr.advisor_id', Auth::user()->id);
 
         $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
@@ -474,7 +476,7 @@ class CarQuoteService extends BaseService
         if (isset($request->nfdSart) && isset($request->nfdEnd) && $request->nfdSart != '' && $request->nfdEnd != '') {
             $dateFrom = $this->parseDate($request->nfdSart, true);
             $dateTo = $this->parseDate($request->nfdEnd, false);
-            $query->whereBetween('hqrd.next_followup_date', [$dateFrom, $dateTo]);
+            $query->whereBetween('cqrd.next_followup_date', [$dateFrom, $dateTo]);
         }
         if (isset($request->cdbId) && $request->cdbId != 0) {
             $query->where('cqr.code', $request->cdbId);
@@ -484,6 +486,9 @@ class CarQuoteService extends BaseService
         }
         if (isset($request->leadStatus) && $request->leadStatus != 0) {
             $query->where('cqr.quote_status_id', $request->leadStatus);
+        }
+        if (isset($request->paymentStatus)) {
+            $query->where('cqr.payment_status_id', $request->paymentStatus);
         }
         return $query;
     }

@@ -12,11 +12,14 @@ use Auth;
 use \Carbon\Carbon;
 use Config;
 use App\Traits\GetUserTree;
+use App\Traits\GetTravelPreviousQuoteIds;
+
 class TravelQuoteService extends BaseService
 {
-
     protected $query;
     use GetUserTree;
+    use GetTravelPreviousQuoteIds;
+
     public function __construct()
     {
         $this->query = DB::table('travel_quote_request as tqr')->select(
@@ -59,8 +62,11 @@ class TravelQuoteService extends BaseService
             'tqr.currently_located_in_id',
             'cli.text as currently_located_in_id_text',
             'tqr.destination_id',
-            'nationality.text as destination_id_text',
-            'tqr.renewal_expiry_date'
+            'nationality.country_name as destination_id_text',
+            'tqr.is_ecommerce',
+            'tqr.renewal_expiry_date',
+            'tqr.renewal_batch',
+            'tqr.renewal_import_code'
         )
             ->leftJoin('travel_cover_for as tcf', 'tcf.id', '=', 'tqr.travel_cover_for_id')
             ->leftJoin('travel_quote_request_detail as tqrd', 'tqr.id', '=', 'tqrd.travel_quote_request_id')
@@ -179,11 +185,13 @@ class TravelQuoteService extends BaseService
                 'tqr.mobile_no as mobile_no',
                 'tqr.source as leadSource',
                 'tqrd.next_followup_date as nextFollowupDate',
-                'tqr.previous_quote_id'
+                'tqr.previous_quote_id',
+                'ps.text as paymentStatus'
             )
             ->leftJoin('travel_quote_request_detail as tqrd', 'tqrd.travel_quote_request_id', '=', 'tqr.id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'tqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'tqrd.advisor_assigned_by_id')
+            ->leftJoin('payment_status as ps', 'ps.id', '=', 'tqr.payment_status_id')
             ->where('qs.text', '!=', 'Fake')
             ->where('tqr.advisor_id', Auth::user()->id);
 
@@ -209,7 +217,7 @@ class TravelQuoteService extends BaseService
         if (isset($request->nfdSart) && isset($request->nfdEnd) && $request->nfdSart != '' && $request->nfdEnd != '') {
             $dateFrom = Carbon::createFromFormat('Y-m-d', $request->nfdSart)->startOfDay()->toDateTimeString();
             $dateTo = Carbon::createFromFormat('Y-m-d', $request->nfdEnd)->endOfDay()->toDateTimeString();
-            $query->whereBetween('hqrd.next_followup_date', [$dateFrom, $dateTo]);
+            $query->whereBetween('tqrd.next_followup_date', [$dateFrom, $dateTo]);
         }
         if (isset($request->cdbId) && $request->cdbId != 0) {
             $query->where('tqr.code', $request->cdbId);
@@ -220,13 +228,15 @@ class TravelQuoteService extends BaseService
         if (isset($request->leadStatus) && $request->leadStatus != 0) {
             $query->where('tqr.quote_status_id', $request->leadStatus);
         }
-
         if (Auth::user()->isRenewalAdvisor()) {
             $query->whereNotNull('tqr.previous_quote_id');
         }
         if (Auth::user()->isRenewalManager()) {
             $ids = $this->walkTree(Auth::user()->id);
-            $this->query->whereIn('hqr.advisor_id', $ids);
+            $this->query->whereIn('tqr.advisor_id', $ids);
+        }
+        if (isset($request->paymentStatus)) {
+            $query->where('tqr.payment_status_id', $request->paymentStatus);
         }
         return $query;
     }
@@ -282,6 +292,7 @@ class TravelQuoteService extends BaseService
             if(Auth::user()->isSpecificTeamAdvisor('Travel')){
                 // if user has advisor Role then fetch leads assigned to the user only
                 $this->query->where('tqr.advisor_id', Auth::user()->id);	// fetch leads assigned to the user
+                $this->query->whereNull('tqr.previous_quote_id');
             }
             if (Auth::user()->isRenewalAdvisor()) {
                 $this->query->whereNotNull('tqr.previous_quote_id');
@@ -297,6 +308,16 @@ class TravelQuoteService extends BaseService
                 if($request->is_renewal == "No")
                     $this->query->whereNull('tqr.previous_quote_id');
             }
+            if (isset($request->is_ecommerce) && $request->is_ecommerce != '') {
+                if($request->is_ecommerce == "Yes")
+                    $this->query->where('tqr.is_ecommerce', 1);
+                if($request->is_ecommerce == "No")
+                    $this->query->where('tqr.is_ecommerce', 0);
+            }
+            if(Auth::user()->isManagerOrDeputy()) {
+                $this->query->whereNotIn('tqr.id', $this->travelPreviousQuoteIds());
+                $this->query->whereNull('tqr.previous_quote_id');
+            }
             foreach ($searchProperties as $item) {
                 if (!empty($request[$item]) && $item != "created_at") {
                     if ($request[$item] == 'null') {
@@ -310,6 +331,10 @@ class TravelQuoteService extends BaseService
                     else if ($item == 'quote_status_id' && is_array($request[$item]) && !empty($request[$item])) {
                         $this->query->whereIn('quote_status_id', $request[$item]);
                     } else {
+                        $skipped = array('is_renewal','is_ecommerce');
+                        if(in_array($item, $skipped)) {
+                            continue;
+                        }
                         $this->query->where($this->getQuerySuffix($item) . '.' . $item, $request[$item]);
                     }
                 }
@@ -465,7 +490,11 @@ class TravelQuoteService extends BaseService
             "previous_quote_id" => "readonly|title",
             "renewal_expiry_date" => "input|date|title|range",
             "is_renewal" => "|static|Yes,No",
-            "currently_located_in_id" => "select|title|required"
+            "currently_located_in_id" => "select|title|required",
+            "is_ecommerce" => "|static|title|Yes,No",
+            "renewal_batch" => "input|number|title",
+            "payment_status_id" => "select|title",
+            "renewal_import_code" => "input|text|required"
         );
     }
 
@@ -521,8 +550,17 @@ class TravelQuoteService extends BaseService
             case 'previous_quote_id':
                 $title = "Previous Quote Id";
                 break;
+            case 'is_ecommerce':
+                $title = "Ecommerce";
+                break;
             case 'renewal_expiry_date':
                 $title = "Renewal Expiry Date";
+                break;
+            case 'renewal_batch':
+                $title = "Renewal Batch #";
+                break;
+            case 'payment_status_id':
+                $title = "Payment Status";
                 break;
             default:
                 break;
@@ -533,26 +571,26 @@ class TravelQuoteService extends BaseService
     public function fillModelSkipProperties()
     {
         return [
-            "create" => "is_renewal,previous_quote_id,id,created_at,id,code,advisor_id,updated_at,quote_status_id,next_followup_date,lost_reason,premium,source,transapp_code,renewal_expiry_date",
-            "list" => "is_renewal,previous_quote_id,email,mobile_no,region_cover_for_id,travel_cover_for_id,details,nationality_id,days_cover_for,renewal_expiry_date",
-            "update" => 'is_renewal,previous_quote_id,created_at,id,code,advisor_id,updated_at,quote_status_id,next_followup_date,lost_reason,source,transapp_code,renewal_expiry_date',
+            "create" => "is_ecommerce,is_renewal,previous_quote_id,id,created_at,id,code,advisor_id,updated_at,quote_status_id,next_followup_date,lost_reason,premium,source,transapp_code,renewal_batch,payment_status_id,renewal_import_code",
+            "list" => "is_renewal,previous_quote_id,email,mobile_no,region_cover_for_id,travel_cover_for_id,details,nationality_id,days_cover_for,renewal_batch,renewal_import_code",
+            "update" => 'is_ecommerce,is_renewal,previous_quote_id,created_at,id,code,advisor_id,updated_at,quote_status_id,next_followup_date,lost_reason,source,transapp_code,renewal_batch,payment_status_id,renewal_import_code',
             "show" => "is_renewal"
         ];
     }
 
     public function fillModelSearchProperties()
     {
-        return ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'advisor_id', 'created_at', 'next_followup_date'];
+        return ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'advisor_id', 'created_at', 'next_followup_date','is_ecommerce','payment_status_id'];
     }
 
     public function fillRenewalProperties($model)
     {
-        $model->renewalSearchProperties = ['created_at', 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'policy_number','premium','is_renewal'];
+        $model->renewalSearchProperties = ['created_at', 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'policy_number','premium','is_renewal','payment_status_id'];
         $model->renewalSkipProperties = [
-            "create" => "is_renewal,previous_quote_id,id,created_at,id,code,advisor_id,updated_at,quote_status_id,next_followup_date,lost_reason,premium,source,transapp_code,renewal_expiry_date",
-            "list" => "is_renewal,dob,email,mobile_no,region_cover_for_id,travel_cover_for_id,details,nationality_id,days_cover_for,next_followup_date,lost_reason,source,transapp_code,currently_located_in_id,destination_id,renewal_expiry_date",
-            "update" => 'is_renewal,previous_quote_id,created_at,id,code,advisor_id,updated_at,quote_status_id,next_followup_date,lost_reason,source,transapp_code,renewal_expiry_date',
-            "show" => "is_renewal",
+            "create" => "is_ecommerce,is_renewal,previous_quote_id,id,created_at,id,code,advisor_id,updated_at,quote_status_id,next_followup_date,lost_reason,premium,source,transapp_code,renewal_batch,payment_status_id,renewal_import_code",
+            "list" => "is_ecommerce,is_renewal,dob,email,mobile_no,region_cover_for_id,travel_cover_for_id,details,nationality_id,days_cover_for,next_followup_date,lost_reason,source,transapp_code,currently_located_in_id,destination_id,renewal_batch,renewal_import_code",
+            "update" => 'is_ecommerce,is_renewal,previous_quote_id,created_at,id,code,advisor_id,updated_at,quote_status_id,next_followup_date,lost_reason,source,transapp_code,renewal_batch,payment_status_id,renewal_import_code',
+            "show" => "is_ecommerce,is_renewal",
         ];
     }
 

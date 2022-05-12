@@ -218,6 +218,10 @@ class LifeQuoteService extends BaseService
                     else if ($item == 'quote_status_id' && is_array($request[$item]) && !empty($request[$item])) {
                         $this->query->whereIn('quote_status_id', $request[$item]);
                     } else {
+                        $skipped = array('is_renewal');
+                        if(in_array($item, $skipped)){
+                            continue;
+                        }
                         $this->query->where($this->getQuerySuffix($item) . '.' . $item, $request[$item]);
                     }
                 }
@@ -362,11 +366,13 @@ class LifeQuoteService extends BaseService
                 'lqr.email',
                 'lqr.mobile_no',
                 'lqrd.next_followup_date as nextFollowupDate',
-                'lqr.previous_quote_id'
+                'lqr.previous_quote_id',
+                'ps.text as paymentStatus'
             )
             ->leftJoin('life_quote_request_detail as lqrd', 'lqrd.life_quote_request_id', '=', 'lqr.id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'lqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'lqrd.advisor_assigned_by_id')
+            ->leftJoin('payment_status as ps', 'ps.id', '=', 'lqr.payment_status_id')
             ->where('qs.text', '!=', 'Fake')
             ->where('lqr.advisor_id', Auth::user()->id);
 
@@ -392,19 +398,22 @@ class LifeQuoteService extends BaseService
         if (isset($request->nfdSart) && isset($request->nfdEnd) && $request->nfdSart != '' && $request->nfdEnd != '') {
             $dateFrom = Carbon::createFromFormat('Y-m-d', $request->nfdSart)->startOfDay()->toDateTimeString();
             $dateTo = Carbon::createFromFormat('Y-m-d', $request->nfdEnd)->endOfDay()->toDateTimeString();
-            $query->whereBetween('hqrd.next_followup_date', [$dateFrom, $dateTo]);
+            $query->whereBetween('lqrd.next_followup_date', [$dateFrom, $dateTo]);
         }
         if (isset($request->cdbId) && $request->cdbId != 0) {
             $query->where('lqr.code', $request->cdbId);
         }
         if (isset($request->email) && $request->email != '') {
-            $query->where('bqr.email', $request->email);
+            $query->where('lqr.email', $request->email);
         }
         if (isset($request->leadStatus) && $request->leadStatus != 0) {
             $query->where('lqr.quote_status_id', $request->leadStatus);
         }
         if (Auth::user()->isRenewalAdvisor()) {
            $query->whereNotNull('lqr.previous_quote_id');
+        }
+        if (isset($request->paymentStatus)) {
+            $query->where('lqr.payment_status_id', $request->paymentStatus);
         }
         return $query;
     }

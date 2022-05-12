@@ -120,7 +120,6 @@ class BusinessQuoteService extends BaseService
 
     public function getBusinessLeadsForAdvisor($request)
     {
-        
         $query = DB::table('business_quote_request as bqr')
             ->select(
                 'bqr.id',
@@ -139,11 +138,13 @@ class BusinessQuoteService extends BaseService
                 'bqr.email',
                 'bqr.mobile_no',
                 'bqrd.next_followup_date as nextFollowupDate',
-                'bqr.previous_quote_id'
+                'bqr.previous_quote_id',
+                'ps.text as paymentStatus'
             )
             ->leftJoin('business_quote_request_detail as bqrd', 'bqrd.business_quote_request_id', '=', 'bqr.id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'bqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'bqrd.advisor_assigned_by_id')
+            ->leftJoin('payment_status as ps', 'ps.id', '=', 'bqr.payment_status_id')
             ->where('bqr.advisor_id', Auth::user()->id)
             ->where('qs.text', '!=', 'Fake');
         if (isset($request->startedAt) && isset($request->endAt) && $request->startedAt != '' && $request->endAt != '') {
@@ -154,7 +155,7 @@ class BusinessQuoteService extends BaseService
         if (isset($request->nfdSart) && isset($request->nfdEnd) && $request->nfdSart != '' && $request->nfdEnd != '') {
             $dateFrom = Carbon::createFromFormat('Y-m-d', $request->nfdSart)->startOfDay()->toDateTimeString();
             $dateTo = Carbon::createFromFormat('Y-m-d', $request->nfdEnd)->endOfDay()->toDateTimeString();
-            $query->whereBetween('hqrd.next_followup_date', [$dateFrom, $dateTo]);
+            $query->whereBetween('bqrd.next_followup_date', [$dateFrom, $dateTo]);
         }
         $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
         $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';
@@ -191,9 +192,11 @@ class BusinessQuoteService extends BaseService
         if (isset($request->mobile_no) && $request->mobile_no != '') {
             $query->where('bqr.mobile_no', $request->mobile_no);
         }
-
         if (Auth::user()->isRenewalAdvisor()) {
             $query->whereNotNull('bqr.previous_quote_id');
+        }
+        if (isset($request->paymentStatus)) {
+            $query->where('bqr.payment_status_id', $request->paymentStatus);
         }
         return $query;
     }
@@ -341,6 +344,10 @@ class BusinessQuoteService extends BaseService
                     else if ($item == 'quote_status_id' && is_array($request[$item]) && !empty($request[$item])) {
                         $this->query->whereIn('quote_status_id', $request[$item]);
                     } else {
+                        $skipped = array('is_renewal');
+                        if(in_array($item, $skipped)){
+                            continue;
+                        }
                         $this->query->where($this->getQuerySuffix($item) . '.' . $item, $request[$item]);
                     }
                 }
