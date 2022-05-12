@@ -344,6 +344,9 @@ class HomeQuoteService extends BaseService
         if (Auth::user()->isRenewalAdvisor()) {
             $query->whereNotNull('hqr.previous_quote_id');
         }
+        if (isset($request->paymentStatus)) {
+            $query->where('hqr.payment_status_id', $request->paymentStatus);
+        }
         return $query;
     }
 
