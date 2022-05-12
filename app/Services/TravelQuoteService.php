@@ -185,11 +185,13 @@ class TravelQuoteService extends BaseService
                 'tqr.mobile_no as mobile_no',
                 'tqr.source as leadSource',
                 'tqrd.next_followup_date as nextFollowupDate',
-                'tqr.previous_quote_id'
+                'tqr.previous_quote_id',
+                'ps.text as paymentStatus'
             )
             ->leftJoin('travel_quote_request_detail as tqrd', 'tqrd.travel_quote_request_id', '=', 'tqr.id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'tqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'tqrd.advisor_assigned_by_id')
+            ->leftJoin('payment_status as ps', 'ps.id', '=', 'tqr.payment_status_id')
             ->where('qs.text', '!=', 'Fake')
             ->where('tqr.advisor_id', Auth::user()->id);
 
