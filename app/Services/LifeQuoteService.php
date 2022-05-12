@@ -366,7 +366,8 @@ class LifeQuoteService extends BaseService
                 'lqr.email',
                 'lqr.mobile_no',
                 'lqrd.next_followup_date as nextFollowupDate',
-                'lqr.previous_quote_id'
+                'lqr.previous_quote_id',
+                'lqr.payment_status_id as paymentStatus'
             )
             ->leftJoin('life_quote_request_detail as lqrd', 'lqrd.life_quote_request_id', '=', 'lqr.id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'lqr.quote_status_id')

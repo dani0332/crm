@@ -301,7 +301,8 @@ class HomeQuoteService extends BaseService
                 'hqr.source as leadSource',
                 'hqr.premium',
                 'hqrd.next_followup_date as nextFollowupDate',
-                'hqr.previous_quote_id'
+                'hqr.previous_quote_id',
+                'hqr.payment_status_id as paymentStatus'
             )
             ->leftJoin('home_quote_request_detail as hqrd', 'hqrd.home_quote_request_id', '=', 'hqr.id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'hqr.quote_status_id')

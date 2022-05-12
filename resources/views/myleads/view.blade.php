@@ -211,6 +211,9 @@
                     {
                         data: 'nextFollowupDate',
                         name: 'nextFollowupDate',
+                    },{
+                        data: 'paymentStatus',
+                        name: 'paymentStatus',
                     });
             }
             var myleadsTable = $("#dtBasicExample-leadsearch").DataTable({
@@ -639,6 +642,7 @@
                                 @if (Auth::user()->isRenewalAdvisor()) <th>Last Updated Date</th> @endif
                                 <th>Assigned By</th>
                                 @if (!Auth::user()->isRenewalAdvisor()) <th>Next FollowUp Date</th> @endif
+                                @if (!Auth::user()->isRenewalAdvisor()) <th>Payment Status</th> @endif
                                 @if (Auth::user()->isRenewalAdvisor()) <th>Policy Number</th> @endif
                                 @if (Auth::user()->isRenewalAdvisor())<th>Premium</th>@endif
                                 @if (Auth::user()->isRenewalAdvisor() && $teamName == "Business")<th>Company Name</th>@endif
