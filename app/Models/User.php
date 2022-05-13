@@ -120,7 +120,7 @@ class User extends Authenticatable implements AuditableContract
     }
     public function isRenewalManager()
     {
-        return Auth::user()->hasAnyRole(["TRAVEL_RENEWAL_MANAGER","HEALTH_RENEWAL_MANAGER","HOME_RENEWAL_MANAGER","LIFE_RENEWAL_MANAGER","GM_RENEWAL_MANAGER","CORPLINE_RENEWAL_MANAGER"]);
+        return Auth::user()->hasAnyRole(["CAR_RENEWAL_MANAGER","TRAVEL_RENEWAL_MANAGER","HEALTH_RENEWAL_MANAGER","HOME_RENEWAL_MANAGER","LIFE_RENEWAL_MANAGER","GM_RENEWAL_MANAGER","CORPLINE_RENEWAL_MANAGER"]);
     }
     public function isAdvisor()
     {

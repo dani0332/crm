@@ -125,7 +125,7 @@ class RenewalsUploadController extends Controller
         $renewalsUploadLead = new RenewalsUploadLeads();
         $renewalsUploadLead->file_name = $fileName;
         $renewalsUploadLead->file_path = $azureStorageUrl.$azureStorageContainer.'/'.$filePathAzure;
-        $renewalsUploadLead->status = ProcessStatusCode::PENDING;
+        $renewalsUploadLead->status = ProcessStatusCode::IN_PROGRESS;
         $renewalsUploadLead->good = 0;
         $renewalsUploadLead->created_by_id = Auth::user()->id;
         $renewalsUploadLead->save();
@@ -227,7 +227,7 @@ class RenewalsUploadController extends Controller
 
         $renewalsBatchStatus = new RenewalsBatchEmails();
         $renewalsBatchStatus->batch = $batch;
-        $renewalsBatchStatus->status = ProcessStatusCode::PROCEED;
+        $renewalsBatchStatus->status = ProcessStatusCode::IN_PROGRESS;
         $renewalsBatchStatus->total_leads = $batchLeadsCount;
         $renewalsBatchStatus->total_sent = 0;
         $renewalsBatchStatus->total_bounced = 0;
