@@ -824,7 +824,7 @@ class RenewalsUploadService
                 $newEmailStatus->quote_id = $carQuote->id;
                 $newEmailStatus->email_address = $finalEmail;
                 $newEmailStatus->msg_id = $getmessageId;
-                $newEmailStatus->email_status = ProcessStatusCode::PENDING;
+                $newEmailStatus->email_status = ProcessStatusCode::IN_PROGRESS;
                 $newEmailStatus->save();
             }
         }
@@ -857,6 +857,10 @@ class RenewalsUploadService
                 "to" => array([
                     "email" => $emailData['customerEmail'],
                     "name" => $emailData['customerName'],
+                ]),
+                "bcc" => array([
+                    "email" => $emailData['advisorEmail'],
+                    "name" => $emailData['advisorName'],
                 ]),
                 "templateId" => $emailTemplateId,
                 "params" => [
