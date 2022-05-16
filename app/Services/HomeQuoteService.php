@@ -12,10 +12,14 @@ use Illuminate\Support\Facades\Auth;
 use \Carbon\Carbon;
 use Config;
 use App\Traits\GetUserTree;
+use App\Traits\CustomerAdditionalInfo as CustomerAdditionalInfoTrait;
+use App\Enums\quoteTypeCode;
+
 class HomeQuoteService extends BaseService
 {
     protected $query;
     use GetUserTree;
+    use CustomerAdditionalInfoTrait;
     public function __construct()
     {
 
@@ -114,7 +118,11 @@ class HomeQuoteService extends BaseService
             "referenceUrl" => $appUrl,
         );
         if (!Auth::user()->hasRole("ADMIN")) $dataArr['advisorId'] = Auth::user()->id;
-        return CapiRequestService::sendCAPIRequest('/api/v1-save-home-quote', $dataArr);
+        $response = CapiRequestService::sendCAPIRequest('/api/v1-save-home-quote', $dataArr);
+        if(isset($response->quoteUID))
+            return $this->createUpdateCustomerInfo($request, $request->email, $response->quoteUID, quoteTypeCode::HomeQuote);
+        else
+            return $response;
     }
 
     public function getGridData($model, $request)
@@ -414,7 +422,7 @@ class HomeQuoteService extends BaseService
         $homeQuote->has_building = $request->has_building == 'on' ? true : false;
         $homeQuote->has_personal_belongings = $request->has_personal_belongings == 'on' ?  true : false;
         $homeQuote->save();
-
+        $this->createUpdateCustomerInfo($request, $homeQuote->email, $homeQuote->uuid, quoteTypeCode::HomeQuote);
         if (isset($request->return_to_view))
             return redirect("quote/home/" . $id)->with('success', 'Home Quote has been updated');
     }

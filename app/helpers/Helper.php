@@ -4,6 +4,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use App\Enums\quoteTypeCode;
 use App\Traits\GetUserTree;
+use App\Models\CustomerAdditionalInfo;
+
 if (!function_exists('generate_code')) {
 
     /**
@@ -228,6 +230,12 @@ function getDataAgainstSearchTerm($modelType,  $request) {
        
     }
    
+    return $result;
+}
+
+
+function getAdditionalInfo($modelType, $quoteId) {
+    $result = CustomerAdditionalInfo::where(["quote_request_id" => $quoteId, "quote_type" => $modelType."Quote"])->get();
     return $result;
 }
 
