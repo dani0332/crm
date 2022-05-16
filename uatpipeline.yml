@@ -8,4 +8,4 @@ pool:
 steps:
 
 - publish: '$(System.DefaultWorkingDirectory)'
-  artifact: imcrmstg
+  artifact: imcrmuat
