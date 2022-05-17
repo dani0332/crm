@@ -563,6 +563,12 @@ class CarQuoteService extends BaseService
                 array_push($searchProperties, 'is_ecommerce');
                 array_push($searchProperties, 'payment_status_id');
             }
+            if (Auth::user()->isRenewalAdvisor()) {
+                $this->query->where('cqr.advisor_id', Auth::user()->id);
+            }
+            if (Auth::user()->isRenewalUser()) {
+                $this->query->orderBy('cqr.created_at', 'DESC');
+            }
 
             foreach ($searchProperties as $item) {
                 if (!empty($request[$item]) && $item != "created_at" && $item != "renewal_expiry_date") {
