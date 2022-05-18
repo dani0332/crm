@@ -161,7 +161,6 @@ class CarQuoteService extends BaseService
         $carQuote->emirate_of_registration_id = $request->emirate_of_registration_id;
         $carQuote->car_type_insurance_id = $request->car_type_insurance_id;
         $carQuote->claim_history_id = $request->claim_history_id;
-        $carQuote->quote_status_id = $request->quote_status_id;
         $carQuote->premium = $request->premium;
         $carQuote->car_value = $request->car_value;
         $carQuote->seat_capacity = $request->seat_capacity;
