@@ -170,6 +170,7 @@ class CarQuoteService extends BaseService
         $carQuote->car_make_id = $request->car_make_id;
         $carQuote->car_model_id = $request->car_model_id;
         $carQuote->currently_insured_with = $request->currently_insured_with;
+        $carQuote->quote_updated_at = Carbon::now();
         $carQuote->save();
 
         if (isset($request->return_to_view))
