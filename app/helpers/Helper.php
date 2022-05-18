@@ -107,15 +107,13 @@ function cleanString($string) {
             ->whereNotNull("previous_quote_id")
             ->paginate(10);
 
-        }else {
+        }
+        else {
             $result["total_leads"] = $modelType::where("quote_status_id", $statusId)
-            ->where("advisor_id", \Auth::user()->id)
             ->count();
             $result["total_premium"] = $modelType::where("quote_status_id", $statusId)
-            ->where("advisor_id", \Auth::user()->id)
             ->sum("premium");
             $result["leads_list"] = $modelType::where("quote_status_id", $statusId)
-            ->where("advisor_id", \Auth::user()->id)
             ->paginate(10);
         }
     }else {
@@ -134,6 +132,35 @@ function cleanString($string) {
             ->where("advisor_id", \Auth::user()->id)
             ->whereNotNull("previous_quote_id")->paginate(10);
 
+        }
+        else if (Auth::user()->isRenewalManager()) {
+            $ids = GetUserTree::StaticWalkTree(Auth::user()->id);
+            $result["total_leads"] = $modelType::where("quote_status_id", $statusId)
+            ->whereIn("advisor_id",  $ids)
+            ->whereNotNull("previous_quote_id")->count();
+
+            $result["total_premium"] = $modelType::where("quote_status_id", $statusId)
+            ->whereIn("advisor_id",  $ids)
+            ->whereNotNull("previous_quote_id")->sum("premium");
+
+            $result["leads_list"] = $modelType::where("quote_status_id", $statusId)
+            ->whereIn("advisor_id",  $ids)
+            ->whereNotNull("previous_quote_id")->paginate(10);
+        }
+        else if (Auth::user()->isNewBusinessManager()) {
+            $ids = GetUserTree::StaticWalkTree(Auth::user()->id);
+
+            $result["total_leads"] = $modelType::where("quote_status_id", $statusId)
+            ->whereIn("advisor_id",  $ids)
+            ->whereNull("previous_quote_id")->count();
+
+            $result["total_premium"] = $modelType::where("quote_status_id", $statusId)
+            ->whereIn("advisor_id",  $ids)
+            ->whereNull("previous_quote_id")->sum("premium");
+
+            $result["leads_list"] = $modelType::where("quote_status_id", $statusId)
+            ->whereIn("advisor_id",  $ids)
+            ->whereNull("previous_quote_id")->paginate(10);
         }
         else {
             $result["total_leads"] = $modelType::where("quote_status_id", $statusId)->count();

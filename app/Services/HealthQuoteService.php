@@ -157,8 +157,12 @@ class HealthQuoteService extends BaseService
         $searchProperties = [];
         $isRenewalUser = Auth::user()->isRenewalUser();
         $isRenewalManager = Auth::user()->isRenewalManager();
+        $isNewManager = Auth::user()->isNewBusinessManager();
         if ($isRenewalUser || $isRenewalManager) {
             $searchProperties = $model->renewalSearchProperties;
+        }
+        else if ($isNewManager) {
+            $searchProperties = $model->newBusinessSkipProperties;
         } else {
             $searchProperties = $model->searchProperties;
         }
@@ -210,6 +214,12 @@ class HealthQuoteService extends BaseService
             if (Auth::user()->isRenewalManager()) {
                 $ids = $this->walkTree(Auth::user()->id);
                 $this->query->whereIn('hqr.advisor_id', $ids);
+                $this->query->whereNotNull('hqr.previous_quote_id');
+            }
+            if (Auth::user()->isNewBusinessManager()) {
+                $ids = $this->walkTree(Auth::user()->id);
+                $this->query->whereIn('hqr.advisor_id', $ids);
+                $this->query->whereNull('hqr.previous_quote_id');
             }
             if (isset($request->is_renewal) && $request->is_renewal != '') {
                 if($request->is_renewal == "Yes")
@@ -543,12 +553,23 @@ class HealthQuoteService extends BaseService
 
     public function fillRenewalProperties($model)
     {
-        $model->renewalSearchProperties = ['created_at', 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'policy_number','is_renewal'];
+        $model->renewalSearchProperties = ['created_at', 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'policy_number'];
         $model->renewalSkipProperties = [
             "create" => "member_category_id,salary_band_id,gender,is_renewal,previous_quote_id,created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,premium,source,transapp_code,renewal_expiry_date",
             "list" => "member_category_id,salary_band_id,gender,is_renewal,email,cover_for_id,has_worldwide_cover,has_home,details,preference,mobile_no,dob,marital_status_id,nationality_id,has_dental,emirate_of_your_visa_id,is_ebp_renewal,health_team_type,next_followup_date,lost_reason,source,transapp_code,premium,lead_type_id,renewal_expiry_date",
             "update" => "member_category_id,salary_band_id,gender,is_renewal,previous_quote_id,created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,source,transapp_code,renewal_expiry_date",
             "show" => "member_category_id,salary_band_id,gender,is_renewal,id,next_followup_date",
+        ];
+    }
+
+    public function fillNewBusinessProperties($model)
+    {
+        $model->newBusinessSearchProperties = ['created_at', 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'policy_number'];
+        $model->newBusinessSkipProperties = [
+            "create" => "member_category_id,salary_band_id,gender,is_renewal,previous_quote_id,created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,premium,source,transapp_code,renewal_expiry_date",
+            "list" => "member_category_id,salary_band_id,gender,is_renewal,email,cover_for_id,has_worldwide_cover,has_home,details,preference,mobile_no,dob,marital_status_id,nationality_id,has_dental,emirate_of_your_visa_id,is_ebp_renewal,health_team_type,next_followup_date,lost_reason,source,transapp_code,premium,lead_type_id,renewal_expiry_date,previous_quote_id",
+            "update" => "member_category_id,salary_band_id,gender,is_renewal,previous_quote_id,created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,source,transapp_code,renewal_expiry_date",
+            "show" => "member_category_id,salary_band_id,gender,is_renewal,id,next_followup_date,previous_quote_id",
         ];
     }
 
@@ -643,7 +664,7 @@ class HealthQuoteService extends BaseService
 
     public function fillModelSearchProperties()
     {
-        return ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'advisor_id', 'created_at', 'health_team_type', 'next_followup_date'];
+        return ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'advisor_id', 'created_at', 'health_team_type', 'next_followup_date','is_renewal'];
     }
 
     public function convertLeadToGM($lead)
