@@ -14,7 +14,7 @@
                 <ul class="nav side-menu">
                     <li> <a href="{{ url('/leadsearch') }}"><i class="fa fa-home"></i> Home</a></li>
                 </ul>
-                @if (Auth::user()->hasAnyRole(['ADMIN','CAR_ADVISOR', 'BUSINESS_ADVISOR', 'HEALTH_ADVISOR','HOME_ADVISOR','LIFE_ADVISOR','TRAVEL_ADVISOR', 'GM_ADVISOR', 'RM_ADVISOR', 'CORPLINE_ADVISOR', 'EBP_ADVISOR', 'HEALTH_WCU_ADVISOR','HEALTH_RENEWAL_ADVISOR','TRAVEL_RENEWAL_ADVISOR','LIFE_RENEWAL_ADVISOR','HOME_RENEWAL_ADVISOR','GM_RENEWAL_ADVISOR','CORPLINE_RENEWAL_ADVISOR']))
+                @if (Auth::user()->hasAnyRole(['ADMIN','CAR_ADVISOR', 'BUSINESS_ADVISOR', 'HEALTH_ADVISOR','HOME_ADVISOR','LIFE_ADVISOR','TRAVEL_ADVISOR', 'GM_ADVISOR', 'RM_ADVISOR', 'CORPLINE_ADVISOR', 'EBP_ADVISOR', 'HEALTH_WCU_ADVISOR','HEALTH_RENEWAL_ADVISOR','TRAVEL_RENEWAL_ADVISOR','LIFE_RENEWAL_ADVISOR','HOME_RENEWAL_ADVISOR','GM_RENEWAL_ADVISOR','CORPLINE_RENEWAL_ADVISOR','CAR_RENEWAL_ADVISOR']))
                     <ul class="nav side-menu">
                         <li>
                             <a  href="{{ url('/myleads') }}"><i class="fa fa-inbox"></i> My Leads</a>
@@ -51,6 +51,11 @@
                             </ul>
                         </li>
                     </ul>
+                @endcan
+               @can('activities-list')
+                <ul class="nav side-menu">
+                    <li> <a href="{{ url('/activities') }}"> <i class="fa fa-list-alt" aria-hidden="true"></i> Activities</a></li>
+                </ul>
                 @endcan
                 @canany(['car-quotes-list', 'health-quotes-list', 'travel-quotes-list', 'life-quotes-list', 'home-quotes-list'])
                 <ul class="nav side-menu">

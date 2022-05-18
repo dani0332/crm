@@ -312,16 +312,6 @@
                 for (let index = 1; index < rows.length; index++) {
                     var columns = $(rows[index]).children();
                     for (let i = 0; i < columns.length; i++) {
-                        if (i == nextFollowupDateColumn && $(columns[i]).text() != "") {
-                            if (formatedDate(new Date()) > formatedDate(new Date($(columns[i]).text()))) {
-                                $(rows[index]).children().eq(i).css({
-                                    'color': 'white',
-                                    'background-color': 'red',
-                                    'font-weight': 'bold',
-                                    'font-size': '12px'
-                                });
-                            }
-                        }
                         if (checkboxIndexes.includes(i)) {
                             const element = columns[i];
                             if ($(element).text() == '1') {

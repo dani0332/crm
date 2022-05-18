@@ -168,6 +168,13 @@ class RenewalsUploadService
         $advisorId = $this->renewalsAddonService->getUserInfo($quoteData->pAdvisor);
         $quoteUuid = $this->generateUUID(QuoteTypeId::Business);
 
+        if ($quoteData->product_type != null) {
+            $businessSublineInsuranceInstance = $this->renewalsAddonService->getBusinessSublineInsurance($quoteData->product_type);	
+            if($businessSublineInsuranceInstance){
+                $businessSublineInsuranceId = $businessSublineInsuranceInstance->id;
+            }
+        }
+
         $newBusinessQuote = new BusinessQuote([
             "first_name" => $quoteData->first_name,
             "last_name" => $quoteData->last_name,
@@ -185,11 +192,12 @@ class RenewalsUploadService
             "quote_status_id" => $transApprovedId,
             "other_email_addresses" => $quoteData->other_email_ids,
             "renewal_import_code" => $renewalImportCode,
-            "premium" => $quoteData->gross_premium
+            "premium" => $quoteData->gross_premium,
+            "business_type_of_insurance_id" => $businessSublineInsuranceId
         ]);
         $newBusinessQuote->save();
 
-        $createRenewalQuote = $this->createNewRenewalBusinessQuote($newBusinessQuote->id, $quoteData->advisor, $quoteData->batch, $quoteData->policy, $newLeadId, $quoteData->other_email_ids, $renewalImportCode);
+        $createRenewalQuote = $this->createNewRenewalBusinessQuote($newBusinessQuote->id, $quoteData->advisor, $quoteData->batch, $quoteData->policy, $newLeadId, $quoteData->other_email_ids, $renewalImportCode, $businessSublineInsuranceId);
         $this->createRenewalDumpRecord('Business', $createRenewalQuote, $quoteData);
     }
 
@@ -425,7 +433,7 @@ class RenewalsUploadService
         return $createRenewalQuote->id;
     }
 
-    function createNewRenewalBusinessQuote($quoteId, $newAdvisor, $batchNumber, $policy, $newLeadId, $otherEmailIds, $renewalImportCode)
+    function createNewRenewalBusinessQuote($quoteId, $newAdvisor, $batchNumber, $policy, $newLeadId, $otherEmailIds, $renewalImportCode, $businessSublineInsuranceId)
     {
         $getBusinessQuoteData = BusinessQuote::where('id', '=', $quoteId)->get()->first();
         $advisorId = $this->renewalsAddonService->getUserInfo($newAdvisor);
@@ -448,7 +456,8 @@ class RenewalsUploadService
             "previous_quote_policy_number" => $policy,
             "quote_status_id" => $newLeadId,
             "other_email_addresses" => $otherEmailIds,
-            "renewal_import_code" => $renewalImportCode
+            "renewal_import_code" => $renewalImportCode,
+            "business_type_of_insurance_id" => $businessSublineInsuranceId
         ]);
         $createRenewalQuote->save();
 
@@ -815,7 +824,7 @@ class RenewalsUploadService
                 $newEmailStatus->quote_id = $carQuote->id;
                 $newEmailStatus->email_address = $finalEmail;
                 $newEmailStatus->msg_id = $getmessageId;
-                $newEmailStatus->email_status = ProcessStatusCode::PENDING;
+                $newEmailStatus->email_status = ProcessStatusCode::IN_PROGRESS;
                 $newEmailStatus->save();
             }
         }
@@ -848,6 +857,10 @@ class RenewalsUploadService
                 "to" => array([
                     "email" => $emailData['customerEmail'],
                     "name" => $emailData['customerName'],
+                ]),
+                "bcc" => array([
+                    "email" => $emailData['advisorEmail'],
+                    "name" => $emailData['advisorName'],
                 ]),
                 "templateId" => $emailTemplateId,
                 "params" => [

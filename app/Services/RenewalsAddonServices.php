@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\BikeQuote;
+use App\Models\BusinessInsuranceType;
 use App\Models\BusinessQuote;
 use App\Models\CarMake;
 use App\Models\CarModel;
@@ -121,6 +122,11 @@ class RenewalsAddonServices
     function getQuoteType($type) 
     {
         return QuoteType::where('code','=',$type)->get()->first();
+    }
+
+    function getBusinessSublineInsurance($text)
+    {
+        return BusinessInsuranceType::where('text', '=', $text)->get()->first();
     }
 
 }

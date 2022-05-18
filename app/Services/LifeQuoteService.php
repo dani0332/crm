@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Enums\QuoteTypeId;
-use App\Models\LeadStatus;
 use App\Models\LifeQuote;
 use App\Models\LifeQuoteRequestDetail;
 use App\Models\QuoteStatus;
@@ -61,8 +60,7 @@ class LifeQuoteService extends BaseService
                 'lqrd.transapp_code',
                 'lqrd.notes',
                 'ls.text as lost_reason',
-                'lqr.previous_quote_id',
-                'lqr.insurer_quote_no'
+                'lqr.previous_quote_id'
             )
             ->leftJoin('life_quote_request_detail as lqrd', 'lqrd.life_quote_request_id', 'lqr.id')
             ->leftJoin('currency_type as ct', 'ct.id', '=', 'lqr.sum_insured_currency_id')
@@ -220,6 +218,10 @@ class LifeQuoteService extends BaseService
                     else if ($item == 'quote_status_id' && is_array($request[$item]) && !empty($request[$item])) {
                         $this->query->whereIn('quote_status_id', $request[$item]);
                     } else {
+                        $skipped = array('is_renewal');
+                        if(in_array($item, $skipped)){
+                            continue;
+                        }
                         $this->query->where($this->getQuerySuffix($item) . '.' . $item, $request[$item]);
                     }
                 }
@@ -364,11 +366,13 @@ class LifeQuoteService extends BaseService
                 'lqr.email',
                 'lqr.mobile_no',
                 'lqrd.next_followup_date as nextFollowupDate',
-                'lqr.previous_quote_id'
+                'lqr.previous_quote_id',
+                'ps.text as paymentStatus'
             )
             ->leftJoin('life_quote_request_detail as lqrd', 'lqrd.life_quote_request_id', '=', 'lqr.id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'lqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'lqrd.advisor_assigned_by_id')
+            ->leftJoin('payment_status as ps', 'ps.id', '=', 'lqr.payment_status_id')
             ->where('qs.text', '!=', 'Fake')
             ->where('lqr.advisor_id', Auth::user()->id);
 
@@ -394,19 +398,22 @@ class LifeQuoteService extends BaseService
         if (isset($request->nfdSart) && isset($request->nfdEnd) && $request->nfdSart != '' && $request->nfdEnd != '') {
             $dateFrom = Carbon::createFromFormat('Y-m-d', $request->nfdSart)->startOfDay()->toDateTimeString();
             $dateTo = Carbon::createFromFormat('Y-m-d', $request->nfdEnd)->endOfDay()->toDateTimeString();
-            $query->whereBetween('hqrd.next_followup_date', [$dateFrom, $dateTo]);
+            $query->whereBetween('lqrd.next_followup_date', [$dateFrom, $dateTo]);
         }
         if (isset($request->cdbId) && $request->cdbId != 0) {
             $query->where('lqr.code', $request->cdbId);
         }
         if (isset($request->email) && $request->email != '') {
-            $query->where('bqr.email', $request->email);
+            $query->where('lqr.email', $request->email);
         }
         if (isset($request->leadStatus) && $request->leadStatus != 0) {
             $query->where('lqr.quote_status_id', $request->leadStatus);
         }
         if (Auth::user()->isRenewalAdvisor()) {
            $query->whereNotNull('lqr.previous_quote_id');
+        }
+        if (isset($request->paymentStatus)) {
+            $query->where('lqr.payment_status_id', $request->paymentStatus);
         }
         return $query;
     }
@@ -484,8 +491,7 @@ class LifeQuoteService extends BaseService
             "is_smoker" => "|static|title|Yes,No",
             "others_info" => "textarea",
             "previous_quote_id" => "readonly|title",
-            "is_renewal" => "|static|title|Yes,No",
-            "insurer_quote_no" => "readonly|none"
+            "is_renewal" => "|static|title|Yes,No"
         );
     }
 
@@ -572,10 +578,10 @@ class LifeQuoteService extends BaseService
     {
         $model->renewalSearchProperties = ['created_at', 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'policy_number','is_renewal'];
         $model->renewalSkipProperties = [
-            "create" => "insurer_quote_no,is_renewal,previous_quote_id,id,advisor_id,quote_status_id,code,created_at,updated_at,next_followup_date,lost_reason,premium,source,transapp_code",
-            "list" => "insurer_quote_no,is_renewal,email,mobile_no,others_info,dob,sum_insured_value,sum_insured_currency_id,purpose_of_insurance_id,marital_status_id,children_id,tenure_of_insurance_id,number_of_years_id,gender,is_smoker,others_info,next_followup_date,lost_reason,source,transapp_code",
-            "update" => "insurer_quote_no,is_renewal,previous_quote_id,id,advisor_id,quote_status_id,code,created_at,updated_at,next_followup_date,lost_reason,source,transapp_code",
-            "show" => "insurer_quote_no",
+            "create" => "is_renewal,previous_quote_id,id,advisor_id,quote_status_id,code,created_at,updated_at,next_followup_date,lost_reason,premium,source,transapp_code",
+            "list" => "is_renewal,email,mobile_no,others_info,dob,sum_insured_value,sum_insured_currency_id,purpose_of_insurance_id,marital_status_id,children_id,tenure_of_insurance_id,number_of_years_id,gender,is_smoker,others_info,next_followup_date,lost_reason,source,transapp_code",
+            "update" => "is_renewal,previous_quote_id,id,advisor_id,quote_status_id,code,created_at,updated_at,next_followup_date,lost_reason,source,transapp_code",
+            "show" => "",
         ];
     }
 

@@ -8,7 +8,6 @@ use App\Models\BusinessInsuranceType;
 use App\Models\BusinessQuote;
 use App\Models\HealthQuote;
 use App\Models\HealthQuoteRequestDetail;
-use App\Models\LeadStatus;
 use App\Models\QuoteStatus;
 use Illuminate\Http\Request;
 use DB;
@@ -69,7 +68,7 @@ class HealthQuoteService extends BaseService
             'sb.text as salary_band_id_text',
             'hqr.member_category_id',
             'mc.text as member_category_id_text',
-            'hqr.insurer_quote_no'
+            'hqr.renewal_expiry_date'
         )
             ->leftJoin('marital_status as ms', 'ms.id', '=', 'hqr.marital_status_id')
             ->leftJoin('health_quote_request_detail as hqrd', 'hqrd.health_quote_request_id', '=', 'hqr.id')
@@ -231,6 +230,10 @@ class HealthQuoteService extends BaseService
                     else if ($item == 'quote_status_id' && is_array($request[$item]) && !empty($request[$item])) {
                         $this->query->whereIn('quote_status_id', $request[$item]);
                     } else {
+                        $skipped = array('is_renewal');
+                        if(in_array($item, $skipped)){
+                            continue;
+                        }
                         $this->query->where($this->getQuerySuffix($item) . '.' . $item, $request[$item]);
                     }
                 }
@@ -405,11 +408,13 @@ class HealthQuoteService extends BaseService
                 'hqr.source as leadSource',
                 'hqr.premium',
                 'hqrd.next_followup_date as nextFollowupDate',
-                'hqr.previous_quote_id'
+                'hqr.previous_quote_id',
+                'ps.text as paymentStatus'
             )
             ->leftJoin('health_quote_request_detail as hqrd', 'hqrd.health_quote_request_id', '=', 'hqr.id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'hqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'hqrd.advisor_assigned_by_id')
+            ->leftJoin('payment_status as ps', 'ps.id', '=', 'hqr.payment_status_id')
             ->where('qs.text', '!=', 'Fake')
             ->where('hqr.advisor_id', Auth::user()->id);
 
@@ -446,9 +451,11 @@ class HealthQuoteService extends BaseService
         if (isset($request->leadStatus) && $request->leadStatus != 0) {
             $query->where('hqr.quote_status_id', $request->leadStatus);
         }
-
         if (Auth::user()->isRenewalAdvisor()) {
             $query->whereNotNull('hqr.previous_quote_id');
+        }
+        if (isset($request->paymentStatus)) {
+            $query->where('hqr.payment_status_id', $request->paymentStatus);
         }
         return $query;
     }
@@ -526,11 +533,11 @@ class HealthQuoteService extends BaseService
             "has_home" => "input|checkbox|title",
             "emirate_of_your_visa_id" => "select|title|required",
             "previous_quote_id" => "readonly|title",
+            "renewal_expiry_date" => "input|date|title|range",
             "is_renewal" => "|static|Yes,No",
             "salary_band_id" => "select|title|required",
             "member_category_id" => "select|title|required",
-            "insurer_quote_no" => "readonly|none",
-            "gender" => "|static|Male,Female",
+            "gender" => "|static|Male,Female"
         );
     }
 
@@ -538,10 +545,10 @@ class HealthQuoteService extends BaseService
     {
         $model->renewalSearchProperties = ['created_at', 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'policy_number','is_renewal'];
         $model->renewalSkipProperties = [
-            "create" => "member_category_id,salary_band_id,gender,insurer_quote_no,is_renewal,previous_quote_id,created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,premium,source,transapp_code",
-            "list" => "member_category_id,salary_band_id,gender,insurer_quote_no,is_renewal,email,cover_for_id,has_worldwide_cover,has_home,details,preference,mobile_no,dob,marital_status_id,nationality_id,has_dental,emirate_of_your_visa_id,is_ebp_renewal,health_team_type,next_followup_date,lost_reason,source,transapp_code,premium,lead_type_id",
-            "update" => "member_category_id,salary_band_id,gender,insurer_quote_no,is_renewal,previous_quote_id,created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,source,transapp_code",
-            "show" => "member_category_id,salary_band_id,gender,insurer_quote_no,is_renewal,id,next_followup_date",
+            "create" => "member_category_id,salary_band_id,gender,is_renewal,previous_quote_id,created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,premium,source,transapp_code,renewal_expiry_date",
+            "list" => "member_category_id,salary_band_id,gender,is_renewal,email,cover_for_id,has_worldwide_cover,has_home,details,preference,mobile_no,dob,marital_status_id,nationality_id,has_dental,emirate_of_your_visa_id,is_ebp_renewal,health_team_type,next_followup_date,lost_reason,source,transapp_code,premium,lead_type_id,renewal_expiry_date",
+            "update" => "member_category_id,salary_band_id,gender,is_renewal,previous_quote_id,created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,source,transapp_code,renewal_expiry_date",
+            "show" => "member_category_id,salary_band_id,gender,is_renewal,id,next_followup_date",
         ];
     }
 
@@ -615,6 +622,9 @@ class HealthQuoteService extends BaseService
             case 'member_category_id':
                 $title = "Member Category";
                 break;
+            case 'renewal_expiry_date':
+                $title = "Renewal Expiry Date";
+                break;
             default:
                 break;
         }
@@ -624,9 +634,9 @@ class HealthQuoteService extends BaseService
     public function fillModelSkipProperties()
     {
         return [
-            "create" => "is_renewal,previous_quote_id,created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,premium,source,transapp_code",
-            "list" => "is_renewal,gender,previous_quote_id,email,cover_for_id,has_worldwide_cover,has_home,details,preference,mobile_no,dob,marital_status_id,nationality_id,has_dental,emirate_of_your_visa_id,is_ebp_renewal",
-            "update" => "is_renewal,previous_quote_id,created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,source,transapp_code",
+            "create" => "is_renewal,previous_quote_id,created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,premium,source,transapp_code,renewal_expiry_date",
+            "list" => "is_renewal,gender,previous_quote_id,email,cover_for_id,has_worldwide_cover,has_home,details,preference,mobile_no,dob,marital_status_id,nationality_id,has_dental,emirate_of_your_visa_id,is_ebp_renewal,renewal_expiry_date",
+            "update" => "is_renewal,previous_quote_id,created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,source,transapp_code,renewal_expiry_date",
             "show" => "is_renewal,id,next_followup_date",
         ];
     }

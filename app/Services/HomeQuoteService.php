@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Enums\QuoteTypeId;
 use App\Models\HomeQuote;
 use App\Models\HomeQuoteRequestDetail;
-use App\Models\LeadStatus;
 use App\Models\QuoteStatus;
 use Illuminate\Http\Request;
 use DB;
@@ -53,7 +52,7 @@ class HomeQuoteService extends BaseService
             'hqrd.notes',
             'ls.text as lost_reason',
             'hqr.previous_quote_id',
-            'hqr.insurer_quote_no'
+            'hqr.renewal_expiry_date'
         )
             ->leftJoin('home_quote_request_detail as hqrd', 'hqrd.home_quote_request_id', '=', 'hqr.id')
             ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'hqrd.lost_reason_id')
@@ -193,6 +192,10 @@ class HomeQuoteService extends BaseService
                     else if ($item == 'quote_status_id' && is_array($request[$item]) && !empty($request[$item])) {
                         $this->query->whereIn('quote_status_id', $request[$item]);
                     } else {
+                        $skipped = array('is_renewal');
+                        if(in_array($item, $skipped)){
+                            continue;
+                        }
                         $this->query->where($this->getQuerySuffix($item) . '.' . $item, $request[$item]);
                     }
                 }
@@ -298,11 +301,13 @@ class HomeQuoteService extends BaseService
                 'hqr.source as leadSource',
                 'hqr.premium',
                 'hqrd.next_followup_date as nextFollowupDate',
-                'hqr.previous_quote_id'
+                'hqr.previous_quote_id',
+                'ps.text as paymentStatus'
             )
             ->leftJoin('home_quote_request_detail as hqrd', 'hqrd.home_quote_request_id', '=', 'hqr.id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'hqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'hqrd.advisor_assigned_by_id')
+            ->leftJoin('payment_status as ps', 'ps.id', '=', 'hqr.payment_status_id')
             ->where('qs.text', '!=', 'Fake')
             ->where('hqr.advisor_id', Auth::user()->id);
         $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
@@ -340,6 +345,9 @@ class HomeQuoteService extends BaseService
         }
         if (Auth::user()->isRenewalAdvisor()) {
             $query->whereNotNull('hqr.previous_quote_id');
+        }
+        if (isset($request->paymentStatus)) {
+            $query->where('hqr.payment_status_id', $request->paymentStatus);
         }
         return $query;
     }
@@ -441,7 +449,7 @@ class HomeQuoteService extends BaseService
             "address" => 'textarea|required',
             "previous_quote_id" => "readonly|title",
             "is_renewal" => "|static|Yes,No",
-            "insurer_quote_no" => "readonly|none"
+            "renewal_expiry_date" => "input|date|title|range"
         );
     }
 
@@ -482,6 +490,9 @@ class HomeQuoteService extends BaseService
             case 'previous_quote_id':
                 $title = "Previous Quote ID";
                 break;
+            case 'renewal_expiry_date':
+                $title = "Renewal Expiry Date";
+                break;
             default:
                 break;
         }
@@ -491,9 +502,9 @@ class HomeQuoteService extends BaseService
     public function fillModelSkipProperties()
     {
         return [
-            "create" => "is_renewal,previous_quote_id,id,code,quote_status_id,advisor_id,created_at,updated_at,next_followup_date,lost_reason,premium,source,transapp_code",
-            "list" => "is_renewal,previous_quote_id,email,address,iam_possesion_type_id,ilivein_accommodation_type_id,mobile_no,personal_belongings_aed,building_aed,contents_aed,has_contents,has_personal_belongings,has_building,address",
-            "update" => "is_renewal,previous_quote_id,id,code,quote_status_id,advisor_id,created_at,updated_at,next_followup_date,lost_reason,source,transapp_code",
+            "create" => "is_renewal,previous_quote_id,id,code,quote_status_id,advisor_id,created_at,updated_at,next_followup_date,lost_reason,premium,source,transapp_code,renewal_expiry_date",
+            "list" => "is_renewal,previous_quote_id,email,address,iam_possesion_type_id,ilivein_accommodation_type_id,mobile_no,personal_belongings_aed,building_aed,contents_aed,has_contents,has_personal_belongings,has_building,address,renewal_expiry_date",
+            "update" => "is_renewal,previous_quote_id,id,code,quote_status_id,advisor_id,created_at,updated_at,next_followup_date,lost_reason,source,transapp_code,renewal_expiry_date",
             "show" => "is_renewal,id,next_followup_date,lost_reason"
         ];
     }
@@ -507,10 +518,10 @@ class HomeQuoteService extends BaseService
     {
         $model->renewalSearchProperties = ['created_at', 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'policy_number','is_renewal'];
         $model->renewalSkipProperties = [
-            "create" => "insurer_quote_no,is_renewal,previous_quote_id,id,code,quote_status_id,advisor_id,created_at,updated_at,next_followup_date,lost_reason,premium,source,transapp_code",
-            "list" => "insurer_quote_no,is_renewal,email,address,iam_possesion_type_id,ilivein_accommodation_type_id,mobile_no,personal_belongings_aed,building_aed,contents_aed,has_contents,has_personal_belongings,has_building,address,next_followup_date,lost_reason,premium,source,transapp_code",
-            "update" => "insurer_quote_no,is_renewal,previous_quote_id,id,code,quote_status_id,advisor_id,created_at,updated_at,next_followup_date,lost_reason,source,transapp_code",
-            "show" => "insurer_quote_no,id,next_followup_date,lost_reason,is_renewal",
+            "create" => "is_renewal,previous_quote_id,id,code,quote_status_id,advisor_id,created_at,updated_at,next_followup_date,lost_reason,premium,source,transapp_code,renewal_expiry_date",
+            "list" => "is_renewal,email,address,iam_possesion_type_id,ilivein_accommodation_type_id,mobile_no,personal_belongings_aed,building_aed,contents_aed,has_contents,has_personal_belongings,has_building,address,next_followup_date,lost_reason,premium,source,transapp_code,renewal_expiry_date",
+            "update" => "is_renewal,previous_quote_id,id,code,quote_status_id,advisor_id,created_at,updated_at,next_followup_date,lost_reason,source,transapp_code,renewal_expiry_date",
+            "show" => "id,next_followup_date,lost_reason,is_renewal",
         ];
     }
 

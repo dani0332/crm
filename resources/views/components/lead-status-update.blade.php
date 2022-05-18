@@ -53,6 +53,7 @@
                 $('#trans-div').hide();
             }
         });
+       
     });
 </script>
 <div class="row">
@@ -83,10 +84,7 @@
                         </div>
                         <div class="col">
                             <div id="followup-div" style="display: none">
-                                <label class="col-form-label col-md-3 col-sm-3 label-align"><b>Next Follow-up Date</b></label>
-                                <div class="col-md-6 col-sm-6">
-                                    <input type="text" class="form-control" id="nextFollowUpDate" name="nextFollowUpDate" value="{{$lead->next_followup_date}}">
-                                </div>
+                                {{-- <button class="btn btn-warning btn-sm" style="float:right;width:110px;" type="button" id="add-activity-btn">Add Activity</button> --}}
                             </div>
                         </div>
                     </div>
