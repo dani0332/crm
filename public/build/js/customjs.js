@@ -1725,7 +1725,19 @@ $(document).ready(function () {
         e.preventDefault();
         $('#duplicateLeadModal').modal({ show: true });;
     });
+    $('#add-activity-btn').on('click', function(){
+        $('#activityModal').modal({ show: true });
+    });
 
+    $("#due_date").daterangepicker({
+        timePicker: true,
+        singleDatePicker: true,
+        timePicker24Hour: true,
+        locale: {
+            format: 'YYYY-MM-DD HH:mm:ss'
+        }
+    });
+    
     $("#quotePlansGenerateButton").click(function () {
         var quotePlansGenerateUrl = $('#quotePlansGenerateUrl').val();
         navigator.clipboard.writeText(quotePlansGenerateUrl);
@@ -2036,6 +2048,42 @@ $(document).ready(function () {
             },
         });
     });
+    disabledDoneActivities();
+
+    $('.activityChk1').on('change', function(e) {
+        $.ajax({
+            url: '/activities/updateStatus',
+            method: "POST",
+            data: {
+                activity_id: $(this).val(),
+                _token: $('input[name=_token]').val()
+            },
+            success: function(data) {
+                disabledDoneActivities();
+            },
+        });
+    });
+
+    $(".renewals-batches-data-table").DataTable({
+        ordering: false,
+        info: false,
+        searching: false,
+        bLengthChange: false,
+        serverSide: true,
+        stateSave: true,
+        paging: true,
+        processing: true,
+        ajax: config.routes.renewals_batches_datatable_route,
+        columns: [{
+            data: 'renewal_batch',
+            name: 'renewal_batch',
+            render: function (data, type, row) {
+                return "<a href='" + config.routes.renewals_batches_datatable_route + '/' + row.renewal_batch + "'>" + row.renewal_batch + "</a>"
+            }
+        },
+        ],
+    });
+   
 });
 
 
@@ -2080,22 +2128,105 @@ $('#quotePlanModal').on('hidden.bs.modal', function () {
     location.reload();
 });
 
-$(".renewals-batches-data-table").DataTable({
-    ordering: false,
-    info: false,
-    searching: false,
-    bLengthChange: false,
-    serverSide: true,
-    stateSave: true,
-    paging: true,
-    processing: true,
-    ajax: config.routes.renewals_batches_datatable_route,
-    columns: [{
-        data: 'renewal_batch',
-        name: 'renewal_batch',
-        render: function (data, type, row) {
-            return "<a href='" + config.routes.renewals_batches_datatable_route + '/' + row.renewal_batch + "'>" + row.renewal_batch + "</a>"
+function activityEdit1(el) {
+    var id = $(el).attr('data-record-id');
+    var type = $(el).attr('data-type');
+    var quote_uuid = $(el).attr('data-quote-uuid');
+    $.ajax({
+        url: '/activities/getEditView',
+        method: "POST",
+        data: {
+            activity_id: id,
+            quoteType: type,
+            quote_uuid: quote_uuid,
+            _token: $('input[name=_token]').val()
+        },
+        success: function(data) {
+            $('#activityEditModalContent').html(data);
+            $('#activityEditModalContent > form').append('<input type="hidden" name="fromLeadView" value="1">');
+            $('#activityEditModal').modal('show');
+        },
+    });
+}
+
+function isActivityFormValid() {
+    var isValid = true;
+    if ($('#title').val() == '') {
+        $('#title').next('span').html('Title is required').delay(5000).hide(0);;
+        isValid = false;
+    }
+    if ($('#description').val() == '') {
+        $('#description').next('span').html('Description is required').delay(5000).hide(0);;
+        isValid = false;
+    }
+    if ($('#due_date').val() == '') {
+        $('#due_date').next('span').html('Due Date is required').delay(5000).hide(0);;
+        isValid = false;
+    }
+    if ($('#assignee_id').val() == '') {
+        $('#assignee_id').next('span').html('Assignee is required').delay(5000).hide(0);;
+        isValid = false;
+    }
+    return isValid;
+}
+
+function submitUpdateActivity(el) {
+    var uuid = $(el).attr('data-record-id');
+    if (isActivityFormValid()) {
+        var id = $(el).attr('data-record-id');
+        var type = $(el).attr('data-type');
+        var quote_uuid = $(el).attr('data-quote-uuid');
+        $.ajax({
+            url: '/activities/' + uuid + '/update',
+            method: "POST",
+            data: {
+                title: $('#title').val(),
+                description: $('#description').val(),
+                due_date: $('#due_date').val(),
+                assignee_id: $('#assignee_id').val(),
+                _token: $('input[name=_token]').val()
+            },
+            success: function(data) {
+                $('#activityEditModal').modal('hide');
+                $('#sucess-div').text('Activity updated successfully').show().delay(5000).hide(0);
+            },
+        });
+    } else return false;
+
+}
+
+function deleteActivity1 (el)
+{
+    if(confirm('Are you sure you want to delete this activity?')){
+        var id = $(el).attr('data-record-id');
+    var quote_uuid = $(el).attr('data-quote-uuid');
+    var type = $(el).attr('data-type');
+    $.ajax({
+        url: '/activities/' + id + '/delete',
+        method: "POST",
+        data: {
+            isLeadView: 1,
+            quote_uuid: quote_uuid,
+            _token: $('input[name=_token]').val(),
+            quoteType: type,
+        },
+        success: function(data) {
+            window.location.reload();
+        },
+    });
+    }
+    else{
+        return false;
+    }
+    
+}
+
+function disabledDoneActivities(){
+    $('.activityChk1').each(function(index, el) {
+        if($(el).is(':checked') == true){
+            $(el).attr('disabled', true);
+            $(el).closest('td').siblings().find('button').attr('disabled', true);
         }
-    },
-    ],
-});
+    });
+}
+
