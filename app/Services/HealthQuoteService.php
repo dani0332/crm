@@ -424,7 +424,9 @@ class HealthQuoteService extends BaseService
                 'hqr.premium',
                 'hqrd.next_followup_date as nextFollowupDate',
                 'hqr.previous_quote_id',
-                'ps.text as paymentStatus'
+                'ps.text as paymentStatus',
+                'hqr.renewal_batch',
+                'hqr.previous_quote_policy_number as previous_policy_number',
             )
             ->leftJoin('health_quote_request_detail as hqrd', 'hqrd.health_quote_request_id', '=', 'hqr.id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'hqr.quote_status_id')
@@ -471,6 +473,12 @@ class HealthQuoteService extends BaseService
         }
         if (isset($request->paymentStatus)) {
             $query->where('hqr.payment_status_id', $request->paymentStatus);
+        }
+        if (isset($request->renewal_batch)) {
+            $query->where('hqr.renewal_batch', $request->renewal_batch);
+        }
+        if (isset($request->previous_policy_number)) {
+            $query->where('hqr.previous_quote_policy_number', $request->previous_policy_number);
         }
         return $query;
     }

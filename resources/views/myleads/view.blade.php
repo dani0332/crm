@@ -75,8 +75,11 @@
                     data: "assignedBy",
                     name: "assignedBy"
                 }, {
-                    data: 'policy_number',
-                    name: 'policy_number'
+                    data: 'previous_policy_number',
+                    name: 'previous_policy_number'
+                }, {
+                    data: 'renewal_batch',
+                    name: 'renewal_batch'
                 }, {
                     data: 'premium',
                     name: 'premium',
@@ -164,6 +167,8 @@
                         d.email = $('#email').val();
                         d.teamType = $('#teamType').val();
                         d.paymentStatus = $('#paymentStatus').val();
+                        d.renewal_batch = $('#renewal_batch').val();
+                        d.previous_policy_number = $('#previous_policy_number').val();
                     },
                 },
                 columnDefs: [
@@ -452,6 +457,17 @@
                                             </div>
                                         </div>
                                     </div>
+                                    @if (Auth::user()->isRenewalAdvisor())
+                                        <div class="col">
+                                            <label class="col-form-label col-md-4 col-sm-4" for="previous_policy_number">
+                                                Previous Policy Number</label>
+                                            <div class="col-md-6 col-sm-6">
+                                                <div class="input-group">
+                                                    <input type="text" name="previous_policy_number" id="previous_policy_number" class="form-control">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @endif
                                     @if (Auth::user()->isRenewalAdvisor() && $teamName == 'Business')
                                         <div class="col">
                                             <label class="col-form-label col-md-4 col-sm-4" for="company">Company
@@ -474,6 +490,17 @@
                                             </div>
                                         </div>
                                     </div>
+                                    @if (Auth::user()->isRenewalAdvisor())
+                                        <div class="col">
+                                            <label class="col-form-label col-md-4 col-sm-4" for="batch_no">
+                                                Batch No</label>
+                                            <div class="col-md-6 col-sm-6">
+                                                <div class="input-group">
+                                                    <input type="text" name="renewal_batch" id="renewal_batch" class="form-control">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @endif
                                     @if (!Auth::user()->isRenewalAdvisor())
                                         <div class="col">
                                             <label class="col-form-label col-md-4 col-sm-4" for="is_renewal">Is
@@ -572,7 +599,10 @@
                                         <th>Payment Status</th>
                                     @endif
                                     @if (Auth::user()->isRenewalAdvisor())
-                                        <th>Policy Number</th>
+                                        <th>Previous Policy Number</th>
+                                    @endif
+                                    @if (Auth::user()->isRenewalAdvisor())
+                                        <th>Batch Number</th>
                                     @endif
                                     @if (Auth::user()->isRenewalAdvisor())
                                         <th>Premium</th>
