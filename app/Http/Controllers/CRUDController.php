@@ -92,15 +92,27 @@ class CRUDController extends Controller
             $this->crudService->fillRenewalData($this->genericModel);
             $renewalAdvisors = $this->crudService->getRenewalAdvisorsByModelType($this->genericModel->modelType);
         }
-        else if(Auth::user()->isRenewalAdvisor() || Auth::user()->isRenewalManager())
+        else if(Auth::user()->isRenewalAdvisor() )
         {
-            $isRenewalUser = Auth::user()->isRenewalAdvisor() ?? Auth::user()->isRenewalManager();
+            $isRenewalUser = Auth::user()->isRenewalAdvisor();
             $this->crudService->fillRenewalData($this->genericModel);
             $renewalAdvisors = $this->crudService->getRenewalAdvisorsByModelType($this->genericModel->modelType); 
         }
-        else if(Auth::user()->isNewBusinessManager() || Auth::user()->isNewBusinessAdvisor())
+        else if(Auth::user()->isRenewalManager())
         {
-            $isNewBusinessUser = Auth::user()->isNewBusinessManager() ?? Auth::user()->isNewBusinessAdvisor();
+            $isRenewalUser = Auth::user()->isRenewalManager();
+            $this->crudService->fillRenewalData($this->genericModel);
+            $renewalAdvisors = $this->crudService->getRenewalAdvisorsByModelType($this->genericModel->modelType); 
+        }
+        else if(Auth::user()->isNewBusinessManager())
+        {
+            $isNewBusinessUser = Auth::user()->isNewBusinessManager();
+            $this->crudService->fillNewBusinessData($this->genericModel);
+            $renewalAdvisors = $this->crudService->getNewBusinessAdvisorsByModelType($this->genericModel->modelType); 
+        }
+        else if(Auth::user()->isNewBusinessAdvisor())
+        {
+            $isNewBusinessUser = Auth::user()->isNewBusinessAdvisor();
             $this->crudService->fillNewBusinessData($this->genericModel);
             $renewalAdvisors = $this->crudService->getNewBusinessAdvisorsByModelType($this->genericModel->modelType); 
         }
