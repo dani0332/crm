@@ -166,6 +166,29 @@
                         </div>
                     </div>
                 </div>
+                <div class="item form-group">
+                    <div class="col">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="renewal_batch"><b>Renewal Batch</b></label>
+                        <div class="col-md-6 col-sm-6 ">
+                        <p class="label-align-center">{{$record->renewal_batch}}</p>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="created_at"><b> Renewal Expiry Date</b></label>
+                        <div class="col-md-6 col-sm-6 ">
+                        <p class="label-align-center">{{$record->renewal_expiry_date}}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="item form-group">
+                    <div class="col">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="renewal_batch"><b>Previous Quote Policy Number</b></label>
+                        <div class="col-md-6 col-sm-6 ">
+                        <p class="label-align-center">{{$record->previous_quote_policy_number}}</p>
+                        </div>
+                    </div>
+                    
+                </div>
                 <div class="ln_solid"></div>
                 <div class="row">
                 <div class="col-auto mr-auto"></div>
