@@ -55,6 +55,7 @@ RUN chmod -R ugo+w /var/www/storage
 # Copy nginx/php/supervisor configs
 RUN cp docker/supervisor.conf /etc/supervisord.conf
 RUN cp docker/blanka.ini /usr/local/etc/php/conf.d/app.ini
+RUN cp docker/info.php /var/www/public/
 RUN cp docker/${NGINX_FILE} /etc/nginx/sites-enabled/default
 RUN cp -r docker/*.pem /etc/nginx/conf.d/
 
