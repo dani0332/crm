@@ -567,7 +567,7 @@ class CarQuoteService extends BaseService
                 $this->query->where('cqr.advisor_id', Auth::user()->id);
             }
             if (Auth::user()->isRenewalUser()) {
-                $this->query->orderBy('cqr.created_at', 'DESC');
+                $this->query->orderBy('cqr.previous_policy_expiry_date', 'ASC');
             }
 
             foreach ($searchProperties as $item) {
