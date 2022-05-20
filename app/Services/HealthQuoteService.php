@@ -206,6 +206,9 @@ class HealthQuoteService extends BaseService
             if (isset($request->mobile_no) && $request->mobile_no != '') {
                 $this->query->where('hqr.mobile_no', $request->mobile_no);
             }
+            if (isset($request->policy_number) && $request->policy_number != '') {
+                $this->query->where('hqr.policy_number', $request->policy_number);
+            }
             if (isset($request->previous_quote_policy_number) && $request->previous_quote_policy_number != '') {
                 $this->query->where('hqr.previous_quote_policy_number', $request->previous_quote_policy_number);
             }

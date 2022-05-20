@@ -468,7 +468,9 @@
                                             </div>
                                         </div>
                                     @endif
-                                    @if (Auth::user()->isRenewalAdvisor() && $teamName == 'Business')
+                                </div>
+                                <div class="item form-group">
+                                     @if (Auth::user()->isRenewalAdvisor() && $teamName == 'Business')
                                         <div class="col">
                                             <label class="col-form-label col-md-4 col-sm-4" for="company">Company
                                                 Name</label>
@@ -479,8 +481,15 @@
                                             </div>
                                         </div>
                                     @endif
+                                    <div class="col">
+                                            <label class="col-form-label col-md-4 col-sm-4" for="company"></label>
+                                            <div class="col-md-6 col-sm-6">
+                                                <div class="input-group">
+                                                   
+                                                </div>
+                                            </div>
+                                        </div>
                                 </div>
-
                                 <div class="item form-group">
                                     <div class="col">
                                         <label class="col-form-label col-md-4 col-sm-4" for="email">Email</label>
