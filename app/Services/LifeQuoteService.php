@@ -12,11 +12,14 @@ use Auth;
 use \Carbon\Carbon;
 use Config;
 use App\Traits\GetUserTree;
+use App\Traits\CustomerAdditionalInfo as CustomerAdditionalInfoTrait;
+use App\Enums\quoteTypeCode;
 
 class LifeQuoteService extends BaseService
 {
     protected $query;
     use GetUserTree;
+    use CustomerAdditionalInfoTrait;
     public function __construct()
     {
         $this->query = DB::table('life_quote_request as lqr')
@@ -104,7 +107,11 @@ class LifeQuoteService extends BaseService
             "referenceUrl" => $appUrl,
         );
         if (!Auth::user()->hasRole("ADMIN")) $dataArr['advisorId'] = Auth::user()->id;
-        return CapiRequestService::sendCAPIRequest('/api/v1-save-life-quote', $dataArr);
+        $response = CapiRequestService::sendCAPIRequest('/api/v1-save-life-quote', $dataArr);
+        if(isset($response->quoteUID))
+            return $this->createUpdateCustomerInfo($request, $request->email, $response->quoteUID, quoteTypeCode::LifeQuote);
+        else
+            return $response;
     }
 
     public function getEntity($id)
@@ -320,6 +327,7 @@ class LifeQuoteService extends BaseService
         $lifeQuote->others_info = $request->others_info;
         $lifeQuote->save();
 
+        $this->createUpdateCustomerInfo($request, $lifeQuote->email, $lifeQuote->uuid, quoteTypeCode::LifeQuote);
         if (isset($request->return_to_view))
             return redirect("quotes/life")->with('success', 'Life Quote has been updated');
     }
