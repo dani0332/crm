@@ -85,13 +85,14 @@ class CRUDController extends Controller
     public function index(Request $request)
     {
         $renewalAdvisors = [];
+        $isNewBusinessUser = null;
         //Checking if the loggedIn user is Renewal User
         $isRenewalUser = Auth::user()->isRenewalUser();
         if ($isRenewalUser && strtolower($this->genericModel->modelType) == strtolower(quoteTypeCode::Car)) {
             $this->crudService->fillRenewalData($this->genericModel);
             $renewalAdvisors = $this->crudService->getRenewalAdvisorsByModelType($this->genericModel->modelType);
         }
-        else if(Auth::user()->isRenewalAdvisor())
+        else if(Auth::user()->isRenewalAdvisor() )
         {
             $isRenewalUser = Auth::user()->isRenewalAdvisor();
             $this->crudService->fillRenewalData($this->genericModel);
@@ -102,6 +103,18 @@ class CRUDController extends Controller
             $isRenewalUser = Auth::user()->isRenewalManager();
             $this->crudService->fillRenewalData($this->genericModel);
             $renewalAdvisors = $this->crudService->getRenewalAdvisorsByModelType($this->genericModel->modelType); 
+        }
+        else if(Auth::user()->isNewBusinessManager())
+        {
+            $isNewBusinessUser = Auth::user()->isNewBusinessManager();
+            $this->crudService->fillNewBusinessData($this->genericModel);
+            $renewalAdvisors = $this->crudService->getNewBusinessAdvisorsByModelType($this->genericModel->modelType); 
+        }
+        else if(Auth::user()->isNewBusinessAdvisor())
+        {
+            $isNewBusinessUser = Auth::user()->isNewBusinessAdvisor();
+            $this->crudService->fillNewBusinessData($this->genericModel);
+            $renewalAdvisors = $this->crudService->getNewBusinessAdvisorsByModelType($this->genericModel->modelType); 
         }
         // Getting the data for grid based on the model type
         $gridData = $this->crudService->getGridData($this->genericModel, $request);
@@ -128,9 +141,9 @@ class CRUDController extends Controller
             return DataTables::of($gridData)
                 ->addIndexColumn()
                 ->make(true);
-            return view('shared.view', compact('model', 'dropdownSource', 'customTitles', 'advisors', 'isManagerORDeputy', 'isRenewalUser', 'renewalAdvisors'));
+            return view('shared.view', compact('model', 'dropdownSource', 'customTitles', 'advisors', 'isManagerORDeputy', 'isRenewalUser', 'renewalAdvisors','isNewBusinessUser'));
         }
-        return view('shared.view', compact('model', 'dropdownSource', 'customTitles', 'advisors', 'isManagerORDeputy', 'isRenewalUser', 'renewalAdvisors'));
+        return view('shared.view', compact('model', 'dropdownSource', 'customTitles', 'advisors', 'isManagerORDeputy', 'isRenewalUser', 'renewalAdvisors','isNewBusinessUser'));
     }
 
     /**

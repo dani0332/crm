@@ -10,7 +10,7 @@
 <script>
     function loadManagers(teamId, manager_id){
         $.ajax({
-                url: '/getTeamManagers?teamId=' + teamId,
+                url: '/getTeamManagers?teamId=' + teamId + '&userId=' + JSON.parse('<?php echo json_encode("$user->id"); ?>'),
                 type: "get",
                 success: function(response) {
                     $('#user-manager-select').find('option').remove().end().append('<option value="0" selected="selected">None</option>');

@@ -505,10 +505,10 @@ class TravelQuoteService extends BaseService
             "is_ecommerce" => "|static|title|Yes,No",
             "renewal_batch" => "input|number|title",
             "payment_status_id" => "select|title",
+            "previous_quote_policy_number"=> "input|none",
+            "renewal_expiry_date" => "input|none",
+            "lang" => "readonly|none"
             "renewal_import_code" => "input|text"
-            'previous_quote_policy_number' => "readonly|none",
-            'renewal_expiry_date' => "readonly|none",
-            'lang' => "readonly|none"
         );
     }
 

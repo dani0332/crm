@@ -43,6 +43,7 @@
             var model = JSON.parse('<?php echo json_encode(get_object_vars($model)); ?>');
             var isAdmin = JSON.parse('<?php echo json_encode(Auth::user()->hasRole('ADMIN')); ?>');
             var isManagerOrDeputy = $("#isManagerOrDeputy").val();
+            var isNewBusinessUser = JSON.parse('<?php echo json_encode($isNewBusinessUser); ?>');
             // Adding custom search fields for admin role
             if (isAdmin && !isRenewalUser) {
                 model.searchProperties.push('is_ecommerce');
@@ -100,6 +101,8 @@
                 skipPropertiesArray = model.renewalSkipProperties['list'].split(',');
             }else if(isRenewalUser && model.modelType.toLowerCase() != 'car'){
                 skipPropertiesArray = model.renewalSkipProperties['list'].split(',');
+            }else if(isNewBusinessUser && model.modelType.toLowerCase() != 'car'){
+                skipPropertiesArray = model.newBusinessSkipProperties['list'].split(',');
             } else {
                 skipPropertiesArray = model.skipProperties['list'].split(',');
             }
@@ -202,7 +205,7 @@
                     }
                     break;
                 case 'home':
-                    if(isRenewalUser){
+                    if(isRenewalUser || isNewBusinessUser){
                         disableSortColumns = [-1,0,1,2,3,4,5,6];
                     }
                     else if(isManagerOrDeputy == '1' || isAdmin)
@@ -212,7 +215,7 @@
                     break;
                     break;
                 case 'health':
-                    if(isRenewalUser){
+                    if(isRenewalUser || isNewBusinessUser){
                         disableSortColumns = [-1,0,1,2,3,4,5,6];
                     }
                     else if(isManagerOrDeputy == '1' || isAdmin)
@@ -221,7 +224,7 @@
                         disableSortColumns = [-1,0,1,2,3,4,7,9,10];
                     break;
                 case 'life':
-                    if(isRenewalUser){
+                    if(isRenewalUser || isNewBusinessUser){
                         disableSortColumns = [-1,0,1,2,3,4,5,6];
                     }
                     else if(isManagerOrDeputy == '1' || isAdmin)
@@ -230,7 +233,7 @@
                         disableSortColumns = [-1, 0, 1, 2, 3, 4, 8, 9, 10];
                     break;
                 case 'business':
-                    if(isRenewalUser){
+                    if(isRenewalUser || isNewBusinessUser){
                         disableSortColumns = [-1,0,1,2,3,4,5,6];
                     }
                     else if(isManagerOrDeputy == '1' || isAdmin)
@@ -239,7 +242,7 @@
                         disableSortColumns = [-1, 0, 1, 2, 3, 5, 6, 7, 8, 11, 12, 13];
                     break;
                 case 'travel':
-                    if(isRenewalUser){
+                    if(isRenewalUser || isNewBusinessUser){
                         disableSortColumns = [-1,0,1,2,3,4,5,6];
                     }
                     else if(isManagerOrDeputy == '1' || isAdmin)
@@ -553,6 +556,10 @@
                                 else if($isRenewalUser && strtolower($model->modelType) != 'car'){
                                     $searchProperties = $model->renewalSearchProperties;
                                     $skipProperties = $model->renewalSkipProperties;
+                                }
+                                else if($isNewBusinessUser && strtolower($model->modelType) != 'car'){
+                                    $searchProperties = $model->newBusinessSearchProperties;
+                                    $skipProperties = $model->newBusinessSkipProperties;
                                 }
                                 else{
                                     $searchProperties = $model->searchProperties;
