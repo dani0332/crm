@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Models\User;
+use Hidehalo\Nanoid\Client;
 
 class HelperService extends BaseService
 {
@@ -22,4 +24,25 @@ class HelperService extends BaseService
         }
         return $recordName;
 	}
+
+    public function walkTree ($userId) {
+        $childUserIds = [];
+        $childs = User::where('manager_id', $userId)->pluck('id');
+        foreach ($childs as $child) {
+            $nextChilds = User::where('manager_id', $child)->pluck('id');
+            if(count($nextChilds) > 0) {
+                $this->walkTree($child);
+            }
+            array_push($childUserIds, $child);
+        }
+        return $childUserIds;
+    }
+
+    public function generateUUID()
+    {
+        $client = new Client();
+        $alphabets = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        $nanoId = $client->formattedId($alphabets, 8);
+        return $nanoId;
+    }
 }

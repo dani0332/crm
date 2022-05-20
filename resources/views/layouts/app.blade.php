@@ -206,6 +206,7 @@ $appName = Config::get('constants.APP_NAME');
                 leadassignmentDataTable: "{{ route('leadassignment.index') }}",
                 myleadsDataTable: "{{ route('myleads.index') }}",
                 amtDataTable: "{{ route('amt.index') }}",
+                activitiesDataTable :"{{ route('activities.index') }}",
                 renewals_batches_datatable_route: "{{ url('renewals/batches') }}",
             },
             _token: "{{ csrf_token() }}",

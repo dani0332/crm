@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ActivitesController;
 use App\Http\Controllers\AgeDiscountController;
 use App\Http\Controllers\AuditableController;
 use App\Http\Controllers\CarQuoteController;
@@ -106,6 +107,16 @@ Route::group(['middleware' =>  ['auth']], function () {
         'update' => 'leadassignment.update',
         'destroy' => 'leadassignment.destroy',
     ]);
+    Route::resource('activities', ActivitesController::class)->names([
+        'index' => 'activities.index',
+        'destroy' => 'activities.destroy',
+    ]);
+    Route::post('/activities/createActivity', [ActivitesController::class, 'store'])->name('activities.store');
+    Route::post('activities/{id}/update', [ActivitesController::class, 'update'])->name('activities.update');
+    Route::post('activities/{id}/delete', [ActivitesController::class, 'destroy'])->name('activities.destroy');
+    Route::post('activities/updateStatus', [ActivitesController::class, 'updateStatus'])->name('activities.updateStatus');
+    Route::post('activities/getEditView', [ActivitesController::class, 'getEditView'])->name('activities.getEditView');
+    Route::post('updateActivity', [CRUDController::class, 'updateActivity'])->name('updateActivity');
     Route::get('getAdvisors', [LeadAssignmentController::class, 'getAdvisors'])->name('getAdvisors');
     Route::get('getTeamManagers', [UserController::class, 'getTeamManagers'])->name('getTeamManagers');
     Route::get('getSubTeams', [UserController::class, 'getSubTeams'])->name('getSubTeams');
@@ -155,6 +166,7 @@ Route::group(['middleware' =>  ['auth']], function () {
         Route::post('save', [CRUDController::class, 'store'])->name('saveQuote');
         Route::post('update', [CRUDController::class, 'update'])->name('updateQuote');
         Route::post('createDuplicate', [CRUDController::class, 'createDuplicate'])->name('createDuplicate');
+       
         Route::get('getvalues/{modelType}/{propertyName}/{recordId}', [CRUDController::class, 'getDropdownSourceNameForDisplay']);
         Route::get('car/{quoteId}/plan_details/{planId}', [CRUDController::class, 'carQuotePlanDetails']);
         Route::post('manualLeadAssign', [CRUDController::class, 'manualLeadAssign'])->name('manualLeadAssign');
