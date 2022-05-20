@@ -29,7 +29,9 @@
 .custom-checkbox input[type='checkbox']:checked + span.checkbox { background: #26B99A; border-color: #169F85; text-align:center; }
 
 .custom-checkbox input[type='checkbox']:checked + span.checkbox:before { content:"\f00c"; color:#fff; font: normal normal normal 20px/1 FontAwesome;}
-
+        .col {
+            padding-left: 8px;
+        }
     </style>
     <script>
          $('#add-activity-btn').on('click', function(){

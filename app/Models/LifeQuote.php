@@ -32,4 +32,8 @@ class LifeQuote extends Model implements AuditableContract
     {
         return $this->hasOne(LifeQuoteRequestDetail::class, 'life_quote_request_id', 'id');
     }
+    public function customerAdditionalInfo()
+    {
+        return $this->hasMany(CustomerAdditionalInfo::class, 'quote_request_id', 'id');
+    }
 }

@@ -11,11 +11,13 @@ use DB;
 use Config;
 use Auth;
 use \Carbon\Carbon;
+use App\Traits\CustomerAdditionalInfo as CustomerAdditionalInfoTrait;
+use App\Enums\quoteTypeCode;
 
 class BusinessQuoteService extends BaseService
 {
     protected $query;
-
+    use CustomerAdditionalInfoTrait;
     public function __construct()
     {
         $this->query = DB::table('business_quote_request as bqr')
@@ -274,7 +276,10 @@ class BusinessQuoteService extends BaseService
         );
         if (!Auth::user()->hasRole("ADMIN")) $dataArr['advisorId'] = Auth::user()->id;
         $response  = CapiRequestService::sendCAPIRequest('/api/v1-save-business-quote', $dataArr);
-        return $response;
+        if(isset($response->quoteUID))
+            return $this->createUpdateCustomerInfo($request, $request->email, $response->quoteUID, quoteTypeCode::BusinessQuote);
+        else
+            return $response;
     }
 
     public function getGridData($model, $request)
@@ -445,6 +450,7 @@ class BusinessQuoteService extends BaseService
             if (isset($request->group_medical_type_id)) $businessQuote->group_medical_type_id = $request->group_medical_type_id;
             $businessQuote->save();
 
+            $this->createUpdateCustomerInfo($request, $businessQuote->email, $businessQuote->uuid, quoteTypeCode::BusinessQuote);
             if (isset($request->return_to_view))
                 return redirect("quote/business/" . $businessQuote->id)->with('success', 'Business Quote has been updated');
         } else {

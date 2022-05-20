@@ -16,11 +16,14 @@ use \Carbon\Carbon;
 use Hidehalo\Nanoid\Client;
 use Config;
 use App\Traits\GetUserTree;
+use App\Traits\CustomerAdditionalInfo as CustomerAdditionalInfoTrait;
+use App\Enums\quoteTypeCode;
 
 class HealthQuoteService extends BaseService
 {
     protected $query;
     use GetUserTree;
+    use CustomerAdditionalInfoTrait;
     public function __construct()
     {
         $this->query = DB::table('health_quote_request as hqr')->select(
@@ -151,7 +154,11 @@ class HealthQuoteService extends BaseService
             "memberCategoryId" => $request->member_category_id
         );
         if (!Auth::user()->hasRole("ADMIN")) $dataArr['advisorId'] = Auth::user()->id;
-        return CapiRequestService::sendCAPIRequest('/api/v1-save-health-quote', $dataArr);
+         $response = CapiRequestService::sendCAPIRequest('/api/v1-save-health-quote', $dataArr);
+        if(isset($response->quoteUID))
+            return $this->createUpdateCustomerInfo($request, $request->email, $response->quoteUID, quoteTypeCode::HealthQuote);
+        else
+            return $response;
     }
 
     public function getGridData($model, $request)
@@ -348,7 +355,7 @@ class HealthQuoteService extends BaseService
         $healthQuote->salary_band_id = $request->salary_band_id;
         $healthQuote->member_category_id = $request->member_category_id;
         $healthQuote->save();
-
+        $this->createUpdateCustomerInfo($request, $healthQuote->email, $healthQuote->uuid, quoteTypeCode::HealthQuote);
         if (isset($request->return_to_view))
             return redirect("quote/health/" . $id)->with('success', 'Health Quote has been updated');
     }

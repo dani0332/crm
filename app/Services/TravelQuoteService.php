@@ -13,13 +13,15 @@ use \Carbon\Carbon;
 use Config;
 use App\Traits\GetUserTree;
 use App\Traits\GetTravelPreviousQuoteIds;
+use App\Traits\CustomerAdditionalInfo as CustomerAdditionalInfoTrait;
+use App\Enums\quoteTypeCode;
 
 class TravelQuoteService extends BaseService
 {
     protected $query;
     use GetUserTree;
     use GetTravelPreviousQuoteIds;
-
+    use CustomerAdditionalInfoTrait;
     public function __construct()
     {
         $this->query = DB::table('travel_quote_request as tqr')->select(
@@ -104,7 +106,11 @@ class TravelQuoteService extends BaseService
             "dob" => $request->dob
         );
         if (!Auth::user()->hasRole("ADMIN")) $dataArr['advisorId'] = Auth::user()->id;
-        return CapiRequestService::sendCAPIRequest('/api/v1-save-travel-quote', $dataArr);
+            $response  = CapiRequestService::sendCAPIRequest('/api/v1-save-travel-quote', $dataArr);
+        if(isset($response->quoteUID))
+            return $this->createUpdateCustomerInfo($request, $request->email, $response->quoteUID, quoteTypeCode::TravelQuote);
+        else
+            return $response;
     }
 
     public function getTravelOverDueFollowups()
@@ -458,6 +464,9 @@ class TravelQuoteService extends BaseService
         $travelQuote->destination_id = $request->destination_id;
         $travelQuote->dob = $request->dob;
         $travelQuote->save();
+
+        $this->createUpdateCustomerInfo($request, $travelQuote->email, $travelQuote->uuid, quoteTypeCode::TravelQuote);
+
         if (isset($request->return_to_view))
             return redirect("quote/travel/" . $id)->with('success', 'Travel Quote has been updated');
     }
@@ -496,10 +505,10 @@ class TravelQuoteService extends BaseService
             "is_ecommerce" => "|static|title|Yes,No",
             "renewal_batch" => "input|number|title",
             "payment_status_id" => "select|title",
-            "renewal_import_code" => "input|text|required",
             "previous_quote_policy_number"=> "input|none",
             "renewal_expiry_date" => "input|none",
             "lang" => "readonly|none"
+            "renewal_import_code" => "input|text"
         );
     }
 

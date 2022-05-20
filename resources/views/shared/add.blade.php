@@ -172,6 +172,7 @@
                                             @if(strpos($value, "required") == true)
                                             <span class='required'>*</span>
                                             @endif
+                                           
                                         </span>
                                         @php
                                             $title = '';
@@ -187,10 +188,19 @@
                                         data-toggle="tooltip" data-placement="top" title="{{$title}}"
                                         @endif
                                         class="form-control">
+                                        @if($property == "mobile_no")
+                                            <a href="javascript:void(0);" class="remove_additional_btn" id="add_additional_btn" title="Add field" style="padding-top: 5px;float:right"><img src="/image/add-icon.png"/></a>
+                                        @endif
                                         @if ($errors->has($property))
                                             <span class="text-danger">{{ $errors->first($property) }}</span>
                                         @endif
                                     </div>
+                                    </div>
+                                    @endif
+                                    @if($property == "mobile_no")
+                                    <div class="col-md-12"> <div class="col">
+                                        <div id="additional_info"></div>
+                                        </div>
                                     </div>
                                     @endif
                                     @if(strpos($value, 'select') !== false)
