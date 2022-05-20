@@ -159,7 +159,7 @@ class RenewalsUploadService
         ]);
         $newBikeQuote->save();
 
-        $createRenewalQuote = $this->createNewRenewalBikeQuote($newBikeQuote->id, $quoteData->advisor, $quoteData->batch, $quoteData->policy, $newLeadId, $quoteData->other_email_ids, $renewalImportCode);
+        $createRenewalQuote = $this->createNewRenewalBikeQuote($newBikeQuote->id, $quoteData->advisor, $quoteData->batch, $quoteData->policy, $newLeadId, $quoteData->other_email_ids, $renewalImportCode, $quoteData->endDate);
         $this->createRenewalDumpRecord('Bike', $createRenewalQuote, $quoteData);
     }
 
@@ -197,7 +197,7 @@ class RenewalsUploadService
         ]);
         $newBusinessQuote->save();
 
-        $createRenewalQuote = $this->createNewRenewalBusinessQuote($newBusinessQuote->id, $quoteData->advisor, $quoteData->batch, $quoteData->policy, $newLeadId, $quoteData->other_email_ids, $renewalImportCode, $businessSublineInsuranceId);
+        $createRenewalQuote = $this->createNewRenewalBusinessQuote($newBusinessQuote->id, $quoteData->advisor, $quoteData->batch, $quoteData->policy, $newLeadId, $quoteData->other_email_ids, $renewalImportCode, $businessSublineInsuranceId, $quoteData->endDate);
         $this->createRenewalDumpRecord('Business', $createRenewalQuote, $quoteData);
     }
 
@@ -249,7 +249,7 @@ class RenewalsUploadService
         ]);
         $newCarQuote->save();
 
-        $createRenewalQuote = $this->createNewRenewalCarQuote($newCarQuote->id, $quoteData->advisor, $quoteData->batch, $quoteData->policy, $newLeadId, $quoteData->other_email_ids, $renewalImportCode);
+        $createRenewalQuote = $this->createNewRenewalCarQuote($newCarQuote->id, $quoteData->advisor, $quoteData->batch, $quoteData->policy, $newLeadId, $quoteData->other_email_ids, $renewalImportCode, $quoteData->endDate);
         $this->createRenewalDumpRecord('Car', $createRenewalQuote, $quoteData);
     }
 
@@ -279,7 +279,7 @@ class RenewalsUploadService
         ]);
         $newHealthQuote->save();
 
-        $createRenewalQuote = $this->createNewRenewalHealthQuote($newHealthQuote->id, $quoteData->advisor, $quoteData->batch, $quoteData->policy, $newLeadId, $quoteData->other_email_ids, $renewalImportCode);
+        $createRenewalQuote = $this->createNewRenewalHealthQuote($newHealthQuote->id, $quoteData->advisor, $quoteData->batch, $quoteData->policy, $newLeadId, $quoteData->other_email_ids, $renewalImportCode, $quoteData->endDate);
         $this->createRenewalDumpRecord('Health', $createRenewalQuote, $quoteData);
     }
 
@@ -308,7 +308,7 @@ class RenewalsUploadService
         ]);
         $newHomeQuote->save();
 
-        $createRenewalQuote = $this->createNewRenewalHomeQuote($newHomeQuote->id, $quoteData->advisor, $quoteData->batch, $quoteData->policy, $newLeadId, $quoteData->other_email_ids, $renewalImportCode);
+        $createRenewalQuote = $this->createNewRenewalHomeQuote($newHomeQuote->id, $quoteData->advisor, $quoteData->batch, $quoteData->policy, $newLeadId, $quoteData->other_email_ids, $renewalImportCode, $quoteData->endDate);
         $this->createRenewalDumpRecord('Home', $createRenewalQuote, $quoteData);
     }
 
@@ -337,7 +337,7 @@ class RenewalsUploadService
         ]);
         $newLifeQuote->save();
 
-        $createRenewalQuote = $this->createNewRenewalLifeQuote($newLifeQuote->id, $quoteData->advisor, $quoteData->batch, $quoteData->policy, $newLeadId, $quoteData->other_email_ids, $renewalImportCode);
+        $createRenewalQuote = $this->createNewRenewalLifeQuote($newLifeQuote->id, $quoteData->advisor, $quoteData->batch, $quoteData->policy, $newLeadId, $quoteData->other_email_ids, $renewalImportCode, $quoteData->endDate);
         $this->createRenewalDumpRecord('Life', $createRenewalQuote, $quoteData);
     }
 
@@ -367,7 +367,7 @@ class RenewalsUploadService
         ]);
         $newTravelQuote->save();
 
-        $createRenewalQuote = $this->createNewRenewalTravelQuote($newTravelQuote->id, $quoteData->advisor, $quoteData->batch, $quoteData->policy, $newLeadId, $quoteData->other_email_ids, $renewalImportCode);
+        $createRenewalQuote = $this->createNewRenewalTravelQuote($newTravelQuote->id, $quoteData->advisor, $quoteData->batch, $quoteData->policy, $newLeadId, $quoteData->other_email_ids, $renewalImportCode, $quoteData->endDate);
         $this->createRenewalDumpRecord('Travel', $createRenewalQuote, $quoteData);
     }
 
@@ -397,11 +397,11 @@ class RenewalsUploadService
         ]);
         $newYachtQuote->save();
 
-        $createRenewalQuote = $this->createNewRenewalYachtQuote($newYachtQuote->id, $quoteData->advisor, $quoteData->batch, $quoteData->policy, $newLeadId, $quoteData->other_email_ids, $renewalImportCode);
+        $createRenewalQuote = $this->createNewRenewalYachtQuote($newYachtQuote->id, $quoteData->advisor, $quoteData->batch, $quoteData->policy, $newLeadId, $quoteData->other_email_ids, $renewalImportCode, $quoteData->endDate);
         $this->createRenewalDumpRecord('Yacht', $createRenewalQuote, $quoteData);
     }
 
-    function createNewRenewalBikeQuote($quoteId, $newAdvisor, $batchNumber, $policy, $newLeadId, $otherEmailIds, $renewalImportCode)
+    function createNewRenewalBikeQuote($quoteId, $newAdvisor, $batchNumber, $policy, $newLeadId, $otherEmailIds, $renewalImportCode, $endDate)
     {
         $getBikeQuoteData = BikeQuote::where('id', '=', $quoteId)->get()->first();
         $advisorId = $this->renewalsAddonService->getUserInfo($newAdvisor);
@@ -425,7 +425,8 @@ class RenewalsUploadService
             "previous_quote_policy_number" => $policy,
             "quote_status_id" => $newLeadId,
             "other_email_addresses" => $otherEmailIds,
-            "renewal_import_code" => $renewalImportCode
+            "renewal_import_code" => $renewalImportCode,
+            "previous_policy_expiry_date" => $endDate
         ]);
         $createRenewalQuote->save();
 
@@ -433,7 +434,7 @@ class RenewalsUploadService
         return $createRenewalQuote->id;
     }
 
-    function createNewRenewalBusinessQuote($quoteId, $newAdvisor, $batchNumber, $policy, $newLeadId, $otherEmailIds, $renewalImportCode, $businessSublineInsuranceId)
+    function createNewRenewalBusinessQuote($quoteId, $newAdvisor, $batchNumber, $policy, $newLeadId, $otherEmailIds, $renewalImportCode, $businessSublineInsuranceId, $endDate)
     {
         $getBusinessQuoteData = BusinessQuote::where('id', '=', $quoteId)->get()->first();
         $advisorId = $this->renewalsAddonService->getUserInfo($newAdvisor);
@@ -457,7 +458,8 @@ class RenewalsUploadService
             "quote_status_id" => $newLeadId,
             "other_email_addresses" => $otherEmailIds,
             "renewal_import_code" => $renewalImportCode,
-            "business_type_of_insurance_id" => $businessSublineInsuranceId
+            "business_type_of_insurance_id" => $businessSublineInsuranceId,
+            "previous_policy_expiry_date" => $endDate
         ]);
         $createRenewalQuote->save();
 
@@ -465,7 +467,7 @@ class RenewalsUploadService
         return $createRenewalQuote->id;
     }
 
-    function createNewRenewalCarQuote($quoteId, $newAdvisor, $batchNumber, $policy, $newLeadId, $otherEmailIds, $renewalImportCode)
+    function createNewRenewalCarQuote($quoteId, $newAdvisor, $batchNumber, $policy, $newLeadId, $otherEmailIds, $renewalImportCode, $endDate)
     {
         $getCarQuoteData = CarQuote::where('id', '=', $quoteId)->get()->first();
         $advisorId = $this->renewalsAddonService->getUserInfo($newAdvisor);
@@ -496,7 +498,8 @@ class RenewalsUploadService
             "quote_status_id" => $newLeadId,
             "is_quote_locked" => true,
             "other_email_addresses" => $otherEmailIds,
-            "renewal_import_code" => $renewalImportCode
+            "renewal_import_code" => $renewalImportCode,
+            "previous_policy_expiry_date" => $endDate
         ]);
         $createRenewalQuote->save();
 
@@ -504,7 +507,7 @@ class RenewalsUploadService
         return $createRenewalQuote->id;
     }
 
-    function createNewRenewalHealthQuote($quoteId, $newAdvisor, $batchNumber, $policy, $newLeadId, $otherEmailIds, $renewalImportCode)
+    function createNewRenewalHealthQuote($quoteId, $newAdvisor, $batchNumber, $policy, $newLeadId, $otherEmailIds, $renewalImportCode, $endDate)
     {
         $getHealthQuoteData = HealthQuote::where('id', '=', $quoteId)->get()->first();
         $advisorId = $this->renewalsAddonService->getUserInfo($newAdvisor);
@@ -527,7 +530,8 @@ class RenewalsUploadService
             "previous_quote_policy_number" => $policy,
             "quote_status_id" => $newLeadId,
             "other_email_addresses" => $otherEmailIds,
-            "renewal_import_code" => $renewalImportCode
+            "renewal_import_code" => $renewalImportCode,
+            "previous_policy_expiry_date" => $endDate
         ]);
         $createRenewalQuote->save();
 
@@ -535,7 +539,7 @@ class RenewalsUploadService
         return $createRenewalQuote->id;
     }
 
-    function createNewRenewalHomeQuote($quoteId, $newAdvisor, $batchNumber, $policy, $newLeadId, $otherEmailIds, $renewalImportCode)
+    function createNewRenewalHomeQuote($quoteId, $newAdvisor, $batchNumber, $policy, $newLeadId, $otherEmailIds, $renewalImportCode, $endDate)
     {
         $getHomeQuoteData = HomeQuote::where('id', '=', $quoteId)->get()->first();
         $advisorId = $this->renewalsAddonService->getUserInfo($newAdvisor);
@@ -558,7 +562,8 @@ class RenewalsUploadService
             "previous_quote_policy_number" => $policy,
             "quote_status_id" => $newLeadId,
             "other_email_addresses" => $otherEmailIds,
-            "renewal_import_code" => $renewalImportCode
+            "renewal_import_code" => $renewalImportCode,
+            "previous_policy_expiry_date" => $endDate
         ]);
         $createRenewalQuote->save();
 
@@ -566,7 +571,7 @@ class RenewalsUploadService
         return $createRenewalQuote->id;
     }
 
-    function createNewRenewalLifeQuote($quoteId, $newAdvisor, $batchNumber, $policy, $newLeadId, $otherEmailIds, $renewalImportCode)
+    function createNewRenewalLifeQuote($quoteId, $newAdvisor, $batchNumber, $policy, $newLeadId, $otherEmailIds, $renewalImportCode, $endDate)
     {
         $getLifeQuoteData = LifeQuote::where('id', '=', $quoteId)->get()->first();
         $advisorId = $this->renewalsAddonService->getUserInfo($newAdvisor);
@@ -588,7 +593,8 @@ class RenewalsUploadService
             "previous_quote_policy_number" => $policy,
             "quote_status_id" => $newLeadId,
             "other_email_addresses" => $otherEmailIds,
-            "renewal_import_code" => $renewalImportCode
+            "renewal_import_code" => $renewalImportCode,
+            "previous_policy_expiry_date" => $endDate
         ]);
         $createRenewalQuote->save();
 
@@ -596,7 +602,7 @@ class RenewalsUploadService
         return $createRenewalQuote->id;
     }
 
-    function createNewRenewalTravelQuote($quoteId, $newAdvisor, $batchNumber, $policy, $newLeadId, $otherEmailIds, $renewalImportCode)
+    function createNewRenewalTravelQuote($quoteId, $newAdvisor, $batchNumber, $policy, $newLeadId, $otherEmailIds, $renewalImportCode, $endDate)
     {
         $getTravelQuoteData = TravelQuote::where('id', '=', $quoteId)->get()->first();
         $advisorId = $this->renewalsAddonService->getUserInfo($newAdvisor);
@@ -618,7 +624,8 @@ class RenewalsUploadService
             "previous_quote_policy_number" => $policy,
             "quote_status_id" => $newLeadId,
             "other_email_addresses" => $otherEmailIds,
-            "renewal_import_code" => $renewalImportCode
+            "renewal_import_code" => $renewalImportCode,
+            "previous_policy_expiry_date" => $endDate
         ]);
         $createRenewalQuote->save();
 
@@ -626,7 +633,7 @@ class RenewalsUploadService
         return $createRenewalQuote->id;
     }
 
-    function createNewRenewalYachtQuote($quoteId, $newAdvisor, $batchNumber, $policy, $newLeadId, $otherEmailIds, $renewalImportCode)
+    function createNewRenewalYachtQuote($quoteId, $newAdvisor, $batchNumber, $policy, $newLeadId, $otherEmailIds, $renewalImportCode, $endDate)
     {
         $getYachtQuoteData = YachtQuote::where('id', '=', $quoteId)->get()->first();
         $advisorId = $this->renewalsAddonService->getUserInfo($newAdvisor);
@@ -649,7 +656,8 @@ class RenewalsUploadService
             "previous_quote_policy_number" => $policy,
             "quote_status_id" => $newLeadId,
             "other_email_addresses" => $otherEmailIds,
-            "renewal_import_code" => $renewalImportCode
+            "renewal_import_code" => $renewalImportCode,
+            "previous_policy_expiry_date" => $endDate
         ]);
         $createRenewalQuote->save();
 
