@@ -4,14 +4,11 @@ namespace App\Services;
 
 use App\Enums\QuoteTypeId;
 use App\Models\CarMake;
-use App\Models\CarModel;
 use App\Models\CarQuote;
 use App\Models\CarQuoteRequestDetail;
 use App\Models\InsuranceProvider;
-use App\Models\LeadStatus;
 use App\Models\QuoteStatus;
 use App\Models\User;
-use App\Models\UserTeams;
 use App\Models\VehicleType;
 use App\Models\YearOfManufacture;
 use Illuminate\Http\Request;
@@ -832,22 +829,36 @@ class CarQuoteService extends BaseService
         if(isset($request->is_create)) {
             if($request->is_create == 1) {
                 $discountedPremium = $request->actual_premium;
+                $isUpdate = false;
             } else {
                 $discountedPremium = $request->discounted_premium;
+                $isUpdate = true;
             }
         } else {
             $discountedPremium = $request->actual_premium;
         }
 
+        $addons = [];
+        if($request->addons != null && count($request->addons) > 0) {
+            $addons = $request->addons;
+        } else {
+            $addons = [];
+        }
+
         $carPlanData = array(
             "quoteUID" => $request->car_quote_uuid,
+            "update" => $isUpdate,
             "plans" => array(
-                ["planId" => (int)$request->car_plan_id,
-                "actualPremium" => (float)$request->actual_premium,
-                "carValue" => (float)$request->car_value,
-                "excess" => (float)$request->excess,
-                "discountPremium" => (float)$discountedPremium,
-                "isDisabled" => filter_var($request->is_disabled, FILTER_VALIDATE_BOOLEAN)]
+                [
+                    "planId" => (int)$request->car_plan_id,
+                    "actualPremium" => (float)$request->actual_premium,
+                    "carValue" => (float)$request->car_value,
+                    "excess" => (float)$request->excess,
+                    "discountPremium" => (float)$discountedPremium,
+                    "isDisabled" => filter_var($request->is_disabled, FILTER_VALIDATE_BOOLEAN),
+                    "addons" => $addons,
+                ]
+
             )
         );
 
@@ -858,7 +869,9 @@ class CarQuoteService extends BaseService
             "apiUserName" => $apiUserName,
             "apiPassword" => $apiPassword,
         );
+
         $response = $this->httpService->processRequest($carPlanData, $apiCreds);
+
         return $response;
     }
 
