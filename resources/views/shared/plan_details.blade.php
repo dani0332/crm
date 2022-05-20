@@ -143,9 +143,6 @@
                 },
                 error: function(jqXhr, textStatus, errorMessage){
                     $(".loader").hide();
-                    console.log("Error: ", errorMessage);
-                    console.log("textStatus: ", textStatus);
-                    console.log("jqXhr: ", jqXhr.responseText);
                     $('#car_plan_manual_process_text').show().text(jqXhr.responseText).delay(5000).fadeOut(300);
                 }
             });
