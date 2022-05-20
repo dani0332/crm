@@ -229,6 +229,11 @@ class HealthQuoteService extends BaseService
                 $this->query->whereIn('hqr.advisor_id', $ids);
                 $this->query->whereNull('hqr.previous_quote_id');
             }
+              if (Auth::user()->isNewBusinessAdvisor()) {
+                $ids = $this->walkTree(Auth::user()->id);
+                $this->query->whereIn('hqr.advisor_id', $ids);
+                $this->query->whereNull('hqr.previous_quote_id');
+            }
             if (isset($request->is_renewal) && $request->is_renewal != '') {
                 if($request->is_renewal == "Yes")
                     $this->query->whereNotNull('hqr.previous_quote_id');
@@ -473,6 +478,9 @@ class HealthQuoteService extends BaseService
         }
         if (Auth::user()->isRenewalAdvisor()) {
             $query->whereNotNull('hqr.previous_quote_id');
+        }
+        if (Auth::user()->isNewBusinessAdvisor()) {
+            $query->whereNull('hqr.previous_quote_id');
         }
         if (isset($request->paymentStatus)) {
             $query->where('hqr.payment_status_id', $request->paymentStatus);
