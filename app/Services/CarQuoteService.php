@@ -487,6 +487,9 @@ class CarQuoteService extends BaseService
         if (isset($request->paymentStatus)) {
             $query->where('cqr.payment_status_id', $request->paymentStatus);
         }
+        if (isset($request->renewalBatch)) {
+            $query->where('cqr.renewal_batch', $request->renewalBatch);
+        }
         return $query;
     }
     private function parseDate($date, $isStartOfDay)

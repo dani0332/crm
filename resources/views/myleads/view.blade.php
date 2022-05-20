@@ -164,6 +164,7 @@
                         d.email = $('#email').val();
                         d.teamType = $('#teamType').val();
                         d.paymentStatus = $('#paymentStatus').val();
+                        d.renewalBatch = $('#renewalBatch').val();
                     },
                 },
                 columnDefs: [
@@ -535,7 +536,14 @@
                                     </div>
                                 </div>
                                 <div class="col">
-
+                                    @if (Auth::user()->isRenewalAdvisor())
+                                        <label class="col-form-label col-md-4 col-sm-4" for="Renewal Batch #">Renewal Batch #</label>
+                                        <div class="col-md-6 col-sm-6">
+                                            <div class="input-group">
+                                                <input type="number" name="renewalBatch" id="renewalBatch" class="form-control">
+                                            </div>
+                                        </div>
+                                    @endif
                                 </div>
                             </div>
                             <div class="item form-group">
