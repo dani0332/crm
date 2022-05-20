@@ -721,7 +721,7 @@ class HealthQuoteService extends BaseService
         $authBasic = base64_encode($plansApiUserName . ":" . $plansApiPassword);
 
         $plansDataArr = array(
-            "quoteUID" =>'E5UV78H6',
+            "quoteUID" => $quoteUuId,
             "lang" => "en",
         );
 
