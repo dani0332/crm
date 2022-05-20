@@ -477,8 +477,8 @@ class HomeQuoteService extends BaseService
             "previous_quote_id" => "readonly|title",
             "is_renewal" => "|static|Yes,No",
             "renewal_expiry_date" => "input|date|title|range",
-            'renewal_batch' => "input|none",
-            'previous_quote_policy_number' => "input|none"
+            "renewal_batch" => "input|none",
+            "previous_quote_policy_number" => "input|none"
         );
     }
 

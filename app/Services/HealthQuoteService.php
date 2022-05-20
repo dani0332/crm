@@ -572,8 +572,8 @@ class HealthQuoteService extends BaseService
             "salary_band_id" => "select|title|required",
             "member_category_id" => "select|title|required",
             "gender" => "|static|Male,Female",
-            'renewal_batch' => "input|none",
-            'previous_quote_policy_number' => "input|title"
+            "renewal_batch" => "input|none",
+            "previous_quote_policy_number" => "input|title"
         );
     }
 
@@ -760,7 +760,7 @@ class HealthQuoteService extends BaseService
         $authBasic = base64_encode($plansApiUserName . ":" . $plansApiPassword);
 
         $plansDataArr = array(
-            "quoteUID" =>'E5UV78H6',
+            "quoteUID" => $quoteUuId,
             "lang" => "en",
         );
 
