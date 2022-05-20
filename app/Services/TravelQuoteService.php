@@ -507,7 +507,7 @@ class TravelQuoteService extends BaseService
             "payment_status_id" => "select|title",
             "previous_quote_policy_number"=> "input|none",
             "renewal_expiry_date" => "input|none",
-            "lang" => "readonly|none"
+            "lang" => "readonly|none",
             "renewal_import_code" => "input|text"
         );
     }
