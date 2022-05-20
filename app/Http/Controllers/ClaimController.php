@@ -478,10 +478,16 @@ class ClaimController extends Controller
     {
         $response = $this->carQuoteService->carPlanModify($request);
 
+        $message = '';
         if (gettype($response) == 'integer' && ($response == 200 || $response == 201)) {
             $message = 'Car Plan has been updated';
         } else {
-            $message = 'Car Plan has not been updated '.$response->message;
+            if(isset($response->message)) {
+                $responseMessage = $response->message;
+            } else {
+                $responseMessage = $response;
+            }
+            $message = 'Car Plan has not been updated '.$responseMessage;
         }
 
         return $message;
