@@ -217,7 +217,7 @@ class CRUDService extends BaseService
         if (strtolower($modelType) == strtolower(quoteTypeCode::Car)) {
             $query->whereIn('r.name', [strtoupper($modelType) . '_RENEWAL_ADVISOR', 'advisor']);
         } else if (strtolower($modelType) ==  strtolower(quoteTypeCode::Health)) {
-            $query->whereIn('r.name', [strtoupper($modelType) . '_WCU_ADVISOR', 'RM_ADVISOR', 'EBP_ADVISOR','HEALTH_RENEWAL_ADISOR']);
+            $query->whereIn('r.name', [strtoupper($modelType) . '_WCU_ADVISOR', 'RM_ADVISOR', 'EBP_ADVISOR','HEALTH_RENEWAL_ADVISOR']);
         } else if (strtolower($modelType) ==  strtolower(quoteTypeCode::Business)) {
             $query->whereIn('r.name', ['CORPLINE_ADVISOR','CORPLINE_RENEWAL_ADVISOR']);
         }else if (strtolower($modelType) == strtolower(quoteTypeCode::Life) || strtolower($modelType) == strtolower(quoteTypeCode::Home) || strtolower($modelType) == strtolower(quoteTypeCode::Travel)) {

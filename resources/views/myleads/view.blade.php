@@ -22,6 +22,7 @@
         var isAdmin = JSON.parse('<?php echo json_encode(Auth::user()->hasRole('ADMIN')); ?>');
         var teamUserIds = JSON.parse('<?php echo json_encode(Auth::user()->getTeamUserIds()); ?>');
         var isRenewalUser = JSON.parse('<?php echo json_encode(Auth::user()->isRenewalAdvisor()); ?>');
+        var isNewUser = JSON.parse('<?php echo json_encode(Auth::user()->isNewBusinessAdvisor()); ?>');
         $(document).ready(function() {
             $('#handler').find('i').toggleClass("fa-angle-double-down fa-angle-double-up");
             $('#collapseOne').collapse();
@@ -83,6 +84,9 @@
                 }, {
                     data: 'premium',
                     name: 'premium',
+                },{
+                    data: 'previous_policy_expiry_date',
+                    name: 'previous_policy_expiry_date'
                 });
             } else if (isRenewalUser && $("#modelType").val() == "Business") {
                 Columns.push({
@@ -113,6 +117,9 @@
                 }, {
                     data: 'premium',
                     name: 'premium',
+                }, {
+                    data: 'previous_policy_expiry_date',
+                    name: 'previous_policy_expiry_date'
                 }, {
                     data: 'company_name',
                     name: 'company_name',
@@ -170,6 +177,8 @@
                         d.renewal_batch = $('#renewal_batch').val();
                         d.previous_policy_number = $('#previous_policy_number').val();
                         d.renewalBatch = $('#renewalBatch').val();
+                        d.previous_policy_expiry_date = $('#previous_policy_expiry_date').val();
+                        d.previous_policy_expiry_date_end = $('#previous_policy_expiry_date_end').val();
                     },
                 },
                 columnDefs: [
@@ -201,6 +210,7 @@
                     .val('')
                     .prop('checked', false)
                     .prop('selected', false);
+                    window.location.reload();
                 $(".loader").show();
                 myleadsTable.draw();
                 setTimeout(() => {
@@ -417,6 +427,18 @@
                                     </div>
                                 @else
                                     <div class="col">
+                                        <label class="col-form-label col-md-4 col-sm-4" for="policy_number"></label>
+                                        <div class="col-md-6 col-sm-6">
+                                            <div class="input-group">
+                                                
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endif
+                            </div>
+                            @if(!Auth::user()->isRenewalAdvisor())
+                                <div class="item form-group">
+                                    <div class="col">
                                         <label class="col-form-label col-md-4 col-sm-4" for="policy_number">Policy
                                             Number</label>
                                         <div class="col-md-6 col-sm-6">
@@ -426,9 +448,16 @@
                                             </div>
                                         </div>
                                     </div>
-
-                                @endif
-                            </div>
+                                    <div class="col">
+                                        <label class="col-form-label col-md-4 col-sm-4" for="policy_number"></label>
+                                        <div class="col-md-6 col-sm-6">
+                                            <div class="input-group">
+                                                
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endif
                             @if (Auth::user()->isRenewalAdvisor())
                                 <div class="item form-group">
                                     <div class="col">
@@ -462,14 +491,38 @@
                                         <div class="col">
                                             <label class="col-form-label col-md-4 col-sm-4" for="previous_policy_number">
                                                 Previous Policy Number</label>
+                                                <div class="col-md-6 col-sm-6">
+                                                    <div class="input-group">
+                                                        <input type="text" name="previous_policy_number" id="previous_policy_number" class="form-control">
+                                                    </div>
+                                                </div>
+                                        </div>
+                                    @endif
+        
+                                </div>
+                               
+                                @if (Auth::user()->isRenewalAdvisor())
+                                    <div class="item form-group">
+                                        <div class="col">
+                                            <label class="col-form-label col-md-4 col-sm-4" for="previous_policy_expiry_date">
+                                                Previous Policy Expiry Date</label>
                                             <div class="col-md-6 col-sm-6">
                                                 <div class="input-group">
-                                                    <input type="text" name="previous_policy_number" id="previous_policy_number" class="form-control">
+                                                    <input type="date" name="previous_policy_expiry_date" id="previous_policy_expiry_date" class="form-control">
                                                 </div>
                                             </div>
                                         </div>
+                                        <div class="col">
+                                            <label class="col-form-label col-md-4 col-sm-4" for="previous_policy_expiry_date_end">
+                                                Previous Policy Expiry Date End</label>
+                                            <div class="col-md-6 col-sm-6">
+                                                <div class="input-group">
+                                                    <input type="date" name="previous_policy_expiry_date_end" id="previous_policy_expiry_date_end" class="form-control">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                     @endif
-                                </div>
                                 <div class="item form-group">
                                      @if (Auth::user()->isRenewalAdvisor() && $teamName == 'Business')
                                         <div class="col">
@@ -572,7 +625,7 @@
                                     </div>
                                 </div>
                                 <div class="col">
-                                    @if (Auth::user()->isRenewalAdvisor())
+                                    @if (Auth::user()->isRenewalAdvisor() && $teamName == "Car")
                                         <label class="col-form-label col-md-4 col-sm-4" for="Renewal Batch #">Renewal Batch #</label>
                                         <div class="col-md-6 col-sm-6">
                                             <div class="input-group">
@@ -623,6 +676,9 @@
                                     @endif
                                     @if (Auth::user()->isRenewalAdvisor())
                                         <th>Premium</th>
+                                    @endif
+                                    @if (Auth::user()->isRenewalAdvisor())
+                                        <th>Previous Policy Expiry Date</th>
                                     @endif
                                     @if (Auth::user()->isRenewalAdvisor() && $teamName == 'Business')
                                         <th>Company Name</th>
