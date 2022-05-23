@@ -115,15 +115,21 @@ function cleanString($string) {
             $result["total_leads"] = $modelType::where("quote_status_id", $statusId)
             ->where("advisor_id", \Auth::user()->id)
             ->whereNull("previous_quote_id")
+            ->whereNotNull('policy_number')
+            ->where('source', "!=", quoteTypeCode::RenewalsUpload)
             ->count();
             $result["total_premium"] = $modelType::where("quote_status_id", $statusId)
             ->where("advisor_id", \Auth::user()->id)
             ->whereNull("previous_quote_id")
+            ->whereNotNull('policy_number')
+            ->where('source', "!=", quoteTypeCode::RenewalsUpload)
             ->sum("premium");
 
             $result["leads_list"] = $modelType::where("quote_status_id", $statusId)
             ->where("advisor_id", \Auth::user()->id)
             ->whereNull("previous_quote_id")
+            ->whereNotNull('policy_number')
+            ->where('source', "!=", quoteTypeCode::RenewalsUpload)
             ->paginate(10);
 
         }
@@ -170,15 +176,21 @@ function cleanString($string) {
 
             $result["total_leads"] = $modelType::where("quote_status_id", $statusId)
             ->where("advisor_id", \Auth::user()->id)
-            ->whereNull("previous_quote_id")->count();
+            ->whereNull("previous_quote_id")
+            ->whereNotNull('policy_number')
+            ->where('source', "!=", quoteTypeCode::RenewalsUpload)->count();
 
             $result["total_premium"] = $modelType::where("quote_status_id", $statusId)
             ->where("advisor_id", \Auth::user()->id)
-            ->whereNull("previous_quote_id")->sum("premium");
+            ->whereNull("previous_quote_id")
+            ->whereNotNull('policy_number')
+            ->where('source', "!=", quoteTypeCode::RenewalsUpload)->sum("premium");
 
             $result["leads_list"] = $modelType::where("quote_status_id", $statusId)
             ->where("advisor_id", \Auth::user()->id)
-            ->whereNull("previous_quote_id")->paginate(10);
+            ->whereNull("previous_quote_id")
+            ->whereNotNull('policy_number')
+            ->where('source', "!=", quoteTypeCode::RenewalsUpload)->paginate(10);
 
         }
         else if (Auth::user()->isNewBusinessManager()) {
@@ -186,15 +198,21 @@ function cleanString($string) {
 
             $result["total_leads"] = $modelType::where("quote_status_id", $statusId)
             ->whereIn("advisor_id",  $ids)
-            ->whereNull("previous_quote_id")->count();
+            ->whereNull("previous_quote_id")
+            ->whereNotNull('policy_number')
+            ->where('source', "!=", quoteTypeCode::RenewalsUpload)->count();
 
             $result["total_premium"] = $modelType::where("quote_status_id", $statusId)
             ->whereIn("advisor_id",  $ids)
-            ->whereNull("previous_quote_id")->sum("premium");
+            ->whereNull("previous_quote_id")
+            ->whereNotNull('policy_number')
+            ->where('source', "!=", quoteTypeCode::RenewalsUpload)->sum("premium");
 
             $result["leads_list"] = $modelType::where("quote_status_id", $statusId)
             ->whereIn("advisor_id",  $ids)
-            ->whereNull("previous_quote_id")->paginate(10);
+            ->whereNull("previous_quote_id")
+            ->whereNotNull('policy_number')
+            ->where('source', "!=", quoteTypeCode::RenewalsUpload)->paginate(10);
         }
         else {
             $result["total_leads"] = $modelType::where("quote_status_id", $statusId)->count();
@@ -226,6 +244,8 @@ function getDataAgainstEveryStatus($modelType, $request) {
             $result["leads_list"] = $modelType::where("quote_status_id", $request->status)
             ->where("advisor_id", \Auth::user()->id)
             ->whereNull("previous_quote_id")
+            ->whereNotNull('policy_number')
+            ->where('source', "!=", quoteTypeCode::RenewalsUpload)
             ->paginate(10);
 
         }
@@ -246,6 +266,8 @@ function getDataAgainstEveryStatus($modelType, $request) {
             $result["leads_list"] = $modelType::where("quote_status_id", $request->status)
             ->where("advisor_id", \Auth::user()->id)
             ->whereNull("previous_quote_id")
+            ->whereNotNull('policy_number')
+            ->where('source', "!=", quoteTypeCode::RenewalsUpload)
             ->paginate(10);
 
         } else {
@@ -275,7 +297,9 @@ function getDataAgainstSearchTerm($modelType,  $request) {
                 $result["leads_list"] = $modelType::where("quote_status_id", $request->status)
                 ->whereRaw('MATCH (company_name, first_name, last_name, code, mobile_no, email) AGAINST (?)' , array($request->term.'*'))
                 ->where("advisor_id", \Auth::user()->id)
-                ->whereNotNull("previous_quote_id")
+                ->whereNull("previous_quote_id")
+                ->whereNotNull('policy_number')
+                ->where('source', "!=", quoteTypeCode::RenewalsUpload)
                 ->get();
             }else {
                 $result["leads_list"] = $modelType::where("quote_status_id", $request->status)
@@ -295,6 +319,8 @@ function getDataAgainstSearchTerm($modelType,  $request) {
                 ->whereRaw('MATCH (company_name, first_name, last_name, code, mobile_no, email) AGAINST (? IN BOOLEAN MODE)' , array($request->term.'*'))
                 ->whereNull("previous_quote_id")
                 ->where("advisor_id", \Auth::user()->id)
+                ->whereNotNull('policy_number')
+                ->where('source', "!=", quoteTypeCode::RenewalsUpload)
                 ->get();
             }else {
                 $result["leads_list"] = $modelType::where("quote_status_id", $status)
