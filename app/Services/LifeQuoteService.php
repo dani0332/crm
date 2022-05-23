@@ -626,6 +626,7 @@ class LifeQuoteService extends BaseService
 
     public function getLeadAuditHistory($id)
     {
+        
         $audits = DB::table('audits as a')
         ->select(
             'a.created_at as ModifiedAt',
@@ -634,11 +635,6 @@ class LifeQuoteService extends BaseService
             DB::raw("(SELECT NAME FROM users WHERE id = JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.advisor_id'))) AS NewAdvisor"),
             DB::raw("JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.notes')) AS NewNotes")
         )
-        ->join('life_quote_request_detail as cqrd', 'cqrd.life_quote_request_id', '=', 'cqr.id')
-        ->join("audits as a",function($query){
-            $query->on("a.auditable_id","=","cqr.id")
-                ->orOn("a.auditable_id","=","cqrd.id");
-        })
         ->where(function ($query) {
             $query->where('a.auditable_type', 'App\Models\LifeQuote')
             ->orWhere('a.auditable_type', 'App\Models\LifeQuoteRequestDetail');
@@ -648,8 +644,11 @@ class LifeQuoteService extends BaseService
             ->orWhereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.notes')"))
             ->orWhereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.advisor_id')"));
         })
-        ->where('cqr.id', $id)
-        ->where('a.new_values', 'like', '%%')
+        ->where(function ($query) use ($id) {
+            $detailObjId = LifeQuoteRequestDetail::where('life_quote_request_id', $id)->first()->id;
+            $query->where('a.auditable_id', $id)
+            ->orWhere('a.auditable_id', $detailObjId);
+        })
         ->orderBy('a.created_at', 'DESC')->get();
         return $audits;
     }
