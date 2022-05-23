@@ -167,9 +167,27 @@
 
                     @php
                         $count = 1;
+                        $searchProperties = [];
+                        $skipProperties = [];
+                        if($isRenewalUser && strtolower($model->modelType) == 'car'){
+                            $searchProperties = $model->renewalSearchProperties;
+                            $skipProperties = $model->renewalSkipProperties;
+                        }
+                        else if($isRenewalUser && strtolower($model->modelType) != 'car'){
+                            $searchProperties = $model->renewalSearchProperties;
+                            $skipProperties = $model->renewalSkipProperties;
+                        }
+                        else if($isNewBusinessUser && strtolower($model->modelType) != 'car'){
+                            $searchProperties = $model->newBusinessSearchProperties;
+                            $skipProperties = $model->newBusinessSkipProperties;
+                        }
+                        else{
+                            $searchProperties = $model->searchProperties;
+                            $skipProperties = $model->skipProperties;
+                        }
                     @endphp
                     @foreach ($model->properties as $property => $value)
-                        @if (!str_contains($model->skipProperties['show'], $property))
+                        @if (!str_contains($skipProperties['show'], $property))
                             @if ($count % 2 != 0)
                                 <div class="item form-group">
                             @endif
