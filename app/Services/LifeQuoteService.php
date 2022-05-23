@@ -645,9 +645,13 @@ class LifeQuoteService extends BaseService
             ->orWhereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.advisor_id')"));
         })
         ->where(function ($query) use ($id) {
-            $detailObjId = LifeQuoteRequestDetail::where('life_quote_request_id', $id)->first()->id;
-            $query->where('a.auditable_id', $id)
-            ->orWhere('a.auditable_id', $detailObjId);
+            $detailObjId = LifeQuoteRequestDetail::where('life_quote_request_id', $id)->first();
+            if($detailObjId) {
+                $query->where('a.auditable_id', $id)
+                ->orWhere('a.auditable_id', $detailObjId->id);
+            } else {
+                $query->where('a.auditable_id', $id);
+            }
         })
         ->orderBy('a.created_at', 'DESC')->get();
         return $audits;
