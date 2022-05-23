@@ -244,15 +244,11 @@ class HealthQuoteService extends BaseService
                 $ids = $this->walkTree(Auth::user()->id);
                 $this->query->whereIn('hqr.advisor_id', $ids);
                 $this->query->whereNull('hqr.previous_quote_id');
-                $this->query->whereNotNull('hqr.policy_number');
-                $this->query->where('hqr.source', "!=", quoteTypeCode::RenewalsUpload);
             }
               if (Auth::user()->isNewBusinessAdvisor()) {
                 $ids = $this->walkTree(Auth::user()->id);
                 $this->query->whereIn('hqr.advisor_id', $ids);
                 $this->query->whereNull('hqr.previous_quote_id');
-                $this->query->whereNotNull('hqr.policy_number');
-                $this->query->where('hqr.source', "!=", quoteTypeCode::RenewalsUpload);
             }
             if (isset($request->is_renewal) && $request->is_renewal != '') {
                 if($request->is_renewal ==  quoteTypeCode::yesText)
@@ -494,12 +490,9 @@ class HealthQuoteService extends BaseService
         if (Auth::user()->isRenewalAdvisor()) {
             $query->whereNotNull('hqr.previous_quote_id');
             $query->whereNotNull('hqr.policy_number');
-            $query->where('hqr.source', "!=", quoteTypeCode::RenewalsUpload);
         }
         if (Auth::user()->isNewBusinessAdvisor()) {
             $query->whereNull('hqr.previous_quote_id');
-            $query->whereNotNull('hqr.policy_number');
-            $query->where('hqr.source', "!=", quoteTypeCode::RenewalsUpload);
         }
         if (isset($request->paymentStatus) && $request->paymentStatus != '') {
             $query->where('hqr.payment_status_id', $request->paymentStatus);
