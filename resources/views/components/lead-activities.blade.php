@@ -39,37 +39,46 @@
                             @foreach ($activities as $activity)
                             @php
                              $quotetypename = '';
+                             $quoteCode = '';
                              $token =$activity['quote_type_id'];
                                 switch ($token) {
                                     case 1:
                                         $quotetypename = 'car';
+                                        $quoteCode = 'CAR-';
                                         break;
                                     case 2:
                                         $quotetypename = 'home';
+                                        $quoteCode = 'HOM-';
                                         break;
                                     case 3:
                                         $quotetypename = 'health';
+                                        $quoteCode = 'HEA-';
                                         break;
                                     case 4:
                                         $quotetypename = 'life';
+                                        $quoteCode = 'LIF-';
                                         break;
                                     case 5:
                                         $quotetypename = 'business';
+                                        $quoteCode = 'BUS-';
                                         break;
                                     case 6:
                                         $quotetypename = 'bike';
+                                        $quoteCode = 'BIK-';
                                         break;
                                     case 7:
                                         $quotetypename = 'yacht';
+                                        $quoteCode = 'YAC-';
                                         break;
                                     case 8:
                                         $quotetypename = 'travel';
+                                        $quoteCode = 'TRA-';
                                         break;
                                 }
                             @endphp
                                 <tr>
                                     <td>{{ $activity['title'] }}</td>
-                                    <td><a href="{{ $url }}">{{ $activity['quote_request_id'] }}</a></td>
+                                    <td><a href="{{ $url }}">{{ $quoteCode. ''. strtoupper($activity['quote_uuid']) }}</a></td>
                                     <td>{{ $activity['client_name'] }}</td>
                                     <td>{{ $activity['due_date'] }}</td>
                                     <td>{{ $activity['assignee'] }}</td>

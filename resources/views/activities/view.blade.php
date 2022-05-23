@@ -113,7 +113,27 @@
                 },
             });
         }
+        function getQuoteTypeCode(id){
+            switch (id) {
+                case 1:
+                    return 'CAR-';
+                case 2:
+                    return 'HOM-';
+                case 3:
+                    return 'HEA-';
+                case 4:
+                    return 'LIF-';
+                case 5:
+                    return 'BUS-';
+                case 6:
+                    return 'BIK-';
+                case 7:
+                    return 'YAC-';
+                case 8:
+                    return 'TRA-';
 
+            }
+        }
         function getQuoteTypeById(id) {
             switch (id) {
                 case 1:
@@ -283,12 +303,13 @@
                         data: 'quote_request_id',
                         name: 'quote_request_id',
                         render: function(data, type, row) {
-
+                            
                             var url = '/quotes/' + getQuoteTypeById(row.quote_type_id) + '/' + row
                                 .quote_uuid;
                             if (row.quote_uuid) {
-                                return "<a target='_blank' href='" + url + "'>" + row
-                                    .quote_request_id +
+                                var quoteTypeCode = getQuoteTypeCode(row.quote_type_id);
+                                var CDBID = quoteTypeCode + '-' + row.quote_uuid.toUpperCase();
+                                return "<a target='_blank' href='" + url + "'>" + CDBID +
                                     "</a>";
                             } else {
                                 return '';
@@ -411,9 +432,9 @@
                         </div>
                         <div class="col">
                             <ul class="nav navbar-right panel_toolbox">
-                                <li><input type="button" id="search-activities-reset" value="Reset"
+                                <li><input @iF(Auth::user()->isAdvisor()) disabled="disabled" @endif type="button" id="search-activities-reset" value="Reset"
                                         class="btn btn-success btn-sm"></li>
-                                <li><input type="submit" id="search-activities-submit" class="btn btn-warning btn-sm"></li>
+                                <li><input @iF(Auth::user()->isAdvisor()) disabled="disabled" @endif type="submit" id="search-activities-submit" class="btn btn-warning btn-sm"></li>
                                 <input type="hidden" name="period" id="period" value="today">
                                 <input type="hidden" name="customPeriodStart" id="customPeriodStart" >
                                 <input type="hidden" name="customPeriodStart" id="customPeriodEnd" >
