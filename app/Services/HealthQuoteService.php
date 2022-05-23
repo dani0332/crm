@@ -493,7 +493,6 @@ class HealthQuoteService extends BaseService
         }
         if (Auth::user()->isRenewalAdvisor()) {
             $query->whereNotNull('hqr.previous_quote_id');
-            $query->whereNotNull('hqr.policy_number');
         }
         if (Auth::user()->isNewBusinessAdvisor()) {
             $query->whereNull('hqr.previous_quote_id');
