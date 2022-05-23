@@ -40,6 +40,7 @@
     </script>
     <?php
     use App\Enums\quoteTypeCode;
+    use App\Models\CarQuote;
     ?>
     <div class="row">
         <div class="col-md-12 col-sm-12 admin-detail">
@@ -203,7 +204,18 @@
                                     @else
                                         <div class="col-md-6 col-sm-6"
                                             style="text-overflow: ellipsis;overflow: auto;white-space: nowrap;width: 495px;">
-                                            <p class="label-align-center">{{ $record->$property }}</p>
+                                            <p class="label-align-center">
+                                                @if($property == 'previous_quote_id')
+                                                    @php
+                                                        $previousQuote = CarQuote::select('uuid')->where('id', $record->previous_quote_id)->first();
+                                                    @endphp
+                                                    @if($previousQuote)
+                                                        <a href="/quotes/car/{{ $previousQuote->uuid }}" target="_blank" style="text-decoration: underline;">{{ $record->$property }}</a>
+                                                    @endif
+                                                @else
+                                                    {{ $record->$property }}
+                                                @endif
+                                            </p>
                                         </div>
                                     @endif
                                 @endif

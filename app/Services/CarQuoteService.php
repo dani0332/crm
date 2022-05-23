@@ -526,9 +526,13 @@ class CarQuoteService extends BaseService
 
         if ($request->ajax()) {
             if(Auth::user()->isManagerOrDeputy()){
-                $this->walkTree(Auth::user()->id); // get all childs of the user
-                array_push($this->childUserIds, Auth::user()->id); // add the user id to the array to fetch directly assigned leads as well
-                $this->query->whereIn('cqr.advisor_id', $this->childUserIds);	// fetch leads assigned to the user or his childs
+                if (Auth::user()->hasRole('CAR_RENEWAL_MANAGER')) {
+
+                } else {
+                    $this->walkTree(Auth::user()->id); // get all childs of the user
+                    array_push($this->childUserIds, Auth::user()->id); // add the user id to the array to fetch directly assigned leads as well
+                    $this->query->whereIn('cqr.advisor_id', $this->childUserIds);	// fetch leads assigned to the user or his childs
+                }
             }
 
             if(Auth::user()->isSpecificTeamAdvisor('Car')){
@@ -547,7 +551,7 @@ class CarQuoteService extends BaseService
             if (isset($request->renewal_expiry_date) && $request->renewal_expiry_date != '') {
                 $dateFrom = $this->parseDate($request['renewal_expiry_date'], true);
                 $dateTo = $this->parseDate($request['renewal_expiry_date_end'], false);
-                $this->query->whereBetween('cqr.renewal_expiry_date', [$dateFrom, $dateTo]);
+                $this->query->whereBetween('cqr.previous_policy_expiry_date', [$dateFrom, $dateTo]);
             }
             if (isset($request->next_followup_date) && $request->next_followup_date != '') {
                 $dateFrom = $this->parseDate($request['next_followup_date'], true);
