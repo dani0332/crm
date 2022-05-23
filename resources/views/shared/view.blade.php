@@ -69,6 +69,10 @@
                     $('#renewal_expiry_date_end').next().html('Please select renewal to end date');
                     return false;
                 }
+                if ($('#previous_policy_expiry_date').val() != '' && $('#previous_policy_expiry_date_end').val() == '') {
+                    $('#previous_policy_expiry_date_end').next().html('Please select previous policy expiry date to end date');
+                    return false;
+                }
 
                 if ($('#created_at').val() != '' && $('#created_at_end').val() == '') {
                     $('#created_at_end').next().html('Please select created end date');
@@ -279,9 +283,14 @@
                         d.assigned_to_date_end = $('#assigned_to_date_end').val();
                         d.renewal_expiry_date = $('#renewal_expiry_date').val();
                         d.renewal_expiry_date_end = $('#renewal_expiry_date_end').val();
+                        d.policy_number = $('#policy_number').val();
                         if (model.properties['created_at'] && model.properties['created_at'].indexOf(
                                 'range') > -1) {
                             d['created_at_end'] = $('#created_at_end').val();
+                        }
+                        if (model.properties['previous_policy_expiry_date'] && model.properties['previous_policy_expiry_date'].indexOf(
+                                'range') > -1) {
+                            d['previous_policy_expiry_date_end'] = $('#previous_policy_expiry_date_end').val();
                         }
                     }
                 },
@@ -781,7 +790,11 @@
                                                             <label style="margin-left: 8px;font-size: 16px;font-weight: bolder;">Assign Advisor</label>
                                                             <span class='required' style="margin-left:10px;">*</span>
                                                             @php
-                                                                $updatedAdvisors = $isRenewalUser ? $renewalAdvisors : $advisors;
+                                                               
+                                                                if(!empty($renewalAdvisors))
+                                                                    $updatedAdvisors = $renewalAdvisors;
+                                                                else
+                                                                    $updatedAdvisors = $advisors;
                                                             @endphp
                                                             <select class="form-control" id="assigned_to_id_new"
                                                                 name="assigned_to_id_new">
