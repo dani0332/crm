@@ -283,6 +283,7 @@
                         d.assigned_to_date_end = $('#assigned_to_date_end').val();
                         d.renewal_expiry_date = $('#renewal_expiry_date').val();
                         d.renewal_expiry_date_end = $('#renewal_expiry_date_end').val();
+                        d.policy_number = $('#policy_number').val();
                         if (model.properties['created_at'] && model.properties['created_at'].indexOf(
                                 'range') > -1) {
                             d['created_at_end'] = $('#created_at_end').val();
