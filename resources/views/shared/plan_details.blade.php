@@ -29,38 +29,15 @@
                 $providerName = $listQuotePlan->providerName;
                 $repairType = $listQuotePlan->repairType;
                 $actualPremium = $listQuotePlan->actualPremium;
-                if ($listQuotePlan->actualPremium == '') {
-                    $actualPremium = 0;
-                }
-                $discountPremium = $listQuotePlan->discountPremium;
-                if ($listQuotePlan->discountPremium == '') {
-                    $discountPremium = 0;
-                }
-                if (isset($listQuotePlan->carValueLowerLimit)) {
-                    $carValueLowerLimit = $listQuotePlan->carValueLowerLimit;
-                } else {
-                    $carValueLowerLimit = 0;
-                }
-                if (isset($listQuotePlan->carValueUpperLimit)) {
-                    $carValueUpperLimit = $listQuotePlan->carValueUpperLimit;
-                } else {
-                    $carValueUpperLimit = 0;
-                }
-                if (isset($listQuotePlan->excess)) {
-                    $excess = $listQuotePlan->excess;
-                } else {
-                    $excess = 0;
-                }
-                if (isset($listQuotePlan->carValue)) {
-                    $carValue = $listQuotePlan->carValue;
-                } else {
-                    $carValue = 0;
-                }
-                if (isset($listQuotePlan->isDisabled)) {
-                    $isDisabled = $listQuotePlan->isDisabled;
-                } else {
-                    $isDisabled = 0;
-                }
+
+                $actualPremium = isset($listQuotePlan->actualPremium) ? $listQuotePlan->actualPremium : 0;
+                $discountPremium = isset($listQuotePlan->discountPremium) ? $listQuotePlan->discountPremium : 0;
+                $carValueLowerLimit = isset($listQuotePlan->carValueLowerLimit) ? $listQuotePlan->carValueLowerLimit : 0;
+                $carValueUpperLimit = isset($listQuotePlan->carValueUpperLimit) ? $listQuotePlan->carValueUpperLimit : 0;
+                $excess = isset($listQuotePlan->excess) ? $listQuotePlan->excess : 0;
+                $carValue = isset($listQuotePlan->carValue) ? $listQuotePlan->carValue : 0;
+                $isDisabled = isset($listQuotePlan->isDisabled) ? $listQuotePlan->isDisabled : 0;
+
                 $listQuotePlanAddonss = $listQuotePlan->addons;
                 $listQuotePlanBenefitsInclusions = $listQuotePlan->benefits->inclusion;
                 $listQuotePlanBenefitsExclusions = $listQuotePlan->benefits->exclusion;
