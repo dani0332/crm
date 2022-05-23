@@ -526,9 +526,13 @@ class CarQuoteService extends BaseService
 
         if ($request->ajax()) {
             if(Auth::user()->isManagerOrDeputy()){
-                $this->walkTree(Auth::user()->id); // get all childs of the user
-                array_push($this->childUserIds, Auth::user()->id); // add the user id to the array to fetch directly assigned leads as well
-                $this->query->whereIn('cqr.advisor_id', $this->childUserIds);	// fetch leads assigned to the user or his childs
+                if (Auth::user()->hasRole('CAR_RENEWAL_MANAGER')) {
+
+                } else {
+                    $this->walkTree(Auth::user()->id); // get all childs of the user
+                    array_push($this->childUserIds, Auth::user()->id); // add the user id to the array to fetch directly assigned leads as well
+                    $this->query->whereIn('cqr.advisor_id', $this->childUserIds);	// fetch leads assigned to the user or his childs
+                }
             }
 
             if(Auth::user()->isSpecificTeamAdvisor('Car')){
