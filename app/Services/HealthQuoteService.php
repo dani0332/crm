@@ -245,19 +245,19 @@ class HealthQuoteService extends BaseService
                 $this->query->whereIn('hqr.advisor_id', $ids);
                 $this->query->whereNull('hqr.previous_quote_id');
                 $this->query->whereNotNull('hqr.policy_number');
-                $this->query->where('hqr.source', "!=", "RenewalsUpload");
+                $this->query->where('hqr.source', "!=", quoteTypeCode::RenewalsUpload);
             }
               if (Auth::user()->isNewBusinessAdvisor()) {
                 $ids = $this->walkTree(Auth::user()->id);
                 $this->query->whereIn('hqr.advisor_id', $ids);
                 $this->query->whereNull('hqr.previous_quote_id');
                 $this->query->whereNotNull('hqr.policy_number');
-                $this->query->where('hqr.source', "!=", "RenewalsUpload");
+                $this->query->where('hqr.source', "!=", quoteTypeCode::RenewalsUpload);
             }
             if (isset($request->is_renewal) && $request->is_renewal != '') {
-                if($request->is_renewal == "Yes")
+                if($request->is_renewal ==  quoteTypeCode::yesText)
                     $this->query->whereNotNull('hqr.previous_quote_id');
-                if($request->is_renewal == "No")
+                if($request->is_renewal ==  quoteTypeCode::noText)
                     $this->query->whereNull('hqr.previous_quote_id');
             }
             foreach ($searchProperties as $item) {
@@ -500,6 +500,8 @@ class HealthQuoteService extends BaseService
         }
         if (Auth::user()->isNewBusinessAdvisor()) {
             $query->whereNull('hqr.previous_quote_id');
+            $query->whereNotNull('hqr.policy_number');
+            $query->where('hqr.source', "!=", quoteTypeCode::RenewalsUpload);
         }
         if (isset($request->paymentStatus) && $request->paymentStatus != '') {
             $query->where('hqr.payment_status_id', $request->paymentStatus);
@@ -515,6 +517,7 @@ class HealthQuoteService extends BaseService
             $dateTo = Carbon::createFromFormat('Y-m-d', $request['previous_policy_expiry_date_end'])->endOfDay()->toDateTimeString();
             $query->whereBetween('hqr.previous_policy_expiry_date', [$dateFrom, $dateTo]);
         }
+        
         return $query;
     }
 
