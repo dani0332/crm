@@ -39,6 +39,7 @@ class quoteTypeCode extends Enum
     const RenewalsUpload = "RenewalsUpload";
     const yesText = "Yes";
     const noText = "No";
+    const quoteStatus= 'quote_status_id';
 
     public static function getOptions() 
     {
