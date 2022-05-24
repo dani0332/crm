@@ -14,72 +14,56 @@ class AlterQuotesTable extends Migration
     public function up()
     {
         Schema::table('car_quote_request', function (Blueprint $table) {
-            if(Schema::hasColumn('car_quote_request', 'previous_policy_expiry_date')) {
-                $table->dateTime('previous_policy_expiry_date')->nullable()->default(null)->change();
-            }
+           
             if(Schema::hasColumn('car_quote_request', 'renewal_batch')) {
                 $table->string('renewal_batch', 50)->nullable()->default(null)->change();
             }
         });
 
         Schema::table('health_quote_request', function (Blueprint $table) {
-            if(Schema::hasColumn('health_quote_request', 'previous_policy_expiry_date')) {
-                $table->dateTime('previous_policy_expiry_date')->change();
-            }
+            
             if(Schema::hasColumn('health_quote_request', 'renewal_batch')) {
                 $table->string('renewal_batch', 50)->nullable()->default(null)->change();
             }
         });
 
         Schema::table('travel_quote_request', function (Blueprint $table) {
-            if(Schema::hasColumn('travel_quote_request', 'previous_policy_expiry_date')) {
-                $table->dateTime('previous_policy_expiry_date')->nullable()->default(null)->change();
-            }
+           
             if(Schema::hasColumn('travel_quote_request', 'renewal_batch')) {
                 $table->string('renewal_batch', 50)->nullable()->default(null)->change();
             }
         });
 
         Schema::table('life_quote_request', function (Blueprint $table) {
-            if(Schema::hasColumn('life_quote_request', 'previous_policy_expiry_date')) {
-                $table->dateTime('previous_policy_expiry_date')->nullable()->default(null)->change();
-            }
+            
             if(Schema::hasColumn('life_quote_request', 'renewal_batch')) {
                 $table->string('renewal_batch', 50)->nullable()->default(null)->change();
             }
         });
 
         Schema::table('home_quote_request', function (Blueprint $table) {
-            if(Schema::hasColumn('home_quote_request', 'previous_policy_expiry_date')) {
-                $table->dateTime('previous_policy_expiry_date')->nullable()->default(null)->change();
-            }
+           
             if(Schema::hasColumn('home_quote_request', 'renewal_batch')) {
                 $table->string('renewal_batch', 50)->nullable()->default(null)->change();
             }
         });
 
         Schema::table('yacht_quote_request', function (Blueprint $table) {
-            if(Schema::hasColumn('yacht_quote_request', 'previous_policy_expiry_date')) {
-                $table->dateTime('previous_policy_expiry_date')->nullable()->default(null)->change();
-            }
+            
             if(Schema::hasColumn('yacht_quote_request', 'renewal_batch')) {
                 $table->string('renewal_batch', 50)->nullable()->default(null)->change();
             }
         });
 
         Schema::table('bike_quote_request', function (Blueprint $table) {
-            if(Schema::hasColumn('bike_quote_request', 'previous_policy_expiry_date')) {
-                $table->dateTime('previous_policy_expiry_date')->nullable()->default(null)->change();
-            }
+            
             if(Schema::hasColumn('bike_quote_request', 'renewal_batch')) {
                 $table->string('renewal_batch', 50)->nullable()->default(null)->change();
             }
         });
 
         Schema::table('business_quote_request', function (Blueprint $table) {
-            if(Schema::hasColumn('business_quote_request', 'previous_policy_expiry_date')) {
-                $table->dateTime('previous_policy_expiry_date')->nullable()->default(null)->change();
-            }
+           
             if(Schema::hasColumn('business_quote_request', 'renewal_batch')) {
                 $table->string('renewal_batch', 50)->nullable()->default(null)->change();
             }
