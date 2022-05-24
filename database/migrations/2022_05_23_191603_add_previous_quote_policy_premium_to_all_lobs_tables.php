@@ -56,7 +56,7 @@ class AddPreviousQuotePolicyPremiumToAllLobsTables extends Migration
         });
 
         Schema::table('business_quote_request', function (Blueprint $table) {
-            if(!Schema::hasColumn('business_quote_request', 'previous_policy_expiry_date')) {
+            if(!Schema::hasColumn('business_quote_request', 'previous_quote_policy_premium')) {
                 $table->decimal('previous_quote_policy_premium')->nullable();
             }
         });
