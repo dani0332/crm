@@ -94,6 +94,7 @@ class CRUDController extends Controller
         }
         else if(Auth::user()->isRenewalManager() || Auth::user()->isRenewalAdvisor() )
         {
+            
             $isRenewalUser = true;
             $this->crudService->fillRenewalData($this->genericModel);
             $renewalAdvisors = $this->crudService->getRenewalAdvisorsByModelType($this->genericModel->modelType); 
