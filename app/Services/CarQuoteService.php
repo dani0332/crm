@@ -395,7 +395,7 @@ class CarQuoteService extends BaseService
                 $title = "Renewal Batch #";
                 break;
             case 'renewal_expiry_date':
-                $title = "Renewal Expiry Date";
+                $title = "Previous Policy Expiry Date";
                 break;
             case 'policy_number':
                 $title = "Policy Number";
@@ -410,13 +410,13 @@ class CarQuoteService extends BaseService
                 $title = "Cylinder";
                 break;
             case 'previous_quote_policy_number':
-                $title = "Previous Quote Policy Number";
+                $title = "Previous Policy Number";
                 break;
             case 'previous_policy_expiry_date':
                 $title = "Previous Policy Expiry Date";
                 break;
             case 'previous_quote_policy_premium':
-                $title = "Previous Quote Policy Premium";
+                $title = "Previous Policy Premium";
                 break;
             default:
                 break;
@@ -753,7 +753,7 @@ class CarQuoteService extends BaseService
 
     public function fillRenewalProperties($model)
     {
-        $model->renewalSearchProperties = ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'advisor_id', 'created_at', 'vehicle_type_id', 'renewal_expiry_date', 'is_ecommerce', 'payment_status_id', 'policy_number', 'renewal_batch', 'car_type_insurance_id', 'currently_insured_with'];
+        $model->renewalSearchProperties = ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'advisor_id', 'created_at', 'vehicle_type_id', 'renewal_expiry_date', 'is_ecommerce', 'payment_status_id', 'renewal_batch', 'car_type_insurance_id', 'currently_insured_with','previous_quote_policy_number'];
         $model->renewalSkipProperties = [
             "create" => "id,advisor_id,paid_at,renewal_expiry_date,renewal_batch,lost_reason,payment_status_id,plan_id,premium,car_plan_provider_id,code,is_ecommerce,payment_gateway,created_at,next_followup_date,updated_at,promo_code,quote_status_id,device,policy_number,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by,premium,source,transapp_code,previous_quote_policy_number,previous_policy_expiry_date,previous_quote_policy_premium",
             "list" => "additional_notes,email,mobile_no,paid_at,plan_id,car_plan_provider_id,payment_gateway,promo_code,source,seat_capacity,cylinder,device,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by,nationality_id,dob,year_of_manufacture,uae_license_held_for_id,car_value,emirate_of_registration_id,claim_history_id,transapp_code,is_ecommerce,payment_status_id,policy_number,renewal_expiry_date,premium",
