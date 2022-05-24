@@ -2,20 +2,18 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\TmLead;
 use Illuminate\Http\Request;
-use DataTables;
-use Auth;
-use DB;
-use App\Enums\tmLeadStatusCode;
-use App\Services\TMLeadsService;
+use App\Models\TmLead;
 use App\Models\TmInsuranceType;
 use App\Models\TmLeadStatus;
 use App\Models\User;
-use \Carbon\Carbon;
 use App\Http\Requests\TmLeadRequest;
+use App\Services\TMLeadsService;
+use App\Enums\tmLeadStatusCode;
 use App\Http\Traits\TmLeadTrait;
-
+use \Carbon\Carbon;
+use DataTables;
+use Auth;
 class TmLeadController extends Controller
 {
     use TmLeadTrait;
@@ -33,7 +31,7 @@ class TmLeadController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index(Request $request)
+    public function index(Request $request, TmLead $tmLead, Datatables $datatables)
     {
         $handlers = User::select('users.*')
             ->leftjoin('model_has_roles', 'users.id', 'model_has_roles.model_id')
@@ -51,7 +49,7 @@ class TmLeadController extends Controller
         }
 
         if ($request->ajax()) {
-            $queryTmLeads = TmLead::select(
+            $queryTmLeads = $tmLead::select(
                 'tm_leads.id as id',
                 'tm_leads.customer_name as customer_name',
                 'tm_leads.notes as notes',
@@ -124,7 +122,7 @@ class TmLeadController extends Controller
                 $queryTmLeads->where('tm_leads.tm_lead_types_id', $request->tm_lead_types_id);
             }
 
-            return Datatables::of($queryTmLeads)
+            return $datatables::of($queryTmLeads)
                 ->addIndexColumn()
                 ->make(true);
         }

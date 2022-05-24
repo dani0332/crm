@@ -163,7 +163,6 @@
                 <input type="hidden" id="selectTmLeadId" name="selectTmLeadId" value="">
                 <input type="hidden" id="isCurrentUserIsAdvisor" name="isCurrentUserIsAdvisor" value="{{ $isCurrentUserIsAdvisor }}">
                 <table class="table table-striped jambo_table tmlead-data-table" style="width:100%">
-                    <label id="totalLeads" style="font-weight: bold;margin-left: 18px;"></label>
                       <thead>
                         <tr>
                           <th>@if($isCurrentUserIsAdvisor == "0")<input type="checkbox" id="checkAllTmLeads" name="checkAllTmLeads" value="">@endif</th>

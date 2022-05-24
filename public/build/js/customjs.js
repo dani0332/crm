@@ -1286,10 +1286,13 @@ $(document).ready(function () {
             "action": newexportaction
         }],
         ordering: false,
-        info: false,
+        info: true,
         searching: false,
         bLengthChange: false,
         serverSide: true,
+        stateSave: true,
+        paging: true,
+        processing: true,
         ajax: {
             url: config.routes.tmlead_datatable_route,
             data: function (d) {
@@ -1350,10 +1353,6 @@ $(document).ready(function () {
                 }
             }
         },
-        drawCallback: function (settings) {
-            var api = new $.fn.dataTable.Api(settings);
-            $("#totalLeads").text("Total Leads: " + settings._iRecordsTotal);
-        }
     });
     tmLeadsDatatable.column(4).visible(false);
 
@@ -1617,6 +1616,9 @@ $(document).ready(function () {
         searching: false,
         bLengthChange: false,
         serverSide: true,
+        stateSave: true,
+        paging: true,
+        processing: true,
         ajax: config.routes.tmuploadlead_datatable_route,
         columns: [{
             data: 'id',
