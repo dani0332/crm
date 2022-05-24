@@ -228,7 +228,7 @@
                                                         $previousQuote = CarQuote::select('uuid')->where('id', $record->previous_quote_id)->first();
                                                     @endphp
                                                     @if($previousQuote)
-                                                        <a href="/quotes/car/{{ $previousQuote->uuid }}" target="_blank" style="text-decoration: underline;">{{ $record->$property }}</a>
+                                                        <a href="/quotes/{{strtolower($model->modelType)}}/{{ $previousQuote->uuid }}" target="_blank" style="text-decoration: underline;">{{ $record->$property }}</a>
                                                     @endif
                                                 @else
                                                     {{ $record->$property }}
