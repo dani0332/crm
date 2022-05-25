@@ -112,8 +112,11 @@
                     data: "assignedBy",
                     name: "assignedBy"
                 }, {
-                    data: 'policy_number',
-                    name: 'policy_number'
+                    data: 'previous_policy_number',
+                    name: 'previous_policy_number'
+                }, {
+                    data: 'renewal_batch',
+                    name: 'renewal_batch'
                 }, {
                     data: 'premium',
                     name: 'premium',
