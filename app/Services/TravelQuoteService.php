@@ -249,9 +249,6 @@ class TravelQuoteService extends BaseService
         if (Auth::user()->isNewBusinessAdvisor()) {
             $query->whereNull('tqr.previous_quote_id');
         }
-        if (isset($request->paymentStatus) && $request->paymentStatus != '') {
-            $query->where('tqr.payment_status_id', $request->paymentStatus);
-        }
         if (isset($request->renewal_batch) && $request->renewal_batch != '') {
             $query->where('tqr.renewal_batch', $request->renewal_batch);
         }
@@ -551,7 +548,7 @@ class TravelQuoteService extends BaseService
             "is_ecommerce" => "|static|title|Yes,No",
             "renewal_batch" => "input|number|title",
             "payment_status_id" => "select|title",
-            "previous_quote_policy_number"=> "input|none",
+            "previous_quote_policy_number"=> "input|title",
             "renewal_import_code" => "input|text",
             "previous_policy_expiry_date" => "input|date|title|range",
             "renewal_batch" => "input|none",
