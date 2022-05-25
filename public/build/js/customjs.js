@@ -1293,6 +1293,7 @@ $(document).ready(function () {
         stateSave: true,
         paging: true,
         processing: true,
+        scrollX: true,
         ajax: {
             url: config.routes.tmlead_datatable_route,
             data: function (d) {

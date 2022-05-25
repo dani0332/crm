@@ -1,6 +1,16 @@
 @extends('layouts.app')
 @section('title','View TM Leads')
 @section('content')
+<style>
+    div.dt-buttons {
+        position: relative;
+        float: left;
+    }
+
+    td {
+        word-wrap: break-word;
+    }
+</style>
 <div class="row">
     <div class="col-md-12 col-sm-12 ">
         <div class="x_panel">
@@ -162,22 +172,22 @@
                 <input type="hidden" id="displayTmLeadsDownloadCsvIcon" name="displayTmLeadsDownloadCsvIcon" value="">
                 <input type="hidden" id="selectTmLeadId" name="selectTmLeadId" value="">
                 <input type="hidden" id="isCurrentUserIsAdvisor" name="isCurrentUserIsAdvisor" value="{{ $isCurrentUserIsAdvisor }}">
-                <table class="table table-striped jambo_table tmlead-data-table" style="width:100%">
+                <table class="table table-striped jambo_table tmlead-data-table" style="table-layout: fixed;" width="100%">
                       <thead>
                         <tr>
-                          <th>@if($isCurrentUserIsAdvisor == "0")<input type="checkbox" id="checkAllTmLeads" name="checkAllTmLeads" value="">@endif</th>
-                          <th>TM Id</th>
-                          <th>Customer Name</th>
-                          <th>Insurance Type</th>
-                          <th>Lead Type</th>
-                          <th>Lead Status</th>
-                          <th>Notes</th>
-                          <th>Enquiry Date</th>
-                          <th>Allocation Date</th>
-                          <th>Next Follow-up Date</th>
-                          <th>Assigned To</th>
-                          <th>Created At</th>
-                          <th>Updated At</th>
+                          <th style="width: 15px !important">@if($isCurrentUserIsAdvisor == "0")<input type="checkbox" id="checkAllTmLeads" name="checkAllTmLeads" value="">@endif</th>
+                          <th style="width: 60px !important">TM Id</th>
+                          <th style="width: 100px !important">Customer Name</th>
+                          <th style="width: 100px !important">Insurance Type</th>
+                          <th style="width: 100px !important">Lead Type</th>
+                          <th style="width: 100px !important">Lead Status</th>
+                          <th style="width: 100px !important">Notes</th>
+                          <th style="width: 85px !important">Enquiry Date</th>
+                          <th style="width: 85px !important">Allocation Date</th>
+                          <th style="width: 100px !important">Next Follow-up Date</th>
+                          <th style="width: 100px !important">Assigned To</th>
+                          <th style="width: 100px !important">Created At</th>
+                          <th style="width: 100px !important">Updated At</th>
                          
                         </tr>
                       </thead>
