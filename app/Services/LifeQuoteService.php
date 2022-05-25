@@ -553,13 +553,10 @@ class LifeQuoteService extends BaseService
             "others_info" => "textarea",
             "previous_quote_id" => "readonly|title",
             "is_renewal" => "|static|title|Yes,No",
-            'renewal_batch' => "readonly|none",
-            'previous_quote_policy_number' => "readonly|none",
             "renewal_expiry_date" => "input|date|title|range",
             "renewal_batch" => "input|none",
             "previous_quote_policy_number" => "input|title",
-            "previous_policy_expiry_date" => "input|date|title|range",
-            "device" => "readonly|none",
+            "previous_policy_expiry_date" => "input|date|title|range"
 
         );
     }
