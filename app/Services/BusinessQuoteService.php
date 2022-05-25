@@ -397,7 +397,7 @@ class BusinessQuoteService extends BaseService
                         else
                             $this->query->whereIn('advisor_id', $request[$item]);
                     }
-                    else if ($item == 'quote_status_id' && is_array($request[$item]) && !empty($request[$item])) {
+                    else if ($item == quoteTypeCode::quoteStatus && is_array($request[$item]) && !empty($request[$item])) {
                         $this->query->whereIn('quote_status_id', $request[$item]);
                     } else {
                         $skipped = array('is_renewal','previous_policy_expiry_date');
