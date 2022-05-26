@@ -101,7 +101,7 @@
                                 <tr><td>4</td><td>Insurer</td><td>Insurance Provider - should match the CDB data</td><td>Yes</td><td>100</td></tr>
                                 <tr><td>5</td><td>Product</td><td>Quotation asked against the insurance line</td><td>Yes</td><td>100</td></tr>
                                 <tr><td>6</td><td>Product Type</td><td>Type of Insurance | Comprehensive or Third Party Only</td><td>No</td><td>100</td></tr>
-                                <tr><td>7</td><td>Sales Channel</td><td>Source of the quotation</td><td>Yes</td><td>100</td></tr>
+                                <tr><td>7</td><td>Sales Channel</td><td>Source of the quotation</td><td>No</td><td>100</td></tr>
                                 <tr><td>8</td><td>Customer mobile</td><td>Customer Mobile Number - only numeric data</td><td>No</td><td>100</td></tr>
                                 <tr><td>9</td><td>Advisor</td><td>Advisor Email</td><td>No</td><td>100</td></tr>
                                 <tr><td>10</td><td>Previous Advisor</td><td>Previosuly assigned Advisor Email</td><td>No</td><td>100</td></tr>
