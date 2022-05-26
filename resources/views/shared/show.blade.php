@@ -252,7 +252,7 @@
             <div class="row">
                 <div class="col-auto mr-auto"></div>
                 <div class="col-auto">
-                    @if (strtolower($model->modelType) == 'business')
+                    @if (strtolower($model->modelType) == quoteTypeCode::business)
                         @can('corpline-quotes-edit')
                             <a id="texta"
                                 href="{{ url('quotes/' . strtolower($model->modelType) . '/' . $record->uuid . '/edit') }}"

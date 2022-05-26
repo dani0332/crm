@@ -1,5 +1,6 @@
 @php
-if($property == 'mobile_no')
+use App\Enums\quoteTypeCode;
+if($property == quoteTypeCode::quotemobile)
 {
     $alternative_mobiles = getAdditionalInfo($model->modelType, $record->id);
     if($alternative_mobiles) {
@@ -9,7 +10,7 @@ if($property == 'mobile_no')
         }
     }
     
-}else if($property == 'email')
+}else if($property == quoteTypeCode::quoteemail)
 {
     $alternative_mobiles = getAdditionalInfo($model->modelType, $record->id);
     if($alternative_mobiles) {
