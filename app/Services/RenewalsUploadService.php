@@ -144,7 +144,7 @@ class RenewalsUploadService
             "mobile_no" => $quoteData->phoneNumber,
             "uuid" => $quoteUuid,
             "code" => 'BIK-'.$quoteUuid,
-            "source" => $quoteData->source,
+            "source" => 'Renewal_upload',
             "currently_insured_with" => $quoteData->insurer,
             "year_of_manufacture" => $quoteData->year,
             "policy_number" => $quoteData->policy,
@@ -167,11 +167,11 @@ class RenewalsUploadService
         $advisorId = $this->renewalsAddonService->getUserInfo($quoteData->pAdvisor);
         $quoteUuid = $this->generateUUID(QuoteTypeId::Business);
 
-        if ($quoteData->product_type != null) {
-            $businessSublineInsuranceInstance = $this->renewalsAddonService->getBusinessSublineInsurance($quoteData->product_type);	
-            if($businessSublineInsuranceInstance){
-                $businessSublineInsuranceId = $businessSublineInsuranceInstance->id;
-            }
+        if (isset($quoteData->product_type)) {
+            $businessSubline = $this->renewalsAddonService->getBusinessSublineInsurance($quoteData->product_type);	
+            $businessSublineInsuranceId = isset($businessSubline->id) ? $businessSubline->id : NULL;
+        } else {
+            $businessSublineInsuranceId = NULL;
         }
 
         $newBusinessQuote = new BusinessQuote([
@@ -182,7 +182,7 @@ class RenewalsUploadService
             "mobile_no" => $quoteData->phoneNumber,
             "uuid" => $quoteUuid,
             "code" => 'BUS-'.$quoteUuid,
-            "source" => $quoteData->source,
+            "source" => 'Renewal_upload',
             "policy_number" => $quoteData->policy,
             "advisor_id" => $advisorId,
             "additional_notes" => $quoteData->notes,
@@ -227,7 +227,7 @@ class RenewalsUploadService
             "mobile_no" => $quoteData->phoneNumber,
             "uuid" => $quoteUuid,
             "code" => 'CAR-'.$quoteUuid,
-            "source" => $quoteData->source,
+            "source" => 'Renewal_upload',
             "currently_insured_with" => $quoteData->insurer,
             "car_type_insurance_id" => $carTypeOfInsurance,
             "year_of_manufacture" => $quoteData->year ?? null,
@@ -263,7 +263,7 @@ class RenewalsUploadService
             "mobile_no" => $quoteData->phoneNumber,
             "uuid" => $quoteUuid,
             "code" => 'HEA-'.$quoteUuid,
-            "source" => $quoteData->source,
+            "source" => 'Renewal_upload',
             "policy_number" => $quoteData->policy,
             "advisor_id" => $advisorId,
             "additional_notes" => $quoteData->notes,
@@ -291,7 +291,7 @@ class RenewalsUploadService
             "mobile_no" => $quoteData->phoneNumber,
             "uuid" => $quoteUuid,
             "code" => 'HOM-'.$quoteUuid,
-            "source" => $quoteData->source,
+            "source" => 'Renewal_upload',
             "policy_number" => $quoteData->policy,
             "advisor_id" => $advisorId,
             "additional_notes" => $quoteData->notes,
@@ -319,7 +319,7 @@ class RenewalsUploadService
             "mobile_no" => $quoteData->phoneNumber,
             "uuid" => $quoteUuid,
             "code" => 'LIF-'.$quoteUuid,
-            "source" => $quoteData->source,
+            "source" => 'Renewal_upload',
             "policy_number" => $quoteData->policy,
             "advisor_id" => $advisorId,
             "additional_notes" => $quoteData->notes,
@@ -348,7 +348,7 @@ class RenewalsUploadService
             "mobile_no" => $quoteData->phoneNumber,
             "uuid" => $quoteUuid,
             "code" => 'TRA-'.$quoteUuid,
-            "source" => $quoteData->source,
+            "source" => 'Renewal_upload',
             "policy_number" => $quoteData->policy,
             "advisor_id" => $advisorId,
             "additional_notes" => $quoteData->notes,
@@ -376,7 +376,7 @@ class RenewalsUploadService
             "mobile_no" => $quoteData->phoneNumber,
             "uuid" => $quoteUuid,
             "code" => 'YAC-'.$quoteUuid,
-            "source" => $quoteData->source,
+            "source" => 'Renewal_upload',
             "policy_number" => $quoteData->policy,
             "advisor_id" => $advisorId,
             "additional_notes" => $quoteData->notes,
@@ -406,7 +406,7 @@ class RenewalsUploadService
             "mobile_no" => $getBikeQuoteData->mobile_no,
             "uuid" => $quoteUuid,
             "code" => 'BIK-'.$quoteUuid,
-            "source" => $getBikeQuoteData->source,
+            "source" => 'Renewal_upload',
             "currently_insured_with" => $getBikeQuoteData->currently_insured_with,
             "year_of_manufacture" => $getBikeQuoteData->year_of_manufacture,
             "additional_notes" => $getBikeQuoteData->additional_notes,
@@ -440,7 +440,7 @@ class RenewalsUploadService
             "mobile_no" => $getBusinessQuoteData->mobile_no,
             "uuid" => $quoteUuid,
             "code" => 'BUS-'.$quoteUuid,
-            "source" => $getBusinessQuoteData->source,
+            "source" => 'Renewal_upload',
             "additional_notes" => $getBusinessQuoteData->additional_notes,
             "previous_quote_id" => $quoteId,
             "advisor_id" => $advisorId,
@@ -473,7 +473,7 @@ class RenewalsUploadService
             "mobile_no" => $getCarQuoteData->mobile_no,
             "uuid" => $quoteUuid,
             "code" => 'CAR-'.$quoteUuid,
-            "source" => $getCarQuoteData->source,
+            "source" => 'Renewal_upload',
             "currently_insured_with" => $getCarQuoteData->currently_insured_with,
             "car_type_insurance_id" => $getCarQuoteData->car_type_insurance_id,
             "year_of_manufacture" => $getCarQuoteData->year_of_manufacture,
@@ -513,7 +513,7 @@ class RenewalsUploadService
             "mobile_no" => $getHealthQuoteData->mobile_no,
             "uuid" => $quoteUuid,
             "code" => 'HEA-'.$quoteUuid,
-            "source" => $getHealthQuoteData->source,
+            "source" => 'Renewal_upload',
             "additional_notes" => $getHealthQuoteData->additional_notes,
             "previous_quote_id" => $quoteId,
             "advisor_id" => $advisorId,
@@ -545,7 +545,7 @@ class RenewalsUploadService
             "mobile_no" => $getHomeQuoteData->mobile_no,
             "uuid" => $quoteUuid,
             "code" => 'HOM-'.$quoteUuid,
-            "source" => $getHomeQuoteData->source,
+            "source" => 'Renewal_upload',
             "additional_notes" => $getHomeQuoteData->additional_notes,
             "previous_quote_id" => $quoteId,
             "advisor_id" => $advisorId,
@@ -576,7 +576,7 @@ class RenewalsUploadService
             "mobile_no" => $getLifeQuoteData->mobile_no,
             "uuid" => $quoteUuid,
             "code" => 'LIF-'.$quoteUuid,
-            "source" => $getLifeQuoteData->source,
+            "source" => 'Renewal_upload',
             "additional_notes" => $getLifeQuoteData->additional_notes,
             "previous_quote_id" => $quoteId,
             "advisor_id" => $advisorId,
@@ -607,7 +607,7 @@ class RenewalsUploadService
             "mobile_no" => $getTravelQuoteData->mobile_no,
             "uuid" => $quoteUuid,
             "code" => 'TRA-'.$quoteUuid,
-            "source" => $getTravelQuoteData->source,
+            "source" => 'Renewal_upload',
             "additional_notes" => $getTravelQuoteData->additional_notes,
             "previous_quote_id" => $quoteId,
             "advisor_id" => $advisorId,
@@ -639,7 +639,7 @@ class RenewalsUploadService
             "mobile_no" => $getYachtQuoteData->mobile_no,
             "uuid" => $quoteUuid,
             "code" => 'YAC-'.$quoteUuid,
-            "source" => $getYachtQuoteData->source,
+            "source" => 'Renewal_upload',
             "additional_notes" => $getYachtQuoteData->additional_notes,
             "previous_quote_id" => $quoteId,
             "advisor_id" => $advisorId,
