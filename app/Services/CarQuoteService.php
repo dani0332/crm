@@ -472,7 +472,7 @@ class CarQuoteService extends BaseService
                 'ps.text as paymentStatus',
                 'cqr.renewal_batch as renewalBatch',
                 'cqr.previous_quote_policy_number as previousPolicyNumber',
-                'cqr.previous_policy_expiry_date as previousPolicyExpiryDate',
+                DB::raw('DATE_FORMAT(cqr.previous_policy_expiry_date, "%d-%m-%Y") as previousPolicyExpiryDate'),
                 'cmake.text as carMake',
                 'cmodel.text as carModel',
                 'cqr.year_of_manufacture as yearOfManufacture',

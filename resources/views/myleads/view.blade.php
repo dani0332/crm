@@ -645,57 +645,57 @@
                             </div>
                         </form>
                         <table id="dtBasicExample-leadsearch" class="table table-striped jambo_table leadSearch-data-table"
-                            style="width:100%">
+                         style="table-layout: fixed;" width="100%">
                             <thead>
                                 <tr>
-                                    <th>CDB ID</th>
-                                    <th>Client Name</th>
-                                    <th>Lead Status</th>
-                                    <th>Created Date</th>
+                                    <th style="width: 100px !important">CDB ID</th>
+                                    <th style="width: 100px !important">Client Name</th>
+                                    <th style="width: 100px !important">Lead Status</th>
+                                    <th style="width: 100px !important">Created Date</th>
                                     @if (Auth::user()->isRenewalAdvisor())
-                                        <th>Vehicle Type</th>
+                                        <th style="width: 100px !important">Vehicle Type</th>
                                     @endif
                                     @if (Auth::user()->isRenewalAdvisor())
-                                        <th>Previous Policy Premium</th>
+                                        <th style="width: 100px !important">Previous Policy Premium</th>
                                     @endif
                                     @if (Auth::user()->isRenewalAdvisor())
-                                        <th>Renewal Batch #</th>
+                                        <th style="width: 100px !important">Renewal Batch #</th>
                                     @endif
                                     @if (Auth::user()->isRenewalAdvisor())
-                                        <th>Previous Policy Expiry Date</th>
+                                        <th style="width: 100px !important">Previous Policy Expiry Date</th>
                                     @endif
                                     @if (Auth::user()->isRenewalAdvisor())
-                                        <th>Previous Policy Number</th>
+                                        <th style="width: 100px !important">Previous Policy Number</th>
                                     @endif
                                     @if (Auth::user()->isRenewalAdvisor())
-                                        <th>Car Make</th>
+                                        <th style="width: 100px !important">Car Make</th>
                                     @endif
                                     @if (Auth::user()->isRenewalAdvisor())
-                                        <th>Car Model</th>
+                                        <th style="width: 100px !important">Car Model</th>
                                     @endif
                                     @if (Auth::user()->isRenewalAdvisor())
-                                        <th>Year Of Manufacture</th>
+                                        <th style="width: 100px !important">Year Of Manufacture</th>
                                     @endif
                                     @if (Auth::user()->isRenewalAdvisor())
-                                        <th>Type of Car Insurance</th>
+                                        <th style="width: 100px !important">Type of Car Insurance</th>
                                     @endif
                                     @if (Auth::user()->isRenewalAdvisor())
-                                        <th>Current Insurer</th>
+                                        <th style="width: 100px !important">Current Insurer</th>
                                     @endif
                                     @if (!Auth::user()->isRenewalAdvisor())
-                                        <th>Assigned Date</th>
+                                        <th style="width: 100px !important">Assigned Date</th>
                                     @endif
                                     @if (!Auth::user()->isRenewalAdvisor())
-                                        <th>Assigned By</th>
+                                        <th style="width: 100px !important">Assigned By</th>
                                     @endif
                                     @if (!Auth::user()->isRenewalAdvisor())
-                                        <th>Next FollowUp Date</th>
+                                        <th style="width: 100px !important">Next FollowUp Date</th>
                                     @endif
                                     @if (!Auth::user()->isRenewalAdvisor())
-                                        <th>Payment Status</th>
+                                        <th style="width: 100px !important">Payment Status</th>
                                     @endif
                                     @if (Auth::user()->isRenewalAdvisor() && $teamName == 'Business')
-                                        <th>Company Name</th>
+                                        <th style="width: 100px !important">Company Name</th>
                                     @endif
                                 </tr>
                             </thead>
@@ -724,18 +724,18 @@
                             <div id="collapseOne" class="collapse show" style="display:none" aria-labelledby="headingOne"
                                 data-parent="#accordion">
                                 <div class="card-body" style="border: 1px solid #ced4da;margin-bottom: 25px;">
-                                    <table id="overDueFollowups" class="table table-striped jambo_table"
-                                        style="width:100%">
+                                    <table id="overDueFollowups" class="table table-striped jambo_table" 
+                                    style="table-layout: fixed;" width="100%">
                                         <thead>
                                             <tr>
-                                                <th>CDB ID</th>
-                                                <th>Client Name</th>
-                                                <th>Lead Status</th>
-                                                <th>Created Date</th>
-                                                <th>Assigned Date</th>
-                                                <th>Assigned By</th>
-                                                <th>Next FollowUp Date</th>
-                                                <th>Premium</th>
+                                                <th style="width: 100px !important">CDB ID</th>
+                                                <th style="width: 100px !important">Client Name</th>
+                                                <th style="width: 100px !important">Lead Status</th>
+                                                <th style="width: 100px !important">Created Date</th>
+                                                <th style="width: 100px !important">Assigned Date</th>
+                                                <th style="width: 100px !important">Assigned By</th>
+                                                <th style="width: 100px !important">Next FollowUp Date</th>
+                                                <th style="width: 100px !important">Premium</th>
                                             </tr>
                                         </thead>
                                         <tbody>
