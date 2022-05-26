@@ -827,6 +827,7 @@
                                                     <th style="width: 15px;"><input type="checkbox" id="checkAllTmLeads"
                                                             name="checkAllTmLeads" value=""></th>
                                                 @endif
+                                              
                                                 @foreach ($model->properties as $property => $value)
                                                     @if ($model->modelType != 'LeadStatus' && $model->modelType != 'Teams')
                                                         @if ($property != 'id')

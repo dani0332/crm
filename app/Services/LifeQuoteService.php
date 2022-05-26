@@ -14,7 +14,7 @@ use Config;
 use App\Traits\GetUserTree;
 use App\Traits\CustomerAdditionalInfo as CustomerAdditionalInfoTrait;
 use App\Enums\quoteTypeCode;
-
+use App\Enums\DatabaseColumnsString;
 class LifeQuoteService extends BaseService
 {
     protected $query;
@@ -69,6 +69,7 @@ class LifeQuoteService extends BaseService
                 'lqr.renewal_expiry_date',
                 'lqr.device',
                 'lqr.previous_policy_expiry_date',
+                'lqr.previous_quote_policy_premium'
             )
             ->leftJoin('life_quote_request_detail as lqrd', 'lqrd.life_quote_request_id', 'lqr.id')
             ->leftJoin('currency_type as ct', 'ct.id', '=', 'lqr.sum_insured_currency_id')
@@ -220,6 +221,9 @@ class LifeQuoteService extends BaseService
                 $dateTo = Carbon::createFromFormat('Y-m-d', $request['previous_policy_expiry_date_end'])->endOfDay()->toDateTimeString();
                 $this->query->whereBetween('lqr.previous_policy_expiry_date', [$dateFrom, $dateTo]);
             }
+            if (isset($request->previous_quote_policy_premium) && $request->previous_quote_policy_premium != '') {
+                $this->query->where('lqr.previous_quote_policy_premium', $request->previous_quote_policy_premium);
+            }
             if (Auth::user()->isRenewalAdvisor()) {
                 $this->query->whereNotNull('lqr.previous_quote_id');
                 $this->query->where('lqr.advisor_id', Auth::user()->id);
@@ -255,7 +259,7 @@ class LifeQuoteService extends BaseService
                         else
                             $this->query->whereIn('advisor_id', $request[$item]);
                     }
-                    else if ($item == quoteTypeCode::quoteStatus && is_array($request[$item]) && !empty($request[$item])) {
+                    else if ($item == DatabaseColumnsString::quoteStatus && is_array($request[$item]) && !empty($request[$item])) {
                         $this->query->whereIn('quote_status_id', $request[$item]);
                     } else {
                         $skipped = array('is_renewal','previous_policy_expiry_date');
@@ -411,7 +415,8 @@ class LifeQuoteService extends BaseService
                 'ps.text as paymentStatus',
                 'lqr.renewal_batch',
                 'lqr.previous_quote_policy_number as previous_policy_number',
-                'lqr.previous_policy_expiry_date'
+                'lqr.previous_policy_expiry_date',
+                'lqr.previous_quote_policy_premium'
             )
             ->leftJoin('life_quote_request_detail as lqrd', 'lqrd.life_quote_request_id', '=', 'lqr.id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'lqr.quote_status_id')
@@ -470,6 +475,9 @@ class LifeQuoteService extends BaseService
         }
         if (isset($request->previous_policy_number) && $request->previous_policy_number != '') {
             $query->where('lqr.previous_quote_policy_number', $request->previous_policy_number);
+        }
+        if (isset($request->previous_quote_policy_premium) && $request->previous_quote_policy_premium != '') {
+            $this->query->where('lqr.previous_quote_policy_premium', $request->previous_quote_policy_premium);
         }
         if (isset($request->previous_policy_expiry_date) && $request->previous_policy_expiry_date != '' && $request->previous_policy_expiry_date_end != '') {
             $dateFrom = Carbon::createFromFormat('Y-m-d', $request['previous_policy_expiry_date'])->startOfDay()->toDateTimeString();
@@ -556,7 +564,8 @@ class LifeQuoteService extends BaseService
             "renewal_expiry_date" => "input|date|title|range",
             "renewal_batch" => "input|none",
             "previous_quote_policy_number" => "input|title",
-            "previous_policy_expiry_date" => "input|date|title|range"
+            "previous_policy_expiry_date" => "input|date|title|range",
+            "previous_quote_policy_premium" => "input|title",
 
         );
     }
@@ -627,6 +636,9 @@ class LifeQuoteService extends BaseService
                 break;
             case 'previous_policy_expiry_date':
                 $title = "Previous Policy Expiry Date";
+                break;
+            case 'previous_quote_policy_premium':
+                $title = "Previous Policy Premium";
                 break;
             default:
                 break;

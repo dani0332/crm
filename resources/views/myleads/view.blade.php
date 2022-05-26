@@ -123,6 +123,9 @@
                 }, {
                     data: 'previous_policy_expiry_date',
                     name: 'previous_policy_expiry_date'
+                },{
+                    data: 'previous_policy_expiry_date',
+                    name: 'previous_policy_expiry_date'
                 }, {
                     data: 'company_name',
                     name: 'company_name',
