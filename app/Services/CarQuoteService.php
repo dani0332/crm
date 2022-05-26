@@ -467,8 +467,11 @@ class CarQuoteService extends BaseService
                 'cqr.updated_at',
                 'cqr.source as leadSource',
                 'cqrd.next_followup_date as nextFollowupDate',
-                'cqr.premium',
-                'ps.text as paymentStatus'
+                'cqr.previous_quote_policy_premium',
+                'ps.text as paymentStatus',
+                'cqr.renewal_batch',
+                'cqr.previous_quote_policy_number as previous_policy_number',
+                'cqr.previous_policy_expiry_date'
             )
             ->leftJoin('car_quote_request_detail as cqrd', 'cqrd.car_quote_request_id', '=', 'cqr.id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'cqr.quote_status_id')
@@ -505,8 +508,20 @@ class CarQuoteService extends BaseService
         if (isset($request->paymentStatus)) {
             $query->where('cqr.payment_status_id', $request->paymentStatus);
         }
-        if (isset($request->renewalBatch)) {
-            $query->where('cqr.renewal_batch', $request->renewalBatch);
+        if (isset($request->renewal_batch)) {
+            $query->where('cqr.renewal_batch', $request->renewal_batch);
+        }
+        if (isset($request->previous_policy_number)) {
+            $query->where('cqr.previous_quote_policy_number', $request->previous_policy_number);
+        }
+        if (isset($request->previous_policy_expiry_date) && $request->previous_policy_expiry_date != '' && $request->previous_policy_expiry_date_end != '') {
+            $dateFrom = Carbon::createFromFormat('Y-m-d', $request['previous_policy_expiry_date'])->startOfDay()->toDateTimeString();
+            $dateTo = Carbon::createFromFormat('Y-m-d', $request['previous_policy_expiry_date_end'])->endOfDay()->toDateTimeString();
+            $query->whereBetween('cqr.previous_policy_expiry_date', [$dateFrom, $dateTo]);
+        }
+        if (Auth::user()->isRenewalAdvisor()) {
+            $query->whereNotNull('cqr.previous_quote_id');
+            $query->orderBy('cqr.previous_policy_expiry_date', 'ASC');
         }
         return $query;
     }
