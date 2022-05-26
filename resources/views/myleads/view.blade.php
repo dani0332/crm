@@ -14,7 +14,6 @@
             newDate = newDate.toISOString().split('T')[0];
             return newDate;
         }
-
         function changeIcon(item) {
             $(item).find('i').toggleClass("fa-angle-double-down fa-angle-double-up");
         }
@@ -70,23 +69,20 @@
                     data: "createdAt",
                     name: "createdAt"
                 }, {
-                    data: "updatedAt",
-                    name: "updatedAt"
+                    data: "vehicleType",
+                    name: "vehicleType"
                 }, {
-                    data: "assignedBy",
-                    name: "assignedBy"
-                }, {
-                    data: 'previous_policy_number',
-                    name: 'previous_policy_number'
+                    data: 'previous_quote_policy_premium',
+                    name: 'previous_quote_policy_premium',
                 }, {
                     data: 'renewal_batch',
                     name: 'renewal_batch'
                 }, {
-                    data: 'previous_quote_policy_premium',
-                    name: 'previous_quote_policy_premium',
-                },{
                     data: 'previous_policy_expiry_date',
                     name: 'previous_policy_expiry_date'
+                }, {
+                    data: 'previous_policy_number',
+                    name: 'previous_policy_number'
                 });
             } else if (isRenewalUser && $("#modelType").val() == "Business") {
                 Columns.push({
@@ -121,6 +117,9 @@
                     data: 'premium',
                     name: 'premium',
                 }, {
+                    data: 'previous_policy_expiry_date',
+                    name: 'previous_policy_expiry_date'
+                },{
                     data: 'previous_policy_expiry_date',
                     name: 'previous_policy_expiry_date'
                 }, {
@@ -188,7 +187,6 @@
                 ],
                 columns: Columns
             });
-
             myleadsTable.on('draw', function() {
                 var rows = $('#dtBasicExample-leadsearch tr');
                 var headerRowColumns = $(rows[0]).children();
@@ -219,7 +217,6 @@
                     $(".loader").hide();
                 }, 1000);
             });
-
             $("#my-leads-form").submit(function(e) {
                 e.preventDefault();
                 $(".loader").show();
@@ -227,7 +224,6 @@
                 //followupLeadsTable.draw();
                 $(".loader").hide();
             });
-
             $(".toggle-btn-2").on("click", function() {
                 $(".show-visual-cards").addClass("hideme");
                 $(".show-visual-cards").removeClass("showme");
@@ -245,11 +241,9 @@
                 $(".toggle-btn-2").removeClass("active");
             });
         });
-
         var ENDPOINT = "{{ url('/') }}";
         var page;
         var temp_status = '';
-
         function loadMore(status) {
             if (localStorage.getItem('page' + status) == null)
                 page = 2;
@@ -257,7 +251,6 @@
                 page = localStorage.getItem('page' + status);
             infinteLoadMore(page, status);
         }
-
         function infinteLoadMore(page, status) {
             $.ajaxSetup({
                 headers: {
@@ -290,7 +283,6 @@
                     console.log('Server error occured');
                 });
         }
-
         function searchTerm(element) {
             var term = $(element).val();
             var status = $(element).attr('name');
@@ -644,30 +636,32 @@
                                     <th>Client Name</th>
                                     <th>Lead Status</th>
                                     <th>Created Date</th>
-                                    @if (!Auth::user()->isRenewalAdvisor())
-                                        <th>Assigned Date</th>
-                                    @endif
                                     @if (Auth::user()->isRenewalAdvisor())
-                                        <th>Last Updated Date</th>
-                                    @endif
-                                    <th>Assigned By</th>
-                                    @if (!Auth::user()->isRenewalAdvisor())
-                                        <th>Next FollowUp Date</th>
-                                    @endif
-                                    @if (!Auth::user()->isRenewalAdvisor())
-                                        <th>Payment Status</th>
-                                    @endif
-                                    @if (Auth::user()->isRenewalAdvisor())
-                                        <th>Previous Policy Number</th>
-                                    @endif
-                                    @if (Auth::user()->isRenewalAdvisor())
-                                        <th>Renewal Batch #</th>
+                                        <th>Vehicle Type</th>
                                     @endif
                                     @if (Auth::user()->isRenewalAdvisor())
                                         <th>Previous Policy Premium</th>
                                     @endif
                                     @if (Auth::user()->isRenewalAdvisor())
+                                        <th>Renewal Batch #</th>
+                                    @endif
+                                    @if (Auth::user()->isRenewalAdvisor())
                                         <th>Previous Policy Expiry Date</th>
+                                    @endif
+                                    @if (Auth::user()->isRenewalAdvisor())
+                                        <th>Previous Policy Number</th>
+                                    @endif
+                                    @if (!Auth::user()->isRenewalAdvisor())
+                                        <th>Assigned Date</th>
+                                    @endif
+                                    @if (!Auth::user()->isRenewalAdvisor())
+                                        <th>Assigned By</th>
+                                    @endif
+                                    @if (!Auth::user()->isRenewalAdvisor())
+                                        <th>Next FollowUp Date</th>
+                                    @endif
+                                    @if (!Auth::user()->isRenewalAdvisor())
+                                        <th>Payment Status</th>
                                     @endif
                                     @if (Auth::user()->isRenewalAdvisor() && $teamName == 'Business')
                                         <th>Company Name</th>
