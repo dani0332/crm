@@ -60,7 +60,6 @@ class HomeQuoteService extends BaseService
             'hqr.renewal_batch',
             'hqr.previous_quote_policy_number',
             'hqr.previous_policy_expiry_date',
-            'hqr.is_property_rented_holiday_home',
             'hqr.previous_quote_policy_premium',
         )
             ->leftJoin('home_quote_request_detail as hqrd', 'hqrd.home_quote_request_id', '=', 'hqr.id')
