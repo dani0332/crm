@@ -548,7 +548,7 @@ class BusinessQuoteService extends BaseService
             "business_type_of_insurance_id" => "select|title|required",
             "brief_details" => 'textarea|required',
             "previous_quote_id" => "readonly|title",
-            "is_renewal" => "|static|Yes,No",
+            "is_renewal" => "static|Yes,No",
             "renewal_expiry_date" => "input|date|title|range",
             "renewal_batch" => "input|none",
             "previous_policy_expiry_date" => "input|date|title|range",
