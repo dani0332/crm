@@ -169,7 +169,7 @@ class UserController extends Controller
         $teams = Team::whereNull('parent_team_id')->orderBy('name', 'asc')->get(); // get all teams
         $subTeams = Team::whereNotNull('parent_team_id')->orderBy('name', 'asc')->get();;
         $managers = [];
-        if($user->teamId)  $managers = $this->getManagersBasedOnTeamId($user->team_id); // get all managers based on current user's team
+        if($user->teamId)  $managers = $this->getManagersBasedOnTeamId($user->team_id, $user->id); // get all managers based on current user's team
         $selectedAdditionalTeams = $user->additional_team_ids; // get all additional teams of current user
         $selectedTeam = $user->team_id; // current user team
         $selectedManager = $user->manager_id; // current user manager
@@ -243,25 +243,25 @@ class UserController extends Controller
     public function getTeamManagers(Request $request)
     {
         $teamId = $request->query()['teamId'];  
-        return $this->getManagersBasedOnTeamId($teamId);
+        return $this->getManagersBasedOnTeamId($teamId, $request->userId);
     }
 
-    public function getManagersBasedOnTeamId($teamId)
+    public function getManagersBasedOnTeamId($teamId, $userId=null)
     {
 
         $team = Team::find($teamId);
-        $teamUsers = User::Where('team_id', $teamId)->get();
+        $teamUsers = User::Where('team_id', $teamId)->where('id','!=', $userId)->get();
         $teamName = strtoupper($team->name);
         // devicing role name based on primary team name as we have to show manager name based on primary team name
         $roleNames = [];
         if($teamName == strtoupper(quoteTypeCode::Health)){
-            $roleNames = ['RM_MANAGER', 'RM_DEPUTY_MANAGER', 'EBP_MANAGER', 'EBP_DEPUTY_MANAGER', 'HEALTH_MANAGER', 'HEALTH_DEPUTY_MANAGER','HEALTH_RENEWAL_MANAGER'];
+            $roleNames = ['RM_MANAGER', 'RM_DEPUTY_MANAGER', 'EBP_MANAGER', 'EBP_DEPUTY_MANAGER', 'HEALTH_MANAGER', 'HEALTH_DEPUTY_MANAGER','HEALTH_RENEWAL_MANAGER','HEALTH_NEW_BUSINESS_MANAGER'];
         }
         else if($teamName == strtoupper(quoteTypeCode::Business)){
-            $roleNames = ['GM_MANAGER', 'GM_DEPUTY_MANAGER', 'CORPLINE_MANAGER', 'CORPLINE_DEPUTY_MANAGER', 'BUSINESS_MANAGER', 'BUSINESS_DEPUTY_MANAGER'];
+            $roleNames = ['GM_MANAGER', 'GM_DEPUTY_MANAGER', 'CORPLINE_MANAGER', 'CORPLINE_DEPUTY_MANAGER', 'BUSINESS_MANAGER', 'BUSINESS_DEPUTY_MANAGER','GM_RENEWAL_MANAGER','CORPLINE_RENEWAL_MANAGER','GM_NEW_BUSINESS_MANAGER','CORPLINE_NEW_BUSINESS_MANAGER'];
         }
         else{
-            $roleNames = [$teamName . '_MANAGER', $teamName . '_DEPUTY_MANAGER', $teamName . '_RENEWAL_MANAGER'];
+            $roleNames = [$teamName . '_MANAGER', $teamName . '_DEPUTY_MANAGER', $teamName . '_RENEWAL_MANAGER', $teamName . '_NEW_BUSINESS_MANAGER'];
         }
         $teamManagers = [];
         foreach ($teamUsers as $teamUser) {            

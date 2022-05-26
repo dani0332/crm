@@ -16,11 +16,12 @@ use DataTables;
 use \Carbon\Carbon;
 use Auth;
 use Illuminate\Support\Facades\Redirect;
-
+use App\Traits\GetUserTree;
 class AMTController extends Controller
 {
     protected $businessQuoteService;
     protected $crudService;
+    use GetUserTree;
     public function __construct(BusinessQuoteService $businessQuoteService, CRUDService $crudService)
     {
         $this->businessQuoteService = $businessQuoteService;
@@ -59,15 +60,33 @@ class AMTController extends Controller
                 'bqr.company_name',
                 'bqrd.next_followup_date',
                 'bqr.policy_number',
+                'bqr.renewal_batch',
+                'bqr.renewal_import_code',
+                'bqr.previous_quote_policy_number',
+                'bqr.previous_policy_expiry_date',
+                'bqr.device',
+                'bqr.previous_quote_policy_premium'
             )->orderBy('bqr.advisor_id', 'asc');
 
-        if (Auth::user()->isAdvisor()) {
-            $data = $data->where('bqr.advisor_id', Auth::user()->id);
-        }
-
-        if (Auth::user()->isRenewalAdvisor()) {
-            $data = $data->whereNotNull('bqr.previous_quote_id');
-        }
+            if (\Auth::user()->isRenewalAdvisor()) {
+                $data->whereNotNull('tqr.previous_quote_id');
+                $data->where('bqr.advisor_id', \Auth::user()->id);
+            }
+            if (\Auth::user()->isRenewalManager()) {
+                $ids = $this->walkTree(\Auth::user()->id);
+                $data->whereIn('bqr.advisor_id', $ids);
+                $data->whereNotNull('bqr.previous_quote_id');
+            }
+            if (\Auth::user()->isNewBusinessManager()) {
+                $ids = $this->walkTree(\Auth::user()->id);
+                $data->whereIn('bqr.advisor_id', $ids);
+                $data->whereNull('bqr.previous_quote_id');
+            }
+            if (\Auth::user()->isNewBusinessAdvisor()) {
+                $ids = $this->walkTree(\Auth::user()->id);
+                $data->whereIn('bqr.advisor_id', $ids);
+                $data->whereNull('bqr.previous_quote_id');
+            }
 
         $leadStatuses = DB::table('quote_status')->select('id', 'text')->orderBy('sort_order', 'asc')->get();
         $advisors = DB::table('users as u')
@@ -105,6 +124,21 @@ class AMTController extends Controller
             if (isset($request->advisor_id) && $request->advisor_id != '') {
                 $request->advisor_id == '-1' ? $data->whereNull('bqr.advisor_id') : $data->where('bqr.advisor_id', '=', $request->advisor_id);
             }
+            if (isset($request->previous_policy_expiry_date) && $request->previous_policy_expiry_date != '' && isset($request->previous_policy_expiry_date_end) && $request->previous_policy_expiry_date_end != '') {
+                $dateFrom = Carbon::createFromFormat('Y-m-d', $request->previous_policy_expiry_date)->startOfDay()->toDateTimeString();
+                $dateTo = Carbon::createFromFormat('Y-m-d', $request->previous_policy_expiry_date_end)->endOfDay()->toDateTimeString();
+                $data->whereBetween('bqr.previous_policy_expiry_date', [$dateFrom, $dateTo]);
+            }
+            if (isset($request->previous_quote_policy_premium) && $request->previous_quote_policy_premium != '') {
+                $data->where('bqr.previous_quote_policy_premium', $request->previous_quote_policy_premium);
+            }
+            if (isset($request->previous_quote_policy_number) && $request->previous_quote_policy_number != '') {
+                $data->where('bqr.previous_quote_policy_number', $request->previous_quote_policy_number);
+            }
+            if (isset($request->renewal_batch) && $request->renewal_batch != '') {
+                $data->where('bqr.renewal_batch', $request->renewal_batch);
+            }
+
             $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
             $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';
             if ($column != '' && $column != 0 && $direction != '') {

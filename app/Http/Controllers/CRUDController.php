@@ -8,6 +8,8 @@ use App\Enums\quoteTypeCode;
 use App\Models\CarQuoteAdvisorToOE;
 use App\Models\GenericModel;
 use App\Models\InsuranceProvider;
+use App\Models\User;
+use App\Services\ActivitiesService;
 use App\Services\BusinessQuoteService;
 use Illuminate\Http\Request;
 use App\Services\DropdownSourceService;
@@ -42,6 +44,7 @@ class CRUDController extends Controller
     protected $homeQuoteService;
     protected $businessQuoteService;
     protected $userService;
+    protected $activityService;
     public function __construct(
         HealthQuoteService $healthService,
         TeamService $teamsService,
@@ -54,7 +57,8 @@ class CRUDController extends Controller
         HomeQuoteService $homeQuoteService,
         BusinessQuoteService $businessQuoteService,
         UserService $userService,
-        Request $request
+        Request $request, 
+        ActivitiesService $activityService
     ) {
         $this->genericModel = new GenericModel();
         $this->healthQuoteService = $healthService;
@@ -67,6 +71,7 @@ class CRUDController extends Controller
         $this->lifeQuoteService = $lifeQuoteService;
         $this->homeQuoteService = $homeQuoteService;
         $this->businessQuoteService = $businessQuoteService;
+        $this->activityService = $activityService;
         $this->userService = $userService;
         $this->setModelType($request);
         $this->fillModelByModelType(ucwords($this->genericModel->modelType), $request);
@@ -80,23 +85,25 @@ class CRUDController extends Controller
     public function index(Request $request)
     {
         $renewalAdvisors = [];
+        $isNewBusinessUser = false;
         //Checking if the loggedIn user is Renewal User
         $isRenewalUser = Auth::user()->isRenewalUser();
         if ($isRenewalUser && strtolower($this->genericModel->modelType) == strtolower(quoteTypeCode::Car)) {
             $this->crudService->fillRenewalData($this->genericModel);
             $renewalAdvisors = $this->crudService->getRenewalAdvisorsByModelType($this->genericModel->modelType);
         }
-        else if(Auth::user()->isRenewalAdvisor())
+        else if(Auth::user()->isRenewalManager() || Auth::user()->isRenewalAdvisor() )
         {
-            $isRenewalUser = Auth::user()->isRenewalAdvisor();
+            
+            $isRenewalUser = true;
             $this->crudService->fillRenewalData($this->genericModel);
             $renewalAdvisors = $this->crudService->getRenewalAdvisorsByModelType($this->genericModel->modelType); 
         }
-        else if(Auth::user()->isRenewalManager())
+        else if(Auth::user()->isNewBusinessManager() || Auth::user()->isNewBusinessAdvisor())
         {
-            $isRenewalUser = Auth::user()->isRenewalManager();
-            $this->crudService->fillRenewalData($this->genericModel);
-            $renewalAdvisors = $this->crudService->getRenewalAdvisorsByModelType($this->genericModel->modelType); 
+            $isNewBusinessUser = true;
+            $this->crudService->fillNewBusinessData($this->genericModel);
+            $renewalAdvisors = $this->crudService->getNewBusinessAdvisorsByModelType($this->genericModel->modelType); 
         }
         // Getting the data for grid based on the model type
         $gridData = $this->crudService->getGridData($this->genericModel, $request);
@@ -123,9 +130,9 @@ class CRUDController extends Controller
             return DataTables::of($gridData)
                 ->addIndexColumn()
                 ->make(true);
-            return view('shared.view', compact('model', 'dropdownSource', 'customTitles', 'advisors', 'isManagerORDeputy', 'isRenewalUser', 'renewalAdvisors'));
+            return view('shared.view', compact('model', 'dropdownSource', 'customTitles', 'advisors', 'isManagerORDeputy', 'isRenewalUser', 'renewalAdvisors','isNewBusinessUser'));
         }
-        return view('shared.view', compact('model', 'dropdownSource', 'customTitles', 'advisors', 'isManagerORDeputy', 'isRenewalUser', 'renewalAdvisors'));
+        return view('shared.view', compact('model', 'dropdownSource', 'customTitles', 'advisors', 'isManagerORDeputy', 'isRenewalUser', 'renewalAdvisors','isNewBusinessUser'));
     }
 
     /**
@@ -138,6 +145,18 @@ class CRUDController extends Controller
         $isRenewalUser = Auth::user()->isRenewalUser();
         if ($isRenewalUser && strtolower($this->genericModel->modelType) == strtolower(quoteTypeCode::Car)) {
             $renewalAdvisors = $this->crudService->fillRenewalData($this->genericModel);
+        }
+        else if(Auth::user()->isRenewalManager() || Auth::user()->isRenewalAdvisor() )
+        {
+            $isRenewalUser = true;
+            $this->crudService->fillRenewalData($this->genericModel);
+            $renewalAdvisors = $this->crudService->getRenewalAdvisorsByModelType($this->genericModel->modelType); 
+        }
+        else if(Auth::user()->isNewBusinessManager() || Auth::user()->isNewBusinessAdvisor())
+        {
+            $isNewBusinessUser = true;
+            $this->crudService->fillNewBusinessData($this->genericModel);
+            $renewalAdvisors = $this->crudService->getNewBusinessAdvisorsByModelType($this->genericModel->modelType); 
         }
         $customTitles = $dropdownSource = [];
         foreach ($this->genericModel->properties as $property => $value) {
@@ -197,9 +216,24 @@ class CRUDController extends Controller
     {
         $record = $this->crudService->getEntity($this->genericModel->modelType, $id);
         if (!$record) abort(404);
+
+        $isRenewalUser = false;
+        $isNewBusinessUser = false;
         $model = $this->genericModel;
         $model_name = $this->genericModel->modelType."Quote";
         $customTitles = $customTableList = [];
+        if(Auth::user()->isRenewalManager() || Auth::user()->isRenewalAdvisor() )
+        {
+            $isRenewalUser = true;
+            $this->crudService->fillRenewalData($this->genericModel);
+            $renewalAdvisors = $this->crudService->getRenewalAdvisorsByModelType($this->genericModel->modelType); 
+        }
+        else if(Auth::user()->isNewBusinessManager() || Auth::user()->isNewBusinessAdvisor())
+        {
+            $isNewBusinessUser = true;
+            $this->crudService->fillNewBusinessData($this->genericModel);
+            $renewalAdvisors = $this->crudService->getNewBusinessAdvisorsByModelType($this->genericModel->modelType); 
+        }
         $leadStatuses = DB::table('quote_status')
             ->select('id', 'text')
             ->whereNotIn('text', [
@@ -213,7 +247,7 @@ class CRUDController extends Controller
         if (strtolower($this->genericModel->modelType) != 'teams' && strtolower($this->genericModel->modelType) != 'leadstatus') {
             $selectedLostReasonId = $this->crudService->getSelectedLostReason($this->genericModel->modelType, $record->id);
         }
-
+        $advisors  = [];
         if (strtolower($this->genericModel->modelType) == strtolower(quoteTypeCode::Health) && ($record->health_team_type == HealthTeamType::EBP ||
         $record->health_team_type == HealthTeamType::RM_NB || $record->health_team_type == HealthTeamType::RM_SPEED)) {
             $advisors = $this->crudService->getEBPAndRMAdvisors();
@@ -233,6 +267,22 @@ class CRUDController extends Controller
         $quoteTypes = 'Health,Car,Travel,Life,Home,Business';
         $serviceType = str_contains($quoteTypes, ucwords($model->modelType)) ? strtolower($model->modelType) . 'QuoteService' : lcfirst(ucwords($model->modelType)) . 'Service';
         $allowedDuplicateLOB = $this->crudService->getAllowedDuplicateLOB($model->modelType, $record->code);
+        $activitiesData = $this->activityService->getActivityByLeadId($record->id, strtolower($model->modelType));
+        $activities = [];
+        foreach ($activitiesData as $activity) {
+            $updatedActivity = array(
+                'id' => $activity->id,
+                'title' => $activity->title,
+                'quote_request_id' => $activity->quote_request_id,
+                'quote_type_id' => $activity->quote_type_id,
+                'quote_uuid' => $activity->quote_uuid,
+                'client_name' => $activity->client_name,
+                'due_date' => $activity->due_date,
+                'assignee' => User::where('id', $activity->assignee_id)->first()->name,
+                'status' => $activity->status,
+            );
+            array_push($activities, $updatedActivity);
+        }
         $audits = [];
         if ($this->genericModel->modelType == "Car") { // Car plans to display on detail view
 
@@ -257,7 +307,8 @@ class CRUDController extends Controller
             return view('shared.show', compact([
                 'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList',
                 'ecomCarInsuranceQuoteUrl', 'carQuotePlanAddons', 'vehicleTypeText', 'leadStatuses',
-                'lostReasons', 'selectedLostReasonId', 'listQuote','model_name', 'allowedDuplicateLOB', 'audits'
+                'lostReasons', 'selectedLostReasonId', 'listQuote','model_name', 'allowedDuplicateLOB', 'audits', 'activities', 'advisors','isRenewalUser',
+                'isNewBusinessUser'
             ]));
         } else if ($this->genericModel->modelType == quoteTypeCode::Travel) { // Travel plans to display on detail view
             $listQuotePlans = '';
@@ -275,7 +326,8 @@ class CRUDController extends Controller
             $members_detail = $this->travelQuoteService->getMembersDetail($record->id);
             return view('shared.show', compact([
                 'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList',
-                'leadStatuses', 'lostReasons', 'selectedLostReasonId', 'members_detail','model_name', 'allowedDuplicateLOB', 'audits'
+                'leadStatuses', 'lostReasons', 'selectedLostReasonId', 'members_detail','model_name', 'allowedDuplicateLOB', 'audits', 'activities', 'advisors','isRenewalUser',
+                'isNewBusinessUser'
             ]));
         }else if ($this->genericModel->modelType == quoteTypeCode::Health) { // Health plans to display on detail view
             $listQuotePlans = '';
@@ -291,10 +343,12 @@ class CRUDController extends Controller
             }
             return view('shared.show', compact([
                 'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList',
-                'leadStatuses', 'lostReasons', 'selectedLostReasonId','model_name', 'allowedDuplicateLOB', 'audits','advisors'
+                'leadStatuses', 'lostReasons', 'selectedLostReasonId','model_name', 'allowedDuplicateLOB', 'audits','advisors', 'activities','isRenewalUser',
+                'isNewBusinessUser'
             ]));
         } else {
-            return view('shared.show', compact(['record', 'model', 'customTitles', 'customTableList', 'advisors', 'leadStatuses', 'lostReasons', 'selectedLostReasonId','model_name', 'allowedDuplicateLOB', 'audits']));
+            return view('shared.show', compact(['record', 'model', 'customTitles', 'customTableList', 'advisors', 'leadStatuses', 'lostReasons', 'selectedLostReasonId','model_name', 'allowedDuplicateLOB', 'audits', 'activities','isRenewalUser',
+            'isNewBusinessUser']));
         }
     }
 
@@ -349,8 +403,7 @@ class CRUDController extends Controller
         } else {
             Log::channel('daily')->info("update quote with id " . $id. " and modelproperties " . json_encode($modelPropertiesList));
             foreach ($modelPropertiesList as $property => $value) {
-                
-                if (strpos($value, 'required') && $property != 'id' && $property != 'code' && $property != 'email' && $property != 'mobile_no' && !strpos($modelSkipPropertiesList, $property)) {
+                if (strpos($value, 'required') && $property != 'id' && $property != 'code' && $property != 'email' && $property != 'mobile_no' && !strpos($modelSkipPropertiesList['update'], $property)) {
                     $validateArray[$property] = 'required';
                 }
             }
@@ -705,5 +758,15 @@ class CRUDController extends Controller
     {   
         $this->crudService->createDuplicate($request);
         return redirect()->to('/quotes/' . strtolower($request->parentType) . '/' . $request->entityUId)->with('success', ' Lead has been Duplicated');
+    }
+
+    public function createActivity(Request $request)
+    {
+        $record = $this->{strtolower($request->modelType) . 'QuoteService'}->getEntityPlain($request->entityId);
+        $this->activityService->createActivity($request, $record);
+        if(isset($request->isActivityView)){
+            return redirect()->to('/activities/')->with('success', ' Activity has been Created');
+        }
+        return redirect()->to('/quotes/' . strtolower($request->parentType) . '/' . $request->entityUId)->with('success', ' Activity has been Created');
     }
 }

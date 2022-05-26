@@ -11,11 +11,16 @@ use DB;
 use Config;
 use Auth;
 use \Carbon\Carbon;
+use App\Traits\CustomerAdditionalInfo as CustomerAdditionalInfoTrait;
+use App\Enums\quoteTypeCode;
+use App\Enums\DatabaseColumnsString;
+use App\Traits\GetUserTree;
 
 class BusinessQuoteService extends BaseService
 {
     protected $query;
-
+    use CustomerAdditionalInfoTrait;
+    use GetUserTree;
     public function __construct()
     {
         $this->query = DB::table('business_quote_request as bqr')
@@ -46,7 +51,12 @@ class BusinessQuoteService extends BaseService
                 'bqr.source',
                 'bqr.policy_number',
                 'bqr.previous_quote_id',
-                'bqr.renewal_expiry_date'
+                'bqr.renewal_expiry_date',
+                'bqr.renewal_batch',
+                'bqr.previous_quote_policy_number',
+                'bqr.previous_policy_expiry_date',
+                'bqr.previous_quote_policy_premium',
+                'bqr.gender'
             )
             ->leftJoin('business_type_of_insurance as bti', 'bti.id', '=', 'bqr.business_type_of_insurance_id')
             ->leftJoin('business_quote_request_detail as bqrd', 'bqrd.business_quote_request_id', '=', 'bqr.id')
@@ -139,7 +149,11 @@ class BusinessQuoteService extends BaseService
                 'bqr.mobile_no',
                 'bqrd.next_followup_date as nextFollowupDate',
                 'bqr.previous_quote_id',
-                'ps.text as paymentStatus'
+                'ps.text as paymentStatus',
+                'bqr.renewal_batch',
+                'bqr.previous_quote_policy_number as previous_policy_number',
+                'bqr.previous_policy_expiry_date',
+                'bqr.previous_quote_policy_premium'
             )
             ->leftJoin('business_quote_request_detail as bqrd', 'bqrd.business_quote_request_id', '=', 'bqr.id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'bqr.quote_status_id')
@@ -192,12 +206,30 @@ class BusinessQuoteService extends BaseService
         if (isset($request->mobile_no) && $request->mobile_no != '') {
             $query->where('bqr.mobile_no', $request->mobile_no);
         }
-        if (Auth::user()->isRenewalAdvisor()) {
-            $query->whereNotNull('bqr.previous_quote_id');
-        }
         if (isset($request->paymentStatus)) {
             $query->where('bqr.payment_status_id', $request->paymentStatus);
         }
+        if (Auth::user()->isRenewalAdvisor()) {
+            $query->whereNotNull('bqr.previous_quote_id');
+        }
+        if (Auth::user()->isNewBusinessAdvisor()) {
+            $query->whereNull('bqr.previous_quote_id');
+        }
+        if (isset($request->renewal_batch) && $request->renewal_batch != '') {
+            $query->where('bqr.renewal_batch', $request->renewal_batch);
+        }
+        if (isset($request->previous_policy_number) && $request->previous_policy_number != '') {
+            $query->where('bqr.previous_quote_policy_number', $request->previous_policy_number);
+        }
+        if (isset($request->previous_quote_policy_premium) && $request->previous_quote_policy_premium != '') {
+            $query->where('bqr.previous_quote_policy_premium', $request->previous_quote_policy_premium);
+        }
+        if (isset($request->previous_policy_expiry_date) && $request->previous_policy_expiry_date != '' && $request->previous_policy_expiry_date_end != '') {
+            $dateFrom = Carbon::createFromFormat('Y-m-d', $request['previous_policy_expiry_date'])->startOfDay()->toDateTimeString();
+            $dateTo = Carbon::createFromFormat('Y-m-d', $request['previous_policy_expiry_date_end'])->endOfDay()->toDateTimeString();
+            $query->whereBetween('bqr.previous_policy_expiry_date', [$dateFrom, $dateTo]);
+        }
+       
         return $query;
     }
 
@@ -263,16 +295,25 @@ class BusinessQuoteService extends BaseService
         );
         if (!Auth::user()->hasRole("ADMIN")) $dataArr['advisorId'] = Auth::user()->id;
         $response  = CapiRequestService::sendCAPIRequest('/api/v1-save-business-quote', $dataArr);
-        return $response;
+        if(isset($response->quoteUID))
+            return $this->createUpdateCustomerInfo($request, $request->email, $response->quoteUID, quoteTypeCode::BusinessQuote);
+        else
+            return $response;
     }
 
     public function getGridData($model, $request)
     {
         $searchProperties = [];
         $isRenewalUser = Auth::user()->isRenewalUser();
+        $isRenewalAdvisor = Auth::user()->isRenewalAdvisor();
         $isRenewalManager = Auth::user()->isRenewalManager();
-        if ($isRenewalUser || $isRenewalManager) {
+        $isNewManager = Auth::user()->isNewBusinessManager();
+        $isNewAdvisor = Auth::user()->isNewBusinessAdvisor();
+        if ($isRenewalUser || $isRenewalManager || $isRenewalAdvisor) {
             $searchProperties = $model->renewalSearchProperties;
+        }
+        else if ($isNewManager || $isNewAdvisor) {
+            $searchProperties = $model->newBusinessSearchProperties;
         } else {
             $searchProperties = $model->searchProperties;
         }
@@ -317,6 +358,20 @@ class BusinessQuoteService extends BaseService
             if (isset($request->policy_number) && $request->policy_number != '') {
                 $this->query->where('bqr.policy_number', $request->policy_number);
             }
+            if (isset($request->previous_quote_policy_number) && $request->previous_quote_policy_number != '') {
+                $this->query->where('bqr.previous_quote_policy_number', $request->previous_quote_policy_number);
+            }
+            if (isset($request->renewal_batch) && $request->renewal_batch != '') {
+                $this->query->where('bqr.renewal_batch', $request->renewal_batch);
+            }
+            if (isset($request->previous_policy_expiry_date) && $request->previous_policy_expiry_date != '') {
+                $dateFrom = Carbon::createFromFormat('Y-m-d', $request['previous_policy_expiry_date'])->startOfDay()->toDateTimeString();
+                $dateTo = Carbon::createFromFormat('Y-m-d', $request['previous_policy_expiry_date_end'])->endOfDay()->toDateTimeString();
+                $this->query->whereBetween('bqr.previous_policy_expiry_date', [$dateFrom, $dateTo]);
+            }
+            if (isset($request->previous_quote_policy_premium) && $request->previous_quote_policy_premium != '') {
+                $this->query->where('bqr.previous_quote_policy_premium', $request->previous_quote_policy_premium);
+            }
             if (Auth::user()->isRenewalAdvisor()) {
                 $this->query->whereNotNull('bqr.previous_quote_id');
                 $this->query->where('bqr.advisor_id', Auth::user()->id);
@@ -324,11 +379,22 @@ class BusinessQuoteService extends BaseService
             if (Auth::user()->isRenewalManager()) {
                 $ids = $this->walkTree(Auth::user()->id);
                 $this->query->whereIn('bqr.advisor_id', $ids);
+                $this->query->whereNotNull('bqr.previous_quote_id');
+            }
+            if (Auth::user()->isNewBusinessManager()) {
+                $ids = $this->walkTree(Auth::user()->id);
+                $this->query->whereIn('bqr.advisor_id', $ids);
+                $this->query->whereNull('bqr.previous_quote_id');
+            }
+            if (Auth::user()->isNewBusinessAdvisor()) {
+                $ids = $this->walkTree(Auth::user()->id);
+                $this->query->whereIn('bqr.advisor_id', $ids);
+                $this->query->whereNull('bqr.previous_quote_id');
             }
             if (isset($request->is_renewal) && $request->is_renewal != '') {
-                if($request->is_renewal == "Yes")
+                if($request->is_renewal == quoteTypeCode::yesText)
                     $this->query->whereNotNull('bqr.previous_quote_id');
-                if($request->is_renewal == "No")
+                if($request->is_renewal == quoteTypeCode::noText)
                     $this->query->whereNull('bqr.previous_quote_id');
             }
             foreach ($searchProperties as $item) {
@@ -341,10 +407,10 @@ class BusinessQuoteService extends BaseService
                         else
                             $this->query->whereIn('advisor_id', $request[$item]);
                     }
-                    else if ($item == 'quote_status_id' && is_array($request[$item]) && !empty($request[$item])) {
+                    else if ($item == DatabaseColumnsString::quoteStatus && is_array($request[$item]) && !empty($request[$item])) {
                         $this->query->whereIn('quote_status_id', $request[$item]);
                     } else {
-                        $skipped = array('is_renewal');
+                        $skipped = array('is_renewal','previous_policy_expiry_date');
                         if(in_array($item, $skipped)){
                             continue;
                         }
@@ -418,6 +484,7 @@ class BusinessQuoteService extends BaseService
             if (isset($request->group_medical_type_id)) $businessQuote->group_medical_type_id = $request->group_medical_type_id;
             $businessQuote->save();
 
+            $this->createUpdateCustomerInfo($request, $businessQuote->email, $businessQuote->uuid, quoteTypeCode::BusinessQuote);
             if (isset($request->return_to_view))
                 return redirect("quote/business/" . $businessQuote->id)->with('success', 'Business Quote has been updated');
         } else {
@@ -427,7 +494,7 @@ class BusinessQuoteService extends BaseService
 
     public function getLeadAuditHistory($id)
     {
-        $audits = DB::table('car_quote_request as cqr')
+        $audits = DB::table('audits as a')
         ->select(
             'a.created_at as ModifiedAt',
             DB::raw('(SELECT name from users where id = a.user_id) as ModifiedBy'),
@@ -435,11 +502,6 @@ class BusinessQuoteService extends BaseService
             DB::raw("(SELECT NAME FROM users WHERE id = JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.advisor_id'))) AS NewAdvisor"),
             DB::raw("JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.notes')) AS NewNotes")
         )
-        ->join('business_quote_request_detail as cqrd', 'cqrd.business_quote_request_id', '=', 'cqr.id')
-        ->join("audits as a",function($query){
-            $query->on("a.auditable_id","=","cqr.id")
-                ->orOn("a.auditable_id","=","cqrd.id");
-        })
         ->where(function ($query) {
             $query->where('a.auditable_type', 'App\Models\BusinessQuote')
             ->orWhere('a.auditable_type', 'App\Models\BusinessQuoteRequestDetail');
@@ -449,8 +511,15 @@ class BusinessQuoteService extends BaseService
             ->orWhereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.notes')"))
             ->orWhereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.advisor_id')"));
         })
-        ->where('cqr.id', $id)
-        ->where('a.new_values', 'like', '%%')
+        ->where(function ($query) use ($id) {
+            $detailObjId = BusinessQuoteRequestDetail::where('business_quote_request_id', $id)->first();
+            if($detailObjId) {
+                $query->where('a.auditable_id', $id)
+                ->orWhere('a.auditable_id', $detailObjId->id);
+            } else {
+                $query->where('a.auditable_id', $id);
+            }
+        })
         ->orderBy('a.created_at', 'DESC')->get();
         return $audits;
     }
@@ -479,8 +548,13 @@ class BusinessQuoteService extends BaseService
             "business_type_of_insurance_id" => "select|title|required",
             "brief_details" => 'textarea|required',
             "previous_quote_id" => "readonly|title",
-            "is_renewal" => "|static|Yes,No",
-            "renewal_expiry_date" => "input|date|title|range"
+            "is_renewal" => "static|Yes,No",
+            "renewal_expiry_date" => "input|date|title|range",
+            "renewal_batch" => "input|none",
+            "previous_policy_expiry_date" => "input|date|title|range",
+            "previous_quote_policy_number" => "input|title",
+            "previous_quote_policy_premium" => "input|title",
+            "gender" => "input|none",
         );
     }
 
@@ -522,7 +596,16 @@ class BusinessQuoteService extends BaseService
                 $title = "Previous Quote Id";
                 break;
             case 'renewal_expiry_date':
-                $title = "Renewal Expiry Date";
+                $title = "Expiry Date";
+                break;
+            case 'previous_quote_policy_number':
+                $title = "Previous Policy Number";
+                break;
+            case 'previous_policy_expiry_date':
+                $title = "Previous Policy Expiry Date";
+                break;
+            case 'previous_quote_policy_premium':
+                $title = "Previous Policy Premium";
                 break;
             default:
                 break;
@@ -533,9 +616,9 @@ class BusinessQuoteService extends BaseService
     public function fillModelSkipProperties()
     {
         return [
-            "create" => "is_renewal,previous_quote_id,id,advisor_id,quote_status_id,code,updated_at,created_at,next_followup_date,lost_reason,premium,source,transapp_code,renewal_expiry_date",
-            "list" => "is_renewal,previous_quote_id,email,mobile_no,brief_details,dob,renewal_expiry_date",
-            "update" => "is_renewal,previous_quote_id,id,advisor_id,quote_status_id,code,updated_at,created_at,next_followup_date,lost_reason,source,transapp_code,renewal_expiry_date",
+            "create" => "previous_quote_policy_premium,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,is_renewal,previous_quote_id,id,advisor_id,quote_status_id,code,updated_at,created_at,next_followup_date,lost_reason,premium,source,transapp_code,renewal_expiry_date",
+            "list" => "previous_quote_policy_premium,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,is_renewal,previous_quote_id,email,mobile_no,brief_details,dob,renewal_expiry_date",
+            "update" => "previous_quote_policy_premium,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,is_renewal,previous_quote_id,id,advisor_id,quote_status_id,code,updated_at,created_at,next_followup_date,lost_reason,source,transapp_code,renewal_expiry_date",
             "show" => "is_renewal"
         ];
     }
@@ -547,14 +630,26 @@ class BusinessQuoteService extends BaseService
 
     public function fillRenewalProperties($model)
     {
-        $model->renewalSearchProperties = ['created_at', 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'policy_number','is_renewal'];
+        $model->renewalSearchProperties = ['created_at', 'code', 'first_name', 'last_name', 'email', 'mobile_no','renewal_batch','previous_quote_policy_number','previous_policy_expiry_date','previous_quote_policy_premium'];
         $model->renewalSkipProperties = [
-            "create" => "is_renewal,previous_quote_id,id,advisor_id,quote_status_id,code,updated_at,created_at,next_followup_date,lost_reason,premium,source,transapp_code",
-            "list" => "is_renewal,previous_quote_id,email,mobile_no,brief_details,dob,next_followup_date,lost_reason,source,transapp_code,business_type_of_insurance_id,premium,number_of_employees",
-            "update" => "is_renewal,previous_quote_id,id,advisor_id,quote_status_id,code,updated_at,created_at,next_followup_date,lost_reason,source,transapp_code",
-            "show" => "is_renewal",
+            "create" => "gender,previous_quote_policy_premium,renewal_expiry_date,previous_policy_expiry_date,policy_number,renewal_batch,previous_quote_policy_number,is_renewal,previous_quote_id,id,advisor_id,quote_status_id,code,updated_at,created_at,next_followup_date,lost_reason,premium,source,transapp_code",
+            "list" => "gender,renewal_expiry_date,policy_number,is_renewal,previous_quote_id,email,mobile_no,brief_details,dob,next_followup_date,lost_reason,source,transapp_code,business_type_of_insurance_id,premium,number_of_employees",
+            "update" => "gender,previous_quote_policy_premium,renewal_expiry_date,previous_policy_expiry_date,policy_number,renewal_batch,previous_quote_policy_number,is_renewal,previous_quote_id,id,advisor_id,quote_status_id,code,updated_at,created_at,next_followup_date,lost_reason,source,transapp_code",
+            "show" => "gender,renewal_expiry_date,is_renewal,policy_number",
         ];
     }
+
+    public function fillNewBusinessProperties($model)
+    {
+        $model->newBusinessSearchProperties = ['created_at', 'code', 'first_name', 'last_name', 'email', 'mobile_no','policy_number'];
+        $model->newBusinessSkipProperties = [
+            "create" => "previous_quote_policy_premium,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,member_category_id,salary_band_id,gender,is_renewal,previous_quote_id,created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,premium,source,transapp_code,renewal_expiry_date",
+            "list" => "previous_quote_policy_premium,renewal_batch,previous_quote_policy_number,previous_policy_expiry_date,member_category_id,salary_band_id,gender,is_renewal,email,cover_for_id,has_worldwide_cover,has_home,details,preference,mobile_no,dob,marital_status_id,nationality_id,has_dental,emirate_of_your_visa_id,is_ebp_renewal,health_team_type,next_followup_date,lost_reason,source,transapp_code,premium,lead_type_id,renewal_expiry_date,previous_quote_id",
+            "update" => "previous_quote_policy_premium,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,member_category_id,salary_band_id,gender,is_renewal,previous_quote_id,created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,source,transapp_code,renewal_expiry_date",
+            "show" => "previous_quote_policy_premium,renewal_batch,previous_quote_policy_number,previous_policy_expiry_date,member_category_id,salary_band_id,is_renewal,id,next_followup_date,previous_quote_id",
+        ];
+    }
+    
     public function getDuplicateEntityByCode($code)
     {
         return BusinessQuote::where('parent_duplicate_quote_id', $code)->first();

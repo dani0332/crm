@@ -4,6 +4,8 @@
     use App\Enums\quoteTypeCode;
     use App\Enums\CarPlanType;
     use App\Models\ApplicationStorage;
+    use App\Enums\CarPlanAddons;
+    use App\Enums\InsuranceProviders;
 
     if(!isset($modelName)) {
 
@@ -21,38 +23,34 @@
         }
     
         foreach ($listQuotePlans as $listQuotePlan) { // Car quote plans
-    
             if ($listQuotePlan->id == $planId) {
                 $listQuotePlanName = $listQuotePlan->name;
                 $providerCode = $listQuotePlan->providerCode;
                 $providerName = $listQuotePlan->providerName;
                 $repairType = $listQuotePlan->repairType;
                 $actualPremium = $listQuotePlan->actualPremium;
-                $discountPremium = $listQuotePlan->discountPremium;
-                if(isset($listQuotePlan->carValueLowerLimit)) { $carValueLowerLimit = $listQuotePlan->carValueLowerLimit; } else { $carValueLowerLimit = 0; }
-                if(isset($listQuotePlan->carValueUpperLimit)) { $carValueUpperLimit = $listQuotePlan->carValueUpperLimit; } else { $carValueUpperLimit = 0; }
-                if(isset($listQuotePlan->excess)) { $excess = $listQuotePlan->excess; } else { $excess = 0; }
-                if(isset($listQuotePlan->carValue)) { $carValue = $listQuotePlan->carValue; } else { $carValue = 0; }
-                if(isset($listQuotePlan->isDisabled)) { $isDisabled = $listQuotePlan->isDisabled; } else { $isDisabled = 0; }
+
+                $actualPremium = isset($listQuotePlan->actualPremium) ? $listQuotePlan->actualPremium : 0;
+                $discountPremium = isset($listQuotePlan->discountPremium) ? $listQuotePlan->discountPremium : 0;
+                $carValueLowerLimit = isset($listQuotePlan->carValueLowerLimit) ? $listQuotePlan->carValueLowerLimit : 0;
+                $carValueUpperLimit = isset($listQuotePlan->carValueUpperLimit) ? $listQuotePlan->carValueUpperLimit : 0;
+                $excess = isset($listQuotePlan->excess) ? $listQuotePlan->excess : 0;
+                $carValue = isset($listQuotePlan->carValue) ? $listQuotePlan->carValue : 0;
+                $isDisabled = isset($listQuotePlan->isDisabled) ? $listQuotePlan->isDisabled : 0;
+
                 $listQuotePlanAddonss = $listQuotePlan->addons;
                 $listQuotePlanBenefitsInclusions = $listQuotePlan->benefits->inclusion;
                 $listQuotePlanBenefitsExclusions = $listQuotePlan->benefits->exclusion;
                 $listQuotePlanBenefitsFeatures = $listQuotePlan->benefits->feature;
                 $listQuotePlanBenefitsRsas = $listQuotePlan->benefits->roadSideAssistance;
                 $listQuotePlanBenefitsPolicyDetails = $listQuotePlan->policyWordings;
-    
                 foreach ($listQuotePlanAddonss as $listQuotePlanAddon) {
                     $listQuotePlanAddons[] = $listQuotePlanAddon; // Get Addons Names
-    
-                    foreach ($listQuotePlanAddon->carAddonOption as $listQuotePlanAddonsOptions) {
-                        $listQuotePlanAddonValues[] = $listQuotePlanAddonsOptions->value;
-                        $listQuotePlanAddonPrices[] = $listQuotePlanAddonsOptions->price;
-                    }
                 }
+                $listQuotePlanBenefitsPolicyDetailLink = '';
                 foreach ($listQuotePlanBenefitsPolicyDetails as $listQuotePlanBenefitsPolicyDetail) {
                     $listQuotePlanBenefitsPolicyDetailLink = $listQuotePlanBenefitsPolicyDetail->link;
                 }
-                if(isset($listQuotePlanBenefitsPolicyDetailLink)) { $listQuotePlanBenefitsPolicyDetailLink = $listQuotePlanBenefitsPolicyDetailLink; } else { $listQuotePlanBenefitsPolicyDetailLink = ''; }
             }
         }
     
@@ -66,53 +64,67 @@
 ?>
 <script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
 <script>
-    $.ajaxSetup({
-        headers: {
-            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-        }
-    });
-    $('#update_car_plan_button').on('click', function (e) {
-
-        var actual_premium = $("#actual_premium").val();
-        var discounted_premium = $("#discounted_premium").val();
-        var car_value = $("#car_value").val();
-        var excess = $("#excess").val();
-        var repair_type = $("#repair_type").val();
-        var car_value_lower_limit = $("#car_value_lower_limit").val();
-        var carPlanTypeComp = JSON.parse('<?php echo json_encode($carPlanTypeComp) ?>');
-
-        if(repair_type == carPlanTypeComp && parseInt(car_value) < parseInt(car_value_lower_limit)) {
-            alert("Car Value should be greater than or equal to " + car_value_lower_limit);
-            return false;
-        }
-        if(actual_premium == '' || discounted_premium == '' || car_value == '' || excess == '') {
-            alert('Please fill all the fields');
-            return false;
-        }
-
-        e.preventDefault();
-        $.ajax({
-            url: "{{ url('/CarPlanUpdateManualProcess') }}",
-            type: 'post',
-            data: {
-                car_quote_uuid: $('#car_quote_uuid').val(),
-                car_plan_id: $('#car_plan_id').val(),
-                actual_premium: $('#actual_premium').val(),
-                discounted_premium: $('#discounted_premium').val(),
-                car_value: $('#car_value').val(),
-                excess: $('#excess').val(),
-                is_disabled: $('#is_disabled').val(),
-                is_create: $('#is_create').val(),
-                _token: '{{ csrf_token() }}'
-            },
-            success: function(result) {
-                $('#car_plan_manual_process_text').show();
-                $("#car_plan_manual_process_text").text(result);
-                $("#car_plan_manual_process_text").delay(3200).fadeOut(300);
+        $.ajaxSetup({
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
             }
         });
-    });
-</script>
+        $('#update_car_plan_button').on('click', function(e) {
+            var actual_premium = $("#actual_premium").val();
+            var discounted_premium = $("#discounted_premium").val();
+            var car_value = $("#car_value").val();
+            var excess = $("#excess").val();
+            var repair_type = $("#repair_type").val();
+            var car_value_lower_limit = $("#car_value_lower_limit").val();
+            var carPlanTypeComp = JSON.parse('<?php echo json_encode($carPlanTypeComp) ?>');
+            if (repair_type == carPlanTypeComp && parseInt(car_value) < parseInt(car_value_lower_limit)) {
+                alert("Car Value should be greater than or equal to " + car_value_lower_limit);
+                return false;
+            }
+            if (actual_premium == '' || discounted_premium == '' || car_value == '' || excess == '') {
+                alert('Please fill all the fields');
+                return false;
+            }
+            var length = $('.addon_id').length;
+            var addons = [];
+            for ($a = 0; $a < length; $a++) {
+                addons.push({
+                    'addonId': parseInt($('.addon_id').eq($a).val()),
+                    'addonOptionId': parseInt($('.addon_option_id').eq($a).val()),
+                    'price': parseFloat($('.addon_price').eq($a).val()),
+                    'isSelected': $('.addon_is_selected').eq($a).val() == "true" ? true : false,
+                });
+            }
+            $(".loader").show();
+            e.preventDefault();
+            $.ajax({
+                url: "{{ url('/CarPlanUpdateManualProcess') }}",
+                type: 'post',
+                dataType: "json",
+                contentType: "application/json; charset=utf-8",
+                data: JSON.stringify({
+                    car_quote_uuid: $('#car_quote_uuid').val(),
+                    car_plan_id: $('#car_plan_id').val(),
+                    actual_premium: $('#actual_premium').val(),
+                    discounted_premium: $('#discounted_premium').val(),
+                    car_value: $('#car_value').val(),
+                    excess: $('#excess').val(),
+                    is_disabled: $('#is_disabled').val(),
+                    is_create: $('#is_create').val(),
+                    addons,
+                    _token: '{{ csrf_token() }}'
+                }),
+                success: function(result) {
+                    $(".loader").hide();
+                    $('#car_plan_manual_process_text').show().text(result).delay(5000).fadeOut(300);
+                },
+                error: function(jqXhr, textStatus, errorMessage){
+                    $(".loader").hide();
+                    $('#car_plan_manual_process_text').show().text(jqXhr.responseText).delay(5000).fadeOut(300);
+                }
+            });
+        });
+    </script>
 <?php
     }
 ?>
@@ -425,33 +437,54 @@
                             </p>
                         </div>
                         <div class="tab-pane fade" id="addons" role="tabpanel" aria-labelledby="addons-tab">
+                        <div id="addons_text" style="font-weight:bold;display:none;"></div>
                             <table cellpadding="3" cellspacing="3">
                                 <tr>
                                     <td>
                                         <table cellpadding="3" cellspacing="3">
-                                            @foreach ($listQuotePlanAddons as $key => $listQuotePlanAddon)
-                                                <tr><td style="width: 430px;height: 30px;">{{ ucwords($listQuotePlanAddon->text) }}</td></tr>
-                                            @endforeach
-                                        </table>
-                                    </td>
-                                    <td>
-                                        <table cellpadding="3" cellspacing="3">
-                                            @foreach ($listQuotePlanAddonValues as $key => $listQuotePlanAddonValue)
-                                                <tr><td style="width: 430px;height: 30px;">{{ ucwords($listQuotePlanAddonValue) }}</td></tr>
-                                            @endforeach
-                                        </table>
-                                    </td>
-                                    <td>
-                                        <table cellpadding="3" cellspacing="3">
-                                            @foreach ($listQuotePlanAddonPrices as $key => $listQuotePlanAddonPrice)
-                                                @if($listQuotePlanAddonPrice == 0)
-                                                <tr><td style="width: 230px;height: 30px;">Free</td>
-                                                    <td><input type="checkbox" checked style="height: unset !important;" disabled></td></td></tr>
-                                                @else
-                                                <tr><td style="width: 230px;height: 30px;">AED {{ ucwords($listQuotePlanAddonPrice) }}</td>
-                                                    <td><input type="checkbox" style="height: unset !important;" disabled></td></tr>
-                                                @endif
-                                            @endforeach
+                                            <ul>
+                                                @foreach ($listQuotePlanAddons as $listQuotePlanAddon)
+                                                    @foreach ($listQuotePlanAddon->carAddonOption as $carAddonOption)
+                                                    <tr>
+                                                        <td style="width: 430px;height: 30px;">{{ ucwords($listQuotePlanAddon->text) }}</td>
+                                                        <td style="width: 800px;height: 30px;">{{ ucwords($carAddonOption->value) }}</td>
+
+                                                        @if($carAddonOption->price == 0)
+                                                            <?php
+                                                                if(isset($carAddonOption->isSelected)) {
+                                                                    $carAddonOptionIsSelected = $carAddonOption->isSelected;
+                                                                } else {
+                                                                    $carAddonOptionIsSelected = false;
+                                                                }
+                                                            ?>
+                                                        <td style="width: 430px;height: 30px;">Free</td>
+                                                        <td style="width: 430px;height: 30px;">
+                                                            <select class="form-control" style="height: 30px; width: 140px;pointer-events: none; background-color: #f6f6f6">
+                                                                <option value="false" {{ $carAddonOptionIsSelected == false ? 'selected="selected"' : '' }}>Deselected</option>
+                                                                <option value="true" {{ $carAddonOptionIsSelected == true ? 'selected="selected"' : '' }}>Selected</option>
+                                                            </select>
+                                                        </td>
+                                                        @else
+                                                        <td style="width: 430px;height: 30px;">
+                                                            @if($listQuotePlanAddon->code == CarPlanAddons::CAR_HIRE && ($providerCode == InsuranceProviders::AXA || $providerCode == InsuranceProviders::RSA))
+                                                                <input type="number" id="addon_price" name="addon_price" value="{{ $carAddonOption->price }}" style="width: 100px;" onKeyDown="if(this.value.length==5) return false;" class="form-control addon_price">
+                                                            @else
+                                                                AED {{ $carAddonOption->price }}
+                                                                <input type="hidden" id="addon_price" name="addon_price" value="{{ $carAddonOption->price }}" class="addon_price">
+                                                            @endif
+                                                            <input type="hidden" id="addon_id" name="addon_id" value="{{ $listQuotePlanAddon->id }}" class="addon_id">
+                                                            <input type="hidden" id="addon_option_id" name="addon_option_id" value="{{ $carAddonOption->id }}" class="addon_option_id">
+                                                        </td>
+                                                        <td style="width: 430px;height: 30px;" id="plan_addons">
+                                                            <select id="addon_is_selected" name="addon_is_selected" style="height: 30px; width: 140px;" class="form-control addon_is_selected">
+                                                                <option value=false {{ $carAddonOption->isSelected == false ? 'selected="selected"' : '' }}>Deselected</option>
+                                                                <option value=true {{ $carAddonOption->isSelected == true ? 'selected="selected"' : '' }}>Selected</option>
+                                                            </select>
+                                                        </td>
+                                                        @endif
+                                                    </tr>
+                                                    @endforeach
+                                                @endforeach
                                         </table>
                                     </td>
                                 </tr>

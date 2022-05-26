@@ -28,7 +28,18 @@ class quoteTypeCode extends Enum
     const GM = "GM";
     const RM = "RM";
     const GroupMedical = "Group Medical";
-
+    const CarQuote = "CarQuote";
+    const HomeQuote = "HomeQuote";
+    const HealthQuote = "HealthQuote";
+    const LifeQuote = "LifeQuote";
+    const BusinessQuote = "BusinessQuote";
+    const BikeQuote = "BikeQuote";
+    const YachtQuote = "YachtQuote";
+    const TravelQuote = "TravelQuote";
+    const RenewalsUpload = "RenewalsUpload";
+    const yesText = "Yes";
+    const noText = "No";
+    const business = "business";
     public static function getOptions() 
     {
         $oClass = new ReflectionClass(__CLASS__);

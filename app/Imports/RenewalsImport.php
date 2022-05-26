@@ -330,9 +330,6 @@ class RenewalsImport implements OnEachRow, WithStartRow, WithValidation, SkipsOn
                 }
             },
             '*.6' => function($attribute, $value, $onFailure) { // Sales Channel
-                if(!$value) {
-                    $onFailure('Sales Channel is required');
-                }
                 if(strlen($value) > 100) {
                     $onFailure('Sales Channel should not exceed length of 100 characters');
                 }

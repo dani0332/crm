@@ -12,11 +12,14 @@ use Auth;
 use \Carbon\Carbon;
 use Config;
 use App\Traits\GetUserTree;
-
+use App\Traits\CustomerAdditionalInfo as CustomerAdditionalInfoTrait;
+use App\Enums\quoteTypeCode;
+use App\Enums\DatabaseColumnsString;
 class LifeQuoteService extends BaseService
 {
     protected $query;
     use GetUserTree;
+    use CustomerAdditionalInfoTrait;
     public function __construct()
     {
         $this->query = DB::table('life_quote_request as lqr')
@@ -60,7 +63,13 @@ class LifeQuoteService extends BaseService
                 'lqrd.transapp_code',
                 'lqrd.notes',
                 'ls.text as lost_reason',
-                'lqr.previous_quote_id'
+                'lqr.previous_quote_id',
+                'lqr.renewal_batch',
+                'lqr.previous_quote_policy_number',
+                'lqr.renewal_expiry_date',
+                'lqr.device',
+                'lqr.previous_policy_expiry_date',
+                'lqr.previous_quote_policy_premium'
             )
             ->leftJoin('life_quote_request_detail as lqrd', 'lqrd.life_quote_request_id', 'lqr.id')
             ->leftJoin('currency_type as ct', 'ct.id', '=', 'lqr.sum_insured_currency_id')
@@ -100,7 +109,11 @@ class LifeQuoteService extends BaseService
             "referenceUrl" => $appUrl,
         );
         if (!Auth::user()->hasRole("ADMIN")) $dataArr['advisorId'] = Auth::user()->id;
-        return CapiRequestService::sendCAPIRequest('/api/v1-save-life-quote', $dataArr);
+        $response = CapiRequestService::sendCAPIRequest('/api/v1-save-life-quote', $dataArr);
+        if(isset($response->quoteUID))
+            return $this->createUpdateCustomerInfo($request, $request->email, $response->quoteUID, quoteTypeCode::LifeQuote);
+        else
+            return $response;
     }
 
     public function getEntity($id)
@@ -144,9 +157,15 @@ class LifeQuoteService extends BaseService
     {
         $searchProperties = [];
         $isRenewalUser = Auth::user()->isRenewalUser();
+        $isRenewalAdvisor = Auth::user()->isRenewalAdvisor();
         $isRenewalManager = Auth::user()->isRenewalManager();
-        if ($isRenewalUser || $isRenewalManager) {
+        $isNewManager = Auth::user()->isNewBusinessManager();
+        $isNewAdvisor = Auth::user()->isNewBusinessAdvisor();
+        if ($isRenewalUser || $isRenewalManager || $isRenewalAdvisor) {
             $searchProperties = $model->renewalSearchProperties;
+        }
+        else if ($isNewManager || $isNewAdvisor) {
+            $searchProperties = $model->newBusinessSearchProperties;
         } else {
             $searchProperties = $model->searchProperties;
         }
@@ -191,6 +210,20 @@ class LifeQuoteService extends BaseService
             if (isset($request->policy_number) && $request->policy_number != '') {
                 $this->query->where('lqr.policy_number', $request->policy_number);
             }
+            if (isset($request->previous_quote_policy_number) && $request->previous_quote_policy_number != '') {
+                $this->query->where('lqr.previous_quote_policy_number', $request->previous_quote_policy_number);
+            }
+            if (isset($request->renewal_batch) && $request->renewal_batch != '') {
+                $this->query->where('lqr.renewal_batch', $request->renewal_batch);
+            }
+            if (isset($request->previous_policy_expiry_date) && $request->previous_policy_expiry_date != '') {
+                $dateFrom = Carbon::createFromFormat('Y-m-d', $request['previous_policy_expiry_date'])->startOfDay()->toDateTimeString();
+                $dateTo = Carbon::createFromFormat('Y-m-d', $request['previous_policy_expiry_date_end'])->endOfDay()->toDateTimeString();
+                $this->query->whereBetween('lqr.previous_policy_expiry_date', [$dateFrom, $dateTo]);
+            }
+            if (isset($request->previous_quote_policy_premium) && $request->previous_quote_policy_premium != '') {
+                $this->query->where('lqr.previous_quote_policy_premium', $request->previous_quote_policy_premium);
+            }
             if (Auth::user()->isRenewalAdvisor()) {
                 $this->query->whereNotNull('lqr.previous_quote_id');
                 $this->query->where('lqr.advisor_id', Auth::user()->id);
@@ -198,11 +231,22 @@ class LifeQuoteService extends BaseService
             if (Auth::user()->isRenewalManager()) {
                 $ids = $this->walkTree(Auth::user()->id);
                 $this->query->whereIn('lqr.advisor_id', $ids);
+                $this->query->whereNotNull('lqr.previous_quote_id');
+            }
+            if (Auth::user()->isNewBusinessManager()) {
+                $ids = $this->walkTree(Auth::user()->id);
+                $this->query->whereIn('lqr.advisor_id', $ids);
+                $this->query->whereNull('lqr.previous_quote_id');
+            }
+            if (Auth::user()->isNewBusinessAdvisor()) {
+                $ids = $this->walkTree(Auth::user()->id);
+                $this->query->whereIn('lqr.advisor_id', $ids);
+                $this->query->whereNull('lqr.previous_quote_id');
             }
             if (isset($request->is_renewal) && $request->is_renewal != '') {
-                if($request->is_renewal == "Yes")
+                if($request->is_renewal == quoteTypeCode::yesText)
                     $this->query->whereNotNull('lqr.previous_quote_id');
-                if($request->is_renewal == "No")
+                if($request->is_renewal == quoteTypeCode::noText)
                     $this->query->whereNull('lqr.previous_quote_id');
             }
             foreach ($searchProperties as $item) {
@@ -215,10 +259,10 @@ class LifeQuoteService extends BaseService
                         else
                             $this->query->whereIn('advisor_id', $request[$item]);
                     }
-                    else if ($item == 'quote_status_id' && is_array($request[$item]) && !empty($request[$item])) {
+                    else if ($item == DatabaseColumnsString::quoteStatus && is_array($request[$item]) && !empty($request[$item])) {
                         $this->query->whereIn('quote_status_id', $request[$item]);
                     } else {
-                        $skipped = array('is_renewal');
+                        $skipped = array('is_renewal','previous_policy_expiry_date');
                         if(in_array($item, $skipped)){
                             continue;
                         }
@@ -316,6 +360,7 @@ class LifeQuoteService extends BaseService
         $lifeQuote->others_info = $request->others_info;
         $lifeQuote->save();
 
+        $this->createUpdateCustomerInfo($request, $lifeQuote->email, $lifeQuote->uuid, quoteTypeCode::LifeQuote);
         if (isset($request->return_to_view))
             return redirect("quotes/life")->with('success', 'Life Quote has been updated');
     }
@@ -367,7 +412,11 @@ class LifeQuoteService extends BaseService
                 'lqr.mobile_no',
                 'lqrd.next_followup_date as nextFollowupDate',
                 'lqr.previous_quote_id',
-                'ps.text as paymentStatus'
+                'ps.text as paymentStatus',
+                'lqr.renewal_batch',
+                'lqr.previous_quote_policy_number as previous_policy_number',
+                'lqr.previous_policy_expiry_date',
+                'lqr.previous_quote_policy_premium'
             )
             ->leftJoin('life_quote_request_detail as lqrd', 'lqrd.life_quote_request_id', '=', 'lqr.id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'lqr.quote_status_id')
@@ -409,11 +458,31 @@ class LifeQuoteService extends BaseService
         if (isset($request->leadStatus) && $request->leadStatus != 0) {
             $query->where('lqr.quote_status_id', $request->leadStatus);
         }
-        if (Auth::user()->isRenewalAdvisor()) {
-           $query->whereNotNull('lqr.previous_quote_id');
-        }
         if (isset($request->paymentStatus)) {
             $query->where('lqr.payment_status_id', $request->paymentStatus);
+        }
+        if (Auth::user()->isRenewalAdvisor()) {
+            $query->whereNotNull('lqr.previous_quote_id');
+        }
+        if (Auth::user()->isNewBusinessAdvisor()) {
+            $query->whereNull('lqr.previous_quote_id');
+        }
+        if (isset($request->paymentStatus) && $request->paymentStatus != '') {
+            $query->where('lqr.payment_status_id', $request->paymentStatus);
+        }
+        if (isset($request->renewal_batch) && $request->renewal_batch != '') {
+            $query->where('lqr.renewal_batch', $request->renewal_batch);
+        }
+        if (isset($request->previous_policy_number) && $request->previous_policy_number != '') {
+            $query->where('lqr.previous_quote_policy_number', $request->previous_policy_number);
+        }
+        if (isset($request->previous_quote_policy_premium) && $request->previous_quote_policy_premium != '') {
+            $query->where('lqr.previous_quote_policy_premium', $request->previous_quote_policy_premium);
+        }
+        if (isset($request->previous_policy_expiry_date) && $request->previous_policy_expiry_date != '' && $request->previous_policy_expiry_date_end != '') {
+            $dateFrom = Carbon::createFromFormat('Y-m-d', $request['previous_policy_expiry_date'])->startOfDay()->toDateTimeString();
+            $dateTo = Carbon::createFromFormat('Y-m-d', $request['previous_policy_expiry_date_end'])->endOfDay()->toDateTimeString();
+            $query->whereBetween('lqr.previous_policy_expiry_date', [$dateFrom, $dateTo]);
         }
         return $query;
     }
@@ -491,7 +560,13 @@ class LifeQuoteService extends BaseService
             "is_smoker" => "|static|title|Yes,No",
             "others_info" => "textarea",
             "previous_quote_id" => "readonly|title",
-            "is_renewal" => "|static|title|Yes,No"
+            "is_renewal" => "|static|title|Yes,No",
+            "renewal_expiry_date" => "input|date|title|range",
+            "renewal_batch" => "input|none",
+            "previous_quote_policy_number" => "input|title",
+            "previous_policy_expiry_date" => "input|date|title|range",
+            "previous_quote_policy_premium" => "input|title"
+
         );
     }
 
@@ -553,6 +628,18 @@ class LifeQuoteService extends BaseService
             case 'previous_quote_id':
                 $title = "Previous Quote Id";
                 break;
+            case 'renewal_expiry_date':
+                $title = "Expiry Date";
+                break;
+            case 'previous_quote_policy_number':
+                $title = "Previous Policy Number";
+                break;
+            case 'previous_policy_expiry_date':
+                $title = "Previous Policy Expiry Date";
+                break;
+            case 'previous_quote_policy_premium':
+                $title = "Previous Policy Premium";
+                break;
             default:
                 break;
         }
@@ -562,26 +649,36 @@ class LifeQuoteService extends BaseService
     public function fillModelSkipProperties()
     {
         return [
-            "create" => "is_renewal,previous_quote_id,id,advisor_id,quote_status_id,code,created_at,updated_at,next_followup_date,lost_reason,premium,source,transapp_code",
-            "list" => "is_renewal,previous_quote_id,email,mobile_no,others_info,dob,sum_insured_value,sum_insured_currency_id,purpose_of_insurance_id,marital_status_id,children_id,tenure_of_insurance_id,number_of_years_id,gender,is_smoker,others_info",
-            "update" => "is_renewal,previous_quote_id,id,advisor_id,quote_status_id,code,created_at,updated_at,next_followup_date,lost_reason,source,transapp_code",
+            "create" => "previous_quote_policy_premium,previous_policy_expiry_date,device,renewal_batch,previous_quote_policy_number,renewal_expiry_date,is_renewal,previous_quote_id,id,advisor_id,quote_status_id,code,created_at,updated_at,next_followup_date,lost_reason,premium,source,transapp_code",
+            "list" => "previous_quote_policy_premium,previous_policy_expiry_date,device,renewal_batch,previous_quote_policy_number,renewal_expiry_date,is_renewal,previous_quote_id,email,mobile_no,others_info,dob,sum_insured_value,sum_insured_currency_id,purpose_of_insurance_id,marital_status_id,children_id,tenure_of_insurance_id,number_of_years_id,gender,is_smoker,others_info",
+            "update" => "previous_quote_policy_premium,previous_policy_expiry_date,device,renewal_batch,previous_quote_policy_number,renewal_expiry_date,is_renewal,previous_quote_id,id,advisor_id,quote_status_id,code,created_at,updated_at,next_followup_date,lost_reason,source,transapp_code",
             "show" => "is_renewal",
         ];
     }
 
     public function fillModelSearchProperties()
     {
-        return ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'advisor_id', 'created_at', 'next_followup_date'];
+        return ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'advisor_id', 'created_at', 'next_followup_date','is_renewal'];
     }
 
     public function fillRenewalProperties($model)
     {
-        $model->renewalSearchProperties = ['created_at', 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'policy_number','is_renewal'];
+        $model->renewalSearchProperties = ['created_at', 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'previous_quote_policy_number','previous_policy_expiry_date','renewal_batch','previous_quote_policy_premium'];
         $model->renewalSkipProperties = [
-            "create" => "is_renewal,previous_quote_id,id,advisor_id,quote_status_id,code,created_at,updated_at,next_followup_date,lost_reason,premium,source,transapp_code",
-            "list" => "is_renewal,email,mobile_no,others_info,dob,sum_insured_value,sum_insured_currency_id,purpose_of_insurance_id,marital_status_id,children_id,tenure_of_insurance_id,number_of_years_id,gender,is_smoker,others_info,next_followup_date,lost_reason,source,transapp_code",
-            "update" => "is_renewal,previous_quote_id,id,advisor_id,quote_status_id,code,created_at,updated_at,next_followup_date,lost_reason,source,transapp_code",
-            "show" => "",
+            "create" => "previous_quote_policy_premium,renewal_batch,previous_quote_policy_number,renewal_expiry_date,is_renewal,previous_quote_id,id,advisor_id,quote_status_id,code,created_at,updated_at,next_followup_date,lost_reason,premium,source,transapp_code",
+            "list" => "premium,policy_number,renewal_expiry_date,is_renewal,email,mobile_no,others_info,dob,sum_insured_value,sum_insured_currency_id,purpose_of_insurance_id,marital_status_id,children_id,tenure_of_insurance_id,number_of_years_id,gender,is_smoker,others_info,next_followup_date,lost_reason,source,transapp_code",
+            "update" => "previous_quote_policy_premium,renewal_batch,previous_quote_policy_number,renewal_expiry_date,is_renewal,previous_quote_id,id,advisor_id,quote_status_id,code,created_at,updated_at,next_followup_date,lost_reason,source,transapp_code",
+            "show" => "id,next_followup_date,lost_reason,is_renewal",
+        ];
+    }
+    public function fillNewBusinessProperties($model)
+    {
+        $model->newBusinessSearchProperties = ['created_at', 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'policy_number'];
+        $model->newBusinessSkipProperties = [
+            "create" => "previous_quote_policy_premium,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,member_category_id,salary_band_id,gender,is_renewal,previous_quote_id,created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,premium,source,transapp_code,renewal_expiry_date",
+            "list" => "previous_quote_policy_premium,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,others_info,member_category_id,salary_band_id,gender,is_renewal,email,cover_for_id,has_worldwide_cover,has_home,details,preference,mobile_no,dob,marital_status_id,nationality_id,has_dental,emirate_of_your_visa_id,is_ebp_renewal,health_team_type,next_followup_date,lost_reason,source,transapp_code,premium,lead_type_id,renewal_expiry_date,previous_quote_id",
+            "update" => "previous_quote_policy_premium,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,member_category_id,salary_band_id,gender,is_renewal,previous_quote_id,created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,source,transapp_code,renewal_expiry_date",
+            "show" => "previous_quote_policy_premium,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,member_category_id,salary_band_id,gender,is_renewal,id,next_followup_date,previous_quote_id",
         ];
     }
 
@@ -610,7 +707,8 @@ class LifeQuoteService extends BaseService
 
     public function getLeadAuditHistory($id)
     {
-        $audits = DB::table('car_quote_request as cqr')
+        
+        $audits = DB::table('audits as a')
         ->select(
             'a.created_at as ModifiedAt',
             DB::raw('(SELECT name from users where id = a.user_id) as ModifiedBy'),
@@ -618,11 +716,6 @@ class LifeQuoteService extends BaseService
             DB::raw("(SELECT NAME FROM users WHERE id = JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.advisor_id'))) AS NewAdvisor"),
             DB::raw("JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.notes')) AS NewNotes")
         )
-        ->join('life_quote_request_detail as cqrd', 'cqrd.life_quote_request_id', '=', 'cqr.id')
-        ->join("audits as a",function($query){
-            $query->on("a.auditable_id","=","cqr.id")
-                ->orOn("a.auditable_id","=","cqrd.id");
-        })
         ->where(function ($query) {
             $query->where('a.auditable_type', 'App\Models\LifeQuote')
             ->orWhere('a.auditable_type', 'App\Models\LifeQuoteRequestDetail');
@@ -632,8 +725,15 @@ class LifeQuoteService extends BaseService
             ->orWhereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.notes')"))
             ->orWhereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.advisor_id')"));
         })
-        ->where('cqr.id', $id)
-        ->where('a.new_values', 'like', '%%')
+        ->where(function ($query) use ($id) {
+            $detailObjId = LifeQuoteRequestDetail::where('life_quote_request_id', $id)->first();
+            if($detailObjId) {
+                $query->where('a.auditable_id', $id)
+                ->orWhere('a.auditable_id', $detailObjId->id);
+            } else {
+                $query->where('a.auditable_id', $id);
+            }
+        })
         ->orderBy('a.created_at', 'DESC')->get();
         return $audits;
     }

@@ -43,6 +43,7 @@
             var model = JSON.parse('<?php echo json_encode(get_object_vars($model)); ?>');
             var isAdmin = JSON.parse('<?php echo json_encode(Auth::user()->hasRole('ADMIN')); ?>');
             var isManagerOrDeputy = $("#isManagerOrDeputy").val();
+            var isNewBusinessUser = JSON.parse('<?php echo json_encode($isNewBusinessUser); ?>');
             // Adding custom search fields for admin role
             if (isAdmin && !isRenewalUser) {
                 model.searchProperties.push('is_ecommerce');
@@ -66,6 +67,10 @@
 
                 if ($('#renewal_expiry_date').val() != '' && $('#renewal_expiry_date_end').val() == '') {
                     $('#renewal_expiry_date_end').next().html('Please select renewal to end date');
+                    return false;
+                }
+                if ($('#previous_policy_expiry_date').val() != '' && $('#previous_policy_expiry_date_end').val() == '') {
+                    $('#previous_policy_expiry_date_end').next().html('Please select previous policy expiry date to end date');
                     return false;
                 }
 
@@ -100,6 +105,8 @@
                 skipPropertiesArray = model.renewalSkipProperties['list'].split(',');
             }else if(isRenewalUser && model.modelType.toLowerCase() != 'car'){
                 skipPropertiesArray = model.renewalSkipProperties['list'].split(',');
+            }else if(isNewBusinessUser && model.modelType.toLowerCase() != 'car'){
+                skipPropertiesArray = model.newBusinessSkipProperties['list'].split(',');
             } else {
                 skipPropertiesArray = model.skipProperties['list'].split(',');
             }
@@ -202,7 +209,7 @@
                     }
                     break;
                 case 'home':
-                    if(isRenewalUser){
+                    if(isRenewalUser || isNewBusinessUser){
                         disableSortColumns = [-1,0,1,2,3,4,5,6];
                     }
                     else if(isManagerOrDeputy == '1' || isAdmin)
@@ -212,7 +219,7 @@
                     break;
                     break;
                 case 'health':
-                    if(isRenewalUser){
+                    if(isRenewalUser || isNewBusinessUser){
                         disableSortColumns = [-1,0,1,2,3,4,5,6];
                     }
                     else if(isManagerOrDeputy == '1' || isAdmin)
@@ -221,7 +228,7 @@
                         disableSortColumns = [-1,0,1,2,3,4,7,9,10];
                     break;
                 case 'life':
-                    if(isRenewalUser){
+                    if(isRenewalUser || isNewBusinessUser){
                         disableSortColumns = [-1,0,1,2,3,4,5,6];
                     }
                     else if(isManagerOrDeputy == '1' || isAdmin)
@@ -230,7 +237,7 @@
                         disableSortColumns = [-1, 0, 1, 2, 3, 4, 8, 9, 10];
                     break;
                 case 'business':
-                    if(isRenewalUser){
+                    if(isRenewalUser || isNewBusinessUser){
                         disableSortColumns = [-1,0,1,2,3,4,5,6];
                     }
                     else if(isManagerOrDeputy == '1' || isAdmin)
@@ -239,7 +246,7 @@
                         disableSortColumns = [-1, 0, 1, 2, 3, 5, 6, 7, 8, 11, 12, 13];
                     break;
                 case 'travel':
-                    if(isRenewalUser){
+                    if(isRenewalUser || isNewBusinessUser){
                         disableSortColumns = [-1,0,1,2,3,4,5,6];
                     }
                     else if(isManagerOrDeputy == '1' || isAdmin)
@@ -276,9 +283,14 @@
                         d.assigned_to_date_end = $('#assigned_to_date_end').val();
                         d.renewal_expiry_date = $('#renewal_expiry_date').val();
                         d.renewal_expiry_date_end = $('#renewal_expiry_date_end').val();
+                        d.policy_number = $('#policy_number').val();
                         if (model.properties['created_at'] && model.properties['created_at'].indexOf(
                                 'range') > -1) {
                             d['created_at_end'] = $('#created_at_end').val();
+                        }
+                        if (model.properties['previous_policy_expiry_date'] && model.properties['previous_policy_expiry_date'].indexOf(
+                                'range') > -1) {
+                            d['previous_policy_expiry_date_end'] = $('#previous_policy_expiry_date_end').val();
                         }
                     }
                 },
@@ -312,16 +324,6 @@
                 for (let index = 1; index < rows.length; index++) {
                     var columns = $(rows[index]).children();
                     for (let i = 0; i < columns.length; i++) {
-                        if (i == nextFollowupDateColumn && $(columns[i]).text() != "") {
-                            if (formatedDate(new Date()) > formatedDate(new Date($(columns[i]).text()))) {
-                                $(rows[index]).children().eq(i).css({
-                                    'color': 'white',
-                                    'background-color': 'red',
-                                    'font-weight': 'bold',
-                                    'font-size': '12px'
-                                });
-                            }
-                        }
                         if (checkboxIndexes.includes(i)) {
                             const element = columns[i];
                             if ($(element).text() == '1') {
@@ -556,13 +558,14 @@
                             @php
                                 $searchProperties = [];
                                 $skipProperties = [];
-                                if($isRenewalUser && strtolower($model->modelType) == 'car'){
+                                
+                                if($isRenewalUser && strtolower($model->modelType) != 'car'){
                                     $searchProperties = $model->renewalSearchProperties;
                                     $skipProperties = $model->renewalSkipProperties;
                                 }
-                                else if($isRenewalUser && strtolower($model->modelType) != 'car'){
-                                    $searchProperties = $model->renewalSearchProperties;
-                                    $skipProperties = $model->renewalSkipProperties;
+                                else if($isNewBusinessUser && strtolower($model->modelType) != 'car'){
+                                    $searchProperties = $model->newBusinessSearchProperties;
+                                    $skipProperties = $model->newBusinessSkipProperties;
                                 }
                                 else{
                                     $searchProperties = $model->searchProperties;
@@ -784,7 +787,11 @@
                                                             <label style="margin-left: 8px;font-size: 16px;font-weight: bolder;">Assign Advisor</label>
                                                             <span class='required' style="margin-left:10px;">*</span>
                                                             @php
-                                                                $updatedAdvisors = $isRenewalUser ? $renewalAdvisors : $advisors;
+                                                               
+                                                                if(!empty($renewalAdvisors))
+                                                                    $updatedAdvisors = $renewalAdvisors;
+                                                                else
+                                                                    $updatedAdvisors = $advisors;
                                                             @endphp
                                                             <select class="form-control" id="assigned_to_id_new"
                                                                 name="assigned_to_id_new">
@@ -817,6 +824,7 @@
                                                     <th style="width: 15px;"><input type="checkbox" id="checkAllTmLeads"
                                                             name="checkAllTmLeads" value=""></th>
                                                 @endif
+                                              
                                                 @foreach ($model->properties as $property => $value)
                                                     @if ($model->modelType != 'LeadStatus' && $model->modelType != 'Teams')
                                                         @if ($property != 'id')

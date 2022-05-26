@@ -16,11 +16,14 @@ use \Carbon\Carbon;
 use Hidehalo\Nanoid\Client;
 use Config;
 use App\Traits\GetUserTree;
+use App\Traits\CustomerAdditionalInfo as CustomerAdditionalInfoTrait;
+use App\Enums\quoteTypeCode;
 
 class HealthQuoteService extends BaseService
 {
     protected $query;
     use GetUserTree;
+    use CustomerAdditionalInfoTrait;
     public function __construct()
     {
         $this->query = DB::table('health_quote_request as hqr')->select(
@@ -68,7 +71,12 @@ class HealthQuoteService extends BaseService
             'sb.text as salary_band_id_text',
             'hqr.member_category_id',
             'mc.text as member_category_id_text',
-            'hqr.renewal_expiry_date'
+            'hqr.renewal_expiry_date',
+            'hqr.renewal_batch',
+            'hqr.previous_quote_policy_number',
+            'hqr.previous_policy_expiry_date',
+            'hqr.previous_quote_policy_premium',
+            'hqr.device'
         )
             ->leftJoin('marital_status as ms', 'ms.id', '=', 'hqr.marital_status_id')
             ->leftJoin('health_quote_request_detail as hqrd', 'hqrd.health_quote_request_id', '=', 'hqr.id')
@@ -149,16 +157,26 @@ class HealthQuoteService extends BaseService
             "memberCategoryId" => $request->member_category_id
         );
         if (!Auth::user()->hasRole("ADMIN")) $dataArr['advisorId'] = Auth::user()->id;
-        return CapiRequestService::sendCAPIRequest('/api/v1-save-health-quote', $dataArr);
+         $response = CapiRequestService::sendCAPIRequest('/api/v1-save-health-quote', $dataArr);
+        if(isset($response->quoteUID))
+            return $this->createUpdateCustomerInfo($request, $request->email, $response->quoteUID, quoteTypeCode::HealthQuote);
+        else
+            return $response;
     }
 
     public function getGridData($model, $request)
     {
         $searchProperties = [];
         $isRenewalUser = Auth::user()->isRenewalUser();
+        $isRenewalAdvisor = Auth::user()->isRenewalAdvisor();
         $isRenewalManager = Auth::user()->isRenewalManager();
-        if ($isRenewalUser || $isRenewalManager) {
+        $isNewManager = Auth::user()->isNewBusinessManager();
+        $isNewAdvisor = Auth::user()->isNewBusinessAdvisor();
+        if ($isRenewalUser || $isRenewalManager || $isRenewalAdvisor) {
             $searchProperties = $model->renewalSearchProperties;
+        }
+        else if ($isNewManager || $isNewAdvisor) {
+            $searchProperties = $model->newBusinessSearchProperties;
         } else {
             $searchProperties = $model->searchProperties;
         }
@@ -203,6 +221,20 @@ class HealthQuoteService extends BaseService
             if (isset($request->policy_number) && $request->policy_number != '') {
                 $this->query->where('hqr.policy_number', $request->policy_number);
             }
+            if (isset($request->previous_quote_policy_number) && $request->previous_quote_policy_number != '') {
+                $this->query->where('hqr.previous_quote_policy_number', $request->previous_quote_policy_number);
+            }
+            if (isset($request->previous_policy_expiry_date) && $request->previous_policy_expiry_date != '') {
+                $dateFrom = Carbon::createFromFormat('Y-m-d', $request['previous_policy_expiry_date'])->startOfDay()->toDateTimeString();
+                $dateTo = Carbon::createFromFormat('Y-m-d', $request['previous_policy_expiry_date_end'])->endOfDay()->toDateTimeString();
+                $this->query->whereBetween('hqr.previous_policy_expiry_date', [$dateFrom, $dateTo]);
+            }
+            if (isset($request->renewal_batch) && $request->renewal_batch != '') {
+                $this->query->where('hqr.renewal_batch', $request->renewal_batch);
+            }
+            if (isset($request->previous_quote_policy_premium) && $request->previous_quote_policy_premium != '') {
+                $this->query->where('hqr.previous_quote_policy_premium', $request->previous_quote_policy_premium);
+            }
             if (Auth::user()->isRenewalAdvisor()) {
                 $this->query->whereNotNull('hqr.previous_quote_id');
                 $this->query->where('hqr.advisor_id', Auth::user()->id);
@@ -210,11 +242,22 @@ class HealthQuoteService extends BaseService
             if (Auth::user()->isRenewalManager()) {
                 $ids = $this->walkTree(Auth::user()->id);
                 $this->query->whereIn('hqr.advisor_id', $ids);
+                $this->query->whereNotNull('hqr.previous_quote_id');
+            }
+            if (Auth::user()->isNewBusinessManager()) {
+                $ids = $this->walkTree(Auth::user()->id);
+                $this->query->whereIn('hqr.advisor_id', $ids);
+                $this->query->whereNull('hqr.previous_quote_id');
+            }
+              if (Auth::user()->isNewBusinessAdvisor()) {
+                $ids = $this->walkTree(Auth::user()->id);
+                $this->query->whereIn('hqr.advisor_id', $ids);
+                $this->query->whereNull('hqr.previous_quote_id');
             }
             if (isset($request->is_renewal) && $request->is_renewal != '') {
-                if($request->is_renewal == "Yes")
+                if($request->is_renewal ==  quoteTypeCode::yesText)
                     $this->query->whereNotNull('hqr.previous_quote_id');
-                if($request->is_renewal == "No")
+                if($request->is_renewal ==  quoteTypeCode::noText)
                     $this->query->whereNull('hqr.previous_quote_id');
             }
             foreach ($searchProperties as $item) {
@@ -230,7 +273,7 @@ class HealthQuoteService extends BaseService
                     else if ($item == 'quote_status_id' && is_array($request[$item]) && !empty($request[$item])) {
                         $this->query->whereIn('quote_status_id', $request[$item]);
                     } else {
-                        $skipped = array('is_renewal');
+                        $skipped = array('is_renewal','previous_policy_expiry_date');
                         if(in_array($item, $skipped)){
                             continue;
                         }
@@ -325,14 +368,14 @@ class HealthQuoteService extends BaseService
         $healthQuote->salary_band_id = $request->salary_band_id;
         $healthQuote->member_category_id = $request->member_category_id;
         $healthQuote->save();
-
+        $this->createUpdateCustomerInfo($request, $healthQuote->email, $healthQuote->uuid, quoteTypeCode::HealthQuote);
         if (isset($request->return_to_view))
             return redirect("quote/health/" . $id)->with('success', 'Health Quote has been updated');
     }
 
     public function getLeadAuditHistory($id)
     {
-        $audits = DB::table('car_quote_request as cqr')
+        $audits = DB::table('audits as a')
         ->select(
             'a.created_at as ModifiedAt',
             DB::raw('(SELECT name from users where id = a.user_id) as ModifiedBy'),
@@ -340,11 +383,6 @@ class HealthQuoteService extends BaseService
             DB::raw("(SELECT NAME FROM users WHERE id = JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.advisor_id'))) AS NewAdvisor"),
             DB::raw("JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.notes')) AS NewNotes")
         )
-        ->join('health_quote_request_detail as cqrd', 'cqrd.health_quote_request_id', '=', 'cqr.id')
-        ->join("audits as a",function($query){
-            $query->on("a.auditable_id","=","cqr.id")
-                ->orOn("a.auditable_id","=","cqrd.id");
-        })
         ->where(function ($query) {
             $query->where('a.auditable_type', 'App\Models\HealthQuote')
             ->orWhere('a.auditable_type', 'App\Models\HealthQuoteRequestDetail');
@@ -354,8 +392,15 @@ class HealthQuoteService extends BaseService
             ->orWhereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.notes')"))
             ->orWhereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.advisor_id')"));
         })
-        ->where('cqr.id', $id)
-        ->where('a.new_values', 'like', '%%')
+        ->where(function ($query) use ($id) {
+            $detailObjId = HealthQuoteRequestDetail::where('health_quote_request_id', $id)->first();
+            if($detailObjId) {
+                $query->where('a.auditable_id', $id)
+                ->orWhere('a.auditable_id', $detailObjId->id);
+            } else {
+                $query->where('a.auditable_id', $id);
+            }
+        })
         ->orderBy('a.created_at', 'DESC')->get();
         return $audits;
     }
@@ -409,7 +454,11 @@ class HealthQuoteService extends BaseService
                 'hqr.premium',
                 'hqrd.next_followup_date as nextFollowupDate',
                 'hqr.previous_quote_id',
-                'ps.text as paymentStatus'
+                'ps.text as paymentStatus',
+                'hqr.renewal_batch',
+                'hqr.previous_quote_policy_number as previous_policy_number',
+                'hqr.previous_policy_expiry_date',
+                'hqr.previous_quote_policy_premium'
             )
             ->leftJoin('health_quote_request_detail as hqrd', 'hqrd.health_quote_request_id', '=', 'hqr.id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'hqr.quote_status_id')
@@ -454,9 +503,27 @@ class HealthQuoteService extends BaseService
         if (Auth::user()->isRenewalAdvisor()) {
             $query->whereNotNull('hqr.previous_quote_id');
         }
-        if (isset($request->paymentStatus)) {
+        if (Auth::user()->isNewBusinessAdvisor()) {
+            $query->whereNull('hqr.previous_quote_id');
+        }
+        if (isset($request->paymentStatus) && $request->paymentStatus != '') {
             $query->where('hqr.payment_status_id', $request->paymentStatus);
         }
+        if (isset($request->renewal_batch) && $request->renewal_batch != '') {
+            $query->where('hqr.renewal_batch', $request->renewal_batch);
+        }
+        if (isset($request->previous_policy_number) && $request->previous_policy_number != '') {
+            $query->where('hqr.previous_quote_policy_number', $request->previous_policy_number);
+        }
+        if (isset($request->previous_quote_policy_premium) && $request->previous_quote_policy_premium != '') {
+            $query->where('hqr.previous_quote_policy_premium', $request->previous_quote_policy_premium);
+        }
+        if (isset($request->previous_policy_expiry_date) && $request->previous_policy_expiry_date != '' && $request->previous_policy_expiry_date_end != '') {
+            $dateFrom = Carbon::createFromFormat('Y-m-d', $request['previous_policy_expiry_date'])->startOfDay()->toDateTimeString();
+            $dateTo = Carbon::createFromFormat('Y-m-d', $request['previous_policy_expiry_date_end'])->endOfDay()->toDateTimeString();
+            $query->whereBetween('hqr.previous_policy_expiry_date', [$dateFrom, $dateTo]);
+        }
+        
         return $query;
     }
 
@@ -537,21 +604,50 @@ class HealthQuoteService extends BaseService
             "is_renewal" => "|static|Yes,No",
             "salary_band_id" => "select|title|required",
             "member_category_id" => "select|title|required",
-            "gender" => "|static|Male,Female"
+            "gender" => "|static|Male,Female",
+            "renewal_batch" => "input|none",
+            "previous_quote_policy_number" => "input|title",
+            "previous_policy_expiry_date" => "input|date|title|range",
+            "previous_quote_policy_premium" => "input|title",
+            "device" => "input|title"
         );
+    }
+
+    public function fillModelSkipProperties()
+    {
+        return [
+            "create" => "previous_quote_policy_premium,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,is_renewal,previous_quote_id,created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,premium,source,transapp_code,renewal_expiry_date",
+            "list" => "previous_policy_expiry_date,previous_quote_policy_premium,renewal_batch,previous_quote_policy_number,is_renewal,gender,previous_quote_id,email,cover_for_id,has_worldwide_cover,has_home,details,preference,mobile_no,dob,marital_status_id,nationality_id,has_dental,emirate_of_your_visa_id,is_ebp_renewal,renewal_expiry_date",
+            "update" => "previous_policy_expiry_date,previous_quote_policy_premium,renewal_batch,previous_quote_policy_number,is_renewal,previous_quote_id,created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,source,transapp_code,renewal_expiry_date",
+            "show" => "is_renewal,id,next_followup_date",
+        ];
     }
 
     public function fillRenewalProperties($model)
     {
-        $model->renewalSearchProperties = ['created_at', 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'policy_number','is_renewal'];
+        $model->renewalSearchProperties = ['created_at', 'code', 'first_name', 'last_name', 'email', 'mobile_no','renewal_batch','previous_quote_policy_number','previous_policy_expiry_date','previous_quote_policy_premium'];
         $model->renewalSkipProperties = [
-            "create" => "member_category_id,salary_band_id,gender,is_renewal,previous_quote_id,created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,premium,source,transapp_code,renewal_expiry_date",
-            "list" => "member_category_id,salary_band_id,gender,is_renewal,email,cover_for_id,has_worldwide_cover,has_home,details,preference,mobile_no,dob,marital_status_id,nationality_id,has_dental,emirate_of_your_visa_id,is_ebp_renewal,health_team_type,next_followup_date,lost_reason,source,transapp_code,premium,lead_type_id,renewal_expiry_date",
-            "update" => "member_category_id,salary_band_id,gender,is_renewal,previous_quote_id,created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,source,transapp_code,renewal_expiry_date",
+            "create" => "device,previous_quote_policy_premium,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,member_category_id,salary_band_id,gender,is_renewal,previous_quote_id,created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,premium,source,transapp_code,renewal_expiry_date",
+            "list" => "device,policy_number,member_category_id,salary_band_id,gender,is_renewal,email,cover_for_id,has_worldwide_cover,has_home,details,preference,mobile_no,dob,marital_status_id,nationality_id,has_dental,emirate_of_your_visa_id,is_ebp_renewal,health_team_type,next_followup_date,lost_reason,source,transapp_code,premium,lead_type_id,renewal_expiry_date",
+            "update" => "device,previous_quote_policy_premium,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,member_category_id,salary_band_id,gender,is_renewal,previous_quote_id,created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,source,transapp_code,renewal_expiry_date",
             "show" => "member_category_id,salary_band_id,gender,is_renewal,id,next_followup_date",
         ];
     }
 
+    public function fillNewBusinessProperties($model)
+    {
+        $model->newBusinessSearchProperties = ['created_at', 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'policy_number'];
+        $model->newBusinessSkipProperties = [
+            "create" => "device,previous_quote_policy_premium,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,member_category_id,salary_band_id,gender,is_renewal,previous_quote_id,created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,premium,source,transapp_code,renewal_expiry_date",
+            "list" => "device,previous_quote_policy_premium,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,member_category_id,salary_band_id,gender,is_renewal,email,cover_for_id,has_worldwide_cover,has_home,details,preference,mobile_no,dob,marital_status_id,nationality_id,has_dental,emirate_of_your_visa_id,is_ebp_renewal,health_team_type,next_followup_date,lost_reason,source,transapp_code,premium,lead_type_id,renewal_expiry_date,previous_quote_id",
+            "update" => "device,previous_quote_policy_premium,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,member_category_id,salary_band_id,gender,is_renewal,previous_quote_id,created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,source,transapp_code,renewal_expiry_date",
+            "show" => "previous_quote_policy_premium,renewal_expiry_date,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,member_category_id,salary_band_id,gender,is_renewal,id,next_followup_date,previous_quote_id",
+        ];
+    }
+    public function fillModelSearchProperties()
+    {
+        return ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'advisor_id', 'created_at', 'health_team_type', 'next_followup_date','is_renewal'];
+    }
     public function getCustomTitleByProperty($propertyName)
     {
         $title = "";
@@ -623,27 +719,21 @@ class HealthQuoteService extends BaseService
                 $title = "Member Category";
                 break;
             case 'renewal_expiry_date':
-                $title = "Renewal Expiry Date";
+                $title = "Expiry Date";
+                break;
+            case 'previous_quote_policy_number':
+                $title = "Previous Policy Number";
+                break;
+            case 'previous_policy_expiry_date':
+                $title = "Previous Policy Expiry Date";
+                break;
+            case 'previous_quote_policy_premium':
+                $title = "Previous Policy Premium";
                 break;
             default:
                 break;
         }
         return $title;
-    }
-
-    public function fillModelSkipProperties()
-    {
-        return [
-            "create" => "is_renewal,previous_quote_id,created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,premium,source,transapp_code,renewal_expiry_date",
-            "list" => "is_renewal,gender,previous_quote_id,email,cover_for_id,has_worldwide_cover,has_home,details,preference,mobile_no,dob,marital_status_id,nationality_id,has_dental,emirate_of_your_visa_id,is_ebp_renewal,renewal_expiry_date",
-            "update" => "is_renewal,previous_quote_id,created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,source,transapp_code,renewal_expiry_date",
-            "show" => "is_renewal,id,next_followup_date",
-        ];
-    }
-
-    public function fillModelSearchProperties()
-    {
-        return ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'advisor_id', 'created_at', 'health_team_type', 'next_followup_date'];
     }
 
     public function convertLeadToGM($lead)
@@ -710,7 +800,7 @@ class HealthQuoteService extends BaseService
         $authBasic = base64_encode($plansApiUserName . ":" . $plansApiPassword);
 
         $plansDataArr = array(
-            "quoteUID" =>'E5UV78H6',
+            "quoteUID" => $quoteUuId,
             "lang" => "en",
         );
 

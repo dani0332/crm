@@ -98,6 +98,11 @@ class CRUDService extends BaseService
         return $this->{strtolower($leadType) . 'QuoteService'}->{'get' . ucwords($leadType) . 'OverDueFollowups'}($request);
     }
 
+    public function getEntityByUUID($uuid, $leadType)
+    {
+        return $this->{strtolower($leadType) . 'QuoteService'}->getEntity($uuid, $leadType);
+    }
+
     public function getCustomTitleByModelType($modelType, $propertyName)
     {
         $lowerCaseModelType = strtolower($modelType);
@@ -212,12 +217,24 @@ class CRUDService extends BaseService
         if (strtolower($modelType) == strtolower(quoteTypeCode::Car)) {
             $query->whereIn('r.name', [strtoupper($modelType) . '_RENEWAL_ADVISOR', 'advisor']);
         } else if (strtolower($modelType) ==  strtolower(quoteTypeCode::Health)) {
-            $query->whereIn('r.name', [strtoupper($modelType) . '_WCU_ADVISOR', 'RM_ADVISOR', 'EBP_ADVISOR']);
+            $query->whereIn('r.name', [strtoupper($modelType) . '_WCU_ADVISOR', 'RM_ADVISOR', 'EBP_ADVISOR','HEALTH_RENEWAL_ADVISOR']);
         } else if (strtolower($modelType) ==  strtolower(quoteTypeCode::Business)) {
-            $query->whereIn('r.name', ['CORPLINE_ADVISOR']);
+            $query->whereIn('r.name', ['CORPLINE_ADVISOR','CORPLINE_RENEWAL_ADVISOR']);
+        }else if (strtolower($modelType) == strtolower(quoteTypeCode::Life) || strtolower($modelType) == strtolower(quoteTypeCode::Home) || strtolower($modelType) == strtolower(quoteTypeCode::Travel)) {
+            $query->whereIn('r.name', [strtoupper($modelType) . '_RENEWAL_ADVISOR', 'advisor']);
         } else {
             $query->where('r.name', strtoupper($modelType) . '_ADVISOR');
         }
+        return $query->orderBy('r.name')->distinct()->get();
+    }
+
+    public function getNewBusinessAdvisorsByModelType($modelType)
+    {
+        $query = DB::table('users as u')
+            ->join('model_has_roles as mr', 'mr.model_id', '=', 'u.id')
+            ->join('roles as r', 'r.id', '=', 'mr.role_id')
+            ->select('u.id', DB::raw("CONCAT(u.name,' - ',r.name) AS name"));
+            $query->where('r.name', strtoupper($modelType) . '_NEW_BUSINESS_ADVISOR');
         return $query->orderBy('r.name')->distinct()->get();
     }
 
@@ -270,6 +287,13 @@ class CRUDService extends BaseService
         $lowerCaseModelType = strtolower($model->modelType);
         return $this->{in_array($lowerCaseModelType, $this->quoteTypes) ? $lowerCaseModelType . 'QuoteService' : $lowerCaseModelType . 'Service'}
             ->fillRenewalProperties($model);
+    }
+
+    public function fillNewBusinessData($model)
+    {
+        $lowerCaseModelType = strtolower($model->modelType);
+        return $this->{in_array($lowerCaseModelType, $this->quoteTypes) ? $lowerCaseModelType . 'QuoteService' : $lowerCaseModelType . 'Service'}
+            ->fillNewBusinessProperties($model);
     }
 
     public function getSelectedLostReason($modelType, $id)

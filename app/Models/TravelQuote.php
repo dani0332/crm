@@ -32,4 +32,8 @@ class TravelQuote extends Model implements AuditableContract
     {
         return $this->hasOne(TravelQuoteRequestDetail::class, 'travel_quote_request_id', 'id');
     }
+    public function customerAdditionalInfo()
+    {
+        return $this->hasMany(CustomerAdditionalInfo::class, 'quote_request_id', 'id');
+    }
 }

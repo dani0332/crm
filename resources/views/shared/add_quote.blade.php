@@ -10,7 +10,6 @@ $(document).ready(function() {
         $('.single .extra-fields-customer').remove();
         $('.single').append('<a href="#" class="remove-field btn-remove-customer" style="text-align: right;"><span class="fa fa-remove"></span></a>');
         $('.customer_records_dynamic > .single').attr("class", "remove");
-
         $('.customer_records_dynamic input').each(function() {
             var count = 0;
             var fieldname = $(this).attr("name");
@@ -46,7 +45,7 @@ $(document).ready(function() {
                     {{csrf_field()}}
                     <input type="hidden" id="car_quote_uuid" name="car_quote_uuid" value="{{ $quoteUuId }}">
                     <input type="hidden" id="is_disabled" name="is_disabled" value="0">
-                    <input type="hidden" id="isCreate" name="isCreate" value="1">
+                    <input type="hidden" id="is_create" name="is_create" value="1">
                     <div class="item form-group">
                         <div class="col-md-6 col-sm-6">
                             <div class="row">
@@ -71,13 +70,13 @@ $(document).ready(function() {
                                                 </select>
                                             </td>
                                             <td>
-                                                <input type="number" id="actual_premium" name="actual_premium" placeholder="Enter Premium (without VAT)" class="form-control" data-toggle="tooltip" data-placement="top" title="Please enter premium (without VAT)" onKeyDown="if(this.value.length==8) return false;" style="width: 200px">
+                                                <input type="number" id="actual_premium" name="actual_premium" placeholder="Enter Premium (without VAT)" class="form-control" data-toggle="tooltip" data-placement="top" title="Please enter premium (without VAT)" onKeyDown="if(this.value.length==8) return false;" style="width: 160px">
                                             </td>
                                             <td>
-                                                <input type="number" id="car_value" name="car_value" placeholder="Enter Car Value" class="form-control" data-toggle="tooltip" data-placement="top" title="Please enter car value" onKeyDown="if(this.value.length==8) return false;" style="width: 200px">
+                                                <input type="number" id="car_value" name="car_value" placeholder="Enter Car Value" class="form-control" data-toggle="tooltip" data-placement="top" title="Please enter car value" onKeyDown="if(this.value.length==8) return false;" style="width: 160px">
                                             </td>
                                             <td>
-                                                <input type="number" id="excess" name="excess" placeholder="Enter Excess" class="form-control" data-toggle="tooltip" data-placement="top" title="Please enter excess" onKeyDown="if(this.value.length==8) return false;" style="width: 200px">
+                                                <input type="number" id="excess" name="excess" placeholder="Enter Excess" class="form-control" data-toggle="tooltip" data-placement="top" title="Please enter excess" onKeyDown="if(this.value.length==8) return false;" style="width: 160px">
                                             </td>
                                             <td>
                                                 {{-- <a class="extra-fields-customer" href="#"><span class="fa fa-plus-square"></span></a> --}}
