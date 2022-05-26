@@ -403,8 +403,7 @@ class CRUDController extends Controller
         } else {
             Log::channel('daily')->info("update quote with id " . $id. " and modelproperties " . json_encode($modelPropertiesList));
             foreach ($modelPropertiesList as $property => $value) {
-                
-                if (strpos($value, 'required') && $property != 'id' && $property != 'code' && $property != 'email' && $property != 'mobile_no' && !strpos($modelSkipPropertiesList, $property)) {
+                if (strpos($value, 'required') && $property != 'id' && $property != 'code' && $property != 'email' && $property != 'mobile_no' && !strpos($modelSkipPropertiesList['update'], $property)) {
                     $validateArray[$property] = 'required';
                 }
             }

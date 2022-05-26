@@ -186,8 +186,11 @@
                             $skipProperties = $model->skipProperties;
                         }
                     @endphp
+                    @php
+                        $skipPropertiesArray = array_filter(explode(",",$skipProperties['show']));
+                    @endphp
                     @foreach ($model->properties as $property => $value)
-                        @if (!str_contains($skipProperties['show'], $property))
+                        @if (!in_array($property, $skipPropertiesArray))
                             @if ($count % 2 != 0)
                                 <div class="item form-group">
                             @endif
@@ -252,7 +255,7 @@
             <div class="row">
                 <div class="col-auto mr-auto"></div>
                 <div class="col-auto">
-                    @if (strtolower($model->modelType) == quoteTypeCode::business)
+                    @if (strtolower($model->modelType) == 'business')
                         @can('corpline-quotes-edit')
                             <a id="texta"
                                 href="{{ url('quotes/' . strtolower($model->modelType) . '/' . $record->uuid . '/edit') }}"
