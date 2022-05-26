@@ -558,11 +558,8 @@
                             @php
                                 $searchProperties = [];
                                 $skipProperties = [];
-                                if($isRenewalUser && strtolower($model->modelType) == 'car'){
-                                    $searchProperties = $model->renewalSearchProperties;
-                                    $skipProperties = $model->renewalSkipProperties;
-                                }
-                                else if($isRenewalUser && strtolower($model->modelType) != 'car'){
+                                
+                                if($isRenewalUser && strtolower($model->modelType) != 'car'){
                                     $searchProperties = $model->renewalSearchProperties;
                                     $skipProperties = $model->renewalSkipProperties;
                                 }
@@ -827,6 +824,7 @@
                                                     <th style="width: 15px;"><input type="checkbox" id="checkAllTmLeads"
                                                             name="checkAllTmLeads" value=""></th>
                                                 @endif
+                                              
                                                 @foreach ($model->properties as $property => $value)
                                                     @if ($model->modelType != 'LeadStatus' && $model->modelType != 'Teams')
                                                         @if ($property != 'id')
