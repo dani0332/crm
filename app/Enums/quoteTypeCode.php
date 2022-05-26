@@ -40,7 +40,10 @@ class quoteTypeCode extends Enum
     const yesText = "Yes";
     const noText = "No";
     const quoteStatus= 'quote_status_id';
-
+    const quotemobile= 'mobile_no';
+    const quoteemail= 'email';
+    const business = "business";
+    
     public static function getOptions() 
     {
         $oClass = new ReflectionClass(__CLASS__);

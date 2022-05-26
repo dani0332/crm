@@ -60,6 +60,8 @@ class HomeQuoteService extends BaseService
             'hqr.renewal_batch',
             'hqr.previous_quote_policy_number',
             'hqr.previous_policy_expiry_date',
+            'hqr.is_property_rented_holiday_home',
+            'hqr.previous_quote_policy_premium',
         )
             ->leftJoin('home_quote_request_detail as hqrd', 'hqrd.home_quote_request_id', '=', 'hqr.id')
             ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'hqrd.lost_reason_id')
@@ -118,6 +120,7 @@ class HomeQuoteService extends BaseService
             "hasBuilding" => $request->has_building == 'on' ? true : false,
             "hasPersonalBelongings" => $request->has_personal_belongings == 'on' ?  true : false,
             "source" => $sourceName,
+            "isPropertyRentedHolidayHome" => $request->is_property_rented_holiday_home == 'on' ? true : false,
             "referenceUrl" => $appUrl,
         );
         if (!Auth::user()->hasRole("ADMIN")) $dataArr['advisorId'] = Auth::user()->id;
@@ -505,6 +508,7 @@ class HomeQuoteService extends BaseService
             "has_contents" => "input|checkbox|required",
             "has_personal_belongings" => "input|checkbox|required",
             "has_building" => "input|checkbox|required",
+            "is_property_rented_holiday_home" => "input|checkbox|required",
             "address" => 'textarea|required',
             "previous_quote_id" => "readonly|title",
             "is_renewal" => "|static|Yes,No",
@@ -512,6 +516,7 @@ class HomeQuoteService extends BaseService
             "renewal_batch" => "input|none",
             "previous_quote_policy_number" => "input|title",
             "previous_policy_expiry_date" => "input|date|title|range",
+            "previous_quote_policy_premium" =>  "input|number|title"
         );
     }
 
@@ -561,6 +566,12 @@ class HomeQuoteService extends BaseService
             case 'previous_policy_expiry_date':
                 $title = "Previous Policy Expiry Date";
                 break;
+            case 'is_property_rented_holiday_home': 
+                $title = "Is Property Rented Holiday Home ?";
+                break;
+            case 'previous_quote_policy_premium';
+                $title = "Previous Quote Premium";
+                break;
             default:
                 break;
         }
@@ -570,9 +581,9 @@ class HomeQuoteService extends BaseService
     public function fillModelSkipProperties()
     {
         return [
-            "create" => "previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,is_renewal,previous_quote_id,id,code,quote_status_id,advisor_id,created_at,updated_at,next_followup_date,lost_reason,premium,source,transapp_code,renewal_expiry_date",
-            "list" => "previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,renewal_expiry_date,is_renewal,previous_quote_id,email,address,iam_possesion_type_id,ilivein_accommodation_type_id,mobile_no,personal_belongings_aed,building_aed,contents_aed,has_contents,has_personal_belongings,has_building,address,renewal_expiry_date",
-            "update" => "previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,is_renewal,previous_quote_id,id,code,quote_status_id,advisor_id,created_at,updated_at,next_followup_date,lost_reason,source,transapp_code,renewal_expiry_date",
+            "create" => "previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,is_renewal,previous_quote_id,id,code,quote_status_id,advisor_id,created_at,updated_at,next_followup_date,lost_reason,premium,source,transapp_code,renewal_expiry_date,previous_quote_policy_premium",
+            "list" => "previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,renewal_expiry_date,is_renewal,previous_quote_id,email,address,iam_possesion_type_id,ilivein_accommodation_type_id,mobile_no,personal_belongings_aed,building_aed,contents_aed,has_contents,has_personal_belongings,has_building,address,renewal_expiry_date,previous_quote_policy_premium",
+            "update" => "previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,is_renewal,previous_quote_id,id,code,quote_status_id,advisor_id,created_at,updated_at,next_followup_date,lost_reason,source,transapp_code,renewal_expiry_date,previous_quote_policy_premium",
             "show" => "is_renewal,id,next_followup_date,lost_reason"
         ];
     }
@@ -644,7 +655,7 @@ class HomeQuoteService extends BaseService
                     }
                 }
             } else {
-                if ($propertyName != 'id' && $propertyName != 'email' && $propertyName != 'code'  && $propertyName != 'created_at' && $propertyName != 'updated_at' && $propertyName != 'mobile_no' && $propertyName != 'quote_status_id' && $propertyName != 'next_followup_date' && $propertyName != 'lost_reason' && $propertyName != 'source' && $propertyName != 'advisor_id') {
+                if ($propertyName != 'id' && $propertyName != 'email' && $propertyName != 'code'  && $propertyName != 'created_at' && $propertyName != 'updated_at' && $propertyName != 'mobile_no' && $propertyName != 'quote_status_id' && $propertyName != 'next_followup_date' && $propertyName != 'lost_reason' && $propertyName != 'source' && $propertyName != 'advisor_id' && $propertyName != 'policy_number' && $propertyName != 'previous_quote_policy_premium') {
                     $validationArray[$propertyName] = 'required';
                 }
             }
