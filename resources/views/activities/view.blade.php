@@ -451,9 +451,9 @@
                         </div>
                         <div class="col">
                             <ul class="nav navbar-right panel_toolbox">
-                                <li><input @iF(Auth::user()->isAdvisor()) disabled="disabled" @endif type="button" id="search-activities-reset" value="Reset"
+                                <li><input type="button" id="search-activities-reset" value="Reset"
                                         class="btn btn-success btn-sm"></li>
-                                <li><input @iF(Auth::user()->isAdvisor()) disabled="disabled" @endif type="button" id="search-activities-submit" value="Search" class="btn btn-warning btn-sm"></li>
+                                <li><input type="button" id="search-activities-submit" value="Search" class="btn btn-warning btn-sm"></li>
                                 <input type="hidden" name="period" id="period" value="today">
                                 <input type="hidden" name="customPeriodStart" id="customPeriodStart" >
                                 <input type="hidden" name="customPeriodStart" id="customPeriodEnd" >
