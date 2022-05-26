@@ -60,7 +60,8 @@ class HomeQuoteService extends BaseService
             'hqr.renewal_batch',
             'hqr.previous_quote_policy_number',
             'hqr.previous_policy_expiry_date',
-            'hqr.previous_quote_policy_premium'
+            'hqr.is_property_rented_holiday_home',
+            'hqr.previous_quote_policy_premium',
         )
             ->leftJoin('home_quote_request_detail as hqrd', 'hqrd.home_quote_request_id', '=', 'hqr.id')
             ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'hqrd.lost_reason_id')
@@ -119,6 +120,7 @@ class HomeQuoteService extends BaseService
             "hasBuilding" => $request->has_building == 'on' ? true : false,
             "hasPersonalBelongings" => $request->has_personal_belongings == 'on' ?  true : false,
             "source" => $sourceName,
+            "isPropertyRentedHolidayHome" => $request->is_property_rented_holiday_home == 'on' ? true : false,
             "referenceUrl" => $appUrl,
         );
         if (!Auth::user()->hasRole("ADMIN")) $dataArr['advisorId'] = Auth::user()->id;
@@ -409,7 +411,7 @@ class HomeQuoteService extends BaseService
             $query->where('hqr.previous_quote_policy_number', $request->previous_policy_number);
         }
         if (isset($request->previous_quote_policy_premium) && $request->previous_quote_policy_premium != '') {
-            $this->query->where('hqr.previous_quote_policy_premium', $request->previous_quote_policy_premium);
+            $query->where('hqr.previous_quote_policy_premium', $request->previous_quote_policy_premium);
         }
         if (isset($request->previous_policy_expiry_date) && $request->previous_policy_expiry_date != '' && $request->previous_policy_expiry_date_end != '') {
             $dateFrom = Carbon::createFromFormat('Y-m-d', $request['previous_policy_expiry_date'])->startOfDay()->toDateTimeString();
@@ -513,6 +515,7 @@ class HomeQuoteService extends BaseService
             "has_contents" => "input|checkbox|required",
             "has_personal_belongings" => "input|checkbox|required",
             "has_building" => "input|checkbox|required",
+            "is_property_rented_holiday_home" => "input|checkbox|required",
             "address" => 'textarea|required',
             "previous_quote_id" => "readonly|title",
             "is_renewal" => "|static|Yes,No",
@@ -520,7 +523,7 @@ class HomeQuoteService extends BaseService
             "renewal_batch" => "input|none",
             "previous_quote_policy_number" => "input|title",
             "previous_policy_expiry_date" => "input|date|title|range",
-            "previous_quote_policy_premium" => "input|title",
+            "previous_quote_policy_premium" =>  "input|number|title"
         );
     }
 
@@ -570,8 +573,11 @@ class HomeQuoteService extends BaseService
             case 'previous_policy_expiry_date':
                 $title = "Previous Policy Expiry Date";
                 break;
-            case 'previous_quote_policy_premium':
-                $title = "Previous Policy Premium";
+            case 'is_property_rented_holiday_home': 
+                $title = "Is Property Rented Holiday Home ?";
+                break;
+            case 'previous_quote_policy_premium';
+                $title = "Previous Quote Premium";
                 break;
             default:
                 break;
@@ -656,7 +662,7 @@ class HomeQuoteService extends BaseService
                     }
                 }
             } else {
-                if ($propertyName != 'id' && $propertyName != 'email' && $propertyName != 'code'  && $propertyName != 'created_at' && $propertyName != 'updated_at' && $propertyName != 'mobile_no' && $propertyName != 'quote_status_id' && $propertyName != 'next_followup_date' && $propertyName != 'lost_reason' && $propertyName != 'source' && $propertyName != 'advisor_id') {
+                if ($propertyName != 'id' && $propertyName != 'email' && $propertyName != 'code'  && $propertyName != 'created_at' && $propertyName != 'updated_at' && $propertyName != 'mobile_no' && $propertyName != 'quote_status_id' && $propertyName != 'next_followup_date' && $propertyName != 'lost_reason' && $propertyName != 'source' && $propertyName != 'advisor_id' && $propertyName != 'policy_number' && $propertyName != 'previous_quote_policy_premium') {
                     $validationArray[$propertyName] = 'required';
                 }
             }
