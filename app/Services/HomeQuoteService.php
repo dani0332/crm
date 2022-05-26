@@ -515,7 +515,7 @@ class HomeQuoteService extends BaseService
             "has_contents" => "input|checkbox|required",
             "has_personal_belongings" => "input|checkbox|required",
             "has_building" => "input|checkbox|required",
-            "is_property_rented_holiday_home" => "input|checkbox|required",
+            // "is_property_rented_holiday_home" => "input|checkbox|required",
             "address" => 'textarea|required',
             "previous_quote_id" => "readonly|title",
             "is_renewal" => "|static|Yes,No",
