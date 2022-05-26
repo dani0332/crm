@@ -14,7 +14,6 @@
             newDate = newDate.toISOString().split('T')[0];
             return newDate;
         }
-
         function changeIcon(item) {
             $(item).find('i').toggleClass("fa-angle-double-down fa-angle-double-up");
         }
@@ -70,23 +69,35 @@
                     data: "createdAt",
                     name: "createdAt"
                 }, {
-                    data: "updatedAt",
-                    name: "updatedAt"
+                    data: "vehicleType",
+                    name: "vehicleType"
                 }, {
-                    data: "assignedBy",
-                    name: "assignedBy"
+                    data: 'previousPolicyPremium',
+                    name: 'previousPolicyPremium'
                 }, {
-                    data: 'previous_policy_number',
-                    name: 'previous_policy_number'
+                    data: 'renewalBatch',
+                    name: 'renewalBatch'
                 }, {
-                    data: 'renewal_batch',
-                    name: 'renewal_batch'
+                    data: 'previousPolicyExpiryDate',
+                    name: 'previousPolicyExpiryDate'
                 }, {
-                    data: 'previous_quote_policy_premium',
-                    name: 'previous_quote_policy_premium',
-                },{
-                    data: 'previous_policy_expiry_date',
-                    name: 'previous_policy_expiry_date'
+                    data: 'previousPolicyNumber',
+                    name: 'previousPolicyNumber'
+                }, {
+                    data: 'carMake',
+                    name: 'carMake'
+                }, {
+                    data: 'carModel',
+                    name: 'carModel'
+                }, {
+                    data: 'yearOfManufacture',
+                    name: 'yearOfManufacture'
+                }, {
+                    data: 'typeOfCarInsurance',
+                    name: 'typeOfCarInsurance'
+                }, {
+                    data: 'currentlyInsuredWith',
+                    name: 'currentlyInsuredWith'
                 });
             } else if (isRenewalUser && $("#modelType").val() == "Business") {
                 Columns.push({
@@ -167,6 +178,7 @@
                 searching: false,
                 bLengthChange: false,
                 serverSide: true,
+                scrollX: true,
                 ajax: {
                     url: config.routes.myleadsDataTable,
                     data: function(d) {
@@ -191,7 +203,6 @@
                 ],
                 columns: Columns
             });
-
             myleadsTable.on('draw', function() {
                 var rows = $('#dtBasicExample-leadsearch tr');
                 var headerRowColumns = $(rows[0]).children();
@@ -222,7 +233,6 @@
                     $(".loader").hide();
                 }, 1000);
             });
-
             $("#my-leads-form").submit(function(e) {
                 e.preventDefault();
                 $(".loader").show();
@@ -230,7 +240,6 @@
                 //followupLeadsTable.draw();
                 $(".loader").hide();
             });
-
             $(".toggle-btn-2").on("click", function() {
                 $(".show-visual-cards").addClass("hideme");
                 $(".show-visual-cards").removeClass("showme");
@@ -248,11 +257,9 @@
                 $(".toggle-btn-2").removeClass("active");
             });
         });
-
         var ENDPOINT = "{{ url('/') }}";
         var page;
         var temp_status = '';
-
         function loadMore(status) {
             if (localStorage.getItem('page' + status) == null)
                 page = 2;
@@ -260,7 +267,6 @@
                 page = localStorage.getItem('page' + status);
             infinteLoadMore(page, status);
         }
-
         function infinteLoadMore(page, status) {
             $.ajaxSetup({
                 headers: {
@@ -293,7 +299,6 @@
                     console.log('Server error occured');
                 });
         }
-
         function searchTerm(element) {
             var term = $(element).val();
             var status = $(element).attr('name');
@@ -640,40 +645,57 @@
                             </div>
                         </form>
                         <table id="dtBasicExample-leadsearch" class="table table-striped jambo_table leadSearch-data-table"
-                            style="width:100%">
+                         style="table-layout: fixed;" width="100%">
                             <thead>
                                 <tr>
-                                    <th>CDB ID</th>
-                                    <th>Client Name</th>
-                                    <th>Lead Status</th>
-                                    <th>Created Date</th>
+                                    <th style="width: 100px !important">CDB ID</th>
+                                    <th style="width: 100px !important">Client Name</th>
+                                    <th style="width: 100px !important">Lead Status</th>
+                                    <th style="width: 100px !important">Created Date</th>
+                                    @if (Auth::user()->isRenewalAdvisor())
+                                        <th style="width: 100px !important">Vehicle Type</th>
+                                    @endif
+                                    @if (Auth::user()->isRenewalAdvisor())
+                                        <th style="width: 100px !important">Previous Policy Premium</th>
+                                    @endif
+                                    @if (Auth::user()->isRenewalAdvisor())
+                                        <th style="width: 100px !important">Renewal Batch #</th>
+                                    @endif
+                                    @if (Auth::user()->isRenewalAdvisor())
+                                        <th style="width: 100px !important">Previous Policy Expiry Date</th>
+                                    @endif
+                                    @if (Auth::user()->isRenewalAdvisor())
+                                        <th style="width: 100px !important">Previous Policy Number</th>
+                                    @endif
+                                    @if (Auth::user()->isRenewalAdvisor())
+                                        <th style="width: 100px !important">Car Make</th>
+                                    @endif
+                                    @if (Auth::user()->isRenewalAdvisor())
+                                        <th style="width: 100px !important">Car Model</th>
+                                    @endif
+                                    @if (Auth::user()->isRenewalAdvisor())
+                                        <th style="width: 100px !important">Year Of Manufacture</th>
+                                    @endif
+                                    @if (Auth::user()->isRenewalAdvisor())
+                                        <th style="width: 100px !important">Type of Car Insurance</th>
+                                    @endif
+                                    @if (Auth::user()->isRenewalAdvisor())
+                                        <th style="width: 100px !important">Current Insurer</th>
+                                    @endif
                                     @if (!Auth::user()->isRenewalAdvisor())
-                                        <th>Assigned Date</th>
-                                    @endif
-                                    @if (Auth::user()->isRenewalAdvisor())
-                                        <th>Last Updated Date</th>
-                                    @endif
-                                    <th>Assigned By</th>
-                                    @if (!Auth::user()->isRenewalAdvisor())
-                                        <th>Next FollowUp Date</th>
+                                        <th style="width: 100px !important">Assigned Date</th>
                                     @endif
                                     @if (!Auth::user()->isRenewalAdvisor())
-                                        <th>Payment Status</th>
+                                        <th style="width: 100px !important">Assigned By</th>
                                     @endif
-                                    @if (Auth::user()->isRenewalAdvisor())
-                                        <th>Previous Policy Number</th>
+                                    @if (!Auth::user()->isRenewalAdvisor())
+                                        <th style="width: 100px !important">Next FollowUp Date</th>
                                     @endif
-                                    @if (Auth::user()->isRenewalAdvisor())
-                                        <th>Renewal Batch #</th>
-                                    @endif
-                                    @if (Auth::user()->isRenewalAdvisor())
-                                        <th>Previous Policy Premium</th>
-                                    @endif
-                                    @if (Auth::user()->isRenewalAdvisor())
-                                        <th>Previous Policy Expiry Date</th>
+                                    @if (!Auth::user()->isRenewalAdvisor())
+                                        <th style="width: 100px !important">Payment Status</th>
                                     @endif
                                     @if (Auth::user()->isRenewalAdvisor() && $teamName == 'Business')
-                                        <th>Company Name</th>
+                                        <th style="width: 100px !important">Company Name</th>
                                     @endif
                                 </tr>
                             </thead>
@@ -702,18 +724,18 @@
                             <div id="collapseOne" class="collapse show" style="display:none" aria-labelledby="headingOne"
                                 data-parent="#accordion">
                                 <div class="card-body" style="border: 1px solid #ced4da;margin-bottom: 25px;">
-                                    <table id="overDueFollowups" class="table table-striped jambo_table"
-                                        style="width:100%">
+                                    <table id="overDueFollowups" class="table table-striped jambo_table" 
+                                    style="table-layout: fixed;" width="100%">
                                         <thead>
                                             <tr>
-                                                <th>CDB ID</th>
-                                                <th>Client Name</th>
-                                                <th>Lead Status</th>
-                                                <th>Created Date</th>
-                                                <th>Assigned Date</th>
-                                                <th>Assigned By</th>
-                                                <th>Next FollowUp Date</th>
-                                                <th>Premium</th>
+                                                <th style="width: 100px !important">CDB ID</th>
+                                                <th style="width: 100px !important">Client Name</th>
+                                                <th style="width: 100px !important">Lead Status</th>
+                                                <th style="width: 100px !important">Created Date</th>
+                                                <th style="width: 100px !important">Assigned Date</th>
+                                                <th style="width: 100px !important">Assigned By</th>
+                                                <th style="width: 100px !important">Next FollowUp Date</th>
+                                                <th style="width: 100px !important">Premium</th>
                                             </tr>
                                         </thead>
                                         <tbody>

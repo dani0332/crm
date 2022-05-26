@@ -461,22 +461,32 @@ class CarQuoteService extends BaseService
                 DB::raw("CONCAT_WS(' ',cqr.first_name,cqr.last_name) AS clientName"),
                 'qs.text as leadStatus',
                 'cqr.created_at as createdAt',
+                'vt.text as vehicleType',
                 'cqr.quote_status_id',
                 'cqrd.advisor_assigned_date as assignedDate',
                 'u.name as assignedBy',
                 'cqr.updated_at',
                 'cqr.source as leadSource',
                 'cqrd.next_followup_date as nextFollowupDate',
-                'cqr.previous_quote_policy_premium',
+                'cqr.previous_quote_policy_premium as previousPolicyPremium',
                 'ps.text as paymentStatus',
-                'cqr.renewal_batch',
-                'cqr.previous_quote_policy_number as previous_policy_number',
-                'cqr.previous_policy_expiry_date'
+                'cqr.renewal_batch as renewalBatch',
+                'cqr.previous_quote_policy_number as previousPolicyNumber',
+                DB::raw('DATE_FORMAT(cqr.previous_policy_expiry_date, "%d-%m-%Y") as previousPolicyExpiryDate'),
+                'cmake.text as carMake',
+                'cmodel.text as carModel',
+                'cqr.year_of_manufacture as yearOfManufacture',
+                'cti.text as typeOfCarInsurance',
+                'cqr.currently_insured_with as currentlyInsuredWith',
             )
             ->leftJoin('car_quote_request_detail as cqrd', 'cqrd.car_quote_request_id', '=', 'cqr.id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'cqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'cqrd.advisor_assigned_by_id')
             ->leftJoin('payment_status as ps', 'ps.id', '=', 'cqr.payment_status_id')
+            ->leftJoin('vehicle_type as vt', 'vt.id', '=', 'cqr.vehicle_type_id')
+            ->leftJoin('car_make as cmake', 'cmake.id', '=', 'cqr.car_make_id')
+            ->leftJoin('car_model as cmodel', 'cmodel.id', '=', 'cqr.car_model_id')
+            ->leftJoin('car_type_insurance as cti', 'cti.id', '=', 'cqr.car_type_insurance_id')
             ->where('qs.text', '!=', 'Fake')->where('cqr.advisor_id', Auth::user()->id);
 
         $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
