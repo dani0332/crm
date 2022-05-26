@@ -72,7 +72,10 @@ class ActivitiesService extends BaseService
         if (isset($request->assignee_id) && $request->assignee_id != '') {
             $activities = $activities->where('assignee_id', $request->assignee_id);
         }
-        $rawActivities = $activities->get();
+        if (isset($request->status) && $request->status != '') {
+            $activities = $activities->where('status', $request->status);
+        }
+        $rawActivities = $activities->get()->sortBy('status');
         foreach($rawActivities as $act)
         {
             $act->assignee_name = User::where('id', $act->assignee_id)->first()->name;

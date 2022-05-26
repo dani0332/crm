@@ -107,7 +107,6 @@
                     _token: $('input[name=_token]').val()
                 },
                 success: function(data) {
-                    debugger;
                     $('#activityEditModalContent').html(data);
                     $('#activityEditModal').modal('show');
                 },
@@ -291,6 +290,7 @@
                         d.assignee_id = $("#assignee_id").val();
                         d.startDate = $("#customPeriodStart").val();
                         d.endDate = $("#customPeriodEnd").val();
+                        d.status = $("#status").val();
                     }
                 },
                 columns: [
@@ -359,7 +359,6 @@
                     },
                 ],
                 drawCallback: function (settings) {
-                    debugger;
                     $("#totalActivites").text("Total Activites: " + settings._iRecordsTotal);
                 }
             });
@@ -390,6 +389,9 @@
                     }
                 });
 
+            });
+            $('#search-activities-submit').on('click', function () {
+                activitiesTable.draw();
             });
         });
     </script>
@@ -431,10 +433,27 @@
                             </div>
                         </div>
                         <div class="col">
+                            <label class="col-form-label col-md-2 col-sm-2" id="vehicle_type_label"
+                            for="Payment mode">Status</label>
+                        <div class="col-md-6 col-sm-6">
+                            <div class="input-group">
+                                <select class="form-control" name="status" id="status">
+                                    <option value="">Select Activity Status</option>
+                                    <option value="1">Done</option>
+                                    <option value="0">Pending</option>
+                                </select>
+                            </div>
+                        </div>
+                        </div>
+                    </div>
+                    <div class="item form-group">
+                        <div class="col">
+                        </div>
+                        <div class="col">
                             <ul class="nav navbar-right panel_toolbox">
                                 <li><input @iF(Auth::user()->isAdvisor()) disabled="disabled" @endif type="button" id="search-activities-reset" value="Reset"
                                         class="btn btn-success btn-sm"></li>
-                                <li><input @iF(Auth::user()->isAdvisor()) disabled="disabled" @endif type="submit" id="search-activities-submit" class="btn btn-warning btn-sm"></li>
+                                <li><input @iF(Auth::user()->isAdvisor()) disabled="disabled" @endif type="button" id="search-activities-submit" value="Search" class="btn btn-warning btn-sm"></li>
                                 <input type="hidden" name="period" id="period" value="today">
                                 <input type="hidden" name="customPeriodStart" id="customPeriodStart" >
                                 <input type="hidden" name="customPeriodStart" id="customPeriodEnd" >
