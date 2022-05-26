@@ -24,11 +24,5 @@ steps:
 #- script: docker push $(acrName).azurecr.io/$(imageName)
 #  displayName: 'docker push'
 
-#- task: PublishBuildArtifacts@1
-#  displayName: 'publish yaml folder as an artifact'
-#  inputs:
-#    artifactName: 'yaml'
-#    pathToPublish: 'manifest.yml'
-
 - publish: '$(System.DefaultWorkingDirectory)'
-  artifact: imcrmdev
+  artifact: '$(imcrmdev)'
