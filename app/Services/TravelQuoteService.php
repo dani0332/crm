@@ -540,7 +540,7 @@ class TravelQuoteService extends BaseService
             "transapp_code" => "readonly|none",
             "lost_reason" => "input|text",
             "source" => "input|text",
-            "premium" => "input|number",
+            "premium" => "input|number|title",
             "policy_number" => "input|text",
             "days_cover_for" => "input|number|title|required",
             "nationality_id" => "select|title|required",
@@ -638,6 +638,9 @@ class TravelQuoteService extends BaseService
                 break;
             case 'previous_quote_policy_premium':
                 $title = "Previous Policy Premium";
+                break;
+            case 'premium':
+                $title = "Premium";
                 break;
             default:
                 break;
