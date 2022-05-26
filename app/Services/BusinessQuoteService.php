@@ -56,7 +56,8 @@ class BusinessQuoteService extends BaseService
                 'bqr.previous_quote_policy_number',
                 'bqr.previous_policy_expiry_date',
                 'bqr.previous_quote_policy_premium',
-                'bqr.gender'
+                'bqr.gender',
+                'bqr.device',
             )
             ->leftJoin('business_type_of_insurance as bti', 'bti.id', '=', 'bqr.business_type_of_insurance_id')
             ->leftJoin('business_quote_request_detail as bqrd', 'bqrd.business_quote_request_id', '=', 'bqr.id')
@@ -555,6 +556,7 @@ class BusinessQuoteService extends BaseService
             "previous_quote_policy_number" => "input|title",
             "previous_quote_policy_premium" => "input|title",
             "gender" => "input|none",
+            "device" => "input|title",
         );
     }
 
