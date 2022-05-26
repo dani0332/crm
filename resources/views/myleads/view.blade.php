@@ -72,17 +72,32 @@
                     data: "vehicleType",
                     name: "vehicleType"
                 }, {
-                    data: 'previous_quote_policy_premium',
-                    name: 'previous_quote_policy_premium',
+                    data: 'previousPolicyPremium',
+                    name: 'previousPolicyPremium'
                 }, {
-                    data: 'renewal_batch',
-                    name: 'renewal_batch'
+                    data: 'renewalBatch',
+                    name: 'renewalBatch'
                 }, {
-                    data: 'previous_policy_expiry_date',
-                    name: 'previous_policy_expiry_date'
+                    data: 'previousPolicyExpiryDate',
+                    name: 'previousPolicyExpiryDate'
                 }, {
-                    data: 'previous_policy_number',
-                    name: 'previous_policy_number'
+                    data: 'previousPolicyNumber',
+                    name: 'previousPolicyNumber'
+                }, {
+                    data: 'carMake',
+                    name: 'carMake'
+                }, {
+                    data: 'carModel',
+                    name: 'carModel'
+                }, {
+                    data: 'yearOfManufacture',
+                    name: 'yearOfManufacture'
+                }, {
+                    data: 'typeOfCarInsurance',
+                    name: 'typeOfCarInsurance'
+                }, {
+                    data: 'currentlyInsuredWith',
+                    name: 'currentlyInsuredWith'
                 });
             } else if (isRenewalUser && $("#modelType").val() == "Business") {
                 Columns.push({
@@ -163,6 +178,7 @@
                 searching: false,
                 bLengthChange: false,
                 serverSide: true,
+                scrollX: true,
                 ajax: {
                     url: config.routes.myleadsDataTable,
                     data: function(d) {
@@ -650,6 +666,21 @@
                                     @endif
                                     @if (Auth::user()->isRenewalAdvisor())
                                         <th>Previous Policy Number</th>
+                                    @endif
+                                    @if (Auth::user()->isRenewalAdvisor())
+                                        <th>Car Make</th>
+                                    @endif
+                                    @if (Auth::user()->isRenewalAdvisor())
+                                        <th>Car Model</th>
+                                    @endif
+                                    @if (Auth::user()->isRenewalAdvisor())
+                                        <th>Year Of Manufacture</th>
+                                    @endif
+                                    @if (Auth::user()->isRenewalAdvisor())
+                                        <th>Type of Car Insurance</th>
+                                    @endif
+                                    @if (Auth::user()->isRenewalAdvisor())
+                                        <th>Current Insurer</th>
                                     @endif
                                     @if (!Auth::user()->isRenewalAdvisor())
                                         <th>Assigned Date</th>
