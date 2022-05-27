@@ -395,7 +395,7 @@ class CarQuoteService extends BaseService
                 $title = "Renewal Batch #";
                 break;
             case 'renewal_expiry_date':
-                $title = "Previous Policy Expiry Date";
+                $title = "Policy Expiry Date";
                 break;
             case 'policy_number':
                 $title = "Policy Number";
