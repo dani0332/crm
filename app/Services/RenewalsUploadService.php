@@ -724,8 +724,6 @@ class RenewalsUploadService
         $updateCarQuoteRenewal = CarQuote::where('renewal_import_code', $renewalImportCode)
         ->where('previous_quote_policy_number', $quoteData->policy)->first();
 
-        $notes = $updateCarQuoteRenewal->additional_notes.' - '.$carMakeModel.' - '.$quoteData->notes;
-
         $updateCarQuoteRenewal->car_type_insurance_id = $carTypeOfInsurance;
         $updateCarQuoteRenewal->advisor_id = $advisorId;
         $updateCarQuoteRenewal->renewal_batch = $quoteData->batch;
