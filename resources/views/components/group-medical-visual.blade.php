@@ -18,11 +18,11 @@ use App\Enums\quoteStatusCode;
             </h2>
             <span>
             Total Leads
-                <span class="float-right">&nbsp; {{$result ? $result['total_leads'] : 0}} </span>
+                <span class="float-right">&nbsp; {{$result ? number_format($result['total_leads']) : 0}} </span>
             </span><br />
             <span>
             Total Premium
-                <span class="float-right">&nbsp; {{$result ? $result['total_premium'] : 0}} </span>
+                <span class="float-right">&nbsp; {{$result ? number_format($result['total_premium']) : 0}} </span>
             </span>
             
             </div>
@@ -46,7 +46,7 @@ use App\Enums\quoteStatusCode;
                             {{$lead->company_name}}
                             </div>
                             <div class="pad-5"></div>
-                            <div class="lead-cost"><i class="fa fa-usd font-1"></i>&nbsp; {{$lead->premium}}
+                            <div class="lead-cost"><i class="fa fa-usd font-1"></i>&nbsp; {{number_format($lead->premium)}}
                             </div>
                         </div>
                     </li> 
