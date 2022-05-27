@@ -418,7 +418,8 @@ class RenewalsUploadService
             "other_email_addresses" => $otherEmailIds,
             "renewal_import_code" => $renewalImportCode,
             "previous_policy_expiry_date" => $endDate,
-            "previous_quote_policy_premium" => $grossPremium
+            "previous_quote_policy_premium" => $grossPremium,
+            "policy_number" => NULL
         ]);
         $createRenewalQuote->save();
         $this->checkAMLService->checkAML($getBikeQuoteData->first_name, $getBikeQuoteData->last_name, $createRenewalQuote->id, $quoteType->id, false, null, null);
@@ -451,7 +452,8 @@ class RenewalsUploadService
             "renewal_import_code" => $renewalImportCode,
             "business_type_of_insurance_id" => $businessSublineInsuranceId,
             "previous_policy_expiry_date" => $endDate,
-            "previous_quote_policy_premium" => $grossPremium
+            "previous_quote_policy_premium" => $grossPremium,
+            "policy_number" => NULL
         ]);
         $createRenewalQuote->save();
         $this->checkAMLService->checkAML($getBusinessQuoteData->first_name, $getBusinessQuoteData->last_name, $createRenewalQuote->id, $quoteType->id, false, null, null);
@@ -491,7 +493,8 @@ class RenewalsUploadService
             "other_email_addresses" => $otherEmailIds,
             "renewal_import_code" => $renewalImportCode,
             "previous_policy_expiry_date" => $endDate,
-            "previous_quote_policy_premium" => $grossPremium
+            "previous_quote_policy_premium" => $grossPremium,
+            "policy_number" => NULL
         ]);
         $createRenewalQuote->save();
         $this->checkAMLService->checkAML($getCarQuoteData->first_name, $getCarQuoteData->last_name, $createRenewalQuote->id, $quoteType->id, false, null, null);
@@ -523,7 +526,8 @@ class RenewalsUploadService
             "other_email_addresses" => $otherEmailIds,
             "renewal_import_code" => $renewalImportCode,
             "previous_policy_expiry_date" => $endDate,
-            "previous_quote_policy_premium" => $grossPremium
+            "previous_quote_policy_premium" => $grossPremium,
+            "policy_number" => NULL
         ]);
         $createRenewalQuote->save();
         $this->checkAMLService->checkAML($getHealthQuoteData->first_name, $getHealthQuoteData->last_name, $createRenewalQuote->id, $quoteType->id, false, null, null);
@@ -555,7 +559,8 @@ class RenewalsUploadService
             "other_email_addresses" => $otherEmailIds,
             "renewal_import_code" => $renewalImportCode,
             "previous_policy_expiry_date" => $endDate,
-            "previous_quote_policy_premium" => $grossPremium
+            "previous_quote_policy_premium" => $grossPremium,
+            "policy_number" => NULL
         ]);
         $createRenewalQuote->save();
         $this->checkAMLService->checkAML($getHomeQuoteData->first_name, $getHomeQuoteData->last_name, $createRenewalQuote->id, $quoteType->id, false, null, null);
@@ -586,7 +591,8 @@ class RenewalsUploadService
             "other_email_addresses" => $otherEmailIds,
             "renewal_import_code" => $renewalImportCode,
             "previous_policy_expiry_date" => $endDate,
-            "previous_quote_policy_premium" => $grossPremium
+            "previous_quote_policy_premium" => $grossPremium,
+            "policy_number" => NULL
         ]);
         $createRenewalQuote->save();
         $this->checkAMLService->checkAML($getLifeQuoteData->first_name, $getLifeQuoteData->last_name, $createRenewalQuote->id, $quoteType->id, false, null, null);
@@ -617,7 +623,8 @@ class RenewalsUploadService
             "other_email_addresses" => $otherEmailIds,
             "renewal_import_code" => $renewalImportCode,
             "previous_policy_expiry_date" => $endDate,
-            "previous_quote_policy_premium" => $grossPremium
+            "previous_quote_policy_premium" => $grossPremium,
+            "policy_number" => NULL
         ]);
         $createRenewalQuote->save();
         $this->checkAMLService->checkAML($getTravelQuoteData->first_name, $getTravelQuoteData->last_name, $createRenewalQuote->id, $quoteType->id, false, null, null);
@@ -649,7 +656,8 @@ class RenewalsUploadService
             "other_email_addresses" => $otherEmailIds,
             "renewal_import_code" => $renewalImportCode,
             "previous_policy_expiry_date" => $endDate,
-            "previous_quote_policy_premium" => $grossPremium
+            "previous_quote_policy_premium" => $grossPremium,
+            "policy_number" => NULL
         ]);
         $createRenewalQuote->save();
         $this->checkAMLService->checkAML($getYachtQuoteData->first_name, $getYachtQuoteData->last_name, $createRenewalQuote->id, $quoteType->id, false, null, null);
