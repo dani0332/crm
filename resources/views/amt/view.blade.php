@@ -141,6 +141,7 @@
             { data: "advisor_id_text", name: "advisor_id_text" },
             { data: "premium", name: "premium" },
             { data: "company_name", name: "company_name" },
+            { data: "policy_number", name: "policy_number" },
             { data: "next_followup_date", name: "next_followup_date" },
             { data: "lost_reason", name: "lost_reason" },
             { data: "source", name: "source" },
