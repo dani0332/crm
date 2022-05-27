@@ -196,6 +196,7 @@
                         d.previous_policy_number = $('#previous_policy_number').val();
                         d.previous_policy_expiry_date = $('#previous_policy_expiry_date').val();
                         d.previous_policy_expiry_date_end = $('#previous_policy_expiry_date_end').val();
+                        d.isEcommerce = $('#isEcommerce').val();
                     },
                 },
                 columnDefs: [
@@ -421,30 +422,19 @@
                                         </div>
                                     </div>
                                 </div>
-                                @if (!Auth::user()->isRenewalAdvisor())
-                                    <div class="col">
-                                        <label class="col-form-label col-md-4 col-sm-4" for="Start Date">Lead Status</label>
-                                        <div class="col-md-6 col-sm-6">
-                                            <div class="input-group">
-                                                <select class="form-control" id="leadStatus" name="leadStatus">
-                                                    <option value="" selected="selected">Select Lead Status</option>
-                                                    @foreach ($leadStatusList as $item)
-                                                        <option value="{{ $item->id }}">{{ $item->text }}</option>
-                                                    @endforeach
-                                                </select>
-                                            </div>
+                                <div class="col">
+                                    <label class="col-form-label col-md-4 col-sm-4" for="Start Date">Lead Status</label>
+                                    <div class="col-md-6 col-sm-6">
+                                        <div class="input-group">
+                                            <select class="form-control" id="leadStatus" name="leadStatus">
+                                                <option value="" selected="selected">Select Lead Status</option>
+                                                @foreach ($leadStatusList as $item)
+                                                    <option value="{{ $item->id }}">{{ $item->text }}</option>
+                                                @endforeach
+                                            </select>
                                         </div>
                                     </div>
-                                @else
-                                    <div class="col">
-                                        <label class="col-form-label col-md-4 col-sm-4" for="policy_number"></label>
-                                        <div class="col-md-6 col-sm-6">
-                                            <div class="input-group">
-                                                
-                                            </div>
-                                        </div>
-                                    </div>
-                                @endif
+                                </div>
                             </div>
                             @if(!Auth::user()->isRenewalAdvisor())
                                 <div class="item form-group">
@@ -487,30 +477,36 @@
                                         </div>
                                     </div>
                                 </div>
-
                                 <div class="item form-group">
-                                    <div class="col">
-                                        
-                                    </div>
                                     @if (Auth::user()->isRenewalAdvisor())
                                         <div class="col">
-                                            <label class="col-form-label col-md-4 col-sm-4" for="previous_policy_number">
-                                                Previous Policy Number</label>
-                                                <div class="col-md-6 col-sm-6">
-                                                    <div class="input-group">
-                                                        <input type="text" name="previous_policy_number" id="previous_policy_number" class="form-control">
-                                                    </div>
+                                            <label class="col-form-label col-md-4 col-sm-4" for="previous_policy_number">Previous Policy Number</label>
+                                            <div class="col-md-6 col-sm-6">
+                                                <div class="input-group">
+                                                    <input type="text" name="previous_policy_number" id="previous_policy_number" class="form-control">
                                                 </div>
+                                            </div>
                                         </div>
                                     @endif
-        
+                                    <div class="col">
+                                        @if (Auth::user()->isRenewalAdvisor())
+                                            <label class="col-form-label col-md-4 col-sm-4" for="Ecommerce">Ecommerce</label>
+                                            <div class="col-md-6 col-sm-6">
+                                                <div class="input-group">
+                                                    <select class="form-control" id="isEcommerce" name="isEcommerce">
+                                                        <option value="" selected="selected">Please select is ecommerce</option>
+                                                        <option value="Yes">Yes</option>
+                                                        <option value="No">No</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        @endif
+                                    </div>
                                 </div>
-                               
                                 @if (Auth::user()->isRenewalAdvisor())
                                     <div class="item form-group">
                                         <div class="col">
-                                            <label class="col-form-label col-md-4 col-sm-4" for="previous_policy_expiry_date">
-                                                Previous Policy Expiry Date</label>
+                                            <label class="col-form-label col-md-4 col-sm-4" for="previous_policy_expiry_date">Prev. Policy Expiry Start</label>
                                             <div class="col-md-6 col-sm-6">
                                                 <div class="input-group">
                                                     <input type="date" name="previous_policy_expiry_date" id="previous_policy_expiry_date" class="form-control">
@@ -518,8 +514,7 @@
                                             </div>
                                         </div>
                                         <div class="col">
-                                            <label class="col-form-label col-md-4 col-sm-4" for="previous_policy_expiry_date_end">
-                                                Previous Policy Expiry Date End</label>
+                                            <label class="col-form-label col-md-4 col-sm-4" for="previous_policy_expiry_date_end">Prev. Policy Expiry End</label>
                                             <div class="col-md-6 col-sm-6">
                                                 <div class="input-group">
                                                     <input type="date" name="previous_policy_expiry_date_end" id="previous_policy_expiry_date_end" class="form-control">
@@ -527,7 +522,7 @@
                                             </div>
                                         </div>
                                     </div>
-                                    @endif
+                                @endif
                                 <div class="item form-group">
                                      @if (Auth::user()->isRenewalAdvisor() && $teamName == 'Business')
                                         <div class="col">
@@ -629,7 +624,7 @@
                                     </div>
                                 </div>
                                 <div class="col">
-                                    
+
                                 </div>
                             </div>
                             <div class="item form-group">
