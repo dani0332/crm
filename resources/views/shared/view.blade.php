@@ -559,7 +559,7 @@
                                 $searchProperties = [];
                                 $skipProperties = [];
                                 
-                                if($isRenewalUser && strtolower($model->modelType) != 'car'){
+                                if($isRenewalUser){
                                     $searchProperties = $model->renewalSearchProperties;
                                     $skipProperties = $model->renewalSkipProperties;
                                 }
