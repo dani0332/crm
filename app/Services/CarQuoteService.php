@@ -533,6 +533,10 @@ class CarQuoteService extends BaseService
             $query->whereNotNull('cqr.previous_quote_id');
             $query->orderBy('cqr.previous_policy_expiry_date', 'ASC');
         }
+        if (isset($request->isEcommerce)) {
+            $isEcommerce = $request->isEcommerce == "Yes" ? 1 : 0;
+            $query->where('cqr.is_ecommerce', $isEcommerce);
+        }
         return $query;
     }
     private function parseDate($date, $isStartOfDay)
