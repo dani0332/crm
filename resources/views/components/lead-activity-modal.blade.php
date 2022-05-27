@@ -12,7 +12,7 @@
                     <input type="hidden" value="{{ strtolower($record->code) }}" name="entityCode">
                     <input type="hidden" value="{{ strtolower($record->uuid) }}" name="entityUId">
                     <div class="modal-header">
-                        <h5 class="modal-title" id="duplicateLeadModalLabel" style="font-size: 16px !important;"><img src="https://i.ibb.co/SRHGR0S/system.png" height="30px" width="30px" />
+                        <h5 class="modal-title" id="duplicateLeadModalLabel" style="font-size: 16px !important;"> <i class="fa fa-cog" aria-hidden="true"></i>
                             <strong style="margin-left: 13px;">New Lead Activity</strong>
                         </h5>
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
