@@ -186,8 +186,11 @@
                             $skipProperties = $model->skipProperties;
                         }
                     @endphp
+                    @php
+                        $skipPropertiesArray = array_filter(explode(",",$skipProperties['show']));
+                    @endphp
                     @foreach ($model->properties as $property => $value)
-                        @if (!str_contains($skipProperties['show'], $property))
+                        @if (!in_array($property, $skipPropertiesArray))
                             @if ($count % 2 != 0)
                                 <div class="item form-group">
                             @endif
@@ -231,7 +234,7 @@
                                                         <a href="/quotes/{{strtolower($model->modelType)}}/{{ $previousQuote->uuid }}" target="_blank" style="text-decoration: underline;">{{ $record->$property }}</a>
                                                     @endif
                                                 @else
-                                                    {{ $record->$property }}
+                                                    <x-show-alternative-email-phone :property="$property" :record="$record" :model="$model" />
                                                 @endif
                                             </p>
                                         </div>

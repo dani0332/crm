@@ -14,7 +14,6 @@
             newDate = newDate.toISOString().split('T')[0];
             return newDate;
         }
-
         function changeIcon(item) {
             $(item).find('i').toggleClass("fa-angle-double-down fa-angle-double-up");
         }
@@ -70,23 +69,35 @@
                     data: "createdAt",
                     name: "createdAt"
                 }, {
-                    data: "updatedAt",
-                    name: "updatedAt"
+                    data: "vehicleType",
+                    name: "vehicleType"
                 }, {
-                    data: "assignedBy",
-                    name: "assignedBy"
+                    data: 'previousPolicyPremium',
+                    name: 'previousPolicyPremium'
                 }, {
-                    data: 'previous_policy_number',
-                    name: 'previous_policy_number'
+                    data: 'renewalBatch',
+                    name: 'renewalBatch'
                 }, {
-                    data: 'renewal_batch',
-                    name: 'renewal_batch'
+                    data: 'previousPolicyExpiryDate',
+                    name: 'previousPolicyExpiryDate'
                 }, {
-                    data: 'premium',
-                    name: 'premium',
-                },{
-                    data: 'previous_policy_expiry_date',
-                    name: 'previous_policy_expiry_date'
+                    data: 'previousPolicyNumber',
+                    name: 'previousPolicyNumber'
+                }, {
+                    data: 'carMake',
+                    name: 'carMake'
+                }, {
+                    data: 'carModel',
+                    name: 'carModel'
+                }, {
+                    data: 'yearOfManufacture',
+                    name: 'yearOfManufacture'
+                }, {
+                    data: 'typeOfCarInsurance',
+                    name: 'typeOfCarInsurance'
+                }, {
+                    data: 'currentlyInsuredWith',
+                    name: 'currentlyInsuredWith'
                 });
             } else if (isRenewalUser && $("#modelType").val() == "Business") {
                 Columns.push({
@@ -121,6 +132,9 @@
                     data: 'premium',
                     name: 'premium',
                 }, {
+                    data: 'previous_policy_expiry_date',
+                    name: 'previous_policy_expiry_date'
+                },{
                     data: 'previous_policy_expiry_date',
                     name: 'previous_policy_expiry_date'
                 }, {
@@ -164,6 +178,7 @@
                 searching: false,
                 bLengthChange: false,
                 serverSide: true,
+                scrollX: true,
                 ajax: {
                     url: config.routes.myleadsDataTable,
                     data: function(d) {
@@ -179,9 +194,9 @@
                         d.paymentStatus = $('#paymentStatus').val();
                         d.renewal_batch = $('#renewal_batch').val();
                         d.previous_policy_number = $('#previous_policy_number').val();
-                        d.renewalBatch = $('#renewalBatch').val();
                         d.previous_policy_expiry_date = $('#previous_policy_expiry_date').val();
                         d.previous_policy_expiry_date_end = $('#previous_policy_expiry_date_end').val();
+                        d.isEcommerce = $('#isEcommerce').val();
                     },
                 },
                 columnDefs: [
@@ -189,7 +204,6 @@
                 ],
                 columns: Columns
             });
-
             myleadsTable.on('draw', function() {
                 var rows = $('#dtBasicExample-leadsearch tr');
                 var headerRowColumns = $(rows[0]).children();
@@ -220,7 +234,6 @@
                     $(".loader").hide();
                 }, 1000);
             });
-
             $("#my-leads-form").submit(function(e) {
                 e.preventDefault();
                 $(".loader").show();
@@ -228,7 +241,6 @@
                 //followupLeadsTable.draw();
                 $(".loader").hide();
             });
-
             $(".toggle-btn-2").on("click", function() {
                 $(".show-visual-cards").addClass("hideme");
                 $(".show-visual-cards").removeClass("showme");
@@ -246,11 +258,9 @@
                 $(".toggle-btn-2").removeClass("active");
             });
         });
-
         var ENDPOINT = "{{ url('/') }}";
         var page;
         var temp_status = '';
-
         function loadMore(status) {
             if (localStorage.getItem('page' + status) == null)
                 page = 2;
@@ -258,7 +268,6 @@
                 page = localStorage.getItem('page' + status);
             infinteLoadMore(page, status);
         }
-
         function infinteLoadMore(page, status) {
             $.ajaxSetup({
                 headers: {
@@ -291,7 +300,6 @@
                     console.log('Server error occured');
                 });
         }
-
         function searchTerm(element) {
             var term = $(element).val();
             var status = $(element).attr('name');
@@ -414,30 +422,19 @@
                                         </div>
                                     </div>
                                 </div>
-                                @if (!Auth::user()->isRenewalAdvisor())
-                                    <div class="col">
-                                        <label class="col-form-label col-md-4 col-sm-4" for="Start Date">Lead Status</label>
-                                        <div class="col-md-6 col-sm-6">
-                                            <div class="input-group">
-                                                <select class="form-control" id="leadStatus" name="leadStatus">
-                                                    <option value="" selected="selected">Select Lead Status</option>
-                                                    @foreach ($leadStatusList as $item)
-                                                        <option value="{{ $item->id }}">{{ $item->text }}</option>
-                                                    @endforeach
-                                                </select>
-                                            </div>
+                                <div class="col">
+                                    <label class="col-form-label col-md-4 col-sm-4" for="Start Date">Lead Status</label>
+                                    <div class="col-md-6 col-sm-6">
+                                        <div class="input-group">
+                                            <select class="form-control" id="leadStatus" name="leadStatus">
+                                                <option value="" selected="selected">Select Lead Status</option>
+                                                @foreach ($leadStatusList as $item)
+                                                    <option value="{{ $item->id }}">{{ $item->text }}</option>
+                                                @endforeach
+                                            </select>
                                         </div>
                                     </div>
-                                @else
-                                    <div class="col">
-                                        <label class="col-form-label col-md-4 col-sm-4" for="policy_number"></label>
-                                        <div class="col-md-6 col-sm-6">
-                                            <div class="input-group">
-                                                
-                                            </div>
-                                        </div>
-                                    </div>
-                                @endif
+                                </div>
                             </div>
                             @if(!Auth::user()->isRenewalAdvisor())
                                 <div class="item form-group">
@@ -480,35 +477,36 @@
                                         </div>
                                     </div>
                                 </div>
-
                                 <div class="item form-group">
-                                    <div class="col">
-                                        <label class="col-form-label col-md-4 col-sm-4" for="premium">Premium</label>
-                                        <div class="col-md-6 col-sm-6">
-                                            <div class="input-group">
-                                                <input type="text" name="premium" id="premium" class="form-control">
-                                            </div>
-                                        </div>
-                                    </div>
                                     @if (Auth::user()->isRenewalAdvisor())
                                         <div class="col">
-                                            <label class="col-form-label col-md-4 col-sm-4" for="previous_policy_number">
-                                                Previous Policy Number</label>
-                                                <div class="col-md-6 col-sm-6">
-                                                    <div class="input-group">
-                                                        <input type="text" name="previous_policy_number" id="previous_policy_number" class="form-control">
-                                                    </div>
+                                            <label class="col-form-label col-md-4 col-sm-4" for="previous_policy_number">Previous Policy Number</label>
+                                            <div class="col-md-6 col-sm-6">
+                                                <div class="input-group">
+                                                    <input type="text" name="previous_policy_number" id="previous_policy_number" class="form-control">
                                                 </div>
+                                            </div>
                                         </div>
                                     @endif
-        
+                                    <div class="col">
+                                        @if (Auth::user()->isRenewalAdvisor())
+                                            <label class="col-form-label col-md-4 col-sm-4" for="Ecommerce">Ecommerce</label>
+                                            <div class="col-md-6 col-sm-6">
+                                                <div class="input-group">
+                                                    <select class="form-control" id="isEcommerce" name="isEcommerce">
+                                                        <option value="" selected="selected">Please select is ecommerce</option>
+                                                        <option value="Yes">Yes</option>
+                                                        <option value="No">No</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        @endif
+                                    </div>
                                 </div>
-                               
                                 @if (Auth::user()->isRenewalAdvisor())
                                     <div class="item form-group">
                                         <div class="col">
-                                            <label class="col-form-label col-md-4 col-sm-4" for="previous_policy_expiry_date">
-                                                Previous Policy Expiry Date</label>
+                                            <label class="col-form-label col-md-4 col-sm-4" for="previous_policy_expiry_date">Prev. Policy Expiry Start</label>
                                             <div class="col-md-6 col-sm-6">
                                                 <div class="input-group">
                                                     <input type="date" name="previous_policy_expiry_date" id="previous_policy_expiry_date" class="form-control">
@@ -516,8 +514,7 @@
                                             </div>
                                         </div>
                                         <div class="col">
-                                            <label class="col-form-label col-md-4 col-sm-4" for="previous_policy_expiry_date_end">
-                                                Previous Policy Expiry Date End</label>
+                                            <label class="col-form-label col-md-4 col-sm-4" for="previous_policy_expiry_date_end">Prev. Policy Expiry End</label>
                                             <div class="col-md-6 col-sm-6">
                                                 <div class="input-group">
                                                     <input type="date" name="previous_policy_expiry_date_end" id="previous_policy_expiry_date_end" class="form-control">
@@ -525,7 +522,7 @@
                                             </div>
                                         </div>
                                     </div>
-                                    @endif
+                                @endif
                                 <div class="item form-group">
                                      @if (Auth::user()->isRenewalAdvisor() && $teamName == 'Business')
                                         <div class="col">
@@ -558,8 +555,7 @@
                                     </div>
                                     @if (Auth::user()->isRenewalAdvisor())
                                         <div class="col">
-                                            <label class="col-form-label col-md-4 col-sm-4" for="batch_no">
-                                                Batch No</label>
+                                            <label class="col-form-label col-md-4 col-sm-4" for="batch_no">Renewal Batch #</label>
                                             <div class="col-md-6 col-sm-6">
                                                 <div class="input-group">
                                                     <input type="text" name="renewal_batch" id="renewal_batch" class="form-control">
@@ -628,14 +624,7 @@
                                     </div>
                                 </div>
                                 <div class="col">
-                                    @if (Auth::user()->isRenewalAdvisor() && $teamName == "Car")
-                                        <label class="col-form-label col-md-4 col-sm-4" for="Renewal Batch #">Renewal Batch #</label>
-                                        <div class="col-md-6 col-sm-6">
-                                            <div class="input-group">
-                                                <input type="number" name="renewalBatch" id="renewalBatch" class="form-control">
-                                            </div>
-                                        </div>
-                                    @endif
+
                                 </div>
                             </div>
                             <div class="item form-group">
@@ -651,40 +640,57 @@
                             </div>
                         </form>
                         <table id="dtBasicExample-leadsearch" class="table table-striped jambo_table leadSearch-data-table"
-                            style="width:100%">
+                         style="table-layout: fixed;" width="100%">
                             <thead>
                                 <tr>
-                                    <th>CDB ID</th>
-                                    <th>Client Name</th>
-                                    <th>Lead Status</th>
-                                    <th>Created Date</th>
+                                    <th style="width: 100px !important">CDB ID</th>
+                                    <th style="width: 100px !important">Client Name</th>
+                                    <th style="width: 100px !important">Lead Status</th>
+                                    <th style="width: 100px !important">Created Date</th>
+                                    @if (Auth::user()->isRenewalAdvisor())
+                                        <th style="width: 100px !important">Vehicle Type</th>
+                                    @endif
+                                    @if (Auth::user()->isRenewalAdvisor())
+                                        <th style="width: 100px !important">Previous Policy Premium</th>
+                                    @endif
+                                    @if (Auth::user()->isRenewalAdvisor())
+                                        <th style="width: 100px !important">Renewal Batch #</th>
+                                    @endif
+                                    @if (Auth::user()->isRenewalAdvisor())
+                                        <th style="width: 100px !important">Previous Policy Expiry Date</th>
+                                    @endif
+                                    @if (Auth::user()->isRenewalAdvisor())
+                                        <th style="width: 100px !important">Previous Policy Number</th>
+                                    @endif
+                                    @if (Auth::user()->isRenewalAdvisor())
+                                        <th style="width: 100px !important">Car Make</th>
+                                    @endif
+                                    @if (Auth::user()->isRenewalAdvisor())
+                                        <th style="width: 100px !important">Car Model</th>
+                                    @endif
+                                    @if (Auth::user()->isRenewalAdvisor())
+                                        <th style="width: 100px !important">Year Of Manufacture</th>
+                                    @endif
+                                    @if (Auth::user()->isRenewalAdvisor())
+                                        <th style="width: 100px !important">Type of Car Insurance</th>
+                                    @endif
+                                    @if (Auth::user()->isRenewalAdvisor())
+                                        <th style="width: 100px !important">Current Insurer</th>
+                                    @endif
                                     @if (!Auth::user()->isRenewalAdvisor())
-                                        <th>Assigned Date</th>
-                                    @endif
-                                    @if (Auth::user()->isRenewalAdvisor())
-                                        <th>Last Updated Date</th>
-                                    @endif
-                                    <th>Assigned By</th>
-                                    @if (!Auth::user()->isRenewalAdvisor())
-                                        <th>Next FollowUp Date</th>
+                                        <th style="width: 100px !important">Assigned Date</th>
                                     @endif
                                     @if (!Auth::user()->isRenewalAdvisor())
-                                        <th>Payment Status</th>
+                                        <th style="width: 100px !important">Assigned By</th>
                                     @endif
-                                    @if (Auth::user()->isRenewalAdvisor())
-                                        <th>Previous Policy Number</th>
+                                    @if (!Auth::user()->isRenewalAdvisor())
+                                        <th style="width: 100px !important">Next FollowUp Date</th>
                                     @endif
-                                    @if (Auth::user()->isRenewalAdvisor())
-                                        <th>Batch Number</th>
-                                    @endif
-                                    @if (Auth::user()->isRenewalAdvisor())
-                                        <th>Premium</th>
-                                    @endif
-                                    @if (Auth::user()->isRenewalAdvisor())
-                                        <th>Previous Policy Expiry Date</th>
+                                    @if (!Auth::user()->isRenewalAdvisor())
+                                        <th style="width: 100px !important">Payment Status</th>
                                     @endif
                                     @if (Auth::user()->isRenewalAdvisor() && $teamName == 'Business')
-                                        <th>Company Name</th>
+                                        <th style="width: 100px !important">Company Name</th>
                                     @endif
                                 </tr>
                             </thead>
@@ -713,18 +719,18 @@
                             <div id="collapseOne" class="collapse show" style="display:none" aria-labelledby="headingOne"
                                 data-parent="#accordion">
                                 <div class="card-body" style="border: 1px solid #ced4da;margin-bottom: 25px;">
-                                    <table id="overDueFollowups" class="table table-striped jambo_table"
-                                        style="width:100%">
+                                    <table id="overDueFollowups" class="table table-striped jambo_table" 
+                                    style="table-layout: fixed;" width="100%">
                                         <thead>
                                             <tr>
-                                                <th>CDB ID</th>
-                                                <th>Client Name</th>
-                                                <th>Lead Status</th>
-                                                <th>Created Date</th>
-                                                <th>Assigned Date</th>
-                                                <th>Assigned By</th>
-                                                <th>Next FollowUp Date</th>
-                                                <th>Premium</th>
+                                                <th style="width: 100px !important">CDB ID</th>
+                                                <th style="width: 100px !important">Client Name</th>
+                                                <th style="width: 100px !important">Lead Status</th>
+                                                <th style="width: 100px !important">Created Date</th>
+                                                <th style="width: 100px !important">Assigned Date</th>
+                                                <th style="width: 100px !important">Assigned By</th>
+                                                <th style="width: 100px !important">Next FollowUp Date</th>
+                                                <th style="width: 100px !important">Premium</th>
                                             </tr>
                                         </thead>
                                         <tbody>

@@ -8,7 +8,7 @@
     $(document).ready(function() {
         var isAdmin = JSON.parse('<?php echo json_encode(Auth::user()->hasRole("ADMIN")); ?>');
         var isManagerOrDeputy = $("#isManagerOrDeputy").val();
-        var isRenewalUser = JSON.parse('<?php echo json_encode(Auth::user()->hasRole("GM_RENEWAL_ADVISOR")); ?>');
+        var isRenewalUser = JSON.parse('<?php echo json_encode(Auth::user()->hasAnyRole("GM_RENEWAL_ADVISOR","GM_RENEWAL_MANAGER")); ?>');
         $(document).on("change", "#amtLeadID", function () {
             var idsArray = $('#selectTmLeadId').val();
             idsArray = idsArray+ ',' + $(this).val() + ',';
@@ -65,12 +65,11 @@
             { data: "last_name", name: "last_name" },
             { data: "leadStatus", name: "leadStatus" },
             { data: "advisor_id_text", name: "advisor_id_text" },
-            { data: "premium", name: "premium" },
             { data: "company_name", name: "company_name" },
-            // { data: "next_followup_date", name: "next_followup_date" },
-            // { data: "lost_reason", name: "lost_reason" },
-            // { data: "source", name: "source" },
-            { data: "policy_number", name: "policy_number" },
+            { data: "previous_quote_policy_premium", name: "previous_quote_policy_premium" },
+            { data: "previous_policy_expiry_date", name: "previous_policy_expiry_date" },
+            { data: "renewal_batch", name: "renewal_batch" },
+            { data: "previous_quote_policy_number", name: "previous_quote_policy_number" },           
             { data: "created_at", name: "created_at" },
             { data: "updated_at", name: "updated_at" },
 
@@ -85,8 +84,9 @@
                 serverSide: true,
                 paging: true,
                 processing: true,
+                scrollX: true,
                 columnDefs: [
-                        // { orderable: false, targets: [1,2,3,4,5,6,7,9,10] }
+                       
                         ],
                 buttons: isAdmin || isManagerOrDeputy ? [{
                         extend: 'excel',
@@ -101,8 +101,11 @@
                         d.created_at_end = $("#created_at_end").val();
                         d.first_name = $("#first_name").val();
                         d.last_name = $("#last_name").val();
-                        // d.email = $("#email").val();
-                        // d.mobile_no = $("#mobile_no").val();
+                        d.renewal_batch = $("#renewal_batch").val();
+                        d.previous_quote_policy_premium = $("#previous_quote_policy_premium").val();
+                        d.previous_quote_policy_number = $("#previous_quote_policy_number").val();
+                        d.previous_policy_expiry_date = $("#previous_policy_expiry_date").val();
+                        d.previous_policy_expiry_date_end = $("#previous_policy_expiry_date_end").val();
                         d.leadStatus = $("#leadStatus").val();
                         d.advisor_id = $("#advisor_id").val();
                         d.code = $("#code").val();
@@ -139,6 +142,7 @@
             { data: "advisor_id_text", name: "advisor_id_text" },
             { data: "premium", name: "premium" },
             { data: "company_name", name: "company_name" },
+            { data: "policy_number", name: "policy_number" },
             { data: "next_followup_date", name: "next_followup_date" },
             { data: "lost_reason", name: "lost_reason" },
             { data: "source", name: "source" },
@@ -156,6 +160,7 @@
                 serverSide: true,
                 paging: true,
                 processing: true,
+                scrollX: true,
                 columnDefs: [
                         { orderable: false, targets: [1,2,3,4,5,6,7,9,10] }
                         ],
@@ -492,6 +497,59 @@
                             </div>
                         </div>
                         @endif
+
+                        @if (Auth::user()->isRenewalAdvisor() || Auth::user()->isRenewalManager())
+                            <div class="item form-group">
+                                <div class="col">
+                                    <label class="col-form-label col-md-2 col-sm-2" for="searchfield">RENEWAL BATCH</label>
+                                    <div class="col-md-6 col-sm-6">
+                                        <div class="input-group">
+                                        <input type="text" class="form-control" name="renewal_batch" id="renewal_batch" >
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col">
+                                    <label class="col-form-label col-md-2 col-sm-2" for="searchfield">PREVIOUS POLICY NUMBER</label>
+                                    <div class="col-md-6 col-sm-6">
+                                        <div class="input-group">
+                                        <input type="text" class="form-control" name="previous_quote_policy_number" id="previous_quote_policy_number" >
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="item form-group">
+                                <div class="col">
+                                    <label class="col-form-label col-md-2 col-sm-2" for="searchfield">PREVIOUS POLICY PREMIUM</label>
+                                    <div class="col-md-6 col-sm-6">
+                                        <div class="input-group">
+                                        <input type="text" class="form-control" name="previous_quote_policy_premium" id="previous_quote_policy_premium" >
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col">
+                                    <label class="col-form-label col-md-2 col-sm-2" for="searchfield">PREVIOUS POLICY EXPIRY DATE START</label>
+                                    <div class="col-md-6 col-sm-6">
+                                        <div class="input-group">
+                                        <input type="date" class="form-control" name="previous_policy_expiry_date" id="previous_policy_expiry_date" >
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="item form-group">
+                                <div class="col">
+                                    <label class="col-form-label col-md-2 col-sm-2" for="searchfield">PREVIOUS POLICY EXPIRY DATE END</label>
+                                    <div class="col-md-6 col-sm-6">
+                                        <div class="input-group">
+                                        <input type="date" class="form-control" name="previous_policy_expiry_date_end" id="previous_policy_expiry_date_end" >
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col">
+                                    
+                                </div>
+                            </div>
+                        @endif
                         <div class="item form-group">
                             <div class="col">
 
@@ -560,12 +618,16 @@
                                 <th>Last Name</th>
                                 <th>Lead Status</th>
                                 <th>Assigned To</th>
-                                <th>Premium</th>
+                                @if (!Auth::user()->isRenewalAdvisor() && !Auth::user()->isRenewalManager())<th>Premium</th>@endif
                                 <th>Company Name</th>
-                                @if (Auth::user()->isRenewalAdvisor())<th>Policy Number</th>@endif
-                                @if (!Auth::user()->isRenewalAdvisor())<th>Next FollowUp Date</th>@endif
-                                @if (!Auth::user()->isRenewalAdvisor())<th>Lost Reason</th>@endif
-                                @if (!Auth::user()->isRenewalAdvisor())<th>Source</th>@endif
+                                @if (Auth::user()->isRenewalAdvisor() || Auth::user()->isRenewalManager())<th>Previous Quote Premium</th>@endif
+                                @if (Auth::user()->isRenewalAdvisor() || Auth::user()->isRenewalManager())<th>Previous Quote Expiry Date</th>@endif
+                                @if (Auth::user()->isRenewalAdvisor() || Auth::user()->isRenewalManager())<th>Renewal Batch</th>@endif
+                                @if (Auth::user()->isRenewalAdvisor() || Auth::user()->isRenewalManager())<th>Previous Quote Policy Number</th>@endif
+                                @if (!Auth::user()->isRenewalAdvisor() && !Auth::user()->isRenewalManager())<th>Policy Number</th>@endif
+                                @if (!Auth::user()->isRenewalAdvisor() && !Auth::user()->isRenewalManager())<th>Next FollowUp Date</th>@endif
+                                @if (!Auth::user()->isRenewalAdvisor() && !Auth::user()->isRenewalManager())<th>Lost Reason</th>@endif
+                                @if (!Auth::user()->isRenewalAdvisor() && !Auth::user()->isRenewalManager())<th>Source</th>@endif
                                 <th>Created At</th>
                                 <th>Updated At</th>
                             </tr>

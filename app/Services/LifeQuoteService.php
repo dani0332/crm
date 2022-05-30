@@ -14,7 +14,7 @@ use Config;
 use App\Traits\GetUserTree;
 use App\Traits\CustomerAdditionalInfo as CustomerAdditionalInfoTrait;
 use App\Enums\quoteTypeCode;
-
+use App\Enums\DatabaseColumnsString;
 class LifeQuoteService extends BaseService
 {
     protected $query;
@@ -69,6 +69,7 @@ class LifeQuoteService extends BaseService
                 'lqr.renewal_expiry_date',
                 'lqr.device',
                 'lqr.previous_policy_expiry_date',
+                'lqr.previous_quote_policy_premium'
             )
             ->leftJoin('life_quote_request_detail as lqrd', 'lqrd.life_quote_request_id', 'lqr.id')
             ->leftJoin('currency_type as ct', 'ct.id', '=', 'lqr.sum_insured_currency_id')
@@ -220,6 +221,9 @@ class LifeQuoteService extends BaseService
                 $dateTo = Carbon::createFromFormat('Y-m-d', $request['previous_policy_expiry_date_end'])->endOfDay()->toDateTimeString();
                 $this->query->whereBetween('lqr.previous_policy_expiry_date', [$dateFrom, $dateTo]);
             }
+            if (isset($request->previous_quote_policy_premium) && $request->previous_quote_policy_premium != '') {
+                $this->query->where('lqr.previous_quote_policy_premium', $request->previous_quote_policy_premium);
+            }
             if (Auth::user()->isRenewalAdvisor()) {
                 $this->query->whereNotNull('lqr.previous_quote_id');
                 $this->query->where('lqr.advisor_id', Auth::user()->id);
@@ -255,7 +259,7 @@ class LifeQuoteService extends BaseService
                         else
                             $this->query->whereIn('advisor_id', $request[$item]);
                     }
-                    else if ($item == quoteTypeCode::quoteStatus && is_array($request[$item]) && !empty($request[$item])) {
+                    else if ($item == DatabaseColumnsString::quoteStatus && is_array($request[$item]) && !empty($request[$item])) {
                         $this->query->whereIn('quote_status_id', $request[$item]);
                     } else {
                         $skipped = array('is_renewal','previous_policy_expiry_date');
@@ -411,7 +415,8 @@ class LifeQuoteService extends BaseService
                 'ps.text as paymentStatus',
                 'lqr.renewal_batch',
                 'lqr.previous_quote_policy_number as previous_policy_number',
-                'lqr.previous_policy_expiry_date'
+                'lqr.previous_policy_expiry_date',
+                'lqr.previous_quote_policy_premium'
             )
             ->leftJoin('life_quote_request_detail as lqrd', 'lqrd.life_quote_request_id', '=', 'lqr.id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'lqr.quote_status_id')
@@ -470,6 +475,9 @@ class LifeQuoteService extends BaseService
         }
         if (isset($request->previous_policy_number) && $request->previous_policy_number != '') {
             $query->where('lqr.previous_quote_policy_number', $request->previous_policy_number);
+        }
+        if (isset($request->previous_quote_policy_premium) && $request->previous_quote_policy_premium != '') {
+            $query->where('lqr.previous_quote_policy_premium', $request->previous_quote_policy_premium);
         }
         if (isset($request->previous_policy_expiry_date) && $request->previous_policy_expiry_date != '' && $request->previous_policy_expiry_date_end != '') {
             $dateFrom = Carbon::createFromFormat('Y-m-d', $request['previous_policy_expiry_date'])->startOfDay()->toDateTimeString();
@@ -556,8 +564,9 @@ class LifeQuoteService extends BaseService
             "renewal_expiry_date" => "input|date|title|range",
             "renewal_batch" => "input|none",
             "previous_quote_policy_number" => "input|title",
-            "previous_policy_expiry_date" => "input|date|title|range"
-
+            "previous_policy_expiry_date" => "input|date|title|range",
+            "previous_quote_policy_premium" => "input|title",
+            "device" => "input|title"
         );
     }
 
@@ -628,6 +637,9 @@ class LifeQuoteService extends BaseService
             case 'previous_policy_expiry_date':
                 $title = "Previous Policy Expiry Date";
                 break;
+            case 'previous_quote_policy_premium':
+                $title = "Previous Policy Premium";
+                break;
             default:
                 break;
         }
@@ -637,9 +649,9 @@ class LifeQuoteService extends BaseService
     public function fillModelSkipProperties()
     {
         return [
-            "create" => "previous_policy_expiry_date,device,renewal_batch,previous_quote_policy_number,renewal_expiry_date,is_renewal,previous_quote_id,id,advisor_id,quote_status_id,code,created_at,updated_at,next_followup_date,lost_reason,premium,source,transapp_code",
-            "list" => "previous_policy_expiry_date,device,renewal_batch,previous_quote_policy_number,renewal_expiry_date,is_renewal,previous_quote_id,email,mobile_no,others_info,dob,sum_insured_value,sum_insured_currency_id,purpose_of_insurance_id,marital_status_id,children_id,tenure_of_insurance_id,number_of_years_id,gender,is_smoker,others_info",
-            "update" => "previous_policy_expiry_date,device,renewal_batch,previous_quote_policy_number,renewal_expiry_date,is_renewal,previous_quote_id,id,advisor_id,quote_status_id,code,created_at,updated_at,next_followup_date,lost_reason,source,transapp_code",
+            "create" => "previous_quote_policy_premium,previous_policy_expiry_date,device,renewal_batch,previous_quote_policy_number,renewal_expiry_date,is_renewal,previous_quote_id,id,advisor_id,quote_status_id,code,created_at,updated_at,next_followup_date,lost_reason,premium,source,transapp_code",
+            "list" => "previous_quote_policy_premium,previous_policy_expiry_date,device,renewal_batch,previous_quote_policy_number,renewal_expiry_date,is_renewal,previous_quote_id,email,mobile_no,others_info,dob,sum_insured_value,sum_insured_currency_id,purpose_of_insurance_id,marital_status_id,children_id,tenure_of_insurance_id,number_of_years_id,gender,is_smoker,others_info",
+            "update" => "previous_quote_policy_premium,previous_policy_expiry_date,device,renewal_batch,previous_quote_policy_number,renewal_expiry_date,is_renewal,previous_quote_id,id,advisor_id,quote_status_id,code,created_at,updated_at,next_followup_date,lost_reason,source,transapp_code",
             "show" => "is_renewal",
         ];
     }
@@ -651,11 +663,11 @@ class LifeQuoteService extends BaseService
 
     public function fillRenewalProperties($model)
     {
-        $model->renewalSearchProperties = ['created_at', 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'previous_quote_policy_number','previous_policy_expiry_date','renewal_batch'];
+        $model->renewalSearchProperties = ['created_at', 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'previous_quote_policy_number','previous_policy_expiry_date','renewal_batch','previous_quote_policy_premium'];
         $model->renewalSkipProperties = [
-            "create" => "device,renewal_batch,previous_quote_policy_number,renewal_expiry_date,is_renewal,previous_quote_id,id,advisor_id,quote_status_id,code,created_at,updated_at,next_followup_date,lost_reason,premium,source,transapp_code",
-            "list" => "device,renewal_expiry_date,is_renewal,email,mobile_no,others_info,dob,sum_insured_value,sum_insured_currency_id,purpose_of_insurance_id,marital_status_id,children_id,tenure_of_insurance_id,number_of_years_id,gender,is_smoker,others_info,next_followup_date,lost_reason,source,transapp_code",
-            "update" => "device,renewal_batch,previous_quote_policy_number,renewal_expiry_date,is_renewal,previous_quote_id,id,advisor_id,quote_status_id,code,created_at,updated_at,next_followup_date,lost_reason,source,transapp_code",
+            "create" => "previous_quote_policy_premium,renewal_batch,previous_quote_policy_number,renewal_expiry_date,is_renewal,previous_quote_id,id,advisor_id,quote_status_id,code,created_at,updated_at,next_followup_date,lost_reason,premium,source,transapp_code",
+            "list" => "premium,policy_number,renewal_expiry_date,is_renewal,email,mobile_no,others_info,dob,sum_insured_value,sum_insured_currency_id,purpose_of_insurance_id,marital_status_id,children_id,tenure_of_insurance_id,number_of_years_id,gender,is_smoker,others_info,next_followup_date,lost_reason,source,transapp_code",
+            "update" => "previous_quote_policy_premium,renewal_batch,previous_quote_policy_number,renewal_expiry_date,is_renewal,previous_quote_id,id,advisor_id,quote_status_id,code,created_at,updated_at,next_followup_date,lost_reason,source,transapp_code",
             "show" => "id,next_followup_date,lost_reason,is_renewal",
         ];
     }
@@ -663,10 +675,10 @@ class LifeQuoteService extends BaseService
     {
         $model->newBusinessSearchProperties = ['created_at', 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'policy_number'];
         $model->newBusinessSkipProperties = [
-            "create" => "previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,member_category_id,salary_band_id,gender,is_renewal,previous_quote_id,created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,premium,source,transapp_code,renewal_expiry_date",
-            "list" => "previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,member_category_id,salary_band_id,gender,is_renewal,email,cover_for_id,has_worldwide_cover,has_home,details,preference,mobile_no,dob,marital_status_id,nationality_id,has_dental,emirate_of_your_visa_id,is_ebp_renewal,health_team_type,next_followup_date,lost_reason,source,transapp_code,premium,lead_type_id,renewal_expiry_date,previous_quote_id",
-            "update" => "previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,member_category_id,salary_band_id,gender,is_renewal,previous_quote_id,created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,source,transapp_code,renewal_expiry_date",
-            "show" => "previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,member_category_id,salary_band_id,gender,is_renewal,id,next_followup_date,previous_quote_id",
+            "create" => "previous_quote_policy_premium,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,member_category_id,salary_band_id,gender,is_renewal,previous_quote_id,created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,premium,source,transapp_code,renewal_expiry_date",
+            "list" => "previous_quote_policy_premium,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,others_info,member_category_id,salary_band_id,gender,is_renewal,email,cover_for_id,has_worldwide_cover,has_home,details,preference,mobile_no,dob,marital_status_id,nationality_id,has_dental,emirate_of_your_visa_id,is_ebp_renewal,health_team_type,next_followup_date,lost_reason,source,transapp_code,premium,lead_type_id,renewal_expiry_date,previous_quote_id",
+            "update" => "previous_quote_policy_premium,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,member_category_id,salary_band_id,gender,is_renewal,previous_quote_id,created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,source,transapp_code,renewal_expiry_date",
+            "show" => "previous_quote_policy_premium,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,member_category_id,salary_band_id,gender,is_renewal,id,next_followup_date,previous_quote_id",
         ];
     }
 
