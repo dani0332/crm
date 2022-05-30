@@ -1,6 +1,6 @@
 <?php
 use App\Enums\DatabaseColumnsString;
-if($property == DatabaseColumnsString::quotemobile)
+if($property == DatabaseColumnsString::MOBILE)
 {
     $alternative_mobiles = getAdditionalInfo($model->modelType, $record->id);
     if($alternative_mobiles) { ?>
@@ -11,7 +11,7 @@ if($property == DatabaseColumnsString::quotemobile)
         <?php }
     }
     
-}else if($property == DatabaseColumnsString::quoteemail)
+}else if($property == DatabaseColumnsString::EMAIL)
 {
     $alternative_mobiles = getAdditionalInfo($model->modelType, $record->id);
     if($alternative_mobiles) { ?>
