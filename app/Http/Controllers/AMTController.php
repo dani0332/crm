@@ -17,6 +17,7 @@ use \Carbon\Carbon;
 use Auth;
 use Illuminate\Support\Facades\Redirect;
 use App\Traits\GetUserTree;
+use App\Enums\quoteStatusCode;
 class AMTController extends Controller
 {
     protected $businessQuoteService;
@@ -41,7 +42,8 @@ class AMTController extends Controller
             ->leftJoin('users as u', 'bqr.advisor_id', '=', 'u.id')
             ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'bqrd.lost_reason_id')
             ->leftJoin('quote_status as qs', 'bqr.quote_status_id', '=', 'qs.id')
-            ->where('bit.text', '=', 'Group Medical')
+            ->where('bit.text', '=', quoteStatusCode::GROUP_MEDICAL)
+            ->where('qs.text', '!=', quoteStatusCode::FAKE)
             ->select(
                 'bqr.id',
                 'bqr.code',

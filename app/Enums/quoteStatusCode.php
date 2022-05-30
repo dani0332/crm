@@ -31,4 +31,6 @@ final class quoteStatusCode extends Enum
     const MISSING_DOCUMENTS = "Missing Documents Requested";
     const QUALIFIED = "Qualified";
     const TRANSACTIONAPPROVED = "Transaction Approved";
+    const FAKE = "Fake";
+    const GROUP_MEDICAL= 'Group Medical';
 }

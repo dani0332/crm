@@ -11,7 +11,7 @@ use BenSampo\Enum\Enum;
  */
 final class DatabaseColumnsString extends Enum
 {
-    const quoteStatus= 'quote_status_id';
-    const quotemobile= 'mobile_no';
-    const quoteemail= 'email';
+    const QUOTE_STATUS_ID= 'quote_status_id';
+    const MOBILE= 'mobile_no';
+    const EMAIL= 'email';
 }
