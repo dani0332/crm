@@ -7,7 +7,7 @@ if($property == DatabaseColumnsString::quotemobile)
         {{$record->$property}}
         <?php 
         foreach($alternative_mobiles as $mobile) { ?>
-            ", " {{$mobile->mobile_no}};
+            , {{$mobile->mobile_no}};
         <?php }
     }
     
@@ -17,7 +17,7 @@ if($property == DatabaseColumnsString::quotemobile)
     if($alternative_mobiles) { ?>
         {{$record->$property}}
         <?php foreach($alternative_mobiles as $email) { ?>
-            ", " {{$email->email_address}}
+            , {{$email->email_address}}
         <?php }
     }  
 } else { ?>
