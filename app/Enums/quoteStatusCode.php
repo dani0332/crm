@@ -32,5 +32,5 @@ final class quoteStatusCode extends Enum
     const QUALIFIED = "Qualified";
     const TRANSACTIONAPPROVED = "Transaction Approved";
     const FAKE = "Fake";
-    const GroupMedical= 'Group Medical';
+    const GROUPMEDICAL= 'Group Medical';
 }

@@ -42,7 +42,7 @@ class AMTController extends Controller
             ->leftJoin('users as u', 'bqr.advisor_id', '=', 'u.id')
             ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'bqrd.lost_reason_id')
             ->leftJoin('quote_status as qs', 'bqr.quote_status_id', '=', 'qs.id')
-            ->where('bit.text', '=', quoteStatusCode::GroupMedical)
+            ->where('bit.text', '=', quoteStatusCode::GROUPMEDICAL)
             ->where('qs.text', '!=', quoteStatusCode::FAKE)
             ->select(
                 'bqr.id',
