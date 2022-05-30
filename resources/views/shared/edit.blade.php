@@ -14,9 +14,9 @@
             var carMake = $('#car_make_id').empty();
             $.each(data, function (create, carmodelObj) {
                 if(carmodelObj.id == id){
-                    carMake.append('<option ata-id="' + carmodelObj.code + '"value="' + carmodelObj.id + '" selected>' + carmodelObj.text + '</option>');
+                    carMake.append('<option data-id="' + carmodelObj.code + '"value="' + carmodelObj.id + '" selected>' + carmodelObj.text + '</option>');
                 }else{
-                carMake.append('<option data-id="' + carmodelObj.code + '" value="' + carmodelObj.id + '">' + carmodelObj.text + '</option>');
+                    carMake.append('<option data-id="' + carmodelObj.code + '" value="' + carmodelObj.id + '">' + carmodelObj.text + '</option>');
                 }
             });
         });
@@ -42,12 +42,8 @@
         if(model.modelType.toLowerCase() == 'car'){
             var oldCarModelId = JSON.parse('<?php echo json_encode(isset($record->car_model_id) ? $record->car_model_id : 0) ?>');
             var oldCarMakeId = JSON.parse('<?php echo json_encode(isset($record->car_make_id) ? $record->car_make_id : 0) ?>');
-            if(oldCarMakeId != '') {
-                getCarMakes(oldCarMakeId);
-            }
-            if(oldCarModelId != '') {
-                getCarModels(oldCarMakeId, oldCarModelId);
-            }
+            getCarMakes(oldCarMakeId);
+            getCarModels(oldCarMakeId, oldCarModelId);
         }
         var result = modelSkipProperties.filter(obj => {
             return obj.name === 'update'

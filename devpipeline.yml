@@ -3,32 +3,34 @@ trigger:
 
 pool:
   vmImage: 'Ubuntu 20.04'
-
-#variables:
-#  - group: dev
-#  - name: imageName
-#    value: 'imcrmdev:$(Build.BuildId)'
-  
 steps:
-#- script: |
-#    sudo apt-get update && sudo apt-get install -y apt-transport-https ca-certificates curl gnupg && \
-#    curl -sLf --retry 3 --tlsv1.2 --proto "=https" 'https://packages.doppler.com/public/cli/gpg.DE2A7741A397C129.key' | sudo apt-key add - && \
-#    echo "deb https://packages.doppler.com/public/cli/deb/debian any-version main" | sudo tee /etc/apt/sources.list.d/doppler-cli.list && \
-#    sudo apt-get update && sudo apt-get install doppler
- 
-#- script: doppler --token $(IMCRM_DEV_TOKEN) run -- docker build --build-arg IMCRM_TOKEN=$(IMCRM_DEV_TOKEN) --build-arg NGINX_FILE=$(DEV_NGINX) -f Dockerfile -t $(acrName).azurecr.io/$(imageName) .
-#- script: docker build --build-arg NEW_RELIC_LICENSE_KEY=$(KEY) --build-arg NEW_RELIC_APP_NAME=$(NAME) --build-arg IMCRM_TOKEN=$(IMCRM_DEV_TOKEN) --build-arg NGINX_FILE=$(DEV_NGINX) -f Dockerfile -t $(acrName).azurecr.io/$(imageName) .
-#  displayName: 'docker build'
-#- script: docker login -u $(dockerId) -p $(dockerPassword) $(acrName).azurecr.io
-#  displayName: 'docker login'
-#- script: docker push $(acrName).azurecr.io/$(imageName)
-#  displayName: 'docker push'
+- task: DownloadSecureFile@1
+  name: fullchain01
+  displayName: 'Download cert file'
+  inputs:
+    secureFile: 'devcrm01_fullchain.pem'
+- task: DownloadSecureFile@1
+  name: privkey01
+  displayName: 'Download cert file'
+  inputs:
+    secureFile: 'devcrm01_privkey.pem'    
 
-#- task: PublishBuildArtifacts@1
-#  displayName: 'publish yaml folder as an artifact'
-#  inputs:
-#    artifactName: 'yaml'
-#    pathToPublish: 'manifest.yml'
+- task: DownloadSecureFile@1
+  name: fullchain02
+  displayName: 'Download cert file'
+  inputs:
+    secureFile: 'devcrm02_fullchain.pem'
+- task: DownloadSecureFile@1
+  name: privkey02
+  displayName: 'Download cert file'
+  inputs:
+    secureFile: 'devcrm02_privkey.pem'    
+    
+- script: |
+    cp $(fullchain01.secureFilePath) $(System.DefaultWorkingDirectory)/docker/
+    cp $(privkey01.secureFilePath) $(System.DefaultWorkingDirectory)/docker/
+    cp $(fullchain02.secureFilePath) $(System.DefaultWorkingDirectory)/docker/
+    cp $(privkey02.secureFilePath) $(System.DefaultWorkingDirectory)/docker/
 
 - publish: '$(System.DefaultWorkingDirectory)'
-  artifact: imcrmdev
+  artifact: '$(imcrmdev)'
