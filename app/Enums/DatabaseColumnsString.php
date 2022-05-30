@@ -14,4 +14,6 @@ final class DatabaseColumnsString extends Enum
     const quoteStatus= 'quote_status_id';
     const quotemobile= 'mobile_no';
     const quoteemail= 'email';
+    const fake= 'Fake';
+    const GroupMedical= 'Group Medical';
 }
