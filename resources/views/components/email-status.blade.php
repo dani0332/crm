@@ -12,7 +12,6 @@
                             <tr>
                                 <th>Id</th>
                                 <th>Email Address</th>
-                                <th>Msg Id</th>
                                 <th>Status</th>
                                 <th>Reason</th>
                                 <th>Create At</th>
@@ -25,9 +24,8 @@
                                     <tr>
                                         <td>{{ $emailStatus->id }}</td>
                                         <td>{{ $emailStatus->email_address }}</td>
-                                        <td>{{ $emailStatus->msg_id }}</td>
-                                        <td>{{ $emailStatus->email_status }}</td>
-                                        <td>{{ $emailStatus->reason }}</td>
+                                        <td>{{ ucwords($emailStatus->email_status) }}</td>
+                                        <td>{{ ucwords($emailStatus->reason) }}</td>
                                         <td>{{ $emailStatus->created_at }}</td>
                                         <td>{{ $emailStatus->updated_at }}</td>
                                     </tr>
