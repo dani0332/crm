@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\HealthTeamType;
 use App\Enums\LeadStatusCode;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Models\CarQuoteAdvisorToOE;
 use App\Models\GenericModel;
 use App\Models\InsuranceProvider;
@@ -312,7 +313,7 @@ class CRUDController extends Controller
 
             $entity = $this->carQuoteService->getQuoteByUuid($id);
             $previousQuoteId = isset($entity->previous_quote_id) ? $entity->previous_quote_id : NULL;
-            $emailStatuses = $this->emailStatusService->getEmailStatus(1, $entity->id);
+            $emailStatuses = $this->emailStatusService->getEmailStatus(QuoteTypeId::Car, $entity->id);
 
             return view('shared.show', compact([
                 'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList',
