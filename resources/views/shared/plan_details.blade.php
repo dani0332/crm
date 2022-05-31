@@ -1,7 +1,9 @@
 <meta name="csrf-token" content="{{ csrf_token() }}" />
 
 <?php
-    use App\Enums\quoteTypeCode;
+
+use App\Enums\ApplicationStorage as EnumsApplicationStorage;
+use App\Enums\quoteTypeCode;
     use App\Enums\CarPlanType;
     use App\Models\ApplicationStorage;
     use App\Enums\CarPlanAddons;
@@ -13,7 +15,7 @@
         ->where([['key_name', 'IMCRM_CAR_QUOTE_PLANS_EDIT_IS_DISABLED'], ['is_active', 1]])
         ->get()->first();
 
-        $carQuoteEditDisable = $carQuoteEditSwitch->value == '1' ? 'disabled' : '';
+        $carQuoteEditDisable = $carQuoteEditSwitch->value == EnumsApplicationStorage::ACTIVE ? 'disabled' : '';
 
         foreach ($listQuotePlans as $listQuotePlan) { // Car quote plans
             if ($listQuotePlan->id == $planId) {
