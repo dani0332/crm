@@ -2,10 +2,10 @@
 
 <?php
 
-use App\Enums\ApplicationStorage as EnumsApplicationStorage;
-use App\Enums\quoteTypeCode;
-    use App\Enums\CarPlanType;
     use App\Models\ApplicationStorage;
+    use App\Enums\ApplicationStorage as EnumsApplicationStorage;
+    use App\Enums\quoteTypeCode;
+    use App\Enums\CarPlanType;
     use App\Enums\CarPlanAddons;
     use App\Enums\InsuranceProviders;
 
