@@ -949,5 +949,10 @@ class CarQuoteService extends BaseService
         $quote->advisor_id = Auth::user()->id;
         $quote->save();
     }
+
+    public function getQuoteByUuid($uuid)
+    {
+        return CarQuote::where('uuid', '=', $uuid)->first();
+    }
     
 }

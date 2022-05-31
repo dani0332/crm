@@ -447,6 +447,11 @@
             :quoteRequestId="$record->id" />
     @endif
 
+    @isset($previousQuoteId)
+        <x-email-status
+            :emailStatuses="$emailStatuses" />
+    @endisset
+
     @can('auditable')
         <div id="auditable">
             <button id='auditablebtn' class="btn btn-warning btn-sm auditablebtn" data-id="{{ $record->id }}"
