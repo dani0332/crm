@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\HealthTeamType;
 use App\Enums\LeadStatusCode;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Models\CarQuoteAdvisorToOE;
 use App\Models\GenericModel;
 use App\Models\InsuranceProvider;
@@ -22,6 +23,7 @@ use App\Services\LifeQuoteService;
 use App\Services\TeamService;
 use App\Services\TravelQuoteService;
 use App\Services\UserService;
+use App\Services\EmailStatusService;
 use BenSampo\Enum\Rules\EnumValue;
 use DataTables;
 use Illuminate\Support\Facades\Auth;
@@ -45,6 +47,8 @@ class CRUDController extends Controller
     protected $businessQuoteService;
     protected $userService;
     protected $activityService;
+    protected $emailStatusService;
+
     public function __construct(
         HealthQuoteService $healthService,
         TeamService $teamsService,
@@ -58,7 +62,8 @@ class CRUDController extends Controller
         BusinessQuoteService $businessQuoteService,
         UserService $userService,
         Request $request, 
-        ActivitiesService $activityService
+        ActivitiesService $activityService,
+        EmailStatusService $emailStatusService
     ) {
         $this->genericModel = new GenericModel();
         $this->healthQuoteService = $healthService;
@@ -73,6 +78,8 @@ class CRUDController extends Controller
         $this->businessQuoteService = $businessQuoteService;
         $this->activityService = $activityService;
         $this->userService = $userService;
+        $this->emailStatusService = $emailStatusService;
+
         $this->setModelType($request);
         $this->fillModelByModelType(ucwords($this->genericModel->modelType), $request);
     }
@@ -304,11 +311,15 @@ class CRUDController extends Controller
                 }
             }
 
+            $entity = $this->carQuoteService->getQuoteByUuid($id);
+            $previousQuoteId = isset($entity->previous_quote_id) ? $entity->previous_quote_id : NULL;
+            $emailStatuses = $this->emailStatusService->getEmailStatus(QuoteTypeId::Car, $entity->id);
+
             return view('shared.show', compact([
                 'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList',
                 'ecomCarInsuranceQuoteUrl', 'carQuotePlanAddons', 'vehicleTypeText', 'leadStatuses',
                 'lostReasons', 'selectedLostReasonId', 'listQuote','model_name', 'allowedDuplicateLOB', 'audits', 'activities', 'advisors','isRenewalUser',
-                'isNewBusinessUser'
+                'isNewBusinessUser', 'previousQuoteId', 'emailStatuses'
             ]));
         } else if ($this->genericModel->modelType == quoteTypeCode::Travel) { // Travel plans to display on detail view
             $listQuotePlans = '';
