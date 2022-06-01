@@ -23,7 +23,6 @@ use App\Models\LifePurposeOfInsurance;
 use App\Models\MartialStatus;
 use App\Models\Nationality;
 use App\Models\PaymentStatus;
-use App\Models\QuoteStatus;
 use App\Models\Regions;
 use App\Models\TravelCoverFor;
 use App\Models\UAELicenseHeldFor;
@@ -31,15 +30,12 @@ use App\Models\User;
 use App\Models\VehicleType;
 use App\Models\YearOfManufacture;
 use App\Models\CarAddOn;
-use App\Models\CarPlanCoverage;
 use App\Models\Team;
 use DB;
-use Faker\Provider\ar_SA\Payment;
 use Illuminate\Support\Facades\Auth;
 
 class DropdownSourceService extends BaseService
 {
-
     public function getCustomDropdownList($type, $id)
     {
         $data = '';
@@ -89,10 +85,10 @@ class DropdownSourceService extends BaseService
                 $data = Team::whereNull('parent_team_id')->get();
                 break;
             case 'marital_status_id':
-                $data = MartialStatus::select('id', 'text')->get();
+                $data = MartialStatus::select('id', 'text')->where("is_active", true)->get();
                 break;
             case 'nationality_id':
-                $data = Nationality::select('id', 'text')->get();
+                $data = Nationality::select('id', 'text')->where("is_active", true)->get();
                 break;
             case 'quote_status_id':
                 $data = DB::table('quote_status')->select('id', 'text')->orderBy('sort_order', 'asc')
@@ -103,43 +99,43 @@ class DropdownSourceService extends BaseService
                     ->get();
                 break;
             case 'cover_for_id':
-                $data = HealthCoverFor::select('id', 'text')->get();
+                $data = HealthCoverFor::select('id', 'text')->where("is_active", true)->get();
                 break;
             case 'emirate_of_your_visa_id':
-                $data = Emirate::select('id', 'text')->get();
+                $data = Emirate::select('id', 'text')->where("is_active", true)->get();
                 break;
             case 'team_users':
                 $data = User::select('id', 'name')->get();
                 break;
             case 'car_make_id':
-                $data = CarMake::select('code as id', 'text')->get();
+                $data = CarMake::select('code as id', 'text')->where("is_active", true)->get();
                 break;
             case 'car_model_id':
                 $data = [];
                 break;
             case 'region_cover_for_id':
-                $data = Regions::select('id', 'text')->get();
+                $data = Regions::select('id', 'text')->where("is_active", true)->get();
                 break;
             case 'travel_cover_for_id':
-                $data = TravelCoverFor::select('id', 'text')->get();
+                $data = TravelCoverFor::select('id', 'text')->where("is_active", true)->get();
                 break;
             case 'sum_insured_currency_id':
-                $data = CurrencyType::select('id', 'text')->get();
+                $data = CurrencyType::select('id', 'text')->where("is_active", true)->get();
                 break;
             case 'lead_type_id':
-                $data = DB::table('health_lead_type')->select('id', 'text')->get();
+                $data = DB::table('health_lead_type')->select('id', 'text')->where("is_active", true)->get();
                 break;
             case 'purpose_of_insurance_id':
-                $data = LifePurposeOfInsurance::select('id', 'text')->get();
+                $data = LifePurposeOfInsurance::select('id', 'text')->where("is_active", true)->get();
                 break;
             case 'children_id':
-                $data = LifeChildren::select('id', 'text')->get();
+                $data = LifeChildren::select('id', 'text')->where("is_active", true)->get();
                 break;
             case 'tenure_of_insurance_id':
-                $data = LifeInsuranceTenure::select('id', 'text')->get();
+                $data = LifeInsuranceTenure::select('id', 'text')->where("is_active", true)->get();
                 break;
             case 'number_of_years_id':
-                $data = LifeNumberOfYears::select('id', 'text')->get();
+                $data = LifeNumberOfYears::select('id', 'text')->where("is_active", true)->get();
                 break;
             case 'year_of_manufacture':
                 $data = YearOfManufacture::select('id', 'text')->get();
@@ -170,40 +166,40 @@ class DropdownSourceService extends BaseService
                 }
                 break;
             case 'iam_possesion_type_id':
-                $data = HomePossessionType::select('id', 'text')->get();
+                $data = HomePossessionType::select('id', 'text')->where("is_active", true)->get();
                 break;
             case 'ilivein_accommodation_type_id':
-                $data = HomeAccomodationType::select('id', 'text')->get();
+                $data = HomeAccomodationType::select('id', 'text')->where("is_active", true)->get();
                 break;
             case 'business_type_of_insurance_id':
-                $data = BusinessInsuranceType::select('id', 'text')->get();
+                $data = BusinessInsuranceType::select('id', 'text')->where("is_active", true)->get();
                 break;
             case 'uae_license_held_for_id':
-                $data = UAELicenseHeldFor::select('id', 'text')->get();
+                $data = UAELicenseHeldFor::select('id', 'text')->where("is_active", true)->get();
                 break;
             case 'emirate_of_registration_id':
-                $data = Emirate::select('id', 'text')->get();
+                $data = Emirate::select('id', 'text')->where("is_active", true)->get();
                 break;
             case 'currently_insured_with':
-                $data = InsuranceProvider::select('id', 'text')->get();
+                $data = InsuranceProvider::select('text as id', 'text')->where('is_active', 1)->get();
                 break;
             case 'car_type_insurance_id':
-                $data = CarTypeInsurance::select('id', 'text')->get();
+                $data = CarTypeInsurance::select('id', 'text')->where("is_active", true)->get();
                 break;
             case 'claim_history_id':
-                $data = ClaimHistory::select('id', 'text')->get();
+                $data = ClaimHistory::select('id', 'text')->where("is_active", true)->get();
                 break;
             case 'plan_id':
-                $data = CarPlan::select('id', 'text')->get();
+                $data = CarPlan::select('id', 'text')->where("is_active", true)->get();
                 break;
             case 'provider_id':
                 $data = InsuranceProvider::select('id', 'text')->where('is_active', true)->get();
                 break;
             case 'vehicle_type_id':
-                $data = VehicleType::select('id', 'text')->get();
+                $data = VehicleType::select('id', 'text')->where("is_active", true)->get();
                 break;
             case 'car_plan_provider_id':
-                $data = InsuranceProvider::select('id', 'text')->get();
+                $data = InsuranceProvider::select('id', 'text')->where("is_active", true)->get();
                 break;
             case 'team_managers':
                 $data = User::select('users.id', 'users.name')
@@ -212,25 +208,25 @@ class DropdownSourceService extends BaseService
                     ->where('roles.name', '=', 'MANAGER')->get();
                 break;
             case 'payment_status_id':
-                $data = PaymentStatus::select('id', 'text')->get();
+                $data = PaymentStatus::select('id', 'text')->where("is_active", true)->get();
                 break;
             case 'addon_id':
                 $data = CarAddOn::select('id', 'text')->get();
                 break;
             case 'code':
-                $data = DB::table("car_plan_coverage")->distinct()->select('car_plan_coverage.code as id','car_plan_coverage.code as text')->whereNotNull('code')->whereNotNull('text')->get();
+                $data = DB::table("car_plan_coverage")->distinct()->select('car_plan_coverage.code as id', 'car_plan_coverage.code as text')->whereNotNull('code')->whereNotNull('text')->get();
                 break;
             case 'currently_located_in_id':
-                $data = DB::table("currently_located_in")->select('id','text')->where("is_active", true)->orderBy('sort_order', 'asc')->get();
+                $data = DB::table("currently_located_in")->select('id', 'text')->where("is_active", true)->orderBy('sort_order', 'asc')->get();
                 break;
             case 'destination_id':
-                $data = DB::table("nationality")->select('id','country_name as text')->where("is_active", true)->orderBy('sort_order', 'asc')->get();
+                $data = DB::table("nationality")->select('id', 'country_name as text')->where("is_active", true)->orderBy('sort_order', 'asc')->get();
                 break;
             case 'salary_band_id':
-                $data = DB::table("salary_band")->select('id','text')->where("is_active", true)->orderBy('sort_order', 'asc')->get();
+                $data = DB::table("salary_band")->select('id', 'text')->where("is_active", true)->orderBy('sort_order', 'asc')->get();
                 break;
             case 'member_category_id':
-                $data = DB::table("member_category")->select('id','text')->where("is_active", true)->orderBy('sort_order', 'asc')->get();
+                $data = DB::table("member_category")->select('id', 'text')->where("is_active", true)->orderBy('sort_order', 'asc')->get();
                 break;
             default:
                 break;

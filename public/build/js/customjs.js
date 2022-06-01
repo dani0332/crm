@@ -30,6 +30,12 @@ $(document).ready(function () {
         dateFormat: "yy-mm-dd",
         yearRange: "-80:+00"
     });
+    $("input[type^=date]").datepicker({ // TM Leads
+        changeMonth: true,
+        changeYear: true,
+        dateFormat: "yy-mm-dd",
+        yearRange: "-80:+00"
+    });
 
     if (window.location.href.indexOf('tmleads') > -1) {
         if (performance.navigation.type == 2) {

@@ -22,6 +22,7 @@ use App\Services\LeadStatusService;
 use App\Services\LifeQuoteService;
 use App\Services\TeamService;
 use App\Services\TravelQuoteService;
+use App\Services\PetQuoteService;
 use App\Services\UserService;
 use App\Services\EmailStatusService;
 use BenSampo\Enum\Rules\EnumValue;
@@ -45,6 +46,7 @@ class CRUDController extends Controller
     protected $lifeQuoteService;
     protected $homeQuoteService;
     protected $businessQuoteService;
+    protected $petQuoteService;
     protected $userService;
     protected $activityService;
     protected $emailStatusService;
@@ -60,6 +62,7 @@ class CRUDController extends Controller
         LifeQuoteService $lifeQuoteService,
         HomeQuoteService $homeQuoteService,
         BusinessQuoteService $businessQuoteService,
+        PetQuoteService $petQuoteService,
         UserService $userService,
         Request $request,
         ActivitiesService $activityService,
@@ -76,6 +79,7 @@ class CRUDController extends Controller
         $this->lifeQuoteService = $lifeQuoteService;
         $this->homeQuoteService = $homeQuoteService;
         $this->businessQuoteService = $businessQuoteService;
+        $this->petQuoteService = $petQuoteService;
         $this->activityService = $activityService;
         $this->userService = $userService;
         $this->emailStatusService = $emailStatusService;
@@ -437,13 +441,14 @@ class CRUDController extends Controller
         if (strpos($url, 'home')) $this->genericModel->modelType = 'Home';
         if (strpos($url, 'business')) $this->genericModel->modelType = 'Business';
         if (strpos($url, 'leadstatus')) $this->genericModel->modelType = 'LeadStatus';
+        if (strpos($url, 'pet')) $this->genericModel->modelType = 'Pet';
     }
 
     private function fillModelByModelType($type, Request $request)
     {
         $modelType = json_decode($request->get('modelType'), true) ?? $type;
         if ($modelType == null) $modelType = $request->get('modelType');
-        $quoteTypes = 'Health,Car,Travel,Life,Home,Business';
+        $quoteTypes = 'Health,Car,Travel,Life,Home,Business,Pet';
         $serviceType = str_contains($quoteTypes, ucwords($modelType)) ? strtolower($modelType) . 'QuoteService' : lcfirst(ucwords($modelType)) . 'Service';
         $this->genericModel->properties = $this->{$serviceType}->fillModelProperties();
         $this->genericModel->skipProperties = $this->{$serviceType}->fillModelSkipProperties();

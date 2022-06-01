@@ -36,6 +36,7 @@ class quoteTypeCode extends Enum
     const BikeQuote = "BikeQuote";
     const YachtQuote = "YachtQuote";
     const TravelQuote = "TravelQuote";
+    const PetQuote = "PetQuote";
     const RenewalsUpload = "RenewalsUpload";
     const yesText = "Yes";
     const noText = "No";

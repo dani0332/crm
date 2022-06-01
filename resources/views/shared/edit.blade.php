@@ -212,7 +212,11 @@
                                                     @endforeach
                                                 @else
                                                 @foreach($dropdownSource[$property] as $item)
-                                                    <option value="{{$item->id}}" {{ $item->id == old($item->id, $record->$property) ? 'selected' : ''}}>{{ $item->text ?? $item->name }}</option>
+                                                @if($property == 'currently_insured_with')
+                                                <option value="{{$item->text}}" {{ $item->text == old($item->id, $record->$property) ? 'selected' : ''}}>{{ $item->text ?? $item->name }}</option>
+                                                @else
+                                                <option value="{{$item->id}}" {{ $item->id == old($item->id, $record->$property) ? 'selected' : ''}}>{{ $item->text ?? $item->name }}</option>
+                                                @endif
                                                 @endforeach
 
                                                 @endif
@@ -242,7 +246,7 @@
                                             @endif
                                         @endif
                                         @if(strpos($value, 'static') !== false )
-                                    
+
                                     <div class="col">
                                         <span class="col-form-label col-md-6 col-sm-6" for="name">
                                             @if(strpos($value, 'title'))

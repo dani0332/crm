@@ -59,7 +59,7 @@
                 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
             }
         });
-        $('#update_car_plan_button').on('click', function(e) {
+        $('#update_car_plan_button, #update_car_plan_addons_button').on('click', function(e) {
             var actual_premium = $("#actual_premium").val();
             var discounted_premium = $("#discounted_premium").val();
             var car_value = $("#car_value").val();
@@ -106,11 +106,11 @@
                 }),
                 success: function(result) {
                     $(".loader").hide();
-                    $('#car_plan_manual_process_text').show().text(result).delay(5000).fadeOut(300);
+                    $('#car_plan_manual_process_text, #car_plan_addon_manual_process_text').show().text(result).delay(5000).fadeOut(300);
                 },
                 error: function(jqXhr, textStatus, errorMessage){
                     $(".loader").hide();
-                    $('#car_plan_manual_process_text').show().text(jqXhr.responseText).delay(5000).fadeOut(300);
+                    $('#car_plan_manual_process_text, #car_plan_addon_manual_process_text').show().text(jqXhr.responseText).delay(5000).fadeOut(300);
                 }
             });
         });
@@ -430,7 +430,6 @@
                                 <tr>
                                     <td>
                                         <table cellpadding="3" cellspacing="3">
-                                            <ul>
                                                 @foreach ($listQuotePlanAddons as $listQuotePlanAddon)
                                                     @foreach ($listQuotePlanAddon->carAddonOption as $carAddonOption)
                                                     <tr>
@@ -473,6 +472,18 @@
                                                     </tr>
                                                     @endforeach
                                                 @endforeach
+                                                <tr>
+                                                    <td colspan="3"> </td>
+                                                    <td align="center"> </td>
+                                                </tr>
+                                                <tr>
+                                                    <td colspan="3"> </td>
+                                                    <td align="center"> </td>
+                                                </tr>
+                                                <tr>
+                                                    <td colspan="3" align="right"><div id="car_plan_addon_manual_process_text" style="display: none;font-weight:bold;"></div></td>
+                                                    <td align="center"><button type="submit" class="btn btn-warning btn-sm" id="update_car_plan_addons_button" {{ $carQuoteEditDisable }}>Update</button></td>
+                                                </tr>
                                         </table>
                                     </td>
                                 </tr>
