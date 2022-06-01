@@ -61,7 +61,7 @@ class MyLeadsController extends Controller
             if(Auth::user()->isRenewalAdvisor()){
                 $teamName = strtolower($request->leadType); 
             }
-            $allowedTypes = ['car', 'home', 'business', 'health', 'life', 'travel'];
+            $allowedTypes = ['car', 'home', 'business', 'health', 'life', 'travel','pet'];
             $gridData = in_array($teamName, $allowedTypes) ? $this->crudService->getAdvisorLeads($request, $teamName) : [];
             return DataTables::of($gridData)
                 ->addIndexColumn()

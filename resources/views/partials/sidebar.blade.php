@@ -14,7 +14,7 @@
                 <ul class="nav side-menu">
                     <li> <a href="{{ url('/leadsearch') }}"><i class="fa fa-home"></i> Home</a></li>
                 </ul>
-                @if (Auth::user()->hasAnyRole(['ADMIN','CAR_ADVISOR', 'BUSINESS_ADVISOR', 'HEALTH_ADVISOR','HOME_ADVISOR','LIFE_ADVISOR','TRAVEL_ADVISOR', 'GM_ADVISOR', 'RM_ADVISOR', 'CORPLINE_ADVISOR', 'EBP_ADVISOR', 'HEALTH_WCU_ADVISOR','HEALTH_RENEWAL_ADVISOR','HEALTH_NEW_BUSINESS_ADVISOR','TRAVEL_RENEWAL_ADVISOR','TRAVEL_NEW_BUSINESS_ADVISOR','LIFE_RENEWAL_ADVISOR','LIFE_NEW_BUSINESS_ADVISOR','HOME_RENEWAL_ADVISOR','HOME_NEW_BUSINESS_ADVISOR','GM_NEW_BUSINESS_ADVISOR','GM_RENEWAL_ADVISOR','CORPLINE_RENEWAL_ADVISOR','CORPLINE_NEW_BUSINESS_ADVISOR','CAR_RENEWAL_ADVISOR']))
+                @if (Auth::user()->hasAnyRole(['ADMIN','CAR_ADVISOR', 'BUSINESS_ADVISOR', 'HEALTH_ADVISOR','HOME_ADVISOR','LIFE_ADVISOR','TRAVEL_ADVISOR', 'GM_ADVISOR', 'RM_ADVISOR', 'CORPLINE_ADVISOR', 'EBP_ADVISOR', 'HEALTH_WCU_ADVISOR','HEALTH_RENEWAL_ADVISOR','HEALTH_NEW_BUSINESS_ADVISOR','TRAVEL_RENEWAL_ADVISOR','TRAVEL_NEW_BUSINESS_ADVISOR','LIFE_RENEWAL_ADVISOR','LIFE_NEW_BUSINESS_ADVISOR','HOME_RENEWAL_ADVISOR','HOME_NEW_BUSINESS_ADVISOR','GM_NEW_BUSINESS_ADVISOR','GM_RENEWAL_ADVISOR','CORPLINE_RENEWAL_ADVISOR','CORPLINE_NEW_BUSINESS_ADVISOR','CAR_RENEWAL_ADVISOR','PET_NEW_BUSINESS_ADVISOR','PET_RENEWAL_ADVISOR']))
                     <ul class="nav side-menu">
                         <li>
                             <a  href="{{ url('/myleads') }}"><i class="fa fa-inbox"></i> My Leads</a>
@@ -57,7 +57,7 @@
                     <li> <a href="{{ url('/activities') }}"> <i class="fa fa-list-alt" aria-hidden="true"></i> Activities</a></li>
                 </ul>
                 @endcan
-                @canany(['car-quotes-list', 'health-quotes-list', 'travel-quotes-list', 'life-quotes-list', 'home-quotes-list'])
+                @canany(['car-quotes-list', 'health-quotes-list', 'travel-quotes-list', 'life-quotes-list', 'home-quotes-list', 'pet-quotes-list'])
                 <ul class="nav side-menu">
                     <li><a><i class="fa fa-quote-left"></i> Personal Quotes <span class="fa fa-chevron-down"></span></a>
                         <ul class="nav child_menu">
@@ -78,6 +78,9 @@
                             @endcan
                             @can('home-quotes-list')
                                 <li><a href="{{ url('quotes/home') }}">Home Quotes</a></li>
+                            @endcan
+                            @can('pet-quotes-list')
+                                <li><a href="{{ url('quotes/pet') }}">Pet Quotes</a></li>
                             @endcan
                         </ul>
                     </li>

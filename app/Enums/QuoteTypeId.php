@@ -20,6 +20,7 @@ final class QuoteTypeId extends Enum
     const Bike = 6;
     const Yacht = 7;
     const Travel = 8;
+    const Pet = 9;
     public static function getOptions() 
     {
         $oClass = new ReflectionClass(__CLASS__);

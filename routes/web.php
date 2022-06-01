@@ -161,8 +161,9 @@ Route::group(['middleware' =>  ['auth']], function () {
         Route::resource('home', CRUDController::class);
         Route::resource('business', CRUDController::class);
         Route::resource('travel', CRUDController::class);
+        Route::resource('pet', CRUDController::class);
         Route::resource('teams', CRUDController::class);
-        Route::resource('leadstatus', CRUDController::class);
+        Route::resource('leadstatus', CRUDController::class);  
         Route::post('save', [CRUDController::class, 'store'])->name('saveQuote');
         Route::post('update', [CRUDController::class, 'update'])->name('updateQuote');
         Route::post('createDuplicate', [CRUDController::class, 'createDuplicate'])->name('createDuplicate');
