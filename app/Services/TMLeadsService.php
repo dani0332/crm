@@ -6,6 +6,7 @@ use App\Models\TmInsuranceType;
 use App\Models\TmLeadStatus;
 use Illuminate\Http\Request;
 use App\Enums\tmInsuranceTypeCode;
+use App\Enums\TmLeadsCode;
 use App\Enums\tmLeadStatusCode;
 use Auth;
 use App\Models\TmLeadContactInformation;
@@ -158,6 +159,10 @@ class TMLeadsService
     {
         $assignedToUserIdNew = $request->assigned_to_id_new;
         $tmLeadsIds = $request->selectTmLeadId;
+
+        if(substr($tmLeadsIds, 0, 1) == TmLeadsCode::COMMA) {
+            $tmLeadsIds = substr($tmLeadsIds, 1);
+        }
 
         $tmLeadsIds = array_map('intval', explode(',', $tmLeadsIds));
         foreach($tmLeadsIds as $tmLeadsId) {
