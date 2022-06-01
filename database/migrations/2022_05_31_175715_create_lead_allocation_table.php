@@ -15,11 +15,11 @@ class CreateLeadAllocationTable extends Migration
     {
         Schema::create('lead_allocation', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('user_id')->nullable(false);
+            $table->unsignedBigInteger('user_id')->index();
             $table->foreign('user_id')->references('id')->on('users');
-            $table->unsignedBigInteger('last_allocation_date')->default(DB::raw('UNIX_TIMESTAMP()'));
-            $table->integer('allocation_count')->default(0);
-            $table->integer('max_capacity')->default(0);
+            $table->integer('last_allocation_date');
+            $table->integer('allocation_count');
+            $table->integer('max_capacity');
             $table->boolean('is_available')->default(false);
 
             $table->timestamps();

@@ -15,6 +15,7 @@ use App\Http\Controllers\RewardTranslationController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\CarQouteController;
 use App\Http\Controllers\HealthQouteController;
+use App\Http\Controllers\LeadAllocationController;
 use App\Http\Controllers\ClaimController;
 use App\Http\Controllers\TypeOfInsuranceController;
 use App\Http\Controllers\SubTypeOfInsuranceController;
@@ -123,7 +124,8 @@ Route::group(['middleware' =>  ['auth']], function () {
     Route::resource('customer', CustomerController::class);
     Route::get('/customer-upload', [CustomerController::class, 'uploadCustomers']);
     Route::post('/customer-process', [CustomerController::class, 'processCustomerCSV']);
-    Route::get('/leadAllocation', [UserController::class, 'leadAllocation']);
+
+    Route::resource('lead-allocation', LeadAllocationController::class);
 
     Route::group(['prefix' => 'renewals'], function () {
         Route::resource('uploaded-leads', RenewalsUploadController::class);
@@ -164,7 +166,7 @@ Route::group(['middleware' =>  ['auth']], function () {
         Route::resource('travel', CRUDController::class);
         Route::resource('pet', CRUDController::class);
         Route::resource('teams', CRUDController::class);
-        Route::resource('leadstatus', CRUDController::class);  
+        Route::resource('leadstatus', CRUDController::class);
         Route::post('save', [CRUDController::class, 'store'])->name('saveQuote');
         Route::post('update', [CRUDController::class, 'update'])->name('updateQuote');
         Route::post('createDuplicate', [CRUDController::class, 'createDuplicate'])->name('createDuplicate');

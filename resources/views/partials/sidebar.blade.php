@@ -14,10 +14,10 @@
                 <ul class="nav side-menu">
                     <li> <a href="{{ url('/leadsearch') }}"><i class="fa fa-home"></i> Home</a></li>
                 </ul>
-                @if (Auth::user()->hasAnyRole(['ADMIN','CAR_ADVISOR', 'BUSINESS_ADVISOR', 'HEALTH_ADVISOR','HOME_ADVISOR','LIFE_ADVISOR','TRAVEL_ADVISOR', 'GM_ADVISOR', 'RM_ADVISOR', 'CORPLINE_ADVISOR', 'EBP_ADVISOR', 'HEALTH_WCU_ADVISOR','HEALTH_RENEWAL_ADVISOR','HEALTH_NEW_BUSINESS_ADVISOR','TRAVEL_RENEWAL_ADVISOR','TRAVEL_NEW_BUSINESS_ADVISOR','LIFE_RENEWAL_ADVISOR','LIFE_NEW_BUSINESS_ADVISOR','HOME_RENEWAL_ADVISOR','HOME_NEW_BUSINESS_ADVISOR','GM_NEW_BUSINESS_ADVISOR','GM_RENEWAL_ADVISOR','CORPLINE_RENEWAL_ADVISOR','CORPLINE_NEW_BUSINESS_ADVISOR','CAR_RENEWAL_ADVISOR','PET_NEW_BUSINESS_ADVISOR','PET_RENEWAL_ADVISOR']))
+                @if (Auth::user()->hasAnyRole(['ADMIN', 'CAR_ADVISOR', 'BUSINESS_ADVISOR', 'HEALTH_ADVISOR', 'HOME_ADVISOR', 'LIFE_ADVISOR', 'TRAVEL_ADVISOR', 'GM_ADVISOR', 'RM_ADVISOR', 'CORPLINE_ADVISOR', 'EBP_ADVISOR', 'HEALTH_WCU_ADVISOR', 'HEALTH_RENEWAL_ADVISOR', 'HEALTH_NEW_BUSINESS_ADVISOR', 'TRAVEL_RENEWAL_ADVISOR', 'TRAVEL_NEW_BUSINESS_ADVISOR', 'LIFE_RENEWAL_ADVISOR', 'LIFE_NEW_BUSINESS_ADVISOR', 'HOME_RENEWAL_ADVISOR', 'HOME_NEW_BUSINESS_ADVISOR', 'GM_NEW_BUSINESS_ADVISOR', 'GM_RENEWAL_ADVISOR', 'CORPLINE_RENEWAL_ADVISOR', 'CORPLINE_NEW_BUSINESS_ADVISOR', 'CAR_RENEWAL_ADVISOR', 'PET_NEW_BUSINESS_ADVISOR', 'PET_RENEWAL_ADVISOR']))
                     <ul class="nav side-menu">
                         <li>
-                            <a  href="{{ url('/myleads') }}"><i class="fa fa-inbox"></i> My Leads</a>
+                            <a href="{{ url('/myleads') }}"><i class="fa fa-inbox"></i> My Leads</a>
                         </li>
                     </ul>
                 @endif
@@ -32,7 +32,8 @@
 
                 <ul class="nav side-menu">
                     <li>
-                        <a  href="{{ url('/leadAllocation') }}"><i class="fa fa-globe"></i> Lead Alloc. Management</a>
+                        <a href="{{ url('/lead-allocation') }}"><i class="fa fa-globe"></i> Lead Alloc.
+                            Management</a>
                     </li>
                 </ul>
 
@@ -53,58 +54,61 @@
                                     <li><a href="{{ url('rewards/reward-tags') }}">Reward Tags</a></li>
                                 @endcan
                                 @can('reward-sliders-list')
-                                <li><a href="{{ url('rewards/reward-sliders') }}">Reward Slider</a></li>
-                            @endcan
+                                    <li><a href="{{ url('rewards/reward-sliders') }}">Reward Slider</a></li>
+                                @endcan
                             </ul>
                         </li>
                     </ul>
                 @endcan
-               @can('activities-list')
-                <ul class="nav side-menu">
-                    <li> <a href="{{ url('/activities') }}"> <i class="fa fa-list-alt" aria-hidden="true"></i> Activities</a></li>
-                </ul>
+                @can('activities-list')
+                    <ul class="nav side-menu">
+                        <li> <a href="{{ url('/activities') }}"> <i class="fa fa-list-alt" aria-hidden="true"></i>
+                                Activities</a></li>
+                    </ul>
                 @endcan
-                @canany(['car-quotes-list', 'health-quotes-list', 'travel-quotes-list', 'life-quotes-list', 'home-quotes-list', 'pet-quotes-list'])
-                <ul class="nav side-menu">
-                    <li><a><i class="fa fa-quote-left"></i> Personal Quotes <span class="fa fa-chevron-down"></span></a>
-                        <ul class="nav child_menu">
-                            {{-- @can('car-quotes-list')
+                @canany(['car-quotes-list', 'health-quotes-list', 'travel-quotes-list', 'life-quotes-list',
+                    'home-quotes-list', 'pet-quotes-list'])
+                    <ul class="nav side-menu">
+                        <li><a><i class="fa fa-quote-left"></i> Personal Quotes <span class="fa fa-chevron-down"></span></a>
+                            <ul class="nav child_menu">
+                                {{-- @can('car-quotes-list')
                                 <li><a href="{{ url('quotes/carquotes') }}">Car Quotes</a></li>
                             @endcan --}}
-                            @can('car-quotes-list')
-                                <li><a href="{{ url('quotes/car') }}">Car Quotes</a></li>
-                            @endcan
-                            @can('health-quotes-list')
-                                <li><a href={{ url('quotes/health') }}>Health Quotes</a></li>
-                            @endcan
-                            @can('travel-quotes-list')
-                                <li><a href="{{ url('quotes/travel') }}">Travel Quotes</a></li>
-                            @endcan
-                            @can('life-quotes-list')
-                                <li><a href="{{ url('quotes/life') }}">Life Quotes</a></li>
-                            @endcan
-                            @can('home-quotes-list')
-                                <li><a href="{{ url('quotes/home') }}">Home Quotes</a></li>
-                            @endcan
-                            @can('pet-quotes-list')
-                                <li><a href="{{ url('quotes/pet') }}">Pet Quotes</a></li>
-                            @endcan
-                        </ul>
-                    </li>
-                </ul>
+                                @can('car-quotes-list')
+                                    <li><a href="{{ url('quotes/car') }}">Car Quotes</a></li>
+                                @endcan
+                                @can('health-quotes-list')
+                                    <li><a href={{ url('quotes/health') }}>Health Quotes</a></li>
+                                @endcan
+                                @can('travel-quotes-list')
+                                    <li><a href="{{ url('quotes/travel') }}">Travel Quotes</a></li>
+                                @endcan
+                                @can('life-quotes-list')
+                                    <li><a href="{{ url('quotes/life') }}">Life Quotes</a></li>
+                                @endcan
+                                @can('home-quotes-list')
+                                    <li><a href="{{ url('quotes/home') }}">Home Quotes</a></li>
+                                @endcan
+                                @can('pet-quotes-list')
+                                    <li><a href="{{ url('quotes/pet') }}">Pet Quotes</a></li>
+                                @endcan
+                            </ul>
+                        </li>
+                    </ul>
                 @endcanany
                 @canany(['gm-quotes-list', 'corpline-quotes-list'])
-                <ul class="nav side-menu">
-                    <li> <a><i class="fa fa-quote-right"></i> Business Quotes <span class="fa fa-chevron-down"></span></a>
-                        <ul class="nav child_menu">
+                    <ul class="nav side-menu">
+                        <li> <a><i class="fa fa-quote-right"></i> Business Quotes <span
+                                    class="fa fa-chevron-down"></span></a>
+                            <ul class="nav child_menu">
                                 @can('gm-quotes-list')
-                                <li><a href="{{ url('medical/amt') }}"> Group Medical Quotes </a></li>
+                                    <li><a href="{{ url('medical/amt') }}"> Group Medical Quotes </a></li>
                                 @endcan
                                 @can('corpline-quotes-list')
-                                <li><a href="{{ url('quotes/business') }}"> CorpLine Quotes </a></li>
+                                    <li><a href="{{ url('quotes/business') }}"> CorpLine Quotes </a></li>
                                 @endcan
-                        </ul>
-                </ul>
+                            </ul>
+                    </ul>
                 @endcanany
                 @canany(['vehicle-depreciation-list', 'vehicle-valuation-list'])
                     <ul class="nav side-menu">
@@ -141,7 +145,7 @@
                                     <li><a href="{{ route('home') }}">Search Transaction</a></li>
                                 @endcan
                                 @can('transapp-create')
-                                <li><a href="{{ route('transaction.create') }}">Create Transaction</a></li>
+                                    <li><a href="{{ route('transaction.create') }}">Create Transaction</a></li>
                                 @endcan
                                 @can('transapp-edit')
                                     <li class="sub_menu"><a href="{{ route('reissue_view') }}">Cancel & Re-Issue
@@ -278,31 +282,32 @@
                         </li>
                     </ul>
                 @endcan
-                @canany(['users-list', 'role-list', 'teams-list', 'inusrance-provider-list','application-storage-list'])
-                <ul class="nav side-menu">
-                    <li><a><i class="fa fa-user"></i> Admin <span class="fa fa-chevron-down"></span></a>
-                        <ul class="nav child_menu">
-                            @can('users-list')
-                                <li><a href="{{ url('admin/users') }}">Users</a></li>
-                            @endcan
-                            @can('role-list')
-                                <li><a href="{{ url('admin/roles') }}">Roles</a></li>
-                            @endcan
-                            @can('teams-list')
-                                <li><a href="{{ url('generic/teams') }}">Teams</a></li>
-                            @endcan
-                            @can('teams-list')
-                                <li><a href="{{ url('quotes/leadstatus') }}">Lead Status</a></li>
-                            @endcan
-                            @can('inusrance-provider-list')
-                             <li><a href="{{ url('generic/insuranceprovider') }}">Insurance Providers</a></li>
-                            @endcan
-                            @can('application-storage-list')
-                            <li><a href="{{ url('generic/applicationstorage') }}">Application Storage</a></li>
-                            @endcan
-                        </ul>
-                    </li>
-                </ul>
+                @canany(['users-list', 'role-list', 'teams-list', 'inusrance-provider-list',
+                    'application-storage-list'])
+                    <ul class="nav side-menu">
+                        <li><a><i class="fa fa-user"></i> Admin <span class="fa fa-chevron-down"></span></a>
+                            <ul class="nav child_menu">
+                                @can('users-list')
+                                    <li><a href="{{ url('admin/users') }}">Users</a></li>
+                                @endcan
+                                @can('role-list')
+                                    <li><a href="{{ url('admin/roles') }}">Roles</a></li>
+                                @endcan
+                                @can('teams-list')
+                                    <li><a href="{{ url('generic/teams') }}">Teams</a></li>
+                                @endcan
+                                @can('teams-list')
+                                    <li><a href="{{ url('quotes/leadstatus') }}">Lead Status</a></li>
+                                @endcan
+                                @can('inusrance-provider-list')
+                                    <li><a href="{{ url('generic/insuranceprovider') }}">Insurance Providers</a></li>
+                                @endcan
+                                @can('application-storage-list')
+                                    <li><a href="{{ url('generic/applicationstorage') }}">Application Storage</a></li>
+                                @endcan
+                            </ul>
+                        </li>
+                    </ul>
                 @endcanany
             </div>
         </div>

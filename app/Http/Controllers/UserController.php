@@ -13,8 +13,6 @@ use DB;
 use Illuminate\Http\Request;
 use Spatie\Permission\Models\Role;
 use Auth;
-use Carbon\Carbon;
-use Illuminate\Support\Facades\Gate;
 
 class UserController extends Controller
 {
@@ -269,21 +267,5 @@ class UserController extends Controller
             }
         }
         return $teamManagers;
-    }
-
-    public function leadAllocation(Request $request)
-    {
-        if (Gate::allows('view-lead-allocation', Auth::user())) {
-
-            if ($request->ajax()) {
-                $data = $this->leadAllocationService->getGridData($request);
-                return Datatables::of($data)
-                    ->addIndexColumn()
-                    ->make(true);
-            }
-            return view('user.lead-allocation');
-        } else {
-            abort(403, 'Unauthorized action.');
-        }
     }
 }
