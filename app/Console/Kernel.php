@@ -16,9 +16,9 @@ class Kernel extends ConsoleKernel
      * @var array
      */
     protected $commands = [
-        DailyInslyDataCapture::class,
-        InslyOldDataCapture::class,
-        Commands\FTCAcKEmail::class,
+        // DailyInslyDataCapture::class,
+        // InslyOldDataCapture::class,
+        // Commands\FTCAcKEmail::class,
     ];
 
     /**
@@ -37,18 +37,18 @@ class Kernel extends ConsoleKernel
         // ->withoutOverlapping();
         // // ->emailOutputOnFailure('ahsan.ashfaq@afia.ae')
         //echo(phpinfo());
-        $schedule
-        ->command('InslyOldDataCapture:all')
-        ->timezone('Asia/Dubai')
-        ->between('09:00', '07:00')
-        ->everyThirtyMinutes()
-        ->runInBackground()
-        ->onOneServer()
-        ->withoutOverlapping();
+        // $schedule
+        //     ->command('InslyOldDataCapture:all')
+        //     ->timezone('Asia/Dubai')
+        //     ->between('09:00', '07:00')
+        //     ->everyThirtyMinutes()
+        //     ->runInBackground()
+        //     ->onOneServer()
+        //     ->withoutOverlapping();
 
 
-        $schedule->command('log:FTCAckEmail')
-                 ->everyFifteenMinutes();
+        // $schedule->command('log:FTCAckEmail')
+        //     ->everyFifteenMinutes();
     }
 
     /**
@@ -58,7 +58,7 @@ class Kernel extends ConsoleKernel
      */
     protected function commands()
     {
-        $this->load(__DIR__.'/Commands');
+        $this->load(__DIR__ . '/Commands');
 
         require base_path('routes/console.php');
     }
