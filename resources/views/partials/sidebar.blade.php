@@ -29,6 +29,13 @@
                             </ul>
                     </ul>
                 @endcan --}}
+
+                <ul class="nav side-menu">
+                    <li>
+                        <a  href="{{ url('/leadallocation') }}"><i class="fa fa-inbox"></i> Lead Allocation Management</a>
+                    </li>
+                </ul>
+
                 @can('rewards-list')
                     <ul class="nav side-menu">
                         <li><a><i class="fa fa-gift"></i> Rewards <span class="fa fa-chevron-down"></span></a>
@@ -288,7 +295,7 @@
                              <li><a href="{{ url('generic/insuranceprovider') }}">Insurance Providers</a></li>
                             @endcan
                             @can('application-storage-list')
-                            <li><a href="{{ url('generic/applicationstorage') }}">Application Storage</a></li> 
+                            <li><a href="{{ url('generic/applicationstorage') }}">Application Storage</a></li>
                             @endcan
                         </ul>
                     </li>

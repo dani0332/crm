@@ -25,6 +25,16 @@ class AuthServiceProvider extends ServiceProvider
     {
         $this->registerPolicies();
 
-        //
+        Gate::define('view-lead-allocation', function ($user) {
+
+            $userRoles = $user->usersroles()->get();
+            $isAllowed = false;
+            foreach ($userRoles as $userRole) {
+                if (str_contains(strtolower($userRole->name), 'lead_allocation')) {
+                    $isAllowed = true;
+                }
+            }
+            return $isAllowed;
+        });
     }
 }
