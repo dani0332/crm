@@ -7,19 +7,23 @@ use App\Models\Team;
 use App\Models\User;
 use App\Models\LeadAllocation;
 use App\Services\LeadAllocationService;
+use App\Services\UserService;
 use DataTables;
 use DB;
 use Illuminate\Http\Request;
 use Spatie\Permission\Models\Role;
 use Auth;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Gate;
 
 class UserController extends Controller
 {
     protected $leadAllocationService;
-    public function __construct(LeadAllocationService $leadAllocationService)
+    protected $userService;
+    public function __construct(LeadAllocationService $leadAllocationService, UserService $userService)
     {
         $this->leadAllocationService = $leadAllocationService;
+        $this->userService = $userService;
         $this->middleware('permission:users-list|users-create|users-edit|users-delete', ['only' => ['index', 'store']]);
         $this->middleware('permission:users-create', ['only' => ['create', 'store']]);
         $this->middleware('permission:users-edit', ['only' => ['edit', 'update']]);
@@ -110,32 +114,10 @@ class UserController extends Controller
             'password' => 'required',
             'team' => 'required',
         ]);
-        $user = new User();
-        $user->name = $request->name;
-        $user->email = $request->email;
-        $user->mobile_no = $request->mobile_no;
-        $user->landline_no = $request->landline_no;
-        $user->password = bcrypt($request->password);
 
-        if ($request->sub_team_id != "0") $user->sub_team_id = $request->sub_team_id;
+        $user = $this->userService->createUserRecord($request);
 
-        if ($request->manager != "0") $user->manager_id = $request->manager;
-        else $user->manager_id = null;
-
-        if (isset($request->additionalTeams)) {
-            if (count((array)$request->additionalTeams) > 0)  $user->additional_team_ids = implode(',', $request->additionalTeams);
-            else $user->additional_team_ids = $request->additionalTeams[0];
-        }
-        $user->team_id = $request->team;
-        $user->save();
-
-        $leadAllocation = new LeadAllocation();
-        $leadAllocation->user_id = $user->id;
-        $leadAllocation->allocation_count = 0;
-        $leadAllocation->last_allocation_date = null;
-        $leadAllocation->max_capacity = 0;
-        $leadAllocation->is_available = false;
-        $leadAllocation->save();
+        $this->leadAllocationService->createLeadAllocationRecord($user->id);
 
         $user->assignRole($request->input('roles'));
         if (isset($request->return_to_view))

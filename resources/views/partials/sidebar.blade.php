@@ -32,7 +32,7 @@
 
                 <ul class="nav side-menu">
                     <li>
-                        <a  href="{{ url('/leadallocation') }}"><i class="fa fa-inbox"></i> Lead Allocation Management</a>
+                        <a  href="{{ url('/leadAllocation') }}"><i class="fa fa-globe"></i> Lead Alloc. Management</a>
                     </li>
                 </ul>
 
