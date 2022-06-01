@@ -185,7 +185,7 @@ class DropdownSourceService extends BaseService
                 $data = Emirate::select('id', 'text')->get();
                 break;
             case 'currently_insured_with':
-                $data = InsuranceProvider::select('id', 'text')->get();
+                $data = InsuranceProvider::select('text as id', 'text')->where('is_active', 1)->get();
                 break;
             case 'car_type_insurance_id':
                 $data = CarTypeInsurance::select('id', 'text')->get();
@@ -218,19 +218,19 @@ class DropdownSourceService extends BaseService
                 $data = CarAddOn::select('id', 'text')->get();
                 break;
             case 'code':
-                $data = DB::table("car_plan_coverage")->distinct()->select('car_plan_coverage.code as id','car_plan_coverage.code as text')->whereNotNull('code')->whereNotNull('text')->get();
+                $data = DB::table("car_plan_coverage")->distinct()->select('car_plan_coverage.code as id', 'car_plan_coverage.code as text')->whereNotNull('code')->whereNotNull('text')->get();
                 break;
             case 'currently_located_in_id':
-                $data = DB::table("currently_located_in")->select('id','text')->where("is_active", true)->orderBy('sort_order', 'asc')->get();
+                $data = DB::table("currently_located_in")->select('id', 'text')->where("is_active", true)->orderBy('sort_order', 'asc')->get();
                 break;
             case 'destination_id':
-                $data = DB::table("nationality")->select('id','country_name as text')->where("is_active", true)->orderBy('sort_order', 'asc')->get();
+                $data = DB::table("nationality")->select('id', 'country_name as text')->where("is_active", true)->orderBy('sort_order', 'asc')->get();
                 break;
             case 'salary_band_id':
-                $data = DB::table("salary_band")->select('id','text')->where("is_active", true)->orderBy('sort_order', 'asc')->get();
+                $data = DB::table("salary_band")->select('id', 'text')->where("is_active", true)->orderBy('sort_order', 'asc')->get();
                 break;
             case 'member_category_id':
-                $data = DB::table("member_category")->select('id','text')->where("is_active", true)->orderBy('sort_order', 'asc')->get();
+                $data = DB::table("member_category")->select('id', 'text')->where("is_active", true)->orderBy('sort_order', 'asc')->get();
                 break;
             default:
                 break;
