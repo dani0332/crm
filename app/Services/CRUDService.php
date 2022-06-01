@@ -10,6 +10,7 @@ use App\Models\QuoteStatusLog;
 use App\Models\User;
 use App\Services\TeamService;
 use App\Services\HealthQuoteService;
+use App\Services\PetQuoteService;
 use App\Services\InsuranceProviderService;
 use App\Services\CarPlanService;
 use App\Services\CarPlanCoverageService;
@@ -31,6 +32,7 @@ class CRUDService extends BaseService
     protected $lifeQuoteService;
     protected $homeQuoteService;
     protected $businessQuoteService;
+    protected $petQuoteService;
     protected $quoteTypes;
     protected $insuranceproviderService;
     protected $carplancoverageService;
@@ -47,6 +49,7 @@ class CRUDService extends BaseService
         LifeQuoteService $lifeQuoteService,
         HomeQuoteService $homeQuoteService,
         BusinessQuoteService $businessQuoteService,
+        PetQuoteService $petQuoteService,
         InsuranceProviderService $insuranceproviderService,
         CarPlanService $carplanService,
         CarPlanCoverageService $carplancoverageService,
@@ -62,13 +65,14 @@ class CRUDService extends BaseService
         $this->lifeQuoteService = $lifeQuoteService;
         $this->homeQuoteService = $homeQuoteService;
         $this->businessQuoteService = $businessQuoteService;
+        $this->petQuoteService = $petQuoteService;
         $this->insuranceproviderService = $insuranceproviderService;
         $this->carplanService = $carplanService;
         $this->carplancoverageService = $carplancoverageService;
         $this->carplanaddonService = $carplanaddonService;
         $this->carplanaddonoptionService = $carplanaddonoptionService;
         $this->applicationstorageService = $applicationstorageService;
-        $this->quoteTypes = ['home', 'health', 'life', 'business', 'travel', 'car'];
+        $this->quoteTypes = ['home', 'health', 'life', 'business', 'travel', 'car','pet'];
     }
     public function getGridData(GenericModel $model, Request $request)
     {
@@ -113,7 +117,7 @@ class CRUDService extends BaseService
 
     public function getAllowedDuplicateLOB($modelType, $leadCode)
     {
-        $allowedLeadTypes = ['Home', 'Health', 'Life', 'Corpline', 'Group Medical', 'Travel', 'Car'];
+        $allowedLeadTypes = ['Home', 'Health', 'Life', 'Corpline', 'Group Medical', 'Travel', 'Car', 'Pet'];
         if(strtolower($modelType) == 'business') {
             $modelType = 'Corpline';
         }
