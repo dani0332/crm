@@ -159,6 +159,10 @@ class TMLeadsService
         $assignedToUserIdNew = $request->assigned_to_id_new;
         $tmLeadsIds = $request->selectTmLeadId;
 
+        if(substr($tmLeadsIds, 0, 1) == ',') {
+            $tmLeadsIds = substr($tmLeadsIds, 1);
+        }
+
         $tmLeadsIds = array_map('intval', explode(',', $tmLeadsIds));
         foreach($tmLeadsIds as $tmLeadsId) {
             $updateTmLead = TmLead::find($tmLeadsId);
