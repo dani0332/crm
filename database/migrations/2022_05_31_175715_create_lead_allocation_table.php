@@ -17,7 +17,7 @@ class CreateLeadAllocationTable extends Migration
             $table->id();
             $table->unsignedBigInteger('user_id')->index();
             $table->foreign('user_id')->references('id')->on('users');
-            $table->integer('last_allocation_date');
+            $table->integer('last_allocated');
             $table->integer('allocation_count');
             $table->integer('max_capacity');
             $table->boolean('is_available')->default(false);

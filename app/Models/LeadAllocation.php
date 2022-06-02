@@ -23,4 +23,9 @@ class LeadAllocation extends Model implements AuditableContract
         $date_time_format = Config::get('constants.datetime_format');
         return $this->asDateTime($table)->timezone(config('app.timezone'))->format($date_time_format);
     }
+
+    public function leadAllocationUser()
+    {
+        return $this->hasOne(User::class, 'id', 'user_id');
+    }
 }

@@ -45,6 +45,7 @@ $appName = Config::get('constants.APP_NAME');
 
     <!-- iCheck -->
     <link href="{{ asset('vendors/iCheck/skins/flat/green.css') }}" rel="stylesheet">
+
     <style>
         .loader {
             position: fixed;

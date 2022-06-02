@@ -24,7 +24,7 @@ class LeadAllocationController extends Controller
     public function index(Request $request)
     {
         if (Gate::allows('view-lead-allocation', Auth::user())) {
-
+            $this->leadAllocationService->assignNewLead();
             if ($request->ajax()) {
                 $data = $this->leadAllocationService->getGridData($request);
                 return Datatables::of($data)
