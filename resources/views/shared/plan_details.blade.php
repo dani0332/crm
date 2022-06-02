@@ -438,11 +438,7 @@
 
                                                         @if($carAddonOption->price == 0)
                                                             <?php
-                                                                if(isset($carAddonOption->isSelected)) {
-                                                                    $carAddonOptionIsSelected = $carAddonOption->isSelected;
-                                                                } else {
-                                                                    $carAddonOptionIsSelected = false;
-                                                                }
+                                                                $carAddonOptionIsSelected = isset($carAddonOption->isSelected) ? $carAddonOption->isSelected : false;
                                                             ?>
                                                         <td style="width: 430px;height: 30px;">Free</td>
                                                         <td style="width: 430px;height: 30px;">
