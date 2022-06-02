@@ -171,6 +171,7 @@ class CarQuoteService extends BaseService
         $carQuote->car_model_id = $request->car_model_id;
         $carQuote->currently_insured_with = $request->currently_insured_with;
         $carQuote->quote_updated_at = Carbon::now();
+        $carQuote->is_quote_locked = true;
         $carQuote->save();
 
         if (isset($request->return_to_view))
@@ -948,6 +949,11 @@ class CarQuoteService extends BaseService
         $quote->mobile_no = $parentRecord->mobile_no;
         $quote->advisor_id = Auth::user()->id;
         $quote->save();
+    }
+
+    public function getQuoteByUuid($uuid)
+    {
+        return CarQuote::where('uuid', '=', $uuid)->first();
     }
     
 }

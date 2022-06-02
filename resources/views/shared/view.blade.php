@@ -98,7 +98,7 @@
                 });
                 $('#searchTable').submit();
             });
-            var allowedModelTypes = ['home', 'health', 'life', 'business', 'travel', 'car'];
+            var allowedModelTypes = ['home', 'health', 'life', 'business', 'travel', 'car','pet'];
             var skipPropertiesArray = [];
             // Getting the skip properties based on loggedin user role
             if (isRenewalUser && model.modelType.toLowerCase() == 'car') {
@@ -258,6 +258,7 @@
                     disableSortColumns = [];
                     break;
             }
+            console.log(dataTableColumns);
             // Initializing the datatable
             var vehicleTypeDataTable = $("#dtBasicExample").DataTable({
                 ordering: false,

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\HealthTeamType;
 use App\Enums\LeadStatusCode;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Models\CarQuoteAdvisorToOE;
 use App\Models\GenericModel;
 use App\Models\InsuranceProvider;
@@ -21,7 +22,9 @@ use App\Services\LeadStatusService;
 use App\Services\LifeQuoteService;
 use App\Services\TeamService;
 use App\Services\TravelQuoteService;
+use App\Services\PetQuoteService;
 use App\Services\UserService;
+use App\Services\EmailStatusService;
 use BenSampo\Enum\Rules\EnumValue;
 use DataTables;
 use Illuminate\Support\Facades\Auth;
@@ -43,8 +46,11 @@ class CRUDController extends Controller
     protected $lifeQuoteService;
     protected $homeQuoteService;
     protected $businessQuoteService;
+    protected $petQuoteService;
     protected $userService;
     protected $activityService;
+    protected $emailStatusService;
+
     public function __construct(
         HealthQuoteService $healthService,
         TeamService $teamsService,
@@ -56,9 +62,11 @@ class CRUDController extends Controller
         LifeQuoteService $lifeQuoteService,
         HomeQuoteService $homeQuoteService,
         BusinessQuoteService $businessQuoteService,
+        PetQuoteService $petQuoteService,
         UserService $userService,
         Request $request, 
-        ActivitiesService $activityService
+        ActivitiesService $activityService,
+        EmailStatusService $emailStatusService
     ) {
         $this->genericModel = new GenericModel();
         $this->healthQuoteService = $healthService;
@@ -71,8 +79,11 @@ class CRUDController extends Controller
         $this->lifeQuoteService = $lifeQuoteService;
         $this->homeQuoteService = $homeQuoteService;
         $this->businessQuoteService = $businessQuoteService;
+        $this->petQuoteService = $petQuoteService;
         $this->activityService = $activityService;
         $this->userService = $userService;
+        $this->emailStatusService = $emailStatusService;
+
         $this->setModelType($request);
         $this->fillModelByModelType(ucwords($this->genericModel->modelType), $request);
     }
@@ -304,11 +315,15 @@ class CRUDController extends Controller
                 }
             }
 
+            $entity = $this->carQuoteService->getQuoteByUuid($id);
+            $previousQuoteId = isset($entity->previous_quote_id) ? $entity->previous_quote_id : NULL;
+            $emailStatuses = $this->emailStatusService->getEmailStatus(QuoteTypeId::Car, $entity->id);
+
             return view('shared.show', compact([
                 'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList',
                 'ecomCarInsuranceQuoteUrl', 'carQuotePlanAddons', 'vehicleTypeText', 'leadStatuses',
                 'lostReasons', 'selectedLostReasonId', 'listQuote','model_name', 'allowedDuplicateLOB', 'audits', 'activities', 'advisors','isRenewalUser',
-                'isNewBusinessUser'
+                'isNewBusinessUser', 'previousQuoteId', 'emailStatuses'
             ]));
         } else if ($this->genericModel->modelType == quoteTypeCode::Travel) { // Travel plans to display on detail view
             $listQuotePlans = '';
@@ -435,13 +450,14 @@ class CRUDController extends Controller
         if (strpos($url, 'home')) $this->genericModel->modelType = 'Home';
         if (strpos($url, 'business')) $this->genericModel->modelType = 'Business';
         if (strpos($url, 'leadstatus')) $this->genericModel->modelType = 'LeadStatus';
+        if (strpos($url, 'pet')) $this->genericModel->modelType = 'Pet';
     }
 
     private function fillModelByModelType($type, Request $request)
     {
         $modelType = json_decode($request->get('modelType'), true) ?? $type;
         if ($modelType == null) $modelType = $request->get('modelType');
-        $quoteTypes = 'Health,Car,Travel,Life,Home,Business';
+        $quoteTypes = 'Health,Car,Travel,Life,Home,Business,Pet';
         $serviceType = str_contains($quoteTypes, ucwords($modelType)) ? strtolower($modelType) . 'QuoteService' : lcfirst(ucwords($modelType)) . 'Service';
         $this->genericModel->properties = $this->{$serviceType}->fillModelProperties();
         $this->genericModel->skipProperties = $this->{$serviceType}->fillModelSkipProperties();

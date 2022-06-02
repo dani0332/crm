@@ -1,9 +1,11 @@
 <meta name="csrf-token" content="{{ csrf_token() }}" />
 
 <?php
+
+    use App\Models\ApplicationStorage;
+    use App\Enums\ApplicationStorage as EnumsApplicationStorage;
     use App\Enums\quoteTypeCode;
     use App\Enums\CarPlanType;
-    use App\Models\ApplicationStorage;
     use App\Enums\CarPlanAddons;
     use App\Enums\InsuranceProviders;
 
@@ -12,16 +14,9 @@
         $carQuoteEditSwitch = ApplicationStorage::select('value')
         ->where([['key_name', 'IMCRM_CAR_QUOTE_PLANS_EDIT_IS_DISABLED'], ['is_active', 1]])
         ->get()->first();
-        if(isset($carQuoteEditSwitch->value)) {
-            if($carQuoteEditSwitch->value == '1') {
-                $carQuoteEditDisable = 'disabled';
-            } else {
-                $carQuoteEditDisable = '';
-            }
-        } else {
-            $carQuoteEditDisable = 'disabled';
-        }
-    
+
+        $carQuoteEditDisable = $carQuoteEditSwitch->value == EnumsApplicationStorage::ACTIVE ? 'disabled' : '';
+
         foreach ($listQuotePlans as $listQuotePlan) { // Car quote plans
             if ($listQuotePlan->id == $planId) {
                 $listQuotePlanName = $listQuotePlan->name;
@@ -53,13 +48,8 @@
                 }
             }
         }
-    
-        if($repairType == CarPlanType::TPL) {
-            $readonlyFieldCss = "pointer-events: none;background-color: #f6f6f6;";
-        } else {
-            $readonlyFieldCss = "";
-        }
-    
+
+        $readonlyFieldCss = $repairType == CarPlanType::TPL ? "pointer-events: none;background-color: #f6f6f6;" : "";
         $carPlanTypeComp = CarPlanType::COMP;
 ?>
 <script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
@@ -69,7 +59,7 @@
                 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
             }
         });
-        $('#update_car_plan_button').on('click', function(e) {
+        $('#update_car_plan_button, #update_car_plan_addons_button').on('click', function(e) {
             var actual_premium = $("#actual_premium").val();
             var discounted_premium = $("#discounted_premium").val();
             var car_value = $("#car_value").val();
@@ -116,11 +106,11 @@
                 }),
                 success: function(result) {
                     $(".loader").hide();
-                    $('#car_plan_manual_process_text').show().text(result).delay(5000).fadeOut(300);
+                    $('#car_plan_manual_process_text, #car_plan_addon_manual_process_text').show().text(result).delay(5000).fadeOut(300);
                 },
                 error: function(jqXhr, textStatus, errorMessage){
                     $(".loader").hide();
-                    $('#car_plan_manual_process_text').show().text(jqXhr.responseText).delay(5000).fadeOut(300);
+                    $('#car_plan_manual_process_text, #car_plan_addon_manual_process_text').show().text(jqXhr.responseText).delay(5000).fadeOut(300);
                 }
             });
         });
@@ -408,9 +398,7 @@
                                     </tr>
                                     <tr>
                                         <td valign="top">Car value:</td> <td><input type="number" id="car_value" name="car_value" value="{{ old('car_value', $carValue) }}" class="form-control" onKeyDown="if(this.value.length==8) return false;" style="{{ $readonlyFieldCss }}" {{ $carQuoteEditDisable }}>
-                                            @if($repairType == CarPlanType::COMP)
-                                                <span style="font-size: 10px;">Min: AED {{ number_format($carValueLowerLimit) }} - Max: AED {{ number_format($carValueUpperLimit) }}</span>
-                                            @endif
+                                            <span style="font-size: 10px;">Min: AED {{ number_format($carValueLowerLimit) }} - Max: AED {{ number_format($carValueUpperLimit) }}</span>
                                         </td>
                                         <td valign="top">Excess:</td> <td><input type="number" id="excess" name="excess" value="{{ old('excess', $excess) }}" class="form-control" onKeyDown="if(this.value.length==8) return false;" style="{{ $readonlyFieldCss }}" {{ $carQuoteEditDisable }}></td>
                                     </tr>
@@ -442,7 +430,6 @@
                                 <tr>
                                     <td>
                                         <table cellpadding="3" cellspacing="3">
-                                            <ul>
                                                 @foreach ($listQuotePlanAddons as $listQuotePlanAddon)
                                                     @foreach ($listQuotePlanAddon->carAddonOption as $carAddonOption)
                                                     <tr>
@@ -485,6 +472,18 @@
                                                     </tr>
                                                     @endforeach
                                                 @endforeach
+                                                <tr>
+                                                    <td colspan="3"> </td>
+                                                    <td align="center"> </td>
+                                                </tr>
+                                                <tr>
+                                                    <td colspan="3"> </td>
+                                                    <td align="center"> </td>
+                                                </tr>
+                                                <tr>
+                                                    <td colspan="3" align="right"><div id="car_plan_addon_manual_process_text" style="display: none;font-weight:bold;"></div></td>
+                                                    <td align="center"><button type="submit" class="btn btn-warning btn-sm" id="update_car_plan_addons_button" {{ $carQuoteEditDisable }}>Update</button></td>
+                                                </tr>
                                         </table>
                                     </td>
                                 </tr>
