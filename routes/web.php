@@ -163,7 +163,7 @@ Route::group(['middleware' =>  ['auth']], function () {
         Route::resource('travel', CRUDController::class);
         Route::resource('pet', CRUDController::class);
         Route::resource('teams', CRUDController::class);
-        Route::resource('leadstatus', CRUDController::class);  
+        // Route::resource('leadstatus', CRUDController::class);
         Route::post('save', [CRUDController::class, 'store'])->name('saveQuote');
         Route::post('update', [CRUDController::class, 'update'])->name('updateQuote');
         Route::post('createDuplicate', [CRUDController::class, 'createDuplicate'])->name('createDuplicate');
@@ -196,6 +196,7 @@ Route::group(['middleware' =>  ['auth']], function () {
         Route::resource('carplanaddonoption', GenericCrudController::class);
         Route::resource('applicationstorage', GenericCrudController::class);
         Route::resource('teams', GenericCrudController::class);
+        Route::resource('leadstatus', GenericCrudController::class);
         Route::post('save', [GenericCrudController::class, 'store'])->name('save');
         Route::post('update', [GenericCrudController::class, 'update'])->name('update');
     });

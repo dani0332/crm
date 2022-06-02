@@ -18,7 +18,6 @@ use App\Services\HealthQuoteService;
 use App\Services\CarQuoteService;
 use App\Services\CRUDService;
 use App\Services\HomeQuoteService;
-use App\Services\LeadStatusService;
 use App\Services\LifeQuoteService;
 use App\Services\TeamService;
 use App\Services\TravelQuoteService;
@@ -41,7 +40,6 @@ class CRUDController extends Controller
     protected $dropdownSourceService;
     protected $carQuoteService;
     protected $crudService;
-    protected $leadStatusService;
     protected $travelQuoteService;
     protected $lifeQuoteService;
     protected $homeQuoteService;
@@ -57,7 +55,6 @@ class CRUDController extends Controller
         CRUDService $crudService,
         DropdownSourceService $dropdownSourceService,
         CarQuoteService $carQuoteService,
-        LeadStatusService $leadStatusService,
         TravelQuoteService $travelQuoteService,
         LifeQuoteService $lifeQuoteService,
         HomeQuoteService $homeQuoteService,
@@ -74,7 +71,6 @@ class CRUDController extends Controller
         $this->crudService = $crudService;
         $this->dropdownSourceService = $dropdownSourceService;
         $this->carQuoteService = $carQuoteService;
-        $this->leadStatusService = $leadStatusService;
         $this->travelQuoteService = $travelQuoteService;
         $this->lifeQuoteService = $lifeQuoteService;
         $this->homeQuoteService = $homeQuoteService;
