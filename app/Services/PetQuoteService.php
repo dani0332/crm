@@ -66,7 +66,7 @@ class PetQuoteService extends BaseService
                 'pqr.is_microchipped',
                 'pqr.is_neutered',
                 'pqr.is_mixed_breed',
-                'pqr.any_injury'
+                'pqr.has_injury'
             )
             ->leftJoin('pet_quote_request_detail as pqrd', 'pqrd.pet_quote_request_id', 'pqr.id')
             ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'pqrd.lost_reason_id')
@@ -345,7 +345,7 @@ class PetQuoteService extends BaseService
         $PetQuote->is_microchipped = $request->is_microchipped == 'Yes' ?  true : false;
         $PetQuote->is_neutered = $request->is_neutered == 'Yes' ?  true : false;
         $PetQuote->is_mixed_breed = $request->is_mixed_breed == 'Yes' ?  true : false;
-        $PetQuote->any_injury = $request->any_injury == 'Yes' ?  true : false;
+        $PetQuote->has_injury = $request->has_injury == 'Yes' ?  true : false;
         $PetQuote->age_of_pet1 = $request->age_of_pet1;
         $PetQuote->ilivein_accommodation_type_id = $request->ilivein_accommodation_type_id;
         $PetQuote->iam_possesion_type_id = $request->iam_possesion_type_id;
@@ -545,7 +545,7 @@ class PetQuoteService extends BaseService
             "is_microchipped" => "static|Yes,No",
             "is_neutered" => "static|Yes,No",
             "is_mixed_breed" => "static|Yes,No",
-            "any_injury" => "static|Yes,No",
+            "has_injury" => "static|Yes,No",
             "gender" => "static|Male,Female",
             "ilivein_accommodation_type_id" => "select|title|required",
             "iam_possesion_type_id" => "select|title|required",
