@@ -281,7 +281,6 @@ class CRUDService extends BaseService
     public function getEntity($modelType, $id)
     {
         $lowerCaseModelType = strtolower($modelType);
-
         return $this->{in_array($lowerCaseModelType, $this->quoteTypes) ? $lowerCaseModelType . 'QuoteService' : $lowerCaseModelType . 'Service'}
             ->getEntity($id);
     }

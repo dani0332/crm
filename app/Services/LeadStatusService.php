@@ -30,7 +30,7 @@ class LeadStatusService extends BaseService
 
     public function updateLeadStatus(Request $request, $id)
     {
-        $quoteStatus = QuoteStatus::where('uuid', $id)->first();
+        $quoteStatus = QuoteStatus::where('id', $id)->first();
         $quoteStatus->text = $request->text;
         $quoteStatus->save();
 
@@ -57,7 +57,7 @@ class LeadStatusService extends BaseService
 
     public function getEntity($id)
     {
-        return $this->query->where('ls.uuid', $id)->first();
+        return $this->query->where('ls.id', $id)->first();
     }
 
     public function getEntityPlain($id)

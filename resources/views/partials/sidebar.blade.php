@@ -285,7 +285,7 @@
                                 <li><a href="{{ url('generic/teams') }}">Teams</a></li>
                             @endcan
                             @can('teams-list')
-                                <li><a href="{{ url('quotes/leadstatus') }}">Lead Status</a></li>
+                                <li><a href="{{ url('generic/leadstatus') }}">Lead Status</a></li>
                             @endcan
                             @can('inusrance-provider-list')
                              <li><a href="{{ url('generic/insuranceprovider') }}">Insurance Providers</a></li>
