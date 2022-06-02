@@ -201,7 +201,7 @@ class CRUDService extends BaseService
             ->join('roles as r', 'r.id', '=', 'mr.role_id')
             ->select('u.id', DB::raw("CONCAT(u.name,' - ',r.name) AS name"));
         if (strtolower($modelType) == strtolower(quoteTypeCode::Car)) {
-            $query->whereIn('r.name', [strtoupper($modelType) . '_ADVISOR', 'advisor','CAR_RENEWAL_ADVISOR']);
+            $query->whereIn('r.name', [strtoupper($modelType) . '_ADVISOR', 'advisor']);
         } else if (strtolower($modelType) ==  strtolower(quoteTypeCode::Health)) {
             $query->whereIn('r.name', [strtoupper($modelType) . '_WCU_ADVISOR', 'RM_ADVISOR', 'EBP_ADVISOR','HEALTH_RENEWAL_ADVISOR','HEALTH_NEW_BUSINESS_ADVISOR']);
         } else if (strtolower($modelType) ==  strtolower(quoteTypeCode::Business)) {
