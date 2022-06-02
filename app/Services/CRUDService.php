@@ -201,11 +201,11 @@ class CRUDService extends BaseService
             ->join('roles as r', 'r.id', '=', 'mr.role_id')
             ->select('u.id', DB::raw("CONCAT(u.name,' - ',r.name) AS name"));
         if (strtolower($modelType) == strtolower(quoteTypeCode::Car)) {
-            $query->whereIn('r.name', [strtoupper($modelType) . '_ADVISOR', 'advisor']);
+            $query->whereIn('r.name', [strtoupper($modelType) . '_ADVISOR', 'advisor','CAR_RENEWAL_ADVISOR']);
         } else if (strtolower($modelType) ==  strtolower(quoteTypeCode::Health)) {
-            $query->whereIn('r.name', [strtoupper($modelType) . '_WCU_ADVISOR', 'RM_ADVISOR', 'EBP_ADVISOR']);
+            $query->whereIn('r.name', [strtoupper($modelType) . '_WCU_ADVISOR', 'RM_ADVISOR', 'EBP_ADVISOR','HEALTH_RENEWAL_ADVISOR','HEALTH_NEW_BUSINESS_ADVISOR']);
         } else if (strtolower($modelType) ==  strtolower(quoteTypeCode::Business)) {
-            $query->whereIn('r.name', ['CORPLINE_ADVISOR']);
+            $query->whereIn('r.name', ['CORPLINE_ADVISOR','CORPLINE_RENEWAL_ADVISOR','CORPLINE_NEW_BUSINESS_ADVISOR','GM_RENEWAL_ADVISOR','GM_NEW_BUSINESS_ADVISOR']);
         } else {
             $query->where('r.name', strtoupper($modelType) . '_ADVISOR');
         }
