@@ -25,7 +25,7 @@ class LeadStatusService extends BaseService
         $leadStatus->text = $request->text;
         $leadStatus->is_active = true;
         $leadStatus->save();
-        return QuoteStatus::find($leadStatus->id)->uuid;
+        return QuoteStatus::find($leadStatus->id);
     }
 
     public function updateLeadStatus(Request $request, $id)
