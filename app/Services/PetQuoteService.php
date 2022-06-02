@@ -555,8 +555,7 @@ class PetQuoteService extends BaseService
             "renewal_batch" => "input|none",
             "previous_quote_policy_number" => "input|title",
             "previous_policy_expiry_date" => "input|date|title|range",
-            "previous_quote_policy_premium" => "input|title",
-            "device" => "input|none"
+            "previous_quote_policy_premium" => "input|title"
         );
     }
 
