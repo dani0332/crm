@@ -9,8 +9,8 @@ use BenSampo\Enum\Enum;
  * @method static static OptionTwo()
  * @method static static OptionThree()
  */
-final class ApplicationStorage extends Enum
+final class ApplicationStorageEnums extends Enum
 {
-    const ACTIVE = "1";
-    const INACTIVE = "0";
+    const ACTIVE = 1;
+    const INACTIVE = 0;
 }
