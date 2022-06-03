@@ -126,11 +126,9 @@ if (!isset($modelName)) {
                     $.each(addons, function(i, jsondata) {
                         if (jsondata.isSelected == true) {
                             selectedAddonsPriceSum += jsondata.price;
-                            console.log('price: ', jsondata.price);
                         }
                     });
                     var totalPremium = Number(selectedAddonsPriceSum) + Number(discounted_premium);
-                    console.log('totalPremium: ', totalPremium);
                     var totalPremiumHtml = '<div style="background-color: lavender;">Total Premium: AED ' + totalPremium + ' <small class="text-muted">(excluded VAT, Discounted Premium + Selected Addons)</small></div>';
                     $('#totalPremiumOnFeatures').show().html(totalPremiumHtml).delay(5000);
                     $('#totalPremiumOnAddons').show().html(totalPremiumHtml).delay(5000);
