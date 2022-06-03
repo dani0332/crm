@@ -8,7 +8,8 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Log;
+use DB;
+
 class VerifyRenewalInDatabase implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
@@ -30,17 +31,22 @@ class VerifyRenewalInDatabase implements ShouldQueue
      */
     public function handle()
     {
-        $record = RenewalsUploadLeads::where('file_name', $this->fileName)->first();
-        if($record)
-        {
-            // if record exists, update the number of rows uploaded
-            $record->good = $record->good + 1;
-            $record->save();
-        }
-        if(($record->good + $record->cannot_upload) == $record->total_records){
-            // if all records are uploaded, update the status to completed
+        try {
+            $record = RenewalsUploadLeads::where('file_name', $this->fileName)->first();
+            if ($record) {
+                // if record exists, update the number of rows uploaded
+                $record->good = $record->good + 1;
+                $record->save();
+            }
+            if (($record->good + $record->cannot_upload) == $record->total_records) {
+                // if all records are uploaded, update the status to completed
                 $record->status = 'Completed';
                 $record->save();
+            }
+        } catch (\Exception $e) {
+            return $e->getMessage();
+        } finally {
+            DB::disconnect('mysql');
         }
     }
 }
