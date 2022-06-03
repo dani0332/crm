@@ -12,6 +12,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Config;
+use DB;
 
 class ProcessSIBCustomerMail implements ShouldQueue
 {
@@ -28,34 +29,40 @@ class ProcessSIBCustomerMail implements ShouldQueue
 
     public function handle()
     {
-        $emailTemplateId = (int)Config::get('constants.SIB_CORPORATE_TEMPLATE');
-        $WEGenerateUrlResponse = CustomerWEGenerateUrlService::getCustomerWeUrl($this->email);
+        try {
+            $emailTemplateId = (int)Config::get('constants.SIB_CORPORATE_TEMPLATE');
+            $WEGenerateUrlResponse = CustomerWEGenerateUrlService::getCustomerWeUrl($this->email);
 
-        $emailData = array(
-            'customerName' => $this->name,
-            'customerEmail' => $this->email,
-            'signUpButtonUrl' => $WEGenerateUrlResponse
-        );
+            $emailData = array(
+                'customerName' => $this->name,
+                'customerEmail' => $this->email,
+                'signUpButtonUrl' => $WEGenerateUrlResponse
+            );
 
-        $getStatusCode = SendEmailCustomerService::sendEmail($emailTemplateId, $emailData, $tag='corporate-myalfred-we');
+            $getStatusCode = SendEmailCustomerService::sendEmail($emailTemplateId, $emailData, $tag = 'corporate-myalfred-we');
 
-        if($getStatusCode == 201) {
-            $findCustomerByEmail = CustomerService::getCustomerByEmail($this->email);
-            $updateCustomer = $findCustomerByEmail->first();
-            $updateCustomer->is_we_sent = true;
-            $updateCustomer->save();
+            if ($getStatusCode == 201) {
+                $findCustomerByEmail = CustomerService::getCustomerByEmail($this->email);
+                $updateCustomer = $findCustomerByEmail->first();
+                $updateCustomer->is_we_sent = true;
+                $updateCustomer->save();
 
-            $existingCustomer = MyAlFredUser::where('customer_id', '=', $updateCustomer->id)->get();
+                $existingCustomer = MyAlFredUser::where('customer_id', '=', $updateCustomer->id)->get();
 
-            if($existingCustomer->isEmpty()) {
-                $code = substr($WEGenerateUrlResponse, strpos($WEGenerateUrlResponse, "signup/") + 7);
-                $newMyAlFredUser = new MyAlFredUser;
-                $newMyAlFredUser->signup_url = $WEGenerateUrlResponse;
-                $newMyAlFredUser->customer_id = $updateCustomer->id;
-                $newMyAlFredUser->code = $code;
-                $newMyAlFredUser->source = "CORPORATE";
-                $newMyAlFredUser->save();
+                if ($existingCustomer->isEmpty()) {
+                    $code = substr($WEGenerateUrlResponse, strpos($WEGenerateUrlResponse, "signup/") + 7);
+                    $newMyAlFredUser = new MyAlFredUser;
+                    $newMyAlFredUser->signup_url = $WEGenerateUrlResponse;
+                    $newMyAlFredUser->customer_id = $updateCustomer->id;
+                    $newMyAlFredUser->code = $code;
+                    $newMyAlFredUser->source = "CORPORATE";
+                    $newMyAlFredUser->save();
+                }
             }
+        } catch (Exception $e) {
+            return $e->getMessage();
+        } finally {
+            DB::disconnect('mysql');
         }
     }
 }

@@ -9,6 +9,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use App\Services\RenewalsUploadService;
 use Illuminate\Support\Facades\Log;
+use DB;
 
 class RenewalBatchEmailJob implements ShouldQueue
 {
@@ -42,13 +43,14 @@ class RenewalBatchEmailJob implements ShouldQueue
     {
         try {
             $this->renewalsUploadFileService->renewalBatchEmailProcess($this->batchLeadId, $this->batchEmailId);
-        }
-        catch(\Exception $e) {
-            Log::channel('daily')->info("message: ".$e->getMessage());
+        } catch (\Exception $e) {
+            Log::channel('daily')->info("message: " . $e->getMessage());
             if ($this->attempts() < 4) {
                 $delayInSeconds = 5 * 60;
                 $this->release($delayInSeconds);
             }
+        } finally {
+            DB::disconnect('mysql');
         }
     }
 }

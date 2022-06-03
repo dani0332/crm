@@ -10,6 +10,8 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use App\Services\RenewalsUploadService;
+use DB;
+
 class CheckAMLJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
@@ -45,7 +47,13 @@ class CheckAMLJob implements ShouldQueue
      */
     public function handle()
     {
-        // Sending request with data to create renewal and normal quote
-        $this->amlService->checkAml($this->firstName, $this->lastName, $this->quoteRequestId, $this->quoteTypeId, $this->isEmailSendingEnabled, $this->yob, $this->companyName);
+        try {
+            // Sending request with data to create renewal and normal quote
+            $this->amlService->checkAml($this->firstName, $this->lastName, $this->quoteRequestId, $this->quoteTypeId, $this->isEmailSendingEnabled, $this->yob, $this->companyName);
+        } catch (\Exception $e) {
+            return $e;
+        } finally {
+            DB::disconnect('mysql');
+        }
     }
 }
