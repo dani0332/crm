@@ -24,6 +24,7 @@ use App\Services\TravelQuoteService;
 use App\Services\PetQuoteService;
 use App\Services\UserService;
 use App\Services\EmailStatusService;
+use App\Services\ApplicationStorageService;
 use BenSampo\Enum\Rules\EnumValue;
 use DataTables;
 use Illuminate\Support\Facades\Auth;
@@ -48,6 +49,7 @@ class CRUDController extends Controller
     protected $userService;
     protected $activityService;
     protected $emailStatusService;
+    protected $applicationStorageService;
 
     public function __construct(
         HealthQuoteService $healthService,
@@ -63,7 +65,8 @@ class CRUDController extends Controller
         UserService $userService,
         Request $request, 
         ActivitiesService $activityService,
-        EmailStatusService $emailStatusService
+        EmailStatusService $emailStatusService,
+        ApplicationStorageService $applicationStorageService
     ) {
         $this->genericModel = new GenericModel();
         $this->healthQuoteService = $healthService;
@@ -79,6 +82,7 @@ class CRUDController extends Controller
         $this->activityService = $activityService;
         $this->userService = $userService;
         $this->emailStatusService = $emailStatusService;
+        $this->applicationStorageService = $applicationStorageService;
 
         $this->setModelType($request);
         $this->fillModelByModelType(ucwords($this->genericModel->modelType), $request);
@@ -291,7 +295,7 @@ class CRUDController extends Controller
             array_push($activities, $updatedActivity);
         }
         $audits = [];
-        if ($this->genericModel->modelType == "Car") { // Car plans to display on detail view
+        if ($this->genericModel->modelType == quoteTypeCode::Car) { // Car plans to display on detail view
 
             $listQuotePlans = '';
             $quotePlans = $this->carQuoteService->getQuotePlans($id);
@@ -314,6 +318,8 @@ class CRUDController extends Controller
             $entity = $this->carQuoteService->getQuoteByUuid($id);
             $previousQuoteId = isset($entity->previous_quote_id) ? $entity->previous_quote_id : NULL;
             $emailStatuses = $this->emailStatusService->getEmailStatus(QuoteTypeId::Car, $entity->id);
+
+            
 
             return view('shared.show', compact([
                 'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList',
@@ -477,11 +483,12 @@ class CRUDController extends Controller
     public function carQuotePlanDetails($quoteId, $planId)
     {
         $quotePlans = $this->carQuoteService->getQuotePlans($quoteId);
+        $isPlanUpdateActive = $this->applicationStorageService->getKeyValue('IMCRM_CAR_QUOTE_PLANS_EDIT_IS_DISABLED');
 
         if (gettype($quotePlans) != 'string') {
             $listQuotePlans = $quotePlans->quotes->plans;
 
-            return view('shared.plan_details', compact(['listQuotePlans', 'quoteId', 'planId']));
+            return view('shared.plan_details', compact(['listQuotePlans', 'quoteId', 'planId', 'isPlanUpdateActive']));
         }
     }
 
