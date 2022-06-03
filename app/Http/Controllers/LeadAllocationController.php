@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\LeadAllocation;
 use App\Services\LeadAllocationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -24,7 +25,7 @@ class LeadAllocationController extends Controller
     public function index(Request $request)
     {
         if (Gate::allows('view-lead-allocation', Auth::user())) {
-            $this->leadAllocationService->assignNewLead();
+            //$this->leadAllocationService->assignNewLead();
             if ($request->ajax()) {
                 $data = $this->leadAllocationService->getGridData($request);
                 return Datatables::of($data)
@@ -101,5 +102,12 @@ class LeadAllocationController extends Controller
     public function destroy($id)
     {
         //
+    }
+
+    public function updateAvailability(Request $request)
+    {
+        $leadAllocationUser = LeadAllocation::where('user_id', $request->aid)->where('id', $request->id)->first();
+        $leadAllocationUser->is_available = $request->is_available;
+        $leadAllocationUser->save();
     }
 }

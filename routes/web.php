@@ -126,6 +126,7 @@ Route::group(['middleware' =>  ['auth']], function () {
     Route::post('/customer-process', [CustomerController::class, 'processCustomerCSV']);
 
     Route::resource('lead-allocation', LeadAllocationController::class);
+    Route::post('/lead-allocation/updateAvailability', [LeadAllocationController::class, 'updateAvailability']);
 
     Route::group(['prefix' => 'renewals'], function () {
         Route::resource('uploaded-leads', RenewalsUploadController::class);

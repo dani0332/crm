@@ -219,32 +219,32 @@ class CarQuoteService extends BaseService
     public function getLeadAuditHistory($id)
     {
         $audits = DB::table('audits as a')
-        ->select(
-            'a.created_at as ModifiedAt',
-            DB::raw('(SELECT name from users where id = a.user_id) as ModifiedBy'),
-            DB::raw("(SELECT TEXT FROM quote_status WHERE id = JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.quote_status_id'))) AS NewStatus"),
-            DB::raw("(SELECT NAME FROM users WHERE id = JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.advisor_id'))) AS NewAdvisor"),
-            DB::raw("JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.notes')) AS NewNotes")
-        )
-        ->where(function ($query) {
-            $query->where('a.auditable_type', 'App\Models\CarQuote')
-            ->orWhere('a.auditable_type', 'App\Models\CarQuoteRequestDetail');
-        })
-        ->where(function ($query) {
-           return  $query->whereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.quote_status_id')"))
-            ->orWhereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.notes')"))
-            ->orWhereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.advisor_id')"));
-        })
-        ->where(function ($query) use ($id) {
-            $detailObjId = CarQuoteRequestDetail::where('car_quote_request_id', $id)->first();
-            if($detailObjId) {
-                $query->where('a.auditable_id', $id)
-                ->orWhere('a.auditable_id', $detailObjId->id);
-            } else {
-                $query->where('a.auditable_id', $id);
-            }
-        })
-        ->orderBy('a.created_at', 'DESC')->get();
+            ->select(
+                'a.created_at as ModifiedAt',
+                DB::raw('(SELECT name from users where id = a.user_id) as ModifiedBy'),
+                DB::raw("(SELECT TEXT FROM quote_status WHERE id = JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.quote_status_id'))) AS NewStatus"),
+                DB::raw("(SELECT NAME FROM users WHERE id = JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.advisor_id'))) AS NewAdvisor"),
+                DB::raw("JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.notes')) AS NewNotes")
+            )
+            ->where(function ($query) {
+                $query->where('a.auditable_type', 'App\Models\CarQuote')
+                    ->orWhere('a.auditable_type', 'App\Models\CarQuoteRequestDetail');
+            })
+            ->where(function ($query) {
+                return  $query->whereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.quote_status_id')"))
+                    ->orWhereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.notes')"))
+                    ->orWhereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.advisor_id')"));
+            })
+            ->where(function ($query) use ($id) {
+                $detailObjId = CarQuoteRequestDetail::where('car_quote_request_id', $id)->first();
+                if ($detailObjId) {
+                    $query->where('a.auditable_id', $id)
+                        ->orWhere('a.auditable_id', $detailObjId->id);
+                } else {
+                    $query->where('a.auditable_id', $id);
+                }
+            })
+            ->orderBy('a.created_at', 'DESC')->get();
         return $audits;
     }
 
@@ -447,7 +447,7 @@ class CarQuoteService extends BaseService
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'cqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'cqrd.advisor_assigned_by_id')
             ->where('cqrd.next_followup_date', '<', date('Y-m-d H:i:s'))
-            ->whereIn('qs.text', ['Followed Up','Qualification Pending', 'Quoted', 'FTC Pending', 'FTC Sent', 'Missing Documents Requested', 'Policy Documents Pending', 'Payment Pending', 'Pending with UW', 'Application Pending', 'In Negotiation'])
+            ->whereIn('qs.text', ['Followed Up', 'Qualification Pending', 'Quoted', 'FTC Pending', 'FTC Sent', 'Missing Documents Requested', 'Policy Documents Pending', 'Payment Pending', 'Pending with UW', 'Application Pending', 'In Negotiation'])
             ->where('cqr.advisor_id', Auth::user()->id);
         return $query;
     }
@@ -551,11 +551,12 @@ class CarQuoteService extends BaseService
         }
     }
 
-    public function walkTree ($userId) {
+    public function walkTree($userId)
+    {
         $childs = User::where('manager_id', $userId)->pluck('id');
         foreach ($childs as $child) {
             $nextChilds = User::where('manager_id', $child)->pluck('id');
-            if(count($nextChilds) > 0) {
+            if (count($nextChilds) > 0) {
                 $this->walkTree($child);
             }
             array_push($this->childUserIds, $child);
@@ -573,19 +574,19 @@ class CarQuoteService extends BaseService
         }
 
         if ($request->ajax()) {
-            if(Auth::user()->isManagerOrDeputy()){
+            if (Auth::user()->isManagerOrDeputy()) {
                 if (!Auth::user()->hasRole('CAR_RENEWAL_MANAGER')) {
                     $this->walkTree(Auth::user()->id); // get all childs of the user
                     array_push($this->childUserIds, Auth::user()->id); // add the user id to the array to fetch directly assigned leads as well
-                    $this->query->whereIn('cqr.advisor_id', $this->childUserIds);	// fetch leads assigned to the user or his childs
+                    $this->query->whereIn('cqr.advisor_id', $this->childUserIds);    // fetch leads assigned to the user or his childs
                 }
             }
 
-            if(Auth::user()->isSpecificTeamAdvisor('Car')){
+            if (Auth::user()->isSpecificTeamAdvisor('Car')) {
                 // if user has advisor Role then fetch leads assigned to the user only
-                $this->query->where('cqr.advisor_id', Auth::user()->id);	// fetch leads assigned to the user
+                $this->query->where('cqr.advisor_id', Auth::user()->id);    // fetch leads assigned to the user
             }
-            
+
             if (!isset($request->email) && $request->email == '') {
                 $this->query->where('qs.text', '!=', 'Fake');
             }
@@ -625,19 +626,17 @@ class CarQuoteService extends BaseService
                     if ($request[$item] == 'null') {
                         $this->query->whereNull($item);
                     } else if ($item == 'advisor_id' && is_array($request[$item]) && !empty($request[$item])) {
-                        if($request[$item][0] == 'null')
+                        if ($request[$item][0] == 'null')
                             $this->query->whereNull('advisor_id');
                         else
                             $this->query->whereIn('advisor_id', $request[$item]);
-                    }
-                    else if ($item == 'quote_status_id' && is_array($request[$item]) && !empty($request[$item])) {
+                    } else if ($item == 'quote_status_id' && is_array($request[$item]) && !empty($request[$item])) {
                         $this->query->whereIn('quote_status_id', $request[$item]);
                     } else {
                         $searchedValue = str_contains($request[$item], 'Yes') || str_contains($request[$item], 'No') ? ($request[$item] == 'Yes' ? 1 : 0) : $request[$item];
                         if ($item == 'policy_number') {
                             $this->query->where('previous_quote_policy_number', $searchedValue);
-                        }
-                        else {
+                        } else {
                             $this->query->where($this->getQuerySuffix($item) . '.' . $item, $searchedValue);
                         }
                     }
@@ -783,12 +782,12 @@ class CarQuoteService extends BaseService
 
     public function fillRenewalProperties($model)
     {
-        $model->renewalSearchProperties = ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'advisor_id', 'created_at', 'vehicle_type_id', 'renewal_expiry_date', 'is_ecommerce', 'payment_status_id', 'renewal_batch', 'car_type_insurance_id', 'currently_insured_with','previous_quote_policy_number'];
+        $model->renewalSearchProperties = ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'advisor_id', 'created_at', 'vehicle_type_id', 'renewal_expiry_date', 'is_ecommerce', 'payment_status_id', 'renewal_batch', 'car_type_insurance_id', 'currently_insured_with', 'previous_quote_policy_number'];
         $model->renewalSkipProperties = [
             "create" => "id,advisor_id,paid_at,renewal_expiry_date,renewal_batch,lost_reason,payment_status_id,plan_id,premium,car_plan_provider_id,code,is_ecommerce,payment_gateway,created_at,next_followup_date,updated_at,promo_code,quote_status_id,device,policy_number,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by,premium,source,transapp_code,previous_quote_policy_number,previous_policy_expiry_date,previous_quote_policy_premium",
             "list" => "additional_notes,email,mobile_no,paid_at,plan_id,car_plan_provider_id,payment_gateway,promo_code,source,seat_capacity,cylinder,device,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by,nationality_id,dob,year_of_manufacture,uae_license_held_for_id,car_value,emirate_of_registration_id,claim_history_id,transapp_code,is_ecommerce,payment_status_id,policy_number,renewal_expiry_date,premium",
             "update" => "id,advisor_id,paid_at,payment_status_id,lost_reason,plan_id,car_plan_provider_id,code,is_ecommerce,payment_gateway,created_at,next_followup_date,updated_at,promo_code,device,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by,renewal_expiry_date,source,transapp_code,quote_status_id,renewal_batch,policy_number,previous_quote_policy_number,previous_policy_expiry_date,previous_quote_policy_premium",
-            "show" => "", 
+            "show" => "",
         ];
     }
 
@@ -879,8 +878,8 @@ class CarQuoteService extends BaseService
         $apiUserName = Config::get('constants.KEN_API_USER');
         $apiPassword = Config::get('constants.KEN_API_PWD');
 
-        if(isset($request->is_create)) {
-            if($request->is_create == 1) {
+        if (isset($request->is_create)) {
+            if ($request->is_create == 1) {
                 $discountedPremium = $request->actual_premium;
                 $isUpdate = false;
             } else {
@@ -892,7 +891,7 @@ class CarQuoteService extends BaseService
         }
 
         $addons = [];
-        if($request->addons != null && count($request->addons) > 0) {
+        if ($request->addons != null && count($request->addons) > 0) {
             $addons = $request->addons;
         } else {
             $addons = [];
@@ -938,9 +937,9 @@ class CarQuoteService extends BaseService
         $quote = new CarQuote();
         $quote->parent_duplicate_quote_id = $parentRecord->code;
         $response = CapiRequestService::getUUID(QuoteTypeId::Car);
-        if($response) {
+        if ($response) {
             $quote->uuid = $response->uuid;
-            $quote->code = 'CAR-'. $response->uuid;
+            $quote->code = 'CAR-' . $response->uuid;
         }
         $quote->quote_status_id = QuoteStatus::where('text', 'New Lead')->first()->id;
         $quote->first_name = $parentRecord->first_name;
@@ -955,5 +954,15 @@ class CarQuoteService extends BaseService
     {
         return CarQuote::where('uuid', '=', $uuid)->first();
     }
-    
+
+    public function getUnAssignedLeads($from)
+    {
+        $to = Carbon::now();
+        $leads = CarQuote::where('quote_status_id', QuoteStatus::where('text', 'New Lead')->first()->id)
+            ->where('advisor_id', null)
+            ->whereBetween('created_at', [$from, $to])
+            ->get();
+
+        return $leads;
+    }
 }

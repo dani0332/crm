@@ -69,13 +69,32 @@
                         searchable: false,
                         render: function(data, type, row) {
                             if (data == 1) {
-                                return `<input type="checkbox" class="chk" checked data-toggle="toggle">`;
+                                return `<input type="checkbox" data-id="${row.id}" data-aid="${row.userId}" class="chk" checked data-toggle="toggle">`;
                             } else {
-                                return `<input type="checkbox" class="chk" data-toggle="toggle">`;
+                                return `<input type="checkbox" data-id="${row.id}" data-aid="${row.userId}" class="chk" data-toggle="toggle">`;
                             }
                         },
                     },
                 ]
+            });
+
+        });
+
+        $(document).on("change", "input:checkbox.chk", function() {
+            var ischecked = $(this).is(':checked');
+            $.ajax({
+                url: '/lead-allocation/updateAvailability',
+                type: 'POST',
+                data: {
+                    'aid': $(this).data('aid'),
+                    'id': $(this).data('id'),
+                    'is_available': ischecked ? 1 : 0,
+                    '_token': $('meta[name="csrf-token"]').attr('content')
+                },
+                success: function(data) {
+                    console.log(data);
+                    $('.loading').hide();
+                }
             });
         });
     </script>
