@@ -46,6 +46,16 @@
                 foreach ($listQuotePlanBenefitsPolicyDetails as $listQuotePlanBenefitsPolicyDetail) {
                     $listQuotePlanBenefitsPolicyDetailLink = $listQuotePlanBenefitsPolicyDetail->link;
                 }
+
+                $selectedAddonsSum = 0;
+                foreach ($listQuotePlanAddons as $listQuotePlanAddon) {
+                    foreach ($listQuotePlanAddon->carAddonOption as $carAddonOption) {
+                        if($carAddonOption->isSelected == true) {
+                            $selectedAddonsSum+= $carAddonOption->price;
+                        }
+                    }
+                }
+                $totalPremium = $selectedAddonsSum + $discountPremium;
             }
         }
 
@@ -109,11 +119,31 @@
                     $('#car_plan_manual_process_text, #car_plan_addon_manual_process_text').show().text(result).delay(5000).fadeOut(300);
                 },
                 error: function(jqXhr, textStatus, errorMessage){
+
+                    $('#totalPremiumOnFeatures').show().html('').delay(5000);
+                    $('#totalPremiumOnAddons').show().html('').delay(5000);
+                    var selectedAddonsPriceSum = 0;
+                    $.each(addons, function (i, jsondata) {
+                        if(jsondata.isSelected == true) {
+                            selectedAddonsPriceSum+= jsondata.price;
+                            console.log('price: ',jsondata.price);
+                        }
+                    });
+                    var totalPremium = Number(selectedAddonsPriceSum) + Number(discounted_premium);
+                    console.log('totalPremium: ',totalPremium);
+                    var totalPremiumHtml = '<div style="background-color: lavender;">Total Premium: AED '+totalPremium+' <small class="text-muted">(excluded VAT, Discounted Premium + Selected Addons)</small></div>';
+                    $('#totalPremiumOnFeatures').show().html(totalPremiumHtml).delay(5000);
+                    $('#totalPremiumOnAddons').show().html(totalPremiumHtml).delay(5000);
+
                     $(".loader").hide();
                     $('#car_plan_manual_process_text, #car_plan_addon_manual_process_text').show().text(jqXhr.responseText).delay(5000).fadeOut(300);
                 }
             });
         });
+
+        var totalPremiumHtml = '<div style="background-color: lavender;">Total Premium: AED '+<?php echo $totalPremium; ?>+' <small class="text-muted">(excluded VAT, Discounted Premium + Selected Addons)</small></div>';
+        $('#totalPremiumOnFeatures').show().html(totalPremiumHtml).delay(5000);
+        $('#totalPremiumOnAddons').show().html(totalPremiumHtml).delay(5000);
     </script>
 <?php
     }
@@ -410,7 +440,8 @@
                                             <div id="car_plan_manual_process_text" style="display: none;font-weight:bold;"></div>
                                         </td>
                                         <td> </td>
-                                        <td align="right"><button type="submit" class="btn btn-warning btn-sm" id="update_car_plan_button" {{ $carQuoteEditDisable }}>Update</button></td></tr>
+                                        <td align="right"><button type="submit" class="btn btn-warning btn-sm" id="update_car_plan_button" {{ $carQuoteEditDisable }}>Update</button></td>
+                                    </tr>
                                 </table>
                             </form>
                             <br />
@@ -421,65 +452,72 @@
                                         <tr><td style="width: 300px;">{{ ucwords($listQuotePlanBenefitsFeature->text) }}</td>
                                             <td>{{ ucwords($listQuotePlanBenefitsFeature->value) }}</td></tr>
                                     @endforeach
+                                    <tr><td colspan="4"></td></tr>
+                                    <tr><td colspan="4"></td></tr>
+                                    <tr>
+                                        <td colspan="4"><span id="totalPremiumOnFeatures"></span></td>
+                                    </tr>
                                 </table>
                             </p>
                         </div>
                         <div class="tab-pane fade" id="addons" role="tabpanel" aria-labelledby="addons-tab">
-                        <div id="addons_text" style="font-weight:bold;display:none;"></div>
                             <table cellpadding="3" cellspacing="3">
                                 <tr>
                                     <td>
                                         <table cellpadding="3" cellspacing="3">
-                                                @foreach ($listQuotePlanAddons as $listQuotePlanAddon)
-                                                    @foreach ($listQuotePlanAddon->carAddonOption as $carAddonOption)
-                                                    <tr>
-                                                        <td style="width: 430px;height: 30px;">{{ ucwords($listQuotePlanAddon->text) }}</td>
-                                                        <td style="width: 800px;height: 30px;">{{ ucwords($carAddonOption->value) }}</td>
+                                            @foreach ($listQuotePlanAddons as $listQuotePlanAddon)
+                                                @foreach ($listQuotePlanAddon->carAddonOption as $carAddonOption)
+                                                <tr>
+                                                    <td style="width: 430px;height: 30px;">{{ ucwords($listQuotePlanAddon->text) }}</td>
+                                                    <td style="width: 800px;height: 30px;">{{ ucwords($carAddonOption->value) }}</td>
 
-                                                        @if($carAddonOption->price == 0)
-                                                            <?php
-                                                                $carAddonOptionIsSelected = isset($carAddonOption->isSelected) ? $carAddonOption->isSelected : false;
-                                                            ?>
-                                                        <td style="width: 430px;height: 30px;">Free</td>
-                                                        <td style="width: 430px;height: 30px;">
-                                                            <select class="form-control" style="height: 30px; width: 140px;pointer-events: none; background-color: #f6f6f6">
-                                                                <option value="false" {{ $carAddonOptionIsSelected == false ? 'selected="selected"' : '' }}>Deselected</option>
-                                                                <option value="true" {{ $carAddonOptionIsSelected == true ? 'selected="selected"' : '' }}>Selected</option>
-                                                            </select>
-                                                        </td>
+                                                    @if($carAddonOption->price == 0)
+                                                        <?php
+                                                            $carAddonOptionIsSelected = isset($carAddonOption->isSelected) ? $carAddonOption->isSelected : false;
+                                                        ?>
+                                                    <td style="width: 430px;height: 30px;">Free</td>
+                                                    <td style="width: 430px;height: 30px;">
+                                                        <select class="form-control" style="height: 30px; width: 140px;pointer-events: none; background-color: #f6f6f6">
+                                                            <option value="false" {{ $carAddonOptionIsSelected == false ? 'selected="selected"' : '' }}>Deselected</option>
+                                                            <option value="true" {{ $carAddonOptionIsSelected == true ? 'selected="selected"' : '' }}>Selected</option>
+                                                        </select>
+                                                    </td>
+                                                    @else
+                                                    <td style="width: 430px;height: 30px;">
+                                                        @if($listQuotePlanAddon->code == CarPlanAddons::CAR_HIRE && ($providerCode == InsuranceProviders::AXA || $providerCode == InsuranceProviders::RSA))
+                                                            <input type="number" id="addon_price" name="addon_price" value="{{ $carAddonOption->price }}" style="width: 100px;" onKeyDown="if(this.value.length==5) return false;" class="form-control addon_price">
                                                         @else
-                                                        <td style="width: 430px;height: 30px;">
-                                                            @if($listQuotePlanAddon->code == CarPlanAddons::CAR_HIRE && ($providerCode == InsuranceProviders::AXA || $providerCode == InsuranceProviders::RSA))
-                                                                <input type="number" id="addon_price" name="addon_price" value="{{ $carAddonOption->price }}" style="width: 100px;" onKeyDown="if(this.value.length==5) return false;" class="form-control addon_price">
-                                                            @else
-                                                                AED {{ $carAddonOption->price }}
-                                                                <input type="hidden" id="addon_price" name="addon_price" value="{{ $carAddonOption->price }}" class="addon_price">
-                                                            @endif
-                                                            <input type="hidden" id="addon_id" name="addon_id" value="{{ $listQuotePlanAddon->id }}" class="addon_id">
-                                                            <input type="hidden" id="addon_option_id" name="addon_option_id" value="{{ $carAddonOption->id }}" class="addon_option_id">
-                                                        </td>
-                                                        <td style="width: 430px;height: 30px;" id="plan_addons">
-                                                            <select id="addon_is_selected" name="addon_is_selected" style="height: 30px; width: 140px;" class="form-control addon_is_selected">
-                                                                <option value=false {{ $carAddonOption->isSelected == false ? 'selected="selected"' : '' }}>Deselected</option>
-                                                                <option value=true {{ $carAddonOption->isSelected == true ? 'selected="selected"' : '' }}>Selected</option>
-                                                            </select>
-                                                        </td>
+                                                            AED {{ $carAddonOption->price }}
+                                                            <input type="hidden" id="addon_price" name="addon_price" value="{{ $carAddonOption->price }}" class="addon_price">
                                                         @endif
-                                                    </tr>
-                                                    @endforeach
+                                                        <input type="hidden" id="addon_id" name="addon_id" value="{{ $listQuotePlanAddon->id }}" class="addon_id">
+                                                        <input type="hidden" id="addon_option_id" name="addon_option_id" value="{{ $carAddonOption->id }}" class="addon_option_id">
+                                                    </td>
+                                                    <td style="width: 430px;height: 30px;" id="plan_addons">
+                                                        <select id="addon_is_selected" name="addon_is_selected" style="height: 30px; width: 140px;" class="form-control addon_is_selected">
+                                                            <option value=false {{ $carAddonOption->isSelected == false ? 'selected="selected"' : '' }}>Deselected</option>
+                                                            <option value=true {{ $carAddonOption->isSelected == true ? 'selected="selected"' : '' }}>Selected</option>
+                                                        </select>
+                                                    </td>
+                                                    @endif
+                                                </tr>
                                                 @endforeach
-                                                <tr>
-                                                    <td colspan="3"> </td>
-                                                    <td align="center"> </td>
-                                                </tr>
-                                                <tr>
-                                                    <td colspan="3"> </td>
-                                                    <td align="center"> </td>
-                                                </tr>
-                                                <tr>
-                                                    <td colspan="3" align="right"><div id="car_plan_addon_manual_process_text" style="display: none;font-weight:bold;"></div></td>
-                                                    <td align="center"><button type="submit" class="btn btn-warning btn-sm" id="update_car_plan_addons_button" {{ $carQuoteEditDisable }}>Update</button></td>
-                                                </tr>
+                                            @endforeach
+                                            <tr>
+                                                <td colspan="3"> </td>
+                                                <td align="center"> </td>
+                                            </tr>
+                                            <tr>
+                                                <td colspan="3"> </td>
+                                                <td align="center"> </td>
+                                            </tr>
+                                            <tr>
+                                                <td colspan="3" align="right"><div id="car_plan_addon_manual_process_text" style="display: none;font-weight:bold;"></div></td>
+                                                <td align="center"><button type="submit" class="btn btn-warning btn-sm" id="update_car_plan_addons_button" {{ $carQuoteEditDisable }}>Update</button></td>
+                                            </tr>
+                                            <tr>
+                                                <td colspan="3"><span id="totalPremiumOnAddons"></span></td>
+                                            </tr>
                                         </table>
                                     </td>
                                 </tr>
