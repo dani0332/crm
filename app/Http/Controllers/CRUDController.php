@@ -24,6 +24,7 @@ use App\Services\TravelQuoteService;
 use App\Services\PetQuoteService;
 use App\Services\UserService;
 use App\Services\EmailStatusService;
+use App\Services\ApplicationStorageService;
 use BenSampo\Enum\Rules\EnumValue;
 use DataTables;
 use Illuminate\Support\Facades\Auth;
@@ -48,6 +49,7 @@ class CRUDController extends Controller
     protected $userService;
     protected $activityService;
     protected $emailStatusService;
+    protected $applicationStorageService;
 
     public function __construct(
         HealthQuoteService $healthService,
@@ -63,7 +65,8 @@ class CRUDController extends Controller
         UserService $userService,
         Request $request, 
         ActivitiesService $activityService,
-        EmailStatusService $emailStatusService
+        EmailStatusService $emailStatusService,
+        ApplicationStorageService $applicationStorageService
     ) {
         $this->genericModel = new GenericModel();
         $this->healthQuoteService = $healthService;
@@ -80,6 +83,7 @@ class CRUDController extends Controller
         $this->activityService = $activityService;
         $this->userService = $userService;
         $this->emailStatusService = $emailStatusService;
+        $this->applicationStorageService = $applicationStorageService;
 
         $this->setModelType($request);
         $this->fillModelByModelType(ucwords($this->genericModel->modelType), $request);
@@ -272,7 +276,7 @@ class CRUDController extends Controller
                 $customTableList[$property] = $this->dropdownSourceService->getOnlySelectedItemName($property, $id);
             }
         }
-        $quoteTypes = 'Health,Car,Travel,Life,Home,Business';
+        $quoteTypes = 'Health,Car,Travel,Life,Home,Business,Pet';
         $serviceType = str_contains($quoteTypes, ucwords($model->modelType)) ? strtolower($model->modelType) . 'QuoteService' : lcfirst(ucwords($model->modelType)) . 'Service';
         $allowedDuplicateLOB = $this->crudService->getAllowedDuplicateLOB($model->modelType, $record->code);
         $activitiesData = $this->activityService->getActivityByLeadId($record->id, strtolower($model->modelType));
@@ -292,7 +296,7 @@ class CRUDController extends Controller
             array_push($activities, $updatedActivity);
         }
         $audits = [];
-        if ($this->genericModel->modelType == "Car") { // Car plans to display on detail view
+        if ($this->genericModel->modelType == quoteTypeCode::Car) { // Car plans to display on detail view
 
             $listQuotePlans = '';
             $quotePlans = $this->carQuoteService->getQuotePlans($id);
