@@ -115,13 +115,18 @@ class HealthQuoteService extends BaseService
     {
         $entity = HealthQuoteRequestDetail::where('health_quote_request_id', $id)->first();
         if (!$entity) {
-            HealthQuoteRequestDetail::create([
-                'health_quote_request_id' => $id,
-                'created_at' => Carbon::now(),
-                'updated_at' => Carbon::now(),
-            ]);
+            $entity = $this->createDetailEntity($id);
         }
         return HealthQuoteRequestDetail::where('health_quote_request_id', $id)->first();
+    }
+
+    public function createDetailEntity($id)
+    {
+        return HealthQuoteRequestDetail::create([
+            'health_quote_request_id' => $id,
+            'created_at' => Carbon::now(),
+            'updated_at' => Carbon::now(),
+        ]);
     }
 
     public function getLeadsForAssignment()
@@ -563,11 +568,14 @@ class HealthQuoteService extends BaseService
     public function updateChildRecord($id)
     {
         $childRecord = HealthQuoteRequestDetail::where('health_quote_request_id', $id)->first();
-        if (!empty($childRecord)) {
-            $childRecord->advisor_assigned_by_id = Auth::user()->id;
-            $childRecord->advisor_assigned_date = Carbon::now();
-            $childRecord->save();
+
+        if (empty($childRecord)) {
+            $childRecord = $this->createDetailEntity($id);
         }
+
+        $childRecord->advisor_assigned_by_id = Auth::user()->id;
+        $childRecord->advisor_assigned_date = Carbon::now();
+        $childRecord->save();
     }
 
     public function fillModelProperties()

@@ -136,13 +136,18 @@ class PetQuoteService extends BaseService
     {
         $entity = PetQuoteRequestDetail::where('pet_quote_request_id', $id)->first();
         if (!$entity) {
-            PetQuoteRequestDetail::create([
-                'pet_quote_request_id' => $id,
-                'created_at' => Carbon::now(),
-                'updated_at' => Carbon::now(),
-            ]);
+            $entity = $this->createDetailEntity($id);
         }
         return PetQuoteRequestDetail::where('pet_quote_request_id', $id)->first();
+    }
+
+    public function createDetailEntity($id)
+    {
+        return PetQuoteRequestDetail::create([
+            'pet_quote_request_id' => $id,
+            'created_at' => Carbon::now(),
+            'updated_at' => Carbon::now(),
+        ]);
     }
 
     public function getLeadsForAssignment()
@@ -513,11 +518,14 @@ class PetQuoteService extends BaseService
     public function updateChildRecord($id)
     {
         $childRecord = PetQuoteRequestDetail::where('pet_quote_request_id', $id)->first();
-        if (!empty($childRecord)) {
-            $childRecord->advisor_assigned_by_id = Auth::user()->id;
-            $childRecord->advisor_assigned_date = Carbon::now();
-            $childRecord->save();
+
+        if (empty($childRecord)) {
+            $childRecord = $this->createDetailEntity($id);
         }
+    
+        $childRecord->advisor_assigned_by_id = Auth::user()->id;
+        $childRecord->advisor_assigned_date = Carbon::now();
+        $childRecord->save();
     }
 
     public function fillModelProperties()

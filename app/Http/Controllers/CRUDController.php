@@ -573,6 +573,10 @@ class CRUDController extends Controller
     {
         $assignedToUserIdNew = $request->assigned_to_id_new;
         $leadsIds = $request->selectTmLeadId;
+        if(substr($leadsIds, 0, 1) == ',') {
+            $leadsIds = substr($leadsIds, 1);
+        }
+
         $leadsIds = array_map('intval', explode(',', $leadsIds));
         if ($leadsIds == '' || $leadsIds == null) {
             return redirect()->back()->with('message', 'Please select lead(s) to assign');
