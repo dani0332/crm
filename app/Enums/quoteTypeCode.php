@@ -20,6 +20,7 @@ class quoteTypeCode extends Enum
     const Bike = "Bike";
     const Yacht = "Yacht";
     const Travel = "Travel";
+    const Pet = "Pet";
     const RM_NB = "RM-NB";
     const RM_SPEED = "RM-SPEED";
     const RetailMedical = "Retail Medical";

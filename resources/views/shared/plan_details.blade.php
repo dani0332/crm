@@ -344,9 +344,17 @@ if (!isset($modelName)) {
                     <li class="nav-item">
                         <a class="nav-link active" id="general-tab" data-toggle="tab" href="#general" role="tab" aria-controls="general" aria-selected="true">General Info</a>
                     </li>
-
                     <li class="nav-item">
                         <a class="nav-link" id="benefits-inclusion-tab" data-toggle="tab" href="#benefits-inclusion" role="tab" aria-controls="benefits-inclusion" aria-selected="false">Inclusions</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="benefits-coInsurance-tab" data-toggle="tab" href="#benefits-coInsurance" role="tab" aria-controls="benefits-coInsurance" aria-selected="false">Co-pay/Co-insurance</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="benefits-regionCover-tab" data-toggle="tab" href="#benefits-regionCover" role="tab" aria-controls="benefits-regionCover" aria-selected="false">Region coverage & Network list</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="benefits-maternityCover-tab" data-toggle="tab" href="#benefits-maternityCover" role="tab" aria-controls="benefits-maternityCover" aria-selected="false">Maternity cover</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" id="benefits-exclusion-tab" data-toggle="tab" href="#benefits-exclusion" role="tab" aria-controls="benefits-exclusion" aria-selected="false">Exclusions</a>
@@ -385,11 +393,91 @@ if (!isset($modelName)) {
                         <table cellpadding="3" cellspacing="3">
                             <tr>
                                 <td>
+                                    
                                     <table cellpadding="3" cellspacing="3">
+                                        <tr>
+                                            <td>
+                                                <h6 style="font-weight: bold;">Features & Benefits</h6>
+                                            </td>
+                                        </tr>
+                                        @foreach ($listQuotePlanBenefitsFeatures as $key => $listQuotePlanBenefitsFeature)
+                                        <tr>
+                                            <td style="width: 300px;">{{ ucwords($listQuotePlanBenefitsFeature->text) }}</td>
+                                            <td>{{ ucwords($listQuotePlanBenefitsFeature->value) }}</td>
+                                        </tr>
+                                        @endforeach
                                         @foreach ($listQuotePlanBenefitsInclusions as $key => $listQuotePlanBenefitsInclusion)
                                         <tr>
                                             <td style="width: 300px;">{{ ucwords($listQuotePlanBenefitsInclusion->text) }}</td>
                                             <td>{{ ucwords($listQuotePlanBenefitsInclusion->value) }}</td>
+                                        </tr>
+                                        @endforeach
+                                    </table>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <div class="tab-pane fade" id="benefits-coInsurance" role="tabpanel" aria-labelledby="benefits-coInsurance-tab">
+                        <table cellpadding="3" cellspacing="3">
+                            <tr>
+                                <td>
+                                    <table cellpadding="3" cellspacing="3">
+                                        @foreach ($listQuotePlanBenefitsCoInsurance as $key => $listQuotePlanCoInsurance)
+                                        <tr>
+                                            <td style="width: 300px;">{{ ucwords($listQuotePlanCoInsurance->text) }}</td>
+                                            <td>{{ ucwords($listQuotePlanCoInsurance->value) }}</td>
+                                        </tr>
+                                        @endforeach
+                                    </table>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <div class="tab-pane fade" id="benefits-regionCover" role="tabpanel" aria-labelledby="benefits-regionCover-tab">
+                        <table cellpadding="3" cellspacing="3">
+                            <tr>
+                                <td>
+                                    <table cellpadding="3" cellspacing="3">
+                                        @foreach ($listQuotePlanBenefitsRegionCover as $key => $listQuotePlanRegionCover)
+                                        <tr>
+                                            <td style="width: 300px;">{{ ucwords($listQuotePlanRegionCover->text) }}</td>
+                                            <td>{{ ucwords($listQuotePlanRegionCover->value) }}</td>
+                                        </tr>
+                                        @endforeach
+                                    </table>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <div class="tab-pane fade" id="benefits-maternityCover" role="tabpanel" aria-labelledby="benefits-maternityCover-tab">
+                        <table cellpadding="3" cellspacing="3">
+                            <tr>
+                                <td>
+                                    <table cellpadding="3" cellspacing="3">
+                                        @foreach ($listQuotePlanBenefitsMaternityCover as $key => $listQuotePlanMaternityCover)
+                                        <tr>
+                                            <td style="width: 300px;">{{ ucwords($listQuotePlanMaternityCover->text) }}</td>
+                                            <td>{{ ucwords($listQuotePlanMaternityCover->value) }}</td>
+                                        </tr>
+                                        @endforeach
+                                    </table>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <div class="tab-pane fade" id="benefits-exclusion" role="tabpanel" aria-labelledby="benefits-exclusion-tab">
+                        <table cellpadding="3" cellspacing="3">
+                            <tr>
+                                <td>
+                                    <table cellpadding="3" cellspacing="3">
+                                        @foreach ($listQuotePlanBenefitsExclusions as $key => $listQuotePlanBenefitsExclusion)
+                                        <tr>
+                                            <td style="width: 300px;">{{ ucwords($listQuotePlanBenefitsExclusion->text) }}</td>
+                                            <td>{{ ucwords($listQuotePlanBenefitsExclusion->value) }}</td>
                                         </tr>
                                         @endforeach
                                     </table>

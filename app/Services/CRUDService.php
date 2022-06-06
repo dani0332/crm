@@ -207,7 +207,7 @@ class CRUDService extends BaseService
         } else if (strtolower($modelType) ==  strtolower(quoteTypeCode::Business)) {
             $query->whereIn('r.name', ['CORPLINE_ADVISOR','CORPLINE_RENEWAL_ADVISOR','CORPLINE_NEW_BUSINESS_ADVISOR','GM_RENEWAL_ADVISOR','GM_NEW_BUSINESS_ADVISOR']);
         } else {
-            $query->where('r.name', strtoupper($modelType) . '_ADVISOR');
+            $query->whereIn('r.name', [strtoupper($modelType) . '_ADVISOR',strtoupper($modelType) . '_RENEWAL_ADVISOR',strtoupper($modelType) . '_NEW_BUSINESS_ADVISOR']);
         }
         return $query->orderBy('r.name')->distinct()->get();
     }
@@ -224,7 +224,7 @@ class CRUDService extends BaseService
             $query->whereIn('r.name', [strtoupper($modelType) . '_WCU_ADVISOR', 'RM_ADVISOR', 'EBP_ADVISOR','HEALTH_RENEWAL_ADVISOR']);
         } else if (strtolower($modelType) ==  strtolower(quoteTypeCode::Business)) {
             $query->whereIn('r.name', ['CORPLINE_ADVISOR','CORPLINE_RENEWAL_ADVISOR']);
-        }else if (strtolower($modelType) == strtolower(quoteTypeCode::Life) || strtolower($modelType) == strtolower(quoteTypeCode::Home) || strtolower($modelType) == strtolower(quoteTypeCode::Travel)) {
+        }else if (strtolower($modelType) == strtolower(quoteTypeCode::Life) || strtolower($modelType) == strtolower(quoteTypeCode::Home) || strtolower($modelType) == strtolower(quoteTypeCode::Travel) || strtolower($modelType) == strtolower(quoteTypeCode::Pet)) {
             $query->whereIn('r.name', [strtoupper($modelType) . '_RENEWAL_ADVISOR', 'advisor']);
         } else {
             $query->where('r.name', strtoupper($modelType) . '_ADVISOR');
