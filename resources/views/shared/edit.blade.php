@@ -212,11 +212,11 @@
                                                     @endforeach
                                                 @else
                                                 @foreach($dropdownSource[$property] as $item)
-                                                @if($property == 'currently_insured_with')
-                                                <option value="{{$item->text}}" {{ $item->text == old($item->id, $record->$property) ? 'selected' : ''}}>{{ $item->text ?? $item->name }}</option>
-                                                @else
-                                                <option value="{{$item->id}}" {{ $item->id == old($item->id, $record->$property) ? 'selected' : ''}}>{{ $item->text ?? $item->name }}</option>
-                                                @endif
+                                                    @if($property == 'currently_insured_with' || $property == 'year_of_manufacture')
+                                                        <option value="{{$item->text}}" {{ $item->text == old($item->id, $record->$property) ? 'selected' : ''}}>{{ $item->text ?? $item->name }}</option>
+                                                    @else
+                                                        <option value="{{$item->id}}" {{ $item->id == old($item->id, $record->$property) ? 'selected' : ''}}>{{ $item->text ?? $item->name }}</option>
+                                                    @endif
                                                 @endforeach
 
                                                 @endif
