@@ -74,6 +74,7 @@ class CRUDController extends Controller
         $this->crudService = $crudService;
         $this->dropdownSourceService = $dropdownSourceService;
         $this->carQuoteService = $carQuoteService;
+
         $this->travelQuoteService = $travelQuoteService;
         $this->lifeQuoteService = $lifeQuoteService;
         $this->homeQuoteService = $homeQuoteService;
@@ -275,7 +276,7 @@ class CRUDController extends Controller
                 $customTableList[$property] = $this->dropdownSourceService->getOnlySelectedItemName($property, $id);
             }
         }
-        $quoteTypes = 'Health,Car,Travel,Life,Home,Business';
+        $quoteTypes = 'Health,Car,Travel,Life,Home,Business,Pet';
         $serviceType = str_contains($quoteTypes, ucwords($model->modelType)) ? strtolower($model->modelType) . 'QuoteService' : lcfirst(ucwords($model->modelType)) . 'Service';
         $allowedDuplicateLOB = $this->crudService->getAllowedDuplicateLOB($model->modelType, $record->code);
         $activitiesData = $this->activityService->getActivityByLeadId($record->id, strtolower($model->modelType));
@@ -318,8 +319,6 @@ class CRUDController extends Controller
             $entity = $this->carQuoteService->getQuoteByUuid($id);
             $previousQuoteId = isset($entity->previous_quote_id) ? $entity->previous_quote_id : NULL;
             $emailStatuses = $this->emailStatusService->getEmailStatus(QuoteTypeId::Car, $entity->id);
-
-            
 
             return view('shared.show', compact([
                 'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList',
@@ -484,11 +483,10 @@ class CRUDController extends Controller
     {
         $quotePlans = $this->carQuoteService->getQuotePlans($quoteId);
         $isPlanUpdateActive = $this->applicationStorageService->getKeyValue('IMCRM_CAR_QUOTE_PLANS_EDIT_IS_DISABLED');
-
         if (gettype($quotePlans) != 'string') {
             $listQuotePlans = $quotePlans->quotes->plans;
 
-            return view('shared.plan_details', compact(['listQuotePlans', 'quoteId', 'planId', 'isPlanUpdateActive']));
+            return view('shared.plan_details', compact(['listQuotePlans', 'quoteId', 'planId','isPlanUpdateActive']));
         }
     }
 
@@ -550,6 +548,9 @@ class CRUDController extends Controller
                     $listQuotePlanBenefitsInclusions = $listQuotePlan->benefits->inclusion;
                     $listQuotePlanBenefitsExclusions = $listQuotePlan->benefits->exclusion;
                     $listQuotePlanBenefitsFeatures = $listQuotePlan->benefits->feature;
+                    $listQuotePlanBenefitsCoInsurance = $listQuotePlan->benefits->coInsurance;
+                    $listQuotePlanBenefitsRegionCover = $listQuotePlan->benefits->regionCover;
+                    $listQuotePlanBenefitsMaternityCover = $listQuotePlan->benefits->maternityCover;
                     $listQuotePlanBenefitsPolicyDetails = $listQuotePlan->policyWordings;
 
                     foreach ($listQuotePlanBenefitsPolicyDetails as $listQuotePlanBenefitsPolicyDetail) {
@@ -562,7 +563,8 @@ class CRUDController extends Controller
                 'listQuotePlanName', 'providerCode', 'providerName',
                 'actualPremium', 'discountPremium', 'listQuotePlanBenefitsInclusions',
                 'listQuotePlanBenefitsExclusions', 'listQuotePlanBenefitsFeatures',
-                'listQuotePlanBenefitsPolicyDetailLink', 'modelName'
+                'listQuotePlanBenefitsPolicyDetailLink', 'modelName',
+                'listQuotePlanBenefitsCoInsurance','listQuotePlanBenefitsRegionCover','listQuotePlanBenefitsMaternityCover'
             ]));
         }
     }
