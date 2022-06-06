@@ -138,7 +138,7 @@ class DropdownSourceService extends BaseService
                 $data = LifeNumberOfYears::select('id', 'text')->where("is_active", true)->get();
                 break;
             case 'year_of_manufacture':
-                $data = YearOfManufacture::select('id', 'text')->get();
+                $data = YearOfManufacture::select('text as id', 'text')->get();
                 break;
             case 'advisor_id':
                 if (Auth::user()->isRenewalUser()) {
