@@ -2,7 +2,6 @@
 
 namespace App\Imports;
 
-use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeShortCode;
 use App\Jobs\RenewalImportJob;
 use App\Services\RenewalsUploadService;
@@ -14,6 +13,7 @@ use Maatwebsite\Excel\Concerns\WithValidation;
 use Maatwebsite\Excel\Concerns\WithStartRow;
 use Maatwebsite\Excel\Concerns\SkipsFailures;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
+use Illuminate\Support\Facades\Auth;
 
 class RenewalsImportUpdate implements OnEachRow, WithStartRow, WithValidation, SkipsOnFailure, WithChunkReading
 {
@@ -75,7 +75,7 @@ class RenewalsImportUpdate implements OnEachRow, WithStartRow, WithValidation, S
                 "notes" => $notes
             );
 
-            dispatch(new RenewalImportJob($quoteData, $quoteType, $this->renewalsUploadService, $this->fileName, $this->renewalImportCode, $this->uploadType));
+            dispatch(new RenewalImportJob($quoteData, $quoteType, $this->renewalsUploadService, $this->fileName, $this->renewalImportCode, $this->uploadType, Auth::user()->id));
         }
     }
 
