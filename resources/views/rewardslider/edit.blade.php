@@ -70,6 +70,15 @@
                         </div>
                     </div>
                     <div class="item form-group">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="is_public">Is Active</label>
+                        <div class="col-md-6 col-sm-6">
+                            <select class="form-control" id='is_public' name="is_public" data-toggle="tooltip" data-placement="top" title="Please select public false/true">
+                                <option value="0" {{ $rewardSlider->is_public == 0 ? 'selected="selected"' : '' }}>False</option>
+                                <option value="1" {{ $rewardSlider->is_public == 1 ? 'selected="selected"' : '' }}>True</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="is_active">Is Active</label>
                         <div class="col-md-6 col-sm-6">
                             <select class="form-control" id='is_active' name="is_active" data-toggle="tooltip" data-placement="top" title="Please select active false/true">
