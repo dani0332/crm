@@ -13,7 +13,7 @@ class RewardSlider extends Model implements AuditableContract
     use HasFactory, Auditable;
 
     protected $table = 'reward_slider';
-    protected $fillable = ['image', 'link', 'sort_order', 'is_active', 'start_date', 'end_date'];
+    protected $fillable = ['image', 'link', 'sort_order', 'is_active', 'start_date', 'end_date', 'is_public'];
 
     public function getCreatedAtAttribute($table)
     {
