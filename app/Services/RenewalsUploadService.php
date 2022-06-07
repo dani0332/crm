@@ -162,7 +162,7 @@ class RenewalsUploadService
         $newBikeQuote->save();
         $createRenewalQuote = $this->createNewRenewalBikeQuote($newBikeQuote->id, $quoteData->advisor, $quoteData->batch, $quoteData->policy, $newLeadId, $quoteData->other_email_ids, $renewalImportCode, $quoteData->endDate, $quoteData->gross_premium, $currentUserId);
         $this->createRenewalDumpRecord('Bike', $createRenewalQuote, $quoteData);
-        $this->updateAdvisorAssignedDateTime("BikeQuoteRequestDetail", $newBikeQuote->id, "bike_quote_request_id", $currentUserId);
+        $this->updateAdvisorAssignedDateTime("BikeQuoteRequestDetail", $newBikeQuote->id, "bike_quote_request_id", $currentUserId, $advisorId);
     }
 
     function createNewBusinessQuoute($quoteData, $transApprovedId, $newLeadId, $renewalImportCode, $currentUserId)
@@ -200,7 +200,7 @@ class RenewalsUploadService
         $newBusinessQuote->save();
         $createRenewalQuote = $this->createNewRenewalBusinessQuote($newBusinessQuote->id, $quoteData->advisor, $quoteData->batch, $quoteData->policy, $newLeadId, $quoteData->other_email_ids, $renewalImportCode, $businessSublineInsuranceId, $quoteData->endDate, $quoteData->gross_premium, $currentUserId);
         $this->createRenewalDumpRecord('Business', $createRenewalQuote, $quoteData);
-        $this->updateAdvisorAssignedDateTime("BusinessQuoteRequestDetail", $newBusinessQuote->id, "business_quote_request_id", $currentUserId);
+        $this->updateAdvisorAssignedDateTime("BusinessQuoteRequestDetail", $newBusinessQuote->id, "business_quote_request_id", $currentUserId, $advisorId);
     }
 
     function createNewCarQuoute($quoteData, $transApprovedId, $newLeadId, $renewalImportCode, $currentUserId)
@@ -252,7 +252,7 @@ class RenewalsUploadService
         $newCarQuote->save();
         $createRenewalQuote = $this->createNewRenewalCarQuote($newCarQuote->id, $quoteData->advisor, $quoteData->batch, $quoteData->policy, $newLeadId, $quoteData->other_email_ids, $renewalImportCode, $quoteData->endDate, $quoteData->gross_premium, $currentUserId);
         $this->createRenewalDumpRecord('Car', $createRenewalQuote, $quoteData);
-        $this->updateAdvisorAssignedDateTime("CarQuoteRequestDetail", $newCarQuote->id, "car_quote_request_id", $currentUserId);
+        $this->updateAdvisorAssignedDateTime("CarQuoteRequestDetail", $newCarQuote->id, "car_quote_request_id", $currentUserId, $advisorId);
     }
 
     function createNewHealthQuoute($quoteData, $transApprovedId, $newLeadId, $renewalImportCode, $currentUserId)
@@ -282,7 +282,7 @@ class RenewalsUploadService
         $newHealthQuote->save();
         $createRenewalQuote = $this->createNewRenewalHealthQuote($newHealthQuote->id, $quoteData->advisor, $quoteData->batch, $quoteData->policy, $newLeadId, $quoteData->other_email_ids, $renewalImportCode, $quoteData->endDate, $quoteData->gross_premium, $currentUserId);
         $this->createRenewalDumpRecord('Health', $createRenewalQuote, $quoteData);
-        $this->updateAdvisorAssignedDateTime("HealthQuoteRequestDetail", $newHealthQuote->id, "health_quote_request_id", $currentUserId);
+        $this->updateAdvisorAssignedDateTime("HealthQuoteRequestDetail", $newHealthQuote->id, "health_quote_request_id", $currentUserId, $advisorId);
     }
 
     function createNewHomeQuoute($quoteData, $transApprovedId, $newLeadId, $renewalImportCode, $currentUserId)
@@ -311,7 +311,7 @@ class RenewalsUploadService
         $newHomeQuote->save();
         $createRenewalQuote = $this->createNewRenewalHomeQuote($newHomeQuote->id, $quoteData->advisor, $quoteData->batch, $quoteData->policy, $newLeadId, $quoteData->other_email_ids, $renewalImportCode, $quoteData->endDate, $quoteData->gross_premium, $currentUserId);
         $this->createRenewalDumpRecord('Home', $createRenewalQuote, $quoteData);
-        $this->updateAdvisorAssignedDateTime("HomeQuoteRequestDetail", $newHomeQuote->id, "home_quote_request_id", $currentUserId);
+        $this->updateAdvisorAssignedDateTime("HomeQuoteRequestDetail", $newHomeQuote->id, "home_quote_request_id", $currentUserId, $advisorId);
     }
 
     function createNewLifeQuoute($quoteData, $transApprovedId, $newLeadId, $renewalImportCode, $currentUserId)
@@ -340,7 +340,7 @@ class RenewalsUploadService
         $newLifeQuote->save();
         $createRenewalQuote = $this->createNewRenewalLifeQuote($newLifeQuote->id, $quoteData->advisor, $quoteData->batch, $quoteData->policy, $newLeadId, $quoteData->other_email_ids, $renewalImportCode, $quoteData->endDate, $quoteData->gross_premium, $currentUserId);
         $this->createRenewalDumpRecord('Life', $createRenewalQuote, $quoteData);
-        $this->updateAdvisorAssignedDateTime("LifeQuoteRequestDetail", $newLifeQuote->id, "life_quote_request_id", $currentUserId);
+        $this->updateAdvisorAssignedDateTime("LifeQuoteRequestDetail", $newLifeQuote->id, "life_quote_request_id", $currentUserId, $advisorId);
     }
 
     function createNewTravelQuoute($quoteData, $transApprovedId, $newLeadId, $renewalImportCode, $currentUserId)
@@ -370,7 +370,7 @@ class RenewalsUploadService
         $newTravelQuote->save();
         $createRenewalQuote = $this->createNewRenewalTravelQuote($newTravelQuote->id, $quoteData->advisor, $quoteData->batch, $quoteData->policy, $newLeadId, $quoteData->other_email_ids, $renewalImportCode, $quoteData->endDate, $quoteData->gross_premium, $currentUserId);
         $this->createRenewalDumpRecord('Travel', $createRenewalQuote, $quoteData);
-        $this->updateAdvisorAssignedDateTime("TravelQuoteRequestDetail", $newTravelQuote->id, "travel_quote_request_id", $currentUserId);
+        $this->updateAdvisorAssignedDateTime("TravelQuoteRequestDetail", $newTravelQuote->id, "travel_quote_request_id", $currentUserId, $advisorId);
     }
 
     function createNewYachtQuoute($quoteData, $transApprovedId, $newLeadId, $renewalImportCode, $currentUserId)
@@ -399,7 +399,7 @@ class RenewalsUploadService
         $newYachtQuote->save();
         $createRenewalQuote = $this->createNewRenewalYachtQuote($newYachtQuote->id, $quoteData->advisor, $quoteData->batch, $quoteData->policy, $newLeadId, $quoteData->other_email_ids, $renewalImportCode, $quoteData->endDate, $quoteData->gross_premium, $currentUserId);
         $this->createRenewalDumpRecord('Yacht', $createRenewalQuote, $quoteData);
-        $this->updateAdvisorAssignedDateTime("YachtQuoteRequestDetail", $newYachtQuote->id, "yacht_quote_request_id", $currentUserId);
+        $this->updateAdvisorAssignedDateTime("YachtQuoteRequestDetail", $newYachtQuote->id, "yacht_quote_request_id", $currentUserId, $advisorId);
     }
 
     function createNewRenewalBikeQuote($quoteId, $newAdvisor, $batchNumber, $policy, $newLeadId, $otherEmailIds, $renewalImportCode, $endDate, $grossPremium, $currentUserId)
@@ -433,7 +433,7 @@ class RenewalsUploadService
         ]);
         $createRenewalQuote->save();
         $this->checkAMLService->checkAML($getBikeQuoteData->first_name, $getBikeQuoteData->last_name, $createRenewalQuote->id, $quoteType->id, false, null, null);
-        $this->updateAdvisorAssignedDateTime("BikeQuoteRequestDetail", $createRenewalQuote->id, "bike_quote_request_id", $currentUserId);
+        $this->updateAdvisorAssignedDateTime("BikeQuoteRequestDetail", $createRenewalQuote->id, "bike_quote_request_id", $currentUserId, $advisorId);
         return $createRenewalQuote->id;
     }
 
@@ -468,7 +468,7 @@ class RenewalsUploadService
         ]);
         $createRenewalQuote->save();
         $this->checkAMLService->checkAML($getBusinessQuoteData->first_name, $getBusinessQuoteData->last_name, $createRenewalQuote->id, $quoteType->id, false, null, null);
-        $this->updateAdvisorAssignedDateTime("BusinessQuoteRequestDetail", $createRenewalQuote->id, "business_quote_request_id", $currentUserId);
+        $this->updateAdvisorAssignedDateTime("BusinessQuoteRequestDetail", $createRenewalQuote->id, "business_quote_request_id", $currentUserId, $advisorId);
         return $createRenewalQuote->id;
     }
 
@@ -510,7 +510,7 @@ class RenewalsUploadService
         ]);
         $createRenewalQuote->save();
         $this->checkAMLService->checkAML($getCarQuoteData->first_name, $getCarQuoteData->last_name, $createRenewalQuote->id, $quoteType->id, false, null, null);
-        $this->updateAdvisorAssignedDateTime("CarQuoteRequestDetail", $createRenewalQuote->id, "car_quote_request_id", $currentUserId);
+        $this->updateAdvisorAssignedDateTime("CarQuoteRequestDetail", $createRenewalQuote->id, "car_quote_request_id", $currentUserId, $advisorId);
         return $createRenewalQuote->id;
     }
 
@@ -544,7 +544,7 @@ class RenewalsUploadService
         ]);
         $createRenewalQuote->save();
         $this->checkAMLService->checkAML($getHealthQuoteData->first_name, $getHealthQuoteData->last_name, $createRenewalQuote->id, $quoteType->id, false, null, null);
-        $this->updateAdvisorAssignedDateTime("HealthQuoteRequestDetail", $createRenewalQuote->id, "health_quote_request_id", $currentUserId);
+        $this->updateAdvisorAssignedDateTime("HealthQuoteRequestDetail", $createRenewalQuote->id, "health_quote_request_id", $currentUserId, $advisorId);
         return $createRenewalQuote->id;
     }
 
@@ -578,7 +578,7 @@ class RenewalsUploadService
         ]);
         $createRenewalQuote->save();
         $this->checkAMLService->checkAML($getHomeQuoteData->first_name, $getHomeQuoteData->last_name, $createRenewalQuote->id, $quoteType->id, false, null, null);
-        $this->updateAdvisorAssignedDateTime("HomeQuoteRequestDetail", $createRenewalQuote->id, "home_quote_request_id", $currentUserId);
+        $this->updateAdvisorAssignedDateTime("HomeQuoteRequestDetail", $createRenewalQuote->id, "home_quote_request_id", $currentUserId, $advisorId);
         return $createRenewalQuote->id;
     }
 
@@ -611,7 +611,7 @@ class RenewalsUploadService
         ]);
         $createRenewalQuote->save();
         $this->checkAMLService->checkAML($getLifeQuoteData->first_name, $getLifeQuoteData->last_name, $createRenewalQuote->id, $quoteType->id, false, null, null);
-        $this->updateAdvisorAssignedDateTime("LifeQuoteRequestDetail", $createRenewalQuote->id, "life_quote_request_id", $currentUserId);
+        $this->updateAdvisorAssignedDateTime("LifeQuoteRequestDetail", $createRenewalQuote->id, "life_quote_request_id", $currentUserId, $advisorId);
         return $createRenewalQuote->id;
     }
 
@@ -644,7 +644,7 @@ class RenewalsUploadService
         ]);
         $createRenewalQuote->save();
         $this->checkAMLService->checkAML($getTravelQuoteData->first_name, $getTravelQuoteData->last_name, $createRenewalQuote->id, $quoteType->id, false, null, null);
-        $this->updateAdvisorAssignedDateTime("TravelQuoteRequestDetail", $createRenewalQuote->id, "travel_quote_request_id", $currentUserId);
+        $this->updateAdvisorAssignedDateTime("TravelQuoteRequestDetail", $createRenewalQuote->id, "travel_quote_request_id", $currentUserId, $advisorId);
         return $createRenewalQuote->id;
     }
 
@@ -678,7 +678,7 @@ class RenewalsUploadService
         ]);
         $createRenewalQuote->save();
         $this->checkAMLService->checkAML($getYachtQuoteData->first_name, $getYachtQuoteData->last_name, $createRenewalQuote->id, $quoteType->id, false, null, null);
-        $this->updateAdvisorAssignedDateTime("YachtQuoteRequestDetail", $createRenewalQuote->id, "yacht_quote_request_id", $currentUserId);
+        $this->updateAdvisorAssignedDateTime("YachtQuoteRequestDetail", $createRenewalQuote->id, "yacht_quote_request_id", $currentUserId, $advisorId);
         return $createRenewalQuote->id;
     }
 
@@ -745,7 +745,7 @@ class RenewalsUploadService
         $updateCarQuote->vehicle_category = $vehicleType->category ?? null;
         $updateCarQuote->year_of_manufacture = $quoteData->year ?? null;
         $updateCarQuote->save();
-        $this->updateAdvisorAssignedDateTime("CarQuoteRequestDetail", $updateCarQuote->id, "car_quote_request_id", $currentUserId);
+        $this->updateAdvisorAssignedDateTime("CarQuoteRequestDetail", $updateCarQuote->id, "car_quote_request_id", $currentUserId, $previousAdvisorId);
 
         // Renewal Car Lead
         $updateCarQuoteRenewal = CarQuote::where('renewal_import_code', $renewalImportCode)
@@ -761,7 +761,7 @@ class RenewalsUploadService
         $updateCarQuoteRenewal->vehicle_category = $vehicleType->category ?? null;
         $updateCarQuoteRenewal->year_of_manufacture = $quoteData->year ?? null;
         $updateCarQuoteRenewal->save();
-        $this->updateAdvisorAssignedDateTime("CarQuoteRequestDetail", $updateCarQuoteRenewal->id, "car_quote_request_id", $currentUserId);
+        $this->updateAdvisorAssignedDateTime("CarQuoteRequestDetail", $updateCarQuoteRenewal->id, "car_quote_request_id", $currentUserId, $advisorId);
     }
 
     public function renewalBatchEmailProcess($batchLeadId, $batchEmailId)
@@ -965,27 +965,35 @@ class RenewalsUploadService
         }
     }
 
-    public function updateAdvisorAssignedDateTime($modelName, $quoteId, $quoteRequestIdName, $currentUserId)
+    public function updateAdvisorAssignedDateTime($modelName, $quoteId, $quoteRequestIdName, $currentUserId, $advisorId)
     {
         $nameSpace = '\\App\\Models\\';
-        $modelType = $nameSpace.$modelName;
+        $modelLobDetail = $nameSpace.$modelName;
 
         // check if record exists in model_detail table
-        $isRecordExist = $modelType::where($quoteRequestIdName, $quoteId)->first();
+        $isRecordExist = $modelLobDetail::where($quoteRequestIdName, $quoteId)->first();
 
-        if(!$isRecordExist) {
-            $newlobModel = new $modelType([
-                $quoteRequestIdName => $quoteId, // car_quote_request_id
-                "created_at" => Carbon::now(),
-                "updated_at" => Carbon::now(),
-                "advisor_assigned_by_id" => $currentUserId,
-                "advisor_assigned_date" => Carbon::now()
-            ]);
-            $newlobModel->save();
+        if($advisorId) {
+            if(!$isRecordExist) {
+                $lobDetail = new $modelLobDetail([
+                    $quoteRequestIdName => $quoteId, // i-e: $quoteRequestIdName = car_quote_request_id
+                    "created_at" => Carbon::now(),
+                    "updated_at" => Carbon::now(),
+                    "advisor_assigned_by_id" => $currentUserId,
+                    "advisor_assigned_date" => Carbon::now()
+                ]);
+            } else {
+                $lobDetail = $modelLobDetail::find($isRecordExist->id);
+                $quoteRequestIdName = $quoteId; // i-e: $quoteRequestIdName = car_quote_request_id
+                $lobDetail->updated_at = Carbon::now();
+                $lobDetail->advisor_assigned_by_id = $currentUserId;
+                $lobDetail->advisor_assigned_date = Carbon::now();
+            }
+            $lobDetail->save();
         } else {
             return false;
         }
 
-        return $newlobModel;
+        return $lobDetail;
     }
 }
