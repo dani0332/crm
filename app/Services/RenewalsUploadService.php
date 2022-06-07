@@ -984,7 +984,6 @@ class RenewalsUploadService
                 ]);
             } else {
                 $lobDetail = $modelLobDetail::find($isRecordExist->id);
-                $quoteRequestIdName = $quoteId; // i-e: $quoteRequestIdName = car_quote_request_id
                 $lobDetail->updated_at = Carbon::now();
                 $lobDetail->advisor_assigned_by_id = $currentUserId;
                 $lobDetail->advisor_assigned_date = Carbon::now();
