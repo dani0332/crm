@@ -125,7 +125,7 @@ if (!isset($modelName)) {
                         }
                     });
                     var totalPremium = Number(selectedAddonsPriceSum) + Number(discounted_premium);
-                    var totalPremiumHtml = '<div style="background-color: lavender;">Total Premium: AED ' + totalPremium + ' <small class="text-muted">(excluded VAT, Discounted Premium + Selected Addons)</small></div>';
+                    var totalPremiumHtml = '<div><span style="padding-top: 7px;border-top: 2px solid #E6E9ED;"><b>Total Premium with VAT:</b> AED ' + totalPremium + '</span></div>';
                     $('#totalPremiumOnFeatures').show().html(totalPremiumHtml).delay(5000);
                     $('#totalPremiumOnAddons').show().html(totalPremiumHtml).delay(5000);
 
@@ -135,7 +135,7 @@ if (!isset($modelName)) {
             });
         });
 
-        var totalPremiumHtml = '<div style="background-color: lavender;">Total Premium: AED ' + <?php echo $totalPremium; ?> + ' <small class="text-muted">(excluded VAT, Discounted Premium + Selected Addons)</small></div>';
+        var totalPremiumHtml = '<div><span style="padding-top: 7px;border-top: 2px solid #E6E9ED;"><b>Total Premium with VAT:</b> AED ' + <?php echo $totalPremium; ?> + '</span></div>';
         $('#totalPremiumOnFeatures').show().html(totalPremiumHtml).delay(5000);
         $('#totalPremiumOnAddons').show().html(totalPremiumHtml).delay(5000);
     </script>
