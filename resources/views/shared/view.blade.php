@@ -254,6 +254,15 @@
                     else
                         disableSortColumns = [-1, 0, 1, 2, 3, 4, 8, 9, 10];
                     break;
+                case 'pet':
+                    if(isRenewalUser || isNewBusinessUser){
+                        disableSortColumns = [-1,0,1,2,3,4,5,6];
+                    }
+                    else if(isManagerOrDeputy == '1' || isAdmin)
+                        disableSortColumns = [-1,1,2,3,4,5,9,10];
+                    else
+                        disableSortColumns = [-1, 0, 1, 2, 3, 4, 8, 9, 10];
+                    break;
                 default:
                     disableSortColumns = [];
                     break;
@@ -820,7 +829,7 @@
                                         width="100%">
                                         <thead>
                                             <tr>
-                                                @if ($isManagerORDeputy == '1' && str_contains('home,health,life,business,travel,car', strtolower($model->modelType)))
+                                                @if ($isManagerORDeputy == '1' && str_contains('home,health,life,business,travel,car,pet', strtolower($model->modelType)))
                                                     <th style="width: 15px;"><input type="checkbox" id="checkAllTmLeads"
                                                             name="checkAllTmLeads" value=""></th>
                                                 @endif
