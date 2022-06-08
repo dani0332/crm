@@ -110,7 +110,6 @@
         });
 
         function pet_field_microchip_visibility() {
-            console.log("das");
             var is_microchipped_value = $("#is_microchipped").val();
             if (is_microchipped_value == "Yes") {
                 $("#microchip_no_div").show(300);
