@@ -254,7 +254,6 @@
                     else
                         disableSortColumns = [-1, 0, 1, 2, 3, 4, 8, 9, 10];
                     break;
-
                 case 'pet':
                     if(isRenewalUser || isNewBusinessUser){
                         disableSortColumns = [-1,0,1,2,3,4,5,6];
@@ -268,6 +267,7 @@
                     disableSortColumns = [];
                     break;
             }
+            console.log(dataTableColumns);
             // Initializing the datatable
             var vehicleTypeDataTable = $("#dtBasicExample").DataTable({
                 ordering: false,
@@ -806,8 +806,7 @@
                                                             <select class="form-control" id="assigned_to_id_new"
                                                                 name="assigned_to_id_new">
                                                                 @foreach ($updatedAdvisors as $handler)
-                                                                    <option value="{{ $handler->id }}">{{ $handler->name }}
-                                                                    </option>
+                                                                    <option value="{{ $handler->id }}">{{ $handler->name }}</option>
                                                                 @endforeach
                                                             </select>
                                                         </div>
