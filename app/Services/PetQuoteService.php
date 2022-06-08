@@ -331,7 +331,7 @@ class PetQuoteService extends BaseService
                 $title = "Previous Quote ID";
                 break;    
             default:
-                return 'lqr';
+                return 'pqr';
                 break;
         }
     }
@@ -363,7 +363,7 @@ class PetQuoteService extends BaseService
 
     public function getPetOverDueFollowups()
     {
-        $query = DB::table('pet_quote_request as lqr')
+        $query = DB::table('pet_quote_request as pqr')
             ->select(
                 'pqr.id',
                 'pqr.uuid',
