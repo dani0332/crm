@@ -542,16 +542,16 @@ class PetQuoteService extends BaseService
             "created_at" => "input|date|title|range",
             "updated_at" => "input|date|title",
             "next_followup_date" => "input|date|title|range",
-            "microchip_no" => "input|number",
             "source" => "input|text",
             "lost_reason" => "input|text",
             "premium" => "input|number",
             "policy_number" => "input|text",
-            "type_of_pet1" => "input|text|required",
-            "breed_of_pet1" => "input|text|required",
-            "age_of_pet1" => "input|number|required",
-            "is_microchipped" => "static|Yes,No",
+            "type_of_pet1" => "input|text|title|required",
+            "breed_of_pet1" => "input|text|title|required",
+            "age_of_pet1" => "input|number|title|required",
             "is_neutered" => "static|Yes,No",
+            "is_microchipped" => "static|Yes,No",
+            "microchip_no" => "input|number",
             "is_mixed_breed" => "static|Yes,No",
             "has_injury" => "static|Yes,No",
             "gender" => "static|Male,Female",
@@ -618,6 +618,18 @@ class PetQuoteService extends BaseService
                 break;
             case 'previous_quote_policy_premium':
                 $title = "Previous Policy Premium";
+                break;
+            case 'type':
+                $title = "Previous Policy Premium";
+                break;
+            case 'type_of_pet1':
+                $title = "Type Of Pet";
+                break;
+            case 'breed_of_pet1':
+                $title = "Breed Of Pet";
+                break;
+            case 'age_of_pet1':
+                $title = "Age Of Pet";
                 break;
             default:
                 break;

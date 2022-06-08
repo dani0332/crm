@@ -7,6 +7,9 @@
         background-color: white !important;
     }
 </style>
+<?php
+    use App\Enums\quoteTypeCode;
+    ?>
 <script>
     function getCarMakes(id)
     {
@@ -102,6 +105,19 @@
                 }
             });
         }
+        $('#is_microchipped').on("change", function (e) {
+            pet_field_microchip_visibility();
+        });
+
+        function pet_field_microchip_visibility() {
+            var is_microchipped_value = $("#is_microchipped").val();
+            if (is_microchipped_value == "Yes") {
+                $("#microchip_no_div").show(300);
+            } else {
+                $("#microchip_no_div").hide(300);
+            }
+        }
+        pet_field_microchip_visibility();
 });
 </script>
     <div class="row">
@@ -268,7 +284,11 @@
                                         @endif
                                         <select @if(strpos($value, 'multiple')) name="{{$property.'[]'}}" multiple="multiple" class="form-control select2 select-roles" @else class="form-control" name="{{$property}}" @endif id="{{$property}}" >
                                             @foreach($staticOptions as $item)
-                                            <option value="{{ $item }}" {{ $item == old($item, $record->$property) ? 'selected' : ''}}>{{ $item }}</option>
+                                                @if($item == quoteTypeCode::yesText && $record->$property == 1 || $item == quoteTypeCode::noText && $record->$property == 0)
+                                                    <option value="{{ $item }}" {{ $item == old($item, $item) ? 'selected' : ''}}>{{ $item }}</option>
+                                                @else
+                                                    <option value="{{ $item }}" {{ $item == old($item, $record->$property) ? 'selected' : ''}}>{{ $item }}</option>
+                                                @endif
                                             @endforeach
                                         </select>
 
