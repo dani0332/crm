@@ -105,6 +105,19 @@
                 }
             });
         }
+        $('#is_microchipped').on("change", function (e) {
+            pet_field_microchip_visibility();
+        });
+
+        function pet_field_microchip_visibility() {
+            var is_microchipped_value = $("#is_microchipped").val();
+            if (is_microchipped_value == "Yes") {
+                $("#microchip_no_div").show(300);
+            } else {
+                $("#microchip_no_div").hide(300);
+            }
+        }
+        pet_field_microchip_visibility();
 });
 </script>
     <div class="row">
