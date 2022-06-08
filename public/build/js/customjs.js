@@ -1211,16 +1211,6 @@ $(document).ready(function () {
         }
     });
 
-
-    $('#is_microchipped').on("change", function (e) {
-        var is_microchipped_value = $(this).val();
-        if (is_microchipped_value == "Yes") {
-            $("#microchip_no_div").show(300);
-        } else {
-            $("#microchip_no_div").hide(300);
-        }
-    });
-
     $('.tminsurancetype-data-table').DataTable({
         ordering: false,
         info: false,
