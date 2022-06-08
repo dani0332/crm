@@ -70,7 +70,7 @@
                         </div>
                     </div>
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="is_public">Is Active</label>
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="is_public">Is Public</label>
                         <div class="col-md-6 col-sm-6">
                             <select class="form-control" id='is_public' name="is_public" data-toggle="tooltip" data-placement="top" title="Please select public false/true">
                                 <option value="0" {{ $rewardSlider->is_public == 0 ? 'selected="selected"' : '' }}>False</option>
