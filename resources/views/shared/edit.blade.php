@@ -7,6 +7,9 @@
         background-color: white !important;
     }
 </style>
+<?php
+    use App\Enums\quoteTypeCode;
+    ?>
 <script>
     function getCarMakes(id)
     {
@@ -268,7 +271,7 @@
                                         @endif
                                         <select @if(strpos($value, 'multiple')) name="{{$property.'[]'}}" multiple="multiple" class="form-control select2 select-roles" @else class="form-control" name="{{$property}}" @endif id="{{$property}}" >
                                             @foreach($staticOptions as $item)
-                                                @if($item == "Yes" && $record->$property == 1 || $item == "No" && $record->$property == 0)
+                                                @if($item == quoteTypeCode::yesText && $record->$property == 1 || $item == quoteTypeCode::noText && $record->$property == 0)
                                                     <option value="{{ $item }}" {{ $item == old($item, $item) ? 'selected' : ''}}>{{ $item }}</option>
                                                 @else
                                                     <option value="{{ $item }}" {{ $item == old($item, $record->$property) ? 'selected' : ''}}>{{ $item }}</option>
