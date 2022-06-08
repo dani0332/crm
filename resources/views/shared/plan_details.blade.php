@@ -51,7 +51,8 @@ if (!isset($modelName)) {
                     }
                 }
             }
-            $totalPremium = $selectedAddonsSum + $discountPremium;
+            $totalAmount = $selectedAddonsSum + $discountPremium;
+            $totalPremium = 5 / 100 * $totalAmount + $totalAmount;
         }
     }
 
@@ -124,7 +125,8 @@ if (!isset($modelName)) {
                             selectedAddonsPriceSum += jsondata.price;
                         }
                     });
-                    var totalPremium = Number(selectedAddonsPriceSum) + Number(discounted_premium);
+                    var totalAmount = Number(selectedAddonsPriceSum) + Number(discounted_premium);
+                    var totalPremium = 5 / 100 * Number(totalAmount) + Number(totalAmount);
                     var totalPremiumHtml = '<div><span style="padding-top: 7px;border-top: 2px solid #E6E9ED;"><b>Total Premium with VAT:</b> AED ' + totalPremium + '</span></div>';
                     $('#totalPremiumOnFeatures').show().html(totalPremiumHtml).delay(5000);
                     $('#totalPremiumOnAddons').show().html(totalPremiumHtml).delay(5000);
