@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\GenericModel;
-use App\Models\InsuranceProvider;
 use App\Services\InsuranceProviderService;
 use App\Services\CarPlanService;
 use App\Services\DropdownSourceService;
@@ -14,6 +13,7 @@ use App\Services\CarPlanAddOnOptionService;
 use App\Services\ApplicationStorageService;
 use App\Enums\InsuranceProvderConstants;
 use App\Services\TeamService;
+use App\Services\LeadStatusService;
 use Illuminate\Http\Request;
 use DataTables;
 use Illuminate\Support\Facades\Redirect;
@@ -29,6 +29,7 @@ class GenericCrudController extends Controller
     protected $carPlanAddOnOptionService;
     protected $applicationStorageService;
     protected $teamsService;
+    protected $leadStatusService;
     public function __construct(
         InsuranceProviderService $insuranceProviderService,
         CRUDService $crudService,
@@ -39,7 +40,8 @@ class GenericCrudController extends Controller
         CarPlanCoverageService $carPlanCoverageService,
         CarPlanAddOnOptionService $carPlanAddOnOptionService,
         ApplicationStorageService $applicationStorageService,
-        TeamService $teamsService
+        TeamService $teamsService,
+        LeadStatusService $leadStatusService
     ) {
         $this->genericModel = new GenericModel();
         $this->crudService = $crudService;
@@ -51,6 +53,7 @@ class GenericCrudController extends Controller
         $this->carPlanAddOnOptionService = $carPlanAddOnOptionService;
         $this->applicationStorageService = $applicationStorageService;
         $this->teamsService = $teamsService;
+        $this->leadStatusService = $leadStatusService;
         $this->setModelType($request);
         $this->fillModelByModelType(ucwords($this->genericModel->modelType), $request);
     }
@@ -259,6 +262,7 @@ class GenericCrudController extends Controller
         if (strpos($url, 'carplanaddonoption')) $this->genericModel->modelType = 'CarPlanAddOnOption';
         if (strpos($url, 'applicationstorage')) $this->genericModel->modelType = 'ApplicationStorage';
         if (strpos($url, 'teams')) $this->genericModel->modelType = 'Teams';
+        if (strpos($url, 'leadstatus')) $this->genericModel->modelType = 'LeadStatus';
     }
 
     private function fillModelByModelType($type, Request $request)

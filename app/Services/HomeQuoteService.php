@@ -89,13 +89,18 @@ class HomeQuoteService extends BaseService
     {
         $entity = HomeQuoteRequestDetail::where('home_quote_request_id', $id)->first();
         if (!$entity) {
-            HomeQuoteRequestDetail::create([
-                'home_quote_request_id' => $id,
-                'created_at' => Carbon::now(),
-                'updated_at' => Carbon::now(),
-            ]);
+            $entity = $this->createDetailEntity($id);
         }
         return HomeQuoteRequestDetail::where('home_quote_request_id', $id)->first();
+    }
+
+    public function createDetailEntity($id)
+    {
+        return HomeQuoteRequestDetail::create([
+            'home_quote_request_id' => $id,
+            'created_at' => Carbon::now(),
+            'updated_at' => Carbon::now(),
+        ]);
     }
 
     public function saveHomeQuote(Request $request)
@@ -428,11 +433,14 @@ class HomeQuoteService extends BaseService
     public function updateChildRecord($id)
     {
         $childRecord = HomeQuoteRequestDetail::where('home_quote_request_id', $id)->first();
-        if (!empty($childRecord)) {
-            $childRecord->advisor_assigned_by_id = Auth::user()->id;
-            $childRecord->advisor_assigned_date = Carbon::now();
-            $childRecord->save();
+
+        if (empty($childRecord)) {
+            $childRecord = $this->createDetailEntity($id);
         }
+    
+        $childRecord->advisor_assigned_by_id = Auth::user()->id;
+        $childRecord->advisor_assigned_date = Carbon::now();
+        $childRecord->save();
     }
 
     public function getLeads($CDBID, $email, $mobile_no, $lead_type)
@@ -661,7 +669,7 @@ class HomeQuoteService extends BaseService
                     }
                 }
             } else {
-                if ($propertyName != 'id' && $propertyName != 'email' && $propertyName != 'code'  && $propertyName != 'created_at' && $propertyName != 'updated_at' && $propertyName != 'mobile_no' && $propertyName != 'quote_status_id' && $propertyName != 'next_followup_date' && $propertyName != 'lost_reason' && $propertyName != 'source' && $propertyName != 'advisor_id' && $propertyName != 'policy_number' && $propertyName != 'previous_quote_policy_premium') {
+                if ($propertyName != 'id' && $propertyName != 'email' && $propertyName != 'code'  && $propertyName != 'created_at' && $propertyName != 'updated_at' && $propertyName != 'mobile_no' && $propertyName != 'quote_status_id' && $propertyName != 'next_followup_date' && $propertyName != 'lost_reason' && $propertyName != 'source' && $propertyName != 'advisor_id' && $propertyName != 'policy_number' && $propertyName != 'previous_quote_policy_premium' && $propertyName != 'transapp_code' && $propertyName != 'premium' && $propertyName != 'previous_quote_id' && $propertyName != 'is_renewal' && $propertyName != 'renewal_expiry_date' && $propertyName != 'renewal_batch' && $propertyName != 'previous_quote_policy_number' && $propertyName != 'previous_policy_expiry_date') {
                     $validationArray[$propertyName] = 'required';
                 }
             }

@@ -11,6 +11,8 @@ use Illuminate\Queue\SerializesModels;
 use Exception;
 use Illuminate\Support\Facades\Log;
 use App\Models\InslyBatchLog;
+use DB;
+
 class InslyDataProcessingJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
@@ -36,8 +38,8 @@ class InslyDataProcessingJob implements ShouldQueue
             Log::channel('daily')->info('Process InslyDataProcessingJob trigged');
             $arrayOfPolicyArray = array_chunk((array)$this->request->policies, 100);
             $count = 1;
-            foreach($arrayOfPolicyArray as $policyArray) {
-                Log::channel('daily')->info('Dispatched Job # '.$count.' for creating customer using policy');
+            foreach ($arrayOfPolicyArray as $policyArray) {
+                Log::channel('daily')->info('Dispatched Job # ' . $count . ' for creating customer using policy');
                 dispatch(new InslyCustomerCreationJob($policyArray));
                 $count++;
             }
@@ -48,12 +50,14 @@ class InslyDataProcessingJob implements ShouldQueue
             return;
         } catch (Exception $ex) {
             return $ex;
+        } finally {
+            DB::disconnect('mysql');
         }
-
     }
 
-    public static function GetWEEmailRequestObject($first_name, $last_name, $customer_email){
-        $params = ["customerName" => $first_name.' '.$last_name];
+    public static function GetWEEmailRequestObject($first_name, $last_name, $customer_email)
+    {
+        $params = ["customerName" => $first_name . ' ' . $last_name];
         $emailRequest = array();
         $emailRequest['to'] = $customer_email;
         $emailRequest['subject'] = 'Welcome to myAlfred by InsuranceMarket.ae';
@@ -63,11 +67,11 @@ class InslyDataProcessingJob implements ShouldQueue
     }
 
     /**
-    * The job failed to process.
-    *
-    * @param  Exception  $exception
-    * @return void
-    */
+     * The job failed to process.
+     *
+     * @param  Exception  $exception
+     * @return void
+     */
     public function failed(Exception $exception)
     {
         return $exception;

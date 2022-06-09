@@ -115,13 +115,18 @@ class HealthQuoteService extends BaseService
     {
         $entity = HealthQuoteRequestDetail::where('health_quote_request_id', $id)->first();
         if (!$entity) {
-            HealthQuoteRequestDetail::create([
-                'health_quote_request_id' => $id,
-                'created_at' => Carbon::now(),
-                'updated_at' => Carbon::now(),
-            ]);
+            $entity = $this->createDetailEntity($id);
         }
         return HealthQuoteRequestDetail::where('health_quote_request_id', $id)->first();
+    }
+
+    public function createDetailEntity($id)
+    {
+        return HealthQuoteRequestDetail::create([
+            'health_quote_request_id' => $id,
+            'created_at' => Carbon::now(),
+            'updated_at' => Carbon::now(),
+        ]);
     }
 
     public function getLeadsForAssignment()
@@ -365,6 +370,9 @@ class HealthQuoteService extends BaseService
         $healthQuote->has_home = $request->has_home == 'on' ? true : false;
         $healthQuote->emirate_of_your_visa_id = $request->emirate_of_your_visa_id;
         $healthQuote->premium = $request->premium;
+        if($healthQuote->salary_band_id != $request->salary_band_id || $healthQuote->member_category_id != $request->member_category_id) {
+            $healthQuote->quote_updated_at = Carbon::now();
+        }
         $healthQuote->salary_band_id = $request->salary_band_id;
         $healthQuote->member_category_id = $request->member_category_id;
         $healthQuote->save();
@@ -560,11 +568,14 @@ class HealthQuoteService extends BaseService
     public function updateChildRecord($id)
     {
         $childRecord = HealthQuoteRequestDetail::where('health_quote_request_id', $id)->first();
-        if (!empty($childRecord)) {
-            $childRecord->advisor_assigned_by_id = Auth::user()->id;
-            $childRecord->advisor_assigned_date = Carbon::now();
-            $childRecord->save();
+
+        if (empty($childRecord)) {
+            $childRecord = $this->createDetailEntity($id);
         }
+
+        $childRecord->advisor_assigned_by_id = Auth::user()->id;
+        $childRecord->advisor_assigned_date = Carbon::now();
+        $childRecord->save();
     }
 
     public function fillModelProperties()
@@ -609,7 +620,7 @@ class HealthQuoteService extends BaseService
             "previous_quote_policy_number" => "input|title",
             "previous_policy_expiry_date" => "input|date|title|range",
             "previous_quote_policy_premium" => "input|title",
-            "device" => "input|title"
+            "device" => "input|title",
         );
     }
 

@@ -37,7 +37,7 @@ class MyLeadsController extends Controller
             $teamName = 'business';
         }
         $parentTeamId = $team->id;
-        $leadStatusList = QuoteStatus::select('id', 'text')->get();
+        $leadStatusList = QuoteStatus::select('id', 'text')->where('is_active', 1)->get();
         $paymentStatusList = PaymentStatus::select('id', 'text')->where('is_active', 1)->get();
 
         $allowedTeamTypes = [];

@@ -1647,6 +1647,7 @@ $(document).ready(function () {
         searching: false,
         bLengthChange: false,
         serverSide: true,
+        processing: true,
         ajax: config.routes.reward_sliders_datatable_route,
         columns: [{
             data: 'id',
@@ -1669,6 +1670,7 @@ $(document).ready(function () {
         { data: 'start_date', name: 'start_date' },
         { data: 'end_date', name: 'end_date' },
         { data: 'sort_order', name: 'sort_order' },
+        { data: 'is_public', name: 'is_public' },
         { data: 'is_active', name: 'is_active' },
         { data: 'created_at', name: 'created_at' },
         { data: 'updated_at', name: 'updated_at' },

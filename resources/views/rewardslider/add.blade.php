@@ -67,11 +67,20 @@
                         </div>
                     </div>
                     <div class="item form-group">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="is_public">Is Public</label>
+                        <div class="col-md-6 col-sm-6">
+                            <select class="form-control" id='is_public' name="is_public" data-toggle="tooltip" data-placement="top" title="Please select public false/true">
+                                <option value="0" {{ (old("is_public") == "0") ? "selected" : "" }}>False</option>
+                                <option value="1" {{ (old("is_public") == "1") ? "selected" : "" }}>True</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="is_active">Is Active</label>
                         <div class="col-md-6 col-sm-6">
                             <select class="form-control" id='is_active' name="is_active" data-toggle="tooltip" data-placement="top" title="Please select active false/true">
-                                <option value="0">False</option>
-                                <option value="1">True</option>
+                            <option value="0" {{ (old("is_active") == "0") ? "selected" : "" }}>False</option>
+                                <option value="1" {{ (old("is_active") == "1") ? "selected" : "" }}>True</option>
                             </select>
                         </div>
                     </div>

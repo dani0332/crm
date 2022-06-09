@@ -18,13 +18,13 @@ use App\Services\HealthQuoteService;
 use App\Services\CarQuoteService;
 use App\Services\CRUDService;
 use App\Services\HomeQuoteService;
-use App\Services\LeadStatusService;
 use App\Services\LifeQuoteService;
 use App\Services\TeamService;
 use App\Services\TravelQuoteService;
 use App\Services\PetQuoteService;
 use App\Services\UserService;
 use App\Services\EmailStatusService;
+use App\Services\ApplicationStorageService;
 use BenSampo\Enum\Rules\EnumValue;
 use DataTables;
 use Illuminate\Support\Facades\Auth;
@@ -41,7 +41,6 @@ class CRUDController extends Controller
     protected $dropdownSourceService;
     protected $carQuoteService;
     protected $crudService;
-    protected $leadStatusService;
     protected $travelQuoteService;
     protected $lifeQuoteService;
     protected $homeQuoteService;
@@ -50,6 +49,7 @@ class CRUDController extends Controller
     protected $userService;
     protected $activityService;
     protected $emailStatusService;
+    protected $applicationStorageService;
 
     public function __construct(
         HealthQuoteService $healthService,
@@ -57,7 +57,6 @@ class CRUDController extends Controller
         CRUDService $crudService,
         DropdownSourceService $dropdownSourceService,
         CarQuoteService $carQuoteService,
-        LeadStatusService $leadStatusService,
         TravelQuoteService $travelQuoteService,
         LifeQuoteService $lifeQuoteService,
         HomeQuoteService $homeQuoteService,
@@ -66,7 +65,8 @@ class CRUDController extends Controller
         UserService $userService,
         Request $request, 
         ActivitiesService $activityService,
-        EmailStatusService $emailStatusService
+        EmailStatusService $emailStatusService,
+        ApplicationStorageService $applicationStorageService
     ) {
         $this->genericModel = new GenericModel();
         $this->healthQuoteService = $healthService;
@@ -74,7 +74,7 @@ class CRUDController extends Controller
         $this->crudService = $crudService;
         $this->dropdownSourceService = $dropdownSourceService;
         $this->carQuoteService = $carQuoteService;
-        $this->leadStatusService = $leadStatusService;
+
         $this->travelQuoteService = $travelQuoteService;
         $this->lifeQuoteService = $lifeQuoteService;
         $this->homeQuoteService = $homeQuoteService;
@@ -83,6 +83,7 @@ class CRUDController extends Controller
         $this->activityService = $activityService;
         $this->userService = $userService;
         $this->emailStatusService = $emailStatusService;
+        $this->applicationStorageService = $applicationStorageService;
 
         $this->setModelType($request);
         $this->fillModelByModelType(ucwords($this->genericModel->modelType), $request);
@@ -275,7 +276,7 @@ class CRUDController extends Controller
                 $customTableList[$property] = $this->dropdownSourceService->getOnlySelectedItemName($property, $id);
             }
         }
-        $quoteTypes = 'Health,Car,Travel,Life,Home,Business';
+        $quoteTypes = 'Health,Car,Travel,Life,Home,Business,Pet';
         $serviceType = str_contains($quoteTypes, ucwords($model->modelType)) ? strtolower($model->modelType) . 'QuoteService' : lcfirst(ucwords($model->modelType)) . 'Service';
         $allowedDuplicateLOB = $this->crudService->getAllowedDuplicateLOB($model->modelType, $record->code);
         $activitiesData = $this->activityService->getActivityByLeadId($record->id, strtolower($model->modelType));
@@ -295,7 +296,7 @@ class CRUDController extends Controller
             array_push($activities, $updatedActivity);
         }
         $audits = [];
-        if ($this->genericModel->modelType == "Car") { // Car plans to display on detail view
+        if ($this->genericModel->modelType == quoteTypeCode::Car) { // Car plans to display on detail view
 
             $listQuotePlans = '';
             $quotePlans = $this->carQuoteService->getQuotePlans($id);
@@ -481,11 +482,11 @@ class CRUDController extends Controller
     public function carQuotePlanDetails($quoteId, $planId)
     {
         $quotePlans = $this->carQuoteService->getQuotePlans($quoteId);
-
+        $isPlanUpdateActive = $this->applicationStorageService->getKeyValue('IMCRM_CAR_QUOTE_PLANS_EDIT_IS_DISABLED');
         if (gettype($quotePlans) != 'string') {
             $listQuotePlans = $quotePlans->quotes->plans;
 
-            return view('shared.plan_details', compact(['listQuotePlans', 'quoteId', 'planId']));
+            return view('shared.plan_details', compact(['listQuotePlans', 'quoteId', 'planId','isPlanUpdateActive']));
         }
     }
 
@@ -547,6 +548,9 @@ class CRUDController extends Controller
                     $listQuotePlanBenefitsInclusions = $listQuotePlan->benefits->inclusion;
                     $listQuotePlanBenefitsExclusions = $listQuotePlan->benefits->exclusion;
                     $listQuotePlanBenefitsFeatures = $listQuotePlan->benefits->feature;
+                    $listQuotePlanBenefitsCoInsurance = $listQuotePlan->benefits->coInsurance;
+                    $listQuotePlanBenefitsRegionCover = $listQuotePlan->benefits->regionCover;
+                    $listQuotePlanBenefitsMaternityCover = $listQuotePlan->benefits->maternityCover;
                     $listQuotePlanBenefitsPolicyDetails = $listQuotePlan->policyWordings;
 
                     foreach ($listQuotePlanBenefitsPolicyDetails as $listQuotePlanBenefitsPolicyDetail) {
@@ -559,7 +563,8 @@ class CRUDController extends Controller
                 'listQuotePlanName', 'providerCode', 'providerName',
                 'actualPremium', 'discountPremium', 'listQuotePlanBenefitsInclusions',
                 'listQuotePlanBenefitsExclusions', 'listQuotePlanBenefitsFeatures',
-                'listQuotePlanBenefitsPolicyDetailLink', 'modelName'
+                'listQuotePlanBenefitsPolicyDetailLink', 'modelName',
+                'listQuotePlanBenefitsCoInsurance','listQuotePlanBenefitsRegionCover','listQuotePlanBenefitsMaternityCover'
             ]));
         }
     }
@@ -568,6 +573,10 @@ class CRUDController extends Controller
     {
         $assignedToUserIdNew = $request->assigned_to_id_new;
         $leadsIds = $request->selectTmLeadId;
+        if(substr($leadsIds, 0, 1) == ',') {
+            $leadsIds = substr($leadsIds, 1);
+        }
+
         $leadsIds = array_map('intval', explode(',', $leadsIds));
         if ($leadsIds == '' || $leadsIds == null) {
             return redirect()->back()->with('message', 'Please select lead(s) to assign');

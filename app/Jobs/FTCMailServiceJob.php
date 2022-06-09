@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Jobs;
+
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -8,6 +9,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use App\Mail\FTCMailerService;
 use Mail;
+use DB;
 
 class FTCMailServiceJob implements ShouldQueue
 {
@@ -34,14 +36,16 @@ class FTCMailServiceJob implements ShouldQueue
 
             $email = new FTCMailerService($this->request);
             $sender = Mail::to($this->request['to']);
-            if(isset($this->request['cc'])){
-                 $sender->cc($this->request['cc']);
+            if (isset($this->request['cc'])) {
+                $sender->cc($this->request['cc']);
             }
             $sender->send($email);
 
             return "Success";
         } catch (Exception $ex) {
             return $ex;
+        } finally {
+            DB::disconnect('mysql');
         }
     }
 }

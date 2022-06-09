@@ -138,11 +138,14 @@ class DropdownSourceService extends BaseService
                 $data = LifeNumberOfYears::select('id', 'text')->where("is_active", true)->get();
                 break;
             case 'year_of_manufacture':
-                $data = YearOfManufacture::select('id', 'text')->get();
+                $data = YearOfManufacture::select('text as id', 'text')->get();
                 break;
             case 'advisor_id':
-                if (Auth::user()->isRenewalUser()) {
+                if (Auth::user()->isRenewalUser() || Auth::user()->isRenewalManager() || Auth::user()->isRenewalAdvisor()) {
                     $advisorType = $advisorType . '_RENEWAL';
+                }
+                if (Auth::user()->isNewBusinessManager() || Auth::user()->isNewBusinessAdvisor()) {
+                    $advisorType = $advisorType . '_NEW_BUSINESS_';
                 }
                 if (strtolower($advisorType) == strtolower(quoteTypeCode::Health)) {
                     $data = DB::table('users as u')->select('u.id', DB::raw("CONCAT(u.name,' - ',r.name) AS name"))
@@ -159,7 +162,7 @@ class DropdownSourceService extends BaseService
                         $data = DB::table('users as u')->select('u.id',  DB::raw("CONCAT(u.name,' - ',r.name) AS name"))
                             ->join('model_has_roles as mhr', 'mhr.model_id', '=', 'u.id')
                             ->join('roles as r', 'mhr.role_id', '=', 'r.id')
-                            ->where('r.name', '=', $advisorType . '_ADVISOR')->get();
+                            ->whereIn('r.name',[$advisorType . '_ADVISOR', $advisorType . '_NEW_BUSINESS_ADVISOR', $advisorType . '_RENEWAL_ADVISOR'])->get();
                     } else {
                         $data = User::select('id', 'name')->get();
                     }
