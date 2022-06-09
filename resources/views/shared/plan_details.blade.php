@@ -23,6 +23,7 @@ if (!isset($modelName)) {
 
             $actualPremium = isset($listQuotePlan->actualPremium) ? $listQuotePlan->actualPremium : 0;
             $discountPremium = isset($listQuotePlan->discountPremium) ? $listQuotePlan->discountPremium : 0;
+            $vat = isset($listQuotePlan->vat) ? $listQuotePlan->vat : 0;
             $carValueLowerLimit = isset($listQuotePlan->carValueLowerLimit) ? $listQuotePlan->carValueLowerLimit : 0;
             $carValueUpperLimit = isset($listQuotePlan->carValueUpperLimit) ? $listQuotePlan->carValueUpperLimit : 0;
             $excess = isset($listQuotePlan->excess) ? $listQuotePlan->excess : 0;
@@ -44,16 +45,16 @@ if (!isset($modelName)) {
                 $listQuotePlanBenefitsPolicyDetailLink = $listQuotePlanBenefitsPolicyDetail->link;
             }
 
-            $selectedAddonsSum = 0;
+            $totalSelectedAddonsPriceWithVat = 0;
             foreach ($listQuotePlanAddons as $listQuotePlanAddon) {
                 foreach ($listQuotePlanAddon->carAddonOption as $carAddonOption) {
                     if ($carAddonOption->isSelected == true) {
-                        $selectedAddonsSum += $carAddonOption->price;
+                        $totalSelectedAddonsPriceWithVat += $carAddonOption->price + $carAddonOption->vat;
                     }
                 }
             }
-            $totalAmount = $selectedAddonsSum + $discountPremium;
-            $totalPremium = 5 / 100 * $totalAmount + $totalAmount;
+
+            $totalPremium = $discountPremium + $vat + $totalSelectedAddonsPriceWithVat;
         }
     }
 
@@ -70,6 +71,7 @@ if (!isset($modelName)) {
         $('#update_car_plan_button, #update_car_plan_addons_button').on('click', function(e) {
             var actual_premium = $("#actual_premium").val();
             var discounted_premium = $("#discounted_premium").val();
+            var premium_vat = $("#premium_vat").val();
             var car_value = $("#car_value").val();
             var excess = $("#excess").val();
             var repair_type = $("#repair_type").val();
@@ -90,6 +92,7 @@ if (!isset($modelName)) {
                     'addonId': parseInt($('.addon_id').eq($a).val()),
                     'addonOptionId': parseInt($('.addon_option_id').eq($a).val()),
                     'price': parseFloat($('.addon_price').eq($a).val()),
+                    'vat': parseFloat($('.addon_vat').eq($a).val()),
                     'isSelected': $('.addon_is_selected').eq($a).val() == "true" ? true : false,
                 });
             }
@@ -105,6 +108,7 @@ if (!isset($modelName)) {
                     car_plan_id: $('#car_plan_id').val(),
                     actual_premium: $('#actual_premium').val(),
                     discounted_premium: $('#discounted_premium').val(),
+                    premium_vat: $('#premium_vat').val(),
                     car_value: $('#car_value').val(),
                     excess: $('#excess').val(),
                     is_disabled: $('#is_disabled').val(),
@@ -120,14 +124,13 @@ if (!isset($modelName)) {
 
                     $('#totalPremiumOnFeatures').show().html('').delay(5000);
                     $('#totalPremiumOnAddons').show().html('').delay(5000);
-                    var selectedAddonsPriceSum = 0;
+                    var totalSelectedAddonsPriceWithVat = 0;
                     $.each(addons, function(i, jsondata) {
                         if (jsondata.isSelected == true) {
-                            selectedAddonsPriceSum += jsondata.price;
+                            totalSelectedAddonsPriceWithVat += jsondata.price + jsondata.vat;
                         }
                     });
-                    var totalAmount = Number(selectedAddonsPriceSum) + Number(discounted_premium);
-                    var totalPremium = 5 / 100 * Number(totalAmount) + Number(totalAmount);
+                    var totalPremium =  Number(discounted_premium) + Number(premium_vat) + Number(totalSelectedAddonsPriceWithVat);
                     var totalPremiumHtml = '<div><span style="padding-top: 7px;border-top: 2px solid #E6E9ED;"><b>Total Premium with VAT:</b> AED ' + totalPremium + '</span></div>';
                     $('#totalPremiumOnFeatures').show().html(totalPremiumHtml).delay(5000);
                     $('#totalPremiumOnAddons').show().html(totalPremiumHtml).delay(5000);
@@ -577,7 +580,10 @@ if (!isset($modelName)) {
                                     <td valign="top">Actual Premium:</td>
                                     <td><input type="number" id="actual_premium" name="actual_premium" value="{{ old('actual_premium', $actualPremium) }}" class="form-control" onKeyDown="if(this.value.length==8) return false;"></td>
                                     <td valign="top">Discounted Premium:</td>
-                                    <td><input type="number" id="discounted_premium" name="discounted_premium" value="{{ old('discounted_premium', $discountPremium) }}" class="form-control" onKeyDown="if(this.value.length==8) return false;"></td>
+                                    <td>
+                                        <input type="number" id="discounted_premium" name="discounted_premium" value="{{ old('discounted_premium', $discountPremium) }}" class="form-control" onKeyDown="if(this.value.length==8) return false;">
+                                        <input type="hidden" id="premium_vat" name="premium_vat" value="{{ $vat }}">
+                                    </td>
                                 </tr>
                                 <tr>
                                     <td valign="top">Car value:</td>
@@ -652,6 +658,7 @@ if (!isset($modelName)) {
                                                 AED {{ $carAddonOption->price }}
                                                 <input type="hidden" id="addon_price" name="addon_price" value="{{ $carAddonOption->price }}" class="addon_price">
                                                 @endif
+                                                <input type="hidden" id="addon_vat" name="addon_vat" value="{{ $carAddonOption->vat }}" class="addon_vat">
                                                 <input type="hidden" id="addon_id" name="addon_id" value="{{ $listQuotePlanAddon->id }}" class="addon_id">
                                                 <input type="hidden" id="addon_option_id" name="addon_option_id" value="{{ $carAddonOption->id }}" class="addon_option_id">
                                             </td>
