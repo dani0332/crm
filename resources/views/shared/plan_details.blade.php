@@ -28,6 +28,7 @@ if (!isset($modelName)) {
             $excess = isset($listQuotePlan->excess) ? $listQuotePlan->excess : 0;
             $carValue = isset($listQuotePlan->carValue) ? $listQuotePlan->carValue : 0;
             $isDisabled = isset($listQuotePlan->isDisabled) ? $listQuotePlan->isDisabled : 0;
+            $insurerQuoteNo = isset($listQuotePlan->insurerQuoteNo) ? $listQuotePlan->insurerQuoteNo : '';
 
             $listQuotePlanAddonss = $listQuotePlan->addons;
             $listQuotePlanBenefitsInclusions = $listQuotePlan->benefits->inclusion;
@@ -569,7 +570,8 @@ if (!isset($modelName)) {
                                 <tr>
                                     <td valign="top">Repair Type:</td>
                                     <td>{{ $repairType }}</td>
-                                    <td> </td>
+                                    <td>Insurer Quote No.:</td>
+                                    <td>{{ $insurerQuoteNo }}</td>
                                 </tr>
                                 <tr>
                                     <td valign="top">Actual Premium:</td>
