@@ -46,7 +46,7 @@ use App\Enums\CarPlanExclusionsCode;
                                     <th style="width: 100px !important">Oman cover TPL</th>
                                     <th style="width: 100px !important">Actual Premium</th>
                                     <th style="width: 100px !important">Discounted Premium</th>
-                                    <th style="width: 100px !important">Premium with VAT</th>
+                                    <th style="width: 100px !important">Premium with VAT.</th>
                                     <th style="width: 50px !important">Action</th>
                                 </tr>
                             </thead>
@@ -178,7 +178,7 @@ use App\Enums\CarPlanExclusionsCode;
                                 <th>Oman cover TPL</th>
                                 <th>Actual Premium</th>
                                 <th>Discounted Premium</th>
-                                <th>Premium with VAT</th>
+                                <th>Premium with VAT.</th>
                                 <th>Action</th>
                             </tr>
                         </thead>
