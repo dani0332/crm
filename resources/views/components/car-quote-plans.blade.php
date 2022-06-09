@@ -85,7 +85,17 @@
                                                 <td>
                                                     <table style="margin-left: -10px;margin-top: -10px !important;">
                                                         @foreach ($quotePlan->addons as $quotePlanAddon)
+                                                            <?php
+                                                                $selectedAddonsSum = 0;
+                                                            ?>
                                                             @foreach ($quotePlanAddon->carAddonOption as $quotePlanOptions)
+                                                                <?php
+                                                                    if(isset($quotePlanOptions->isSelected)) {
+                                                                        if ($quotePlanOptions->isSelected == true) {
+                                                                            $selectedAddonsSum += $quotePlanOptions->price;
+                                                                        }
+                                                                    }
+                                                                ?>
                                                                 @if(isset($quotePlanAddon->code))
                                                                     @if($quotePlanAddon->code == CarPlanAddonsCode::DRIVER_COVER || $quotePlanAddon->code == CarPlanAddonsCode::PASSENGER_COVER)
                                                                         <tr style="background-color: transparent;">
@@ -143,7 +153,13 @@
                                                         <input type="number" id="discountedPremium[]" name="discountedPremium[]" value="{{ $quotePlan->discountPremium }}" class="editINPUT" style="display:none;" size="8" maxlength="8">
                                                     </div>
                                                 </td>
-                                                <td>{{ $quotePlan->discountPremium + $quotePlan->vatPremium }}</td>
+                                                <td>
+                                                    <?php
+                                                        $totalAmount = $selectedAddonsSum + $quotePlan->discountPremium;
+                                                        $totalPremium = 5 / 100 * $totalAmount + $totalAmount;
+                                                    ?>
+                                                    {{ $totalPremium }}
+                                                </td>
                                                 <td><a href="#" planDetailUrl="{{ $uuidModal }}/plan_details/{{ $quotePlan->id }}"
                                                     data-toggle="modal" data-target="#quotePlanModal" class="quotePlanModalPopup">View</a></td>
                                             </tr>
