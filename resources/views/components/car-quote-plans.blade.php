@@ -89,17 +89,19 @@ use App\Enums\CarPlanExclusionsCode;
                                     </td>
                                     <td>
                                         <table style="margin-left: -10px;margin-top: -10px !important;">
-                                            @foreach ($quotePlan->addons as $quotePlanAddon)
                                             <?php
-                                            $selectedAddonsSum = 0;
+                                            $totalSelectedAddonsPriceWithVat = 0;
                                             ?>
+                                            @foreach ($quotePlan->addons as $quotePlanAddon)
                                             @foreach ($quotePlanAddon->carAddonOption as $quotePlanOptions)
                                             <?php
-                                            if (isset($quotePlanOptions->isSelected)) {
-                                                if ($quotePlanOptions->isSelected == true) {
-                                                    $selectedAddonsSum += $quotePlanOptions->price;
+                                                if(isset($quotePlanOptions->isSelected)) {
+                                                    if ($quotePlanOptions->isSelected == true && $quotePlanOptions->price != 0) {
+                                                        $totalSelectedAddonsPriceWithVat += $quotePlanOptions->price + $quotePlanOptions->vat;
+                                                    }
+                                                } else {
+                                                    $totalSelectedAddonsPriceWithVat = 0;
                                                 }
-                                            }
                                             ?>
                                             @if(isset($quotePlanAddon->code))
                                             @if($quotePlanAddon->code == CarPlanAddonsCode::DRIVER_COVER || $quotePlanAddon->code == CarPlanAddonsCode::PASSENGER_COVER)
@@ -160,8 +162,7 @@ use App\Enums\CarPlanExclusionsCode;
                                     </td>
                                     <td>
                                         <?php
-                                        $totalAmount = $selectedAddonsSum + $quotePlan->discountPremium;
-                                        $totalPremium = 5 / 100 * $totalAmount + $totalAmount;
+                                            $totalPremium = $quotePlan->discountPremium + $quotePlan->vat + $totalSelectedAddonsPriceWithVat;
                                         ?>
                                         {{ $totalPremium }}
                                     </td>
