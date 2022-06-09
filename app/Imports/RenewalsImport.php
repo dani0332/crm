@@ -15,6 +15,7 @@ use Maatwebsite\Excel\Concerns\WithValidation;
 use Maatwebsite\Excel\Concerns\WithStartRow;
 use Maatwebsite\Excel\Concerns\SkipsFailures;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
+use Illuminate\Support\Facades\Auth;
 
 class RenewalsImport implements OnEachRow, WithStartRow, WithValidation, SkipsOnFailure, WithChunkReading
 {
@@ -161,7 +162,7 @@ class RenewalsImport implements OnEachRow, WithStartRow, WithValidation, SkipsOn
                 );
             }
 
-            dispatch(new RenewalImportJob($quoteData, $qouteType, $this->renewalsUploadService, $this->fileName, $this->renewalImportCode, $this->uploadType));
+            dispatch(new RenewalImportJob($quoteData, $qouteType, $this->renewalsUploadService, $this->fileName, $this->renewalImportCode, $this->uploadType, Auth::user()->id));
         }
     }
 

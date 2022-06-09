@@ -67,7 +67,7 @@ class PetQuoteService extends BaseService
                 'pqr.is_microchipped',
                 'pqr.is_neutered',
                 'pqr.is_mixed_breed',
-                'pqr.any_injury'
+                'pqr.has_injury'
             )
             ->leftJoin('pet_quote_request_detail as pqrd', 'pqrd.pet_quote_request_id', 'pqr.id')
             ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'pqrd.lost_reason_id')
@@ -137,13 +137,18 @@ class PetQuoteService extends BaseService
     {
         $entity = PetQuoteRequestDetail::where('pet_quote_request_id', $id)->first();
         if (!$entity) {
-            PetQuoteRequestDetail::create([
-                'pet_quote_request_id' => $id,
-                'created_at' => Carbon::now(),
-                'updated_at' => Carbon::now(),
-            ]);
+            $entity = $this->createDetailEntity($id);
         }
         return PetQuoteRequestDetail::where('pet_quote_request_id', $id)->first();
+    }
+
+    public function createDetailEntity($id)
+    {
+        return PetQuoteRequestDetail::create([
+            'pet_quote_request_id' => $id,
+            'created_at' => Carbon::now(),
+            'updated_at' => Carbon::now(),
+        ]);
     }
 
     public function getLeadsForAssignment()
@@ -325,7 +330,7 @@ class PetQuoteService extends BaseService
                 $title = "Previous Quote ID";
                 break;
             default:
-                return 'lqr';
+                return 'pqr';
                 break;
         }
     }
@@ -344,7 +349,7 @@ class PetQuoteService extends BaseService
         $PetQuote->is_microchipped = $request->is_microchipped == 'Yes' ?  true : false;
         $PetQuote->is_neutered = $request->is_neutered == 'Yes' ?  true : false;
         $PetQuote->is_mixed_breed = $request->is_mixed_breed == 'Yes' ?  true : false;
-        $PetQuote->any_injury = $request->any_injury == 'Yes' ?  true : false;
+        $PetQuote->has_injury = $request->has_injury == 'Yes' ?  true : false;
         $PetQuote->age_of_pet1 = $request->age_of_pet1;
         $PetQuote->ilivein_accommodation_type_id = $request->ilivein_accommodation_type_id;
         $PetQuote->iam_possesion_type_id = $request->iam_possesion_type_id;
@@ -357,7 +362,7 @@ class PetQuoteService extends BaseService
 
     public function getPetOverDueFollowups()
     {
-        $query = DB::table('pet_quote_request as lqr')
+        $query = DB::table('pet_quote_request as pqr')
             ->select(
                 'pqr.id',
                 'pqr.uuid',
@@ -512,11 +517,14 @@ class PetQuoteService extends BaseService
     public function updateChildRecord($id)
     {
         $childRecord = PetQuoteRequestDetail::where('pet_quote_request_id', $id)->first();
-        if (!empty($childRecord)) {
-            $childRecord->advisor_assigned_by_id = Auth::user()->id;
-            $childRecord->advisor_assigned_date = Carbon::now();
-            $childRecord->save();
+
+        if (empty($childRecord)) {
+            $childRecord = $this->createDetailEntity($id);
         }
+    
+        $childRecord->advisor_assigned_by_id = Auth::user()->id;
+        $childRecord->advisor_assigned_date = Carbon::now();
+        $childRecord->save();
     }
 
     public function fillModelProperties()
@@ -533,18 +541,18 @@ class PetQuoteService extends BaseService
             "created_at" => "input|date|title|range",
             "updated_at" => "input|date|title",
             "next_followup_date" => "input|date|title|range",
-            "microchip_no" => "input|number",
             "source" => "input|text",
             "lost_reason" => "input|text",
             "premium" => "input|number",
             "policy_number" => "input|text",
-            "type_of_pet1" => "input|text|required",
-            "breed_of_pet1" => "input|text|required",
-            "age_of_pet1" => "input|number|required",
-            "is_microchipped" => "static|Yes,No",
+            "type_of_pet1" => "input|text|title|required",
+            "breed_of_pet1" => "input|text|title|required",
+            "age_of_pet1" => "input|number|title|required",
             "is_neutered" => "static|Yes,No",
+            "is_microchipped" => "static|Yes,No",
+            "microchip_no" => "input|number",
             "is_mixed_breed" => "static|Yes,No",
-            "any_injury" => "static|Yes,No",
+            "has_injury" => "static|Yes,No",
             "gender" => "static|Male,Female",
             "ilivein_accommodation_type_id" => "select|title|required",
             "iam_possesion_type_id" => "select|title|required",
@@ -554,8 +562,7 @@ class PetQuoteService extends BaseService
             "renewal_batch" => "input|none",
             "previous_quote_policy_number" => "input|title",
             "previous_policy_expiry_date" => "input|date|title|range",
-            "previous_quote_policy_premium" => "input|title",
-            "device" => "input|none"
+            "previous_quote_policy_premium" => "input|title"
         );
     }
 
@@ -610,6 +617,18 @@ class PetQuoteService extends BaseService
                 break;
             case 'previous_quote_policy_premium':
                 $title = "Previous Policy Premium";
+                break;
+            case 'type':
+                $title = "Previous Policy Premium";
+                break;
+            case 'type_of_pet1':
+                $title = "Type Of Pet";
+                break;
+            case 'breed_of_pet1':
+                $title = "Breed Of Pet";
+                break;
+            case 'age_of_pet1':
+                $title = "Age Of Pet";
                 break;
             default:
                 break;

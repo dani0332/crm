@@ -155,4 +155,13 @@ class ApplicationStorageService extends BaseService
     {
         return ['key_name', 'value', 'created_at'];
     }
+
+    public function getKeyValue($keyName)
+    {
+        $query = ApplicationStorage::select("is_active")
+        ->where("key_name", $keyName)
+        ->first();
+
+        return $query->is_active;
+    }
 }

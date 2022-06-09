@@ -27,6 +27,7 @@
                           <th>Start Date & Time</th>
                           <th>End Date & Time</th>
                           <th>Sort Order</th>
+                          <th>Is Public</th>
                           <th>Is Active</th>
                           <th>Created At</th>
                           <th>Updated At</th>
