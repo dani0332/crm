@@ -116,19 +116,19 @@ class User extends Authenticatable implements AuditableContract
 
     public function isRenewalAdvisor()
     {
-        return Auth::user()->hasAnyRole(["CAR_RENEWAL_ADVISOR","TRAVEL_RENEWAL_ADVISOR","HEALTH_RENEWAL_ADVISOR","HOME_RENEWAL_ADVISOR","LIFE_RENEWAL_ADVISOR","GM_RENEWAL_ADVISOR","CORPLINE_RENEWAL_ADVISOR","PET_RENEWAL_ADVISOR"]);
+        return Auth::user()->hasAnyRole(["CAR_RENEWAL_ADVISOR", "TRAVEL_RENEWAL_ADVISOR", "HEALTH_RENEWAL_ADVISOR", "HOME_RENEWAL_ADVISOR", "LIFE_RENEWAL_ADVISOR", "GM_RENEWAL_ADVISOR", "CORPLINE_RENEWAL_ADVISOR", "PET_RENEWAL_ADVISOR"]);
     }
     public function isRenewalManager()
     {
-        return Auth::user()->hasAnyRole(["CAR_RENEWAL_MANAGER","TRAVEL_RENEWAL_MANAGER","HEALTH_RENEWAL_MANAGER","HOME_RENEWAL_MANAGER","LIFE_RENEWAL_MANAGER","GM_RENEWAL_MANAGER","CORPLINE_RENEWAL_MANAGER","PET_RENEWAL_MANAGER"]);
+        return Auth::user()->hasAnyRole(["CAR_RENEWAL_MANAGER", "TRAVEL_RENEWAL_MANAGER", "HEALTH_RENEWAL_MANAGER", "HOME_RENEWAL_MANAGER", "LIFE_RENEWAL_MANAGER", "GM_RENEWAL_MANAGER", "CORPLINE_RENEWAL_MANAGER", "PET_RENEWAL_MANAGER"]);
     }
     public function isNewBusinessManager()
     {
-        return Auth::user()->hasAnyRole(["HEALTH_NEW_BUSINESS_MANAGER","TRAVEL_NEW_BUSINESS_MANAGER","HOME_NEW_BUSINESS_MANAGER","LIFE_NEW_BUSINESS_MANAGER","GM_NEW_BUSINESS_MANAGER","CORPLINE_NEW_BUSINESS_MANAGER","PET_NEW_BUSINESS_MANAGER"]);
+        return Auth::user()->hasAnyRole(["HEALTH_NEW_BUSINESS_MANAGER", "TRAVEL_NEW_BUSINESS_MANAGER", "HOME_NEW_BUSINESS_MANAGER", "LIFE_NEW_BUSINESS_MANAGER", "GM_NEW_BUSINESS_MANAGER", "CORPLINE_NEW_BUSINESS_MANAGER", "PET_NEW_BUSINESS_MANAGER"]);
     }
     public function isNewBusinessAdvisor()
     {
-        return Auth::user()->hasAnyRole(["CAR_NEW_BUSINESS_ADVISOR","TRAVEL_NEW_BUSINESS_ADVISOR","HEALTH_NEW_BUSINESS_ADVISOR","HOME_NEW_BUSINESS_ADVISOR","LIFE_NEW_BUSINESS_ADVISOR","GM_NEW_BUSINESS_ADVISOR","CORPLINE_NEW_BUSINESS_ADVISOR","PET_NEW_BUSINESS_ADVISOR"]);
+        return Auth::user()->hasAnyRole(["CAR_NEW_BUSINESS_ADVISOR", "TRAVEL_NEW_BUSINESS_ADVISOR", "HEALTH_NEW_BUSINESS_ADVISOR", "HOME_NEW_BUSINESS_ADVISOR", "LIFE_NEW_BUSINESS_ADVISOR", "GM_NEW_BUSINESS_ADVISOR", "CORPLINE_NEW_BUSINESS_ADVISOR", "PET_NEW_BUSINESS_ADVISOR"]);
     }
     public function isAdvisor()
     {
@@ -147,7 +147,7 @@ class User extends Authenticatable implements AuditableContract
         $userRoles = Auth::user()->usersroles()->get();
         $isAdvisor = false;
         foreach ($userRoles as $userRole) {
-            if (str_contains(strtolower($userRole->name), strtolower($teamType).'_advisor')) {
+            if (str_contains(strtolower($userRole->name), strtolower($teamType) . '_advisor')) {
                 $isAdvisor = true;
             }
         }
@@ -203,5 +203,17 @@ class User extends Authenticatable implements AuditableContract
         //         $q->where('name', 'admin');
         //     }
         // )->get();
+    }
+
+    public function isHealthWCUAdvisor()
+    {
+        $userRoles = Auth::user()->usersroles()->get();
+        $isAdvisor = false;
+        foreach ($userRoles as $userRole) {
+            if (str_contains(strtolower($userRole->name), 'wcu')) {
+                $isAdvisor = true;
+            }
+        }
+        return $isAdvisor;
     }
 }

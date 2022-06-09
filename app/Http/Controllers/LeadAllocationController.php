@@ -25,14 +25,25 @@ class LeadAllocationController extends Controller
     public function index(Request $request)
     {
         if (Gate::allows('view-lead-allocation', Auth::user())) {
-            //$this->leadAllocationService->assignNewLead();
+            $totalAssignedLeadCount = 0;
+            $availableUsers = 0;
+            $unAvailableUsers = 0;
+            $data = $this->leadAllocationService->getGridData($request);
+            foreach ($data as $key => $value) {
+                $totalAssignedLeadCount += $value->allocation_count;
+                if ($value->is_available == 1) {
+                    $availableUsers++;
+                } else {
+                    $unAvailableUsers++;
+                }
+            }
             if ($request->ajax()) {
-                $data = $this->leadAllocationService->getGridData($request);
+
                 return Datatables::of($data)
                     ->addIndexColumn()
                     ->make(true);
             }
-            return view('user.lead-allocation');
+            return view('user.lead-allocation', compact(['totalAssignedLeadCount', 'availableUsers', 'unAvailableUsers']));
         } else {
             abort(403, 'Unauthorized action.');
         }
@@ -107,7 +118,9 @@ class LeadAllocationController extends Controller
     public function updateAvailability(Request $request)
     {
         $leadAllocationUser = LeadAllocation::where('user_id', $request->aid)->where('id', $request->id)->first();
-        $leadAllocationUser->is_available = $request->is_available;
+
+        if (isset($request->is_available)) $leadAllocationUser->is_available = $request->is_available;
+        if (isset($request->max_cap)) $leadAllocationUser->max_capacity = $request->max_cap;
         $leadAllocationUser->save();
     }
 }

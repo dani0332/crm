@@ -44,6 +44,7 @@ class UserController extends Controller
                                         ,teams.name as teamName
                                         ,u1.created_at
                                         ,u1.updated_at
+                                        ,u1.is_active
                                     FROM users u1
                                     JOIN (
                                         SELECT users.id
@@ -189,6 +190,8 @@ class UserController extends Controller
         $user->mobile_no = $request->mobile_no;
         $user->landline_no = $request->landline_no;
         $user->password = bcrypt($request->password);
+        $user->is_active = $request->is_active == "on" ? 1 : 0;
+        $this->leadAllocationService->updateUserAllocationRecord($user->id, null, null, $user->is_active);
         if ($request->manager_id != "0") $user->manager_id = $request->manager_id;
         else $user->manager_id = null;
         if (isset($request->additionalTeams)) {

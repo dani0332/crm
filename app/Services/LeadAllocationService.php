@@ -9,8 +9,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use DB;
 use Auth;
-
-
+use Illuminate\Support\Facades\Log;
 
 class LeadAllocationService extends BaseService
 {
@@ -41,46 +40,16 @@ class LeadAllocationService extends BaseService
         $leadAllocation->allocation_count = 0;
         $leadAllocation->last_allocation_date = Carbon::now()->timestamp;
         $leadAllocation->max_capacity = 0;
-        $leadAllocation->is_available = false;
+        $leadAllocation->is_available = true;
         $leadAllocation->save();
     }
 
-    public function getUnAllocatedLeads()
+    public function updateUserAllocationRecord($userId, $allocationCount, $maxCapacity, $isAvailable)
     {
-        $allowedLeadTypes = ['Health'];
-        $unAllocatedLeads = [];
-
-        foreach ($allowedLeadTypes as $leadType) {
-            $unAllocatedLeads[$leadType] = $this->{strtolower($leadType) . 'QuoteService'}->getUnAssignedLeads(Carbon::now()->startOfMonth()->toDateTimeString());
-        }
-    }
-
-    public function assignNewLead()
-    {
-        $subOrdinates = $this->walkTree(Auth::user()->id);
-
-        $leadAllocationWithUsers = LeadAllocation::with('leadAllocationUser')->where('is_available', '=', true)->whereIn('user_id', $subOrdinates)->get();
-
-        $nextAvailableUser = $this->getNextAssignableUser($leadAllocationWithUsers);
-
-        dd($nextAvailableUser->leadAllocationUser->name);
-
-        return $nextAvailableUser;
-    }
-
-    public function getNextAssignableUser($leadAllocationWithUsers)
-    {
-        $allAssignableUsers = collect([]);
-        foreach ($leadAllocationWithUsers as $leadAllocationWithUser) {
-            if ($leadAllocationWithUser->allocation_count < $leadAllocationWithUser->max_capacity || $leadAllocationWithUser->max_capacity == -1) {
-                $allAssignableUsers->push($leadAllocationWithUser);
-            }
-        }
-
-        $allAssignableUsers = $allAssignableUsers->sortBy('last_allocated', SORT_NATURAL);
-        if ($allAssignableUsers->count() > 0) {
-            return $allAssignableUsers->first();
-        }
-        return 0;
+        $leadAllocation = LeadAllocation::where('user_id', $userId)->first();
+        if (isset($allocationCount)) $leadAllocation->allocation_count = $allocationCount;
+        if (isset($max_capacity)) $leadAllocation->max_capacity = $maxCapacity;
+        if (isset($isAvailable)) $leadAllocation->is_available = $isAvailable;
+        $leadAllocation->save();
     }
 }

@@ -24,7 +24,7 @@ class UserService extends BaseService
         $user->mobile_no = $request->mobile_no;
         $user->landline_no = $request->landline_no;
         $user->password = bcrypt($request->password);
-
+        $user->is_active = true;
         if ($request->sub_team_id != "0") $user->sub_team_id = $request->sub_team_id;
 
         if ($request->manager != "0") $user->manager_id = $request->manager;

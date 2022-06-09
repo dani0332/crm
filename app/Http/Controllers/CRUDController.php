@@ -239,7 +239,10 @@ class CRUDController extends Controller
             ->whereNotIn('text', [
                 'AML Screening Cleared', 'Draft', 'Cancelled', 'AML Screening Failed', 'Transaction Declined', 'Policy Issued', 'Policy Invoiced',
                 'Completed', 'Pending', 'Rejected', 'Issued', 'Approved', 'Approval required', 'Resubmit for approval'
-            ])->orderBy('sort_order', 'asc')->get();
+            ])->orderBy('sort_order', 'asc')
+            ->when(Auth::user()->isHealthWCUAdvisor(), function ($query) {
+                return $query->whereIn('text', ['New Lead', 'Qualification Pending', 'Qualified']);
+            })->get();
         $lostReasons = DB::table('lost_reasons')
             ->select('id', 'text')
             ->get();
