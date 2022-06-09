@@ -40,6 +40,7 @@ use App\Enums\CarPlanExclusionsCode;
                                     <th style="width: 100px !important">Provider Name</th>
                                     <th style="width: 100px !important">Plan Name</th>
                                     <th style="width: 80px !important">Repair Type</th>
+                                    <th style="width: 80px !important">Insurer Quote No.</th>
                                     <th style="width: 100px !important">TPL Limit</th>
                                     <th style="width: 100px !important">PAB cover</th>
                                     <th style="width: 100px !important">Roadside assistance</th>
@@ -68,6 +69,11 @@ use App\Enums\CarPlanExclusionsCode;
                                     </td>
                                     <td><a href="#" planDetailUrl="{{ $uuidModal }}/plan_details/{{ $quotePlan->id }}" data-toggle="modal" data-target="#quotePlanModal" class="quotePlanModalPopup">{{ ucwords($quotePlan->name) }}</a></td>
                                     <td>{{ $quotePlan->repairType }}</td>
+                                    <td>
+                                        @isset($quotePlan->insurerQuoteNo)
+                                        {{ $quotePlan->insurerQuoteNo }}
+                                        @endisset
+                                    </td>
                                     <td>
                                         @foreach ($quotePlan->benefits->feature as $quotePlanFeatures)
                                         @if(isset($quotePlanFeatures->code))
@@ -172,6 +178,7 @@ use App\Enums\CarPlanExclusionsCode;
                                 <th>Provider Name</th>
                                 <th>Plan Name</th>
                                 <th>Repair Type</th>
+                                <th>Insurer Quote No.</th>
                                 <th>TPL Limit</th>
                                 <th>PAB cover</th>
                                 <th>Roadside assistance</th>
