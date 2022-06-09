@@ -28,7 +28,7 @@ if (!isset($modelName)) {
             $excess = isset($listQuotePlan->excess) ? $listQuotePlan->excess : 0;
             $carValue = isset($listQuotePlan->carValue) ? $listQuotePlan->carValue : 0;
             $isDisabled = isset($listQuotePlan->isDisabled) ? $listQuotePlan->isDisabled : 0;
-            $insurerQuoteNo = isset($listQuotePlan->insurerQuoteNo) ? $listQuotePlan->insurerQuoteNo : '';
+            $insurerQuoteNo = isset($listQuotePlan->insurerQuoteNo) ? $listQuotePlan->insurerQuoteNo : ''; // Insurer Quote No.
 
             $listQuotePlanAddonss = $listQuotePlan->addons;
             $listQuotePlanBenefitsInclusions = $listQuotePlan->benefits->inclusion;
