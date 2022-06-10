@@ -48,7 +48,7 @@ if (!isset($modelName)) {
             $totalSelectedAddonsPriceWithVat = 0;
             foreach ($listQuotePlanAddons as $listQuotePlanAddon) {
                 foreach ($listQuotePlanAddon->carAddonOption as $carAddonOption) {
-                    if ($carAddonOption->isSelected == true) {
+                    if(isset($carAddonOption->isSelected)) {
                         $totalSelectedAddonsPriceWithVat += $carAddonOption->price + $carAddonOption->vat;
                     }
                 }
@@ -664,8 +664,8 @@ if (!isset($modelName)) {
                                             </td>
                                             <td style="width: 430px;height: 30px;" id="plan_addons">
                                                 <select id="addon_is_selected" name="addon_is_selected" style="height: 30px; width: 140px;" class="form-control addon_is_selected">
-                                                    <option value=false {{ $carAddonOption->isSelected == false ? 'selected="selected"' : '' }}>Deselected</option>
-                                                    <option value=true {{ $carAddonOption->isSelected == true ? 'selected="selected"' : '' }}>Selected</option>
+                                                    <option value=false {{ isset($carAddonOption->isSelected) && $carAddonOption->isSelected == false ? 'selected="selected"' : '' }}>Deselected</option>
+                                                    <option value=true {{ isset($carAddonOption->isSelected) && $carAddonOption->isSelected == true ? 'selected="selected"' : '' }}>Selected</option>
                                                 </select>
                                             </td>
                                             @endif
