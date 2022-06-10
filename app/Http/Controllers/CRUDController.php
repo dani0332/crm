@@ -298,26 +298,13 @@ class CRUDController extends Controller
         $audits = [];
         if ($this->genericModel->modelType == quoteTypeCode::Car) { // Car plans to display on detail view
 
-            $listQuotePlans = '';
-            $quotePlans = $this->carQuoteService->getQuotePlans($id);
+            $listQuotePlans = NULL;
+            $listQuote = null;
             $carQuotePlanAddons = $this->carQuoteService->getCarQuotePlanAddons($id);
             $ecomCarInsuranceQuoteUrl = Config::get('constants.ECOM_CAR_INSURANCE_QUOTE_URL');
             $vehicleTypeText = $this->carQuoteService->getCarQuoteVehicleType($id);
-
-            $listQuote = null;
-            if (isset($quotePlans->message) && $quotePlans->message != '') {
-                $listQuotePlans = $quotePlans->message;
-            } else {
-                if (gettype($quotePlans) != 'string' && isset($quotePlans->quotes->plans)) {
-                    $listQuotePlans = $quotePlans->quotes->plans;
-                    $listQuote = $quotePlans->quotes;
-                } else if(!isset($quotePlans->quotes->plans)) {
-                    $listQuotePlans = 'Plans not available!';
-                }
-                else {
-                    $listQuotePlans = $quotePlans;
-                }
-            }
+            $listQuotePlans = $this->carQuoteService->getPlans($id)[0];
+            $listQuote = $this->carQuoteService->getPlans($id)[1];
 
             $entity = $this->carQuoteService->getQuoteByUuid($id);
             $previousQuoteId = isset($entity->previous_quote_id) ? $entity->previous_quote_id : NULL;

@@ -963,5 +963,26 @@ class CarQuoteService extends BaseService
     {
         return CarQuote::where('uuid', '=', $uuid)->first();
     }
+
+    public function getPlans($id)
+    {
+        $quotePlans = $this->getQuotePlans($id);
+
+        if (isset($quotePlans->message) && $quotePlans->message != '') {
+            $listQuotePlans = $quotePlans->message;
+        } else {
+            if (gettype($quotePlans) != 'string' && isset($quotePlans->quotes->plans)) {
+                $listQuotePlans = $quotePlans->quotes->plans;
+                $listQuote = $quotePlans->quotes;
+            } else if(!isset($quotePlans->quotes->plans)) {
+                $listQuotePlans = 'Plans not available!';
+                $listQuote = NULL;
+            } else {
+                $listQuotePlans = $quotePlans;
+            }
+        }
+
+        return array($listQuotePlans, $listQuote);
+    }
     
 }
