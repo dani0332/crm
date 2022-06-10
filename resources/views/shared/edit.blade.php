@@ -118,6 +118,30 @@
             }
         }
         pet_field_microchip_visibility();
+
+        $('#car_model_id').on('change',function(){
+            var car_model_id = $('#car_model_id').val();
+            $.ajax({
+                url: "{{ url('/getCarModelDetails') }}",
+                type: "GET",
+                data: {
+                    car_model_id: car_model_id
+                },
+                success: function(data){
+                    if(data.cylinder || data.seat_capacity || data.vehicle_type_id){
+                        $('#cylinder').val(data.cylinder);
+                        $('#seat_capacity').val(data.seat_capacity);
+                        if(data.vehicle_type_id) $('#vehicle_type_id').val(data.vehicle_type_id);
+                    }
+                    if(!data.cylinder && !data.seat_capacity && !data.vehicle_type_id){
+                        alert('No Vehicle Assumptions Data Found');
+                    }
+                },
+                error: function(data){
+                    console.log(data);
+                }
+            });
+        });
 });
 </script>
     <div class="row">
