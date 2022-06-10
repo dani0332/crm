@@ -308,14 +308,13 @@ class CRUDController extends Controller
             if (isset($quotePlans->message) && $quotePlans->message != '') {
                 $listQuotePlans = $quotePlans->message;
             } else {
-                if (gettype($quotePlans) != 'string') {
-                    if(isset($quotePlans->quotes->plans)) {
-                        $listQuotePlans = $quotePlans->quotes->plans;
-                        $listQuote = $quotePlans->quotes;
-                    } else {
-                        abort(404);
-                    }
-                } else {
+                if (gettype($quotePlans) != 'string' && isset($quotePlans->quotes->plans)) {
+                    $listQuotePlans = $quotePlans->quotes->plans;
+                    $listQuote = $quotePlans->quotes;
+                } else if(!isset($quotePlans->quotes->plans)) {
+                    $listQuotePlans = 'Plans not available!';
+                }
+                else {
                     $listQuotePlans = $quotePlans;
                 }
             }
