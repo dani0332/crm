@@ -45,6 +45,9 @@
                     if(!data.cylinder && !data.seat_capacity && !data.vehicle_type_id){
                         $("#vehicle_assumptions_error_msg").show(300);
                         $("#vehicle_assumptions_success_msg").hide(300);
+                        $('#cylinder').val('');
+                        $('#seat_capacity').val('');
+                        $('#vehicle_type_id').val('');
                     }
                 },
                 error: function(data){
