@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Models\Team;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 use Illuminate\Support\Facades\Gate;
 
@@ -32,6 +33,32 @@ class AuthServiceProvider extends ServiceProvider
             foreach ($userRoles as $userRole) {
                 if (str_contains(strtolower($userRole->name), 'lead_allocation')) {
                     $isAllowed = true;
+                }
+            }
+            return $isAllowed;
+        });
+
+        Gate::define('view-lead', function ($user, $lead) {
+            $userRoles = $user->usersroles()->get(); // get all roles of user
+            $userTeam = Team::where('id', $user->team_id)->first(); // get team of user
+
+            $isAllowed = false;
+            foreach ($userRoles as $userRole) {
+                if (str_contains(strtolower($userRole->name), 'wcu')) {
+                    if ($lead->wcu_id == $user->id) {
+                        $isAllowed = true; // WCU advisor can view lead until lead is assigned to him
+                    }
+                }
+                if (str_contains(strtolower($userRole->name), 'manager') && str_contains(strtolower($userRole->name), strtolower($userTeam->name))) {
+                    $isAllowed = true; // Manager can view all leads from his team
+                }
+                if (str_contains(strtolower($userRole->name), 'advisor') && str_contains(strtolower($userRole->name), strtolower($userTeam->name))) {
+                    if ($lead->advisor_id == $user->id) {
+                        $isAllowed = true; // advisor can view his own leads from his team
+                    }
+                }
+                if (str_contains(strtolower($userRole->name), 'admin')) {
+                    $isAllowed = true; // admin can view all leads
                 }
             }
             return $isAllowed;

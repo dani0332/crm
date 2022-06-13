@@ -46,12 +46,6 @@ class Kernel extends ConsoleKernel
             ->runInBackground()
             ->onOneServer()
             ->withoutOverlapping();
-
-        // $schedule->command('log:FTCAckEmail')
-        //     ->everyFifteenMinutes();
-
-        // $schedule->command('log:FTCAckEmail')
-        //     ->everyFifteenMinutes();
     }
 
     /**

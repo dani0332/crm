@@ -9,6 +9,7 @@ use App\Enums\QuoteTypeId;
 use App\Models\CarQuoteAdvisorToOE;
 use App\Models\GenericModel;
 use App\Models\InsuranceProvider;
+use App\Models\QuoteStatus;
 use App\Models\User;
 use App\Services\ActivitiesService;
 use App\Services\BusinessQuoteService;
@@ -25,6 +26,7 @@ use App\Services\PetQuoteService;
 use App\Services\UserService;
 use App\Services\EmailStatusService;
 use App\Services\ApplicationStorageService;
+use App\Services\LeadAllocationService;
 use BenSampo\Enum\Rules\EnumValue;
 use DataTables;
 use Illuminate\Support\Facades\Auth;
@@ -32,6 +34,7 @@ use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Log;
 use Config;
 use DB;
+use Illuminate\Support\Facades\Gate;
 
 class CRUDController extends Controller
 {
@@ -50,6 +53,7 @@ class CRUDController extends Controller
     protected $activityService;
     protected $emailStatusService;
     protected $applicationStorageService;
+    protected $leadAllocationService;
 
     public function __construct(
         HealthQuoteService $healthService,
@@ -66,7 +70,8 @@ class CRUDController extends Controller
         Request $request,
         ActivitiesService $activityService,
         EmailStatusService $emailStatusService,
-        ApplicationStorageService $applicationStorageService
+        ApplicationStorageService $applicationStorageService,
+        LeadAllocationService $leadAllocationService
     ) {
         $this->genericModel = new GenericModel();
         $this->healthQuoteService = $healthService;
@@ -84,7 +89,7 @@ class CRUDController extends Controller
         $this->userService = $userService;
         $this->emailStatusService = $emailStatusService;
         $this->applicationStorageService = $applicationStorageService;
-
+        $this->leadAllocationService = $leadAllocationService;
         $this->setModelType($request);
         $this->fillModelByModelType(ucwords($this->genericModel->modelType), $request);
     }
@@ -218,147 +223,151 @@ class CRUDController extends Controller
      */
     public function show($id, Request $request)
     {
+
         $record = $this->crudService->getEntity($this->genericModel->modelType, $id);
         if (!$record) abort(404);
+        if (Gate::allows('view-lead', Auth::user(), $record)) {
+            $isRenewalUser = false;
+            $isNewBusinessUser = false;
+            $model = $this->genericModel;
+            $model_name = $this->genericModel->modelType . "Quote";
+            $customTitles = $customTableList = [];
+            if (Auth::user()->isRenewalManager() || Auth::user()->isRenewalAdvisor()) {
+                $isRenewalUser = true;
+                $this->crudService->fillRenewalData($this->genericModel);
+                $renewalAdvisors = $this->crudService->getRenewalAdvisorsByModelType($this->genericModel->modelType);
+            } else if (Auth::user()->isNewBusinessManager() || Auth::user()->isNewBusinessAdvisor()) {
+                $isNewBusinessUser = true;
+                $this->crudService->fillNewBusinessData($this->genericModel);
+                $renewalAdvisors = $this->crudService->getNewBusinessAdvisorsByModelType($this->genericModel->modelType);
+            }
+            $leadStatuses = DB::table('quote_status')
+                ->select('id', 'text')
+                ->whereNotIn('text', [
+                    'AML Screening Cleared', 'Draft', 'Cancelled', 'AML Screening Failed', 'Transaction Declined', 'Policy Issued', 'Policy Invoiced',
+                    'Completed', 'Pending', 'Rejected', 'Issued', 'Approved', 'Approval required', 'Resubmit for approval'
+                ])->orderBy('sort_order', 'asc')
+                ->when(Auth::user()->isHealthWCUAdvisor(), function ($query) {
+                    return $query->whereIn('text', ['New Lead', 'Qualification Pending', 'Qualified']);
+                })->get();
+            $lostReasons = DB::table('lost_reasons')
+                ->select('id', 'text')
+                ->get();
+            $selectedLostReasonId = '';
+            if (strtolower($this->genericModel->modelType) != 'teams' && strtolower($this->genericModel->modelType) != 'leadstatus') {
+                $selectedLostReasonId = $this->crudService->getSelectedLostReason($this->genericModel->modelType, $record->id);
+            }
+            $advisors  = [];
+            if (strtolower($this->genericModel->modelType) == strtolower(quoteTypeCode::Health) && ($record->health_team_type == HealthTeamType::EBP ||
+                $record->health_team_type == HealthTeamType::RM_NB || $record->health_team_type == HealthTeamType::RM_SPEED)) {
+                $advisors = $this->crudService->getEBPAndRMAdvisors();
+            } else if (strtolower($this->genericModel->modelType) == 'business') {
+                $advisors = $this->crudService->getRMAndBusinessAdvisors();
+            } else {
+                $advisors = $this->crudService->getAdvisorsByModelType($this->genericModel->modelType);
+            }
+            foreach ($model->properties as $property => $value) {
+                if (str_contains($value, 'title')) {
+                    $customTitles[$property] = $this->crudService->getCustomTitleByModelType($this->genericModel->modelType, $property);
+                }
+                if (str_contains($value, 'customTable')) {
+                    $customTableList[$property] = $this->dropdownSourceService->getOnlySelectedItemName($property, $id);
+                }
+            }
+            $quoteTypes = 'Health,Car,Travel,Life,Home,Business,Pet';
+            $serviceType = str_contains($quoteTypes, ucwords($model->modelType)) ? strtolower($model->modelType) . 'QuoteService' : lcfirst(ucwords($model->modelType)) . 'Service';
+            $allowedDuplicateLOB = $this->crudService->getAllowedDuplicateLOB($model->modelType, $record->code);
+            $activitiesData = $this->activityService->getActivityByLeadId($record->id, strtolower($model->modelType));
+            $activities = [];
+            foreach ($activitiesData as $activity) {
+                $updatedActivity = array(
+                    'id' => $activity->id,
+                    'title' => $activity->title,
+                    'quote_request_id' => $activity->quote_request_id,
+                    'quote_type_id' => $activity->quote_type_id,
+                    'quote_uuid' => $activity->quote_uuid,
+                    'client_name' => $activity->client_name,
+                    'due_date' => $activity->due_date,
+                    'assignee' => User::where('id', $activity->assignee_id)->first()->name,
+                    'status' => $activity->status,
+                );
+                array_push($activities, $updatedActivity);
+            }
+            $audits = [];
+            if ($this->genericModel->modelType == quoteTypeCode::Car) { // Car plans to display on detail view
 
-        $isRenewalUser = false;
-        $isNewBusinessUser = false;
-        $model = $this->genericModel;
-        $model_name = $this->genericModel->modelType . "Quote";
-        $customTitles = $customTableList = [];
-        if (Auth::user()->isRenewalManager() || Auth::user()->isRenewalAdvisor()) {
-            $isRenewalUser = true;
-            $this->crudService->fillRenewalData($this->genericModel);
-            $renewalAdvisors = $this->crudService->getRenewalAdvisorsByModelType($this->genericModel->modelType);
-        } else if (Auth::user()->isNewBusinessManager() || Auth::user()->isNewBusinessAdvisor()) {
-            $isNewBusinessUser = true;
-            $this->crudService->fillNewBusinessData($this->genericModel);
-            $renewalAdvisors = $this->crudService->getNewBusinessAdvisorsByModelType($this->genericModel->modelType);
-        }
-        $leadStatuses = DB::table('quote_status')
-            ->select('id', 'text')
-            ->whereNotIn('text', [
-                'AML Screening Cleared', 'Draft', 'Cancelled', 'AML Screening Failed', 'Transaction Declined', 'Policy Issued', 'Policy Invoiced',
-                'Completed', 'Pending', 'Rejected', 'Issued', 'Approved', 'Approval required', 'Resubmit for approval'
-            ])->orderBy('sort_order', 'asc')
-            ->when(Auth::user()->isHealthWCUAdvisor(), function ($query) {
-                return $query->whereIn('text', ['New Lead', 'Qualification Pending', 'Qualified']);
-            })->get();
-        $lostReasons = DB::table('lost_reasons')
-            ->select('id', 'text')
-            ->get();
-        $selectedLostReasonId = '';
-        if (strtolower($this->genericModel->modelType) != 'teams' && strtolower($this->genericModel->modelType) != 'leadstatus') {
-            $selectedLostReasonId = $this->crudService->getSelectedLostReason($this->genericModel->modelType, $record->id);
-        }
-        $advisors  = [];
-        if (strtolower($this->genericModel->modelType) == strtolower(quoteTypeCode::Health) && ($record->health_team_type == HealthTeamType::EBP ||
-            $record->health_team_type == HealthTeamType::RM_NB || $record->health_team_type == HealthTeamType::RM_SPEED)) {
-            $advisors = $this->crudService->getEBPAndRMAdvisors();
-        } else if (strtolower($this->genericModel->modelType) == 'business') {
-            $advisors = $this->crudService->getRMAndBusinessAdvisors();
+                $listQuotePlans = '';
+                $quotePlans = $this->carQuoteService->getQuotePlans($id);
+                $carQuotePlanAddons = $this->carQuoteService->getCarQuotePlanAddons($id);
+                $ecomCarInsuranceQuoteUrl = Config::get('constants.ECOM_CAR_INSURANCE_QUOTE_URL');
+                $vehicleTypeText = $this->carQuoteService->getCarQuoteVehicleType($id);
+
+                $listQuote = null;
+                if (isset($quotePlans->message) && $quotePlans->message != '') {
+                    $listQuotePlans = $quotePlans->message;
+                } else {
+                    if (gettype($quotePlans) != 'string') {
+                        $listQuotePlans = $quotePlans->quotes->plans;
+                        $listQuote = $quotePlans->quotes;
+                    } else {
+                        $listQuotePlans = $quotePlans;
+                    }
+                }
+
+                $entity = $this->carQuoteService->getQuoteByUuid($id);
+                $previousQuoteId = isset($entity->previous_quote_id) ? $entity->previous_quote_id : NULL;
+                $emailStatuses = $this->emailStatusService->getEmailStatus(QuoteTypeId::Car, $entity->id);
+
+                return view('shared.show', compact([
+                    'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList',
+                    'ecomCarInsuranceQuoteUrl', 'carQuotePlanAddons', 'vehicleTypeText', 'leadStatuses',
+                    'lostReasons', 'selectedLostReasonId', 'listQuote', 'model_name', 'allowedDuplicateLOB', 'audits', 'activities', 'advisors', 'isRenewalUser',
+                    'isNewBusinessUser', 'previousQuoteId', 'emailStatuses'
+                ]));
+            } else if ($this->genericModel->modelType == quoteTypeCode::Travel) { // Travel plans to display on detail view
+                $listQuotePlans = '';
+                $quotePlans = $this->travelQuoteService->getQuotePlans($id);
+                if (isset($quotePlans->message) && $quotePlans->message != '') {
+                    $listQuotePlans = $quotePlans->message;
+                } else {
+                    if (gettype($quotePlans) != 'string') {
+                        $listQuotePlans = $quotePlans->quotes->plans;
+                    } else {
+                        $listQuotePlans = $quotePlans;
+                    }
+                }
+
+                $members_detail = $this->travelQuoteService->getMembersDetail($record->id);
+                return view('shared.show', compact([
+                    'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList',
+                    'leadStatuses', 'lostReasons', 'selectedLostReasonId', 'members_detail', 'model_name', 'allowedDuplicateLOB', 'audits', 'activities', 'advisors', 'isRenewalUser',
+                    'isNewBusinessUser'
+                ]));
+            } else if ($this->genericModel->modelType == quoteTypeCode::Health) { // Health plans to display on detail view
+                $listQuotePlans = '';
+                $quotePlans = $this->healthQuoteService->getQuotePlans($id);
+                if (isset($quotePlans->message) && $quotePlans->message != '') {
+                    $listQuotePlans = $quotePlans->message;
+                } else {
+                    if (gettype($quotePlans) != 'string') {
+                        $listQuotePlans = $quotePlans->quote->plans;
+                    } else {
+                        $listQuotePlans = $quotePlans;
+                    }
+                }
+                return view('shared.show', compact([
+                    'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList',
+                    'leadStatuses', 'lostReasons', 'selectedLostReasonId', 'model_name', 'allowedDuplicateLOB', 'audits', 'advisors', 'activities', 'isRenewalUser',
+                    'isNewBusinessUser'
+                ]));
+            } else {
+                return view('shared.show', compact([
+                    'record', 'model', 'customTitles', 'customTableList', 'advisors', 'leadStatuses', 'lostReasons', 'selectedLostReasonId', 'model_name', 'allowedDuplicateLOB', 'audits', 'activities', 'isRenewalUser',
+                    'isNewBusinessUser'
+                ]));
+            }
         } else {
-            $advisors = $this->crudService->getAdvisorsByModelType($this->genericModel->modelType);
-        }
-        foreach ($model->properties as $property => $value) {
-            if (str_contains($value, 'title')) {
-                $customTitles[$property] = $this->crudService->getCustomTitleByModelType($this->genericModel->modelType, $property);
-            }
-            if (str_contains($value, 'customTable')) {
-                $customTableList[$property] = $this->dropdownSourceService->getOnlySelectedItemName($property, $id);
-            }
-        }
-        $quoteTypes = 'Health,Car,Travel,Life,Home,Business,Pet';
-        $serviceType = str_contains($quoteTypes, ucwords($model->modelType)) ? strtolower($model->modelType) . 'QuoteService' : lcfirst(ucwords($model->modelType)) . 'Service';
-        $allowedDuplicateLOB = $this->crudService->getAllowedDuplicateLOB($model->modelType, $record->code);
-        $activitiesData = $this->activityService->getActivityByLeadId($record->id, strtolower($model->modelType));
-        $activities = [];
-        foreach ($activitiesData as $activity) {
-            $updatedActivity = array(
-                'id' => $activity->id,
-                'title' => $activity->title,
-                'quote_request_id' => $activity->quote_request_id,
-                'quote_type_id' => $activity->quote_type_id,
-                'quote_uuid' => $activity->quote_uuid,
-                'client_name' => $activity->client_name,
-                'due_date' => $activity->due_date,
-                'assignee' => User::where('id', $activity->assignee_id)->first()->name,
-                'status' => $activity->status,
-            );
-            array_push($activities, $updatedActivity);
-        }
-        $audits = [];
-        if ($this->genericModel->modelType == quoteTypeCode::Car) { // Car plans to display on detail view
-
-            $listQuotePlans = '';
-            $quotePlans = $this->carQuoteService->getQuotePlans($id);
-            $carQuotePlanAddons = $this->carQuoteService->getCarQuotePlanAddons($id);
-            $ecomCarInsuranceQuoteUrl = Config::get('constants.ECOM_CAR_INSURANCE_QUOTE_URL');
-            $vehicleTypeText = $this->carQuoteService->getCarQuoteVehicleType($id);
-
-            $listQuote = null;
-            if (isset($quotePlans->message) && $quotePlans->message != '') {
-                $listQuotePlans = $quotePlans->message;
-            } else {
-                if (gettype($quotePlans) != 'string') {
-                    $listQuotePlans = $quotePlans->quotes->plans;
-                    $listQuote = $quotePlans->quotes;
-                } else {
-                    $listQuotePlans = $quotePlans;
-                }
-            }
-
-            $entity = $this->carQuoteService->getQuoteByUuid($id);
-            $previousQuoteId = isset($entity->previous_quote_id) ? $entity->previous_quote_id : NULL;
-            $emailStatuses = $this->emailStatusService->getEmailStatus(QuoteTypeId::Car, $entity->id);
-
-            return view('shared.show', compact([
-                'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList',
-                'ecomCarInsuranceQuoteUrl', 'carQuotePlanAddons', 'vehicleTypeText', 'leadStatuses',
-                'lostReasons', 'selectedLostReasonId', 'listQuote', 'model_name', 'allowedDuplicateLOB', 'audits', 'activities', 'advisors', 'isRenewalUser',
-                'isNewBusinessUser', 'previousQuoteId', 'emailStatuses'
-            ]));
-        } else if ($this->genericModel->modelType == quoteTypeCode::Travel) { // Travel plans to display on detail view
-            $listQuotePlans = '';
-            $quotePlans = $this->travelQuoteService->getQuotePlans($id);
-            if (isset($quotePlans->message) && $quotePlans->message != '') {
-                $listQuotePlans = $quotePlans->message;
-            } else {
-                if (gettype($quotePlans) != 'string') {
-                    $listQuotePlans = $quotePlans->quotes->plans;
-                } else {
-                    $listQuotePlans = $quotePlans;
-                }
-            }
-
-            $members_detail = $this->travelQuoteService->getMembersDetail($record->id);
-            return view('shared.show', compact([
-                'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList',
-                'leadStatuses', 'lostReasons', 'selectedLostReasonId', 'members_detail', 'model_name', 'allowedDuplicateLOB', 'audits', 'activities', 'advisors', 'isRenewalUser',
-                'isNewBusinessUser'
-            ]));
-        } else if ($this->genericModel->modelType == quoteTypeCode::Health) { // Health plans to display on detail view
-            $listQuotePlans = '';
-            $quotePlans = $this->healthQuoteService->getQuotePlans($id);
-            if (isset($quotePlans->message) && $quotePlans->message != '') {
-                $listQuotePlans = $quotePlans->message;
-            } else {
-                if (gettype($quotePlans) != 'string') {
-                    $listQuotePlans = $quotePlans->quote->plans;
-                } else {
-                    $listQuotePlans = $quotePlans;
-                }
-            }
-            return view('shared.show', compact([
-                'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList',
-                'leadStatuses', 'lostReasons', 'selectedLostReasonId', 'model_name', 'allowedDuplicateLOB', 'audits', 'advisors', 'activities', 'isRenewalUser',
-                'isNewBusinessUser'
-            ]));
-        } else {
-            return view('shared.show', compact([
-                'record', 'model', 'customTitles', 'customTableList', 'advisors', 'leadStatuses', 'lostReasons', 'selectedLostReasonId', 'model_name', 'allowedDuplicateLOB', 'audits', 'activities', 'isRenewalUser',
-                'isNewBusinessUser'
-            ]));
+            abort(403, 'Unauthorized action.');
         }
     }
 
@@ -480,7 +489,7 @@ class CRUDController extends Controller
         if (gettype($quotePlans) != 'string') {
             $listQuotePlans = $quotePlans->quotes->plans;
 
-            return view('shared.plan_details', compact(['listQuotePlans', 'quoteId', 'planId','isPlanUpdateActive']));
+            return view('shared.plan_details', compact(['listQuotePlans', 'quoteId', 'planId', 'isPlanUpdateActive']));
         }
     }
 
@@ -558,7 +567,7 @@ class CRUDController extends Controller
                 'actualPremium', 'discountPremium', 'listQuotePlanBenefitsInclusions',
                 'listQuotePlanBenefitsExclusions', 'listQuotePlanBenefitsFeatures',
                 'listQuotePlanBenefitsPolicyDetailLink', 'modelName',
-                'listQuotePlanBenefitsCoInsurance','listQuotePlanBenefitsRegionCover','listQuotePlanBenefitsMaternityCover'
+                'listQuotePlanBenefitsCoInsurance', 'listQuotePlanBenefitsRegionCover', 'listQuotePlanBenefitsMaternityCover'
             ]));
         }
     }
@@ -567,7 +576,7 @@ class CRUDController extends Controller
     {
         $assignedToUserIdNew = $request->assigned_to_id_new;
         $leadsIds = $request->selectTmLeadId;
-        if(substr($leadsIds, 0, 1) == ',') {
+        if (substr($leadsIds, 0, 1) == ',') {
             $leadsIds = substr($leadsIds, 1);
         }
 
@@ -596,6 +605,10 @@ class CRUDController extends Controller
         foreach ($leadsIds as $tmLeadsId) {
             $userId = (int)$assignedToUserIdNew;
             $entity = $this->{strtolower($request->modelType) . 'QuoteService'}->getEntityPlain($tmLeadsId);
+            $transactionApprovedStatusId = QuoteStatus::where('text', LeadStatusCode::TRANSACTION_APPROVED)->first()->id;
+            if ($entity->quote_status_id == $transactionApprovedStatusId) {
+                return redirect()->back()->with('message', 'Cannot assign leads in transaction approved status');
+            }
             if ($entity) {
                 if (strtolower($request->modelType) == 'health' && $request->assign_team == 'GM') {
                     $entity->health_team_type = $request->assign_team;
@@ -606,7 +619,7 @@ class CRUDController extends Controller
                     if (Auth::user()->hasRole('WCU_ADVISOR')) {
                         $entity->wcu_id = $userId;
                     } else {
-                        $entity->advisor_id = $userId;
+                        $this->leadAllocationService->assignLead($entity, $userId);
                     }
                     $advisorOE = CarQuoteAdvisorToOE::where('advisor_id', $userId)->first();
                     if (!empty($advisorOE) && strtolower($request->modelType) == 'car') {
@@ -630,9 +643,13 @@ class CRUDController extends Controller
         $leadsIds = array_map('intval', explode(',', $leadsIds));
         foreach ($leadsIds as $tmLeadsId) {
             $entity = $this->{strtolower($request->modelType) . 'QuoteService'}->getEntityPlain($tmLeadsId);
+            $transactionApprovedStatusId = QuoteStatus::where('text', LeadStatusCode::TRANSACTION_APPROVED)->first()->id;
+            if ($entity->quote_status_id == $transactionApprovedStatusId) {
+                return redirect()->back()->with('message', 'Cannot assign leads in transaction approved status');
+            }
             if ($entity) {
                 $userId = (int)$assignedToUserIdNew;
-                $entity->advisor_id = $userId;
+                $this->leadAllocationService->assignLead($entity, $userId);
                 $advisorOE = CarQuoteAdvisorToOE::where('advisor_id', $userId)->first();
                 if (!empty($advisorOE) && strtolower($request->modelType) == 'car') {
                     $entity->oe_id = $advisorOE->oe_id;
@@ -671,19 +688,27 @@ class CRUDController extends Controller
 
     public function UpdateLeadStatus(Request $request)
     {
-        $transctionApprovedId = DB::table('quote_status')->where('text', LeadStatusCode::TRANSACTION_APPROVED)->value('id');
+        $qualifiedId = DB::table('quote_status')->where('text', LeadStatusCode::Qualified)->value('id');
+        if (Auth::user()->isHealthWcuAdvisor()) {
+            $lead = $this->healthQuoteService->getEntityPlain($request->get('leadId'));
+            if ($lead->health_team_type == '' && $request->leadStatus == $qualifiedId) {
+                return redirect()->back()->with('message', 'Please select team type before moving to QUALIFIED status');
+            }
+        }
+
+        $transactionApprovedStatusId = DB::table('quote_status')->where('text', LeadStatusCode::TRANSACTION_APPROVED)->value('id');
         $lostId = DB::table('quote_status')->where('text', LeadStatusCode::LOST)->value('id');
         if ($request->leadStatus == $lostId) {
             $this->validate($request, [
                 'lostReason' => 'required',
             ]);
         }
-        if ($request->leadStatus == $transctionApprovedId) {
+        if ($request->leadStatus == $transactionApprovedStatusId) {
             $this->validate($request, [
                 'trans_code' => 'required',
             ]);
         }
-        $entity = $this->crudService->updateQuoteStatus($request);
+        $entity = $this->crudService->updateQuoteStatus($request, $qualifiedId);
         return redirect()->to('/quotes/' . strtolower($request->modelType) . '/' . $entity->uuid)->with('success', ' Lead Status has been Updated');
     }
 

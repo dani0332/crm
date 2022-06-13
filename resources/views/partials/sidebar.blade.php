@@ -36,14 +36,14 @@
                         </ul>
                 </ul>
                 @endcan --}}
-
+                @can('view-lead-allocation')
                 <ul class="nav side-menu">
                     <li>
                         <a href="{{ url('/lead-allocation') }}"><i class="fa fa-globe"></i> Lead Alloc.
                             Management</a>
                     </li>
                 </ul>
-
+                @endcan
                 @can('rewards-list')
                 <ul class="nav side-menu">
                     <li><a><i class="fa fa-gift"></i> Rewards <span class="fa fa-chevron-down"></span></a>
