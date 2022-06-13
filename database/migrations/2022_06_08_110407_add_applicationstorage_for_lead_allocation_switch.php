@@ -34,6 +34,16 @@ class AddApplicationstorageForLeadAllocationSwitch extends Migration
                 'updated_at' => Carbon::now()->format('Y-m-d H:i:s')
             )
         );
+
+        DB::table('application_storage')->insert(
+            array(
+                'key_name' => 'LEAD_ALLOCATION_UNAVAILABILITY_TIME',
+                'value' => Carbon::now()->endOfDay()->format('Y-m-d H:i:s'),
+                'is_active' => 1,
+                'created_at' => Carbon::now()->format('Y-m-d H:i:s'),
+                'updated_at' => Carbon::now()->format('Y-m-d H:i:s')
+            )
+        );
     }
 
     /**

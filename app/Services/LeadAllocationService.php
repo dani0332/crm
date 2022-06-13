@@ -131,7 +131,8 @@ class LeadAllocationService extends BaseService
         Log::channel('daily')->info('setAdvisorsToUnavailable -- started');
         $dateTimeNow = Carbon::now()->toTimeString();
         Log::channel('daily')->info('Current time is ' . $dateTimeNow);
-        if ($dateTimeNow >= '00:30:00') {
+        $timeForUnavailability = ApplicationStorage::where('key_name', 'LEAD_ALLOCATION_UNAVAILABILITY_TIME')->first()->value;
+        if ($dateTimeNow >= $timeForUnavailability) {
             Log::channel('daily')->info('Current time before unavailable is ' . $dateTimeNow);
             Log::channel('daily')->info('Setting advisors to unavailable');
             $leadAllocations = LeadAllocation::where('is_available', '=', true)->get();
