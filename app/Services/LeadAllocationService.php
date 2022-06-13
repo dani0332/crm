@@ -18,12 +18,7 @@ use Illuminate\Support\Facades\Log;
 class LeadAllocationService extends BaseService
 {
     use GetUserTree;
-    protected $crudService;
 
-    public function __construct(CRUDService $crudService)
-    {
-        $this->crudService = $crudService;
-    }
 
     public function getGridData(Request $request)
     {
@@ -44,7 +39,7 @@ class LeadAllocationService extends BaseService
         $leadAllocation->allocation_count = 0;
         $leadAllocation->last_allocation_date = Carbon::now()->timestamp;
         $leadAllocation->max_capacity = 0;
-        $leadAllocation->is_available = true;
+        $leadAllocation->is_available = false;
         $leadAllocation->save();
     }
 
@@ -136,7 +131,7 @@ class LeadAllocationService extends BaseService
         Log::channel('daily')->info('setAdvisorsToUnavailable -- started');
         $dateTimeNow = Carbon::now()->toTimeString();
         Log::channel('daily')->info('Current time is ' . $dateTimeNow);
-        if ($dateTimeNow >= '23:55:00') {
+        if ($dateTimeNow >= '00:30:00') {
             Log::channel('daily')->info('Current time before unavailable is ' . $dateTimeNow);
             Log::channel('daily')->info('Setting advisors to unavailable');
             $leadAllocations = LeadAllocation::where('is_available', '=', true)->get();
