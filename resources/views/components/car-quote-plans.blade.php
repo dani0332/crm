@@ -40,13 +40,14 @@ use App\Enums\CarPlanExclusionsCode;
                                     <th style="width: 100px !important">Provider Name</th>
                                     <th style="width: 100px !important">Plan Name</th>
                                     <th style="width: 80px !important">Repair Type</th>
+                                    <th style="width: 80px !important">Insurer Quote No.</th>
                                     <th style="width: 100px !important">TPL Limit</th>
                                     <th style="width: 100px !important">PAB cover</th>
                                     <th style="width: 100px !important">Roadside assistance</th>
                                     <th style="width: 100px !important">Oman cover TPL</th>
                                     <th style="width: 100px !important">Actual Premium</th>
                                     <th style="width: 100px !important">Discounted Premium</th>
-                                    <th style="width: 100px !important">Premium with VAT</th>
+                                    <th style="width: 100px !important">Premium with VAT.</th>
                                     <th style="width: 50px !important">Action</th>
                                 </tr>
                             </thead>
@@ -69,6 +70,11 @@ use App\Enums\CarPlanExclusionsCode;
                                     <td><a href="#" planDetailUrl="{{ $uuidModal }}/plan_details/{{ $quotePlan->id }}" data-toggle="modal" data-target="#quotePlanModal" class="quotePlanModalPopup">{{ ucwords($quotePlan->name) }}</a></td>
                                     <td>{{ $quotePlan->repairType }}</td>
                                     <td>
+                                        @isset($quotePlan->insurerQuoteNo)
+                                        {{ $quotePlan->insurerQuoteNo }}
+                                        @endisset
+                                    </td>
+                                    <td>
                                         @foreach ($quotePlan->benefits->feature as $quotePlanFeatures)
                                         @if(isset($quotePlanFeatures->code))
                                         @if($quotePlanFeatures->code == CarPlanFeaturesCode::TPL_DAMAGE_LIMIT || $quotePlanFeatures->code == CarPlanFeaturesCode::DAMAGE_LIMIT)
@@ -83,17 +89,19 @@ use App\Enums\CarPlanExclusionsCode;
                                     </td>
                                     <td>
                                         <table style="margin-left: -10px;margin-top: -10px !important;">
-                                            @foreach ($quotePlan->addons as $quotePlanAddon)
                                             <?php
-                                            $selectedAddonsSum = 0;
+                                            $totalSelectedAddonsPriceWithVat = 0;
                                             ?>
+                                            @foreach ($quotePlan->addons as $quotePlanAddon)
                                             @foreach ($quotePlanAddon->carAddonOption as $quotePlanOptions)
                                             <?php
-                                            if (isset($quotePlanOptions->isSelected)) {
-                                                if ($quotePlanOptions->isSelected == true) {
-                                                    $selectedAddonsSum += $quotePlanOptions->price;
+                                                if(isset($quotePlanOptions->isSelected)) {
+                                                    if ($quotePlanOptions->isSelected == true && $quotePlanOptions->price != 0) {
+                                                        $totalSelectedAddonsPriceWithVat += $quotePlanOptions->price + $quotePlanOptions->vat;
+                                                    }
+                                                } else {
+                                                    $totalSelectedAddonsPriceWithVat = 0;
                                                 }
-                                            }
                                             ?>
                                             @if(isset($quotePlanAddon->code))
                                             @if($quotePlanAddon->code == CarPlanAddonsCode::DRIVER_COVER || $quotePlanAddon->code == CarPlanAddonsCode::PASSENGER_COVER)
@@ -154,8 +162,7 @@ use App\Enums\CarPlanExclusionsCode;
                                     </td>
                                     <td>
                                         <?php
-                                        $totalAmount = $selectedAddonsSum + $quotePlan->discountPremium;
-                                        $totalPremium = 5 / 100 * $totalAmount + $totalAmount;
+                                            $totalPremium = $quotePlan->discountPremium + $quotePlan->vat + $totalSelectedAddonsPriceWithVat;
                                         ?>
                                         {{ $totalPremium }}
                                     </td>
@@ -172,13 +179,14 @@ use App\Enums\CarPlanExclusionsCode;
                                 <th>Provider Name</th>
                                 <th>Plan Name</th>
                                 <th>Repair Type</th>
+                                <th>Insurer Quote No.</th>
                                 <th>TPL Limit</th>
                                 <th>PAB cover</th>
                                 <th>Roadside assistance</th>
                                 <th>Oman cover TPL</th>
                                 <th>Actual Premium</th>
                                 <th>Discounted Premium</th>
-                                <th>Premium with VAT</th>
+                                <th>Premium with VAT.</th>
                                 <th>Action</th>
                             </tr>
                         </thead>

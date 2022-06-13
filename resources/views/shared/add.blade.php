@@ -39,9 +39,15 @@
                         $('#cylinder').val(data.cylinder);
                         $('#seat_capacity').val(data.seat_capacity);
                         if(data.vehicle_type_id) $('#vehicle_type_id').val(data.vehicle_type_id);
+                        $("#vehicle_assumptions_error_msg").hide(300);
+                        $("#vehicle_assumptions_success_msg").show(300);
                     }
                     if(!data.cylinder && !data.seat_capacity && !data.vehicle_type_id){
-                        alert('No Vehicle Assumptions Data Found');
+                        $("#vehicle_assumptions_error_msg").show(300);
+                        $("#vehicle_assumptions_success_msg").hide(300);
+                        $('#cylinder').val('');
+                        $('#seat_capacity').val('');
+                        $('#vehicle_type_id').val('');
                     }
                 },
                 error: function(data){
@@ -133,6 +139,8 @@
                     @if (session()->has('message'))
                         <div class="alert alert-danger">{{ session()->get('message') }}</div>
                     @endif
+                    <div id="vehicle_assumptions_success_msg" class="alert alert-success" style="display:none;">Vehicle Assumptions Data Found</div>
+                    <div id="vehicle_assumptions_error_msg" class="alert alert-danger" style="display:none;">No Vehicle Assumptions Data Found</div>
                     <form id="demo-form2" autocomplete="off" action="{{ route('saveQuote') }}" method='post' enctype="multipart/form-data"
                         data-parsley-validate class="form-horizontal form-label-left" autocomplete="off">
                         @php

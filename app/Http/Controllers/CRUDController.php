@@ -223,9 +223,9 @@ class CRUDController extends Controller
      */
     public function show($id, Request $request)
     {
-
         $record = $this->crudService->getEntity($this->genericModel->modelType, $id);
         if (!$record) abort(404);
+
         if (Gate::allows('view-lead', Auth::user(), $record)) {
             $isRenewalUser = false;
             $isNewBusinessUser = false;
@@ -246,10 +246,7 @@ class CRUDController extends Controller
                 ->whereNotIn('text', [
                     'AML Screening Cleared', 'Draft', 'Cancelled', 'AML Screening Failed', 'Transaction Declined', 'Policy Issued', 'Policy Invoiced',
                     'Completed', 'Pending', 'Rejected', 'Issued', 'Approved', 'Approval required', 'Resubmit for approval'
-                ])->orderBy('sort_order', 'asc')
-                ->when(Auth::user()->isHealthWCUAdvisor(), function ($query) {
-                    return $query->whereIn('text', ['New Lead', 'Qualification Pending', 'Qualified']);
-                })->get();
+                ])->orderBy('sort_order', 'asc')->get();
             $lostReasons = DB::table('lost_reasons')
                 ->select('id', 'text')
                 ->get();
@@ -296,23 +293,13 @@ class CRUDController extends Controller
             $audits = [];
             if ($this->genericModel->modelType == quoteTypeCode::Car) { // Car plans to display on detail view
 
-                $listQuotePlans = '';
-                $quotePlans = $this->carQuoteService->getQuotePlans($id);
+                $listQuotePlans = NULL;
+                $listQuote = null;
                 $carQuotePlanAddons = $this->carQuoteService->getCarQuotePlanAddons($id);
                 $ecomCarInsuranceQuoteUrl = Config::get('constants.ECOM_CAR_INSURANCE_QUOTE_URL');
                 $vehicleTypeText = $this->carQuoteService->getCarQuoteVehicleType($id);
-
-                $listQuote = null;
-                if (isset($quotePlans->message) && $quotePlans->message != '') {
-                    $listQuotePlans = $quotePlans->message;
-                } else {
-                    if (gettype($quotePlans) != 'string') {
-                        $listQuotePlans = $quotePlans->quotes->plans;
-                        $listQuote = $quotePlans->quotes;
-                    } else {
-                        $listQuotePlans = $quotePlans;
-                    }
-                }
+                $listQuotePlans = $this->carQuoteService->getPlans($id)[0];
+                $listQuote = $this->carQuoteService->getPlans($id)[1];
 
                 $entity = $this->carQuoteService->getQuoteByUuid($id);
                 $previousQuoteId = isset($entity->previous_quote_id) ? $entity->previous_quote_id : NULL;
@@ -367,7 +354,7 @@ class CRUDController extends Controller
                 ]));
             }
         } else {
-            abort(403, 'Unauthorized action.');
+            abort(403, 'You are not authorized to view this page.');
         }
     }
 

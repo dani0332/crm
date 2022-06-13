@@ -118,6 +118,36 @@
             }
         }
         pet_field_microchip_visibility();
+
+        $('#car_model_id').on('change',function(){
+            var car_model_id = $('#car_model_id').val();
+            $.ajax({
+                url: "{{ url('/getCarModelDetails') }}",
+                type: "GET",
+                data: {
+                    car_model_id: car_model_id
+                },
+                success: function(data){
+                    if(data.cylinder || data.seat_capacity || data.vehicle_type_id){
+                        $('#cylinder').val(data.cylinder);
+                        $('#seat_capacity').val(data.seat_capacity);
+                        if(data.vehicle_type_id) $('#vehicle_type_id').val(data.vehicle_type_id);
+                        $("#vehicle_assumptions_error_msg").hide(300);
+                        $("#vehicle_assumptions_success_msg").show(300);
+                    }
+                    if(!data.cylinder && !data.seat_capacity && !data.vehicle_type_id){
+                        $("#vehicle_assumptions_error_msg").show(300);
+                        $("#vehicle_assumptions_success_msg").hide(300);
+                        $('#cylinder').val('');
+                        $('#seat_capacity').val('');
+                        $('#vehicle_type_id').val('');
+                    }
+                },
+                error: function(data){
+                    console.log(data);
+                }
+            });
+        });
 });
 </script>
     <div class="row">
@@ -138,6 +168,8 @@
                     @if (session()->has('message'))
                         <div class="alert alert-danger">{{ session()->get('message') }}</div>
                     @endif
+                    <div id="vehicle_assumptions_success_msg" class="alert alert-success" style="display:none;">Vehicle Assumptions Data Found</div>
+                    <div id="vehicle_assumptions_error_msg" class="alert alert-danger" style="display:none;">No Vehicle Assumptions Data Found</div>
                     <form id="demo-form2" method='post'
                         action="{{ route(strtolower($model->modelType).'.update', $record->uuid) }}"
                         enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left"
