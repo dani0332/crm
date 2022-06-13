@@ -69,9 +69,6 @@
                     data: "createdAt",
                     name: "createdAt"
                 }, {
-                    data: "vehicleType",
-                    name: "vehicleType"
-                }, {
                     data: 'previousPolicyPremium',
                     name: 'previousPolicyPremium'
                 }, {
@@ -89,6 +86,9 @@
                 }, {
                     data: 'carModel',
                     name: 'carModel'
+                }, {
+                    data: "vehicleType",
+                    name: "vehicleType"
                 }, {
                     data: 'yearOfManufacture',
                     name: 'yearOfManufacture'
@@ -197,6 +197,11 @@
                         d.previous_policy_expiry_date = $('#previous_policy_expiry_date').val();
                         d.previous_policy_expiry_date_end = $('#previous_policy_expiry_date_end').val();
                         d.isEcommerce = $('#isEcommerce').val();
+                        d.createdAtStart = $('#createdAtStart').val();
+                        d.createdAtEnd = $('#createdAtEnd').val();
+                        d.vehicleType = $('#vehicleType').val();
+                        d.typeOfCarInsurance = $('#typeOfCarInsurance').val();
+                        d.currentlyInsuredWith = $('#currentlyInsuredWith').val();
                     },
                 },
                 columnDefs: [
@@ -367,6 +372,48 @@
                             {{ csrf_field() }}
                             @method('POST')
                             <input type="hidden" name="modelType" id="modelType" value="{{ $teamName }}">
+                            @if (Auth::user()->isRenewalAdvisor())
+                            <div class="item form-group">
+                                <div class="col">
+                                    <label class="col-form-label col-md-4 col-sm-4" for="Created Date Start">Created Date
+                                        Start</label>
+                                    <div class="col-md-6 col-sm-6">
+                                        <div class="input-group">
+                                            <input type="date" name="createdAtStart" id="createdAtStart" class="form-control">
+                                            <span class="text-danger"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col">
+                                    <label class="col-form-label col-md-4 col-sm-4" for="Created Date End">Created Date
+                                        End</label>
+                                    <div class="col-md-6 col-sm-6">
+                                        <div class="input-group">
+                                            <input type="date" name="createdAtEnd" id="createdAtEnd" class="form-control">
+                                            <span class="text-danger"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="item form-group">
+                                <div class="col">
+                                    <label class="col-form-label col-md-4 col-sm-4" for="previous_policy_expiry_date">Prev. Policy Expiry Start</label>
+                                    <div class="col-md-6 col-sm-6">
+                                        <div class="input-group">
+                                            <input type="date" name="previous_policy_expiry_date" id="previous_policy_expiry_date" class="form-control">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col">
+                                    <label class="col-form-label col-md-4 col-sm-4" for="previous_policy_expiry_date_end">Prev. Policy Expiry End</label>
+                                    <div class="col-md-6 col-sm-6">
+                                        <div class="input-group">
+                                            <input type="date" name="previous_policy_expiry_date_end" id="previous_policy_expiry_date_end" class="form-control">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            @endif
                             <div class="item form-group">
                                 <div class="col">
                                     <label class="col-form-label col-md-4 col-sm-4" for="Start Date">Assigned Date
@@ -392,7 +439,7 @@
                             @if (!Auth::user()->isRenewalAdvisor())
                                 <div class="item form-group">
                                     <div class="col">
-                                        <label class="col-form-label col-md-4 col-sm-4" for="Start Date">NextFollowup Date
+                                        <label class="col-form-label col-md-4 col-sm-4" for="Start Date">Next Followup Date
                                             Start</label>
                                         <div class="col-md-6 col-sm-6">
                                             <div class="input-group">
@@ -402,7 +449,7 @@
                                         </div>
                                     </div>
                                     <div class="col">
-                                        <label class="col-form-label col-md-4 col-sm-4" for="End Date">NextFollowup Date
+                                        <label class="col-form-label col-md-4 col-sm-4" for="End Date">Next Followup Date
                                             End</label>
                                         <div class="col-md-6 col-sm-6">
                                             <div class="input-group">
@@ -503,26 +550,6 @@
                                         @endif
                                     </div>
                                 </div>
-                                @if (Auth::user()->isRenewalAdvisor())
-                                    <div class="item form-group">
-                                        <div class="col">
-                                            <label class="col-form-label col-md-4 col-sm-4" for="previous_policy_expiry_date">Prev. Policy Expiry Start</label>
-                                            <div class="col-md-6 col-sm-6">
-                                                <div class="input-group">
-                                                    <input type="date" name="previous_policy_expiry_date" id="previous_policy_expiry_date" class="form-control">
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="col">
-                                            <label class="col-form-label col-md-4 col-sm-4" for="previous_policy_expiry_date_end">Prev. Policy Expiry End</label>
-                                            <div class="col-md-6 col-sm-6">
-                                                <div class="input-group">
-                                                    <input type="date" name="previous_policy_expiry_date_end" id="previous_policy_expiry_date_end" class="form-control">
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                @endif
                                 <div class="item form-group">
                                      @if (Auth::user()->isRenewalAdvisor() && $teamName == 'Business')
                                         <div class="col">
@@ -624,9 +651,51 @@
                                     </div>
                                 </div>
                                 <div class="col">
-
+                                    @if (Auth::user()->isRenewalAdvisor() && $teamName == 'Car')
+                                    <label class="col-form-label col-md-4 col-sm-4" for="Vehicle Type">Vehicle Type</label>
+                                    <div class="col-md-6 col-sm-6">
+                                        <div class="input-group">
+                                            <select class="form-control" id="vehicleType" name="vehicleType">
+                                                <option value="" selected="selected">Select Vehicle Type</option>
+                                                @foreach ($vehicleTypeList as $item)
+                                                    <option value="{{ $item->id }}">{{ $item->text }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                    </div>
+                                    @endif
                                 </div>
                             </div>
+                            @if (Auth::user()->isRenewalAdvisor() && $teamName == 'Car')
+                            <div class="item form-group">
+                                <div class="col">
+                                    <label class="col-form-label col-md-4 col-sm-4" for="Type of Car Insurance">Type of Car Insurance</label>
+                                    <div class="col-md-6 col-sm-6">
+                                        <div class="input-group">
+                                            <select class="form-control" id="typeOfCarInsurance" name="typeOfCarInsurance">
+                                                <option value="" selected="selected">Select Type of Car Insurance</option>
+                                                @foreach ($carTypeInsuranceList as $item)
+                                                    <option value="{{ $item->id }}">{{ $item->text }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col">
+                                    <label class="col-form-label col-md-4 col-sm-4" for="Currently Insured With">Currently Insured With</label>
+                                    <div class="col-md-6 col-sm-6">
+                                        <div class="input-group">
+                                            <select class="form-control" id="currentlyInsuredWith" name="currentlyInsuredWith">
+                                                <option value="" selected="selected">Select Currently Insured With</option>
+                                                @foreach ($insuranceProviderList as $item)
+                                                    <option value="{{ $item->text }}">{{ $item->text }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            @endif
                             <div class="item form-group">
                                 <div class="col">
                                 </div>
@@ -648,9 +717,6 @@
                                     <th style="width: 100px !important">Lead Status</th>
                                     <th style="width: 100px !important">Created Date</th>
                                     @if (Auth::user()->isRenewalAdvisor())
-                                        <th style="width: 100px !important">Vehicle Type</th>
-                                    @endif
-                                    @if (Auth::user()->isRenewalAdvisor())
                                         <th style="width: 100px !important">Previous Policy Premium</th>
                                     @endif
                                     @if (Auth::user()->isRenewalAdvisor())
@@ -669,13 +735,16 @@
                                         <th style="width: 100px !important">Car Model</th>
                                     @endif
                                     @if (Auth::user()->isRenewalAdvisor())
+                                        <th style="width: 100px !important">Vehicle Type</th>
+                                    @endif
+                                    @if (Auth::user()->isRenewalAdvisor())
                                         <th style="width: 100px !important">Year Of Manufacture</th>
                                     @endif
                                     @if (Auth::user()->isRenewalAdvisor())
                                         <th style="width: 100px !important">Type of Car Insurance</th>
                                     @endif
                                     @if (Auth::user()->isRenewalAdvisor())
-                                        <th style="width: 100px !important">Current Insurer</th>
+                                        <th style="width: 100px !important">Currently Insured with</th>
                                     @endif
                                     @if (!Auth::user()->isRenewalAdvisor())
                                         <th style="width: 100px !important">Assigned Date</th>
