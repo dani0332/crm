@@ -231,6 +231,9 @@ class DropdownSourceService extends BaseService
             case 'member_category_id':
                 $data = DB::table("member_category")->select('id', 'text')->where("is_active", true)->orderBy('sort_order', 'asc')->get();
                 break;
+            case 'trim':
+                $data = [];
+                break;
             default:
                 break;
         }

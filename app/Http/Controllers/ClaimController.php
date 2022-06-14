@@ -442,10 +442,25 @@ class ClaimController extends Controller
     public function getCarModelDetails(Request $request)
     {
         $modelId = $request->car_model_id;
-        $carModelDetail = DB::table('car_model')
+        
+        $carModelDetail = DB::table('car_model_detail')
+        ->select('cylinder', 'seating_capacity as seat_capacity', 'vehicle_type_id','text','id','is_default')
+        ->where('car_model_id', '=', $modelId)
+        ->get();
+        if(!$carModelDetail) {
+            $carModelDetail = DB::table('car_model')
             ->select('cylinder', 'seat_capacity', 'vehicle_type_id')
             ->where('id', '=', $modelId)
-            ->first();
+            ->get();
+        }
+        return response()->json($carModelDetail);
+    }
+
+    public function getCarModelTrimValues(Request $request) {
+        $carModelDetail = DB::table('car_model_detail')
+        ->select('cylinder', 'seating_capacity as seat_capacity', 'vehicle_type_id')
+        ->where('id', '=', $request->id)
+        ->first();
         return response()->json($carModelDetail);
     }
 

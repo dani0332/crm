@@ -271,6 +271,7 @@ Route::group(['middleware' =>  ['auth']], function () {
     Route::get('/car-make', [ClaimController::class, 'getCarMake']);
     Route::get('/getoverdueleads', [ClaimController::class, 'getoverdueleads']);
     Route::get('/getCarModelDetails', [ClaimController::class, 'getCarModelDetails']);
+    Route::get('/getCarModelTrimValues', [ClaimController::class, 'getCarModelTrimValues']);
     Route::post('auditable', [AuditableController::class, 'loadAuditableComponent']);
     Route::get('/car-model-by-id', [ClaimController::class, 'carModelBasedOnCarMakeId']);
     Route::get('/insurance-provider-plans', [ClaimController::class, 'carPlansBasedOnInsuranceProvider']);

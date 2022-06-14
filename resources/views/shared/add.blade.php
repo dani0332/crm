@@ -34,20 +34,35 @@
                 data: {
                     car_model_id: car_model_id
                 },
-                success: function(data){
-                    if(data.cylinder || data.seat_capacity || data.vehicle_type_id){
-                        $('#cylinder').val(data.cylinder);
-                        $('#seat_capacity').val(data.seat_capacity);
-                        if(data.vehicle_type_id) $('#vehicle_type_id').val(data.vehicle_type_id);
+                success: function(data){     
+                    if(data.length > 0){
+                        var trim = $('#trim').empty();
+                        $.each(data, function (create, carmodelObj) {
+                            if(carmodelObj.is_default != undefined) {
+                                if(carmodelObj.is_default == 1){
+                                    populateCarValues(carmodelObj)
+                                    trim.append('<option selected value="' + carmodelObj.id + '">' + carmodelObj.text + '</option>');
+                                }else{
+                                    if(create == 0) {
+                                        populateCarValues(carmodelObj)
+                                    }
+                                    trim.append('<option value="' + carmodelObj.id + '">' + carmodelObj.text + '</option>');
+                                }
+                            }else {
+                                populateCarValues(carmodelObj)
+                                trim.append('<option value="">I dont know</option>');
+                            }
+                        });
+                        
                         $("#vehicle_assumptions_error_msg").hide(300);
                         $("#vehicle_assumptions_success_msg").show(300);
-                    }
-                    if(!data.cylinder && !data.seat_capacity && !data.vehicle_type_id){
+                    } else{
                         $("#vehicle_assumptions_error_msg").show(300);
                         $("#vehicle_assumptions_success_msg").hide(300);
                         $('#cylinder').val('');
                         $('#seat_capacity').val('');
                         $('#vehicle_type_id').val('');
+                        $('#trim').empty();
                     }
                 },
                 error: function(data){
@@ -55,6 +70,24 @@
                 }
             });
         });
+
+        $('#trim').on('change',function(){
+            loadTrimValues($('#trim').val())
+        });
+        function populateCarValues(carmodelObj) {
+            $('#cylinder').val(carmodelObj.cylinder);
+            $('#seat_capacity').val(carmodelObj.seat_capacity);
+            $('#vehicle_type_id').val(carmodelObj.vehicle_type_id);
+        }
+        function loadTrimValues(trimId)
+        {
+            $.get('/getCarModelTrimValues?id=' + trimId, function (data) {
+                if(data.length > 0) {
+                    populateCarValues(data);
+                }
+            });
+        }
+
         function convertObjectToArray(obj) {
         return Object.keys(obj).map(key => ({
             name: key,
