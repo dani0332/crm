@@ -96,6 +96,11 @@
                         </div>
                     </div>
                 </div>
+                <div align="right">
+                    <button type="submit" class="btn btn-primary btn-sm" id="cancel-motor-assumptions-btn">Cancel</button>
+                    <button type="submit" class="btn btn-success btn-sm" id="update-motor-assumptions-btn">Update</button>
+                    <button type="submit" class="btn btn-warning btn-sm" id="edit-motor-assumptions-btn">Edit Assumptions</button>
+                </div>
             </div>
         </div>
     </div>

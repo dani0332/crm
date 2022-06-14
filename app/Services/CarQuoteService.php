@@ -475,7 +475,6 @@ class CarQuoteService extends BaseService
                 'cqr.id',
                 'cqr.uuid',
                 'cqr.code',
-                DB::raw("CONCAT_WS(' ',cqr.first_name,cqr.last_name) AS clientName"),
                 'qs.text as leadStatus',
                 'cqr.created_at as createdAt',
                 'vt.text as vehicleType',
@@ -495,6 +494,11 @@ class CarQuoteService extends BaseService
                 'cqr.year_of_manufacture as yearOfManufacture',
                 'cti.text as typeOfCarInsurance',
                 'cqr.currently_insured_with as currentlyInsuredWith',
+                'ua.name as assignedTo',
+                'cqr.updated_at as updatedAt',
+                'ls.text as lostReason',
+                'cqr.first_name as firstName',
+                'cqr.last_name as lastName',
             )
             ->leftJoin('car_quote_request_detail as cqrd', 'cqrd.car_quote_request_id', '=', 'cqr.id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'cqr.quote_status_id')
@@ -504,6 +508,8 @@ class CarQuoteService extends BaseService
             ->leftJoin('car_make as cmake', 'cmake.id', '=', 'cqr.car_make_id')
             ->leftJoin('car_model as cmodel', 'cmodel.id', '=', 'cqr.car_model_id')
             ->leftJoin('car_type_insurance as cti', 'cti.id', '=', 'cqr.car_type_insurance_id')
+            ->leftJoin('users as ua', 'ua.id', '=', 'cqr.advisor_id')
+            ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'cqrd.lost_reason_id')
             ->where('qs.text', '!=', 'Fake')->where('cqr.advisor_id', Auth::user()->id);
 
         $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
