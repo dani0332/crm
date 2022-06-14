@@ -299,12 +299,10 @@ class CRUDController extends Controller
         if ($this->genericModel->modelType == quoteTypeCode::Car) { // Car plans to display on detail view
 
             $listQuotePlans = NULL;
-            $listQuote = null;
             $carQuotePlanAddons = $this->carQuoteService->getCarQuotePlanAddons($id);
             $ecomCarInsuranceQuoteUrl = Config::get('constants.ECOM_CAR_INSURANCE_QUOTE_URL');
             $vehicleTypeText = $this->carQuoteService->getCarQuoteVehicleType($id);
-            $listQuotePlans = $this->carQuoteService->getPlans($id)[0];
-            //$listQuote = $this->carQuoteService->getPlans($id)[1];
+            $listQuotePlans = $this->carQuoteService->getPlans($id);
 
             $entity = $this->carQuoteService->getQuoteByUuid($id);
             $previousQuoteId = isset($entity->previous_quote_id) ? $entity->previous_quote_id : NULL;
@@ -313,7 +311,7 @@ class CRUDController extends Controller
             return view('shared.show', compact([
                 'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList',
                 'ecomCarInsuranceQuoteUrl', 'carQuotePlanAddons', 'vehicleTypeText', 'leadStatuses',
-                'lostReasons', 'selectedLostReasonId', 'listQuote','model_name', 'allowedDuplicateLOB', 'audits', 'activities', 'advisors','isRenewalUser',
+                'lostReasons', 'selectedLostReasonId','model_name', 'allowedDuplicateLOB', 'audits', 'activities', 'advisors','isRenewalUser',
                 'isNewBusinessUser', 'previousQuoteId', 'emailStatuses'
             ]));
         } else if ($this->genericModel->modelType == quoteTypeCode::Travel) { // Travel plans to display on detail view

@@ -995,16 +995,14 @@ class CarQuoteService extends BaseService
         } else {
             if (gettype($quotePlans) != 'string' && isset($quotePlans->quotes->plans)) {
                 $listQuotePlans = $quotePlans->quotes->plans;
-                $listQuote = $quotePlans->quotes;
             } else if(!isset($quotePlans->quotes->plans)) {
                 $listQuotePlans = 'Plans not available!';
-                $listQuote = NULL;
             } else {
                 $listQuotePlans = $quotePlans;
             }
         }
 
-        return array($listQuotePlans, $listQuote);
+        return $listQuotePlans;
     }
     
 }
