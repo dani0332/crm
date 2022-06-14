@@ -304,7 +304,7 @@ class CRUDController extends Controller
             $ecomCarInsuranceQuoteUrl = Config::get('constants.ECOM_CAR_INSURANCE_QUOTE_URL');
             $vehicleTypeText = $this->carQuoteService->getCarQuoteVehicleType($id);
             $listQuotePlans = $this->carQuoteService->getPlans($id)[0];
-            $listQuote = $this->carQuoteService->getPlans($id)[1];
+            //$listQuote = $this->carQuoteService->getPlans($id)[1];
 
             $entity = $this->carQuoteService->getQuoteByUuid($id);
             $previousQuoteId = isset($entity->previous_quote_id) ? $entity->previous_quote_id : NULL;

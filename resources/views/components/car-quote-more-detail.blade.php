@@ -8,19 +8,15 @@
             <div class="x_content">
                 <div class="item form-group">
                     <div class="col">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Cylinders"><b>Cylinders</b></label>
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="cylinder"><b>Cylinders</b></label>
                         <div class="col-md-6 col-sm-6">
-                        <p class="label-align-center">
-                            {{ $caqQuoteCylinder }}
-                        </p>
+                        <p class="label-align-center">{{ $record->cylinder }}</p>
                         </div>
                     </div>
                     <div class="col">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Seat Capacity"><b>Seat Capacity</b></label>
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="seat_capacity"><b>Seat Capacity</b></label>
                         <div class="col-md-6 col-sm-6">
-                        <p class="label-align-center">
-                            {{ $caqQuoteSeatCapacity }}
-                        </p>
+                        <p class="label-align-center">{{ $record->seat_capacity }}</p>
                         </div>
                     </div>
                 </div>
@@ -36,76 +32,66 @@
                         </div>
                     </div>
                     <div class="col">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Is Vehicle modified?"><b>Is Vehicle modified?</b></label>
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="is_modified"><b>Is Vehicle modified?</b></label>
                         <div class="col-md-6 col-sm-6">
                         <p class="label-align-center">
-                            @isset($listQuote->isModified)
-                                @if($listQuote->isModified)
-                                    Yes
-                                @else
-                                    No
-                                @endif
-                            @endisset
+                            @if($record->is_modified)
+                                Yes
+                            @else
+                                No
+                            @endif
                         </p>
                         </div>
                     </div>
                 </div>
                 <div class="item form-group">
                     <div class="col">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Bank Financed"><b>Bank Financed</b></label>
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="is_bank_financed"><b>Is Bank Financed?</b></label>
                         <div class="col-md-6 col-sm-6">
                         <p class="label-align-center">
-                            @isset($listQuote->isBankFinanced)
-                                @if($listQuote->isBankFinanced)
-                                    Yes
-                                @else
-                                    No
-                                @endif
-                            @endisset
+                            @if($record->is_bank_financed)
+                                Yes
+                            @else
+                                No
+                            @endif
                         </p>
                         </div>
                     </div>
                     <div class="col">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="GCC Standard"><b>GCC Standard</b></label>
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="is_gcc_standard"><b>Is GCC Standard?</b></label>
                         <div class="col-md-6 col-sm-6">
                         <p class="label-align-center">
-                            @isset($listQuote->isGccStandard)
-                                @if($listQuote->isGccStandard)
-                                    Yes
-                                @else
-                                    No
-                                @endif
-                            @endisset
+                            @if($record->is_gcc_standard)
+                                Yes
+                            @else
+                                No
+                            @endif
                         </p>
                         </div>
                     </div>
                 </div>
                 <div class="item form-group">
                     <div class="col">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Current Insurance"><b>Current Insurance</b></label>
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="current_insurance_status"><b>Current Insurance</b></label>
                         <div class="col-md-6 col-sm-6">
                         <p class="label-align-center">
-                            @isset($listQuote->currentInsuranceStatus)
-                                @if($listQuote->currentInsuranceStatus == 'ACTIVE_TPL')
-                                    Active (Third Party Only)
-                                @endif
-                                @if($listQuote->currentInsuranceStatus == 'ACTIVE_COMP')
-                                    Active (Comprehensive)
-                                @endif
-                                @if($listQuote->currentInsuranceStatus == 'EXPIRED')
-                                    Expired
-                                @endif
-                            @endisset
+                            @if($record->current_insurance_status == 'ACTIVE_TPL')
+                                Active (Third Party Only)
+                            @elseif($record->current_insurance_status == 'ACTIVE_COMP')
+                                Active (Comprehensive)
+                            @elseif($record->current_insurance_status == 'EXPIRED')
+                                Expired
+                            @else
+                                N/A
+                            @endif
                         </p>
                         </div>
                     </div>
                     <div class="col">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Year Of First Registration"><b>Year Of First Registration</b></label>
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="year_of_first_registration"><b>Year Of First Registration</b></label>
                         <div class="col-md-6 col-sm-6">
                         <p class="label-align-center">
-                            @isset($listQuote->isGccStandard)
-                                {{ $listQuote->yearOfFirstRegistration }}
-                            @endisset
+                            {{ $record->year_of_first_registration }}
                         </p>
                         </div>
                     </div>

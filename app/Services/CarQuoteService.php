@@ -93,7 +93,12 @@ class CarQuoteService extends BaseService
                 'ls.text as lost_reason',
                 'cqr.previous_quote_policy_number',
                 'cqr.previous_policy_expiry_date',
-                'cqr.previous_quote_policy_premium'
+                'cqr.previous_quote_policy_premium',
+                'cqr.is_modified',
+                'cqr.is_bank_financed',
+                'cqr.is_gcc_standard',
+                'cqr.current_insurance_status',
+                'cqr.year_of_first_registration'
             )
             ->leftJoin('nationality as n', 'n.id', '=', 'cqr.nationality_id')
             ->leftJoin('car_quote_request_detail as cqrd', 'cqrd.car_quote_request_id', '=', 'cqr.id')
