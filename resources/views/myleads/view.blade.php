@@ -728,22 +728,22 @@
                                     @if (Auth::user()->isRenewalAdvisor())
                                         <th style="width: 100px !important">Previous Policy Number</th>
                                     @endif
-                                    @if (Auth::user()->isRenewalAdvisor())
+                                    @if (Auth::user()->isRenewalAdvisor() && $teamName == 'Car')
                                         <th style="width: 100px !important">Car Make</th>
                                     @endif
-                                    @if (Auth::user()->isRenewalAdvisor())
+                                    @if (Auth::user()->isRenewalAdvisor() && $teamName == 'Car')
                                         <th style="width: 100px !important">Car Model</th>
                                     @endif
-                                    @if (Auth::user()->isRenewalAdvisor())
+                                    @if (Auth::user()->isRenewalAdvisor() && $teamName == 'Car')
                                         <th style="width: 100px !important">Vehicle Type</th>
                                     @endif
-                                    @if (Auth::user()->isRenewalAdvisor())
+                                    @if (Auth::user()->isRenewalAdvisor() && $teamName == 'Car')
                                         <th style="width: 100px !important">Year Of Manufacture</th>
                                     @endif
-                                    @if (Auth::user()->isRenewalAdvisor())
+                                    @if (Auth::user()->isRenewalAdvisor() && $teamName == 'Car')
                                         <th style="width: 100px !important">Type of Car Insurance</th>
                                     @endif
-                                    @if (Auth::user()->isRenewalAdvisor())
+                                    @if (Auth::user()->isRenewalAdvisor() && $teamName == 'Car')
                                         <th style="width: 100px !important">Currently Insured with</th>
                                     @endif
                                     @if (!Auth::user()->isRenewalAdvisor())
