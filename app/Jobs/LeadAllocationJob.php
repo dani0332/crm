@@ -40,19 +40,19 @@ class LeadAllocationJob implements ShouldQueue
     public function handle()
     {
         try {
-            Log::channel('daily')->info('Lead Allocation Job Started');
+            Log::info('Lead Allocation Job Started');
 
             $leadAllocationJobSwitch = ApplicationStorage::where('key_name', 'LEAD_ALLOCATION_JOB_SWITCH')->first();
-            Log::channel('daily')->info('Lead Allocation Job Switch: ' . $leadAllocationJobSwitch->value);
+            Log::info('Lead Allocation Job Switch: ' . $leadAllocationJobSwitch->value);
             if ($leadAllocationJobSwitch->value == '0') {
-                Log::channel('daily')->info('Lead Allocation Job Switch is OFF');
+                Log::info('Lead Allocation Job Switch is OFF');
                 return;
             }
 
             $this->leadAllocationService->setAdvisorsToUnavailable();
 
             $unAllocatedLeads = $this->leadAllocationService->getUnAllocatedLeads();
-            Log::channel('daily')->info('Number of leads to be allocated: ' . count($unAllocatedLeads));
+            Log::info('Number of leads to be allocated: ' . count($unAllocatedLeads));
 
             foreach ($unAllocatedLeads as $unAllocatedLead) {
                 $user = $this->leadAllocationService->getNextAvailableAdvisor();
@@ -62,25 +62,25 @@ class LeadAllocationJob implements ShouldQueue
                     $this->leadAllocationService->getHealthUserSubTeamName($user);
 
                     $subTeamName = $this->leadAllocationService->getHealthUserSubTeamName($user);
-                    Log::channel('daily')->info('Lead Health Team Type ' . $unAllocatedLead->health_team_type . ' User Sub Team Name: ' . $subTeamName);
+                    Log::info('Lead Health Team Type ' . $unAllocatedLead->health_team_type . ' User Sub Team Name: ' . $subTeamName);
 
                     if ($subTeamName == $unAllocatedLead->health_team_type) {
-                        Log::channel('daily')->info('Next available advisor: ' . $user->name);
-                        Log::channel('daily')->info('Allocating lead with uuid ' . $unAllocatedLead->uuid . ' to ' . $user->name);
+                        Log::info('Next available advisor: ' . $user->name);
+                        Log::info('Allocating lead with uuid ' . $unAllocatedLead->uuid . ' to ' . $user->name);
 
                         $this->leadAllocationService->assignLead($unAllocatedLead, $user);
-                        Log::channel('daily')->info('Lead allocated to ' . $user->name);
+                        Log::info('Lead allocated to ' . $user->name);
                     } else {
-                        Log::channel('daily')->info('Skipping allocation of lead with uuid ' . $unAllocatedLead->uuid . ' to ' . $user->name . ' as the user is not in the correct sub team');
+                        Log::info('Skipping allocation of lead with uuid ' . $unAllocatedLead->uuid . ' to ' . $user->name . ' as the user is not in the correct sub team');
                     }
                 } else {
-                    Log::channel('daily')->info('No available advisor found for ' . $unAllocatedLead->uuid);
+                    Log::info('No available advisor found for ' . $unAllocatedLead->uuid);
                 }
             }
             return;
         } catch (\Exception $e) {
-            Log::channel('daily')->info('Lead Allocation Job Failed');
-            Log::channel('daily')->info("message: " . $e->getMessage());
+            Log::info('Lead Allocation Job Failed');
+            Log::info("message: " . $e->getMessage());
             if ($this->attempts() < 4) {
                 $delayInSeconds = 2 * 60;
                 $this->release($delayInSeconds);

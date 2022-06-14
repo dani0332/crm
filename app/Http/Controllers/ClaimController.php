@@ -22,7 +22,6 @@ use DB;
 use Config;
 use App\Services\CarQuoteService;
 use App\Services\CRUDService;
-use Illuminate\Support\Facades\Log;
 
 class ClaimController extends Controller
 {
@@ -41,7 +40,7 @@ class ClaimController extends Controller
         $this->middleware('permission:claim-edit', ['only' => ['edit', 'update']]);
         $this->middleware('permission:claim-delete', ['only' => ['destroy']]);
         $this->carQuoteService = $carQuoteService;
-        $this->crudService = $crudService;  
+        $this->crudService = $crudService;
     }
 
     public function index(Request $request)
@@ -386,9 +385,6 @@ class ClaimController extends Controller
 
         $claim->save();
 
-        Log::info('ClaimUpdated 1');
-        Log::channel('daily')->info('ClaimUpdated 2');
-
         if (isset($request->return_to_view)) {
             return redirect("claim/claims/" . $claim->id)->with('success', 'Claim has been updated');
         }
@@ -412,9 +408,9 @@ class ClaimController extends Controller
     {
         $make_code = $request->make_code;
         $carmodel = DB::table('car_model')
-        ->where('car_make_code', '=', $make_code)
-        ->where('is_active', '=', 1)
-        ->select('id', 'text', 'code')->get();
+            ->where('car_make_code', '=', $make_code)
+            ->where('is_active', '=', 1)
+            ->select('id', 'text', 'code')->get();
         return response()->json($carmodel);
     }
 
@@ -426,16 +422,16 @@ class ClaimController extends Controller
             $carMakeCode = $make_id;
         }
         $carmodel = DB::table('car_model')
-        ->where('car_make_code', '=', $carMakeCode)
-        ->where('is_active', '=', 1)
-        ->select('id', 'text', 'code')->get();
+            ->where('car_make_code', '=', $carMakeCode)
+            ->where('is_active', '=', 1)
+            ->select('id', 'text', 'code')->get();
         return response()->json($carmodel);
     }
     public function getCarMake()
     {
         $carMakes = DB::table('car_make')
-        ->where('is_active', '=', 1)
-        ->select('id', 'text', 'code')->get();
+            ->where('is_active', '=', 1)
+            ->select('id', 'text', 'code')->get();
         return response()->json($carMakes);
     }
 
@@ -482,12 +478,12 @@ class ClaimController extends Controller
         if (gettype($response) == 'integer' && ($response == 200 || $response == 201)) {
             $message = 'Car Plan has been updated';
         } else {
-            if(isset($response->message)) {
+            if (isset($response->message)) {
                 $responseMessage = $response->message;
             } else {
                 $responseMessage = $response;
             }
-            $message = 'Car Plan has not been updated '.$responseMessage;
+            $message = 'Car Plan has not been updated ' . $responseMessage;
         }
 
         return $message;
@@ -497,19 +493,18 @@ class ClaimController extends Controller
     public function getoverdueleads(Request $request)
     {
         return DataTables::of([])
-                ->addIndexColumn()
-                ->make(true);;
+            ->addIndexColumn()
+            ->make(true);;
         $allowedTypes = ['car', 'home', 'business', 'health', 'life', 'travel'];
-        if(!in_array(strtolower($request->teamName), $allowedTypes)){
+        if (!in_array(strtolower($request->teamName), $allowedTypes)) {
             return DataTables::of([])
                 ->addIndexColumn()
                 ->make(true);
-        }else{
+        } else {
             $gridData = $this->crudService->getOverDueFollowups($request, $request->teamName)->get();
             return DataTables::of($gridData)
-                    ->addIndexColumn()
-                    ->make(true);
+                ->addIndexColumn()
+                ->make(true);
         }
-        
     }
 }
