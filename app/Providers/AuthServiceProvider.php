@@ -39,6 +39,7 @@ class AuthServiceProvider extends ServiceProvider
         });
 
         Gate::define('view-lead', function ($user, $lead) {
+            return true;
             $userRoles = $user->usersroles()->get(); // get all roles of user
             $userTeam = Team::where('id', $user->team_id)->first(); // get team of user
 
