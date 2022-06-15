@@ -5,4 +5,4 @@ destination:
   port: 29575
   protocol: tls
 pid_file: /var/run/remote_syslog.pid
-hostname: crm-development
+hostname: development-alfredcrm
