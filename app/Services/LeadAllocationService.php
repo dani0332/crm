@@ -23,9 +23,10 @@ class LeadAllocationService extends BaseService
     public function getGridData(Request $request)
     {
         $userAgainstManagerWithDetail = DB::table('lead_allocation as la')
-            ->select('la.id as id', 'la.user_id as userId', 'la.allocation_count', 'la.max_capacity', 'la.is_available', 'la.last_allocated', 't.name as teamName', 'u.name as userName')
+            ->select('la.id as id', 'la.user_id as userId', 'la.allocation_count', 'la.max_capacity', 'la.is_available', 'la.last_allocated', 'st.name as teamName', 'u.name as userName')
             ->join('users as u', 'la.user_id', '=', 'u.id')
             ->leftjoin('teams as t', 'u.team_id', '=', 't.id')
+            ->leftjoin('teams as st', 'st.id', '=', 'u.sub_team_id')
             ->where('u.manager_id', '=', $request->user()->id)
             ->where(strtolower('t.name'), '=', strtolower(quoteTypeCode::Health))
             ->get();
