@@ -37,7 +37,7 @@ RUN (curl -Ls https://cli.doppler.com/install.sh || wget -qO- https://cli.dopple
 RUN wget https://github.com/papertrail/remote_syslog2/releases/download/v0.20/remote_syslog_linux_amd64.tar.gz
 RUN tar xzf ./remote_syslog*.tar.gz
 RUN cd remote_syslog && sudo cp ./remote_syslog /usr/local/bin
-RUN cp ./docker/log_files.yml /etc/
+RUN cp docker/log_files.yml /etc/
 
 # Install supervisor
 RUN apt-get install -y supervisor
