@@ -267,7 +267,7 @@
                     disableSortColumns = [];
                     break;
             }
-            console.log(dataTableColumns);
+            // console.log(dataTableColumns);
             // Initializing the datatable
             var vehicleTypeDataTable = $("#dtBasicExample").DataTable({
                 ordering: false,
