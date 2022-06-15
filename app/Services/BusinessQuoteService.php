@@ -136,7 +136,6 @@ class BusinessQuoteService extends BaseService
                 'bqr.id',
                 'bqr.uuid',
                 'bqr.code',
-                DB::raw("CONCAT_WS(' ',bqr.first_name,bqr.last_name) AS clientName"),
                 'qs.text as leadStatus',
                 'bqr.created_at as createdAt',
                 'bqr.quote_status_id',
@@ -144,17 +143,19 @@ class BusinessQuoteService extends BaseService
                 'u.name as assignedBy',
                 'bqr.updated_at as updatedAt',
                 'bqr.source as leadSource',
-                'bqr.company_name',
+                'bqr.company_name as companyName',
                 'bqr.premium',
                 'bqr.email',
                 'bqr.mobile_no',
                 'bqrd.next_followup_date as nextFollowupDate',
                 'bqr.previous_quote_id',
                 'ps.text as paymentStatus',
-                'bqr.renewal_batch',
-                'bqr.previous_quote_policy_number as previous_policy_number',
-                'bqr.previous_policy_expiry_date',
-                'bqr.previous_quote_policy_premium'
+                'bqr.renewal_batch as renewalBatch',
+                'bqr.previous_quote_policy_number as previousPolicyNumber',
+                DB::raw('DATE_FORMAT(bqr.previous_policy_expiry_date, "%d-%m-%Y") as previousPolicyExpiryDate'),
+                'bqr.previous_quote_policy_premium as previousPolicyPremium',
+                'bqr.first_name as firstName',
+                'bqr.last_name as lastName',
             )
             ->leftJoin('business_quote_request_detail as bqrd', 'bqrd.business_quote_request_id', '=', 'bqr.id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'bqr.quote_status_id')

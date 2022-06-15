@@ -445,7 +445,6 @@ class HealthQuoteService extends BaseService
                 'hqr.id',
                 'hqr.uuid',
                 'hqr.code',
-                DB::raw("CONCAT_WS(' ',hqr.first_name,hqr.last_name) AS clientName"),
                 'qs.text as leadStatus',
                 'hqr.created_at as createdAt',
                 'hqr.quote_status_id',
@@ -461,10 +460,12 @@ class HealthQuoteService extends BaseService
                 'hqrd.next_followup_date as nextFollowupDate',
                 'hqr.previous_quote_id',
                 'ps.text as paymentStatus',
-                'hqr.renewal_batch',
-                'hqr.previous_quote_policy_number as previous_policy_number',
-                'hqr.previous_policy_expiry_date',
-                'hqr.previous_quote_policy_premium'
+                'hqr.renewal_batch as renewalBatch',
+                'hqr.previous_quote_policy_number as previousPolicyNumber',
+                DB::raw('DATE_FORMAT(hqr.previous_policy_expiry_date, "%d-%m-%Y") as previousPolicyExpiryDate'),
+                'hqr.previous_quote_policy_premium as previousPolicyPremium',
+                'hqr.first_name as firstName',
+                'hqr.last_name as lastName',
             )
             ->leftJoin('health_quote_request_detail as hqrd', 'hqrd.health_quote_request_id', '=', 'hqr.id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'hqr.quote_status_id')

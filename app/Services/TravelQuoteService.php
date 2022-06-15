@@ -184,7 +184,6 @@ class TravelQuoteService extends BaseService
                 'tqr.id',
                 'tqr.uuid',
                 'tqr.code',
-                DB::raw("CONCAT_WS(' ',tqr.first_name,tqr.last_name) AS clientName"),
                 'qs.text as leadStatus',
                 'tqr.created_at as createdAt',
                 'tqr.quote_status_id',
@@ -198,10 +197,12 @@ class TravelQuoteService extends BaseService
                 'tqrd.next_followup_date as nextFollowupDate',
                 'tqr.previous_quote_id',
                 'ps.text as paymentStatus',
-                'tqr.renewal_batch',
-                'tqr.previous_quote_policy_number as previous_policy_number',
-                'tqr.previous_policy_expiry_date',
-                'tqr.previous_quote_policy_premium'
+                'tqr.renewal_batch as renewalBatch',
+                'tqr.previous_quote_policy_number as previousPolicyNumber',
+                DB::raw('DATE_FORMAT(tqr.previous_policy_expiry_date, "%d-%m-%Y") as previousPolicyExpiryDate'),
+                'tqr.previous_quote_policy_premium as previousPolicyPremium',
+                'tqr.first_name as firstName',
+                'tqr.last_name as lastName',
             )
             ->leftJoin('travel_quote_request_detail as tqrd', 'tqrd.travel_quote_request_id', '=', 'tqr.id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'tqr.quote_status_id')

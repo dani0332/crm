@@ -403,7 +403,6 @@ class LifeQuoteService extends BaseService
                 'lqr.id',
                 'lqr.uuid',
                 'lqr.code',
-                DB::raw("CONCAT_WS(' ',lqr.first_name,lqr.last_name) AS clientName"),
                 'qs.text as leadStatus',
                 'lqr.created_at as createdAt',
                 'lqr.quote_status_id',
@@ -417,10 +416,12 @@ class LifeQuoteService extends BaseService
                 'lqrd.next_followup_date as nextFollowupDate',
                 'lqr.previous_quote_id',
                 'ps.text as paymentStatus',
-                'lqr.renewal_batch',
-                'lqr.previous_quote_policy_number as previous_policy_number',
-                'lqr.previous_policy_expiry_date',
-                'lqr.previous_quote_policy_premium'
+                'lqr.renewal_batch as renewalBatch',
+                'lqr.previous_quote_policy_number as previousPolicyNumber',
+                DB::raw('DATE_FORMAT(lqr.previous_policy_expiry_date, "%d-%m-%Y") as previousPolicyExpiryDate'),
+                'lqr.previous_quote_policy_premium as previousPolicyPremium',
+                'lqr.first_name as firstName',
+                'lqr.last_name as lastName',
             )
             ->leftJoin('life_quote_request_detail as lqrd', 'lqrd.life_quote_request_id', '=', 'lqr.id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'lqr.quote_status_id')
