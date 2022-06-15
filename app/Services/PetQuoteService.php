@@ -395,7 +395,6 @@ class PetQuoteService extends BaseService
                 'pqr.id',
                 'pqr.uuid',
                 'pqr.code',
-                DB::raw("CONCAT_WS(' ',pqr.first_name,pqr.last_name) AS clientName"),
                 'qs.text as leadStatus',
                 'pqr.created_at as createdAt',
                 'pqr.quote_status_id',
@@ -409,10 +408,12 @@ class PetQuoteService extends BaseService
                 'pqrd.next_followup_date as nextFollowupDate',
                 'pqr.previous_quote_id',
                 'ps.text as paymentStatus',
-                'pqr.renewal_batch',
-                'pqr.previous_quote_policy_number as previous_policy_number',
-                'pqr.previous_policy_expiry_date',
-                'pqr.previous_quote_policy_premium'
+                'pqr.renewal_batch as renewalBatch',
+                'pqr.previous_quote_policy_number as previousPolicyNumber',
+                DB::raw('DATE_FORMAT(pqr.previous_policy_expiry_date, "%d-%m-%Y") as previousPolicyExpiryDate'),
+                'pqr.previous_quote_policy_premium as previousPolicyPremium',
+                'pqr.first_name as firstName',
+                'pqr.last_name as lastName',
             )
             ->leftJoin('pet_quote_request_detail as pqrd', 'pqrd.pet_quote_request_id', '=', 'pqr.id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'pqr.quote_status_id')
