@@ -447,7 +447,7 @@
             :quoteRequestId="$record->id" />
     @endif
 
-    @isset($previousQuoteId)
+    @isset($record->previous_quote_id)
         <x-email-status
             :emailStatuses="$emailStatuses" />
     @endisset

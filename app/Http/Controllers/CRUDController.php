@@ -32,6 +32,7 @@ use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Log;
 use Config;
 use DB;
+use App\Services\LookupService;
 
 class CRUDController extends Controller
 {
@@ -50,6 +51,7 @@ class CRUDController extends Controller
     protected $activityService;
     protected $emailStatusService;
     protected $applicationStorageService;
+    protected $lookupService;
 
     public function __construct(
         HealthQuoteService $healthService,
@@ -66,7 +68,8 @@ class CRUDController extends Controller
         Request $request, 
         ActivitiesService $activityService,
         EmailStatusService $emailStatusService,
-        ApplicationStorageService $applicationStorageService
+        ApplicationStorageService $applicationStorageService,
+        LookupService $lookupService
     ) {
         $this->genericModel = new GenericModel();
         $this->healthQuoteService = $healthService;
@@ -74,7 +77,6 @@ class CRUDController extends Controller
         $this->crudService = $crudService;
         $this->dropdownSourceService = $dropdownSourceService;
         $this->carQuoteService = $carQuoteService;
-
         $this->travelQuoteService = $travelQuoteService;
         $this->lifeQuoteService = $lifeQuoteService;
         $this->homeQuoteService = $homeQuoteService;
@@ -84,6 +86,7 @@ class CRUDController extends Controller
         $this->userService = $userService;
         $this->emailStatusService = $emailStatusService;
         $this->applicationStorageService = $applicationStorageService;
+        $this->lookupService = $lookupService;
 
         $this->setModelType($request);
         $this->fillModelByModelType(ucwords($this->genericModel->modelType), $request);
@@ -298,22 +301,21 @@ class CRUDController extends Controller
         $audits = [];
         if ($this->genericModel->modelType == quoteTypeCode::Car) { // Car plans to display on detail view
 
+            $ecomCarInsuranceQuoteUrl = Config::get('constants.ECOM_CAR_INSURANCE_QUOTE_URL');
             $listQuotePlans = NULL;
             $carQuotePlanAddons = $this->carQuoteService->getCarQuotePlanAddons($id);
-            $ecomCarInsuranceQuoteUrl = Config::get('constants.ECOM_CAR_INSURANCE_QUOTE_URL');
-            $vehicleTypes = $this->carQuoteService->getVehicleTypes();
             $listQuotePlans = $this->carQuoteService->getPlans($id);
-            $yearsOfManufacture = $this->carQuoteService->getYearsOfManufacture();
-
             $entity = $this->carQuoteService->getQuoteByUuid($id);
-            $previousQuoteId = isset($entity->previous_quote_id) ? $entity->previous_quote_id : NULL;
+            $vehicleTypes = $this->lookupService->getVehicleTypes();
+            $yearsOfManufacture = $this->lookupService->getYearsOfManufacture();
             $emailStatuses = $this->emailStatusService->getEmailStatus(QuoteTypeId::Car, $entity->id);
 
             return view('shared.show', compact([
                 'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList',
                 'ecomCarInsuranceQuoteUrl', 'carQuotePlanAddons', 'vehicleTypes', 'leadStatuses',
-                'lostReasons', 'selectedLostReasonId','model_name', 'allowedDuplicateLOB', 'audits', 'activities', 'advisors','isRenewalUser',
-                'isNewBusinessUser', 'previousQuoteId', 'emailStatuses', 'yearsOfManufacture'
+                'lostReasons', 'selectedLostReasonId','model_name', 'allowedDuplicateLOB', 'audits', 
+                'activities', 'advisors','isRenewalUser', 'isNewBusinessUser', 'emailStatuses', 
+                'yearsOfManufacture'
             ]));
         } else if ($this->genericModel->modelType == quoteTypeCode::Travel) { // Travel plans to display on detail view
             $listQuotePlans = '';
