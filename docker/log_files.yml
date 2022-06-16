@@ -1,0 +1,8 @@
+files:
+  - /var/www/storage/logs/laravel*.log
+destination:
+  host: logs3.papertrailapp.com
+  port: 29575
+  protocol: tls
+pid_file: /var/run/remote_syslog.pid
+hostname: development-alfredcrm
