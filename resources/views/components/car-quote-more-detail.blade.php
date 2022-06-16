@@ -43,7 +43,7 @@ $(document).ready(function() {
                 <div class="clearfix"></div>
             </div>
             <div class="x_content">
-            <form id="update-assumptions-form" method='post' action="{{ url('/quotes/car/CarAssumptionsUpdate') }}" enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left" autocomplete="off">
+            <form id="update-assumptions-form" method='post' action="{{ url('/quotes/car/carAssumptionsUpdate') }}" enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left" autocomplete="off">
             {{csrf_field()}}
                 <div class="item form-group">
                     <div class="col">

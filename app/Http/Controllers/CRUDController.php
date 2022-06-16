@@ -784,7 +784,7 @@ class CRUDController extends Controller
         return redirect()->to('/quotes/' . strtolower($request->parentType) . '/' . $request->entityUId)->with('success', ' Activity has been Created');
     }
 
-    public function CarAssumptionsUpdate(Request $request)
+    public function carAssumptionsUpdate(Request $request)
     {
         $quoteID = $this->carQuoteService->carAssumptionsUpdateProcess($request);
 
