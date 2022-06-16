@@ -1,7 +1,5 @@
 #!/bin/bash
 
-remote_syslog
-
 cd /var/www
 # php artisan migrate:fresh --seed
 php artisan cache:clear
