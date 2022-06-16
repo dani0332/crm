@@ -5,10 +5,12 @@ namespace App\Console\Commands;
 use App\Jobs\LeadAllocationJob;
 use App\Services\LeadAllocationService;
 use Illuminate\Console\Command;
+use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 
 class LeadAllocation extends Command
 {
+    use SerializesModels;
     /**
      * The name and signature of the console command.
      *
