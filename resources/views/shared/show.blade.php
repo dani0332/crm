@@ -347,9 +347,7 @@
             </div>
         </div>
 
-
-
-        <x-car-quote-more-detail :vehicleTypeText="$vehicleTypeText" :caqQuoteCylinder="$record->cylinder" :caqQuoteSeatCapacity="$record->seat_capacity" :listQuote="$listQuote" :carTrim="$record->trim" />
+        <x-car-quote-more-detail :vehicleTypes="$vehicleTypes" :record="$record" :yearsOfManufacture="$yearsOfManufacture" :carTrim="$record->trim"/>
 
         <x-car-ecom-detail :carQuotePremium="$record->premium" :carQuotePaidAt="$record->paid_at" :carQuotePaymentStatus="$record->payment_status_id_text" :carQuotePlanName="$record->plan_id_text" :carQuotePlanAddons="$carQuotePlanAddons"
             :carQuotePlanProvider="$record->car_plan_provider_id_text" :carQuotePaymentMethod="$record->payment_gateway" />
@@ -447,7 +445,7 @@
             :quoteRequestId="$record->id" />
     @endif
 
-    @isset($previousQuoteId)
+    @isset($record->previous_quote_id)
         <x-email-status
             :emailStatuses="$emailStatuses" />
     @endisset

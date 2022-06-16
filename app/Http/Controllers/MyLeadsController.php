@@ -8,9 +8,12 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use DataTables;
 use App\Enums\quoteTypeCode;
+use App\Models\CarTypeInsurance;
+use App\Models\InsuranceProvider;
 use App\Models\PaymentStatus;
 use App\Models\Team;
 use App\Models\User;
+use App\Models\VehicleType;
 use DB;
 
 class MyLeadsController extends Controller
@@ -39,6 +42,9 @@ class MyLeadsController extends Controller
         $parentTeamId = $team->id;
         $leadStatusList = QuoteStatus::select('id', 'text')->where('is_active', 1)->get();
         $paymentStatusList = PaymentStatus::select('id', 'text')->where('is_active', 1)->get();
+        $vehicleTypeList = VehicleType::select('id', 'text')->where("is_active", true)->get();
+        $insuranceProviderList = InsuranceProvider::select('id', 'text')->where('is_active', true)->get();
+        $carTypeInsuranceList = CarTypeInsurance::select('id', 'text')->where("is_active", true)->get();
 
         $allowedTeamTypes = [];
         array_push($allowedTeamTypes, ['id' => $team->id, 'name' => $teamName]);        
@@ -67,7 +73,8 @@ class MyLeadsController extends Controller
                 ->addIndexColumn()
                 ->make(true);
         }
-        return view('myleads.view', compact('teamName', 'leadStatusList', 'allowedTeamTypes', 'parentTeamId','paymentStatusList'));
+        return view('myleads.view', compact('teamName', 'leadStatusList', 'allowedTeamTypes', 
+        'parentTeamId','paymentStatusList','vehicleTypeList','insuranceProviderList','carTypeInsuranceList'));
     }
 
     /**
