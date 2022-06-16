@@ -10,16 +10,12 @@ class LookupService extends BaseService
 
     public function getYearsOfManufacture()
 	{
-        $yearsOfManufacture = YearOfManufacture::select('text as id', 'text')->get();
-
-        return $yearsOfManufacture;
+        return YearOfManufacture::select('text as id', 'text')->get();
 	}
 
 	public function getVehicleTypes()
     {
-        $vehicleTypes = VehicleType::select('id', 'text')->where("is_active", true)->get();
-
-        return $vehicleTypes;
+        return VehicleType::select('id', 'text')->where("is_active", true)->get();
     }
 
 }
