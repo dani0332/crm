@@ -59,7 +59,7 @@ class LeadAllocationService extends BaseService
         $unAllocatedLeads = [];
         $to = Carbon::now();
         $from = ApplicationStorage::where('key_name', 'LEAD_ALLOCATION_START_DATE_FOR_LEADS')->first()->value;
-        Log::channel('single')->info('to date: ' . $to . ' from date: ' . $from);
+        Log::info('to date: ' . $to . ' from date: ' . $from);
         $unAllocatedLeads = HealthQuote::select('health_quote_request.*')
             ->join('quote_status', 'quote_status.id', '=', 'health_quote_request.quote_status_id')
             ->where('quote_status.id', QuoteStatusEnum::Qualified)
@@ -71,35 +71,35 @@ class LeadAllocationService extends BaseService
 
     public function getNextAvailableAdvisor($skipUser = null)
     {
-        Log::channel('single')->info('getNextAvailableAdvisor -- started');
-        Log::channel('single')->info('Fetching loggedin user (manager) subordinates');
+        Log::info('getNextAvailableAdvisor -- started');
+        Log::info('Fetching loggedin user (manager) subordinates');
         $healthUsersQuery = User::where('team_id', Team::where('name', 'Health')->first()->id);
         if ($skipUser != null) {
             $healthUsersQuery->where('id', '!=', $skipUser);
         }
         $healthUsers = $healthUsersQuery->pluck('id');
-        Log::channel('single')->info('Found ' . count($healthUsers) . ' sub-ordinates');
-        Log::channel('single')->info('Fetching lead allocation records for sub-ordinates');
+        Log::info('Found ' . count($healthUsers) . ' sub-ordinates');
+        Log::info('Fetching lead allocation records for sub-ordinates');
         $leadAllocationWithUsers = LeadAllocation::with('leadAllocationUser')->where('is_available', '=', true)->whereIn('user_id', $healthUsers)->get();
-        Log::channel('single')->info('Found ' . count($leadAllocationWithUsers) . ' lead allocation records');
+        Log::info('Found ' . count($leadAllocationWithUsers) . ' lead allocation records');
         $nextAvailableUser = $this->getNextAssignableUser($leadAllocationWithUsers);
         return $nextAvailableUser;
     }
 
     public function getNextAssignableUser($leadAllocationWithUsers)
     {
-        Log::channel('single')->info('getNextAssignableUser -- started');
+        Log::info('getNextAssignableUser -- started');
         $allAssignableUsers = collect([]);
         foreach ($leadAllocationWithUsers as $leadAllocationWithUser) {
             if ($leadAllocationWithUser->allocation_count < $leadAllocationWithUser->max_capacity || $leadAllocationWithUser->max_capacity == -1) {
-                Log::channel('single')->info('Found assignable user ' . $leadAllocationWithUser->leadAllocationUser->name);
+                Log::info('Found assignable user ' . $leadAllocationWithUser->leadAllocationUser->name);
                 $allAssignableUsers->push($leadAllocationWithUser);
             }
         }
-        Log::channel('single')->info('Found ' . count($allAssignableUsers) . ' assignable users');
+        Log::info('Found ' . count($allAssignableUsers) . ' assignable users');
         $allAssignableUsers = $allAssignableUsers->sortBy('last_allocated', SORT_NATURAL);
         if ($allAssignableUsers->count() > 0) {
-            Log::channel('single')->info('Returning assignable user ' . $allAssignableUsers->first()->leadAllocationUser->name);
+            Log::info('Returning assignable user ' . $allAssignableUsers->first()->leadAllocationUser->name);
             return $allAssignableUsers->first()->leadAllocationUser;
         }
         return new User();
@@ -110,49 +110,49 @@ class LeadAllocationService extends BaseService
         if ($lead->advisor_id != null) {
             $this->removeLeadAllocationForOldAdvisor($lead);
         }
-        Log::channel('single')->info('assignLead -- started');
-        Log::channel('single')->info('Assigning lead ' . $lead->id . ' to advisor ' . $advisorId);
+        Log::info('assignLead -- started');
+        Log::info('Assigning lead ' . $lead->id . ' to advisor ' . $advisorId);
         $lead->advisor_id = $advisorId;
         if ($isManualAssignment) {
             $lead->quote_status_id = QuoteStatusEnum::Qualified;
         }
         $lead->save();
-        Log::channel('single')->info('Lead Id ' . $lead->id . ' assigned to advisor ' . $advisorId);
+        Log::info('Lead Id ' . $lead->id . ' assigned to advisor ' . $advisorId);
 
         $this->updateLeadAllocationRecord($advisorId);
     }
 
     public function removeLeadAllocationForOldAdvisor($lead)
     {
-        Log::channel('single')->info('removeLeadAllocationForOldAdvisor -- started');
+        Log::info('removeLeadAllocationForOldAdvisor -- started');
         $leadAllocation = LeadAllocation::where('user_id', $lead->advisor_id)->first();
         if ($leadAllocation != null) {
             $leadAllocation->allocation_count = $leadAllocation->allocation_count - 1;
             $leadAllocation->save();
-            Log::channel('single')->info('Lead allocation record for user ' . $$lead->advisor_id . ' updated. Current allocation count is ' . $leadAllocation->allocation_count);
+            Log::info('Lead allocation record for user ' . $$lead->advisor_id . ' updated. Current allocation count is ' . $leadAllocation->allocation_count);
         } else {
-            Log::channel('single')->info('Lead allocation record for user ' . $$lead->advisor_id . ' not found for minus 1 allocation count');
+            Log::info('Lead allocation record for user ' . $$lead->advisor_id . ' not found for minus 1 allocation count');
         }
     }
 
     public function updateLeadAllocationRecord($userId)
     {
-        Log::channel('single')->info('updateLeadAllocationRecord -- started');
+        Log::info('updateLeadAllocationRecord -- started');
         $leadAllocation = LeadAllocation::where('user_id', $userId)->first();
         $leadAllocation->allocation_count += 1;
         $leadAllocation->last_allocated = Carbon::now()->timestamp;
         $leadAllocation->save();
-        Log::channel('single')->info('Lead allocation record for user ' . $userId . ' updated. Current allocation count is ' . $leadAllocation->allocation_count);
+        Log::info('Lead allocation record for user ' . $userId . ' updated. Current allocation count is ' . $leadAllocation->allocation_count);
     }
 
     public function getHealthUserSubTeamName($userId)
     {
-        Log::channel('single')->info('getHealthUserSubTeamName -- started');
+        Log::info('getHealthUserSubTeamName -- started');
         $user = User::where('id', $userId)->first();
         if ($user) {
-            Log::channel('single')->info('User ' . $user->name . ' has sub-team ' . $user->sub_team_id);
+            Log::info('User ' . $user->name . ' has sub-team ' . $user->sub_team_id);
             $userSubTeam = Team::where('id', $user->sub_team_id)->first();
-            Log::channel('single')->info('User ' . $user->name . ' belongs to sub team ' . $userSubTeam->name);
+            Log::info('User ' . $user->name . ' belongs to sub team ' . $userSubTeam->name);
             return strtolower($userSubTeam->name);
         } else {
             return null;
@@ -161,19 +161,19 @@ class LeadAllocationService extends BaseService
 
     public function setAdvisorsToUnavailable()
     {
-        Log::channel('single')->info('setAdvisorsToUnavailable -- started');
+        Log::info('setAdvisorsToUnavailable -- started');
         $dateTimeNow = Carbon::now()->toTimeString();
-        Log::channel('single')->info('Current time is ' . $dateTimeNow);
+        Log::info('Current time is ' . $dateTimeNow);
         $timeForUnavailability = ApplicationStorage::where('key_name', 'LEAD_ALLOCATION_UNAVAILABILITY_TIME')->first()->value;
         if ($dateTimeNow >= $timeForUnavailability) {
-            Log::channel('single')->info('Current time before unavailable is ' . $dateTimeNow);
-            Log::channel('single')->info('Setting advisors to unavailable');
+            Log::info('Current time before unavailable is ' . $dateTimeNow);
+            Log::info('Setting advisors to unavailable');
             $leadAllocations = LeadAllocation::where('is_available', '=', true)->get();
             foreach ($leadAllocations as $leadAllocation) {
                 $leadAllocation->is_available = false;
                 $leadAllocation->allocation_count = 0;
                 $leadAllocation->save();
-                Log::channel('single')->info('Advisor ' . $leadAllocation->user_id . ' is now unavailable and allocation count is set to 0');
+                Log::info('Advisor ' . $leadAllocation->user_id . ' is now unavailable and allocation count is set to 0');
             }
         }
     }
