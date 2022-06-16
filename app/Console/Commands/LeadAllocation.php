@@ -43,7 +43,7 @@ class LeadAllocation extends Command
     public function handle()
     {
         Log::info('Lead Allocation Command Started');
-
-        dispatch(new LeadAllocationJob(new LeadAllocationService()));
+        $leadAllocationService = new LeadAllocationService();
+        dispatch(new LeadAllocationJob($leadAllocationService));
     }
 }
