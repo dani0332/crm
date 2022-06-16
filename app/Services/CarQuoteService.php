@@ -897,12 +897,11 @@ class CarQuoteService extends BaseService
         return $listCarQuotePlanAddons;
     }
 
-    public function getCarQuoteVehicleType($id)
+    public function getVehicleTypes()
     {
-        $vehicleTypeId = CarQuote::where('uuid', '=', $id)->value('vehicle_type_id');
-        $vehicleTypeText = VehicleType::where('id', '=', $vehicleTypeId)->value('text');
+        $vehicleTypes = VehicleType::select('id', 'text')->where("is_active", true)->get();
 
-        return $vehicleTypeText;
+        return $vehicleTypes;
     }
 
     public function carPlanModify($request)
@@ -1008,5 +1007,29 @@ class CarQuoteService extends BaseService
 
         return $listQuotePlans;
     }
-    
+
+    public function getYearsOfManufacture()
+    {
+        $yearsOfManufacture = YearOfManufacture::select('text as id', 'text')->get();
+
+        return $yearsOfManufacture;
+    }
+
+    public function carAssumptionsUpdateProcess($request)
+    {
+        $updateQuote = CarQuote::find($request->car_quote_id);
+        $updateQuote->cylinder = $request->cylinder;
+        $updateQuote->seat_capacity = $request->seat_capacity;
+        $updateQuote->vehicle_type_id = $request->vehicle_type_id;
+        $updateQuote->is_modified = $request->is_modified;
+        $updateQuote->is_bank_financed = $request->is_bank_financed;
+        $updateQuote->is_gcc_standard = $request->is_gcc_standard;
+        $updateQuote->current_insurance_status = $request->current_insurance_status;
+        $updateQuote->year_of_first_registration = $request->year_of_first_registration;
+        $updateQuote->quote_updated_at = Carbon::now();
+        $updateQuote->is_quote_locked = true;
+        $updateQuote->save();
+
+        return $updateQuote->id;
+    }
 }

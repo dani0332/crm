@@ -349,7 +349,7 @@
 
 
 
-        <x-car-quote-more-detail :vehicleTypeText="$vehicleTypeText" :record="$record" />
+        <x-car-quote-more-detail :vehicleTypes="$vehicleTypes" :record="$record" :yearsOfManufacture="$yearsOfManufacture" />
 
         <x-car-ecom-detail :carQuotePremium="$record->premium" :carQuotePaidAt="$record->paid_at" :carQuotePaymentStatus="$record->payment_status_id_text" :carQuotePlanName="$record->plan_id_text" :carQuotePlanAddons="$carQuotePlanAddons"
             :carQuotePlanProvider="$record->car_plan_provider_id_text" :carQuotePaymentMethod="$record->payment_gateway" />

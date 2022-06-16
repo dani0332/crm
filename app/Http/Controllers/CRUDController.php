@@ -301,8 +301,9 @@ class CRUDController extends Controller
             $listQuotePlans = NULL;
             $carQuotePlanAddons = $this->carQuoteService->getCarQuotePlanAddons($id);
             $ecomCarInsuranceQuoteUrl = Config::get('constants.ECOM_CAR_INSURANCE_QUOTE_URL');
-            $vehicleTypeText = $this->carQuoteService->getCarQuoteVehicleType($id);
+            $vehicleTypes = $this->carQuoteService->getVehicleTypes();
             $listQuotePlans = $this->carQuoteService->getPlans($id);
+            $yearsOfManufacture = $this->carQuoteService->getYearsOfManufacture();
 
             $entity = $this->carQuoteService->getQuoteByUuid($id);
             $previousQuoteId = isset($entity->previous_quote_id) ? $entity->previous_quote_id : NULL;
@@ -310,9 +311,9 @@ class CRUDController extends Controller
 
             return view('shared.show', compact([
                 'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList',
-                'ecomCarInsuranceQuoteUrl', 'carQuotePlanAddons', 'vehicleTypeText', 'leadStatuses',
+                'ecomCarInsuranceQuoteUrl', 'carQuotePlanAddons', 'vehicleTypes', 'leadStatuses',
                 'lostReasons', 'selectedLostReasonId','model_name', 'allowedDuplicateLOB', 'audits', 'activities', 'advisors','isRenewalUser',
-                'isNewBusinessUser', 'previousQuoteId', 'emailStatuses'
+                'isNewBusinessUser', 'previousQuoteId', 'emailStatuses', 'yearsOfManufacture'
             ]));
         } else if ($this->genericModel->modelType == quoteTypeCode::Travel) { // Travel plans to display on detail view
             $listQuotePlans = '';
@@ -781,5 +782,14 @@ class CRUDController extends Controller
             return redirect()->to('/activities/')->with('success', ' Activity has been Created');
         }
         return redirect()->to('/quotes/' . strtolower($request->parentType) . '/' . $request->entityUId)->with('success', ' Activity has been Created');
+    }
+
+    public function CarAssumptionsUpdate(Request $request)
+    {
+        $quoteID = $this->carQuoteService->carAssumptionsUpdateProcess($request);
+
+        if($quoteID) {
+            return redirect()->back()->with('success', 'Car Assumptions has been updated');
+        }
     }
 }
