@@ -1,5 +1,4 @@
 <?php
-
 use App\Enums\CarPlanFeaturesCode;
 use App\Enums\CarPlanAddonsCode;
 use App\Enums\CarPlanExclusionsCode;
@@ -16,12 +15,12 @@ use App\Enums\CarPlanExclusionsCode;
                     <div class="col-auto mr-auto"></div>
                     <span class="alert alert-success" id="quotePlansGenerateMsg" style="display: none">Copied</span>
                     <div class="col-auto">
-                        <input type="hidden" id="quotePlansGenerateUrl" name="quotePlansGenerateUrl" value="{{ $uuid }}">
+                        <input type="hidden" id="quotePlansGenerateUrl" name="quotePlansGenerateUrl" value="{{ $ecomUrl }}">
                         @can('car-quotes-plans-create')
-                        <a href="{{ url('quotes/car/'.$uuidModal.'/add_quote') }}" class="btn btn-primary btn-sm">Create Quote</a>
+                        <a href="{{ url('quotes/car/'.$record->uuid.'/add_quote') }}" class="btn btn-primary btn-sm">Create Quote</a>
                         @endcan
                         @if(gettype($listQuotePlans) != 'string')
-                        <input type="hidden" id="quoteRequestUuId" name="quoteRequestUuId" value="{{ $quoteRequestId }}">
+                        <input type="hidden" id="quoteRequestUuId" name="quoteRequestUuId" value="{{ $record->id }}">
                         <button type="submit" class="btn btn-primary btn-sm" id="update_discounted_premium" style="display:none;">Update Discounted Premium</button>
                         @if(count($listQuotePlans) > 0)
                         <button type="button" id="quotePlansGenerateButton" name="quotePlansGenerateButton" class="btn btn-warning btn-sm">Copy link</button>
@@ -31,7 +30,7 @@ use App\Enums\CarPlanExclusionsCode;
                 </div>
                 <div id="quote-plans">
                     @if(gettype($listQuotePlans) != 'string')
-                    <form method="post" action="{{ $uuidModal }}/updateDiscountedPremium" class="form-horizontal form-label-left" role="form" data-parsley-validate="" novalidate="" autocomplete="off">
+                    <form method="post" action="{{ $record->uuid }}/updateDiscountedPremium" class="form-horizontal form-label-left" role="form" data-parsley-validate="" novalidate="" autocomplete="off">
                         {{csrf_field()}}
                         @method('GET')
                         <table id="datatable" class="table table-striped jambo_table" style="width:100%">
@@ -67,7 +66,7 @@ use App\Enums\CarPlanExclusionsCode;
                                         @endif
                                         @endisset
                                     </td>
-                                    <td><a href="#" planDetailUrl="{{ $uuidModal }}/plan_details/{{ $quotePlan->id }}" data-toggle="modal" data-target="#quotePlanModal" class="quotePlanModalPopup">{{ ucwords($quotePlan->name) }}</a></td>
+                                    <td><a href="#" planDetailUrl="{{ $record->uuid }}/plan_details/{{ $quotePlan->id }}" data-toggle="modal" data-target="#quotePlanModal" class="quotePlanModalPopup">{{ ucwords($quotePlan->name) }}</a></td>
                                     <td>{{ $quotePlan->repairType }}</td>
                                     <td>
                                         @isset($quotePlan->insurerQuoteNo)
@@ -166,7 +165,7 @@ use App\Enums\CarPlanExclusionsCode;
                                         ?>
                                         {{ $totalPremium }}
                                     </td>
-                                    <td><a href="#" planDetailUrl="{{ $uuidModal }}/plan_details/{{ $quotePlan->id }}" data-toggle="modal" data-target="#quotePlanModal" class="quotePlanModalPopup">View</a></td>
+                                    <td><a href="#" planDetailUrl="{{ $record->uuid }}/plan_details/{{ $quotePlan->id }}" data-toggle="modal" data-target="#quotePlanModal" class="quotePlanModalPopup">View</a></td>
                                 </tr>
                                 @endforeach
                             </tbody>
