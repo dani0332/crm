@@ -1,5 +1,5 @@
 files:
-  - /var/www/storage/logs/laravel*.log
+  - /var/www/storage/logs/laravel.log
 destination:
   host: logs3.papertrailapp.com
   port: 29575
