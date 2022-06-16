@@ -44,6 +44,7 @@ class LeadAllocation extends Command
     {
         Log::info('Lead Allocation Command Started');
         $leadAllocationService = new LeadAllocationService();
+        sleep(10);
         dispatch(new LeadAllocationJob($leadAllocationService));
     }
 }
