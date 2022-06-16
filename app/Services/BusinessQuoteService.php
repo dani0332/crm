@@ -14,6 +14,7 @@ use \Carbon\Carbon;
 use App\Traits\CustomerAdditionalInfo as CustomerAdditionalInfoTrait;
 use App\Enums\quoteTypeCode;
 use App\Enums\DatabaseColumnsString;
+use App\Enums\QuoteStatusEnum;
 use App\Traits\GetUserTree;
 
 class BusinessQuoteService extends BaseService
@@ -247,7 +248,6 @@ class BusinessQuoteService extends BaseService
         if (empty($childRecord)) {
             $childRecord = $this->createDetailEntity($id);
         }
-    
         $childRecord->advisor_assigned_by_id = Auth::user()->id;
         $childRecord->advisor_assigned_date = Carbon::now();
         $childRecord->save();
@@ -675,23 +675,12 @@ class BusinessQuoteService extends BaseService
             $quote->uuid = $response->uuid;
             $quote->code = 'BUS-' . $response->uuid;
         }
-        $quote->quote_status_id = QuoteStatus::where('text', 'New Lead')->first()->id;
+        $quote->quote_status_id = QuoteStatusEnum::NewLead;
         $quote->first_name = $parentRecord->first_name;
         $quote->last_name = $parentRecord->last_name;
         $quote->email = $parentRecord->email;
         $quote->mobile_no = $parentRecord->mobile_no;
         $quote->advisor_id = Auth::user()->id;
         $quote->save();
-    }
-
-    public function getUnAssignedLeads($from)
-    {
-        $to = Carbon::now();
-        $leads = BusinessQuote::where('quote_status_id', QuoteStatus::where('text', 'New Lead')->first()->id)
-            ->where('advisor_id', null)
-            ->whereBetween('created_at', [$from, $to])
-            ->get();
-
-        return $leads;
     }
 }

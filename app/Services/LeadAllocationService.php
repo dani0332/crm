@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Models\ApplicationStorage;
 use App\Models\HealthQuote;
@@ -61,7 +62,7 @@ class LeadAllocationService extends BaseService
         Log::channel('single')->info('to date: ' . $to . ' from date: ' . $from);
         $unAllocatedLeads = HealthQuote::select('health_quote_request.*')
             ->join('quote_status', 'quote_status.id', '=', 'health_quote_request.quote_status_id')
-            ->where('quote_status.text', 'Qualified')
+            ->where('quote_status.id', QuoteStatusEnum::Qualified)
             ->whereNotNull('health_quote_request.health_team_type')
             ->whereNull('health_quote_request.advisor_id')
             ->whereBetween('health_quote_request.created_at', [$from, $to])->skip(0)->take(50)->get();
@@ -104,7 +105,7 @@ class LeadAllocationService extends BaseService
         return new User();
     }
 
-    public function assignLead($lead, $advisorId)
+    public function assignLead($lead, $advisorId, $isManualAssignment = false)
     {
         if ($lead->advisor_id != null) {
             $this->removeLeadAllocationForOldAdvisor($lead);
@@ -112,6 +113,9 @@ class LeadAllocationService extends BaseService
         Log::channel('single')->info('assignLead -- started');
         Log::channel('single')->info('Assigning lead ' . $lead->id . ' to advisor ' . $advisorId);
         $lead->advisor_id = $advisorId;
+        if ($isManualAssignment) {
+            $lead->quote_status_id = QuoteStatusEnum::Qualified;
+        }
         $lead->save();
         Log::channel('single')->info('Lead Id ' . $lead->id . ' assigned to advisor ' . $advisorId);
 

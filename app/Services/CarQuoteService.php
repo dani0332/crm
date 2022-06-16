@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Models\CarMake;
 use App\Models\CarQuote;
@@ -975,7 +976,7 @@ class CarQuoteService extends BaseService
             $quote->uuid = $response->uuid;
             $quote->code = 'CAR-' . $response->uuid;
         }
-        $quote->quote_status_id = QuoteStatus::where('text', 'New Lead')->first()->id;
+        $quote->quote_status_id = QuoteStatusEnum::NewLead;
         $quote->first_name = $parentRecord->first_name;
         $quote->last_name = $parentRecord->last_name;
         $quote->email = $parentRecord->email;

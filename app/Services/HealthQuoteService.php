@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\LeadSourceTypes;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Models\BusinessInsuranceType;
 use App\Models\BusinessQuote;
@@ -368,7 +369,7 @@ class HealthQuoteService extends BaseService
         $healthQuote->has_home = $request->has_home == 'on' ? true : false;
         $healthQuote->emirate_of_your_visa_id = $request->emirate_of_your_visa_id;
         $healthQuote->premium = $request->premium;
-        if($healthQuote->salary_band_id != $request->salary_band_id || $healthQuote->member_category_id != $request->member_category_id) {
+        if ($healthQuote->salary_band_id != $request->salary_band_id || $healthQuote->member_category_id != $request->member_category_id) {
             $healthQuote->quote_updated_at = Carbon::now();
         }
         $healthQuote->salary_band_id = $request->salary_band_id;
@@ -790,7 +791,7 @@ class HealthQuoteService extends BaseService
             $quote->uuid = $response->uuid;
             $quote->code = 'HEA-' . $response->uuid;
         }
-        $quote->quote_status_id = QuoteStatus::where('text', 'New Lead')->first()->id;
+        $quote->quote_status_id = QuoteStatusEnum::NewLead;
         $quote->first_name = $parentRecord->first_name;
         $quote->last_name = $parentRecord->last_name;
         $quote->email = $parentRecord->email;
@@ -854,16 +855,5 @@ class HealthQuoteService extends BaseService
 
             return $responseBodyAsString;
         }
-    }
-
-    public function getUnAssignedLeads($from)
-    {
-        $to = Carbon::now();
-        $leads = HealthQuote::where('quote_status_id', QuoteStatus::where('text', 'New Lead')->first()->id)
-            ->where('advisor_id', null)
-            ->whereBetween('created_at', [$from, $to])
-            ->get();
-
-        return $leads;
     }
 }

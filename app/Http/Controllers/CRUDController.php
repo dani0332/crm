@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\HealthTeamType;
 use App\Enums\LeadStatusCode;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Models\CarQuoteAdvisorToOE;
@@ -586,8 +587,7 @@ class CRUDController extends Controller
         foreach ($leadsIds as $tmLeadsId) {
             $userId = (int)$assignedToUserIdNew;
             $entity = $this->{strtolower($request->modelType) . 'QuoteService'}->getEntityPlain($tmLeadsId);
-            $transactionApprovedStatusId = QuoteStatus::where('text', LeadStatusCode::TRANSACTION_APPROVED)->first()->id;
-            if ($entity->quote_status_id == $transactionApprovedStatusId) {
+            if ($entity->quote_status_id == QuoteStatusEnum::TransactionApproved) {
                 return redirect()->back()->with('message', 'Cannot assign leads in transaction approved status');
             }
             if ($entity) {
@@ -624,8 +624,7 @@ class CRUDController extends Controller
         $leadsIds = array_map('intval', explode(',', $leadsIds));
         foreach ($leadsIds as $tmLeadsId) {
             $entity = $this->{strtolower($request->modelType) . 'QuoteService'}->getEntityPlain($tmLeadsId);
-            $transactionApprovedStatusId = QuoteStatus::where('text', LeadStatusCode::TRANSACTION_APPROVED)->first()->id;
-            if ($entity->quote_status_id == $transactionApprovedStatusId) {
+            if ($entity->quote_status_id == QuoteStatusEnum::TransactionApproved) {
                 return redirect()->back()->with('message', 'Cannot assign leads in transaction approved status');
             }
             if ($entity) {
