@@ -294,8 +294,6 @@
                                             @endif
                                         @endif
                                         @if(strpos($value, 'static') !== false )
-
-                                    <div class="col">
                                         <span class="col-form-label col-md-6 col-sm-6" for="name">
                                             @if(strpos($value, 'title'))
                                                 {{ strtoupper($customTitles[$property])}}
@@ -323,8 +321,6 @@
                                                 @endif
                                             @endforeach
                                         </select>
-
-                                    </div>
                                     @endif
                                     </div>
                                     @if($property == "mobile_no")
