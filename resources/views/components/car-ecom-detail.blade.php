@@ -6,18 +6,17 @@
                 <div class="clearfix"></div>
             </div>
             <div class="x_content">
-
                 <div class="item form-group">
                     <div class="col">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="PREMIUM"><b>PREMIUM</b></label>
                         <div class="col-md-6 col-sm-6">
-                        <p class="label-align-center">{{ $carQuotePremium }}</p>
+                        <p class="label-align-center">{{ $record->premium ? $record->premium: '' }}</p>
                         </div>
                     </div>
                     <div class="col">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="PAID AT"><b>PAID AT</b></label>
                         <div class="col-md-6 col-sm-6">
-                        <p class="label-align-center">{{ $carQuotePaidAt }}</p>
+                        <p class="label-align-center">{{ $record->paid_at ? $record->paid_at: '' }}</p>
                         </div>
                     </div>
                 </div>
@@ -25,13 +24,13 @@
                     <div class="col">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="PAYMENT STATUS"><b>PAYMENT STATUS</b></label>
                         <div class="col-md-6 col-sm-6">
-                        <p class="label-align-center">{{ $carQuotePaymentStatus }}</p>
+                        <p class="label-align-center">{{ $record->payment_status_id_text ? $record->payment_status_id_text: '' }}</p>
                         </div>
                     </div>
                     <div class="col">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="PROVIDER NAME"><b>PROVIDER NAME</b></label>
                         <div class="col-md-6 col-sm-6">
-                        <p class="label-align-center">{{ $carQuotePlanProvider }}</p>
+                        <p class="label-align-center">{{ $record->car_plan_provider_id_text ? $record->car_plan_provider_id_text: '' }}</p>
                         </div>
                     </div>
                 </div>
@@ -40,11 +39,7 @@
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="PAYMENT METHOD"><b>PAYMENT METHOD</b></label>
                         <div class="col-md-6 col-sm-6">
                         <p class="label-align-center">
-                            @if ($carQuotePaymentMethod == 'NGENIUS')
-                                CREDIT CARD
-                            @else
-                                {{ $carQuotePaymentMethod }}
-                            @endif
+                        {{ $record->payment_gateway == 'NGENIUS' ? 'CREDIT CARD': $record->payment_gateway }}
                         </p>
                         </div>
                     </div>
@@ -56,7 +51,7 @@
                     <div class="col">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="PLAN NAME"><b>PLAN NAME</b></label>
                         <div class="col-md-6 col-sm-6">
-                        <p class="label-align-center">{{ ucwords($carQuotePlanName) }}</p>
+                        <p class="label-align-center">{{ $record->plan_id_text ? ucwords($record->plan_id_text): '' }}</p>
                         </div>
                     </div>
                     <div class="col">

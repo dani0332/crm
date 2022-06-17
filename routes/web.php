@@ -187,6 +187,7 @@ Route::group(['middleware' =>  ['auth']], function () {
         Route::get('getLeadHistory', [CRUDController::class, 'getLeadHistory'])->name('getLeadHistory');
         Route::post('car/CarPlanManualProcess', [CRUDController::class, 'CarPlanManualProcess'])->name('CarPlanManualProcess');
         Route::post('car/carAssumptionsUpdate', [CRUDController::class, 'carAssumptionsUpdate']);
+        Route::post('car/addNoteForCustomer', [CRUDController::class, 'addNoteForCustomer']);
     });
 
     Route::group(['prefix' => 'generic'], function () {
