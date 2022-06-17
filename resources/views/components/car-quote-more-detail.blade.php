@@ -149,7 +149,7 @@ $(document).ready(function() {
                     <input type="hidden" id="car_quote_id" name="car_quote_id" value="{{ $record->id }}">
                     <button type="button" class="btn btn-primary btn-sm" id="cancel-motor-assumptions-btn">Cancel</button>
                     <button type="submit" class="btn btn-success btn-sm" id="update-motor-assumptions-btn">Update</button>
-                    <button type="button" class="btn btn-warning btn-sm" id="edit-motor-assumptions-btn">Edit Assumptions</button>
+                    <button type="button" class="btn btn-primary btn-sm" id="edit-motor-assumptions-btn">Edit Assumptions</button>
                 </div>
                 @endcan
             </form>
