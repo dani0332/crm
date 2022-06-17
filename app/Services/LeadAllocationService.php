@@ -177,4 +177,19 @@ class LeadAllocationService extends BaseService
             }
         }
     }
+
+    public function
+
+    public function leadAllocationSwitchStatus()
+    {
+        try {
+            DB::beginTransaction();
+            $leadAllocationSwitch = ApplicationStorage::where('key_name', 'LEAD_ALLOCATION_JOB_SWITCH')->first();
+            DB::commit();
+            return $leadAllocationSwitch && $leadAllocationSwitch->value == '1';
+        } catch (\Exception $e) {
+            Log::error($e->getMessage());
+            DB::rollback();
+        }
+    }
 }

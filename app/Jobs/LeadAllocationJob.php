@@ -41,10 +41,7 @@ class LeadAllocationJob implements ShouldQueue
     {
         try {
             Log::info('Lead Allocation Job Started');
-
-            $leadAllocationJobSwitch = ApplicationStorage::where('key_name', 'LEAD_ALLOCATION_JOB_SWITCH')->first();
-            Log::info('Lead Allocation Job Switch: ' . $leadAllocationJobSwitch->value);
-            if ($leadAllocationJobSwitch->value == '0') {
+            if (!$this->leadAllocationService->leadAllocationSwitchStatus()) {
                 Log::info('Lead Allocation Job Switch is OFF');
                 return;
             }
