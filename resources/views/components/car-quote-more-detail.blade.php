@@ -65,9 +65,13 @@ $(document).ready(function() {
                     <div class="col">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="Trim"><b>Trim</b></label>
                         <div class="col-md-6 col-sm-6">
-                        <p class="label-align-center">
-                            {{ $carTrim }}
-                        </p>
+                        <select class="form-control" id="trim" name="trim">
+                                <option value=""></option>
+                                @foreach($trimList as $trim)
+                                    <option value="{{$trim->id}}"
+                                    {{ $trim->id == old('trim',$record->car_model_detail_id) ? 'selected' : ''}}>{{ $trim->text }}</option>
+                                @endforeach
+                                </select>
                         </div>
                     </div>
                 </div>

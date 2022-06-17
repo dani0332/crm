@@ -21,13 +21,20 @@
         if(model.modelType.toLowerCase() == 'car'){
             oldCarModelId = JSON.parse('<?php echo json_encode(old("car_model_id")) ?>');
             oldCarMakeId = JSON.parse('<?php echo json_encode(old("car_make_id")) ?>');
-            if(oldCarMakeId != '') {
+            if(oldCarMakeId != '' && oldCarMakeId != null) {
              getCarModels(oldCarMakeId, oldCarModelId);
+            }
+            if(oldCarModelId != '' && oldCarModelId != null) {
+                ajaxCallScript(oldCarModelId);
             }
         }
         
         $('#car_model_id').on('change',function(){
             var car_model_id = $('#car_model_id').val();
+            ajaxCallScript(car_model_id) 
+        });
+
+        function ajaxCallScript(car_model_id){
             $.ajax({
                 url: "{{ url('/getCarModelDetails') }}",
                 type: "GET",
@@ -40,8 +47,8 @@
                         $.each(data, function (create, carmodelObj) {
                             if(carmodelObj.is_default != undefined) {
                                 if(carmodelObj.is_default == 1){
-                                    populateCarValues(carmodelObj)
-                                    trim.append('<option selected value="' + carmodelObj.id + '">' + carmodelObj.text + '</option>');
+                                populateCarValues(carmodelObj)
+                                trim.append('<option selected value="' + carmodelObj.id + '">' + carmodelObj.text + '</option>');
                                 }else{
                                     if(create == 0) {
                                         populateCarValues(carmodelObj)
@@ -52,6 +59,7 @@
                                 populateCarValues(carmodelObj)
                                 trim.append('<option value="">I dont know</option>');
                             }
+                            
                         });
                         
                         $("#vehicle_assumptions_error_msg").hide(300);
@@ -69,7 +77,7 @@
                     console.log(data);
                 }
             });
-        });
+        }
 
         $('#trim').on('change',function(){
             loadTrimValues($('#trim').val())
