@@ -40,7 +40,7 @@ class CapiRequestService
                     $carQuoteUpdate->seat_capacity = $data['seatCapacity'];
                     $carQuoteUpdate->vehicle_type_id = $data['vehicleTypeId'];
                     $carQuoteUpdate->is_quote_locked = true;
-                    $carQuoteUpdate->car_model_detail_id = $carModelDetail->id;
+                    $carQuoteUpdate->car_model_detail_id = ($carModelDetail) ? $carModelDetail->id : Null;
                     $carQuoteUpdate->save();
                 }
             }
