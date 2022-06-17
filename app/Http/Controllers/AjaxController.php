@@ -25,7 +25,7 @@ class AjaxController extends Controller
         if (!$carMakeCode) {
             $carMakeCode = $make_id;
         }
-        $carmodel =  CarMake::where('car_make_code', '=', $carMakeCode)
+        $carmodel =  CarMake::where('code', '=', $carMakeCode)
         ->where('is_active', '=', 1)
         ->select('id', 'text', 'code')->get();
         return response()->json($carmodel);
