@@ -190,11 +190,6 @@ use App\Enums\CarPlanExclusionsCode;
                                 <th>Action</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            <tr class="odd">
-                                <td valign="top" colspan="12" class="dataTables_empty">{{ ucfirst($listQuotePlans) }}</td>
-                            </tr>
-                        </tbody>
                     </table>
                     @endif
                 </div>
