@@ -215,8 +215,7 @@ class RenewalsUploadController extends Controller
         $batchLeads = CarQuote::select('car_quote_request.id as id')
         ->leftjoin('quote_status as qs', 'qs.id', 'car_quote_request.quote_status_id')
         ->whereNotNull('car_quote_request.previous_quote_id')
-        ->where(['car_quote_request.renewal_batch' => $batch, 'qs.code' => quoteStatusCode::NEW_LEAD])
-        //->where(['car_quote_request.renewal_batch' => $batch, 'qs.code' => quoteStatusCode::NEW_LEAD, 'car_quote_request.advisor_id' => Auth::user()->id])
+        ->where(['car_quote_request.renewal_batch' => $batch, 'qs.code' => quoteStatusCode::QUOTED])
         ->get();
 
         $batchLeadsCount = $batchLeads->count();

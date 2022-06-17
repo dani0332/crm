@@ -14,7 +14,6 @@ use App\Models\CarMake;
 use App\Models\CarModel;
 use App\Models\CarPlan;
 use App\Models\InsuranceProvider;
-
 use Illuminate\Http\Request;
 use Auth;
 use DataTables;
@@ -406,62 +405,6 @@ class ClaimController extends Controller
         $claim->claimsAttachments()->delete(); // Delete related attachments
         $claim->delete();
         return redirect()->route('claims.index')->with('message', 'Claim has been deleted');
-    }
-
-    public function carModelBasedOnCarMake(Request $request)
-    {
-        $make_code = $request->make_code;
-        $carmodel = DB::table('car_model')
-        ->where('car_make_code', '=', $make_code)
-        ->where('is_active', '=', 1)
-        ->select('id', 'text', 'code')->get();
-        return response()->json($carmodel);
-    }
-
-    public function carModelBasedOnCarMakeId(Request $request)
-    {
-        $make_id = $request->id;
-        $carMakeCode = DB::table('car_make')->where('id', '=', $make_id)->value('code');
-        if (!$carMakeCode) {
-            $carMakeCode = $make_id;
-        }
-        $carmodel = DB::table('car_model')
-        ->where('car_make_code', '=', $carMakeCode)
-        ->where('is_active', '=', 1)
-        ->select('id', 'text', 'code')->get();
-        return response()->json($carmodel);
-    }
-    public function getCarMake()
-    {
-        $carMakes = DB::table('car_make')
-        ->where('is_active', '=', 1)
-        ->select('id', 'text', 'code')->get();
-        return response()->json($carMakes);
-    }
-
-    public function getCarModelDetails(Request $request)
-    {
-        $modelId = $request->car_model_id;
-        
-        $carModelDetail = DB::table('car_model_detail')
-        ->select('cylinder', 'seating_capacity as seat_capacity', 'vehicle_type_id','text','id','is_default')
-        ->where('car_model_id', '=', $modelId)
-        ->get();
-        if(!$carModelDetail) {
-            $carModelDetail = DB::table('car_model')
-            ->select('cylinder', 'seat_capacity', 'vehicle_type_id')
-            ->where('id', '=', $modelId)
-            ->get();
-        }
-        return response()->json($carModelDetail);
-    }
-
-    public function getCarModelTrimValues(Request $request) {
-        $carModelDetail = DB::table('car_model_detail')
-        ->select('cylinder', 'seating_capacity as seat_capacity', 'vehicle_type_id')
-        ->where('id', '=', $request->id)
-        ->first();
-        return response()->json($carModelDetail);
     }
 
     public function carPlansBasedOnInsuranceProvider(Request $request)

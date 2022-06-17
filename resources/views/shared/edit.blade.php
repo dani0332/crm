@@ -192,36 +192,6 @@
                 }
             });
         }
-        
-        // $('#car_model_id').on('change',function(){
-        //     var car_model_id = $('#car_model_id').val();
-        //     $.ajax({
-        //         url: "{{ url('/getCarModelDetails') }}",
-        //         type: "GET",
-        //         data: {
-        //             car_model_id: car_model_id
-        //         },
-        //         success: function(data){
-        //             if(data.cylinder || data.seat_capacity || data.vehicle_type_id){
-        //                 $('#cylinder').val(data.cylinder);
-        //                 $('#seat_capacity').val(data.seat_capacity);
-        //                 if(data.vehicle_type_id) $('#vehicle_type_id').val(data.vehicle_type_id);
-        //                 $("#vehicle_assumptions_error_msg").hide(300);
-        //                 $("#vehicle_assumptions_success_msg").show(300);
-        //             }
-        //             if(!data.cylinder && !data.seat_capacity && !data.vehicle_type_id){
-        //                 $("#vehicle_assumptions_error_msg").show(300);
-        //                 $("#vehicle_assumptions_success_msg").hide(300);
-        //                 $('#cylinder').val('');
-        //                 $('#seat_capacity').val('');
-        //                 $('#vehicle_type_id').val('');
-        //             }
-        //         },
-        //         error: function(data){
-        //             console.log(data);
-        //         }
-        //     });
-        // });
 });
 </script>
     <div class="row">
@@ -368,8 +338,6 @@
                                             @endif
                                         @endif
                                         @if(strpos($value, 'static') !== false )
-
-                                    <div class="col">
                                         <span class="col-form-label col-md-6 col-sm-6" for="name">
                                             @if(strpos($value, 'title'))
                                                 {{ strtoupper($customTitles[$property])}}
@@ -397,8 +365,6 @@
                                                 @endif
                                             @endforeach
                                         </select>
-
-                                    </div>
                                     @endif
                                     </div>
                                     @if($property == "mobile_no")
