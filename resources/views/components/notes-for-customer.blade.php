@@ -3,15 +3,10 @@
         <div class="x_panel">
             <div class="x_title">
                 <h2>Notes for Customer</h2>
+                <button class="btn btn-primary btn-sm" style="float:right;width:170px;" type="button" id="add-note-for-customer-btn">Add note for customer</button>
                 <div class="clearfix"></div>
             </div>
             <div class="x_content">
-                <div class="row">
-                    <div class="col-auto mr-auto"></div>
-                    <div class="col-auto">
-                        <a href="" class="btn btn-primary btn-sm">Create note for customer</a>
-                    </div>
-                </div>
                 <table id="datatable" class="table table-striped jambo_table" style="width:100%">
                     <thead>
                         <tr>

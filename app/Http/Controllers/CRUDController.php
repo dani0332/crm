@@ -314,13 +314,14 @@ class CRUDController extends Controller
             $yearsOfManufacture = $this->lookupService->getYearsOfManufacture();
             $emailStatuses = $this->emailStatusService->getEmailStatus(QuoteTypeId::Car, $entity->id);
             $notesForCustomers = $this->notesForCustomerService->getNotesForCustomer(QuoteTypeId::Car, $entity->id);
+            $quoteTypeId = QuoteTypeId::Car;
 
             return view('shared.show', compact([
                 'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList',
                 'ecomCarInsuranceQuoteUrl', 'carQuotePlanAddons', 'vehicleTypes', 'leadStatuses',
                 'lostReasons', 'selectedLostReasonId','model_name', 'allowedDuplicateLOB', 'audits', 
                 'activities', 'advisors','isRenewalUser', 'isNewBusinessUser', 'emailStatuses', 
-                'yearsOfManufacture','notesForCustomers'
+                'yearsOfManufacture','notesForCustomers', 'quoteTypeId'
             ]));
         } else if ($this->genericModel->modelType == quoteTypeCode::Travel) { // Travel plans to display on detail view
             $listQuotePlans = '';
@@ -797,6 +798,15 @@ class CRUDController extends Controller
 
         if($quoteID) {
             return redirect()->back()->with('success', 'Car Assumptions has been updated');
+        }
+    }
+
+    public function addNoteForCustomer(Request $request)
+    {
+        $noteId = $this->notesForCustomerService->AddNoteForCustomer($request);
+
+        if($noteId) {
+            return redirect()->back()->with('success', 'Note for customer has been added');
         }
     }
 }

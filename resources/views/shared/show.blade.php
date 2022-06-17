@@ -356,6 +356,7 @@
         <x-email-status :emailStatuses="$emailStatuses" />
         @endisset
         <x-notes-for-customer :notesForCustomers="$notesForCustomers" />
+        <x-notes-for-customer-modal :record="$record" :quoteTypeId="$quoteTypeId" />
     @endif
 
     <div class="row" st>
