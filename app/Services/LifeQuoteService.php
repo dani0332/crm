@@ -15,6 +15,7 @@ use App\Traits\GetUserTree;
 use App\Traits\CustomerAdditionalInfo as CustomerAdditionalInfoTrait;
 use App\Enums\quoteTypeCode;
 use App\Enums\DatabaseColumnsString;
+use App\Enums\GenericeRequestEnum;
 
 class LifeQuoteService extends BaseService
 {
@@ -249,9 +250,9 @@ class LifeQuoteService extends BaseService
                 $this->query->whereNull('lqr.previous_quote_id');
             }
             if (isset($request->is_renewal) && $request->is_renewal != '') {
-                if ($request->is_renewal == quoteTypeCode::yesText)
+                if ($request->is_renewal == GenericeRequestEnum::Yes)
                     $this->query->whereNotNull('lqr.previous_quote_id');
-                if ($request->is_renewal == quoteTypeCode::noText)
+                if ($request->is_renewal == GenercieRequestEnum::No)
                     $this->query->whereNull('lqr.previous_quote_id');
             }
             foreach ($searchProperties as $item) {
