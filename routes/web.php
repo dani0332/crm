@@ -275,7 +275,7 @@ Route::group(['middleware' =>  ['auth']], function () {
     Route::get('/getCarModelDetails', [AjaxController::class, 'getCarModelDetails']);
     Route::get('/getCarModelTrimValues', [AjaxController::class, 'getCarModelTrimValues']);
     Route::post('auditable', [AuditableController::class, 'loadAuditableComponent']);
-    Route::get('/car-model-by-id', [ClaimController::class, 'carModelBasedOnCarMakeId']);
+    Route::get('/car-model-by-id', [AjaxController::class, 'carModelBasedOnCarMakeId']);
     Route::get('/insurance-provider-plans', [ClaimController::class, 'carPlansBasedOnInsuranceProvider']);
     Route::post('/CarPlanUpdateManualProcess', [ClaimController::class, 'CarPlanUpdateManualProcess']);
 });
