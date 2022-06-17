@@ -147,6 +147,7 @@ class CarQuoteService extends BaseService
             "seatCapacity" => $request->seat_capacity,
             "cylinder" => $request->cylinder,
             "vehicleTypeId" => $request->vehicle_type_id,
+            "trim" => $request->trim,
             "premium" => $request->premium,
             "carMakeId" => $carMakeId, // ID
             "carModelId" => $request->car_model_id, // ID

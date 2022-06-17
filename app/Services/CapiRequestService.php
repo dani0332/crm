@@ -35,12 +35,11 @@ class CapiRequestService
                 $carQuoteId = CarQuote::where('uuid', '=', $getdecodeContents->quoteUID)->value('id');
                 $carQuoteUpdate = CarQuote::find($carQuoteId);
                 if ($carQuoteUpdate) {
-                    $carModelDetail = CarModelDetail::where('car_model_id', $carQuoteUpdate->car_model_id)->first();
                     $carQuoteUpdate->cylinder = $data['cylinder'];
                     $carQuoteUpdate->seat_capacity = $data['seatCapacity'];
                     $carQuoteUpdate->vehicle_type_id = $data['vehicleTypeId'];
                     $carQuoteUpdate->is_quote_locked = true;
-                    $carQuoteUpdate->car_model_detail_id = ($carModelDetail) ? $carModelDetail->id : Null;
+                    $carQuoteUpdate->car_model_detail_id = $data['trim'];
                     $carQuoteUpdate->save();
                 }
             }
