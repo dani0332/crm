@@ -347,9 +347,7 @@
             </div>
         </div>
 
-
-
-        <x-car-quote-more-detail :vehicleTypes="$vehicleTypes" :record="$record" :yearsOfManufacture="$yearsOfManufacture" />
+        <x-car-quote-more-detail :vehicleTypes="$vehicleTypes" :record="$record" :yearsOfManufacture="$yearsOfManufacture" :carTrim="$record->trim"/>
 
         <x-car-ecom-detail :carQuotePremium="$record->premium" :carQuotePaidAt="$record->paid_at" :carQuotePaymentStatus="$record->payment_status_id_text" :carQuotePlanName="$record->plan_id_text" :carQuotePlanAddons="$carQuotePlanAddons"
             :carQuotePlanProvider="$record->car_plan_provider_id_text" :carQuotePaymentMethod="$record->payment_gateway" />

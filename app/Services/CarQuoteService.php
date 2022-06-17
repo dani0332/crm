@@ -307,7 +307,6 @@ class CarQuoteService extends BaseService
             "claim_history_id" => "select|title|required",
             "source" => "input|text",
             "additional_notes" => "textarea|required",
-            "quote_status_id" => "select|title",
             "is_ecommerce" => "|static|title|Yes,No",
             "payment_status_id" => "select|title",
             "transapp_code" => "readonly|none",

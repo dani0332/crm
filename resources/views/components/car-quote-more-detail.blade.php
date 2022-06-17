@@ -66,7 +66,7 @@ $(document).ready(function() {
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="Trim"><b>Trim</b></label>
                         <div class="col-md-6 col-sm-6">
                         <p class="label-align-center">
-                            {{ $record->trim_text }}
+                            {{ $carTrim }}
                         </p>
                         </div>
                     </div>
