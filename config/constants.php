@@ -59,4 +59,5 @@ return [
     'AZURE_IM_STORAGE_URL' => env('AZURE_IM_STORAGE_URL'),
     'SIB_CAR_RENEWALS_TEMPLATE_ID' => env('SIB_CAR_RENEWALS_TEMPLATE_ID'),
     'Log_channel' => env('LOG_CHANNEL'),
+    'QUEUE_CONNECTION' => env('QUEUE_CONNECTION'),
 ];
