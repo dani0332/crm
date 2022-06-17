@@ -34,7 +34,7 @@
                         @else
                         <tbody>
                             <tr class="odd">
-                                <td valign="top" colspan="11" class="dataTables_empty">No data available in table</td>
+                                <td valign="top" colspan="4" class="dataTables_empty">No data available in table</td>
                             </tr>
                         </tbody>
                         @endif
