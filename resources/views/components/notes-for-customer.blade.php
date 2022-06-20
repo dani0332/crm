@@ -1,65 +1,9 @@
-<meta name="csrf-token" content="{{ csrf_token() }}" />
-<script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
-<script>
-    $.ajaxSetup({
-        headers: {
-            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-        }
-    });
-    $(document).ready(function() {
-        $('#send-notes-to-customer-btn').on('click', function(e) {
-            e.preventDefault();
-
-            let text = "Do you want to send email to customer?";
-            if (confirm(text) == true) {
-                    $(".loader").show();
-                    $.ajax({
-                    url: "{{ url('/quotes/car/sendNotesToCustomer') }}",
-                    type: 'post',
-                    contentType: "application/json; charset=utf-8",
-                    data: JSON.stringify({
-                        quote_id: $('#quote_id').val(),
-                        quote_type_id: $('#quote_type_id').val(),
-                        quote_uuid: $('#quote_uuid').val(),
-                        customer_name: $('#customer_name').val(),
-                        customer_email: $('#customer_email').val(),
-                        quote_cdb_id: $('#quote_cdb_id').val(),
-                        _token: '{{ csrf_token() }}'
-                    }),
-                    success: function(result) {
-                        $('#send-notes-to-customer-response-msg').show().text(result).delay(5000).fadeOut(300).addClass('alert alert-success');
-                        $(".loader").hide();
-                    },
-                    error: function(jqXhr, textStatus, errorMessage, errorThrown, result) {
-                        $('#send-notes-to-customer-response-msg').show().text(textStatus +' '+ errorMessage +' '+ errorThrown).delay(5000).fadeOut(300).addClass('alert alert-danger');
-                        $(".loader").hide();
-                    }
-                });
-            } else {
-                return false;
-            }
-
-            
-        });
-    });
-</script>
 <div class="row">
     <div class="col-md-12 col-sm-12">
         <div class="x_panel">
             <div class="x_title">
                 <h2>Notes for Customer</h2>
-                <button class="btn btn-primary btn-sm" style="float:right;width:170px;" type="button" id="add-note-for-customer-btn">Add note for customer</button>
-                @if($notesForCustomers->count() > 0)
-                <input type="hidden" value="{{ $record->id }}" id="quote_id">
-                <input type="hidden" value="{{ $quoteTypeId }}" id="quote_type_id">
-                <input type="hidden" value="{{ $record->uuid }}" id="quote_uuid">
-                <input type="hidden" value="{{ $record->first_name }} {{ $record->last_name }}" id="customer_name">
-                <input type="hidden" value="{{ $record->email }}" id="customer_email">
-                <input type="hidden" value="{{ $record->code }}" id="quote_cdb_id">
-                <button class="btn btn-primary btn-sm" style="float:right;width:170px;" type="button" id="send-notes-to-customer-btn">Send Email to Customer</button>
-                <br><br>
-                <div class="" id="send-notes-to-customer-response-msg" style="display:none"></div>
-                @endif
+                <button class="btn btn-sm btn-warning" style="float:right;width:170px;" type="button" id="send-note-for-customer-btn">Send Notes to Customer</button>
                 <div class="clearfix"></div>
             </div>
             <div class="x_content">
@@ -77,7 +21,7 @@
                             @foreach ($notesForCustomers as $key => $notesForCustomer)
                                 <tr>
                                     <td>{{ $notesForCustomer->id }}</td>
-                                    <td>{{ $notesForCustomer->description }}</td>
+                                    <td>@php echo nl2br(htmlentities(str_replace("<br />", "", $notesForCustomer->description))) @endphp</td>
                                     <td>{{ $notesForCustomer->created_at }}</td>
                                     <td>{{ $notesForCustomer->createdby ? $notesForCustomer->createdby->name : '' }}</td>
                                 </tr>

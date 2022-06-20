@@ -803,10 +803,16 @@ class CRUDController extends Controller
 
     public function addNoteForCustomer(Request $request)
     {
-        $noteId = $this->notesForCustomerService->AddNoteForCustomer($request);
+        $response = $this->sendNotesToCustomer($request);
+
+        if($response == 201 || $response == 202) {
+            $noteId = $this->notesForCustomerService->AddNoteForCustomer($request);
+        } else {
+            return redirect()->back()->with('message', $response);
+        }
 
         if($noteId) {
-            return redirect()->back()->with('success', 'Note for customer has been added');
+            return redirect()->back()->with('success', 'Notes for customer has been added');
         }
     }
 
@@ -822,15 +828,12 @@ class CRUDController extends Controller
             'buttonUrl' => $ecomCarInsuranceQuoteUrl.$request->quote_uuid,
             'quoteCdbId' => $request->quote_cdb_id,
             'quoteTypeId' => $request->quote_type_id,
-            'quoteId' => $request->quote_id
+            'quoteId' => $request->quote_id,
+            'notesForCustomer' => $request->description
         );
 
         $response = $this->notesForCustomerService->sendEmail($emailTemplateId, $emailData, $tag);
 
-        if($response == 201 || $response == 202) {
-            $responseMsg = 'Email has been sent to customer.';
-        }
-
-        return $responseMsg;
+        return $response;
     }
 }

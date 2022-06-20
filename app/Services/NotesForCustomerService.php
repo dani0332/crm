@@ -23,7 +23,7 @@ class NotesForCustomerService extends BaseService
 		$newNote = new NotesForCustomer();
 		$newNote->quote_type_id = $request->quote_type_id;
 		$newNote->quote_id = $request->quote_id;
-		$newNote->description = $request->description;
+		$newNote->description = nl2br($request->description);
 		$newNote->created_by_id = Auth::user()->id;
 		$newNote->save();
 
@@ -32,10 +32,7 @@ class NotesForCustomerService extends BaseService
 
 	public function sendEmail($emailTemplateId, $emailData, $tag)
     {
-		$notesForCustomer = $this->getNotesForCustomer($emailData['quoteTypeId'], $emailData['quoteId']);
-
         try {
-
             $apiKey = Config::get('constants.SENDINBLUE_KEY');
             $url = Config::get('constants.SIB_URL');
             $appEnv = Config::get('constants.APP_ENV');
@@ -64,7 +61,7 @@ class NotesForCustomerService extends BaseService
                     "customerEmail" => $emailData['customerEmail'],
                     "buttonUrl" => $emailData['buttonUrl'],
 					"cdbId" => $emailData['quoteCdbId'],
-					"notesForCustomer" => $notesForCustomer
+					"notesForCustomer" => nl2br(htmlentities(str_replace("<br />", "", $emailData['notesForCustomer'])))
                 ],
                 "tags" => [
                     $tag
