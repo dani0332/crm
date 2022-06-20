@@ -508,7 +508,7 @@ class CarQuoteService extends BaseService
             ->leftJoin('car_type_insurance as cti', 'cti.id', '=', 'cqr.car_type_insurance_id')
             ->leftJoin('users as ua', 'ua.id', '=', 'cqr.advisor_id')
             ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'cqrd.lost_reason_id')
-            ->where('qs.text', '!=', quoteStatusCode::FAKE)
+            ->where('cqr.quote_status_id', '!=', 20)
             ->where('cqr.advisor_id', Auth::user()->id)
             ->orderBy('cqr.created_at', "DESC");
 

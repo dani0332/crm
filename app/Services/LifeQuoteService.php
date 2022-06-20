@@ -428,7 +428,7 @@ class LifeQuoteService extends BaseService
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'lqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'lqrd.advisor_assigned_by_id')
             ->leftJoin('payment_status as ps', 'ps.id', '=', 'lqr.payment_status_id')
-            ->where('qs.text', '!=', quoteStatusCode::FAKE)
+            ->where('lqr.quote_status_id', '!=', 20)
             ->where('lqr.advisor_id', Auth::user()->id)
             ->orderBy('lqr.created_at', "DESC");
 

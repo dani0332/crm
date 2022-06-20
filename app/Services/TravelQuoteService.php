@@ -208,7 +208,7 @@ class TravelQuoteService extends BaseService
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'tqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'tqrd.advisor_assigned_by_id')
             ->leftJoin('payment_status as ps', 'ps.id', '=', 'tqr.payment_status_id')
-            ->where('qs.text', '!=', quoteStatusCode::FAKE)
+            ->where('tqr.quote_status_id', '!=', 20)
             ->where('tqr.advisor_id', Auth::user()->id)
             ->orderBy('tqr.created_at', "DESC");
 
@@ -290,7 +290,7 @@ class TravelQuoteService extends BaseService
 
         if ($request->ajax()) {
             if (!isset($request->email) && $request->email == '') {
-                $this->query->where('qs.text', '!=', quoteStatusCode::FAKE);
+                $this->query->where('tqr.quote_status_id', '!=', 20);
             }
             if (isset($request->assigned_to_date_start) && $request->assigned_to_date_start != '') {
                 $dateFrom = Carbon::createFromFormat('Y-m-d', $request['assigned_to_date_start'])->startOfDay()->toDateTimeString();
