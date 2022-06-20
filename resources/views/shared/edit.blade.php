@@ -42,7 +42,7 @@
         var modelPropertiesArray = convertObjectToArray(model.properties);
         var modelSkipProperties = convertObjectToArray(model.skipProperties);
         debugger;
-        if(model.modelType.toLowerCase() == 'car'){
+        if(model.modelType.toLowerCase() == '<?php echo strtolower(quoteTypeCode::Car); ?>'){
             var oldCarModelId = JSON.parse('<?php echo json_encode(isset($record->car_model_id) ? $record->car_model_id : 0) ?>');
             var oldCarMakeId = JSON.parse('<?php echo json_encode(isset($record->car_make_id) ? $record->car_make_id : 0) ?>');
             var carModelDetailId = JSON.parse('<?php echo json_encode(isset($record->car_model_detail_id) ? $record->car_model_detail_id : 0) ?>');
@@ -171,7 +171,7 @@
                     }
                 },
                 error: function(data){
-                    console.log(data);
+                   
                 }
             });
         }
