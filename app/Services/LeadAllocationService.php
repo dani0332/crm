@@ -49,7 +49,7 @@ class LeadAllocationService extends BaseService
             $leadAllocation = new LeadAllocation();
             $leadAllocation->user_id = $userId;
             $leadAllocation->allocation_count = 0;
-            $leadAllocation->last_allocation_date = Carbon::now()->timestamp;
+            $leadAllocation->last_allocated = Carbon::now()->timestamp;
             $leadAllocation->max_capacity = 0;
             $leadAllocation->is_available = false;
             $leadAllocation->save();
@@ -154,10 +154,13 @@ class LeadAllocationService extends BaseService
         Log::info('Assigning lead ' . $lead->id . ' to advisor ' . $advisorId);
         try {
             DB::beginTransaction();
-            $lead->advisor_id = $advisorId;
-            if ($isManualAssignment) {
+
+            if ($isManualAssignment && $lead->advisor_id != null) {
                 $lead->quote_status_id = QuoteStatusEnum::Qualified;
             }
+
+            $lead->advisor_id = $advisorId;
+
             $lead->save();
             DB::commit();
         } catch (\Exception $e) {

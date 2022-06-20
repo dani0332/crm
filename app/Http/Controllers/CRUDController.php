@@ -566,15 +566,28 @@ class CRUDController extends Controller
     {
         $assignedToUserIdNew = $request->assigned_to_id_new;
         $leadsIds = $request->selectTmLeadId;
+        $stopFurtherProceeding = false;
         if (substr($leadsIds, 0, 1) == ',') {
             $leadsIds = substr($leadsIds, 1);
         }
-
         $leadsIds = array_map('intval', explode(',', $leadsIds));
+        foreach ($leadsIds as $leadId) {
+            $entity = $this->{strtolower($request->modelType) . 'QuoteService'}->getEntityPlain($leadId);
+            if ($entity->quote_status_id = QuoteStatusEnum::TransactionApproved) {
+                $stopFurtherProceeding = true;
+            }
+        }
+        if ($stopFurtherProceeding) {
+            return redirect()->back()->with('message', 'One of the selected lead is in Transaction Approved state. Please unselect the lead and try again.');
+        }
+
+
+
         if ($leadsIds == '' || $leadsIds == null) {
             return redirect()->back()->with('message', 'Please select lead(s) to assign');
         }
         if (strtolower($request->modelType) == 'health' && $request->assign_team == 'GM') {
+
             foreach ($leadsIds as $tmLeadsId) {
                 $userId = (int)$assignedToUserIdNew;
                 $entity = $this->{strtolower($request->modelType) . 'QuoteService'}->getEntityPlain($tmLeadsId);
@@ -608,7 +621,7 @@ class CRUDController extends Controller
                     if (Auth::user()->hasRole('WCU_ADVISOR')) {
                         $entity->wcu_id = $userId;
                     } else {
-                        $this->leadAllocationService->assignLead($entity, $userId);
+                        $this->leadAllocationService->assignLead($entity, $userId, true);
                     }
                     $advisorOE = CarQuoteAdvisorToOE::where('advisor_id', $userId)->first();
                     if (!empty($advisorOE) && strtolower($request->modelType) == 'car') {
@@ -637,7 +650,7 @@ class CRUDController extends Controller
             }
             if ($entity) {
                 $userId = (int)$assignedToUserIdNew;
-                $this->leadAllocationService->assignLead($entity, $userId);
+                $this->leadAllocationService->assignLead($entity, $userId, true);
                 $advisorOE = CarQuoteAdvisorToOE::where('advisor_id', $userId)->first();
                 if (!empty($advisorOE) && strtolower($request->modelType) == 'car') {
                     $entity->oe_id = $advisorOE->oe_id;

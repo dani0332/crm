@@ -73,6 +73,7 @@
 <?php
     use App\Enums\quoteTypeCode;
     use App\Models\CarQuote;
+    use App\Enums\QuoteStatusEnum;
     ?>
 <div class="row">
     <div class="col-md-12 col-sm-12 admin-detail">
@@ -103,6 +104,7 @@
                 <div class="clearfix"></div>
             </div>
             @hasanyrole('ADMIN|HEALTH_MANAGER|HEALTH_WCU_ADVISOR|HEALTH_DEPUTY_MANAGER')
+            @if($record->quote_status_id != QuoteStatusEnum::TransactionApproved)
             @if (strtolower($model->modelType) == 'health')
             <form method="post" id="healthTeamAssignForm" action="healthTeamAssign"
                 class="form-horizontal form-label-left" autocomplete="off">
@@ -168,6 +170,7 @@
                 <div class="clearfix">
                 </div>
             </form>
+            @endif
             @endif
             @endif
             @endcan
