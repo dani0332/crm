@@ -83,16 +83,11 @@ class NotesForCustomerService extends BaseService
 
 			$getMsgId = json_decode($clientRequest->getBody()->getContents())->messageId;
 			$getResponse = json_decode(json_encode($clientRequest->getStatusCode()." ".$clientRequest->getBody()->getContents()),true);
-
             $getStatusCode = $clientRequest->getStatusCode();
 
             if($getStatusCode == 201 || $getStatusCode == 202) {
                 $isEmailSent = 1;
             }
-
-			$response = "SIB:  getStatusCode: ".$getStatusCode." customerEmail: ".$emailData['customerEmail']." quoteCdbId: ".$emailData['quoteCdbId']." get_class: ".get_class();
-			Log::channel('daily')->info($response);
-
         }
         catch(Exception $ex) {
             $errorMessage = "SIB:  getCode/getMessage: ".$ex->getCode()."/".$ex->getMessage()." customerEmail: ".$emailData['customerEmail']." quoteCdbId: ".$emailData['quoteCdbId']." get_class: ".get_class();
