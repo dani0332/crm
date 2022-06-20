@@ -257,6 +257,7 @@
                         d.vehicleType = $('#vehicleType').val();
                         d.typeOfCarInsurance = $('#typeOfCarInsurance').val();
                         d.currentlyInsuredWith = $('#currentlyInsuredWith').val();
+                        
                     },
                 },
                 columnDefs: [
