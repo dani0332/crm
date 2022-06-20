@@ -33,6 +33,7 @@ use Illuminate\Support\Facades\Log;
 use Config;
 use DB;
 use App\Services\LookupService;
+use App\Services\NotesForCustomerService;
 
 class CRUDController extends Controller
 {
@@ -52,6 +53,7 @@ class CRUDController extends Controller
     protected $emailStatusService;
     protected $applicationStorageService;
     protected $lookupService;
+    protected $notesForCustomerService;
 
     public function __construct(
         HealthQuoteService $healthService,
@@ -69,7 +71,8 @@ class CRUDController extends Controller
         ActivitiesService $activityService,
         EmailStatusService $emailStatusService,
         ApplicationStorageService $applicationStorageService,
-        LookupService $lookupService
+        LookupService $lookupService,
+        NotesForCustomerService $notesForCustomerService
     ) {
         $this->genericModel = new GenericModel();
         $this->healthQuoteService = $healthService;
@@ -87,6 +90,7 @@ class CRUDController extends Controller
         $this->emailStatusService = $emailStatusService;
         $this->applicationStorageService = $applicationStorageService;
         $this->lookupService = $lookupService;
+        $this->notesForCustomerService = $notesForCustomerService;
 
         $this->setModelType($request);
         $this->fillModelByModelType(ucwords($this->genericModel->modelType), $request);
@@ -310,13 +314,15 @@ class CRUDController extends Controller
             $trimList = $this->lookupService->getTrimListByCarModel($record->car_model_id);
             $yearsOfManufacture = $this->lookupService->getYearsOfManufacture();
             $emailStatuses = $this->emailStatusService->getEmailStatus(QuoteTypeId::Car, $entity->id);
+            $notesForCustomers = $this->notesForCustomerService->getNotesForCustomer(QuoteTypeId::Car, $entity->id);
+            $quoteTypeId = QuoteTypeId::Car;
 
             return view('shared.show', compact([
                 'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList',
                 'ecomCarInsuranceQuoteUrl', 'carQuotePlanAddons', 'vehicleTypes', 'leadStatuses',
                 'lostReasons', 'selectedLostReasonId','model_name', 'allowedDuplicateLOB', 'audits', 
                 'activities', 'advisors','isRenewalUser', 'isNewBusinessUser', 'emailStatuses', 
-                'yearsOfManufacture','trimList'
+                'yearsOfManufacture','notesForCustomers', 'quoteTypeId','trimList'
             ]));
         } else if ($this->genericModel->modelType == quoteTypeCode::Travel) { // Travel plans to display on detail view
             $listQuotePlans = '';
@@ -793,6 +799,15 @@ class CRUDController extends Controller
 
         if($quoteID) {
             return redirect()->back()->with('success', 'Car Assumptions has been updated');
+        }
+    }
+
+    public function addNoteForCustomer(Request $request)
+    {
+        $noteId = $this->notesForCustomerService->AddNoteForCustomer($request);
+
+        if($noteId) {
+            return redirect()->back()->with('success', 'Note for customer has been added');
         }
     }
 }

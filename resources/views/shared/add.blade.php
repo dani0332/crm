@@ -211,7 +211,10 @@
                         @foreach($model->properties as $property => $value)
                             @if(strpos($value, 'checkbox'))
                             @else
-                                @if(!str_contains($skipProperties['create'], $property))
+                                @php
+                                    $skipPropertiesArray = array_filter(explode(",", $skipProperties['create']));
+                                @endphp
+                                @if(!in_array($property, $skipPropertiesArray))
                                     @if(strpos($value, 'input') !== false )
                                     <div @if(count($model->properties) < 6) class="col-md-12" @else class="col-md-6" @endif id={{$property.'_div'}}>
                                     <div class="col">
