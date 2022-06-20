@@ -16,7 +16,7 @@ use App\Traits\CustomerAdditionalInfo as CustomerAdditionalInfoTrait;
 use App\Enums\quoteTypeCode;
 use App\Enums\DatabaseColumnsString;
 use App\Enums\GenericeRequestEnum;
-
+use App\Enums\quoteStatusCode;
 class LifeQuoteService extends BaseService
 {
     protected $query;
@@ -177,7 +177,7 @@ class LifeQuoteService extends BaseService
         }
         if ($request->ajax()) {
             if (!isset($request->email) && $request->email == '') {
-                $this->query->where('qs.text', '!=', 'Fake');
+                $this->query->where('qs.text', '!=', quoteStatusCode::FAKE);
             }
             if (isset($request->assigned_to_date_start) && $request->assigned_to_date_start != '') {
                 $dateFrom = Carbon::createFromFormat('Y-m-d', $request['assigned_to_date_start'])->startOfDay()->toDateTimeString();
@@ -428,8 +428,9 @@ class LifeQuoteService extends BaseService
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'lqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'lqrd.advisor_assigned_by_id')
             ->leftJoin('payment_status as ps', 'ps.id', '=', 'lqr.payment_status_id')
-            ->where('qs.text', '!=', 'Fake')
-            ->where('lqr.advisor_id', Auth::user()->id);
+            ->where('qs.text', '!=', quoteStatusCode::FAKE)
+            ->where('lqr.advisor_id', Auth::user()->id)
+            ->orderBy('lqr.created_at', "DESC");
 
         $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
         $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';

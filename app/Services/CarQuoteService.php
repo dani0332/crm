@@ -16,7 +16,7 @@ use Config;
 use DB;
 use \Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
-
+use App\Enums\quoteStatusCode;
 class CarQuoteService extends BaseService
 {
     protected $query;
@@ -508,7 +508,9 @@ class CarQuoteService extends BaseService
             ->leftJoin('car_type_insurance as cti', 'cti.id', '=', 'cqr.car_type_insurance_id')
             ->leftJoin('users as ua', 'ua.id', '=', 'cqr.advisor_id')
             ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'cqrd.lost_reason_id')
-            ->where('qs.text', '!=', 'Fake')->where('cqr.advisor_id', Auth::user()->id);
+            ->where('qs.text', '!=', quoteStatusCode::FAKE)
+            ->where('cqr.advisor_id', Auth::user()->id)
+            ->orderBy('cqr.created_at', "DESC");
 
         $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
         $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';

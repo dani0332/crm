@@ -15,6 +15,7 @@ use App\Traits\GetUserTree;
 use App\Traits\CustomerAdditionalInfo as CustomerAdditionalInfoTrait;
 use App\Enums\quoteTypeCode;
 use App\Enums\DatabaseColumnsString;
+use App\Enums\quoteStatusCode;
 class HomeQuoteService extends BaseService
 {
     protected $query;
@@ -362,8 +363,10 @@ class HomeQuoteService extends BaseService
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'hqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'hqrd.advisor_assigned_by_id')
             ->leftJoin('payment_status as ps', 'ps.id', '=', 'hqr.payment_status_id')
-            ->where('qs.text', '!=', 'Fake')
-            ->where('hqr.advisor_id', Auth::user()->id);
+            ->where('qs.text', '!=', quoteStatusCode::FAKE)
+            ->where('hqr.advisor_id', Auth::user()->id)
+            ->orderBy('hqr.created_at', "DESC");
+
         $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
         $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';
         if ($column != '' && $column != 0 && $direction != '') {
