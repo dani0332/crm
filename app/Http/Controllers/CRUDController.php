@@ -809,4 +809,28 @@ class CRUDController extends Controller
             return redirect()->back()->with('success', 'Note for customer has been added');
         }
     }
+
+    public function sendNotesToCustomer(Request $request)
+    {
+        $ecomCarInsuranceQuoteUrl = Config::get('constants.ECOM_CAR_INSURANCE_QUOTE_URL');
+        $emailTemplateId = (int)Config::get('constants.SIB_CAR_QUOTE_UPDATE_NOTES_TO_CUSTOMER_TEMPLATE');
+        $tag = 'car-quote-update-notes-to-customer';
+
+        $emailData = array(
+            'customerName' => $request->customer_name,
+            'customerEmail' => $request->customer_email,
+            'buttonUrl' => $ecomCarInsuranceQuoteUrl.$request->quote_uuid,
+            'quoteCdbId' => $request->quote_cdb_id,
+            'quoteTypeId' => $request->quote_type_id,
+            'quoteId' => $request->quote_id,
+        );
+
+        $response = $this->notesForCustomerService->sendEmail($emailTemplateId, $emailData, $tag);
+
+        if($response == 201 || $response == 202) {
+            $responseMsg = 'Email has been sent to customer.';
+        }
+
+        return $responseMsg;
+    }
 }
