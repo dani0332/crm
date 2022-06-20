@@ -2,12 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\CarQuote;
-use App\Models\Customer;
 use App\Services\DashboardService;
-use Carbon\Carbon;
-use Illuminate\Http\Request;
-use DB;
 
 class DashboardController extends Controller
 {
@@ -25,28 +20,31 @@ class DashboardController extends Controller
      */
     public function index()
     {
-        $thisWeekStats = $this->dashboardService->getDashboardStatsByDate(
-            $this->dashboardService->getPastDateByWeek(0, true),
-            $this->dashboardService->getPastDateByWeek(0, false)
-        );
-        $secondWeekStats = $this->dashboardService->getDashboardStatsByDate(
-            $this->dashboardService->getPastDateByWeek(1, true),
-            $this->dashboardService->getPastDateByWeek(1, false)
-        );
-        $thirdWeekStats = $this->dashboardService->getDashboardStatsByDate(
-            $this->dashboardService->getPastDateByWeek(2, true),
-            $this->dashboardService->getPastDateByWeek(2, false)
-        );
-        $fourthWeekStats = $this->dashboardService->getDashboardStatsByDate(
-            $this->dashboardService->getPastDateByWeek(3, true),
-            $this->dashboardService->getPastDateByWeek(3, false)
-        );
+        $statsArray = [
+            '1Week' => $this->dashboardService->getDashboardStatsByDate(
+                $this->dashboardService->getPastDateByWeek(0, true),
+                $this->dashboardService->getPastDateByWeek(0, false)
+            ),
+            '2Week' => $this->dashboardService->getDashboardStatsByDate(
+                $this->dashboardService->getPastDateByWeek(1, true),
+                $this->dashboardService->getPastDateByWeek(1, false)
+            ),
+            '3Week' => $this->dashboardService->getDashboardStatsByDate(
+                $this->dashboardService->getPastDateByWeek(2, true),
+                $this->dashboardService->getPastDateByWeek(2, false)
+            ),
+            '4Week' => $this->dashboardService->getDashboardStatsByDate(
+                $this->dashboardService->getPastDateByWeek(3, true),
+                $this->dashboardService->getPastDateByWeek(3, false)
+            ),
+        ];
+        $headingArray = [
+            '1WeekHeadingDate' => $this->dashboardService->getWeekHeadingDate(0),
+            '2WeekHeadingDate' => $this->dashboardService->getWeekHeadingDate(1),
+            '3WeekHeadingDate' => $this->dashboardService->getWeekHeadingDate(2),
+            '4WeekHeadingDate' => $this->dashboardService->getWeekHeadingDate(3),
+        ];
 
-        $firstWeekHeadingDate = $this->dashboardService->getWeekHeadingDate(0);
-        $secondWeekHeadingDate = $this->dashboardService->getWeekHeadingDate(1);
-        $thirdWeekHeadingDate = $this->dashboardService->getWeekHeadingDate(2);
-        $fourthWeekHeadingDate = $this->dashboardService->getWeekHeadingDate(3);
-
-        return view('dashboard', compact('thisWeekStats', 'secondWeekStats', 'thirdWeekStats', 'fourthWeekStats', 'firstWeekHeadingDate', 'secondWeekHeadingDate', 'thirdWeekHeadingDate', 'fourthWeekHeadingDate'));
+        return view('dashboard', compact('statsArray', 'headingArray'));
     }
 }
