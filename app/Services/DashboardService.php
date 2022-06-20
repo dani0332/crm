@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-
+use Carbon\Carbon;
 use DB;
 use Illuminate\Support\Facades\Log;
 
@@ -34,5 +34,18 @@ class DashboardService extends BaseService
                     AND q.created_at BETWEEN '" . $start . "' and '" . $end . "'
                     AND q.renewal_import_code IS NULL
                     GROUP BY q.advisor_id) a;");
+        return $stats;
+    }
+
+    public function getPastDateByWeek($noOfWeeksInPast, $startOfWeek)
+    {
+        $pastDate = Carbon::now()->subWeeks($noOfWeeksInPast);
+        return $startOfWeek ? $pastDate->startOfWeek() : $pastDate->endOfWeek();
+    }
+
+    public function getWeekHeadingDate($noOfWeeksInPast)
+    {
+        $pastDate = Carbon::now()->subWeeks($noOfWeeksInPast);
+        return 'Week : ' . $pastDate->startOfWeek()->format('d M Y') . ' - ' . $pastDate->endOfWeek()->format('d M Y');
     }
 }
