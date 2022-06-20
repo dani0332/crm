@@ -35,7 +35,8 @@ use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Log;
 use Config;
 use DB;
-use Illuminate\Support\Facades\Gate;
+use App\Services\LookupService;
+use App\Services\NotesForCustomerService;
 
 class CRUDController extends Controller
 {
@@ -55,6 +56,8 @@ class CRUDController extends Controller
     protected $emailStatusService;
     protected $applicationStorageService;
     protected $leadAllocationService;
+    protected $lookupService;
+    protected $notesForCustomerService;
 
     public function __construct(
         HealthQuoteService $healthService,
@@ -72,7 +75,9 @@ class CRUDController extends Controller
         ActivitiesService $activityService,
         EmailStatusService $emailStatusService,
         ApplicationStorageService $applicationStorageService,
-        LeadAllocationService $leadAllocationService
+        LeadAllocationService $leadAllocationService,
+        LookupService $lookupService,
+        NotesForCustomerService $notesForCustomerService
     ) {
         $this->genericModel = new GenericModel();
         $this->healthQuoteService = $healthService;
@@ -80,7 +85,6 @@ class CRUDController extends Controller
         $this->crudService = $crudService;
         $this->dropdownSourceService = $dropdownSourceService;
         $this->carQuoteService = $carQuoteService;
-
         $this->travelQuoteService = $travelQuoteService;
         $this->lifeQuoteService = $lifeQuoteService;
         $this->homeQuoteService = $homeQuoteService;
@@ -91,6 +95,8 @@ class CRUDController extends Controller
         $this->emailStatusService = $emailStatusService;
         $this->applicationStorageService = $applicationStorageService;
         $this->leadAllocationService = $leadAllocationService;
+        $this->lookupService = $lookupService;
+        $this->notesForCustomerService = $notesForCustomerService;
         $this->setModelType($request);
         $this->fillModelByModelType(ucwords($this->genericModel->modelType), $request);
     }
@@ -293,21 +299,23 @@ class CRUDController extends Controller
         $audits = [];
         if ($this->genericModel->modelType == quoteTypeCode::Car) { // Car plans to display on detail view
 
+            $ecomCarInsuranceQuoteUrl = Config::get('constants.ECOM_CAR_INSURANCE_QUOTE_URL');
             $listQuotePlans = NULL;
             $carQuotePlanAddons = $this->carQuoteService->getCarQuotePlanAddons($id);
-            $ecomCarInsuranceQuoteUrl = Config::get('constants.ECOM_CAR_INSURANCE_QUOTE_URL');
-            $vehicleTypeText = $this->carQuoteService->getCarQuoteVehicleType($id);
             $listQuotePlans = $this->carQuoteService->getPlans($id);
-
             $entity = $this->carQuoteService->getQuoteByUuid($id);
-            $previousQuoteId = isset($entity->previous_quote_id) ? $entity->previous_quote_id : NULL;
+            $vehicleTypes = $this->lookupService->getVehicleTypes();
+            $yearsOfManufacture = $this->lookupService->getYearsOfManufacture();
             $emailStatuses = $this->emailStatusService->getEmailStatus(QuoteTypeId::Car, $entity->id);
+            $notesForCustomers = $this->notesForCustomerService->getNotesForCustomer(QuoteTypeId::Car, $entity->id);
+            $quoteTypeId = QuoteTypeId::Car;
 
             return view('shared.show', compact([
                 'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList',
-                'ecomCarInsuranceQuoteUrl', 'carQuotePlanAddons', 'vehicleTypeText', 'leadStatuses',
-                'lostReasons', 'selectedLostReasonId', 'model_name', 'allowedDuplicateLOB', 'audits', 'activities', 'advisors', 'isRenewalUser',
-                'isNewBusinessUser', 'previousQuoteId', 'emailStatuses'
+                'ecomCarInsuranceQuoteUrl', 'carQuotePlanAddons', 'vehicleTypes', 'leadStatuses',
+                'lostReasons', 'selectedLostReasonId', 'model_name', 'allowedDuplicateLOB', 'audits',
+                'activities', 'advisors', 'isRenewalUser', 'isNewBusinessUser', 'emailStatuses',
+                'yearsOfManufacture', 'notesForCustomers', 'quoteTypeId'
             ]));
         } else if ($this->genericModel->modelType == quoteTypeCode::Travel) { // Travel plans to display on detail view
             $listQuotePlans = '';
@@ -791,5 +799,23 @@ class CRUDController extends Controller
             return redirect()->to('/activities/')->with('success', ' Activity has been Created');
         }
         return redirect()->to('/quotes/' . strtolower($request->parentType) . '/' . $request->entityUId)->with('success', ' Activity has been Created');
+    }
+
+    public function carAssumptionsUpdate(Request $request)
+    {
+        $quoteID = $this->carQuoteService->carAssumptionsUpdateProcess($request);
+
+        if ($quoteID) {
+            return redirect()->back()->with('success', 'Car Assumptions has been updated');
+        }
+    }
+
+    public function addNoteForCustomer(Request $request)
+    {
+        $noteId = $this->notesForCustomerService->AddNoteForCustomer($request);
+
+        if ($noteId) {
+            return redirect()->back()->with('success', 'Note for customer has been added');
+        }
     }
 }
