@@ -10,14 +10,14 @@
         <!-- sidebar menu -->
         <div id="sidebar-menu" class="main_menu_side hidden-print main_menu">
             <div class="menu_section">
-                @can('rewards-list')
+                @if(Auth::user()->hasRole('ADMIN'))
                 <ul class="nav side-menu">
                     <li>
                         <a href="{{ url('/dashboard') }}"><i class="fa fa-tachometer"
                                 aria-hidden="true"></i>Dashboard</a>
                     </li>
                 </ul>
-                @endcan
+                @endif
                 <ul class="nav side-menu">
                     <li> <a href="{{ url('/leadsearch') }}"><i class="fa fa-home"></i> Home</a></li>
                 </ul>
