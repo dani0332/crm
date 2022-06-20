@@ -17,16 +17,10 @@ class DashboardController extends Controller
      */
     public function index()
     {
-        return view('dashboard');
-    }
+        $thisWeekStart = Carbon::now()->startOfWeek();
+        $thisWeekEnd = $thisWeekStart->endOfWeek();
 
-    public function dashboardStats(Request $request)
-    {
-
-        $lastWeekStart = Carbon::now()->startOfWeek()->subDays(1)->startOfWeek();
-        $lastWeekEnd = $lastWeekStart->endOfWeek();
-
-        $secondLastWeekStart = $lastWeekStart->subDays(1)->startOfWeek();
+        $secondLastWeekStart = $thisWeekEnd->subDays(1)->startOfWeek();
         $secondLastWeekEnd = $secondLastWeekStart->endOfWeek();
 
         $thirdLastWeekStart = $secondLastWeekStart->subDays(1)->startOfWeek();
@@ -34,6 +28,21 @@ class DashboardController extends Controller
 
         $fourthLastWeekStart = $thirdLastWeekStart->subDays(1)->startOfWeek();
         $fourthLastWeekEnd = $fourthLastWeekStart->endOfWeek();
+
+
+        foreach ($stats as $stat) {
+            $stat->ecom_conv = number_format($stat->ecom_conv, 2);
+            $stat->non_ecom_conv = number_format($stat->non_ecom_conv, 2);
+            $stat->overall_conv = number_format($stat->overall_conv, 2);
+            dd($stat);
+        }
+        return view('dashboard');
+    }
+
+    public function dashboardStats(Request $request)
+    {
+
+
 
         $stats = DB::select("
                     SELECT *
