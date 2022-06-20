@@ -16,7 +16,6 @@
                     $.ajax({
                     url: "{{ url('/quotes/car/sendNotesToCustomer') }}",
                     type: 'post',
-                    dataType: "json",
                     contentType: "application/json; charset=utf-8",
                     data: JSON.stringify({
                         quote_id: $('#quote_id').val(),
@@ -28,11 +27,11 @@
                         _token: '{{ csrf_token() }}'
                     }),
                     success: function(result) {
-                        $('#send-notes-to-customer-response-text').show().text(result).delay(5000).fadeOut(300).addClass('alert alert-success');
+                        $('#send-notes-to-customer-response-msg').show().text(result).delay(5000).fadeOut(300).addClass('alert alert-success');
                         $(".loader").hide();
                     },
-                    error: function(jqXhr, textStatus, errorMessage) {
-                        $('#send-notes-to-customer-response-text').show().text('Email has been sent to customer.').delay(5000).fadeOut(300).addClass('alert alert-success');
+                    error: function(jqXhr, textStatus, errorMessage, errorThrown, result) {
+                        $('#send-notes-to-customer-response-msg').show().text(textStatus +' '+ errorMessage +' '+ errorThrown).delay(5000).fadeOut(300).addClass('alert alert-danger');
                         $(".loader").hide();
                     }
                 });
@@ -59,7 +58,7 @@
                 <input type="hidden" value="{{ $record->code }}" id="quote_cdb_id">
                 <button class="btn btn-primary btn-sm" style="float:right;width:170px;" type="button" id="send-notes-to-customer-btn">Send Email to Customer</button>
                 <br><br>
-                <div class="" id="send-notes-to-customer-response-text" style="display:none"></div>
+                <div class="" id="send-notes-to-customer-response-msg" style="display:none"></div>
                 @endif
                 <div class="clearfix"></div>
             </div>

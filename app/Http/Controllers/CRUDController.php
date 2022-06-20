@@ -822,7 +822,7 @@ class CRUDController extends Controller
             'buttonUrl' => $ecomCarInsuranceQuoteUrl.$request->quote_uuid,
             'quoteCdbId' => $request->quote_cdb_id,
             'quoteTypeId' => $request->quote_type_id,
-            'quoteId' => $request->quote_id,
+            'quoteId' => $request->quote_id
         );
 
         $response = $this->notesForCustomerService->sendEmail($emailTemplateId, $emailData, $tag);
