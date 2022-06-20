@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Models\EmailActivity;
+use App\Enums\EnvEnum;
 use App\Models\NotesForCustomer;
 use Illuminate\Support\Facades\Auth;
 use Config;
@@ -37,12 +37,7 @@ class NotesForCustomerService extends BaseService
             $url = Config::get('constants.SIB_URL');
             $appEnv = Config::get('constants.APP_ENV');
 
-            if($appEnv == 'production') {
-                $tag = $tag;
-            }
-            else {
-                $tag = $appEnv.'-'.$tag;
-            }
+            $tag = $appEnv == EnvEnum::PRODUCTION ? $tag : $appEnv.'-'.$tag;
 
             $headers = [
                 'Accept' => 'application/json',
