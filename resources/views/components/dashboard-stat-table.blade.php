@@ -65,13 +65,13 @@ $count = 1;
                 </td>
 
                 <td>
-                    {{$currentWeekStat->ecom_conv}}
+                    {{round($currentWeekStat->tran_approved_ecom, 2)}} {{-- TODO : Need to add conversion here --}}
                 </td>
                 <td>
-                    {{$currentWeekStat->non_ecom_conv}}
+                    {{ round($currentWeekStat->non_ecom_conv, 2) }}{{-- TODO : Need to add conversion here --}}
                 </td>
                 <td>
-                    {{$currentWeekStat->overall_conv}}
+                    {{round($currentWeekStat->overall_conv, 2)}}{{-- TODO : Need to add conversion here --}}
                 </td>
             </tr>
             @endforeach
