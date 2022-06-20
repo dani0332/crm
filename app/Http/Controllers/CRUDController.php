@@ -25,7 +25,6 @@ use App\Services\PetQuoteService;
 use App\Services\UserService;
 use App\Services\EmailStatusService;
 use App\Services\ApplicationStorageService;
-use BenSampo\Enum\Rules\EnumValue;
 use DataTables;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
@@ -34,6 +33,7 @@ use Config;
 use DB;
 use App\Services\LookupService;
 use App\Services\NotesForCustomerService;
+use App\Services\CustomerService;
 
 class CRUDController extends Controller
 {
@@ -54,6 +54,7 @@ class CRUDController extends Controller
     protected $applicationStorageService;
     protected $lookupService;
     protected $notesForCustomerService;
+    protected $customerService;
 
     public function __construct(
         HealthQuoteService $healthService,
@@ -72,7 +73,8 @@ class CRUDController extends Controller
         EmailStatusService $emailStatusService,
         ApplicationStorageService $applicationStorageService,
         LookupService $lookupService,
-        NotesForCustomerService $notesForCustomerService
+        NotesForCustomerService $notesForCustomerService,
+        CustomerService $customerService
     ) {
         $this->genericModel = new GenericModel();
         $this->healthQuoteService = $healthService;
@@ -91,6 +93,7 @@ class CRUDController extends Controller
         $this->applicationStorageService = $applicationStorageService;
         $this->lookupService = $lookupService;
         $this->notesForCustomerService = $notesForCustomerService;
+        $this->customerService = $customerService;
 
         $this->setModelType($request);
         $this->fillModelByModelType(ucwords($this->genericModel->modelType), $request);
@@ -821,6 +824,7 @@ class CRUDController extends Controller
         $ecomCarInsuranceQuoteUrl = Config::get('constants.ECOM_CAR_INSURANCE_QUOTE_URL');
         $emailTemplateId = (int)Config::get('constants.SIB_CAR_QUOTE_UPDATE_NOTES_TO_CUSTOMER_TEMPLATE');
         $tag = 'car-quote-update-notes-to-customer';
+        $customer = $this->customerService->getUniqueCustomerByEmail($request->customer_email);
 
         $emailData = array(
             'customerName' => $request->customer_name,
@@ -829,7 +833,9 @@ class CRUDController extends Controller
             'quoteCdbId' => $request->quote_cdb_id,
             'quoteTypeId' => $request->quote_type_id,
             'quoteId' => $request->quote_id,
-            'notesForCustomer' => $request->description
+            'notesForCustomer' => $request->description,
+            'templateId' => $emailTemplateId,
+            'customerId' => $customer->id
         );
 
         $response = $this->notesForCustomerService->sendEmail($emailTemplateId, $emailData, $tag);

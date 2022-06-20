@@ -8,9 +8,22 @@ use Illuminate\Support\Facades\Auth;
 use Config;
 use Exception;
 use Illuminate\Support\Facades\Log;
+use App\Services\EmailActivityService;
+use App\Services\EmailStatusService;
 
 class NotesForCustomerService extends BaseService
 {
+    protected $emailActivityService;
+    protected $emailStatusService;
+
+    public function __construct(
+        EmailActivityService $emailActivityService,
+        EmailStatusService $emailStatusService
+    ) {
+        $this->emailActivityService = $emailActivityService;
+        $this->emailStatusService = $emailStatusService;
+    }
+
 	public static function getNotesForCustomer($quoteTypeId, $quoteId)
 	{
 		return NotesForCustomer::where(['quote_type_id' => $quoteTypeId, 'quote_id' => $quoteId])
@@ -73,7 +86,7 @@ class NotesForCustomerService extends BaseService
                 ]
             );
 
-			$getMsgId = json_decode($clientRequest->getBody()->getContents())->messageId;
+			$messageId = json_decode($clientRequest->getBody()->getContents())->messageId;
 			$getResponse = json_decode(json_encode($clientRequest->getStatusCode()." ".$clientRequest->getBody()->getContents()),true);
             $getStatusCode = $clientRequest->getStatusCode();
 
@@ -89,8 +102,11 @@ class NotesForCustomerService extends BaseService
             $isEmailSent = 0;
         }
 
-        EmailActivityService::addEmailActivity($getResponse, $isEmailSent, $emailData['customerEmail']);
-		EmailStatusService::addEmailStatus($emailData['quoteTypeId'],$emailData['quoteId'],$emailData['customerEmail'],$getMsgId);
+        $this->emailActivityService->addEmailActivity($getResponse, $isEmailSent, $emailData['customerEmail']);
+
+        if(isset($messageId)) {
+            $this->emailStatusService->addEmailStatus($emailData, $messageId);
+        }
 
         return $getStatusCode;
     }
