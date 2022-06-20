@@ -193,10 +193,11 @@
                         <input type="hidden" name="modelType" value={{ json_encode($model->modelType) }} />
                         <input type="hidden" name="modelSkipProperties" id="skip" value={{ json_encode($skipProperties) }} />
                         @php
-                        $index = 0;
+                            $index = 0;
+                            $skipPropertiesArray = array_filter(explode(",", $skipProperties['update']));
                         @endphp
                         @foreach($model->properties as $property => $value)
-                            @if(!str_contains($skipProperties['update'], $property))
+                            @if(!in_array($property, $skipPropertiesArray))
                                 @if($index == 0 || strpos($value, 'checkbox'))
                                 @else
                                     <div @if(count($model->properties) <6) class="col-md-12" @else class="col-md-6" @endif id={{$property.'_div'}}>
