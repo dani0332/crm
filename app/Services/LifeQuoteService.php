@@ -177,7 +177,7 @@ class LifeQuoteService extends BaseService
         }
         if ($request->ajax()) {
             if (!isset($request->email) && $request->email == '') {
-                $this->query->where('qs.text', '!=', quoteStatusCode::FAKE);
+                $this->query->where('lqr.quote_status_id', '!=', 20);
             }
             if (isset($request->assigned_to_date_start) && $request->assigned_to_date_start != '') {
                 $dateFrom = Carbon::createFromFormat('Y-m-d', $request['assigned_to_date_start'])->startOfDay()->toDateTimeString();
