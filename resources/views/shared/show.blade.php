@@ -103,7 +103,7 @@
                 <div class="clearfix"></div>
             </div>
             @hasanyrole('ADMIN|HEALTH_MANAGER|HEALTH_WCU_ADVISOR|HEALTH_DEPUTY_MANAGER')
-            @if (strtolower($model->modelType) == 'health' && )
+            @if (strtolower($model->modelType) == 'health')
             <form method="post" id="healthTeamAssignForm" action="healthTeamAssign"
                 class="form-horizontal form-label-left" autocomplete="off">
                 {{ csrf_field() }}
