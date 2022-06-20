@@ -6,6 +6,9 @@
         background-color: white !important;
     }
 </style>
+<?php
+    use App\Enums\quoteTypeCode;
+    ?>
 <script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
 <script>
     $(document).ready(function(){
@@ -18,7 +21,7 @@
         var oldCarMakeId = '';
         var model = JSON.parse('<?php echo json_encode(get_object_vars($model)) ?>');
         var modelPropertiesArray = convertObjectToArray(model.properties);
-        if(model.modelType.toLowerCase() == 'car'){
+        if(model.modelType.toLowerCase() == '<?php echo strtolower(quoteTypeCode::Car); ?>'){
             oldCarModelId = JSON.parse('<?php echo json_encode(old("car_model_id")) ?>');
             oldCarMakeId = JSON.parse('<?php echo json_encode(old("car_make_id")) ?>');
             if(oldCarMakeId != '' && oldCarMakeId != null) {
