@@ -812,7 +812,7 @@ class CRUDController extends Controller
         }
 
         if($noteId) {
-            return redirect()->back()->with('success', 'Notes for customer has been added');
+            return redirect()->back()->with('success', 'Notes to customer has been sent.');
         }
     }
 
