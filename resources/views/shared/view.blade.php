@@ -301,6 +301,10 @@
                                 'range') > -1) {
                             d['previous_policy_expiry_date_end'] = $('#previous_policy_expiry_date_end').val();
                         }
+                        if (model.properties['next_followup_date'] && model.properties['next_followup_date'].indexOf(
+                                'range') > -1) {
+                            d['next_followup_date_end'] = $('#next_followup_date_end').val();
+                        }
                     }
                 },
                 columnDefs: [{

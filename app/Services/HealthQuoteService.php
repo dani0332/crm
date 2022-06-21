@@ -18,6 +18,8 @@ use Config;
 use App\Traits\GetUserTree;
 use App\Traits\CustomerAdditionalInfo as CustomerAdditionalInfoTrait;
 use App\Enums\quoteTypeCode;
+use App\Enums\quoteStatusCode;
+use App\Enums\DatabaseColumnsString;
 
 class HealthQuoteService extends BaseService
 {
@@ -187,7 +189,7 @@ class HealthQuoteService extends BaseService
         }
         if ($request->ajax()) {
             if (!isset($request->email) && $request->email == '') {
-                $this->query->where('qs.text', '!=', 'Fake');
+                $this->query->where('hqr.quote_status_id', '!=', 20);
             }
             if (isset($request->assigned_to_date_start) && $request->assigned_to_date_start != '') {
                 $dateFrom = Carbon::createFromFormat('Y-m-d', $request['assigned_to_date_start'])->startOfDay()->toDateTimeString();
@@ -275,10 +277,10 @@ class HealthQuoteService extends BaseService
                         else
                             $this->query->whereIn('advisor_id', $request[$item]);
                     }
-                    else if ($item == 'quote_status_id' && is_array($request[$item]) && !empty($request[$item])) {
+                    else if ($item == DatabaseColumnsString::QUOTE_STATUS_ID && is_array($request[$item]) && !empty($request[$item])) {
                         $this->query->whereIn('quote_status_id', $request[$item]);
                     } else {
-                        $skipped = array('is_renewal','previous_policy_expiry_date');
+                        $skipped = array('is_renewal','previous_policy_expiry_date','next_followup_date');
                         if(in_array($item, $skipped)){
                             continue;
                         }
@@ -453,7 +455,6 @@ class HealthQuoteService extends BaseService
                 'hqrd.advisor_assigned_date as assignedDate',
                 'u.name as assignedBy',
                 'hqr.updated_at as updatedAt',
-                'hqr.premium as premium',
                 'hqr.policy_number as policy_number',
                 'hqr.email as email',
                 'hqr.mobile_no as mobile_no',
@@ -473,8 +474,9 @@ class HealthQuoteService extends BaseService
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'hqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'hqrd.advisor_assigned_by_id')
             ->leftJoin('payment_status as ps', 'ps.id', '=', 'hqr.payment_status_id')
-            ->where('qs.text', '!=', 'Fake')
-            ->where('hqr.advisor_id', Auth::user()->id);
+            ->where('hqr.quote_status_id', '!=', 20)
+            ->where('hqr.advisor_id', Auth::user()->id)
+            ->orderBy('hqr.created_at', "DESC");
 
         $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
         $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';
