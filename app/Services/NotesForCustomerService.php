@@ -31,7 +31,7 @@ class NotesForCustomerService extends BaseService
         ->get();
 	}
 
-	public static function AddNoteForCustomer($request)
+	public static function addCustomerNote($request)
 	{
 		$newNote = new NotesForCustomer();
 		$newNote->quote_type_id = $request->quote_type_id;

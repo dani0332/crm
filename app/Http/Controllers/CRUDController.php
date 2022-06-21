@@ -809,7 +809,7 @@ class CRUDController extends Controller
         $response = $this->sendNotesToCustomer($request);
 
         if($response == 201 || $response == 202) {
-            $noteId = $this->notesForCustomerService->AddNoteForCustomer($request);
+            $noteId = $this->notesForCustomerService->addCustomerNote($request);
         } else {
             return redirect()->back()->with('message', $response);
         }
