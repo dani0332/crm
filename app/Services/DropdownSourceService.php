@@ -31,6 +31,7 @@ use App\Models\VehicleType;
 use App\Models\YearOfManufacture;
 use App\Models\CarAddOn;
 use App\Models\Team;
+use App\Models\MemberCategory;
 use DB;
 use Illuminate\Support\Facades\Auth;
 
@@ -229,7 +230,7 @@ class DropdownSourceService extends BaseService
                 $data = DB::table("salary_band")->select('id', 'text')->where("is_active", true)->orderBy('sort_order', 'asc')->get();
                 break;
             case 'member_category_id':
-                $data = DB::table("member_category")->select('id', 'text')->where("is_active", true)->orderBy('sort_order', 'asc')->get();
+                $data = MemberCategory::select('id', 'text')->active()->sortOrderAsc()->get();
                 break;
             case 'trim':
                 $data = [];
