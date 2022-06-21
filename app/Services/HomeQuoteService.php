@@ -242,7 +242,7 @@ class HomeQuoteService extends BaseService
                     else if ($item == DatabaseColumnsString::QUOTE_STATUS_ID && is_array($request[$item]) && !empty($request[$item])) {
                         $this->query->whereIn('quote_status_id', $request[$item]);
                     } else {
-                        $skipped = array('is_renewal','previous_policy_expiry_date');
+                        $skipped = array('is_renewal','previous_policy_expiry_date','next_followup_date');
                         if(in_array($item, $skipped)){
                             continue;
                         }
