@@ -65,13 +65,21 @@ $count = 1;
                 </td>
 
                 <td>
-                    {{round($currentWeekStat->tran_approved_ecom, 2)}} {{-- TODO : Need to add conversion here --}}
+                    @php
+                    $eComConversion = divideNumber($currentWeekStat->tran_approved_ecom, $currentWeekStat->ecom_total) *
+                    100;
+                    $nonEcomConversion = divideNumber($currentWeekStat->tran_approved_non_ecom,
+                    ($currentWeekStat->total_assigned - $currentWeekStat->ecom_total )) * 100;
+                    $overallConversion = divideNumber($currentWeekStat->tran_approved_total,
+                    $currentWeekStat->total_assigned) * 100;
+                    @endphp
+                    {{round($eComConversion, 2)}} {{-- TODO : Need to add conversion here --}}
                 </td>
                 <td>
-                    {{ round($currentWeekStat->non_ecom_conv, 2) }}{{-- TODO : Need to add conversion here --}}
+                    {{ round($nonEcomConversion, 2) }}{{-- TODO : Need to add conversion here --}}
                 </td>
                 <td>
-                    {{round($currentWeekStat->overall_conv, 2)}}{{-- TODO : Need to add conversion here --}}
+                    {{round($overallConversion, 2)}}{{-- TODO : Need to add conversion here --}}
                 </td>
             </tr>
             @endforeach

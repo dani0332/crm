@@ -16,7 +16,6 @@ use App\Traits\CustomerAdditionalInfo as CustomerAdditionalInfoTrait;
 use App\Enums\quoteTypeCode;
 use App\Enums\DatabaseColumnsString;
 use App\Enums\GenericRequestEnum;
-use App\Enums\quoteStatusCode;
 
 class LifeQuoteService extends BaseService
 {

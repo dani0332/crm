@@ -13,10 +13,6 @@ class DashboardService extends BaseService
     {
         $stats = DB::select("
                     SELECT *
-                    , (a.tran_approved_ecom / a.ecom_total * 100) ecom_conv
-                    , (a.tran_approved_non_ecom / (a.total_assigned-a.ecom_total) * 100) non_ecom_conv
-                    , (a.tran_approved_total / a.total_assigned * 100) overall_conv
-
                     FROM (
                     SELECT
                     count(q.id) total_assigned,
