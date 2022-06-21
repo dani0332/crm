@@ -1,6 +1,6 @@
-<?php
+@php
 $appName = Config::get('constants.APP_NAME');
-?>
+@endphp
 <!DOCTYPE html>
 <html lang="en">
 
@@ -12,7 +12,9 @@ $appName = Config::get('constants.APP_NAME');
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="icon" type="image/png" href="{{ asset('image/favicon.ico') }}">
     <title>@yield('title') |
-        <?php echo $appName; ?>
+        @php
+        echo $appName;
+        @endphp
     </title>
     <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
     <!-- Bootstrap -->
