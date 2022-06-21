@@ -19,6 +19,8 @@ use App\Traits\GetUserTree;
 use App\Traits\CustomerAdditionalInfo as CustomerAdditionalInfoTrait;
 use App\Enums\quoteTypeCode;
 use App\Enums\quoteStatusCode;
+use App\Enums\DatabaseColumnsString;
+
 class HealthQuoteService extends BaseService
 {
     protected $query;
@@ -275,10 +277,10 @@ class HealthQuoteService extends BaseService
                         else
                             $this->query->whereIn('advisor_id', $request[$item]);
                     }
-                    else if ($item == 'quote_status_id' && is_array($request[$item]) && !empty($request[$item])) {
+                    else if ($item == DatabaseColumnsString::QUOTE_STATUS_ID && is_array($request[$item]) && !empty($request[$item])) {
                         $this->query->whereIn('quote_status_id', $request[$item]);
                     } else {
-                        $skipped = array('is_renewal','previous_policy_expiry_date');
+                        $skipped = array('is_renewal','previous_policy_expiry_date','next_followup_date');
                         if(in_array($item, $skipped)){
                             continue;
                         }
