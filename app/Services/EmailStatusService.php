@@ -7,14 +7,14 @@ use App\Models\EmailStatus;
 
 class EmailStatusService extends BaseService
 {
-	public static function getEmailStatus($quoteTypeId, $quoteId)
+	public function getEmailStatus($quoteTypeId, $quoteId)
 	{
 		return EmailStatus::where(['quote_type_id' => $quoteTypeId, 'quote_id' => $quoteId])
         ->orderBy('updated_at', 'desc')
         ->get();
 	}
 
-	public static function addEmailStatus($emailData, $messageId)
+	public function addEmailStatus($emailData, $messageId)
 	{
 		$newEmailStatus = new EmailStatus();
 		$newEmailStatus->quote_type_id = $emailData['quoteTypeId'];

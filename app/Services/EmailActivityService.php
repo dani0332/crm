@@ -6,7 +6,7 @@ use App\Models\EmailActivity;
 
 class EmailActivityService extends BaseService
 {
-	public static function addEmailActivity($getResponse, $isEmailSent, $customerEmail)
+	public function addEmailActivity($getResponse, $isEmailSent, $customerEmail)
 	{
 		$newEmailActivity = new EmailActivity();
         $newEmailActivity->api_response = $getResponse;

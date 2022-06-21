@@ -24,14 +24,14 @@ class NotesForCustomerService extends BaseService
         $this->emailStatusService = $emailStatusService;
     }
 
-	public static function getNotesForCustomer($quoteTypeId, $quoteId)
+	public function getNotesForCustomer($quoteTypeId, $quoteId)
 	{
 		return NotesForCustomer::where(['quote_type_id' => $quoteTypeId, 'quote_id' => $quoteId])
         ->orderBy('updated_at', 'desc')
         ->get();
 	}
 
-	public static function addCustomerNote($request)
+	public function addCustomerNote($request)
 	{
 		$newNote = new NotesForCustomer();
 		$newNote->quote_type_id = $request->quote_type_id;
