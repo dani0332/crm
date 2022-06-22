@@ -9,8 +9,9 @@ use Illuminate\Support\Facades\Log;
 class DashboardService extends BaseService
 {
 
-    public function getDashboardStatsByDate($start, $end)
+    public function getDashboardStatsByDate($start, $end, $type)
     {
+        $tableName = $type. '_quote_request';
         $stats = DB::select("
                     SELECT *
                     FROM (
@@ -25,11 +26,13 @@ class DashboardService extends BaseService
                     SUM(CASE WHEN q.quote_status_id=15 THEN 1 ELSE 0 END) tran_approved_total,
                     SUM(CASE WHEN q.is_ecommerce THEN 1 ELSE 0 END) ecom_total,
                     u.email
-                    FROM travel_quote_request q, users u
-                    WHERE q.advisor_id=u.id AND q.quote_status_id NOT IN (9,35)
+                    FROM ".$tableName." q
+                    LEFT OUTER JOIN users u on u.id = q.advisor_id
+                    WHERE q.quote_status_id NOT IN (9,35)
                     AND q.created_at BETWEEN '" . $start . "' and '" . $end . "'
                     AND q.renewal_import_code IS NULL
-                    GROUP BY q.advisor_id) a;");
+                    GROUP BY q.advisor_id)  a order by a.email;");
+
         return $stats;
     }
 

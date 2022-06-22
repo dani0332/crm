@@ -3,9 +3,8 @@
 @section('content')
 <div class="">
     <div class="row">
-        <div class="x_title">
-            <h2>Dashboard</h2>
-            <div class="clearfix"></div>
+        <div class="x_panel transparent">
+            <x-travel-stat-table :statsArray="$statsArray" :headingArray="$headingArray" />
         </div>
     </div>
 </div>

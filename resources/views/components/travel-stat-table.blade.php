@@ -1,6 +1,10 @@
 @php
 $count = 1;
 @endphp
+<div class="x_title">
+    <h2>Travel Conversion</h2>
+    <div class="clearfix"></div>
+</div>
 @foreach ($statsArray as $currentStat)
 
 <div class="x_content">
