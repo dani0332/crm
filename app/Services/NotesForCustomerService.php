@@ -2,12 +2,9 @@
 
 namespace App\Services;
 
-use App\Enums\EnvEnum;
 use App\Models\NotesForCustomer;
 use Illuminate\Support\Facades\Auth;
 use Config;
-use Exception;
-use Illuminate\Support\Facades\Log;
 use App\Services\EmailActivityService;
 use App\Services\EmailStatusService;
 use App\Services\CustomerService;
