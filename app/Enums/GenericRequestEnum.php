@@ -9,7 +9,7 @@ use BenSampo\Enum\Enum;
  * @method static static OptionTwo()
  * @method static static OptionThree()
  */
-final class GenericeRequestEnum extends Enum
+final class GenericRequestEnum extends Enum
 {
     const Yes = "Yes";
     const No = "No";

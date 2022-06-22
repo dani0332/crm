@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Enums\QuoteTypeId;
 use App\Models\BusinessQuote;
 use App\Models\BusinessQuoteRequestDetail;
-use App\Models\QuoteStatus;
 use Illuminate\Http\Request;
 use DB;
 use Config;
@@ -16,12 +15,15 @@ use App\Enums\quoteTypeCode;
 use App\Enums\DatabaseColumnsString;
 use App\Enums\QuoteStatusEnum;
 use App\Traits\GetUserTree;
+use App\Traits\RolePermissionConditions;
 
 class BusinessQuoteService extends BaseService
 {
     protected $query;
     use CustomerAdditionalInfoTrait;
     use GetUserTree;
+    use RolePermissionConditions;
+
     protected $leadAllocationService;
     public function __construct(LeadAllocationService $leadAllocationService)
     {
@@ -333,7 +335,7 @@ class BusinessQuoteService extends BaseService
         }
         if ($request->ajax()) {
             if (!isset($request->email) && $request->email == '') {
-                $this->query->where('qs.text', '!=', 'Fake');
+                $this->query->where('bqr.quote_status_id', "!=", 20);
             }
             if (isset($request->assigned_to_date_start) && $request->assigned_to_date_start != '') {
                 $dateFrom = Carbon::createFromFormat('Y-m-d', $request['assigned_to_date_start'])->startOfDay()->toDateTimeString();
@@ -386,25 +388,10 @@ class BusinessQuoteService extends BaseService
             if (isset($request->previous_quote_policy_premium) && $request->previous_quote_policy_premium != '') {
                 $this->query->where('bqr.previous_quote_policy_premium', $request->previous_quote_policy_premium);
             }
-            if (Auth::user()->isRenewalAdvisor()) {
-                $this->query->whereNotNull('bqr.previous_quote_id');
-                $this->query->where('bqr.advisor_id', Auth::user()->id);
-            }
-            if (Auth::user()->isRenewalManager()) {
-                $ids = $this->walkTree(Auth::user()->id);
-                $this->query->whereIn('bqr.advisor_id', $ids);
-                $this->query->whereNotNull('bqr.previous_quote_id');
-            }
-            if (Auth::user()->isNewBusinessManager()) {
-                $ids = $this->walkTree(Auth::user()->id);
-                $this->query->whereIn('bqr.advisor_id', $ids);
-                $this->query->whereNull('bqr.previous_quote_id');
-            }
-            if (Auth::user()->isNewBusinessAdvisor()) {
-                $ids = $this->walkTree(Auth::user()->id);
-                $this->query->whereIn('bqr.advisor_id', $ids);
-                $this->query->whereNull('bqr.previous_quote_id');
-            }
+
+            $this->whereBasedOnRole($this->query,'bqr');
+
+
             if (isset($request->is_renewal) && $request->is_renewal != '') {
                 if ($request->is_renewal == quoteTypeCode::yesText)
                     $this->query->whereNotNull('bqr.previous_quote_id');

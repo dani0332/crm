@@ -305,6 +305,7 @@ class CRUDController extends Controller
             $listQuotePlans = $this->carQuoteService->getPlans($id);
             $entity = $this->carQuoteService->getQuoteByUuid($id);
             $vehicleTypes = $this->lookupService->getVehicleTypes();
+            $trimList = $this->lookupService->getTrimListByCarModel($record->car_model_id);
             $yearsOfManufacture = $this->lookupService->getYearsOfManufacture();
             $emailStatuses = $this->emailStatusService->getEmailStatus(QuoteTypeId::Car, $entity->id);
             $notesForCustomers = $this->notesForCustomerService->getNotesForCustomer(QuoteTypeId::Car, $entity->id);
@@ -313,9 +314,9 @@ class CRUDController extends Controller
             return view('shared.show', compact([
                 'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList',
                 'ecomCarInsuranceQuoteUrl', 'carQuotePlanAddons', 'vehicleTypes', 'leadStatuses',
-                'lostReasons', 'selectedLostReasonId', 'model_name', 'allowedDuplicateLOB', 'audits',
-                'activities', 'advisors', 'isRenewalUser', 'isNewBusinessUser', 'emailStatuses',
-                'yearsOfManufacture', 'notesForCustomers', 'quoteTypeId'
+                'lostReasons', 'selectedLostReasonId','model_name', 'allowedDuplicateLOB', 'audits',
+                'activities', 'advisors','isRenewalUser', 'isNewBusinessUser', 'emailStatuses',
+                'yearsOfManufacture','notesForCustomers', 'quoteTypeId','trimList'
             ]));
         } else if ($this->genericModel->modelType == quoteTypeCode::Travel) { // Travel plans to display on detail view
             $listQuotePlans = '';
