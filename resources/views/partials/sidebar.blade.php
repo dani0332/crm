@@ -14,14 +14,14 @@ use App\Enums\PermissionsEnum;
         <!-- sidebar menu -->
         <div id="sidebar-menu" class="main_menu_side hidden-print main_menu">
             <div class="menu_section">
-                @if(Auth::user()->isAdmin())
+                @can(PermissionsEnum::DashboardView)
                 <ul class="nav side-menu">
                     <li>
                         <a href="{{ url('/dashboard') }}"><i class="fa fa-tachometer"
                                 aria-hidden="true"></i>Dashboard</a>
                     </li>
                 </ul>
-                @endif
+                @endcan
                 <ul class="nav side-menu">
                     <li> <a href="{{ url('/leadsearch') }}"><i class="fa fa-home"></i> Home</a></li>
                 </ul>

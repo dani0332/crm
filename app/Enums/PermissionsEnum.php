@@ -168,4 +168,5 @@ final class PermissionsEnum extends Enum
     const PetQuotesDelete = "pet-quotes-delete";
     const PetQuotesView = "pet-quotes-view";
     const PetQuotesEdit = "pet-quotes-edit";
+    const DashboardView = "dashboard-view";
 }
