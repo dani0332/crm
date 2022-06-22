@@ -242,23 +242,22 @@ class HealthQuoteService extends BaseService
             if (isset($request->previous_quote_policy_premium) && $request->previous_quote_policy_premium != '') {
                 $this->query->where('hqr.previous_quote_policy_premium', $request->previous_quote_policy_premium);
             }
-            if (Auth::user()->isRenewalAdvisor()) {
+            if ($isRenewalAdvisor) {
                 $this->query->whereNotNull('hqr.previous_quote_id');
                 $this->query->where('hqr.advisor_id', Auth::user()->id);
             }
-            if (Auth::user()->isRenewalManager()) {
+            if ($isRenewalManager) {
                 $ids = $this->walkTree(Auth::user()->id);
                 $this->query->whereIn('hqr.advisor_id', $ids);
                 $this->query->whereNotNull('hqr.previous_quote_id');
             }
-            if (Auth::user()->isNewBusinessManager()) {
+            if ($isNewManager) {
                 $ids = $this->walkTree(Auth::user()->id);
                 $this->query->whereIn('hqr.advisor_id', $ids);
                 $this->query->whereNull('hqr.previous_quote_id');
             }
-              if (Auth::user()->isNewBusinessAdvisor()) {
-                $ids = $this->walkTree(Auth::user()->id);
-                $this->query->whereIn('hqr.advisor_id', $ids);
+            if ($isNewAdvisor) {
+                $this->query->where('hqr.advisor_id', Auth::user()->id);
                 $this->query->whereNull('hqr.previous_quote_id');
             }
             if (isset($request->is_renewal) && $request->is_renewal != '') {
