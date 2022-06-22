@@ -12,6 +12,15 @@ $count = 1;
         @php
         $statVariableName = $count . 'Week';
         $statHeadingName = $count . 'WeekHeadingDate';
+        $totalAssigned = 0;
+        $totalPaidEcom = 0;
+        $totalPaidEcomAuthorised = 0;
+        $totalPaidEcomCaputed = 0;
+        $totalPaidEcomCancelled = 0;
+        $totalTransactionApprovedEcom = 0;
+        $totalTransactionApprovedNonEcom = 0;
+        $totalTransactionApproved = 0;
+        $totalEcom = 0;
         @endphp
         <h2>{{$headingArray[$statHeadingName]}}</h2>
         <div class="clearfix"></div>
@@ -36,6 +45,17 @@ $count = 1;
         </thead>
         <tbody>
             @foreach ($statsArray[$statVariableName] as $currentWeekStat)
+            @php
+                $totalAssigned += $currentWeekStat->total_assigned;
+                $totalPaidEcom = $currentWeekStat->paid_ecom;
+                $totalPaidEcomAuthorised = $currentWeekStat->paid_ecom_auth;
+                $totalPaidEcomCaputed = $currentWeekStat->paid_ecom_captured;
+                $totalPaidEcomCancelled = $currentWeekStat->paid_ecom_cancelled;
+                $totalTransactionApprovedEcom = $currentWeekStat->tran_approved_ecom;
+                $totalTransactionApprovedNonEcom = $currentWeekStat->tran_approved_non_ecom;
+                $totalTransactionApproved = $currentWeekStat->tran_approved_total;
+                $totalEcom = $currentWeekStat->ecom_total;
+            @endphp
             <tr>
                 <td>
                     {{$currentWeekStat->email}}
@@ -87,6 +107,35 @@ $count = 1;
                 </td>
             </tr>
             @endforeach
+            <tr>
+                <td colspan="2" style="text-align: center;">
+                   <b>{{$totalAssigned}}</b>
+                </td>
+                <td style="text-align: center;">
+                    <b>{{$totalPaidEcom}}</b>
+                </td>
+                <td style="text-align: center;">
+                    <b>{{$totalPaidEcomAuthorised}}</b>
+                </td>
+                <td style="text-align: center;">
+                    <b> {{$totalPaidEcomCaputed}}</b>
+                </td>
+                <td style="text-align: center;">
+                    <b>{{$totalPaidEcomCancelled}}</b>
+                </td>
+                <td style="text-align: center;">
+                    <b>{{$totalTransactionApprovedEcom}}</b>
+                </td>
+                <td style="text-align: center;">
+                    <b>{{$totalTransactionApprovedNonEcom}}</b>
+                </td>
+                <td style="text-align: center;">
+                    <b>{{$totalTransactionApproved}}</b>
+                </td>
+                <td colspan="4" style="text-align: left;">
+                    <b>{{$totalEcom}}</b>
+                </td>
+            </tr>
         </tbody>
     </table>
 </div>

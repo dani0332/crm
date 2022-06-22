@@ -13,6 +13,12 @@ $count = 1;
         @php
         $statVariableName = $count . 'Week';
         $statHeadingName = $count . 'WeekHeadingDate';
+        $totalAssigned = 0;
+        $totalPaidEcom = 0;
+        $totalPaidEcomAuthorised = 0;
+        $totalPaidEcomCaputed = 0;
+        $totalPaidEcomCancelled = 0;
+        $totalEcom = 0;
         @endphp
         <h2>{{$headingArray[$statHeadingName]}}</h2>
     </div>
@@ -31,6 +37,14 @@ $count = 1;
         </thead>
         <tbody>
             @foreach ($statsArray[$statVariableName] as $currentWeekStat)
+            @php
+                $totalAssigned += $currentWeekStat->total_assigned;
+                $totalPaidEcom = $currentWeekStat->paid_ecom;
+                $totalPaidEcomAuthorised = $currentWeekStat->paid_ecom_auth;
+                $totalPaidEcomCaputed = $currentWeekStat->paid_ecom_captured;
+                $totalPaidEcomCancelled = $currentWeekStat->paid_ecom_cancelled;
+                $totalEcom = $currentWeekStat->ecom_total;
+            @endphp
             <tr>
                 <td>
                     {{$currentWeekStat->email}}
@@ -63,6 +77,26 @@ $count = 1;
                 </td>
             </tr>
             @endforeach
+            <tr>
+                <td colspan="2" style="text-align: center;border: 1px solid black;">
+                   <b>{{$totalAssigned}}</b>
+                </td>
+                <td style="text-align: center;border: 1px solid black;">
+                    <b>{{$totalPaidEcom}}</b>
+                </td>
+                <td style="text-align: center;border: 1px solid black;">
+                    <b>{{$totalPaidEcomAuthorised}}</b>
+                </td>
+                <td style="text-align: center;;border: 1px solid black;">
+                    <b> {{$totalPaidEcomCaputed}}</b>
+                </td>
+                <td style="text-align: center;;border: 1px solid black;">
+                    <b>{{$totalPaidEcomCancelled}}</b>
+                </td>
+                <td colspan="4" style="text-align: center;border: 1px solid black;">
+                    <b>{{$totalEcom}}</b>
+                </td>
+            </tr>
         </tbody>
     </table>
 </div>
