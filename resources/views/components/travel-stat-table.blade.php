@@ -47,14 +47,14 @@ $count = 1;
             @foreach ($statsArray[$statVariableName] as $currentWeekStat)
             @php
                 $totalAssigned += $currentWeekStat->total_assigned;
-                $totalPaidEcom = $currentWeekStat->paid_ecom;
-                $totalPaidEcomAuthorised = $currentWeekStat->paid_ecom_auth;
-                $totalPaidEcomCaputed = $currentWeekStat->paid_ecom_captured;
-                $totalPaidEcomCancelled = $currentWeekStat->paid_ecom_cancelled;
-                $totalTransactionApprovedEcom = $currentWeekStat->tran_approved_ecom;
-                $totalTransactionApprovedNonEcom = $currentWeekStat->tran_approved_non_ecom;
-                $totalTransactionApproved = $currentWeekStat->tran_approved_total;
-                $totalEcom = $currentWeekStat->ecom_total;
+                $totalPaidEcom += $currentWeekStat->paid_ecom;
+                $totalPaidEcomAuthorised += $currentWeekStat->paid_ecom_auth;
+                $totalPaidEcomCaputed += $currentWeekStat->paid_ecom_captured;
+                $totalPaidEcomCancelled += $currentWeekStat->paid_ecom_cancelled;
+                $totalTransactionApprovedEcom += $currentWeekStat->tran_approved_ecom;
+                $totalTransactionApprovedNonEcom += $currentWeekStat->tran_approved_non_ecom;
+                $totalTransactionApproved += $currentWeekStat->tran_approved_total;
+                $totalEcom += $currentWeekStat->ecom_total;
             @endphp
             <tr>
                 <td class="conversion-align">
