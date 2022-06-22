@@ -22,8 +22,10 @@ class BusinessQuoteService extends BaseService
     protected $query;
     use CustomerAdditionalInfoTrait;
     use GetUserTree;
-    public function __construct()
+    protected $leadAllocationService;
+    public function __construct(LeadAllocationService $leadAllocationService)
     {
+        $this->leadAllocationService = $leadAllocationService;
         $this->query = DB::table('business_quote_request as bqr')
             ->select(
                 'bqr.id',
@@ -305,8 +307,11 @@ class BusinessQuoteService extends BaseService
         );
         if (!Auth::user()->hasRole("ADMIN")) $dataArr['advisorId'] = Auth::user()->id;
         $response  = CapiRequestService::sendCAPIRequest('/api/v1-save-business-quote', $dataArr);
-        if (isset($response->quoteUID))
+        if (isset($response->quoteUID)){
+            $record = $this->getEntityPlainByUUID($response->quoteUID);
+            $this->leadAllocationService->assignLead($record, Auth::user()->id);
             return $this->createUpdateCustomerInfo($request, $request->email, $response->quoteUID, quoteTypeCode::BusinessQuote);
+        }
         else
             return $response;
     }
@@ -685,5 +690,10 @@ class BusinessQuoteService extends BaseService
         $quote->mobile_no = $parentRecord->mobile_no;
         $quote->advisor_id = Auth::user()->id;
         $quote->save();
+    }
+
+    public function getEntityPlainByUUID($uuid)
+    {
+        BusinessQuote::where('uuid', $uuid)->first();
     }
 }
