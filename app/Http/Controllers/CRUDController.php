@@ -34,6 +34,7 @@ use DB;
 use App\Services\LookupService;
 use App\Services\NotesForCustomerService;
 use App\Services\CustomerService;
+use App\Services\SendEmailCustomerService;
 
 class CRUDController extends Controller
 {
@@ -55,6 +56,7 @@ class CRUDController extends Controller
     protected $lookupService;
     protected $notesForCustomerService;
     protected $customerService;
+    protected $sendEmailCustomerService;
 
     public function __construct(
         HealthQuoteService $healthService,
@@ -74,7 +76,8 @@ class CRUDController extends Controller
         ApplicationStorageService $applicationStorageService,
         LookupService $lookupService,
         NotesForCustomerService $notesForCustomerService,
-        CustomerService $customerService
+        CustomerService $customerService,
+        SendEmailCustomerService $sendEmailCustomerService
     ) {
         $this->genericModel = new GenericModel();
         $this->healthQuoteService = $healthService;
@@ -94,6 +97,7 @@ class CRUDController extends Controller
         $this->lookupService = $lookupService;
         $this->notesForCustomerService = $notesForCustomerService;
         $this->customerService = $customerService;
+        $this->sendEmailCustomerService = $sendEmailCustomerService;
 
         $this->setModelType($request);
         $this->fillModelByModelType(ucwords($this->genericModel->modelType), $request);
@@ -808,7 +812,7 @@ class CRUDController extends Controller
     {
         $response = $this->sendNotesToCustomer($request);
 
-        if($response == 201 || $response == 202) {
+        if($response == 201) {
             $noteId = $this->notesForCustomerService->addCustomerNote($request);
         } else {
             return redirect()->back()->with('message', $response);
@@ -821,25 +825,6 @@ class CRUDController extends Controller
 
     public function sendNotesToCustomer(Request $request)
     {
-        $ecomCarInsuranceQuoteUrl = Config::get('constants.ECOM_CAR_INSURANCE_QUOTE_URL');
-        $emailTemplateId = (int)Config::get('constants.SIB_CAR_QUOTE_UPDATE_NOTES_TO_CUSTOMER_TEMPLATE');
-        $tag = 'car-quote-update-notes-to-customer';
-        $customer = $this->customerService->getUniqueCustomerByEmail($request->customer_email);
-
-        $emailData = array(
-            'customerName' => $request->customer_name,
-            'customerEmail' => $request->customer_email,
-            'buttonUrl' => $ecomCarInsuranceQuoteUrl.$request->quote_uuid,
-            'quoteCdbId' => $request->quote_cdb_id,
-            'quoteTypeId' => $request->quote_type_id,
-            'quoteId' => $request->quote_id,
-            'notesForCustomer' => $request->description,
-            'templateId' => $emailTemplateId,
-            'customerId' => $customer->id
-        );
-
-        $response = $this->notesForCustomerService->sendEmail($emailTemplateId, $emailData, $tag);
-
-        return $response;
+        return $this->notesForCustomerService->notesSendToCustomer($request);
     }
 }

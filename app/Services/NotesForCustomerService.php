@@ -10,18 +10,26 @@ use Exception;
 use Illuminate\Support\Facades\Log;
 use App\Services\EmailActivityService;
 use App\Services\EmailStatusService;
+use App\Services\CustomerService;
+use App\Services\SendEmailCustomerService;
 
 class NotesForCustomerService extends BaseService
 {
     protected $emailActivityService;
     protected $emailStatusService;
+    protected $customerService;
+    protected $sendEmailCustomerService;
 
     public function __construct(
         EmailActivityService $emailActivityService,
-        EmailStatusService $emailStatusService
+        EmailStatusService $emailStatusService,
+        CustomerService $customerService,
+        SendEmailCustomerService $sendEmailCustomerService
     ) {
         $this->emailActivityService = $emailActivityService;
         $this->emailStatusService = $emailStatusService;
+        $this->customerService = $customerService;
+        $this->sendEmailCustomerService = $sendEmailCustomerService;
     }
 
 	public function getNotesForCustomer($quoteTypeId, $quoteId)
@@ -43,72 +51,27 @@ class NotesForCustomerService extends BaseService
 		return $newNote->id;
 	}
 
-	public function sendEmail($emailTemplateId, $emailData, $tag)
-    {
-        try {
-            $apiKey = Config::get('constants.SENDINBLUE_KEY');
-            $url = Config::get('constants.SIB_URL');
-            $appEnv = Config::get('constants.APP_ENV');
+    public function notesSendToCustomer($request)
+	{
+        $ecomCarInsuranceQuoteUrl = Config::get('constants.ECOM_CAR_INSURANCE_QUOTE_URL');
+        $emailTemplateId = (int)Config::get('constants.SIB_CAR_QUOTE_UPDATE_NOTES_TO_CUSTOMER_TEMPLATE');
+        $customer = $this->customerService->getUniqueCustomerByEmail($request->customer_email);
 
-            $tag = $appEnv == EnvEnum::PRODUCTION ? $tag : $appEnv.'-'.$tag;
+        $emailData = array(
+            'customerName' => $request->customer_name,
+            'customerEmail' => $request->customer_email,
+            'buttonUrl' => $ecomCarInsuranceQuoteUrl.$request->quote_uuid,
+            'quoteCdbId' => $request->quote_cdb_id,
+            'quoteTypeId' => $request->quote_type_id,
+            'quoteId' => $request->quote_id,
+            'notesForCustomer' => $request->description,
+            'templateId' => $emailTemplateId,
+            'customerId' => $customer->id
+        );
 
-            $headers = [
-                'Accept' => 'application/json',
-                'api-key' => $apiKey,
-                'Content-Type' => 'application/json'
-            ];
+        $response = $this->sendEmailCustomerService->sendEmail($emailTemplateId, $emailData, 'car-quote-update-notes-to-customer');
 
-            $body = json_encode([
-                "to" => array([
-                    "email" => $emailData['customerEmail'],
-                    "name" => $emailData['customerName']
-                ]),
-                "templateId" => $emailTemplateId,
-                "params" => [
-                    "customerName" => $emailData['customerName'],
-                    "customerEmail" => $emailData['customerEmail'],
-                    "buttonUrl" => $emailData['buttonUrl'],
-					"cdbId" => $emailData['quoteCdbId'],
-					"notesForCustomer" => nl2br(htmlentities(str_replace("<br />", "", $emailData['notesForCustomer'])))
-                ],
-                "tags" => [
-                    $tag
-                ],
-            ]);
-
-            $client = new \GuzzleHttp\Client();
-            $clientRequest = $client->post(
-                $url,
-                [
-                    'headers' => $headers,
-                    'body' => $body,
-                    'timeout' => 10000,
-                ]
-            );
-
-			$messageId = json_decode($clientRequest->getBody()->getContents())->messageId;
-			$getResponse = json_decode(json_encode($clientRequest->getStatusCode()." ".$clientRequest->getBody()->getContents()),true);
-            $getStatusCode = $clientRequest->getStatusCode();
-
-            if($getStatusCode == 201 || $getStatusCode == 202) {
-                $isEmailSent = 1;
-            }
-        }
-        catch(Exception $ex) {
-            $errorMessage = "SIB:  getCode/getMessage: ".$ex->getCode()."/".$ex->getMessage()." customerEmail: ".$emailData['customerEmail']." quoteCdbId: ".$emailData['quoteCdbId']." get_class: ".get_class();
-            Log::channel('daily')->error($errorMessage);
-            $getStatusCode = $ex->getCode();
-            $getResponse = json_encode($ex->getCode()." ".$ex->getMessage());
-            $isEmailSent = 0;
-        }
-
-        $this->emailActivityService->addEmailActivity($getResponse, $isEmailSent, $emailData['customerEmail']);
-
-        if(isset($messageId)) {
-            $this->emailStatusService->addEmailStatus($emailData, $messageId);
-        }
-
-        return $getStatusCode;
-    }
+        return $response;
+	}
 
 }
