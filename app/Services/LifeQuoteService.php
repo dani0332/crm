@@ -15,8 +15,8 @@ use App\Traits\GetUserTree;
 use App\Traits\CustomerAdditionalInfo as CustomerAdditionalInfoTrait;
 use App\Enums\quoteTypeCode;
 use App\Enums\DatabaseColumnsString;
-use App\Enums\GenericeRequestEnum;
-use App\Enums\quoteStatusCode;
+use App\Enums\GenericRequestEnum;
+
 class LifeQuoteService extends BaseService
 {
     protected $query;
@@ -250,9 +250,9 @@ class LifeQuoteService extends BaseService
                 $this->query->whereNull('lqr.previous_quote_id');
             }
             if (isset($request->is_renewal) && $request->is_renewal != '') {
-                if ($request->is_renewal == GenericeRequestEnum::Yes)
+                if ($request->is_renewal == GenericRequestEnum::Yes)
                     $this->query->whereNotNull('lqr.previous_quote_id');
-                if ($request->is_renewal == GenercieRequestEnum::No)
+                if ($request->is_renewal == GenericRequestEnum::No)
                     $this->query->whereNull('lqr.previous_quote_id');
             }
             foreach ($searchProperties as $item) {
@@ -267,7 +267,7 @@ class LifeQuoteService extends BaseService
                     } else if ($item == DatabaseColumnsString::QUOTE_STATUS_ID && is_array($request[$item]) && !empty($request[$item])) {
                         $this->query->whereIn('quote_status_id', $request[$item]);
                     } else {
-                        $skipped = array('is_renewal', 'previous_policy_expiry_date','next_followup_date');
+                        $skipped = array('is_renewal', 'previous_policy_expiry_date', 'next_followup_date');
                         if (in_array($item, $skipped)) {
                             continue;
                         }

@@ -1,6 +1,6 @@
-<?php
+@php
 $appName = Config::get('constants.APP_NAME');
-?>
+@endphp
 <!DOCTYPE html>
 <html lang="en">
 
@@ -11,7 +11,9 @@ $appName = Config::get('constants.APP_NAME');
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="icon" type="image/png" href="{{ asset('image/favicon.ico') }}">
-    <title>@yield('title') | <?php echo $appName; ?></title>
+    <title>@yield('title') |
+        {{$appName}}
+    </title>
     <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
     <!-- Bootstrap -->
     <link href="{{ asset('vendors/bootstrap/dist/css/bootstrap.min.css') }}" rel="stylesheet">
@@ -36,8 +38,7 @@ $appName = Config::get('constants.APP_NAME');
     <link href="{{ asset('vendors/datatables.net-buttons-bs/css/buttons.bootstrap.min.css') }}" rel="stylesheet">
     <link href="{{ asset('vendors/datatables.net-fixedheader-bs/css/fixedHeader.bootstrap.min.css') }}"
         rel="stylesheet">
-    <link href="{{ asset('vendors/datatables.net-responsive-bs/css/responsive.bootstrap.min.css') }}"
-        rel="stylesheet">
+    <link href="{{ asset('vendors/datatables.net-responsive-bs/css/responsive.bootstrap.min.css') }}" rel="stylesheet">
     <link href="{{ asset('vendors/datatables.net-scroller-bs/css/scroller.bootstrap.min.css') }}" rel="stylesheet">
     <link href="https://www.jquery-az.com/jquery/css/bootstrap-markdown-editor.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
@@ -57,7 +58,6 @@ $appName = Config::get('constants.APP_NAME');
             background: url('//upload.wikimedia.org/wikipedia/commons/thumb/e/e5/Phi_fenomeni.gif/50px-Phi_fenomeni.gif') 50% 50% no-repeat rgb(249, 249, 249);
             display: none;
         }
-
     </style>
 </head>
 
@@ -182,7 +182,7 @@ $appName = Config::get('constants.APP_NAME');
                 customer_data_table_route: "{{ route('customer.index') }}",
                 discount_base_data_table_route: "{{ route('base.index') }}",
                 load_auditable: "{{ url('auditable') }}",
-                //load_dashboard_stats: "{{ url('dashboard-stats') }}",
+                load_dashboard_stats: "{{ url('dashboard-stats') }}",
                 insurancecompany_datatable_route: "{{ route('insurancecompany.index') }}",
                 handler_datatable_route: "{{ route('handler.index') }}",
                 reason_datatable_route: "{{ route('reason.index') }}",

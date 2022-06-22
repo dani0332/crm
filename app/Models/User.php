@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\RolesEnum;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -111,24 +112,24 @@ class User extends Authenticatable implements AuditableContract
 
     public function isRenewalUser()
     {
-        return Auth::user()->hasAnyRole(["CAR_RENEWAL_ADVISOR", "CAR_RENEWAL_MANAGER"]);
+        return Auth::user()->hasAnyRole([RolesEnum::CarRenewalAdvisor, RolesEnum::CarRenewalManager]);
     }
 
     public function isRenewalAdvisor()
     {
-        return Auth::user()->hasAnyRole(["CAR_RENEWAL_ADVISOR","TRAVEL_RENEWAL_ADVISOR","HEALTH_RENEWAL_ADVISOR","HOME_RENEWAL_ADVISOR","LIFE_RENEWAL_ADVISOR","GM_RENEWAL_ADVISOR","CORPLINE_RENEWAL_ADVISOR","PET_RENEWAL_ADVISOR"]);
+        return Auth::user()->hasAnyRole([RolesEnum::CarRenewalAdvisor, RolesEnum::TravelRenewalAdvisor, RolesEnum::HealthRenewalAdvisor, RolesEnum::HomeRenewalAdvisor, RolesEnum::LifeRenewalAdvisor, RolesEnum::GMRenewalAdvisor, RolesEnum::CorpLineRenewalAdvisor, RolesEnum::PetRenewalAdvisor]);
     }
     public function isRenewalManager()
     {
-        return Auth::user()->hasAnyRole(["CAR_RENEWAL_MANAGER","TRAVEL_RENEWAL_MANAGER","HEALTH_RENEWAL_MANAGER","HOME_RENEWAL_MANAGER","LIFE_RENEWAL_MANAGER","GM_RENEWAL_MANAGER","CORPLINE_RENEWAL_MANAGER","PET_RENEWAL_MANAGER"]);
+        return Auth::user()->hasAnyRole([RolesEnum::CarRenewalManager, RolesEnum::TravelRenewalManager, RolesEnum::HealthRenewalManager, RolesEnum::HomeRenewalManager, RolesEnum::LifeRenewalManager, RolesEnum::GMRenewalManager, RolesEnum::CorpLineRenewalManager, RolesEnum::PetRenewalManager]);
     }
     public function isNewBusinessManager()
     {
-        return Auth::user()->hasAnyRole(["HEALTH_NEW_BUSINESS_MANAGER","TRAVEL_NEW_BUSINESS_MANAGER","HOME_NEW_BUSINESS_MANAGER","LIFE_NEW_BUSINESS_MANAGER","GM_NEW_BUSINESS_MANAGER","CORPLINE_NEW_BUSINESS_MANAGER","PET_NEW_BUSINESS_MANAGER"]);
+        return Auth::user()->hasAnyRole([RolesEnum::HealthNewBusinessManager, RolesEnum::TravelNewBusinessManager, RolesEnum::HomeNewBusinessManager, RolesEnum::LifeNewBusinessManager, RolesEnum::GMNewBusinessManager, RolesEnum::CorpLineNewBusinessManager, RolesEnum::PetNewBusinessManager]);
     }
     public function isNewBusinessAdvisor()
     {
-        return Auth::user()->hasAnyRole(["CAR_NEW_BUSINESS_ADVISOR","TRAVEL_NEW_BUSINESS_ADVISOR","HEALTH_NEW_BUSINESS_ADVISOR","HOME_NEW_BUSINESS_ADVISOR","LIFE_NEW_BUSINESS_ADVISOR","GM_NEW_BUSINESS_ADVISOR","CORPLINE_NEW_BUSINESS_ADVISOR","PET_NEW_BUSINESS_ADVISOR"]);
+        return Auth::user()->hasAnyRole([RolesEnum::CarNewBusinessAdvisor, RolesEnum::TravelNewBusinessAdvisor, RolesEnum::HealthNewBusinessAdvisor, RolesEnum::HomeNewBusinessAdvisor, RolesEnum::LifeNewBusinessAdvisor, RolesEnum::GMNewBusinessAdvisor, RolesEnum::CorpLineNewBusinessAdvisor, RolesEnum::PetNewBusinessAdvisor]);
     }
     public function isAdvisor()
     {
@@ -147,7 +148,7 @@ class User extends Authenticatable implements AuditableContract
         $userRoles = Auth::user()->usersroles()->get();
         $isAdvisor = false;
         foreach ($userRoles as $userRole) {
-            if (str_contains(strtolower($userRole->name), strtolower($teamType).'_advisor')) {
+            if (str_contains(strtolower($userRole->name), strtolower($teamType) . '_advisor')) {
                 $isAdvisor = true;
             }
         }
@@ -156,7 +157,7 @@ class User extends Authenticatable implements AuditableContract
 
     public function isAdmin()
     {
-        return Auth::user()->hasRole("ADMIN");
+        return Auth::user()->hasRole(RolesEnum::Admin);
     }
 
     public function getUserTeams($userId)
@@ -168,40 +169,44 @@ class User extends Authenticatable implements AuditableContract
     public function processGetDSL($filters = [])
     {
 
-        if (Auth::user()->hasRole('production_approval_manager')) {
-
-            $users =  User::select(['id', 'name'])->whereHas(
-                'roles',
-                function ($q) {
-                    $q->where('name', 'pa');
-                }
-            )
-                ->get();
-            return $users;
+        if (Auth::user()->hasAnyRole([RolesEnum::ProductionApprovalManager, RolesEnum::Advisor, RolesEnum::Admin])) {
+            return $this->getUserRoles();
         }
-
-        if (Auth::user()->hasRole('advisor') || Auth::user()->hasRole('ADMIN')) {
-
-            $users =  User::select(['id', 'name'])->whereHas(
-                'roles',
-                function ($q) use ($filters) {
-                    foreach ($filters as $key => $value) {
-                        $q->where($key, $value);
-                    }
-                }
-            )
-                ->get();
-            return $users;
-        }
-
         return self::with(array('usersroles' => function ($query) {
             $query->where('name', 'admin');
         }))->get();
+    }
 
-        // return User::whereHas(
-        //     'usersroles', function($q){
-        //         $q->where('name', 'admin');
-        //     }
-        // )->get();
+    public function hasMyLeadAccess()
+    {
+        return Auth::user()->hasAnyRole([
+            RolesEnum::Admin, RolesEnum::CarAdvisor, RolesEnum::BusinessAdvisor, RolesEnum::HealthAdvisor, RolesEnum::HomeAdvisor,
+            RolesEnum::LifeAdvisor, RolesEnum::TravelAdvisor, RolesEnum::GMAdvisor, RolesEnum::RMAdvisor, RolesEnum::CorpLineAdvisor,
+            RolesEnum::EBPAdvisor, RolesEnum::HealthWCUAdvisor, RolesEnum::HealthRenewalAdvisor, RolesEnum::HealthNewBusinessAdvisor,
+            RolesEnum::TravelAdvisor, RolesEnum::HealthWCUAdvisor, RolesEnum::HealthRenewalAdvisor, RolesEnum::HealthNewBusinessAdvisor,
+            RolesEnum::TravelRenewalAdvisor, RolesEnum::TravelNewBusinessAdvisor, RolesEnum::LifeRenewalAdvisor, RolesEnum::LifeNewBusinessAdvisor,
+            RolesEnum::HomeRenewalAdvisor, RolesEnum::HomeNewBusinessAdvisor, RolesEnum::GMNewBusinessAdvisor, RolesEnum::GMRenewalAdvisor,
+            RolesEnum::CorpLineRenewalAdvisor,
+            RolesEnum::CorpLineNewBusinessAdvisor, RolesEnum::PetRenewalAdvisor, RolesEnum::PetNewBusinessAdvisor, RolesEnum::CarRenewalAdvisor
+        ]);
+    }
+
+    public function hasPolicyIssuanceAccess()
+    {
+        return Auth::user()->hasAnyRole([
+            RolesEnum::Advisor, RolesEnum::PA, RolesEnum::Payment, RolesEnum::Invoicing,
+            RolesEnum::ProductionApprovalManager
+        ]);
+    }
+
+    public function getUserRoles()
+    {
+        return User::select(['id', 'name'])->whereHas(
+            'roles',
+            function ($q) {
+                $q->where('name', 'pa');
+            }
+        )
+            ->get();
     }
 }

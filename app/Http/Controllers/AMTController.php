@@ -16,13 +16,14 @@ use DataTables;
 use \Carbon\Carbon;
 use Auth;
 use Illuminate\Support\Facades\Redirect;
-use App\Traits\GetUserTree;
+use App\Traits\RolePermissionConditions;
 use App\Enums\quoteStatusCode;
+
 class AMTController extends Controller
 {
     protected $businessQuoteService;
     protected $crudService;
-    use GetUserTree;
+    use RolePermissionConditions;
     public function __construct(BusinessQuoteService $businessQuoteService, CRUDService $crudService)
     {
         $this->businessQuoteService = $businessQuoteService;
@@ -70,25 +71,7 @@ class AMTController extends Controller
                 'bqr.previous_quote_policy_premium'
             )->orderBy('bqr.advisor_id', 'asc');
 
-            if (\Auth::user()->isRenewalAdvisor()) {
-                $data->whereNotNull('tqr.previous_quote_id');
-                $data->where('bqr.advisor_id', \Auth::user()->id);
-            }
-            if (\Auth::user()->isRenewalManager()) {
-                $ids = $this->walkTree(\Auth::user()->id);
-                $data->whereIn('bqr.advisor_id', $ids);
-                $data->whereNotNull('bqr.previous_quote_id');
-            }
-            if (\Auth::user()->isNewBusinessManager()) {
-                $ids = $this->walkTree(\Auth::user()->id);
-                $data->whereIn('bqr.advisor_id', $ids);
-                $data->whereNull('bqr.previous_quote_id');
-            }
-            if (\Auth::user()->isNewBusinessAdvisor()) {
-                $ids = $this->walkTree(\Auth::user()->id);
-                $data->whereIn('bqr.advisor_id', $ids);
-                $data->whereNull('bqr.previous_quote_id');
-            }
+        $this->whereBasedOnRole($data, 'bqr');
 
         $leadStatuses = DB::table('quote_status')->select('id', 'text')->orderBy('sort_order', 'asc')->get();
         $advisors = DB::table('users as u')
