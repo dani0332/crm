@@ -8,7 +8,7 @@ $count = 1;
 @foreach ($statsArray as $currentStat)
 
 <div class="x_content">
-    <div class="x_title">
+    <div>
         @php
         $statVariableName = $count . 'Week';
         $statHeadingName = $count . 'WeekHeadingDate';
