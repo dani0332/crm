@@ -27,3 +27,11 @@
 .remove_additional_btn, #add_additional_btn{
     padding-top: 39px;
   }
+
+  .conversion-td{
+
+    border: 1px solid black;
+}
+.conversion_table td{
+    text-align: center !important;
+}

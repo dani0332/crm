@@ -25,7 +25,7 @@ $count = 1;
         <h2>{{$headingArray[$statHeadingName]}}</h2>
         <div class="clearfix"></div>
     </div>
-    <table class="table table-striped jambo_table" style="width:100%">
+    <table class="table table-striped jambo_table conversion_table" style="width:100%">
         <thead>
             <tr>
                 <th>Advisor Email</th>
@@ -57,7 +57,7 @@ $count = 1;
                 $totalEcom = $currentWeekStat->ecom_total;
             @endphp
             <tr>
-                <td>
+                <td class="conversion-align">
                     {{$currentWeekStat->email}}
                 </td>
                 <td>
@@ -108,32 +108,36 @@ $count = 1;
             </tr>
             @endforeach
             <tr>
-                <td colspan="2" style="text-align: center;">
+                <td></td>
+                <td class="conversion-td conversion-align">
                    <b>{{$totalAssigned}}</b>
                 </td>
-                <td style="text-align: center;">
+                <td class="conversion-td conversion-align">
                     <b>{{$totalPaidEcom}}</b>
                 </td>
-                <td style="text-align: center;">
+                <td class="conversion-td conversion-align">
                     <b>{{$totalPaidEcomAuthorised}}</b>
                 </td>
-                <td style="text-align: center;">
+                <td class="conversion-td conversion-align">
                     <b> {{$totalPaidEcomCaputed}}</b>
                 </td>
-                <td style="text-align: center;">
+                <td class="conversion-td conversion-align">
                     <b>{{$totalPaidEcomCancelled}}</b>
                 </td>
-                <td style="text-align: center;">
+                <td class="conversion-td conversion-align">
                     <b>{{$totalTransactionApprovedEcom}}</b>
                 </td>
-                <td style="text-align: center;">
+                <td class="conversion-td conversion-align">
                     <b>{{$totalTransactionApprovedNonEcom}}</b>
                 </td>
-                <td style="text-align: center;">
+                <td class="conversion-td conversion-align">
                     <b>{{$totalTransactionApproved}}</b>
                 </td>
-                <td colspan="4" style="text-align: left;">
+                <td class="conversion-td conversion-align">
                     <b>{{$totalEcom}}</b>
+                </td>
+                <td colspan="3">
+
                 </td>
             </tr>
         </tbody>
