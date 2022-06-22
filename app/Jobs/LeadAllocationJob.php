@@ -58,9 +58,9 @@ class LeadAllocationJob implements ShouldQueue
                     $subTeamName = $this->leadAllocationService->getHealthUserSubTeamName($user->id);
                     if ($subTeamName == null) {
                         Log::info('User: ' . $user->name . ' has no sub team so skipping this user.');
-                        $user = $this->leadAllocationService->getNextAvailableAdvisor($user->id);
+                        continue;
                     }
-                    Log::info('Lead Health Team Type ' . $unAllocatedLead->health_team_type . ' User Sub Team Name: ' . $subTeamName);
+                    Log::info('Lead Health Team Type ' . $unAllocatedLead->health_team_type . ', User Sub Team Name: ' . $subTeamName);
 
                     if (strtolower($subTeamName) == strtolower($unAllocatedLead->health_team_type)) {
                         Log::info('Next available advisor: ' . $user->name);

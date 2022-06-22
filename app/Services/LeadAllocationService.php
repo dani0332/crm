@@ -105,15 +105,23 @@ class LeadAllocationService extends BaseService
         try {
             DB::beginTransaction();
             Log::info('getNextAvailableAdvisor -- started');
-            Log::info('Fetching loggedin user (manager) subordinates');
-            $healthUsersQuery = User::where('team_id', Team::where('name', 'Health')->first()->id);
+            Log::info('Fetching loggedin users with Health Team and roles RM, EBP & HEALTH advisor');
+            $healthTeamId = Team::where('name', 'Health')->first()->id;
+            $healthUsersQuery = User::join('model_has_roles', 'model_has_roles.model_id', '=', 'users.id')
+                ->join('roles', 'roles.id', '=', 'model_has_roles.role_id')
+                ->whereIn('roles.name', ['RM_ADVISOR', 'EBP_ADVISOR', 'HEALTH_ADVISOR'])
+                ->whereNotNull('sub_team_id')
+                ->where('team_id', $healthTeamId);
             if ($skipUser != null) {
                 $healthUsersQuery->where('id', '!=', $skipUser);
             }
             $healthUsers = $healthUsersQuery->pluck('id');
             Log::info('Found ' . count($healthUsers) . ' sub-ordinates');
             Log::info('Fetching lead allocation records for sub-ordinates');
-            $leadAllocationWithUsers = LeadAllocation::with('leadAllocationUser')->where('is_available', '=', true)->whereIn('user_id', $healthUsers)->get();
+            $leadAllocationWithUsers = LeadAllocation::with('leadAllocationUser')
+                ->where('is_available', '=', true)
+                ->whereIn('user_id', $healthUsers)
+                ->get();
             Log::info('Found ' . count($leadAllocationWithUsers) . ' lead allocation records');
 
             DB::commit();
