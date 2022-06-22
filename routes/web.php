@@ -189,6 +189,7 @@ Route::group(['middleware' =>  ['auth']], function () {
         Route::post('car/CarPlanManualProcess', [CRUDController::class, 'CarPlanManualProcess'])->name('CarPlanManualProcess');
         Route::post('car/carAssumptionsUpdate', [CRUDController::class, 'carAssumptionsUpdate']);
         Route::post('car/addNoteForCustomer', [CRUDController::class, 'addNoteForCustomer']);
+        Route::post('car/sendNotesToCustomer', [CRUDController::class, 'sendNotesToCustomer']);
     });
 
     Route::group(['prefix' => 'generic'], function () {

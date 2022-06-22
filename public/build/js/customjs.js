@@ -2242,6 +2242,6 @@ function disabledDoneActivities(){
     });
 }
 
-$('#add-note-for-customer-btn').on('click', function(){
+$('#send-note-for-customer-btn').on('click', function(){
     $('#notesForCustomerModal').modal({ show: true });
 });

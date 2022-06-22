@@ -3,7 +3,7 @@
         <div class="x_panel">
             <div class="x_title">
                 <h2>Notes for Customer</h2>
-                <button class="btn btn-primary btn-sm" style="float:right;width:170px;" type="button" id="add-note-for-customer-btn">Add note for customer</button>
+                <button class="btn btn-sm btn-warning" style="float:right;width:170px;" type="button" id="send-note-for-customer-btn">Send Notes to Customer</button>
                 <div class="clearfix"></div>
             </div>
             <div class="x_content">
@@ -21,7 +21,7 @@
                             @foreach ($notesForCustomers as $key => $notesForCustomer)
                                 <tr>
                                     <td>{{ $notesForCustomer->id }}</td>
-                                    <td>{{ $notesForCustomer->description }}</td>
+                                    <td>@php echo nl2br(htmlentities(str_replace("<br />", "", $notesForCustomer->description))) @endphp</td>
                                     <td>{{ $notesForCustomer->created_at }}</td>
                                     <td>{{ $notesForCustomer->createdby ? $notesForCustomer->createdby->name : '' }}</td>
                                 </tr>

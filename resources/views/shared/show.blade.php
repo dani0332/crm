@@ -355,7 +355,7 @@
         @isset($record->previous_quote_id)
         <x-email-status :emailStatuses="$emailStatuses" />
         @endisset
-        <x-notes-for-customer :notesForCustomers="$notesForCustomers" />
+        <x-notes-for-customer :record="$record" :notesForCustomers="$notesForCustomers" :quoteTypeId="$quoteTypeId" />
         <x-notes-for-customer-modal :record="$record" :quoteTypeId="$quoteTypeId" />
     @endif
 

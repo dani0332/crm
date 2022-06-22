@@ -25,7 +25,6 @@ use App\Services\PetQuoteService;
 use App\Services\UserService;
 use App\Services\EmailStatusService;
 use App\Services\ApplicationStorageService;
-use BenSampo\Enum\Rules\EnumValue;
 use DataTables;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
@@ -34,6 +33,8 @@ use Config;
 use DB;
 use App\Services\LookupService;
 use App\Services\NotesForCustomerService;
+use App\Services\CustomerService;
+use App\Services\SendEmailCustomerService;
 
 class CRUDController extends Controller
 {
@@ -54,6 +55,8 @@ class CRUDController extends Controller
     protected $applicationStorageService;
     protected $lookupService;
     protected $notesForCustomerService;
+    protected $customerService;
+    protected $sendEmailCustomerService;
 
     public function __construct(
         HealthQuoteService $healthService,
@@ -72,7 +75,9 @@ class CRUDController extends Controller
         EmailStatusService $emailStatusService,
         ApplicationStorageService $applicationStorageService,
         LookupService $lookupService,
-        NotesForCustomerService $notesForCustomerService
+        NotesForCustomerService $notesForCustomerService,
+        CustomerService $customerService,
+        SendEmailCustomerService $sendEmailCustomerService
     ) {
         $this->genericModel = new GenericModel();
         $this->healthQuoteService = $healthService;
@@ -91,6 +96,8 @@ class CRUDController extends Controller
         $this->applicationStorageService = $applicationStorageService;
         $this->lookupService = $lookupService;
         $this->notesForCustomerService = $notesForCustomerService;
+        $this->customerService = $customerService;
+        $this->sendEmailCustomerService = $sendEmailCustomerService;
 
         $this->setModelType($request);
         $this->fillModelByModelType(ucwords($this->genericModel->modelType), $request);
@@ -804,10 +811,21 @@ class CRUDController extends Controller
 
     public function addNoteForCustomer(Request $request)
     {
-        $noteId = $this->notesForCustomerService->AddNoteForCustomer($request);
+        $response = $this->sendNotesToCustomer($request);
+
+        if($response == 201) {
+            $noteId = $this->notesForCustomerService->addCustomerNote($request);
+        } else {
+            return redirect()->back()->with('message', $response);
+        }
 
         if($noteId) {
-            return redirect()->back()->with('success', 'Note for customer has been added');
+            return redirect()->back()->with('success', 'Notes to customer has been sent.');
         }
+    }
+
+    public function sendNotesToCustomer(Request $request)
+    {
+        return $this->notesForCustomerService->notesSendToCustomer($request);
     }
 }

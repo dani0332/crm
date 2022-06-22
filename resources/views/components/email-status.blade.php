@@ -10,32 +10,34 @@
                     <thead>
                         <tr>
                             <th>Id</th>
+                            <th>Email Subject</th>
                             <th>Email Address</th>
                             <th>Status</th>
                             <th>Reason</th>
+                            @if (Auth::user()->hasRole(['ADMIN']))
+                            <th>Template Id</th>
+                            <th>Customer Id</th>
+                            @endif
                             <th>Created At</th>
                             <th>Updated At</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @if($emailStatuses->count() > 0)
-                            @foreach ($emailStatuses as $key => $emailStatus)
-                                <tr>
-                                    <td>{{ $emailStatus->id }}</td>
-                                    <td>{{ $emailStatus->email_address }}</td>
-                                    <td>{{ ucwords($emailStatus->email_status) }}</td>
-                                    <td>{{ ucwords($emailStatus->reason) }}</td>
-                                    <td>{{ $emailStatus->created_at }}</td>
-                                    <td>{{ $emailStatus->updated_at }}</td>
-                                </tr>
-                            @endforeach
-                        @else
-                        <tbody>
-                            <tr class="odd">
-                                <td valign="top" colspan="6" class="dataTables_empty">No data available in table</td>
+                        @foreach ($emailStatuses as $key => $emailStatus)
+                            <tr>
+                                <td>{{ $emailStatus->id }}</td>
+                                <td>{{ $emailStatus->email_subject }}</td>
+                                <td>{{ $emailStatus->email_address }}</td>
+                                <td>{{ ucwords($emailStatus->email_status) }}</td>
+                                <td>{{ ucwords($emailStatus->reason) }}</td>
+                                @if (Auth::user()->hasRole(['ADMIN']))
+                                <td>{{ $emailStatus->template_id }}</td>
+                                <td>{{ $emailStatus->customer_id }}</td>
+                                @endif
+                                <td>{{ $emailStatus->created_at }}</td>
+                                <td>{{ $emailStatus->updated_at }}</td>
                             </tr>
-                        </tbody>
-                        @endif
+                        @endforeach
                     </tbody>
                 </table>
             </div>

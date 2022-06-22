@@ -13,6 +13,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Config;
 use DB;
+use Exception;
 
 class ProcessSIBCustomerMail implements ShouldQueue
 {
@@ -20,11 +21,13 @@ class ProcessSIBCustomerMail implements ShouldQueue
 
     protected $email;
     protected $name;
+    protected $sendEmailCustomerService;
 
-    public function __construct($email, $name)
+    public function __construct($email, $name, SendEmailCustomerService $sendEmailCustomerService)
     {
         $this->email = $email;
         $this->name = $name;
+        $this->sendEmailCustomerService = $sendEmailCustomerService;
     }
 
     public function handle()
@@ -39,7 +42,7 @@ class ProcessSIBCustomerMail implements ShouldQueue
                 'signUpButtonUrl' => $WEGenerateUrlResponse
             );
 
-            $getStatusCode = SendEmailCustomerService::sendEmail($emailTemplateId, $emailData, $tag = 'corporate-myalfred-we');
+            $getStatusCode = $this->sendEmailCustomerService->sendEmail($emailTemplateId, $emailData, 'corporate-myalfred-we');
 
             if ($getStatusCode == 201) {
                 $findCustomerByEmail = CustomerService::getCustomerByEmail($this->email);
