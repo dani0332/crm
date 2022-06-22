@@ -109,31 +109,31 @@ $count = 1;
             @endforeach
             <tr>
                 <td></td>
-                <td class="conversion-td conversion-align">
+                <td class="conversion-td">
                    <b>{{$totalAssigned}}</b>
                 </td>
-                <td class="conversion-td conversion-align">
+                <td class="conversion-td">
                     <b>{{$totalPaidEcom}}</b>
                 </td>
-                <td class="conversion-td conversion-align">
+                <td class="conversion-td">
                     <b>{{$totalPaidEcomAuthorised}}</b>
                 </td>
-                <td class="conversion-td conversion-align">
+                <td class="conversion-td">
                     <b> {{$totalPaidEcomCaputed}}</b>
                 </td>
-                <td class="conversion-td conversion-align">
+                <td class="conversion-td">
                     <b>{{$totalPaidEcomCancelled}}</b>
                 </td>
-                <td class="conversion-td conversion-align">
+                <td class="conversion-td">
                     <b>{{$totalTransactionApprovedEcom}}</b>
                 </td>
-                <td class="conversion-td conversion-align">
+                <td class="conversion-td">
                     <b>{{$totalTransactionApprovedNonEcom}}</b>
                 </td>
-                <td class="conversion-td conversion-align">
+                <td class="conversion-td">
                     <b>{{$totalTransactionApproved}}</b>
                 </td>
-                <td class="conversion-td conversion-align">
+                <td class="conversion-td">
                     <b>{{$totalEcom}}</b>
                 </td>
                 <td colspan="3">

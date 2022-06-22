@@ -81,22 +81,22 @@ $count = 1;
                 <td>
 
                 </td>
-                <td class="conversion-td conversion-align">
+                <td class="conversion-td">
                    <b>{{$totalAssigned}}</b>
                 </td>
-                <td class="conversion-td conversion-align">
+                <td class="conversion-td">
                     <b>{{$totalPaidEcom}}</b>
                 </td>
-                <td class="conversion-td conversion-align">
+                <td class="conversion-td">
                     <b>{{$totalPaidEcomAuthorised}}</b>
                 </td>
-                <td class="conversion-td conversion-align">
+                <td class="conversion-td">
                     <b> {{$totalPaidEcomCaputed}}</b>
                 </td>
-                <td class="conversion-td conversion-align">
+                <td class="conversion-td">
                     <b>{{$totalPaidEcomCancelled}}</b>
                 </td>
-                <td class="conversion-td conversion-align">
+                <td class="conversion-td">
                     <b>{{$totalEcom}}</b>
                 </td>
                 <td colspan="3" >
