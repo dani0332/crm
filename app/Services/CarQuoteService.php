@@ -95,8 +95,8 @@ class CarQuoteService extends BaseService
                 'cqr.previous_policy_expiry_date',
                 'cqr.previous_quote_policy_premium',
                 'cqr.car_model_detail_id',
-                'cmodeldetail.text as trim',
-                'cmodeldetail.text as trim_text',
+                // 'cmodeldetail.text as trim',
+                // 'cmodeldetail.text as trim_text',
                 'cqr.is_modified',
                 'cqr.is_bank_financed',
                 'cqr.is_gcc_standard',
@@ -109,7 +109,7 @@ class CarQuoteService extends BaseService
             ->leftJoin('car_make as cmake', 'cmake.id', '=', 'cqr.car_make_id')
             ->leftJoin('uae_license_held_for as ulhf', 'ulhf.id', '=', 'cqr.uae_license_held_for_id')
             ->leftJoin('car_model as cmodel', 'cmodel.id', '=', 'cqr.car_model_id')
-            ->leftJoin('car_model_detail as cmodeldetail', 'cmodeldetail.car_model_id', '=', 'cmodel.id')
+            // ->leftJoin('car_model_detail as cmodeldetail', 'cmodeldetail.car_model_id', '=', 'cmodel.id')
             ->leftJoin('emirates as e', 'e.id', '=', 'cqr.emirate_of_registration_id')
             ->leftJoin('car_type_insurance as cti', 'cti.id', '=', 'cqr.car_type_insurance_id')
             ->leftJoin('claim_history as ch', 'ch.id', '=', 'cqr.claim_history_id')
@@ -147,7 +147,7 @@ class CarQuoteService extends BaseService
             "seatCapacity" => $request->seat_capacity,
             "cylinder" => $request->cylinder,
             "vehicleTypeId" => $request->vehicle_type_id,
-            "trim" => $request->trim,
+            // "trim" => $request->trim,
             "premium" => $request->premium,
             "carMakeId" => $carMakeId, // ID
             "carModelId" => $request->car_model_id, // ID
@@ -182,7 +182,7 @@ class CarQuoteService extends BaseService
         $carQuote->currently_insured_with = $request->currently_insured_with;
         $carQuote->quote_updated_at = Carbon::now();
         $carQuote->is_quote_locked = true;
-        $carQuote->car_model_detail_id = $request->trim;
+        // $carQuote->car_model_detail_id = $request->trim;
         $carQuote->save();
 
         if (isset($request->return_to_view))
@@ -288,7 +288,7 @@ class CarQuoteService extends BaseService
             "quote_status_id" => "select|title|multiple",
             "car_make_id" => "select|title|required",
             "car_model_id" => "select|title|required",
-            "trim" => "select|title",
+            // "trim" => "select|title",
             "vehicle_type_id" => "select|title|required",
             "next_followup_date" => "input|date|title|range",
             "previous_quote_policy_premium" => "input|title|number",
@@ -816,7 +816,7 @@ class CarQuoteService extends BaseService
         return [
             "create" => "id,advisor_id,paid_at,lost_reason,payment_status_id,plan_id,premium,car_plan_provider_id,code,is_ecommerce,payment_gateway,created_at,next_followup_date,updated_at,promo_code,quote_status_id,device,policy_number,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by,renewal_expiry_date,renewal_batch,premium,source,transapp_code,previous_quote_policy_number,previous_policy_expiry_date,previous_quote_policy_premium",
             "list" => "trim,additional_notes,email,mobile_no,paid_at,renewal_batch,renewal_expiry_date,plan_id,car_plan_provider_id,payment_gateway,currently_insured_with,promo_code,car_make_id,car_model_id,device,policy_number,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by,nationality_id,dob,year_of_manufacture,uae_license_held_for_id,car_value,emirate_of_registration_id,claim_history_id,car_type_insurance_id,previous_quote_policy_number,previous_policy_expiry_date,previous_quote_policy_premium",
-            "update" => "id,advisor_id,paid_at,renewal_expiry_date,payment_status_id,lost_reason,plan_id,premium,car_plan_provider_id,code,is_ecommerce,payment_gateway,created_at,next_followup_date,updated_at,promo_code,device,policy_number,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by,renewal_batch,source,transapp_code,previous_quote_policy_number,previous_policy_expiry_date,previous_quote_policy_premium",
+            "update" => "id,advisor_id,paid_at,renewal_expiry_date,payment_status_id,lost_reason,plan_id,premium,car_plan_provider_id,code,is_ecommerce,payment_gateway,created_at,next_followup_date,updated_at,promo_code,device,policy_number,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by,renewal_batch,source,transapp_code,previous_quote_policy_number,previous_policy_expiry_date,previous_quote_policy_premium,quote_status_id",
             "show" => "trim",
         ];
     }
