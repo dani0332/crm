@@ -889,10 +889,14 @@ class HealthQuoteService extends BaseService
     {
         $startOfDayToday = Carbon::now()->startOfDay();
         $entityDetail = $this->getDetailEntity($entity->id);
-        $lastAssignedAdvisorDate =
+        $lastAssignedAdvisorDate = Carbon::parse($entityDetail->advisor_assigned_date)->startOfDay();
+        if ($lastAssignedAdvisorDate == $startOfDayToday) {
+            $this->leadAllocationService->removeLeadAllocationForOldAdvisor($entity);
+        }
         $entity->advisor_id = null;
         $entity->quote_status_id = QuoteStatusEnum::Qualified;
         $entity->save();
+
     }
 
     public function processManualLeadAssignment($request)

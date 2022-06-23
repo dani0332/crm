@@ -3,14 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Enums\HealthTeamType;
-use App\Enums\LeadStatusCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
-use App\Models\CarQuoteAdvisorToOE;
 use App\Models\GenericModel;
 use App\Models\InsuranceProvider;
-use App\Models\QuoteStatus;
 use App\Models\User;
 use App\Services\ActivitiesService;
 use App\Services\BusinessQuoteService;
@@ -28,7 +25,6 @@ use App\Services\UserService;
 use App\Services\EmailStatusService;
 use App\Services\ApplicationStorageService;
 use App\Services\LeadAllocationService;
-use BenSampo\Enum\Rules\EnumValue;
 use DataTables;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
@@ -37,7 +33,6 @@ use Config;
 use DB;
 use App\Services\LookupService;
 use App\Services\NotesForCustomerService;
-use Carbon\Carbon;
 use App\Services\CustomerService;
 use App\Services\SendEmailCustomerService;
 
@@ -579,7 +574,6 @@ class CRUDController extends Controller
 
     public function manualLeadAssign(Request $request)
     {
-
         $isValidRequest  = $this->crudService->validateRequest($request->modelType, $request);
         if($isValidRequest != 'true'){
             return redirect()->back()->with('message', $isValidRequest);
@@ -599,7 +593,6 @@ class CRUDController extends Controller
                 return Redirect::back()->with('message', 'Manual Lead Assignment Failed. Please try again.');
             }
         }
-
         $assignedUserName = $this->userService->getUserNameById((int)$request->assigned_to_id_new);
         return Redirect::back()->with('success', $request->modelType . ' Leads has been Assigned To ' . $assignedUserName);
     }
@@ -624,7 +617,6 @@ class CRUDController extends Controller
     {
         $quoteUuId = $request->quoteUuId;
         $insuranceproviders = InsuranceProvider::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
-
         return view('shared.add_quote', compact('insuranceproviders', 'quoteUuId'));
     }
 
