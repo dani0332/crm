@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\RolesEnum;
 use App\Models\ApplicationStorage;
 use App\Models\HealthQuote;
 use App\Models\LeadAllocation;
@@ -106,16 +107,16 @@ class LeadAllocationService extends BaseService
             DB::beginTransaction();
             Log::info('getNextAvailableAdvisor -- started');
             Log::info('Fetching loggedin users with Health Team and roles RM, EBP & HEALTH advisor');
-            $healthTeamId = Team::where('name', 'Health')->first()->id;
+            $healthTeamId = Team::where('name', quoteTypeCode::Health)->first()->id;
             $healthUsersQuery = User::join('model_has_roles', 'model_has_roles.model_id', '=', 'users.id')
                 ->join('roles', 'roles.id', '=', 'model_has_roles.role_id')
-                ->whereIn('roles.name', ['RM_ADVISOR', 'EBP_ADVISOR', 'HEALTH_ADVISOR'])
-                ->whereNotNull('sub_team_id')
-                ->where('team_id', $healthTeamId);
+                ->whereIn('roles.name', [RolesEnum::RMAdvisor, RolesEnum::EBPAdvisor, RolesEnum::HealthAdvisor])
+                ->whereNotNull('users.sub_team_id')
+                ->where('users.team_id', $healthTeamId);
             if ($skipUser != null) {
                 $healthUsersQuery->where('id', '!=', $skipUser);
             }
-            $healthUsers = $healthUsersQuery->pluck('id');
+            $healthUsers = $healthUsersQuery->pluck('users.id');
             Log::info('Found ' . count($healthUsers) . ' sub-ordinates');
             Log::info('Fetching lead allocation records for sub-ordinates');
             $leadAllocationWithUsers = LeadAllocation::with('leadAllocationUser')
@@ -257,7 +258,7 @@ class LeadAllocationService extends BaseService
             if ($dateTimeNow >= $timeForUnavailability) {
                 Log::info('Current time before unavailable is ' . $dateTimeNow);
                 Log::info('Setting advisors to unavailable');
-                $leadAllocations = LeadAllocation::where('is_available', '=', true)->get();
+                $leadAllocations = LeadAllocation::get();
                 foreach ($leadAllocations as $leadAllocation) {
                     $leadAllocation->is_available = false;
                     $leadAllocation->allocation_count = 0;

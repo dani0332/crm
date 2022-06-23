@@ -901,7 +901,10 @@ class HealthQuoteService extends BaseService
 
     public function processManualLeadAssignment($request)
     {
-        $leadsIds = array_map('intval', explode(',', trim($request->selectTmLeadId, ',')));
+        if(isset($request->selectTmLeadId))
+            $leadsIds = array_map('intval', explode(',', trim($request->selectTmLeadId, ',')));
+        else
+            $leadsIds = array_map('intval', explode(',', trim($request->entityId, ',')));
         Log::info('Leads ids to assign: ' . json_encode($leadsIds));
 
         $userId = (int)$request->assigned_to_id_new;

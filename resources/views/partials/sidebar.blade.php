@@ -287,9 +287,9 @@ use App\Enums\PermissionsEnum;
                             @can(PermissionsEnum::TeamsList)
                             <li><a href="{{ url('generic/teams') }}">Teams</a></li>
                             @endcan
-                            @can(PermissionsEnum::TeamsList)
+                            {{-- @can(PermissionsEnum::TeamsList)
                             <li><a href="{{ url('generic/leadstatus') }}">Lead Status</a></li>
-                            @endcan
+                            @endcan --}}
                             @can(PermissionsEnum::InsuranceProviderList)
                             <li><a href="{{ url('generic/insuranceprovider') }}">Insurance Providers</a></li>
                             @endcan

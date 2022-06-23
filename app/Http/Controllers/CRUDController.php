@@ -641,7 +641,7 @@ class CRUDController extends Controller
 
     public function UpdateLeadStatus(Request $request)
     {
-        if (Auth::user()->isHealthWcuAdvisor()) {
+        if(strtolower($request->modelType) == strtolower(quoteTypeCode::Health)) {
             $lead = $this->healthQuoteService->getEntityPlain($request->get('leadId'));
             if ($lead->health_team_type == '' && $request->leadStatus == QuoteStatusEnum::Qualified) {
                 return redirect()->back()->with('message', 'Please select team type before moving to QUALIFIED status');
