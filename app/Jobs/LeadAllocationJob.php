@@ -54,8 +54,6 @@ class LeadAllocationJob implements ShouldQueue
 
             foreach ($unAllocatedLeads as $unAllocatedLead) {
                 $availableUserIds = $this->leadAllocationService->getNextAvailableAdvisors();
-
-                Log::info('Number of available advisors: ' . count($availableUserIds));
                 if ($availableUserIds->count() == 0) {
                     Log::info('No available advisors for allocation');
                     break;
