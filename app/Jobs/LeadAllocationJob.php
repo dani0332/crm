@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\ApplicationStorage;
+use App\Models\User;
 use App\Services\LeadAllocationService;
 use App\Traits\GetUserTree;
 use Illuminate\Bus\Queueable;
@@ -52,28 +53,35 @@ class LeadAllocationJob implements ShouldQueue
             Log::info('Number of leads to be allocated: ' . count($unAllocatedLeads));
 
             foreach ($unAllocatedLeads as $unAllocatedLead) {
-                $user = $this->leadAllocationService->getNextAvailableAdvisor();
+                $availableUserIds = $this->leadAllocationService->getNextAvailableAdvisors();
 
-                if (!empty($user->name)) {
-                    $subTeamName = $this->leadAllocationService->getHealthUserSubTeamName($user->id);
-                    if ($subTeamName == null) {
-                        Log::info('User: ' . $user->name . ' has no sub team so skipping this user.');
-                        continue;
-                    }
-                    Log::info('Lead Health Team Type ' . $unAllocatedLead->health_team_type . ', User Sub Team Name: ' . $subTeamName);
-
-                    if (strtolower($subTeamName) == strtolower($unAllocatedLead->health_team_type)) {
-                        Log::info('Next available advisor: ' . $user->name);
-                        Log::info('Allocating lead with uuid ' . $unAllocatedLead->uuid . ' to ' . $user->name);
-
-                        $this->leadAllocationService->assignLead($unAllocatedLead, $user->id);
-                        Log::info('Lead allocated to ' . $user->name);
-                    } else {
-                        Log::info('Skipping allocation of lead with uuid ' . $unAllocatedLead->uuid . ' to ' . $user->name . ' as the user is not in the correct sub team');
-                    }
-                } else {
-                    Log::info('No available advisor found for ' . $unAllocatedLead->uuid);
+                Log::info('Number of available advisors: ' . count($availableUserIds));
+                if ($availableUserIds->count() == 0) {
+                    Log::info('No available advisors for allocation');
+                    break;
                 }
+                foreach ($availableUserIds as $userId) {
+                    $user = User::where('id', $userId)->first();
+                    if (!empty($user->name)) {
+                        $subTeamName = $this->leadAllocationService->getHealthUserSubTeamName($user->id);
+                        if ($subTeamName == null) {
+                            Log::info('User: ' . $user->name . ' has no sub team so skipping this user.');
+                            continue;
+                        }
+                        Log::info('Lead Health Team Type ' . $unAllocatedLead->health_team_type . ', User Sub Team Name: ' . $subTeamName);
+
+                        if (strtolower($subTeamName) == strtolower($unAllocatedLead->health_team_type)) {
+                            Log::info('Next available advisor: ' . $user->name);
+                            Log::info('Allocating lead with uuid ' . $unAllocatedLead->uuid . ' to ' . $user->name);
+
+                            $this->leadAllocationService->assignLead($unAllocatedLead, $user->id);
+                            Log::info('Lead allocated to ' . $user->name);
+                        } else {
+                            Log::info('Skipping allocation of lead with uuid ' . $unAllocatedLead->uuid . ' to ' . $user->name . ' as the user is not in the correct sub team');
+                        }
+                    }
+                }
+
             }
             return;
         } catch (\Exception $e) {

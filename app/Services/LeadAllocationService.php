@@ -101,21 +101,19 @@ class LeadAllocationService extends BaseService
         }
     }
 
-    public function getNextAvailableAdvisor($skipUser = null)
+    public function getNextAvailableAdvisors()
     {
         try {
             DB::beginTransaction();
-            Log::info('getNextAvailableAdvisor -- started');
+            Log::info('getNextAvailableAdvisors -- started');
             Log::info('Fetching loggedin users with Health Team and roles RM, EBP & HEALTH advisor');
             $healthTeamId = Team::where('name', quoteTypeCode::Health)->first()->id;
             $healthUsersQuery = User::join('model_has_roles', 'model_has_roles.model_id', '=', 'users.id')
                 ->join('roles', 'roles.id', '=', 'model_has_roles.role_id')
                 ->whereIn('roles.name', [RolesEnum::RMAdvisor, RolesEnum::EBPAdvisor, RolesEnum::HealthAdvisor])
                 ->whereNotNull('users.sub_team_id')
+                ->where('users.is_active', true)
                 ->where('users.team_id', $healthTeamId);
-            if ($skipUser != null) {
-                $healthUsersQuery->where('id', '!=', $skipUser);
-            }
             $healthUsers = $healthUsersQuery->pluck('users.id');
             Log::info('Found ' . count($healthUsers) . ' sub-ordinates');
             Log::info('Fetching lead allocation records for sub-ordinates');
@@ -126,30 +124,30 @@ class LeadAllocationService extends BaseService
             Log::info('Found ' . count($leadAllocationWithUsers) . ' lead allocation records');
 
             DB::commit();
-            $nextAvailableUser = $this->getNextAssignableUser($leadAllocationWithUsers);
-            return $nextAvailableUser;
+            $availableUsers = $this->getAssignableUsers($leadAllocationWithUsers);
+            return $availableUsers;
         } catch (\Exception $e) {
             Log::error($e->getMessage());
             DB::rollback();
         }
     }
 
-    public function getNextAssignableUser($leadAllocationWithUsers)
+    public function getAssignableUsers($leadAllocationWithUsers)
     {
 
-        Log::info('getNextAssignableUser -- started');
+        Log::info('getAssignableUsers -- started');
         $allAssignableUsers = collect([]);
         foreach ($leadAllocationWithUsers as $leadAllocationWithUser) {
             if ($leadAllocationWithUser->allocation_count < $leadAllocationWithUser->max_capacity || $leadAllocationWithUser->max_capacity == -1) {
                 Log::info('Found assignable user ' . $leadAllocationWithUser->leadAllocationUser->name);
-                $allAssignableUsers->push($leadAllocationWithUser);
+                $allAssignableUsers->push($leadAllocationWithUser->leadAllocationUser->id);
             }
         }
         Log::info('Found ' . count($allAssignableUsers) . ' assignable users');
         $allAssignableUsers = $allAssignableUsers->sortBy('last_allocated', SORT_NATURAL);
         if ($allAssignableUsers->count() > 0) {
-            Log::info('Returning assignable user ' . $allAssignableUsers->first()->leadAllocationUser->name);
-            return $allAssignableUsers->first()->leadAllocationUser;
+            Log::info('Returning assignable user count : ' . $allAssignableUsers->count());
+            return $allAssignableUsers;
         }
         return new User();
     }
@@ -232,11 +230,15 @@ class LeadAllocationService extends BaseService
             Log::info('getHealthUserSubTeamName -- started');
             $user = User::where('id', $userId)->first();
             if ($user) {
-                Log::info('User ' . $user->name . ' has sub-team ' . $user->sub_team_id);
-                $userSubTeam = Team::where('id', $user->sub_team_id)->first();
-                Log::info('User ' . $user->name . ' belongs to sub team ' . $userSubTeam->name);
-                DB::commit();
-                return strtolower($userSubTeam->name);
+                if($user->sub_team_id != null){
+                    Log::info('User ' . $user->name . ' has sub-team ' . $user->sub_team_id);
+                    $userSubTeam = Team::where('id', $user->sub_team_id)->first();
+                    Log::info('User ' . $user->name . ' belongs to sub team ' . $userSubTeam->name);
+                    DB::commit();
+                    return strtolower($userSubTeam->name);
+                }else{
+                    return null;
+                }
             } else {
                 DB::commit();
                 return null;

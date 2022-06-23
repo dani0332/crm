@@ -29,6 +29,13 @@ use App\Enums\PermissionsEnum;
                     </li>
                 </ul>
                 @endcan
+                @can(PermissionsEnum::LeadAllocationView)
+                <ul class="nav side-menu">
+                    <li>
+                        <a href="{{ url('/lead-allocation') }}"><i class="fa fa-paper-plane"></i>Lead Allocation</a>
+                    </li>
+                </ul>
+                @endcan
                 @if (Auth::user()->hasMyLeadAccess())
                 <ul class="nav side-menu">
                     <li>
