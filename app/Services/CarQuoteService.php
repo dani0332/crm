@@ -151,7 +151,7 @@ class CarQuoteService extends BaseService
             "premium" => $request->premium,
             "carMakeId" => $carMakeId, // ID
             "carModelId" => $request->car_model_id, // ID
-            "currentlyInsuredWith" => $insuranceProviderText, // TEXT
+            "currentlyInsuredWith" => $request->currently_insured_with,
             "source" => $sourceName,
             "referenceUrl" => $appUrl,
         );
