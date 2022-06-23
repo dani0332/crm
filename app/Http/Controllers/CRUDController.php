@@ -38,6 +38,8 @@ use DB;
 use App\Services\LookupService;
 use App\Services\NotesForCustomerService;
 use Carbon\Carbon;
+use App\Services\CustomerService;
+use App\Services\SendEmailCustomerService;
 
 class CRUDController extends Controller
 {
@@ -59,6 +61,8 @@ class CRUDController extends Controller
     protected $leadAllocationService;
     protected $lookupService;
     protected $notesForCustomerService;
+    protected $customerService;
+    protected $sendEmailCustomerService;
 
     public function __construct(
         HealthQuoteService $healthService,
@@ -78,7 +82,9 @@ class CRUDController extends Controller
         ApplicationStorageService $applicationStorageService,
         LeadAllocationService $leadAllocationService,
         LookupService $lookupService,
-        NotesForCustomerService $notesForCustomerService
+        NotesForCustomerService $notesForCustomerService,
+        CustomerService $customerService,
+        SendEmailCustomerService $sendEmailCustomerService
     ) {
         $this->genericModel = new GenericModel();
         $this->healthQuoteService = $healthService;
@@ -98,6 +104,9 @@ class CRUDController extends Controller
         $this->leadAllocationService = $leadAllocationService;
         $this->lookupService = $lookupService;
         $this->notesForCustomerService = $notesForCustomerService;
+        $this->customerService = $customerService;
+        $this->sendEmailCustomerService = $sendEmailCustomerService;
+
         $this->setModelType($request);
         $this->fillModelByModelType(ucwords($this->genericModel->modelType), $request);
     }
@@ -772,10 +781,21 @@ class CRUDController extends Controller
 
     public function addNoteForCustomer(Request $request)
     {
-        $noteId = $this->notesForCustomerService->AddNoteForCustomer($request);
+        $response = $this->sendNotesToCustomer($request);
 
-        if ($noteId) {
-            return redirect()->back()->with('success', 'Note for customer has been added');
+        if($response == 201) {
+            $noteId = $this->notesForCustomerService->addCustomerNote($request);
+        } else {
+            return redirect()->back()->with('message', $response);
         }
+
+        if($noteId) {
+            return redirect()->back()->with('success', 'Notes to customer has been sent.');
+        }
+    }
+
+    public function sendNotesToCustomer(Request $request)
+    {
+        return $this->notesForCustomerService->notesSendToCustomer($request);
     }
 }

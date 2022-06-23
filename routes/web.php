@@ -139,9 +139,7 @@ Route::group(['middleware' =>  ['auth']], function () {
         Route::get('update', [RenewalsUploadController::class, 'updateRenewals']);
     });
 
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-
-    Route::post('dashboard-stats', [DashboardController::class, 'dashboardStats']);
+    Route::get('/dashboard/{quoteType}-conversion', [DashboardController::class, 'conversionStats']);
     Route::group(['prefix' => 'rewards'], function () {
         Route::resource('partner', PartnerController::class);
         Route::resource('reward', RewardController::class);
@@ -193,6 +191,7 @@ Route::group(['middleware' =>  ['auth']], function () {
         Route::post('car/CarPlanManualProcess', [CRUDController::class, 'CarPlanManualProcess'])->name('CarPlanManualProcess');
         Route::post('car/carAssumptionsUpdate', [CRUDController::class, 'carAssumptionsUpdate']);
         Route::post('car/addNoteForCustomer', [CRUDController::class, 'addNoteForCustomer']);
+        Route::post('car/sendNotesToCustomer', [CRUDController::class, 'sendNotesToCustomer']);
     });
 
     Route::group(['prefix' => 'generic'], function () {
