@@ -42,7 +42,8 @@ class quoteTypeCode extends Enum
     const yesText = "Yes";
     const noText = "No";
     const business = "business";
-    public static function getOptions() 
+    const WCU = "Wow-Call";
+    public static function getOptions()
     {
         $oClass = new ReflectionClass(__CLASS__);
         $constants = $oClass->getConstants();

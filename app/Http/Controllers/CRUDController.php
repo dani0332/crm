@@ -626,6 +626,8 @@ class CRUDController extends Controller
         $selectedTeam = $request->get('assign_team');
         $lead = $this->healthQuoteService->getEntityPlain($request->get('entityId'));
         $lead->health_team_type = $request->get('assign_team');
+        Log::info('Health Team Assign start');
+        Log::info('Healht Team Type is '.$lead->health_team_type . ' for lead id '.$lead->id);
         if($lead->health_team_type != null && $request->assign_team != null){
             // If health team type and assign team from request both are not null, then it is a team change case and we need to update advisor to null
             Log::info('Health team type is not null, so updating advisor to null');

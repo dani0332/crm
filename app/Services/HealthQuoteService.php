@@ -922,7 +922,7 @@ class HealthQuoteService extends BaseService
                     }
 
                     if($request->assign_team != quoteTypeCode::GM){
-                        if (Auth::user()->isHealthWCUAdvisor()) {
+                        if (Auth::user()->isHealthWCUAdvisor() || $request->assign_team == quoteTypeCode::WCU) {
                             Log::info('User is health WCU advisor so only updating wcu_id column');
                             $entity->wcu_id = $userId;
                         }else{
