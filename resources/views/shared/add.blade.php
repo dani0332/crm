@@ -289,10 +289,19 @@
                                             @else
                                                 <option value="">{{"Please confirm ".str_replace("id"," ",str_replace("_"," ",$property)) }}</option>
                                             @endif
-                                            @foreach($dropdownSource[$property] as $item)
-
-                                                <option value="{{ $item->id }}"  @if(old($property) == $item->id) selected @endif>{{ $item->text ?? $item->name }}</option>
-                                            @endforeach
+                                            @if (strpos($value, 'customTable') !== false)
+                                                @foreach($dropdownSource[$property] as $item)
+                                                    <option value="{{ $item->id }}"  @if(old($property) == $item->id) selected @endif>{{ $item->text ?? $item->name }}</option>
+                                                @endforeach
+                                            @else
+                                                @foreach($dropdownSource[$property] as $item)
+                                                    @if($property == 'currently_insured_with' || $property == 'year_of_manufacture')
+                                                        <option value="{{$item->text}}" {{ $item->text == old($item->id) ? 'selected' : ''}}>{{ $item->text ?? $item->name }}</option>
+                                                    @else
+                                                        <option value="{{$item->id}}" {{ $item->id == old($item->id) ? 'selected' : ''}}>{{ $item->text ?? $item->name }}</option>
+                                                    @endif
+                                                @endforeach
+                                            @endif
                                         </select>
                                         @if ($errors->has($property))
                                         <span class="text-danger">{{ $errors->first($property) }}</span>
