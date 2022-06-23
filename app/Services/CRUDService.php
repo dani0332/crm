@@ -313,4 +313,18 @@ class CRUDService extends BaseService
         return $this->{in_array($lowerCaseModelType, $this->quoteTypes) ? $lowerCaseModelType . 'QuoteService' : $lowerCaseModelType . 'Service'}
             ->getSelectedLostReason($id);
     }
+
+    public function getLeadPlainEntityByUUID($modelType, $uuid)
+    {
+        $lowerCaseModelType = strtolower($modelType);
+        return $this->{in_array($lowerCaseModelType, $this->quoteTypes) ? $lowerCaseModelType . 'QuoteService' : $lowerCaseModelType . 'Service'}
+            ->getEntityPlainByUUID($uuid);
+    }
+
+    public function validateRequest($modelType, $request)
+    {
+        $lowerCaseModelType = strtolower($modelType);
+        return $this->{in_array($lowerCaseModelType, $this->quoteTypes) ? $lowerCaseModelType . 'QuoteService' : $lowerCaseModelType . 'Service'}
+            ->validateRequest($request);
+    }
 }

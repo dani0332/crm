@@ -284,4 +284,17 @@ class LeadAllocationService extends BaseService
             DB::rollback();
         }
     }
+
+    public function getLeadAllocationRecordByUserId($userId)
+    {
+        try {
+            DB::beginTransaction();
+            $leadAllocation = LeadAllocation::where('user_id', $userId)->first();
+            DB::commit();
+            return $leadAllocation;
+        } catch (\Exception $e) {
+            Log::error($e->getMessage());
+            DB::rollback();
+        }
+    }
 }

@@ -37,6 +37,7 @@ use Config;
 use DB;
 use App\Services\LookupService;
 use App\Services\NotesForCustomerService;
+use Carbon\Carbon;
 
 class CRUDController extends Controller
 {
@@ -230,8 +231,12 @@ class CRUDController extends Controller
      */
     public function show($id, Request $request)
     {
-        $record = $this->crudService->getEntity($this->genericModel->modelType, $id);
+        $record = $this->crudService->getLeadPlainEntityByUUID($this->genericModel->modelType, $id);
         if (!$record) abort(404);
+
+        if(strtolower($this->genericModel->modelType) == strtolower(quoteTypeCode::Health) &&  Auth::user()->isHealthWCUAdvisor() && $record->wcu_id != Auth::user()->id){
+            abort(403, 'Unauthorized action.');
+        }
 
         $isRenewalUser = false;
         $isNewBusinessUser = false;
@@ -565,105 +570,45 @@ class CRUDController extends Controller
 
     public function manualLeadAssign(Request $request)
     {
-        $assignedToUserIdNew = $request->assigned_to_id_new;
-        $leadsIds = $request->selectTmLeadId;
-        $stopFurtherProceeding = false;
-        if (substr($leadsIds, 0, 1) == ',') {
-            $leadsIds = substr($leadsIds, 1);
+
+        $isValidRequest  = $this->crudService->validateRequest($request->modelType, $request);
+        if($isValidRequest != 'true'){
+            return redirect()->back()->with('message', $isValidRequest);
         }
-        $leadsIds = array_map('intval', explode(',', $leadsIds));
-        foreach ($leadsIds as $leadId) {
-            $entity = $this->{strtolower($request->modelType) . 'QuoteService'}->getEntityPlain($leadId);
-            if ($entity->quote_status_id = QuoteStatusEnum::TransactionApproved) {
-                $stopFurtherProceeding = true;
+        if (strtolower($request->modelType) == strtolower(quoteTypeCode::Health)){
+            Log::info('Health Manual Lead Assign start');
+            $isProcessed = $this->healthQuoteService->processManualLeadAssignment($request);
+            if(!$isProcessed){
+                Log::warning('Manual Lead Assignment Failed for Health Quote , selected id was '. $request->selectTmLeadId);
+                return Redirect::back()->with('message', 'Manual Lead Assignment Failed for Health Quote. Please try again.');
             }
         }
-        if ($stopFurtherProceeding) {
-            return redirect()->back()->with('message', 'One of the selected lead is in Transaction Approved state. Please unselect the lead and try again.');
-        }
-
-
-
-        if ($leadsIds == '' || $leadsIds == null) {
-            return redirect()->back()->with('message', 'Please select lead(s) to assign');
-        }
-        if (strtolower($request->modelType) == 'health' && $request->assign_team == 'GM') {
-
-            foreach ($leadsIds as $tmLeadsId) {
-                $userId = (int)$assignedToUserIdNew;
-                $entity = $this->{strtolower($request->modelType) . 'QuoteService'}->getEntityPlain($tmLeadsId);
-                if ($entity) {
-                    if ($request->assign_team == 'GM') {
-                        $entity->health_team_type = $request->assign_team;
-                    }
-                    $entity->save();
-                    return Redirect::back()->with('success', $request->modelType . ' Team has been Assigned');
-                }
+        else{
+            $isProcessed = $this->{strtolower($request->modelType) . 'QuoteService'}->processManualLeadAssignment($request);
+            if(!$isProcessed){
+                Log::warning('Manual Lead Assignment Failed for '.$request->modelType.' Quote , selected id was '. $request->selectTmLeadId);
+                return Redirect::back()->with('message', 'Manual Lead Assignment Failed. Please try again.');
             }
         }
 
-        if ($assignedToUserIdNew == '' || $assignedToUserIdNew == null) {
-            return redirect()->back()->with('message', 'Please select user to assign leads');
-        }
-
-        foreach ($leadsIds as $tmLeadsId) {
-            $userId = (int)$assignedToUserIdNew;
-            $entity = $this->{strtolower($request->modelType) . 'QuoteService'}->getEntityPlain($tmLeadsId);
-            if ($entity->quote_status_id == QuoteStatusEnum::TransactionApproved) {
-                return redirect()->back()->with('message', 'Cannot assign leads in transaction approved status');
-            }
-            if ($entity) {
-                if (strtolower($request->modelType) == 'health' && $request->assign_team == 'GM') {
-                    $entity->health_team_type = $request->assign_team;
-                } else {
-                    if (strtolower($request->modelType) == 'health') {
-                        $entity->health_team_type = $request->assign_team;
-                    }
-                    if (Auth::user()->hasRole('WCU_ADVISOR')) {
-                        $entity->wcu_id = $userId;
-                    } else {
-                        $this->leadAllocationService->assignLead($entity, $userId, true);
-                    }
-                    $advisorOE = CarQuoteAdvisorToOE::where('advisor_id', $userId)->first();
-                    if (!empty($advisorOE) && strtolower($request->modelType) == 'car') {
-                        $entity->oe_id = $advisorOE->oe_id;
-                    }
-                }
-                $entity->save();
-                $this->{strtolower($request->modelType) . 'QuoteService'}->updateChildRecord($tmLeadsId);
-            } else {
-                return redirect()->back()->with('message', 'Invalid lead selected for assignment');
-            }
-        }
-        $assignedUserName = $this->userService->getUserNameById($assignedToUserIdNew);
+        $assignedUserName = $this->userService->getUserNameById((int)$request->assigned_to_id_new);
         return Redirect::back()->with('success', $request->modelType . ' Leads has been Assigned To ' . $assignedUserName);
     }
 
     public function manualLeadAssignAfterTeamAssign(Request $request)
     {
-        $assignedToUserIdNew = $request->assigned_to_id_new;
-        $leadsIds = $request->entityId;
-        $leadsIds = array_map('intval', explode(',', $leadsIds));
-        foreach ($leadsIds as $tmLeadsId) {
-            $entity = $this->{strtolower($request->modelType) . 'QuoteService'}->getEntityPlain($tmLeadsId);
-            if ($entity->quote_status_id == QuoteStatusEnum::TransactionApproved) {
-                return redirect()->back()->with('message', 'Cannot assign leads in transaction approved status');
-            }
-            if ($entity) {
-                $userId = (int)$assignedToUserIdNew;
-                $this->leadAllocationService->assignLead($entity, $userId, true);
-                $advisorOE = CarQuoteAdvisorToOE::where('advisor_id', $userId)->first();
-                if (!empty($advisorOE) && strtolower($request->modelType) == 'car') {
-                    $entity->oe_id = $advisorOE->oe_id;
-                }
-                $entity->save();
-            } else {
-                return redirect()->back()->with('message', 'Invalid lead selected for assignment');
+        $this->crudService->validateRequest($request->modelType, $request);
+
+        if (strtolower($request->modelType) == strtolower(quoteTypeCode::Health)){
+            Log::info('Health Manual Lead Assign start');
+            $isProcessed = $this->healthQuoteService->processManualLeadAssignment($request);
+            if(!$isProcessed){
+                Log::warning('Manual Lead Assignment Failed for Health Quote , selected id was '. $request->selectTmLeadId);
+                return Redirect::back()->with('message', 'Manual Lead Assignment Failed for Health Quote. Please try again.');
             }
         }
-        $this->{strtolower($request->modelType) . 'QuoteService'}->updateChildRecord($tmLeadsId);
-        $assignedUserName = $this->userService->getUserNameById($assignedToUserIdNew);
-        return Redirect::back()->with('success', ' Lead has been Assigned To ' . $assignedUserName);
+        $assignedUserName = $this->userService->getUserNameById((int)$request->assigned_to_id_new);
+        return Redirect::back()->with('success', $request->modelType . ' Leads has been Assigned To ' . $assignedUserName);
     }
 
     public function addCarQuotePlan(Request $request)
@@ -679,8 +624,13 @@ class CRUDController extends Controller
         $selectedTeam = $request->get('assign_team');
         $lead = $this->healthQuoteService->getEntityPlain($request->get('entityId'));
         $lead->health_team_type = $request->get('assign_team');
+        if($lead->health_team_type != null && $request->assign_team != null){
+            // If health team type and assign team from request both are not null, then it is a team change case and we need to update advisor to null
+            Log::info('Health team type is not null, so updating advisor to null');
+            $this->healthQuoteService->removePreviousAdvisorAndUpdateStatus($lead);
+        }
         $lead->save();
-        if ($selectedTeam == 'GM') {
+        if ($selectedTeam == quoteTypeCode::GM) {
             $this->healthQuoteService->convertLeadToGM($lead);
             return redirect()->to('/quotes/health')->with('success', ' Lead has been Converted And Assigned To Group Medical Team');
         } else {
@@ -690,27 +640,23 @@ class CRUDController extends Controller
 
     public function UpdateLeadStatus(Request $request)
     {
-        $qualifiedId = DB::table('quote_status')->where('text', LeadStatusCode::Qualified)->value('id');
         if (Auth::user()->isHealthWcuAdvisor()) {
             $lead = $this->healthQuoteService->getEntityPlain($request->get('leadId'));
-            if ($lead->health_team_type == '' && $request->leadStatus == $qualifiedId) {
+            if ($lead->health_team_type == '' && $request->leadStatus == QuoteStatusEnum::Qualified) {
                 return redirect()->back()->with('message', 'Please select team type before moving to QUALIFIED status');
             }
         }
-
-        $transactionApprovedStatusId = DB::table('quote_status')->where('text', LeadStatusCode::TRANSACTION_APPROVED)->value('id');
-        $lostId = DB::table('quote_status')->where('text', LeadStatusCode::LOST)->value('id');
-        if ($request->leadStatus == $lostId) {
+        if ($request->leadStatus == QuoteStatusEnum::Lost) {
             $this->validate($request, [
                 'lostReason' => 'required',
             ]);
         }
-        if ($request->leadStatus == $transactionApprovedStatusId) {
+        if ($request->leadStatus == QuoteStatusEnum::TransactionApproved) {
             $this->validate($request, [
                 'trans_code' => 'required',
             ]);
         }
-        $entity = $this->crudService->updateQuoteStatus($request, $qualifiedId);
+        $entity = $this->crudService->updateQuoteStatus($request, QuoteStatusEnum::Qualified);
         return redirect()->to('/quotes/' . strtolower($request->modelType) . '/' . $entity->uuid)->with('success', ' Lead Status has been Updated');
     }
 

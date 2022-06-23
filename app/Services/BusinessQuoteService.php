@@ -16,6 +16,7 @@ use App\Enums\DatabaseColumnsString;
 use App\Enums\QuoteStatusEnum;
 use App\Traits\GetUserTree;
 use App\Traits\RolePermissionConditions;
+use Illuminate\Support\Facades\Log;
 
 class BusinessQuoteService extends BaseService
 {
@@ -263,7 +264,7 @@ class BusinessQuoteService extends BaseService
         if (!$entity) {
             $entity = $this->createDetailEntity($id);
         }
-        return BusinessQuoteRequestDetail::where('business_quote_request_id', $id)->first();
+        return  $entity;
     }
 
     public function createDetailEntity($id)
@@ -681,6 +682,36 @@ class BusinessQuoteService extends BaseService
 
     public function getEntityPlainByUUID($uuid)
     {
-        BusinessQuote::where('uuid', $uuid)->first();
+        return BusinessQuote::where('uuid', $uuid)->first();
+    }
+
+    public function processManualLeadAssignment($request)
+    {
+        $leadsIds = array_map('intval', explode(',', trim($request->selectTmLeadId, ',')));
+        Log::info('Leads ids: ' . json_encode($leadsIds));
+
+        $userId = (int)$request->assigned_to_id_new;
+        Log::info('User id: ' . $userId);
+
+        foreach ($leadsIds as $leadId) {
+            $entity = $this->getEntityPlain($leadId);
+            if ($entity) {
+                Log::info('Entity found with uuid: ' . $entity->uuid);
+                if (Auth::user()->isHealthWCUAdvisor()) {
+                    Log::info('User is health WCU advisor so only updating wcu_id column');
+                    $entity->wcu_id = $userId;
+                } else {
+                    Log::info('Assigning lead to user id: ' . $userId . ' entity id: ' . $entity->uuid);
+                    $this->leadAllocationService->assignLead($entity, $userId, true);
+                }
+                $entity->save();
+                Log::info('updating detail record for lead id: ' . $leadId);
+                $this->updateChildRecord($leadId);
+                return true;
+            } else {
+                return false;
+            }
+        }
+
     }
 }

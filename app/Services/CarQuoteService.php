@@ -18,13 +18,19 @@ use DB;
 use \Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use App\Enums\quoteStatusCode;
+use App\Enums\quoteTypeCode;
+use App\Models\CarQuoteAdvisorToOE;
+use Illuminate\Support\Facades\Log;
+
 class CarQuoteService extends BaseService
 {
     protected $query;
     protected $httpService;
     protected $childUserIds = [];
-    public function __construct(HttpRequestService $httpService)
+    protected $leadAllocationService;
+    public function __construct(HttpRequestService $httpService, LeadAllocationService $leadAllocationService)
     {
+        $this->leadAllocationService = $leadAllocationService;
         $this->httpService = $httpService;
         $this->query = DB::table('car_quote_request as cqr')
             ->select(
@@ -1030,4 +1036,44 @@ class CarQuoteService extends BaseService
 
         return $updateQuote->id;
     }
+
+    public function processManualLeadAssignment($request)
+    {
+        $leadsIds = array_map('intval', explode(',', trim($request->selectTmLeadId, ',')));
+        Log::info('Leads ids: ' . json_encode($leadsIds));
+
+        $userId = (int)$request->assigned_to_id_new;
+        Log::info('User id: ' . $userId);
+
+        foreach ($leadsIds as $leadId) {
+            $entity = $this->getEntityPlain($leadId);
+            if ($entity) {
+                Log::info('Entity found with uuid: ' . $entity->uuid);
+                if (Auth::user()->isHealthWCUAdvisor()) {
+                    Log::info('User is health WCU advisor so only updating wcu_id column');
+                    $entity->wcu_id = $userId;
+                } else {
+                    Log::info('Assigning lead to user id: ' . $userId . ' entity id: ' . $entity->uuid);
+                    $this->leadAllocationService->assignLead($entity, $userId, true);
+                }
+                $advisorOE = CarQuoteAdvisorToOE::where('advisor_id', $userId)->first();
+                if (!empty($advisorOE) && strtolower($request->modelType) == strtolower(quoteTypeCode::Car)) {
+                    $entity->oe_id = $advisorOE->oe_id;
+                }
+                $entity->save();
+                Log::info('updating detail record for lead id: ' . $leadId);
+                $this->updateChildRecord($leadId);
+                return true;
+            } else {
+                return false;
+            }
+        }
+
+    }
+
+    public function getEntityPlainByUUID($uuid)
+    {
+        return CarQuote::where('uuid', $uuid)->first();
+    }
+
 }

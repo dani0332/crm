@@ -16,13 +16,17 @@ use App\Traits\CustomerAdditionalInfo as CustomerAdditionalInfoTrait;
 use App\Enums\quoteTypeCode;
 use App\Enums\DatabaseColumnsString;
 use App\Enums\QuoteStatusEnum;
+use Illuminate\Support\Facades\Log;
+
 class HomeQuoteService extends BaseService
 {
     protected $query;
     use GetUserTree;
     use CustomerAdditionalInfoTrait;
-    public function __construct()
+    protected $leadAllocationService;
+    public function __construct(LeadAllocationService $leadAllocationService)
     {
+        $this->leadAllocationService = $leadAllocationService;
 
         $this->query = DB::table('home_quote_request as hqr')->select(
             'hqr.id',
@@ -92,7 +96,7 @@ class HomeQuoteService extends BaseService
         if (!$entity) {
             $entity = $this->createDetailEntity($id);
         }
-        return HomeQuoteRequestDetail::where('home_quote_request_id', $id)->first();
+        return $entity;
     }
 
     public function createDetailEntity($id)
@@ -737,4 +741,39 @@ class HomeQuoteService extends BaseService
         $quote->mobile_no = $parentRecord->mobile_no;
         $quote->save();
     }
+
+    public function processManualLeadAssignment($request)
+    {
+        $leadsIds = array_map('intval', explode(',', trim($request->selectTmLeadId, ',')));
+        Log::info('Leads ids: ' . json_encode($leadsIds));
+
+        $userId = (int)$request->assigned_to_id_new;
+        Log::info('User id: ' . $userId);
+
+        foreach ($leadsIds as $leadId) {
+            $entity = $this->getEntityPlain($leadId);
+            if ($entity) {
+                Log::info('Entity found with uuid: ' . $entity->uuid);
+                if (Auth::user()->isHealthWCUAdvisor()) {
+                    Log::info('User is health WCU advisor so only updating wcu_id column');
+                    $entity->wcu_id = $userId;
+                } else {
+                    Log::info('Assigning lead to user id: ' . $userId . ' entity id: ' . $entity->uuid);
+                    $this->leadAllocationService->assignLead($entity, $userId, true);
+                }
+                $entity->save();
+                Log::info('updating detail record for lead id: ' . $leadId);
+                $this->updateChildRecord($leadId);
+                return true;
+            } else {
+                return false;
+            }
+        }
+
+    }
+    public function getEntityPlainByUUID($uuid)
+    {
+        return HomeQuote::where('uuid', $uuid)->first();
+    }
+
 }

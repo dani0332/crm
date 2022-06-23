@@ -786,7 +786,7 @@
                                                 $updatedAdvisors = $isRenewalUser ? $renewalAdvisors : $advisors;
                                                 @endphp
                                                 <select class="form-control" id="assign_team" name="assign_team"
-                                                    disabled="disabled" style="margin-bottom: 10px;">
+                                                    readonly="readonly" style="margin-bottom: 10px;">
                                                     <option value="">Select Health Team Type</option>
                                                     <option selected="selected" value="Wow-Call">Wow Call </option>
                                                 </select>

@@ -18,14 +18,17 @@ use App\Enums\quoteTypeCode;
 use App\Enums\DatabaseColumnsString;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteStatusCode;
+use Illuminate\Support\Facades\Log;
+
 class TravelQuoteService extends BaseService
 {
     protected $query;
     use GetUserTree;
     use GetTravelPreviousQuoteIds;
     use CustomerAdditionalInfoTrait;
-    public function __construct()
+    public function __construct(LeadAllocationService $leadAllocationService)
     {
+        $this->leadAllocationService = $leadAllocationService;
         $this->query = DB::table('travel_quote_request as tqr')->select(
             'tqr.id',
             'tqr.uuid',
@@ -498,7 +501,7 @@ class TravelQuoteService extends BaseService
         if (!$entity) {
             $entity = $this->createDetailEntity($id);
         }
-        return TravelQuoteRequestDetail::where('travel_quote_request_id', $id)->first();
+        return $entity;
     }
 
     public function createDetailEntity($id)
@@ -808,4 +811,40 @@ class TravelQuoteService extends BaseService
             ->orderBy('a.created_at', 'DESC')->get();
         return $audits;
     }
+
+    public function processManualLeadAssignment($request)
+    {
+        $leadsIds = array_map('intval', explode(',', trim($request->selectTmLeadId, ',')));
+        Log::info('Leads ids: ' . json_encode($leadsIds));
+
+        $userId = (int)$request->assigned_to_id_new;
+        Log::info('User id: ' . $userId);
+
+        foreach ($leadsIds as $leadId) {
+            $entity = $this->getEntityPlain($leadId);
+            if ($entity) {
+                Log::info('Entity found with uuid: ' . $entity->uuid);
+                if (Auth::user()->isHealthWCUAdvisor()) {
+                    Log::info('User is health WCU advisor so only updating wcu_id column');
+                    $entity->wcu_id = $userId;
+                } else {
+                    Log::info('Assigning lead to user id: ' . $userId . ' entity id: ' . $entity->uuid);
+                    $this->leadAllocationService->assignLead($entity, $userId, true);
+                }
+                $entity->save();
+                Log::info('updating detail record for lead id: ' . $leadId);
+                $this->updateChildRecord($leadId);
+                return true;
+            } else {
+                return false;
+            }
+        }
+
+    }
+
+    public function getEntityPlainByUUID($uuid)
+    {
+        return TravelQuote::where('uuid', $uuid)->first();
+    }
+
 }

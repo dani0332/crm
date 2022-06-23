@@ -395,39 +395,16 @@
     </div>
 </div>
 
-
-
-<x-car-quote-more-detail :record="$record" :vehicleTypes="$vehicleTypes" :yearsOfManufacture="$yearsOfManufacture" />
-<x-car-ecom-detail :record="$record" :carQuotePlanAddons="$carQuotePlanAddons" />
-<x-car-quote-plans :record="$record" :listQuotePlans="$listQuotePlans"
-    :ecomUrl="$ecomCarInsuranceQuoteUrl . $record->uuid" />
-@isset($record->previous_quote_id)
-<x-email-status :emailStatuses="$emailStatuses" />
-@endisset
-<x-notes-for-customer :notesForCustomers="$notesForCustomers" />
-<x-notes-for-customer-modal :record="$record" :quoteTypeId="$quoteTypeId" />
-@endif
-
-<div class="row" st>
-    <div class="col-md-12 col-sm-12">
-        <div class="x_panel">
-            <div class="x_title">
-                <h2>Lead History</h2>
-                <div class="clearfix"></div>
-            </div>
-        </div>
-
-
-
-        <x-car-quote-more-detail :record="$record" :vehicleTypes="$vehicleTypes" :yearsOfManufacture="$yearsOfManufacture"  :carTrim="$record->trim" :trimList="$trimList" />
-        <x-car-ecom-detail :record="$record" :carQuotePlanAddons="$carQuotePlanAddons" />
-        <x-car-quote-plans :record="$record" :listQuotePlans="$listQuotePlans" :ecomUrl="$ecomCarInsuranceQuoteUrl . $record->uuid" />
-        @isset($record->previous_quote_id)
-        <x-email-status :emailStatuses="$emailStatuses" />
-        @endisset
-        <x-notes-for-customer :notesForCustomers="$notesForCustomers" />
-        <x-notes-for-customer-modal :record="$record" :quoteTypeId="$quoteTypeId" />
+<x-car-quote-more-detail :record="$record" :vehicleTypes="$vehicleTypes" :yearsOfManufacture="$yearsOfManufacture"  :carTrim="$record->trim" :trimList="$trimList" />
+    <x-car-ecom-detail :record="$record" :carQuotePlanAddons="$carQuotePlanAddons" />
+    <x-car-quote-plans :record="$record" :listQuotePlans="$listQuotePlans" :ecomUrl="$ecomCarInsuranceQuoteUrl . $record->uuid" />
+    @isset($record->previous_quote_id)
+    <x-email-status :emailStatuses="$emailStatuses" />
+    @endisset
+    <x-notes-for-customer :notesForCustomers="$notesForCustomers" />
+    <x-notes-for-customer-modal :record="$record" :quoteTypeId="$quoteTypeId" />
     @endif
+
 
     <div class="row" st>
         <div class="col-md-12 col-sm-12">
