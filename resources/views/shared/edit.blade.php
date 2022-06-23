@@ -156,15 +156,8 @@
                             }
                             
                         });
-                        
-                        $("#vehicle_assumptions_error_msg").hide(300);
-                        $("#vehicle_assumptions_success_msg").show(300);
+
                     } else{
-                        $("#vehicle_assumptions_error_msg").show(300);
-                        $("#vehicle_assumptions_success_msg").hide(300);
-                        $('#cylinder').val('');
-                        $('#seat_capacity').val('');
-                        $('#vehicle_type_id').val('');
                         $('#trim').empty();
                     }
                 },
@@ -187,7 +180,15 @@
         {
             $.get('/getCarModelTrimValues?id=' + trimId, function (data) {
                 if(data.length > 0) {
+                    $("#vehicle_assumptions_error_msg").hide(300);
+                    $("#vehicle_assumptions_success_msg").show(300);
                     populateCarValues(data);
+                }else {
+                    $("#vehicle_assumptions_error_msg").show(300);
+                    $("#vehicle_assumptions_success_msg").hide(300);
+                    $('#cylinder').val('');
+                    $('#seat_capacity').val('');
+                    $('#vehicle_type_id').val('');
                 }
             });
         }
