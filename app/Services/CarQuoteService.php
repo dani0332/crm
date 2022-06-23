@@ -138,7 +138,7 @@ class CarQuoteService extends BaseService
             "dob" => $request->dob,
             "nationalityId" => $request->nationality_id,
             "uaeLicenseHeldForId" => $request->uae_license_held_for_id,
-            "yearOfManufacture" => $yearOfManufactureText, // TEXT
+            "yearOfManufacture" => $request->year_of_manufacture,
             "emirateOfRegistrationId" => $request->emirate_of_registration_id,
             "carTypeInsuranceId" => $request->car_type_insurance_id,
             "claimHistoryId" => $request->claim_history_id,
