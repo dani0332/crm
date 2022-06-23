@@ -48,12 +48,7 @@
             var carModelDetailId = JSON.parse('<?php echo json_encode(isset($record->car_model_detail_id) ? $record->car_model_detail_id : 0) ?>');
             getCarMakes(oldCarMakeId);
             getCarModels(oldCarMakeId, oldCarModelId);
-            if(carModelDetailId == 0) {
-                ajaxCallScript(oldCarModelId)
-            }else {
-                loadTrimValues(carModelDetailId);
-            }
-            
+            ajaxCallScript(oldCarModelId);
         }
         var result = modelSkipProperties.filter(obj => {
             return obj.name === 'update'
