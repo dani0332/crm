@@ -143,11 +143,14 @@
                         var trim = $('#trim').empty();
                         $.each(data, function (create, carmodelObj) {
                             if(carmodelObj.is_default != undefined) {
-                                if(carmodelObj.is_default == 1){
+                                if(carmodelObj.is_default == 1 && carModelDetailId == 0){
                                 populateCarValues(carmodelObj)
                                 trim.append('<option selected value="' + carmodelObj.id + '">' + carmodelObj.text + '</option>');
                                 }else{
-                                    if(create == 0) {
+                                    
+                                    if(carModelDetailId != 0 && carmodelObj.id == carModelDetailId) {
+                                        trim.append('<option selected value="' + carmodelObj.id + '">' + carmodelObj.text + '</option>');
+                                    } else if(create == 0) {
                                         populateCarValues(carmodelObj)
                                     }
                                     trim.append('<option value="' + carmodelObj.id + '">' + carmodelObj.text + '</option>');
