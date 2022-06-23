@@ -48,12 +48,7 @@
             var carModelDetailId = JSON.parse('<?php echo json_encode(isset($record->car_model_detail_id) ? $record->car_model_detail_id : 0) ?>');
             getCarMakes(oldCarMakeId);
             getCarModels(oldCarMakeId, oldCarModelId);
-            if(carModelDetailId == 0) {
-                ajaxCallScript(oldCarModelId)
-            }else {
-                loadTrimValues(carModelDetailId);
-            }
-            
+            ajaxCallScript(oldCarModelId);
         }
         var result = modelSkipProperties.filter(obj => {
             return obj.name === 'update'
@@ -143,11 +138,14 @@
                         var trim = $('#trim').empty();
                         $.each(data, function (create, carmodelObj) {
                             if(carmodelObj.is_default != undefined) {
-                                if(carmodelObj.is_default == 1){
+                                if(carmodelObj.is_default == 1 && carModelDetailId == 0){
                                 populateCarValues(carmodelObj)
                                 trim.append('<option selected value="' + carmodelObj.id + '">' + carmodelObj.text + '</option>');
                                 }else{
-                                    if(create == 0) {
+                                    
+                                    if(carModelDetailId != 0 && carmodelObj.id == carModelDetailId) {
+                                        trim.append('<option selected value="' + carmodelObj.id + '">' + carmodelObj.text + '</option>');
+                                    } else if(create == 0) {
                                         populateCarValues(carmodelObj)
                                     }
                                     trim.append('<option value="' + carmodelObj.id + '">' + carmodelObj.text + '</option>');
@@ -158,15 +156,8 @@
                             }
                             
                         });
-                        
-                        $("#vehicle_assumptions_error_msg").hide(300);
-                        $("#vehicle_assumptions_success_msg").show(300);
+
                     } else{
-                        $("#vehicle_assumptions_error_msg").show(300);
-                        $("#vehicle_assumptions_success_msg").hide(300);
-                        $('#cylinder').val('');
-                        $('#seat_capacity').val('');
-                        $('#vehicle_type_id').val('');
                         $('#trim').empty();
                     }
                 },
@@ -182,13 +173,22 @@
         function populateCarValues(carmodelObj) {
             $('#cylinder').val(carmodelObj.cylinder);
             $('#seat_capacity').val(carmodelObj.seat_capacity);
-            $('#vehicle_type_id').val(carmodelObj.vehicle_type_id);
+            if(carmodelObj.vehicle_type_id)
+                $('#vehicle_type_id').val(carmodelObj.vehicle_type_id);
         }
         function loadTrimValues(trimId)
         {
             $.get('/getCarModelTrimValues?id=' + trimId, function (data) {
                 if(data.length > 0) {
+                    $("#vehicle_assumptions_error_msg").hide(300);
+                    $("#vehicle_assumptions_success_msg").show(300);
                     populateCarValues(data);
+                }else {
+                    $("#vehicle_assumptions_error_msg").show(300);
+                    $("#vehicle_assumptions_success_msg").hide(300);
+                    $('#cylinder').val('');
+                    $('#seat_capacity').val('');
+                    $('#vehicle_type_id').val('');
                 }
             });
         }
