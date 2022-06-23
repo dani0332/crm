@@ -57,8 +57,8 @@ $count = 1;
                 $totalEcom += $currentWeekStat->ecom_total;
             @endphp
             <tr>
-                <td class="conversion-align">
-                    {{$currentWeekStat->email}}
+                <td>
+                    {{ $currentWeekStat->email == ''|| $currentWeekStat->email == null ? 'UnAssigned' : $currentWeekStat->email }}
                 </td>
                 <td>
                     {{$currentWeekStat->total_assigned}}
@@ -109,35 +109,41 @@ $count = 1;
             @endforeach
             <tr>
                 <td></td>
-                <td class="conversion-td">
+                <td>
                    <b>{{$totalAssigned}}</b>
                 </td>
-                <td class="conversion-td">
+                <td>
                     <b>{{$totalPaidEcom}}</b>
                 </td>
-                <td class="conversion-td">
+                <td>
                     <b>{{$totalPaidEcomAuthorised}}</b>
                 </td>
-                <td class="conversion-td">
+                <td>
                     <b> {{$totalPaidEcomCaputed}}</b>
                 </td>
-                <td class="conversion-td">
+                <td>
                     <b>{{$totalPaidEcomCancelled}}</b>
                 </td>
-                <td class="conversion-td">
+                <td>
                     <b>{{$totalTransactionApprovedEcom}}</b>
                 </td>
-                <td class="conversion-td">
+                <td>
                     <b>{{$totalTransactionApprovedNonEcom}}</b>
                 </td>
-                <td class="conversion-td">
+                <td>
                     <b>{{$totalTransactionApproved}}</b>
                 </td>
-                <td class="conversion-td">
+                <td>
                     <b>{{$totalEcom}}</b>
                 </td>
-                <td colspan="3">
-
+                <td>
+                    <b>{{round(divideNumber($totalTransactionApprovedEcom, $totalEcom) * 100, 2)}}%</b>
+                </td>
+                <td>
+                    <b>{{round(divideNumber($totalTransactionApprovedNonEcom, ($totalAssigned - $totalEcom)) * 100, 2)}}%</b>
+                </td>
+                <td>
+                    <b>{{round(divideNumber($totalTransactionApproved, $totalAssigned) * 100, 2)}}%</b>
                 </td>
             </tr>
         </tbody>
