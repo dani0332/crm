@@ -214,17 +214,20 @@ class LeadAllocationService extends BaseService
             if ($leadAllocation != null) {
                 if($leadAllocation->max_capacity == -1 || $leadAllocation->allocation_count < $leadAllocation->max_capacity){
                     Log::info('Advisor ' . $advisorId . ' can take lead');
+                    DB::commit();
                     return true;
                 }
                 if ($leadAllocation->max_capacity == $leadAllocation->allocation_count && $leadAllocation->max_capacity != -1) {
                     Log::info('Advisor ' . $advisorId . ' cannot take lead. Max capacity reached');
+                    DB::commit();
                     return false;
                 }
             } else {
                 Log::info('Advisor ' . $advisorId . ' has no allocation record');
+                DB::commit();
                 return false;
             }
-            DB::commit();
+
         } catch (\Exception $e) {
             Log::error($e->getMessage());
             DB::rollback();
