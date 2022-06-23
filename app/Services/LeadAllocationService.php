@@ -149,7 +149,7 @@ class LeadAllocationService extends BaseService
             Log::info('Returning assignable user count : ' . $allAssignableUsers->count());
             return $allAssignableUsers;
         }
-        return new User();
+        return collect([]);
     }
 
     public function assignLead($lead, $advisorId, $isManualAssignment = false)
