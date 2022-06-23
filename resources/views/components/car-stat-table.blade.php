@@ -47,7 +47,7 @@ $count = 1;
             @endphp
             <tr>
                 <td>
-                    {{$currentWeekStat->email}}
+                    {{ $currentWeekStat->email == ''|| $currentWeekStat->email == null ? 'UnAssigned' : $currentWeekStat->email }}
                 </td>
                 <td>
                     {{$currentWeekStat->total_assigned}}
@@ -81,25 +81,26 @@ $count = 1;
                 <td>
 
                 </td>
-                <td class="conversion-td">
+                <td>
                    <b>{{$totalAssigned}}</b>
                 </td>
-                <td class="conversion-td">
+                <td>
                     <b>{{$totalPaidEcom}}</b>
                 </td>
-                <td class="conversion-td">
+                <td>
                     <b>{{$totalPaidEcomAuthorised}}</b>
                 </td>
-                <td class="conversion-td">
+                <td>
                     <b> {{$totalPaidEcomCaputed}}</b>
                 </td>
-                <td class="conversion-td">
+                <td>
                     <b>{{$totalPaidEcomCancelled}}</b>
                 </td>
-                <td class="conversion-td">
+                <td>
                     <b>{{$totalEcom}}</b>
                 </td>
                 <td colspan="3" >
+                    <b>{{round(divideNumber($totalPaidEcom, $totalEcom) * 100, 2)}}%</b>
                 </td>
             </tr>
         </tbody>
