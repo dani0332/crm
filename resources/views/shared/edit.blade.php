@@ -180,7 +180,8 @@
         function populateCarValues(carmodelObj) {
             $('#cylinder').val(carmodelObj.cylinder);
             $('#seat_capacity').val(carmodelObj.seat_capacity);
-            $('#vehicle_type_id').val(carmodelObj.vehicle_type_id);
+            if(carmodelObj.vehicle_type_id)
+                $('#vehicle_type_id').val(carmodelObj.vehicle_type_id);
         }
         function loadTrimValues(trimId)
         {
