@@ -311,8 +311,6 @@ class BusinessQuoteService extends BaseService
         if (!Auth::user()->hasRole("ADMIN")) $dataArr['advisorId'] = Auth::user()->id;
         $response  = CapiRequestService::sendCAPIRequest('/api/v1-save-business-quote', $dataArr);
         if (isset($response->quoteUID)){
-            $record = $this->getEntityPlainByUUID($response->quoteUID);
-            $this->leadAllocationService->assignLead($record, Auth::user()->id);
             return $this->createUpdateCustomerInfo($request, $request->email, $response->quoteUID, quoteTypeCode::BusinessQuote);
         }
         else
@@ -702,7 +700,13 @@ class BusinessQuoteService extends BaseService
                     $entity->wcu_id = $userId;
                 } else {
                     Log::info('Assigning lead to user id: ' . $userId . ' entity id: ' . $entity->uuid);
-                    $this->leadAllocationService->assignLead($entity, $userId, true);
+                    $isAllocated =  $this->leadAllocationService->assignLead($entity, $userId, true);
+                    if ($isAllocated) {
+                        Log::info('Lead assigned successfully');
+                    } else {
+                        Log::info('Lead not assigned');
+                        return false;
+                    }
                 }
                 $entity->save();
                 Log::info('updating detail record for lead id: ' . $leadId);

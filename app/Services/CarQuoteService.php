@@ -1051,7 +1051,13 @@ class CarQuoteService extends BaseService
                     $entity->wcu_id = $userId;
                 } else {
                     Log::info('Assigning lead to user id: ' . $userId . ' entity id: ' . $entity->uuid);
-                    $this->leadAllocationService->assignLead($entity, $userId, true);
+                    $isAllocated =  $this->leadAllocationService->assignLead($entity, $userId, true);
+                    if ($isAllocated) {
+                        Log::info('Lead assigned successfully');
+                    } else {
+                        Log::info('Lead not assigned');
+                        return false;
+                    }
                 }
                 $advisorOE = CarQuoteAdvisorToOE::where('advisor_id', $userId)->first();
                 if (!empty($advisorOE) && strtolower($request->modelType) == strtolower(quoteTypeCode::Car)) {

@@ -829,7 +829,13 @@ class TravelQuoteService extends BaseService
                     $entity->wcu_id = $userId;
                 } else {
                     Log::info('Assigning lead to user id: ' . $userId . ' entity id: ' . $entity->uuid);
-                    $this->leadAllocationService->assignLead($entity, $userId, true);
+                    $isAllocated =  $this->leadAllocationService->assignLead($entity, $userId, true);
+                    if ($isAllocated) {
+                        Log::info('Lead assigned successfully');
+                    } else {
+                        Log::info('Lead not assigned');
+                        return false;
+                    }
                 }
                 $entity->save();
                 Log::info('updating detail record for lead id: ' . $leadId);

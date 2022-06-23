@@ -928,7 +928,13 @@ class HealthQuoteService extends BaseService
                         }else{
                             // If assign team is not GM, we need to update the advisor because in GM case, we don't need to update the advisor
                             Log::info('Assigning to advisor');
-                            $this->leadAllocationService->assignLead($entity, $userId, true);
+                            $isAllocated =  $this->leadAllocationService->assignLead($entity, $userId, true);
+                            if ($isAllocated) {
+                                Log::info('Lead assigned successfully');
+                            } else {
+                                Log::info('Lead not assigned');
+                                return false;
+                            }
                             $entity->wcu_id = null;
                             $this->updateChildRecord($entity->id);
                         }

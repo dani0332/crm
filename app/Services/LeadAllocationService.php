@@ -154,30 +154,35 @@ class LeadAllocationService extends BaseService
 
     public function assignLead($lead, $advisorId, $isManualAssignment = false)
     {
-        if ($lead->advisor_id != null) {
-            $this->removeLeadAllocationForOldAdvisor($lead);
-        }
-        Log::info('assignLead -- started');
-        Log::info('Assigning lead ' . $lead->id . ' to advisor ' . $advisorId);
-        try {
-            DB::beginTransaction();
+        if($this->checkIfAdvisorCanTakeLead($advisorId)){
+            if ($lead->advisor_id != null) {
+                $this->removeLeadAllocationForOldAdvisor($lead);
+            }
+            Log::info('assignLead -- started');
+            Log::info('Assigning lead ' . $lead->id . ' to advisor ' . $advisorId);
+            try {
+                DB::beginTransaction();
 
-            if ($isManualAssignment && $lead->advisor_id != null) {
-                $lead->quote_status_id = QuoteStatusEnum::Qualified;
+                if ($isManualAssignment && $lead->advisor_id != null) {
+                    $lead->quote_status_id = QuoteStatusEnum::Qualified;
+                }
+                $lead->advisor_id = $advisorId;
+                $lead->save();
+                DB::commit();
+            } catch (\Exception $e) {
+                Log::error($e->getMessage());
+                DB::rollback();
             }
 
-            $lead->advisor_id = $advisorId;
+            Log::info('Lead Id ' . $lead->id . ' assigned to advisor ' . $advisorId);
 
-            $lead->save();
-            DB::commit();
-        } catch (\Exception $e) {
-            Log::error($e->getMessage());
-            DB::rollback();
+            $this->updateLeadAllocationRecord($advisorId);
+            return true;
+        }
+        else{
+            return false;
         }
 
-        Log::info('Lead Id ' . $lead->id . ' assigned to advisor ' . $advisorId);
-
-        $this->updateLeadAllocationRecord($advisorId);
     }
 
     public function removeLeadAllocationForOldAdvisor($lead)
@@ -200,7 +205,32 @@ class LeadAllocationService extends BaseService
             DB::rollback();
         }
     }
-
+    public function checkIfAdvisorCanTakeLead($advisorId)
+    {
+        try {
+            DB::beginTransaction();
+            Log::info('checkIfAdvisorCanTakeLead -- started');
+            $leadAllocation = LeadAllocation::where('user_id', $advisorId)->first();
+            if ($leadAllocation != null) {
+                if($leadAllocation->max_capacity == -1 || $leadAllocation->allocation_count < $leadAllocation->max_capacity){
+                    Log::info('Advisor ' . $advisorId . ' can take lead');
+                    return true;
+                }
+                if ($leadAllocation->max_capacity == $leadAllocation->allocation_count && $leadAllocation->max_capacity != -1) {
+                    Log::info('Advisor ' . $advisorId . ' cannot take lead. Max capacity reached');
+                    return false;
+                }
+            } else {
+                Log::info('Advisor ' . $advisorId . ' has no allocation record');
+                return false;
+            }
+            DB::commit();
+        } catch (\Exception $e) {
+            Log::error($e->getMessage());
+            DB::rollback();
+            throw $e;
+        }
+    }
     public function updateLeadAllocationRecord($userId)
     {
         try {

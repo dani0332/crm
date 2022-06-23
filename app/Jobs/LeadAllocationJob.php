@@ -73,8 +73,14 @@ class LeadAllocationJob implements ShouldQueue
                             Log::info('Next available advisor: ' . $user->name);
                             Log::info('Allocating lead with uuid ' . $unAllocatedLead->uuid . ' to ' . $user->name);
 
-                            $this->leadAllocationService->assignLead($unAllocatedLead, $user->id);
-                            Log::info('Lead allocated to ' . $user->name);
+                            $isAllocated = $this->leadAllocationService->assignLead($unAllocatedLead, $user->id);
+                            if(!$isAllocated) {
+                                Log::info('Lead allocation failed for lead with uuid ' . $unAllocatedLead->uuid . ' to ' . $user->name);
+                                continue;
+                            }else{
+                                Log::info('Lead allocated to ' . $user->name);
+                            }
+
                         } else {
                             Log::info('Skipping allocation of lead with uuid ' . $unAllocatedLead->uuid . ' to ' . $user->name . ' as the user is not in the correct sub team');
                         }
