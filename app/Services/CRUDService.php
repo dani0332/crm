@@ -213,11 +213,7 @@ class CRUDService extends BaseService
             $query->whereIn('r.name', [RolesEnum::CarAdvisor, RolesEnum::Advisor]);
         }
         else if (strtolower($modelType) ==  strtolower(quoteTypeCode::Health)) {
-            if(Auth::user()->hasRole([RolesEnum::HealthManager, RolesEnum::HealthWCUAdvisor])) {
-                $query->where('r.name', '=', RolesEnum::HealthWCUAdvisor);
-            } else {
-                $query->whereIn('r.name', [RolesEnum::RMAdvisor, RolesEnum::EBPAdvisor, RolesEnum::HealthRenewalAdvisor, RolesEnum::HealthNewBusinessAdvisor, RolesEnum::HealthWCUAdvisor]);
-            }
+            $query->whereIn('r.name', [RolesEnum::RMAdvisor, RolesEnum::EBPAdvisor, RolesEnum::HealthRenewalAdvisor, RolesEnum::HealthNewBusinessAdvisor, RolesEnum::HealthWCUAdvisor]);
         } else if (strtolower($modelType) ==  strtolower(quoteTypeCode::Business)) {
             $query->whereIn('r.name', [RolesEnum::CorpLineAdvisor, RolesEnum::CorpLineRenewalAdvisor, RolesEnum::CorpLineNewBusinessAdvisor, RolesEnum::GMRenewalAdvisor, RolesEnum::GMNewBusinessAdvisor]);
         } else {
