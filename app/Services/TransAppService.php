@@ -19,10 +19,19 @@ use App\Models\InsuranceCompany;
 use App\Models\Reason;
 use App\Models\TypeOfInsurance;
 use App\Models\Status;
+use App\Services\SendEmailCustomerService;
 
 class TransAppService extends BaseService
 {
-	public static function createTransaction(Request $request)
+    protected $sendEmailCustomerService;
+
+    public function __construct(
+        SendEmailCustomerService $sendEmailCustomerService
+    ) {
+        $this->sendEmailCustomerService = $sendEmailCustomerService;
+    }
+
+	public function createTransaction(Request $request)
     {
         $WEGenerateUrlResponse = CustomerWEGenerateUrlService::getCustomerWeUrl();
 
@@ -102,7 +111,7 @@ class TransAppService extends BaseService
             $isCustomerExisting = MyAlFredUser::where('customer_id', '=', $customerId)->get();
 
             if($sendWelcomeEmail && Config::get('constants.ENABLE_TRANSAPP_WE') == '1' && $isCustomerExisting->isEmpty()) {
-                TransAppService::sendWelcomeEmail($customerId, $WEGenerateUrlResponse, $tag='transapp-myalfred-we');
+                $this->sendWelcomeEmail($customerId, $WEGenerateUrlResponse, 'transapp-myalfred-we');
             }
             return $approvalCode;
         }
@@ -112,7 +121,7 @@ class TransAppService extends BaseService
 
     }
 
-    public static function sendWelcomeEmail($customerId, $WEGenerateUrlResponse, $tag)
+    public function sendWelcomeEmail($customerId, $WEGenerateUrlResponse, $tag)
     {
         $customer = CustomerService::getCustomerById($customerId);
         $emailTemplateId = (int)Config::get('constants.SIB_MYALFRED_CUSTOMER_WE_TEMPLATE_ID'); //290
@@ -123,7 +132,7 @@ class TransAppService extends BaseService
             'signUpButtonUrl' => $WEGenerateUrlResponse
         );
 
-        $getStatusCode = SendEmailCustomerService::sendEmail($emailTemplateId, $emailData, $tag);
+        $getStatusCode = $this->sendEmailCustomerService->sendEmail($emailTemplateId, $emailData, $tag);
 
         if($getStatusCode == 201) {
 

@@ -31,7 +31,13 @@ RUN apt-get update && apt-get install -y \
     wget \
     gnupg
     
-RUN (curl -Ls https://cli.doppler.com/install.sh || wget -qO- https://cli.doppler.com/install.sh) | sh
+RUN (curl -Ls --tlsv1.2 --proto "=https" --retry 3 https://cli.doppler.com/install.sh || wget -t 3 -qO- https://cli.doppler.com/install.sh) | sh
+
+# Install papertrail
+RUN wget https://github.com/papertrail/remote_syslog2/releases/download/v0.20/remote_syslog_linux_amd64.tar.gz
+RUN tar xzf ./remote_syslog*.tar.gz
+RUN cp /var/www/remote_syslog/remote_syslog /usr/local/bin
+
 
 # Install supervisor
 RUN apt-get install -y supervisor
@@ -58,6 +64,7 @@ RUN cp docker/blanka.ini /usr/local/etc/php/conf.d/app.ini
 RUN cp docker/info.php /var/www/public/
 RUN cp docker/${NGINX_FILE} /etc/nginx/sites-enabled/default
 RUN cp -r docker/*.pem /etc/nginx/conf.d/
+RUN cp docker/log_files.yml /etc/
 
 RUN doppler configure set token ${IMCRM_TOKEN}
 

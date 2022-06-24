@@ -927,6 +927,7 @@ $(document).ready(function () {
         }
         $.get('/car-model?make_code=' + make_code, function (data) {
             var carmodel = $('#car_model_id').empty();
+            carmodel.append('<option data-id="" value="">Please Confirm Car Model</option>');
             $.each(data, function (create, carmodelObj) {
                 var option = $('<option/>', { id: create, value: carmodelObj });
                 carmodel.append('<option data-id="' + carmodelObj.code + '" value="' + carmodelObj.id + '">' + carmodelObj.text + '</option>');
@@ -2241,3 +2242,6 @@ function disabledDoneActivities(){
     });
 }
 
+$('#send-note-for-customer-btn').on('click', function(){
+    $('#notesForCustomerModal').modal({ show: true });
+});

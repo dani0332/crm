@@ -56,6 +56,7 @@ use App\Http\Controllers\RenewalsUploadController;
 use App\Http\Controllers\RewardSliderController;
 use App\Http\Controllers\VehicleRangeController;
 use App\Http\Controllers\VehicleValueController;
+use App\Http\Controllers\AjaxController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -134,9 +135,7 @@ Route::group(['middleware' =>  ['auth']], function () {
         Route::get('update', [RenewalsUploadController::class, 'updateRenewals']);
     });
 
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-
-    Route::post('dashboard-stats', [DashboardController::class, 'dashboardStats']);
+    Route::get('/dashboard/{quoteType}-conversion', [DashboardController::class, 'conversionStats']);
     Route::group(['prefix' => 'rewards'], function () {
         Route::resource('partner', PartnerController::class);
         Route::resource('reward', RewardController::class);
@@ -167,7 +166,7 @@ Route::group(['middleware' =>  ['auth']], function () {
         Route::post('save', [CRUDController::class, 'store'])->name('saveQuote');
         Route::post('update', [CRUDController::class, 'update'])->name('updateQuote');
         Route::post('createDuplicate', [CRUDController::class, 'createDuplicate'])->name('createDuplicate');
-       
+
         Route::get('getvalues/{modelType}/{propertyName}/{recordId}', [CRUDController::class, 'getDropdownSourceNameForDisplay']);
         Route::get('car/{quoteId}/plan_details/{planId}', [CRUDController::class, 'carQuotePlanDetails']);
         Route::post('manualLeadAssign', [CRUDController::class, 'manualLeadAssign'])->name('manualLeadAssign');
@@ -186,6 +185,9 @@ Route::group(['middleware' =>  ['auth']], function () {
         Route::post('records/search', [CRUDController::class, 'searchLead'])->name('searchLead');
         Route::get('getLeadHistory', [CRUDController::class, 'getLeadHistory'])->name('getLeadHistory');
         Route::post('car/CarPlanManualProcess', [CRUDController::class, 'CarPlanManualProcess'])->name('CarPlanManualProcess');
+        Route::post('car/carAssumptionsUpdate', [CRUDController::class, 'carAssumptionsUpdate']);
+        Route::post('car/addNoteForCustomer', [CRUDController::class, 'addNoteForCustomer']);
+        Route::post('car/sendNotesToCustomer', [CRUDController::class, 'sendNotesToCustomer']);
     });
 
     Route::group(['prefix' => 'generic'], function () {
@@ -267,12 +269,13 @@ Route::group(['middleware' =>  ['auth']], function () {
         Route::get('/tmLeadsAssign', [TmLeadController::class, 'tmLeadsAssign']);
     });
 
-    Route::get('/car-model', [ClaimController::class, 'carModelBasedOnCarMake']);
-    Route::get('/car-make', [ClaimController::class, 'getCarMake']);
+    Route::get('/car-model', [AjaxController::class, 'carModelBasedOnCarMake']);
+    Route::get('/car-make', [AjaxController::class, 'getCarMake']);
     Route::get('/getoverdueleads', [ClaimController::class, 'getoverdueleads']);
-    Route::get('/getCarModelDetails', [ClaimController::class, 'getCarModelDetails']);
+    Route::get('/getCarModelDetails', [AjaxController::class, 'getCarModelDetails']);
+    Route::get('/getCarModelTrimValues', [AjaxController::class, 'getCarModelTrimValues']);
     Route::post('auditable', [AuditableController::class, 'loadAuditableComponent']);
-    Route::get('/car-model-by-id', [ClaimController::class, 'carModelBasedOnCarMakeId']);
+    Route::get('/car-model-by-id', [AjaxController::class, 'carModelBasedOnCarMakeId']);
     Route::get('/insurance-provider-plans', [ClaimController::class, 'carPlansBasedOnInsuranceProvider']);
     Route::post('/CarPlanUpdateManualProcess', [ClaimController::class, 'CarPlanUpdateManualProcess']);
 });

@@ -22,7 +22,7 @@ final class quoteStatusCode extends Enum
     const TRANSACTION_APPROVED = "transaction_approved";
     const NEWLEAD = "New Lead";
     const QUOTED = "Quoted";
-    const FOLLOWEDUP = "Followed Up";
+    const FOLLOWEDUP = "Followed Up";
     const NEGOTIATION = "In Negotiation";
     const PAYMENTPENDING = "Payment Pending";
     const PENDINGUW = "Pending with UW";

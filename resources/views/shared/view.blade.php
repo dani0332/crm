@@ -196,9 +196,9 @@
                 case 'car':
                     if (isRenewalUser) {
                         if (isManagerOrDeputy) {
-                            disableSortColumns = [-1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 14, 15, 16, 17, 18];
+                            disableSortColumns = [-1, 2, 2, 3, 4, 5, 6, 7, 8];
                         } else {
-                            disableSortColumns = [-1, 2, 2, 3, 4, 5, 6, 7, 8, 9, 13, 14, 15, 16, 17];
+                            disableSortColumns = [-1, 2, 2, 3, 4, 5, 6, 7, 8];
                         }
                     } else if (isManagerOrDeputy) {
                         disableSortColumns = [-1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 15];
@@ -267,7 +267,6 @@
                     disableSortColumns = [];
                     break;
             }
-            console.log(dataTableColumns);
             // Initializing the datatable
             var vehicleTypeDataTable = $("#dtBasicExample").DataTable({
                 ordering: false,
@@ -301,6 +300,10 @@
                         if (model.properties['previous_policy_expiry_date'] && model.properties['previous_policy_expiry_date'].indexOf(
                                 'range') > -1) {
                             d['previous_policy_expiry_date_end'] = $('#previous_policy_expiry_date_end').val();
+                        }
+                        if (model.properties['next_followup_date'] && model.properties['next_followup_date'].indexOf(
+                                'range') > -1) {
+                            d['next_followup_date_end'] = $('#next_followup_date_end').val();
                         }
                     }
                 },

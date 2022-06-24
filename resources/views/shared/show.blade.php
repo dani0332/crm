@@ -349,13 +349,14 @@
 
 
 
-        <x-car-quote-more-detail :vehicleTypeText="$vehicleTypeText" :caqQuoteCylinder="$record->cylinder" :caqQuoteSeatCapacity="$record->seat_capacity" :listQuote="$listQuote" />
-
-        <x-car-ecom-detail :carQuotePremium="$record->premium" :carQuotePaidAt="$record->paid_at" :carQuotePaymentStatus="$record->payment_status_id_text" :carQuotePlanName="$record->plan_id_text" :carQuotePlanAddons="$carQuotePlanAddons"
-            :carQuotePlanProvider="$record->car_plan_provider_id_text" :carQuotePaymentMethod="$record->payment_gateway" />
-
-
-        <x-car-quote-plans :listQuotePlans="$listQuotePlans" :uuid="$ecomCarInsuranceQuoteUrl . $record->uuid" :uuidModal="$record->uuid" :quoteRequestId="$record->id" :quoteIsCommerce="$record->is_ecommerce" />
+        <x-car-quote-more-detail :record="$record" :vehicleTypes="$vehicleTypes" :yearsOfManufacture="$yearsOfManufacture" :trimList="$trimList" />
+        <x-car-ecom-detail :record="$record" :carQuotePlanAddons="$carQuotePlanAddons" />
+        <x-car-quote-plans :record="$record" :listQuotePlans="$listQuotePlans" :ecomUrl="$ecomCarInsuranceQuoteUrl . $record->uuid" />
+        @isset($record->previous_quote_id)
+        <x-email-status :emailStatuses="$emailStatuses" />
+        @endisset
+        <x-notes-for-customer :record="$record" :notesForCustomers="$notesForCustomers" :quoteTypeId="$quoteTypeId" />
+        <x-notes-for-customer-modal :record="$record" :quoteTypeId="$quoteTypeId" />
     @endif
 
     <div class="row" st>
@@ -415,7 +416,7 @@
         </div>
         <x-travel-ecom-detail :travelQuotePremium="$record->premium" :travelQuotePaidAt="$record->paid_at" :travelQuotePaymentStatus="$record->payment_status_id_text" :travelQuotePlanName="$record->plan_id_text" />
         <x-travel-quote-members-detail :members="$members_detail" />
-        <x-travel-quote :listQuotePlans="$listQuotePlans" :uuidModal="$record->uuid" :quoteRequestId="$record->id" />
+        <x-travel-quote :listQuotePlans="$listQuotePlans" :uuidModal="$record->uuid" :quoteRequestId="$record->id" :ecomUrl="$ecomTravelInsuranceQuoteUrl . $record->uuid" />
     @endif
 
     @if ($model->modelType == quoteTypeCode::Health)
@@ -446,11 +447,6 @@
             :uuidModal="$record->uuid"
             :quoteRequestId="$record->id" />
     @endif
-
-    @isset($previousQuoteId)
-        <x-email-status
-            :emailStatuses="$emailStatuses" />
-    @endisset
 
     @can('auditable')
         <div id="auditable">

@@ -1,14 +1,18 @@
 <?php
+
 namespace App\Http\Controllers;
 
-use App\Models\CarQuote;
-use App\Models\Customer;
-use Carbon\Carbon;
-use Illuminate\Http\Request;
-use DB;
+use App\Services\DashboardService;
 
 class DashboardController extends Controller
 {
+    protected $dashboardService;
+
+    public function __construct(DashboardService $dashboardService)
+    {
+        $this->dashboardService = $dashboardService;
+    }
+
     /**
      * Display a listing of the resource.
      *
@@ -19,34 +23,45 @@ class DashboardController extends Controller
         return view('dashboard');
     }
 
-    public function dashboardStats(Request $request)
+    public function conversionStats($quoteType)
     {
-        $startDate = Carbon::now()->startOfDay()->toDateTimeString();
-        $endDate = Carbon::now()->endOfDay()->toDateTimeString();
-        if (isset($request->startDate) && !empty($request->startDate)
-            && isset($request->endDate) && !empty($request->endDate)) {
-            $startDate = Carbon::parse($request->startDate)->startOfDay()->toDateTimeString();
-            $endDate = Carbon::parse($request->endDate)->endOfDay()->toDateTimeString();
-        }
-        $customers = Customer::whereBetween('created_at', [$startDate, $endDate]);
+        $statsArray = $this->getWeeklyStats($quoteType);
+        $headingArray = $this->getWeeklyHeading();
+        return view('dashboard.'.$quoteType.'-conversion', compact('statsArray', 'headingArray'));
+    }
 
-        // $ecomLeadCount = DB::table('car_quote_request')->where('is_ecommerce', true)
-        //                 ->whereBetween('created_at', [$startDate, $endDate]);
-
-        $fakeLeads = DB::table('car_quote_request')
-                         ->join('quote_status', 'quote_status.id', '=', 'car_quote_request.quote_status_id')
-                         ->where('quote_status.text', 'New Lead')
-                         ->orWhere('quote_status.text', 'Fake')
-                         ->whereBetween('car_quote_request.created_at', [$startDate, $endDate]);
-
-        $carQuotes = DB::table('car_quote_request')->whereBetween('created_at', [date($startDate), date($endDate)])
-                        ->GroupBy('customer_id');
-
-        return response()->json([
-            'totalCustomers' => $customers->count(),
-            'totalCarQuotes' => $carQuotes->count(),
-            'totalEcommerceLeads' => 0,
-            'totalFakeLeads' => $fakeLeads->count(),
-        ]);
+    public function getWeeklyStats ($type)
+    {
+        return [
+            '1Week' => $this->dashboardService->getDashboardStatsByDate(
+                $this->dashboardService->getPastDateByWeek(0, true),
+                $this->dashboardService->getPastDateByWeek(0, false),
+                $type
+            ),
+            '2Week' => $this->dashboardService->getDashboardStatsByDate(
+                $this->dashboardService->getPastDateByWeek(1, true),
+                $this->dashboardService->getPastDateByWeek(1, false),
+                $type
+            ),
+            '3Week' => $this->dashboardService->getDashboardStatsByDate(
+                $this->dashboardService->getPastDateByWeek(2, true),
+                $this->dashboardService->getPastDateByWeek(2, false),
+                $type
+            ),
+            '4Week' => $this->dashboardService->getDashboardStatsByDate(
+                $this->dashboardService->getPastDateByWeek(3, true),
+                $this->dashboardService->getPastDateByWeek(3, false),
+                $type
+            ),
+        ];
+    }
+    public function getWeeklyHeading()
+    {
+        return [
+            '1WeekHeadingDate' => $this->dashboardService->getWeekHeadingDate(0),
+            '2WeekHeadingDate' => $this->dashboardService->getWeekHeadingDate(1),
+            '3WeekHeadingDate' => $this->dashboardService->getWeekHeadingDate(2),
+            '4WeekHeadingDate' => $this->dashboardService->getWeekHeadingDate(3),
+        ];
     }
 }

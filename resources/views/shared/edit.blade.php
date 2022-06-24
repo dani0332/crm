@@ -42,11 +42,13 @@
         var modelPropertiesArray = convertObjectToArray(model.properties);
         var modelSkipProperties = convertObjectToArray(model.skipProperties);
         debugger;
-        if(model.modelType.toLowerCase() == 'car'){
+        if(model.modelType.toLowerCase() == '<?php echo strtolower(quoteTypeCode::Car); ?>'){
             var oldCarModelId = JSON.parse('<?php echo json_encode(isset($record->car_model_id) ? $record->car_model_id : 0) ?>');
             var oldCarMakeId = JSON.parse('<?php echo json_encode(isset($record->car_make_id) ? $record->car_make_id : 0) ?>');
+            var carModelDetailId = JSON.parse('<?php echo json_encode(isset($record->car_model_detail_id) ? $record->car_model_detail_id : 0) ?>');
             getCarMakes(oldCarMakeId);
             getCarModels(oldCarMakeId, oldCarModelId);
+            ajaxCallScript(oldCarModelId);
         }
         var result = modelSkipProperties.filter(obj => {
             return obj.name === 'update'
@@ -118,6 +120,78 @@
             }
         }
         pet_field_microchip_visibility();
+
+        $('#car_model_id').on('change',function(){
+            var car_model_id = $('#car_model_id').val();
+            ajaxCallScript(car_model_id) 
+        });
+
+        function ajaxCallScript(car_model_id){
+            $.ajax({
+                url: "{{ url('/getCarModelDetails') }}",
+                type: "GET",
+                data: {
+                    car_model_id: car_model_id
+                },
+                success: function(data){     
+                    if(data.length > 0){
+                        var trim = $('#trim').empty();
+                        $.each(data, function (create, carmodelObj) {
+                            if(carmodelObj.is_default != undefined) {
+                                if(carmodelObj.is_default == 1 && carModelDetailId == 0){
+                                populateCarValues(carmodelObj)
+                                trim.append('<option selected value="' + carmodelObj.id + '">' + carmodelObj.text + '</option>');
+                                }else{
+                                    
+                                    if(carModelDetailId != 0 && carmodelObj.id == carModelDetailId) {
+                                        trim.append('<option selected value="' + carmodelObj.id + '">' + carmodelObj.text + '</option>');
+                                    } else if(create == 0) {
+                                        populateCarValues(carmodelObj)
+                                    }
+                                    trim.append('<option value="' + carmodelObj.id + '">' + carmodelObj.text + '</option>');
+                                }
+                            }else {
+                                populateCarValues(carmodelObj)
+                                trim.append('<option value="">I dont know</option>');
+                            }
+                            
+                        });
+
+                    } else{
+                        $('#trim').empty();
+                    }
+                },
+                error: function(data){
+                   
+                }
+            });
+        }
+
+        $('#trim').on('change',function(){
+            loadTrimValues($('#trim').val())
+        });
+        function populateCarValues(carmodelObj) {
+            $('#cylinder').val(carmodelObj.cylinder);
+            $('#seat_capacity').val(carmodelObj.seat_capacity);
+            if(carmodelObj.vehicle_type_id)
+                $('#vehicle_type_id').val(carmodelObj.vehicle_type_id);
+        }
+        function loadTrimValues(trimId)
+        {
+            $.get('/getCarModelTrimValues?id=' + trimId, function (data) {
+                if(data.length > 0) {
+                    $("#vehicle_assumptions_error_msg").hide(300);
+                    $("#vehicle_assumptions_success_msg").show(300);
+                    populateCarValues(data);
+                }else {
+                    $("#vehicle_assumptions_error_msg").show(300);
+                    $("#vehicle_assumptions_success_msg").hide(300);
+                    $('#cylinder').val('');
+                    $('#seat_capacity').val('');
+                    $('#vehicle_type_id').val('');
+                }
+            });
+        }
 });
 </script>
     <div class="row">
@@ -138,6 +212,8 @@
                     @if (session()->has('message'))
                         <div class="alert alert-danger">{{ session()->get('message') }}</div>
                     @endif
+                    <div id="vehicle_assumptions_success_msg" class="alert alert-success" style="display:none;">Vehicle Assumptions Data Found</div>
+                    <div id="vehicle_assumptions_error_msg" class="alert alert-danger" style="display:none;">No Vehicle Assumptions Data Found</div>
                     <form id="demo-form2" method='post'
                         action="{{ route(strtolower($model->modelType).'.update', $record->uuid) }}"
                         enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left"
@@ -161,10 +237,11 @@
                         <input type="hidden" name="modelType" value={{ json_encode($model->modelType) }} />
                         <input type="hidden" name="modelSkipProperties" id="skip" value={{ json_encode($skipProperties) }} />
                         @php
-                        $index = 0;
+                            $index = 0;
+                            $skipPropertiesArray = array_filter(explode(",", $skipProperties['update']));
                         @endphp
                         @foreach($model->properties as $property => $value)
-                            @if(!str_contains($skipProperties['update'], $property))
+                            @if(!in_array($property, $skipPropertiesArray))
                                 @if($index == 0 || strpos($value, 'checkbox'))
                                 @else
                                     <div @if(count($model->properties) <6) class="col-md-12" @else class="col-md-6" @endif id={{$property.'_div'}}>
@@ -262,8 +339,6 @@
                                             @endif
                                         @endif
                                         @if(strpos($value, 'static') !== false )
-
-                                    <div class="col">
                                         <span class="col-form-label col-md-6 col-sm-6" for="name">
                                             @if(strpos($value, 'title'))
                                                 {{ strtoupper($customTitles[$property])}}
@@ -291,8 +366,6 @@
                                                 @endif
                                             @endforeach
                                         </select>
-
-                                    </div>
                                     @endif
                                     </div>
                                     @if($property == "mobile_no")
