@@ -885,7 +885,7 @@ class HealthQuoteService extends BaseService
         return 'true';
     }
 
-    public function removePreviousAdvisorAndUpdateStatus($entity)
+    public function removePreviousAdvisorAndUpdateStatus($entity, $quoteStatusId)
     {
         $startOfDayToday = Carbon::now()->startOfDay();
         $entityDetail = $this->getDetailEntity($entity->id);
@@ -894,63 +894,105 @@ class HealthQuoteService extends BaseService
             $this->leadAllocationService->removeLeadAllocationForOldAdvisor($entity);
         }
         $entity->advisor_id = null;
-        $entity->quote_status_id = QuoteStatusEnum::Qualified;
+        $entity->quote_status_id = $quoteStatusId;
         $entity->save();
 
     }
 
-    public function processManualLeadAssignment($request)
+    public function assignWCU($request): array
     {
-        if(isset($request->selectTmLeadId))
-            $leadsIds = array_map('intval', explode(',', trim($request->selectTmLeadId, ',')));
-        else
-            $leadsIds = array_map('intval', explode(',', trim($request->entityId, ',')));
+        $leadsIds = array_map('intval', explode(',', trim($request->selectTmLeadId, ',')));
         Log::info('Leads ids to assign: ' . json_encode($leadsIds));
+        $userId = $request->assigned_to_id_new;
+        $result = [];
+        foreach ($leadsIds as $leadId) {
+            $lead = $this->getEntityPlain($leadId);
+            if($this->isLeadTransactionApproved($lead)) {
+                Log::info('Cannot assign WCU as lead is in Transaction Approved state , lead id: ' . $leadId);
+                array_push($result, ['leadId' => $lead->code, 'msg' => 'Cannot assign WCU as lead is in Transaction Approved state']);
+                continue;
+            }
+            $lead->advisor_id = null;
+            $lead->quote_status_id = QuoteStatusEnum::NewLead;
+            $lead->wcu_id = $userId;
+            $lead->health_team_type = $request->assign_team;
+            $lead->save();
+            Log::info('WCU advisor : ' . $userId . ' assigned to lead: ' . $leadId);
+        }
+        return $result;
+    }
 
+    public function assignHealthTeam($request, $lead): bool
+    {
+        if($this->isLeadTransactionApproved($lead)) {
+            Log::info('Cannot assign Health Team as lead is in Transaction Approved state');
+            return false;
+        }
+        if($lead->health_team_type != null) {
+            Log::info('Removing previous advisor as lead already assigned to a health team');
+            $this->removePreviousAdvisorAndUpdateStatus($lead, QuoteStatusEnum::Qualified);
+        }
+        $selectedTeam = $request->get('assign_team');
+        if ($selectedTeam == quoteTypeCode::GM) {
+            Log::info('Assigning lead to GM');
+            $this->convertLeadToGM($lead);
+            $lead->health_team_type = quoteTypeCode::GM;
+            $lead->save();
+
+        } else {
+            Log::info('Assigning lead to '. $selectedTeam. ' team');
+            $lead->health_team_type = $selectedTeam;
+            if($lead->quote_status_id == QuoteStatusEnum::Qualified) {
+                $lead->wcu_id = null;
+            }
+            $lead->save();
+        }
+        return true;
+    }
+
+    public function isLeadTransactionApproved($lead): bool
+    {
+        if ($lead->quote_status_id == QuoteStatusEnum::TransactionApproved) {
+            return true;
+        }
+        return false;
+    }
+
+    public function processManualLeadAssignment($request): array
+    {
+        $leadsIds = array_map('intval', explode(',', trim($request->selectTmLeadId, ',')));
         $userId = (int)$request->assigned_to_id_new;
-        Log::info('User id to assign: ' . $userId);
-
-        if (strtolower($request->modelType) == strtolower(quoteTypeCode::Health)) {
-            foreach ($leadsIds as $leadId) {
-                $entity = $this->getEntityPlain($leadId);
-                if ($entity) {
-                    Log::info('Entity found with uuid ' . $entity->uuid);
-                    if($entity->health_team_type != null && $request->assign_team != null){
-                        // If health team type and assign team from request both are not null, then it is a team change case and we need to update advisor to null
-                        Log::info('Health team type is not null, so updating advisor to null');
-                        $this->removePreviousAdvisorAndUpdateStatus($entity);
-                    }
-
-                    if($request->assign_team != quoteTypeCode::GM){
-                        if (Auth::user()->isHealthWCUAdvisor() || $request->assign_team == quoteTypeCode::WCU) {
-                            Log::info('User is health WCU advisor so only updating wcu_id column');
-                            $entity->wcu_id = $userId;
-                        }else{
-                            // If assign team is not GM, we need to update the advisor because in GM case, we don't need to update the advisor
-                            Log::info('Assigning to advisor');
-                            $isAllocated =  $this->leadAllocationService->assignLead($entity, $userId, true);
-                            if ($isAllocated) {
-                                Log::info('Lead assigned successfully');
-                            } else {
-                                Log::info('Lead not assigned');
-                                return false;
-                            }
-                            $entity->wcu_id = null;
-                            $this->updateChildRecord($entity->id);
-                        }
-                    }
-                    // updating the health team type to the team type selected in the request
-                    Log::info('Assigning to health team');
-                    $entity->health_team_type = $request->assign_team;
-                    $entity->save();
-                    return true;
+        Log::info('Leads ids to assign: ' . json_encode($leadsIds));
+        $result = [];
+        foreach($leadsIds as $leadId)
+        {
+            $lead = $this->getEntityPlain($leadId);
+            if(strtolower($request->modelType) == strtolower(quoteTypeCode::Health))
+            {
+                if($lead->health_team_type == null || $lead->health_team_type == '') {
+                    Log::info('Lead with id: ' . $leadId . ' is not assigned to any health team');
+                    $msg = 'Health team is missing please select health team first';
+                    array_push($result, [ 'leadId' => $lead->code, 'msg' => $msg ]);
+                    continue;
                 }
-                else{
-                    Log::info('Entity not found with id ' . $leadId);
-                    return false;
+                if($this->leadAllocationService->checkIfAdvisorCanTakeLead($userId)){
+                    Log::info('Advisor : ' . $userId . ' can take lead: ' . $leadId);
+                    $this->leadAllocationService->assignLead($lead, $userId, true);
+                    $this->updateChildRecord($lead->id);
+                    Log::info('Lead: ' . $leadId . ' assigned to advisor: ' . $userId);
+                }else{
+                    Log::info('Advisor : ' . $userId . ' cannot take lead: ' . $leadId);
+                    $msg = 'Advisor is not allowed to take lead with CDBID : ' . $lead->code;
+                    array_push($result, [ 'leadId' => $lead->code, 'msg' => $msg ]);
+                    continue;
                 }
             }
+            else{
+                $lead->advisor_id = $userId;
+                $lead->save();
+            }
         }
+        return $result;
     }
     public function getEntityPlainByUUID($uuid)
     {

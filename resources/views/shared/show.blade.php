@@ -34,6 +34,8 @@
     <?php
     use App\Enums\quoteTypeCode;
     use App\Models\CarQuote;
+    use App\Enums\RolesEnum;
+    use App\Enums\QuoteStatusEnum;
     ?>
     <div class="row">
         <div class="col-md-12 col-sm-12 admin-detail">
@@ -59,8 +61,8 @@
                     </ul>
                     <div class="clearfix"></div>
                 </div>
-                @hasanyrole('ADMIN|HEALTH_MANAGER|HEALTH_WCU_ADVISOR|HEALTH_DEPUTY_MANAGER')
-                    @if (strtolower($model->modelType) == 'health')
+                @if(Auth::user()->hasAnyRole([RolesEnum::Admin, RolesEnum::HealthManager, RolesEnum::HealthWCUAdvisor, RolesEnum::HealthDeputyManager]))
+                    @if (strtolower($model->modelType) == strtolower(quoteTypeCode::Health) && $record->quote_status_id != QuoteStatusEnum::TransactionApproved)
                         <form method="post" id="healthTeamAssignForm" action="healthTeamAssign"
                             class="form-horizontal form-label-left" autocomplete="off">
                             {{ csrf_field() }}
@@ -93,7 +95,8 @@
                             <div class="clearfix">
                             </div>
                         </form>
-                        <form method="post" action="manualLeadAssignAfterTeamAssign" class="form-horizontal form-label-left"
+                        @if(Auth::user()->hasAnyRole([RolesEnum::Admin, RolesEnum::HealthManager, RolesEnum::HealthDeputyManager]) && !Auth::user()->hasRole(RolesEnum::HealthWCUAdvisor))
+                        <form method="post" action="manualAssign" class="form-horizontal form-label-left"
                             autocomplete="off">
                             {{ csrf_field() }}
                             @method('POST')
@@ -122,10 +125,10 @@
                             <div class="clearfix">
                             </div>
                         </form>
-
+                        @endif
                     @endif
-                @endcan
-                @if (strtolower($model->modelType) == 'business' && Auth::user()->hasAnyRole(['ADMIN', 'BUSINESS_MANAGER', 'WCU_ADVISOR', 'BUSINESS_DEPUTY']) && ($record->business_type_of_insurance_id_text = 'Group Medical'))
+                @endif
+                @if (strtolower($model->modelType) == strtolower(quoteTypeCode::Business) && Auth::user()->hasAnyRole(['ADMIN', 'BUSINESS_MANAGER', 'WCU_ADVISOR', 'BUSINESS_DEPUTY']) && ($record->business_type_of_insurance_id_text = 'Group Medical'))
                     <form method="post" action="manualBusinessLeadAssign" class="form-horizontal form-label-left"
                         autocomplete="off">
                         {{ csrf_field() }}

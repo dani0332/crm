@@ -573,45 +573,42 @@ class CRUDController extends Controller
         }
     }
 
-    public function manualLeadAssign(Request $request)
+    public function wcuAssign(Request $request)
     {
-        $isValidRequest  = $this->crudService->validateRequest($request->modelType, $request);
-        if($isValidRequest != 'true'){
-            return redirect()->back()->with('message', $isValidRequest);
-        }
-        if (strtolower($request->modelType) == strtolower(quoteTypeCode::Health)){
-            Log::info('Health Manual Lead Assign start');
-            $isProcessed = $this->healthQuoteService->processManualLeadAssignment($request);
-            if(!$isProcessed){
-                Log::warning('Manual Lead Assignment Failed for Health Quote , selected id was '. $request->selectTmLeadId);
-                return Redirect::back()->with('message', 'Manual Lead Assignment Failed for Health Quote. Please try again.');
+        $result = $this->healthQuoteService->assignWCU($request);
+        if(count($result) > 0){
+            $msg = '';
+            foreach ($result as $item){
+                $msg = $msg . 'Lead with CDBID ' . $item['leadId'] .' is not assigned. <span style="color:black;">Reason : '. $item['msg'] . '</span> <br>';
             }
-        }
-        else{
-            $isProcessed = $this->{strtolower($request->modelType) . 'QuoteService'}->processManualLeadAssignment($request);
-            if(!$isProcessed){
-                Log::warning('Manual Lead Assignment Failed for '.$request->modelType.' Quote , selected id was '. $request->selectTmLeadId);
-                return Redirect::back()->with('message', 'Manual Lead Assignment Failed. Please try again.');
-            }
+            Log::warning('WCU Assignment Failed for '.$request->modelType.' Quote , selected id was '. $request->selectTmLeadId);
+            return Redirect::back()->with('message', $msg);
         }
         $assignedUserName = $this->userService->getUserNameById((int)$request->assigned_to_id_new);
         return Redirect::back()->with('success', $request->modelType . ' Leads has been Assigned To ' . $assignedUserName);
     }
 
-    public function manualLeadAssignAfterTeamAssign(Request $request)
-    {
-        $this->crudService->validateRequest($request->modelType, $request);
 
-        if (strtolower($request->modelType) == strtolower(quoteTypeCode::Health)){
-            Log::info('Health Manual Lead Assign start');
-            $isProcessed = $this->healthQuoteService->processManualLeadAssignment($request);
-            if(!$isProcessed){
-                Log::warning('Manual Lead Assignment Failed for Health Quote , selected id was '. $request->selectTmLeadId);
-                return Redirect::back()->with('message', 'Manual Lead Assignment Failed for Health Quote. Please try again.');
-            }
+
+    public function manualLeadAssign(Request $request)
+    {
+
+        $isValidRequest  = $this->crudService->validateRequest($request->modelType, $request);
+        if($isValidRequest != 'true'){
+            return redirect()->back()->with('message', $isValidRequest);
         }
-        $assignedUserName = $this->userService->getUserNameById((int)$request->assigned_to_id_new);
-        return Redirect::back()->with('success', $request->modelType . ' Leads has been Assigned To ' . $assignedUserName);
+        $assignmentResult = $this->{strtolower($request->modelType) . 'QuoteService'}->processManualLeadAssignment($request);
+        if(count($assignmentResult) > 0){
+            $msg = '';
+            foreach($assignmentResult as $assignmentResultItem){
+                $msg = $msg . ' Lead with CDBID' . $assignmentResultItem['leadId'] .' is not assigned, Reason : '. $assignmentResultItem['msg'] . ' <br>';
+            }
+            Log::warning('Manual Lead Assignment Failed for '.$request->modelType.' Quote , selected id was '. $request->selectTmLeadId);
+            return Redirect::back()->with('message', $msg);
+        }else{
+            $assignedUserName = $this->userService->getUserNameById((int)$request->assigned_to_id_new);
+            return Redirect::back()->with('success', $request->modelType . ' Leads has been Assigned To ' . $assignedUserName);
+        }
     }
 
     public function addCarQuotePlan(Request $request)
@@ -624,20 +621,16 @@ class CRUDController extends Controller
     public function healthTeamAssign(Request $request)
     {
         $selectedTeam = $request->get('assign_team');
+
         $lead = $this->healthQuoteService->getEntityPlain($request->get('entityId'));
-        $lead->health_team_type = $request->get('assign_team');
-        Log::info('Health Team Assign start');
-        Log::info('Healht Team Type is '.$lead->health_team_type . ' for lead id '.$lead->id);
-        if($lead->health_team_type != null && $request->assign_team != null){
-            // If health team type and assign team from request both are not null, then it is a team change case and we need to update advisor to null
-            Log::info('Health team type is not null, so updating advisor to null');
-            $this->healthQuoteService->removePreviousAdvisorAndUpdateStatus($lead);
-        }
-        $lead->save();
-        if ($selectedTeam == quoteTypeCode::GM) {
-            $this->healthQuoteService->convertLeadToGM($lead);
+
+        $isAssigned = $this->healthQuoteService->assignHealthTeam($request, $lead);
+
+        if($selectedTeam == quoteTypeCode::GM && $isAssigned){
             return redirect()->to('/quotes/health')->with('success', ' Lead has been Converted And Assigned To Group Medical Team');
-        } else {
+        }
+        if($selectedTeam != quoteTypeCode::GM && $isAssigned){
+
             return redirect()->to('/quotes/health/' . $lead->uuid)->with('success', ' Lead has been Assigned To ' . strtoupper($selectedTeam) . ' Team');
         }
     }

@@ -751,44 +751,46 @@ class LifeQuoteService extends BaseService
         return $audits;
     }
 
-    public function processManualLeadAssignment($request)
+    public function processManualLeadAssignment($request): array
     {
         $leadsIds = array_map('intval', explode(',', trim($request->selectTmLeadId, ',')));
-        Log::info('Leads ids: ' . json_encode($leadsIds));
-
         $userId = (int)$request->assigned_to_id_new;
-        Log::info('User id: ' . $userId);
-
-        foreach ($leadsIds as $leadId) {
-            $entity = $this->getEntityPlain($leadId);
-            if ($entity) {
-                Log::info('Entity found with uuid: ' . $entity->uuid);
-                if (Auth::user()->isHealthWCUAdvisor()) {
-                    Log::info('User is health WCU advisor so only updating wcu_id column');
-                    $entity->wcu_id = $userId;
-                } else {
-                    Log::info('Assigning lead to user id: ' . $userId . ' entity id: ' . $entity->uuid);
-                    $isAllocated =  $this->leadAllocationService->assignLead($entity, $userId, true);
-                    if ($isAllocated) {
-                        Log::info('Lead assigned successfully');
-                    } else {
-                        Log::info('Lead not assigned');
-                        return false;
-                    }
-                }
-                $entity->save();
-                Log::info('updating detail record for lead id: ' . $leadId);
-                $this->updateChildRecord($leadId);
-                return true;
-            } else {
-                return false;
-            }
+        Log::info('Leads ids to assign: ' . json_encode($leadsIds));
+        $result = [];
+        foreach($leadsIds as $leadId)
+        {
+            $lead = $this->getEntityPlain($leadId);
+            $lead->advisor_id = $userId;
+            $lead->save();
         }
-
+        return $result;
     }
     public function getEntityPlainByUUID($uuid)
     {
         return LifeQuote::where('uuid', $uuid)->first();
+    }
+
+    public function validateRequest($request)
+    {
+        $userId = $request->assigned_to_id_new;
+        $leadsIds = $request->selectTmLeadId;
+        if ($leadsIds == '' || $leadsIds == null) {
+            return 'Please select lead(s) to assign';
+        }
+        if (substr($leadsIds, 0, 1) == ',') {
+            $leadsIds = substr($leadsIds, 1);
+        }
+        $leadsIds = array_map('intval', explode(',', $leadsIds));
+        foreach ($leadsIds as $leadId) {
+            $entity = $this->getEntityPlain($leadId);
+            if ($entity->quote_status_id == QuoteStatusEnum::TransactionApproved) {
+                return 'One of the selected lead is in Transaction Approved state. Please unselect the lead and try again.';
+            }
+        }
+        if ($userId == '' || $userId == null) {
+            return 'Please select user to assign leads';
+        }
+        return 'true';
     }
 
 }

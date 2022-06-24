@@ -569,7 +569,7 @@
                 @endif
                 <div class="show-container showme">
                     @if (session()->has('message'))
-                    <div class="alert alert-danger">{{ session()->get('message') }}</div>
+                    <div class="alert alert-danger">{!! session()->get('message') !!}</div>
                     @endif
                     @if (session()->has('success'))
                     <div class="alert alert-success">{{ session()->get('success') }}</div>
@@ -763,7 +763,7 @@
                     </form>
                     @endif
 
-                    <form method="post" action="manualLeadAssign" class="form-horizontal form-label-left" role="form"
+                    <form method="post" @if(strtolower($model->modelType) == strtolower(quoteTypeCode::Health)) action="wcuAssign" @else action="manualLeadAssign" @endif class="form-horizontal form-label-left" role="form"
                         data-parsley-validate="" novalidate="" autocomplete="off">
                         {{ csrf_field() }}
                         <input type="hidden" value="{{ strtolower($model->modelType) }}" name="modelType">
@@ -801,18 +801,23 @@
                                                     Advisor</label>
                                                 <span class='required' style="margin-left:10px;">*</span>
                                                 @php
-
-                                                if(!empty($renewalAdvisors))
-                                                $updatedAdvisors = $renewalAdvisors;
-                                                else
                                                 $updatedAdvisors = $advisors;
+                                                if(strtolower($model->modelType) != strtolower(quoteTypeCode::Health)){
+                                                    if(!empty($renewalAdvisors)){
+                                                        $updatedAdvisors = $renewalAdvisors;
+                                                    }
+                                                }
                                                 @endphp
                                                 <select class="form-control" id="assigned_to_id_new"
                                                     name="assigned_to_id_new">
                                                     @foreach ($updatedAdvisors as $handler)
-                                                    @if(str_contains( $handler->name, 'WCU'))
-                                                    <option value="{{ $handler->id }}">{{ $handler->name }}</option>
-                                                    @endif
+                                                        @if(Auth::user()->isHealthWCUAdvisor() && strtolower($model->modelType) == strtolower(quoteTypeCode::Health))
+                                                            @if(str_contains($handler->name, RolesEnum::HealthWCUAdvisor))
+                                                                <option value="{{ $handler->id }}">{{ $handler->name }}</option>
+                                                            @endif
+                                                        @else
+                                                            <option value="{{ $handler->id }}">{{ $handler->name }}</option>
+                                                        @endif
                                                     @endforeach
                                                 </select>
                                             </div>
@@ -832,6 +837,7 @@
                         <input type="hidden" id="selectTmLeadId" name="selectTmLeadId" value="">
                         <input type="hidden" id="isManagerOrDeputy" name="isManagerOrDeputy"
                             value="{{ $isManagerORDeputy }}">
+                        </form>
                         <table id="dtBasicExample" class="table table-striped jambo_table" style="table-layout: fixed;"
                             width="100%">
                             <thead>
@@ -873,7 +879,7 @@
                             <tbody>
                             </tbody>
                         </table>
-                    </form>
+
                 </div>
             </div>
         </div>

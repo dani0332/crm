@@ -56,4 +56,6 @@ final class RolesEnum extends Enum
     const ProductionApprovalManager = "production_approval_manager";
     const OE = "oe";
     const RoleSMDashboard = "ROLE_SM_DASHBOARD";
+    const HealthDeputyManager = "HEALTH_DEPUTY_MANAGER";
+    const HealthManager = "HEALTH_MANAGER";
 }

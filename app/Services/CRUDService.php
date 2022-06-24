@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
+use App\Enums\RolesEnum;
 use App\Models\CarQuoteRequestDetail;
 use App\Models\GenericModel;
 use App\Models\QuoteStatusLog;
@@ -21,6 +22,7 @@ use Illuminate\Http\Request;
 use DB;
 use \Carbon\Carbon;
 use Auth;
+use Illuminate\Support\Facades\Log;
 
 class CRUDService extends BaseService
 {
@@ -203,16 +205,21 @@ class CRUDService extends BaseService
 
     public function getAdvisorsByModelType($modelType)
     {
-        $query = DB::table('users as u')
-            ->join('model_has_roles as mr', 'mr.model_id', '=', 'u.id')
+        $query = User::
+            join('model_has_roles as mr', 'mr.model_id', '=', 'users.id')
             ->join('roles as r', 'r.id', '=', 'mr.role_id')
-            ->select('u.id', DB::raw("CONCAT(u.name,' - ',r.name) AS name"));
+            ->select('users.id', DB::raw("CONCAT(users.name,' - ',r.name) AS name"));
         if (strtolower($modelType) == strtolower(quoteTypeCode::Car)) {
-            $query->whereIn('r.name', [strtoupper($modelType) . '_ADVISOR', 'advisor']);
-        } else if (strtolower($modelType) ==  strtolower(quoteTypeCode::Health)) {
-            $query->whereIn('r.name', [strtoupper($modelType) . '_WCU_ADVISOR', 'RM_ADVISOR', 'EBP_ADVISOR', 'HEALTH_RENEWAL_ADVISOR', 'HEALTH_NEW_BUSINESS_ADVISOR']);
+            $query->whereIn('r.name', [RolesEnum::CarAdvisor, RolesEnum::Advisor]);
+        }
+        else if (strtolower($modelType) ==  strtolower(quoteTypeCode::Health)) {
+            if(Auth::user()->hasRole([RolesEnum::HealthManager, RolesEnum::HealthWCUAdvisor])) {
+                $query->where('r.name', '=', RolesEnum::HealthWCUAdvisor);
+            } else {
+                $query->whereIn('r.name', [RolesEnum::RMAdvisor, RolesEnum::EBPAdvisor, RolesEnum::HealthRenewalAdvisor, RolesEnum::HealthNewBusinessAdvisor, RolesEnum::HealthWCUAdvisor]);
+            }
         } else if (strtolower($modelType) ==  strtolower(quoteTypeCode::Business)) {
-            $query->whereIn('r.name', ['CORPLINE_ADVISOR', 'CORPLINE_RENEWAL_ADVISOR', 'CORPLINE_NEW_BUSINESS_ADVISOR', 'GM_RENEWAL_ADVISOR', 'GM_NEW_BUSINESS_ADVISOR']);
+            $query->whereIn('r.name', [RolesEnum::CorpLineAdvisor, RolesEnum::CorpLineRenewalAdvisor, RolesEnum::CorpLineNewBusinessAdvisor, RolesEnum::GMRenewalAdvisor, RolesEnum::GMNewBusinessAdvisor]);
         } else {
             $query->whereIn('r.name', [strtoupper($modelType) . '_ADVISOR', strtoupper($modelType) . '_RENEWAL_ADVISOR', strtoupper($modelType) . '_NEW_BUSINESS_ADVISOR']);
         }
