@@ -627,7 +627,7 @@ class CRUDController extends Controller
         $isAssigned = $this->healthQuoteService->assignHealthTeam($request, $lead);
 
         if($lead->quote_status_id == QuoteStatusEnum::Qualified){
-            return redirect()->to('/quotes/health')->with('success', ' Lead Team has been assigned successfully');
+            return redirect()->to('/quotes/health'. $lead->uuid)->with('success', ' Lead Team has been assigned successfully');
         }
 
         if($selectedTeam == quoteTypeCode::GM && $isAssigned){
@@ -659,7 +659,7 @@ class CRUDController extends Controller
         }
         $entity = $this->crudService->updateQuoteStatus($request, QuoteStatusEnum::Qualified);
         if($entity->health_team_type != null && $entity->quote_status_id == QuoteStatusEnum::Qualified){
-            return redirect()->to('/quotes/health')->with('success', ' Lead status has been updated successfully');
+            return redirect()->to('/quotes/health/'. $entity->uuid)->with('success', ' Lead status has been updated successfully');
         }
         return redirect()->to('/quotes/' . strtolower($request->modelType) . '/' . $entity->uuid)->with('success', ' Lead Status has been Updated');
     }
