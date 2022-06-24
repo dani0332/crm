@@ -305,10 +305,16 @@ class BusinessQuoteService extends BaseService
         );
         if (!Auth::user()->hasRole("ADMIN")) $dataArr['advisorId'] = Auth::user()->id;
         $response  = CapiRequestService::sendCAPIRequest('/api/v1-save-business-quote', $dataArr);
-        if(isset($response->quoteUID))
+        if(isset($response->quoteUID)) {
+            $quote = BusinessQuote::where('uuid', $response->quoteUID)->first();
+            if($quote) {
+                $quote->premium = $request->premium;
+                $quote->save();
+            }
             return $this->createUpdateCustomerInfo($request, $request->email, $response->quoteUID, quoteTypeCode::BusinessQuote);
-        else
+        }else {
             return $response;
+        }  
     }
 
     public function getGridData($model, $request)

@@ -9,14 +9,12 @@ use App\Models\CarQuoteRequestDetail;
 use App\Models\InsuranceProvider;
 use App\Models\QuoteStatus;
 use App\Models\User;
-use App\Models\VehicleType;
 use App\Models\YearOfManufacture;
 use Illuminate\Http\Request;
 use Config;
 use DB;
 use \Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
-use App\Enums\quoteStatusCode;
 class CarQuoteService extends BaseService
 {
     protected $query;

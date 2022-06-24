@@ -11,16 +11,15 @@ use DB;
 use Auth;
 use \Carbon\Carbon;
 use Config;
-use App\Traits\GetUserTree;
 use App\Traits\CustomerAdditionalInfo as CustomerAdditionalInfoTrait;
 use App\Enums\quoteTypeCode;
 use App\Enums\DatabaseColumnsString;
 use App\Enums\GenericRequestEnum;
-
+use App\Traits\RolePermissionConditions;
 class LifeQuoteService extends BaseService
 {
     protected $query;
-    use GetUserTree;
+    use RolePermissionConditions;
     use CustomerAdditionalInfoTrait;
     public function __construct()
     {
@@ -112,10 +111,16 @@ class LifeQuoteService extends BaseService
         );
         if (!Auth::user()->hasRole("ADMIN")) $dataArr['advisorId'] = Auth::user()->id;
         $response = CapiRequestService::sendCAPIRequest('/api/v1-save-life-quote', $dataArr);
-        if (isset($response->quoteUID))
+        if (isset($response->quoteUID)) {
+            $quote = LifeQuote::where('uuid', $response->quoteUID)->first();
+            if($quote) {
+                $quote->premium = $request->premium;
+                $quote->save();
+            }
             return $this->createUpdateCustomerInfo($request, $request->email, $response->quoteUID, quoteTypeCode::LifeQuote);
-        else
+        }else {
             return $response;
+        } 
     }
 
     public function getEntity($id)
@@ -230,25 +235,9 @@ class LifeQuoteService extends BaseService
             if (isset($request->previous_quote_policy_premium) && $request->previous_quote_policy_premium != '') {
                 $this->query->where('lqr.previous_quote_policy_premium', $request->previous_quote_policy_premium);
             }
-            if (Auth::user()->isRenewalAdvisor()) {
-                $this->query->whereNotNull('lqr.previous_quote_id');
-                $this->query->where('lqr.advisor_id', Auth::user()->id);
-            }
-            if (Auth::user()->isRenewalManager()) {
-                $ids = $this->walkTree(Auth::user()->id);
-                $this->query->whereIn('lqr.advisor_id', $ids);
-                $this->query->whereNotNull('lqr.previous_quote_id');
-            }
-            if (Auth::user()->isNewBusinessManager()) {
-                $ids = $this->walkTree(Auth::user()->id);
-                $this->query->whereIn('lqr.advisor_id', $ids);
-                $this->query->whereNull('lqr.previous_quote_id');
-            }
-            if (Auth::user()->isNewBusinessAdvisor()) {
-                $ids = $this->walkTree(Auth::user()->id);
-                $this->query->whereIn('lqr.advisor_id', $ids);
-                $this->query->whereNull('lqr.previous_quote_id');
-            }
+
+            $this->whereBasedOnRole($this->query,'lqr');
+
             if (isset($request->is_renewal) && $request->is_renewal != '') {
                 if ($request->is_renewal == GenericRequestEnum::Yes)
                     $this->query->whereNotNull('lqr.previous_quote_id');

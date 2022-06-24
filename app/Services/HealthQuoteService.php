@@ -18,7 +18,6 @@ use Config;
 use App\Traits\GetUserTree;
 use App\Traits\CustomerAdditionalInfo as CustomerAdditionalInfoTrait;
 use App\Enums\quoteTypeCode;
-use App\Enums\quoteStatusCode;
 use App\Enums\DatabaseColumnsString;
 
 class HealthQuoteService extends BaseService
@@ -165,10 +164,16 @@ class HealthQuoteService extends BaseService
         );
         if (!Auth::user()->hasRole("ADMIN")) $dataArr['advisorId'] = Auth::user()->id;
          $response = CapiRequestService::sendCAPIRequest('/api/v1-save-health-quote', $dataArr);
-        if(isset($response->quoteUID))
+        if(isset($response->quoteUID)) {
+            $quote = HealthQuote::where('uuid', $response->quoteUID)->first();
+            if($quote) {
+                $quote->premium = $request->premium;
+                $quote->save();
+            }
             return $this->createUpdateCustomerInfo($request, $request->email, $response->quoteUID, quoteTypeCode::HealthQuote);
-        else
+        }else {
             return $response;
+        }   
     }
 
     public function getGridData($model, $request)

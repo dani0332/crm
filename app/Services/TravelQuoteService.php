@@ -16,7 +16,6 @@ use App\Traits\GetTravelPreviousQuoteIds;
 use App\Traits\CustomerAdditionalInfo as CustomerAdditionalInfoTrait;
 use App\Enums\quoteTypeCode;
 use App\Enums\DatabaseColumnsString;
-use App\Enums\quoteStatusCode;
 class TravelQuoteService extends BaseService
 {
     protected $query;
@@ -110,10 +109,16 @@ class TravelQuoteService extends BaseService
         );
         if (!Auth::user()->hasRole("ADMIN")) $dataArr['advisorId'] = Auth::user()->id;
             $response  = CapiRequestService::sendCAPIRequest('/api/v1-save-travel-quote', $dataArr);
-        if(isset($response->quoteUID))
+        if(isset($response->quoteUID)) {
+            $quote = TravelQuote::where('uuid', $response->quoteUID)->first();
+            if($quote) {
+                $quote->premium = $request->premium;
+                $quote->save();
+            }
             return $this->createUpdateCustomerInfo($request, $request->email, $response->quoteUID, quoteTypeCode::TravelQuote);
-        else
+        }else {
             return $response;
+        }     
     }
 
     public function getTravelOverDueFollowups()
