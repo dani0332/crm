@@ -235,7 +235,7 @@ class CRUDController extends Controller
      */
     public function show($id, Request $request)
     {
-        $record = $this->crudService->getLeadPlainEntityByUUID($this->genericModel->modelType, $id);
+        $record = $this->crudService->getEntity($this->genericModel->modelType, $id);
         if (!$record) abort(404);
 
         if(strtolower($this->genericModel->modelType) == strtolower(quoteTypeCode::Health) &&  Auth::user()->isHealthWCUAdvisor() && $record->wcu_id != Auth::user()->id){

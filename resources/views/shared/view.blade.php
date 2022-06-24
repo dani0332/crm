@@ -3,6 +3,8 @@
 @section('content')
 <?php
     use App\Enums\quoteTypeCode;
+    use App\Enums\RolesEnum;
+    use App\Enums\QuoteStatusEnum;
     ?>
 <meta name="csrf-token" content="{{ csrf_token() }}" />
 <script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>

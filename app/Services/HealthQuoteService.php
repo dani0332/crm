@@ -82,7 +82,8 @@ class HealthQuoteService extends BaseService
             'hqr.previous_quote_policy_number',
             'hqr.previous_policy_expiry_date',
             'hqr.previous_quote_policy_premium',
-            'hqr.device'
+            'hqr.device',
+            'hqr.wcu_id',
         )
             ->leftJoin('marital_status as ms', 'ms.id', '=', 'hqr.marital_status_id')
             ->leftJoin('health_quote_request_detail as hqrd', 'hqrd.health_quote_request_id', '=', 'hqr.id')
