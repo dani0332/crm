@@ -4,6 +4,7 @@ namespace App\Services;
 use App\Services\CustomerWEGenerateUrlService;
 use App\Models\MyAlFredUser;
 use App\Services\CustomerService;
+use App\Services\CreateUpdateContactService;
 use App\Models\Customer;
 use Exception, Log;
 class ApiService
@@ -33,7 +34,7 @@ class ApiService
         return response()->json(["message" => "Customer does not exists"], 404);
     }
 
-    private function generateSignupUrl($customer, $request) {
+    private function generateSignupUrl($customer) {
         $WEGenerateUrlResponse = CustomerWEGenerateUrlService::getCustomerWeUrl();
         if(gettype($WEGenerateUrlResponse) == 'string') {
             Customer::where("id", $customer->id)->update(['is_we_sent' => true]);
@@ -48,5 +49,14 @@ class ApiService
         }else
             return response()->json(["message" => $WEGenerateUrlResponse], 500);
 
+    }
+
+    public function triggerSibFlow($request){
+        try {
+            $contactService = CreateUpdateContactService::contactCreateUpdate();
+        } catch(Exception $e) {
+            Log::error($e->getLine() ." ".$e->getMessage() ." ".$e->getFile());
+            return response()->json(["message" => "Something went wrong. Please try again later."], 500);
+        }
     }
 }
