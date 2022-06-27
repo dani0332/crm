@@ -15,7 +15,6 @@ use App\Models\HealthCoverFor;
 use App\Models\HomeAccomodationType;
 use App\Models\HomePossessionType;
 use App\Models\InsuranceProvider;
-use App\Models\LeadStatus;
 use App\Models\LifeChildren;
 use App\Models\LifeInsuranceTenure;
 use App\Models\LifeNumberOfYears;
@@ -33,6 +32,7 @@ use App\Models\CarAddOn;
 use App\Models\Team;
 use App\Models\MemberCategory;
 use DB;
+use App\Services\LookupService;
 use Illuminate\Support\Facades\Auth;
 
 class DropdownSourceService extends BaseService
@@ -81,6 +81,7 @@ class DropdownSourceService extends BaseService
     {
         $advisorType = strtoupper(explode('/', $_SERVER["REQUEST_URI"])[2]);
         $data = '';
+        $lookUpService = new LookupService();
         switch ($type) {
             case 'parent_team_id':
                 $data = Team::whereNull('parent_team_id')->get();
@@ -234,6 +235,9 @@ class DropdownSourceService extends BaseService
                 break;
             case 'trim':
                 $data = [];
+                break;
+            case 'back_home_license_held_for_id':
+                $data = $lookUpService->getBackHomeLicensed();
                 break;
             default:
                 break;
