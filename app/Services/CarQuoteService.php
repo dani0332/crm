@@ -9,14 +9,12 @@ use App\Models\CarQuoteRequestDetail;
 use App\Models\InsuranceProvider;
 use App\Models\QuoteStatus;
 use App\Models\User;
-use App\Models\VehicleType;
 use App\Models\YearOfManufacture;
 use Illuminate\Http\Request;
 use Config;
 use DB;
 use \Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
-use App\Enums\quoteStatusCode;
 class CarQuoteService extends BaseService
 {
     protected $query;
@@ -99,13 +97,17 @@ class CarQuoteService extends BaseService
                 'cqr.is_bank_financed',
                 'cqr.is_gcc_standard',
                 'cqr.current_insurance_status',
-                'cqr.year_of_first_registration'
+                'cqr.year_of_first_registration',
+                'cqr.has_ncd_supporting_documents',
+                'cqr.back_home_license_held_for_id',
+                'ulhfs.TEXT as back_home_license_held_for_id_text'
             )
             ->leftJoin('nationality as n', 'n.id', '=', 'cqr.nationality_id')
             ->leftJoin('car_quote_request_detail as cqrd', 'cqrd.car_quote_request_id', '=', 'cqr.id')
             ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'cqrd.lost_reason_id')
             ->leftJoin('car_make as cmake', 'cmake.id', '=', 'cqr.car_make_id')
             ->leftJoin('uae_license_held_for as ulhf', 'ulhf.id', '=', 'cqr.uae_license_held_for_id')
+            ->leftJoin('uae_license_held_for as ulhfs', 'ulhfs.id', '=', 'cqr.back_home_license_held_for_id')
             ->leftJoin('car_model as cmodel', 'cmodel.id', '=', 'cqr.car_model_id')
             ->leftJoin('emirates as e', 'e.id', '=', 'cqr.emirate_of_registration_id')
             ->leftJoin('car_type_insurance as cti', 'cti.id', '=', 'cqr.car_type_insurance_id')
@@ -135,10 +137,12 @@ class CarQuoteService extends BaseService
             "dob" => $request->dob,
             "nationalityId" => $request->nationality_id,
             "uaeLicenseHeldForId" => $request->uae_license_held_for_id,
+            "backHomeLicenseHeldForId" => $request->back_home_license_held_for_id,
             "yearOfManufacture" => $request->year_of_manufacture,
             "emirateOfRegistrationId" => $request->emirate_of_registration_id,
             "carTypeInsuranceId" => $request->car_type_insurance_id,
             "claimHistoryId" => $request->claim_history_id,
+            "hasNcdSupportingDocuments" => $request->has_ncd_supporting_documents == 'Yes' ? true : false,
             "additionalNotes" => $request->additional_notes,
             "carValue" => $request->car_value,
             "seatCapacity" => $request->seat_capacity,
@@ -164,10 +168,12 @@ class CarQuoteService extends BaseService
         $carQuote->dob = $request->dob;
         $carQuote->nationality_id = $request->nationality_id;
         $carQuote->uae_license_held_for_id = $request->uae_license_held_for_id;
+        $carQuote->back_home_license_held_for_id = $request->back_home_license_held_for_id;
         $carQuote->year_of_manufacture = $request->year_of_manufacture;
         $carQuote->emirate_of_registration_id = $request->emirate_of_registration_id;
         $carQuote->car_type_insurance_id = $request->car_type_insurance_id;
         $carQuote->claim_history_id = $request->claim_history_id;
+        $carQuote->has_ncd_supporting_documents = $request->has_ncd_supporting_documents == 'Yes' ? true : false;
         $carQuote->premium = $request->premium;
         $carQuote->car_value = $request->car_value;
         $carQuote->seat_capacity = $request->seat_capacity;
@@ -298,12 +304,14 @@ class CarQuoteService extends BaseService
             "dob" => "input|date|title|date|required",
             "nationality_id" => "select|title|required",
             "uae_license_held_for_id" => "select|title|required",
+            "back_home_license_held_for_id" => "select|title",
             "year_of_manufacture" => "select|title|required",
             "car_value" => "input|number|required",
             "seat_capacity" => "input|number|title|required",
             "cylinder" => "input|number|title|required",
             "emirate_of_registration_id" => "select|title|required",
             "claim_history_id" => "select|title|required",
+            "has_ncd_supporting_documents" => "|static|title|Yes,No",
             "source" => "input|text",
             "additional_notes" => "textarea|required",
             "is_ecommerce" => "|static|title|Yes,No",
@@ -438,6 +446,12 @@ class CarQuoteService extends BaseService
                 break;
             case 'previous_quote_policy_premium':
                 $title = "Previous Policy Premium";
+                break;
+            case 'back_home_license_held_for_id':
+                $title = "Home country driving license held for";
+                break;
+            case 'has_ncd_supporting_documents':
+                $title = "Can you provide no-claims letter from your previous insurers?";
                 break;
             default:
                 break;
