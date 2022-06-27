@@ -144,7 +144,7 @@ class CarPlanService extends BaseService
             "code" => "input|title|required",
             "text" => "input|text|title|required",
             "text_ar" => "input|text|title|required",
-            "repair_type" => "static|title|TPL,COMP,Agency",
+            "repair_type" => "static|title|TPL,COMP,AGENCY",
             "insurance_type" => "input|text|title|required",
             "provider_id" => "select|title",
             "created_at" => "input|title|date|range",
