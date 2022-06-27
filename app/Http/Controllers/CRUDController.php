@@ -627,7 +627,7 @@ class CRUDController extends Controller
         $isAssigned = $this->healthQuoteService->assignHealthTeam($request, $lead);
 
         if($lead->quote_status_id == QuoteStatusEnum::Qualified){
-            return redirect()->to('/quotes/health'. $lead->uuid)->with('success', ' Lead Team has been assigned successfully');
+            return redirect()->to('/quotes/health/'. $lead->uuid)->with('success', ' Lead Team has been assigned successfully');
         }
 
         if($selectedTeam == quoteTypeCode::GM && $isAssigned){
