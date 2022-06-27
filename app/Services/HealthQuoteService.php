@@ -278,7 +278,7 @@ class HealthQuoteService extends BaseService
                         if ($request[$item][0] == 'null')
                             $this->query->whereNull('advisor_id');
                         else
-                            $this->query->whereIn('advisor_id', $request[$item]);
+                            $this->query->whereIn('advisor_id', $request[$item])->orWhereIn('wcu_id', $request[$item]);
                     }
                     else if ($item == DatabaseColumnsString::QUOTE_STATUS_ID && is_array($request[$item]) && !empty($request[$item])) {
                         $this->query->whereIn('quote_status_id', $request[$item]);
@@ -478,8 +478,14 @@ class HealthQuoteService extends BaseService
             ->leftJoin('users as u', 'u.id', '=', 'hqrd.advisor_assigned_by_id')
             ->leftJoin('payment_status as ps', 'ps.id', '=', 'hqr.payment_status_id')
             ->where('hqr.quote_status_id', '!=', 20)
-            ->where('hqr.advisor_id', Auth::user()->id)
             ->orderBy('hqr.created_at', "DESC");
+
+            if(auth()->user()->isHealthWCUAdvisor())
+            {
+                $query->where('hqr.wcu_id', auth()->id());
+            }else{
+                $query->where('hqr.advisor_id', auth()->id());
+            }
 
         $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
         $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';
