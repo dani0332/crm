@@ -19,12 +19,13 @@ use App\Traits\RolePermissionConditions;
 use App\Traits\CustomerAdditionalInfo as CustomerAdditionalInfoTrait;
 use App\Enums\quoteTypeCode;
 use App\Enums\DatabaseColumnsString;
-
+use App\Traits\AddPremiumAllLobs;
 class HealthQuoteService extends BaseService
 {
     protected $query;
     use RolePermissionConditions;
     use CustomerAdditionalInfoTrait;
+    use AddPremiumAllLobs;
     public function __construct()
     {
         $this->query = DB::table('health_quote_request as hqr')->select(
@@ -165,11 +166,7 @@ class HealthQuoteService extends BaseService
         if (!Auth::user()->hasRole("ADMIN")) $dataArr['advisorId'] = Auth::user()->id;
          $response = CapiRequestService::sendCAPIRequest('/api/v1-save-health-quote', $dataArr);
         if(isset($response->quoteUID)) {
-            $quote = HealthQuote::where('uuid', $response->quoteUID)->first();
-            if($quote) {
-                $quote->premium = $request->premium;
-                $quote->save();
-            }
+            $this->savePremium(quoteTypeCode::HealthQuote, $request, $response);
             return $this->createUpdateCustomerInfo($request, $request->email, $response->quoteUID, quoteTypeCode::HealthQuote);
         }else {
             return $response;

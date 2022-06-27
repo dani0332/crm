@@ -16,11 +16,13 @@ use App\Enums\quoteTypeCode;
 use App\Enums\DatabaseColumnsString;
 use App\Enums\GenericRequestEnum;
 use App\Traits\RolePermissionConditions;
+use App\Traits\AddPremiumAllLobs;
 class LifeQuoteService extends BaseService
 {
     protected $query;
     use RolePermissionConditions;
     use CustomerAdditionalInfoTrait;
+    use AddPremiumAllLobs;
     public function __construct()
     {
         $this->query = DB::table('life_quote_request as lqr')
@@ -112,11 +114,7 @@ class LifeQuoteService extends BaseService
         if (!Auth::user()->hasRole("ADMIN")) $dataArr['advisorId'] = Auth::user()->id;
         $response = CapiRequestService::sendCAPIRequest('/api/v1-save-life-quote', $dataArr);
         if (isset($response->quoteUID)) {
-            $quote = LifeQuote::where('uuid', $response->quoteUID)->first();
-            if($quote) {
-                $quote->premium = $request->premium;
-                $quote->save();
-            }
+            $this->savePremium(quoteTypeCode::LifeQuote, $request, $response);
             return $this->createUpdateCustomerInfo($request, $request->email, $response->quoteUID, quoteTypeCode::LifeQuote);
         }else {
             return $response;

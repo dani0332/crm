@@ -16,12 +16,14 @@ use App\Traits\GetTravelPreviousQuoteIds;
 use App\Traits\CustomerAdditionalInfo as CustomerAdditionalInfoTrait;
 use App\Enums\quoteTypeCode;
 use App\Enums\DatabaseColumnsString;
+use App\Traits\AddPremiumAllLobs;
 class TravelQuoteService extends BaseService
 {
     protected $query;
     use RolePermissionConditions;
     use GetTravelPreviousQuoteIds;
     use CustomerAdditionalInfoTrait;
+    use AddPremiumAllLobs;
     public function __construct()
     {
         $this->query = DB::table('travel_quote_request as tqr')->select(
@@ -110,11 +112,7 @@ class TravelQuoteService extends BaseService
         if (!Auth::user()->hasRole("ADMIN")) $dataArr['advisorId'] = Auth::user()->id;
             $response  = CapiRequestService::sendCAPIRequest('/api/v1-save-travel-quote', $dataArr);
         if(isset($response->quoteUID)) {
-            $quote = TravelQuote::where('uuid', $response->quoteUID)->first();
-            if($quote) {
-                $quote->premium = $request->premium;
-                $quote->save();
-            }
+            $this->savePremium(quoteTypeCode::TravelQuote, $request, $response);
             return $this->createUpdateCustomerInfo($request, $request->email, $response->quoteUID, quoteTypeCode::TravelQuote);
         }else {
             return $response;
