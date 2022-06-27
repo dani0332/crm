@@ -16,7 +16,7 @@ use App\Traits\GetTravelPreviousQuoteIds;
 use App\Traits\CustomerAdditionalInfo as CustomerAdditionalInfoTrait;
 use App\Enums\quoteTypeCode;
 use App\Enums\DatabaseColumnsString;
-use App\Enums\quoteStatusCode;
+
 class TravelQuoteService extends BaseService
 {
     protected $query;
@@ -74,6 +74,8 @@ class TravelQuoteService extends BaseService
             'tqr.previous_policy_expiry_date',
             'tqr.device',
             'tqr.previous_quote_policy_premium',
+            'tqr.policy_issuance_date',
+            'tqr.policy_start_date',
         )
             ->leftJoin('travel_cover_for as tcf', 'tcf.id', '=', 'tqr.travel_cover_for_id')
             ->leftJoin('travel_quote_request_detail as tqrd', 'tqr.id', '=', 'tqrd.travel_quote_request_id')
@@ -808,5 +810,19 @@ class TravelQuoteService extends BaseService
         })
         ->orderBy('a.created_at', 'DESC')->get();
         return $audits;
+    }
+
+    public function updateQuotePolicy($request)
+    {
+        $quote = TravelQuote::where('id', $request->quote_id)
+        ->update([
+            'policy_number' => $request->quote_policy_number,
+            'policy_issuance_date' => Carbon::parse($request->quote_policy_issuance_date)->format('Y-m-d'),
+            'policy_start_date' => Carbon::parse($request->quote_policy_start_date)->format('Y-m-d'),
+            'renewal_expiry_date' => Carbon::parse($request->quote_policy_expiry_date)->format('Y-m-d'),
+            'premium' => $request->quote_premium
+        ]);
+
+        return $quote;
     }
 }
