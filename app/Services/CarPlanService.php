@@ -144,7 +144,7 @@ class CarPlanService extends BaseService
             "code" => "input|title|required",
             "text" => "input|text|title|required",
             "text_ar" => "input|text|title|required",
-            "repair_type" => "input|text|title|required",
+            "repair_type" => "static|title|TPL,COMP,Agency",
             "insurance_type" => "input|text|title|required",
             "provider_id" => "select|title",
             "created_at" => "input|title|date|range",
@@ -173,7 +173,7 @@ class CarPlanService extends BaseService
                 $title = "Plan Name (Arabic)";
                 break;
             case 'repair_type':
-                $title = "Repair Type";
+                $title = "Plan Type";
                 break;
             case 'insurance_type':
                 $title = "Insurance Type";
