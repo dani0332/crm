@@ -15,6 +15,8 @@ use Config;
 use DB;
 use \Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use App\Enums\GenericRequestEnum;
+
 class CarQuoteService extends BaseService
 {
     protected $query;
@@ -142,7 +144,7 @@ class CarQuoteService extends BaseService
             "emirateOfRegistrationId" => $request->emirate_of_registration_id,
             "carTypeInsuranceId" => $request->car_type_insurance_id,
             "claimHistoryId" => $request->claim_history_id,
-            "hasNcdSupportingDocuments" => $request->has_ncd_supporting_documents == 'Yes' ? true : false,
+            "hasNcdSupportingDocuments" => $request->has_ncd_supporting_documents == GenericRequestEnum::Yes ? true : false,
             "additionalNotes" => $request->additional_notes,
             "carValue" => $request->car_value,
             "seatCapacity" => $request->seat_capacity,
@@ -173,7 +175,7 @@ class CarQuoteService extends BaseService
         $carQuote->emirate_of_registration_id = $request->emirate_of_registration_id;
         $carQuote->car_type_insurance_id = $request->car_type_insurance_id;
         $carQuote->claim_history_id = $request->claim_history_id;
-        $carQuote->has_ncd_supporting_documents = $request->has_ncd_supporting_documents == 'Yes' ? true : false;
+        $carQuote->has_ncd_supporting_documents = $request->has_ncd_supporting_documents == GenericRequestEnum::Yes ? true : false;
         $carQuote->premium = $request->premium;
         $carQuote->car_value = $request->car_value;
         $carQuote->seat_capacity = $request->seat_capacity;
