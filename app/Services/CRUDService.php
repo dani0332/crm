@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
@@ -165,7 +166,7 @@ class CRUDService extends BaseService
         return $this->{strtolower($leadType) . 'QuoteService'}->getLeadAuditHistory($leadId);
     }
 
-    public function updateQuoteStatus(Request $request, $qualifiedStatusId)
+    public function updateQuoteStatus(Request $request)
     {
 
         $quoteDetailEntity = $this->{strtolower($request->modelType) . 'QuoteService'}->getDetailEntity($request->leadId);
@@ -188,7 +189,7 @@ class CRUDService extends BaseService
         $entity = $this->{strtolower($request->modelType) . 'QuoteService'}->getEntityPlain($request->leadId);
         $previousQuoteStatus = $entity->quote_status_id;
         $entity->quote_status_id = $request->leadStatus;
-        if ($request->leadStatus == $qualifiedStatusId && Auth::user()->isHealthWcuAdvisor()) {
+        if ($request->leadStatus == QuoteStatusEnum::Qualified && Auth::user()->isHealthWcuAdvisor()) {
             $entity->wcu_id = NULL;
         }
         $entity->save();

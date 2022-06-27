@@ -935,7 +935,7 @@ class HealthQuoteService extends BaseService
             Log::info('Cannot assign Health Team as lead is in Transaction Approved state');
             return false;
         }
-        if($lead->health_team_type != null) {
+        if($lead->health_team_type != null && $lead->advisor_id != null) {
             Log::info('Removing previous advisor as lead already assigned to a health team');
             $this->removePreviousAdvisorAndUpdateStatus($lead, QuoteStatusEnum::Qualified);
         }

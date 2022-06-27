@@ -626,8 +626,8 @@ class CRUDController extends Controller
 
         $isAssigned = $this->healthQuoteService->assignHealthTeam($request, $lead);
 
-        if($lead->quote_status_id == QuoteStatusEnum::Qualified && $selectedTeam != quoteTypeCode::GM){
-            return redirect()->to('/quotes/health/'. $lead->uuid)->with('success', ' Lead Team has been assigned successfully');
+        if($lead->quote_status_id == QuoteStatusEnum::Qualified && $selectedTeam != quoteTypeCode::GM && $isAssigned){
+            return redirect()->to('/quotes/health')->with('success', ' Lead Team has been assigned successfully');
         }
 
         if($selectedTeam == quoteTypeCode::GM && $isAssigned){
@@ -643,7 +643,7 @@ class CRUDController extends Controller
     {
         if(strtolower($request->modelType) == strtolower(quoteTypeCode::Health)) {
             $lead = $this->healthQuoteService->getEntityPlain($request->get('leadId'));
-            if ($lead->health_team_type == '' && $request->leadStatus == QuoteStatusEnum::Qualified) {
+            if (($lead->health_team_type == null  || $lead->health_team_type == quoteTypeCode::WCU )  && $request->leadStatus == QuoteStatusEnum::Qualified) {
                 return redirect()->back()->with('message', 'Please select team type before moving to QUALIFIED status');
             }
         }
@@ -657,9 +657,9 @@ class CRUDController extends Controller
                 'trans_code' => 'required',
             ]);
         }
-        $entity = $this->crudService->updateQuoteStatus($request, QuoteStatusEnum::Qualified);
+        $entity = $this->crudService->updateQuoteStatus($request);
         if($entity->health_team_type != null && $entity->quote_status_id == QuoteStatusEnum::Qualified){
-            return redirect()->to('/quotes/health/'. $entity->uuid)->with('success', ' Lead status has been updated successfully');
+            return redirect()->to('/quotes/health')->with('success', ' Lead status has been updated successfully');
         }
         return redirect()->to('/quotes/' . strtolower($request->modelType) . '/' . $entity->uuid)->with('success', ' Lead Status has been Updated');
     }
