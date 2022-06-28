@@ -12,9 +12,7 @@
                 <div class="x_title">
                     <h2>Create {{$model->modelType}}</h2>
                     <ul class="nav navbar-right panel_toolbox">
-                        <li><a href="{{ url()->previous() }}" class="btn btn-warning btn-sm">Back to Previous</a></li>
                         <li><a href="{{ url('generic/'.strtolower($model->modelType)) }}" class="btn btn-warning btn-sm">{{$model->modelType}} List</a></li>
-                        
                     </ul>
                     <div class="clearfix"></div>
                 </div>
