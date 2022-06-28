@@ -195,16 +195,16 @@ class DropdownSourceService extends BaseService
                 $data = ClaimHistory::select('id', 'text')->where("is_active", true)->get();
                 break;
             case 'plan_id':
-                $data = CarPlan::select('id', 'text')->where("is_active", true)->get();
+                $data = CarPlan::select('id', 'text')->get();
                 break;
             case 'provider_id':
-                $data = InsuranceProvider::select('id', 'text')->where('is_active', true)->get();
+                $data = InsuranceProvider::select('id', 'text')->get();
                 break;
             case 'vehicle_type_id':
                 $data = VehicleType::select('id', 'text')->where("is_active", true)->get();
                 break;
             case 'car_plan_provider_id':
-                $data = InsuranceProvider::select('id', 'text')->where("is_active", true)->get();
+                $data = InsuranceProvider::select('id', 'text')->get();
                 break;
             case 'team_managers':
                 $data = User::select('users.id', 'users.name')
