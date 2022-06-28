@@ -16,7 +16,6 @@ use DB;
 use \Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use App\Enums\GenericRequestEnum;
-
 class CarQuoteService extends BaseService
 {
     protected $query;

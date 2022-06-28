@@ -11,18 +11,19 @@ use DB;
 use Auth;
 use \Carbon\Carbon;
 use Config;
-use App\Traits\GetUserTree;
+use App\Traits\RolePermissionConditions;
 use App\Traits\GetTravelPreviousQuoteIds;
 use App\Traits\CustomerAdditionalInfo as CustomerAdditionalInfoTrait;
 use App\Enums\quoteTypeCode;
 use App\Enums\DatabaseColumnsString;
-use App\Enums\quoteStatusCode;
+use App\Traits\AddPremiumAllLobs;
 class TravelQuoteService extends BaseService
 {
     protected $query;
-    use GetUserTree;
+    use RolePermissionConditions;
     use GetTravelPreviousQuoteIds;
     use CustomerAdditionalInfoTrait;
+    use AddPremiumAllLobs;
     public function __construct()
     {
         $this->query = DB::table('travel_quote_request as tqr')->select(
@@ -110,10 +111,12 @@ class TravelQuoteService extends BaseService
         );
         if (!Auth::user()->hasRole("ADMIN")) $dataArr['advisorId'] = Auth::user()->id;
             $response  = CapiRequestService::sendCAPIRequest('/api/v1-save-travel-quote', $dataArr);
-        if(isset($response->quoteUID))
+        if(isset($response->quoteUID)) {
+            $this->savePremium(quoteTypeCode::TravelQuote, $request, $response);
             return $this->createUpdateCustomerInfo($request, $request->email, $response->quoteUID, quoteTypeCode::TravelQuote);
-        else
+        }else {
             return $response;
+        }     
     }
 
     public function getTravelOverDueFollowups()
@@ -345,25 +348,8 @@ class TravelQuoteService extends BaseService
                 $dateTo = Carbon::createFromFormat('Y-m-d', $request['previous_policy_expiry_date_end'])->endOfDay()->toDateTimeString();
                 $this->query->whereBetween('tqr.previous_policy_expiry_date', [$dateFrom, $dateTo]);
             }
-            if (Auth::user()->isRenewalAdvisor()) {
-                $this->query->whereNotNull('tqr.previous_quote_id');
-                $this->query->where('tqr.advisor_id', Auth::user()->id);
-            }
-            if (Auth::user()->isRenewalManager()) {
-                $ids = $this->walkTree(Auth::user()->id);
-                $this->query->whereIn('tqr.advisor_id', $ids);
-                $this->query->whereNotNull('tqr.previous_quote_id');
-            }
-            if (Auth::user()->isNewBusinessManager()) {
-                $ids = $this->walkTree(Auth::user()->id);
-                $this->query->whereIn('tqr.advisor_id', $ids);
-                $this->query->whereNull('tqr.previous_quote_id');
-            }
-            if (Auth::user()->isNewBusinessAdvisor()) {
-                $ids = $this->walkTree(Auth::user()->id);
-                $this->query->whereIn('tqr.advisor_id', $ids);
-                $this->query->whereNull('tqr.previous_quote_id');
-            }
+            $this->whereBasedOnRole($this->query,'tqr');
+
             if (isset($request->is_renewal) && $request->is_renewal != '') {
                 if($request->is_renewal == quoteTypeCode::yesText)
                     $this->query->whereNotNull('tqr.previous_quote_id');
