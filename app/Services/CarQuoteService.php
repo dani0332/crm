@@ -635,6 +635,7 @@ class CarQuoteService extends BaseService
                     $this->walkTree(Auth::user()->id); // get all childs of the user
                     array_push($this->childUserIds, Auth::user()->id); // add the user id to the array to fetch directly assigned leads as well
                     $this->query->whereIn('cqr.advisor_id', $this->childUserIds);	// fetch leads assigned to the user or his childs
+                    $this->query->orWhereNull('cqr.advisor_id'); // fetch unassigned leads
                 }
             }
 
