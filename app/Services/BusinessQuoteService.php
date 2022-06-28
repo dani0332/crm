@@ -15,13 +15,12 @@ use App\Traits\CustomerAdditionalInfo as CustomerAdditionalInfoTrait;
 use App\Enums\quoteTypeCode;
 use App\Enums\DatabaseColumnsString;
 use App\Traits\RolePermissionConditions;
-use App\Traits\AddPremiumAllLobs;
+
 class BusinessQuoteService extends BaseService
 {
     protected $query;
     use CustomerAdditionalInfoTrait;
     use RolePermissionConditions;
-    use AddPremiumAllLobs;
     public function __construct()
     {
         $this->query = DB::table('business_quote_request as bqr')
@@ -306,12 +305,10 @@ class BusinessQuoteService extends BaseService
         );
         if (!Auth::user()->hasRole("ADMIN")) $dataArr['advisorId'] = Auth::user()->id;
         $response  = CapiRequestService::sendCAPIRequest('/api/v1-save-business-quote', $dataArr);
-        if(isset($response->quoteUID)) {
-            $this->savePremium(quoteTypeCode::BusinessQuote, $request, $response);
+        if(isset($response->quoteUID))
             return $this->createUpdateCustomerInfo($request, $request->email, $response->quoteUID, quoteTypeCode::BusinessQuote);
-        }else {
+        else
             return $response;
-        }  
     }
 
     public function getGridData($model, $request)
@@ -552,7 +549,7 @@ class BusinessQuoteService extends BaseService
             "previous_policy_expiry_date" => "input|date|title|range",
             "previous_quote_policy_number" => "input|title",
             "previous_quote_policy_premium" => "input|title",
-            "gender" => "|static|Male,Female",
+            "gender" => "input|none",
             "device" => "input|title",
         );
     }

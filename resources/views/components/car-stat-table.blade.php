@@ -70,7 +70,7 @@ $count = 1;
 
                 <td>
                     @php
-                    $eComConversion = divideNumber($currentWeekStat->paid_ecom_captured, $currentWeekStat->ecom_total) *
+                    $eComConversion = divideNumber($currentWeekStat->tran_approved_ecom, $currentWeekStat->ecom_total) *
                     100;
                     @endphp
                     {{round($eComConversion, 2)}} {{-- TODO : Need to add conversion here --}}
@@ -100,7 +100,7 @@ $count = 1;
                     <b>{{$totalEcom}}</b>
                 </td>
                 <td colspan="3" >
-                    <b>{{round(divideNumber($totalPaidEcomCaputed, $totalEcom) * 100, 2)}}%</b>
+                    <b>{{round(divideNumber($totalPaidEcom, $totalEcom) * 100, 2)}}%</b>
                 </td>
             </tr>
         </tbody>
