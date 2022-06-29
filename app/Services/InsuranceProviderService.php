@@ -27,7 +27,7 @@ class InsuranceProviderService extends BaseService
                 'ip.lower_limit',
                 'ip.upper_limit',
                 'ip.sort_order'
-            )->where('ip.is_active', 1);
+            );
     }
 
     public function getEntity($id)
@@ -126,7 +126,7 @@ class InsuranceProviderService extends BaseService
             "created_at" => "input|title|date|range",
             "updated_at" => "input|title|date",
             "lower_limit" => "input|number|title|required|min:0",
-            "upper_limit" => "input|number|title|required|min:0",        
+            "upper_limit" => "input|number|title|required|min:0",
             "is_active" => "input|checkbox"
         );
     }
