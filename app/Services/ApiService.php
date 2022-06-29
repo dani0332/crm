@@ -6,6 +6,7 @@ use App\Models\MyAlFredUser;
 use App\Services\CustomerService;
 use App\Services\CreateUpdateContactService;
 use App\Models\Customer;
+use App\Models\HealthQuote;
 use Exception, Log;
 class ApiService
 {
@@ -53,7 +54,20 @@ class ApiService
 
     public function triggerSibFlow($request){
         try {
-            $contactService = CreateUpdateContactService::contactCreateUpdate();
+            $quoteData = HealthQuote::where('uuid', $request->quoteUID)->where('quote_status_id', $request->QuoteStatus)->first();
+            if($quoteData) {
+                $data = [
+                    'customerName' => $quoteData->full_name,
+                    'advisorName' => $quoteData->advisor->name,
+                    'advisorEmail' => $quoteData->advisor->email,
+                    'advisorMobile' => $quoteData->advisor->mobile_no,
+                    'customerLastName' => $quoteData->last_name,
+                    'customerFirstName' => $quoteData->first_name,
+                    'lead_status' => $quoteData->quoteStatus->text
+                ];
+                $contactService = CreateUpdateContactService::contactCreateUpdate(128, $quoteData->first_name, $quoteData->last_name, $quoteData->email, false, $data);
+            }
+            
         } catch(Exception $e) {
             Log::error($e->getLine() ." ".$e->getMessage() ." ".$e->getFile());
             return response()->json(["message" => "Something went wrong. Please try again later."], 500);
