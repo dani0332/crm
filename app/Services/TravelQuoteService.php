@@ -116,7 +116,7 @@ class TravelQuoteService extends BaseService
             return $this->createUpdateCustomerInfo($request, $request->email, $response->quoteUID, quoteTypeCode::TravelQuote);
         }else {
             return $response;
-        }     
+        }
     }
 
     public function getTravelOverDueFollowups()
@@ -211,7 +211,7 @@ class TravelQuoteService extends BaseService
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'tqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'tqrd.advisor_assigned_by_id')
             ->leftJoin('payment_status as ps', 'ps.id', '=', 'tqr.payment_status_id')
-            ->where('tqr.quote_status_id', '!=', 20)
+            ->where('tqr.quote_status_id', '!=', 9)
             ->where('tqr.advisor_id', Auth::user()->id)
             ->orderBy('tqr.created_at', "DESC");
 
@@ -293,7 +293,7 @@ class TravelQuoteService extends BaseService
 
         if ($request->ajax()) {
             if (!isset($request->email) && $request->email == '') {
-                $this->query->where('tqr.quote_status_id', '!=', 20);
+                $this->query->where('tqr.quote_status_id', '!=', 9);
             }
             if (isset($request->assigned_to_date_start) && $request->assigned_to_date_start != '') {
                 $dateFrom = Carbon::createFromFormat('Y-m-d', $request['assigned_to_date_start'])->startOfDay()->toDateTimeString();
@@ -388,12 +388,12 @@ class TravelQuoteService extends BaseService
                 }
             }
         }
-       
+
         $isManagerORDeputy = Auth::user()->isManagerOrDeputy();
         $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
         $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';
         if ($column != '' && $column != 0 && $direction != '') {
-            
+
             $isAdmin = Auth::user()->hasRole("ADMIN");
             if ($isAdmin || $isManagerORDeputy == "1") {
                 if ($column == 6) {
@@ -417,7 +417,7 @@ class TravelQuoteService extends BaseService
                 }
             }
             return $this->query->orderBy($column, $direction);
-        } else {   
+        } else {
             return $this->query->orderBy('tqr.created_at', 'DESC');
         }
     }
