@@ -11,18 +11,20 @@ use DB;
 use Illuminate\Support\Facades\Auth;
 use \Carbon\Carbon;
 use Config;
-use App\Traits\GetUserTree;
+use App\Traits\RolePermissionConditions;
 use App\Traits\CustomerAdditionalInfo as CustomerAdditionalInfoTrait;
 use App\Enums\quoteTypeCode;
 use App\Enums\DatabaseColumnsString;
 use App\Enums\QuoteStatusEnum;
 use Illuminate\Support\Facades\Log;
 
+use App\Traits\AddPremiumAllLobs;
 class HomeQuoteService extends BaseService
 {
     protected $query;
-    use GetUserTree;
+    use RolePermissionConditions;
     use CustomerAdditionalInfoTrait;
+    use AddPremiumAllLobs;
     protected $leadAllocationService;
     public function __construct(LeadAllocationService $leadAllocationService)
     {
@@ -134,10 +136,12 @@ class HomeQuoteService extends BaseService
         );
         if (!Auth::user()->hasRole("ADMIN")) $dataArr['advisorId'] = Auth::user()->id;
         $response = CapiRequestService::sendCAPIRequest('/api/v1-save-home-quote', $dataArr);
-        if (isset($response->quoteUID))
+        if(isset($response->quoteUID)) {
+            $this->savePremium(quoteTypeCode::HomeQuote, $request, $response);
             return $this->createUpdateCustomerInfo($request, $request->email, $response->quoteUID, quoteTypeCode::HomeQuote);
-        else
+        }else {
             return $response;
+        }
     }
 
     public function getGridData($model, $request)
@@ -207,25 +211,8 @@ class HomeQuoteService extends BaseService
                 // if user has advisor Role then fetch leads assigned to the user only
                 $this->query->where('hqr.advisor_id', Auth::user()->id);    // fetch leads assigned to the user
             }
-            if (Auth::user()->isRenewalAdvisor()) {
-                $this->query->whereNotNull('hqr.previous_quote_id');
-                $this->query->where('hqr.advisor_id', Auth::user()->id);
-            }
-            if (Auth::user()->isRenewalManager()) {
-                $ids = $this->walkTree(Auth::user()->id);
-                $this->query->whereIn('hqr.advisor_id', $ids);
-                $this->query->whereNotNull('hqr.previous_quote_id');
-            }
-            if (Auth::user()->isNewBusinessManager()) {
-                $ids = $this->walkTree(Auth::user()->id);
-                $this->query->whereIn('hqr.advisor_id', $ids);
-                $this->query->whereNull('hqr.previous_quote_id');
-            }
-            if (Auth::user()->isNewBusinessAdvisor()) {
-                $ids = $this->walkTree(Auth::user()->id);
-                $this->query->whereIn('hqr.advisor_id', $ids);
-                $this->query->whereNull('hqr.previous_quote_id');
-            }
+            $this->whereBasedOnRole($this->query,'hqr');
+
             if (isset($request->is_renewal) && $request->is_renewal != '') {
                 if ($request->is_renewal == quoteTypeCode::yesText)
                     $this->query->whereNotNull('hqr.previous_quote_id');

@@ -16,7 +16,6 @@ use App\Models\HealthCoverFor;
 use App\Models\HomeAccomodationType;
 use App\Models\HomePossessionType;
 use App\Models\InsuranceProvider;
-use App\Models\LeadStatus;
 use App\Models\LifeChildren;
 use App\Models\LifeInsuranceTenure;
 use App\Models\LifeNumberOfYears;
@@ -35,6 +34,7 @@ use App\Models\Team;
 use App\Models\MemberCategory;
 use App\Models\QuoteStatus;
 use DB;
+use App\Services\LookupService;
 use Illuminate\Support\Facades\Auth;
 
 class DropdownSourceService extends BaseService
@@ -83,6 +83,7 @@ class DropdownSourceService extends BaseService
     {
         $advisorType = strtoupper(explode('/', $_SERVER["REQUEST_URI"])[2]);
         $data = '';
+        $lookUpService = new LookupService();
         switch ($type) {
             case 'parent_team_id':
                 $data = Team::whereNull('parent_team_id')->get();
@@ -199,16 +200,16 @@ class DropdownSourceService extends BaseService
                 $data = ClaimHistory::select('id', 'text')->where("is_active", true)->get();
                 break;
             case 'plan_id':
-                $data = CarPlan::select('id', 'text')->where("is_active", true)->get();
+                $data = CarPlan::select('id', 'text')->get();
                 break;
             case 'provider_id':
-                $data = InsuranceProvider::select('id', 'text')->where('is_active', true)->get();
+                $data = InsuranceProvider::select('id', 'text')->get();
                 break;
             case 'vehicle_type_id':
                 $data = VehicleType::select('id', 'text')->where("is_active", true)->get();
                 break;
             case 'car_plan_provider_id':
-                $data = InsuranceProvider::select('id', 'text')->where("is_active", true)->get();
+                $data = InsuranceProvider::select('id', 'text')->get();
                 break;
             case 'team_managers':
                 $data = User::select('users.id', 'users.name')
@@ -239,6 +240,9 @@ class DropdownSourceService extends BaseService
                 break;
             case 'trim':
                 $data = [];
+                break;
+            case 'back_home_license_held_for_id':
+                $data = $lookUpService->getBackHomeLicensed();
                 break;
             default:
                 break;

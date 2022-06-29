@@ -10,7 +10,7 @@ use Maatwebsite\Excel\Row;
 use Maatwebsite\Excel\Concerns\OnEachRow;
 use Maatwebsite\Excel\Concerns\WithStartRow;
 use App\Jobs\ProcessSIBCustomerMail;
-
+use App\Services\SendEmailCustomerService;
 
 class CustomersImport implements OnEachRow, WithStartRow
 {
@@ -18,11 +18,13 @@ class CustomersImport implements OnEachRow, WithStartRow
     public $myalfredExpiryDate;
     public $CDBId;
     public $inviatationEmail;
-    public function __construct($myalfredExpiryDate, $cdbId, $inviatationEmail)
+    public $sendEmailCustomerService;
+    public function __construct($myalfredExpiryDate, $cdbId, $inviatationEmail, SendEmailCustomerService $sendEmailCustomerService)
     {
         $this->myalfredExpiryDate = $myalfredExpiryDate;
         $this->CDBId = $cdbId;
         $this->inviatationEmail = $inviatationEmail;
+        $this->sendEmailCustomerService = $sendEmailCustomerService;
     }
 
     /**
@@ -77,8 +79,8 @@ class CustomersImport implements OnEachRow, WithStartRow
 
             $customerModel = Customer::find($customerId);
             if ($this->inviatationEmail == 'on') {
-                if ($customerModel->is_we_sent == 0) {
-                    dispatch(new ProcessSIBCustomerMail($email, $firstName));
+                if($customerModel->is_we_sent == 0) {
+                    dispatch(new ProcessSIBCustomerMail($email, $firstName, $this->sendEmailCustomerService));
                 }
             }
 

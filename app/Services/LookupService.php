@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\VehicleType;
 use App\Models\YearOfManufacture;
 use App\Models\CarModelDetail;
+use App\Models\UAELicenseHeldFor;
 class LookupService extends BaseService
 {
 
@@ -21,6 +22,11 @@ class LookupService extends BaseService
     public function getTrimListByCarModel($id)
     {
         return CarModelDetail::select('id', 'text')->where("is_active", true)->where("car_model_id", $id)->get();
+    }
+
+    public function getBackHomeLicensed()
+    {
+        return UAELicenseHeldFor::isBackHomeActive()->get();
     }
 
 }

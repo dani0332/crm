@@ -29,8 +29,7 @@ class CarPlanService extends BaseService
                 'cp.text_ar',
                 'cp.is_active'
             )
-            ->leftJoin('insurance_provider as ip', 'cp.provider_id', '=', 'ip.id')
-            ->where('cp.is_active', 1);
+            ->leftJoin('insurance_provider as ip', 'cp.provider_id', '=', 'ip.id');
     }
 
     public function getEntity($id)
@@ -46,7 +45,6 @@ class CarPlanService extends BaseService
     {
         $searchProperties = $model->searchProperties;
         if ($request->ajax()) {
-            
             if (in_array('created_at', $searchProperties) && isset($request->created_at) && $request->created_at != "") {
                 $dateFrom = Carbon::createFromFormat('Y-m-d', $request['created_at'])->startOfDay()->toDateTimeString();
                 $dateTo = Carbon::createFromFormat('Y-m-d', $request['created_at_end'])->endOfDay()->toDateTimeString();
@@ -89,13 +87,13 @@ class CarPlanService extends BaseService
                 }
                 if ($column == 3) {
                     $column = "cp.text_ar";
-                } 
+                }
                 if ($column == 4) {
                     $column = "cp.repair_type";
-                } 
+                }
                 if ($column == 5) {
                     $column = "cp.insurance_type";
-                }     
+                }
                 if ($column == 6) {
                     $column = "cp.created_at";
                 }
@@ -117,7 +115,7 @@ class CarPlanService extends BaseService
             'repair_type' => $request->repair_type,
             'insurance_type' => $request->insurance_type,
             'provider_id' => $request->provider_id,
-            'is_active' => $request->has("is_active") ? 1 : 0 
+            'is_active' => $request->has("is_active") ? 1 : 0
         ];
         return CarPlan::create($data);
     }
@@ -144,7 +142,7 @@ class CarPlanService extends BaseService
             "code" => "input|title|required",
             "text" => "input|text|title|required",
             "text_ar" => "input|text|title|required",
-            "repair_type" => "input|text|title|required",
+            "repair_type" => "static|title|TPL,COMP,AGENCY",
             "insurance_type" => "input|text|title|required",
             "provider_id" => "select|title",
             "created_at" => "input|title|date|range",
@@ -173,7 +171,7 @@ class CarPlanService extends BaseService
                 $title = "Plan Name (Arabic)";
                 break;
             case 'repair_type':
-                $title = "Repair Type";
+                $title = "Plan Type";
                 break;
             case 'insurance_type':
                 $title = "Insurance Type";

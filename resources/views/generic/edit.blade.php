@@ -13,6 +13,7 @@
                 <div class="x_title">
                     <h2>Edit {{$model->modelType}}</h2>
                     <ul class="nav navbar-right panel_toolbox">
+                    <li><a href="{{ url()->previous() }}" class="btn btn-warning btn-sm">Back to Previous</a></li>
                         <li><a href="{{ url('generic/'.strtolower($model->modelType)) }}" class="btn btn-warning btn-sm">{{(str_contains(strtolower($model->modelType), 'team') ? 'Team' : (str_contains(strtolower($model->modelType), 'leadstatus') ? 'Lead Status' : $model->modelType)).' List'}}</a></li>
                     </ul>
                     <div class="clearfix"></div>
@@ -136,6 +137,31 @@
                                                 <span class="text-danger">{{ $errors->first($property) }}</span>
                                             @endif
                                         @endif
+                                        @if(strpos($value, 'static') !== false )
+                                        <span class="col-form-label col-md-6 col-sm-6" for="name">
+                                            @if(strpos($value, 'title'))
+                                                {{ strtoupper($customTitles[$property])}}
+                                            @else
+                                                {{str_replace("_"," ",strtoupper($property))}}
+                                            @endif
+                                            @if(strpos($value, "required") == true)
+                                            <span class='required'>*</span>
+                                            @endif
+                                        </span>
+                                        @php
+                                            $propertyLastIndex = explode('|', $model->properties[$property]);
+                                            $staticOptionString = end($propertyLastIndex);
+                                            $staticOptions = explode(',', $staticOptionString);
+                                        @endphp
+                                        @if ($errors->has($property))
+                                        <span class="text-danger">{{ $errors->first($property) }}</span>
+                                        @endif
+                                        <select @if(strpos($value, 'multiple')) name="{{$property.'[]'}}" multiple="multiple" class="form-control select2 select-roles" @else class="form-control" name="{{$property}}" @endif id="{{$property}}" >
+                                            @foreach($staticOptions as $item)
+                                            <option value="{{ $item }}" {{ $item == old($item, $record->$property) ? 'selected' : ''}}>{{ $item }}</option>
+                                            @endforeach
+                                        </select>
+                                    @endif
                                     </div>
                                 @endif
                             @endif
