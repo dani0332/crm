@@ -861,7 +861,7 @@ class HealthQuoteService extends BaseService
     public function validateRequest($request)
     {
         $userId = $request->assigned_to_id_new;
-        $leadsIds = $request->selectTmLeadId;
+        $leadsIds = $request->selectTmLeadId == null || $request->selectTmLeadId == '' ? $request->entityId : $request->selectTmLeadId;
         if ($leadsIds == '' || $leadsIds == null) {
             return 'Please select lead(s) to assign';
         }
@@ -956,7 +956,12 @@ class HealthQuoteService extends BaseService
 
     public function processManualLeadAssignment($request): array
     {
-        $leadsIds = array_map('intval', explode(',', trim($request->selectTmLeadId, ',')));
+        if($request->selectTmLeadId == '' || $request->selectTmLeadId == null) {
+            $leadsIds = array_map('intval', explode(',', trim($request->entityId, ',')));
+        }
+        else{
+            $leadsIds = array_map('intval', explode(',', trim($request->selectTmLeadId, ',')));
+        }
         $userId = (int)$request->assigned_to_id_new;
         Log::info('Leads ids to assign: ' . json_encode($leadsIds));
         $result = [];

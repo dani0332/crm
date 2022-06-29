@@ -173,7 +173,7 @@ Route::group(['middleware' =>  ['auth']], function () {
 
         Route::get('getvalues/{modelType}/{propertyName}/{recordId}', [CRUDController::class, 'getDropdownSourceNameForDisplay']);
         Route::get('car/{quoteId}/plan_details/{planId}', [CRUDController::class, 'carQuotePlanDetails']);
-        Route::post('manualLeadAssign', [CRUDController::class, 'manualLeadAssign'])->name('manualLeadAssign');
+        Route::post('health/manualLeadAssign', [CRUDController::class, 'manualLeadAssign'])->name('manualLeadAssign');
         Route::post('wcuAssign', [CRUDController::class, 'wcuAssign'])->name('wcuAssign');
         Route::post('/{modelType}/{QuoteUId}/UpdateLeadStatus', [CRUDController::class, 'UpdateLeadStatus'])->name('UpdateLeadStatus');
         Route::post('health/manualLeadAssignAfterTeamAssign', [CRUDController::class, 'manualLeadAssignAfterTeamAssign'])->name('manualLeadAssignAfterTeamAssign');

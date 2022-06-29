@@ -96,7 +96,7 @@
                             </div>
                         </form>
                         @if(Auth::user()->hasAnyRole([RolesEnum::Admin, RolesEnum::HealthManager, RolesEnum::HealthDeputyManager]) && !Auth::user()->hasRole(RolesEnum::HealthWCUAdvisor))
-                        <form method="post" action="manualAssign" class="form-horizontal form-label-left"
+                        <form method="post" action="manualLeadAssign" class="form-horizontal form-label-left"
                             autocomplete="off">
                             {{ csrf_field() }}
                             @method('POST')
