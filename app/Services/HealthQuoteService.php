@@ -170,7 +170,7 @@ class HealthQuoteService extends BaseService
             return $this->createUpdateCustomerInfo($request, $request->email, $response->quoteUID, quoteTypeCode::HealthQuote);
         }else {
             return $response;
-        }   
+        }
     }
 
     public function getGridData($model, $request)
@@ -191,7 +191,7 @@ class HealthQuoteService extends BaseService
         }
         if ($request->ajax()) {
             if (!isset($request->email) && $request->email == '') {
-                $this->query->where('hqr.quote_status_id', '!=', 20);
+                $this->query->where('hqr.quote_status_id', '!=', 9);
             }
             if (isset($request->assigned_to_date_start) && $request->assigned_to_date_start != '') {
                 $dateFrom = Carbon::createFromFormat('Y-m-d', $request['assigned_to_date_start'])->startOfDay()->toDateTimeString();
@@ -302,11 +302,11 @@ class HealthQuoteService extends BaseService
             }
             return $this->query->orderBy($column, $direction);
         } else {
-               
+
             return $this->query->orderBy('hqr.created_at', 'DESC');
         }
     }
-   
+
     private function getQuerySuffix($item)
     {
         switch ($item) {
@@ -459,7 +459,7 @@ class HealthQuoteService extends BaseService
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'hqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'hqrd.advisor_assigned_by_id')
             ->leftJoin('payment_status as ps', 'ps.id', '=', 'hqr.payment_status_id')
-            ->where('hqr.quote_status_id', '!=', 20)
+            ->where('hqr.quote_status_id', '!=', 9)
             ->where('hqr.advisor_id', Auth::user()->id)
             ->orderBy('hqr.created_at', "DESC");
 
@@ -519,7 +519,7 @@ class HealthQuoteService extends BaseService
             $dateTo = Carbon::createFromFormat('Y-m-d', $request['previous_policy_expiry_date_end'])->endOfDay()->toDateTimeString();
             $query->whereBetween('hqr.previous_policy_expiry_date', [$dateFrom, $dateTo]);
         }
-        
+
         return $query;
     }
 

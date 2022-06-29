@@ -205,7 +205,7 @@ class CarQuoteService extends BaseService
         if (empty($childRecord)) {
             $childRecord = $this->createDetailEntity($id);
         }
-    
+
         $childRecord->advisor_assigned_by_id = Auth::user()->id;
         $childRecord->advisor_assigned_date = Carbon::now();
         $childRecord->save();
@@ -529,7 +529,7 @@ class CarQuoteService extends BaseService
             ->leftJoin('car_type_insurance as cti', 'cti.id', '=', 'cqr.car_type_insurance_id')
             ->leftJoin('users as ua', 'ua.id', '=', 'cqr.advisor_id')
             ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'cqrd.lost_reason_id')
-            ->where('cqr.quote_status_id', '!=', 20)
+            ->where('cqr.quote_status_id', '!=', 9)
             ->where('cqr.advisor_id', Auth::user()->id)
             ->orderBy('cqr.created_at', "DESC");
 
@@ -643,9 +643,9 @@ class CarQuoteService extends BaseService
                 // if user has advisor Role then fetch leads assigned to the user only
                 $this->query->where('cqr.advisor_id', Auth::user()->id);	// fetch leads assigned to the user
             }
-            
+
             if (!isset($request->email) && $request->email == '') {
-                $this->query->where('qs.text', '!=', 'Fake');
+                $this->query->where('qs.id', '!=', 9);
             }
             if (isset($request->assigned_to_date_start) && $request->assigned_to_date_start != '') {
                 $dateFrom = $this->parseDate($request['assigned_to_date_start'], true);
