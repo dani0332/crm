@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\BusinessInsuranceType;
 use App\Models\BusinessQuote;
-use App\Models\BusinessQuoteRequestDetail;
 use App\Models\GroupMedicalType;
 use App\Models\QuoteStatus;
 use App\Models\User;
@@ -18,7 +17,7 @@ use Auth;
 use Illuminate\Support\Facades\Redirect;
 use App\Traits\RolePermissionConditions;
 use App\Enums\quoteStatusCode;
-
+use App\Enums\quoteTypeCode;
 class AMTController extends Controller
 {
     protected $businessQuoteService;
@@ -70,7 +69,10 @@ class AMTController extends Controller
                 'bqr.device',
                 'bqr.previous_quote_policy_premium'
             )->orderBy('bqr.advisor_id', 'asc');
-
+            if(Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::Business) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::Amt) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::GM)){
+                // if user has advisor Role then fetch leads assigned to the user only
+                $data->where('bqr.advisor_id', Auth::user()->id);	// fetch leads assigned to the user
+            }
         $this->whereBasedOnRole($data, 'bqr');
 
         $leadStatuses = DB::table('quote_status')->select('id', 'text')->orderBy('sort_order', 'asc')->get();

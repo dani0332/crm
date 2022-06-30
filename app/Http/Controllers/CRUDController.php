@@ -240,6 +240,7 @@ class CRUDController extends Controller
      */
     public function show($id, Request $request)
     {
+        $quoteType = strtolower($this->genericModel->modelType);
         $record = $this->crudService->getEntity($this->genericModel->modelType, $id);
         if (!$record) abort(404);
 
@@ -346,10 +347,11 @@ class CRUDController extends Controller
             }
 
             $members_detail = $this->travelQuoteService->getMembersDetail($record->id);
+
             return view('shared.show', compact([
                 'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList',
                 'leadStatuses', 'lostReasons', 'selectedLostReasonId', 'members_detail','model_name', 'allowedDuplicateLOB', 'audits', 'activities', 'advisors','isRenewalUser',
-                'isNewBusinessUser', 'ecomTravelInsuranceQuoteUrl'
+                'isNewBusinessUser', 'ecomTravelInsuranceQuoteUrl', 'quoteType'
             ]));
         }else if ($this->genericModel->modelType == quoteTypeCode::Health) { // Health plans to display on detail view
             $listQuotePlans = '';
@@ -828,5 +830,14 @@ class CRUDController extends Controller
     public function sendNotesToCustomer(Request $request)
     {
         return $this->notesForCustomerService->notesSendToCustomer($request);
+    }
+
+    public function updateQuotePolicy(Request $request)
+    {
+        $quote = $this->travelQuoteService->updateQuotePolicy($request);
+
+        if($quote) {
+            return redirect()->back()->with('success', 'Quote Policy Detail has been updated.');
+        }
     }
 }
