@@ -11,6 +11,7 @@ class CarAddOnOption extends Model implements AuditableContract
 {
     use HasFactory, Auditable;
     protected $table = 'car_addon_option';
+    protected $guarded = ['id'];
     public $access = [
 
         'write' => ['advisor', 'oe'],
