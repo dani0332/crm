@@ -240,6 +240,7 @@ class CRUDController extends Controller
      */
     public function show($id, Request $request)
     {
+        $quoteType = strtolower($this->genericModel->modelType);
         $record = $this->crudService->getEntity($this->genericModel->modelType, $id);
         if (!$record) abort(404);
 
@@ -346,7 +347,6 @@ class CRUDController extends Controller
             }
 
             $members_detail = $this->travelQuoteService->getMembersDetail($record->id);
-            $quoteType = strtolower(quoteTypeCode::Travel);
 
             return view('shared.show', compact([
                 'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList',
