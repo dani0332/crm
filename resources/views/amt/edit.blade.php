@@ -134,8 +134,7 @@
 
                         <div class="item form-group">
                             <div class="col">
-                                <span class="col-form-label col-md-6 col-sm-6">Premium<span
-                                    class="required">*</span></span>
+                                <span class="col-form-label col-md-6 col-sm-6">Premium</span>
                                 <input type="number" id="premium"  name="premium" value="{{ old('premium', $record->premium) }}"
                                     class="form-control">
                                 @if ($errors->has('premium'))
