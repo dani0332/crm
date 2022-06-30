@@ -5,29 +5,48 @@ $(document).ready(function() {
     $("#update-quote-policy-btn").hide();
     $("#cancel-quote-policy-btn").hide();
     $("#update-quote-policy-form :input"). prop("disabled", true);
-    $('#edit-quote-policy-btn').prop('disabled', false);
+    $("#edit-quote-policy-btn").prop("disabled", false);
     $("#edit-quote-policy-btn").click(function(){
         $("#edit-quote-policy-btn").hide();
         $("#update-quote-policy-btn").show();
         $("#cancel-quote-policy-btn").show();
         $("#update-quote-policy-form :input"). prop("disabled", false);
+        $("#error-quote-policy-form").text("");
     });
     $("#cancel-quote-policy-btn").click(function(){
         $("#edit-quote-policy-btn").show();
         $("#update-quote-policy-btn").hide();
         $("#cancel-quote-policy-btn").hide();
         $("#update-quote-policy-form :input"). prop("disabled", true);
-        $('#edit-quote-policy-btn').prop('disabled', false);
+        $("#edit-quote-policy-btn").prop("disabled", false);
+        $("#error-quote-policy-form").text("");
     });
-    $("#error-quote-policy-form").hide();
+    $("#error-quote-policy-form").text("");
     $("#update-quote-policy-form").submit(function (e) {
         if($("#quote_policy_number").val() == "" || $("#quote_policy_issuance_date").val() == "" 
             || $("#quote_policy_start_date").val() == "" || $("#quote_policy_expiry_date").val() == "" 
             || $("#quote_premium").val() == "") {
-            $("#error-quote-policy-form").show();
+            $("#error-quote-policy-form").text("All fields are required.");
             return false;
         } else {
-            $("#error-quote-policy-form").hide();
+            var quotePolicyStartDate = $("#quote_policy_start_date").val();
+            var quotePolicyExpiryDate = $("#quote_policy_expiry_date").val();
+
+            var quotePolicyStartDateExt = new Date(quotePolicyStartDate);
+            var quotePolicyExpiryDateExt = new Date(quotePolicyExpiryDate);
+
+            console.log('quotePolicyStartDate: ', quotePolicyStartDate);
+            console.log('quotePolicyStartDateExt: ', quotePolicyStartDateExt);
+
+            console.log('quotePolicyExpiryDate: ', quotePolicyExpiryDate);
+            console.log('quotePolicyExpiryDateExt: ', quotePolicyExpiryDateExt);
+            return false;
+
+            if(quotePolicyStartDateExt >= quotePolicyExpiryDateExt) {
+                $("#error-quote-policy-form").text("Expiry date should be greater than Start Date");
+                return false;
+            }
+            $("#error-quote-policy-form").text("");
             return true;
         }
     });
@@ -96,7 +115,7 @@ $(document).ready(function() {
                 <!-- Transaction Approved -->
                 @if($record->quote_status_id == 15) 
                 <div align="right">
-                    <span style="color:red;" id="error-quote-policy-form">All fields are required.</span>
+                    <span style="color:red;" id="error-quote-policy-form"></span>
                     <button type="button" class="btn btn-primary btn-sm" id="cancel-quote-policy-btn">Cancel</button>
                     <button type="submit" class="btn btn-success btn-sm" id="update-quote-policy-btn">Update</button>
                     <button type="button" class="btn btn-primary btn-sm" id="edit-quote-policy-btn">Edit</button>
