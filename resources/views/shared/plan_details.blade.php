@@ -595,8 +595,8 @@ if (!isset($modelName)) {
                                 <tr>
                                     <td valign="top">Hide Plan?</td>
                                     <td><select class="form-control" id='is_disabled' name="is_disabled">
-                                            <option value="false" {{ $isDisabled == false ? 'selected="selected"' : '' }}>No</option>
-                                            <option value="true" {{ $isDisabled == true ? 'selected="selected"' : '' }}>Yes</option>
+                                            <option value="false" {{ $isDisabled == "false" ? 'selected="selected"' : '' }}>No</option>
+                                            <option value="true" {{ $isDisabled == "true" ? 'selected="selected"' : '' }}>Yes</option>
                                         </select>
                                         <div id="car_plan_manual_process_text" style="display: none;font-weight:bold;"></div>
                                     </td>
