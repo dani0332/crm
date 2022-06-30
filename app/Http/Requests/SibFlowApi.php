@@ -16,9 +16,9 @@ class SibFlowApi extends FormRequest
     public function rules()
     {
         return [
-            'quoteUID' => 'required|number',
-            'quoteTypeID' => 'required|number',
-            'QuoteStatus' => 'required|number'
+            'quoteUID' => 'required',
+            'quoteTypeID' => 'required',
+            'QuoteStatus' => 'required'
         ];
     }
 
