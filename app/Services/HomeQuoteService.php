@@ -11,16 +11,17 @@ use DB;
 use Illuminate\Support\Facades\Auth;
 use \Carbon\Carbon;
 use Config;
-use App\Traits\GetUserTree;
+use App\Traits\RolePermissionConditions;
 use App\Traits\CustomerAdditionalInfo as CustomerAdditionalInfoTrait;
 use App\Enums\quoteTypeCode;
 use App\Enums\DatabaseColumnsString;
-use App\Enums\quoteStatusCode;
+use App\Traits\AddPremiumAllLobs;
 class HomeQuoteService extends BaseService
 {
     protected $query;
-    use GetUserTree;
+    use RolePermissionConditions;
     use CustomerAdditionalInfoTrait;
+    use AddPremiumAllLobs;
     public function __construct()
     {
 
@@ -130,10 +131,12 @@ class HomeQuoteService extends BaseService
         );
         if (!Auth::user()->hasRole("ADMIN")) $dataArr['advisorId'] = Auth::user()->id;
         $response = CapiRequestService::sendCAPIRequest('/api/v1-save-home-quote', $dataArr);
-        if(isset($response->quoteUID))
+        if(isset($response->quoteUID)) {
+            $this->savePremium(quoteTypeCode::HomeQuote, $request, $response);
             return $this->createUpdateCustomerInfo($request, $request->email, $response->quoteUID, quoteTypeCode::HomeQuote);
-        else
+        }else {
             return $response;
+        }
     }
 
     public function getGridData($model, $request)
@@ -204,25 +207,8 @@ class HomeQuoteService extends BaseService
                 // if user has advisor Role then fetch leads assigned to the user only
                 $this->query->where('hqr.advisor_id', Auth::user()->id);	// fetch leads assigned to the user
             }
-            if (Auth::user()->isRenewalAdvisor()) {
-                $this->query->whereNotNull('hqr.previous_quote_id');
-                $this->query->where('hqr.advisor_id', Auth::user()->id);
-            }
-            if (Auth::user()->isRenewalManager()) {
-                $ids = $this->walkTree(Auth::user()->id);
-                $this->query->whereIn('hqr.advisor_id', $ids);
-                $this->query->whereNotNull('hqr.previous_quote_id');
-            }
-            if (Auth::user()->isNewBusinessManager()) {
-                $ids = $this->walkTree(Auth::user()->id);
-                $this->query->whereIn('hqr.advisor_id', $ids);
-                $this->query->whereNull('hqr.previous_quote_id');
-            }
-            if (Auth::user()->isNewBusinessAdvisor()) {
-                $ids = $this->walkTree(Auth::user()->id);
-                $this->query->whereIn('hqr.advisor_id', $ids);
-                $this->query->whereNull('hqr.previous_quote_id');
-            }
+            $this->whereBasedOnRole($this->query,'hqr');
+
             if (isset($request->is_renewal) && $request->is_renewal != '') {
                 if($request->is_renewal == quoteTypeCode::yesText)
                     $this->query->whereNotNull('hqr.previous_quote_id');
@@ -363,7 +349,7 @@ class HomeQuoteService extends BaseService
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'hqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'hqrd.advisor_assigned_by_id')
             ->leftJoin('payment_status as ps', 'ps.id', '=', 'hqr.payment_status_id')
-            ->where('hqr.quote_status_id', '!=', 20)
+            ->where('hqr.quote_status_id', '!=', 9)
             ->where('hqr.advisor_id', Auth::user()->id)
             ->orderBy('hqr.created_at', "DESC");
 
@@ -441,7 +427,7 @@ class HomeQuoteService extends BaseService
         if (empty($childRecord)) {
             $childRecord = $this->createDetailEntity($id);
         }
-    
+
         $childRecord->advisor_assigned_by_id = Auth::user()->id;
         $childRecord->advisor_assigned_date = Carbon::now();
         $childRecord->save();
@@ -584,7 +570,7 @@ class HomeQuoteService extends BaseService
             case 'previous_policy_expiry_date':
                 $title = "Previous Policy Expiry Date";
                 break;
-            case 'is_property_rented_holiday_home': 
+            case 'is_property_rented_holiday_home':
                 $title = "Is Property Rented Holiday Home ?";
                 break;
             case 'previous_quote_policy_premium';

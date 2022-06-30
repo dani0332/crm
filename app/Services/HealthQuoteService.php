@@ -15,17 +15,17 @@ use Auth;
 use \Carbon\Carbon;
 use Hidehalo\Nanoid\Client;
 use Config;
-use App\Traits\GetUserTree;
+use App\Traits\RolePermissionConditions;
 use App\Traits\CustomerAdditionalInfo as CustomerAdditionalInfoTrait;
 use App\Enums\quoteTypeCode;
-use App\Enums\quoteStatusCode;
 use App\Enums\DatabaseColumnsString;
-
+use App\Traits\AddPremiumAllLobs;
 class HealthQuoteService extends BaseService
 {
     protected $query;
-    use GetUserTree;
+    use RolePermissionConditions;
     use CustomerAdditionalInfoTrait;
+    use AddPremiumAllLobs;
     public function __construct()
     {
         $this->query = DB::table('health_quote_request as hqr')->select(
@@ -165,10 +165,12 @@ class HealthQuoteService extends BaseService
         );
         if (!Auth::user()->hasRole("ADMIN")) $dataArr['advisorId'] = Auth::user()->id;
          $response = CapiRequestService::sendCAPIRequest('/api/v1-save-health-quote', $dataArr);
-        if(isset($response->quoteUID))
+        if(isset($response->quoteUID)) {
+            $this->savePremium(quoteTypeCode::HealthQuote, $request, $response);
             return $this->createUpdateCustomerInfo($request, $request->email, $response->quoteUID, quoteTypeCode::HealthQuote);
-        else
+        }else {
             return $response;
+        }
     }
 
     public function getGridData($model, $request)
@@ -189,7 +191,7 @@ class HealthQuoteService extends BaseService
         }
         if ($request->ajax()) {
             if (!isset($request->email) && $request->email == '') {
-                $this->query->where('hqr.quote_status_id', '!=', 20);
+                $this->query->where('hqr.quote_status_id', '!=', 9);
             }
             if (isset($request->assigned_to_date_start) && $request->assigned_to_date_start != '') {
                 $dateFrom = Carbon::createFromFormat('Y-m-d', $request['assigned_to_date_start'])->startOfDay()->toDateTimeString();
@@ -242,24 +244,8 @@ class HealthQuoteService extends BaseService
             if (isset($request->previous_quote_policy_premium) && $request->previous_quote_policy_premium != '') {
                 $this->query->where('hqr.previous_quote_policy_premium', $request->previous_quote_policy_premium);
             }
-            if ($isRenewalAdvisor) {
-                $this->query->whereNotNull('hqr.previous_quote_id');
-                $this->query->where('hqr.advisor_id', Auth::user()->id);
-            }
-            if ($isRenewalManager) {
-                $ids = $this->walkTree(Auth::user()->id);
-                $this->query->whereIn('hqr.advisor_id', $ids);
-                $this->query->whereNotNull('hqr.previous_quote_id');
-            }
-            if ($isNewManager) {
-                $ids = $this->walkTree(Auth::user()->id);
-                $this->query->whereIn('hqr.advisor_id', $ids);
-                $this->query->whereNull('hqr.previous_quote_id');
-            }
-            if ($isNewAdvisor) {
-                $this->query->where('hqr.advisor_id', Auth::user()->id);
-                $this->query->whereNull('hqr.previous_quote_id');
-            }
+            $this->whereBasedOnRole($this->query,'hqr');
+
             if (isset($request->is_renewal) && $request->is_renewal != '') {
                 if($request->is_renewal ==  quoteTypeCode::yesText)
                     $this->query->whereNotNull('hqr.previous_quote_id');
@@ -316,11 +302,11 @@ class HealthQuoteService extends BaseService
             }
             return $this->query->orderBy($column, $direction);
         } else {
-               
+
             return $this->query->orderBy('hqr.created_at', 'DESC');
         }
     }
-   
+
     private function getQuerySuffix($item)
     {
         switch ($item) {
@@ -473,7 +459,7 @@ class HealthQuoteService extends BaseService
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'hqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'hqrd.advisor_assigned_by_id')
             ->leftJoin('payment_status as ps', 'ps.id', '=', 'hqr.payment_status_id')
-            ->where('hqr.quote_status_id', '!=', 20)
+            ->where('hqr.quote_status_id', '!=', 9)
             ->where('hqr.advisor_id', Auth::user()->id)
             ->orderBy('hqr.created_at', "DESC");
 
@@ -533,7 +519,7 @@ class HealthQuoteService extends BaseService
             $dateTo = Carbon::createFromFormat('Y-m-d', $request['previous_policy_expiry_date_end'])->endOfDay()->toDateTimeString();
             $query->whereBetween('hqr.previous_policy_expiry_date', [$dateFrom, $dateTo]);
         }
-        
+
         return $query;
     }
 

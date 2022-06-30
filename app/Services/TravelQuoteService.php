@@ -11,18 +11,19 @@ use DB;
 use Auth;
 use \Carbon\Carbon;
 use Config;
-use App\Traits\GetUserTree;
+use App\Traits\RolePermissionConditions;
 use App\Traits\GetTravelPreviousQuoteIds;
 use App\Traits\CustomerAdditionalInfo as CustomerAdditionalInfoTrait;
 use App\Enums\quoteTypeCode;
 use App\Enums\DatabaseColumnsString;
-
+use App\Traits\AddPremiumAllLobs;
 class TravelQuoteService extends BaseService
 {
     protected $query;
-    use GetUserTree;
+    use RolePermissionConditions;
     use GetTravelPreviousQuoteIds;
     use CustomerAdditionalInfoTrait;
+    use AddPremiumAllLobs;
     public function __construct()
     {
         $this->query = DB::table('travel_quote_request as tqr')->select(
@@ -112,10 +113,12 @@ class TravelQuoteService extends BaseService
         );
         if (!Auth::user()->hasRole("ADMIN")) $dataArr['advisorId'] = Auth::user()->id;
             $response  = CapiRequestService::sendCAPIRequest('/api/v1-save-travel-quote', $dataArr);
-        if(isset($response->quoteUID))
+        if(isset($response->quoteUID)) {
+            $this->savePremium(quoteTypeCode::TravelQuote, $request, $response);
             return $this->createUpdateCustomerInfo($request, $request->email, $response->quoteUID, quoteTypeCode::TravelQuote);
-        else
+        }else {
             return $response;
+        }
     }
 
     public function getTravelOverDueFollowups()
@@ -210,7 +213,7 @@ class TravelQuoteService extends BaseService
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'tqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'tqrd.advisor_assigned_by_id')
             ->leftJoin('payment_status as ps', 'ps.id', '=', 'tqr.payment_status_id')
-            ->where('tqr.quote_status_id', '!=', 20)
+            ->where('tqr.quote_status_id', '!=', 9)
             ->where('tqr.advisor_id', Auth::user()->id)
             ->orderBy('tqr.created_at', "DESC");
 
@@ -292,7 +295,7 @@ class TravelQuoteService extends BaseService
 
         if ($request->ajax()) {
             if (!isset($request->email) && $request->email == '') {
-                $this->query->where('tqr.quote_status_id', '!=', 20);
+                $this->query->where('tqr.quote_status_id', '!=', 9);
             }
             if (isset($request->assigned_to_date_start) && $request->assigned_to_date_start != '') {
                 $dateFrom = Carbon::createFromFormat('Y-m-d', $request['assigned_to_date_start'])->startOfDay()->toDateTimeString();
@@ -347,25 +350,8 @@ class TravelQuoteService extends BaseService
                 $dateTo = Carbon::createFromFormat('Y-m-d', $request['previous_policy_expiry_date_end'])->endOfDay()->toDateTimeString();
                 $this->query->whereBetween('tqr.previous_policy_expiry_date', [$dateFrom, $dateTo]);
             }
-            if (Auth::user()->isRenewalAdvisor()) {
-                $this->query->whereNotNull('tqr.previous_quote_id');
-                $this->query->where('tqr.advisor_id', Auth::user()->id);
-            }
-            if (Auth::user()->isRenewalManager()) {
-                $ids = $this->walkTree(Auth::user()->id);
-                $this->query->whereIn('tqr.advisor_id', $ids);
-                $this->query->whereNotNull('tqr.previous_quote_id');
-            }
-            if (Auth::user()->isNewBusinessManager()) {
-                $ids = $this->walkTree(Auth::user()->id);
-                $this->query->whereIn('tqr.advisor_id', $ids);
-                $this->query->whereNull('tqr.previous_quote_id');
-            }
-            if (Auth::user()->isNewBusinessAdvisor()) {
-                $ids = $this->walkTree(Auth::user()->id);
-                $this->query->whereIn('tqr.advisor_id', $ids);
-                $this->query->whereNull('tqr.previous_quote_id');
-            }
+            $this->whereBasedOnRole($this->query,'tqr');
+
             if (isset($request->is_renewal) && $request->is_renewal != '') {
                 if($request->is_renewal == quoteTypeCode::yesText)
                     $this->query->whereNotNull('tqr.previous_quote_id');
@@ -404,12 +390,12 @@ class TravelQuoteService extends BaseService
                 }
             }
         }
-       
+
         $isManagerORDeputy = Auth::user()->isManagerOrDeputy();
         $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
         $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';
         if ($column != '' && $column != 0 && $direction != '') {
-            
+
             $isAdmin = Auth::user()->hasRole("ADMIN");
             if ($isAdmin || $isManagerORDeputy == "1") {
                 if ($column == 6) {
@@ -433,7 +419,7 @@ class TravelQuoteService extends BaseService
                 }
             }
             return $this->query->orderBy($column, $direction);
-        } else {   
+        } else {
             return $this->query->orderBy('tqr.created_at', 'DESC');
         }
     }
