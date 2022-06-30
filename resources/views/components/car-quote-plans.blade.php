@@ -58,7 +58,7 @@ use App\Enums\CarPlanExclusionsCode;
                                         <br>
                                         @isset($quotePlan->isDisabled)
                                         @if($quotePlan->isDisabled)
-                                        <span class="badge badge-danger">Disabled</span>
+                                        <span class="badge badge-danger">Hidden</span>
                                         @endif
                                         @endisset
                                         @isset($quotePlan->isRenewal)
