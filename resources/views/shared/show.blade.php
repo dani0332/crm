@@ -281,8 +281,6 @@
         <x-lead-status-update :lead="$record" :modeltype="$model->modelType" :status="$record->quote_status_id" :statuses="$leadStatuses" :lostreasons="$lostReasons"
             :selectedlostreason="$selectedLostReasonId" :activityassignees="$advisors" />
     @endif
-    <x-lead-activities :lead="$record" :modeltype="$model->modelType" :activities="$activities" />
-    <x-lead-activity-modal :advisors="$advisors" :modeltype="$model->modelType" :record="$record" />
     @if (count($allowedDuplicateLOB) > 0)
         <div class="modal fade" id="duplicateLeadModal" name="duplicateLeadModal" tabindex="-1" role="dialog"
             aria-labelledby="duplicateLeadModalLabel" aria-hidden="true">
@@ -359,6 +357,67 @@
         <x-notes-for-customer-modal :record="$record" :quoteTypeId="$quoteTypeId" />
     @endif
 
+    @if ($model->modelType == quoteTypeCode::Travel)
+        <div class="modal fade" id="quotePlanModal" name="quotePlanModal" tabindex="-1" role="dialog"
+            aria-labelledby="quotePlanModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+                <div class="modal-content" style="height: 40vw;">
+                    <div class="modal-header" style="border-bottom: none;">
+                        <h5 class="modal-title" id="quotePlanModalLabel"><svg xmlns="http://www.w3.org/2000/svg"
+                                width="16" height="16" fill="currentColor" class="bi bi-grid-3x3-gap-fill"
+                                viewBox="0 0 16 16" style="vertical-align: unset;">
+                                <path
+                                    d="M1 2a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2zm5 0a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V2zm5 0a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1V2zM1 7a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V7zm5 0a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7zm5 0a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1V7zM1 12a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1v-2zm5 0a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1v-2zm5 0a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1v-2z" />
+                            </svg> <strong>Plan Details</strong></h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="quote-plan-modal-body"> </div>
+                    <div class="modal-footer" style="border: none">
+
+                    </div>
+                </div>
+            </div>
+        </div>
+        <x-quote-policy :record="$record" :quoteType="$quoteType" />
+        <x-travel-ecom-detail :travelQuotePremium="$record->premium" :travelQuotePaidAt="$record->paid_at" :travelQuotePaymentStatus="$record->payment_status_id_text" :travelQuotePlanName="$record->plan_id_text" />
+        <x-travel-quote-members-detail :members="$members_detail" />
+        <x-travel-quote :listQuotePlans="$listQuotePlans" :uuidModal="$record->uuid" :quoteRequestId="$record->id" :ecomUrl="$ecomTravelInsuranceQuoteUrl . $record->uuid" />
+    @endif
+
+    @if ($model->modelType == quoteTypeCode::Health)
+        <div class="modal fade" id="quotePlanModal" name="quotePlanModal" tabindex="-1" role="dialog"
+            aria-labelledby="quotePlanModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+                <div class="modal-content" style="height: 40vw;">
+                    <div class="modal-header" style="border-bottom: none;">
+                        <h5 class="modal-title" id="quotePlanModalLabel"><svg xmlns="http://www.w3.org/2000/svg"
+                                width="16" height="16" fill="currentColor" class="bi bi-grid-3x3-gap-fill"
+                                viewBox="0 0 16 16" style="vertical-align: unset;">
+                                <path
+                                    d="M1 2a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2zm5 0a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V2zm5 0a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1V2zM1 7a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V7zm5 0a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7zm5 0a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1V7zM1 12a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1v-2zm5 0a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1v-2zm5 0a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1v-2z" />
+                            </svg> <strong>Plan Details</strong></h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="quote-plan-modal-body"> </div>
+                    <div class="modal-footer" style="border: none">
+
+                    </div>
+                </div>
+            </div>
+        </div>
+        <x-health-quote-plans
+            :listQuotePlans="$listQuotePlans"
+            :uuidModal="$record->uuid"
+            :quoteRequestId="$record->id" />
+    @endif
+
+    <x-lead-activities :lead="$record" :modeltype="$model->modelType" :activities="$activities" />
+    <x-lead-activity-modal :advisors="$advisors" :modeltype="$model->modelType" :record="$record" />
+
     <div class="row" st>
         <div class="col-md-12 col-sm-12">
             <div class="x_panel">
@@ -390,64 +449,6 @@
             </div>
         </div>
     </div>
-
-    @if ($model->modelType == quoteTypeCode::Travel)
-        <div class="modal fade" id="quotePlanModal" name="quotePlanModal" tabindex="-1" role="dialog"
-            aria-labelledby="quotePlanModalLabel" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
-                <div class="modal-content" style="height: 40vw;">
-                    <div class="modal-header" style="border-bottom: none;">
-                        <h5 class="modal-title" id="quotePlanModalLabel"><svg xmlns="http://www.w3.org/2000/svg"
-                                width="16" height="16" fill="currentColor" class="bi bi-grid-3x3-gap-fill"
-                                viewBox="0 0 16 16" style="vertical-align: unset;">
-                                <path
-                                    d="M1 2a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2zm5 0a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V2zm5 0a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1V2zM1 7a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V7zm5 0a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7zm5 0a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1V7zM1 12a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1v-2zm5 0a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1v-2zm5 0a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1v-2z" />
-                            </svg> <strong>Plan Details</strong></h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>
-                    <div class="quote-plan-modal-body"> </div>
-                    <div class="modal-footer" style="border: none">
-
-                    </div>
-                </div>
-            </div>
-        </div>
-        <x-travel-ecom-detail :travelQuotePremium="$record->premium" :travelQuotePaidAt="$record->paid_at" :travelQuotePaymentStatus="$record->payment_status_id_text" :travelQuotePlanName="$record->plan_id_text" />
-        <x-travel-quote-members-detail :members="$members_detail" />
-        <x-travel-quote :listQuotePlans="$listQuotePlans" :uuidModal="$record->uuid" :quoteRequestId="$record->id" :ecomUrl="$ecomTravelInsuranceQuoteUrl . $record->uuid" />
-        <x-quote-policy :record="$record" :quoteType="$quoteType" />
-    @endif
-
-    @if ($model->modelType == quoteTypeCode::Health)
-        <div class="modal fade" id="quotePlanModal" name="quotePlanModal" tabindex="-1" role="dialog"
-            aria-labelledby="quotePlanModalLabel" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
-                <div class="modal-content" style="height: 40vw;">
-                    <div class="modal-header" style="border-bottom: none;">
-                        <h5 class="modal-title" id="quotePlanModalLabel"><svg xmlns="http://www.w3.org/2000/svg"
-                                width="16" height="16" fill="currentColor" class="bi bi-grid-3x3-gap-fill"
-                                viewBox="0 0 16 16" style="vertical-align: unset;">
-                                <path
-                                    d="M1 2a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2zm5 0a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V2zm5 0a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1V2zM1 7a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V7zm5 0a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7zm5 0a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1V7zM1 12a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1v-2zm5 0a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1v-2zm5 0a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1v-2z" />
-                            </svg> <strong>Plan Details</strong></h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>
-                    <div class="quote-plan-modal-body"> </div>
-                    <div class="modal-footer" style="border: none">
-
-                    </div>
-                </div>
-            </div>
-        </div>
-        <x-health-quote-plans
-            :listQuotePlans="$listQuotePlans"
-            :uuidModal="$record->uuid"
-            :quoteRequestId="$record->id" />
-    @endif
 
     @can('auditable')
         <div id="auditable">
