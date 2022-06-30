@@ -281,8 +281,6 @@
         <x-lead-status-update :lead="$record" :modeltype="$model->modelType" :status="$record->quote_status_id" :statuses="$leadStatuses" :lostreasons="$lostReasons"
             :selectedlostreason="$selectedLostReasonId" :activityassignees="$advisors" />
     @endif
-    <x-lead-activities :lead="$record" :modeltype="$model->modelType" :activities="$activities" />
-    <x-lead-activity-modal :advisors="$advisors" :modeltype="$model->modelType" :record="$record" />
     @if (count($allowedDuplicateLOB) > 0)
         <div class="modal fade" id="duplicateLeadModal" name="duplicateLeadModal" tabindex="-1" role="dialog"
             aria-labelledby="duplicateLeadModalLabel" aria-hidden="true">
@@ -359,38 +357,6 @@
         <x-notes-for-customer-modal :record="$record" :quoteTypeId="$quoteTypeId" />
     @endif
 
-    <div class="row" st>
-        <div class="col-md-12 col-sm-12">
-            <div class="x_panel">
-                <div class="x_title">
-                    <h2>Lead History</h2>
-                    <div class="clearfix"></div>
-                </div>
-                <div class="x_content">
-                    <div id="lead-history-div">
-                        <table id="leadhistorydatatable" class="table table-striped jambo_table" style="width:100%">
-                            <thead>
-                                <tr>
-                                    <th>Modified At</th>
-                                    <th>Modified By</th>
-                                    <th>Lead Status</th>
-                                    <th>Advisor</th>
-                                    <th>Notes</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td colspan="5" style="text-align: center"> <button id="loadHistoryDataBtn"
-                                            class="btn btn-success btn-sm">Load History Data</button></td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
     @if ($model->modelType == quoteTypeCode::Travel)
         <div class="modal fade" id="quotePlanModal" name="quotePlanModal" tabindex="-1" role="dialog"
             aria-labelledby="quotePlanModalLabel" aria-hidden="true">
@@ -414,6 +380,7 @@
                 </div>
             </div>
         </div>
+        <x-quote-policy :record="$record" :quoteType="$quoteType" />
         <x-travel-ecom-detail :travelQuotePremium="$record->premium" :travelQuotePaidAt="$record->paid_at" :travelQuotePaymentStatus="$record->payment_status_id_text" :travelQuotePlanName="$record->plan_id_text" />
         <x-travel-quote-members-detail :members="$members_detail" />
         <x-travel-quote :listQuotePlans="$listQuotePlans" :uuidModal="$record->uuid" :quoteRequestId="$record->id" :ecomUrl="$ecomTravelInsuranceQuoteUrl . $record->uuid" />
@@ -447,6 +414,41 @@
             :uuidModal="$record->uuid"
             :quoteRequestId="$record->id" />
     @endif
+
+    <x-lead-activities :lead="$record" :modeltype="$model->modelType" :activities="$activities" />
+    <x-lead-activity-modal :advisors="$advisors" :modeltype="$model->modelType" :record="$record" />
+
+    <div class="row" st>
+        <div class="col-md-12 col-sm-12">
+            <div class="x_panel">
+                <div class="x_title">
+                    <h2>Lead History</h2>
+                    <div class="clearfix"></div>
+                </div>
+                <div class="x_content">
+                    <div id="lead-history-div">
+                        <table id="leadhistorydatatable" class="table table-striped jambo_table" style="width:100%">
+                            <thead>
+                                <tr>
+                                    <th>Modified At</th>
+                                    <th>Modified By</th>
+                                    <th>Lead Status</th>
+                                    <th>Advisor</th>
+                                    <th>Notes</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td colspan="5" style="text-align: center"> <button id="loadHistoryDataBtn"
+                                            class="btn btn-success btn-sm">Load History Data</button></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     @can('auditable')
         <div id="auditable">
