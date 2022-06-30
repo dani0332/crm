@@ -93,9 +93,6 @@
                         data: "vehicleType",
                         name: "vehicleType"
                     }, {
-                        data: 'nextFollowupDate',
-                        name: 'nextFollowupDate'
-                    }, {
                         data: "previousPolicyPremium",
                         name: "previousPolicyPremium"
                     }, {
@@ -210,9 +207,6 @@
                 }, {
                     data: "assignedBy",
                     name: "assignedBy"
-                }, {
-                    data: 'nextFollowupDate',
-                    name: 'nextFollowupDate',
                 }, {
                     data: 'paymentStatus',
                     name: 'paymentStatus',
@@ -771,9 +765,7 @@
                                     @if ($isRenewalAdvisor && $teamName == quoteTypeCode::Car)
                                         <th style="width: 100px !important">Vehicle Type</th>
                                     @endif
-                                    @if ($isRenewalAdvisor && $teamName == quoteTypeCode::Car)
-                                        <th style="width: 100px !important">Next FollowUp Date</th>
-                                    @endif
+                                   
                                     @if ($isRenewalAdvisor)
                                         <th style="width: 100px !important">Previous Policy Premium</th>
                                     @endif
@@ -793,9 +785,7 @@
                                     @if (!$isRenewalAdvisor)
                                         <th style="width: 100px !important">Assigned By</th>
                                     @endif
-                                    @if (!$isRenewalAdvisor)
-                                        <th style="width: 100px !important">Next FollowUp Date</th>
-                                    @endif
+                                 
                                     @if (!$isRenewalAdvisor)
                                         <th style="width: 100px !important">Payment Status</th>
                                     @endif
@@ -839,7 +829,7 @@
                                                 <th style="width: 100px !important">Created Date</th>
                                                 <th style="width: 100px !important">Assigned Date</th>
                                                 <th style="width: 100px !important">Assigned By</th>
-                                                <th style="width: 100px !important">Next FollowUp Date</th>
+                                             
                                                 <th style="width: 100px !important">Premium</th>
                                             </tr>
                                         </thead>
