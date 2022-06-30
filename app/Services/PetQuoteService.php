@@ -113,7 +113,7 @@ class PetQuoteService extends BaseService
             return $this->createUpdateCustomerInfo($request, $request->email, $response->quoteUID, quoteTypeCode::PetQuote);
         }else {
             return $response;
-        }     
+        }
     }
 
     public function getEntity($id)
@@ -176,7 +176,7 @@ class PetQuoteService extends BaseService
         }
         if ($request->ajax()) {
             if (!isset($request->email) && $request->email == '') {
-                $this->query->where('qs.text', '!=', 'Fake');
+                $this->query->where('qs.id', '!=', 9);
             }
             if (isset($request->assigned_to_date_start) && $request->assigned_to_date_start != '') {
                 $dateFrom = Carbon::createFromFormat('Y-m-d', $request['assigned_to_date_start'])->startOfDay()->toDateTimeString();
@@ -251,7 +251,7 @@ class PetQuoteService extends BaseService
                 }
             }
         }
-      
+
         $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
         $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';
         if ($column != '' && $column != 0 && $direction != '') {
@@ -316,7 +316,7 @@ class PetQuoteService extends BaseService
                 break;
             case 'previous_quote_id':
                 $title = "Previous Quote ID";
-                break;    
+                break;
             default:
                 return 'pqr';
                 break;
@@ -406,7 +406,7 @@ class PetQuoteService extends BaseService
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'pqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'pqrd.advisor_assigned_by_id')
             ->leftJoin('payment_status as ps', 'ps.id', '=', 'pqr.payment_status_id')
-            ->where('qs.text', '!=', 'Fake')
+            ->where('qs.id', '!=', 9)
             ->where('pqr.advisor_id', Auth::user()->id);
 
         $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
@@ -510,7 +510,7 @@ class PetQuoteService extends BaseService
         if (empty($childRecord)) {
             $childRecord = $this->createDetailEntity($id);
         }
-    
+
         $childRecord->advisor_assigned_by_id = Auth::user()->id;
         $childRecord->advisor_assigned_date = Carbon::now();
         $childRecord->save();
@@ -686,7 +686,7 @@ class PetQuoteService extends BaseService
 
     public function getLeadAuditHistory($id)
     {
-        
+
         $audits = DB::table('audits as a')
         ->select(
             'a.created_at as ModifiedAt',
