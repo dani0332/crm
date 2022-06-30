@@ -39,14 +39,6 @@
                     $('#startedAt').next().html('Please select assigned to start date');
                     return false;
                 }
-                if ($('#nfdSart').val() != '' && $('#nfdEnd').val() == '') {
-                    $('#nfdEnd').next().html('Please select next followup end date');
-                    return false;
-                }
-                if ($('#nfdSart').val() == '' && $('#nfdEnd').val() != '') {
-                    $('#nfdSart').next().html('Please select next followup start date');
-                    return false;
-                }
                 $("span").each(function(k, v) {
                     if ($(v).hasClass('text-danger')) {
                         $(v).html('');
@@ -226,7 +218,6 @@
                     name: 'paymentStatus',
                 });
             }
-            console.log('Columns: ',Columns);
             var myleadsTable = $("#dtBasicExample-leadsearch").DataTable({
                 ordering: false,
                 info: false,
@@ -242,7 +233,6 @@
                         d.leadStatus = $("#leadStatus").val();
                         d.startedAt = $("#startedAt").val();
                         d.endAt = $("#endAt").val();
-                        d.nfdSart = $('#nfdSart').val();
                         d.nfdEnd = $('#nfdEnd').val();
                         d.email = $('#email').val();
                         d.teamType = $('#teamType').val();
@@ -492,30 +482,7 @@
                                     </div>
                                 </div>
                             </div>
-                            @if (!$isRenewalAdvisor)
-                                <div class="item form-group">
-                                    <div class="col">
-                                        <label class="col-form-label col-md-4 col-sm-4" for="Start Date">Next Followup Date
-                                            Start</label>
-                                        <div class="col-md-6 col-sm-6">
-                                            <div class="input-group">
-                                                <input type="date" name="nfdSart" id="nfdSart" class="form-control">
-                                                <span class="text-danger"></span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="col">
-                                        <label class="col-form-label col-md-4 col-sm-4" for="End Date">Next Followup Date
-                                            End</label>
-                                        <div class="col-md-6 col-sm-6">
-                                            <div class="input-group">
-                                                <input type="date" name="nfdEnd" id="nfdEnd" class="form-control">
-                                                <span class="text-danger"></span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            @endif
+                            
                             <div class="item form-group">
                                 <div class="col">
                                     <label class="col-form-label col-md-4 col-sm-4" for="Start Date">CDB ID</label>
