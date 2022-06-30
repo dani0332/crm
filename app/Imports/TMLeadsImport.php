@@ -232,7 +232,7 @@ class TMLeadsImport implements ToModel, WithValidation, SkipsOnFailure, WithStar
             ],
             '*.16' => [ // Advisor email
                 'nullable',
-                'max:30',
+                'max:60',
             ],
         ];
     }
