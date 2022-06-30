@@ -4,46 +4,59 @@
 $(document).ready(function() {
     $("#update-quote-policy-btn").hide();
     $("#cancel-quote-policy-btn").hide();
-    $("#update-quote-policy-form :input"). prop("disabled", true);
-    $("#edit-quote-policy-btn").prop("disabled", false);
+    updateQuotePolicyformProp(true);
+    editQuotePolicyButtonProp(false);
     $("#edit-quote-policy-btn").click(function(){
         $("#edit-quote-policy-btn").hide();
         $("#update-quote-policy-btn").show();
         $("#cancel-quote-policy-btn").show();
-        $("#update-quote-policy-form :input"). prop("disabled", false);
-        $("#error-quote-policy-form").text("");
+        updateQuotePolicyformProp(false);
+        showValidationText("");
     });
     $("#cancel-quote-policy-btn").click(function(){
         $("#edit-quote-policy-btn").show();
         $("#update-quote-policy-btn").hide();
         $("#cancel-quote-policy-btn").hide();
-        $("#update-quote-policy-form :input"). prop("disabled", true);
-        $("#edit-quote-policy-btn").prop("disabled", false);
-        $("#error-quote-policy-form").text("");
+        updateQuotePolicyformProp(true);
+        editQuotePolicyButtonProp(false);
+        showValidationText("");
     });
-    $("#error-quote-policy-form").text("");
+    showValidationText("");
     $("#update-quote-policy-form").submit(function (e) {
-        if($("#quote_policy_number").val() == "" || $("#quote_policy_issuance_date").val() == "" 
-            || $("#quote_policy_start_date").val() == "" || $("#quote_policy_expiry_date").val() == "" 
-            || $("#quote_premium").val() == "") {
-            $("#error-quote-policy-form").text("All fields are required.");
-            return false;
+        if(!$('#quote_policy_number').val() || !$('#quote_policy_issuance_date').val() 
+            || !$('#quote_policy_start_date').val() || !$('#quote_policy_expiry_date').val() 
+            || !$('#quote_premium').val()) {
+                showValidationText("All fields are required");
+                return false;
         } else {
-
-            var partsStart = $("#quote_policy_start_date").val().split('-');
-            var startDate = new Date(partsStart[2], partsStart[1] - 1, partsStart[0]);
-            
-            var partsExpiry = $("#quote_policy_expiry_date").val().split('-');
-            var expiryDate = new Date(partsExpiry[2], partsExpiry[1] - 1, partsExpiry[0]);
-
+            var startDate = convertStringToDate($("#quote_policy_start_date").val());
+            var expiryDate = convertStringToDate($("#quote_policy_expiry_date").val());
             if(startDate >= expiryDate) {
-                $("#error-quote-policy-form").text("Expiry date should be greater than Start Date");
+                showValidationText("Expiry date should be greater than Start Date");
                 return false;
             }
-            $("#error-quote-policy-form").text("");
+            showValidationText("");
             return true;
         }
     });
+
+    function showValidationText(msg)
+    {
+        $("#error-quote-policy-form").text(msg);
+    }
+    function convertStringToDate(formDate)
+    {
+        var part = formDate.split('-');
+        return new Date(part[2], part[1] - 1, part[0]);
+    }
+    function updateQuotePolicyformProp(flag)
+    {
+        $("#update-quote-policy-form :input").prop("disabled", flag);
+    }
+    function editQuotePolicyButtonProp(flag)
+    {
+        $("#edit-quote-policy-btn").prop("disabled", flag);
+    }
 });
 </script>
 <div class="row">
