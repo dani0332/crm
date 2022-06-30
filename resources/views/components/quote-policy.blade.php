@@ -29,20 +29,14 @@ $(document).ready(function() {
             $("#error-quote-policy-form").text("All fields are required.");
             return false;
         } else {
-            var quotePolicyStartDate = $("#quote_policy_start_date").val();
-            var quotePolicyExpiryDate = $("#quote_policy_expiry_date").val();
 
-            var quotePolicyStartDateExt = new Date(quotePolicyStartDate);
-            var quotePolicyExpiryDateExt = new Date(quotePolicyExpiryDate);
+            var partsStart = $("#quote_policy_start_date").val().split('-');
+            var startDate = new Date(partsStart[2], partsStart[1] - 1, partsStart[0]);
+            
+            var partsExpiry = $("#quote_policy_expiry_date").val().split('-');
+            var expiryDate = new Date(partsExpiry[2], partsExpiry[1] - 1, partsExpiry[0]);
 
-            console.log('quotePolicyStartDate: ', quotePolicyStartDate);
-            console.log('quotePolicyStartDateExt: ', quotePolicyStartDateExt);
-
-            console.log('quotePolicyExpiryDate: ', quotePolicyExpiryDate);
-            console.log('quotePolicyExpiryDateExt: ', quotePolicyExpiryDateExt);
-            return false;
-
-            if(quotePolicyStartDateExt >= quotePolicyExpiryDateExt) {
+            if(startDate >= expiryDate) {
                 $("#error-quote-policy-form").text("Expiry date should be greater than Start Date");
                 return false;
             }
