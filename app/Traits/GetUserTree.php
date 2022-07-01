@@ -10,7 +10,7 @@ trait GetUserTree {
         foreach ($childs as $child) {
             $nextChilds = User::where('manager_id', $child)->pluck('id');
             if(count($nextChilds) > 0) {
-                walkTree($child);
+                $this->walkTree($child);
             }
             array_push($childUserIds, $child);
         }
