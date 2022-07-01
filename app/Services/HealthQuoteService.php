@@ -198,7 +198,7 @@ class HealthQuoteService extends BaseService
         }
         if ($request->ajax()) {
             if (!isset($request->email) && $request->email == '') {
-                $this->query->where('hqr.quote_status_id', '!=', 20);
+                $this->query->where('hqr.quote_status_id', '!=', 9);
             }
             if (isset($request->assigned_to_date_start) && $request->assigned_to_date_start != '') {
                 $dateFrom = Carbon::createFromFormat('Y-m-d', $request['assigned_to_date_start'])->startOfDay()->toDateTimeString();
@@ -466,7 +466,8 @@ class HealthQuoteService extends BaseService
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'hqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'hqrd.advisor_assigned_by_id')
             ->leftJoin('payment_status as ps', 'ps.id', '=', 'hqr.payment_status_id')
-            ->where('hqr.quote_status_id', '!=', 20)
+            ->where('hqr.quote_status_id', '!=', 9)
+            ->where('hqr.advisor_id', Auth::user()->id)
             ->orderBy('hqr.created_at', "DESC");
 
             if(auth()->user()->isHealthWCUAdvisor())

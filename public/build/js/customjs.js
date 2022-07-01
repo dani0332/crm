@@ -2250,3 +2250,22 @@ function disabledDoneActivities() {
 $('#send-note-for-customer-btn').on('click', function(){
     $('#notesForCustomerModal').modal({ show: true });
 });
+
+$("#quote_policy_issuance_date, #quote_policy_start_date, #quote_policy_expiry_date").datepicker({
+    changeMonth: true,
+    changeYear: true,
+    dateFormat: "dd-mm-yy"
+});
+
+// allow only numbers and decimal, ref html: onkeypress="return isNumberKey(event,this)"
+function isNumberKey(evt, obj) {
+    var charCode = (evt.which) ? evt.which : event.keyCode
+    var value = obj.value;
+    var dotcontains = value.indexOf(".") != -1;
+    if (dotcontains)
+        if (charCode == 46) return false;
+    if (charCode == 46) return true;
+    if (charCode > 31 && (charCode < 48 || charCode > 57))
+        return false;
+    return true;
+}

@@ -180,7 +180,7 @@ class PetQuoteService extends BaseService
         }
         if ($request->ajax()) {
             if (!isset($request->email) && $request->email == '') {
-                $this->query->where('qs.text', '!=', 'Fake');
+                $this->query->where('qs.id', '!=', 9);
             }
             if (isset($request->assigned_to_date_start) && $request->assigned_to_date_start != '') {
                 $dateFrom = Carbon::createFromFormat('Y-m-d', $request['assigned_to_date_start'])->startOfDay()->toDateTimeString();
@@ -409,7 +409,7 @@ class PetQuoteService extends BaseService
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'pqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'pqrd.advisor_assigned_by_id')
             ->leftJoin('payment_status as ps', 'ps.id', '=', 'pqr.payment_status_id')
-            ->where('qs.text', '!=', 'Fake')
+            ->where('qs.id', '!=', 9)
             ->where('pqr.advisor_id', Auth::user()->id);
 
         $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';

@@ -9,6 +9,13 @@ variables:
   phpVersion: 7.2
 
 steps:
+- checkout: self
+  persistCredentials: true
+- script: |
+    git tag main-$(Build.BuildId)
+    git tag
+    git push --tag
+
 #- task: DownloadSecureFile@1
 #  name: env
 #  displayName: 'Download env file'
@@ -16,7 +23,5 @@ steps:
 #    secureFile: '.env.crmprod'
 #- script: cp $(env.secureFilePath) $(System.DefaultWorkingDirectory)/
 
-- script: |
-    echo "Artifacts uploaded to $(System.DefaultWorkingDirectory)"
 - publish: '$(System.DefaultWorkingDirectory)'
   artifact: myalfredcrm

@@ -169,7 +169,7 @@ class BusinessQuoteService extends BaseService
             ->leftJoin('users as u', 'u.id', '=', 'bqrd.advisor_assigned_by_id')
             ->leftJoin('payment_status as ps', 'ps.id', '=', 'bqr.payment_status_id')
             ->where('bqr.advisor_id', Auth::user()->id)
-            ->where('qs.text', '!=', 'Fake');
+            ->where('qs.id', '!=', 9);
         if (isset($request->startedAt) && isset($request->endAt) && $request->startedAt != '' && $request->endAt != '') {
             $dateFrom = Carbon::createFromFormat('Y-m-d', $request->startedAt)->startOfDay()->toDateTimeString();
             $dateTo = Carbon::createFromFormat('Y-m-d', $request->endAt)->endOfDay()->toDateTimeString();
@@ -336,7 +336,7 @@ class BusinessQuoteService extends BaseService
         }
         if ($request->ajax()) {
             if (!isset($request->email) && $request->email == '') {
-                $this->query->where('bqr.quote_status_id', "!=", 20);
+                $this->query->where('bqr.quote_status_id', "!=", 9);
             }
             if (isset($request->assigned_to_date_start) && $request->assigned_to_date_start != '') {
                 $dateFrom = Carbon::createFromFormat('Y-m-d', $request['assigned_to_date_start'])->startOfDay()->toDateTimeString();
@@ -353,7 +353,7 @@ class BusinessQuoteService extends BaseService
                 $dateTo = Carbon::createFromFormat('Y-m-d', $request['created_at_end'])->endOfDay()->toDateTimeString();
                 $this->query->whereBetween('bqr.created_at', [$dateFrom, $dateTo]);
             }
-            if (Auth::user()->isSpecificTeamAdvisor('Business') || Auth::user()->isSpecificTeamAdvisor('CorpLine') || Auth::user()->isSpecificTeamAdvisor('AMT')) {
+            if(Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::CORPLINE) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::Business) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::Amt) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::GM)){
                 // if user has advisor Role then fetch leads assigned to the user only
                 $this->query->where('bqr.advisor_id', Auth::user()->id);    // fetch leads assigned to the user
             }
@@ -391,8 +391,6 @@ class BusinessQuoteService extends BaseService
             }
 
             $this->whereBasedOnRole($this->query,'bqr');
-
-
             if (isset($request->is_renewal) && $request->is_renewal != '') {
                 if ($request->is_renewal == quoteTypeCode::yesText)
                     $this->query->whereNotNull('bqr.previous_quote_id');
@@ -654,7 +652,6 @@ class BusinessQuoteService extends BaseService
             "show" => "previous_quote_policy_premium,renewal_batch,previous_quote_policy_number,previous_policy_expiry_date,member_category_id,salary_band_id,is_renewal,id,next_followup_date,previous_quote_id",
         ];
     }
-
     public function getDuplicateEntityByCode($code)
     {
         return BusinessQuote::where('parent_duplicate_quote_id', $code)->first();
@@ -663,9 +660,7 @@ class BusinessQuoteService extends BaseService
     public function createDuplicate($parentRecord)
     {
         $quote = new BusinessQuote();
-
         $quote->parent_duplicate_quote_id = $parentRecord->code;
-
         $response = CapiRequestService::getUUID(QuoteTypeId::Business);
         if ($response) {
             $quote->uuid = $response->uuid;

@@ -148,15 +148,18 @@ class CRUDService extends BaseService
 
     public function createDuplicate(Request $request)
     {
-        $lob_teams = $request->lob_team;
+        $lobTeams = $request->lob_team;
+        $parentType = $request->parentType;
+        if(strtolower($parentType) == strtolower(quoteTypeCode::CORPLINE) || strtolower($parentType) == strtolower(quoteTypeCode::GroupMedical)){
+            $parentType = 'Business';
+        }
         $parentRecord = $this->{strtolower($request->parentType) . 'QuoteService'}->getEntityPlain($request->entityId);
-        if (!empty($lob_teams)) {
-            foreach ($lob_teams as $lob_team) {
-                $serviceName = strtolower($lob_team);
-                if ($serviceName == strtolower(quoteTypeCode::CORPLINE) || $serviceName == strtolower(quoteTypeCode::GroupMedical)) {
-                    $serviceName = 'business';
+        if(!empty($lobTeams)) {
+            foreach ($lobTeams as $lobTeam) {
+                if(strtolower($lobTeam) == strtolower(quoteTypeCode::CORPLINE) || strtolower($lobTeam) == strtolower(quoteTypeCode::GroupMedical)){
+                    $lobTeam = 'Business';
                 }
-                $this->{strtolower($serviceName) . 'QuoteService'}->createDuplicate($parentRecord);
+                $this->{strtolower($lobTeam) . 'QuoteService'}->createDuplicate($parentRecord);
             }
         }
     }
@@ -189,9 +192,13 @@ class CRUDService extends BaseService
         $entity = $this->{strtolower($request->modelType) . 'QuoteService'}->getEntityPlain($request->leadId);
         $previousQuoteStatus = $entity->quote_status_id;
         $entity->quote_status_id = $request->leadStatus;
+<<<<<<< HEAD
         if ($request->leadStatus == QuoteStatusEnum::Qualified && Auth::user()->isHealthWcuAdvisor()) {
             $entity->wcu_id = NULL;
         }
+=======
+
+>>>>>>> a137a05834dbebff68794852686ab5dbb9c9b9f5
         $entity->save();
         QuoteStatusLog::create(array(
             'quote_type_id' => QuoteTypeId::Car,

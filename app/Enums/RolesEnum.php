@@ -49,6 +49,8 @@ final class RolesEnum extends Enum
     const GMNewBusinessManager = "GM_NEW_BUSINESS_MANAGER";
     const CorpLineNewBusinessManager = "CORPLINE_NEW_BUSINESS_MANAGER";
     const PetNewBusinessManager = "PET_NEW_BUSINESS_MANAGER";
+    const PetAdvisor = "PET_ADVISOR";
+    const PetManager = "PET_MANAGER";
     const Advisor = "advisor";
     const PA = "pa";
     const Invoicing = "invoicing";
