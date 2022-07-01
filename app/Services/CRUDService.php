@@ -144,11 +144,18 @@ class CRUDService extends BaseService
 
     public function createDuplicate(Request $request)
     {
-        $lob_teams = $request->lob_team;
+        $lobTeams = $request->lob_team;
+        $parentType = $request->parentType;
+        if(strtolower($parentType) == strtolower(quoteTypeCode::CORPLINE) || strtolower($parentType) == strtolower(quoteTypeCode::GroupMedical)){
+            $parentType = 'Business';
+        }
         $parentRecord = $this->{strtolower($request->parentType) . 'QuoteService'}->getEntityPlain($request->entityId);
-        if(!empty($lob_teams)) {
-            foreach ($lob_teams as $lob_team) {
-                $this->{strtolower($lob_team) . 'QuoteService'}->createDuplicate($parentRecord);
+        if(!empty($lobTeams)) {
+            foreach ($lobTeams as $lobTeam) {
+                if(strtolower($lobTeam) == strtolower(quoteTypeCode::CORPLINE) || strtolower($lobTeam) == strtolower(quoteTypeCode::GroupMedical)){
+                    $lobTeam = 'Business';
+                }
+                $this->{strtolower($lobTeam) . 'QuoteService'}->createDuplicate($parentRecord);
             }
         }
     }
@@ -160,9 +167,9 @@ class CRUDService extends BaseService
 
     public function updateQuoteStatus(Request $request)
     {
-       
+
         $quoteDetailEntity = $this->{strtolower($request->modelType) . 'QuoteService'}->getDetailEntity($request->leadId);
-       
+
         if (isset($request->lostReason) && $request->lostReason != '') {
             $quoteDetailEntity->lost_reason_id = $request->lostReason;
         }
@@ -181,7 +188,7 @@ class CRUDService extends BaseService
         $entity = $this->{strtolower($request->modelType) . 'QuoteService'}->getEntityPlain($request->leadId);
         $previousQuoteStatus = $entity->quote_status_id;
         $entity->quote_status_id = $request->leadStatus;
-        
+
         $entity->save();
         QuoteStatusLog::create(array(
             'quote_type_id' => QuoteTypeId::Car,
