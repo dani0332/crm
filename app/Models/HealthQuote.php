@@ -46,4 +46,9 @@ class HealthQuote extends Model implements AuditableContract
     {
         return $this->hasMany(CustomerAdditionalInfo::class, 'quote_request_id', 'id');
     }
+    public function memberDetails()
+    {
+        return $this->hasMany(HealthMemberDetail::class,'id','primary_member_id'); 
+    }
+   
 }
