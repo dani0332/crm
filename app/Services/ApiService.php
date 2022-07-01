@@ -65,7 +65,7 @@ class ApiService
                     'customerFirstName' => $quoteData->first_name,
                     'lead_status' => $quoteData->quoteStatus->text
                 ];
-                $contactService = CreateUpdateContactService::contactCreateUpdate(128, $quoteData->first_name, $quoteData->last_name, $quoteData->email, false, $data);
+                CreateUpdateContactService::contactCreateUpdate(128, $quoteData->first_name, $quoteData->last_name, $quoteData->email, false, $data);
             }
             
         } catch(Exception $e) {
