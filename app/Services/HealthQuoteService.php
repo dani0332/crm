@@ -467,7 +467,6 @@ class HealthQuoteService extends BaseService
             ->leftJoin('users as u', 'u.id', '=', 'hqrd.advisor_assigned_by_id')
             ->leftJoin('payment_status as ps', 'ps.id', '=', 'hqr.payment_status_id')
             ->where('hqr.quote_status_id', '!=', 9)
-            ->where('hqr.advisor_id', Auth::user()->id)
             ->orderBy('hqr.created_at', "DESC");
 
             if(auth()->user()->isHealthWCUAdvisor())
