@@ -192,13 +192,9 @@ class CRUDService extends BaseService
         $entity = $this->{strtolower($request->modelType) . 'QuoteService'}->getEntityPlain($request->leadId);
         $previousQuoteStatus = $entity->quote_status_id;
         $entity->quote_status_id = $request->leadStatus;
-<<<<<<< HEAD
         if ($request->leadStatus == QuoteStatusEnum::Qualified && Auth::user()->isHealthWcuAdvisor()) {
             $entity->wcu_id = NULL;
         }
-=======
-
->>>>>>> a137a05834dbebff68794852686ab5dbb9c9b9f5
         $entity->save();
         QuoteStatusLog::create(array(
             'quote_type_id' => QuoteTypeId::Car,
