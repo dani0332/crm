@@ -136,7 +136,7 @@ class HomeQuoteService extends BaseService
             return $this->createUpdateCustomerInfo($request, $request->email, $response->quoteUID, quoteTypeCode::HomeQuote);
         }else {
             return $response;
-        }   
+        }
     }
 
     public function getGridData($model, $request)
@@ -349,7 +349,7 @@ class HomeQuoteService extends BaseService
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'hqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'hqrd.advisor_assigned_by_id')
             ->leftJoin('payment_status as ps', 'ps.id', '=', 'hqr.payment_status_id')
-            ->where('hqr.quote_status_id', '!=', 20)
+            ->where('hqr.quote_status_id', '!=', 9)
             ->where('hqr.advisor_id', Auth::user()->id)
             ->orderBy('hqr.created_at', "DESC");
 
@@ -427,7 +427,7 @@ class HomeQuoteService extends BaseService
         if (empty($childRecord)) {
             $childRecord = $this->createDetailEntity($id);
         }
-    
+
         $childRecord->advisor_assigned_by_id = Auth::user()->id;
         $childRecord->advisor_assigned_date = Carbon::now();
         $childRecord->save();
@@ -570,7 +570,7 @@ class HomeQuoteService extends BaseService
             case 'previous_policy_expiry_date':
                 $title = "Previous Policy Expiry Date";
                 break;
-            case 'is_property_rented_holiday_home': 
+            case 'is_property_rented_holiday_home':
                 $title = "Is Property Rented Holiday Home ?";
                 break;
             case 'previous_quote_policy_premium';

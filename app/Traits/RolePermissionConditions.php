@@ -30,8 +30,5 @@ trait RolePermissionConditions {
             $query->whereIn($prefix .'.'. 'advisor_id', $ids);
             $query->whereNull($prefix .'.'. 'previous_quote_id');
         }
-        if ($isAdvisor) {
-            $query->where($prefix .'.'. 'advisor_id', Auth::user()->id);
-        }
     }
 }

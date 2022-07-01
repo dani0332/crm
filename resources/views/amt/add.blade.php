@@ -110,6 +110,20 @@
                             </div>
                         </div>
 
+                        <div class="item form-group">
+                            <div class="col">
+                                <span class="col-form-label col-md-6 col-sm-6">Premium</span>
+                                    <input type="number" id="premium" name="premium" value="{{ old('premium') }}"
+                                    class="form-control">
+                            @if ($errors->has('premium'))
+                                <span class="text-danger">{{ $errors->first('premium') }}</span>
+                            @endif
+                            </div>
+                            <div class="col">
+                           
+                            </div>
+                        </div>
+
                         <div id='redirect_to_view_div'></div>
                         <div class="ln_solid"></div>
                         <div class="row">
