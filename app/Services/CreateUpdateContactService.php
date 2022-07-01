@@ -22,6 +22,7 @@ class CreateUpdateContactService extends BaseService
                 "CUSTOMERNAME" => $data['customerName'] ?? Null,
                 "ADVISORNAME" => $data['advisorName'] ?? Null,
                 "LEAD_STATUS" => $data['lead_status'] ?? Null,
+                "CDBID" => $data['cbdid'] ?? Null,
             ),
             "listIds" => [(int)$listId],
             "updateEnabled" => true,

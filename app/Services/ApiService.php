@@ -63,9 +63,10 @@ class ApiService
                     'advisorMobile' => $quoteData->advisor->mobile_no,
                     'customerLastName' => $quoteData->last_name,
                     'customerFirstName' => $quoteData->first_name,
-                    'lead_status' => $quoteData->quoteStatus->text
+                    'lead_status' => $quoteData->quoteStatus->text,
+                    'cbdid' => $quoteData->uuid
                 ];
-                CreateUpdateContactService::contactCreateUpdate(128, $quoteData->first_name, $quoteData->last_name, $quoteData->email, false, $data);
+                return CreateUpdateContactService::contactCreateUpdate(128, $quoteData->first_name, $quoteData->last_name, $quoteData->email, false, $data);
             }
             
         } catch(Exception $e) {
