@@ -1,6 +1,7 @@
 <?php
 
 use App\Interfaces\PaymentRepositoryInterface;
+use App\Models\Payment;
 
 class PaymentRepository implements  PaymentRepositoryInterface
 {
