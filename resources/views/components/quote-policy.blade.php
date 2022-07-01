@@ -1,64 +1,6 @@
 <meta name="csrf-token" content="{{ csrf_token() }}" />
 <script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
-<script>
-$(document).ready(function() {
-    $("#update-quote-policy-btn").hide();
-    $("#cancel-quote-policy-btn").hide();
-    updateQuotePolicyformProp(true);
-    editQuotePolicyButtonProp(false);
-    $("#edit-quote-policy-btn").click(function(){
-        $("#edit-quote-policy-btn").hide();
-        $("#update-quote-policy-btn").show();
-        $("#cancel-quote-policy-btn").show();
-        updateQuotePolicyformProp(false);
-        showValidationText("");
-    });
-    $("#cancel-quote-policy-btn").click(function(){
-        $("#edit-quote-policy-btn").show();
-        $("#update-quote-policy-btn").hide();
-        $("#cancel-quote-policy-btn").hide();
-        updateQuotePolicyformProp(true);
-        editQuotePolicyButtonProp(false);
-        showValidationText("");
-    });
-    showValidationText("");
-    $("#update-quote-policy-form").submit(function (e) {
-        if(!$('#quote_policy_number').val() || !$('#quote_policy_issuance_date').val() 
-            || !$('#quote_policy_start_date').val() || !$('#quote_policy_expiry_date').val() 
-            || !$('#quote_premium').val()) {
-                showValidationText("All fields are required");
-                return false;
-        } else {
-            var startDate = convertStringToDate($("#quote_policy_start_date").val());
-            var expiryDate = convertStringToDate($("#quote_policy_expiry_date").val());
-            if(startDate >= expiryDate) {
-                showValidationText("Expiry date should be greater than Start Date");
-                return false;
-            }
-            showValidationText("");
-            return true;
-        }
-    });
-
-    function showValidationText(msg)
-    {
-        $("#error-quote-policy-form").text(msg);
-    }
-    function convertStringToDate(formDate)
-    {
-        var part = formDate.split('-');
-        return new Date(part[2], part[1] - 1, part[0]);
-    }
-    function updateQuotePolicyformProp(flag)
-    {
-        $("#update-quote-policy-form :input").prop("disabled", flag);
-    }
-    function editQuotePolicyButtonProp(flag)
-    {
-        $("#edit-quote-policy-btn").prop("disabled", flag);
-    }
-});
-</script>
+<script src="{{ asset('build/js/quote_policy.js') }}"></script>
 <div class="row">
     <div class="col-md-12 col-sm-12">
         <div class="x_panel">
