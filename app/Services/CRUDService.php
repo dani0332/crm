@@ -144,18 +144,18 @@ class CRUDService extends BaseService
 
     public function createDuplicate(Request $request)
     {
-        $lob_teams = $request->lob_team;
+        $lobTeams = $request->lob_team;
         $parentType = $request->parentType;
         if(strtolower($parentType) == strtolower(quoteTypeCode::CORPLINE) || strtolower($parentType) == strtolower(quoteTypeCode::GroupMedical)){
             $parentType = 'Business';
         }
         $parentRecord = $this->{strtolower($request->parentType) . 'QuoteService'}->getEntityPlain($request->entityId);
-        if(!empty($lob_teams)) {
-            foreach ($lob_teams as $lob_team) {
-                if(strtolower($lob_team) == strtolower(quoteTypeCode::CORPLINE) || strtolower($lob_team) == strtolower(quoteTypeCode::GroupMedical)){
-                    $lob_team = 'Business';
+        if(!empty($lobTeams)) {
+            foreach ($lobTeams as $lobTeam) {
+                if(strtolower($lobTeam) == strtolower(quoteTypeCode::CORPLINE) || strtolower($lobTeam) == strtolower(quoteTypeCode::GroupMedical)){
+                    $lobTeam = 'Business';
                 }
-                $this->{strtolower($lob_team) . 'QuoteService'}->createDuplicate($parentRecord);
+                $this->{strtolower($lobTeam) . 'QuoteService'}->createDuplicate($parentRecord);
             }
         }
     }
