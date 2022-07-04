@@ -13,7 +13,6 @@ use App\Models\User;
 use App\Traits\GetUserTree;
 use Illuminate\Http\Request;
 use DB;
-use Auth;
 use Illuminate\Support\Facades\Log;
 
 class LeadAllocationService extends BaseService
@@ -25,9 +24,8 @@ class LeadAllocationService extends BaseService
     {
         try {
             DB::beginTransaction();
-            $userAgainstManagerWithDetail = DB::table('lead_allocation as la') // TODO : convert it to eloquent query
-                ->select('la.id as id', 'la.user_id as userId', 'la.allocation_count', 'la.max_capacity', 'la.is_available', 'la.last_allocated', 'st.name as teamName', 'u.name as userName')
-                ->join('users as u', 'la.user_id', '=', 'u.id')
+            $userAgainstManagerWithDetail = LeadAllocation ::select('lead_allocation.id as id', 'lead_allocation.user_id as userId', 'lead_allocation.allocation_count', 'lead_allocation.max_capacity', 'lead_allocation.is_available', 'lead_allocation.last_allocated', 'st.name as teamName', 'u.name as userName')
+                ->join('users as u', 'lead_allocation.user_id', '=', 'u.id')
                 ->leftjoin('teams as t', 'u.team_id', '=', 't.id')
                 ->leftjoin('teams as st', 'st.id', '=', 'u.sub_team_id')
                 ->where('u.manager_id', '=', $request->user()->id)
@@ -84,7 +82,7 @@ class LeadAllocationService extends BaseService
             $unAllocatedLeads = [];
             $to = now();
             $from = ApplicationStorage::where('key_name', 'LEAD_ALLOCATION_START_DATE_FOR_LEADS')->first()->value;
-            info('to date: ' . $to . ' from date: ' . $from);
+            info('from date : ' . $from . ' to date : ' . $to);
             $unAllocatedLeads = HealthQuote::select('health_quote_request.*')
                 ->join('quote_status', 'quote_status.id', '=', 'health_quote_request.quote_status_id')
                 ->where('quote_status.id', QuoteStatusEnum::Qualified)
@@ -105,10 +103,10 @@ class LeadAllocationService extends BaseService
         try {
             DB::beginTransaction();
             info('getNextAvailableAdvisors -- started');
-            info('Fetching loggedin users with Health Team and roles RM, EBP & HEALTH advisor');
+
             $healthTeamId = Team::where('name', quoteTypeCode::Health)->first()->id;
             $healthSubTeamIds = Team::where('parent_team_id', $healthTeamId)->get()->pluck('id');
-            info('healthSubTeamIds: ' . $healthSubTeamIds);
+
             $healthUsersQuery = User::
                  whereNotNull('users.sub_team_id')
                 ->where('users.is_active', true)
@@ -116,6 +114,7 @@ class LeadAllocationService extends BaseService
             $healthUsers = $healthUsersQuery->pluck('users.id');
 
             info('Found ' . count($healthUsers) . ' sub-ordinates');
+
             info('Fetching lead allocation records for sub-ordinates');
             $leadAllocationWithUsers = LeadAllocation::with('leadAllocationUser')
                 ->where('is_available', '=', true)
@@ -154,11 +153,12 @@ class LeadAllocationService extends BaseService
 
     public function assignLead($lead, $advisorId, $isManualAssignment = false)
     {
+        info('assignLead -- started');
         if($this->checkIfAdvisorCanTakeLead($advisorId)){
             if ($lead->advisor_id != null) {
                 $this->removeLeadAllocationForOldAdvisor($lead);
             }
-            info('assignLead -- started');
+
             info('Assigning lead ' . $lead->id . ' to advisor ' . $advisorId);
             try {
                 DB::beginTransaction();
@@ -168,28 +168,26 @@ class LeadAllocationService extends BaseService
                 }
                 $lead->advisor_id = $advisorId;
                 $lead->save();
+                info('Lead Id ' . $lead->id . ' assigned to advisor ' . $advisorId);
+                $this->updateLeadAllocationRecord($advisorId);
+                $this->updateLeadDetailRecord($lead->id); // TODO : add LOB type when implement for other lines
+                return true;
                 DB::commit();
             } catch (\Exception $e) {
                 Log::error($e->getMessage());
                 DB::rollback();
             }
-
-            info('Lead Id ' . $lead->id . ' assigned to advisor ' . $advisorId);
-
-            $this->updateLeadAllocationRecord($advisorId);
-            $this->updateLeadDetailRecord($lead->id); // TODO : add LOB type when implement for other lines
-            return true;
         }
         else{
             return false;
         }
-
     }
 
     public function updateLeadDetailRecord($leadId)
     {
         info('updateLeadDetailRecord -- started for lead id: ' . $leadId);
         HealthQuoteRequestDetail::where('health_quote_request_id',$leadId)->update(['advisor_assigned_date'=>now(), 'advisor_assigned_by_id' => auth()->id()]);
+        info('updateLeadDetailRecord -- completed for lead id: ' . $leadId);
     }
 
     public function removeLeadAllocationForOldAdvisor($lead)

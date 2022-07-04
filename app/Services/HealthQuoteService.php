@@ -20,6 +20,8 @@ use App\Traits\RolePermissionConditions;
 use App\Traits\CustomerAdditionalInfo as CustomerAdditionalInfoTrait;
 use App\Enums\quoteTypeCode;
 use App\Enums\DatabaseColumnsString;
+use App\Models\Team;
+use App\Models\User;
 use App\Traits\AddPremiumAllLobs;
 use App\Traits\GetUserTree;
 use Illuminate\Support\Facades\Log;
@@ -978,6 +980,14 @@ class HealthQuoteService extends BaseService
                 }
                 if($this->leadAllocationService->checkIfAdvisorCanTakeLead($userId)){
                     Log::info('Advisor : ' . $userId . ' can take lead: ' . $leadId);
+                    $user = User::where('id', $userId)->first();
+                    $subTeam = Team::where('id', $user->sub_team_id)->first();
+                    if(strtolower($subTeam->name) != strtolower($lead->health_team_type)) {
+                        Log::info('Advisor : ' . $userId . ' can take lead: ' . $leadId . ' but he is not assigned to the correct health team');
+                        $msg = 'User sub team mismatch with lead health team';
+                        array_push($result, [ 'leadId' => $lead->code, 'msg' => $msg ]);
+                        continue;
+                    }
                     $this->leadAllocationService->assignLead($lead, $userId, true);
                     $this->updateChildRecord($lead->id);
                     Log::info('Lead: ' . $leadId . ' assigned to advisor: ' . $userId);
