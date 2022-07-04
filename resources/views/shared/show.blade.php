@@ -95,7 +95,14 @@
                             <div class="clearfix">
                             </div>
                         </form>
-                        @if(Auth::user()->hasAnyRole([RolesEnum::Admin, RolesEnum::HealthManager, RolesEnum::HealthDeputyManager]) && !Auth::user()->hasRole(RolesEnum::HealthWCUAdvisor))
+                        @if(
+                            (Auth::user()->hasAnyRole([RolesEnum::Admin, RolesEnum::HealthManager, RolesEnum::HealthDeputyManager])
+                            && !Auth::user()->hasRole(RolesEnum::HealthWCUAdvisor)) ||
+                            Auth::user()->hasRole(RolesEnum::HealthWCUAdvisor) && $autoAllocationDisabled == '0'
+
+
+                         )
+
                         <form method="post" action="manualLeadAssign" class="form-horizontal form-label-left"
                             autocomplete="off">
                             {{ csrf_field() }}

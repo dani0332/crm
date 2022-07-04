@@ -238,7 +238,7 @@ class CRUDController extends Controller
         $quoteType = strtolower($this->genericModel->modelType);
         $record = $this->crudService->getEntity($this->genericModel->modelType, $id);
         if (!$record) abort(404);
-
+        $autoAllocationDisabled = $this->lookupService->getApplicationStorageValue('LEAD_ALLOCATION_JOB_SWITCH');
         if(strtolower($this->genericModel->modelType) == strtolower(quoteTypeCode::Health) &&  Auth::user()->isHealthWCUAdvisor() && $record->wcu_id != Auth::user()->id){
             abort(403, 'Unauthorized action.');
         }
@@ -257,15 +257,8 @@ class CRUDController extends Controller
             $this->crudService->fillNewBusinessData($this->genericModel);
             $renewalAdvisors = $this->crudService->getNewBusinessAdvisorsByModelType($this->genericModel->modelType);
         }
-        $leadStatuses = DB::table('quote_status')
-            ->select('id', 'text')
-            ->whereNotIn('text', [
-                'AML Screening Cleared', 'Draft', 'Cancelled', 'AML Screening Failed', 'Transaction Declined', 'Policy Issued', 'Policy Invoiced',
-                'Completed', 'Pending', 'Rejected', 'Issued', 'Approved', 'Approval required', 'Resubmit for approval'
-            ])->orderBy('sort_order', 'asc')->get();
-        $lostReasons = DB::table('lost_reasons')
-            ->select('id', 'text')
-            ->get();
+        $leadStatuses = $this->dropdownSourceService->getDropdownSource('quote_status_id');
+        $lostReasons = $this->lookupService->getLostReasons();
         $selectedLostReasonId = '';
         if (strtolower($this->genericModel->modelType) != 'teams' && strtolower($this->genericModel->modelType) != 'leadstatus') {
             $selectedLostReasonId = $this->crudService->getSelectedLostReason($this->genericModel->modelType, $record->id);
@@ -326,7 +319,7 @@ class CRUDController extends Controller
                 'ecomCarInsuranceQuoteUrl', 'carQuotePlanAddons', 'vehicleTypes', 'leadStatuses',
                 'lostReasons', 'selectedLostReasonId','model_name', 'allowedDuplicateLOB', 'audits',
                 'activities', 'advisors','isRenewalUser', 'isNewBusinessUser', 'emailStatuses',
-                'yearsOfManufacture','notesForCustomers', 'quoteTypeId','trimList'
+                'yearsOfManufacture','notesForCustomers', 'quoteTypeId','trimList', 'autoAllocationDisabled'
             ]));
         } else if ($this->genericModel->modelType == quoteTypeCode::Travel) { // Travel plans to display on detail view
             $ecomTravelInsuranceQuoteUrl = Config::get('constants.ECOM_TRAVEL_INSURANCE_QUOTE_URL');
@@ -347,7 +340,7 @@ class CRUDController extends Controller
             return view('shared.show', compact([
                 'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList',
                 'leadStatuses', 'lostReasons', 'selectedLostReasonId', 'members_detail','model_name', 'allowedDuplicateLOB', 'audits', 'activities', 'advisors','isRenewalUser',
-                'isNewBusinessUser', 'ecomTravelInsuranceQuoteUrl', 'quoteType'
+                'isNewBusinessUser', 'ecomTravelInsuranceQuoteUrl', 'quoteType', 'autoAllocationDisabled'
             ]));
         } else if ($this->genericModel->modelType == quoteTypeCode::Health) { // Health plans to display on detail view
             $listQuotePlans = '';
@@ -364,12 +357,12 @@ class CRUDController extends Controller
             return view('shared.show', compact([
                 'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList',
                 'leadStatuses', 'lostReasons', 'selectedLostReasonId', 'model_name', 'allowedDuplicateLOB', 'audits', 'advisors', 'activities', 'isRenewalUser',
-                'isNewBusinessUser'
+                'isNewBusinessUser', 'autoAllocationDisabled'
             ]));
         } else {
             return view('shared.show', compact([
                 'record', 'model', 'customTitles', 'customTableList', 'advisors', 'leadStatuses', 'lostReasons', 'selectedLostReasonId', 'model_name', 'allowedDuplicateLOB', 'audits', 'activities', 'isRenewalUser',
-                'isNewBusinessUser'
+                'isNewBusinessUser', 'autoAllocationDisabled'
             ]));
         }
     }
