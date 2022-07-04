@@ -1,3 +1,8 @@
+<?php
+    use Illuminate\Support\Facades\Config;
+    $dateFormat = Config::get('constants.DATE_FORMAT');
+?>
+
 <meta name="csrf-token" content="{{ csrf_token() }}" />
 <script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
 <script src="{{ asset('build/js/quote_policy.js') }}"></script>
@@ -25,7 +30,7 @@
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="quote_policy_issuance_date"><b>Issuance Date</b></label>
                         <div class="col-md-6 col-sm-6">
                         <p class="label-align-center">
-                        <input type="text" class="form-control" id="quote_policy_issuance_date" name="quote_policy_issuance_date" value="{{ $record->policy_issuance_date ? Carbon\Carbon::parse($record->policy_issuance_date)->format('d-m-Y') : '' }}">
+                        <input type="text" class="form-control" id="quote_policy_issuance_date" name="quote_policy_issuance_date" value="{{ $record->policy_issuance_date ? Carbon\Carbon::parse($record->policy_issuance_date)->format($dateFormat) : '' }}">
                         </p>
                         </div>
                     </div>
@@ -35,7 +40,7 @@
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="quote_policy_start_date"><b>Start Date</b></label>
                         <div class="col-md-6 col-sm-6">
                             <p class="label-align-center">
-                            <input type="text" class="form-control" id="quote_policy_start_date" name="quote_policy_start_date" value="{{ $record->policy_start_date ? Carbon\Carbon::parse($record->policy_start_date)->format('d-m-Y') : '' }}">
+                            <input type="text" class="form-control" id="quote_policy_start_date" name="quote_policy_start_date" value="{{ $record->policy_start_date ? Carbon\Carbon::parse($record->policy_start_date)->format($dateFormat) : '' }}">
                             </p>
                         </div>
                     </div>
@@ -43,7 +48,7 @@
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="quote_policy_expiry_date"><b>Expiry Date</b></label>
                         <div class="col-md-6 col-sm-6">
                             <p class="label-align-center">
-                            <input type="text" class="form-control" id="quote_policy_expiry_date" name="quote_policy_expiry_date" value="{{ $record->renewal_expiry_date ? Carbon\Carbon::parse($record->renewal_expiry_date)->format('d-m-Y') : '' }}">
+                            <input type="text" class="form-control" id="quote_policy_expiry_date" name="quote_policy_expiry_date" value="{{ $record->renewal_expiry_date ? Carbon\Carbon::parse($record->renewal_expiry_date)->format($dateFormat) : '' }}">
                             </p>
                         </div>
                     </div>
