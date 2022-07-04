@@ -3,7 +3,6 @@
 <?php
 
 use App\Enums\ApplicationStorageEnums;
-use App\Models\ApplicationStorage;
 use App\Enums\quoteTypeCode;
 use App\Enums\CarPlanType;
 use App\Enums\CarPlanAddons;
@@ -594,10 +593,10 @@ if (!isset($modelName)) {
                                     <td><input type="number" id="excess" name="excess" value="{{ old('excess', $excess) }}" class="form-control" onKeyDown="if(this.value.length==8) return false;" style="{{ $readonlyFieldCss }}"></td>
                                 </tr>
                                 <tr>
-                                    <td valign="top">Disabled?</td>
+                                    <td valign="top">Hide Plan?</td>
                                     <td><select class="form-control" id='is_disabled' name="is_disabled">
-                                            <option value="false" {{ $isDisabled == false ? 'selected="selected"' : '' }}>False</option>
-                                            <option value="true" {{ $isDisabled == true ? 'selected="selected"' : '' }}>True</option>
+                                            <option value="false" {{ $isDisabled == "false" ? 'selected="selected"' : '' }}>No</option>
+                                            <option value="true" {{ $isDisabled == "true" ? 'selected="selected"' : '' }}>Yes</option>
                                         </select>
                                         <div id="car_plan_manual_process_text" style="display: none;font-weight:bold;"></div>
                                     </td>
