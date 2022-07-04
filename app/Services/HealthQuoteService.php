@@ -134,8 +134,8 @@ class HealthQuoteService extends BaseService
     {
         return HealthQuoteRequestDetail::create([
             'health_quote_request_id' => $id,
-            'created_at' => Carbon::now(),
-            'updated_at' => Carbon::now(),
+            'created_at' => now(),
+            'updated_at' => now(),
         ]);
     }
 
@@ -365,7 +365,7 @@ class HealthQuoteService extends BaseService
         $healthQuote->emirate_of_your_visa_id = $request->emirate_of_your_visa_id;
         $healthQuote->premium = $request->premium;
         if ($healthQuote->salary_band_id != $request->salary_band_id || $healthQuote->member_category_id != $request->member_category_id) {
-            $healthQuote->quote_updated_at = Carbon::now();
+            $healthQuote->quote_updated_at = now();
         }
         $healthQuote->salary_band_id = $request->salary_band_id;
         $healthQuote->member_category_id = $request->member_category_id;
@@ -574,7 +574,7 @@ class HealthQuoteService extends BaseService
         }
         if($childRecord->advisor_id != null){
             $childRecord->advisor_assigned_by_id = Auth::user()->id;
-            $childRecord->advisor_assigned_date = Carbon::now();
+            $childRecord->advisor_assigned_date = now();
             $childRecord->save();
         }
     }
@@ -883,7 +883,7 @@ class HealthQuoteService extends BaseService
 
     public function removePreviousAdvisorAndUpdateStatus($entity, $quoteStatusId)
     {
-        $startOfDayToday = Carbon::now()->startOfDay();
+        $startOfDayToday = now()->startOfDay();
         $entityDetail = $this->getDetailEntity($entity->id);
         $lastAssignedAdvisorDate = Carbon::parse($entityDetail->advisor_assigned_date)->startOfDay();
         if ($lastAssignedAdvisorDate == $startOfDayToday) {

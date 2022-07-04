@@ -4,14 +4,13 @@ namespace App\Services;
 
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
-use App\Enums\RolesEnum;
 use App\Models\ApplicationStorage;
 use App\Models\HealthQuote;
+use App\Models\HealthQuoteRequestDetail;
 use App\Models\LeadAllocation;
 use App\Models\Team;
 use App\Models\User;
 use App\Traits\GetUserTree;
-use Carbon\Carbon;
 use Illuminate\Http\Request;
 use DB;
 use Auth;
@@ -50,7 +49,7 @@ class LeadAllocationService extends BaseService
             $leadAllocation = new LeadAllocation();
             $leadAllocation->user_id = $userId;
             $leadAllocation->allocation_count = 0;
-            $leadAllocation->last_allocated = Carbon::now()->timestamp;
+            $leadAllocation->last_allocated = now()->timestamp;
             $leadAllocation->max_capacity = 0;
             $leadAllocation->is_available = false;
             $leadAllocation->save();
@@ -83,9 +82,9 @@ class LeadAllocationService extends BaseService
         try {
             DB::beginTransaction();
             $unAllocatedLeads = [];
-            $to = Carbon::now();
+            $to = now();
             $from = ApplicationStorage::where('key_name', 'LEAD_ALLOCATION_START_DATE_FOR_LEADS')->first()->value;
-            Log::info('to date: ' . $to . ' from date: ' . $from);
+            info('to date: ' . $to . ' from date: ' . $from);
             $unAllocatedLeads = HealthQuote::select('health_quote_request.*')
                 ->join('quote_status', 'quote_status.id', '=', 'health_quote_request.quote_status_id')
                 ->where('quote_status.id', QuoteStatusEnum::Qualified)
@@ -105,23 +104,24 @@ class LeadAllocationService extends BaseService
     {
         try {
             DB::beginTransaction();
-            Log::info('getNextAvailableAdvisors -- started');
-            Log::info('Fetching loggedin users with Health Team and roles RM, EBP & HEALTH advisor');
+            info('getNextAvailableAdvisors -- started');
+            info('Fetching loggedin users with Health Team and roles RM, EBP & HEALTH advisor');
             $healthTeamId = Team::where('name', quoteTypeCode::Health)->first()->id;
-            $healthUsersQuery = User::join('model_has_roles', 'model_has_roles.model_id', '=', 'users.id')
-                ->join('roles', 'roles.id', '=', 'model_has_roles.role_id')
-                ->whereIn('roles.name', [RolesEnum::RMAdvisor, RolesEnum::EBPAdvisor, RolesEnum::HealthAdvisor])
-                ->whereNotNull('users.sub_team_id')
+            $healthSubTeamIds = Team::where('parent_team_id', $healthTeamId)->get()->pluck('id');
+            info('healthSubTeamIds: ' . $healthSubTeamIds);
+            $healthUsersQuery = User::
+                 whereNotNull('users.sub_team_id')
                 ->where('users.is_active', true)
-                ->where('users.team_id', $healthTeamId);
+                ->whereIn('users.sub_team_id', $healthSubTeamIds);
             $healthUsers = $healthUsersQuery->pluck('users.id');
-            Log::info('Found ' . count($healthUsers) . ' sub-ordinates');
-            Log::info('Fetching lead allocation records for sub-ordinates');
+
+            info('Found ' . count($healthUsers) . ' sub-ordinates');
+            info('Fetching lead allocation records for sub-ordinates');
             $leadAllocationWithUsers = LeadAllocation::with('leadAllocationUser')
                 ->where('is_available', '=', true)
                 ->whereIn('user_id', $healthUsers)
                 ->get();
-            Log::info('Found ' . count($leadAllocationWithUsers) . ' lead allocation records');
+            info('Found ' . count($leadAllocationWithUsers) . ' lead allocation records');
 
             DB::commit();
             $availableUsers = $this->getAssignableUsers($leadAllocationWithUsers);
@@ -135,18 +135,18 @@ class LeadAllocationService extends BaseService
     public function getAssignableUsers($leadAllocationWithUsers)
     {
 
-        Log::info('getAssignableUsers -- started');
+        info('getAssignableUsers -- started');
         $allAssignableUsers = collect([]);
         foreach ($leadAllocationWithUsers as $leadAllocationWithUser) {
             if ($leadAllocationWithUser->allocation_count < $leadAllocationWithUser->max_capacity || $leadAllocationWithUser->max_capacity == -1) {
-                Log::info('Found assignable user ' . $leadAllocationWithUser->leadAllocationUser->name);
+                info('Found assignable user ' . $leadAllocationWithUser->leadAllocationUser->name);
                 $allAssignableUsers->push($leadAllocationWithUser->leadAllocationUser->id);
             }
         }
-        Log::info('Found ' . count($allAssignableUsers) . ' assignable users');
+        info('Found ' . count($allAssignableUsers) . ' assignable users');
         $allAssignableUsers = $allAssignableUsers->sortBy('last_allocated', SORT_NATURAL);
         if ($allAssignableUsers->count() > 0) {
-            Log::info('Returning assignable user count : ' . $allAssignableUsers->count());
+            info('Returning assignable user count : ' . $allAssignableUsers->count());
             return $allAssignableUsers;
         }
         return collect([]);
@@ -158,8 +158,8 @@ class LeadAllocationService extends BaseService
             if ($lead->advisor_id != null) {
                 $this->removeLeadAllocationForOldAdvisor($lead);
             }
-            Log::info('assignLead -- started');
-            Log::info('Assigning lead ' . $lead->id . ' to advisor ' . $advisorId);
+            info('assignLead -- started');
+            info('Assigning lead ' . $lead->id . ' to advisor ' . $advisorId);
             try {
                 DB::beginTransaction();
 
@@ -174,9 +174,10 @@ class LeadAllocationService extends BaseService
                 DB::rollback();
             }
 
-            Log::info('Lead Id ' . $lead->id . ' assigned to advisor ' . $advisorId);
+            info('Lead Id ' . $lead->id . ' assigned to advisor ' . $advisorId);
 
             $this->updateLeadAllocationRecord($advisorId);
+            $this->updateLeadDetailRecord($lead->id); // TODO : add LOB type when implement for other lines
             return true;
         }
         else{
@@ -185,20 +186,21 @@ class LeadAllocationService extends BaseService
 
     }
 
+    public function updateLeadDetailRecord($leadId)
+    {
+        info('updateLeadDetailRecord -- started for lead id: ' . $leadId);
+        HealthQuoteRequestDetail::where('health_quote_request_id',$leadId)->update(['advisor_assigned_date'=>now(), 'advisor_assigned_by_id' => auth()->id()]);
+    }
+
     public function removeLeadAllocationForOldAdvisor($lead)
     {
 
         try {
             DB::beginTransaction();
-            Log::info('removeLeadAllocationForOldAdvisor -- started');
-            $leadAllocation = LeadAllocation::where('user_id', $lead->advisor_id)->first();
-            if ($leadAllocation != null) {
-                $leadAllocation->allocation_count = $leadAllocation->allocation_count - 1;
-                $leadAllocation->save();
-                Log::info('Lead allocation record for user ' . $$lead->advisor_id . ' updated. Current allocation count is ' . $leadAllocation->allocation_count);
-            } else {
-                Log::info('Lead allocation record for user ' . $$lead->advisor_id . ' not found for minus 1 allocation count');
-            }
+            info('removeLeadAllocationForOldAdvisor -- started');
+            info('Removing lead allocation record for lead id: ' . $lead->id . ' and advisor id: ' . $lead->advisor_id);
+            LeadAllocation::where('user_id', $lead->advisor_id)->decrement('allocation_count', 1);
+            info('Lead allocation count decremented for advisor id: ' . $lead->advisor_id);
             DB::commit();
         } catch (\Exception $e) {
             Log::error($e->getMessage());
@@ -209,21 +211,21 @@ class LeadAllocationService extends BaseService
     {
         try {
             DB::beginTransaction();
-            Log::info('checkIfAdvisorCanTakeLead -- started');
+            info('checkIfAdvisorCanTakeLead -- started');
             $leadAllocation = LeadAllocation::where('user_id', $advisorId)->first();
             if ($leadAllocation != null) {
                 if($leadAllocation->max_capacity == -1 || $leadAllocation->allocation_count < $leadAllocation->max_capacity){
-                    Log::info('Advisor ' . $advisorId . ' can take lead');
+                    info('Advisor ' . $advisorId . ' can take lead');
                     DB::commit();
                     return true;
                 }
                 if ($leadAllocation->max_capacity == $leadAllocation->allocation_count && $leadAllocation->max_capacity != -1) {
-                    Log::info('Advisor ' . $advisorId . ' cannot take lead. Max capacity reached');
+                    info('Advisor ' . $advisorId . ' cannot take lead. Max capacity reached');
                     DB::commit();
                     return false;
                 }
             } else {
-                Log::info('Advisor ' . $advisorId . ' has no allocation record');
+                info('Advisor ' . $advisorId . ' has no allocation record');
                 DB::commit();
                 return false;
             }
@@ -238,17 +240,17 @@ class LeadAllocationService extends BaseService
     {
         try {
             DB::beginTransaction();
-            Log::info('updateLeadAllocationRecord -- started');
+            info('updateLeadAllocationRecord -- started');
             $leadAllocation = LeadAllocation::where('user_id', $userId)->first();
             DB::commit();
-            Log::info('Max capacity for user ' . $userId . ' is ' . $leadAllocation->max_capacity. ' and allocation count is ' . $leadAllocation->allocation_count);
+            info('Max capacity for user ' . $userId . ' is ' . $leadAllocation->max_capacity. ' and allocation count is ' . $leadAllocation->allocation_count);
             if($leadAllocation->max_capacity > $leadAllocation->allocation_count){
                 $leadAllocation->allocation_count += 1;
-                $leadAllocation->last_allocated = Carbon::now()->timestamp;
+                $leadAllocation->last_allocated = now()->timestamp;
                 $leadAllocation->save();
-                Log::info('Lead allocation record for user ' . $userId . ' updated. Current allocation count is ' . $leadAllocation->allocation_count);
+                info('Lead allocation record for user ' . $userId . ' updated. Current allocation count is ' . $leadAllocation->allocation_count);
             }else{
-                Log::info('Lead allocation record not updated for user ' . $userId . ' updated for lead because max cap reached.');
+                info('Lead allocation record not updated for user ' . $userId . ' updated for lead because max cap reached.');
             }
 
         } catch (\Exception $e) {
@@ -261,13 +263,13 @@ class LeadAllocationService extends BaseService
     {
         try {
             DB::beginTransaction();
-            Log::info('getHealthUserSubTeamName -- started');
+            info('getHealthUserSubTeamName -- started');
             $user = User::where('id', $userId)->first();
             if ($user) {
                 if($user->sub_team_id != null){
-                    Log::info('User ' . $user->name . ' has sub-team ' . $user->sub_team_id);
+                    info('User ' . $user->name . ' has sub-team ' . $user->sub_team_id);
                     $userSubTeam = Team::where('id', $user->sub_team_id)->first();
-                    Log::info('User ' . $user->name . ' belongs to sub team ' . $userSubTeam->name);
+                    info('User ' . $user->name . ' belongs to sub team ' . $userSubTeam->name);
                     DB::commit();
                     return strtolower($userSubTeam->name);
                 }else{
@@ -287,19 +289,19 @@ class LeadAllocationService extends BaseService
     {
         try {
             DB::beginTransaction();
-            Log::info('setAdvisorsToUnavailable -- started');
-            $dateTimeNow = Carbon::now()->toTimeString();
-            Log::info('Current time is ' . $dateTimeNow);
+            info('setAdvisorsToUnavailable -- started');
+            $dateTimeNow = now()->toTimeString();
+            info('Current time is ' . $dateTimeNow);
             $timeForUnavailability = ApplicationStorage::where('key_name', 'LEAD_ALLOCATION_UNAVAILABILITY_TIME')->first()->value;
             if ($dateTimeNow >= $timeForUnavailability) {
-                Log::info('Current time before unavailable is ' . $dateTimeNow);
-                Log::info('Setting advisors to unavailable');
+                info('Current time before unavailable is ' . $dateTimeNow);
+                info('Setting advisors to unavailable');
                 $leadAllocations = LeadAllocation::get();
                 foreach ($leadAllocations as $leadAllocation) {
                     $leadAllocation->is_available = false;
                     $leadAllocation->allocation_count = 0;
                     $leadAllocation->save();
-                    Log::info('Advisor ' . $leadAllocation->user_id . ' is now unavailable and allocation count is set to 0');
+                    info('Advisor ' . $leadAllocation->user_id . ' is now unavailable and allocation count is set to 0');
                 }
             }
             DB::commit();
