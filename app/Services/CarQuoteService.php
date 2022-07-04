@@ -94,6 +94,7 @@ class CarQuoteService extends BaseService
                 'cqr.previous_policy_expiry_date',
                 'cqr.previous_quote_policy_premium',
                 'cqr.car_model_detail_id',
+                'cmd.text as car_model_detail_id_text',
                 'cqr.is_modified',
                 'cqr.is_bank_financed',
                 'cqr.is_gcc_standard',
@@ -101,7 +102,7 @@ class CarQuoteService extends BaseService
                 'cqr.year_of_first_registration',
                 'cqr.has_ncd_supporting_documents',
                 'cqr.back_home_license_held_for_id',
-                'ulhfs.TEXT as back_home_license_held_for_id_text'
+                'ulhfs.TEXT as back_home_license_held_for_id_text',
             )
             ->leftJoin('nationality as n', 'n.id', '=', 'cqr.nationality_id')
             ->leftJoin('car_quote_request_detail as cqrd', 'cqrd.car_quote_request_id', '=', 'cqr.id')
@@ -118,7 +119,8 @@ class CarQuoteService extends BaseService
             ->leftJoin('insurance_provider as cpip', 'cpip.id', '=', 'cp.provider_id')
             ->leftJoin('payment_status as ps', 'ps.id', '=', 'cqr.payment_status_id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'cqr.quote_status_id')
-            ->leftJoin('vehicle_type as vt', 'vt.id', '=', 'cqr.vehicle_type_id');
+            ->leftJoin('vehicle_type as vt', 'vt.id', '=', 'cqr.vehicle_type_id')
+            ->leftJoin('car_model_detail as cmd', 'cmd.id', '=', 'cqr.car_model_detail_id');
     }
 
     public function saveCarQuote(Request $request)
@@ -332,7 +334,8 @@ class CarQuoteService extends BaseService
             "created_by" => "input",
             "updated_by" => "input",
             "plan_id" => "select|title",
-            "car_plan_provider_id" => "select|title"
+            "car_plan_provider_id" => "select|title",
+            "car_model_detail_id" => "select|title",
         );
     }
 
@@ -453,6 +456,9 @@ class CarQuoteService extends BaseService
                 break;
             case 'has_ncd_supporting_documents':
                 $title = "Can you provide no-claims letter from your previous insurers?";
+                break;
+            case 'car_model_detail_id':
+                $title = "Trim";
                 break;
             default:
                 break;
@@ -843,10 +849,10 @@ class CarQuoteService extends BaseService
     {
         $model->renewalSearchProperties = ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'advisor_id', 'created_at', 'vehicle_type_id', 'renewal_expiry_date', 'is_ecommerce', 'payment_status_id', 'renewal_batch', 'car_type_insurance_id', 'currently_insured_with','previous_quote_policy_number'];
         $model->renewalSkipProperties = [
-            "create" => "id,advisor_id,paid_at,renewal_expiry_date,renewal_batch,lost_reason,payment_status_id,plan_id,premium,car_plan_provider_id,code,is_ecommerce,payment_gateway,created_at,next_followup_date,updated_at,promo_code,quote_status_id,device,policy_number,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by,premium,source,transapp_code,previous_quote_policy_number,previous_policy_expiry_date,previous_quote_policy_premium",
-            "list" => "trim,additional_notes,email,mobile_no,paid_at,plan_id,car_plan_provider_id,payment_gateway,promo_code,source,seat_capacity,cylinder,device,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by,nationality_id,dob,year_of_manufacture,uae_license_held_for_id,car_value,emirate_of_registration_id,claim_history_id,transapp_code,is_ecommerce,payment_status_id,policy_number,renewal_expiry_date,premium",
-            "update" => "id,advisor_id,paid_at,payment_status_id,lost_reason,plan_id,car_plan_provider_id,code,is_ecommerce,payment_gateway,created_at,next_followup_date,updated_at,promo_code,device,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by,renewal_expiry_date,source,transapp_code,quote_status_id,renewal_batch,policy_number,previous_quote_policy_number,previous_policy_expiry_date,previous_quote_policy_premium",
-            "show" => "trim",
+            "create" => "id,advisor_id,paid_at,renewal_expiry_date,renewal_batch,lost_reason,payment_status_id,plan_id,premium,car_plan_provider_id,code,is_ecommerce,payment_gateway,created_at,next_followup_date,updated_at,promo_code,quote_status_id,device,policy_number,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by,premium,source,transapp_code,previous_quote_policy_number,previous_policy_expiry_date,previous_quote_policy_premium,car_model_detail_id",
+            "list" => "trim,additional_notes,email,mobile_no,paid_at,plan_id,car_plan_provider_id,payment_gateway,promo_code,source,seat_capacity,cylinder,device,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by,nationality_id,dob,year_of_manufacture,uae_license_held_for_id,car_value,emirate_of_registration_id,claim_history_id,transapp_code,is_ecommerce,payment_status_id,policy_number,renewal_expiry_date,premium,car_model_detail_id",
+            "update" => "id,advisor_id,paid_at,payment_status_id,lost_reason,plan_id,car_plan_provider_id,code,is_ecommerce,payment_gateway,created_at,next_followup_date,updated_at,promo_code,device,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by,renewal_expiry_date,source,transapp_code,quote_status_id,renewal_batch,policy_number,previous_quote_policy_number,previous_policy_expiry_date,previous_quote_policy_premium,car_model_detail_id",
+            "show" => "trim,device",
         ];
     }
 
@@ -1030,7 +1036,6 @@ class CarQuoteService extends BaseService
         $updateQuote = CarQuote::find($request->car_quote_id);
         $updateQuote->cylinder = $request->cylinder;
         $updateQuote->seat_capacity = $request->seat_capacity;
-        $updateQuote->car_model_detail_id = $request->trim;
         $updateQuote->vehicle_type_id = $request->vehicle_type_id;
         $updateQuote->is_modified = $request->is_modified;
         $updateQuote->is_bank_financed = $request->is_bank_financed;
