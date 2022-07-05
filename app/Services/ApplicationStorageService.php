@@ -164,4 +164,20 @@ class ApplicationStorageService extends BaseService
 
         return $query->is_active;
     }
+
+    public function getValueByKey($keyName)
+    {
+        $query = ApplicationStorage::select("value")
+        ->where("key_name", $keyName)
+        ->first();
+
+        return $query->value;
+    }
+    public function updateLeadAllocationJobStatus()
+    {
+        $applicationStorage = ApplicationStorage::where('key_name', 'LEAD_ALLOCATION_JOB_SWITCH')->first();
+        $applicationStorage->value =  $applicationStorage->value == 1 ? 0 : 1;
+        $applicationStorage->save();
+        return true;
+    }
 }

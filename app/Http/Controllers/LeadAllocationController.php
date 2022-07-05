@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\LeadAllocation;
+use App\Services\ApplicationStorageService;
 use App\Services\LeadAllocationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -13,9 +14,11 @@ class LeadAllocationController extends Controller
 {
 
     protected $leadAllocationService;
-    public function __construct(LeadAllocationService $leadAllocationService)
+    protected $applicationStorageService;
+    public function __construct(LeadAllocationService $leadAllocationService, ApplicationStorageService $applicationStorageService)
     {
         $this->leadAllocationService = $leadAllocationService;
+        $this->applicationStorageService = $applicationStorageService;
     }
     /**
      * Display a listing of the resource.
@@ -28,6 +31,7 @@ class LeadAllocationController extends Controller
             $totalAssignedLeadCount = 0;
             $availableUsers = 0;
             $unAvailableUsers = 0;
+            $isAutoAllocationWorking = $this->applicationStorageService->getValueByKey('LEAD_ALLOCATION_JOB_SWITCH');
             $data = $this->leadAllocationService->getGridData($request);
             foreach ($data as $key => $value) {
                 $totalAssignedLeadCount += $value->allocation_count;
@@ -43,7 +47,7 @@ class LeadAllocationController extends Controller
                     ->addIndexColumn()
                     ->make(true);
             }
-            return view('user.lead-allocation', compact(['totalAssignedLeadCount', 'availableUsers', 'unAvailableUsers']));
+            return view('user.lead-allocation', compact(['totalAssignedLeadCount', 'availableUsers', 'unAvailableUsers', 'isAutoAllocationWorking']));
         } else {
             abort(403, 'Unauthorized action.');
         }
@@ -122,5 +126,9 @@ class LeadAllocationController extends Controller
         if (isset($request->is_available)) $leadAllocationUser->is_available = $request->is_available;
         if (isset($request->max_cap)) $leadAllocationUser->max_capacity = $request->max_cap;
         $leadAllocationUser->save();
+    }
+    public function setLeadAllocationJobStatus()
+    {
+        $this->applicationStorageService->updateLeadAllocationJobStatus();
     }
 }

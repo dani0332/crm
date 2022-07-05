@@ -10,6 +10,7 @@
 <script>
     var leadAllocationDataTable = null;
     $(document).ready(function() {
+        var isAutoAllocationWorking = JSON.parse('<?php echo json_encode($isAutoAllocationWorking); ?>');
         var indexLastColumn = $(".lead_allocation_table").find('tr')[0].cells.length-1;
         leadAllocationDataTable = $('.lead_allocation_table').DataTable({
                 info: true,
@@ -76,6 +77,10 @@
                     $('.lead_allocation_table tr').each(function(){
                         $(this).find('td:last').attr('style', 'float:left;');
                     });
+                    if(isAutoAllocationWorking == '0') {
+                        $inputs = $('.chk');
+                        $inputs.each(function(){ $(this).attr('disabled', true); });
+                    }
                 }
             });
 
@@ -125,7 +130,13 @@
                 el.off('blur', endEdition);
             }
     });
-
+    function changeAvailabilityInputs(ischecked){
+        debugger;
+        $inputs = $('.chk');
+        $inputs.each(function(){
+            ischecked ? $(this).attr('disabled', false) : $(this).attr('disabled', true);
+        });
+    }
     $(document).on("change", "input:checkbox.chk", function() {
             var ischecked = $(this).is(':checked');
             if(ischecked){
@@ -157,6 +168,21 @@
                 }
             });
         });
+
+        $(document).on("change", "input:checkbox.leadSwitch", function() {
+            var ischecked = $(this).is(':checked');
+
+            $.ajax({
+                url: '/lead-allocation/setLeadAllocationJobStatus',
+                type: 'POST',
+                data : {
+                    '_token': $('meta[name="csrf-token"]').attr('content')
+                },
+                success: function(data) {
+                    changeAvailabilityInputs(ischecked);
+                }
+            });
+        });
 </script>
 
 
@@ -165,6 +191,12 @@
         <div class="x_panel">
             <div class="x_title">
                 <h2>Lead Allocation Management</h2>
+               @if(Auth::user()->isAdmin())
+               <span class="status-text"></span><label class="switch " style="margin-left: 20px;float: left;margin-top: 5px;">
+                <input type="checkbox" @if($isAutoAllocationWorking == '1')  checked="checked" @endif class="leadSwitch success" id="jobSwitch" name="jobSwitch">
+                <span class="slider round"></span>
+            </label>
+               @endif
                 <div class="clearfix"></div>
             </div>
             <div class="x_content">
