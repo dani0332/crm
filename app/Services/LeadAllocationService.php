@@ -13,6 +13,7 @@ use App\Models\User;
 use App\Traits\GetUserTree;
 use Illuminate\Http\Request;
 use DB;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
 class LeadAllocationService extends BaseService
