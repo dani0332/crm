@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\quoteTypeCode;
+use App\Enums\RolesEnum;
 use App\Models\Team;
 use App\Models\User;
 use App\Models\LeadAllocation;
@@ -250,9 +251,10 @@ class UserController extends Controller
         // devicing role name based on primary team name as we have to show manager name based on primary team name
         $roleNames = [];
         if ($teamName == strtoupper(quoteTypeCode::Health)) {
-            $roleNames = ['RM_MANAGER', 'RM_DEPUTY_MANAGER', 'EBP_MANAGER', 'EBP_DEPUTY_MANAGER', 'HEALTH_MANAGER', 'HEALTH_DEPUTY_MANAGER', 'HEALTH_RENEWAL_MANAGER', 'HEALTH_NEW_BUSINESS_MANAGER'];
+            $roleNames = [RolesEnum::RMManager, RolesEnum::RMDeputyManager, RolesEnum::EBPManager, RolesEnum::EBPDeputyManager, RolesEnum::HealthManager, RolesEnum::HealthDeputyManager, RolesEnum::HealthRenewalManager, RolesEnum::HealthNewBusinessManager];
+
         } else if ($teamName == strtoupper(quoteTypeCode::Business)) {
-            $roleNames = ['GM_MANAGER', 'GM_DEPUTY_MANAGER', 'CORPLINE_MANAGER', 'CORPLINE_DEPUTY_MANAGER', 'BUSINESS_MANAGER', 'BUSINESS_DEPUTY_MANAGER', 'GM_RENEWAL_MANAGER', 'CORPLINE_RENEWAL_MANAGER', 'GM_NEW_BUSINESS_MANAGER', 'CORPLINE_NEW_BUSINESS_MANAGER'];
+            $roleNames = [RolesEnum::GMManager, RolesEnum::GMDeputyManager, RolesEnum::CorplineManager, RolesEnum::CorplineDeputyManager, RolesEnum::BusinessManager, RolesEnum::BusinessDeputyManager, RolesEnum::GMRenewalManager, RolesEnum::CorplineRenewalManager, RolesEnum::GMNewBusinessManager, RolesEnum::CorplineNewBusinessManager];
         } else {
             $roleNames = [$teamName . '_MANAGER', $teamName . '_DEPUTY_MANAGER', $teamName . '_RENEWAL_MANAGER', $teamName . '_NEW_BUSINESS_MANAGER'];
         }

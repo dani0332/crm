@@ -186,7 +186,12 @@ class LeadAllocationService extends BaseService
     public function updateLeadDetailRecord($leadId)
     {
         info('updateLeadDetailRecord -- started for lead id: ' . $leadId);
-        HealthQuoteRequestDetail::where('health_quote_request_id',$leadId)->update(['advisor_assigned_date'=>now(), 'advisor_assigned_by_id' => auth()->id()]);
+        $leadDetail = HealthQuoteRequestDetail::where('health_quote_request_id',$leadId)->first();
+        if($leadDetail){
+            $leadDetail->advisor_assigned_date = now();
+            $leadDetail->advisor_assigned_by_id = Auth::user()->id;
+            $leadDetail->save();
+        }
         info('updateLeadDetailRecord -- completed for lead id: ' . $leadId);
     }
 

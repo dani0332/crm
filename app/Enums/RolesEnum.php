@@ -15,8 +15,12 @@ final class RolesEnum extends Enum
     const TravelAdvisor = "TRAVEL_ADVISOR";
     const GMAdvisor = "GM_ADVISOR";
     const RMAdvisor = "RM_ADVISOR";
-    const CorpLineAdvisor = "CORPLINE_ADVISOR";
+    const RMManager = "RM_MANAGER";
+    const RMDeputyManager = "RM_DEPUTY_MANAGER";
+    const EBPManager = "EBP_MANAGER";
     const EBPAdvisor = "EBP_ADVISOR";
+    const EBPDeputyManager = "EBP_DEPUTY_MANAGER";
+    const CorpLineAdvisor = "CORPLINE_ADVISOR";
     const HealthWCUAdvisor = "HEALTH_WCU_ADVISOR";
     const HealthRenewalAdvisor = "HEALTH_RENEWAL_ADVISOR";
     const HealthNewBusinessAdvisor = "HEALTH_NEW_BUSINESS_ADVISOR";
@@ -28,6 +32,8 @@ final class RolesEnum extends Enum
     const HomeNewBusinessAdvisor = "HOME_NEW_BUSINESS_ADVISOR";
     const GMRenewalAdvisor = "GM_RENEWAL_ADVISOR";
     const GMNewBusinessAdvisor = "GM_NEW_BUSINESS_ADVISOR";
+    const GMManager = "GM_MANAGER";
+    const GMDeputyManager = "GM_DEPUTY_MANAGER";
     const CorpLineRenewalAdvisor = "CORPLINE_RENEWAL_ADVISOR";
     const CorpLineNewBusinessAdvisor = "CORPLINE_NEW_BUSINESS_ADVISOR";
     const PetRenewalAdvisor = "PET_RENEWAL_ADVISOR";
@@ -60,4 +66,11 @@ final class RolesEnum extends Enum
     const RoleSMDashboard = "ROLE_SM_DASHBOARD";
     const HealthDeputyManager = "HEALTH_DEPUTY_MANAGER";
     const HealthManager = "HEALTH_MANAGER";
+    const CorplineManager = "CORPLINE_MANAGER";
+    const CorplineDeputyManager = "CORPLINE_DEPUTY_MANAGER";
+    const BusinessManager = "BUSINESS_MANAGER";
+    const BusinessDeputyManager = "BUSINESS_DEPUTY_MANAGER";
+    const CorplineRenewalManager = "CORPLINE_RENEWAL_MANAGER";
+    const CorplineNewBusinessManager = "CORPLINE_NEW_BUSINESS_MANAGER";
+
 }

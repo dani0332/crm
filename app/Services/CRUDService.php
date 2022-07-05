@@ -131,7 +131,8 @@ class CRUDService extends BaseService
             }
         });
         foreach ($allowedLeadTypes as $leadType) {
-            if ($leadType == 'Corpline' || $leadType = 'Group Medical') {
+            $leadType = strtolower($leadType);
+            if ($leadType == strtolower(quoteTypeCode::CORPLINE) || $leadType = strtolower(quoteTypeCode::GroupMedical)) {
                 $leadType = 'Business';
             }
             $duplicateRecord =  $this->{strtolower($leadType) . 'QuoteService'}->getDuplicateEntityByCode($leadCode);

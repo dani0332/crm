@@ -537,7 +537,7 @@
                             (str_contains(strtolower($model->modelType), 'leadstatus')? 'Lead Status': 'Lead') }}</a>
                     </li>
                     @endif
-                    @if (strtolower($model->modelType) == 'business')
+                    @if (strtolower($model->modelType) == strtolower(quoteTypeCode::Business))
                     @can('corpline-quotes-create')
                     <li><a href="{{ url('quotes/' . strtolower($model->modelType) . '/create') }}"
                             class="btn btn-warning btn-sm">Create
@@ -778,7 +778,7 @@
                                     </div>
                                     <div class="x_content" id="form-to-show">
                                         <div class="item form-group">
-                                            @if(strtolower($model->modelType) == 'health')
+                                            @if(strtolower($model->modelType) == strtolower(quoteTypeCode::Health))
                                             <div class="col-md-4 col-sm-4" id="healthTeamTypeAssignDiv">
                                                 <label
                                                     style="margin-left: 8px;font-size: 16px;font-weight: bolder;">Assign
