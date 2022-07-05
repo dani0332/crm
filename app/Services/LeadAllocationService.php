@@ -171,8 +171,9 @@ class LeadAllocationService extends BaseService
                 info('Lead Id ' . $lead->id . ' assigned to advisor ' . $advisorId);
                 $this->updateLeadAllocationRecord($advisorId);
                 $this->updateLeadDetailRecord($lead->id); // TODO : add LOB type when implement for other lines
+                DB::commit(); // added commit before
                 return true;
-                DB::commit();
+
             } catch (\Exception $e) {
                 Log::error($e->getMessage());
                 DB::rollback();
