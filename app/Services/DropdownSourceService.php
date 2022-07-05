@@ -239,6 +239,9 @@ class DropdownSourceService extends BaseService
             case 'back_home_license_held_for_id':
                 $data = $lookUpService->getBackHomeLicensed();
                 break;
+            case 'car_model_detail_id':
+                $data = [];
+                break;
             default:
                 break;
         }
