@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Console\Commands\LeadAllocation;
 use App\Models\ApplicationStorage;
 use Illuminate\Http\Request;
 use DB;
@@ -176,6 +177,9 @@ class ApplicationStorageService extends BaseService
     public function updateLeadAllocationJobStatus()
     {
         $applicationStorage = ApplicationStorage::where('key_name', 'LEAD_ALLOCATION_JOB_SWITCH')->first();
+        if($applicationStorage->value == '1'){
+            LeadAllocation::where('is_active', 1)->update(['is_available' => 0]);
+        }
         $applicationStorage->value =  $applicationStorage->value == 1 ? 0 : 1;
         $applicationStorage->save();
         return true;
