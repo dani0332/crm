@@ -43,66 +43,65 @@ class InslyOldDataCapture extends Command
      */
     public function handle()
     {
-        Log::channel('daily')->info('Over All Insly Job Started');
+        Log::info('Over All Insly Job Started');
 
-        $JobSwitch = ApplicationStorage::where([['key_name', 'INSLY_MIGRATION_SCHEDULER_SWITCH'],['value', 1], ['is_active', 1]])->get()->first();
+        $JobSwitch = ApplicationStorage::where([['key_name', 'INSLY_MIGRATION_SCHEDULER_SWITCH'], ['value', 1], ['is_active', 1]])->get()->first();
 
-        if($JobSwitch != ''){
+        if ($JobSwitch != '') {
             date_default_timezone_set(config('app.timezone'));
 
             $format = 'd.m.Y';
 
             $numberOfDays = Config::get('constants.INSLY_DAYS_TO_CAPTURE');
 
-            Log::channel('daily')->info('number of days'. $numberOfDays);
+            Log::info('number of days' . $numberOfDays);
 
             $defaultStartDate = (string)Config::get('constants.INSLY_DEFAULT_DATE_TO_CAPTURE');
 
-            Log::channel('daily')->info('default start date : '.$defaultStartDate);
+            Log::info('default start date : ' . $defaultStartDate);
 
             $sortedDate = Carbon::createFromFormat($format, $defaultStartDate)->format($format);
 
-            Log::channel('daily')->info('Parsed Default Date : '.$sortedDate);
+            Log::info('Parsed Default Date : ' . $sortedDate);
 
             $lastBatch = InslyDataService::GetLastInslyBatchLog();
 
-            Log::channel('daily')->info('Fetched records');
+            Log::info('Fetched records');
 
-            Log::channel('daily')->info($lastBatch);
+            Log::info($lastBatch);
 
-            if($lastBatch == ""){
-                Log::channel('daily')->info('Record not found');
+            if ($lastBatch == "") {
+                Log::info('Record not found');
                 $nextStartDate = $sortedDate;
 
-                Log::channel('daily')->info('Next Start Date : '. $nextStartDate);
-                $nextEndDate = date($format, strtotime($nextStartDate. ' + '.$numberOfDays.' days'));
+                Log::info('Next Start Date : ' . $nextStartDate);
+                $nextEndDate = date($format, strtotime($nextStartDate . ' + ' . $numberOfDays . ' days'));
 
-                Log::channel('daily')->info('Next End Date : '. $nextEndDate);
-            }else {
-                Log::channel('daily')->info('Record found');
-                $nextStartDate = date($format, strtotime($lastBatch->batch_end_date. ' + 1 days'));
+                Log::info('Next End Date : ' . $nextEndDate);
+            } else {
+                Log::info('Record found');
+                $nextStartDate = date($format, strtotime($lastBatch->batch_end_date . ' + 1 days'));
 
-                Log::channel('daily')->info('Next Start Date : '. $nextStartDate);
-                $nextEndDate = date($format, strtotime($nextStartDate. ' + '.$numberOfDays.' days'));
+                Log::info('Next Start Date : ' . $nextStartDate);
+                $nextEndDate = date($format, strtotime($nextStartDate . ' + ' . $numberOfDays . ' days'));
 
-                Log::channel('daily')->info('Next End Date : '. $nextEndDate);
+                Log::info('Next End Date : ' . $nextEndDate);
             }
-            Log::channel('daily')->info('Process FetchAndProcessInslyData trigged');
+            Log::info('Process FetchAndProcessInslyData trigged');
 
             $data = InslyDataService::GetDataFromInsly($nextStartDate, $nextEndDate);
 
             $dataCount = count(json_decode($data)->policies);
 
-            Log::channel('daily')->info('Data from url fetched with number of records  : '.$dataCount);
+            Log::info('Data from url fetched with number of records  : ' . $dataCount);
 
             InslyDataService::AddInslyBatchLog($nextStartDate, $nextEndDate, $dataCount);
 
-            Log::channel('daily')->info('Record added in db for batch log for start date : '.$nextStartDate.', end date : '.$nextEndDate.', count : '. $dataCount);
+            Log::info('Record added in db for batch log for start date : ' . $nextStartDate . ', end date : ' . $nextEndDate . ', count : ' . $dataCount);
 
             dispatch(new InslyDataProcessingJob($data));
-        }
-        else{
-            Log::channel('daily')->info('Ending Job as Application Storage Switch is not ON');
+        } else {
+            Log::info('Ending Job as Application Storage Switch is not ON');
         }
     }
 }

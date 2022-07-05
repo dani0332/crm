@@ -348,6 +348,12 @@ $(document).ready(function () {
         { data: "email", name: "email" },
         { data: "roles", name: "roles" },
         { data: "teamName", name: "teamName" },
+        {
+            data: "is_active", name: "is_active",
+            render: function (data, type, row) {
+                return data == 1 ? "Active" : "InActive";
+            },
+        },
         { data: 'created_at', name: 'created_at' },
         { data: 'updated_at', name: 'updated_at' },
         ],
@@ -503,7 +509,7 @@ $(document).ready(function () {
         var tmLeadsEndDate = $("#transapp_stop_date");
         var message = $("#message");
         var transappExport = $("#transapp-export");
-        
+
         var tmLeadsStartDateVal = tmLeadsStartDate.val();
         var tmLeadsEndDateVal = tmLeadsEndDate.val();
 
@@ -512,21 +518,21 @@ $(document).ready(function () {
         var timeDiff = tmLeadsEndDateVar.getTime() - tmLeadsStartDateVar.getTime();
         var daysDiff = timeDiff / (1000 * 60 * 60 * 24);
 
-        if((tmLeadsStartDateVal == "") || (tmLeadsEndDateVal == "")) {
+        if ((tmLeadsStartDateVal == "") || (tmLeadsEndDateVal == "")) {
             message.html("Please select start & stop dates");
             tmLeadsStartDate.css('border-color', 'red');
             tmLeadsEndDate.css('border-color', 'red');
             transappExport.hide();
             return false
         }
-        if(tmLeadsStartDateVal > tmLeadsEndDateVal) {
+        if (tmLeadsStartDateVal > tmLeadsEndDateVal) {
             message.html("Start date must be equal or less than stop date");
             tmLeadsStartDate.css('border-color', 'red');
             tmLeadsEndDate.css('border-color', 'red');
             transappExport.hide();
             return false
         }
-        if(daysDiff > 30) {
+        if (daysDiff > 30) {
             message.html("Allowed number of days between start & stop dates are 30 days.");
             tmLeadsStartDate.css('border-color', 'red');
             tmLeadsEndDate.css('border-color', 'red');
@@ -545,7 +551,7 @@ $(document).ready(function () {
             }, 1000);
 
             var isTransappAdmin = $("#isTransappAdmin").val();
-            if(isTransappAdmin == 1) {
+            if (isTransappAdmin == 1) {
                 $("a[title='Download CSV']").show();
             } else {
                 $("a[title='Download CSV']").hide();
@@ -1483,10 +1489,10 @@ $(document).ready(function () {
         }
     });
 
-    $('#assign_team').on('change', function(){
-        if($(this).val() == "GM") {
+    $('#assign_team').on('change', function () {
+        if ($(this).val() == "GM") {
             $('#assigned_to_id_new').attr('disabled', true);
-        }else{
+        } else {
             $('#assigned_to_id_new').attr('disabled', false);
         }
     });
@@ -1494,13 +1500,13 @@ $(document).ready(function () {
     // TM Leads: Select tm leads id and store in hidden field
     $("#tmLeadsAssignToUser").click(function () {
         var tmLeadIDs = [];
-        if($('#healthTeamTypeAssignDiv').length > 0){
-            if($('#assign_team').val() == "") {
+        if ($('#healthTeamTypeAssignDiv').length > 0) {
+            if ($('#assign_team').val() == "") {
                 $("#teamErrorSpan").show().fadeOut(5000);
                 return false;
             }
         }
-        
+
         if (!$('#checkAllTmLeads').is(":checked")) {
             $.each($("input[name='tmLeadID']:checked"), function () {
                 tmLeadIDs.push($(this).val());
@@ -1511,11 +1517,11 @@ $(document).ready(function () {
 
     $("#assignAfterTeam").click(function () {
         var tmLeadIDs = [];
-        if($('#assign_team').val() == "") {
+        if ($('#assign_team').val() == "") {
             $("#teamAssignValidation").show().fadeOut(5000);
             return false;
         }
-        
+
         if (!$('#checkAllTmLeads').is(":checked")) {
             $.each($("input[name='tmLeadID']:checked"), function () {
                 tmLeadIDs.push($(this).val());
@@ -1737,7 +1743,7 @@ $(document).ready(function () {
         e.preventDefault();
         $('#duplicateLeadModal').modal({ show: true });;
     });
-    $('#add-activity-btn').on('click', function(){
+    $('#add-activity-btn').on('click', function () {
         $('#activityModal').modal({ show: true });
     });
 
@@ -1749,7 +1755,7 @@ $(document).ready(function () {
             format: 'YYYY-MM-DD HH:mm:ss'
         }
     });
-    
+
     $("#quotePlansGenerateButton").click(function () {
         var quotePlansGenerateUrl = $('#quotePlansGenerateUrl').val();
         navigator.clipboard.writeText(quotePlansGenerateUrl);
@@ -1985,7 +1991,7 @@ $(document).ready(function () {
         placeholder: "Select LOB For Duplication",
         allowClear: true,
         width: '100%',
-    });  
+    });
     $('.vehiclevalue-data-table').DataTable({
         ordering: false,
         info: false,
@@ -2039,7 +2045,7 @@ $(document).ready(function () {
             type: "GET",
             success: function (response) {
                 var html = '';
-                if(response.length > 0 ){
+                if (response.length > 0) {
                     for (let i = 0; i < response.length; i++) {
                         const element = response[i];
                         element.ModifiedAt = element.ModifiedAt == null ? '' : element.ModifiedAt;
@@ -2047,10 +2053,10 @@ $(document).ready(function () {
                         element.NewStatus = element.NewStatus == null ? '' : element.NewStatus;
                         element.NewAdvisor = element.NewAdvisor == null ? '' : element.NewAdvisor;
                         element.NewNotes = element.NewNotes == null ? '' : element.NewNotes;
-                       
-                        html = html + '<tr><td>'+element.ModifiedAt+'</td><td>'+element.ModifiedBy+'</td><td>'+element.NewStatus+'</td><td>'+element.NewAdvisor+'</td><td>'+element.NewNotes+'</td></tr>' ;
+
+                        html = html + '<tr><td>' + element.ModifiedAt + '</td><td>' + element.ModifiedBy + '</td><td>' + element.NewStatus + '</td><td>' + element.NewAdvisor + '</td><td>' + element.NewNotes + '</td></tr>';
                     }
-                }else{
+                } else {
                     html = '<tr><td colspan="5" style="text-align: center">No data available</td></tr>';
                 }
                 $('#leadhistorydatatable tbody').html(html);
@@ -2062,7 +2068,7 @@ $(document).ready(function () {
     });
     disabledDoneActivities();
 
-    $('.activityChk1').on('change', function(e) {
+    $('.activityChk1').on('change', function (e) {
         $.ajax({
             url: '/activities/updateStatus',
             method: "POST",
@@ -2070,7 +2076,7 @@ $(document).ready(function () {
                 activity_id: $(this).val(),
                 _token: $('input[name=_token]').val()
             },
-            success: function(data) {
+            success: function (data) {
                 disabledDoneActivities();
             },
         });
@@ -2095,7 +2101,7 @@ $(document).ready(function () {
         },
         ],
     });
-   
+
 });
 
 
@@ -2109,14 +2115,14 @@ $('#insurance_provider_id').on('change', function (e) {
     var quoteUuId = $("#car_quote_uuid").val();
     $.get('/insurance-provider-plans?insuranceProviderId=' + insuranceProviderId + '&quoteUuId=' + quoteUuId, function (data) {
         var carPlan = $('#car_plan_id').empty();
-        $('#car_plan_id').animate({borderColor:'#007bff'}).delay(5);
+        $('#car_plan_id').animate({ borderColor: '#007bff' }).delay(5);
         $('#car_plan_id').delay(100).fadeOut().fadeIn('slow');
-        $('#car_plan_id').animate({borderColor:'#ced4da'}).delay(5);
+        $('#car_plan_id').animate({ borderColor: '#ced4da' }).delay(5);
 
         $.each(data, function (create, carPlanObj) {
-            carPlan.append('<option value="' + carPlanObj.id + '">' + carPlanObj.text + ' ('+carPlanObj.repair_type+')</option>');
+            carPlan.append('<option value="' + carPlanObj.id + '">' + carPlanObj.text + ' (' + carPlanObj.repair_type + ')</option>');
         });
-        if(data.length == 0) {
+        if (data.length == 0) {
             carPlan.append('<option value="">Select Plan</option>');
         }
     });
@@ -2153,7 +2159,7 @@ function activityEdit1(el) {
             quote_uuid: quote_uuid,
             _token: $('input[name=_token]').val()
         },
-        success: function(data) {
+        success: function (data) {
             $('#activityEditModalContent').html(data);
             $('#activityEditModalContent > form').append('<input type="hidden" name="fromLeadView" value="1">');
             $('#activityEditModal').modal('show');
@@ -2198,7 +2204,7 @@ function submitUpdateActivity(el) {
                 assignee_id: $('#assignee_id').val(),
                 _token: $('input[name=_token]').val()
             },
-            success: function(data) {
+            success: function (data) {
                 $('#activityEditModal').modal('hide');
                 $('#sucess-div').text('Activity updated successfully').show().delay(5000).hide(0);
             },
@@ -2207,35 +2213,34 @@ function submitUpdateActivity(el) {
 
 }
 
-function deleteActivity1 (el)
-{
-    if(confirm('Are you sure you want to delete this activity?')){
+function deleteActivity1(el) {
+    if (confirm('Are you sure you want to delete this activity?')) {
         var id = $(el).attr('data-record-id');
-    var quote_uuid = $(el).attr('data-quote-uuid');
-    var type = $(el).attr('data-type');
-    $.ajax({
-        url: '/activities/' + id + '/delete',
-        method: "POST",
-        data: {
-            isLeadView: 1,
-            quote_uuid: quote_uuid,
-            _token: $('input[name=_token]').val(),
-            quoteType: type,
-        },
-        success: function(data) {
-            window.location.reload();
-        },
-    });
+        var quote_uuid = $(el).attr('data-quote-uuid');
+        var type = $(el).attr('data-type');
+        $.ajax({
+            url: '/activities/' + id + '/delete',
+            method: "POST",
+            data: {
+                isLeadView: 1,
+                quote_uuid: quote_uuid,
+                _token: $('input[name=_token]').val(),
+                quoteType: type,
+            },
+            success: function (data) {
+                window.location.reload();
+            },
+        });
     }
-    else{
+    else {
         return false;
     }
-    
+
 }
 
-function disabledDoneActivities(){
-    $('.activityChk1').each(function(index, el) {
-        if($(el).is(':checked') == true){
+function disabledDoneActivities() {
+    $('.activityChk1').each(function (index, el) {
+        if ($(el).is(':checked') == true) {
             $(el).attr('disabled', true);
             $(el).closest('td').siblings().find('button').attr('disabled', true);
         }

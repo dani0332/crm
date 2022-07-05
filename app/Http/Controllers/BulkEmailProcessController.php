@@ -24,7 +24,7 @@ class BulkEmailProcessController extends Controller
 
     public function ProcessBulkWelcomeEmails(Request $request)
     {
-        Log::channel('daily')->info('Process Bulk Welcome Email Method trigged');
+        Log::info('Process Bulk Welcome Email Method trigged');
         dispatch(new RewardsBulkWEJob(json_encode($request), $request->dateTo, $request->dateFrom));
         return "Success";
     }

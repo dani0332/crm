@@ -46,6 +46,7 @@ $appName = Config::get('constants.APP_NAME');
 
     <!-- iCheck -->
     <link href="{{ asset('vendors/iCheck/skins/flat/green.css') }}" rel="stylesheet">
+
     <style>
         .loader {
             position: fixed;
@@ -206,8 +207,9 @@ $appName = Config::get('constants.APP_NAME');
                 leadassignmentDataTable: "{{ route('leadassignment.index') }}",
                 myleadsDataTable: "{{ route('myleads.index') }}",
                 amtDataTable: "{{ route('amt.index') }}",
-                activitiesDataTable :"{{ route('activities.index') }}",
+                activitiesDataTable: "{{ route('activities.index') }}",
                 renewals_batches_datatable_route: "{{ url('renewals/batches') }}",
+                lead_allocation_index_route: "{{ route('lead-allocation.index') }}",
             },
             _token: "{{ csrf_token() }}",
             image_path: "{{ \Config::get('constants.azure_storage_url') . 'myrewards/' }}",
