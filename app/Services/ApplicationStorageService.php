@@ -178,7 +178,7 @@ class ApplicationStorageService extends BaseService
     {
         $applicationStorage = ApplicationStorage::where('key_name', 'LEAD_ALLOCATION_JOB_SWITCH')->first();
         if($applicationStorage->value == '1'){
-            LeadAllocation::where('is_active', 1)->update(['is_available' => 0]);
+            LeadAllocation::whereNotNull('user_id')->update(['is_available' => 0]);
         }
         $applicationStorage->value =  $applicationStorage->value == 1 ? 0 : 1;
         $applicationStorage->save();
