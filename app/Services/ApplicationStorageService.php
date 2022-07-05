@@ -2,8 +2,8 @@
 
 namespace App\Services;
 
-use App\Console\Commands\LeadAllocation;
 use App\Models\ApplicationStorage;
+use App\Models\LeadAllocation;
 use Illuminate\Http\Request;
 use DB;
 use Auth;
