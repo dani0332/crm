@@ -42,10 +42,10 @@ class RenewalsUploadController extends Controller
             // Check if file already uploaded
             $existingFile = RenewalsUploadLeads::where('file_name', $request->file_name->getClientOriginalName())->first();
 
-            // if($existingFile) {
-            //     // Returning with error message if file already uploaded
-            //     return back()->withInput()->with('message', 'File already been uploaded. Please try again with different file.');
-            // }
+            if($existingFile) {
+                // Returning with error message if file already uploaded
+                return back()->withInput()->with('message', 'File already been uploaded. Please try again with different file.');
+            }
 
             // Check upload type
             if($request->renewals_upload_type == RenewalsUploadType::CREATE_LEADS) {
