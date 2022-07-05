@@ -72,7 +72,9 @@
                     <span style="color:red;" id="error-quote-policy-form"></span>
                     <button type="button" class="btn btn-primary btn-sm" id="cancel-quote-policy-btn">Cancel</button>
                     <button type="submit" class="btn btn-success btn-sm" id="update-quote-policy-btn">Update</button>
+                    @can('travel-quotes-policy-detail-edit')
                     <button type="button" class="btn btn-primary btn-sm" id="edit-quote-policy-btn">Edit</button>
+                    @endcan
                 </div>
                 @endif
             </form>
