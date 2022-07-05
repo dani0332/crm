@@ -19,6 +19,7 @@ use App\Traits\RolePermissionConditions;
 use App\Traits\CustomerAdditionalInfo as CustomerAdditionalInfoTrait;
 use App\Enums\quoteTypeCode;
 use App\Enums\DatabaseColumnsString;
+use App\Models\HealthMemberDetail;
 use App\Traits\AddPremiumAllLobs;
 
 class HealthQuoteService extends BaseService
@@ -846,5 +847,10 @@ class HealthQuoteService extends BaseService
 
             return $responseBodyAsString;
         }
+    }
+
+    public function getMembersDetail($id)
+    {
+        return HealthMemberDetail::where('health_quote_request_id', $id)->get();
     }
 }

@@ -15,4 +15,10 @@ class HealthMemberDetail extends Model
     {
         return $this->belongsTo(HealthQuote::class, 'id', 'primary_member_id'); 
     }
+    public function memberCategory(){
+        return $this->belongsTo(MemberCategory::class,'member_category_id','id');
+    }
+    public function salaryBand(){
+        return $this->belongsTo(SalaryBand::class,'salary_band_id','id');
+    }
 }

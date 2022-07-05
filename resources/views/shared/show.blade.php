@@ -413,6 +413,7 @@
             :listQuotePlans="$listQuotePlans"
             :uuidModal="$record->uuid"
             :quoteRequestId="$record->id" />
+        <x-health-quote-members-detail :members="$members_detail" />
     @endif
 
     <x-lead-activities :lead="$record" :modeltype="$model->modelType" :activities="$activities" />
