@@ -13,7 +13,6 @@ use App\Models\User;
 use App\Traits\GetUserTree;
 use Illuminate\Http\Request;
 use DB;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
 class LeadAllocationService extends BaseService
@@ -190,7 +189,7 @@ class LeadAllocationService extends BaseService
         $leadDetail = HealthQuoteRequestDetail::where('health_quote_request_id',$leadId)->first();
         if($leadDetail){
             $leadDetail->advisor_assigned_date = now();
-            $leadDetail->advisor_assigned_by_id = Auth::user()->id;
+            $leadDetail->advisor_assigned_by_id = auth()->id();
             $leadDetail->save();
         }
         info('updateLeadDetailRecord -- completed for lead id: ' . $leadId);
