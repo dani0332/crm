@@ -143,7 +143,6 @@
             { data: "premium", name: "premium" },
             { data: "company_name", name: "company_name" },
             { data: "policy_number", name: "policy_number" },
-            { data: "next_followup_date", name: "next_followup_date" },
             { data: "lost_reason", name: "lost_reason" },
             { data: "source", name: "source" },
             { data: "created_at", name: "created_at" },
@@ -383,26 +382,7 @@
                                 </div>
                             </div>
                         </div>
-                        @if (!Auth::user()->isRenewalAdvisor())
-                        <div class="item form-group">
-                            <div class="col">
-                                <label class="col-form-label col-md-2 col-sm-2" for="searchfield">Next Followup Date Start</label>
-                                <div class="col-md-6 col-sm-6">
-                                    <div class="input-group">
-                                        <input type="date" class="form-control" name="next_followup_date" id="next_followup_date" >
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col">
-                                <label class="col-form-label col-md-2 col-sm-2" for="searchfield">Next Followup Date Start</label>
-                                <div class="col-md-6 col-sm-6">
-                                    <div class="input-group">
-                                        <input type="date" class="form-control" name="next_followup_date_end" id="next_followup_date_end" >
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        @endif
+                        
                         <div class="item form-group">
                             <div class="col">
                                 <label class="col-form-label col-md-2 col-sm-2" for="searchfield">CDB ID</label>
@@ -625,7 +605,7 @@
                                 @if (Auth::user()->isRenewalAdvisor() || Auth::user()->isRenewalManager())<th>Renewal Batch</th>@endif
                                 @if (Auth::user()->isRenewalAdvisor() || Auth::user()->isRenewalManager())<th>Previous Quote Policy Number</th>@endif
                                 @if (!Auth::user()->isRenewalAdvisor() && !Auth::user()->isRenewalManager())<th>Policy Number</th>@endif
-                                @if (!Auth::user()->isRenewalAdvisor() && !Auth::user()->isRenewalManager())<th>Next FollowUp Date</th>@endif
+                              
                                 @if (!Auth::user()->isRenewalAdvisor() && !Auth::user()->isRenewalManager())<th>Lost Reason</th>@endif
                                 @if (!Auth::user()->isRenewalAdvisor() && !Auth::user()->isRenewalManager())<th>Source</th>@endif
                                 <th>Created At</th>

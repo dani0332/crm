@@ -44,7 +44,7 @@ class RenewalBatchEmailJob implements ShouldQueue
         try {
             $this->renewalsUploadFileService->renewalBatchEmailProcess($this->batchLeadId, $this->batchEmailId);
         } catch (\Exception $e) {
-            Log::channel('daily')->info("message: " . $e->getMessage());
+            Log::info("message: " . $e->getMessage());
             if ($this->attempts() < 4) {
                 $delayInSeconds = 5 * 60;
                 $this->release($delayInSeconds);

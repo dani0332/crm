@@ -187,7 +187,7 @@ class User extends Authenticatable implements AuditableContract
             RolesEnum::TravelRenewalAdvisor, RolesEnum::TravelNewBusinessAdvisor, RolesEnum::LifeRenewalAdvisor, RolesEnum::LifeNewBusinessAdvisor,
             RolesEnum::HomeRenewalAdvisor, RolesEnum::HomeNewBusinessAdvisor, RolesEnum::GMNewBusinessAdvisor, RolesEnum::GMRenewalAdvisor,
             RolesEnum::CorpLineRenewalAdvisor,
-            RolesEnum::CorpLineNewBusinessAdvisor, RolesEnum::PetRenewalAdvisor, RolesEnum::PetNewBusinessAdvisor, RolesEnum::CarRenewalAdvisor
+            RolesEnum::CorpLineNewBusinessAdvisor, RolesEnum::PetRenewalAdvisor, RolesEnum::PetNewBusinessAdvisor, RolesEnum::CarRenewalAdvisor,RolesEnum::PetAdvisor
         ]);
     }
 
@@ -208,5 +208,17 @@ class User extends Authenticatable implements AuditableContract
             }
         )
             ->get();
+    }
+
+    public function isHealthWCUAdvisor()
+    {
+        $userRoles = Auth::user()->usersroles()->get();
+        $isAdvisor = false;
+        foreach ($userRoles as $userRole) {
+            if (str_contains(strtolower($userRole->name), 'wcu')) {
+                $isAdvisor = true;
+            }
+        }
+        return $isAdvisor;
     }
 }
