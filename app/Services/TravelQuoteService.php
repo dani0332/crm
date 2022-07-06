@@ -16,10 +16,6 @@ use App\Traits\GetTravelPreviousQuoteIds;
 use App\Traits\CustomerAdditionalInfo as CustomerAdditionalInfoTrait;
 use App\Enums\quoteTypeCode;
 use App\Enums\DatabaseColumnsString;
-use App\Enums\QuoteStatusEnum;
-use App\Enums\quoteStatusCode;
-use Illuminate\Support\Facades\Log;
-
 use App\Traits\AddPremiumAllLobs;
 class TravelQuoteService extends BaseService
 {
@@ -28,9 +24,8 @@ class TravelQuoteService extends BaseService
     use GetTravelPreviousQuoteIds;
     use CustomerAdditionalInfoTrait;
     use AddPremiumAllLobs;
-    public function __construct(LeadAllocationService $leadAllocationService)
+    public function __construct()
     {
-        $this->leadAllocationService = $leadAllocationService;
         $this->query = DB::table('travel_quote_request as tqr')->select(
             'tqr.id',
             'tqr.uuid',
@@ -148,9 +143,9 @@ class TravelQuoteService extends BaseService
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'tqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'tqrd.advisor_assigned_by_id')
             ->where('tqrd.next_followup_date', '<', date('Y-m-d H:i:s'))
-            ->whereIn('qs.text', ['Followed Up', 'Qualification Pending', 'Quoted', 'FTC Pending', 'FTC Sent', 'Missing Documents Requested', 'Policy Documents Pending', 'Payment Pending', 'Pending with UW', 'Application Pending', 'In Negotiation'])
+            ->whereIn('qs.text', ['Followed Up','Qualification Pending', 'Quoted', 'FTC Pending', 'FTC Sent', 'Missing Documents Requested', 'Policy Documents Pending', 'Payment Pending', 'Pending with UW', 'Application Pending', 'In Negotiation'])
             ->where('tqr.advisor_id', Auth::user()->id);
-        return $query;
+            return $query;
     }
 
     public function getLeads($CDBID, $email, $mobile_no, $lead_type)
@@ -291,7 +286,8 @@ class TravelQuoteService extends BaseService
         $isNewAdvisor = Auth::user()->isNewBusinessAdvisor();
         if ($isRenewalUser || $isRenewalManager || $isRenewalAdvisor) {
             $searchProperties = $model->renewalSearchProperties;
-        } else if ($isNewManager || $isNewAdvisor) {
+        }
+        else if ($isNewManager || $isNewAdvisor) {
             $searchProperties = $model->newBusinessSearchProperties;
         } else {
             $searchProperties = $model->searchProperties;
@@ -335,12 +331,12 @@ class TravelQuoteService extends BaseService
             if (isset($request->policy_number) && $request->policy_number != '') {
                 $this->query->where('tqr.policy_number', $request->policy_number);
             }
-            if (Auth::user()->isSpecificTeamAdvisor('Travel')) {
+            if(Auth::user()->isSpecificTeamAdvisor('Travel')){
                 // if user has advisor Role then fetch leads assigned to the user only
-                $this->query->where('tqr.advisor_id', Auth::user()->id);    // fetch leads assigned to the user
+                $this->query->where('tqr.advisor_id', Auth::user()->id);	// fetch leads assigned to the user
                 $this->query->whereNull('tqr.previous_quote_id');
             }
-            if (isset($request->previous_quote_policy_number) && $request->previous_quote_policy_number != '') {
+             if (isset($request->previous_quote_policy_number) && $request->previous_quote_policy_number != '') {
                 $this->query->where('tqr.previous_quote_policy_number', $request->previous_quote_policy_number);
             }
             if (isset($request->renewal_batch) && $request->renewal_batch != '') {
@@ -357,18 +353,18 @@ class TravelQuoteService extends BaseService
             $this->whereBasedOnRole($this->query,'tqr');
 
             if (isset($request->is_renewal) && $request->is_renewal != '') {
-                if ($request->is_renewal == quoteTypeCode::yesText)
+                if($request->is_renewal == quoteTypeCode::yesText)
                     $this->query->whereNotNull('tqr.previous_quote_id');
-                if ($request->is_renewal == quoteTypeCode::noText)
+                if($request->is_renewal == quoteTypeCode::noText)
                     $this->query->whereNull('tqr.previous_quote_id');
             }
             if (isset($request->is_ecommerce) && $request->is_ecommerce != '') {
-                if ($request->is_ecommerce == quoteTypeCode::yesText)
+                if($request->is_ecommerce == quoteTypeCode::yesText)
                     $this->query->where('tqr.is_ecommerce', 1);
-                if ($request->is_ecommerce == quoteTypeCode::noText)
+                if($request->is_ecommerce == quoteTypeCode::noText)
                     $this->query->where('tqr.is_ecommerce', 0);
             }
-            if (Auth::user()->isManagerOrDeputy()) {
+            if(Auth::user()->isManagerOrDeputy()) {
                 $this->query->whereNotIn('tqr.id', $this->travelPreviousQuoteIds());
                 $this->query->whereNull('tqr.previous_quote_id');
             }
@@ -377,11 +373,12 @@ class TravelQuoteService extends BaseService
                     if ($request[$item] == 'null') {
                         $this->query->whereNull($item);
                     } else if ($item == 'advisor_id' && is_array($request[$item]) && !empty($request[$item])) {
-                        if ($request[$item][0] == 'null')
+                        if($request[$item][0] == 'null')
                             $this->query->whereNull('advisor_id');
                         else
                             $this->query->whereIn('advisor_id', $request[$item]);
-                    } else if ($item == DatabaseColumnsString::QUOTE_STATUS_ID && is_array($request[$item]) && !empty($request[$item])) {
+                    }
+                    else if ($item == DatabaseColumnsString::QUOTE_STATUS_ID && is_array($request[$item]) && !empty($request[$item])) {
                         $this->query->whereIn('quote_status_id', $request[$item]);
                     } else {
                         $skipped = array('is_renewal','is_ecommerce','previous_policy_expiry_date','next_followup_date');
@@ -490,7 +487,7 @@ class TravelQuoteService extends BaseService
         if (!$entity) {
             $entity = $this->createDetailEntity($id);
         }
-        return $entity;
+        return TravelQuoteRequestDetail::where('travel_quote_request_id', $id)->first();
     }
 
     public function createDetailEntity($id)
@@ -558,7 +555,7 @@ class TravelQuoteService extends BaseService
             "is_ecommerce" => "|static|title|Yes,No",
             "renewal_batch" => "input|number|title",
             "payment_status_id" => "select|title",
-            "previous_quote_policy_number" => "input|title",
+            "previous_quote_policy_number"=> "input|title",
             "renewal_import_code" => "input|text",
             "previous_policy_expiry_date" => "input|date|title|range",
             "renewal_batch" => "input|none",
@@ -667,7 +664,7 @@ class TravelQuoteService extends BaseService
 
     public function fillRenewalProperties($model)
     {
-        $model->renewalSearchProperties = ['created_at', 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'previous_quote_policy_number', 'payment_status_id', 'previous_policy_expiry_date', 'renewal_batch', 'previous_quote_policy_premium'];
+        $model->renewalSearchProperties = ['created_at', 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'previous_quote_policy_number','payment_status_id','previous_policy_expiry_date','renewal_batch','previous_quote_policy_premium'];
         $model->renewalSkipProperties = [
             "create" => "premium,previous_quote_policy_premium,device,renewal_expiry_date,policy_number,previous_policy_expiry_date,previous_quote_policy_number,is_ecommerce,is_renewal,previous_quote_id,id,created_at,id,code,advisor_id,updated_at,quote_status_id,next_followup_date,lost_reason,source,transapp_code,renewal_batch,payment_status_id,renewal_import_code",
             "list" => "premium,device,renewal_expiry_date,policy_number,is_ecommerce,is_renewal,dob,email,mobile_no,region_cover_for_id,travel_cover_for_id,details,nationality_id,days_cover_for,next_followup_date,lost_reason,source,transapp_code,currently_located_in_id,destination_id,renewal_import_code",
@@ -678,7 +675,7 @@ class TravelQuoteService extends BaseService
 
     public function fillNewBusinessProperties($model)
     {
-        $model->newBusinessSearchProperties = ['created_at', 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'policy_number', 'premium'];
+        $model->newBusinessSearchProperties = ['created_at', 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'policy_number','premium'];
         $model->newBusinessSkipProperties = [
             "create" => "previous_quote_policy_premium,device,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,member_category_id,salary_band_id,gender,is_renewal,previous_quote_id,created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,source,transapp_code,renewal_expiry_date",
             "list" => "previous_quote_policy_premium,device,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,member_category_id,salary_band_id,gender,is_renewal,email,cover_for_id,has_worldwide_cover,has_home,details,preference,mobile_no,dob,marital_status_id,nationality_id,has_dental,emirate_of_your_visa_id,is_ebp_renewal,health_team_type,next_followup_date,lost_reason,source,transapp_code,lead_type_id,renewal_expiry_date,previous_quote_id",
@@ -756,11 +753,11 @@ class TravelQuoteService extends BaseService
         $quote = new TravelQuote();
         $quote->parent_duplicate_quote_id = $parentRecord->code;
         $response = CapiRequestService::getUUID(QuoteTypeId::Travel);
-        if ($response) {
+        if($response) {
             $quote->uuid = $response->uuid;
-            $quote->code = 'TRA-' . $response->uuid;
+            $quote->code = 'TRA-'. $response->uuid;
         }
-        $quote->quote_status_id = QuoteStatusEnum::NewLead;
+        $quote->quote_status_id = QuoteStatus::where('text', 'New Lead')->first()->id;
         $quote->first_name = $parentRecord->first_name;
         $quote->last_name = $parentRecord->last_name;
         $quote->email = $parentRecord->email;
@@ -772,76 +769,33 @@ class TravelQuoteService extends BaseService
     public function getLeadAuditHistory($id)
     {
         $audits = DB::table('audits as a')
-            ->select(
-                'a.created_at as ModifiedAt',
-                DB::raw('(SELECT name from users where id = a.user_id) as ModifiedBy'),
-                DB::raw("(SELECT TEXT FROM quote_status WHERE id = JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.quote_status_id'))) AS NewStatus"),
-                DB::raw("(SELECT NAME FROM users WHERE id = JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.advisor_id'))) AS NewAdvisor"),
-                DB::raw("JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.notes')) AS NewNotes")
-            )
-            ->where(function ($query) {
-                $query->where('a.auditable_type', 'App\Models\TravelQuote')
-                    ->orWhere('a.auditable_type', 'App\Models\TravelQuoteRequestDetail');
-            })
-            ->where(function ($query) {
-                $query->whereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.quote_status_id')"))
-                    ->orWhereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.notes')"))
-                    ->orWhereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.advisor_id')"));
-            })
-            ->where(function ($query) use ($id) {
-                $detailObjId = TravelQuoteRequestDetail::where('travel_quote_request_id', $id)->first();
-                if ($detailObjId) {
-                    $query->where('a.auditable_id', $id)
-                        ->orWhere('a.auditable_id', $detailObjId->id);
-                } else {
-                    $query->where('a.auditable_id', $id);
-                }
-            })
-            ->orderBy('a.created_at', 'DESC')->get();
-        return $audits;
-    }
-
-    public function processManualLeadAssignment($request): array
-    {
-        $leadsIds = array_map('intval', explode(',', trim($request->selectTmLeadId, ',')));
-        $userId = (int)$request->assigned_to_id_new;
-        Log::info('Leads ids to assign: ' . json_encode($leadsIds));
-        $result = [];
-        foreach($leadsIds as $leadId)
-        {
-            $lead = $this->getEntityPlain($leadId);
-            $lead->advisor_id = $userId;
-            $lead->save();
-        }
-        return $result;
-    }
-
-    public function getEntityPlainByUUID($uuid)
-    {
-        return TravelQuote::where('uuid', $uuid)->first();
-    }
-
-    public function validateRequest($request)
-    {
-        $userId = $request->assigned_to_id_new;
-        $leadsIds = $request->selectTmLeadId;
-        if ($leadsIds == '' || $leadsIds == null) {
-            return 'Please select lead(s) to assign';
-        }
-        if (substr($leadsIds, 0, 1) == ',') {
-            $leadsIds = substr($leadsIds, 1);
-        }
-        $leadsIds = array_map('intval', explode(',', $leadsIds));
-        foreach ($leadsIds as $leadId) {
-            $entity = $this->getEntityPlain($leadId);
-            if ($entity->quote_status_id == QuoteStatusEnum::TransactionApproved) {
-                return 'One of the selected lead is in Transaction Approved state. Please unselect the lead and try again.';
+        ->select(
+            'a.created_at as ModifiedAt',
+            DB::raw('(SELECT name from users where id = a.user_id) as ModifiedBy'),
+            DB::raw("(SELECT TEXT FROM quote_status WHERE id = JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.quote_status_id'))) AS NewStatus"),
+            DB::raw("(SELECT NAME FROM users WHERE id = JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.advisor_id'))) AS NewAdvisor"),
+            DB::raw("JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.notes')) AS NewNotes")
+        )
+        ->where(function ($query) {
+            $query->where('a.auditable_type', 'App\Models\TravelQuote')
+            ->orWhere('a.auditable_type', 'App\Models\TravelQuoteRequestDetail');
+        })
+        ->where(function ($query) {
+            $query->whereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.quote_status_id')"))
+            ->orWhereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.notes')"))
+            ->orWhereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.advisor_id')"));
+        })
+        ->where(function ($query) use ($id) {
+            $detailObjId = TravelQuoteRequestDetail::where('travel_quote_request_id', $id)->first();
+            if($detailObjId) {
+                $query->where('a.auditable_id', $id)
+                ->orWhere('a.auditable_id', $detailObjId->id);
+            } else {
+                $query->where('a.auditable_id', $id);
             }
-        }
-        if ($userId == '' || $userId == null) {
-            return 'Please select user to assign leads';
-        }
-        return 'true';
+        })
+        ->orderBy('a.created_at', 'DESC')->get();
+        return $audits;
     }
 
     public function updateQuotePolicy($request)

@@ -2,10 +2,8 @@
 
 namespace App\Services;
 
-use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
-use App\Enums\RolesEnum;
 use App\Models\CarQuoteRequestDetail;
 use App\Models\GenericModel;
 use App\Models\QuoteStatusLog;
@@ -22,8 +20,6 @@ use App\Services\ApplicationStorageService;
 use Illuminate\Http\Request;
 use DB;
 use \Carbon\Carbon;
-use Auth;
-use Illuminate\Support\Facades\Log;
 
 class CRUDService extends BaseService
 {
@@ -76,7 +72,7 @@ class CRUDService extends BaseService
         $this->carplanaddonService = $carplanaddonService;
         $this->carplanaddonoptionService = $carplanaddonoptionService;
         $this->applicationstorageService = $applicationstorageService;
-        $this->quoteTypes = ['home', 'health', 'life', 'business', 'travel', 'car', 'pet'];
+        $this->quoteTypes = ['home', 'health', 'life', 'business', 'travel', 'car','pet'];
     }
     public function getGridData(GenericModel $model, Request $request)
     {
@@ -122,7 +118,7 @@ class CRUDService extends BaseService
     public function getAllowedDuplicateLOB($modelType, $leadCode)
     {
         $allowedLeadTypes = ['Home', 'Health', 'Life', 'Corpline', 'Group Medical', 'Travel', 'Car', 'Pet'];
-        if (strtolower($modelType) == 'business') {
+        if(strtolower($modelType) == 'business') {
             $modelType = 'Corpline';
         }
         $allowedLeadTypes = array_filter($allowedLeadTypes, function ($item) use ($modelType) {
@@ -131,12 +127,11 @@ class CRUDService extends BaseService
             }
         });
         foreach ($allowedLeadTypes as $leadType) {
-            $leadType = strtolower($leadType);
-            if ($leadType == strtolower(quoteTypeCode::CORPLINE) || $leadType = strtolower(quoteTypeCode::GroupMedical)) {
+            if($leadType == 'Corpline' || $leadType = 'Group Medical'){
                 $leadType = 'Business';
             }
             $duplicateRecord =  $this->{strtolower($leadType) . 'QuoteService'}->getDuplicateEntityByCode($leadCode);
-            if ($duplicateRecord) {
+            if($duplicateRecord) {
                 $allowedLeadTypes = array_filter($allowedLeadTypes, function ($item) use ($leadType) {
                     if ($item != $leadType) {
                         return $item;
@@ -193,9 +188,7 @@ class CRUDService extends BaseService
         $entity = $this->{strtolower($request->modelType) . 'QuoteService'}->getEntityPlain($request->leadId);
         $previousQuoteStatus = $entity->quote_status_id;
         $entity->quote_status_id = $request->leadStatus;
-        if ($request->leadStatus == QuoteStatusEnum::Qualified && Auth::user()->isHealthWcuAdvisor()) {
-            $entity->wcu_id = NULL;
-        }
+
         $entity->save();
         QuoteStatusLog::create(array(
             'quote_type_id' => QuoteTypeId::Car,
@@ -210,19 +203,18 @@ class CRUDService extends BaseService
 
     public function getAdvisorsByModelType($modelType)
     {
-        $query = User::
-            join('model_has_roles as mr', 'mr.model_id', '=', 'users.id')
+        $query = DB::table('users as u')
+            ->join('model_has_roles as mr', 'mr.model_id', '=', 'u.id')
             ->join('roles as r', 'r.id', '=', 'mr.role_id')
-            ->select('users.id', DB::raw("CONCAT(users.name,' - ',r.name) AS name"));
+            ->select('u.id', DB::raw("CONCAT(u.name,' - ',r.name) AS name"));
         if (strtolower($modelType) == strtolower(quoteTypeCode::Car)) {
-            $query->whereIn('r.name', [RolesEnum::CarAdvisor, RolesEnum::Advisor]);
-        }
-        else if (strtolower($modelType) ==  strtolower(quoteTypeCode::Health)) {
-            $query->whereIn('r.name', [RolesEnum::RMAdvisor, RolesEnum::EBPAdvisor, RolesEnum::HealthRenewalAdvisor, RolesEnum::HealthNewBusinessAdvisor, RolesEnum::HealthWCUAdvisor]);
+            $query->whereIn('r.name', [strtoupper($modelType) . '_ADVISOR', 'advisor']);
+        } else if (strtolower($modelType) ==  strtolower(quoteTypeCode::Health)) {
+            $query->whereIn('r.name', [strtoupper($modelType) . '_WCU_ADVISOR', 'RM_ADVISOR', 'EBP_ADVISOR','HEALTH_RENEWAL_ADVISOR','HEALTH_NEW_BUSINESS_ADVISOR']);
         } else if (strtolower($modelType) ==  strtolower(quoteTypeCode::Business)) {
-            $query->whereIn('r.name', [RolesEnum::CorpLineAdvisor, RolesEnum::CorpLineRenewalAdvisor, RolesEnum::CorpLineNewBusinessAdvisor, RolesEnum::GMRenewalAdvisor, RolesEnum::GMNewBusinessAdvisor]);
+            $query->whereIn('r.name', ['CORPLINE_ADVISOR','CORPLINE_RENEWAL_ADVISOR','CORPLINE_NEW_BUSINESS_ADVISOR','GM_RENEWAL_ADVISOR','GM_NEW_BUSINESS_ADVISOR']);
         } else {
-            $query->whereIn('r.name', [strtoupper($modelType) . '_ADVISOR', strtoupper($modelType) . '_RENEWAL_ADVISOR', strtoupper($modelType) . '_NEW_BUSINESS_ADVISOR']);
+            $query->whereIn('r.name', [strtoupper($modelType) . '_ADVISOR',strtoupper($modelType) . '_RENEWAL_ADVISOR',strtoupper($modelType) . '_NEW_BUSINESS_ADVISOR']);
         }
         return $query->orderBy('r.name')->distinct()->get();
     }
@@ -236,10 +228,10 @@ class CRUDService extends BaseService
         if (strtolower($modelType) == strtolower(quoteTypeCode::Car)) {
             $query->whereIn('r.name', [strtoupper($modelType) . '_RENEWAL_ADVISOR', 'advisor']);
         } else if (strtolower($modelType) ==  strtolower(quoteTypeCode::Health)) {
-            $query->whereIn('r.name', [strtoupper($modelType) . '_WCU_ADVISOR', 'RM_ADVISOR', 'EBP_ADVISOR', 'HEALTH_RENEWAL_ADVISOR']);
+            $query->whereIn('r.name', [strtoupper($modelType) . '_WCU_ADVISOR', 'RM_ADVISOR', 'EBP_ADVISOR','HEALTH_RENEWAL_ADVISOR']);
         } else if (strtolower($modelType) ==  strtolower(quoteTypeCode::Business)) {
-            $query->whereIn('r.name', ['CORPLINE_ADVISOR', 'CORPLINE_RENEWAL_ADVISOR']);
-        } else if (strtolower($modelType) == strtolower(quoteTypeCode::Life) || strtolower($modelType) == strtolower(quoteTypeCode::Home) || strtolower($modelType) == strtolower(quoteTypeCode::Travel) || strtolower($modelType) == strtolower(quoteTypeCode::Pet)) {
+            $query->whereIn('r.name', ['CORPLINE_ADVISOR','CORPLINE_RENEWAL_ADVISOR']);
+        }else if (strtolower($modelType) == strtolower(quoteTypeCode::Life) || strtolower($modelType) == strtolower(quoteTypeCode::Home) || strtolower($modelType) == strtolower(quoteTypeCode::Travel) || strtolower($modelType) == strtolower(quoteTypeCode::Pet)) {
             $query->whereIn('r.name', [strtoupper($modelType) . '_RENEWAL_ADVISOR', 'advisor']);
         } else {
             $query->where('r.name', strtoupper($modelType) . '_ADVISOR');
@@ -253,7 +245,7 @@ class CRUDService extends BaseService
             ->join('model_has_roles as mr', 'mr.model_id', '=', 'u.id')
             ->join('roles as r', 'r.id', '=', 'mr.role_id')
             ->select('u.id', DB::raw("CONCAT(u.name,' - ',r.name) AS name"));
-        $query->where('r.name', strtoupper($modelType) . '_NEW_BUSINESS_ADVISOR');
+            $query->where('r.name', strtoupper($modelType) . '_NEW_BUSINESS_ADVISOR');
         return $query->orderBy('r.name')->distinct()->get();
     }
 
@@ -262,7 +254,7 @@ class CRUDService extends BaseService
         $query = DB::table('users as u')
             ->join('model_has_roles as mr', 'mr.model_id', '=', 'u.id')
             ->join('roles as r', 'r.id', '=', 'mr.role_id')
-            ->whereIn('r.name', ['RM_ADVISOR', 'EBP_ADVISOR', 'HEALTH_WCU_ADVISOR', 'HEALTH_NEW_BUSINESS_ADVISOR', 'HEALTH_RENEWAL_ADVISOR'])
+            ->whereIn('r.name', ['RM_ADVISOR', 'EBP_ADVISOR', 'HEALTH_WCU_ADVISOR','HEALTH_NEW_BUSINESS_ADVISOR','HEALTH_RENEWAL_ADVISOR'])
             ->select('u.id', DB::raw("CONCAT(u.name,' - ',r.name) AS name"));
         return $query->orderBy('r.name')->distinct()->get();
     }
@@ -272,7 +264,7 @@ class CRUDService extends BaseService
         $query = DB::table('users as u')
             ->join('model_has_roles as mr', 'mr.model_id', '=', 'u.id')
             ->join('roles as r', 'r.id', '=', 'mr.role_id')
-            ->whereIn('r.name', ['RM_ADVISOR', 'BUSINESS_ADVISOR', 'AMT_ADVISOR', 'HEALTH_NEW_BUSINESS_ADVISOR', 'HEALTH_RENEWAL_ADVISOR'])
+            ->whereIn('r.name', ['RM_ADVISOR', 'BUSINESS_ADVISOR', 'AMT_ADVISOR','HEALTH_NEW_BUSINESS_ADVISOR','HEALTH_RENEWAL_ADVISOR'])
             ->select('u.id', DB::raw("CONCAT(u.name,' - ',r.name) AS name"));
         return $query->orderBy('r.name')->distinct()->get();
     }
@@ -320,19 +312,5 @@ class CRUDService extends BaseService
 
         return $this->{in_array($lowerCaseModelType, $this->quoteTypes) ? $lowerCaseModelType . 'QuoteService' : $lowerCaseModelType . 'Service'}
             ->getSelectedLostReason($id);
-    }
-
-    public function getLeadPlainEntityByUUID($modelType, $uuid)
-    {
-        $lowerCaseModelType = strtolower($modelType);
-        return $this->{in_array($lowerCaseModelType, $this->quoteTypes) ? $lowerCaseModelType . 'QuoteService' : $lowerCaseModelType . 'Service'}
-            ->getEntityPlainByUUID($uuid);
-    }
-
-    public function validateRequest($modelType, $request)
-    {
-        $lowerCaseModelType = strtolower($modelType);
-        return $this->{in_array($lowerCaseModelType, $this->quoteTypes) ? $lowerCaseModelType . 'QuoteService' : $lowerCaseModelType . 'Service'}
-            ->validateRequest($request);
     }
 }
