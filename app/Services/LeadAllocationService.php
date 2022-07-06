@@ -29,6 +29,7 @@ class LeadAllocationService extends BaseService
                 ->join('users as u', 'lead_allocation.user_id', '=', 'u.id')
                 ->leftjoin('teams as t', 'u.team_id', '=', 't.id')
                 ->leftjoin('teams as st', 'st.id', '=', 'u.sub_team_id')
+                ->whereNotNull('u.sub_team_id')
                 ->where(strtolower('t.name'), '=', strtolower(quoteTypeCode::Health));
             if(!auth()->user()->hasRole(RolesEnum::SuperManagerLeadAllocation)){
                 $userAgainstManagerWithDetail = $userAgainstManagerWithDetail->where('u.manager_id', auth()->user()->id);
