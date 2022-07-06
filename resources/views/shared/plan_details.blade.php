@@ -69,6 +69,11 @@ if (!isset($modelName)) {
             }
         });
         $(document).ready(function() {
+
+            var discountedPremium = $('#discounted_premium').val();
+            var carPlanType = JSON.parse('<?php echo json_encode($repairType) ?>');
+            var carPlanTypeTpl = JSON.parse('<?php echo json_encode(CarPlanType::TPL) ?>');
+
             $('.update-car-quote-plan-button').on('click', function(e) {
                 var actual_premium = $("#actual_premium").val();
                 var discounted_premium = $("#discounted_premium").val();
@@ -152,6 +157,8 @@ if (!isset($modelName)) {
                     success: function(result) {
                         $(".loader").hide();
                         validationDivText('.car-quote-plan-validation-div', result);
+                        // Conditionally lock fields
+                        conditionallyLockFields(discounted_premium, carPlanType, carPlanTypeTpl);
                     },
                     error: function(jqXhr, textStatus, errorMessage) {
                         $(".loader").hide();
@@ -175,27 +182,20 @@ if (!isset($modelName)) {
         var totalPremium = JSON.parse('<?php echo json_encode($totalPremium) ?>');
         showTotals('.car-quote-plan-total-premium', totalPremium.toFixed(2));
 
-        var discountedPremium = $('#discounted_premium').val();
-        var carPlanType = JSON.parse('<?php echo json_encode($repairType) ?>');
-        var carPlanTypeTpl = JSON.parse('<?php echo json_encode(CarPlanType::TPL) ?>');
-
         // Conditionally lock fields
-        if (carPlanType == carPlanTypeTpl) { // TPL
-            if (discountedPremium > 0) {
-                lockField("#actual_premium");
-            }
-        } else { // COMP
-            if (discountedPremium > 0) {
-                lockField("#actual_premium");
-                lockField("#car_value");
-                lockField("#excess");
-            }
-        }
+        conditionallyLockFields(discountedPremium, carPlanType, carPlanTypeTpl);
 
         function lockField(id) {
             $(id).css({
                 "pointer-events": "none",
                 "background-color": "#f6f6f6"
+            });
+        }
+
+        function unlockField(id) {
+            $(id).css({
+                "pointer-events": "",
+                "background-color": ""
             });
         }
 
@@ -206,6 +206,26 @@ if (!isset($modelName)) {
         function showTotals(id, totalPremium) {
             var totalPremiumHtml = '<div><span style="padding-top: 7px;border-top: 2px solid #E6E9ED;"><b>Total Premium with VAT:</b> AED ' + totalPremium + '</span></div>';
             $(id).show().html(totalPremiumHtml).delay(5000);
+        }
+
+        function conditionallyLockFields(discountedPremium, carPlanType, carPlanTypeTpl) {
+            if (carPlanType == carPlanTypeTpl) { // TPL
+                if (discountedPremium > 0) {
+                    lockField("#actual_premium");
+                } else {
+                    unlockField("#actual_premium");
+                }
+            } else { // COMP
+                if (discountedPremium > 0) {
+                    lockField("#actual_premium");
+                    lockField("#car_value");
+                    lockField("#excess");
+                } else {
+                    unlockField("#actual_premium");
+                    unlockField("#car_value");
+                    unlockField("#excess");
+                }
+            }
         }
     </script>
 <?php
