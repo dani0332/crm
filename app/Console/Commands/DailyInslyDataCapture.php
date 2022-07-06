@@ -42,11 +42,11 @@ class DailyInslyDataCapture extends Command
      */
     public function handle()
     {
-        Log::info('Process FetchAndProcessInslyData trigged');
+        Log::channel('daily')->info('Process FetchAndProcessInslyData trigged');
         date_default_timezone_set(config('app.timezone'));
         $format = Config::get('constants.datetime_format');
         $endDate = date($format);
-        $startDate = date($format, strtotime($endDate . ' - 1 days'));
+        $startDate = date($format, strtotime($endDate. ' - 1 days'));
         $data = InslyDataService::GetDataFromInsly($startDate, $endDate);
         dispatch(new InslyDataProcessingJob($data));
     }

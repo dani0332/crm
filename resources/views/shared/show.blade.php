@@ -6,21 +6,28 @@
         #quote-plans table.dataTable thead .sorting_asc:after {
             content: none !important;
         }
+
         .select2-results__option--selected {
             display: none;
         }
+
         .select2-results__option[aria-selected=true] {
             display: none;
         }
+
         .modal-tall .modal-body {
             position: relative;
             min-height: 600px;
             padding: 15px;
         }
         .custom-checkbox { cursor: pointer; display:block; font-size: 16px; line-height: 26px; margin: 0 0 20px; padding: 0 0 0 40px; position: relative; }
+
 .custom-checkbox input[type="checkbox"] { display: none; }
+
 .custom-checkbox span.checkbox { background-color: #fff; border: solid 2px #cccccc; border-radius:50%; cursor: pointer; display: block; height: 26px; margin: 0px; position: absolute; left: 0; top: 0px; width: 26px; }
+
 .custom-checkbox input[type='checkbox']:checked + span.checkbox { background: #26B99A; border-color: #169F85; text-align:center; }
+
 .custom-checkbox input[type='checkbox']:checked + span.checkbox:before { content:"\f00c"; color:#fff; font: normal normal normal 20px/1 FontAwesome;}
         .col {
             padding-left: 8px;
@@ -34,8 +41,6 @@
     <?php
     use App\Enums\quoteTypeCode;
     use App\Models\CarQuote;
-    use App\Enums\RolesEnum;
-    use App\Enums\QuoteStatusEnum;
     ?>
     <div class="row">
         <div class="col-md-12 col-sm-12 admin-detail">
@@ -61,8 +66,8 @@
                     </ul>
                     <div class="clearfix"></div>
                 </div>
-                @if(Auth::user()->hasAnyRole([RolesEnum::Admin, RolesEnum::HealthManager, RolesEnum::HealthWCUAdvisor, RolesEnum::HealthDeputyManager]))
-                    @if (strtolower($model->modelType) == strtolower(quoteTypeCode::Health) && $record->quote_status_id != QuoteStatusEnum::TransactionApproved)
+                @hasanyrole('ADMIN|HEALTH_MANAGER|HEALTH_WCU_ADVISOR|HEALTH_DEPUTY_MANAGER')
+                    @if (strtolower($model->modelType) == 'health')
                         <form method="post" id="healthTeamAssignForm" action="healthTeamAssign"
                             class="form-horizontal form-label-left" autocomplete="off">
                             {{ csrf_field() }}
@@ -95,15 +100,7 @@
                             <div class="clearfix">
                             </div>
                         </form>
-                        @if(
-                            (Auth::user()->hasAnyRole([RolesEnum::Admin, RolesEnum::HealthManager, RolesEnum::HealthDeputyManager])
-                            && !Auth::user()->hasRole(RolesEnum::HealthWCUAdvisor)) ||
-                            Auth::user()->hasRole(RolesEnum::HealthWCUAdvisor) && $autoAllocationDisabled == '0'
-
-
-                         )
-
-                        <form method="post" action="manualLeadAssign" class="form-horizontal form-label-left"
+                        <form method="post" action="manualLeadAssignAfterTeamAssign" class="form-horizontal form-label-left"
                             autocomplete="off">
                             {{ csrf_field() }}
                             @method('POST')
@@ -132,10 +129,10 @@
                             <div class="clearfix">
                             </div>
                         </form>
-                        @endif
+
                     @endif
-                @endif
-                @if (strtolower($model->modelType) == strtolower(quoteTypeCode::Business) && Auth::user()->hasAnyRole(['ADMIN', 'BUSINESS_MANAGER', 'WCU_ADVISOR', 'BUSINESS_DEPUTY']) && ($record->business_type_of_insurance_id_text = 'Group Medical'))
+                @endcan
+                @if (strtolower($model->modelType) == 'business' && Auth::user()->hasAnyRole(['ADMIN', 'BUSINESS_MANAGER', 'WCU_ADVISOR', 'BUSINESS_DEPUTY']) && ($record->business_type_of_insurance_id_text = 'Group Medical'))
                     <form method="post" action="manualBusinessLeadAssign" class="form-horizontal form-label-left"
                         autocomplete="off">
                         {{ csrf_field() }}
