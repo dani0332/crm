@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-
+use Carbon\Carbon;
 class HealthMemberDetail extends Model
 {
     use HasFactory;
@@ -20,5 +20,9 @@ class HealthMemberDetail extends Model
     }
     public function salaryBand(){
         return $this->belongsTo(SalaryBand::class,'salary_band_id','id');
+    }
+
+    public function getDobAttribute($value){
+        return Carbon::parse($value)->format('Y-m-d');
     }
 }

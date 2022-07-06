@@ -6,6 +6,9 @@ use App\Models\VehicleType;
 use App\Models\YearOfManufacture;
 use App\Models\CarModelDetail;
 use App\Models\UAELicenseHeldFor;
+use App\Models\MemberCategory;
+use App\Models\SalaryBand;
+
 class LookupService extends BaseService
 {
 
@@ -27,6 +30,16 @@ class LookupService extends BaseService
     public function getBackHomeLicensed()
     {
         return UAELicenseHeldFor::isBackHomeActive()->get();
+    }
+
+    public function getMemberCategories()
+    {
+        return MemberCategory::active()->get();
+    }
+
+    public function getSalaryBands()
+    {
+        return SalaryBand::active()->get();
     }
 
 }

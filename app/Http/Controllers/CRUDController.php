@@ -365,11 +365,13 @@ class CRUDController extends Controller
                     $listQuotePlans = $quotePlans;
                 }
             }
-            $members_detail = $this->healthQuoteService->getMembersDetail($record->id);
+            $membersDetail = $this->healthQuoteService->getMembersDetail($record->id);
+            $memberCategories = $this->lookupService->getMemberCategories();
+            $salaryBands = $this->lookupService->getSalaryBands();
             return view('shared.show', compact([
                 'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList',
                 'leadStatuses', 'lostReasons', 'selectedLostReasonId','model_name', 'allowedDuplicateLOB', 'audits','advisors', 'activities','isRenewalUser',
-                'isNewBusinessUser','members_detail'
+                'isNewBusinessUser','membersDetail','memberCategories','salaryBands'
             ]));
         } else {
             return view('shared.show', compact(['record', 'model', 'customTitles', 'customTableList', 'advisors', 'leadStatuses', 'lostReasons', 'selectedLostReasonId','model_name', 'allowedDuplicateLOB', 'audits', 'activities','isRenewalUser',

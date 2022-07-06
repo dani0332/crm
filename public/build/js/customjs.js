@@ -1740,6 +1740,9 @@ $(document).ready(function () {
     $('#add-activity-btn').on('click', function(){
         $('#activityModal').modal({ show: true });
     });
+    $('#add-edit-health-members-btn').on('click', function(){
+        $('#addHealthMemberModal').modal({ show: true });
+    });
 
     $("#due_date").daterangepicker({
         timePicker: true,
@@ -2263,4 +2266,32 @@ function isNumberKey(evt, obj) {
     if (charCode > 31 && (charCode < 48 || charCode > 57))
         return false;
     return true;
+}
+
+function editMemberDetail(member) {
+    $.ajax({
+        url: '/members/'+member+'/edit',
+        method: "GET",
+        success: function(data) {
+            $('#member_model_content_form').html(data);
+            $('#addHealthMemberModal').modal({ show: true });
+        },
+    });
+}
+
+function deleteMemberDetail(member) {
+    if(confirm('Are you sure you want to delete this member?')){
+        $.ajax({
+            url: '/members/'+member,
+            method: "delete",
+            data: {
+                _token: $('input[name=_token]').val()
+            },
+            success: function(data) {
+                location.reload();
+            },
+        });
+    }else {
+        return false;
+    }
 }

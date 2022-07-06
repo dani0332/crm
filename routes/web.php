@@ -57,6 +57,7 @@ use App\Http\Controllers\RewardSliderController;
 use App\Http\Controllers\VehicleRangeController;
 use App\Http\Controllers\VehicleValueController;
 use App\Http\Controllers\AjaxController;
+use App\Http\Controllers\MembersDetailController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -279,6 +280,8 @@ Route::group(['middleware' =>  ['auth']], function () {
     Route::get('/car-model-by-id', [AjaxController::class, 'carModelBasedOnCarMakeId']);
     Route::get('/insurance-provider-plans', [ClaimController::class, 'carPlansBasedOnInsuranceProvider']);
     Route::post('/CarPlanUpdateManualProcess', [ClaimController::class, 'CarPlanUpdateManualProcess']);
+
+    Route::resource('members', MembersDetailController::class);
 });
 
 
