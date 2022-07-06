@@ -221,6 +221,11 @@ class LeadAllocationService extends BaseService
             info('checkIfAdvisorCanTakeLead -- started');
             $leadAllocation = LeadAllocation::where('user_id', $advisorId)->first();
             if ($leadAllocation != null) {
+                if ($leadAllocation->is_available == 0) {
+                    info('Advisor ' . $advisorId . ' cannot take lead while he/she is not available');
+                    DB::commit();
+                    return false;
+                }
                 if($leadAllocation->max_capacity == -1 || $leadAllocation->allocation_count < $leadAllocation->max_capacity){
                     info('Advisor ' . $advisorId . ' can take lead');
                     DB::commit();
