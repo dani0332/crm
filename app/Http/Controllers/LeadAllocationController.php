@@ -27,12 +27,12 @@ class LeadAllocationController extends Controller
      */
     public function index(Request $request)
     {
-        if (Gate::allows('view-lead-allocation', Auth::user())) {
+        if (Gate::allows('view-lead-allocation', auth()->user())) {
             $totalAssignedLeadCount = 0;
             $availableUsers = 0;
             $unAvailableUsers = 0;
             $isAutoAllocationWorking = $this->applicationStorageService->getValueByKey('LEAD_ALLOCATION_JOB_SWITCH');
-            $data = $this->leadAllocationService->getGridData($request);
+            $data = $this->leadAllocationService->getGridData();
             foreach ($data as $key => $value) {
                 $totalAssignedLeadCount += $value->allocation_count;
                 if ($value->is_available == 1) {
