@@ -2269,3 +2269,12 @@ function isNumberKey(evt, obj) {
         return false;
     return true;
 }
+
+$("#dataTableCarQuotePlans").DataTable({
+    paging: false,
+    ordering: false,
+    info: false,
+    searching: false,
+    bLengthChange: false,
+    scrollX: true,
+});
