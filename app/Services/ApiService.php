@@ -57,7 +57,7 @@ class ApiService
             $quoteData = HealthQuote::where('uuid', $request->quoteUID)->where('quote_status_id', $request->QuoteStatus)->first();
             if($quoteData) {
                 $data = [+
-                    'customerName' => $quoteData->full_name,
+                    'customerName' => $quoteData->first_name,
                     'advisorName' => $quoteData->advisor->name,
                     'advisorEmail' => $quoteData->advisor->email,
                     'advisorMobile' => $quoteData->advisor->mobile_no,
