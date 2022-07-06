@@ -27,6 +27,19 @@ class AddLeadAllocationPermission extends Migration
             );
         }
 
+        $datetime = date('Y-m-d H:i:s');
+        $role = DB::table('roles')->where('name', 'LEAD_ALLOCATION')->first();
+        if ($role === null) {
+            DB::table('roles')->insert(
+                array(
+                    'name' => 'LEAD_ALLOCATION',
+                    'guard_name' => 'web',
+                    'created_at' => $datetime,
+                    'updated_at' => $datetime
+                )
+            );
+        }
+
         $role = DB::table('roles')->where('name', 'LEAD_ALLOCATION')->first();
         $permission = DB::table('permissions')->where('name', 'lead-allocation-view')->first();
         $rolePermission = DB::table('role_has_permissions')->where('role_id', $role->id)->where('permission_id', $permission->id)->first();
