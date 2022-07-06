@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\RolesEnum;
 use App\Models\ApplicationStorage;
 use App\Models\HealthQuote;
 use App\Models\HealthQuoteRequestDetail;
@@ -20,19 +21,20 @@ class LeadAllocationService extends BaseService
     use GetUserTree;
 
 
-    public function getGridData(Request $request)
+    public function getGridData()
     {
         try {
             DB::beginTransaction();
-            $userAgainstManagerWithDetail = LeadAllocation ::select('lead_allocation.id as id', 'lead_allocation.user_id as userId', 'lead_allocation.allocation_count', 'lead_allocation.max_capacity', 'lead_allocation.is_available', 'lead_allocation.last_allocated', 'st.name as teamName', 'u.name as userName')
+            $userAgainstManagerWithDetail = LeadAllocation::select('lead_allocation.id as id', 'lead_allocation.user_id as userId', 'lead_allocation.allocation_count', 'lead_allocation.max_capacity', 'lead_allocation.is_available', 'lead_allocation.last_allocated', 'st.name as teamName', 'u.name as userName')
                 ->join('users as u', 'lead_allocation.user_id', '=', 'u.id')
                 ->leftjoin('teams as t', 'u.team_id', '=', 't.id')
                 ->leftjoin('teams as st', 'st.id', '=', 'u.sub_team_id')
-                ->where('u.manager_id', '=', $request->user()->id)
-                ->where(strtolower('t.name'), '=', strtolower(quoteTypeCode::Health))
-                ->get();
+                ->where(strtolower('t.name'), '=', strtolower(quoteTypeCode::Health));
+            if(!auth()->user()->hasRole(RolesEnum::SuperManagerLeadAllocation)){
+                $userAgainstManagerWithDetail = $userAgainstManagerWithDetail->where('u.manager_id', auth()->user()->id);
+            }
             DB::commit();
-            return $userAgainstManagerWithDetail;
+            return $userAgainstManagerWithDetail->get();
         } catch (\Exception $e) {
             Log::error($e->getMessage());
             DB::rollback();
