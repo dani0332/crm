@@ -68,108 +68,110 @@ if (!isset($modelName)) {
                 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
             }
         });
-        $('.update-car-quote-plan-button').on('click', function(e) {
-            var actual_premium = $("#actual_premium").val();
-            var discounted_premium = $("#discounted_premium").val();
-            var premium_vat = $("#premium_vat").val();
-            var car_value = $("#car_value").val();
-            var excess = $("#excess").val();
-            var repair_type = $("#repair_type").val();
-            var car_value_lower_limit = $("#car_value_lower_limit").val();
-            var carPlanTypeComp = JSON.parse('<?php echo json_encode(CarPlanType::COMP) ?>');
-            var carPlanTypeTpl = JSON.parse('<?php echo json_encode(CarPlanType::TPL) ?>');
+        $(document).ready(function() {
+            $('.update-car-quote-plan-button').on('click', function(e) {
+                var actual_premium = $("#actual_premium").val();
+                var discounted_premium = $("#discounted_premium").val();
+                var premium_vat = $("#premium_vat").val();
+                var car_value = $("#car_value").val();
+                var excess = $("#excess").val();
+                var repair_type = $("#repair_type").val();
+                var car_value_lower_limit = $("#car_value_lower_limit").val();
+                var carPlanTypeComp = JSON.parse('<?php echo json_encode(CarPlanType::COMP) ?>');
+                var carPlanTypeTpl = JSON.parse('<?php echo json_encode(CarPlanType::TPL) ?>');
 
-            // For COMP, car_value should greater than or equal to lower_limit
-            if (repair_type == carPlanTypeComp && parseInt(car_value) < parseInt(car_value_lower_limit)) {
-                validationDivText('.car-quote-plan-validation-div', 'Car Value should be greater than or equal to ' + car_value_lower_limit);
-                return false;
-            }
-
-            // discounted_premium always must filled
-            if (discounted_premium == '') {
-                validationDivText('.car-quote-plan-validation-div', 'Discounted Premium must be filled');
-                return false;
-            } else {
-                if(discounted_premium > actual_premium) {
-                    validationDivText('.car-quote-plan-validation-div', 'Discounted Premium must be lower than Actual Premium');
+                // For COMP, car_value should greater than or equal to lower_limit
+                if (repair_type == carPlanTypeComp && parseInt(car_value) < parseInt(car_value_lower_limit)) {
+                    validationDivText('.car-quote-plan-validation-div', 'Car Value should be greater than or equal to ' + car_value_lower_limit);
                     return false;
                 }
-                validationDivText('.car-quote-plan-validation-div', '');
-                // Validations as per plan_type
-                if (repair_type == carPlanTypeTpl) { // TPL Plan
-                    if (discounted_premium > 0) {
-                        if (actual_premium > 0) { // actual_premium should not empty or 0
-                            validationDivText('.car-quote-plan-validation-div', '');
-                        } else {
-                            validationDivText('.car-quote-plan-validation-div', 'Actual Premium must be filled');
-                            return false;
-                        }
+
+                // discounted_premium always must filled
+                if (discounted_premium == '') {
+                    validationDivText('.car-quote-plan-validation-div', 'Discounted Premium must be filled');
+                    return false;
+                } else {
+                    if(discounted_premium > actual_premium) {
+                        validationDivText('.car-quote-plan-validation-div', 'Discounted Premium must be lower than Actual Premium');
+                        return false;
                     }
-                } else { // COMP Plan
-                    if (discounted_premium > 0) {
-                        // actual_premium, excess, car_value should not empty or 0
-                        if (actual_premium > 0 && excess > 0 && car_value > 0) { // actual_premium should not empty or 0
-                            validationDivText('.car-quote-plan-validation-div', '');
-                        } else {
-                            validationDivText('.car-quote-plan-validation-div', 'Actual Premium, Excess, Car Value must be filled');
-                            return false;
+                    validationDivText('.car-quote-plan-validation-div', '');
+                    // Validations as per plan_type
+                    if (repair_type == carPlanTypeTpl) { // TPL Plan
+                        if (discounted_premium > 0) {
+                            if (actual_premium > 0) { // actual_premium should not empty or 0
+                                validationDivText('.car-quote-plan-validation-div', '');
+                            } else {
+                                validationDivText('.car-quote-plan-validation-div', 'Actual Premium must be filled');
+                                return false;
+                            }
+                        }
+                    } else { // COMP Plan
+                        if (discounted_premium > 0) {
+                            // actual_premium, excess, car_value should not empty or 0
+                            if (actual_premium > 0 && excess > 0 && car_value > 0) { // actual_premium should not empty or 0
+                                validationDivText('.car-quote-plan-validation-div', '');
+                            } else {
+                                validationDivText('.car-quote-plan-validation-div', 'Actual Premium, Excess, Car Value must be filled');
+                                return false;
+                            }
                         }
                     }
                 }
-            }
 
-            var length = $('.addon_id').length;
-            var addons = [];
-            for ($a = 0; $a < length; $a++) {
-                addons.push({
-                    'addonId': parseInt($('.addon_id').eq($a).val()),
-                    'addonOptionId': parseInt($('.addon_option_id').eq($a).val()),
-                    'price': parseFloat($('.addon_price').eq($a).val()),
-                    'vat': parseFloat($('.addon_vat').eq($a).val()),
-                    'isSelected': $('.addon_is_selected').eq($a).val() == "true" ? true : false,
-                });
-            }
-            $(".loader").show();
-            e.preventDefault();
-            $.ajax({
-                url: "{{ url('/CarPlanUpdateManualProcess') }}",
-                type: 'post',
-                dataType: "json",
-                contentType: "application/json; charset=utf-8",
-                data: JSON.stringify({
-                    car_quote_uuid: $('#car_quote_uuid').val(),
-                    car_plan_id: $('#car_plan_id').val(),
-                    actual_premium: $('#actual_premium').val(),
-                    discounted_premium: $('#discounted_premium').val(),
-                    premium_vat: $('#premium_vat').val(),
-                    car_value: $('#car_value').val(),
-                    excess: $('#excess').val(),
-                    is_disabled: $('#is_disabled').val(),
-                    is_create: $('#is_create').val(),
-                    addons,
-                    _token: '{{ csrf_token() }}'
-                }),
-                success: function(result) {
-                    $(".loader").hide();
-                    validationDivText('.car-quote-plan-validation-div', result);
-                },
-                error: function(jqXhr, textStatus, errorMessage) {
-                    $(".loader").hide();
-                    showTotals('.car-quote-plan-total-premium', '');
-                    var totalSelectedAddonsPriceWithVat = 0;
-                    $.each(addons, function(i, jsondata) {
-                        if (jsondata.isSelected == true) {
-                            totalSelectedAddonsPriceWithVat += jsondata.price + jsondata.vat;
-                        }
+                var length = $('.addon_id').length;
+                var addons = [];
+                for ($a = 0; $a < length; $a++) {
+                    addons.push({
+                        'addonId': parseInt($('.addon_id').eq($a).val()),
+                        'addonOptionId': parseInt($('.addon_option_id').eq($a).val()),
+                        'price': parseFloat($('.addon_price').eq($a).val()),
+                        'vat': parseFloat($('.addon_vat').eq($a).val()),
+                        'isSelected': $('.addon_is_selected').eq($a).val() == "true" ? true : false,
                     });
-
-                    var totalPremium = Number(discounted_premium) + Number(premium_vat) + Number(totalSelectedAddonsPriceWithVat);
-                    showTotals('.car-quote-plan-total-premium', totalPremium.toFixed(2));
-                    validationDivText('.car-quote-plan-validation-div', jqXhr.responseText);
                 }
+                $(".loader").show();
+                e.preventDefault();
+                $.ajax({
+                    url: "{{ url('/CarPlanUpdateManualProcess') }}",
+                    type: 'post',
+                    contentType: "application/json; charset=utf-8",
+                    data: JSON.stringify({
+                        car_quote_uuid: $('#car_quote_uuid').val(),
+                        car_plan_id: $('#car_plan_id').val(),
+                        actual_premium: $('#actual_premium').val(),
+                        discounted_premium: $('#discounted_premium').val(),
+                        premium_vat: $('#premium_vat').val(),
+                        car_value: $('#car_value').val(),
+                        excess: $('#excess').val(),
+                        is_disabled: $('#is_disabled').val(),
+                        is_create: $('#is_create').val(),
+                        addons,
+                        _token: '{{ csrf_token() }}'
+                    }),
+                    success: function(result) {
+                        $(".loader").hide();
+                        validationDivText('.car-quote-plan-validation-div', result);
+                    },
+                    error: function(jqXhr, textStatus, errorMessage) {
+                        $(".loader").hide();
+                        showTotals('.car-quote-plan-total-premium', '');
+                        var totalSelectedAddonsPriceWithVat = 0;
+                        $.each(addons, function(i, jsondata) {
+                            if (jsondata.isSelected == true) {
+                                totalSelectedAddonsPriceWithVat += jsondata.price + jsondata.vat;
+                            }
+                        });
+
+                        var totalPremium = Number(discounted_premium) + Number(premium_vat) + Number(totalSelectedAddonsPriceWithVat);
+                        showTotals('.car-quote-plan-total-premium', totalPremium.toFixed(2));
+                        validationDivText('.car-quote-plan-validation-div', jqXhr.responseText);
+                    }
+                });
             });
         });
 
+        // Show total on load
         var totalPremium = JSON.parse('<?php echo json_encode($totalPremium) ?>');
         showTotals('.car-quote-plan-total-premium', totalPremium.toFixed(2));
 
