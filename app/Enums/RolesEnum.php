@@ -72,5 +72,6 @@ final class RolesEnum extends Enum
     const BusinessDeputyManager = "BUSINESS_DEPUTY_MANAGER";
     const CorplineRenewalManager = "CORPLINE_RENEWAL_MANAGER";
     const CorplineNewBusinessManager = "CORPLINE_NEW_BUSINESS_MANAGER";
+    const SuperManagerLeadAllocation = "SUPER_MANAGER_LEAD_ALLOCATION";
 
 }
