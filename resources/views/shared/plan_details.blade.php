@@ -60,7 +60,6 @@ if (!isset($modelName)) {
     }
 
     $readonlyFieldCss = $repairType == CarPlanType::TPL ? "pointer-events: none;background-color: #f6f6f6;" : "";
-    $carPlanTypeComp = CarPlanType::COMP;
 ?>
     <script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
     <script>
@@ -77,15 +76,45 @@ if (!isset($modelName)) {
             var excess = $("#excess").val();
             var repair_type = $("#repair_type").val();
             var car_value_lower_limit = $("#car_value_lower_limit").val();
-            var carPlanTypeComp = JSON.parse('<?php echo json_encode($carPlanTypeComp) ?>');
+            var carPlanTypeComp = JSON.parse('<?php echo json_encode(CarPlanType::COMP) ?>');
+            var carPlanTypeTpl = JSON.parse('<?php echo json_encode(CarPlanType::TPL) ?>');
+
+            // For COMP, car_value should greater than or equal to lower_limit
             if (repair_type == carPlanTypeComp && parseInt(car_value) < parseInt(car_value_lower_limit)) {
                 alert("Car Value should be greater than or equal to " + car_value_lower_limit);
                 return false;
             }
-            if (actual_premium == '' || discounted_premium == '' || car_value == '' || excess == '') {
-                alert('Please fill all the fields');
+
+            // discounted_premium always must filled
+            if (discounted_premium == '') {
+                validationDivText('#car-quote-plan-validation-div', 'Discounted Premium must be filled');
                 return false;
             }
+            else {
+                validationDivText('#car-quote-plan-validation-div', '');
+                // Validations as per plan_type
+                if(repair_type == carPlanTypeTpl) { // TPL Plan
+                    if(discounted_premium > 0) {
+                        if (actual_premium > 0) { // actual_premium should not empty or 0
+                            validationDivText('#car-quote-plan-validation-div', '');
+                        } else {
+                            validationDivText('#car-quote-plan-validation-div', 'Actual Premium must be filled');
+                            return false;
+                        }
+                    }
+                } else { // COMP Plan
+                    if(discounted_premium > 0) {
+                        // actual_premium, excess, car_value should not empty or 0
+                        if (actual_premium > 0 && excess > 0 && car_value > 0) { // actual_premium should not empty or 0
+                            validationDivText('#car-quote-plan-validation-div', '');
+                        } else {
+                            validationDivText('#car-quote-plan-validation-div', 'Actual Premium, Excess, Car Value must be filled');
+                            return false;
+                        }
+                    }
+                }
+            }
+
             var length = $('.addon_id').length;
             var addons = [];
             for ($a = 0; $a < length; $a++) {
@@ -145,6 +174,32 @@ if (!isset($modelName)) {
         var totalPremiumHtml = '<div><span style="padding-top: 7px;border-top: 2px solid #E6E9ED;"><b>Total Premium with VAT:</b> AED ' + <?php echo $totalPremium; ?> + '</span></div>';
         $('#totalPremiumOnFeatures').show().html(totalPremiumHtml).delay(5000);
         $('#totalPremiumOnAddons').show().html(totalPremiumHtml).delay(5000);
+
+        var discountedPremium = $('#discounted_premium').val();
+        var carPlanType = JSON.parse('<?php echo json_encode($repairType) ?>');
+        var carPlanTypeTpl = JSON.parse('<?php echo json_encode(CarPlanType::TPL) ?>');
+
+        if(carPlanType == carPlanTypeTpl) { // TPL
+            if(discountedPremium > 0) {
+                lockField("#actual_premium");
+            }
+        } else { // COMP
+            if(discountedPremium > 0) {
+                lockField("#actual_premium");
+                lockField("#car_value");
+                lockField("#excess");
+            }
+        }
+
+        function lockField(id)
+        {
+            $(id).css({"pointer-events": "none", "background-color": "#f6f6f6"});
+        }
+        function validationDivText(id, text)
+        {
+            $(id).text(text);
+        }
+
     </script>
 <?php
 }
@@ -603,7 +658,14 @@ if (!isset($modelName)) {
                                         <div id="car_plan_manual_process_text" style="display: none;font-weight:bold;"></div>
                                     </td>
                                     <td> </td>
-                                    <td align="right"><button type="submit" class="btn btn-warning btn-sm" id="update_car_plan_button" {{ $carQuoteEditDisable }}>Update</button></td>
+                                    <td align="right">
+                                        <button type="submit" class="btn btn-warning btn-sm" id="update_car_plan_button" {{ $carQuoteEditDisable }}>Update</button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td colspan="4">
+                                        <div id="car-quote-plan-validation-div" style="color:red;font-weight:bold;text-align:right;"></div>
+                                    </td>
                                 </tr>
                             </table>
                         </form>
