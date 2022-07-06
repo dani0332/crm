@@ -634,20 +634,20 @@ if (!isset($modelName)) {
                                 </tr>
                                 <tr>
                                     <td valign="top">Actual Premium:</td>
-                                    <td><input type="number" id="actual_premium" name="actual_premium" value="{{ old('actual_premium', $actualPremium) }}" class="form-control" onKeyDown="if(this.value.length==8) return false;"></td>
+                                    <td><input type="number" id="actual_premium" name="actual_premium" value="{{ old('actual_premium', $actualPremium) }}" class="form-control" onKeyDown="if(this.value.length==8) return false;" onkeypress="return isNumberKey(event,this)"></td>
                                     <td valign="top">Discounted Premium:</td>
                                     <td>
-                                        <input type="number" id="discounted_premium" name="discounted_premium" value="{{ old('discounted_premium', $discountPremium) }}" class="form-control" onKeyDown="if(this.value.length==8) return false;">
+                                        <input type="number" id="discounted_premium" name="discounted_premium" value="{{ old('discounted_premium', $discountPremium) }}" class="form-control" onKeyDown="if(this.value.length==8) return false;" onkeypress="return isNumberKey(event,this)">
                                         <input type="hidden" id="premium_vat" name="premium_vat" value="{{ $vat }}">
                                     </td>
                                 </tr>
                                 <tr>
                                     <td valign="top">Car value:</td>
-                                    <td><input type="number" id="car_value" name="car_value" value="{{ old('car_value', $carValue) }}" class="form-control" onKeyDown="if(this.value.length==8) return false;" style="{{ $readonlyFieldCss }}">
+                                    <td><input type="number" id="car_value" name="car_value" value="{{ old('car_value', $carValue) }}" class="form-control" onKeyDown="if(this.value.length==8) return false;" style="{{ $readonlyFieldCss }}" onkeypress="return isNumberKey(event,this)">
                                         <span style="font-size: 10px;">Min: AED {{ number_format($carValueLowerLimit) }} - Max: AED {{ number_format($carValueUpperLimit) }}</span>
                                     </td>
                                     <td valign="top">Excess:</td>
-                                    <td><input type="number" id="excess" name="excess" value="{{ old('excess', $excess) }}" class="form-control" onKeyDown="if(this.value.length==8) return false;" style="{{ $readonlyFieldCss }}"></td>
+                                    <td><input type="number" id="excess" name="excess" value="{{ old('excess', $excess) }}" class="form-control" onKeyDown="if(this.value.length==8) return false;" style="{{ $readonlyFieldCss }}" onkeypress="return isNumberKey(event,this)"></td>
                                 </tr>
                                 <tr>
                                     <td valign="top">Hide Plan?</td>
