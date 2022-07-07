@@ -166,7 +166,7 @@ if (!isset($modelName)) {
                             }
                         });
 
-                        const premiumWithVat = getPremiumWithVat(5, discounted_premium);
+                        const premiumWithVat = getPremiumWithVat(5, actual_premium);
 
                         totalPremium('.car-quote-plan-total-premium', discounted_premium, premiumWithVat, totalPriceSelectedAddonsWithVat);
                     },
