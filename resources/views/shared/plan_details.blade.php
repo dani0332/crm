@@ -47,8 +47,8 @@ if (!isset($modelName)) {
             $totalSelectedAddonsPriceWithVat = 0;
             foreach ($listQuotePlanAddons as $listQuotePlanAddon) {
                 foreach ($listQuotePlanAddon->carAddonOption as $carAddonOption) {
-                    if(isset($carAddonOption->isSelected)) {
-                        if($carAddonOption->isSelected == 1) {
+                    if (isset($carAddonOption->isSelected)) {
+                        if ($carAddonOption->isSelected == 1) {
                             $totalSelectedAddonsPriceWithVat += $carAddonOption->price + $carAddonOption->vat;
                         }
                     }
@@ -60,7 +60,6 @@ if (!isset($modelName)) {
     }
 
     $readonlyFieldCss = $repairType == CarPlanType::TPL ? "pointer-events: none;background-color: #f6f6f6;" : "";
-    $carPlanTypeComp = CarPlanType::COMP;
 ?>
     <script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
     <script>
@@ -69,82 +68,163 @@ if (!isset($modelName)) {
                 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
             }
         });
-        $('#update_car_plan_button, #update_car_plan_addons_button').on('click', function(e) {
-            var actual_premium = $("#actual_premium").val();
-            var discounted_premium = $("#discounted_premium").val();
-            var premium_vat = $("#premium_vat").val();
-            var car_value = $("#car_value").val();
-            var excess = $("#excess").val();
-            var repair_type = $("#repair_type").val();
-            var car_value_lower_limit = $("#car_value_lower_limit").val();
-            var carPlanTypeComp = JSON.parse('<?php echo json_encode($carPlanTypeComp) ?>');
-            if (repair_type == carPlanTypeComp && parseInt(car_value) < parseInt(car_value_lower_limit)) {
-                alert("Car Value should be greater than or equal to " + car_value_lower_limit);
-                return false;
-            }
-            if (actual_premium == '' || discounted_premium == '' || car_value == '' || excess == '') {
-                alert('Please fill all the fields');
-                return false;
-            }
-            var length = $('.addon_id').length;
-            var addons = [];
-            for ($a = 0; $a < length; $a++) {
-                addons.push({
-                    'addonId': parseInt($('.addon_id').eq($a).val()),
-                    'addonOptionId': parseInt($('.addon_option_id').eq($a).val()),
-                    'price': parseFloat($('.addon_price').eq($a).val()),
-                    'vat': parseFloat($('.addon_vat').eq($a).val()),
-                    'isSelected': $('.addon_is_selected').eq($a).val() == "true" ? true : false,
-                });
-            }
-            $(".loader").show();
-            e.preventDefault();
-            $.ajax({
-                url: "{{ url('/CarPlanUpdateManualProcess') }}",
-                type: 'post',
-                dataType: "json",
-                contentType: "application/json; charset=utf-8",
-                data: JSON.stringify({
-                    car_quote_uuid: $('#car_quote_uuid').val(),
-                    car_plan_id: $('#car_plan_id').val(),
-                    actual_premium: $('#actual_premium').val(),
-                    discounted_premium: $('#discounted_premium').val(),
-                    premium_vat: $('#premium_vat').val(),
-                    car_value: $('#car_value').val(),
-                    excess: $('#excess').val(),
-                    is_disabled: $('#is_disabled').val(),
-                    is_create: $('#is_create').val(),
-                    addons,
-                    _token: '{{ csrf_token() }}'
-                }),
-                success: function(result) {
-                    $(".loader").hide();
-                    $('#car_plan_manual_process_text, #car_plan_addon_manual_process_text').show().text(result).delay(5000).fadeOut(300);
-                },
-                error: function(jqXhr, textStatus, errorMessage) {
 
-                    $('#totalPremiumOnFeatures').show().html('').delay(5000);
-                    $('#totalPremiumOnAddons').show().html('').delay(5000);
-                    var totalSelectedAddonsPriceWithVat = 0;
-                    $.each(addons, function(i, jsondata) {
-                        if (jsondata.isSelected == true) {
-                            totalSelectedAddonsPriceWithVat += jsondata.price + jsondata.vat;
-                        }
-                    });
-                    var totalPremium =  Number(discounted_premium) + Number(premium_vat) + Number(totalSelectedAddonsPriceWithVat);
-                    var totalPremiumHtml = '<div><span style="padding-top: 7px;border-top: 2px solid #E6E9ED;"><b>Total Premium with VAT:</b> AED ' + totalPremium + '</span></div>';
-                    $('#totalPremiumOnFeatures').show().html(totalPremiumHtml).delay(5000);
-                    $('#totalPremiumOnAddons').show().html(totalPremiumHtml).delay(5000);
+        $(document).ready(function() {
+            var discountedPremium = $('#discounted_premium').val();
+            var carPlanType = JSON.parse('<?php echo json_encode($repairType) ?>');
+            var carPlanTypeTpl = JSON.parse('<?php echo json_encode(CarPlanType::TPL) ?>');
 
-                    $(".loader").hide();
-                    $('#car_plan_manual_process_text, #car_plan_addon_manual_process_text').show().text(jqXhr.responseText).delay(5000).fadeOut(300);
+            $('.update-car-quote-plan-button').on('click', function(e) {
+                var actual_premium = $("#actual_premium").val();
+                var discounted_premium = $("#discounted_premium").val();
+                var premium_vat = $("#premium_vat").val();
+                var car_value = $("#car_value").val();
+                var excess = $("#excess").val();
+                var repair_type = $("#repair_type").val();
+                var car_value_lower_limit = $("#car_value_lower_limit").val();
+                var carPlanTypeComp = JSON.parse('<?php echo json_encode(CarPlanType::COMP) ?>');
+                var carPlanTypeTpl = JSON.parse('<?php echo json_encode(CarPlanType::TPL) ?>');
+
+                // For COMP, car_value should greater than or equal to lower_limit
+                if (repair_type == carPlanTypeComp && parseInt(car_value) < parseInt(car_value_lower_limit)) {
+                    validationDivText('.car-quote-plan-validation-div', 'Car Value should be greater than or equal to ' + car_value_lower_limit);
+                    return false;
                 }
-            });
-        });
 
-        var totalPremiumHtml = '<div><span style="padding-top: 7px;border-top: 2px solid #E6E9ED;"><b>Total Premium with VAT:</b> AED ' + <?php echo $totalPremium; ?> + '</span></div>';
-        $('#totalPremiumOnFeatures').show().html(totalPremiumHtml).delay(5000);
-        $('#totalPremiumOnAddons').show().html(totalPremiumHtml).delay(5000);
+                // discounted_premium always must filled
+                if (discounted_premium == '') {
+                    validationDivText('.car-quote-plan-validation-div', 'Discounted Premium must be filled');
+                    return false;
+                } else {
+                    if(discounted_premium > actual_premium) {
+                        validationDivText('.car-quote-plan-validation-div', 'Discounted Premium must be lower than Actual Premium');
+                        return false;
+                    }
+                    validationDivText('.car-quote-plan-validation-div', '');
+                    // Validations as per plan_type
+                    if (repair_type == carPlanTypeTpl) { // TPL Plan
+                        if (discounted_premium > 0) {
+                            if (actual_premium > 0) { // actual_premium should not empty or 0
+                                validationDivText('.car-quote-plan-validation-div', '');
+                            } else {
+                                validationDivText('.car-quote-plan-validation-div', 'Actual Premium must be filled');
+                                return false;
+                            }
+                        }
+                    } else { // COMP Plan
+                        if (discounted_premium > 0) {
+                            // actual_premium, excess, car_value should not empty or 0
+                            if (actual_premium > 0 && excess > 0 && car_value > 0) { // actual_premium should not empty or 0
+                                validationDivText('.car-quote-plan-validation-div', '');
+                            } else {
+                                validationDivText('.car-quote-plan-validation-div', 'Actual Premium, Excess, Car Value must be filled');
+                                return false;
+                            }
+                        }
+                    }
+                }
+
+                var length = $('.addon_id').length;
+                var addons = [];
+                for ($a = 0; $a < length; $a++) {
+                    addons.push({
+                        'addonId': parseInt($('.addon_id').eq($a).val()),
+                        'addonOptionId': parseInt($('.addon_option_id').eq($a).val()),
+                        'price': parseFloat($('.addon_price').eq($a).val()),
+                        'vat': parseFloat($('.addon_vat').eq($a).val()),
+                        'isSelected': $('.addon_is_selected').eq($a).val() == "true" ? true : false,
+                    });
+                }
+                $(".loader").show();
+                e.preventDefault();
+                $.ajax({
+                    url: "{{ url('/CarPlanUpdateManualProcess') }}",
+                    type: 'post',
+                    contentType: "application/json; charset=utf-8",
+                    data: JSON.stringify({
+                        car_quote_uuid: $('#car_quote_uuid').val(),
+                        car_plan_id: $('#car_plan_id').val(),
+                        actual_premium: $('#actual_premium').val(),
+                        discounted_premium: $('#discounted_premium').val(),
+                        premium_vat: $('#premium_vat').val(),
+                        car_value: $('#car_value').val(),
+                        excess: $('#excess').val(),
+                        is_disabled: $('#is_disabled').val(),
+                        is_create: $('#is_create').val(),
+                        addons,
+                        _token: '{{ csrf_token() }}'
+                    }),
+                    success: function(result) {
+                        $(".loader").hide();
+                        validationDivText('.car-quote-plan-validation-div', result);
+                        conditionallyLockFields(discounted_premium, carPlanType, carPlanTypeTpl);
+
+                        var totalPriceSelectedAddonsWithVat = 0;
+                        $.each(addons, function(i, jsondata) {
+                            if (jsondata.isSelected == true) {
+                                totalPriceSelectedAddonsWithVat += jsondata.price + jsondata.vat;
+                            }
+                        });
+
+                        const premiumWithVat = getPremiumWithVat(5, actual_premium);
+
+                        totalPremium('.car-quote-plan-total-premium', discounted_premium, premiumWithVat, totalPriceSelectedAddonsWithVat);
+                    },
+                    error: function(jqXhr, textStatus, errorMessage) {
+                        $(".loader").hide();
+                        validationDivText('.car-quote-plan-validation-div', jqXhr.responseText);
+                    }
+                });
+            });
+
+            // Show total on load
+            totalPremium('.car-quote-plan-total-premium', JSON.parse('<?php echo json_encode($discountPremium) ?>'), JSON.parse('<?php echo json_encode($vat) ?>'), JSON.parse('<?php echo json_encode($totalSelectedAddonsPriceWithVat) ?>'));
+
+            // Conditionally lock fields
+            conditionallyLockFields(discountedPremium, carPlanType, carPlanTypeTpl);
+
+            function lockField(elementId) {
+                for(a=0; a<=elementId.length; a++) {
+                    $(elementId[a]).css({"pointer-events": "none","background-color": "#f6f6f6"});
+                }
+            }
+
+            function unlockField(elementId) {
+                for(a=0; a<=elementId.length; a++) {
+                    $(elementId[a]).css({"pointer-events": "","background-color": ""});
+                }
+            }
+
+            function validationDivText(className, text) {
+                $(className).text(text).css("width","700px");
+            }
+
+            function totalPremium(elementId, discountedPremium, premiumVat, totalPriceSelectedAddonsWithVat) {
+                var totalPremium = Number(discountedPremium) + Number(premiumVat) + Number(totalPriceSelectedAddonsWithVat);
+                var totalPremiumHtml = '<div><span style="padding-top: 7px;border-top: 2px solid #E6E9ED;"><b>Total Premium with VAT:</b> AED ' + totalPremium.toFixed(2) + '</span></div>';
+                $(elementId).show().html(totalPremiumHtml).delay(5000);
+            }
+
+            function conditionallyLockFields(discountedPremium, carPlanType, carPlanTypeTpl) {
+                if (carPlanType == carPlanTypeTpl) { // TPL
+                    if (discountedPremium > 0) {
+                        lockField(["#actual_premium"]);
+                    } else {
+                        unlockField(["#actual_premium"]);
+                    }
+                } else { // COMP
+                    if (discountedPremium > 0) {
+                        lockField(["#actual_premium","#car_value","#excess"]);
+                    } else {
+                        unlockField(["#actual_premium","#car_value","#excess"]);
+                    }
+                }
+            }
+
+            function getPremiumWithVat(percent, total) {
+                return ((percent/ 100) * total).toFixed(2)
+            }
+        });
     </script>
 <?php
 }
@@ -400,7 +480,7 @@ if (!isset($modelName)) {
                         <table cellpadding="3" cellspacing="3">
                             <tr>
                                 <td>
-                                    
+
                                     <table cellpadding="3" cellspacing="3">
                                         <tr>
                                             <td>
@@ -556,60 +636,64 @@ if (!isset($modelName)) {
 
                 <div class="tab-content" style="padding-top: 20px;">
                     <div class="tab-pane fade show active" id="general" role="tabpanel" aria-labelledby="general-tab">
-                        <form id="update_car_plan" method='post' enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left" autocomplete="off">
-                            {{csrf_field()}}
-                            <input type="hidden" id="car_plan_id" name="car_plan_id" value="{{ $planId }}">
-                            <input type="hidden" id="car_quote_uuid" name="car_quote_uuid" value="{{ $quoteId }}">
-                            <input type="hidden" id="car_value_lower_limit" name="car_value_lower_limit" value="{{ $carValueLowerLimit }}">
-                            <input type="hidden" id="car_value_upper_limit" name="car_value_upper_limit" value="{{ $carValueUpperLimit }}">
-                            <input type="hidden" id="repair_type" name="repair_type" value="{{ $repairType }}">
-                            <input type="hidden" id="is_create" name="is_create" value="0">
-                            <table cellpadding="8" cellspacing="8">
-                                <tr>
-                                    <td valign="top" style="width: 120px;">Provider Code:</td>
-                                    <td>{{ $providerCode }}</td>
-                                    <td valign="top">Provider Name:</td>
-                                    <td>{{ $providerName }}</td>
-                                </tr>
-                                <tr>
-                                    <td valign="top">Repair Type:</td>
-                                    <td>{{ $repairType }}</td>
-                                    <td>Insurer Quote No.:</td>
-                                    <td>{{ $insurerQuoteNo }}</td>
-                                </tr>
-                                <tr>
-                                    <td valign="top">Actual Premium:</td>
-                                    <td><input type="number" id="actual_premium" name="actual_premium" value="{{ old('actual_premium', $actualPremium) }}" class="form-control" onKeyDown="if(this.value.length==8) return false;"></td>
-                                    <td valign="top">Discounted Premium:</td>
-                                    <td>
-                                        <input type="number" id="discounted_premium" name="discounted_premium" value="{{ old('discounted_premium', $discountPremium) }}" class="form-control" onKeyDown="if(this.value.length==8) return false;">
-                                        <input type="hidden" id="premium_vat" name="premium_vat" value="{{ $vat }}">
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td valign="top">Car value:</td>
-                                    <td><input type="number" id="car_value" name="car_value" value="{{ old('car_value', $carValue) }}" class="form-control" onKeyDown="if(this.value.length==8) return false;" style="{{ $readonlyFieldCss }}">
-                                        <span style="font-size: 10px;">Min: AED {{ number_format($carValueLowerLimit) }} - Max: AED {{ number_format($carValueUpperLimit) }}</span>
-                                    </td>
-                                    <td valign="top">Excess:</td>
-                                    <td><input type="number" id="excess" name="excess" value="{{ old('excess', $excess) }}" class="form-control" onKeyDown="if(this.value.length==8) return false;" style="{{ $readonlyFieldCss }}"></td>
-                                </tr>
-                                <tr>
-                                    <td valign="top">Hide Plan?</td>
-                                    <td><select class="form-control" id='is_disabled' name="is_disabled">
-                                            <option value="false" {{ $isDisabled == "false" ? 'selected="selected"' : '' }}>No</option>
-                                            <option value="true" {{ $isDisabled == "true" ? 'selected="selected"' : '' }}>Yes</option>
-                                        </select>
-                                        <div id="car_plan_manual_process_text" style="display: none;font-weight:bold;"></div>
-                                    </td>
-                                    <td> </td>
-                                    <td align="right"><button type="submit" class="btn btn-warning btn-sm" id="update_car_plan_button" {{ $carQuoteEditDisable }}>Update</button></td>
-                                </tr>
-                            </table>
-                        </form>
+                        {{csrf_field()}}
+                        <input type="hidden" id="car_plan_id" name="car_plan_id" value="{{ $planId }}">
+                        <input type="hidden" id="car_quote_uuid" name="car_quote_uuid" value="{{ $quoteId }}">
+                        <input type="hidden" id="car_value_lower_limit" name="car_value_lower_limit" value="{{ $carValueLowerLimit }}">
+                        <input type="hidden" id="car_value_upper_limit" name="car_value_upper_limit" value="{{ $carValueUpperLimit }}">
+                        <input type="hidden" id="repair_type" name="repair_type" value="{{ $repairType }}">
+                        <input type="hidden" id="is_create" name="is_create" value="0">
+                        <table cellpadding="8" cellspacing="8">
+                            <tr>
+                                <td valign="top" style="width: 120px;">Provider Code:</td>
+                                <td>{{ $providerCode }}</td>
+                                <td valign="top">Provider Name:</td>
+                                <td>{{ $providerName }}</td>
+                            </tr>
+                            <tr>
+                                <td valign="top">Repair Type:</td>
+                                <td>{{ $repairType }}</td>
+                                <td>Insurer Quote No.:</td>
+                                <td>{{ $insurerQuoteNo }}</td>
+                            </tr>
+                            <tr>
+                                <td valign="top">Actual Premium:</td>
+                                <td><input type="number" id="actual_premium" name="actual_premium" value="{{ old('actual_premium', $actualPremium) }}" class="form-control" onKeyDown="if(this.value.length==8) return false;" onkeypress="return isNumberKey(event,this)"></td>
+                                <td valign="top">Discounted Premium:</td>
+                                <td>
+                                    <input type="number" id="discounted_premium" name="discounted_premium" value="{{ old('discounted_premium', $discountPremium) }}" class="form-control" onKeyDown="if(this.value.length==8) return false;" onkeypress="return isNumberKey(event,this)">
+                                    <input type="hidden" id="premium_vat" name="premium_vat" value="{{ $vat }}">
+                                </td>
+                            </tr>
+                            <tr>
+                                <td valign="top">Car value:</td>
+                                <td><input type="number" id="car_value" name="car_value" value="{{ old('car_value', $carValue) }}" class="form-control" onKeyDown="if(this.value.length==8) return false;" style="{{ $readonlyFieldCss }}" onkeypress="return isNumberKey(event,this)">
+                                    <span style="font-size: 10px;">Min: AED {{ number_format($carValueLowerLimit) }} - Max: AED {{ number_format($carValueUpperLimit) }}</span>
+                                </td>
+                                <td valign="top">Excess:</td>
+                                <td><input type="number" id="excess" name="excess" value="{{ old('excess', $excess) }}" class="form-control" onKeyDown="if(this.value.length==8) return false;" style="{{ $readonlyFieldCss }}" onkeypress="return isNumberKey(event,this)"></td>
+                            </tr>
+                            <tr>
+                                <td valign="top">Hide Plan?</td>
+                                <td><select class="form-control" id='is_disabled' name="is_disabled">
+                                        <option value="false" {{ $isDisabled == "false" ? 'selected="selected"' : '' }}>No</option>
+                                        <option value="true" {{ $isDisabled == "true" ? 'selected="selected"' : '' }}>Yes</option>
+                                    </select>
+                                </td>
+                                <td> </td>
+                                <td align="right">
+                                    <button type="submit" class="btn btn-warning btn-sm update-car-quote-plan-button" {{ $carQuoteEditDisable }}>Update</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td colspan="4">
+                                    <div class="car-quote-plan-validation-div" style="color:red;font-weight:bold;text-align:right;"></div>
+                                </td>
+                            </tr>
+                        </table>
                         <br />
                         <p>
-                            <strong>Features</strong>
+                        <strong>Features</strong>
                         <table cellpadding="3" cellspacing="3">
                             @foreach ($listQuotePlanBenefitsFeatures as $key => $listQuotePlanBenefitsFeature)
                             <tr>
@@ -624,7 +708,7 @@ if (!isset($modelName)) {
                                 <td colspan="4"></td>
                             </tr>
                             <tr>
-                                <td colspan="4"><span id="totalPremiumOnFeatures"></span></td>
+                                <td colspan="4"><span class="car-quote-plan-total-premium"></span></td>
                             </tr>
                         </table>
                         </p>
@@ -674,21 +758,23 @@ if (!isset($modelName)) {
                                         @endforeach
                                         @endforeach
                                         <tr>
-                                            <td colspan="3"> </td>
+                                            <td colspan="5"> </td>
                                             <td align="center"> </td>
                                         </tr>
                                         <tr>
-                                            <td colspan="3"> </td>
+                                            <td colspan="5"> </td>
                                             <td align="center"> </td>
                                         </tr>
                                         <tr>
-                                            <td colspan="3" align="right">
-                                                <div id="car_plan_addon_manual_process_text" style="display: none;font-weight:bold;"></div>
+                                            <td colspan="5" align="right"><button type="submit" class="btn btn-warning btn-sm update-car-quote-plan-button" {{ $carQuoteEditDisable }}>Update</button></td>
+                                        </tr>
+                                        <tr>
+                                            <td colspan="5">
+                                                <div class="car-quote-plan-validation-div" style="color:red;font-weight:bold;text-align:right;"></div>
                                             </td>
-                                            <td align="center"><button type="submit" class="btn btn-warning btn-sm" id="update_car_plan_addons_button" {{ $carQuoteEditDisable }}>Update</button></td>
                                         </tr>
                                         <tr>
-                                            <td colspan="3"><span id="totalPremiumOnAddons"></span></td>
+                                            <td colspan="5"><span class="car-quote-plan-total-premium"></span></td>
                                         </tr>
                                     </table>
                                 </td>
