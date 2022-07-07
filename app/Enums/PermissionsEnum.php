@@ -169,4 +169,5 @@ final class PermissionsEnum extends Enum
     const PetQuotesView = "pet-quotes-view";
     const PetQuotesEdit = "pet-quotes-edit";
     const DashboardView = "dashboard-view";
+    const LeadAllocationView = "lead-allocation-view";
 }

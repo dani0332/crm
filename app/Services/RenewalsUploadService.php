@@ -38,7 +38,7 @@ use Illuminate\Support\Facades\Auth;
 class RenewalsUploadService
 {
     protected $renewalsAddonService, $checkAMLService, $capiRequestService;
-    
+
     function __construct(RenewalsAddonServices $renewalsAddonService, CheckAmlService $checkAMLService, CapiRequestService $capiRequestService)
     {
         $this->renewalsAddonService = $renewalsAddonService;
@@ -54,7 +54,7 @@ class RenewalsUploadService
     {
         $response = $this->capiRequestService->getUUID($quoteTypeId);
 
-        if($response) {
+        if ($response) {
             return $response->uuid;
         }
     }
@@ -94,7 +94,7 @@ class RenewalsUploadService
                 $this->updateRenewalUploadLeadRecord($fileName);
             }
         }
-        
+
         if ($quoteType == QuoteTypeShortCode::HEA) {
             $this->createNewHealthQuoute($quoteData, $transApprovedId, $newLeadId, $renewalImportCode, $currentUserId);
             $this->updateRenewalUploadLeadRecord($fileName);
@@ -120,16 +120,15 @@ class RenewalsUploadService
     public function updateRenewalUploadLeadRecord($fileName)
     {
         $record = RenewalsUploadLeads::where('file_name', $fileName)->first();
-        if($record)
-        {
+        if ($record) {
             // if record exists, update the number of rows uploaded
             $record->good = $record->good + 1;
             $record->save();
         }
-        if(($record->good + $record->cannot_upload) == $record->total_records){
+        if (($record->good + $record->cannot_upload) == $record->total_records) {
             // if all records are uploaded, update the status to completed
-                $record->status = ProcessStatusCode::COMPLETED;
-                $record->save();
+            $record->status = ProcessStatusCode::COMPLETED;
+            $record->save();
         }
     }
 
@@ -145,7 +144,7 @@ class RenewalsUploadService
             "email" => $quoteData->email,
             "mobile_no" => $quoteData->phoneNumber,
             "uuid" => $quoteUuid,
-            "code" => 'BIK-'.$quoteUuid,
+            "code" => 'BIK-' . $quoteUuid,
             "source" => 'Renewal_upload',
             "currently_insured_with" => $quoteData->insurer,
             "year_of_manufacture" => $quoteData->year,
@@ -171,7 +170,7 @@ class RenewalsUploadService
         $quoteUuid = $this->generateUUID(QuoteTypeId::Business);
 
         if (isset($quoteData->product_type)) {
-            $businessSubline = $this->renewalsAddonService->getBusinessSublineInsurance($quoteData->product_type);	
+            $businessSubline = $this->renewalsAddonService->getBusinessSublineInsurance($quoteData->product_type);
             $businessSublineInsuranceId = isset($businessSubline->id) ? $businessSubline->id : NULL;
         } else {
             $businessSublineInsuranceId = NULL;
@@ -184,7 +183,7 @@ class RenewalsUploadService
             "email" => $quoteData->email,
             "mobile_no" => $quoteData->phoneNumber,
             "uuid" => $quoteUuid,
-            "code" => 'BUS-'.$quoteUuid,
+            "code" => 'BUS-' . $quoteUuid,
             "source" => 'Renewal_upload',
             "policy_number" => $quoteData->policy,
             "advisor_id" => $advisorId,
@@ -217,8 +216,8 @@ class RenewalsUploadService
         }
 
         if ($quoteData->product_type != null) {
-            $carTypeOfInsuranceInstance = $this->renewalsAddonService->getCarTypeOfInsurance($quoteData->product_type);	
-            if($carTypeOfInsuranceInstance){
+            $carTypeOfInsuranceInstance = $this->renewalsAddonService->getCarTypeOfInsurance($quoteData->product_type);
+            if ($carTypeOfInsuranceInstance) {
                 $carTypeOfInsurance = $carTypeOfInsuranceInstance->id;
             }
         }
@@ -230,7 +229,7 @@ class RenewalsUploadService
             "email" => $quoteData->email,
             "mobile_no" => $quoteData->phoneNumber,
             "uuid" => $quoteUuid,
-            "code" => 'CAR-'.$quoteUuid,
+            "code" => 'CAR-' . $quoteUuid,
             "source" => 'Renewal_upload',
             "currently_insured_with" => $quoteData->insurer,
             "car_type_insurance_id" => $carTypeOfInsurance,
@@ -267,7 +266,7 @@ class RenewalsUploadService
             "email" => $quoteData->email,
             "mobile_no" => $quoteData->phoneNumber,
             "uuid" => $quoteUuid,
-            "code" => 'HEA-'.$quoteUuid,
+            "code" => 'HEA-' . $quoteUuid,
             "source" => 'Renewal_upload',
             "policy_number" => $quoteData->policy,
             "advisor_id" => $advisorId,
@@ -296,7 +295,7 @@ class RenewalsUploadService
             "email" => $quoteData->email,
             "mobile_no" => $quoteData->phoneNumber,
             "uuid" => $quoteUuid,
-            "code" => 'HOM-'.$quoteUuid,
+            "code" => 'HOM-' . $quoteUuid,
             "source" => 'Renewal_upload',
             "policy_number" => $quoteData->policy,
             "advisor_id" => $advisorId,
@@ -325,7 +324,7 @@ class RenewalsUploadService
             "email" => $quoteData->email,
             "mobile_no" => $quoteData->phoneNumber,
             "uuid" => $quoteUuid,
-            "code" => 'LIF-'.$quoteUuid,
+            "code" => 'LIF-' . $quoteUuid,
             "source" => 'Renewal_upload',
             "policy_number" => $quoteData->policy,
             "advisor_id" => $advisorId,
@@ -355,7 +354,7 @@ class RenewalsUploadService
             "email" => $quoteData->email,
             "mobile_no" => $quoteData->phoneNumber,
             "uuid" => $quoteUuid,
-            "code" => 'TRA-'.$quoteUuid,
+            "code" => 'TRA-' . $quoteUuid,
             "source" => 'Renewal_upload',
             "policy_number" => $quoteData->policy,
             "advisor_id" => $advisorId,
@@ -384,7 +383,7 @@ class RenewalsUploadService
             "email" => $quoteData->email,
             "mobile_no" => $quoteData->phoneNumber,
             "uuid" => $quoteUuid,
-            "code" => 'YAC-'.$quoteUuid,
+            "code" => 'YAC-' . $quoteUuid,
             "source" => 'Renewal_upload',
             "policy_number" => $quoteData->policy,
             "advisor_id" => $advisorId,
@@ -415,7 +414,7 @@ class RenewalsUploadService
             "email" => $getBikeQuoteData->email,
             "mobile_no" => $getBikeQuoteData->mobile_no,
             "uuid" => $quoteUuid,
-            "code" => 'BIK-'.$quoteUuid,
+            "code" => 'BIK-' . $quoteUuid,
             "source" => 'Renewal_upload',
             "currently_insured_with" => $getBikeQuoteData->currently_insured_with,
             "year_of_manufacture" => $getBikeQuoteData->year_of_manufacture,
@@ -451,7 +450,7 @@ class RenewalsUploadService
             "email" => $getBusinessQuoteData->email,
             "mobile_no" => $getBusinessQuoteData->mobile_no,
             "uuid" => $quoteUuid,
-            "code" => 'BUS-'.$quoteUuid,
+            "code" => 'BUS-' . $quoteUuid,
             "source" => 'Renewal_upload',
             "additional_notes" => $getBusinessQuoteData->additional_notes,
             "previous_quote_id" => $quoteId,
@@ -486,7 +485,7 @@ class RenewalsUploadService
             "email" => $getCarQuoteData->email,
             "mobile_no" => $getCarQuoteData->mobile_no,
             "uuid" => $quoteUuid,
-            "code" => 'CAR-'.$quoteUuid,
+            "code" => 'CAR-' . $quoteUuid,
             "source" => 'Renewal_upload',
             "currently_insured_with" => $getCarQuoteData->currently_insured_with,
             "car_type_insurance_id" => $getCarQuoteData->car_type_insurance_id,
@@ -528,7 +527,7 @@ class RenewalsUploadService
             "email" => $getHealthQuoteData->email,
             "mobile_no" => $getHealthQuoteData->mobile_no,
             "uuid" => $quoteUuid,
-            "code" => 'HEA-'.$quoteUuid,
+            "code" => 'HEA-' . $quoteUuid,
             "source" => 'Renewal_upload',
             "additional_notes" => $getHealthQuoteData->additional_notes,
             "previous_quote_id" => $quoteId,
@@ -562,7 +561,7 @@ class RenewalsUploadService
             "email" => $getHomeQuoteData->email,
             "mobile_no" => $getHomeQuoteData->mobile_no,
             "uuid" => $quoteUuid,
-            "code" => 'HOM-'.$quoteUuid,
+            "code" => 'HOM-' . $quoteUuid,
             "source" => 'Renewal_upload',
             "additional_notes" => $getHomeQuoteData->additional_notes,
             "previous_quote_id" => $quoteId,
@@ -595,7 +594,7 @@ class RenewalsUploadService
             "email" => $getLifeQuoteData->email,
             "mobile_no" => $getLifeQuoteData->mobile_no,
             "uuid" => $quoteUuid,
-            "code" => 'LIF-'.$quoteUuid,
+            "code" => 'LIF-' . $quoteUuid,
             "source" => 'Renewal_upload',
             "additional_notes" => $getLifeQuoteData->additional_notes,
             "previous_quote_id" => $quoteId,
@@ -628,7 +627,7 @@ class RenewalsUploadService
             "email" => $getTravelQuoteData->email,
             "mobile_no" => $getTravelQuoteData->mobile_no,
             "uuid" => $quoteUuid,
-            "code" => 'TRA-'.$quoteUuid,
+            "code" => 'TRA-' . $quoteUuid,
             "source" => 'Renewal_upload',
             "additional_notes" => $getTravelQuoteData->additional_notes,
             "previous_quote_id" => $quoteId,
@@ -662,7 +661,7 @@ class RenewalsUploadService
             "email" => $getYachtQuoteData->email,
             "mobile_no" => $getYachtQuoteData->mobile_no,
             "uuid" => $quoteUuid,
-            "code" => 'YAC-'.$quoteUuid,
+            "code" => 'YAC-' . $quoteUuid,
             "source" => 'Renewal_upload',
             "additional_notes" => $getYachtQuoteData->additional_notes,
             "previous_quote_id" => $quoteId,
@@ -697,7 +696,8 @@ class RenewalsUploadService
         return QuoteStatus::where('code', '=', $quoteStatus)->value('id');
     }
 
-    function generateRandomString() {
+    function generateRandomString()
+    {
         $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
         $charactersLength = strlen($characters);
         $randomString = '';
@@ -705,9 +705,9 @@ class RenewalsUploadService
             $randomString .= $characters[rand(0, $charactersLength - 1)];
         }
         return $randomString;
-     }
+    }
 
-     function updateExistingCarQuote($quoteData, $renewalImportCode, $currentUserId)
+    function updateExistingCarQuote($quoteData, $renewalImportCode, $currentUserId)
     {
         $carTypeOfInsurance = null;
         $carMake = $this->renewalsAddonService->getCarMake($quoteData->make);
@@ -722,18 +722,18 @@ class RenewalsUploadService
 
         if ($quoteData->product_type != null) {
             $carTypeOfInsuranceInstance = $this->renewalsAddonService->getCarTypeOfInsurance($quoteData->product_type);
-            if($carTypeOfInsuranceInstance){
+            if ($carTypeOfInsuranceInstance) {
                 $carTypeOfInsurance = $carTypeOfInsuranceInstance->id;
             }
         }
 
         // Previous Car Lead
         $updateCarQuote = CarQuote::where('renewal_import_code', $renewalImportCode)
-        ->where('policy_number', $quoteData->policy)->first();
+            ->where('policy_number', $quoteData->policy)->first();
 
-        $previousAdvisorEmail = 'Previous Advisor Email Id : '. $quoteData->pAdvisor;
-        $carMakeModel = 'Car Make/Model/Year : '. $quoteData->make.' '.$quoteData->year;
-        $notes = $previousAdvisorId == '' ? $updateCarQuote->additional_notes.' - '.$carMakeModel.' - '.$previousAdvisorEmail.' - '.$quoteData->notes : $updateCarQuote->additional_notes.' - '.$carMakeModel.' - '.$quoteData->notes;
+        $previousAdvisorEmail = 'Previous Advisor Email Id : ' . $quoteData->pAdvisor;
+        $carMakeModel = 'Car Make/Model/Year : ' . $quoteData->make . ' ' . $quoteData->year;
+        $notes = $previousAdvisorId == '' ? $updateCarQuote->additional_notes . ' - ' . $carMakeModel . ' - ' . $previousAdvisorEmail . ' - ' . $quoteData->notes : $updateCarQuote->additional_notes . ' - ' . $carMakeModel . ' - ' . $quoteData->notes;
 
         $updateCarQuote->car_type_insurance_id = $carTypeOfInsurance;
         $updateCarQuote->advisor_id = $previousAdvisorId;
@@ -749,7 +749,7 @@ class RenewalsUploadService
 
         // Renewal Car Lead
         $updateCarQuoteRenewal = CarQuote::where('renewal_import_code', $renewalImportCode)
-        ->where('previous_quote_policy_number', $quoteData->policy)->first();
+            ->where('previous_quote_policy_number', $quoteData->policy)->first();
 
         $updateCarQuoteRenewal->car_type_insurance_id = $carTypeOfInsurance;
         $updateCarQuoteRenewal->advisor_id = $advisorId;
@@ -767,51 +767,51 @@ class RenewalsUploadService
     public function renewalBatchEmailProcess($batchLeadId, $batchEmailId)
     {
         $carQuote = CarQuote::find($batchLeadId);
-        $ecomUrl = Config::get('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$carQuote->uuid;
+        $ecomUrl = Config::get('constants.ECOM_CAR_INSURANCE_QUOTE_URL') . $carQuote->uuid;
 
-        if($carQuote->previous_quote_id != null) {
+        if ($carQuote->previous_quote_id != null) {
 
             $primaryEmail = $carQuote->email;
             $otherEmails = $carQuote->other_email_addresses;
 
-            if($otherEmails) {
-                $allEmails = $primaryEmail.",".$otherEmails;
+            if ($otherEmails) {
+                $allEmails = $primaryEmail . "," . $otherEmails;
             } else {
                 $allEmails = $primaryEmail;
             }
 
-            $finalEmails = explode(",",$allEmails);
+            $finalEmails = explode(",", $allEmails);
 
-            foreach($finalEmails as $finalEmail) {
+            foreach ($finalEmails as $finalEmail) {
 
                 $previousCarQuote = CarQuote::find($carQuote->previous_quote_id);
-                Log::channel('daily')->info("CDBID: ".$carQuote->code." RenewalBatch: ".$carQuote->renewal_batch." PreviousQuoteId: ".$carQuote->previous_quote_id." Email: ".$carQuote->email." finalEmail: ".$finalEmail." ecomUrl: ".$ecomUrl." renewal_expiry_date: ".$previousCarQuote->renewal_expiry_date);
+                Log::info("CDBID: " . $carQuote->code . " RenewalBatch: " . $carQuote->renewal_batch . " PreviousQuoteId: " . $carQuote->previous_quote_id . " Email: " . $carQuote->email . " finalEmail: " . $finalEmail . " ecomUrl: " . $ecomUrl . " renewal_expiry_date: " . $previousCarQuote->renewal_expiry_date);
 
-                if(isset($previousCarQuote->renewal_expiry_date)) {
+                if (isset($previousCarQuote->renewal_expiry_date)) {
                     $renewalExpiryDate = date('d/m/Y', strtotime($previousCarQuote->renewal_expiry_date));
                 } else {
                     $renewalExpiryDate = '';
                 }
 
-                if(isset($carQuote->car_type_insurance_id)) {
+                if (isset($carQuote->car_type_insurance_id)) {
                     $carTypeInsurance = CarTypeInsurance::where('id', '=', $carQuote->car_type_insurance_id)->value('text');
                 } else {
                     $carTypeInsurance = '';
                 }
 
-                if(isset($carQuote->car_make_id)) {
+                if (isset($carQuote->car_make_id)) {
                     $carMake = CarMake::where('id', '=', $carQuote->car_make_id)->value('text');
                 } else {
                     $carMake = '';
                 }
 
-                if(isset($carQuote->car_model_id)) {
+                if (isset($carQuote->car_model_id)) {
                     $carModel = CarModel::where('id', '=', $carQuote->car_model_id)->value('text');
                 } else {
                     $carModel = '';
                 }
 
-                if(isset($carQuote->advisor_id)) {
+                if (isset($carQuote->advisor_id)) {
                     $advisorModel = User::where('id', '=', $carQuote->advisor_id)->first();
                     $advisorName = $advisorModel->name;
                     $advisorEmail = $advisorModel->email;
@@ -866,10 +866,10 @@ class RenewalsUploadService
             $emailTemplateId = (int)Config::get('constants.SIB_CAR_RENEWALS_TEMPLATE_ID');
             $tag = 'renewal';
 
-            if($appEnv == 'production') {
+            if ($appEnv == 'production') {
                 $tag = $tag;
             } else {
-                $tag = $appEnv.'-'.$tag;
+                $tag = $appEnv . '-' . $tag;
             }
 
             $headers = [
@@ -925,21 +925,20 @@ class RenewalsUploadService
             $getMsgDetail = json_decode($clientRequest->getBody()->getContents());
 
             $getStatusCode = $clientRequest->getStatusCode();
-            $getResponse = json_encode($clientRequest->getStatusCode()." ".$clientRequest->getBody()->getContents());
+            $getResponse = json_encode($clientRequest->getStatusCode() . " " . $clientRequest->getBody()->getContents());
 
-            if($getStatusCode == 201) {
+            if ($getStatusCode == 201) {
                 $isEmailSent = 1;
             } else {
-                $errorMessage = "SIB Error:  ".$getStatusCode." ".$emailData['customerEmail']." ".get_class();
-                Log::channel('daily')->error("errorMessage: ".$errorMessage);
+                $errorMessage = "SIB Error:  " . $getStatusCode . " " . $emailData['customerEmail'] . " " . get_class();
+                Log::error("errorMessage: " . $errorMessage);
                 $isEmailSent = 0;
             }
-        }
-        catch(Exception $ex) {
-            $errorMessage = "SIB Failed Error: ".$ex->getCode()." ".$ex->getMessage()." ".get_class();
-            Log::channel('daily')->info("errorMessage: ".$errorMessage);
+        } catch (Exception $ex) {
+            $errorMessage = "SIB Failed Error: " . $ex->getCode() . " " . $ex->getMessage() . " " . get_class();
+            Log::info("errorMessage: " . $errorMessage);
             $getStatusCode = $ex->getCode();
-            $getResponse = json_encode($ex->getCode()." ".$ex->getMessage());
+            $getResponse = json_encode($ex->getCode() . " " . $ex->getMessage());
             $isEmailSent = 0;
         }
 
@@ -955,11 +954,11 @@ class RenewalsUploadService
     public function updateRenewalBatchRecord($batchEmailId)
     {
         $renewalsBatchStatus = RenewalsBatchEmails::where('id', $batchEmailId)->first();
-        if($renewalsBatchStatus) { // if record exists, update the number of rows uploaded
+        if ($renewalsBatchStatus) { // if record exists, update the number of rows uploaded
             $renewalsBatchStatus->total_sent = $renewalsBatchStatus->total_sent + 1;
             $renewalsBatchStatus->save();
         }
-        if(($renewalsBatchStatus->total_sent + $renewalsBatchStatus->total_bounced) == $renewalsBatchStatus->total_leads) { // if all records are uploaded, update the status to completed
+        if (($renewalsBatchStatus->total_sent + $renewalsBatchStatus->total_bounced) == $renewalsBatchStatus->total_leads) { // if all records are uploaded, update the status to completed
             $renewalsBatchStatus->status = ProcessStatusCode::COMPLETED;
             $renewalsBatchStatus->save();
         }
@@ -968,13 +967,13 @@ class RenewalsUploadService
     public function updateAdvisorAssignedDateTime($modelName, $quoteId, $quoteRequestIdName, $currentUserId, $advisorId)
     {
         $nameSpace = '\\App\\Models\\';
-        $modelLobDetail = $nameSpace.$modelName;
+        $modelLobDetail = $nameSpace . $modelName;
 
         // check if record exists in model_detail table
         $isRecordExist = $modelLobDetail::where($quoteRequestIdName, $quoteId)->first();
 
-        if($advisorId) {
-            if(!$isRecordExist) {
+        if ($advisorId) {
+            if (!$isRecordExist) {
                 $lobDetail = new $modelLobDetail([
                     $quoteRequestIdName => $quoteId, // i-e: $quoteRequestIdName = car_quote_request_id
                     "created_at" => Carbon::now(),

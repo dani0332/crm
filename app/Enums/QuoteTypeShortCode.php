@@ -19,4 +19,5 @@ final class QuoteTypeShortCode extends Enum
     const LIF = "LIF";
     const TRA = "TRA";
     const YAC = "YAC";
+    const PET = "PET";
 }

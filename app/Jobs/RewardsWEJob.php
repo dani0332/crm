@@ -37,17 +37,17 @@ class RewardsWEJob implements ShouldQueue
     public function handle()
     {
         try {
-            Log::channel('daily')->info('Entered in RewardWEJob with customer id : ' . $this->customerId);
+            Log::info('Entered in RewardWEJob with customer id : ' . $this->customerId);
             $customer = Customer::select('*')->where('id', $this->customerId)->first();
             if (!$customer->is_we_sent && $customer->has_reward_access && $customer->has_alfred_access) {
                 $email = new MailerService($this->request);
                 Mail::to($this->request->to)->send($email);
-                Log::channel('daily')->info('Email sent to customer having id: ' . $this->customerId);
+                Log::info('Email sent to customer having id: ' . $this->customerId);
                 $customer->is_we_sent = true;
                 $customer->save();
-                Log::channel('daily')->info('isWESent flag set to true for customer having id: ' . $this->customerId);
+                Log::info('isWESent flag set to true for customer having id: ' . $this->customerId);
             } else {
-                Log::channel('daily')->info('Welcome email not sent to customer having id : ' . $this->customerId . ' , is_we_sent: ' . $customer->is_we_sent . ', has_alfred_access: ' . $customer->has_alfred_access . ', has_reward_access: ' . $customer->has_reward_access);
+                Log::info('Welcome email not sent to customer having id : ' . $this->customerId . ' , is_we_sent: ' . $customer->is_we_sent . ', has_alfred_access: ' . $customer->has_alfred_access . ', has_reward_access: ' . $customer->has_reward_access);
             }
         } catch (Exception $ex) {
             return $ex;
