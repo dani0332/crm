@@ -33,4 +33,5 @@ final class quoteStatusCode extends Enum
     const TRANSACTIONAPPROVED = "Transaction Approved";
     const FAKE = "Fake";
     const GROUP_MEDICAL= 'Group Medical';
+    const QualificationPending = 'Qualification Pending';
 }
