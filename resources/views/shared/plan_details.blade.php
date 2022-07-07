@@ -636,66 +636,64 @@ if (!isset($modelName)) {
 
                 <div class="tab-content" style="padding-top: 20px;">
                     <div class="tab-pane fade show active" id="general" role="tabpanel" aria-labelledby="general-tab">
-                        <form id="update_car_plan" method='post' enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left" autocomplete="off">
-                            {{csrf_field()}}
-                            <input type="hidden" id="car_plan_id" name="car_plan_id" value="{{ $planId }}">
-                            <input type="hidden" id="car_quote_uuid" name="car_quote_uuid" value="{{ $quoteId }}">
-                            <input type="hidden" id="car_value_lower_limit" name="car_value_lower_limit" value="{{ $carValueLowerLimit }}">
-                            <input type="hidden" id="car_value_upper_limit" name="car_value_upper_limit" value="{{ $carValueUpperLimit }}">
-                            <input type="hidden" id="repair_type" name="repair_type" value="{{ $repairType }}">
-                            <input type="hidden" id="is_create" name="is_create" value="0">
-                            <table cellpadding="8" cellspacing="8">
-                                <tr>
-                                    <td valign="top" style="width: 120px;">Provider Code:</td>
-                                    <td>{{ $providerCode }}</td>
-                                    <td valign="top">Provider Name:</td>
-                                    <td>{{ $providerName }}</td>
-                                </tr>
-                                <tr>
-                                    <td valign="top">Repair Type:</td>
-                                    <td>{{ $repairType }}</td>
-                                    <td>Insurer Quote No.:</td>
-                                    <td>{{ $insurerQuoteNo }}</td>
-                                </tr>
-                                <tr>
-                                    <td valign="top">Actual Premium:</td>
-                                    <td><input type="number" id="actual_premium" name="actual_premium" value="{{ old('actual_premium', $actualPremium) }}" class="form-control" onKeyDown="if(this.value.length==8) return false;" onkeypress="return isNumberKey(event,this)"></td>
-                                    <td valign="top">Discounted Premium:</td>
-                                    <td>
-                                        <input type="number" id="discounted_premium" name="discounted_premium" value="{{ old('discounted_premium', $discountPremium) }}" class="form-control" onKeyDown="if(this.value.length==8) return false;" onkeypress="return isNumberKey(event,this)">
-                                        <input type="hidden" id="premium_vat" name="premium_vat" value="{{ $vat }}">
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td valign="top">Car value:</td>
-                                    <td><input type="number" id="car_value" name="car_value" value="{{ old('car_value', $carValue) }}" class="form-control" onKeyDown="if(this.value.length==8) return false;" style="{{ $readonlyFieldCss }}" onkeypress="return isNumberKey(event,this)">
-                                        <span style="font-size: 10px;">Min: AED {{ number_format($carValueLowerLimit) }} - Max: AED {{ number_format($carValueUpperLimit) }}</span>
-                                    </td>
-                                    <td valign="top">Excess:</td>
-                                    <td><input type="number" id="excess" name="excess" value="{{ old('excess', $excess) }}" class="form-control" onKeyDown="if(this.value.length==8) return false;" style="{{ $readonlyFieldCss }}" onkeypress="return isNumberKey(event,this)"></td>
-                                </tr>
-                                <tr>
-                                    <td valign="top">Hide Plan?</td>
-                                    <td><select class="form-control" id='is_disabled' name="is_disabled">
-                                            <option value="false" {{ $isDisabled == "false" ? 'selected="selected"' : '' }}>No</option>
-                                            <option value="true" {{ $isDisabled == "true" ? 'selected="selected"' : '' }}>Yes</option>
-                                        </select>
-                                    </td>
-                                    <td> </td>
-                                    <td align="right">
-                                        <button type="submit" class="btn btn-warning btn-sm update-car-quote-plan-button" {{ $carQuoteEditDisable }}>Update</button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td colspan="4">
-                                        <div class="car-quote-plan-validation-div" style="color:red;font-weight:bold;text-align:right;"></div>
-                                    </td>
-                                </tr>
-                            </table>
-                        </form>
+                        {{csrf_field()}}
+                        <input type="hidden" id="car_plan_id" name="car_plan_id" value="{{ $planId }}">
+                        <input type="hidden" id="car_quote_uuid" name="car_quote_uuid" value="{{ $quoteId }}">
+                        <input type="hidden" id="car_value_lower_limit" name="car_value_lower_limit" value="{{ $carValueLowerLimit }}">
+                        <input type="hidden" id="car_value_upper_limit" name="car_value_upper_limit" value="{{ $carValueUpperLimit }}">
+                        <input type="hidden" id="repair_type" name="repair_type" value="{{ $repairType }}">
+                        <input type="hidden" id="is_create" name="is_create" value="0">
+                        <table cellpadding="8" cellspacing="8">
+                            <tr>
+                                <td valign="top" style="width: 120px;">Provider Code:</td>
+                                <td>{{ $providerCode }}</td>
+                                <td valign="top">Provider Name:</td>
+                                <td>{{ $providerName }}</td>
+                            </tr>
+                            <tr>
+                                <td valign="top">Repair Type:</td>
+                                <td>{{ $repairType }}</td>
+                                <td>Insurer Quote No.:</td>
+                                <td>{{ $insurerQuoteNo }}</td>
+                            </tr>
+                            <tr>
+                                <td valign="top">Actual Premium:</td>
+                                <td><input type="number" id="actual_premium" name="actual_premium" value="{{ old('actual_premium', $actualPremium) }}" class="form-control" onKeyDown="if(this.value.length==8) return false;" onkeypress="return isNumberKey(event,this)"></td>
+                                <td valign="top">Discounted Premium:</td>
+                                <td>
+                                    <input type="number" id="discounted_premium" name="discounted_premium" value="{{ old('discounted_premium', $discountPremium) }}" class="form-control" onKeyDown="if(this.value.length==8) return false;" onkeypress="return isNumberKey(event,this)">
+                                    <input type="hidden" id="premium_vat" name="premium_vat" value="{{ $vat }}">
+                                </td>
+                            </tr>
+                            <tr>
+                                <td valign="top">Car value:</td>
+                                <td><input type="number" id="car_value" name="car_value" value="{{ old('car_value', $carValue) }}" class="form-control" onKeyDown="if(this.value.length==8) return false;" style="{{ $readonlyFieldCss }}" onkeypress="return isNumberKey(event,this)">
+                                    <span style="font-size: 10px;">Min: AED {{ number_format($carValueLowerLimit) }} - Max: AED {{ number_format($carValueUpperLimit) }}</span>
+                                </td>
+                                <td valign="top">Excess:</td>
+                                <td><input type="number" id="excess" name="excess" value="{{ old('excess', $excess) }}" class="form-control" onKeyDown="if(this.value.length==8) return false;" style="{{ $readonlyFieldCss }}" onkeypress="return isNumberKey(event,this)"></td>
+                            </tr>
+                            <tr>
+                                <td valign="top">Hide Plan?</td>
+                                <td><select class="form-control" id='is_disabled' name="is_disabled">
+                                        <option value="false" {{ $isDisabled == "false" ? 'selected="selected"' : '' }}>No</option>
+                                        <option value="true" {{ $isDisabled == "true" ? 'selected="selected"' : '' }}>Yes</option>
+                                    </select>
+                                </td>
+                                <td> </td>
+                                <td align="right">
+                                    <button type="submit" class="btn btn-warning btn-sm update-car-quote-plan-button" {{ $carQuoteEditDisable }}>Update</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td colspan="4">
+                                    <div class="car-quote-plan-validation-div" style="color:red;font-weight:bold;text-align:right;"></div>
+                                </td>
+                            </tr>
+                        </table>
                         <br />
                         <p>
-                            <strong>Features</strong>
+                        <strong>Features</strong>
                         <table cellpadding="3" cellspacing="3">
                             @foreach ($listQuotePlanBenefitsFeatures as $key => $listQuotePlanBenefitsFeature)
                             <tr>

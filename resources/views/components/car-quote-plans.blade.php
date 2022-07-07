@@ -30,20 +30,20 @@ use App\Enums\CarPlanExclusionsCode;
                     </div>
                 </div>
                 @if(gettype($listQuotePlans) != 'string')
-                <table id="dataTableCarQuotePlans" class="table table-striped jambo_table" style="width:100%">
+                <table id="dataTableCarQuotePlans" class="table table-striped jambo_table" style="table-layout: fixed;" style="width:100%">
                     <thead>
                         <tr>
                             <th style="width: 100px !important">Provider Name</th>
-                            <th style="width: 100px !important">Plan Name</th>
+                            <th style="width: 80px !important">Plan Name</th>
                             <th style="width: 80px !important">Repair Type</th>
                             <th style="width: 80px !important">Insurer Quote No.</th>
                             <th style="width: 100px !important">TPL Limit</th>
                             <th style="width: 100px !important">PAB cover</th>
                             <th style="width: 100px !important">Roadside assistance</th>
                             <th style="width: 100px !important">Oman cover TPL</th>
-                            <th style="width: 100px !important">Actual Premium</th>
-                            <th style="width: 100px !important">Discounted Premium</th>
-                            <th style="width: 100px !important">Premium with VAT.</th>
+                            <th style="width: 80px !important">Actual Premium</th>
+                            <th style="width: 80px !important">Discounted Premium</th>
+                            <th style="width: 80px !important">Premium with VAT.</th>
                             <th style="width: 50px !important">Action</th>
                         </tr>
                     </thead>
