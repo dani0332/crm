@@ -6,7 +6,7 @@
         <div class="x_panel">
             <div class="x_title">
                 <h2>User Detail</h2>
-                 <ul class="nav navbar-right panel_toolbox">
+                <ul class="nav navbar-right panel_toolbox">
                     <li><a href="{{ route('users.index') }}" class="btn btn-warning btn-sm">Users List</a></li>
                 </ul>
                 <div class="clearfix"></div>
@@ -14,11 +14,12 @@
             <div class="x_content">
                 <br />
                 @if(session()->has('success'))
-                    <div class="alert alert-success">{{ session()->get('success') }}</div>
+                <div class="alert alert-success">{{ session()->get('success') }}</div>
                 @endif
-                <form id="demo-form2" method='post' action="{{ route('users.update', ['user' => $user->id]) }}" enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left">
-                {{csrf_field()}}
-                @method('PUT')
+                <form id="demo-form2" method='post' action="{{ route('users.update', ['user' => $user->id]) }}"
+                    enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left">
+                    {{csrf_field()}}
+                    @method('PUT')
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="Name"><b>Name</b></label>
                         <div class="col-md-6 col-sm-6">
@@ -32,13 +33,15 @@
                         </div>
                     </div>
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Mobile"><b>Mobile Number</b></label>
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Mobile"><b>Mobile
+                                Number</b></label>
                         <div class="col-md-6 col-sm-6">
                             <p class="label-align-center">{{ $user->mobile_no }}</p>
                         </div>
                     </div>
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Landline"><b>Landline Number</b></label>
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Landline"><b>Landline
+                                Number</b></label>
                         <div class="col-md-6 col-sm-6">
                             <p class="label-align-center">{{ $user->landline_no }}</p>
                         </div>
@@ -47,42 +50,55 @@
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="Roles"><b>Roles</b></label>
                         <div class="col-md-6 col-sm-6">
                             @foreach($user->usersroles as $userrole)
-                                <label class="label-align-center"><b>{{ $userrole->name }}</b></label>
+                            <label class="label-align-center"><b>{{ $userrole->name }}</b></label>
                             @endforeach
                         </div>
                     </div>
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Updated At"><b>Main Team</b></label>
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Updated At"><b>Main
+                                Team</b></label>
                         <div class="col-md-6 col-sm-6">
                             <p class="label-align-center">{{ $teamName }}</p>
                         </div>
                     </div>
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Updated At"><b>Sub Teams</b></label>
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Updated At"><b>Sub
+                                Teams</b></label>
                         <div class="col-md-6 col-sm-6">
                             <p class="label-align-center">{{ $subTeamName }}</p>
                         </div>
                     </div>
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Updated At"><b>LOB Visisblity Team</b></label>
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Updated At"><b>LOB Visisblity
+                                Team</b></label>
                         <div class="col-md-6 col-sm-6">
                             <p class="label-align-center">{{ $additionalTeamNames }}</p>
                         </div>
                     </div>
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Updated At"><b>Manager</b></label>
+                        <label class="col-form-label col-md-3 col-sm-3 label-align"
+                            for="Updated At"><b>Manager</b></label>
                         <div class="col-md-6 col-sm-6">
                             <p class="label-align-center">{{ $managerName }}</p>
                         </div>
                     </div>
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Created At"><b>Created At</b></label>
+                        <label class="col-form-label col-md-3 col-sm-3 label-align"
+                            for="Updated At"><b>IsActive</b></label>
+                        <div class="col-md-6 col-sm-6">
+                            <p class="label-align-center">{{ $user->is_active == 1 ? 'Active' : 'InActive' }}</p>
+                        </div>
+                    </div>
+                    <div class="item form-group">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Created At"><b>Created
+                                At</b></label>
                         <div class="col-md-6 col-sm-6">
                             <p class="label-align-center">{{ $user->created_at }}</p>
                         </div>
                     </div>
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Updated At"><b>Updated At</b></label>
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Updated At"><b>Updated
+                                At</b></label>
                         <div class="col-md-6 col-sm-6">
                             <p class="label-align-center">{{ $user->updated_at }}</p>
                         </div>
@@ -91,8 +107,10 @@
                     <div class="row">
                         <div class="col-auto mr-auto"></div>
                         <div class="col-auto">
-                            <a href="{{ route('users.edit', ['user' => $user->id])}}" class='btn btn-warning btn-sm'>Edit</a>
-                            <a href="#" date-route="{{ route('users.destroy', ['user' => $user->id])}}" class='btn btn-warning btn-sm delete'>Delete</a>
+                            <a href="{{ route('users.edit', ['user' => $user->id])}}"
+                                class='btn btn-warning btn-sm'>Edit</a>
+                            <a href="#" date-route="{{ route('users.destroy', ['user' => $user->id])}}"
+                                class='btn btn-warning btn-sm delete'>Delete</a>
                         </div>
                     </div>
                 </form>
@@ -101,7 +119,8 @@
     </div>
 </div>
 <div id="auditable">
-    <button id='auditablebtn' class="btn btn-warning btn-sm auditablebtn" data-id="{{ $user->id }}" data-model="App\Models\User">
+    <button id='auditablebtn' class="btn btn-warning btn-sm auditablebtn" data-id="{{ $user->id }}"
+        data-model="App\Models\User">
         View Audit Logs
     </button>
 </div>

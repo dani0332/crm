@@ -14,4 +14,5 @@ final class LeadStatusCode extends Enum
 {
     const TRANSACTION_APPROVED = 'Transaction Approved';
     const LOST = "Lost";
+    const Qualified = "Qualified";
 }

@@ -48,7 +48,9 @@ if (!isset($modelName)) {
             foreach ($listQuotePlanAddons as $listQuotePlanAddon) {
                 foreach ($listQuotePlanAddon->carAddonOption as $carAddonOption) {
                     if(isset($carAddonOption->isSelected)) {
-                        $totalSelectedAddonsPriceWithVat += $carAddonOption->price + $carAddonOption->vat;
+                        if($carAddonOption->isSelected == 1) {
+                            $totalSelectedAddonsPriceWithVat += $carAddonOption->price + $carAddonOption->vat;
+                        }
                     }
                 }
             }

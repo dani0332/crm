@@ -16,6 +16,7 @@ use Maatwebsite\Excel\Concerns\WithStartRow;
 use Maatwebsite\Excel\Concerns\SkipsFailures;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class RenewalsImport implements OnEachRow, WithStartRow, WithValidation, SkipsOnFailure, WithChunkReading
 {
@@ -44,7 +45,7 @@ class RenewalsImport implements OnEachRow, WithStartRow, WithValidation, SkipsOn
         ++$this->rows;
         $row = $row->toArray();
         $qouteType = $row[2];
-        $email = preg_replace('/\s/', '', strtolower(trim(ltrim(rtrim($row[1])))));
+        $email = $row[1];
 
         if(!empty($email)) {
 
@@ -87,16 +88,10 @@ class RenewalsImport implements OnEachRow, WithStartRow, WithValidation, SkipsOn
             $emailResult = $this->sanitizeEmail($email);
             $phoneResult = $this->sanitizePhoneNumber($customerPhone);
 
-            if(strpos($email, ',') !== false) {
-                $otherEmailIds = substr($email, strpos($email, ",") + 1);
-            } else {
-                $otherEmailIds = '';
-            }
-
             $email = $emailResult['0']; // assign the sanitized email to the email variable
             $customerPhone = $phoneResult['0']; // assign the sanitized phone number to the phone variable
-            $notes = $emailResult['1'] != '' ? $notes . $emailResult['1'] : $notes; // if the notes variable is not empty, add the notes from the email sanitization to the notes variable
-            $notes = $phoneResult['1'] != '' ? $notes . $phoneResult['1'] : $notes; // if the notes variable is not empty, add the notes from the phone sanitization to the notes variable
+            $notes = $emailResult['1'] != '' ? $notes . $emailResult['2'] : $notes; // if the notes variable is not empty, add the notes from the email sanitization to the notes variable
+            $notes = $phoneResult['1'] != '' ? $notes . $phoneResult['2'] : $notes; // if the notes variable is not empty, add the notes from the phone sanitization to the notes variable
 
             $findCustomerByEmail = CustomerService::getCustomerByEmail($email);
             if($findCustomerByEmail->isEmpty()) {
@@ -132,7 +127,7 @@ class RenewalsImport implements OnEachRow, WithStartRow, WithValidation, SkipsOn
                     "object" => $object,
                     "gross_premium" => $premium,
                     "notes" => $notes,
-                    "other_email_ids" => $otherEmailIds,
+                    "other_email_ids" => $emailResult['1'],
                 );
             } else {
                 $customer = $findCustomerByEmail->first();
@@ -158,7 +153,7 @@ class RenewalsImport implements OnEachRow, WithStartRow, WithValidation, SkipsOn
                     "object" => $object,
                     "gross_premium" => $premium,
                     "notes" => $notes,
-                    "other_email_ids" => $otherEmailIds,
+                    "other_email_ids" => $emailResult['1'],
                 );
             }
 
@@ -168,43 +163,38 @@ class RenewalsImport implements OnEachRow, WithStartRow, WithValidation, SkipsOn
 
     function sanitizePhoneNumber($phone)
     {
-        $delimiterArray = [',', ':', '/', ';'];
-        $phone = str_replace(' ', '', $phone); // Replaces all spaces with hyphens.
-        $cleanPhone = '';
-        $notes = '';
-        $otherPhoneNos = substr($phone, strpos($phone, ",") + 1);
-        foreach ($delimiterArray as $delimiter) {
-            if(strpos($phone, $delimiter) !== false) {
-                $phoneNumberArray = explode($delimiter, $phone);
-                $cleanPhone = preg_replace('/[^A-Za-z0-9\-]/', '', $phoneNumberArray[0]); // Removes special chars.
-                $notes = " - Additional phone numbers from phone column : ". $otherPhoneNos;
-                break;
-            }
-            else{
-                $cleanPhone = $phone;
-            }
+        $delimiterArray = [',', ':', '/', ';']; // delimiters
+        $phoneClean = preg_replace('/\s/', '', strtolower(trim(ltrim(rtrim($phone)))));
+        $phoneNoReplaceComma = str_replace($delimiterArray,',',$phoneClean);
+        $primaryPhoneNumber = strtok($phoneNoReplaceComma, ',');
+
+        if(strpos($phoneNoReplaceComma, ',') !== false) {
+            $otherphoneNos = substr($phoneNoReplaceComma, strpos($phoneNoReplaceComma, ",") + 1);
+        } else {
+            $otherphoneNos = '';
         }
-        return [$cleanPhone, $notes];
+
+        $notes = " - Additional phone numbers from phone column : ". $otherphoneNos;
+
+        return [$primaryPhoneNumber, $otherphoneNos, $notes];
     }
 
     function sanitizeEmail($email)
     {
         $delimiterArray = [',', ':', '/', ';'];	// delimiters
-        $cleanEmail = '';
-        $notes = '';
-        $otherEmailIds = substr($email, strpos($email, ",") + 1);
-        foreach ($delimiterArray as $delimiter) {
-            if(strpos($email, $delimiter) !== false) {
-                $emailArray = explode($delimiter, $email);
-                $cleanEmail = $emailArray[0];
-                $notes = " - Additional Emails from email column : ". $otherEmailIds;
-                break;
-            }
-            else{
-                $cleanEmail = $email;
-            }
+        $emailClean = preg_replace('/\s/', '', strtolower(trim(ltrim(rtrim($email)))));
+        $emailReplaceComma = str_replace($delimiterArray,',',$emailClean);
+        $primaryEmail = strtok($emailReplaceComma, ',');
+
+        if(strpos($emailReplaceComma, ',') !== false) {
+            $otherEmailIds = substr($emailReplaceComma, strpos($emailReplaceComma, ",") + 1);
+        } else {
+            $otherEmailIds = '';
         }
-        return [$cleanEmail, $notes];
+
+        $notes = " - Additional Emails from email column : ". $otherEmailIds;
+
+        return [$primaryEmail, $otherEmailIds, $notes];
     }
 
     function insurersMapping($insurerName)
@@ -294,8 +284,8 @@ class RenewalsImport implements OnEachRow, WithStartRow, WithValidation, SkipsOn
                 if(!$value) {
                     $onFailure('Customer Email is required');
                 }
-                if(strlen($value) > 100) {
-                    $onFailure('Customer Email should not exceed length of 100 characters');
+                if(strlen($value) > 255) {
+                    $onFailure('Customer Email should not exceed length of 255 characters');
                 }
             },
             '*.2' => function($attribute, $value, $onFailure) { // Type
