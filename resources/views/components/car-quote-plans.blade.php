@@ -148,19 +148,13 @@ use App\Enums\CarPlanExclusionsCode;
                                     @endforeach
                                 </table>
                             </td>
-                            <td>{{ $quotePlan->actualPremium }}</td>
+                            <td>{{ $quotePlan->actualPremium ? number_format($quotePlan->actualPremium, 2) : '0.00' }}</td>
+                            <td>{{ $quotePlan->discountPremium ? number_format($quotePlan->discountPremium, 2) : '0.00' }}</td>
                             <td>
-                                <input type="hidden" id="quote_plan_id[]" name="quote_plan_id[]" value="{{ $quotePlan->id }}">
-                                <div class="editDIV1">
-                                    <span class="editESPAN" style="display:block;line-height: unset;">{{ $quotePlan->discountPremium }}</span>
-                                    <input type="number" id="discountedPremium[]" name="discountedPremium[]" value="{{ $quotePlan->discountPremium }}" class="editINPUT" style="display:none;" size="8" maxlength="8">
-                                </div>
-                            </td>
-                            <td>
-                                <?php
-                                $totalPremium = $quotePlan->discountPremium + $quotePlan->vat + $totalSelectedAddonsPriceWithVat;
-                                ?>
-                                {{ $totalPremium }}
+                                @php
+                                    $totalPremium = $quotePlan->discountPremium + $quotePlan->vat + $totalSelectedAddonsPriceWithVat;
+                                @endphp
+                                {{ $totalPremium ? number_format($totalPremium, 2) : '0.00' }}
                             </td>
                             <td><a href="#" planDetailUrl="{{ $record->uuid }}/plan_details/{{ $quotePlan->id }}" data-toggle="modal" data-target="#quotePlanModal" class="quotePlanModalPopup">View</a></td>
                         </tr>
