@@ -159,19 +159,19 @@ if (!isset($modelName)) {
                         validationDivText('.car-quote-plan-validation-div', result);
                         // Conditionally lock fields
                         conditionallyLockFields(discounted_premium, carPlanType, carPlanTypeTpl);
-                    },
-                    error: function(jqXhr, textStatus, errorMessage) {
-                        $(".loader").hide();
-                        showTotals('.car-quote-plan-total-premium', '');
+
                         var totalSelectedAddonsPriceWithVat = 0;
                         $.each(addons, function(i, jsondata) {
                             if (jsondata.isSelected == true) {
                                 totalSelectedAddonsPriceWithVat += jsondata.price + jsondata.vat;
                             }
                         });
-
                         var totalPremium = Number(discounted_premium) + Number(premium_vat) + Number(totalSelectedAddonsPriceWithVat);
                         showTotals('.car-quote-plan-total-premium', totalPremium.toFixed(2));
+                    },
+                    error: function(jqXhr, textStatus, errorMessage) {
+                        $(".loader").hide();
+                        showTotals('.car-quote-plan-total-premium', '');
                         validationDivText('.car-quote-plan-validation-div', jqXhr.responseText);
                     }
                 });
