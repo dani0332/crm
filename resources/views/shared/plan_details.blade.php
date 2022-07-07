@@ -157,29 +157,28 @@ if (!isset($modelName)) {
                     success: function(result) {
                         $(".loader").hide();
                         validationDivText('.car-quote-plan-validation-div', result);
-                        // Conditionally lock fields
                         conditionallyLockFields(discounted_premium, carPlanType, carPlanTypeTpl);
 
-                        var totalSelectedAddonsPriceWithVat = 0;
+                        var totalPriceSelectedAddonsWithVat = 0;
                         $.each(addons, function(i, jsondata) {
                             if (jsondata.isSelected == true) {
-                                totalSelectedAddonsPriceWithVat += jsondata.price + jsondata.vat;
+                                totalPriceSelectedAddonsWithVat += jsondata.price + jsondata.vat;
                             }
                         });
-                        var totalPremium = Number(discounted_premium) + Number(premium_vat) + Number(totalSelectedAddonsPriceWithVat);
-                        showTotals('.car-quote-plan-total-premium', totalPremium.toFixed(2));
+
+                        const premiumWithVat = getPremiumWithVat(5, discounted_premium);
+
+                        totalPremium('.car-quote-plan-total-premium', discounted_premium, premiumWithVat, totalPriceSelectedAddonsWithVat);
                     },
                     error: function(jqXhr, textStatus, errorMessage) {
                         $(".loader").hide();
-                        showTotals('.car-quote-plan-total-premium', '');
                         validationDivText('.car-quote-plan-validation-div', jqXhr.responseText);
                     }
                 });
             });
 
             // Show total on load
-            var totalPremium = JSON.parse('<?php echo json_encode($totalPremium) ?>');
-            showTotals('.car-quote-plan-total-premium', totalPremium.toFixed(2));
+            totalPremium('.car-quote-plan-total-premium', JSON.parse('<?php echo json_encode($discountPremium) ?>'), JSON.parse('<?php echo json_encode($vat) ?>'), JSON.parse('<?php echo json_encode($totalSelectedAddonsPriceWithVat) ?>'));
 
             // Conditionally lock fields
             conditionallyLockFields(discountedPremium, carPlanType, carPlanTypeTpl);
@@ -200,8 +199,9 @@ if (!isset($modelName)) {
                 $(className).text(text).css("width","700px");
             }
 
-            function showTotals(elementId, totalPremium) {
-                var totalPremiumHtml = '<div><span style="padding-top: 7px;border-top: 2px solid #E6E9ED;"><b>Total Premium with VAT:</b> AED ' + totalPremium + '</span></div>';
+            function totalPremium(elementId, discountedPremium, premiumVat, totalPriceSelectedAddonsWithVat) {
+                var totalPremium = Number(discountedPremium) + Number(premiumVat) + Number(totalPriceSelectedAddonsWithVat);
+                var totalPremiumHtml = '<div><span style="padding-top: 7px;border-top: 2px solid #E6E9ED;"><b>Total Premium with VAT:</b> AED ' + totalPremium.toFixed(2) + '</span></div>';
                 $(elementId).show().html(totalPremiumHtml).delay(5000);
             }
 
@@ -219,6 +219,10 @@ if (!isset($modelName)) {
                         unlockField(["#actual_premium","#car_value","#excess"]);
                     }
                 }
+            }
+
+            function getPremiumWithVat(percent, total) {
+                return ((percent/ 100) * total).toFixed(2)
             }
         });
     </script>
