@@ -44,19 +44,19 @@ class InslyCustomerCreationJob implements ShouldQueue
 
                     $customer_email = $getValidEmail != $customer_email ? $getValidEmail : $customer_email;
 
-                    Log::info('Initiating process for customer with email: ' . $customer_email);
+                    Log::channel('daily')->info('Initiating process for customer with email: ' . $customer_email);
 
                     $customer = CustomerService::getCustomerByEmail($customer_email)->first();
                     $customerId = 0;
                     if ($customer != '') { // If customer already exists in our database
-                        Log::info('Customer with email: ' . $customer_email . ' found in database');
+                        Log::channel('daily')->info('Customer with email: ' . $customer_email . ' found in database');
 
                         $customer->has_reward_access = true;
                         $customer->has_alfred_access = true;
                         $customerId = $customer->id;
                         $customer->save();
                     } else { // If customer doesn't exist in our database
-                        Log::info('Customer with email: ' . $customer_email . ' not found in database');
+                        Log::channel('daily')->info('Customer with email: ' . $customer_email . ' not found in database');
                         $first_name = '';
                         $last_name = '';
                         $customer_name = trim($customer_name);
@@ -70,18 +70,18 @@ class InslyCustomerCreationJob implements ShouldQueue
                             $customerId = CustomerService::createCustomerAndGetId($first_name, $last_name, $customer_email);
                             CustomerService::setCustomerAccess($customerId); // enabling has_alfred_access and has_reward_access for newly created customer
                         } catch (Exception $ex) {
-                            Log::info($ex->__toString());
-                            Log::info('Failed to create customer with email: ' . $customer_email);
+                            Log::channel('daily')->info($ex->__toString());
+                            Log::channel('daily')->info('Failed to create customer with email: ' . $customer_email);
                         }
                     }
-                    Log::info('Initiating complete insly data insertion in database table');
+                    Log::channel('daily')->info('Initiating complete insly data insertion in database table');
                     InslyDataService::AddInslyRecordInDatabase($customer_name, $customer_email, $policy, $customerId == 0 ? true : false);
 
-                    Log::info('Initiating update policy expiry update process');
+                    Log::channel('daily')->info('Initiating update policy expiry update process');
                     CustomerService::updatePolicyExpiry($customer_email, $policy->policy_date_end);
                 } else {
-                    Log::info('Customer Email OR Name is empty so adding data into the insly mapping with flag true');
-                    Log::info('Customer Email : ' . $customer_email . ' Customer Name : ' . $customer_name);
+                    Log::channel('daily')->info('Customer Email OR Name is empty so adding data into the insly mapping with flag true');
+                    Log::channel('daily')->info('Customer Email : ' . $customer_email . ' Customer Name : ' . $customer_name);
                     InslyDataService::AddInslyRecordInDatabase($customer_name, $customer_email, $policy, true);
                 }
             }

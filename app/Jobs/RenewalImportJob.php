@@ -57,7 +57,7 @@ class RenewalImportJob implements ShouldQueue
             // Sending request with data to create renewal and normal quote
             $this->renewalsUploadService->createUpdateQuote($quoteData, $quoteType, $this->fileName, $this->renewalImportCode, $this->uploadType, $this->currentUserId);
         } catch (\Exception $e) {
-            Log::info("message: " . $e->getMessage() . " line: " . $e->getLine() . " file: " . $e->getFile());
+            Log::channel('daily')->info("message: " . $e->getMessage(). " line: " . $e->getLine(). " file: " . $e->getFile());
             if ($this->attempts() < 4) {
                 $delayInSeconds = 5 * 60;
                 $this->release($delayInSeconds);

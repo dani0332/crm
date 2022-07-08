@@ -12,7 +12,7 @@ class AgeDiscount extends Model implements AuditableContract
 {
     use HasFactory, Auditable;
     protected $table = 'discount_engine_age_discount';
-    protected $fillable = ['age_start', 'age_end', 'discount'];
+    protected $fillable = ['age_start', 'age_end', 'discount']; 
 
     public function getCreatedAtAttribute($table)
     {

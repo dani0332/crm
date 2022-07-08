@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Models\BusinessInsuranceType;
 use App\Models\CarMake;
@@ -32,7 +31,6 @@ use App\Models\YearOfManufacture;
 use App\Models\CarAddOn;
 use App\Models\Team;
 use App\Models\MemberCategory;
-use App\Models\QuoteStatus;
 use DB;
 use App\Services\LookupService;
 use Illuminate\Support\Facades\Auth;
@@ -95,14 +93,11 @@ class DropdownSourceService extends BaseService
                 $data = Nationality::select('id', 'text')->where("is_active", true)->get();
                 break;
             case 'quote_status_id':
-                $data = QuoteStatus::select('id', 'text')
-                    ->whereNotIn('id', [
-                        QuoteStatusEnum::AMLScreeningCleared, QuoteStatusEnum::Draft, QuoteStatusEnum::Cancelled, QuoteStatusEnum::AMLScreeningFailed,
-                        QuoteStatusEnum::TransactionDeclined, QuoteStatusEnum::PolicyIssued, QuoteStatusEnum::PolicyInvoiced,
-                        QuoteStatusEnum::Issued
+                $data = DB::table('quote_status')->select('id', 'text')->orderBy('sort_order', 'asc')
+                    ->whereNotIn('text', [
+                        'AML Screening Cleared', 'Draft', 'Cancelled', 'AML Screening Failed', 'Transaction Declined', 'Policy Issued', 'Policy Invoiced',
+                        'Completed', 'Pending', 'Rejected', 'Issued', 'Approved', 'Approval required', 'Resubmit for approval'
                     ])
-                    ->where("is_active", true)
-                    ->orderBy('sort_order', 'asc')
                     ->get();
                 break;
             case 'cover_for_id':

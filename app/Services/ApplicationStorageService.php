@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Models\ApplicationStorage;
-use App\Models\LeadAllocation;
 use Illuminate\Http\Request;
 use DB;
 use Auth;
@@ -164,24 +163,5 @@ class ApplicationStorageService extends BaseService
         ->first();
 
         return $query->is_active;
-    }
-
-    public function getValueByKey($keyName)
-    {
-        $query = ApplicationStorage::select("value")
-        ->where("key_name", $keyName)
-        ->first();
-
-        return $query->value;
-    }
-    public function updateLeadAllocationJobStatus()
-    {
-        $applicationStorage = ApplicationStorage::where('key_name', 'LEAD_ALLOCATION_JOB_SWITCH')->first();
-        if($applicationStorage->value == '1'){
-            LeadAllocation::whereNotNull('user_id')->update(['is_available' => 0]);
-        }
-        $applicationStorage->value =  $applicationStorage->value == 1 ? 0 : 1;
-        $applicationStorage->save();
-        return true;
     }
 }
