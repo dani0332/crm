@@ -1,7 +1,6 @@
 <?php
 
 namespace App\Models;
-
 use Illuminate\Support\Facades\DB;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -65,7 +64,7 @@ class CarQuote extends BaseModel
         return $this->hasOne(PaymentStatus::class, 'id', 'payment_status_id');
     }
 
-
+    
     public function quoteStatus()
     {
         return $this->hasOne(QuoteStatus::class, 'id', 'quote_status_id');
@@ -87,26 +86,26 @@ class CarQuote extends BaseModel
 
     public function car_make_id()
     {
-        return $this->hasOne(CarMake::class, 'id', 'car_make_id')->select(['id', 'code', 'text']);;
+        return $this->hasOne(CarMake::class, 'id', 'car_make_id')->select(['id', 'code','text']);;
     }
 
     public function carQuoteRequestDetail()
     {
         return $this->hasOne(CarQuoteRequestDetail::class, 'car_quote_request_id', 'id');
     }
-
+    
     public function car_model_id()
     {
-        return $this->hasOne(CarModel::class, 'id', 'car_model_id')->select(['id', 'code', 'text']);;
+        return $this->hasOne(CarModel::class, 'id', 'car_model_id')->select(['id', 'code','text']);;
     }
 
     public function emirate_of_registration_id()
     {
-        return $this->hasOne(Emirate::class, 'id', 'emirate_of_registration_id')->select(['id', 'code', 'text']);;
+        return $this->hasOne(Emirate::class, 'id', 'emirate_of_registration_id')->select(['id', 'code','text']);;
     }
     public function claim_history_id()
     {
-        return $this->hasOne(ClaimHistory::class, 'id', 'claim_history_id')->select(['id', 'code', 'text']);;
+        return $this->hasOne(ClaimHistory::class, 'id', 'claim_history_id')->select(['id', 'code','text']);;
     }
 
     public function car_type_insurance_id()
@@ -125,7 +124,7 @@ class CarQuote extends BaseModel
 
     public function nationality_id()
     {
-        return $this->hasOne(Nationality::class, 'id', 'nationality_id')->select(['id', 'code', 'text']);;
+        return $this->hasOne(Nationality::class, 'id', 'nationality_id')->select(['id', 'code','text']);;
     }
 
     public function payment_status_id()
@@ -167,30 +166,29 @@ class CarQuote extends BaseModel
     }
     public function pa_id()
     {
-        return $this->hasOne(User::class, 'id', 'pa_id')->select(['id', 'email', 'name']);
+        return $this->hasOne(User::class, 'id', 'pa_id')->select(['id', 'email','name']);
     }
     public function payment_id()
     {
-        return $this->hasOne(User::class, 'id', 'payment_id')->select(['id', 'email', 'name']);
+        return $this->hasOne(User::class, 'id', 'payment_id')->select(['id', 'email','name']);
     }
 
     public function advisor_id()
     {
-        return $this->hasOne(User::class, 'id', 'advisor_id')->select(['id', 'email', 'name']);
+        return $this->hasOne(User::class, 'id', 'advisor_id')->select(['id', 'email','name']);
     }
 
     public function oe_id()
     {
-        return $this->hasOne(User::class, 'id', 'oe_id')->select(['id', 'email', 'name']);
+        return $this->hasOne(User::class, 'id', 'oe_id')->select(['id', 'email','name']);
     }
 
-    public function scopeRelationWhere($query, $isGetList, $filters)
-    {
+    public function scopeRelationWhere($query, $isGetList, $filters) {
+      
 
+        if(Auth::user()->hasRole('pa') && $isGetList) {
 
-        if (Auth::user()->hasRole('pa') && $isGetList) {
-
-            $query->select(['car_quote_request.id', 'code', 'first_name', 'last_name', 'car_quote_request.updated_at', 'car_quote_request.created_at', "pa_id", "kyc_status_id", "quote_status_id", "aml_status", "payment_id", "car_value", "currently_insured_with", "car_type_insurance_id", "plan_id"]);
+            $query->select(['car_quote_request.id','code', 'first_name', 'last_name', 'car_quote_request.updated_at', 'car_quote_request.created_at', "pa_id", "kyc_status_id","quote_status_id","aml_status","payment_id","car_value", "currently_insured_with", "car_type_insurance_id", "plan_id"]);
             $query->join('car_quote_insurance_coverage', 'car_quote_insurance_coverage.car_quote_id', '=', 'car_quote_request.id');
         }
     }
@@ -198,81 +196,79 @@ class CarQuote extends BaseModel
 
     /*****  NewRelationships so old should not effect */
 
-    public function relations()
-    {
+    public function relations() {
 
-        if ($this->isGetList)
-            return ["pa_id", "payment_id", "quote_status_id", "plan_id"];
+        if($this->isGetList)
+            return ["pa_id","payment_id", "quote_status_id", "plan_id"];
         else
-            return ["car_type_insurance_id", "payment_detail", "quote_status_id", "kyc_status_id", "insurance_coverage.insurance_company_id", "insurance_coverage.insurance_plan_id", "insurance_coverage.vehicle_type_id", "uae_license_held_for_id", "car_make_id", "car_model_id", "emirate_of_registration_id", "claim_history_id",  "nationality_id", "vehicle_detail_id", "pa_id", "car_quote_kyc",  "plan_id", "plan_id.provider_id"];
+            return ["car_type_insurance_id","payment_detail","quote_status_id", "kyc_status_id", "insurance_coverage.insurance_company_id", "insurance_coverage.insurance_plan_id", "insurance_coverage.vehicle_type_id", "uae_license_held_for_id", "car_make_id", "car_model_id", "emirate_of_registration_id", "claim_history_id",  "nationality_id", "vehicle_detail_id", "pa_id", "car_quote_kyc",  "plan_id","plan_id.provider_id"];
     }
 
     public $access = [
 
         'write' => ['advisor', 'oe'],
-        'update' => ['advisor', "payment", 'invoicing', 'pa', 'oe'],
+        'update' => ['advisor',"payment",'invoicing', 'pa', 'oe'],
         'delete' => ['advisor', 'oe'],
         'access' => [
-            "pa" => ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'created_at', "pa_id", "payment_id"],
-            "production_approval_manager" => ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'created_at', "pa_id", "payment_id"],
-            "advisor" => ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'created_at', 'car_value', 'dob', 'nationality_id'],
-            "oe" => ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'created_at', 'car_value', 'dob', 'nationality_id'],
-            "admin" => ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'created_at', 'car_value'],
-            "payment" => ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'created_at', 'payment_id'],
-            "invoicing" => ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'created_at', 'invoicing'],
+            "pa" => [ 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'created_at', "pa_id","payment_id"],
+            "production_approval_manager" => [ 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'created_at', "pa_id","payment_id"],
+            "advisor" => [ 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'created_at','car_value', 'dob', 'nationality_id' ],
+            "oe" => [ 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'created_at','car_value', 'dob', 'nationality_id' ],
+            "admin" => [ 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'created_at','car_value' ],
+            "payment" => [ 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'created_at','payment_id'],
+            "invoicing" => [ 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'created_at','invoicing'],
         ],
         "list" => [
-            "pa" => ['id', 'code', 'first_name', 'last_name',  'created_at', "pa_id", "kyc_status_id", "quote_status_id", "aml_status", "payment_id", "car_value", "currently_insured_with", "car_type_insurance_id", "plan_id"],
-            "production_approval_manager" => ['id', 'code', 'first_name', 'last_name',  'created_at', "pa_id", "kyc_status_id", "quote_status_id", "aml_status", "payment_id", "car_value", "currently_insured_with", "car_type_insurance_id", "plan_id"],
-            "advisor" => ['id', 'code', 'first_name', 'last_name', 'updated_at', 'created_at', "pa_id", "kyc_status_id", "quote_status_id", "aml_status", "payment_id", "car_value", "currently_insured_with", "car_type_insurance_id", "plan_id"],
-            "oe" => ['id', 'code', 'first_name', 'last_name', 'updated_at', 'created_at', "pa_id", "kyc_status_id", "quote_status_id", "aml_status", "payment_id", "car_value", "currently_insured_with", "car_type_insurance_id", "plan_id"],
-            "admin" => ['id', 'code', 'first_name', 'last_name',  'created_at', "kyc_status_id", "quote_status_id", "aml_status", "payment_id", "car_value", "currently_insured_with", "car_type_insurance_id", "plan_id"],
-            "payment" => ['id', 'code', 'first_name', 'last_name', "pa_id",  'created_at', "kyc_status_id", "quote_status_id", "aml_status", "payment_id", "car_value", "currently_insured_with", "car_type_insurance_id", "plan_id"],
-            "invoicing" => ['id', 'code', 'first_name', 'last_name', "pa_id",  'created_at', "kyc_status_id", "quote_status_id", "aml_status", "payment_id", "car_value", "currently_insured_with", "car_type_insurance_id", "invoicing", "plan_id"]
+            "pa" => [ 'id','code', 'first_name', 'last_name',  'created_at', "pa_id", "kyc_status_id","quote_status_id","aml_status","payment_id","car_value", "currently_insured_with", "car_type_insurance_id", "plan_id"],
+            "production_approval_manager" => [ 'id','code', 'first_name', 'last_name',  'created_at', "pa_id", "kyc_status_id","quote_status_id","aml_status","payment_id","car_value", "currently_insured_with", "car_type_insurance_id", "plan_id"],
+            "advisor" => [ 'id','code', 'first_name', 'last_name', 'updated_at', 'created_at', "pa_id", "kyc_status_id","quote_status_id","aml_status","payment_id","car_value", "currently_insured_with", "car_type_insurance_id", "plan_id"],
+            "oe" => [ 'id','code', 'first_name', 'last_name', 'updated_at', 'created_at', "pa_id", "kyc_status_id","quote_status_id","aml_status","payment_id","car_value", "currently_insured_with", "car_type_insurance_id", "plan_id"],
+            "admin" => [ 'id','code', 'first_name', 'last_name',  'created_at', "kyc_status_id","quote_status_id","aml_status","payment_id","car_value", "currently_insured_with", "car_type_insurance_id", "plan_id"],
+            "payment" => [ 'id','code', 'first_name', 'last_name',"pa_id",  'created_at' , "kyc_status_id","quote_status_id","aml_status","payment_id","car_value", "currently_insured_with", "car_type_insurance_id", "plan_id"],
+            "invoicing" => [ 'id','code', 'first_name', 'last_name',"pa_id",  'created_at' , "kyc_status_id","quote_status_id","aml_status","payment_id","car_value", "currently_insured_with", "car_type_insurance_id", "invoicing", "plan_id"]
         ],
         "detail" => [
-            "pa" => ['id', 'code', 'dob', 'first_name', 'last_name', 'email', 'mobile_no', 'Year_of_manufacture', "kyc_status_id", "quote_status_id", 'created_at', "car_make_id", "car_model_id", "car_value", "emirate_of_registration_id", "claim_history_id",  "nationality_id", "uae_license_held_for_id", "pa_id", "aml_status", "payment_id", "currently_insured_with", "car_type_insurance_id", "plan_id"],
-            "production_approval_manager" => ['id', 'code', 'dob', 'first_name', 'last_name', 'email', 'mobile_no', 'Year_of_manufacture', "kyc_status_id", "quote_status_id", 'created_at', "car_make_id", "car_model_id", "car_value", "emirate_of_registration_id", "claim_history_id",  "nationality_id", "uae_license_held_for_id", "pa_id", "aml_status", "payment_id", "currently_insured_with", "car_type_insurance_id", "plan_id"],
-            "advisor" => ['id', 'code', 'dob', 'first_name', 'last_name', 'email', 'mobile_no', 'Year_of_manufacture', "kyc_status_id", "quote_status_id", 'created_at', "car_make_id", "car_model_id", "car_value", "emirate_of_registration_id", "claim_history_id",  "nationality_id", "uae_license_held_for_id", "pa_id", "aml_status", "payment_id", "currently_insured_with", "car_type_insurance_id", "plan_id"],
-            "oe" => ['id', 'code', 'dob', 'first_name', 'last_name', 'email', 'mobile_no', 'Year_of_manufacture', "kyc_status_id", "quote_status_id", 'created_at', "car_make_id", "car_model_id", "car_value", "emirate_of_registration_id", "claim_history_id",  "nationality_id", "uae_license_held_for_id", "pa_id", "aml_status", "payment_id", "currently_insured_with", "car_type_insurance_id", "plan_id"],
-            "admin" => ['id', 'code', 'dob', 'first_name', 'last_name', 'email', 'mobile_no', 'Year_of_manufacture', "kyc_status_id", "quote_status_id", 'created_at', "car_make_id", "car_model_id", "car_value", "emirate_of_registration_id", "claim_history_id",  "nationality_id", "uae_license_held_for_id", "pa_id", "aml_status", "payment_id", "currently_insured_with", "car_type_insurance_id", "plan_id"],
-            "payment" => ['id', 'code', 'dob', 'first_name', 'last_name', 'email', 'mobile_no', 'Year_of_manufacture', "kyc_status_id", "quote_status_id", 'created_at', "car_make_id", "car_model_id", "car_value", "emirate_of_registration_id", "claim_history_id",  "nationality_id", "uae_license_held_for_id", "pa_id", "aml_status", "payment_id", "currently_insured_with", "car_type_insurance_id", "plan_id"],
-            "invoicing" => ['id', 'code', 'dob', 'first_name', 'last_name', 'email', 'mobile_no', 'Year_of_manufacture', "kyc_status_id", "quote_status_id", 'created_at', "car_make_id", "car_model_id", "car_value", "emirate_of_registration_id", "claim_history_id",  "nationality_id", "uae_license_held_for_id", "pa_id", "aml_status", "payment_id", "currently_insured_with", "car_type_insurance_id", "plan_id"],
+            "pa" => [ 'id','code', 'dob','first_name', 'last_name', 'email', 'mobile_no','Year_of_manufacture',"kyc_status_id","quote_status_id", 'created_at', "car_make_id", "car_model_id","car_value", "emirate_of_registration_id", "claim_history_id",  "nationality_id","uae_license_held_for_id", "pa_id","aml_status","payment_id", "currently_insured_with", "car_type_insurance_id", "plan_id"],
+            "production_approval_manager" => [ 'id','code', 'dob','first_name', 'last_name', 'email', 'mobile_no','Year_of_manufacture',"kyc_status_id","quote_status_id", 'created_at', "car_make_id", "car_model_id","car_value", "emirate_of_registration_id", "claim_history_id",  "nationality_id","uae_license_held_for_id", "pa_id","aml_status","payment_id", "currently_insured_with", "car_type_insurance_id", "plan_id"],
+            "advisor" => [ 'id','code','dob', 'first_name', 'last_name', 'email', 'mobile_no', 'Year_of_manufacture',"kyc_status_id","quote_status_id", 'created_at', "car_make_id", "car_model_id","car_value", "emirate_of_registration_id", "claim_history_id",  "nationality_id","uae_license_held_for_id", "pa_id","aml_status","payment_id", "currently_insured_with", "car_type_insurance_id", "plan_id"],
+            "oe" => [ 'id','code','dob', 'first_name', 'last_name', 'email', 'mobile_no', 'Year_of_manufacture',"kyc_status_id","quote_status_id", 'created_at', "car_make_id", "car_model_id","car_value", "emirate_of_registration_id", "claim_history_id",  "nationality_id","uae_license_held_for_id", "pa_id","aml_status","payment_id", "currently_insured_with", "car_type_insurance_id", "plan_id"],
+            "admin" => [ 'id','code', 'dob','first_name', 'last_name', 'email', 'mobile_no', 'Year_of_manufacture',"kyc_status_id","quote_status_id", 'created_at', "car_make_id", "car_model_id","car_value", "emirate_of_registration_id", "claim_history_id",  "nationality_id","uae_license_held_for_id", "pa_id","aml_status","payment_id", "currently_insured_with", "car_type_insurance_id", "plan_id"],
+            "payment" => [ 'id','code','dob', 'first_name', 'last_name', 'email', 'mobile_no','Year_of_manufacture',"kyc_status_id","quote_status_id", 'created_at', "car_make_id", "car_model_id","car_value", "emirate_of_registration_id", "claim_history_id",  "nationality_id","uae_license_held_for_id", "pa_id","aml_status","payment_id", "currently_insured_with", "car_type_insurance_id", "plan_id"],
+            "invoicing" => [ 'id','code','dob', 'first_name', 'last_name', 'email', 'mobile_no','Year_of_manufacture',"kyc_status_id","quote_status_id", 'created_at', "car_make_id", "car_model_id","car_value", "emirate_of_registration_id", "claim_history_id",  "nationality_id","uae_license_held_for_id", "pa_id","aml_status","payment_id", "currently_insured_with", "car_type_insurance_id", "plan_id"],
         ]
     ];
 
-    public function processGetDSL($filters, $request)
-    {
+    public function processGetDSL($filters, $request) {
 
-        if ($request->form_id) {
+        if($request->form_id){
             return parent::processGetBaseDSL($filters, false);
-        } else {
+        }else{
             $restrictFilter = [];
 
-            if (Auth::user()->hasRole('advisor')) {
-                if (empty($filters)) {
+            if(Auth::user()->hasRole('advisor')) {
+                if(empty($filters)){
                     $restrictFilter["advisor_id"] = Auth::user()->id;
-                } else {
+                }else{
                     $restrictFilter["advisor_id"] = Auth::user()->id;
-                    $restrictFilter = array_merge($restrictFilter, $filters);
+                    $restrictFilter = array_merge($restrictFilter,$filters);
                 }
 
-                // $restrictFilter["insurance_coverage.car_quote_id"] = 12222;
+               // $restrictFilter["insurance_coverage.car_quote_id"] = 12222;
             }
 
-            if (Auth::user()->hasRole('oe')) {
-                if (empty($filters)) {
+            if(Auth::user()->hasRole('oe')) {
+                if(empty($filters)){
                     $restrictFilter["oe_id"] = Auth::user()->id;
-                } else {
+                }else{
                     $restrictFilter["oe_id"] = Auth::user()->id;
-                    $restrictFilter = array_merge($restrictFilter, $filters);
+                    $restrictFilter = array_merge($restrictFilter,$filters);
                 }
             }
 
-            if (Auth::user()->hasRole('pa')) {
-                if (!array_key_exists('pa_id', $filters)) {
+            if(Auth::user()->hasRole('pa')) {
+                if(!array_key_exists('pa_id', $filters)){
                     return [];
-                } else {
+                }else{
 
                     $valuesIn = [];
                     array_push($valuesIn,  LookUpModel::getLookModel('QuoteStatus', ['code', '=', 'ftc_accepted']));
@@ -284,15 +280,15 @@ class CarQuote extends BaseModel
                     $pa_id = $filters["pa_id"] == 0 ? NULL : Auth::user()->id;
                     $restrictFilter["pa_id"] = $pa_id;
                     $restrictFilter["advisor_id"] = ["op" => "<>", "val" => ''];
-
+                   
                     $restrictFilter["quote_status_id"] =  ["op" => "in", "val" => $valuesIn];
-                }
+                }   
             }
 
-            if (Auth::user()->hasRole('payment')) {
-                if (!array_key_exists('pa_id', $filters)) {
+            if(Auth::user()->hasRole('payment')) {
+                if(!array_key_exists('pa_id', $filters)){
                     return [];
-                } else {
+                }else{
 
                     $valuesIn = [];
                     array_push($valuesIn,  LookUpModel::getLookModel('QuoteStatus', ['code', '=', 'AMLScreeningCleared']));
@@ -307,10 +303,10 @@ class CarQuote extends BaseModel
                 }
             } //invoicing
 
-            if (Auth::user()->hasRole('invoicing')) {
-                if (!array_key_exists('pa_id', $filters)) {
+            if(Auth::user()->hasRole('invoicing')) {
+                if(!array_key_exists('pa_id', $filters)){
                     return [];
-                } else {
+                }else{
 
                     $valuesIn = [];
                     array_push($valuesIn,  LookUpModel::getLookModel('QuoteStatus', ['code', '=', 'policy_issued']));
@@ -321,20 +317,19 @@ class CarQuote extends BaseModel
                 }
             }
 
-            if (empty($restrictFilter))
+            if(empty($restrictFilter))
                 return [];
             return parent::processGetBaseDSL($restrictFilter, false);
-        }
+      }
     }
 
-    public function saveForm($request, $update = false)
-    {
+    public function saveForm($request, $update = false) {
 
-        if (Auth::user()->hasRole('pa') && $request->has('action')) {
+        if( Auth::user()->hasRole('pa') && $request->has('action')) {
             $request->request->add(['pa_id' => Auth::user()->id]);
 
             $carQuote = CarQuote::where(['id' => $request->form_id])->whereNull('pa_id')->first();
-            if ($carQuote) {
+            if($carQuote) {
                 $templateParams = [
                     'notes' => "Your approval request has been assigned to a Production team member",
                     "first_name" => $carQuote->first_name,
@@ -343,7 +338,7 @@ class CarQuote extends BaseModel
                 ];
 
                 $advisorEmail = $carQuote->advisor_id()->get()->first()->email;
-                if ($advisorEmail) {
+                if($advisorEmail) {
 
                     $params = [
                         'to' => $advisorEmail,
@@ -351,20 +346,21 @@ class CarQuote extends BaseModel
                         'templateName' => 'notification',
                         'templateParams' => $templateParams
                     ];
-
+                    
                     $oeId = $carQuote->oe_id()->first();
-                    if ($oeId && $oeId->email)
+                    if($oeId && $oeId->email)
                         $params['cc'] = $oeId->email;
 
                     dispatch(new FTCMailServiceJob($params));
                 }
             }
             return  parent::saveForm($request, true);
-        } else if (Auth::user()->hasRole('payment') && $request->has('action')) {
+        }
+        else if(Auth::user()->hasRole('payment') && $request->has('action')){
             $request->request->add(['payment_id' => Auth::user()->id]);
 
             $carQuote = CarQuote::where(['id' => $request->form_id])->whereNull('payment_id')->first();
-            if ($carQuote) {
+            if($carQuote) {
                 $templateParams = [
                     'notes' => "Lead has been assigned to a Payment team member",
                     "first_name" => $carQuote->first_name,
@@ -373,27 +369,28 @@ class CarQuote extends BaseModel
                 ];
 
                 $advisorEmail = $carQuote->advisor_id()->get()->first()->email;
-                if ($advisorEmail) {
+                if($advisorEmail) {
                     $params = [
                         'to' => $advisorEmail,
                         'subject' => LookUpModel::subjectForFTCEmailCarQuote($carQuote),
                         'templateName' => 'notification',
                         'templateParams' => $templateParams
                     ];
-
+                    
                     $oeId = $carQuote->oe_id()->first();
-                    if ($oeId && $oeId->email)
+                    if($oeId && $oeId->email)
                         $params['cc'] = $oeId->email;
                     dispatch(new FTCMailServiceJob($params));
                 }
             }
-
+            
             return parent::saveForm($request, true);
-        } else if (Auth::user()->hasRole('invoicing') && $request->has('action')) {
+        }
+        else if(Auth::user()->hasRole('invoicing') && $request->has('action')){
             $request->request->add(['invoicing' => Auth::user()->id]);
 
             $carQuote = CarQuote::where(['id' => $request->form_id])->whereNull('invoicing')->first();
-            if ($carQuote) {
+            if($carQuote) {
                 $templateParams = [
                     'notes' => "Lead has been assigned to a Invoicing team member",
                     "first_name" => $carQuote->first_name,
@@ -402,24 +399,25 @@ class CarQuote extends BaseModel
                 ];
 
                 $advisorEmail = $carQuote->advisor_id()->get()->first()->email;
-                if ($advisorEmail) {
+                if($advisorEmail) {
                     $params = [
                         'to' => $advisorEmail,
                         'subject' => LookUpModel::subjectForFTCEmailCarQuote($carQuote),
                         'templateName' => 'notification',
                         'templateParams' => $templateParams
                     ];
-
+                    
                     $oeId = $carQuote->oe_id()->first();
-                    if ($oeId && $oeId->email)
+                    if($oeId && $oeId->email)
                         $params['cc'] = $oeId->email;
                     dispatch(new FTCMailServiceJob($params));
                 }
             }
-
+            
             return parent::saveForm($request, true);
-        } else {
-            return parent::saveForm($request, $update);
+        }
+        else{
+            return parent::saveForm($request, $update );
         }
     }
 }

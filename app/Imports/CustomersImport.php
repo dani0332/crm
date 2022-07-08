@@ -28,18 +28,18 @@ class CustomersImport implements OnEachRow, WithStartRow
     }
 
     /**
-     * @param array $row
-     *
-     * @return \Illuminate\Database\Eloquent\Model|null
-     */
+    * @param array $row
+    *
+    * @return \Illuminate\Database\Eloquent\Model|null
+    */
     public function onRow(Row $row)
     {
-        Log::info('Entered in Excel Import per row');
+        Log::channel('daily')->info('Entered in Excel Import per row');
         $row = $row->toArray();
 
         $email = $row[1];
 
-        if ($email != null) {
+        if($email != null) {
             $customerId = 0;
             $myalfredExpiryDate = date('Y-m-d H:i:s', strtotime(str_replace('"', '', $this->myalfredExpiryDate)));
             $customerName = explode(" ", $row[0], 2);
@@ -47,24 +47,26 @@ class CustomersImport implements OnEachRow, WithStartRow
             if (!empty($customerName[1])) {
                 $firstName = $customerName[0];
                 $lastName = $customerName[1];
-            } else {
+            }
+            else {
                 $firstName = $row[0];
                 $lastName = "";
             }
 
             $findCustomerByEmail = CustomerService::getCustomerByEmail($email);
-            if (!$findCustomerByEmail->isEmpty()) {
+            if(!$findCustomerByEmail->isEmpty()) {
                 $updateCustomer = $findCustomerByEmail->first();
                 $updateCustomer->first_name = $firstName;
                 $updateCustomer->last_name = $lastName;
                 $updateCustomer->has_alfred_access = true;
                 $updateCustomer->has_reward_access = true;
-                if ($updateCustomer->myalfred_expiry_date < $myalfredExpiryDate) {
+                if($updateCustomer->myalfred_expiry_date < $myalfredExpiryDate){
                     $updateCustomer->myalfred_expiry_date = $myalfredExpiryDate;
                 }
                 $updateCustomer->save();
                 $customerId = $updateCustomer->id;
-            } else {
+            }
+            else {
                 $newCustomer = new Customer([
                     "first_name" => $firstName,
                     "last_name" => $lastName,
@@ -85,12 +87,12 @@ class CustomersImport implements OnEachRow, WithStartRow
             }
 
             $existingQuoteCustomer = QuoteCustomer::where([['customer_id', '=', $customerId], ['cdb_id', '=', $this->CDBId]])->get();
-            if ($existingQuoteCustomer->isEmpty()) {
+            if($existingQuoteCustomer->isEmpty()) {
                 $newQuoteCustomer = new QuoteCustomer();
                 $newQuoteCustomer->cdb_id = $this->CDBId;
                 $newQuoteCustomer->customer_id = $customerId;
                 $newQuoteCustomer->save();
-                Log::info('Saved in quote customer with Customer Id-> ' . $customerId . ' , CDB Id ->' . $this->CDBId);
+                Log::channel('daily')->info('Saved in quote customer with Customer Id-> '.$customerId.' , CDB Id ->'. $this->CDBId);
             }
         }
     }
@@ -99,4 +101,5 @@ class CustomersImport implements OnEachRow, WithStartRow
     {
         return 2;
     }
+
 }

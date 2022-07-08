@@ -1,7 +1,4 @@
 <script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
-<?php
-    use App\Enums\QuoteStatusEnum;
-    ?>
 <script>
     $(document).ready(function () {
         var showFollowupStatuses = ['Followed Up','Qualification Pending', 'Quoted', 'FTC Pending', 'FTC Sent', 'Missing Documents Requested', 'Policy Documents Pending', 'Payment Pending', 'Pending with UW', 'Application Pending', 'In Negotiation'];
@@ -56,7 +53,7 @@
                 $('#trans-div').hide();
             }
         });
-
+       
     });
 </script>
 <div class="row">
@@ -67,31 +64,27 @@
                 <div class="clearfix"></div>
             </div>
             <div class="x_content">
-                <form method="POST" action="/quotes/{{$modeltype}}/{{ $lead->id }}/UpdateLeadStatus"
-                    id="lead-status-form">
+                <form method="POST" action="/quotes/{{$modeltype}}/{{ $lead->id }}/UpdateLeadStatus" id="lead-status-form">
                     {{csrf_field()}}
                     <input type="hidden" value="{{$lead->id}}" name="leadId">
                     <input type="hidden" value="{{$modeltype}}" name="modelType">
                     <div class="item form-group">
                         <div class="col">
-                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="PREMIUM"><b>Lead
-                                    Status</b></label>
+                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="PREMIUM"><b>Lead Status</b></label>
                             <div class="col-md-6 col-sm-6">
-                                <select @if($lead->quote_status_id ==
-                                    QuoteStatusEnum::TransactionApproved) disabled @endif class="form-control"
-                                    id="leadStatus" name="leadStatus">
+                                <select class="form-control" id="leadStatus" name="leadStatus">
                                     <option value="">Select Lead Status</option>
                                     @foreach ($statuses as $item)
-                                    <option @if($status==$item->id) selected="selected" @endif
-                                        value="{{$item->id}}" >{{$item->text}}</option>
+                                        <option
+                                            @if($status == $item->id) selected="selected" @endif
+                                             value="{{$item->id}}" >{{$item->text}}</option>
                                     @endforeach
                                 </select>
                             </div>
                         </div>
                         <div class="col">
                             <div id="followup-div" style="display: none">
-                                {{-- <button class="btn btn-warning btn-sm" style="float:right;width:110px;"
-                                    type="button" id="add-activity-btn">Add Activity</button> --}}
+                                {{-- <button class="btn btn-warning btn-sm" style="float:right;width:110px;" type="button" id="add-activity-btn">Add Activity</button> --}}
                             </div>
                         </div>
                     </div>
@@ -99,35 +92,30 @@
                         <div class="col">
                             <label class="col-form-label col-md-3 col-sm-3 label-align"><b>Notes</b></label>
                             <div class="col-md-6 col-sm-6">
-                                <textarea @if($lead->quote_status_id ==
-                                    QuoteStatusEnum::TransactionApproved) disabled @endif class="form-control" id="notes" name="notes"
-                                    placeholder="Notes">{{$lead->notes}}</textarea>
+                                <textarea class="form-control" id="notes" name="notes" placeholder="Notes">{{$lead->notes}}</textarea>
                             </div>
                         </div>
-                        <div class="col">
+                        <div class="col" >
                             <div id="trans-div" style="display: none;">
-                                <label class="col-form-label col-md-3 col-sm-3 label-align"><b>TransApp Code</b> <span
-                                        class='required'>*</span></label>
+                                <label class="col-form-label col-md-3 col-sm-3 label-align"><b>TransApp Code</b> <span class='required'>*</span></label>
                                 <div class="col-md-6 col-sm-6">
                                     <input type="text" class="form-control" id="trans_code" name="trans_code" value="">
                                     @if ($errors->has('trans_code'))
-                                    <span class="text-danger">{{ $errors->first('trans_code') }}</span>
+                                        <span class="text-danger">{{ $errors->first('trans_code') }}</span>
                                     @endif
                                 </div>
                             </div>
                             <div id="lost-reason-div" style="display: none;">
-                                <label class="col-form-label col-md-3 col-sm-3 label-align"><b>Lost Reason</b> <span
-                                        class='required'>*</span></label>
+                                <label class="col-form-label col-md-3 col-sm-3 label-align"><b>Lost Reason</b> <span class='required'>*</span></label>
                                 <div class="col-md-6 col-sm-6">
                                     <select class="form-control" id="lostReason" name="lostReason">
                                         <option value="">Select Lost Reason</option>
                                         @foreach ($lostreasons as $item)
-                                        <option @if($selectedlostreason==$item->id) selected="selected" @endif
-                                            value="{{$item->id}}" >{{$item->text}}</option>
+                                            <option @if($selectedlostreason == $item->id) selected="selected" @endif value="{{$item->id}}" >{{$item->text}}</option>
                                         @endforeach
                                     </select>
                                     @if ($errors->has('lostReason'))
-                                    <span class="text-danger">{{ $errors->first('lostReason') }}</span>
+                                        <span class="text-danger">{{ $errors->first('lostReason') }}</span>
                                     @endif
                                 </div>
                             </div>
@@ -138,10 +126,7 @@
 
                         </div>
                         <div class="col">
-                            <button type="submit" style="float: right;" @if($lead->quote_status_id ==
-                                QuoteStatusEnum::TransactionApproved) disabled @endif class="btn btn-success
-                                btn-sm" id="lead-change-status-btn">Change
-                                Status</button>
+                            <button type="submit" style="float: right;" class="btn btn-success btn-sm" id="lead-change-status-btn">Change Status</button>
                         </div>
                     </div>
                 </form>

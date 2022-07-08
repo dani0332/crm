@@ -1,5 +1,5 @@
-<?php
-use App\Enums\quoteStatusCode;
+<?php 
+use App\Enums\quoteStatusCode; 
 use App\Enums\quoteTypeCode;
 ?>
 <div class="drag-container">
@@ -7,24 +7,13 @@ use App\Enums\quoteTypeCode;
         @foreach ($model->properties as $property => $value)
             @if (strpos($value, 'select') !== false && $property == "quote_status_id")
                 @foreach ($dropdownSource[$property] as $item)
-                    @if($model->modelType == quoteTypeCode::Health && Auth::user()->isHealthWCUAdvisor())
-                    @if($item->text == quoteStatusCode::NEWLEAD || $item->text == quoteStatusCode::QUALIFIED || $item->text == quoteStatusCode::QualificationPending)
-
-                        <x-visual-card-leads
-                            :item="$item"
-                            :model="$model"
-                        />
-
-                        @endif
-
-                    @endif
-                    @if($model->modelType == quoteTypeCode::Travel || $model->modelType == quoteTypeCode::Home || ($model->modelType == quoteTypeCode::Health &&  !Auth::user()->isHealthWCUAdvisor()) )
+                    @if($model->modelType == quoteTypeCode::Travel || $model->modelType == quoteTypeCode::Home || $model->modelType == quoteTypeCode::Health )
                         @if($item->text == quoteStatusCode::NEWLEAD || $item->text == quoteStatusCode::QUOTED || $item->text == quoteStatusCode::FOLLOWEDUP || $item->text == quoteStatusCode::NEGOTIATION || $item->text == quoteStatusCode::PAYMENTPENDING)
-
+                        
                         <x-visual-card-leads
                             :item="$item"
                             :model="$model"
-                        />
+                        />    
 
                         @endif
                     @endif
@@ -34,25 +23,25 @@ use App\Enums\quoteTypeCode;
                         <x-visual-card-leads
                             :item="$item"
                             :model="$model"
-                        />
+                        />  
                         @endif
                     @endif
-
+                    
                     @if($model->modelType == quoteTypeCode::Life)
                         @if($item->text == quoteStatusCode::NEWLEAD || $item->text == quoteStatusCode::QUOTED || $item->text == quoteStatusCode::FOLLOWEDUP || $item->text == quoteStatusCode::NEGOTIATION || $item->text == quoteStatusCode::FOLLOWEDUP)
                         <x-visual-card-leads
                             :item="$item"
                             :model="$model"
-                        />
+                        />  
                         @endif
                     @endif
 
-                    @if($model->modelType == quoteTypeCode::Health && !Auth::user()->isHealthWCUAdvisor())
+                    @if($model->modelType == quoteTypeCode::Health)
                         @if($item->text == quoteStatusCode::APPLICATION_PENDING || $item->text == quoteStatusCode::PENDINGUW || $item->text == quoteStatusCode::PLOICY_DOCUMENTS_PENDING || $item->text == quoteStatusCode::TRANSACTIONAPPROVED || $item->text == quoteStatusCode::FOLLOWEDUP || $item->text == quoteStatusCode::PLOICY_DOCUMENTS_PENDING)
                         <x-visual-card-leads
                             :item="$item"
                             :model="$model"
-                        />
+                        />  
                         @endif
                     @endif
                 @endforeach

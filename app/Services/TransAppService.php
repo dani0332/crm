@@ -1,7 +1,6 @@
 <?php
 
 namespace App\Services;
-
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Auth;
@@ -36,33 +35,33 @@ class TransAppService extends BaseService
     {
         $WEGenerateUrlResponse = CustomerWEGenerateUrlService::getCustomerWeUrl();
 
-        if (gettype($WEGenerateUrlResponse) == 'string') {
+        if(gettype($WEGenerateUrlResponse) == 'string') {
 
             $existingCustomer = CustomerService::getCustomerByEmail($request->email)->first();
             $sendWelcomeEmail = ($existingCustomer && !$existingCustomer->is_we_sent) || !$existingCustomer ? true : false;
             $customerId = CustomerService::getCustomerIdAndCreateIfNotExists($request->first_name, $request->last_name, $request->email);
             $statusId = DB::table('statuses')->where('name', 'Active')->value('id');
 
-            if ($existingCustomer != null) { // Existing customer
-                if ($existingCustomer->is_we_sent == 1) { // is_we_sent is true
+            if($existingCustomer != null) { // Existing customer
+                if($existingCustomer->is_we_sent == 1) { // is_we_sent is true
 
                     $responseExtend = CustomerExtendSubscriptionService::extendCustomerSubscription($customerId);
 
                     $listId = Config::get('constants.SIB_MYALFRED_CONTACTS_LIST_ID');
                     $responseContact = CreateUpdateContactService::contactCreateUpdate($listId, $request->first_name, $request->last_name, $request->email, $WEGenerateUrlResponse);
 
-                    if ($responseContact != 201 && $responseContact != 204) {
+                    if($responseContact != 201 && $responseContact != 204) {
                         $message = "myAlfred signup link to issued policy cases (SIB API)<br>
-                        Customer Email: " . $request->email;
-                        Log::info($message);
+                        Customer Email: ".$request->email;
+                        Log::channel('daily')->info($message);
                     }
 
-                    if ($responseExtend != 201) {
-                        $customerToken = MyAlFredUser::select('code')->where('customer_id', '=', $customerId)->orderBy('created_at', 'asc')->first();
+                    if($responseExtend != 201) {
+                        $customerToken = MyAlFredUser::select('code')->where('customer_id', '=', $customerId)->orderBy('created_at','asc')->first();
                         $message = "Customer trying to extend subscription but not exist in myAflred<br>
-                        Customer Email: " . $request->email . "<br>
-                        Token: " . $customerToken;
-                        Log::info($message);
+                        Customer Email: ".$request->email."<br>
+                        Token: ".$customerToken;
+                        Log::channel('daily')->info($message);
                     }
                 }
             }
@@ -78,17 +77,17 @@ class TransAppService extends BaseService
             $transaction->amount_paid = $request->amount_paid;
             $transaction->status_id = $statusId;
             $transaction->save();
-            $approvalCode = generate_code('T') . $transaction->id;
-            Transaction::where('id', $transaction->id)->update(['approval_code' => $approvalCode]);
+            $approvalCode = generate_code('T').$transaction->id;
+            Transaction::where('id',$transaction->id)->update(['approval_code'=>$approvalCode]);
             CustomerService::setCustomerAccess($customerId);
 
-            if ($request->has("car_quote_id")) {
+            if($request->has("car_quote_id")) {
 
-                $carQuoteObj = CarQuote::where("id", $request->input("car_quote_id"))->first();
-                if ($carQuoteObj) {
-                    $carQuoteObj->quote_status_id =  LookUpModel::getLookModel('QuoteStatus', ['code', '=', 'transaction_approved']); // Transaction Approved
+                $carQuoteObj = CarQuote::where("id",$request->input("car_quote_id"))->first();
+                if($carQuoteObj){
+                    $carQuoteObj->quote_status_id =  LookUpModel::getLookModel('QuoteStatus', ['code', '=', 'transaction_approved']);// Transaction Approved
                     $carQuoteObj->pa_id = null;
-                    if ($carQuoteObj->save()) {
+                    if($carQuoteObj->save()){
 
                         $newPayment = new CarQuotePaymentHistory();
                         $newPayment->status = "Transaction Approved";
@@ -115,9 +114,11 @@ class TransAppService extends BaseService
                 $this->sendWelcomeEmail($customerId, $WEGenerateUrlResponse, 'transapp-myalfred-we');
             }
             return $approvalCode;
-        } else {
+        }
+        else {
             return $WEGenerateUrlResponse;
         }
+
     }
 
     public function sendWelcomeEmail($customerId, $WEGenerateUrlResponse, $tag)
@@ -126,14 +127,14 @@ class TransAppService extends BaseService
         $emailTemplateId = (int)Config::get('constants.SIB_MYALFRED_CUSTOMER_WE_TEMPLATE_ID'); //290
 
         $emailData = array(
-            'customerName' => $customer->first_name . " " . $customer->last_name,
+            'customerName' => $customer->first_name." ".$customer->last_name,
             'customerEmail' => $customer->email,
             'signUpButtonUrl' => $WEGenerateUrlResponse
         );
 
         $getStatusCode = $this->sendEmailCustomerService->sendEmail($emailTemplateId, $emailData, $tag);
 
-        if ($getStatusCode == 201) {
+        if($getStatusCode == 201) {
 
             $customer->is_we_sent = true;
             $customer->save();
@@ -150,61 +151,61 @@ class TransAppService extends BaseService
 
     public function getTransactors()
     {
-        $transactors = User::select('users.id', 'users.name')
-            ->leftjoin('model_has_roles', 'users.id', 'model_has_roles.model_id')
-            ->leftjoin('roles', 'roles.id', 'model_has_roles.role_id')
-            ->whereIn('roles.name', ['TRANSAPP_ADVISOR', 'TRANSAPP_APPROVER', 'TRANSAPP_ADMIN'])
-            ->orderBy('users.name', 'asc')
-            ->get();
+        $transactors = User::select('users.id','users.name')
+        ->leftjoin('model_has_roles','users.id','model_has_roles.model_id')
+        ->leftjoin('roles','roles.id','model_has_roles.role_id')
+        ->whereIn('roles.name', ['TRANSAPP_ADVISOR','TRANSAPP_APPROVER','TRANSAPP_ADMIN'])
+        ->orderBy('users.name','asc')
+        ->get();
 
         return $transactors;
     }
 
     public function getHandlers()
     {
-        $handlers = User::select('users.id', 'users.name')
-            ->leftjoin('model_has_roles', 'users.id', 'model_has_roles.model_id')
-            ->leftjoin('roles', 'roles.id', 'model_has_roles.role_id')
-            ->whereIn('roles.name', ['TRANSAPP_ADVISOR', 'TRANSAPP_APPROVER', 'TRANSAPP_ADMIN', 'advisor', 'invoicing'])
-            ->orderBy('users.name', 'asc')
-            ->get();
+        $handlers = User::select('users.id','users.name')
+        ->leftjoin('model_has_roles','users.id','model_has_roles.model_id')
+        ->leftjoin('roles','roles.id','model_has_roles.role_id')
+        ->whereIn('roles.name', ['TRANSAPP_ADVISOR', 'TRANSAPP_APPROVER', 'TRANSAPP_ADMIN', 'advisor', 'invoicing'])
+        ->orderBy('users.name', 'asc')
+        ->get();
 
         return $handlers;
     }
 
     public function getInsuranceCompanies()
     {
-        $insuranceCompanies = InsuranceCompany::select('id', 'name')
-            ->where(['is_active' => 1, 'is_deleted' => 0])
-            ->orderBy('name', 'asc')
-            ->get();
+        $insuranceCompanies = InsuranceCompany::select('id','name')
+        ->where(['is_active' => 1, 'is_deleted' => 0])
+        ->orderBy('name', 'asc')
+        ->get();
 
         return $insuranceCompanies;
     }
 
     public function getPaymentModes()
     {
-        $paymentModes = PaymentMode::select('id', 'name')
-            ->where(['is_active' => 1, 'is_deleted' => 0])
-            ->orderBy('name', 'asc')
-            ->get();
+        $paymentModes = PaymentMode::select('id','name')
+        ->where(['is_active' => 1, 'is_deleted' => 0])
+        ->orderBy('name', 'asc')
+        ->get();
 
         return $paymentModes;
     }
 
     public function getReasons()
     {
-        $reasons = Reason::select('id', 'name')
-            ->where(['is_active' => 1, 'is_deleted' => 0])
-            ->orderBy('name', 'asc')
-            ->get();
+        $reasons = Reason::select('id','name')
+        ->where(['is_active' => 1, 'is_deleted' => 0])
+        ->orderBy('name', 'asc')
+        ->get();
 
         return $reasons;
     }
 
     public function checkTransappAdmin()
     {
-        if (Auth::user()->hasRole('TRANSAPP_ADMIN')) {
+        if(Auth::user()->hasRole('TRANSAPP_ADMIN')) {
             $isTransappAdmin = "1";
         } else {
             $isTransappAdmin = "0";
@@ -215,7 +216,7 @@ class TransAppService extends BaseService
 
     public function checkTransappNonAdmin()
     {
-        if (Auth::user()->hasAnyRole(['TRANSAPP_ADVISOR', 'TRANSAPP_APPROVER'])) {
+        if(Auth::user()->hasAnyRole(['TRANSAPP_ADVISOR','TRANSAPP_APPROVER'])) {
             $isTransappNonAdmin = "1";
         } else {
             $isTransappNonAdmin = "0";
@@ -226,10 +227,10 @@ class TransAppService extends BaseService
 
     public function getTypeOfInsurances()
     {
-        $typeofinsurances = TypeOfInsurance::select('id', 'text')
-            ->where(['is_active' => 1, 'is_deleted' => 0])
-            ->orderBy('text', 'asc')
-            ->get();
+        $typeofinsurances = TypeOfInsurance::select('id','text')
+        ->where(['is_active' => 1, 'is_deleted' => 0])
+        ->orderBy('text', 'asc')
+        ->get();
 
         return $typeofinsurances;
     }
@@ -238,23 +239,17 @@ class TransAppService extends BaseService
     {
         $isTransappNonAdmin = $this->checkTransappNonAdmin();
 
-        $transaction = Transaction::select(
-            'transactions.*',
-            'insurance_companies.name as insurance',
-            'handlers.name as handler_name',
-            'creaters.name as created_by_name',
-            'payment_modes.name as payment_mode',
-            'type_of_insurances.text as type_of_insurance'
-        )
-            ->leftjoin('insurance_companies', 'insurance_companies.id', 'transactions.insurance_company_id')
-            ->leftjoin('users as handlers', 'transactions.assigned_to_id', 'handlers.id')
-            ->leftjoin('users as creaters', 'transactions.created_by_id', 'creaters.id')
-            ->leftjoin('payment_modes', 'payment_modes.id', 'transactions.payment_mode_id')
-            ->leftjoin('type_of_insurances', 'type_of_insurances.id', 'transactions.type_of_insurance_id')
-            ->where(['transactions.id' => $transappId, 'transactions.is_deleted' => 0])
-            ->first();
+        $transaction = Transaction::select('transactions.*', 'insurance_companies.name as insurance',
+        'handlers.name as handler_name', 'creaters.name as created_by_name', 'payment_modes.name as payment_mode', 'type_of_insurances.text as type_of_insurance')
+        ->leftjoin('insurance_companies', 'insurance_companies.id', 'transactions.insurance_company_id')
+        ->leftjoin('users as handlers', 'transactions.assigned_to_id','handlers.id')
+        ->leftjoin('users as creaters', 'transactions.created_by_id','creaters.id')
+        ->leftjoin('payment_modes', 'payment_modes.id', 'transactions.payment_mode_id')
+        ->leftjoin('type_of_insurances', 'type_of_insurances.id', 'transactions.type_of_insurance_id')
+        ->where(['transactions.id' => $transappId, 'transactions.is_deleted' => 0])
+        ->first();
 
-        if ($isTransappNonAdmin == "1") {
+        if($isTransappNonAdmin == "1") {
             $transaction->where('transactions.assigned_to_id', Auth::user()->id);
         }
 
@@ -265,22 +260,17 @@ class TransAppService extends BaseService
     {
         $isTransappNonAdmin = $this->checkTransappNonAdmin();
 
-        $transaction = Transaction::select(
-            'transactions.*',
-            'insurance_companies.name as insurance',
-            'handlers.name as handler_name',
-            'creaters.name as created_by_name',
-            'payment_modes.name as payment_mode'
-        )
-            ->leftjoin('insurance_companies', 'insurance_companies.id', 'transactions.insurance_company_id')
-            ->leftjoin('users as handlers', 'transactions.assigned_to_id', 'handlers.id')
-            ->leftjoin('users as creaters', 'transactions.created_by_id', 'creaters.id')
-            ->leftjoin('payment_modes', 'payment_modes.id', 'transactions.payment_mode_id')
-            ->where(['approval_code' => $approvalCode, 'transactions.is_deleted' => 0])
-            ->where('approval_code', $approvalCode)
-            ->first();
+        $transaction = Transaction::select('transactions.*', 'insurance_companies.name as insurance',
+        'handlers.name as handler_name', 'creaters.name as created_by_name', 'payment_modes.name as payment_mode')
+        ->leftjoin('insurance_companies', 'insurance_companies.id', 'transactions.insurance_company_id')
+        ->leftjoin('users as handlers', 'transactions.assigned_to_id','handlers.id')
+        ->leftjoin('users as creaters', 'transactions.created_by_id','creaters.id')
+        ->leftjoin('payment_modes', 'payment_modes.id', 'transactions.payment_mode_id')
+        ->where(['approval_code' => $approvalCode, 'transactions.is_deleted' => 0])
+        ->where('approval_code', $approvalCode)
+        ->first();
 
-        if ($isTransappNonAdmin == "1") {
+        if($isTransappNonAdmin == "1") {
             $transaction->where('transactions.assigned_to_id', Auth::user()->id);
         }
 
@@ -290,8 +280,8 @@ class TransAppService extends BaseService
     public function getTransappAssignedToIdByApprovalCode($approvalCode)
     {
         $transappAssignedToId = Transaction::select('assigned_to_id')
-            ->where('approval_code', $approvalCode)
-            ->first();
+        ->where('approval_code', $approvalCode)
+        ->first();
 
         return $transappAssignedToId->assigned_to_id;
     }
@@ -299,8 +289,8 @@ class TransAppService extends BaseService
     public function getTransappIsCancelledByApprovalCode($approvalCode)
     {
         $isCancelled = Transaction::select('is_cancelled')
-            ->where('approval_code', $approvalCode)
-            ->first();
+        ->where('approval_code', $approvalCode)
+        ->first();
 
         return $isCancelled->is_cancelled;
     }
@@ -308,7 +298,7 @@ class TransAppService extends BaseService
     public function getTransactionByApprovalCode($approvalCode)
     {
         $transaction = Transaction::where('approval_code', $approvalCode)
-            ->get();
+        ->get();
 
         return $transaction;
     }
@@ -316,17 +306,17 @@ class TransAppService extends BaseService
     public function getPreviousTransactionByApprovalCode($approvalCode)
     {
         $transaction = Transaction::where('approval_code', $approvalCode)
-            ->first();
+        ->first();
 
         return $transaction;
     }
 
     public function getStatuses()
     {
-        $statuses = Status::select('id', 'name')
-            ->where(['is_active' => 1, 'is_deleted' => 0])
-            ->orderBy('name', 'asc')
-            ->get();
+        $statuses = Status::select('id','name')
+        ->where(['is_active' => 1, 'is_deleted' => 0])
+        ->orderBy('name', 'asc')
+        ->get();
 
         return $statuses;
     }
@@ -334,8 +324,8 @@ class TransAppService extends BaseService
     public function getStatusId($status)
     {
         $statusId = Status::select('id')
-            ->where('name', $status)
-            ->first();
+        ->where('name', $status)
+        ->first();
 
         return $statusId->id;
     }
@@ -343,8 +333,8 @@ class TransAppService extends BaseService
     public function getTransappApprovalCodeById($transappId)
     {
         $approvalCode = Transaction::select('approval_code')
-            ->where('id', $transappId)
-            ->first();
+        ->where('id', $transappId)
+        ->first();
 
         return $approvalCode->approval_code;
     }

@@ -63,9 +63,6 @@ class TeamService extends BaseService
     {
         $team = Team::where('id', $id)->first();
         $team->name = $request->name;
-        if(isset($request->parent_team_id)){
-            $team->parent_team_id = $request->parent_team_id;
-        }
         $team->save();
         if (isset($request->return_to_view))
             return redirect("/quotes/teams/" . $id)->with('success', 'Team has been updated');
