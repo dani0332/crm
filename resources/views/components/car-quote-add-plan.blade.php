@@ -62,8 +62,6 @@
                             </div>
                         </div>
                     </div>
-
-                    <div id='redirect_to_view_div'></div>
                     <div class="ln_solid"></div>
                     <div class="row">
                         <div class="col-auto mr-auto"></div>
@@ -73,6 +71,49 @@
                         </div>
                     </div>
                 </form>
+                <br>
+                <h2>Existing Plans</h2>
+                <table class="table table-striped jambo_table" style="table-layout: fixed;width:100%">
+                    <thead>
+                        <tr>
+                            <th width="350px">Provider Name</th>
+                            <th>Plan Name</th>
+                            <th>Repair Type</th>
+                            <th>Premium with VAT.</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse ($listQuotePlans as $key => $quotePlan)
+                        <tr>
+                            <td>{{ ucwords($quotePlan->providerName) }}</td>
+                            <td>{{ ucwords($quotePlan->name) }}</td>
+                            <td>{{ $quotePlan->repairType }}</td>
+                            <td>
+                                @php
+                                    $totalSelectedAddonsPriceWithVat = 0;
+                                    foreach ($quotePlan->addons as $quotePlanAddon) {
+                                        foreach ($quotePlanAddon->carAddonOption as $quotePlanOptions) {
+                                            if (isset($quotePlanOptions->isSelected)) {
+                                                if ($quotePlanOptions->isSelected == true && $quotePlanOptions->price != 0) {
+                                                    $totalSelectedAddonsPriceWithVat += $quotePlanOptions->price + $quotePlanOptions->vat;
+                                                }
+                                            } else {
+                                                $totalSelectedAddonsPriceWithVat = 0;
+                                            }
+                                        }
+                                    }
+                                    $totalPremium = $quotePlan->discountPremium + $quotePlan->vat + $totalSelectedAddonsPriceWithVat;
+                                @endphp
+                                {{ $totalPremium ? number_format($totalPremium, 2) : '0.00' }}
+                            </td>
+                        </tr>
+                        @empty
+                                <tr class="odd">
+                                    <td valign="top" colspan="4" class="dataTables_empty">No data available in table</td>
+                                </tr>
+                        @endforelse
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>

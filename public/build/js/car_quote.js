@@ -24,8 +24,8 @@ $(document).ready(function() {
 
     $("#car-create-quote-form").submit(function (e) {
     
-        if (!$('#insurance_provider_id').val() || !$('#car_plan_id').val() || !$('#premium').val() || 
-        !$('#value').val() || !$('#excess').val()) {
+        if (!$('#insurance_provider_id').val() || !$('#car_plan_id').val() || !$('#actual_premium').val() || 
+        !$('#car_value').val() || !$('#excess').val()) {
             validationDivText("#error-car-create-quote-form", "Please fill all the fields");
             return false;
         } else {
