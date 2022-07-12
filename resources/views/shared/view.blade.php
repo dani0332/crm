@@ -765,7 +765,7 @@
                     </form>
                     @endif
 
-                    <form method="post" @if(strtolower($model->modelType) == strtolower(quoteTypeCode::Health)) action="wcuAssign" @else action="manualLeadAssign" @endif class="form-horizontal form-label-left" role="form"
+                    <form method="post" @if(strtolower($model->modelType) == strtolower(quoteTypeCode::Health)) action="wcuAssign" @else action={{ strtolower($model->modelType). '/manualLeadAssign' }} @endif class="form-horizontal form-label-left" role="form"
                         data-parsley-validate="" novalidate="" autocomplete="off">
                         {{ csrf_field() }}
                         <input type="hidden" value="{{ strtolower($model->modelType) }}" name="modelType">
