@@ -9,4 +9,5 @@ interface PaymentRepositoryInterface
     public function deletePayment($paymentId);
     public function createOrder(array $paymentInformation);
     public function updateOrder($paymentId, array $newInformation);
+    public function getPaymentLink($paymentId, $quoteTypeId, $leadId);
 }
