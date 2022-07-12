@@ -2,9 +2,11 @@
 
 namespace App\Services;
 
+use App\Models\ApplicationStorage;
 use App\Models\VehicleType;
 use App\Models\YearOfManufacture;
 use App\Models\CarModelDetail;
+use App\Models\LostReasons;
 use App\Models\UAELicenseHeldFor;
 class LookupService extends BaseService
 {
@@ -27,6 +29,16 @@ class LookupService extends BaseService
     public function getBackHomeLicensed()
     {
         return UAELicenseHeldFor::isBackHomeActive()->get();
+    }
+
+    public function getApplicationStorageValue($key)
+    {
+        return ApplicationStorage::where("key_name", $key)->first()->value;
+    }
+
+    public function getLostReasons()
+    {
+        return LostReasons::select('id', 'text')->get();
     }
 
 }

@@ -29,6 +29,13 @@ use App\Enums\PermissionsEnum;
                     </li>
                 </ul>
                 @endcan
+                @can(PermissionsEnum::LeadAllocationView)
+                <ul class="nav side-menu">
+                    <li>
+                        <a href="{{ url('/lead-allocation') }}"><i class="fa fa-paper-plane"></i>Lead Allocation</a>
+                    </li>
+                </ul>
+                @endcan
                 @if (Auth::user()->hasMyLeadAccess())
                 <ul class="nav side-menu">
                     <li>
@@ -287,9 +294,9 @@ use App\Enums\PermissionsEnum;
                             @can(PermissionsEnum::TeamsList)
                             <li><a href="{{ url('generic/teams') }}">Teams</a></li>
                             @endcan
-                            @can(PermissionsEnum::TeamsList)
+                            {{-- @can(PermissionsEnum::TeamsList)
                             <li><a href="{{ url('generic/leadstatus') }}">Lead Status</a></li>
-                            @endcan
+                            @endcan --}}
                             @can(PermissionsEnum::InsuranceProviderList)
                             <li><a href="{{ url('generic/insuranceprovider') }}">Insurance Providers</a></li>
                             @endcan

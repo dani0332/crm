@@ -15,6 +15,9 @@ use App\Traits\RolePermissionConditions;
 use App\Traits\CustomerAdditionalInfo as CustomerAdditionalInfoTrait;
 use App\Enums\quoteTypeCode;
 use App\Enums\DatabaseColumnsString;
+use App\Enums\QuoteStatusEnum;
+use Illuminate\Support\Facades\Log;
+
 use App\Traits\AddPremiumAllLobs;
 class HomeQuoteService extends BaseService
 {
@@ -22,8 +25,10 @@ class HomeQuoteService extends BaseService
     use RolePermissionConditions;
     use CustomerAdditionalInfoTrait;
     use AddPremiumAllLobs;
-    public function __construct()
+    protected $leadAllocationService;
+    public function __construct(LeadAllocationService $leadAllocationService)
     {
+        $this->leadAllocationService = $leadAllocationService;
 
         $this->query = DB::table('home_quote_request as hqr')->select(
             'hqr.id',
@@ -93,7 +98,7 @@ class HomeQuoteService extends BaseService
         if (!$entity) {
             $entity = $this->createDetailEntity($id);
         }
-        return HomeQuoteRequestDetail::where('home_quote_request_id', $id)->first();
+        return $entity;
     }
 
     public function createDetailEntity($id)
@@ -149,8 +154,7 @@ class HomeQuoteService extends BaseService
         $isNewAdvisor = Auth::user()->isNewBusinessAdvisor();
         if ($isRenewalUser || $isRenewalManager || $isRenewalAdvisor) {
             $searchProperties = $model->renewalSearchProperties;
-        }
-        else if ($isNewManager || $isNewAdvisor) {
+        } else if ($isNewManager || $isNewAdvisor) {
             $searchProperties = $model->newBusinessSearchProperties;
         } else {
             $searchProperties = $model->searchProperties;
@@ -203,16 +207,16 @@ class HomeQuoteService extends BaseService
             if (isset($request->previous_quote_policy_premium) && $request->previous_quote_policy_premium != '') {
                 $this->query->where('hqr.previous_quote_policy_premium', $request->previous_quote_policy_premium);
             }
-            if(Auth::user()->isSpecificTeamAdvisor('Home')){
+            if (Auth::user()->isSpecificTeamAdvisor('Home')) {
                 // if user has advisor Role then fetch leads assigned to the user only
-                $this->query->where('hqr.advisor_id', Auth::user()->id);	// fetch leads assigned to the user
+                $this->query->where('hqr.advisor_id', Auth::user()->id);    // fetch leads assigned to the user
             }
             $this->whereBasedOnRole($this->query,'hqr');
 
             if (isset($request->is_renewal) && $request->is_renewal != '') {
-                if($request->is_renewal == quoteTypeCode::yesText)
+                if ($request->is_renewal == quoteTypeCode::yesText)
                     $this->query->whereNotNull('hqr.previous_quote_id');
-                if($request->is_renewal == quoteTypeCode::noText)
+                if ($request->is_renewal == quoteTypeCode::noText)
                     $this->query->whereNull('hqr.previous_quote_id');
             }
             foreach ($searchProperties as $item) {
@@ -220,12 +224,11 @@ class HomeQuoteService extends BaseService
                     if ($request[$item] == 'null') {
                         $this->query->whereNull($item);
                     } else if ($item == 'advisor_id' && is_array($request[$item]) && !empty($request[$item])) {
-                        if($request[$item][0] == 'null')
-                        $this->query->whereNull('advisor_id');
-                    else
-                        $this->query->whereIn('advisor_id', $request[$item]);
-                    }
-                    else if ($item == DatabaseColumnsString::QUOTE_STATUS_ID && is_array($request[$item]) && !empty($request[$item])) {
+                        if ($request[$item][0] == 'null')
+                            $this->query->whereNull('advisor_id');
+                        else
+                            $this->query->whereIn('advisor_id', $request[$item]);
+                    } else if ($item == DatabaseColumnsString::QUOTE_STATUS_ID && is_array($request[$item]) && !empty($request[$item])) {
                         $this->query->whereIn('quote_status_id', $request[$item]);
                     } else {
                         $skipped = array('is_renewal','previous_policy_expiry_date','next_followup_date');
@@ -312,9 +315,9 @@ class HomeQuoteService extends BaseService
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'hqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'hqrd.advisor_assigned_by_id')
             ->where('hqrd.next_followup_date', '<', date('Y-m-d H:i:s'))
-            ->whereIn('qs.text', ['Followed Up','Qualification Pending', 'Quoted', 'FTC Pending', 'FTC Sent', 'Missing Documents Requested', 'Policy Documents Pending', 'Payment Pending', 'Pending with UW', 'Application Pending', 'In Negotiation'])
+            ->whereIn('qs.text', ['Followed Up', 'Qualification Pending', 'Quoted', 'FTC Pending', 'FTC Sent', 'Missing Documents Requested', 'Policy Documents Pending', 'Payment Pending', 'Pending with UW', 'Application Pending', 'In Negotiation'])
             ->where('hqr.advisor_id', Auth::user()->id);
-            return $query;
+        return $query;
     }
 
     public function getHomeLeadsForAdvisor($request)
@@ -599,7 +602,7 @@ class HomeQuoteService extends BaseService
 
     public function fillRenewalProperties($model)
     {
-        $model->renewalSearchProperties = ['created_at', 'code', 'first_name', 'last_name', 'email', 'mobile_no','renewal_batch','previous_quote_policy_number','previous_policy_expiry_date','previous_quote_policy_premium'];
+        $model->renewalSearchProperties = ['created_at', 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'renewal_batch', 'previous_quote_policy_number', 'previous_policy_expiry_date', 'previous_quote_policy_premium'];
         $model->renewalSkipProperties = [
             "create" => "previous_quote_policy_premium,previous_policy_expiry_date,policy_number,renewal_batch,previous_quote_policy_number,renewal_expiry_date,is_renewal,previous_quote_id,id,code,quote_status_id,advisor_id,created_at,updated_at,next_followup_date,lost_reason,premium,source,transapp_code,renewal_expiry_date",
             "list" => "policy_number,renewal_expiry_date,is_renewal,email,address,iam_possesion_type_id,ilivein_accommodation_type_id,mobile_no,personal_belongings_aed,building_aed,contents_aed,has_contents,has_personal_belongings,has_building,address,next_followup_date,lost_reason,premium,source,transapp_code,renewal_expiry_date",
@@ -679,32 +682,32 @@ class HomeQuoteService extends BaseService
     public function getLeadAuditHistory($id)
     {
         $audits = DB::table('audits as a')
-        ->select(
-            'a.created_at as ModifiedAt',
-            DB::raw('(SELECT name from users where id = a.user_id) as ModifiedBy'),
-            DB::raw("(SELECT TEXT FROM quote_status WHERE id = JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.quote_status_id'))) AS NewStatus"),
-            DB::raw("(SELECT NAME FROM users WHERE id = JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.advisor_id'))) AS NewAdvisor"),
-            DB::raw("JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.notes')) AS NewNotes")
-        )
-        ->where(function ($query) {
-            $query->where('a.auditable_type', 'App\Models\HomeQuote')
-            ->orWhere('a.auditable_type', 'App\Models\HomeQuoteRequestDetail');
-        })
-        ->where(function ($query) {
-            $query->whereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.quote_status_id')"))
-            ->orWhereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.notes')"))
-            ->orWhereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.advisor_id')"));
-        })
-        ->where(function ($query) use ($id) {
-            $detailObjId = HomeQuoteRequestDetail::where('home_quote_request_id', $id)->first();
-            if($detailObjId) {
-                $query->where('a.auditable_id', $id)
-                ->orWhere('a.auditable_id', $detailObjId->id);
-            } else {
-                $query->where('a.auditable_id', $id);
-            }
-        })
-        ->orderBy('a.created_at', 'DESC')->get();
+            ->select(
+                'a.created_at as ModifiedAt',
+                DB::raw('(SELECT name from users where id = a.user_id) as ModifiedBy'),
+                DB::raw("(SELECT TEXT FROM quote_status WHERE id = JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.quote_status_id'))) AS NewStatus"),
+                DB::raw("(SELECT NAME FROM users WHERE id = JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.advisor_id'))) AS NewAdvisor"),
+                DB::raw("JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.notes')) AS NewNotes")
+            )
+            ->where(function ($query) {
+                $query->where('a.auditable_type', 'App\Models\HomeQuote')
+                    ->orWhere('a.auditable_type', 'App\Models\HomeQuoteRequestDetail');
+            })
+            ->where(function ($query) {
+                $query->whereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.quote_status_id')"))
+                    ->orWhereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.notes')"))
+                    ->orWhereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.advisor_id')"));
+            })
+            ->where(function ($query) use ($id) {
+                $detailObjId = HomeQuoteRequestDetail::where('home_quote_request_id', $id)->first();
+                if ($detailObjId) {
+                    $query->where('a.auditable_id', $id)
+                        ->orWhere('a.auditable_id', $detailObjId->id);
+                } else {
+                    $query->where('a.auditable_id', $id);
+                }
+            })
+            ->orderBy('a.created_at', 'DESC')->get();
         return $audits;
     }
 
@@ -713,11 +716,11 @@ class HomeQuoteService extends BaseService
         $quote = new HomeQuote();
         $quote->parent_duplicate_quote_id = $parentRecord->code;
         $response = CapiRequestService::getUUID(QuoteTypeId::Home);
-        if($response) {
+        if ($response) {
             $quote->uuid = $response->uuid;
-            $quote->code = 'HOM-'. $response->uuid;
+            $quote->code = 'HOM-' . $response->uuid;
         }
-        $quote->quote_status_id = QuoteStatus::where('text', 'New Lead')->first()->id;
+        $quote->quote_status_id = QuoteStatusEnum::NewLead;
         $quote->first_name = $parentRecord->first_name;
         $quote->last_name = $parentRecord->last_name;
         $quote->email = $parentRecord->email;
@@ -725,4 +728,47 @@ class HomeQuoteService extends BaseService
         $quote->mobile_no = $parentRecord->mobile_no;
         $quote->save();
     }
+
+    public function processManualLeadAssignment($request): array
+    {
+        $leadsIds = array_map('intval', explode(',', trim($request->selectTmLeadId, ',')));
+        $userId = (int)$request->assigned_to_id_new;
+        Log::info('Leads ids to assign: ' . json_encode($leadsIds));
+        $result = [];
+        foreach($leadsIds as $leadId)
+        {
+            $lead = $this->getEntityPlain($leadId);
+            $lead->advisor_id = $userId;
+            $lead->save();
+        }
+        return $result;
+    }
+    public function getEntityPlainByUUID($uuid)
+    {
+        return HomeQuote::where('uuid', $uuid)->first();
+    }
+
+    public function validateRequest($request)
+    {
+        $userId = $request->assigned_to_id_new;
+        $leadsIds = $request->selectTmLeadId;
+        if ($leadsIds == '' || $leadsIds == null) {
+            return 'Please select lead(s) to assign';
+        }
+        if (substr($leadsIds, 0, 1) == ',') {
+            $leadsIds = substr($leadsIds, 1);
+        }
+        $leadsIds = array_map('intval', explode(',', $leadsIds));
+        foreach ($leadsIds as $leadId) {
+            $entity = $this->getEntityPlain($leadId);
+            if ($entity->quote_status_id == QuoteStatusEnum::TransactionApproved) {
+                return 'One of the selected lead is in Transaction Approved state. Please unselect the lead and try again.';
+            }
+        }
+        if ($userId == '' || $userId == null) {
+            return 'Please select user to assign leads';
+        }
+        return 'true';
+    }
+
 }
