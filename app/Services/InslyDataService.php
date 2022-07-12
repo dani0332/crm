@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Services;
+
 use Illuminate\Support\Facades\Log;
 use App\Models\InslyDataMapping;
 use App\Models\InslyBatchLog;
@@ -11,8 +12,8 @@ use GuzzleHttp\Client;
 
 class InslyDataService extends BaseService
 {
-	public static function GetDataFromInsly($nextStartDate, $nextEndDate)
-	{
+    public static function GetDataFromInsly($nextStartDate, $nextEndDate)
+    {
         $client = new \GuzzleHttp\Client();
         $user = Config::get('constants.INSLY_API_RENEWAL_USERNAME');
         $pass = Config::get('constants.INSLY_API_RENEWAL_PASSWORD');
@@ -20,14 +21,14 @@ class InslyDataService extends BaseService
         $timeout = Config::get('constants.INSLY_REQUEST_TIMEOUT_IN_SECONDS');
 
 
-        Log::channel('daily')->info('User : '.$user.', Pass : '.$pass.', URI : '.$uri);
+        Log::info('User : ' . $user . ', Pass : ' . $pass . ', URI : ' . $uri);
 
         $requestBody = array(
             'username' => $user,
             'password' => $pass,
             'policy_date_begin' => $nextStartDate,
             'policy_date_end' => $nextEndDate,
-         );
+        );
 
         $inslyRequest = $client->post(
             $uri,
@@ -38,13 +39,15 @@ class InslyDataService extends BaseService
             ]
         );
         return $inslyRequest->getBody();
-	}
+    }
 
-    public static function GetLastInslyBatchLog(){
+    public static function GetLastInslyBatchLog()
+    {
         return InslyBatchLog::orderBy('created_at', 'desc')->get()->first();
     }
 
-    public static function AddInslyBatchLog($start, $end, $count){
+    public static function AddInslyBatchLog($start, $end, $count)
+    {
         $batchLog = new InslyBatchLog;
         $batchLog->batch_start_date = $start;
         $batchLog->batch_end_date = $end;
@@ -53,12 +56,12 @@ class InslyDataService extends BaseService
     }
 
     public static function AddInslyRecordInDatabase($customer_name, $customer_email, $policy, $is_corrupt_data)
-	{
+    {
         $dataMapping = new InslyDataMapping();
         $dataMapping->customer_name = $customer_name;
         $dataMapping->customer_email = $customer_email;
         $dataMapping->insly_data = json_encode($policy);
         $dataMapping->is_corrupt_data = $is_corrupt_data;
         $dataMapping->save();
-	}
+    }
 }

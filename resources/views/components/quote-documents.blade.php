@@ -3,6 +3,7 @@
         <div class="x_panel">
             <div class="x_title">
                 <h2>Documents</h2>
+                <a href="{{ url('quotes/'.$quoteType.'/'.$record->uuid.'/uploadDocument') }}" class="btn btn-primary btn-sm" style="float:right;">Upload Documents</a>
                 <div class="clearfix"></div>
             </div>
             <div class="x_content">
