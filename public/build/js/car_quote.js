@@ -3,6 +3,7 @@ $.getScript("../../build/js/helper.js");
 
 $(document).ready(function() {
 
+    // insurer onchange populate plans
     $("#insurance_provider_id").on("change", function (e) {
         var insuranceProviderId = $("#insurance_provider_id option:selected").val();
         var quoteUuId = $("#car_quote_uuid").val();
@@ -22,13 +23,9 @@ $(document).ready(function() {
     });
 
     $("#car-create-quote-form").submit(function (e) {
-        var insuranceProviderId = $("#insurance_provider_id").val();
-        var carPlanId = $("#car_plan_id").val();
-        var premium = $("#premium").val();
-        var value = $("#value").val();
-        var excess = $("#excess").val();
     
-        if (insuranceProviderId == "" || (carPlanId == "" || premium == "" || value == "" || excess == "")) {
+        if (!$('#insurance_provider_id').val() || !$('#car_plan_id').val() || !$('#premium').val() || 
+        !$('#value').val() || !$('#excess').val()) {
             validationDivText("#error-car-create-quote-form", "Please fill all the fields");
             return false;
         } else {
