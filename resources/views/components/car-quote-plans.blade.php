@@ -18,7 +18,7 @@ use App\Enums\CarPlanExclusionsCode;
                     <div class="col-auto">
                         <input type="hidden" id="quotePlansGenerateUrl" name="quotePlansGenerateUrl" value="{{ $ecomUrl }}">
                         @can('car-quotes-plans-create')
-                        <a href="{{ url('quotes/car/'.$record->uuid.'/add_quote') }}" class="btn btn-primary btn-sm">Create Quote</a>
+                        <a href="{{ url('quotes/car/'.$record->uuid.'/create-quote') }}" class="btn btn-primary btn-sm">Create Quote</a>
                         @endcan
                         @if(gettype($listQuotePlans) != 'string')
                         <input type="hidden" id="quoteRequestUuId" name="quoteRequestUuId" value="{{ $record->id }}">

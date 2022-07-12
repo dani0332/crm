@@ -610,7 +610,7 @@ class CRUDController extends Controller
     {
         $quoteUuId = $request->quoteUuId;
         $insuranceproviders = InsuranceProvider::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
-        return view('shared.add_quote', compact('insuranceproviders', 'quoteUuId'));
+        return view('components.car-quote-add-plan', compact('insuranceproviders', 'quoteUuId'));
     }
 
     public function healthTeamAssign(Request $request)
