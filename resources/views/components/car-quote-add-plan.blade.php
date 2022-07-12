@@ -3,6 +3,7 @@
 @section('content')
 <script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
 <script src="{{ asset('build/js/car_quote.js') }}"></script>
+<link href="{{ asset('build/css/car_quote.css') }}" rel="stylesheet">
 <div class="row">
     <div class="col-md-12 col-sm-12 ">
         <div class="x_panel">
@@ -32,7 +33,7 @@
                                 <table cellspacing="5" cellpadding="5">
                                     <tr>
                                         <td>
-                                            <select class="form-control" id='insurance_provider_id' name='insurance_provider_id' data-toggle="tooltip" data-placement="top" title="Please select insurance provider" style="width: 250px">
+                                            <select class="form-control" id='insurance_provider_id' name='insurance_provider_id' data-toggle="tooltip" data-placement="top" title="Please select insurance provider">
                                                 <option value=''>Select Provider</option>
                                                 @foreach($insuranceproviders as $insuranceprovider)
                                                 @if (old('insurance_provider_id') == $insuranceprovider->id)
@@ -44,18 +45,18 @@
                                             </select>
                                         </td>
                                         <td>
-                                            <select class="form-control" id="car_plan_id" name="car_plan_id" data-toggle="tooltip" data-placement="top" title="Please select plan" style="width: 250px">
+                                            <select class="form-control" id="car_plan_id" name="car_plan_id" data-toggle="tooltip" data-placement="top" title="Please select plan">
                                                 <option value="">Select Plan</option>
                                             </select>
                                         </td>
                                         <td>
-                                            <input type="number" id="actual_premium" name="actual_premium" placeholder="Enter Premium (without VAT)" class="form-control" data-toggle="tooltip" data-placement="top" title="Please enter premium (without VAT)" style="width: 160px" onkeypress="return isNumberKey(event,this)">
+                                            <input type="number" id="actual_premium" name="actual_premium" placeholder="Enter Premium (without VAT)" class="form-control" data-toggle="tooltip" data-placement="top" title="Please enter premium (without VAT)" onkeypress="return isNumberKey(event,this)">
                                         </td>
                                         <td>
-                                            <input type="number" id="car_value" name="car_value" placeholder="Enter Car Value" class="form-control" data-toggle="tooltip" data-placement="top" title="Please enter car value" style="width: 160px" onkeypress="return isNumberKey(event,this)">
+                                            <input type="number" id="car_value" name="car_value" placeholder="Enter Car Value" class="form-control" data-toggle="tooltip" data-placement="top" title="Please enter car value" onkeypress="return isNumberKey(event,this)">
                                         </td>
                                         <td>
-                                            <input type="number" id="excess" name="excess" placeholder="Enter Excess" class="form-control" data-toggle="tooltip" data-placement="top" title="Please enter excess" style="width: 160px" onkeypress="return isNumberKey(event,this)">
+                                            <input type="number" id="excess" name="excess" placeholder="Enter Excess" class="form-control" data-toggle="tooltip" data-placement="top" title="Please enter excess" onkeypress="return isNumberKey(event,this)">
                                         </td>
                                     </tr>
                                 </table>
@@ -66,14 +67,14 @@
                     <div class="row">
                         <div class="col-auto mr-auto"></div>
                         <div class="col-auto">
-                            <span style="color:red;" id="error-car-create-quote-form"></span> 
+                            <span id="error-car-create-quote-form"></span> 
                             <button type="submit" class="btn btn-warning btn-sm">Create Quote</button>
                         </div>
                     </div>
                 </form>
                 <br>
                 <h2>Existing Plans</h2>
-                <table class="table table-striped jambo_table" style="table-layout: fixed;width:100%">
+                <table class="table table-striped jambo_table existing-plans">
                     <thead>
                         <tr>
                             <th width="350px">Provider Name</th>
