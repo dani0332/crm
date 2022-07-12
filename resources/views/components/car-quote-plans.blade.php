@@ -18,7 +18,7 @@ use App\Enums\CarPlanExclusionsCode;
                     <div class="col-auto">
                         <input type="hidden" id="quotePlansGenerateUrl" name="quotePlansGenerateUrl" value="{{ $ecomUrl }}">
                         @can('car-quotes-plans-create')
-                        <a href="{{ url('quotes/car/'.$record->uuid.'/add_quote') }}" class="btn btn-primary btn-sm">Create Quote</a>
+                        <a href="{{ url('quotes/car/'.$record->uuid.'/create-quote') }}" class="btn btn-primary btn-sm">Create Quote</a>
                         @endcan
                         @if(gettype($listQuotePlans) != 'string')
                         <input type="hidden" id="quoteRequestUuId" name="quoteRequestUuId" value="{{ $record->id }}">
@@ -30,20 +30,20 @@ use App\Enums\CarPlanExclusionsCode;
                     </div>
                 </div>
                 @if(gettype($listQuotePlans) != 'string')
-                <table id="dataTableCarQuotePlans" class="table table-striped jambo_table" style="width:100%">
+                <table id="dataTableCarQuotePlans" class="table table-striped jambo_table" style="table-layout: fixed;" style="width:100%">
                     <thead>
                         <tr>
                             <th style="width: 100px !important">Provider Name</th>
-                            <th style="width: 100px !important">Plan Name</th>
+                            <th style="width: 80px !important">Plan Name</th>
                             <th style="width: 80px !important">Repair Type</th>
                             <th style="width: 80px !important">Insurer Quote No.</th>
                             <th style="width: 100px !important">TPL Limit</th>
                             <th style="width: 100px !important">PAB cover</th>
                             <th style="width: 100px !important">Roadside assistance</th>
                             <th style="width: 100px !important">Oman cover TPL</th>
-                            <th style="width: 100px !important">Actual Premium</th>
-                            <th style="width: 100px !important">Discounted Premium</th>
-                            <th style="width: 100px !important">Premium with VAT.</th>
+                            <th style="width: 80px !important">Actual Premium</th>
+                            <th style="width: 80px !important">Discounted Premium</th>
+                            <th style="width: 80px !important">Premium with VAT.</th>
                             <th style="width: 50px !important">Action</th>
                         </tr>
                     </thead>
@@ -148,19 +148,13 @@ use App\Enums\CarPlanExclusionsCode;
                                     @endforeach
                                 </table>
                             </td>
-                            <td>{{ $quotePlan->actualPremium }}</td>
+                            <td>{{ $quotePlan->actualPremium ? number_format($quotePlan->actualPremium, 2) : '0.00' }}</td>
+                            <td>{{ $quotePlan->discountPremium ? number_format($quotePlan->discountPremium, 2) : '0.00' }}</td>
                             <td>
-                                <input type="hidden" id="quote_plan_id[]" name="quote_plan_id[]" value="{{ $quotePlan->id }}">
-                                <div class="editDIV1">
-                                    <span class="editESPAN" style="display:block;line-height: unset;">{{ $quotePlan->discountPremium }}</span>
-                                    <input type="number" id="discountedPremium[]" name="discountedPremium[]" value="{{ $quotePlan->discountPremium }}" class="editINPUT" style="display:none;" size="8" maxlength="8">
-                                </div>
-                            </td>
-                            <td>
-                                <?php
-                                $totalPremium = $quotePlan->discountPremium + $quotePlan->vat + $totalSelectedAddonsPriceWithVat;
-                                ?>
-                                {{ $totalPremium }}
+                                @php
+                                    $totalPremium = $quotePlan->discountPremium + $quotePlan->vat + $totalSelectedAddonsPriceWithVat;
+                                @endphp
+                                {{ $totalPremium ? number_format($totalPremium, 2) : '0.00' }}
                             </td>
                             <td><a href="#" planDetailUrl="{{ $record->uuid }}/plan_details/{{ $quotePlan->id }}" data-toggle="modal" data-target="#quotePlanModal" class="quotePlanModalPopup">View</a></td>
                         </tr>
