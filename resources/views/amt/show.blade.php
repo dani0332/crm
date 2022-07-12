@@ -22,7 +22,7 @@
                 @if(session()->has('message'))
                     <div class="alert alert-danger">{{ session()->get('message') }}</div>
                 @endif
-                <form method="post" action="/quotes/business/manualBusinessLeadAssign" class="form-horizontal form-label-left" autocomplete="off">
+                <form method="post" action="/quotes/business/manualLeadAssign" class="form-horizontal form-label-left" autocomplete="off">
                     {{ csrf_field() }}
                     @method('POST')
                     <input type="hidden" value="business" name="modelType">
@@ -203,7 +203,7 @@
                         </div>
                     </div>
                     <div class="col">
-                        
+
                     </div>
                 </div>
                 @endif
@@ -226,7 +226,7 @@
             :statuses="$leadStatuses"
             :lostreasons="$lostReasons"
             :selectedlostreason="$selectedLostReasonId"
-        />  
+        />
 
             <div class="row" st>
                 <div class="col-md-12 col-sm-12">
@@ -259,14 +259,14 @@
                 </div>
             </div>
 
-           
+
 
         </div>
         @if(count($allowedDuplicateLOB) > 0)
         <div class="modal fade" id="duplicateLeadModal" name="duplicateLeadModal" tabindex="-1" role="dialog"
             aria-labelledby="duplicateLeadModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
-               
+
                     <div class="modal-content" style="display: grid;    height: 260px !important;">
                         <form method="post" action="/quotes/createDuplicate" autocomplete="off">
                             {{ csrf_field() }}
@@ -297,7 +297,7 @@
                         </div>
                     </form>
                     </div>
-               
+
             </div>
         </div>
         @endif
