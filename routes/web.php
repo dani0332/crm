@@ -195,7 +195,7 @@ Route::group(['middleware' =>  ['auth']], function () {
         Route::post('car/addNoteForCustomer', [CRUDController::class, 'addNoteForCustomer']);
         Route::post('car/sendNotesToCustomer', [CRUDController::class, 'sendNotesToCustomer']);
         Route::post('{quoteType}/updateQuotePolicy', [CRUDController::class, 'updateQuotePolicy']);
-        Route::get('{quoteType}/{quoteUuId}/uploadDocument', [CRUDController::class, 'uploadDocument']);
+        Route::get('{quoteType}/{quoteUuId}/upload-document', [CRUDController::class, 'uploadDocument']);
     });
 
     Route::group(['prefix' => 'generic'], function () {

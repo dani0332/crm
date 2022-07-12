@@ -21,7 +21,8 @@
                 @endif
                 <form method='post' action="{{ route('CarPlanManualProcess') }}" enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left" autocomplete="off">
                     {{csrf_field()}}
-                    <input type="hidden" id="car_quote_uuid" name="car_quote_uuid" value="{{ $quoteUuId }}">
+                    <input type="hidden" id="quote_id" name="quote_id" value="{{ $quoteId }}">
+                    <input type="hidden" id="quote_type_id" name="quote_type_id" value="{{ $quoteTypeId }}">
 
                    <div id='redirect_to_view_div'></div>
                     <div class="ln_solid"></div>

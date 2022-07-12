@@ -807,6 +807,11 @@ class CRUDController extends Controller
 
     public function uploadDocument(Request $request, $quoteType, $quoteUuId)
     {
-        return view('components.quote-documents-upload', compact('quoteUuId', 'quoteType'));
+        $model = '\\App\\Models\\' . $this->genericModel->modelType . "Quote";
+        $quoteModel = $model::where('uuid', $quoteUuId)->select('id')->first();
+        $quoteId = $quoteModel->id;
+        $quoteTypeId = $this->activityService->getQuoteTypeId($quoteType);
+
+        return view('components.quote-documents-upload', compact('quoteUuId', 'quoteId', 'quoteType', 'quoteTypeId'));
     }
 }
