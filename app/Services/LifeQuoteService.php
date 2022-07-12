@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Enums\QuoteTypeId;
 use App\Models\LifeQuote;
 use App\Models\LifeQuoteRequestDetail;
-use App\Models\QuoteStatus;
 use Illuminate\Http\Request;
 use DB;
 use Auth;
@@ -14,7 +13,10 @@ use Config;
 use App\Traits\CustomerAdditionalInfo as CustomerAdditionalInfoTrait;
 use App\Enums\quoteTypeCode;
 use App\Enums\DatabaseColumnsString;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\GenericRequestEnum;
+use Illuminate\Support\Facades\Log;
+
 use App\Traits\RolePermissionConditions;
 use App\Traits\AddPremiumAllLobs;
 class LifeQuoteService extends BaseService
@@ -23,8 +25,10 @@ class LifeQuoteService extends BaseService
     use RolePermissionConditions;
     use CustomerAdditionalInfoTrait;
     use AddPremiumAllLobs;
-    public function __construct()
+    protected $leadAllocationService;
+    public function __construct(LeadAllocationService $leadAllocationService)
     {
+        $this->leadAllocationService = $leadAllocationService;
         $this->query = DB::table('life_quote_request as lqr')
             ->select(
                 'lqr.id',
@@ -147,7 +151,7 @@ class LifeQuoteService extends BaseService
         if (!$entity) {
             $entity = $this->createDetailEntity($id);
         }
-        return LifeQuoteRequestDetail::where('life_quote_request_id', $id)->first();
+        return $entity;
     }
 
     public function createDetailEntity($id)
@@ -693,7 +697,7 @@ class LifeQuoteService extends BaseService
             $quote->uuid = $response->uuid;
             $quote->code = 'LIF-' . $response->uuid;
         }
-        $quote->quote_status_id = QuoteStatus::where('text', 'New Lead')->first()->id;
+        $quote->quote_status_id = QuoteStatusEnum::NewLead;
         $quote->first_name = $parentRecord->first_name;
         $quote->last_name = $parentRecord->last_name;
         $quote->email = $parentRecord->email;
@@ -734,4 +738,47 @@ class LifeQuoteService extends BaseService
             ->orderBy('a.created_at', 'DESC')->get();
         return $audits;
     }
+
+    public function processManualLeadAssignment($request): array
+    {
+        $leadsIds = array_map('intval', explode(',', trim($request->selectTmLeadId, ',')));
+        $userId = (int)$request->assigned_to_id_new;
+        Log::info('Leads ids to assign: ' . json_encode($leadsIds));
+        $result = [];
+        foreach($leadsIds as $leadId)
+        {
+            $lead = $this->getEntityPlain($leadId);
+            $lead->advisor_id = $userId;
+            $lead->save();
+        }
+        return $result;
+    }
+    public function getEntityPlainByUUID($uuid)
+    {
+        return LifeQuote::where('uuid', $uuid)->first();
+    }
+
+    public function validateRequest($request)
+    {
+        $userId = $request->assigned_to_id_new;
+        $leadsIds = $request->selectTmLeadId;
+        if ($leadsIds == '' || $leadsIds == null) {
+            return 'Please select lead(s) to assign';
+        }
+        if (substr($leadsIds, 0, 1) == ',') {
+            $leadsIds = substr($leadsIds, 1);
+        }
+        $leadsIds = array_map('intval', explode(',', $leadsIds));
+        foreach ($leadsIds as $leadId) {
+            $entity = $this->getEntityPlain($leadId);
+            if ($entity->quote_status_id == QuoteStatusEnum::TransactionApproved) {
+                return 'One of the selected lead is in Transaction Approved state. Please unselect the lead and try again.';
+            }
+        }
+        if ($userId == '' || $userId == null) {
+            return 'Please select user to assign leads';
+        }
+        return 'true';
+    }
+
 }

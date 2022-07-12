@@ -15,6 +15,7 @@ use App\Http\Controllers\RewardTranslationController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\CarQouteController;
 use App\Http\Controllers\HealthQouteController;
+use App\Http\Controllers\LeadAllocationController;
 use App\Http\Controllers\ClaimController;
 use App\Http\Controllers\TypeOfInsuranceController;
 use App\Http\Controllers\SubTypeOfInsuranceController;
@@ -125,6 +126,10 @@ Route::group(['middleware' =>  ['auth']], function () {
     Route::get('/customer-upload', [CustomerController::class, 'uploadCustomers']);
     Route::post('/customer-process', [CustomerController::class, 'processCustomerCSV']);
 
+    Route::resource('lead-allocation', LeadAllocationController::class);
+    Route::post('/lead-allocation/updateAvailability', [LeadAllocationController::class, 'updateAvailability']);
+    Route::post('/lead-allocation/setLeadAllocationJobStatus', [LeadAllocationController::class, 'setLeadAllocationJobStatus']);
+
     Route::group(['prefix' => 'renewals'], function () {
         Route::resource('uploaded-leads', RenewalsUploadController::class);
         Route::get('upload', [RenewalsUploadController::class, 'uploadRenewals']);
@@ -169,7 +174,8 @@ Route::group(['middleware' =>  ['auth']], function () {
 
         Route::get('getvalues/{modelType}/{propertyName}/{recordId}', [CRUDController::class, 'getDropdownSourceNameForDisplay']);
         Route::get('car/{quoteId}/plan_details/{planId}', [CRUDController::class, 'carQuotePlanDetails']);
-        Route::post('manualLeadAssign', [CRUDController::class, 'manualLeadAssign'])->name('manualLeadAssign');
+        Route::post('health/manualLeadAssign', [CRUDController::class, 'manualLeadAssign'])->name('manualLeadAssign');
+        Route::post('wcuAssign', [CRUDController::class, 'wcuAssign'])->name('wcuAssign');
         Route::post('/{modelType}/{QuoteUId}/UpdateLeadStatus', [CRUDController::class, 'UpdateLeadStatus'])->name('UpdateLeadStatus');
         Route::post('health/manualLeadAssignAfterTeamAssign', [CRUDController::class, 'manualLeadAssignAfterTeamAssign'])->name('manualLeadAssignAfterTeamAssign');
         Route::post('business/manualBusinessLeadAssign', [CRUDController::class, 'manualLeadAssignAfterTeamAssign'])->name('manualBusinessLeadAssign');
