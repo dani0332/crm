@@ -5,9 +5,9 @@ use App\Models\Payment;
 
 class PaymentRepository implements  PaymentRepositoryInterface
 {
-    public function getAllPayments($leadId)
+    public function getAllPayments($leadId, $quoteTypeId)
     {
-        return Payment::where('lead_id', $leadId)->get();
+        return Payment::where('quote_id', $leadId)->where('quote_type_id', $quoteTypeId)->get();
     }
 
     public function getPaymentById($paymentId)
