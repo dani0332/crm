@@ -106,7 +106,7 @@ class MembersDetailController extends Controller
     public function destroy($id)
     {
         $data = HealthMemberDetail::find($id);
-        HealthQuote::find($data->health_quote_request_id)->update(['quote_updated_at' => Carbon::now()]);
+        HealthQuote::find($data->health_quote_request_id)->update(['quote_updated_at' => Carbon::now(),'primary_member_id' => null]);
         $data->delete();
         return redirect()->back();
     }
