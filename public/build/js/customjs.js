@@ -2110,38 +2110,6 @@ $("#renewals-upload-button").click(function () {
     $("#renewals-upload-button-text").text("Please wait until file will be uploaded. More waiting time is depending on number of records.");
 });
 
-$('#insurance_provider_id').on('change', function (e) {
-    var insuranceProviderId = $("#insurance_provider_id option:selected").val();
-    var quoteUuId = $("#car_quote_uuid").val();
-    $.get('/insurance-provider-plans?insuranceProviderId=' + insuranceProviderId + '&quoteUuId=' + quoteUuId, function (data) {
-        var carPlan = $('#car_plan_id').empty();
-        $('#car_plan_id').animate({ borderColor: '#007bff' }).delay(5);
-        $('#car_plan_id').delay(100).fadeOut().fadeIn('slow');
-        $('#car_plan_id').animate({ borderColor: '#ced4da' }).delay(5);
-
-        $.each(data, function (create, carPlanObj) {
-            carPlan.append('<option value="' + carPlanObj.id + '">' + carPlanObj.text + ' (' + carPlanObj.repair_type + ')</option>');
-        });
-        if (data.length == 0) {
-            carPlan.append('<option value="">Select Plan</option>');
-        }
-    });
-});
-
-$("#update_car_plans").submit(function (e) {
-    var insurance_provider_id = $("#insurance_provider_id").val();
-    var car_plan_id = $("#car_plan_id").val();
-    var premium = $("#premium").val();
-    var value = $("#value").val();
-    var excess = $("#excess").val();
-
-    if (insurance_provider_id == "" || (car_plan_id == "" || premium == "" || value == "" || excess == "")) {
-        alert('Please fill all the fields');
-        return false;
-    }
-
-});
-
 $('#quotePlanModal').on('hidden.bs.modal', function () {
     location.reload();
 });
@@ -2257,13 +2225,14 @@ $("#quote_policy_issuance_date, #quote_policy_start_date, #quote_policy_expiry_d
     dateFormat: "dd-mm-yy"
 });
 
-// allow only numbers and decimal, ref html: onkeypress="return isNumberKey(event,this)"
+// allow only numbers and decimal (length: 8), ref html: onkeypress="return isNumberKey(event,this)"
 function isNumberKey(evt, obj) {
     var charCode = (evt.which) ? evt.which : event.keyCode
     var value = obj.value;
     var dotcontains = value.indexOf(".") != -1;
     if (dotcontains)
-        if (charCode == 46) return false;
+    if (charCode == 46) return false;
+    if (obj.value.length > 8) return false;
     if (charCode == 46) return true;
     if (charCode > 31 && (charCode < 48 || charCode > 57))
         return false;
