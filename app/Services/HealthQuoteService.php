@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\LeadSourceTypes;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Models\BusinessInsuranceType;
 use App\Models\BusinessQuote;
@@ -20,16 +21,23 @@ use App\Traits\CustomerAdditionalInfo as CustomerAdditionalInfoTrait;
 use App\Enums\quoteTypeCode;
 use App\Enums\DatabaseColumnsString;
 use App\Models\HealthMemberDetail;
+use App\Models\Team;
+use App\Models\User;
 use App\Traits\AddPremiumAllLobs;
+use App\Traits\GetUserTree;
+use Illuminate\Support\Facades\Log;
 
 class HealthQuoteService extends BaseService
 {
     protected $query;
+    protected $leadAllocationService;
+    use GetUserTree;
     use RolePermissionConditions;
     use CustomerAdditionalInfoTrait;
     use AddPremiumAllLobs;
-    public function __construct()
+    public function __construct(LeadAllocationService $leadAllocationService)
     {
+        $this->leadAllocationService = $leadAllocationService;
         $this->query = DB::table('health_quote_request as hqr')->select(
             'hqr.id',
             'hqr.uuid',
@@ -80,7 +88,8 @@ class HealthQuoteService extends BaseService
             'hqr.previous_quote_policy_number',
             'hqr.previous_policy_expiry_date',
             'hqr.previous_quote_policy_premium',
-            'hqr.device'
+            'hqr.device',
+            'hqr.wcu_id',
         )
             ->leftJoin('marital_status as ms', 'ms.id', '=', 'hqr.marital_status_id')
             ->leftJoin('health_quote_request_detail as hqrd', 'hqrd.health_quote_request_id', '=', 'hqr.id')
@@ -121,15 +130,15 @@ class HealthQuoteService extends BaseService
         if (!$entity) {
             $entity = $this->createDetailEntity($id);
         }
-        return HealthQuoteRequestDetail::where('health_quote_request_id', $id)->first();
+        return $entity;
     }
 
     public function createDetailEntity($id)
     {
         return HealthQuoteRequestDetail::create([
             'health_quote_request_id' => $id,
-            'created_at' => Carbon::now(),
-            'updated_at' => Carbon::now(),
+            'created_at' => now(),
+            'updated_at' => now(),
         ]);
     }
 
@@ -185,8 +194,7 @@ class HealthQuoteService extends BaseService
         $isNewAdvisor = Auth::user()->isNewBusinessAdvisor();
         if ($isRenewalUser || $isRenewalManager || $isRenewalAdvisor) {
             $searchProperties = $model->renewalSearchProperties;
-        }
-        else if ($isNewManager || $isNewAdvisor) {
+        } else if ($isNewManager || $isNewAdvisor) {
             $searchProperties = $model->newBusinessSearchProperties;
         } else {
             $searchProperties = $model->searchProperties;
@@ -210,9 +218,9 @@ class HealthQuoteService extends BaseService
                 $dateTo = Carbon::createFromFormat('Y-m-d', $request['created_at_end'])->endOfDay()->toDateTimeString();
                 $this->query->whereBetween('hqr.created_at', [$dateFrom, $dateTo]);
             }
-            if(Auth::user()->isSpecificTeamAdvisor('Health') || Auth::user()->isSpecificTeamAdvisor('EBP') || Auth::user()->isSpecificTeamAdvisor('RM')){
+            if (Auth::user()->isSpecificTeamAdvisor('Health') || Auth::user()->isSpecificTeamAdvisor('EBP') || Auth::user()->isSpecificTeamAdvisor('RM')) {
                 // if user has advisor Role then fetch leads assigned to the user only
-                $this->query->where('hqr.advisor_id', Auth::user()->id);	// fetch leads assigned to the user
+                $this->query->where('hqr.advisor_id', Auth::user()->id);    // fetch leads assigned to the user
             }
             if (isset($request->code) && $request->code != '') {
                 $this->query->where('hqr.code', $request->code);
@@ -249,9 +257,9 @@ class HealthQuoteService extends BaseService
             $this->whereBasedOnRole($this->query,'hqr');
 
             if (isset($request->is_renewal) && $request->is_renewal != '') {
-                if($request->is_renewal ==  quoteTypeCode::yesText)
+                if ($request->is_renewal ==  quoteTypeCode::yesText)
                     $this->query->whereNotNull('hqr.previous_quote_id');
-                if($request->is_renewal ==  quoteTypeCode::noText)
+                if ($request->is_renewal ==  quoteTypeCode::noText)
                     $this->query->whereNull('hqr.previous_quote_id');
             }
             foreach ($searchProperties as $item) {
@@ -259,10 +267,10 @@ class HealthQuoteService extends BaseService
                     if ($request[$item] == 'null') {
                         $this->query->whereNull($item);
                     } else if ($item == 'advisor_id' && is_array($request[$item]) && !empty($request[$item])) {
-                        if($request[$item][0] == 'null')
+                        if ($request[$item][0] == 'null')
                             $this->query->whereNull('advisor_id');
                         else
-                            $this->query->whereIn('advisor_id', $request[$item]);
+                            $this->query->whereIn('advisor_id', $request[$item])->orWhereIn('wcu_id', $request[$item]);
                     }
                     else if ($item == DatabaseColumnsString::QUOTE_STATUS_ID && is_array($request[$item]) && !empty($request[$item])) {
                         $this->query->whereIn('quote_status_id', $request[$item]);
@@ -375,32 +383,32 @@ class HealthQuoteService extends BaseService
     public function getLeadAuditHistory($id)
     {
         $audits = DB::table('audits as a')
-        ->select(
-            'a.created_at as ModifiedAt',
-            DB::raw('(SELECT name from users where id = a.user_id) as ModifiedBy'),
-            DB::raw("(SELECT TEXT FROM quote_status WHERE id = JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.quote_status_id'))) AS NewStatus"),
-            DB::raw("(SELECT NAME FROM users WHERE id = JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.advisor_id'))) AS NewAdvisor"),
-            DB::raw("JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.notes')) AS NewNotes")
-        )
-        ->where(function ($query) {
-            $query->where('a.auditable_type', 'App\Models\HealthQuote')
-            ->orWhere('a.auditable_type', 'App\Models\HealthQuoteRequestDetail');
-        })
-        ->where(function ($query) {
-            $query->whereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.quote_status_id')"))
-            ->orWhereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.notes')"))
-            ->orWhereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.advisor_id')"));
-        })
-        ->where(function ($query) use ($id) {
-            $detailObjId = HealthQuoteRequestDetail::where('health_quote_request_id', $id)->first();
-            if($detailObjId) {
-                $query->where('a.auditable_id', $id)
-                ->orWhere('a.auditable_id', $detailObjId->id);
-            } else {
-                $query->where('a.auditable_id', $id);
-            }
-        })
-        ->orderBy('a.created_at', 'DESC')->get();
+            ->select(
+                'a.created_at as ModifiedAt',
+                DB::raw('(SELECT name from users where id = a.user_id) as ModifiedBy'),
+                DB::raw("(SELECT TEXT FROM quote_status WHERE id = JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.quote_status_id'))) AS NewStatus"),
+                DB::raw("(SELECT NAME FROM users WHERE id = JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.advisor_id'))) AS NewAdvisor"),
+                DB::raw("JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.notes')) AS NewNotes")
+            )
+            ->where(function ($query) {
+                $query->where('a.auditable_type', 'App\Models\HealthQuote')
+                    ->orWhere('a.auditable_type', 'App\Models\HealthQuoteRequestDetail');
+            })
+            ->where(function ($query) {
+                $query->whereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.quote_status_id')"))
+                    ->orWhereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.notes')"))
+                    ->orWhereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.advisor_id')"));
+            })
+            ->where(function ($query) use ($id) {
+                $detailObjId = HealthQuoteRequestDetail::where('health_quote_request_id', $id)->first();
+                if ($detailObjId) {
+                    $query->where('a.auditable_id', $id)
+                        ->orWhere('a.auditable_id', $detailObjId->id);
+                } else {
+                    $query->where('a.auditable_id', $id);
+                }
+            })
+            ->orderBy('a.created_at', 'DESC')->get();
         return $audits;
     }
 
@@ -425,10 +433,10 @@ class HealthQuoteService extends BaseService
             ->leftJoin('health_quote_request_detail as hqrd', 'hqrd.health_quote_request_id', '=', 'hqr.id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'hqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'hqrd.advisor_assigned_by_id')
-            ->whereIn('qs.text', ['Followed Up','Qualification Pending', 'Quoted', 'FTC Pending', 'FTC Sent', 'Missing Documents Requested', 'Policy Documents Pending', 'Payment Pending', 'Pending with UW', 'Application Pending', 'In Negotiation'])
+            ->whereIn('qs.text', ['Followed Up', 'Qualification Pending', 'Quoted', 'FTC Pending', 'FTC Sent', 'Missing Documents Requested', 'Policy Documents Pending', 'Payment Pending', 'Pending with UW', 'Application Pending', 'In Negotiation'])
             ->where('hqrd.next_followup_date', '<', date('Y-m-d H:i:s'))
             ->where('hqr.advisor_id', Auth::user()->id);
-            return $query;
+        return $query;
     }
 
     public function getHealthLeadsForAdvisor($request)
@@ -464,8 +472,14 @@ class HealthQuoteService extends BaseService
             ->leftJoin('users as u', 'u.id', '=', 'hqrd.advisor_assigned_by_id')
             ->leftJoin('payment_status as ps', 'ps.id', '=', 'hqr.payment_status_id')
             ->where('hqr.quote_status_id', '!=', 9)
-            ->where('hqr.advisor_id', Auth::user()->id)
             ->orderBy('hqr.created_at', "DESC");
+
+            if(auth()->user()->isHealthWCUAdvisor())
+            {
+                $query->where('hqr.wcu_id', auth()->id());
+            }else{
+                $query->where('hqr.advisor_id', auth()->id());
+            }
 
         $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
         $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';
@@ -560,14 +574,14 @@ class HealthQuoteService extends BaseService
     public function updateChildRecord($id)
     {
         $childRecord = HealthQuoteRequestDetail::where('health_quote_request_id', $id)->first();
-
         if (empty($childRecord)) {
             $childRecord = $this->createDetailEntity($id);
         }
-
-        $childRecord->advisor_assigned_by_id = Auth::user()->id;
-        $childRecord->advisor_assigned_date = Carbon::now();
-        $childRecord->save();
+        if($childRecord->advisor_id != null){
+            $childRecord->advisor_assigned_by_id = Auth::user()->id;
+            $childRecord->advisor_assigned_date = now();
+            $childRecord->save();
+        }
     }
 
     public function fillModelProperties()
@@ -628,7 +642,7 @@ class HealthQuoteService extends BaseService
 
     public function fillRenewalProperties($model)
     {
-        $model->renewalSearchProperties = ['created_at', 'code', 'first_name', 'last_name', 'email', 'mobile_no','renewal_batch','previous_quote_policy_number','previous_policy_expiry_date','previous_quote_policy_premium'];
+        $model->renewalSearchProperties = ['created_at', 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'renewal_batch', 'previous_quote_policy_number', 'previous_policy_expiry_date', 'previous_quote_policy_premium'];
         $model->renewalSkipProperties = [
             "create" => "premium,device,previous_quote_policy_premium,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,member_category_id,salary_band_id,gender,is_renewal,previous_quote_id,created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,source,transapp_code,renewal_expiry_date",
             "list" => "premium,device,policy_number,member_category_id,salary_band_id,gender,is_renewal,email,cover_for_id,has_worldwide_cover,has_home,details,preference,mobile_no,dob,marital_status_id,nationality_id,has_dental,emirate_of_your_visa_id,is_ebp_renewal,health_team_type,next_followup_date,lost_reason,source,transapp_code,lead_type_id,renewal_expiry_date",
@@ -779,11 +793,11 @@ class HealthQuoteService extends BaseService
         $quote = new HealthQuote();
         $quote->parent_duplicate_quote_id = $parentRecord->code;
         $response = CapiRequestService::getUUID(QuoteTypeId::Health);
-        if($response) {
+        if ($response) {
             $quote->uuid = $response->uuid;
-            $quote->code = 'HEA-'. $response->uuid;
+            $quote->code = 'HEA-' . $response->uuid;
         }
-        $quote->quote_status_id = QuoteStatus::where('text', 'New Lead')->first()->id;
+        $quote->quote_status_id = QuoteStatusEnum::NewLead;
         $quote->first_name = $parentRecord->first_name;
         $quote->last_name = $parentRecord->last_name;
         $quote->email = $parentRecord->email;
@@ -841,7 +855,7 @@ class HealthQuoteService extends BaseService
                 $responseBodyAsString = $response->error;
             } else if (isset($response->msg)) {
                 $responseBodyAsString = $response->msg;
-            }else {
+            } else {
                 $responseBodyAsString = "Quote unavailable for the selected current location and region. Please call 800 ALFRED.";
             }
 
@@ -853,4 +867,154 @@ class HealthQuoteService extends BaseService
     {
         return HealthMemberDetail::where('health_quote_request_id', $id)->get();
     }
+    public function validateRequest($request)
+    {
+        $userId = $request->assigned_to_id_new;
+        $leadsIds = $request->selectTmLeadId == null || $request->selectTmLeadId == '' ? $request->entityId : $request->selectTmLeadId;
+        if ($leadsIds == '' || $leadsIds == null) {
+            return 'Please select lead(s) to assign';
+        }
+        if (substr($leadsIds, 0, 1) == ',') {
+            $leadsIds = substr($leadsIds, 1);
+        }
+        $leadsIds = array_map('intval', explode(',', $leadsIds));
+        foreach ($leadsIds as $leadId) {
+            $entity = $this->getEntityPlain($leadId);
+            if ($entity->quote_status_id == QuoteStatusEnum::TransactionApproved) {
+                return 'One of the selected lead is in Transaction Approved state. Please unselect the lead and try again.';
+            }
+        }
+        if ($userId == '' || $userId == null) {
+            return 'Please select user to assign leads';
+        }
+        return 'true';
+    }
+
+    public function removePreviousAdvisorAndUpdateStatus($entity, $quoteStatusId)
+    {
+        $startOfDayToday = now()->startOfDay();
+        $entityDetail = $this->getDetailEntity($entity->id);
+        $lastAssignedAdvisorDate = Carbon::parse($entityDetail->advisor_assigned_date)->startOfDay();
+        if ($lastAssignedAdvisorDate == $startOfDayToday) {
+            $this->leadAllocationService->removeLeadAllocationForOldAdvisor($entity);
+        }
+        $entity->advisor_id = null;
+        $entity->quote_status_id = $quoteStatusId;
+        $entity->save();
+
+    }
+
+    public function assignWCU($request): array
+    {
+        $leadsIds = array_map('intval', explode(',', trim($request->selectTmLeadId, ',')));
+        Log::info('Leads ids to assign: ' . json_encode($leadsIds));
+        $userId = $request->assigned_to_id_new;
+        $result = [];
+        foreach ($leadsIds as $leadId) {
+            $lead = $this->getEntityPlain($leadId);
+            if($this->isLeadTransactionApproved($lead)) {
+                Log::info('Cannot assign WCU as lead is in Transaction Approved state , lead id: ' . $leadId);
+                array_push($result, ['leadId' => $lead->code, 'msg' => 'Cannot assign WCU as lead is in Transaction Approved state']);
+                continue;
+            }
+            $lead->advisor_id = null;
+            $lead->quote_status_id = QuoteStatusEnum::NewLead;
+            $lead->wcu_id = $userId;
+            $lead->health_team_type = $request->assign_team;
+            $lead->save();
+            Log::info('WCU advisor : ' . $userId . ' assigned to lead: ' . $leadId);
+        }
+        return $result;
+    }
+
+    public function assignHealthTeam($request, $lead): bool
+    {
+        if($this->isLeadTransactionApproved($lead)) {
+            Log::info('Cannot assign Health Team as lead is in Transaction Approved state');
+            return false;
+        }
+        if($lead->health_team_type != null && $lead->advisor_id != null) {
+            Log::info('Removing previous advisor as lead already assigned to a health team');
+            $this->removePreviousAdvisorAndUpdateStatus($lead, QuoteStatusEnum::Qualified);
+        }
+        $selectedTeam = $request->get('assign_team');
+        if ($selectedTeam == quoteTypeCode::GM) {
+            Log::info('Assigning lead to GM');
+            $this->convertLeadToGM($lead);
+            $lead->health_team_type = quoteTypeCode::GM;
+            $lead->save();
+
+        } else {
+            Log::info('Assigning lead to '. $selectedTeam. ' team');
+            $lead->health_team_type = $selectedTeam;
+            if($lead->quote_status_id == QuoteStatusEnum::Qualified) {
+                $lead->wcu_id = null;
+            }
+            $lead->save();
+        }
+        return true;
+    }
+
+    public function isLeadTransactionApproved($lead): bool
+    {
+        if ($lead->quote_status_id == QuoteStatusEnum::TransactionApproved) {
+            return true;
+        }
+        return false;
+    }
+
+    public function processManualLeadAssignment($request): array
+    {
+        if($request->selectTmLeadId == '' || $request->selectTmLeadId == null) {
+            $leadsIds = array_map('intval', explode(',', trim($request->entityId, ',')));
+        }
+        else{
+            $leadsIds = array_map('intval', explode(',', trim($request->selectTmLeadId, ',')));
+        }
+        $userId = (int)$request->assigned_to_id_new;
+        Log::info('Leads ids to assign: ' . json_encode($leadsIds));
+        $result = [];
+        foreach($leadsIds as $leadId)
+        {
+            $lead = $this->getEntityPlain($leadId);
+            if(strtolower($request->modelType) == strtolower(quoteTypeCode::Health))
+            {
+                if($lead->health_team_type == null || $lead->health_team_type == '') {
+                    Log::info('Lead with id: ' . $leadId . ' is not assigned to any health team');
+                    $msg = 'Health team is missing please select health team first';
+                    array_push($result, [ 'leadId' => $lead->code, 'msg' => $msg ]);
+                    continue;
+                }
+                if($this->leadAllocationService->checkIfAdvisorCanTakeLead($userId)){
+                    Log::info('Advisor : ' . $userId . ' can take lead: ' . $leadId);
+                    $user = User::where('id', $userId)->first();
+                    $subTeam = Team::where('id', $user->sub_team_id)->first();
+                    if(strtolower($subTeam->name) != strtolower($lead->health_team_type)) {
+                        Log::info('Advisor : ' . $userId . ' can take lead: ' . $leadId . ' but he is not assigned to the correct health team');
+                        $msg = 'User sub team mismatch with lead health team';
+                        array_push($result, [ 'leadId' => $lead->code, 'msg' => $msg ]);
+                        continue;
+                    }
+                    $this->leadAllocationService->assignLead($lead, $userId, true);
+                    $this->updateChildRecord($lead->id);
+                    Log::info('Lead: ' . $leadId . ' assigned to advisor: ' . $userId);
+                }else{
+                    Log::info('Advisor : ' . $userId . ' cannot take lead: ' . $leadId);
+                    $msg = 'Advisor is not allowed to take lead with CDBID : ' . $lead->code;
+                    array_push($result, [ 'leadId' => $lead->code, 'msg' => $msg ]);
+                    continue;
+                }
+            }
+            else{
+                $lead->advisor_id = $userId;
+                $lead->save();
+            }
+        }
+        return $result;
+    }
+    public function getEntityPlainByUUID($uuid)
+    {
+        return HealthQuote::where('uuid', $uuid)->first();
+    }
+
 }

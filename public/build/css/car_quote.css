@@ -1,0 +1,16 @@
+#car-create-quote-form #insurance_provider_id, #car_plan_id {
+  width: 250px !important;
+}
+
+#car-create-quote-form #actual_premium, #car_value, #excess {
+  width: 160px !important;
+}
+
+#car-create-quote-form #error-car-create-quote-form {
+  color:red !important;
+}
+
+.existing-plans {
+  table-layout: fixed;
+  width:100%;
+}

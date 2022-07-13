@@ -209,4 +209,16 @@ class User extends Authenticatable implements AuditableContract
         )
             ->get();
     }
+
+    public function isHealthWCUAdvisor()
+    {
+        $userRoles = Auth::user()->usersroles()->get();
+        $isAdvisor = false;
+        foreach ($userRoles as $userRole) {
+            if (str_contains(strtolower($userRole->name), 'wcu')) {
+                $isAdvisor = true;
+            }
+        }
+        return $isAdvisor;
+    }
 }

@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Http\Requests\MemberDetail;
 use App\Models\HealthMemberDetail;
 use App\Services\LookupService;
+use App\Models\HealthQuote;
+use Carbon\Carbon;
+
 class MembersDetailController extends Controller
 {
     /**
@@ -44,6 +46,7 @@ class MembersDetailController extends Controller
             'salary_band_id' => $request->salary_band
         ];
         HealthMemberDetail::create($data);
+        HealthQuote::find($request->health_quote_request_id)->update(['quote_updated_at' => Carbon::now()]);
         return redirect()->back();
     }
 
@@ -90,6 +93,7 @@ class MembersDetailController extends Controller
             'salary_band_id' => $request->salary_band
         ];
         HealthMemberDetail::find($id)->update($data);
+        HealthQuote::find($request->health_quote_request_id)->update(['quote_updated_at' => Carbon::now()]);
         return redirect()->back();
     }
 
@@ -101,7 +105,9 @@ class MembersDetailController extends Controller
      */
     public function destroy($id)
     {
-        HealthMemberDetail::find($id)->delete();
+        $data = HealthMemberDetail::find($id);
+        HealthQuote::find($data->health_quote_request_id)->update(['quote_updated_at' => Carbon::now()]);
+        $data->delete();
         return redirect()->back();
     }
 }

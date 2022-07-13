@@ -2,9 +2,12 @@
 
 namespace App\Services;
 
+use App\Models\ApplicationStorage;
 use App\Models\VehicleType;
 use App\Models\YearOfManufacture;
 use App\Models\CarModelDetail;
+use App\Models\InsuranceProvider;
+use App\Models\LostReasons;
 use App\Models\UAELicenseHeldFor;
 use App\Models\MemberCategory;
 use App\Models\SalaryBand;
@@ -40,6 +43,20 @@ class LookupService extends BaseService
     public function getSalaryBands()
     {
         return SalaryBand::active()->get();
+    }
+    public function getApplicationStorageValue($key)
+    {
+        return ApplicationStorage::where("key_name", $key)->first()->value;
+    }
+
+    public function getLostReasons()
+    {
+        return LostReasons::select('id', 'text')->get();
+    }
+
+    public function getInsuranceProviders()
+    {
+        return InsuranceProvider::where('is_active', '=', true)->orderBy('sort_order', 'asc')->get();
     }
 
 }

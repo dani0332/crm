@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Models\CarMake;
 use App\Models\CarQuote;
@@ -15,14 +16,21 @@ use Config;
 use DB;
 use \Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use App\Enums\quoteStatusCode;
+use App\Enums\quoteTypeCode;
+use App\Models\CarQuoteAdvisorToOE;
+use Illuminate\Support\Facades\Log;
+
 use App\Enums\GenericRequestEnum;
 class CarQuoteService extends BaseService
 {
     protected $query;
     protected $httpService;
     protected $childUserIds = [];
-    public function __construct(HttpRequestService $httpService)
+    protected $leadAllocationService;
+    public function __construct(HttpRequestService $httpService, LeadAllocationService $leadAllocationService)
     {
+        $this->leadAllocationService = $leadAllocationService;
         $this->httpService = $httpService;
         $this->query = DB::table('car_quote_request as cqr')
             ->select(
@@ -244,32 +252,32 @@ class CarQuoteService extends BaseService
     public function getLeadAuditHistory($id)
     {
         $audits = DB::table('audits as a')
-        ->select(
-            'a.created_at as ModifiedAt',
-            DB::raw('(SELECT name from users where id = a.user_id) as ModifiedBy'),
-            DB::raw("(SELECT TEXT FROM quote_status WHERE id = JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.quote_status_id'))) AS NewStatus"),
-            DB::raw("(SELECT NAME FROM users WHERE id = JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.advisor_id'))) AS NewAdvisor"),
-            DB::raw("JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.notes')) AS NewNotes")
-        )
-        ->where(function ($query) {
-            $query->where('a.auditable_type', 'App\Models\CarQuote')
-            ->orWhere('a.auditable_type', 'App\Models\CarQuoteRequestDetail');
-        })
-        ->where(function ($query) {
-           return  $query->whereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.quote_status_id')"))
-            ->orWhereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.notes')"))
-            ->orWhereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.advisor_id')"));
-        })
-        ->where(function ($query) use ($id) {
-            $detailObjId = CarQuoteRequestDetail::where('car_quote_request_id', $id)->first();
-            if($detailObjId) {
-                $query->where('a.auditable_id', $id)
-                ->orWhere('a.auditable_id', $detailObjId->id);
-            } else {
-                $query->where('a.auditable_id', $id);
-            }
-        })
-        ->orderBy('a.created_at', 'DESC')->get();
+            ->select(
+                'a.created_at as ModifiedAt',
+                DB::raw('(SELECT name from users where id = a.user_id) as ModifiedBy'),
+                DB::raw("(SELECT TEXT FROM quote_status WHERE id = JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.quote_status_id'))) AS NewStatus"),
+                DB::raw("(SELECT NAME FROM users WHERE id = JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.advisor_id'))) AS NewAdvisor"),
+                DB::raw("JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.notes')) AS NewNotes")
+            )
+            ->where(function ($query) {
+                $query->where('a.auditable_type', 'App\Models\CarQuote')
+                    ->orWhere('a.auditable_type', 'App\Models\CarQuoteRequestDetail');
+            })
+            ->where(function ($query) {
+                return  $query->whereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.quote_status_id')"))
+                    ->orWhereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.notes')"))
+                    ->orWhereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.advisor_id')"));
+            })
+            ->where(function ($query) use ($id) {
+                $detailObjId = CarQuoteRequestDetail::where('car_quote_request_id', $id)->first();
+                if ($detailObjId) {
+                    $query->where('a.auditable_id', $id)
+                        ->orWhere('a.auditable_id', $detailObjId->id);
+                } else {
+                    $query->where('a.auditable_id', $id);
+                }
+            })
+            ->orderBy('a.created_at', 'DESC')->get();
         return $audits;
     }
 
@@ -487,7 +495,7 @@ class CarQuoteService extends BaseService
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'cqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'cqrd.advisor_assigned_by_id')
             ->where('cqrd.next_followup_date', '<', date('Y-m-d H:i:s'))
-            ->whereIn('qs.text', ['Followed Up','Qualification Pending', 'Quoted', 'FTC Pending', 'FTC Sent', 'Missing Documents Requested', 'Policy Documents Pending', 'Payment Pending', 'Pending with UW', 'Application Pending', 'In Negotiation'])
+            ->whereIn('qs.text', ['Followed Up', 'Qualification Pending', 'Quoted', 'FTC Pending', 'FTC Sent', 'Missing Documents Requested', 'Policy Documents Pending', 'Payment Pending', 'Pending with UW', 'Application Pending', 'In Negotiation'])
             ->where('cqr.advisor_id', Auth::user()->id);
         return $query;
     }
@@ -613,11 +621,12 @@ class CarQuoteService extends BaseService
         }
     }
 
-    public function walkTree ($userId) {
+    public function walkTree($userId)
+    {
         $childs = User::where('manager_id', $userId)->pluck('id');
         foreach ($childs as $child) {
             $nextChilds = User::where('manager_id', $child)->pluck('id');
-            if(count($nextChilds) > 0) {
+            if (count($nextChilds) > 0) {
                 $this->walkTree($child);
             }
             array_push($this->childUserIds, $child);
@@ -635,7 +644,7 @@ class CarQuoteService extends BaseService
         }
 
         if ($request->ajax()) {
-            if(Auth::user()->isManagerOrDeputy()){
+            if (Auth::user()->isManagerOrDeputy()) {
                 if (!Auth::user()->hasRole('CAR_RENEWAL_MANAGER')) {
                     $this->walkTree(Auth::user()->id); // get all childs of the user
                     array_push($this->childUserIds, Auth::user()->id); // add the user id to the array to fetch directly assigned leads as well
@@ -644,9 +653,9 @@ class CarQuoteService extends BaseService
                 }
             }
 
-            if(Auth::user()->isSpecificTeamAdvisor('Car')){
+            if (Auth::user()->isSpecificTeamAdvisor('Car')) {
                 // if user has advisor Role then fetch leads assigned to the user only
-                $this->query->where('cqr.advisor_id', Auth::user()->id);	// fetch leads assigned to the user
+                $this->query->where('cqr.advisor_id', Auth::user()->id);    // fetch leads assigned to the user
             }
 
             if (!isset($request->email) && $request->email == '') {
@@ -688,19 +697,17 @@ class CarQuoteService extends BaseService
                     if ($request[$item] == 'null') {
                         $this->query->whereNull($item);
                     } else if ($item == 'advisor_id' && is_array($request[$item]) && !empty($request[$item])) {
-                        if($request[$item][0] == 'null')
+                        if ($request[$item][0] == 'null')
                             $this->query->whereNull('advisor_id');
                         else
                             $this->query->whereIn('advisor_id', $request[$item]);
-                    }
-                    else if ($item == 'quote_status_id' && is_array($request[$item]) && !empty($request[$item])) {
+                    } else if ($item == 'quote_status_id' && is_array($request[$item]) && !empty($request[$item])) {
                         $this->query->whereIn('quote_status_id', $request[$item]);
                     } else {
                         $searchedValue = str_contains($request[$item], 'Yes') || str_contains($request[$item], 'No') ? ($request[$item] == 'Yes' ? 1 : 0) : $request[$item];
                         if ($item == 'policy_number') {
                             $this->query->where('previous_quote_policy_number', $searchedValue);
-                        }
-                        else {
+                        } else {
                             $this->query->where($this->getQuerySuffix($item) . '.' . $item, $searchedValue);
                         }
                     }
@@ -934,8 +941,8 @@ class CarQuoteService extends BaseService
         $apiUserName = Config::get('constants.KEN_API_USER');
         $apiPassword = Config::get('constants.KEN_API_PWD');
 
-        if(isset($request->is_create)) {
-            if($request->is_create == 1) {
+        if (isset($request->is_create)) {
+            if ($request->is_create == 1) {
                 $discountedPremium = $request->actual_premium;
                 $isUpdate = false;
             } else {
@@ -947,7 +954,7 @@ class CarQuoteService extends BaseService
         }
 
         $addons = [];
-        if($request->addons != null && count($request->addons) > 0) {
+        if ($request->addons != null && count($request->addons) > 0) {
             $addons = $request->addons;
         } else {
             $addons = [];
@@ -993,11 +1000,11 @@ class CarQuoteService extends BaseService
         $quote = new CarQuote();
         $quote->parent_duplicate_quote_id = $parentRecord->code;
         $response = CapiRequestService::getUUID(QuoteTypeId::Car);
-        if($response) {
+        if ($response) {
             $quote->uuid = $response->uuid;
-            $quote->code = 'CAR-'. $response->uuid;
+            $quote->code = 'CAR-' . $response->uuid;
         }
-        $quote->quote_status_id = QuoteStatus::where('text', 'New Lead')->first()->id;
+        $quote->quote_status_id = QuoteStatusEnum::NewLead;
         $quote->first_name = $parentRecord->first_name;
         $quote->last_name = $parentRecord->last_name;
         $quote->email = $parentRecord->email;
@@ -1020,7 +1027,7 @@ class CarQuoteService extends BaseService
         } else {
             if (gettype($quotePlans) != 'string' && isset($quotePlans->quotes->plans)) {
                 $listQuotePlans = $quotePlans->quotes->plans;
-            } else if(!isset($quotePlans->quotes->plans)) {
+            } else if (!isset($quotePlans->quotes->plans)) {
                 $listQuotePlans = 'Plans not available!';
             } else {
                 $listQuotePlans = $quotePlans;
@@ -1047,4 +1054,53 @@ class CarQuoteService extends BaseService
 
         return $updateQuote->id;
     }
+
+    public function processManualLeadAssignment($request): array
+    {
+        if($request->selectTmLeadId == '' || $request->selectTmLeadId == null) {
+            $leadsIds = array_map('intval', explode(',', trim($request->entityId, ',')));
+        }
+        else{
+            $leadsIds = array_map('intval', explode(',', trim($request->selectTmLeadId, ',')));
+        }
+        $userId = (int)$request->assigned_to_id_new;
+        Log::info('Leads ids to assign: ' . json_encode($leadsIds));
+        $result = [];
+        foreach($leadsIds as $leadId)
+        {
+            $lead = $this->getEntityPlain($leadId);
+            $lead->advisor_id = $userId;
+            $lead->save();
+        }
+        return $result;
+    }
+
+    public function getEntityPlainByUUID($uuid)
+    {
+        return CarQuote::where('uuid', $uuid)->first();
+    }
+
+    public function validateRequest($request)
+    {
+        $userId = $request->assigned_to_id_new;
+        $leadsIds = $request->selectTmLeadId == null || $request->selectTmLeadId == '' ? $request->entityId : $request->selectTmLeadId;
+        if ($leadsIds == '' || $leadsIds == null) {
+            return 'Please select lead(s) to assign';
+        }
+        if (substr($leadsIds, 0, 1) == ',') {
+            $leadsIds = substr($leadsIds, 1);
+        }
+        $leadsIds = array_map('intval', explode(',', $leadsIds));
+        foreach ($leadsIds as $leadId) {
+            $entity = $this->getEntityPlain($leadId);
+            if ($entity->quote_status_id == QuoteStatusEnum::TransactionApproved) {
+                return 'One of the selected lead is in Transaction Approved state. Please unselect the lead and try again.';
+            }
+        }
+        if ($userId == '' || $userId == null) {
+            return 'Please select user to assign leads';
+        }
+        return 'true';
+    }
+
 }
