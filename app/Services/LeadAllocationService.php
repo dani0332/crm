@@ -12,6 +12,7 @@ use App\Models\LeadAllocation;
 use App\Models\Team;
 use App\Models\User;
 use App\Traits\GetUserTree;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use DB;
 use Illuminate\Support\Facades\Log;
@@ -206,8 +207,16 @@ class LeadAllocationService extends BaseService
             DB::beginTransaction();
             info('removeLeadAllocationForOldAdvisor -- started');
             info('Removing lead allocation record for lead id: ' . $lead->id . ' and advisor id: ' . $lead->advisor_id);
-            LeadAllocation::where('user_id', $lead->advisor_id)->decrement('allocation_count', 1);
-            info('Lead allocation count decremented for advisor id: ' . $lead->advisor_id);
+            $leadDetail = HealthQuoteRequestDetail::where('health_quote_request_id',$lead->id)->first();
+            if($leadDetail){
+                if($leadDetail->advisor_assigned_date != null){
+                    if(Carbon::parse($leadDetail->advisor_assigned_date)->startOfDay() == now()->startOfDay()){
+                        LeadAllocation::where('user_id', $lead->advisor_id)->where('allocation_count', '>', 0)->decrement('allocation_count', 1);
+                        info('Lead allocation count decremented for advisor id: ' . $lead->advisor_id);
+                    }
+                }
+            }
+
             DB::commit();
         } catch (\Exception $e) {
             Log::error($e->getMessage());
