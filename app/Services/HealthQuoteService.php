@@ -957,8 +957,10 @@ class HealthQuoteService extends BaseService
 
     public function isLeadTransactionApproved($lead): bool
     {
-        if ($lead->quote_status_id == QuoteStatusEnum::TransactionApproved) {
-            return true;
+        if($lead != null) {
+            if ($lead->quote_status_id == QuoteStatusEnum::TransactionApproved) {
+                return true;
+            }
         }
         return false;
     }
