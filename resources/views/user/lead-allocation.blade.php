@@ -46,6 +46,19 @@
                         searchable: false
                     },
                     {
+                        data: 'last_allocated',
+                        name: 'last_allocated',
+                        orderable: true,
+                        searchable: false,
+                        render: function(data, type, row) {
+                            if (data == null) {
+                                return '-';
+                            } else {
+                                return new Date(data * 1000).toLocaleString();
+                            }
+                        }
+                    },
+                    {
                         data: 'max_capacity',
                         name: 'max_capacity',
                         orderable: true,
@@ -241,6 +254,7 @@
                             <th style="width: 25% !important">Name</th>
                             <th style="width: 15% !important">Team Type</th>
                             <th style="width: 15% !important">Total Assigned Leads</th>
+                            <th style="width: 15% !important">Last Allocation</th>
                             <th style="width: 15% !important">Max Cap Limit <i class="fa fa-info-circle" id="tooltip"
                                     data-toggle="tooltip" data-placement="top"
                                     title="For Unlimited Capactiy Add ( -1 )"></i>
