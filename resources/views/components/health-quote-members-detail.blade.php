@@ -2,7 +2,7 @@
         <div class="col-md-12 col-sm-12">
             <div class="x_panel">
                 <div class="x_title">
-                    <h2>Members {{Config::get('constants.KEN_API_ENDPOINT')}}</h2>
+                    <h2>Members</h2>
                     <button class="btn btn-warning btn-sm" style="float:right;width:110px;" type="button" id="add-edit-health-members-btn">Add Member</button>
                     <div class="clearfix"></div>
                 </div>
