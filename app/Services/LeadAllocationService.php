@@ -12,6 +12,7 @@ use App\Models\LeadAllocation;
 use App\Models\Team;
 use App\Models\User;
 use App\Traits\GetUserTree;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use DB;
 use Illuminate\Support\Facades\Log;
@@ -206,8 +207,16 @@ class LeadAllocationService extends BaseService
             DB::beginTransaction();
             info('removeLeadAllocationForOldAdvisor -- started');
             info('Removing lead allocation record for lead id: ' . $lead->id . ' and advisor id: ' . $lead->advisor_id);
-            LeadAllocation::where('user_id', $lead->advisor_id)->decrement('allocation_count', 1);
-            info('Lead allocation count decremented for advisor id: ' . $lead->advisor_id);
+            $leadDetail = HealthQuoteRequestDetail::where('health_quote_request_id',$lead->id)->first();
+            if($leadDetail){
+                if($leadDetail->advisor_assigned_date != null){
+                    if(Carbon::parse($leadDetail->advisor_assigned_date)->startOfDay() == now()->startOfDay()){
+                        LeadAllocation::where('user_id', $lead->advisor_id)->where('allocation_count', '>', 0)->decrement('allocation_count', 1);
+                        info('Lead allocation count decremented for advisor id: ' . $lead->advisor_id);
+                    }
+                }
+            }
+
             DB::commit();
         } catch (\Exception $e) {
             Log::error($e->getMessage());
@@ -256,14 +265,11 @@ class LeadAllocationService extends BaseService
             $leadAllocation = LeadAllocation::where('user_id', $userId)->first();
             DB::commit();
             info('Max capacity for user ' . $userId . ' is ' . $leadAllocation->max_capacity. ' and allocation count is ' . $leadAllocation->allocation_count);
-            if($leadAllocation->max_capacity > $leadAllocation->allocation_count){
-                $leadAllocation->allocation_count += 1;
-                $leadAllocation->last_allocated = now()->timestamp;
-                $leadAllocation->save();
-                info('Lead allocation record for user ' . $userId . ' updated. Current allocation count is ' . $leadAllocation->allocation_count);
-            }else{
-                info('Lead allocation record not updated for user ' . $userId . ' updated for lead because max cap reached.');
-            }
+
+            $leadAllocation->allocation_count += 1;
+            $leadAllocation->last_allocated = now()->timestamp;
+            $leadAllocation->save();
+            info('Lead allocation record for user ' . $userId . ' updated. Current allocation count is ' . $leadAllocation->allocation_count);
 
         } catch (\Exception $e) {
             Log::error($e->getMessage());
