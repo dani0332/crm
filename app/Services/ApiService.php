@@ -4,7 +4,9 @@ namespace App\Services;
 use App\Services\CustomerWEGenerateUrlService;
 use App\Models\MyAlFredUser;
 use App\Services\CustomerService;
+use App\Services\CreateUpdateContactService;
 use App\Models\Customer;
+use App\Models\HealthQuote;
 use Exception, Log;
 class ApiService
 {
@@ -33,7 +35,7 @@ class ApiService
         return response()->json(["message" => "Customer does not exists"], 404);
     }
 
-    private function generateSignupUrl($customer, $request) {
+    private function generateSignupUrl($customer) {
         $WEGenerateUrlResponse = CustomerWEGenerateUrlService::getCustomerWeUrl();
         if(gettype($WEGenerateUrlResponse) == 'string') {
             Customer::where("id", $customer->id)->update(['is_we_sent' => true]);
@@ -48,5 +50,28 @@ class ApiService
         }else
             return response()->json(["message" => $WEGenerateUrlResponse], 500);
 
+    }
+
+    public function triggerSibFlow($request){
+        try {
+            $quoteData = HealthQuote::where('uuid', $request->quoteUID)->where('quote_status_id', $request->QuoteStatus)->first();
+            if($quoteData) {
+                $data = [
+                    'customerName' => $quoteData->full_name,
+                    'advisorName' => $quoteData->advisor->name,
+                    'advisorEmail' => $quoteData->advisor->email,
+                    'advisorMobile' => $quoteData->advisor->mobile_no,
+                    'customerLastName' => $quoteData->last_name,
+                    'customerFirstName' => $quoteData->first_name,
+                    'lead_status' => $quoteData->quoteStatus->text,
+                    'cbdid' => $quoteData->uuid
+                ];
+                return CreateUpdateContactService::contactCreateUpdate(128, $quoteData->first_name, $quoteData->last_name, $quoteData->email, false, $data);
+            }
+            
+        } catch(Exception $e) {
+            Log::error($e->getLine() ." ".$e->getMessage() ." ".$e->getFile());
+            return response()->json(["message" => "Something went wrong. Please try again later."], 500);
+        }
     }
 }
