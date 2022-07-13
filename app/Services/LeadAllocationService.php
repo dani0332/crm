@@ -256,14 +256,11 @@ class LeadAllocationService extends BaseService
             $leadAllocation = LeadAllocation::where('user_id', $userId)->first();
             DB::commit();
             info('Max capacity for user ' . $userId . ' is ' . $leadAllocation->max_capacity. ' and allocation count is ' . $leadAllocation->allocation_count);
-            if($leadAllocation->max_capacity > $leadAllocation->allocation_count){
-                $leadAllocation->allocation_count += 1;
-                $leadAllocation->last_allocated = now()->timestamp;
-                $leadAllocation->save();
-                info('Lead allocation record for user ' . $userId . ' updated. Current allocation count is ' . $leadAllocation->allocation_count);
-            }else{
-                info('Lead allocation record not updated for user ' . $userId . ' updated for lead because max cap reached.');
-            }
+
+            $leadAllocation->allocation_count += 1;
+            $leadAllocation->last_allocated = now()->timestamp;
+            $leadAllocation->save();
+            info('Lead allocation record for user ' . $userId . ' updated. Current allocation count is ' . $leadAllocation->allocation_count);
 
         } catch (\Exception $e) {
             Log::error($e->getMessage());
