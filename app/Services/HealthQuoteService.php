@@ -20,6 +20,8 @@ use App\Traits\RolePermissionConditions;
 use App\Traits\CustomerAdditionalInfo as CustomerAdditionalInfoTrait;
 use App\Enums\quoteTypeCode;
 use App\Enums\DatabaseColumnsString;
+use App\Enums\GenericRequestEnum;
+use App\Models\HealthQuotePlan;
 use App\Models\Team;
 use App\Models\User;
 use App\Traits\AddPremiumAllLobs;
@@ -90,6 +92,7 @@ class HealthQuoteService extends BaseService
             'hqr.device',
             'hqr.wcu_id',
             'wcu.name as wcu_id_text',
+            'hqr.plan_id'
         )
             ->leftJoin('marital_status as ms', 'ms.id', '=', 'hqr.marital_status_id')
             ->leftJoin('health_quote_request_detail as hqrd', 'hqrd.health_quote_request_id', '=', 'hqr.id')
@@ -1017,6 +1020,35 @@ class HealthQuoteService extends BaseService
     public function getEntityPlainByUUID($uuid)
     {
         return HealthQuote::where('uuid', $uuid)->first();
+    }
+    public function getEcomDetails($data){
+        $response['providerName'] = '';
+        $response['premium'] = '';
+        $response['paymentStatus'] = '';
+        $response['paidAt'] = '';
+        $response['planName'] = '';
+        $planData = HealthQuotePlan::where('health_quote_request_id', $data->id)->first();
+        if($planData) {
+            $planPayload = json_decode($planData->plan_payload, true);
+            if(isset($planPayload['plans'])) {
+                foreach($planPayload['plans'] as $plan) {
+                    if($plan['id'] == $data->plan_id) {
+                        $response['providerName'] = $plan['providerName'];
+                        $response['premium'] = $plan['actualPremium'];
+                        $response['paymentStatus'] = '';
+                        $response['paidAt'] = '';
+                        if(isset($plan['benefits'], $plan['benefits']['feature'])) {
+                            foreach ($plan['benefits']['feature'] as $value) {
+                                if($value['code'] == GenericRequestEnum::TPA_Code) {
+                                    $response['planName'] = $value['text'];
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return $response;
     }
 
 }

@@ -416,6 +416,7 @@
             :listQuotePlans="$listQuotePlans"
             :uuidModal="$record->uuid"
             :quoteRequestId="$record->id" />
+        <x-health-quote-ecom-details :data="$ecomDetails" />
     @endif
 
     <x-lead-activities :lead="$record" :modeltype="$model->modelType" :activities="$activities" />

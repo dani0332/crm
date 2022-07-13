@@ -354,10 +354,12 @@ class CRUDController extends Controller
                     $listQuotePlans = $quotePlans;
                 }
             }
+
+            $ecomDetails = $this->healthQuoteService->getEcomDetails($record);
             return view('shared.show', compact([
                 'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList',
                 'leadStatuses', 'lostReasons', 'selectedLostReasonId', 'model_name', 'allowedDuplicateLOB', 'audits', 'advisors', 'activities', 'isRenewalUser',
-                'isNewBusinessUser', 'autoAllocationDisabled'
+                'isNewBusinessUser', 'autoAllocationDisabled', 'ecomDetails'
             ]));
         } else {
             return view('shared.show', compact([
