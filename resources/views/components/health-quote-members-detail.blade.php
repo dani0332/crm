@@ -24,10 +24,10 @@
                                 @foreach ($members as $key => $member)
                                         <tr>
                                             <td>Member {{$key+1}}</td>
-                                            <td>{{$member->memberCategory->text}}</td>
+                                            <td>@if($member->memberCategory){{$member->memberCategory->text}}@endif</td>
                                             <td>{{$member->dob}}</td>
                                             <td>{{$member->gender}}</td>
-                                            <td>{{$member->salaryBand->text}}</td>
+                                            <td>@if($member->salaryBand){{$member->salaryBand->text}}@endif</td>
                                             <td><button id="member-details-edit-btn" class="btn btn-sm btn-warning" onclick="editMemberDetail('{{$member->id}}')">Edit</button>
                                             <button id="member-details-delete-btn" class="btn btn-sm btn-warning" onclick="deleteMemberDetail('{{$member->id}}')">Delete</button>
                                             </td>
