@@ -73,7 +73,7 @@
                     </div>
                 </form>
                 <br>
-                <h2>Existing Plans</h2>
+                <h2>Quoted Plans</h2>
                 <table class="table table-striped jambo_table existing-plans">
                     <thead>
                         <tr>
