@@ -470,12 +470,16 @@ class HealthQuoteService extends BaseService
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'hqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'hqrd.advisor_assigned_by_id')
             ->leftJoin('payment_status as ps', 'ps.id', '=', 'hqr.payment_status_id')
-            ->where('hqr.quote_status_id', '!=', 9)
+            ->where('hqr.quote_status_id', '!=', QuoteStatusEnum::Fake)
             ->orderBy('hqr.created_at', "DESC");
 
             if(auth()->user()->isHealthWCUAdvisor())
             {
-                $query->where('hqr.wcu_id', auth()->id());
+                $query->where(function ($query) {
+                    $query->where('hqr.wcu_id', auth()->id())
+                        ->orWhere('hqr.advisor_id', auth()->id());
+                });
+
             }else{
                 $query->where('hqr.advisor_id', auth()->id());
             }
@@ -594,7 +598,7 @@ class HealthQuoteService extends BaseService
             "mobile_no" => "input|title|number|required",
             "quote_status_id" => "select|title|multiple",
             "advisor_id" => "select|title|multiple",
-            "wcu_id" => "select|title|required",
+            "wcu_id" => "select|title",
             "created_at" => "input|date|title|range",
             "updated_at" => "input|date|title",
             "dob" => "input|date|title|required",
