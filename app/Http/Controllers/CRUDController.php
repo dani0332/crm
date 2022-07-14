@@ -816,4 +816,11 @@ class CRUDController extends Controller
 
         return view('components.quote-documents-upload', compact('quoteUuId', 'quoteId', 'quoteType', 'quoteTypeId'));
     }
+
+    public function uploadDocumentProcess(Request $request)
+    {
+        $image = $request->file('file');
+        dd($request, $request->file());
+
+    }
 }
