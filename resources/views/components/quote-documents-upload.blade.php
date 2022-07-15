@@ -32,24 +32,14 @@
 
                     <div class="item form-group">
                         <div class="col">
-                            <span class="col-form-label col-md-6 col-sm-6">Policy wording <span class="required">*</span></span>
-                            <input type="file" id="policy_wording" name="policy_wording" class="form-control form-control-sm" />
-                        </div>
-                        <div class="col">
                             <span class="col-form-label col-md-6 col-sm-6">Policy schedule <span class="required">*</span></span>
                             <input type="file" id="policy_schedule" name="policy_schedule" class="form-control form-control-sm" />
                         </div>
-                    </div>
-
-                    <div class="item form-group">
                         <div class="col">
                             <span class="col-form-label col-md-6 col-sm-6">Debit note <span class="required">*</span></span>
                             <input type="file" id="debit_note" name="debit_note" class="form-control form-control-sm" />
                         </div>
-                        <div class="col">
-                        </div>
                     </div>
-
                     <br>
                     <div class="row">
                     <div class="col-auto mr-auto"></div>
