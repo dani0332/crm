@@ -41,7 +41,7 @@ class TMLeadsImport implements ToModel, WithValidation, SkipsOnFailure, WithStar
 
         $customerName = $row[0];
         $phoneNo = $row[1];
-        $emailId = strtolower(trim(ltrim(rtrim($row[2]))));
+        $emailId = strtolower(trim($row[2]));
         $insuranceType = $row[3];
         $leadType = $row[4];
         $nationality = $row[5];
