@@ -8,10 +8,10 @@ use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 use Config;
 
-class QuoteDocumentType extends Model implements AuditableContract
+class DocumentType extends Model implements AuditableContract
 {
     use HasFactory, Auditable;
-    protected $table = 'quote_documents_types';
+    protected $table = 'document_types';
 
     public function getCreatedAtAttribute($table)
     {

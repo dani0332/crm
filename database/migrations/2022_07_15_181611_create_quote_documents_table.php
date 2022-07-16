@@ -1,6 +1,5 @@
 <?php
 
-use App\Models\QuoteDocumentType;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -18,13 +17,12 @@ class CreateQuoteDocumentsTable extends Migration
             Schema::create('quote_documents', function (Blueprint $table) {
                 $table->id();
                 $table->integer('quote_type_id')->nullable();
-                $table->integer('quote_id')->nullable(); 
+                $table->integer('quote_id')->nullable();
                 $table->string('doc_name','255')->nullable();
                 $table->string('doc_url','255')->nullable();
                 $table->string('doc_mime_type','100')->nullable();
-				$table->boolean('is_deleted')->default('0');
 
-                $table->foreign('document_type_code')->references('code')->on('quote_documents_types')->onDelete('no action');
+                $table->foreign('document_type_code')->references('code')->on('document_types')->onDelete('no action');
                 $table->string('document_type_code','30');
 
                 $table->foreign('created_by_id')->references('id')->on('users')->onDelete('no action');
@@ -34,6 +32,7 @@ class CreateQuoteDocumentsTable extends Migration
                 $table->unsignedBigInteger('updated_by_id')->nullable();
 
                 $table->timestamps();
+                $table->softDeletes();
             });
         }
     }
@@ -45,6 +44,8 @@ class CreateQuoteDocumentsTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('quote_documents');
+        Schema::table('quote_documents', function (Blueprint $table) {
+            //
+        });
     }
 }

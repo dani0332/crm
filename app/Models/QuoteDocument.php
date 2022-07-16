@@ -33,6 +33,6 @@ class QuoteDocument extends Model
     }
     public function documentType()
     {
-        return $this->belongsTo(QuoteDocumentType::class,'document_type_code','code');
+        return $this->belongsTo(DocumentType::class,'document_type_code','code');
     }
 }

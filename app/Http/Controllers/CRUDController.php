@@ -819,8 +819,8 @@ class CRUDController extends Controller
 
     public function uploadDocumentProcess(Request $request)
     {
-        $image = $request->file('file');
-        dd($request, $request->file());
+        $file = $request->file('file');
+        dd($request, $request->file(), $file);
 
     }
 }
