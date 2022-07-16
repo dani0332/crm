@@ -172,9 +172,10 @@ class TMLeadsImport implements ToModel, WithValidation, SkipsOnFailure, WithStar
         return $newTmLead;
     }
 
+    // if email has afia.ae domain replace with insurancemarket.ae domain
     public function changeEmailDomain($email) {
         $emailTrimmed = strtolower(trim($email));
-        if (strpos($emailTrimmed, '@afia.ae') !== false) {
+        if (strpos($emailTrimmed, '@afia.ae')) {
             $advisorEmail = str_replace('@afia.ae', '@insurancemarket.ae', $emailTrimmed);
         } else {
             $advisorEmail = $emailTrimmed;
