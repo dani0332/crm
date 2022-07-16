@@ -41,7 +41,7 @@ class TMLeadsImport implements ToModel, WithValidation, SkipsOnFailure, WithStar
 
         $customerName = $row[0];
         $phoneNo = $row[1];
-        $EmailId = strtolower(trim(ltrim(rtrim($row[2]))));
+        $emailId = strtolower(trim(ltrim(rtrim($row[2]))));
         $insuranceType = $row[3];
         $leadType = $row[4];
         $nationality = $row[5];
@@ -58,7 +58,7 @@ class TMLeadsImport implements ToModel, WithValidation, SkipsOnFailure, WithStar
         $enquiryDateFinal = date('Y-m-d', strtotime($enquiryDate));
         $createdDate = strtr($row[15], '/', '-');
         $createdDateFinal = date('Y-m-d', strtotime($createdDate));
-        $advisorEmail = $row[16];
+        $advisorEmail = $this->changeEmailDomain($row[16]);
 
         if($row[17] != "" && $row[18] != "") {
             $followpDate = strtr($row[17], '/', '-');
@@ -142,7 +142,7 @@ class TMLeadsImport implements ToModel, WithValidation, SkipsOnFailure, WithStar
         $newTmLead = new TmLead([
             "customer_name" => $customerName,
             "phone_number" => $phoneNo,
-            "email_address" => $EmailId,
+            "email_address" => $emailId,
             "enquiry_date" => $enquiryDateFinal,
             "allocation_date" => $createdDateFinal,
             "notes" => $notes,
@@ -170,6 +170,16 @@ class TMLeadsImport implements ToModel, WithValidation, SkipsOnFailure, WithStar
         $updateNewTmLead->save();
 
         return $newTmLead;
+    }
+
+    public function changeEmailDomain($email) {
+        $emailTrimmed = strtolower(trim(ltrim(rtrim($email))));
+        if (strpos($emailTrimmed, '@afia.ae') !== false) {
+            $advisorEmail = str_replace('@afia.ae', '@insurancemarket.ae', $emailTrimmed);
+        } else {
+            $advisorEmail = $emailTrimmed;
+        }
+        return $advisorEmail;
     }
 
     public function getRowCount(): int
