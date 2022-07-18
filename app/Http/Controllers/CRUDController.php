@@ -7,7 +7,6 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Models\GenericModel;
-use App\Models\InsuranceProvider;
 use App\Models\User;
 use App\Services\ActivitiesService;
 use App\Services\BusinessQuoteService;
@@ -30,7 +29,6 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Log;
 use Config;
-use DB;
 use App\Services\LookupService;
 use App\Services\NotesForCustomerService;
 use App\Services\CustomerService;
@@ -339,12 +337,12 @@ class CRUDController extends Controller
                 }
             }
 
-            $members_detail = $this->travelQuoteService->getMembersDetail($record->id);
+            $membersDetail = $this->travelQuoteService->getMembersDetail($record->id);
             $quoteDocuments = $this->quoteDocumentService->getQuoteDocuments(QuoteTypeId::Travel, $record->id);
 
             return view('shared.show', compact([
                 'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList',
-                'leadStatuses', 'lostReasons', 'selectedLostReasonId', 'members_detail','model_name', 
+                'leadStatuses', 'lostReasons', 'selectedLostReasonId', 'membersDetail','model_name', 
                 'allowedDuplicateLOB', 'audits', 'activities', 'advisors','isRenewalUser',
                 'isNewBusinessUser', 'ecomTravelInsuranceQuoteUrl', 'quoteType', 'quoteDocuments', 
                 'autoAllocationDisabled'
