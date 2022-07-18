@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Models\HealthQuote;
 use App\Services\LeadAllocationService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -15,8 +16,9 @@ use DB;
 class LeadAssignmentJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
-    protected $lead;
+    protected $leadId;
     protected $leadAllocationService;
+    protected $lead;
 
     public $maxTries = 5;
     public $timeout = 300;
@@ -27,10 +29,10 @@ class LeadAssignmentJob implements ShouldQueue
      *
      * @return void
      */
-    public function __construct($lead, LeadAllocationService $leadAllocationService)
+    public function __construct($leadId)
     {
-        $this->lead = $lead;
-        $this->leadAllocationService = $leadAllocationService;
+        $this->leadId = $leadId;
+        $this->leadAllocationService = new LeadAllocationService();
     }
 
     /**
@@ -41,7 +43,9 @@ class LeadAssignmentJob implements ShouldQueue
     public function handle()
     {
         try {
+            $this->lead = HealthQuote::where('id', '=', $this->leadId)->first();
             info('Lead Assignment Job Started for lead: ' . $this->lead->uuid);
+
             $availableUser = $this->leadAllocationService->getNextAssignableUserId($this->lead);
             $this->leadAllocationService->assignLead($this->lead, $availableUser['user_id'], false);
         } catch (\Exception $e) {

@@ -2,12 +2,14 @@
 
 namespace App\Services;
 
+use App\Enums\QuoteStatusEnum;
 use App\Models\ApplicationStorage;
 use App\Models\VehicleType;
 use App\Models\YearOfManufacture;
 use App\Models\CarModelDetail;
 use App\Models\InsuranceProvider;
 use App\Models\LostReasons;
+use App\Models\QuoteStatus;
 use App\Models\UAELicenseHeldFor;
 use App\Models\MemberCategory;
 use App\Models\SalaryBand;
@@ -57,6 +59,19 @@ class LookupService extends BaseService
     public function getInsuranceProviders()
     {
         return InsuranceProvider::where('is_active', '=', true)->orderBy('sort_order', 'asc')->get();
+    }
+
+    public function getLeadStatuses()
+    {
+        return QuoteStatus::select('id', 'text')
+        ->whereNotIn('id', [
+            QuoteStatusEnum::AMLScreeningCleared, QuoteStatusEnum::Draft, QuoteStatusEnum::Cancelled, QuoteStatusEnum::AMLScreeningFailed,
+            QuoteStatusEnum::TransactionDeclined, QuoteStatusEnum::PolicyIssued, QuoteStatusEnum::PolicyInvoiced,
+            QuoteStatusEnum::Issued
+        ])
+        ->where("is_active", true)
+        ->orderBy('sort_order', 'asc')
+        ->get();
     }
 
 }

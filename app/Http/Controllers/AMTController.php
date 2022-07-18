@@ -9,6 +9,7 @@ use App\Models\QuoteStatus;
 use App\Models\User;
 use App\Services\BusinessQuoteService;
 use App\Services\CRUDService;
+use App\Services\LookupService;
 use Illuminate\Http\Request;
 use DB;
 use DataTables;
@@ -22,11 +23,14 @@ class AMTController extends Controller
 {
     protected $businessQuoteService;
     protected $crudService;
+    protected $lookupService;
+
     use RolePermissionConditions;
-    public function __construct(BusinessQuoteService $businessQuoteService, CRUDService $crudService)
+    public function __construct(BusinessQuoteService $businessQuoteService, CRUDService $crudService, LookupService $lookupService)
     {
         $this->businessQuoteService = $businessQuoteService;
         $this->crudService = $crudService;
+        $this->lookupService = $lookupService;
     }
     /**
      * Display a listing of the resource.
@@ -35,7 +39,6 @@ class AMTController extends Controller
      */
     public function index(Request $request)
     {
-
         $data = DB::table('business_quote_request as bqr')
             ->leftJoin('business_quote_request_detail as bqrd', 'bqr.id', '=', 'bqrd.business_quote_request_id')
             ->leftJoin('business_type_of_insurance as bit', 'bqr.business_type_of_insurance_id', '=', 'bit.id')
@@ -43,7 +46,6 @@ class AMTController extends Controller
             ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'bqrd.lost_reason_id')
             ->leftJoin('quote_status as qs', 'bqr.quote_status_id', '=', 'qs.id')
             ->where('bit.text', '=', quoteStatusCode::GROUP_MEDICAL)
-            ->where('qs.text', '!=', quoteStatusCode::FAKE)
             ->select(
                 'bqr.id',
                 'bqr.code',
@@ -75,7 +77,8 @@ class AMTController extends Controller
             }
         $this->whereBasedOnRole($data, 'bqr');
 
-        $leadStatuses = DB::table('quote_status')->select('id', 'text')->orderBy('sort_order', 'asc')->get();
+        $leadStatuses = $this->lookupService->getLeadStatuses();
+       
         $advisors = DB::table('users as u')
             ->join('model_has_roles as mr', 'mr.model_id', '=', 'u.id')
             ->join('roles as r', 'r.id', '=', 'mr.role_id')
@@ -85,6 +88,9 @@ class AMTController extends Controller
         $model = 'Business';
         if ($request->ajax()) {
 
+            if (!isset($request->email) && $request->email == '') {
+                $data->where('qs.id', '!=', 9);
+            }
             if (isset($request->first_name) && $request->first_name != '') {
                 $data->where('bqr.first_name', 'like', '%' . $request->first_name . '%');
             }
@@ -211,7 +217,7 @@ class AMTController extends Controller
         $lostReasons = DB::table('lost_reasons')
             ->select('id', 'text')
             ->get();
-        $selectedLostReasonId = $this->crudService->getSelectedLostReason('business', $record->id);;
+        $selectedLostReasonId = $this->crudService->getSelectedLostReason('business', $record->id);
 
         $selectedLeadStatus = '';
         if (isset($record->quote_status_id) && $record->quote_status_id != '') {
