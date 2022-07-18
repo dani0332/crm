@@ -5,9 +5,7 @@ namespace App\Services;
 use App\Models\CarPlan;
 use Illuminate\Http\Request;
 use DB;
-use Auth;
 use \Carbon\Carbon;
-use Config;
 
 class CarPlanService extends BaseService
 {
@@ -201,5 +199,13 @@ class CarPlanService extends BaseService
     public function fillModelSearchProperties()
     {
         return ['code', 'text', 'text_ar','created_at','repair_type','insurance_type','provider_id'];
+    }
+
+    public function getNonQuotedCarPlans($insuranceProviderId, $quotePlanId)
+    {
+        return CarPlan::select('id', 'text', 'repair_type')
+            ->where('provider_id', '=', $insuranceProviderId)
+            ->whereNotIn('id', $quotePlanId)
+            ->get();
     }
 }
