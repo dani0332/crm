@@ -7,7 +7,8 @@ use App\Services\CustomerService;
 use App\Services\CreateUpdateContactService;
 use App\Models\Customer;
 use App\Models\HealthQuote;
-use Exception, Log;
+use Exception, Log, Config;
+
 class ApiService
 {
     public function fetchSignupUrl($request){
@@ -64,9 +65,10 @@ class ApiService
                     'customerLastName' => $quoteData->last_name,
                     'customerFirstName' => $quoteData->first_name,
                     'lead_status' => $quoteData->quoteStatus->text,
-                    'cbdid' => $quoteData->uuid
+                    'cbdid' => $quoteData->uuid,
+                    'link' => Config::get('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$quoteData->uuid
                 ];
-                return CreateUpdateContactService::contactCreateUpdate(128, $quoteData->first_name, $quoteData->last_name, $quoteData->email, false, $data);
+                return CreateUpdateContactService::contactCreateUpdate(Config::get('constants.SIB_HEALTH_EBP_LIST_ID'), $quoteData->first_name, $quoteData->last_name, $quoteData->email, false, $data);
             }
             
         } catch(Exception $e) {

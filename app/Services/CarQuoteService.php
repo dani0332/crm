@@ -22,6 +22,8 @@ use App\Models\CarQuoteAdvisorToOE;
 use Illuminate\Support\Facades\Log;
 
 use App\Enums\GenericRequestEnum;
+use App\Models\TempData;
+
 class CarQuoteService extends BaseService
 {
     protected $query;
@@ -173,6 +175,14 @@ class CarQuoteService extends BaseService
 
     public function updateCarQuote(Request $request, $id)
     {
+        TempData::create([
+            'quote_type' => 'Health',
+            'quote_uuid' => $id,
+            'form' => 'update-carquote',
+            'values' => json_encode($request->all(), true),
+            'created_by_id' => Auth::user()->id,
+        ]);
+        dd("dasd");
         $carQuote = CarQuote::where('uuid', $id)->first();
         $carQuote->first_name = $request->first_name;
         $carQuote->last_name = $request->last_name;

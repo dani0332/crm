@@ -23,6 +23,7 @@ class CreateUpdateContactService extends BaseService
                 "ADVISORNAME" => isset($data['advisorName']) ? $data['advisorName'] : Null,
                 "LEAD_STATUS" => isset($data['lead_status']) ? $data['lead_status'] : Null,
                 "CDBID" =>isset($data['cbdid']) ? $data['cbdid'] : Null,
+                "QUOTEPLANLINK" =>isset($data['link']) ? $data['link'] : Null,
             ),
             "listIds" => [(int)$listId],
             "updateEnabled" => true,
