@@ -813,8 +813,10 @@ class CRUDController extends Controller
         $quoteId = $quoteModel->id;
         $quoteCdbId = $quoteModel->code;
         $quoteTypeId = $this->activityService->getQuoteTypeId($quoteType);
+        $documentsForUpload = $this->quoteDocumentService->listQuoteDocumentsForUpload($quoteTypeId);
 
-        return view('components.quote-documents-upload', compact('quoteUuId', 'quoteId', 'quoteCdbId', 'quoteType', 'quoteTypeId'));
+        return view('components.quote-documents-upload', compact('quoteUuId', 'quoteId', 'quoteCdbId', 
+        'quoteType', 'quoteTypeId', 'documentsForUpload'));
     }
 
     public function uploadDocumentProcess(Request $request)

@@ -14,10 +14,10 @@ class QuoteDocumentService extends BaseService
         ->get();
 	}
 
-	public function quoteDocumentTypesUpload($quoteTypeId, $quoteId)
+	public function listQuoteDocumentsForUpload($quoteTypeId)
 	{
-		return DocumentType::where(['quote_type_id' => $quoteTypeId, 'quote_id' => $quoteId])
-        ->orderBy('created_at', 'desc')
+		return DocumentType::where(['quote_type_id' => $quoteTypeId, 'is_active' => true])
+        ->orderBy('sort_order', 'asc')
         ->get();
 	}
 
