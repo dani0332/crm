@@ -46,14 +46,20 @@
                 </table>
                 <script type="text/javascript">
                     Dropzone.autoDiscover = false;
-                    var documents = new Dropzone('#{{ $documentType->code }}', {
+                    var myDropzone = new Dropzone('#{{ $documentType->code }}', {
+                        paramName: "file",
                         url: "{{ url('/quotes/'.$quoteType.'/uploadDocumentProcess') }}",
                         maxFiles: JSON.parse('<?php echo json_encode($documentType->max_files) ?>'),
                         maxFilesize: JSON.parse('<?php echo json_encode($documentType->max_size) ?>'),
                         autoProcessQueue: true,
                         addRemoveLinks: true,
                         uploadMultiple: false,
-                        acceptedFiles: JSON.parse('<?php echo json_encode($documentType->accepted_files) ?>')
+                        acceptedFiles: JSON.parse('<?php echo json_encode($documentType->accepted_files) ?>'),
+                        sending: function(file, xhr, formData) {
+                            formData.append("_token", "{{{ csrf_token() }}}");
+                            formData.append("quote_id", $('#quote_id').val());
+                            formData.append("quote_type_id", $('#quote_type_id').val());
+                        },
                     });
                 </script>
                 @endforeach
