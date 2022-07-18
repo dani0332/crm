@@ -21,7 +21,7 @@ class LeadAssignmentJob implements ShouldQueue
     protected $lead;
 
     public $maxTries = 5;
-    public $timeout = 300;
+    public $timeout = 30;
     public $backoff = 3;
 
     /**
