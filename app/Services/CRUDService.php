@@ -336,7 +336,7 @@ class CRUDService extends BaseService
             ->validateRequest($request);
     }
 
-    public function getLobQuoteModel($modelType, $quoteUuId)
+    public function quoteModel($modelType, $quoteUuId)
     {
         $model = '\\App\\Models\\' . $modelType . "Quote";
         return $model::where('uuid', $quoteUuId)->select('id','code')->first();

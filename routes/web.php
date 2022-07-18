@@ -58,6 +58,7 @@ use App\Http\Controllers\RewardSliderController;
 use App\Http\Controllers\VehicleRangeController;
 use App\Http\Controllers\VehicleValueController;
 use App\Http\Controllers\AjaxController;
+use App\Http\Controllers\QuoteDocumentController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -130,6 +131,9 @@ Route::group(['middleware' =>  ['auth']], function () {
     Route::post('/lead-allocation/updateAvailability', [LeadAllocationController::class, 'updateAvailability']);
     Route::post('/lead-allocation/setLeadAllocationJobStatus', [LeadAllocationController::class, 'setLeadAllocationJobStatus']);
 
+    Route::get('quotes/{quoteType}/{quoteUuId}/upload-document', [QuoteDocumentController::class, 'uploadDocument']);
+    Route::post('quotes/{quoteType}/uploadDocumentProcess', [QuoteDocumentController::class, 'uploadDocumentProcess']);
+
     Route::group(['prefix' => 'renewals'], function () {
         Route::resource('uploaded-leads', RenewalsUploadController::class);
         Route::get('upload', [RenewalsUploadController::class, 'uploadRenewals']);
@@ -193,8 +197,6 @@ Route::group(['middleware' =>  ['auth']], function () {
         Route::post('car/addNoteForCustomer', [CRUDController::class, 'addNoteForCustomer']);
         Route::post('car/sendNotesToCustomer', [CRUDController::class, 'sendNotesToCustomer']);
         Route::post('{quoteType}/updateQuotePolicy', [CRUDController::class, 'updateQuotePolicy']);
-        Route::get('{quoteType}/{quoteUuId}/upload-document', [CRUDController::class, 'uploadDocument']);
-        Route::post('{quoteType}/uploadDocumentProcess', [CRUDController::class, 'uploadDocumentProcess']);
     });
 
     Route::group(['prefix' => 'generic'], function () {

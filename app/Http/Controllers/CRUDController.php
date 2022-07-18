@@ -806,29 +806,4 @@ class CRUDController extends Controller
             return redirect()->back()->with('success', 'Quote Policy Detail has been updated.');
         }
     }
-
-    public function uploadDocument(Request $request, $quoteType, $quoteUuId)
-    {
-        $quoteModel = $this->crudService->getLobQuoteModel($this->genericModel->modelType, $quoteUuId);
-        $quoteId = $quoteModel->id;
-        $quoteCdbId = $quoteModel->code;
-        $quoteTypeId = $this->activityService->getQuoteTypeId($quoteType);
-        $documentUploadTypes = $this->quoteDocumentService->listQuoteDocumentsForUpload($quoteTypeId);
-
-        return view('components.quote-documents-upload', compact('quoteUuId', 'quoteId', 'quoteCdbId', 
-        'quoteType', 'quoteTypeId', 'documentUploadTypes'));
-    }
-
-    public function uploadDocumentProcess(Request $request)
-    {
-        //dd('request:: ', $request);
-        $file = $request->file('file');
-        $fileOriginalName = $file->getClientOriginalName();
-        //dd('fileOriginalName:: ', $fileOriginalName);
-        //dd('requestfile:: ', $request->file());
-        //dd('request:: ', $request);
-        dd('quote_type_id:: ', $request->quote_type_id, ' quote_id:: ', $request->quote_id);
-        //dd('quote_id:: ', $request->quote_id);
-
-    }
 }
