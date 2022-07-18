@@ -283,6 +283,7 @@ class LeadAllocationService extends BaseService
             $dateTimeNow = now()->toTimeString();
             info('Current time is ' . $dateTimeNow);
             $timeForUnavailability = ApplicationStorage::where('key_name', 'LEAD_ALLOCATION_UNAVAILABILITY_TIME')->first()->value;
+            info('Time for advisor unavailability in app storage is ' . $timeForUnavailability);
             if ($dateTimeNow >= $timeForUnavailability) {
                 info('Current time before unavailable is ' . $dateTimeNow);
                 info('Setting advisors to unavailable');
