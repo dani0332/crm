@@ -53,7 +53,7 @@ class LeadAllocationJob implements ShouldQueue
                 Log::info('Number of leads to be allocated: ' . count($unAllocatedLeads));
                 foreach ($unAllocatedLeads as $unAllocatedLead) {
                     Log::info('Allocation criteria checking for lead :  ' . $unAllocatedLead->uuid);
-                    dispatch(new LeadAssignmentJob($unAllocatedLead, $this->leadAllocationService));
+                    dispatch(new LeadAssignmentJob($unAllocatedLead->id));
                 }
                 return;
             }
