@@ -21,7 +21,7 @@
                 @if(session()->has('message'))
                     <div class="alert alert-danger">{{ session()->get('message') }}</div>
                 @endif
-
+                <p><b>CdbId:</b> {{ $quoteCdbId }}</p>
                 <table width="100%">
                     <tr>
                         <td width="25%">

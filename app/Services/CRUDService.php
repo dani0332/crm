@@ -335,4 +335,10 @@ class CRUDService extends BaseService
         return $this->{in_array($lowerCaseModelType, $this->quoteTypes) ? $lowerCaseModelType . 'QuoteService' : $lowerCaseModelType . 'Service'}
             ->validateRequest($request);
     }
+
+    public function getLobQuoteModel($modelType, $quoteUuId)
+    {
+        $model = '\\App\\Models\\' . $modelType . "Quote";
+        return $model::where('uuid', $quoteUuId)->select('id','code')->first();
+    }
 }
