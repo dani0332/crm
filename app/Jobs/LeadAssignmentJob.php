@@ -43,8 +43,9 @@ class LeadAssignmentJob implements ShouldQueue
     public function handle()
     {
         try {
+            $this->lead = HealthQuote::where('id', '=', $this->leadId)->first();
             info('Lead Assignment Job Started for lead: ' . $this->lead->uuid);
-            $this->lead = HealthQuote::where('id', '=', $this->leadId);
+
             $availableUser = $this->leadAllocationService->getNextAssignableUserId($this->lead);
             $this->leadAllocationService->assignLead($this->lead, $availableUser['user_id'], false);
         } catch (\Exception $e) {
