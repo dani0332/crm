@@ -799,4 +799,8 @@ class CRUDController extends Controller
             return redirect()->back()->with('success', 'Quote Policy Detail has been updated.');
         }
     }
+
+    public function manualPlanToggle(Request $request) {
+        $quote = $this->carQuoteService->updateManualPlansBulk($request);
+    }
 }

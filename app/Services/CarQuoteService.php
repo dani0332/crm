@@ -873,7 +873,7 @@ class CarQuoteService extends BaseService
         $authBasic = base64_encode($plansApiUserName . ":" . $plansApiPassword);
 
         $plansDataArr = array(
-            "quoteUID" => $quoteUuId,
+            "quoteUID" => "HNQP3VLX",
             "lang" => "en",
         );
 
@@ -1101,6 +1101,44 @@ class CarQuoteService extends BaseService
             return 'Please select user to assign leads';
         }
         return 'true';
+    }
+    public function updateManualPlansBulk($request) {
+        $apiEndPoint = Config::get('constants.KEN_API_ENDPOINT') . '/save-manual-car-quote-plan';
+        $apiToken = Config::get('constants.KEN_API_TOKEN');
+        $apiTimeout = Config::get('constants.KEN_API_TIMEOUT');
+        $apiUserName = Config::get('constants.KEN_API_USER');
+        $apiPassword = Config::get('constants.KEN_API_PWD');
+
+        $addons = [];
+
+        $carPlanData = array(
+            "quoteUID" => $request->car_quote_uuid,
+            "update" => $isUpdate,
+            "plans" => array(
+                [
+                    "planId" => (int)$request->car_plan_id,
+                    "actualPremium" => (float)$request->actual_premium,
+                    "carValue" => (float)$request->car_value,
+                    "excess" => (float)$request->excess,
+                    "discountPremium" => (float)$discountedPremium,
+                    "isDisabled" => filter_var($request->is_disabled, FILTER_VALIDATE_BOOLEAN),
+                    "addons" => $addons,
+                ]
+
+            )
+        );
+
+        $apiCreds = array(
+            "apiEndPoint" => $apiEndPoint,
+            "apiToken" => $apiToken,
+            "apiTimeout" => $apiTimeout,
+            "apiUserName" => $apiUserName,
+            "apiPassword" => $apiPassword,
+        );
+
+        $response = $this->httpService->processRequest($carPlanData, $apiCreds);
+
+        return $response;
     }
 
 }
