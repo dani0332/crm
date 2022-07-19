@@ -8,7 +8,6 @@ use App\Models\CarMake;
 use App\Models\CarQuote;
 use App\Models\CarQuoteRequestDetail;
 use App\Models\InsuranceProvider;
-use App\Models\QuoteStatus;
 use App\Models\User;
 use App\Models\YearOfManufacture;
 use Illuminate\Http\Request;
@@ -16,12 +15,9 @@ use Config;
 use DB;
 use \Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
-use App\Enums\quoteStatusCode;
-use App\Enums\quoteTypeCode;
-use App\Models\CarQuoteAdvisorToOE;
 use Illuminate\Support\Facades\Log;
-
 use App\Enums\GenericRequestEnum;
+
 class CarQuoteService extends BaseService
 {
     protected $query;
@@ -648,8 +644,10 @@ class CarQuoteService extends BaseService
                 if (!Auth::user()->hasRole('CAR_RENEWAL_MANAGER')) {
                     $this->walkTree(Auth::user()->id); // get all childs of the user
                     array_push($this->childUserIds, Auth::user()->id); // add the user id to the array to fetch directly assigned leads as well
-                    $this->query->whereIn('cqr.advisor_id', $this->childUserIds);	// fetch leads assigned to the user or his childs
-                    $this->query->orWhereNull('cqr.advisor_id'); // fetch unassigned leads
+                    $this->query->where(function ($query) {
+                        $query->whereIn('cqr.advisor_id', $this->childUserIds) // fetch leads assigned to the user or his childs
+                            ->orWhereNull('cqr.advisor_id'); // fetch unassigned leads
+                    });
                 }
             }
 
