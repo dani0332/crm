@@ -21,7 +21,7 @@ class LeadAssignmentJob implements ShouldQueue
     protected $lead;
 
     public $maxTries = 5;
-    public $timeout = 300;
+    public $timeout = 30;
     public $backoff = 3;
 
     /**
@@ -47,7 +47,15 @@ class LeadAssignmentJob implements ShouldQueue
             info('Lead Assignment Job Started for lead: ' . $this->lead->uuid);
 
             $availableUser = $this->leadAllocationService->getNextAssignableUserId($this->lead);
-            $this->leadAllocationService->assignLead($this->lead, $availableUser['user_id'], false);
+            if($availableUser)
+            {
+                $this->leadAllocationService->assignLead($this->lead, $availableUser['user_id'], false);
+            }
+            else
+            {
+                info('No user available for lead: ' . $this->lead->uuid);
+            }
+
         } catch (\Exception $e) {
             Log::info("message: " . $e->getMessage());
             if ($this->attempts() < 4) {
