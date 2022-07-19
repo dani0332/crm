@@ -13,4 +13,5 @@ final class GenericRequestEnum extends Enum
 {
     const Yes = "Yes";
     const No = "No";
+    const String = "string";
 }

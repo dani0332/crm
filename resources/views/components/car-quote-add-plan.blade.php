@@ -1,6 +1,9 @@
 @extends('layouts.app')
 @section('title','Create Car Quote')
 @section('content')
+@php
+    use App\Enums\GenericRequestEnum;
+@endphp
 <script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
 <script src="{{ asset('build/js/car_quote.js') }}"></script>
 <link href="{{ asset('build/css/car_quote.css') }}" rel="stylesheet">
@@ -84,6 +87,7 @@
                         </tr>
                     </thead>
                     <tbody>
+                        @if(gettype($listQuotePlans) != GenericRequestEnum::String)
                         @forelse ($listQuotePlans as $key => $quotePlan)
                         <tr>
                             <td>{{ ucwords($quotePlan->providerName) }}</td>
@@ -113,6 +117,11 @@
                                     <td valign="top" colspan="4" class="dataTables_empty">No data available in table</td>
                                 </tr>
                         @endforelse
+                        @else
+                            <tr class="odd">
+                                <td valign="top" colspan="4" class="dataTables_empty">No data available in table</td>
+                            </tr>
+                        @endif
                     </tbody>
                 </table>
             </div>
