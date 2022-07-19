@@ -1102,6 +1102,7 @@ class CarQuoteService extends BaseService
         }
         return 'true';
     }
+
     public function updateManualPlansBulk($request) {
         $apiEndPoint = Config::get('constants.KEN_API_ENDPOINT') . '/save-manual-car-quote-plan';
         $apiToken = Config::get('constants.KEN_API_TOKEN');
@@ -1110,35 +1111,37 @@ class CarQuoteService extends BaseService
         $apiPassword = Config::get('constants.KEN_API_PWD');
 
         $addons = [];
-
-        $carPlanData = array(
-            "quoteUID" => $request->car_quote_uuid,
-            "update" => $isUpdate,
-            "plans" => array(
-                [
-                    "planId" => (int)$request->car_plan_id,
-                    "actualPremium" => (float)$request->actual_premium,
-                    "carValue" => (float)$request->car_value,
-                    "excess" => (float)$request->excess,
-                    "discountPremium" => (float)$discountedPremium,
-                    "isDisabled" => filter_var($request->is_disabled, FILTER_VALIDATE_BOOLEAN),
-                    "addons" => $addons,
-                ]
-
-            )
-        );
-
-        $apiCreds = array(
-            "apiEndPoint" => $apiEndPoint,
-            "apiToken" => $apiToken,
-            "apiTimeout" => $apiTimeout,
-            "apiUserName" => $apiUserName,
-            "apiPassword" => $apiPassword,
-        );
-
-        $response = $this->httpService->processRequest($carPlanData, $apiCreds);
-
-        return $response;
+        if($request->planIds) {
+            $data = explode(",", $request->planIds);
+            $isDisabled = $request->toggle;
+            $plansArray = [];
+            for($i=0; $i < count($data); $i++) {
+                $apiArray = array(
+                "quoteUID" => $request->car_quote_uuid,
+                "update" => true,
+                "plans" =>array(
+                    "planId" => (int)$data[$i],
+                    "actualPremium" => '',
+                    "carValue" => '',
+                    "excess" => '',
+                    "discountPremium" => '',
+                    "isDisabled" => filter_var($isDisabled, FILTER_VALIDATE_BOOLEAN),
+                    "addons" => $addons
+                ));
+                array_push($plansArray, $apiArray);
+            }
+            $apiCreds = array(
+                "apiEndPoint" => $apiEndPoint,
+                "apiToken" => $apiToken,
+                "apiTimeout" => $apiTimeout,
+                "apiUserName" => $apiUserName,
+                "apiPassword" => $apiPassword,
+            );
+    
+            $response = $this->httpService->processRequest($plansArray, $apiCreds);
+    
+            return $response;
+        }
     }
 
 }

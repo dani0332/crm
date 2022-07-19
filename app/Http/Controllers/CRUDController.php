@@ -801,6 +801,11 @@ class CRUDController extends Controller
     }
 
     public function manualPlanToggle(Request $request) {
-        $quote = $this->carQuoteService->updateManualPlansBulk($request);
+        $response = $this->carQuoteService->updateManualPlansBulk($request);
+        if ($response == 200 || $response == 201) {
+            return redirect()->back()->with('success', 'Car Plan has been updated');
+        } else {
+            return redirect()->back()->with('message', $response);
+        }
     }
 }

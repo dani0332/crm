@@ -47,8 +47,8 @@ use App\Enums\CarPlanExclusionsCode;
                                                 <select class="form-control" id="toggle"
                                                     name="toggle">
                                                     <option value="">Please Select</option>
-                                                    <option value="1">Show</option>
-                                                    <option value="0"> Hide</option>
+                                                    <option value="0">Show</option>
+                                                    <option value="1"> Hide</option>
                                                 </select>
                                             </div>
                                         </div>
@@ -56,7 +56,7 @@ use App\Enums\CarPlanExclusionsCode;
                                             <label class="col-form-label col-md-2 col-sm-2" for="first-name"> </label>
                                             <div class="col-md-6 col-sm-6">
                                                 <div class="input-group">
-                                                    <button id="togglePlans" name=""
+                                                    <button id="togglePlans" type="button"
                                                         class="btn btn-warning btn-sm">Update</button>
                                                 </div>
                                             </div>
@@ -66,6 +66,7 @@ use App\Enums\CarPlanExclusionsCode;
                             </div>
                         </div>
                         <input type="hidden" id="planIds" name="planIds" value="">
+                        <input type="hidden" id="car_quote_uuid" name="car_quote_uuid" value="{{$record->uuid}}">
                     </form>
                     <table id="dataTableCarQuotePlans" class="table table-striped jambo_table" style="table-layout: fixed;" style="width:100%">
                         <thead>
@@ -88,7 +89,8 @@ use App\Enums\CarPlanExclusionsCode;
                         <tbody>
                             @foreach ($listQuotePlans as $key => $quotePlan)
                             <tr>
-                                <td><input type="checkbox" class="car_plans_checkbox" name="toggle_plans_checkbox" value="{{$quotePlan->id}}" data-status="{{$quotePlan->isDisabled}}"/></td>
+                                <td>
+                                    <input type="checkbox" class="car_plans_checkbox" name="toggle_plans_checkbox" value="{{$quotePlan->id}}" /></td>
                                 <td>{{ ucwords($quotePlan->providerName) }}
                                     <br>
                                     @isset($quotePlan->isDisabled)

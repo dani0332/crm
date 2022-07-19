@@ -2274,8 +2274,6 @@ $("#togglePlans").on('click', function (){
             planIds.push($(this).val());
         });
         $('#planIds').val(planIds);
-        if (planIds.length > 0) {
-            $("#togglePlanForm").submit();
-        }
+        $("#togglePlanForm").submit();
     }
 });
