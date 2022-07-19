@@ -117,7 +117,7 @@ class QuoteDocumentController extends Controller
         //dd('fileOriginalName:: ', $fileOriginalName);
         //dd('requestfile:: ', $request->file());
         //dd('request:: ', $request);
-        dd('quote_type_id:: ', $request->quote_type_id, ' quote_id:: ', $request->quote_id);
+        dd($request->quote_type_id,$request->quote_id,$request->file());
 
     }
 
