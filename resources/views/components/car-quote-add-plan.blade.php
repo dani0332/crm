@@ -38,12 +38,12 @@
                                         <td>
                                             <select class="form-control" id='insurance_provider_id' name='insurance_provider_id' data-toggle="tooltip" data-placement="top" title="Please select insurance provider">
                                                 <option value=''>Select Provider</option>
-                                                @foreach($insuranceproviders as $insuranceprovider)
-                                                @if (old('insurance_provider_id') == $insuranceprovider->id)
-                                                <option value="{{ $insuranceprovider->id }}" selected>{{ $insuranceprovider->text }}</option>
-                                                @else
-                                                <option value="{{ $insuranceprovider->id }}">{{ $insuranceprovider->text }}</option>
-                                                @endif
+                                                @foreach($insuranceProviders as $insuranceProvider)
+                                                    @if (old('insurance_provider_id') == $insuranceProvider->id)
+                                                        <option value="{{ $insuranceProvider->id }}" selected>{{ $insuranceProvider->text }}</option>
+                                                    @else
+                                                        <option value="{{ $insuranceProvider->id }}">{{ $insuranceProvider->text }}</option>
+                                                    @endif
                                                 @endforeach
                                             </select>
                                         </td>
