@@ -7,7 +7,7 @@
     <div class="col-md-12 col-sm-12 ">
         <div class="x_panel">
             <div class="x_title">
-                <h2>Upload Documents</h2>
+                <h2>Upload Documents - {{ $quoteCdbId }}</h2>
                 <ul class="nav navbar-right panel_toolbox">
                     <li><a href="{{ url('quotes/'.$quoteType.'/'.$quoteUuId.'') }}" class="btn btn-warning btn-sm">Go back</a></li>
                 </ul>
@@ -21,7 +21,6 @@
                 @if(session()->has('message'))
                     <div class="alert alert-danger">{{ session()->get('message') }}</div>
                 @endif
-                <p><b>Cdb Id:</b> {{ $quoteCdbId }}</p>
 
                 @foreach ($documentUploadTypes as $key => $documentType)
                 <table width="100%">
