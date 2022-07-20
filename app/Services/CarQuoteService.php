@@ -8,7 +8,6 @@ use App\Models\CarMake;
 use App\Models\CarQuote;
 use App\Models\CarQuoteRequestDetail;
 use App\Models\InsuranceProvider;
-use App\Models\QuoteStatus;
 use App\Models\User;
 use App\Models\YearOfManufacture;
 use Illuminate\Http\Request;
@@ -16,13 +15,8 @@ use Config;
 use DB;
 use \Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
-use App\Enums\quoteStatusCode;
-use App\Enums\quoteTypeCode;
-use App\Models\CarQuoteAdvisorToOE;
 use Illuminate\Support\Facades\Log;
-
 use App\Enums\GenericRequestEnum;
-use App\Models\TempData;
 
 class CarQuoteService extends BaseService
 {
@@ -175,14 +169,6 @@ class CarQuoteService extends BaseService
 
     public function updateCarQuote(Request $request, $id)
     {
-        TempData::create([
-            'quote_type' => 'Health',
-            'quote_uuid' => $id,
-            'form' => 'update-carquote',
-            'values' => json_encode($request->all(), true),
-            'created_by_id' => Auth::user()->id,
-        ]);
-        dd("dasd");
         $carQuote = CarQuote::where('uuid', $id)->first();
         $carQuote->first_name = $request->first_name;
         $carQuote->last_name = $request->last_name;
@@ -658,8 +644,10 @@ class CarQuoteService extends BaseService
                 if (!Auth::user()->hasRole('CAR_RENEWAL_MANAGER')) {
                     $this->walkTree(Auth::user()->id); // get all childs of the user
                     array_push($this->childUserIds, Auth::user()->id); // add the user id to the array to fetch directly assigned leads as well
-                    $this->query->whereIn('cqr.advisor_id', $this->childUserIds);	// fetch leads assigned to the user or his childs
-                    $this->query->orWhereNull('cqr.advisor_id'); // fetch unassigned leads
+                    $this->query->where(function ($query) {
+                        $query->whereIn('cqr.advisor_id', $this->childUserIds) // fetch leads assigned to the user or his childs
+                            ->orWhereNull('cqr.advisor_id'); // fetch unassigned leads
+                    });
                 }
             }
 
