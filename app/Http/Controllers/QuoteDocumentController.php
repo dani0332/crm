@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\QuoteDocument;
 use Illuminate\Http\Request;
 use App\Services\CRUDService;
 use App\Services\ActivitiesService;
@@ -117,7 +118,19 @@ class QuoteDocumentController extends Controller
         //dd('fileOriginalName:: ', $fileOriginalName);
         //dd('requestfile:: ', $request->file());
         //dd('request:: ', $request);
-        dd($request->quote_type_id,$request->quote_id,$request->file());
+        // dd($request->quote_type_id, $request->quote_id, $request->document_type_code,
+        // $request->folder_path, $request->file());
+
+        $newDoc = new QuoteDocument();
+		$newDoc->quote_type_id = $request->quote_type_id;
+        $newDoc->quote_id = $request->quote_id;
+        $newDoc->doc_name = $fileOriginalName;
+        $newDoc->doc_url = "";
+        $newDoc->doc_mime_type = $file->getClientMimeType();
+        $newDoc->document_type_code = $request->document_type_code;
+        $newDoc->created_by_id = auth()->id();
+        $newDoc->updated_by_id = auth()->id();
+		$newDoc->save();
 
     }
 

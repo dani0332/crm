@@ -36,8 +36,6 @@
                             <div class="container">
                                 <form method='post' action="{{ url('/quotes/'.$quoteType.'/uploadDocumentProcess') }}" enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left dropzone" id="{{ $documentType->code }}">
                                     {{csrf_field()}}
-                                    <input type="hidden" id="quote_id" name="quote_id" value="{{ $quoteId }}">
-                                    <input type="hidden" id="quote_type_id" name="quote_type_id" value="{{ $quoteTypeId }}">
                                 </form>
                             </div>
                         </td>
@@ -56,8 +54,10 @@
                         acceptedFiles: JSON.parse('<?php echo json_encode($documentType->accepted_files) ?>'),
                         sending: function(file, xhr, formData) {
                             formData.append("_token", "{{{ csrf_token() }}}");
-                            formData.append("quote_id", $('#quote_id').val());
-                            formData.append("quote_type_id", $('#quote_type_id').val());
+                            formData.append("quote_id", "{{ $quoteId }}");
+                            formData.append("quote_type_id", "{{ $quoteTypeId }}");
+                            formData.append("document_type_code", "{{ $documentType->code}}");
+                            formData.append("folder_path", "{{ $documentType->folder_path }}");
                         },
                     });
                 </script>
