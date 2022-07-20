@@ -871,7 +871,7 @@ class CarQuoteService extends BaseService
         $authBasic = base64_encode($plansApiUserName . ":" . $plansApiPassword);
 
         $plansDataArr = array(
-            "quoteUID" => "HNQP3VLX",
+            "quoteUID" => $quoteUuId,
             "lang" => "en",
         );
 
