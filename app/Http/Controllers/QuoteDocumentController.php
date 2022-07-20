@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Services\CRUDService;
 use App\Services\ActivitiesService;
 use App\Services\QuoteDocumentService;
+use Illuminate\Support\Facades\Config;
 
 class QuoteDocumentController extends Controller
 {
@@ -113,25 +114,33 @@ class QuoteDocumentController extends Controller
 
     public function uploadDocumentProcess(Request $request)
     {
-        $file = $request->file('file');
-        $fileOriginalName = $file->getClientOriginalName();
-        //dd('fileOriginalName:: ', $fileOriginalName);
-        //dd('requestfile:: ', $request->file());
-        //dd('request:: ', $request);
-        // dd($request->quote_type_id, $request->quote_id, $request->document_type_code,
-        // $request->folder_path, $request->file());
+        if ($request->hasFile('file')) {
+            $file = $request->file('file');
+            $fileNameOriginal = $file->getClientOriginalName();
+            $fileMimeType = $file->getClientMimeType();
+            $fileNameAzure = get_guid().'_'.$fileNameOriginal;
+            $filePathAzure = $request->file('file')->storeAs('documents/'.$request->folder_path, $fileNameAzure, 'azureIM');
+            $this->createQuoteDocumentRecord($request, $fileNameOriginal, $filePathAzure, $fileMimeType);
+        }
+    }
+
+    public function createQuoteDocumentRecord($request, $fileNameOriginal, $filePathAzure, $fileMimeType)
+    {
+        $azureStorageUrl = Config::get('constants.AZURE_IM_STORAGE_URL');
+        $azureStorageContainer = Config::get('constants.AZURE_IM_STORAGE_CONTAINER');
 
         $newDoc = new QuoteDocument();
 		$newDoc->quote_type_id = $request->quote_type_id;
         $newDoc->quote_id = $request->quote_id;
-        $newDoc->doc_name = $fileOriginalName;
-        $newDoc->doc_url = "";
-        $newDoc->doc_mime_type = $file->getClientMimeType();
+        $newDoc->doc_name = $fileNameOriginal;
+        $newDoc->doc_url = $azureStorageUrl.$azureStorageContainer.'/'.$filePathAzure;
+        $newDoc->doc_mime_type = $fileMimeType;
         $newDoc->document_type_code = $request->document_type_code;
         $newDoc->created_by_id = auth()->id();
         $newDoc->updated_by_id = auth()->id();
 		$newDoc->save();
 
+        return $newDoc->id;
     }
 
 }
