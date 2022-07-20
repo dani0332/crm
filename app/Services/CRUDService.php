@@ -338,7 +338,7 @@ class CRUDService extends BaseService
 
     public function quoteModel($modelType, $quoteUuId)
     {
-        $model = '\\App\\Models\\' . $modelType . "Quote";
+        $model = '\\App\\Models\\' . ucwords($modelType) . "Quote";
         return $model::where('uuid', $quoteUuId)->select('id','code')->first();
     }
 }
