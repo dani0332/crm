@@ -1121,12 +1121,7 @@ class CarQuoteService extends BaseService
                 "update" => true,
                 "plans" =>array(
                     "planId" => (int)$data[$i],
-                    "actualPremium" => '',
-                    "carValue" => '',
-                    "excess" => '',
-                    "discountPremium" => '',
-                    "isDisabled" => filter_var($isDisabled, FILTER_VALIDATE_BOOLEAN),
-                    "addons" => $addons
+                    "isDisabled" => filter_var($isDisabled, FILTER_VALIDATE_BOOLEAN)
                 ));
                 array_push($plansArray, $apiArray);
             }
