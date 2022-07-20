@@ -49,7 +49,6 @@
                         maxFiles: JSON.parse('<?php echo json_encode($documentType->max_files) ?>'),
                         maxFilesize: JSON.parse('<?php echo json_encode($documentType->max_size) ?>'),
                         autoProcessQueue: true,
-                        addRemoveLinks: true,
                         uploadMultiple: false,
                         acceptedFiles: JSON.parse('<?php echo json_encode($documentType->accepted_files) ?>'),
                         sending: function(file, xhr, formData) {
