@@ -97,7 +97,7 @@ class QuoteDocumentController extends Controller
      */
     public function destroy($id)
     {
-        //
+        dd('ok');
     }
 
     public function uploadDocument(Request $request, $quoteType, $quoteUuId)

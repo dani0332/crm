@@ -13,9 +13,8 @@
                             <th>Document Type</th>
                             <th>Document Name</th>
                             <th>Created At</th>
-                            <th>Updated At</th>
                             <th>Created By</th>
-                            <th>Updated By</th>
+                            <th>Action</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -24,9 +23,8 @@
                                 <td>{{ $document->documentType ? $document->documentType->text : '' }}</td>
                                 <td><a href="{{ $document->doc_url }}" target="_blank">{{ $document->doc_name }}</a></td>
                                 <td>{{ $document->created_at }}</td>
-                                <td>{{ $document->updated_at }}</td>
                                 <td>{{ $document->createdBy ? $document->createdBy->name : '' }}</td>
-                                <td>{{ $document->updatedBy ? $document->updatedBy->name : '' }}</td>
+                                <td><a href="#" class='btn btn-warning btn-sm delete'>Delete</a></td>
                             </tr>
                         @endforeach
                     </tbody>

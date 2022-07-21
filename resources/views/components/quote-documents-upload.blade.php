@@ -58,6 +58,10 @@
                             formData.append("document_type_code", "{{ $documentType->code}}");
                             formData.append("folder_path", "{{ $documentType->folder_path }}");
                         },
+                        success: function (file, response) {
+                            console.log('file: ', file.status);
+                            console.log('response: ', response);
+                        },
                     });
                 </script>
                 @endforeach
