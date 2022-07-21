@@ -60,7 +60,6 @@ class LeadAllocationJob implements ShouldQueue
                     info('availableUsers: ' . $availableUsersString);
                     foreach($healthTeams as $healthTeam)
                     {
-                        sleep(1);
                         info('Lead Allocation Started for health team: ' . $healthTeam);
                         $filteredLeadsByHealthTeam = $unAllocatedLeads->filter(function ($lead) use ($healthTeam) {
                             return strtolower($lead->health_team_type) == strtolower($healthTeam) ? $lead : false;
@@ -73,6 +72,7 @@ class LeadAllocationJob implements ShouldQueue
                         {
                             foreach($filteredLeadsByHealthTeam as $lead)
                             {
+                                sleep(1);
                                 $filteredUsersByHealthTeam = $filteredUsersByHealthTeam->sortBy('last_allocated', SORT_NATURAL)->flatten();
                                 $advisor = $filteredUsersByHealthTeam->first();
                                 $this->leadAllocationService->assignLead($lead, $advisor->id , false);
