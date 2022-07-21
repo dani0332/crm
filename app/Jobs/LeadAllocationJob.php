@@ -60,6 +60,7 @@ class LeadAllocationJob implements ShouldQueue
                     info('availableUsers: ' . $availableUsersString);
                     foreach($healthTeams as $healthTeam)
                     {
+                        sleep(1);
                         info('Lead Allocation Started for health team: ' . $healthTeam);
                         $filteredLeadsByHealthTeam = $unAllocatedLeads->filter(function ($lead) use ($healthTeam) {
                             return strtolower($lead->health_team_type) == strtolower($healthTeam) ? $lead : false;
