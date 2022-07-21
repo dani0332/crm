@@ -1115,14 +1115,17 @@ class CarQuoteService extends BaseService
             $plansArray = [];
             for($i=0; $i < count($data); $i++) {
                 $apiArray = array(
-                "quoteUID" => $request->car_quote_uuid,
-                "update" => true,
-                "plans" =>array(
                     "planId" => (int)$data[$i],
                     "isDisabled" => filter_var($isDisabled, FILTER_VALIDATE_BOOLEAN)
-                ));
+                );
                 array_push($plansArray, $apiArray);
             }
+
+            $dataArray = array(
+                "quoteUID" => $request->car_quote_uuid,
+                "update" => true,
+                "plans" => $plansArray
+            );
             $apiCreds = array(
                 "apiEndPoint" => $apiEndPoint,
                 "apiToken" => $apiToken,
@@ -1131,7 +1134,7 @@ class CarQuoteService extends BaseService
                 "apiPassword" => $apiPassword,
             );
     
-            $response = $this->httpService->processRequest($plansArray, $apiCreds);
+            $response = $this->httpService->processRequest($dataArray, $apiCreds);
     
             return $response;
         }
