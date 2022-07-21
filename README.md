@@ -1,7 +1,7 @@
 <p align="center"><a href="https://insurancemarket.ae" target="_blank"><img src="https://insurancemarket.ae/_next/image/?url=%2Fassets%2Fimg%2Flogo%2Flogo.png&w=2048&q=75" width="400"></a> </p> 
 
 ## About Blanka - IMCRM
-Insurance Market CRM (IMCRM or IMCM) is the CRM used by internal team to handle the incoming leads, handle rewards, view or generate quotes for customers, generate car valuation, and manage customers. Basically its a complete solution for the back office to handle incoming customer inquiries and process their insurnace quotes.
+Insurance Market CRM (IMCRM) is the CRM used by internal team to handle the incoming leads, handle rewards,transactions, view or generate quotes for customers, generate car valuation, and manage customers. Basically its a complete solution for the back office to handle incoming customer inquiries and process their insurnace quotes.
 
 IMCRM is developed on Laravel using PHP 8.0.1 or above, MariaDB 10.x or above. 
 
