@@ -9,6 +9,8 @@ URLs:
 
 - [Live](https://crm.alfred.ae/)
 - [Stage](https://crmstage.alfred.ae/)
+- [UAT](https://crmuat.alfred.ae)
+- [DEV](https://crmdev.alfred.ae) [DEV1](https://crmdev01.alfred.ae) [DEV2](https://crmdev02.alfred.ae)
 - [Laravel Code Standard Guide Lines](https://xqsit.github.io/laravel-coding-guidelines/)
 - [Team Engineering Guide](https://github.com/InsuranceMarket-ae/engineering/wiki)
 
