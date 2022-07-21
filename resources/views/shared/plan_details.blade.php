@@ -485,13 +485,13 @@ if (!isset($modelName)) {
                             </tr>
                             <tr>
                                 <td style="width: 50px;">Category</td>
-                                <td style="width: 50px;">@if($member->memberCategory){{$member->memberCategory->text}}@endif</td>
+                                <td style="width: 50px;">{{$member->memberCategoryText}}</td>
                                 <td style="width: 50px;">DOB</td>
                                 <td style="width: 50px;">{{$member->dob}}</td>
                                 <td style="width: 50px;">Gender</td>
                                 <td style="width: 50px;">{{$member->gender}}</td>
-                                <td style="width: 50px;">Salary Band</td>
-                                <td style="width: 50px;">@if($member->salaryBand){{$member->salaryBand->text}}@endif</td>
+                                <td style="width: 50px;">Premium</td>
+                                <td style="width: 50px;">{{$member->premium}}</td>
                             </tr>
                             @endforeach
                         </table>
