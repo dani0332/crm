@@ -555,7 +555,7 @@ class CRUDController extends Controller
                     $listQuotePlanBenefitsRegionCover = $listQuotePlan->benefits->regionCover;
                     $listQuotePlanBenefitsMaternityCover = $listQuotePlan->benefits->maternityCover;
                     $listQuotePlanBenefitsPolicyDetails = $listQuotePlan->policyWordings;
-                    $membersDetail = $this->healthQuoteService->getMembersDetail($quoteId);
+                    $members = $this->healthQuoteService->getMembersDetail($quoteId);
                     foreach ($listQuotePlanBenefitsPolicyDetails as $listQuotePlanBenefitsPolicyDetail) {
                         $listQuotePlanBenefitsPolicyDetailLink = $listQuotePlanBenefitsPolicyDetail->link;
                     }
@@ -568,7 +568,7 @@ class CRUDController extends Controller
                 'listQuotePlanBenefitsExclusions', 'listQuotePlanBenefitsFeatures',
                 'listQuotePlanBenefitsPolicyDetailLink', 'modelName',
                 'listQuotePlanBenefitsCoInsurance', 'listQuotePlanBenefitsRegionCover', 
-                'listQuotePlanBenefitsMaternityCover', 'membersDetail'
+                'listQuotePlanBenefitsMaternityCover', 'members'
             ]));
         }
     }
