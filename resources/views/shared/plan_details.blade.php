@@ -481,17 +481,17 @@ if (!isset($modelName)) {
                         <table cellpadding="3" cellspacing="3">
                             @foreach($members as $i => $member)
                             <tr>
-                                <td style="width: 100px;font-weight: bold;">Member {{$i}}:</td>
+                                <td style="width: 100px;font-weight: bold;">Member {{$i+1}}:</td>
                             </tr>
                             <tr>
-                                <td style="width: 50px;">Category</td>
+                                <td style="width: 50px;font-weight: bold;">Category</td>
                                 <td style="width: 50px;">{{$member->memberCategoryText}}</td>
-                                <td style="width: 50px;">DOB</td>
-                                <td style="width: 50px;">{{$member->dob}}</td>
-                                <td style="width: 50px;">Gender</td>
+                                <td style="width: 50px;font-weight: bold;">DOB</td>
+                                <td style="width: 120px;">{{$member->dob}}</td>
+                                <td style="width: 50px;font-weight: bold;">Gender</td>
                                 <td style="width: 50px;">{{$member->gender}}</td>
-                                <td style="width: 50px;">Premium</td>
-                                <td style="width: 50px;">{{$member->premium}}</td>
+                                <td style="width: 50px;font-weight: bold;">Premium</td>
+                                <td style="width: 120px;">{{$member->premium}}</td>
                             </tr>
                             @endforeach
                         </table>
