@@ -18,8 +18,8 @@ class RenewalBatchEmailJob implements ShouldQueue
     protected $renewalsUploadFileService;
     protected $batchEmailId;
 
-    public $maxTries = 5;
-    public $timeout = 300;
+    public $tries = 5;
+    public $timeout = 30;
     public $backoff = 3;
 
     /**

@@ -16,7 +16,7 @@ class LeadAllocationJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, GetUserTree, SerializesModels;
 
-    public $Tries = 3;
+    public $tries = 3;
     public $timeout = 30;
     public $backoff = 3;
     public $leadAllocationService;
@@ -80,7 +80,7 @@ class LeadAllocationJob implements ShouldQueue
 
                         foreach($filteredUsersByHealthTeam as $user)
                         {
-                            LeadAllocation::where('user_id', '=', $user->id)->update(['last_allocated' => (float)$user->last_allocated]);
+                            LeadAllocation::where('user_id', $user->id)->update(['last_allocated' => (float)$user->last_allocated]);
                         }
                     }
                     else
