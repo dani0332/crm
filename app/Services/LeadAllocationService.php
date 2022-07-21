@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\RolesEnum;
@@ -92,7 +93,7 @@ class LeadAllocationService extends BaseService
                 ->where('quote_status.id', QuoteStatusEnum::Qualified)
                 ->whereNotNull('health_quote_request.health_team_type')
                 ->whereNull('health_quote_request.advisor_id')
-                ->whereBetween('health_quote_request.created_at', [$from, $to])->skip(0)->take(50)->get();
+                ->whereBetween('health_quote_request.created_at', [$from, $to])->skip(0)->take(20)->get();
 
             DB::commit();
             return $unAllocatedLeads;
@@ -120,9 +121,9 @@ class LeadAllocationService extends BaseService
                 $lead->advisor_id = $advisorId;
                 $lead->save();
                 info('Lead Id ' . $lead->id . ' assigned to advisor ' . $advisorId);
-                $this->updateLeadAllocationRecord($advisorId);
-                $this->updateLeadDetailRecord($lead->id); // TODO : add LOB type when implement for other lines
-                DB::commit(); // added commit before
+                if($lead->source != LeadSourceEnum::REFERRAL) $this->updateLeadAllocationRecord($advisorId);
+                $this->updateLeadDetailRecord($lead->id);
+                DB::commit();
                 return true;
 
             } catch (\Exception $e) {
@@ -338,13 +339,30 @@ class LeadAllocationService extends BaseService
                                                     ->orWhere('lead_allocation.max_capacity', '=', -1);
                                             })
                                             ->where(strtolower('t.name'), strtolower($lead->health_team_type))
-                                            ->orderBy('lead_allocation.last_allocated', 'asc')
-                                            ->select('lead_allocation.user_id');
+                                            ->orderBy('lead_allocation.last_allocated', 'asc');
             DB::commit();
             return $availableUserId->first();
         } catch (\Exception $e) {
             Log::error($e->getMessage());
             DB::rollback();
+        }
+    }
+
+    public function getAvailableAdvisors()
+    {
+        try {
+            $availableAdvisors = LeadAllocation::join('users as u', 'lead_allocation.user_id', '=', 'u.id' )
+                                            ->join('teams as t', 't.id', '=', 'u.sub_team_id')
+                                            ->where('lead_allocation.is_available', 1)
+                                            ->where(function ($query) {
+                                                $query->whereRaw('lead_allocation.allocation_count < lead_allocation.max_capacity')
+                                                    ->orWhere('lead_allocation.max_capacity', '=', -1);
+                                            })
+                                            ->orderBy('lead_allocation.last_allocated', 'asc')
+                                            ->select('u.id', 'u.name', 'u.email', 'u.sub_team_id', 't.name as sub_team_name', 'lead_allocation.allocation_count', 'lead_allocation.max_capacity', 'lead_allocation.last_allocated');
+                                            return $availableAdvisors->get();
+        } catch (\Exception $e) {
+            Log::error($e->getMessage());
         }
     }
 
