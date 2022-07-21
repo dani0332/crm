@@ -72,6 +72,7 @@ class LeadAllocationJob implements ShouldQueue
                         {
                             foreach($filteredLeadsByHealthTeam as $lead)
                             {
+                                sleep(1);
                                 $filteredUsersByHealthTeam = $filteredUsersByHealthTeam->sortBy('last_allocated', SORT_NATURAL)->flatten();
                                 $advisor = $filteredUsersByHealthTeam->first();
                                 $this->leadAllocationService->assignLead($lead, $advisor->id , false);
