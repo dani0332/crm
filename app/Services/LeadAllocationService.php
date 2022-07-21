@@ -93,7 +93,7 @@ class LeadAllocationService extends BaseService
                 ->where('quote_status.id', QuoteStatusEnum::Qualified)
                 ->whereNotNull('health_quote_request.health_team_type')
                 ->whereNull('health_quote_request.advisor_id')
-                ->whereBetween('health_quote_request.created_at', [$from, $to])->skip(0)->take(50)->get();
+                ->whereBetween('health_quote_request.created_at', [$from, $to])->skip(0)->take(10)->get();
 
             DB::commit();
             return $unAllocatedLeads;
