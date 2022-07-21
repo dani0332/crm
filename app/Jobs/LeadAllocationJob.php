@@ -54,7 +54,6 @@ class LeadAllocationJob implements ShouldQueue
                     $availableUsers = $this->leadAllocationService->getAvailableAdvisors();
                     $healthTeams = ['EBP', 'RM-Speed', 'RM-NB'];
                     $availableUsersString = '';
-                    $assignmentString = '';
                     $availableUsers->each(function ($user) use (&$availableUsersString) {
                         $availableUsersString .= $user->name . '|'. $user->last_allocated. ',' ;
                     });
@@ -73,12 +72,11 @@ class LeadAllocationJob implements ShouldQueue
                         {
                             foreach($filteredLeadsByHealthTeam as $lead)
                             {
-                                sleep(1);
+                                sleep(2);
                                 $filteredUsersByHealthTeam = $filteredUsersByHealthTeam->sortBy('last_allocated', SORT_NATURAL)->flatten();
                                 $advisor = $filteredUsersByHealthTeam->first();
                                 $this->leadAllocationService->assignLead($lead, $advisor->id , false);
-                                info('Lead Allocation Done for lead: ' . $lead->uuid . ' and advisor: ' . $advisor->name);
-                                $assignmentString .= $lead->uuid . '|' . $advisor->name . ',    /n';
+                                info('------->Lead Allocation Done for lead: ' . $lead->uuid . ' and advisor: ' . $advisor->name);
                                 $filteredUsersByHealthTeam->each(function ($user) use ($advisor) {
                                     if($user->id == $advisor->id)
                                     {
@@ -99,7 +97,6 @@ class LeadAllocationJob implements ShouldQueue
                             info('No leads or users available for health team: ' . $healthTeam);
                         }
                     }
-                    info('Assignment sequence is: ' . $assignmentString);
                 }
                 else
                 {
