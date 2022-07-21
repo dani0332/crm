@@ -354,6 +354,7 @@ class CRUDController extends Controller
                     $listQuotePlans = $quotePlans;
                 }
             }
+<<<<<<< HEAD
             $membersDetail = $this->healthQuoteService->getMembersDetail($record->id);
             $memberCategories = $this->lookupService->getMemberCategories();
             $salaryBands = $this->lookupService->getSalaryBands();
@@ -361,6 +362,14 @@ class CRUDController extends Controller
                 'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList',
                 'leadStatuses', 'lostReasons', 'selectedLostReasonId','model_name', 'allowedDuplicateLOB', 'audits','advisors', 'activities','isRenewalUser',
                 'isNewBusinessUser','membersDetail','memberCategories','salaryBands','autoAllocationDisabled'
+=======
+
+            $ecomDetails = $this->healthQuoteService->getEcomDetails($record);
+            return view('shared.show', compact([
+                'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList',
+                'leadStatuses', 'lostReasons', 'selectedLostReasonId', 'model_name', 'allowedDuplicateLOB', 'audits', 'advisors', 'activities', 'isRenewalUser',
+                'isNewBusinessUser', 'autoAllocationDisabled', 'ecomDetails'
+>>>>>>> d55000b4151bcd21e1b2df0ba33f56a18b44db9d
             ]));
         } else {
             return view('shared.show', compact([
