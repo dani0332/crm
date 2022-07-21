@@ -555,7 +555,8 @@ class CRUDController extends Controller
                     $listQuotePlanBenefitsRegionCover = $listQuotePlan->benefits->regionCover;
                     $listQuotePlanBenefitsMaternityCover = $listQuotePlan->benefits->maternityCover;
                     $listQuotePlanBenefitsPolicyDetails = $listQuotePlan->policyWordings;
-                    $members = $this->healthQuoteService->getMembersDetail($quoteId);
+                    $healthObj = $this->healthQuoteService->getEntityPlainByUUID($quoteId);
+                    $members = $this->healthQuoteService->getMembersDetail($healthObj->id);
                     foreach ($listQuotePlanBenefitsPolicyDetails as $listQuotePlanBenefitsPolicyDetail) {
                         $listQuotePlanBenefitsPolicyDetailLink = $listQuotePlanBenefitsPolicyDetail->link;
                     }
