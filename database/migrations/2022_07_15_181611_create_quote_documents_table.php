@@ -16,8 +16,11 @@ class CreateQuoteDocumentsTable extends Migration
 		if (!Schema::hasTable('quote_documents')) {
             Schema::create('quote_documents', function (Blueprint $table) {
                 $table->id();
-                $table->integer('quote_type_id')->nullable();
-                $table->integer('quote_id')->nullable();
+                //$table->morphs('quote_documentable');
+                $table->unsignedBigInteger('quote_documentable_id')->nullable();
+                $table->string('quote_documentable_type','255')->nullable();
+                // $table->integer('quote_type_id')->nullable();
+                // $table->integer('quote_id')->nullable();
                 $table->string('doc_name','255')->nullable();
                 $table->string('doc_url','255')->nullable();
                 $table->string('doc_mime_type','100')->nullable();
@@ -33,6 +36,9 @@ class CreateQuoteDocumentsTable extends Migration
 
                 $table->timestamps();
                 $table->softDeletes();
+
+                $table->index('quote_documentable_id');
+                $table->index('quote_documentable_type');
             });
         }
     }
@@ -44,8 +50,6 @@ class CreateQuoteDocumentsTable extends Migration
      */
     public function down()
     {
-        Schema::table('quote_documents', function (Blueprint $table) {
-            //
-        });
+        Schema::dropIfExists('quote_documents');
     }
 }

@@ -338,7 +338,7 @@ class CRUDController extends Controller
             }
 
             $membersDetail = $this->travelQuoteService->getMembersDetail($record->id);
-            $quoteDocuments = $this->quoteDocumentService->getQuoteDocuments(QuoteTypeId::Travel, $record->id);
+            $quoteDocuments = $this->travelQuoteService->getQuoteDocuments($record->id);
 
             return view('shared.show', compact([
                 'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList',

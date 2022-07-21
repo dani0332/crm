@@ -862,4 +862,14 @@ class TravelQuoteService extends BaseService
 
         return $quote;
     }
+
+    public function getQuoteDocuments($quoteId) 
+    {
+        $travelQuote = TravelQuote::where('id', $quoteId)->first();
+
+        if($travelQuote) {
+            dd($travelQuote->documents);
+            return $travelQuote->documents;
+        }
+    }
 }
