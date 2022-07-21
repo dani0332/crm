@@ -24,7 +24,7 @@
                                 <td><a href="{{ $document->doc_url }}" target="_blank">{{ $document->doc_name }}</a></td>
                                 <td>{{ $document->created_at }}</td>
                                 <td>{{ $document->createdBy ? $document->createdBy->name : '' }}</td>
-                                <td><a href="#" class='btn btn-warning btn-sm delete'>Delete</a></td>
+                                <td><button class="btn btn-sm btn-warning" data-record-id="{{ $document->id }}" onclick="deleteDocument(this)">Delete</button></td>
                             </tr>
                         @endforeach
                     </tbody>

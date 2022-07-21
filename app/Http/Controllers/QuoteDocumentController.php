@@ -95,9 +95,12 @@ class QuoteDocumentController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function destroy($id)
+    public function destroy(Request $request, $id)
     {
-        dd('ok');
+        $document = QuoteDocument::find($id);
+        $document->delete();
+
+        return redirect()->back()->with('message', 'Document has been deleted.');
     }
 
     public function uploadDocument(Request $request, $quoteType, $quoteUuId)
@@ -142,5 +145,4 @@ class QuoteDocumentController extends Controller
 
         return $newDoc->id;
     }
-
 }

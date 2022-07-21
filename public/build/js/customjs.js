@@ -2247,3 +2247,23 @@ $("#dataTableCarQuotePlans").DataTable({
     bLengthChange: false,
     scrollX: true,
 });
+
+function deleteDocument(el) {
+    if (confirm('Are you sure you want to delete this document?')) {
+        var id = $(el).attr('data-record-id');
+        $.ajax({
+            url: '/documents/' + id + '/delete',
+            method: "POST",
+            data: {
+                _token: $('input[name=_token]').val(),
+            },
+            success: function (data) {
+                window.location.reload();
+            },
+        });
+    }
+    else {
+        return false;
+    }
+
+}
