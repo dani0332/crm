@@ -24,7 +24,7 @@ class RenewalImportJob implements ShouldQueue
     protected $currentUserId;
 
     public $tries = 5;
-    public $timeout = 30;
+    public $timeout = 300;
     public $backoff = 3;
 
     /**
