@@ -15,6 +15,7 @@ class CreateDocumentTypesTable extends Migration
     {
 		if (!Schema::hasTable('document_types')) {
             Schema::create('document_types', function (Blueprint $table) {
+                $table->id();
                 $table->string('code', '30');
                 $table->string('text', '100');
                 $table->boolean('is_active')->default(true);
@@ -25,9 +26,11 @@ class CreateDocumentTypesTable extends Migration
                 $table->integer('max_size')->default('5');
                 $table->boolean('is_required')->default(false);
                 $table->integer('sort_order')->nullable();
-                $table->primary(array("code"));
             });
+
+
         }
+        
     }
 
     /**

@@ -19,7 +19,7 @@
                     </thead>
                     <tbody>
                         @foreach ($quoteDocuments as $key => $document)
-                            <tr> 
+                            <tr>
                                 <td>{{ $document->documentType ? $document->documentType->text : '' }}</td>
                                 <td><a href="{{ $document->doc_url }}" target="_blank">{{ $document->doc_name }}</a></td>
                                 <td>{{ $document->created_at }}</td>

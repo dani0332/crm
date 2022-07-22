@@ -17,12 +17,12 @@ class CreateQuoteDocumentsTable extends Migration
             Schema::create('quote_documents', function (Blueprint $table) {
                 $table->id();
                 $table->unsignedBigInteger('quote_documentable_id')->nullable();
-                $table->string('quote_documentable_type','255')->nullable();
+                $table->unsignedBigInteger('document_type_id');
+                //$table->string('quote_documentable_type','255')->nullable();
                 $table->string('doc_name','255')->nullable();
                 $table->string('doc_url','255')->nullable();
                 $table->string('doc_mime_type','100')->nullable();
                 $table->string('document_type_code','30');
-                $table->foreign('document_type_code')->references('code')->on('document_types')->onDelete('no action');
                 $table->unsignedBigInteger('created_by_id')->nullable();
                 $table->unsignedBigInteger('updated_by_id')->nullable();
                 $table->timestamps();
@@ -31,6 +31,8 @@ class CreateQuoteDocumentsTable extends Migration
                 $table->index('quote_documentable_type');
             });
         }
+
+
     }
 
     /**
