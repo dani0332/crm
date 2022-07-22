@@ -116,7 +116,7 @@ class TravelQuoteService extends BaseService
             "currentlyLocatedInId" => $request->currently_located_in_id,
             "dob" => $request->dob
         );
-        if (!Auth::user()->hasRole("ADMIN")) $dataArr['advisorId'] = Auth::user()->id;
+        if (!Auth::user()->hasRole("ADMIN") && !Auth::user()->hasRole("Call Desk")) $dataArr['advisorId'] = Auth::user()->id;
             $response  = CapiRequestService::sendCAPIRequest('/api/v1-save-travel-quote', $dataArr);
         if(isset($response->quoteUID)) {
             $this->savePremium(quoteTypeCode::TravelQuote, $request, $response);

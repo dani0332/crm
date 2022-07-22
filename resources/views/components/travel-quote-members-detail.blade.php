@@ -15,6 +15,7 @@
                                         <th>DOB</th>
                                         <th>Created At</th>
                                         <th>Updated At</th>
+                                        <th>Action</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -24,6 +25,9 @@
                                             <td>{{ \Carbon\Carbon::createFromTimestamp(strtotime($member->dob))->format('d-m-Y')}}</td>
                                             <td>{{ $member->created_at }}</td>
                                             <td>{{ $member->updated_at }}</td>
+                                            <td><button id="member-details-edit-btn" class="btn btn-sm btn-warning" onclick="editMemberDetail('{{$member->id}}')">Edit</button>
+                                            <button id="member-details-delete-btn" class="btn btn-sm btn-warning" onclick="deleteMemberDetail('{{$member->id}}')">Delete</button>
+                                            </td>
                                         </tr>
                                 @endforeach
                                 </tbody>
@@ -36,6 +40,7 @@
                                         <th>DOB</th>
                                         <th>Created At</th>
                                         <th>Updated At</th>
+                                        <th>Action</th>
                                     </tr>
                                 </thead>
                             <tbody>
