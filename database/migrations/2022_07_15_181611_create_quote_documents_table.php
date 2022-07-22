@@ -25,14 +25,15 @@ class CreateQuoteDocumentsTable extends Migration
                 $table->string('doc_url','255')->nullable();
                 $table->string('doc_mime_type','100')->nullable();
 
-                $table->foreign('document_type_code')->references('code')->on('document_types')->onDelete('no action');
                 $table->string('document_type_code','30');
-
-                $table->foreign('created_by_id')->references('id')->on('users')->onDelete('no action');
+                $table->foreign('document_type_code')->references('code')->on('document_types')->onDelete('no action');
+                
                 $table->unsignedBigInteger('created_by_id')->nullable();
-
-                $table->foreign('updated_by_id')->references('id')->on('users')->onDelete('no action');
+                $table->foreign('created_by_id')->references('id')->on('users')->onDelete('no action');
+                
                 $table->unsignedBigInteger('updated_by_id')->nullable();
+                $table->foreign('updated_by_id')->references('id')->on('users')->onDelete('no action');
+                
 
                 $table->timestamps();
                 $table->softDeletes();

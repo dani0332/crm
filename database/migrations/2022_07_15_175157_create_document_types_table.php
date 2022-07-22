@@ -37,8 +37,6 @@ class CreateDocumentTypesTable extends Migration
      */
     public function down()
     {
-        Schema::table('document_types', function (Blueprint $table) {
-            //
-        });
+        Schema::dropIfExists('document_types');
     }
 }

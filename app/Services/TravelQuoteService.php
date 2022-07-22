@@ -18,6 +18,7 @@ use App\Enums\quoteTypeCode;
 use App\Enums\DatabaseColumnsString;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteStatusCode;
+use App\Models\QuoteDocument;
 use Illuminate\Support\Facades\Log;
 
 use App\Traits\AddPremiumAllLobs;
@@ -867,8 +868,15 @@ class TravelQuoteService extends BaseService
     {
         $travelQuote = TravelQuote::where('id', $quoteId)->first();
 
+        //Move to create function in this service
+        $quoteDocument = QuoteDocument::create([
+            'doc_name'=> 'test',
+            'doc_url'=>'sample',
+            'document_type_code' => 300
+        ]);
+        $travelQuote->documents()->save($quoteDocument);
+
         if($travelQuote) {
-            dd($travelQuote->documents);
             return $travelQuote->documents;
         }
     }
