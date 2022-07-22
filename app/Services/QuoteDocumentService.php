@@ -14,12 +14,34 @@ class QuoteDocumentService extends BaseService
         ->get();
 	}
 
-	public function listQuoteDocumentsForUpload($quoteTypeId)
+	public function getQuoteDocumentsForUpload($quoteTypeId)
 	{
 		return DocumentType::where(['quote_type_id' => $quoteTypeId, 'is_active' => true])
         ->orderBy('sort_order', 'asc')
         ->get();
 	}
 
+	public function createQuoteDocumentRecord($documentTypeCode, $fileNameOriginal, $filePathAzure, $fileMimeType, $travelQuote)
+	{
+		$documentTypeCode_ = DocumentType::where('code', $documentTypeCode)->first();
+
+		if(!$documentTypeCode_) {
+			return false;
+		}
+
+		$azureStorageUrl = config('constants.AZURE_IM_STORAGE_URL');
+        $azureStorageContainer = config('constants.AZURE_IM_STORAGE_CONTAINER');
+
+		$quoteDocument = QuoteDocument::create([
+            'doc_name'=> $fileNameOriginal,
+            'doc_url'=> $azureStorageUrl.$azureStorageContainer.'/'.$filePathAzure,
+            'doc_mime_type' => $fileMimeType,
+			'document_type_code' => $documentTypeCode_->code,
+			'document_type_text' => $documentTypeCode_->text,
+			'created_by_id' => auth()->id()
+        ]);
+
+        $travelQuote->documents()->save($quoteDocument);
+	}
 
 }

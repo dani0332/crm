@@ -868,14 +868,6 @@ class TravelQuoteService extends BaseService
     {
         $travelQuote = TravelQuote::where('id', $quoteId)->first();
 
-        //Move to create function in this service
-        // $quoteDocument = QuoteDocument::create([
-        //     'doc_name'=> 'test',
-        //     'doc_url'=>'sample',
-        //     'document_type_code' => 'TravelDebitNote'
-        // ]);
-        // $travelQuote->documents()->save($quoteDocument);
-
         if($travelQuote) {
             return $travelQuote->documents;
         }

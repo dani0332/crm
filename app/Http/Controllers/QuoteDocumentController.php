@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\QuoteDocument;
+use App\Models\TravelQuote;
 use Illuminate\Http\Request;
 use App\Services\CRUDService;
 use App\Services\ActivitiesService;
@@ -103,13 +104,13 @@ class QuoteDocumentController extends Controller
         return redirect()->back()->with('message', 'Document has been deleted.');
     }
 
-    public function uploadDocument(Request $request, $quoteType, $quoteUuId)
+    public function listQuoteDocuments(Request $request, $quoteType, $quoteUuId)
     {
         $quoteModel = $this->crudService->quoteModel($quoteType, $quoteUuId);
         $quoteId = $quoteModel->id;
         $quoteCdbId = $quoteModel->code;
         $quoteTypeId = $this->activityService->getQuoteTypeId($quoteType);
-        $documentUploadTypes = $this->quoteDocumentService->listQuoteDocumentsForUpload($quoteTypeId);
+        $documentUploadTypes = $this->quoteDocumentService->getQuoteDocumentsForUpload($quoteTypeId);
 
         return view('components.quote-documents-upload', compact('quoteUuId', 'quoteId', 'quoteCdbId', 
         'quoteType', 'quoteTypeId', 'documentUploadTypes'));
@@ -117,32 +118,16 @@ class QuoteDocumentController extends Controller
 
     public function uploadDocumentProcess(Request $request)
     {
-        if ($request->hasFile('file')) {
-            $file = $request->file('file');
-            $fileNameOriginal = $file->getClientOriginalName();
-            $fileMimeType = $file->getClientMimeType();
-            $fileNameAzure = get_guid().'_'.$fileNameOriginal;
-            $filePathAzure = $request->file('file')->storeAs('documents/'.$request->folder_path, $fileNameAzure, 'azureIM');
-            $this->createQuoteDocumentRecord($request, $fileNameOriginal, $filePathAzure, $fileMimeType);
+        if (!$request->hasFile('file')) {
+            return false;
         }
-    }
 
-    public function createQuoteDocumentRecord($request, $fileNameOriginal, $filePathAzure, $fileMimeType)
-    {
-        $azureStorageUrl = Config::get('constants.AZURE_IM_STORAGE_URL');
-        $azureStorageContainer = Config::get('constants.AZURE_IM_STORAGE_CONTAINER');
-
-        $newDoc = new QuoteDocument();
-		$newDoc->quote_type_id = $request->quote_type_id;
-        $newDoc->quote_id = $request->quote_id;
-        $newDoc->doc_name = $fileNameOriginal;
-        $newDoc->doc_url = $azureStorageUrl.$azureStorageContainer.'/'.$filePathAzure;
-        $newDoc->doc_mime_type = $fileMimeType;
-        $newDoc->document_type_code = $request->document_type_code;
-        $newDoc->created_by_id = auth()->id();
-        $newDoc->updated_by_id = auth()->id();
-		$newDoc->save();
-
-        return $newDoc->id;
+        $travelQuote = TravelQuote::where('id', $request->quote_id)->first();
+        $file = $request->file('file');
+        $fileNameOriginal = $file->getClientOriginalName();
+        $fileMimeType = $file->getClientMimeType();
+        $fileNameAzure = uniqid().'_'.$fileNameOriginal;
+        $filePathAzure = $request->file('file')->storeAs('documents/'.$request->folder_path, $fileNameAzure, 'azureIM');
+        $this->quoteDocumentService->createQuoteDocumentRecord($request->document_type_code, $fileNameOriginal, $filePathAzure, $fileMimeType, $travelQuote);
     }
 }

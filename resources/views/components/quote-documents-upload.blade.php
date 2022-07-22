@@ -22,7 +22,7 @@
                     <div class="alert alert-danger">{{ session()->get('message') }}</div>
                 @endif
 
-                @foreach ($documentUploadTypes as $key => $documentType)
+                @foreach ($documentUploadTypes as $documentType)
                 <table width="100%">
                     <tr>
                         <td width="25%">

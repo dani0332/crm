@@ -14,7 +14,7 @@ class QuoteDocument extends Model
     protected $table = 'quote_documents';
     protected $guarded = [];
     protected $dates = ['deleted_at'];
-    protected $fillable = ['doc_name','doc_url','doc_mime_type','document_type_code','created_by_id', 'updated_by_id'];
+    protected $fillable = ['doc_name','doc_url','doc_mime_type','document_type_code','document_type_text','created_by_id'];
     protected $hidden = [''];
 
 
@@ -35,10 +35,6 @@ class QuoteDocument extends Model
     public function updatedBy()
     {
         return $this->belongsTo(User::class,'updated_by_id','id');
-    }
-    public function documentType()
-    {
-        return $this->belongsTo(DocumentType::class);
     }
     public function quoteDocumentable()
     {
