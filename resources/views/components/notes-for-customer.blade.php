@@ -17,22 +17,14 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @if($notesForCustomers->count() > 0)
-                            @foreach ($notesForCustomers as $key => $notesForCustomer)
-                                <tr>
-                                    <td>{{ $notesForCustomer->id }}</td>
-                                    <td>@php echo nl2br(htmlentities(str_replace("<br />", "", $notesForCustomer->description))) @endphp</td>
-                                    <td>{{ $notesForCustomer->created_at }}</td>
-                                    <td>{{ $notesForCustomer->createdby ? $notesForCustomer->createdby->name : '' }}</td>
-                                </tr>
-                            @endforeach
-                        @else
-                        <tbody>
-                            <tr class="odd">
-                                <td valign="top" colspan="4" class="dataTables_empty">No data available in table</td>
+                        @foreach ($notesForCustomers as $key => $notesForCustomer)
+                            <tr>
+                                <td>{{ $notesForCustomer->id }}</td>
+                                <td>@php echo nl2br(htmlentities(str_replace("<br />", "", $notesForCustomer->description))) @endphp</td>
+                                <td>{{ $notesForCustomer->created_at }}</td>
+                                <td>{{ $notesForCustomer->createdby ? $notesForCustomer->createdby->name : '' }}</td>
                             </tr>
-                        </tbody>
-                        @endif
+                        @endforeach
                     </tbody>
                 </table>
             </div>

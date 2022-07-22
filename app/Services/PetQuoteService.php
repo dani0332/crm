@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Enums\QuoteTypeId;
 use App\Models\PetQuote;
 use App\Models\PetQuoteRequestDetail;
-use App\Models\QuoteStatus;
 use Illuminate\Http\Request;
 use DB;
 use Auth;
@@ -328,25 +327,23 @@ class PetQuoteService extends BaseService
 
     public function updatePetQuote(Request $request, $id)
     {
-        $PetQuote = PetQuote::where('uuid', $id)->first();
-        $PetQuote->first_name = $request->first_name;
-        $PetQuote->last_name = $request->last_name;
-        $PetQuote->email = $request->email;
-        $PetQuote->mobile_no = $request->mobile_no;
-        $PetQuote->gender = $request->gender;
-        $PetQuote->microchip_no = $request->microchip_no;
-        $PetQuote->type_of_pet1 = $request->type_of_pet1;
-        $PetQuote->breed_of_pet1 = $request->breed_of_pet1;
-        $PetQuote->is_microchipped = $request->is_microchipped == 'Yes' ?  true : false;
-        $PetQuote->is_neutered = $request->is_neutered == 'Yes' ?  true : false;
-        $PetQuote->is_mixed_breed = $request->is_mixed_breed == 'Yes' ?  true : false;
-        $PetQuote->has_injury = $request->has_injury == 'Yes' ?  true : false;
-        $PetQuote->age_of_pet1 = $request->age_of_pet1;
-        $PetQuote->ilivein_accommodation_type_id = $request->ilivein_accommodation_type_id;
-        $PetQuote->iam_possesion_type_id = $request->iam_possesion_type_id;
-        $PetQuote->save();
+        $petQuote = PetQuote::where('uuid', $id)->first();
+        $petQuote->first_name = $request->first_name;
+        $petQuote->last_name = $request->last_name;
+        $petQuote->gender = $request->gender;
+        $petQuote->microchip_no = $request->microchip_no;
+        $petQuote->type_of_pet1 = $request->type_of_pet1;
+        $petQuote->breed_of_pet1 = $request->breed_of_pet1;
+        $petQuote->is_microchipped = $request->is_microchipped == 'Yes' ?  true : false;
+        $petQuote->is_neutered = $request->is_neutered == 'Yes' ?  true : false;
+        $petQuote->is_mixed_breed = $request->is_mixed_breed == 'Yes' ?  true : false;
+        $petQuote->has_injury = $request->has_injury == 'Yes' ?  true : false;
+        $petQuote->age_of_pet1 = $request->age_of_pet1;
+        $petQuote->ilivein_accommodation_type_id = $request->ilivein_accommodation_type_id;
+        $petQuote->iam_possesion_type_id = $request->iam_possesion_type_id;
+        $petQuote->save();
 
-        $this->createUpdateCustomerInfo($request, $PetQuote->email, $PetQuote->uuid, quoteTypeCode::PetQuote);
+        $this->createUpdateCustomerInfo($request, $petQuote->email, $petQuote->uuid, quoteTypeCode::PetQuote);
         if (isset($request->return_to_view))
             return redirect("quotes/pet")->with('success', 'Pet Quote has been updated');
     }
@@ -722,7 +719,12 @@ class PetQuoteService extends BaseService
 
     public function processManualLeadAssignment($request): array
     {
-        $leadsIds = array_map('intval', explode(',', trim($request->selectTmLeadId, ',')));
+        if($request->selectTmLeadId == '' || $request->selectTmLeadId == null) {
+            $leadsIds = array_map('intval', explode(',', trim($request->entityId, ',')));
+        }
+        else{
+            $leadsIds = array_map('intval', explode(',', trim($request->selectTmLeadId, ',')));
+        }
         $userId = (int)$request->assigned_to_id_new;
         Log::info('Leads ids to assign: ' . json_encode($leadsIds));
         $result = [];
@@ -742,7 +744,7 @@ class PetQuoteService extends BaseService
     public function validateRequest($request)
     {
         $userId = $request->assigned_to_id_new;
-        $leadsIds = $request->selectTmLeadId;
+        $leadsIds = $request->selectTmLeadId == null || $request->selectTmLeadId == '' ? $request->entityId : $request->selectTmLeadId;
         if ($leadsIds == '' || $leadsIds == null) {
             return 'Please select lead(s) to assign';
         }

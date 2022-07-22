@@ -2,8 +2,7 @@
 
 namespace App\Jobs;
 
-use App\Models\ApplicationStorage;
-use App\Models\User;
+use App\Models\LeadAllocation;
 use App\Services\LeadAllocationService;
 use App\Traits\GetUserTree;
 use Illuminate\Bus\Queueable;
@@ -17,8 +16,8 @@ class LeadAllocationJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, GetUserTree, SerializesModels;
 
-    public $maxTries = 5;
-    public $timeout = 300;
+    public $tries = 3;
+    public $timeout = 30;
     public $backoff = 3;
     public $leadAllocationService;
 
@@ -43,55 +42,71 @@ class LeadAllocationJob implements ShouldQueue
         try {
             Log::info('Lead Allocation Job Started');
             if (!$this->leadAllocationService->leadAllocationSwitchStatus()) {
-                Log::info('Lead Allocation Job Switch is OFF');
+                info('Lead Allocation Job Switch is OFF');
                 return;
             }
+            else
+            {
+                $this->leadAllocationService->setAdvisorsToUnavailable();
+                $unAllocatedLeads = $this->leadAllocationService->getUnAllocatedLeads();
+                if(count($unAllocatedLeads) > 0)
+                {
+                    $availableUsers = $this->leadAllocationService->getAvailableAdvisors();
+                    $healthTeams = ['EBP', 'RM-Speed', 'RM-NB'];
+                    $availableUsersString = '';
+                    $availableUsers->each(function ($user) use (&$availableUsersString) {
+                        $availableUsersString .= $user->name . '|'. $user->last_allocated. ',' ;
+                    });
+                    info('availableUsers: ' . $availableUsersString);
+                    foreach($healthTeams as $healthTeam)
+                    {
+                        info('Lead Allocation Started for health team: ' . $healthTeam);
+                        $filteredLeadsByHealthTeam = $unAllocatedLeads->filter(function ($lead) use ($healthTeam) {
+                            return strtolower($lead->health_team_type) == strtolower($healthTeam) ? $lead : false;
+                        });
+                        $filteredUsersByHealthTeam = $availableUsers->filter(function ($user) use ($healthTeam) {
+                            return strtolower($user->sub_team_name) == strtolower($healthTeam) ? $user : false;
+                        });
 
-            $this->leadAllocationService->setAdvisorsToUnavailable();
+                        if($filteredLeadsByHealthTeam->count() > 0 && $filteredUsersByHealthTeam->count() > 0)
+                        {
+                            foreach($filteredLeadsByHealthTeam as $lead)
+                            {
+                                sleep(1);
+                                $filteredUsersByHealthTeam = $filteredUsersByHealthTeam->sortBy('last_allocated', SORT_NATURAL)->flatten();
+                                $advisor = $filteredUsersByHealthTeam->first();
+                                $this->leadAllocationService->assignLead($lead, $advisor->id , false);
+                                info('------->Lead Allocation Done for lead: ' . $lead->uuid . ' and advisor: ' . $advisor->name);
+                                $filteredUsersByHealthTeam->each(function ($user) use ($advisor) {
+                                    if($user->id == $advisor->id)
+                                    {
+                                        $user->last_allocated = microtime(true);
+                                    }
+                                });
+                            };
 
-            $unAllocatedLeads = $this->leadAllocationService->getUnAllocatedLeads();
-            Log::info('Number of leads to be allocated: ' . count($unAllocatedLeads));
-
-            foreach ($unAllocatedLeads as $unAllocatedLead) {
-                Log::info('Allocation criteria checking for lead :  ' . $unAllocatedLead->uuid);
-                $availableUserIds = $this->leadAllocationService->getNextAvailableAdvisors();
-                if ($availableUserIds->count() == 0) {
-                    Log::info('No available advisors for allocation');
-                    break;
-                }
-                foreach ($availableUserIds as $userId) {
-                    $user = User::where('id', $userId)->first();
-                    if (!empty($user->name)) {
-                        $subTeamName = $this->leadAllocationService->getHealthUserSubTeamName($user->id);
-                        if ($subTeamName == null) {
-                            Log::info('User: ' . $user->name . ' has no sub team so skipping this user.');
-                            continue;
-                        }
-                        Log::info('Lead Health Team Type ' . $unAllocatedLead->health_team_type . ', User Sub Team Name: ' . $subTeamName);
-
-                        if (strtolower($subTeamName) == strtolower($unAllocatedLead->health_team_type)) {
-                            Log::info('Next available advisor: ' . $user->name);
-                            Log::info('Allocating lead with uuid ' . $unAllocatedLead->uuid . ' to ' . $user->name);
-
-                            $isAllocated = $this->leadAllocationService->assignLead($unAllocatedLead, $user->id);
-                            if(!$isAllocated) {
-                                Log::info('Lead allocation failed for lead with uuid ' . $unAllocatedLead->uuid . ' to ' . $user->name);
-                                continue;
-                            }else{
-                                Log::info('Lead allocated to ' . $user->name);
+                            foreach($filteredUsersByHealthTeam as $user)
+                            {
+                                LeadAllocation::where('user_id', $user->id)->update(['last_allocated' => (float)$user->last_allocated]);
                             }
 
-                        } else {
-                            Log::info('Skipping allocation of lead with uuid ' . $unAllocatedLead->uuid . ' to ' . $user->name . ' as the user is not in the correct sub team');
+                        }
+                        else
+                        {
+                            info($healthTeam . ' Leads count is '. $filteredLeadsByHealthTeam->count() . ' and available users count is ' . $filteredUsersByHealthTeam->count());
+                            info('No leads or users available for health team: ' . $healthTeam);
                         }
                     }
                 }
-
+                else
+                {
+                    info('No Unallocated Leads');
+                }
+                return;
             }
-            return;
         } catch (\Exception $e) {
-            Log::info('Lead Allocation Job Failed');
-            Log::info("message: " . $e->getMessage());
+            info('Lead Allocation Job Failed');
+            info("message: " . $e->getMessage());
             if ($this->attempts() < 4) {
                 $delayInSeconds = 2 * 60;
                 $this->release($delayInSeconds);

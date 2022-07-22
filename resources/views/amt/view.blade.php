@@ -69,7 +69,7 @@
             { data: "previous_quote_policy_premium", name: "previous_quote_policy_premium" },
             { data: "previous_policy_expiry_date", name: "previous_policy_expiry_date" },
             { data: "renewal_batch", name: "renewal_batch" },
-            { data: "previous_quote_policy_number", name: "previous_quote_policy_number" },           
+            { data: "previous_quote_policy_number", name: "previous_quote_policy_number" },
             { data: "created_at", name: "created_at" },
             { data: "updated_at", name: "updated_at" },
 
@@ -86,7 +86,7 @@
                 processing: true,
                 scrollX: true,
                 columnDefs: [
-                       
+
                         ],
                 buttons: isAdmin || isManagerOrDeputy ? [{
                         extend: 'excel',
@@ -382,7 +382,7 @@
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div class="item form-group">
                             <div class="col">
                                 <label class="col-form-label col-md-2 col-sm-2" for="searchfield">CDB ID</label>
@@ -526,7 +526,7 @@
                                     </div>
                                 </div>
                                 <div class="col">
-                                    
+
                                 </div>
                             </div>
                         @endif
@@ -543,7 +543,7 @@
                         </div>
                     </form>
                     <br />
-                    <form method="post" action="/quotes/manualLeadAssign" class="form-horizontal form-label-left" role="form"
+                    <form method="post" action="/quotes/business/manualLeadAssign" class="form-horizontal form-label-left" role="form"
                     data-parsley-validate="" novalidate="" autocomplete="off">
                     {{ csrf_field() }}
                     @method('POST')
@@ -605,7 +605,7 @@
                                 @if (Auth::user()->isRenewalAdvisor() || Auth::user()->isRenewalManager())<th>Renewal Batch</th>@endif
                                 @if (Auth::user()->isRenewalAdvisor() || Auth::user()->isRenewalManager())<th>Previous Quote Policy Number</th>@endif
                                 @if (!Auth::user()->isRenewalAdvisor() && !Auth::user()->isRenewalManager())<th>Policy Number</th>@endif
-                              
+
                                 @if (!Auth::user()->isRenewalAdvisor() && !Auth::user()->isRenewalManager())<th>Lost Reason</th>@endif
                                 @if (!Auth::user()->isRenewalAdvisor() && !Auth::user()->isRenewalManager())<th>Source</th>@endif
                                 <th>Created At</th>

@@ -609,8 +609,10 @@ class CRUDController extends Controller
     public function addCarQuotePlan(Request $request)
     {
         $quoteUuId = $request->quoteUuId;
-        $insuranceproviders = InsuranceProvider::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
-        return view('shared.add_quote', compact('insuranceproviders', 'quoteUuId'));
+        $insuranceproviders = $this->lookupService->getInsuranceProviders();
+        $listQuotePlans = $this->carQuoteService->getPlans($quoteUuId);
+
+        return view('components.car-quote-add-plan', compact('quoteUuId', 'insuranceproviders', 'listQuotePlans'));
     }
 
     public function healthTeamAssign(Request $request)
