@@ -2269,6 +2269,35 @@ function deleteMemberDetail(member) {
         return false;
     }
 }
+
+function editTravelMemberDetail(member) {
+    $.ajax({
+        url: '/travelers/'+member+'/edit',
+        method: "GET",
+        success: function(data) {
+            $('#member_model_content_form').html(data);
+            $('#addTravelMemberModal').modal({ show: true });
+        },
+    });
+}
+
+function deleteTravelMemberDetail(member) {
+    if(confirm('Are you sure you want to delete this member?')){
+        $.ajax({
+            url: '/travelers/'+member,
+            method: "delete",
+            data: {
+                _token: $('input[name=_token]').val()
+            },
+            success: function(data) {
+                location.reload();
+            },
+        });
+    }else {
+        return false;
+    }
+}
+
 $("#dataTableCarQuotePlans").DataTable({
     paging: false,
     ordering: false,

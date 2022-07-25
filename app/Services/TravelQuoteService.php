@@ -18,6 +18,7 @@ use App\Enums\quoteTypeCode;
 use App\Enums\DatabaseColumnsString;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteStatusCode;
+use App\Models\TravelMemberDetail;
 use Illuminate\Support\Facades\Log;
 
 use App\Traits\AddPremiumAllLobs;
@@ -743,7 +744,7 @@ class TravelQuoteService extends BaseService
     }
     public function getMembersDetail($id)
     {
-        return DB::table("travel_quote_request_member_details")->where('travel_quote_request_id', $id)->get();
+        return TravelMemberDetail::where('travel_quote_request_id', $id)->get();
     }
 
     public function getDuplicateEntityByCode($code)

@@ -22,11 +22,11 @@
                                 @foreach ($members as $key => $member)
                                         <tr>
                                             <td>Traveler {{$key+1}}</td>
-                                            <td>{{ \Carbon\Carbon::createFromTimestamp(strtotime($member->dob))->format('d-m-Y')}}</td>
+                                            <td>{{ $member->dob }}</td>
                                             <td>{{ $member->created_at }}</td>
                                             <td>{{ $member->updated_at }}</td>
-                                            <td><button id="member-details-edit-btn" class="btn btn-sm btn-warning" onclick="editMemberDetail('{{$member->id}}')">Edit</button>
-                                            <button id="member-details-delete-btn" class="btn btn-sm btn-warning" onclick="deleteMemberDetail('{{$member->id}}')">Delete</button>
+                                            <td><button id="member-details-edit-btn" class="btn btn-sm btn-warning" onclick="editTravelMemberDetail('{{$member->id}}')">Edit</button>
+                                            <button id="member-details-delete-btn" class="btn btn-sm btn-warning" onclick="deleteTravelMemberDetail('{{$member->id}}')">Delete</button>
                                             </td>
                                         </tr>
                                 @endforeach

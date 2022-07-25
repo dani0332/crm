@@ -59,6 +59,7 @@ use App\Http\Controllers\VehicleRangeController;
 use App\Http\Controllers\VehicleValueController;
 use App\Http\Controllers\AjaxController;
 use App\Http\Controllers\MembersDetailController;
+use App\Http\Controllers\TravelMembersDetailController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -288,6 +289,7 @@ Route::group(['middleware' =>  ['auth']], function () {
     Route::resource('members', MembersDetailController::class);
     Route::get('/insurance-provider-plans', [ClaimController::class, 'carPlansByInsuranceProvider']);
     Route::post('/car-plan-manual-update-process', [ClaimController::class, 'carPlanUpdateManualProcess']);
+    Route::resource('travelers', TravelMembersDetailController::class);
 });
 
 
