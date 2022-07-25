@@ -1746,6 +1746,9 @@ $(document).ready(function () {
     $('#add-activity-btn').on('click', function () {
         $('#activityModal').modal({ show: true });
     });
+    $('#add-edit-health-members-btn').on('click', function(){
+        $('#addHealthMemberModal').modal({ show: true });
+    });
 
     $("#due_date").daterangepicker({
         timePicker: true,
@@ -2239,6 +2242,33 @@ function isNumberKey(evt, obj) {
     return true;
 }
 
+function editMemberDetail(member) {
+    $.ajax({
+        url: '/members/'+member+'/edit',
+        method: "GET",
+        success: function(data) {
+            $('#member_model_content_form').html(data);
+            $('#addHealthMemberModal').modal({ show: true });
+        },
+    });
+}
+
+function deleteMemberDetail(member) {
+    if(confirm('Are you sure you want to delete this member?')){
+        $.ajax({
+            url: '/members/'+member,
+            method: "delete",
+            data: {
+                _token: $('input[name=_token]').val()
+            },
+            success: function(data) {
+                location.reload();
+            },
+        });
+    }else {
+        return false;
+    }
+}
 $("#dataTableCarQuotePlans").DataTable({
     paging: false,
     ordering: false,
@@ -2246,4 +2276,34 @@ $("#dataTableCarQuotePlans").DataTable({
     searching: false,
     bLengthChange: false,
     scrollX: true,
+});
+$("#toggle-plans-div").hide();
+$('#flowcheckall').click(function(e) {
+    if($(this).hasClass('checkedAll')) {
+        $("#toggle-plans-div").hide(200);
+        $(".car_plans_checkbox").prop('checked', false);   
+        $(this).removeClass('checkedAll');
+    } else {
+        $(".car_plans_checkbox").prop('checked', true);
+        $(this).addClass('checkedAll');
+        $("#toggle-plans-div").show(300);
+    }
+}); 
+$('.car_plans_checkbox').click(function(e) {
+    if($(this).is(':checked')) {
+        $("#toggle-plans-div").show(300);
+    } else {
+        $("#toggle-plans-div").hide(200);
+    }
+}); 
+
+$("#togglePlans").on('click', function (){
+    if($("#toggle").val() != "") {
+        var planIds = [];
+        $.each($("input[name='toggle_plans_checkbox']:checked"), function () {
+            planIds.push($(this).val());
+        });
+        $('#planIds').val(planIds);
+        $("#togglePlanForm").submit();
+    }
 });
