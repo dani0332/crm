@@ -1,6 +1,9 @@
 @extends('layouts.app')
 @section('title','Create Car Quote')
 @section('content')
+@php
+    use App\Enums\GenericRequestEnum;
+@endphp
 <script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
 <script src="{{ asset('build/js/car_quote.js') }}"></script>
 <link href="{{ asset('build/css/car_quote.css') }}" rel="stylesheet">
@@ -35,12 +38,12 @@
                                         <td>
                                             <select class="form-control" id='insurance_provider_id' name='insurance_provider_id' data-toggle="tooltip" data-placement="top" title="Please select insurance provider">
                                                 <option value=''>Select Provider</option>
-                                                @foreach($insuranceproviders as $insuranceprovider)
-                                                @if (old('insurance_provider_id') == $insuranceprovider->id)
-                                                <option value="{{ $insuranceprovider->id }}" selected>{{ $insuranceprovider->text }}</option>
-                                                @else
-                                                <option value="{{ $insuranceprovider->id }}">{{ $insuranceprovider->text }}</option>
-                                                @endif
+                                                @foreach($insuranceProviders as $insuranceProvider)
+                                                    @if (old('insurance_provider_id') == $insuranceProvider->id)
+                                                        <option value="{{ $insuranceProvider->id }}" selected>{{ $insuranceProvider->text }}</option>
+                                                    @else
+                                                        <option value="{{ $insuranceProvider->id }}">{{ $insuranceProvider->text }}</option>
+                                                    @endif
                                                 @endforeach
                                             </select>
                                         </td>
@@ -84,6 +87,7 @@
                         </tr>
                     </thead>
                     <tbody>
+                        @if(gettype($listQuotePlans) != GenericRequestEnum::TypeString)
                         @forelse ($listQuotePlans as $key => $quotePlan)
                         <tr>
                             <td>{{ ucwords($quotePlan->providerName) }}</td>
@@ -113,6 +117,11 @@
                                     <td valign="top" colspan="4" class="dataTables_empty">No data available in table</td>
                                 </tr>
                         @endforelse
+                        @else
+                            <tr class="odd">
+                                <td valign="top" colspan="4" class="dataTables_empty">No data available in table</td>
+                            </tr>
+                        @endif
                     </tbody>
                 </table>
             </div>
