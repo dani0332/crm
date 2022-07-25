@@ -1107,7 +1107,7 @@ class CarQuoteService extends BaseService
 
     public function lockCarQuote($quoteUuId)
     {
-        $carQuote = CarQuote::where('uuid', '=', $quoteUuId)->first();
+        $carQuote = CarQuote::where('uuid', $quoteUuId)->first();
         $carQuote->is_quote_locked = true;
         $carQuote->save();
 

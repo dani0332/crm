@@ -204,7 +204,7 @@ class CarPlanService extends BaseService
     public function getNonQuotedCarPlans($insuranceProviderId, $quotePlanId)
     {
         return CarPlan::select('id', 'text', 'repair_type')
-            ->where('provider_id', '=', $insuranceProviderId)
+            ->where('provider_id', $insuranceProviderId)
             ->whereNotIn('id', $quotePlanId)
             ->get();
     }
