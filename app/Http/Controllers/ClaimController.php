@@ -428,7 +428,7 @@ class ClaimController extends Controller
         return response()->json($carPlans);
     }
 
-    public function CarPlanUpdateManualProcess(Request $request)
+    public function carPlanUpdateManualProcess(Request $request)
     {
         $response = $this->carQuoteService->carPlanModify($request);
 
