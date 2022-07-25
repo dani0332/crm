@@ -138,7 +138,7 @@ if (!isset($modelName)) {
                 $(".loader").show();
                 e.preventDefault();
                 $.ajax({
-                    url: "{{ url('/CarPlanUpdateManualProcess') }}",
+                    url: "{{ url('/car-plan-manual-update-process') }}",
                     type: 'post',
                     contentType: "application/json; charset=utf-8",
                     data: JSON.stringify({

@@ -287,6 +287,9 @@ Route::group(['middleware' =>  ['auth']], function () {
     Route::post('/CarPlanUpdateManualProcess', [ClaimController::class, 'CarPlanUpdateManualProcess']);
 
     Route::resource('members', MembersDetailController::class);
+    Route::get('/insurance-provider-plans', [ClaimController::class, 'carPlansByInsuranceProvider']);
+    Route::post('/car-plan-manual-update-process', [ClaimController::class, 'carPlanUpdateManualProcess']);
+
 });
 
 
