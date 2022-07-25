@@ -609,10 +609,10 @@ class CRUDController extends Controller
     public function addCarQuotePlan(Request $request)
     {
         $quoteUuId = $request->quoteUuId;
-        $insuranceproviders = $this->lookupService->getInsuranceProviders();
+        $insuranceProviders = $this->lookupService->getAllInsuranceProviders();
         $listQuotePlans = $this->carQuoteService->getPlans($quoteUuId);
 
-        return view('components.car-quote-add-plan', compact('quoteUuId', 'insuranceproviders', 'listQuotePlans'));
+        return view('components.car-quote-add-plan', compact('quoteUuId', 'insuranceProviders', 'listQuotePlans'));
     }
 
     public function healthTeamAssign(Request $request)

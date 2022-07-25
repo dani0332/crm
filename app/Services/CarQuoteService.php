@@ -985,6 +985,10 @@ class CarQuoteService extends BaseService
 
         $response = $this->httpService->processRequest($carPlanData, $apiCreds);
 
+        if($response == 200) {
+            $this->lockCarQuote($request->car_quote_uuid);
+        }
+
         return $response;
     }
 
@@ -1099,6 +1103,15 @@ class CarQuoteService extends BaseService
             return 'Please select user to assign leads';
         }
         return 'true';
+    }
+
+    public function lockCarQuote($quoteUuId)
+    {
+        $carQuote = CarQuote::where('uuid', $quoteUuId)->first();
+        $carQuote->is_quote_locked = true;
+        $carQuote->save();
+
+        return $carQuote->id;
     }
 
 }

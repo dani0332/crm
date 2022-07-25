@@ -21,6 +21,7 @@ use DB;
 use Config;
 use App\Services\CarQuoteService;
 use App\Services\CRUDService;
+use App\Services\CarPlanService;
 
 class ClaimController extends Controller
 {
@@ -31,8 +32,9 @@ class ClaimController extends Controller
      */
     protected $carQuoteService;
     protected $crudService;
+    protected $carPlanService;
 
-    function __construct(CarQuoteService $carQuoteService, CRUDService $crudService)
+    function __construct(CarQuoteService $carQuoteService, CRUDService $crudService, CarPlanService $carPlanService)
     {
         $this->middleware('permission:claim-list|claim-create|claim-edit|claim-delete', ['only' => ['index', 'store']]);
         $this->middleware('permission:claim-create', ['only' => ['create', 'store']]);
@@ -40,6 +42,7 @@ class ClaimController extends Controller
         $this->middleware('permission:claim-delete', ['only' => ['destroy']]);
         $this->carQuoteService = $carQuoteService;
         $this->crudService = $crudService;
+        $this->carPlanService = $carPlanService;
     }
 
     public function index(Request $request)
@@ -403,7 +406,7 @@ class ClaimController extends Controller
         return redirect()->route('claims.index')->with('message', 'Claim has been deleted');
     }
 
-    public function carPlansBasedOnInsuranceProvider(Request $request)
+    public function carPlansByInsuranceProvider(Request $request)
     {
         $insuranceProviderId = $request->insuranceProviderId;
         $quoteUuId = $request->quoteUuId;
@@ -420,15 +423,12 @@ class ClaimController extends Controller
             $quotePlanId[] = $quotePlan->id;
         }
 
-        $carPlan = CarPlan::where('provider_id', '=', $insuranceProviderId)
-            ->where('is_active', '=', 1)
-            ->whereNotIn('id', $quotePlanId)
-            ->get(array('id', 'text', 'repair_type'));
+        $carPlans = $this->carPlanService->getNonQuotedCarPlans($insuranceProviderId, $quotePlanId);
 
-        return response()->json($carPlan);
+        return response()->json($carPlans);
     }
 
-    public function CarPlanUpdateManualProcess(Request $request)
+    public function carPlanUpdateManualProcess(Request $request)
     {
         $response = $this->carQuoteService->carPlanModify($request);
 
