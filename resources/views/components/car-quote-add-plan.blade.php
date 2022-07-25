@@ -87,7 +87,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @if(gettype($listQuotePlans) != GenericRequestEnum::String)
+                        @if(gettype($listQuotePlans) != GenericRequestEnum::TypeString)
                         @forelse ($listQuotePlans as $key => $quotePlan)
                         <tr>
                             <td>{{ ucwords($quotePlan->providerName) }}</td>
