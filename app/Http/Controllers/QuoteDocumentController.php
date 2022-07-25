@@ -126,7 +126,7 @@ class QuoteDocumentController extends Controller
         $file = $request->file('file');
         $fileNameOriginal = $file->getClientOriginalName();
         $fileMimeType = $file->getClientMimeType();
-        $fileNameAzure = uniqid().'_'.$fileNameOriginal;
+        $fileNameAzure = uniqid().'_'.$request->quote_uuid.'_'.$fileNameOriginal;
         $filePathAzure = $request->file('file')->storeAs('documents/'.$request->folder_path, $fileNameAzure, 'azureIM');
         $this->quoteDocumentService->createQuoteDocumentRecord($request->document_type_code, $fileNameOriginal, $filePathAzure, $fileMimeType, $travelQuote);
     }

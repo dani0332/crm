@@ -57,6 +57,7 @@
                             formData.append("quote_type_id", "{{ $quoteTypeId }}");
                             formData.append("document_type_code", "{{ $documentType->code}}");
                             formData.append("folder_path", "{{ $documentType->folder_path }}");
+                            formData.append("quote_uuid", "{{ $quoteUuId }}");
                         },
                         success: function (file, response) {
                             console.log('file: ', file.status);
