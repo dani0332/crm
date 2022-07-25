@@ -29,19 +29,34 @@ class QuoteDocumentService extends BaseService
 			return false;
 		}
 
-		$azureStorageUrl = config('constants.AZURE_IM_STORAGE_URL');
-        $azureStorageContainer = config('constants.AZURE_IM_STORAGE_CONTAINER');
+		$docUuid = uniqid();
+
+		while (QuoteDocument::where('doc_uuid', $docUuid)->first()) {
+			$docUuid = uniqid().rand(1, 100);
+		}
 
 		$quoteDocument = QuoteDocument::create([
             'doc_name'=> $fileNameOriginal,
-            'doc_url'=> $azureStorageUrl.$azureStorageContainer.'/'.$filePathAzure,
+            'doc_url'=> $filePathAzure,
             'doc_mime_type' => $fileMimeType,
 			'document_type_code' => $documentTypeCode_->code,
 			'document_type_text' => $documentTypeCode_->text,
+			'doc_uuid' => $docUuid,
 			'created_by_id' => auth()->id()
         ]);
 
         $travelQuote->documents()->save($quoteDocument);
+	}
+
+	public function getQuoteDocumentUrl($id)
+	{
+		$quoteDocument = QuoteDocument::where('doc_uuid', $id)->first();
+
+		if(!$quoteDocument) {
+			abort(404);
+		}
+
+		return array($quoteDocument->doc_url, $quoteDocument->doc_mime_type); 
 	}
 
 }

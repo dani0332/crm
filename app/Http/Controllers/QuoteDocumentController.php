@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 use App\Services\CRUDService;
 use App\Services\ActivitiesService;
 use App\Services\QuoteDocumentService;
-use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Storage;
 
 class QuoteDocumentController extends Controller
 {
@@ -64,7 +64,15 @@ class QuoteDocumentController extends Controller
      */
     public function show($id)
     {
-        //
+        $document = $this->quoteDocumentService->getQuoteDocumentUrl($id);
+        $disk = Storage::disk('azureIM');
+
+        if($disk->exists($document[0])) {
+            $contents = $disk->get($document[0]);
+            return response($contents)->header('content-type', $document[1]);
+        } else {
+            abort(404);
+        }
     }
 
     /**
