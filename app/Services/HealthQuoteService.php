@@ -20,6 +20,9 @@ use App\Traits\RolePermissionConditions;
 use App\Traits\CustomerAdditionalInfo as CustomerAdditionalInfoTrait;
 use App\Enums\quoteTypeCode;
 use App\Enums\DatabaseColumnsString;
+use App\Models\HealthMemberDetail;
+use App\Enums\GenericRequestEnum;
+use App\Models\HealthQuotePlan;
 use App\Models\Team;
 use App\Models\User;
 use App\Traits\AddPremiumAllLobs;
@@ -90,6 +93,7 @@ class HealthQuoteService extends BaseService
             'hqr.device',
             'hqr.wcu_id',
             'wcu.name as wcu_id_text',
+            'hqr.plan_id'
         )
             ->leftJoin('marital_status as ms', 'ms.id', '=', 'hqr.marital_status_id')
             ->leftJoin('health_quote_request_detail as hqrd', 'hqrd.health_quote_request_id', '=', 'hqr.id')
@@ -368,8 +372,10 @@ class HealthQuoteService extends BaseService
         $healthQuote->has_home = $request->has_home == 'on' ? true : false;
         $healthQuote->emirate_of_your_visa_id = $request->emirate_of_your_visa_id;
         $healthQuote->premium = $request->premium;
-        if ($healthQuote->salary_band_id != $request->salary_band_id || $healthQuote->member_category_id != $request->member_category_id) {
-            $healthQuote->quote_updated_at = now();
+        if($healthQuote->salary_band_id != $request->salary_band_id || $healthQuote->member_category_id != $request->member_category_id) {
+            $healthQuote->quote_updated_at = Carbon::now();
+            $healthQuote->memberDetails()->update(['member_category_id' => $request->member_category_id,
+            'salary_band_id' => $request->salary_band_id, "gender" => $request->gender,"dob" => $request->dob]);
         }
         $healthQuote->salary_band_id = $request->salary_band_id;
         $healthQuote->member_category_id = $request->member_category_id;
@@ -871,6 +877,10 @@ class HealthQuoteService extends BaseService
         }
     }
 
+    public function getMembersDetail($id)
+    {
+        return HealthMemberDetail::where('health_quote_request_id', $id)->get();
+    }
     public function validateRequest($request)
     {
         $userId = $request->assigned_to_id_new;
@@ -1021,6 +1031,35 @@ class HealthQuoteService extends BaseService
     public function getEntityPlainByUUID($uuid)
     {
         return HealthQuote::where('uuid', $uuid)->first();
+    }
+    public function getEcomDetails($data){
+        $response['providerName'] = '';
+        $response['premium'] = '';
+        $response['paymentStatus'] = '';
+        $response['paidAt'] = '';
+        $response['planName'] = '';
+        $planData = HealthQuotePlan::where('health_quote_request_id', $data->id)->first();
+        if($planData) {
+            $planPayload = json_decode($planData->plan_payload, true);
+            if(isset($planPayload['plans'])) {
+                foreach($planPayload['plans'] as $plan) {
+                    if($plan['id'] == $data->plan_id) {
+                        $response['providerName'] = $plan['providerName'];
+                        $response['premium'] = $plan['actualPremium'];
+                        $response['paymentStatus'] = '';
+                        $response['paidAt'] = '';
+                        if(isset($plan['benefits'], $plan['benefits']['feature'])) {
+                            foreach ($plan['benefits']['feature'] as $value) {
+                                if($value['code'] == GenericRequestEnum::TPA_Code) {
+                                    $response['planName'] = $value['text'];
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return $response;
     }
 
 }

@@ -359,11 +359,15 @@ class CRUDController extends Controller
                     $listQuotePlans = $quotePlans;
                 }
             }
+            $membersDetail = $this->healthQuoteService->getMembersDetail($record->id);
+            $memberCategories = $this->lookupService->getMemberCategories();
+            $salaryBands = $this->lookupService->getSalaryBands();
+            $ecomDetails = $this->healthQuoteService->getEcomDetails($record);
             return view('shared.show', compact([
                 'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList',
-                'leadStatuses', 'lostReasons', 'selectedLostReasonId', 'model_name', 'allowedDuplicateLOB', 'audits', 'advisors', 'activities', 'isRenewalUser',
-                'isNewBusinessUser', 'autoAllocationDisabled'
-            ]));
+                'leadStatuses', 'lostReasons', 'selectedLostReasonId','model_name', 'allowedDuplicateLOB', 'audits','advisors', 'activities','isRenewalUser',
+                'isNewBusinessUser','membersDetail','memberCategories','salaryBands','autoAllocationDisabled','ecomDetails']));
+
         } else {
             return view('shared.show', compact([
                 'record', 'model', 'customTitles', 'customTableList', 'advisors', 'leadStatuses', 'lostReasons', 'selectedLostReasonId', 'model_name', 'allowedDuplicateLOB', 'audits', 'activities', 'isRenewalUser',
@@ -556,7 +560,7 @@ class CRUDController extends Controller
                     $listQuotePlanBenefitsRegionCover = $listQuotePlan->benefits->regionCover;
                     $listQuotePlanBenefitsMaternityCover = $listQuotePlan->benefits->maternityCover;
                     $listQuotePlanBenefitsPolicyDetails = $listQuotePlan->policyWordings;
-
+                    $members = $listQuotePlan->memberPremiumBreakdown;
                     foreach ($listQuotePlanBenefitsPolicyDetails as $listQuotePlanBenefitsPolicyDetail) {
                         $listQuotePlanBenefitsPolicyDetailLink = $listQuotePlanBenefitsPolicyDetail->link;
                     }
@@ -568,7 +572,8 @@ class CRUDController extends Controller
                 'actualPremium', 'discountPremium', 'listQuotePlanBenefitsInclusions',
                 'listQuotePlanBenefitsExclusions', 'listQuotePlanBenefitsFeatures',
                 'listQuotePlanBenefitsPolicyDetailLink', 'modelName',
-                'listQuotePlanBenefitsCoInsurance', 'listQuotePlanBenefitsRegionCover', 'listQuotePlanBenefitsMaternityCover'
+                'listQuotePlanBenefitsCoInsurance', 'listQuotePlanBenefitsRegionCover', 
+                'listQuotePlanBenefitsMaternityCover', 'members'
             ]));
         }
     }
@@ -802,6 +807,15 @@ class CRUDController extends Controller
 
         if($quote) {
             return redirect()->back()->with('success', 'Quote Policy Detail has been updated.');
+        }
+    }
+
+    public function manualPlanToggle(Request $request) {
+        $response = $this->carQuoteService->updateManualPlansBulk($request);
+        if ($response == 200 || $response == 201) {
+            return redirect()->back()->with('success', 'Car Plan has been updated');
+        } else {
+            return redirect()->back()->with('message', $response);
         }
     }
 }

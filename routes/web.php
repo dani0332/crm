@@ -59,6 +59,7 @@ use App\Http\Controllers\VehicleRangeController;
 use App\Http\Controllers\VehicleValueController;
 use App\Http\Controllers\AjaxController;
 use App\Http\Controllers\QuoteDocumentController;
+use App\Http\Controllers\MembersDetailController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -199,6 +200,7 @@ Route::group(['middleware' =>  ['auth']], function () {
         Route::post('car/addNoteForCustomer', [CRUDController::class, 'addNoteForCustomer']);
         Route::post('car/sendNotesToCustomer', [CRUDController::class, 'sendNotesToCustomer']);
         Route::post('{quoteType}/updateQuotePolicy', [CRUDController::class, 'updateQuotePolicy']);
+        Route::post('car/manual-plan-toggle', [CRUDController::class, 'manualPlanToggle'])->name('manualPlanToggle');
     });
 
     Route::group(['prefix' => 'generic'], function () {
@@ -287,6 +289,9 @@ Route::group(['middleware' =>  ['auth']], function () {
     Route::get('/getCarModelTrimValues', [AjaxController::class, 'getCarModelTrimValues']);
     Route::post('auditable', [AuditableController::class, 'loadAuditableComponent']);
     Route::get('/car-model-by-id', [AjaxController::class, 'carModelBasedOnCarMakeId']);
+    Route::get('/insurance-provider-plans', [ClaimController::class, 'carPlansBasedOnInsuranceProvider']);
+
+    Route::resource('members', MembersDetailController::class);
     Route::get('/insurance-provider-plans', [ClaimController::class, 'carPlansByInsuranceProvider']);
     Route::post('/car-plan-manual-update-process', [ClaimController::class, 'carPlanUpdateManualProcess']);
 });
