@@ -66,9 +66,9 @@ class ApiService
                     'customerFirstName' => $quoteData->first_name,
                     'lead_status' => $quoteData->quoteStatus->text,
                     'cbdid' => $quoteData->code,
-                    'link' => Config::get('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$quoteData->uuid
+                    'link' => config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$quoteData->uuid
                 ];
-                return CreateUpdateContactService::contactCreateUpdate(Config::get('constants.SIB_HEALTH_EBP_LIST_ID'), $quoteData->first_name, $quoteData->last_name, $quoteData->email, false, $data);
+                return CreateUpdateContactService::contactCreateUpdate(config('constants.SIB_HEALTH_EBP_LIST_ID'), $quoteData->first_name, $quoteData->last_name, $quoteData->email, false, $data);
             }
             
         } catch(Exception $e) {

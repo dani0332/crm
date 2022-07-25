@@ -985,6 +985,10 @@ class CarQuoteService extends BaseService
 
         $response = $this->httpService->processRequest($carPlanData, $apiCreds);
 
+        if($response == 200) {
+            $this->lockCarQuote($request->car_quote_uuid);
+        }
+
         return $response;
     }
 
@@ -1102,42 +1106,48 @@ class CarQuoteService extends BaseService
     }
 
     public function updateManualPlansBulk($request) {
-        $apiEndPoint = Config::get('constants.KEN_API_ENDPOINT') . '/save-manual-car-quote-plan';
-        $apiToken = Config::get('constants.KEN_API_TOKEN');
-        $apiTimeout = Config::get('constants.KEN_API_TIMEOUT');
-        $apiUserName = Config::get('constants.KEN_API_USER');
-        $apiPassword = Config::get('constants.KEN_API_PWD');
-
-        $addons = [];
+        $apiEndPoint = config('constants.KEN_API_ENDPOINT') . '/save-manual-car-quote-plan';
+        $apiToken = config('constants.KEN_API_TOKEN');
+        $apiTimeout = config('constants.KEN_API_TIMEOUT');
+        $apiUserName = config('constants.KEN_API_USER');
+        $apiPassword = config('constants.KEN_API_PWD');
         if($request->planIds) {
             $data = explode(",", $request->planIds);
             $isDisabled = $request->toggle;
             $plansArray = [];
             for($i=0; $i < count($data); $i++) {
-                $apiArray = array(
+                $apiArray = [
                     "planId" => (int)$data[$i],
                     "isDisabled" => filter_var($isDisabled, FILTER_VALIDATE_BOOLEAN)
-                );
+                ];
                 array_push($plansArray, $apiArray);
             }
 
-            $dataArray = array(
+            $dataArray = [
                 "quoteUID" => $request->car_quote_uuid,
                 "update" => true,
                 "plans" => $plansArray
-            );
-            $apiCreds = array(
+            ];
+            $apiCreds = [
                 "apiEndPoint" => $apiEndPoint,
                 "apiToken" => $apiToken,
                 "apiTimeout" => $apiTimeout,
                 "apiUserName" => $apiUserName,
                 "apiPassword" => $apiPassword,
-            );
+            ];
     
             $response = $this->httpService->processRequest($dataArray, $apiCreds);
     
             return $response;
         }
+    }
+    public function lockCarQuote($quoteUuId)
+    {
+        $carQuote = CarQuote::where('uuid', $quoteUuId)->first();
+        $carQuote->is_quote_locked = true;
+        $carQuote->save();
+
+        return $carQuote->id;
     }
 
 }
