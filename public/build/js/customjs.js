@@ -2278,7 +2278,7 @@ $("#dataTableCarQuotePlans").DataTable({
     scrollX: true,
 });
 
-function deleteDocument(el) {
+function deleteQuoteDocument(el) {
     if (confirm('Are you sure you want to delete this document?')) {
         var id = $(el).attr('data-record-id');
         $.ajax({

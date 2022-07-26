@@ -3,7 +3,7 @@
         <div class="x_panel">
             <div class="x_title">
                 <h2>Documents</h2>
-                <a href="{{ url('quotes/'.$quoteType.'/'.$record->uuid.'/upload-documents') }}" class="btn btn-primary btn-sm" style="float:right;">Upload Documents</a>
+                <a href="{{ url('quotes/'.$quoteType.'/'.$record->uuid.'/documents') }}" class="btn btn-primary btn-sm" style="float:right;">Upload Documents</a>
                 <div class="clearfix"></div>
             </div>
             <div class="x_content">
@@ -24,7 +24,7 @@
                                 <td><a href="/documents/{{ $document->doc_uuid }}" target="_blank">{{ $document->doc_name }}</a></td>
                                 <td>{{ $document->created_at }}</td>
                                 <td>{{ $document->createdBy ? $document->createdBy->name : '' }}</td>
-                                <td><button class="btn btn-sm btn-warning" data-record-id="{{ $document->id }}" onclick="deleteDocument(this)">Delete</button></td>
+                                <td><button class="btn btn-sm btn-warning" data-record-id="{{ $document->id }}" onclick="deleteQuoteDocument(this)">Delete</button></td>
                             </tr>
                         @endforeach
                     </tbody>

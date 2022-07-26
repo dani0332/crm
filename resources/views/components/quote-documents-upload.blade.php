@@ -34,7 +34,7 @@
                         </td>
                         <td>
                             <div class="container">
-                                <form method='post' action="{{ url('/quotes/'.$quoteType.'/uploadDocumentProcess') }}" enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left dropzone" id="{{ $documentType->code }}">
+                                <form method='post' enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left dropzone" id="{{ $documentType->code }}">
                                     {{csrf_field()}}
                                 </form>
                             </div>
@@ -45,7 +45,7 @@
                     Dropzone.autoDiscover = false;
                     var myDropzone = new Dropzone('#{{ $documentType->code }}', {
                         paramName: "file",
-                        url: "{{ url('/quotes/'.$quoteType.'/uploadDocumentProcess') }}",
+                        url: "{{ route('documents.store') }}",
                         maxFiles: JSON.parse('<?php echo json_encode($documentType->max_files) ?>'),
                         maxFilesize: JSON.parse('<?php echo json_encode($documentType->max_size) ?>'),
                         autoProcessQueue: true,

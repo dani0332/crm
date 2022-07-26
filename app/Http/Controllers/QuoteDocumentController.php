@@ -25,36 +25,6 @@ class QuoteDocumentController extends Controller
         $this->activityService = $activityService;
         $this->quoteDocumentService = $quoteDocumentService;
     }
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function index(Request $request)
-    {
-        
-    }
-
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
-    public function store(Request $request)
-    {
-        //
-    }
 
     /**
      * Display the specified resource.
@@ -73,29 +43,6 @@ class QuoteDocumentController extends Controller
         } else {
             abort(404);
         }
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function edit($id)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, $id)
-    {
-        //
     }
 
     /**
@@ -124,13 +71,14 @@ class QuoteDocumentController extends Controller
         'quoteType', 'quoteTypeId', 'documentUploadTypes'));
     }
 
-    public function uploadDocumentProcess(Request $request)
+    public function store(Request $request)
     {
+        $travelQuote = TravelQuote::where('id', $request->quote_id)->first();
+
         if (!$request->hasFile('file')) {
             return false;
         }
 
-        $travelQuote = TravelQuote::where('id', $request->quote_id)->first();
         $file = $request->file('file');
         $fileNameOriginal = $file->getClientOriginalName();
         $fileMimeType = $file->getClientMimeType();

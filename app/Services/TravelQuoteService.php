@@ -870,6 +870,8 @@ class TravelQuoteService extends BaseService
 
         if($travelQuote) {
             return $travelQuote->documents;
+        } else {
+            return false;
         }
     }
 }
