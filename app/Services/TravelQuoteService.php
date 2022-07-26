@@ -19,6 +19,7 @@ use App\Enums\DatabaseColumnsString;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteStatusCode;
 use App\Models\TravelMemberDetail;
+use App\Models\QuoteDocument;
 use Illuminate\Support\Facades\Log;
 
 use App\Traits\AddPremiumAllLobs;
@@ -862,5 +863,16 @@ class TravelQuoteService extends BaseService
         ]);
 
         return $quote;
+    }
+
+    public function getQuoteDocuments($quoteId)
+    {
+        $travelQuote = TravelQuote::where('id', $quoteId)->first();
+
+        if($travelQuote) {
+            return $travelQuote->documents->sortDesc();
+        } else {
+            return false;
+        }
     }
 }
