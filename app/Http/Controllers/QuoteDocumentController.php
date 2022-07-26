@@ -37,9 +37,9 @@ class QuoteDocumentController extends Controller
         $document = $this->quoteDocumentService->getQuoteDocumentUrl($id);
         $disk = Storage::disk('azureIM');
 
-        if($disk->exists($document[0])) {
-            $contents = $disk->get($document[0]);
-            return response($contents)->header('content-type', $document[1]);
+        if($disk->exists($document->doc_url)) {
+            $contents = $disk->get($document->doc_url);
+            return response($contents)->header('content-type', $document->doc_mime_type);
         } else {
             abort(404);
         }

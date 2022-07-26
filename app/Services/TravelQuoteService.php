@@ -869,7 +869,7 @@ class TravelQuoteService extends BaseService
         $travelQuote = TravelQuote::where('id', $quoteId)->first();
 
         if($travelQuote) {
-            return $travelQuote->documents;
+            return $travelQuote->documents->sortDesc();
         } else {
             return false;
         }

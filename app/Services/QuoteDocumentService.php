@@ -49,7 +49,7 @@ class QuoteDocumentService extends BaseService
 			abort(404);
 		}
 
-		return array($quoteDocument->doc_url, $quoteDocument->doc_mime_type); 
+		return (object)['doc_url' => $quoteDocument->doc_url, 'doc_mime_type' => $quoteDocument->doc_mime_type];
 	}
 
 }
