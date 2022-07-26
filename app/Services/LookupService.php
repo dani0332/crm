@@ -11,6 +11,9 @@ use App\Models\InsuranceProvider;
 use App\Models\LostReasons;
 use App\Models\QuoteStatus;
 use App\Models\UAELicenseHeldFor;
+use App\Models\MemberCategory;
+use App\Models\SalaryBand;
+
 class LookupService extends BaseService
 {
 
@@ -34,6 +37,15 @@ class LookupService extends BaseService
         return UAELicenseHeldFor::isBackHomeActive()->get();
     }
 
+    public function getMemberCategories()
+    {
+        return MemberCategory::active()->get();
+    }
+
+    public function getSalaryBands()
+    {
+        return SalaryBand::active()->get();
+    }
     public function getApplicationStorageValue($key)
     {
         return ApplicationStorage::where("key_name", $key)->first()->value;
@@ -44,9 +56,9 @@ class LookupService extends BaseService
         return LostReasons::select('id', 'text')->get();
     }
 
-    public function getInsuranceProviders()
+    public function getAllInsuranceProviders()
     {
-        return InsuranceProvider::where('is_active', '=', true)->orderBy('sort_order', 'asc')->get();
+        return InsuranceProvider::select('id', 'text')->orderBy('sort_order', 'asc')->get();
     }
 
     public function getLeadStatuses()
