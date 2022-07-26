@@ -59,42 +59,9 @@
                             formData.append("folder_path", "{{ $documentType->folder_path }}");
                             formData.append("quote_uuid", "{{ $quoteUuId }}");
                         },
-                        success: function (file, response) {
-                            console.log('file: ', file.status);
-                            console.log('response: ', response);
-                        },
                     });
                 </script>
                 @endforeach
-
-                <script type="text/javascript">
-                    // Dropzone.options.dropzone =
-                    // {
-                    //     paramName: "file",
-                    //     autoDiscover: false,
-                    //     autoProcessQueue: true,
-                    //     uploadMultiple: true,
-                    //     maxFilesize: 5, // in mb
-                    //     acceptedFiles: ".xlsm,.xlsx,.pdf,.jpeg,.jpg",
-                    //     addRemoveLinks: true,
-                    //     timeout: 60000,
-                    //     renameFile: function (file) {
-                    //         var dt = new Date();
-                    //         var time = dt.getTime();
-                    //         return time + file.name;
-                    //     },
-                    //     sending: function(file, xhr, formData) {
-                    //         formData.append("_token", "{{{ csrf_token() }}}");
-                    //     },
-                    //     success: function (file, response) {
-                    //         //alert('sdf');
-                    //         console.log(response);
-                    //     },
-                    //     error: function (file, response) {
-                    //         return false;
-                    //     }
-                    // };
-                </script>
             </div>
         </div>
     </div>
