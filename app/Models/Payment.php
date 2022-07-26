@@ -1,27 +1,12 @@
 <?php
 
 namespace App\Models;
-
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
-use OwenIt\Auditing\Auditable;
-use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
-use Config;
-
-class Payment extends Model implements AuditableContract
+class Payment extends CRMBaseModel
 {
-    use HasFactory, Auditable;
     protected $table = 'payments';
 
-    public function getCreatedAtAttribute($table)
+    public function paymentMethod()
     {
-        $date_time_format = Config::get('constants.datetime_format');
-        return $this->asDateTime($table)->timezone(config('app.timezone'))->format($date_time_format);
+        return $this->morphTo();
     }
-    public function getUpdatedAtAttribute($table)
-    {
-        $date_time_format = Config::get('constants.datetime_format');
-        return $this->asDateTime($table)->timezone(config('app.timezone'))->format($date_time_format);
-    }
-
 }

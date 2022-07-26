@@ -20,10 +20,6 @@ class CreatePaymentModeTable extends Migration
                 $table->string('parent_code', 25)->nullable();
                 $table->timestamps();
             });
-
-            Schema::table('payment_methods',function (Blueprint $table){
-                $table->foreign('parent_code')->references('code')->on('payment_methods');
-            });
         }
 
     }
@@ -35,6 +31,6 @@ class CreatePaymentModeTable extends Migration
      */
     public function down()
     {
-        //
+        Schema::dropIfExists('payment_methods');
     }
 }
