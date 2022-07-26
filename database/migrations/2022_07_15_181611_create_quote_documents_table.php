@@ -27,6 +27,7 @@ class CreateQuoteDocumentsTable extends Migration
                 $table->unsignedBigInteger('created_by_id')->nullable();
                 $table->timestamps();
                 $table->softDeletes();
+                $table->index('doc_uuid');
             });
         }
     }
