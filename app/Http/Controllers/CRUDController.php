@@ -823,6 +823,11 @@ class CRUDController extends Controller
     public function destroyDocument($quoteType, $quoteUuId, $id)
     {
         $document = QuoteDocument::find($id);
+
+        if(!$document) {
+            return redirect()->back()->with('message', 'Document not found');
+        }
+
         $document->delete();
 
         return redirect()->back()->with('message', 'Document has been deleted.');
@@ -833,7 +838,7 @@ class CRUDController extends Controller
         $model = '\\App\\Models\\' . ucwords($this->genericModel->modelType) . "Quote";
         $quoteModel = $model::where('id', $request->quote_id)->first();
 
-        if (!$request->hasFile('file')) {
+        if (!$request->hasFile('file') && !$quoteModel) {
             return false;
         }
 
