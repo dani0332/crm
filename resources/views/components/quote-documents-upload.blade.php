@@ -14,14 +14,6 @@
                 <div class="clearfix"></div>
             </div>
             <div class="x_content">
-                <br />
-                @if(session()->has('success'))
-                    <div class="alert alert-success">{{ session()->get('success') }}</div>
-                @endif
-                @if(session()->has('message'))
-                    <div class="alert alert-danger">{{ session()->get('message') }}</div>
-                @endif
-
                 @foreach ($documentUploadTypes as $documentType)
                 <table width="100%">
                     <tr>
@@ -45,7 +37,7 @@
                     Dropzone.autoDiscover = false;
                     var myDropzone = new Dropzone('#{{ $documentType->code }}', {
                         paramName: "file",
-                        url: "{{ route('documents.store') }}",
+                        url: "{{ url('/quotes/'.$quoteType.'/'.$quoteUuId.'/documents/store') }}",
                         maxFiles: JSON.parse('<?php echo json_encode($documentType->max_files) ?>'),
                         maxFilesize: JSON.parse('<?php echo json_encode($documentType->max_size) ?>'),
                         autoProcessQueue: true,
