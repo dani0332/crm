@@ -7,6 +7,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Models\GenericModel;
+use App\Models\QuoteDocument;
 use App\Models\User;
 use App\Services\ActivitiesService;
 use App\Services\BusinessQuoteService;
@@ -817,5 +818,13 @@ class CRUDController extends Controller
         } else {
             return redirect()->back()->with('message', $response);
         }
+    }
+
+    public function destroyDocument($quoteType, $quoteUuId, $id)
+    {
+        $document = QuoteDocument::find($id);
+        $document->delete();
+
+        return redirect()->back()->with('message', 'Document has been deleted.');
     }
 }

@@ -45,20 +45,6 @@ class QuoteDocumentController extends Controller
         }
     }
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy($id)
-    {
-        $document = QuoteDocument::find($id);
-        $document->delete();
-
-        return redirect()->back()->with('message', 'Document has been deleted.');
-    }
-
     public function listQuoteDocuments(Request $request, $quoteType, $quoteUuId)
     {
         $quoteModel = $this->crudService->quoteModel($quoteType, $quoteUuId);
