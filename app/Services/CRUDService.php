@@ -6,7 +6,6 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
-use App\Models\CarQuoteRequestDetail;
 use App\Models\GenericModel;
 use App\Models\QuoteStatusLog;
 use App\Models\User;
@@ -20,10 +19,9 @@ use App\Services\CarPlanAddonService;
 use App\Services\CarPlanAddOnOptionService;
 use App\Services\ApplicationStorageService;
 use Illuminate\Http\Request;
-use DB;
+use Illuminate\Support\Facades\DB;
 use \Carbon\Carbon;
 use Auth;
-use Illuminate\Support\Facades\Log;
 
 class CRUDService extends BaseService
 {
@@ -166,8 +164,34 @@ class CRUDService extends BaseService
     }
 
     public function getLeadAuditHistory($leadType, $leadId)
-    {
-        return $this->{strtolower($leadType) . 'QuoteService'}->getLeadAuditHistory($leadId);
+    {   
+        $leadType = ucwords($leadType);
+        $audits = DB::table('audits as a')
+            ->select(
+                'a.created_at as ModifiedAt',
+                DB::raw('(SELECT name from users where id = a.user_id) as ModifiedBy'),
+                DB::raw("(SELECT TEXT FROM quote_status WHERE id = JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.quote_status_id'))) AS NewStatus"),
+                DB::raw("(SELECT NAME FROM users WHERE id = JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.advisor_id'))) AS NewAdvisor"),
+                DB::raw("JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.notes')) AS NewNotes")
+            )
+            ->where(function ($query) {
+                $query->whereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.quote_status_id')"))
+                    ->orWhereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.notes')"))
+                    ->orWhereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.advisor_id')"));
+            })
+            ->where(function ($query) use ($leadId, $leadType) {
+                $query->where('a.auditable_type', 'App\Models\\'.$leadType.'Quote')
+                    ->where('a.auditable_id', $leadId);
+            })
+            ->orWhere(function ($query) use ($leadType,$leadId) {
+                $detailObjId = $this->{strtolower($leadType) . 'QuoteService'}->getDetailEntity($leadId);
+                if ($detailObjId) {
+                    $query->where('a.auditable_id', $detailObjId->id)
+                    ->where('a.auditable_type', 'App\Models\\'.$leadType.'QuoteRequestDetail');
+                }
+            })
+            ->orderBy('a.created_at', 'DESC')->get();
+        return $audits;
     }
 
     public function updateQuoteStatus(Request $request)
