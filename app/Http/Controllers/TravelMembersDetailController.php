@@ -18,7 +18,6 @@ class TravelMembersDetailController extends Controller
     {
         $data = [
             'travel_quote_request_id' => $request->travel_quote_request_id,
-            'gender' => $request->gender,
             'dob' => $request->dob
         ];
         TravelMemberDetail::create($data);
@@ -49,7 +48,6 @@ class TravelMembersDetailController extends Controller
     {
         $data = [
             'travel_quote_request_id' => $request->travel_quote_request_id,
-            'gender' => $request->gender,
             'dob' => $request->dob
         ];
         TravelMemberDetail::find($id)->update($data);

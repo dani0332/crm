@@ -2,7 +2,7 @@
         aria-labelledby="activityModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
                 <div class="modal-content" id="member_model_content_form">
-                    <form method="post" action="{{ route('members.store') }}" autocomplete="off">
+                    <form method="post" action="{{ route('travelers.store') }}" autocomplete="off">
                         {{ csrf_field() }}
                         <input type="hidden" name="travel_quote_request_id" value="{{$id}}" id="">
                         <input type="hidden" name="modelType" value="Travel" id="">
@@ -19,12 +19,8 @@
                             <div class="col-md-12">
                                 <div class="col-md-6">
                                     <div class="input-group">
-                                    <label class="col-form-label col-md-3 col-sm-3 label-align">Gender</label>
-                                        <select name="gender" id="" class="form-control">
-                                            <option>Please Select Gender</option>
-                                            <option value="Male">Male</option>
-                                            <option value="Female">Female</option>
-                                        </select>
+                                    <label class="col-form-label col-md-3 col-sm-3 label-align">Name</label>
+                                        <input type="text" readonly name="" id="" class="form-control" title="" value="Member"/>
                                     </div>
                                 </div>
                                 <div class="col-md-6">

@@ -3,6 +3,7 @@
             <div class="x_panel">
                 <div class="x_title">
                     <h2>Travelers</h2>
+                    <button class="btn btn-warning btn-sm" style="float:right;width:110px;" type="button" id="add-edit-travel-members-btn">Add Member</button>
                     <div class="clearfix"></div>
                 </div>
                 <div class="x_content">

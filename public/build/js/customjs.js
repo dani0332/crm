@@ -1749,6 +1749,9 @@ $(document).ready(function () {
     $('#add-edit-health-members-btn').on('click', function(){
         $('#addHealthMemberModal').modal({ show: true });
     });
+    $('#add-edit-travel-members-btn').on('click', function(){
+        $('#addTravelMemberModal').modal({ show: true });
+    });
 
     $("#due_date").daterangepicker({
         timePicker: true,

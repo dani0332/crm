@@ -416,7 +416,8 @@
         <x-health-quote-plans
             :listQuotePlans="$listQuotePlans"
             :uuidModal="$record->uuid"
-            :quoteRequestId="$record->id" />
+            :quoteRequestId="$record->id"
+            :ecomHealthInsuranceQuoteUrl="$ecomHealthInsuranceQuoteUrl" />
         <x-health-quote-members-detail :members="$membersDetail" />
         <x-health-quote-members-modal :categories="$memberCategories" :salaries="$salaryBands" :id="$record->id" />
         <x-health-quote-ecom-details :data="$ecomDetails" />

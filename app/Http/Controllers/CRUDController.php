@@ -358,10 +358,11 @@ class CRUDController extends Controller
             $memberCategories = $this->lookupService->getMemberCategories();
             $salaryBands = $this->lookupService->getSalaryBands();
             $ecomDetails = $this->healthQuoteService->getEcomDetails($record);
+            $ecomHealthInsuranceQuoteUrl = config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL');
             return view('shared.show', compact([
                 'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList',
                 'leadStatuses', 'lostReasons', 'selectedLostReasonId','model_name', 'allowedDuplicateLOB', 'audits','advisors', 'activities','isRenewalUser',
-                'isNewBusinessUser','membersDetail','memberCategories','salaryBands','autoAllocationDisabled','ecomDetails']));
+                'isNewBusinessUser','membersDetail','memberCategories','salaryBands','autoAllocationDisabled','ecomDetails','ecomHealthInsuranceQuoteUrl']));
 
         } else {
             return view('shared.show', compact([

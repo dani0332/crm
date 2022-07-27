@@ -16,12 +16,9 @@
         <div class="col-md-12">
             <div class="col-md-6">
                 <div class="input-group">
-                <label class="col-form-label col-md-3 col-sm-3 label-align">Gender</label>
-                    <select name="gender" id="" class="form-control">
-                        <option>Please Select Gender</option>
-                        <option value="Male" @if($data->gender == "Male") selected @endif>Male</option>
-                        <option value="Female"  @if($data->gender == "Female") selected @endif>Female</option>
-                    </select>
+                <label class="col-form-label col-md-3 col-sm-3 label-align">Name</label>
+                <input type="text" name="name" id="" readonly class="form-control" title="NAME" value="Member"/>
+                   
                 </div>
             </div>
             <div class="col-md-6">

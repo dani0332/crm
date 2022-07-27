@@ -6,6 +6,13 @@
                     <div class="clearfix"></div>
                 </div>
                 <div class="x_content">
+                    <span class="alert alert-success" id="quotePlansGenerateMsg" style="display: none">Copied</span>
+                    <div class="col-auto">
+                        <input type="hidden" id="quotePlansGenerateUrl" name="quotePlansGenerateUrl" value="{{ $ecomHealthInsuranceQuoteUrl }}">
+                        @if(gettype($listQuotePlans) != 'string')
+                        <button type="button" id="quotePlansGenerateButton" name="quotePlansGenerateButton" class="btn btn-warning btn-sm" style="float: right;">Copy link</button>
+                        @endif
+                    </div>
                     <div id="quote-plans">
                         @if(gettype($listQuotePlans) != 'string')
                                 <table id="datatable" class="table table-striped jambo_table" style="width:100%">
