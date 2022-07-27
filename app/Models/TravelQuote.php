@@ -36,4 +36,9 @@ class TravelQuote extends Model implements AuditableContract
     {
         return $this->hasMany(CustomerAdditionalInfo::class, 'quote_request_id', 'id');
     }
+
+    public function documents() 
+    {
+        return $this->morphMany(QuoteDocument::class, 'quote_documentable');
+    }
 }

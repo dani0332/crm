@@ -24,13 +24,13 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        $schedule
-            ->command('LeadAllocation:cron')
-            ->timezone('Asia/Dubai')
-            ->everyMinute()
-            ->runInBackground()
-            ->onOneServer()
-            ->withoutOverlapping();
+        // $schedule
+        //     ->command('LeadAllocation:cron')
+        //     ->timezone('Asia/Dubai')
+        //     ->everyMinute()
+        //     ->runInBackground()
+        //     ->onOneServer()
+        //     ->withoutOverlapping();
     }
 
     /**

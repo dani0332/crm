@@ -7,7 +7,6 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Models\GenericModel;
-use App\Models\InsuranceProvider;
 use App\Models\User;
 use App\Services\ActivitiesService;
 use App\Services\BusinessQuoteService;
@@ -30,11 +29,11 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Log;
 use Config;
-use DB;
 use App\Services\LookupService;
 use App\Services\NotesForCustomerService;
 use App\Services\CustomerService;
 use App\Services\SendEmailCustomerService;
+use App\Services\QuoteDocumentService;
 
 class CRUDController extends Controller
 {
@@ -58,6 +57,7 @@ class CRUDController extends Controller
     protected $notesForCustomerService;
     protected $customerService;
     protected $sendEmailCustomerService;
+    protected $quoteDocumentService;
 
     public function __construct(
         HealthQuoteService $healthService,
@@ -79,7 +79,8 @@ class CRUDController extends Controller
         LookupService $lookupService,
         NotesForCustomerService $notesForCustomerService,
         CustomerService $customerService,
-        SendEmailCustomerService $sendEmailCustomerService
+        SendEmailCustomerService $sendEmailCustomerService,
+        QuoteDocumentService $quoteDocumentService
     ) {
         $this->genericModel = new GenericModel();
         $this->healthQuoteService = $healthService;
@@ -101,6 +102,7 @@ class CRUDController extends Controller
         $this->notesForCustomerService = $notesForCustomerService;
         $this->customerService = $customerService;
         $this->sendEmailCustomerService = $sendEmailCustomerService;
+        $this->quoteDocumentService = $quoteDocumentService;
 
         $this->setModelType($request);
         $this->fillModelByModelType(ucwords($this->genericModel->modelType), $request);
@@ -335,12 +337,15 @@ class CRUDController extends Controller
                 }
             }
 
-            $members_detail = $this->travelQuoteService->getMembersDetail($record->id);
+            $membersDetail = $this->travelQuoteService->getMembersDetail($record->id);
+            $quoteDocuments = $this->travelQuoteService->getQuoteDocuments($record->id);
 
             return view('shared.show', compact([
                 'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList',
-                'leadStatuses', 'lostReasons', 'selectedLostReasonId', 'members_detail','model_name', 'allowedDuplicateLOB', 'audits', 'activities', 'advisors','isRenewalUser',
-                'isNewBusinessUser', 'ecomTravelInsuranceQuoteUrl', 'quoteType', 'autoAllocationDisabled'
+                'leadStatuses', 'lostReasons', 'selectedLostReasonId', 'membersDetail','model_name', 
+                'allowedDuplicateLOB', 'audits', 'activities', 'advisors','isRenewalUser',
+                'isNewBusinessUser', 'ecomTravelInsuranceQuoteUrl', 'quoteType', 'quoteDocuments', 
+                'autoAllocationDisabled'
             ]));
         } else if ($this->genericModel->modelType == quoteTypeCode::Health) { // Health plans to display on detail view
             $listQuotePlans = '';
