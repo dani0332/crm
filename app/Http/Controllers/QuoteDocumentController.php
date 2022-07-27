@@ -56,20 +56,4 @@ class QuoteDocumentController extends Controller
         return view('components.quote-documents-upload', compact('quoteUuId', 'quoteId', 'quoteCdbId', 
         'quoteType', 'quoteTypeId', 'documentUploadTypes'));
     }
-
-    public function store(Request $request)
-    {
-        $travelQuote = TravelQuote::where('id', $request->quote_id)->first();
-
-        if (!$request->hasFile('file')) {
-            return false;
-        }
-
-        $file = $request->file('file');
-        $fileNameOriginal = $file->getClientOriginalName();
-        $fileMimeType = $file->getClientMimeType();
-        $fileNameAzure = uniqid().'_'.$request->quote_uuid.'_'.$fileNameOriginal;
-        $filePathAzure = $request->file('file')->storeAs('documents/'.$request->folder_path, $fileNameAzure, 'azureIM');
-        $this->quoteDocumentService->createQuoteDocumentRecord($request->document_type_code, $fileNameOriginal, $filePathAzure, $fileMimeType, $travelQuote);
-    }
 }
