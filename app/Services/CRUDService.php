@@ -184,9 +184,9 @@ class CRUDService extends BaseService
                     ->where('a.auditable_id', $leadId);
             })
             ->orWhere(function ($query) use ($leadType,$leadId) {
-                $detailObjId = $this->{strtolower($leadType) . 'QuoteService'}->getDetailEntity($leadId);
-                if ($detailObjId) {
-                    $query->where('a.auditable_id', $detailObjId->id)
+                $entityDetail = $this->{strtolower($leadType) . 'QuoteService'}->getDetailEntity($leadId);
+                if ($entityDetail) {
+                    $query->where('a.auditable_id', $entityDetail->id)
                     ->where('a.auditable_type', 'App\Models\\'.$leadType.'QuoteRequestDetail');
                 }
             })
