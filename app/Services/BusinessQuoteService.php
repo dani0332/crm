@@ -491,38 +491,6 @@ class BusinessQuoteService extends BaseService
         }
     }
 
-    public function getLeadAuditHistory($id)
-    {
-        $audits = DB::table('audits as a')
-            ->select(
-                'a.created_at as ModifiedAt',
-                DB::raw('(SELECT name from users where id = a.user_id) as ModifiedBy'),
-                DB::raw("(SELECT TEXT FROM quote_status WHERE id = JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.quote_status_id'))) AS NewStatus"),
-                DB::raw("(SELECT NAME FROM users WHERE id = JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.advisor_id'))) AS NewAdvisor"),
-                DB::raw("JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.notes')) AS NewNotes")
-            )
-            ->where(function ($query) {
-                $query->where('a.auditable_type', 'App\Models\BusinessQuote')
-                    ->orWhere('a.auditable_type', 'App\Models\BusinessQuoteRequestDetail');
-            })
-            ->where(function ($query) {
-                $query->whereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.quote_status_id')"))
-                    ->orWhereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.notes')"))
-                    ->orWhereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.advisor_id')"));
-            })
-            ->where(function ($query) use ($id) {
-                $detailObjId = BusinessQuoteRequestDetail::where('business_quote_request_id', $id)->first();
-                if ($detailObjId) {
-                    $query->where('a.auditable_id', $id)
-                        ->orWhere('a.auditable_id', $detailObjId->id);
-                } else {
-                    $query->where('a.auditable_id', $id);
-                }
-            })
-            ->orderBy('a.created_at', 'DESC')->get();
-        return $audits;
-    }
-
     public function fillModelProperties()
     {
         return array(
