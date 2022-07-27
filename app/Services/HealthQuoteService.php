@@ -838,7 +838,7 @@ class HealthQuoteService extends BaseService
             } else if (isset($response->msg)) {
                 $responseBodyAsString = $response->msg;
             } else {
-                $responseBodyAsString = "Quote unavailable for the selected current location and region. Please call 800 ALFRED.";
+                $responseBodyAsString = "Quote unavailable for the selected location and region. Please call 800 ALFRED.";
             }
 
             return $responseBodyAsString;
