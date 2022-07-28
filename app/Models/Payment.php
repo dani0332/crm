@@ -24,13 +24,13 @@ class Payment extends Model
         return $this->belongsTo('App\Models\Plan', 'plan_id');
     }
 
-    public function payment_status()
+    public function paymentStatus()
     {
         return $this->belongsTo('App\Models\PaymentStatus', 'payment_status_id');
     }
 
-    public function payment_method()
+    public function paymentMethod()
     {
-        return $this->belongsTo('App\Models\PaymentMethod', 'payment_methods_code');
+        return $this->belongsTo('App\Models\PaymentMethod', 'payment_methods_code', 'code');
     }
 }

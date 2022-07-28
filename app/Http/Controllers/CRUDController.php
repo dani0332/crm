@@ -3,10 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Enums\HealthTeamType;
+use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Models\GenericModel;
+use App\Models\Payment;
 use App\Models\QuoteDocument;
 use App\Models\User;
 use App\Services\ActivitiesService;
@@ -852,5 +854,28 @@ class CRUDController extends Controller
         $fileNameAzure = uniqid().'_'.$request->quote_uuid.'_'.$fileNameOriginal;
         $filePathAzure = $request->file('file')->storeAs('documents/'.$request->folder_path, $fileNameAzure, 'azureIM');
         $this->quoteDocumentService->createQuoteDocumentRecord($request->document_type_code, $fileNameOriginal, $filePathAzure, $fileMimeType, $quoteModel);
+    }
+
+    public function storePayment(Request $request)
+    {
+        $model = '\\App\\Models\\' . ucwords($request->modelType) . "Quote";
+        $quoteModel = $model::where('id', $request->quote_id)->first();
+        if (!$quoteModel) {
+            return false;
+        }
+        $paymentInformation = [
+            'code' => substr(uniqid('',), 0, 8),
+            'collection_type' => $request->collection_type,
+            'captured_amount' => $request->captured_amount,
+            'payment_methods_code' => $request->payment_methods,
+            'payment_status_id' => PaymentStatusEnum::PENDING,
+            'plan_id' => $request->plan_id,
+            'insurance_provider_id' => $request->insurance_provider_id,
+        ];
+        if($request->reference){
+            $paymentInformation['reference'] = $request->reference;
+        }
+        $quoteDocument = Payment::create($paymentInformation);
+        $quoteModel->payments()->save($quoteDocument);
     }
 }

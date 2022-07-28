@@ -92,6 +92,7 @@ Route::middleware(['auth'])->get('/home', function () {
 
 Route::group(['middleware' =>  ['auth']], function () {
     Route::resource('payments', PaymentController::class);
+    Route::post('/payments/{quoteType}/store', [CRUDController::class, 'storePayment']);
     Route::resource('myleads', MyLeadsController::class);
     Route::get('getOverDueFollowupLeads', [MyLeadsController::class, 'getOverDueFollowupLeads'])->name('getOverDueFollowupLeads');
 

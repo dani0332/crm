@@ -11,6 +11,20 @@
                 $('#reference').hide();
             }
         });
+
+        $('#create-payment-btn').on('click',function (e) {
+            debugger;
+            e.preventDefault();
+            if($('#captured_amount').val() != '' && $('#payment_methods').val() != '' && ($('#payment_methods').val() != 'CC' || $('#reference').val() != '') && $('#collection_type').val() != ''){
+                $('#create-payment-form').submit();
+            }else{
+                $('#captured_amount').val() == '' ? $('#captured_amount_validation').show().delay(3000).fadeOut(800) : '';
+                $('#payment_methods').val() == '' ? $('#payment_methods_validation').show().delay(3000).fadeOut(800) : '';
+                $('#payment_methods').val() != 'CC' && $('#payment_methods').val() != ''  && $('#reference').val() == '' ? $('#reference_validation').show().delay(3000).fadeOut(800) : '';
+                $('#collection_type').val() == '' ? $('#collection_type_validation').show().delay(3000).fadeOut(800) : '';
+            }
+        });
+
     });
 </script>
 
@@ -41,11 +55,11 @@
                             @foreach ($payments as $payment)
                                 <tr>
                                     <td>{{ $payment->code }}</td>
-                                    <td>{{ $payment->payment_status()->name }}</td>
-                                    <td>{{ $payment->plan()->name }}</td>
+                                    <td>{{ $payment->paymentStatus->text }}</td>
+                                    <td>{{ $travelPlainModel->plan->text }}</td>
                                     <td>{{ $payment->captured_amount }}</td>
                                     <td>{{ $payment->captured_at }}</td>
-                                    <td>{{ $payment->payment_method()->code }}</td>
+                                    <td>{{ $payment->paymentMethod->code }}</td>
                                 </tr>
                             @endforeach
                         </tbody>
@@ -61,9 +75,12 @@ aria-labelledby="paymentSalModalLabel" aria-hidden="true">
 <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
 
     <div class="modal-content">
-        <form method="post" action={{url('/payments')}} autocomplete="off">
-            {{ csrf_field() }}
-            @method('POST')
+        <form id="create-payment-form" method="post" action={{url('/payments/'. $modeltype . '/store')}} autocomplete="off">
+            @csrf
+            <input type="hidden" name="quote_id" value="{{ $travelPlainModel->id }}">
+            <input type="hidden" name="modelType" value="{{ $modeltype }}">
+            <input type="hidden" name="plan_id" value="{{ $travelPlainModel->plan_id }}">
+            <input type="hidden" name="insurance_provider_id" value="{{ $travelPlainModel->plan->insuranceProvider->id }}">
             <div class="modal-header">
                 <h5 class="modal-title" id="duplicateLeadModalLabel" style="font-size: 16px !important;">
                     <i class="fa fa-cog" aria-hidden="true"></i>
@@ -79,7 +96,9 @@ aria-labelledby="paymentSalModalLabel" aria-hidden="true">
                         <div class="col">
                             <div class="input-group">
                                 <input id="captured_amount" type="number" class="form-control" name="captured_amount" placeholder="Amount" />
+
                             </div>
+                            <span class="text-danger" style="display: none" id="captured_amount_validation">Please add capture amount</span>
                         </div>
                         <div class="col">
                             <div class="input-group">
@@ -89,6 +108,7 @@ aria-labelledby="paymentSalModalLabel" aria-hidden="true">
                                     <option value="insurer" >Insurer</option>
                                 </select>
                             </div>
+                            <span class="text-danger" style="display: none" id="collection_type_validation">Please select collection type</span>
                         </div>
                     </div>
                     <div class="col">
@@ -112,17 +132,18 @@ aria-labelledby="paymentSalModalLabel" aria-hidden="true">
                                 @endforeach
                             </select>
                         </div>
+                        <span class="text-danger" style="display: none" id="payment_methods_validation">Please select payment method</span>
                     </div>
                     <br />
                     <div class="item form-group">
                         <div class="col">
                             <div class="input-group">
-                                <label>Provider Name : </label> &nbsp;&nbsp;&nbsp;<b>{{ $travelPlainModel->plan()->first() ? $travelPlainModel->plan()->first()->insuranceProvider()->first()->text : 'Not Found' }}</b>
+                                <label>Provider Name : </label> &nbsp;&nbsp;&nbsp;<b>{{ $travelPlainModel->plan ? $travelPlainModel->plan->insuranceProvider->text : 'Not Found' }}</b>
                             </div>
                         </div>
                         <div class="col">
                             <div class="input-group">
-                                <label>Plan Name : </label> &nbsp;&nbsp;&nbsp;<b>{{$travelPlainModel->plan()->first() ? $travelPlainModel->plan()->first()->text : 'Not Found'}}</b>
+                                <label>Plan Name : </label> &nbsp;&nbsp;&nbsp;<b>{{$travelPlainModel->plan ? $travelPlainModel->plan->text : 'Not Found'}}</b>
                             </div>
                         </div>
                     </div>
@@ -130,11 +151,12 @@ aria-labelledby="paymentSalModalLabel" aria-hidden="true">
                         <div class="input-group">
                             <textarea style="display: none" placeholder="Payment Reference" class="form-control" id="reference" rows="5" name="reference"></textarea>
                         </div>
+                        <span class="text-danger" style="display: none" id="reference_validation">Please add payment reference</span>
                     </div>
                 </div>
             </div>
             <div class="modal-footer" style="justify-content: center;">
-                <button type="submit" class="btn btn-sm btn-success">Create Payment</button>
+                <button type="button" id="create-payment-btn" class="btn btn-sm btn-success">Create Payment</button>
             </div>
         </form>
     </div>

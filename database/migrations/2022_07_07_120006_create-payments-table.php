@@ -29,6 +29,7 @@ class CreatePaymentsTable extends Migration
                 $table->unsignedBigInteger('updated_by');
                 $table->boolean('is_approved')->default(false);
                 $table->dateTime('captured_at');
+                $table->string('collection_type', 255);
                 $table->timestamps();
             });
         }

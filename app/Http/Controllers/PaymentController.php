@@ -43,7 +43,10 @@ class PaymentController extends Controller
      */
     public function store(Request $request)
     {
-        dd($request->all());
+        $model = '\\App\\Models\\' . ucwords($this->genericModel->modelType) . "Quote";
+        $quoteModel = $model::where('id', $request->quote_id)->first();
+
+        dd($quoteModel);
     }
 
     /**

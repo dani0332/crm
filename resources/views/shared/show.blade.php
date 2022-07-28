@@ -384,7 +384,7 @@
             </div>
         </div>
         <x-travel-ecom-detail :travelQuotePremium="$record->premium" :travelQuotePaidAt="$record->paid_at" :travelQuotePaymentStatus="$record->payment_status_id_text" :travelQuotePlanName="$record->plan_id_text" />
-        <x-payments-table :payments="$payments" :paymentMethods="$paymentMethods" :travelPlainModel="$travelPlainModel" />
+        <x-payments-table :payments="$payments" :paymentMethods="$paymentMethods" :travelPlainModel="$travelPlainModel" :modeltype="$model->modelType" />
         <x-quote-policy :record="$record" :quoteType="$quoteType" />
         <x-quote-documents :record="$record" :quoteDocuments="$quoteDocuments" :quoteType="$quoteType" />
         <x-travel-quote-members-detail :members="$membersDetail" />
