@@ -1,6 +1,5 @@
 <?php
 
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\API\ApiController;
 /*
@@ -16,4 +15,5 @@ use App\Http\Controllers\API\ApiController;
 
 Route::middleware(['basicAuth'])->group(function () {
     Route::post('/alfred/signupLink', [ApiController::class, 'fetchSignupUrl']);
+    Route::post('/imcrm/sib-flow', [ApiController::class, 'triggerSibFlow']);
 });

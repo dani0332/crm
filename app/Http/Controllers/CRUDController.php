@@ -7,7 +7,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Models\GenericModel;
-use App\Models\InsuranceProvider;
+use App\Models\QuoteDocument;
 use App\Models\User;
 use App\Services\ActivitiesService;
 use App\Services\BusinessQuoteService;
@@ -30,11 +30,11 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Log;
 use Config;
-use DB;
 use App\Services\LookupService;
 use App\Services\NotesForCustomerService;
 use App\Services\CustomerService;
 use App\Services\SendEmailCustomerService;
+use App\Services\QuoteDocumentService;
 
 class CRUDController extends Controller
 {
@@ -58,6 +58,7 @@ class CRUDController extends Controller
     protected $notesForCustomerService;
     protected $customerService;
     protected $sendEmailCustomerService;
+    protected $quoteDocumentService;
 
     public function __construct(
         HealthQuoteService $healthService,
@@ -79,7 +80,8 @@ class CRUDController extends Controller
         LookupService $lookupService,
         NotesForCustomerService $notesForCustomerService,
         CustomerService $customerService,
-        SendEmailCustomerService $sendEmailCustomerService
+        SendEmailCustomerService $sendEmailCustomerService,
+        QuoteDocumentService $quoteDocumentService
     ) {
         $this->genericModel = new GenericModel();
         $this->healthQuoteService = $healthService;
@@ -101,6 +103,7 @@ class CRUDController extends Controller
         $this->notesForCustomerService = $notesForCustomerService;
         $this->customerService = $customerService;
         $this->sendEmailCustomerService = $sendEmailCustomerService;
+        $this->quoteDocumentService = $quoteDocumentService;
 
         $this->setModelType($request);
         $this->fillModelByModelType(ucwords($this->genericModel->modelType), $request);
@@ -335,12 +338,15 @@ class CRUDController extends Controller
                 }
             }
 
-            $members_detail = $this->travelQuoteService->getMembersDetail($record->id);
+            $membersDetail = $this->travelQuoteService->getMembersDetail($record->id);
+            $quoteDocuments = $this->travelQuoteService->getQuoteDocuments($record->id);
 
             return view('shared.show', compact([
                 'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList',
-                'leadStatuses', 'lostReasons', 'selectedLostReasonId', 'members_detail','model_name', 'allowedDuplicateLOB', 'audits', 'activities', 'advisors','isRenewalUser',
-                'isNewBusinessUser', 'ecomTravelInsuranceQuoteUrl', 'quoteType', 'autoAllocationDisabled'
+                'leadStatuses', 'lostReasons', 'selectedLostReasonId', 'membersDetail','model_name', 
+                'allowedDuplicateLOB', 'audits', 'activities', 'advisors','isRenewalUser',
+                'isNewBusinessUser', 'ecomTravelInsuranceQuoteUrl', 'quoteType', 'quoteDocuments', 
+                'autoAllocationDisabled'
             ]));
         } else if ($this->genericModel->modelType == quoteTypeCode::Health) { // Health plans to display on detail view
             $listQuotePlans = '';
@@ -354,11 +360,15 @@ class CRUDController extends Controller
                     $listQuotePlans = $quotePlans;
                 }
             }
+            $membersDetail = $this->healthQuoteService->getMembersDetail($record->id);
+            $memberCategories = $this->lookupService->getMemberCategories();
+            $salaryBands = $this->lookupService->getSalaryBands();
+            $ecomDetails = $this->healthQuoteService->getEcomDetails($record);
             return view('shared.show', compact([
                 'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList',
-                'leadStatuses', 'lostReasons', 'selectedLostReasonId', 'model_name', 'allowedDuplicateLOB', 'audits', 'advisors', 'activities', 'isRenewalUser',
-                'isNewBusinessUser', 'autoAllocationDisabled'
-            ]));
+                'leadStatuses', 'lostReasons', 'selectedLostReasonId','model_name', 'allowedDuplicateLOB', 'audits','advisors', 'activities','isRenewalUser',
+                'isNewBusinessUser','membersDetail','memberCategories','salaryBands','autoAllocationDisabled','ecomDetails']));
+
         } else {
             return view('shared.show', compact([
                 'record', 'model', 'customTitles', 'customTableList', 'advisors', 'leadStatuses', 'lostReasons', 'selectedLostReasonId', 'model_name', 'allowedDuplicateLOB', 'audits', 'activities', 'isRenewalUser',
@@ -551,7 +561,7 @@ class CRUDController extends Controller
                     $listQuotePlanBenefitsRegionCover = $listQuotePlan->benefits->regionCover;
                     $listQuotePlanBenefitsMaternityCover = $listQuotePlan->benefits->maternityCover;
                     $listQuotePlanBenefitsPolicyDetails = $listQuotePlan->policyWordings;
-
+                    $members = [];//$listQuotePlan->memberPremiumBreakdown;
                     foreach ($listQuotePlanBenefitsPolicyDetails as $listQuotePlanBenefitsPolicyDetail) {
                         $listQuotePlanBenefitsPolicyDetailLink = $listQuotePlanBenefitsPolicyDetail->link;
                     }
@@ -563,7 +573,8 @@ class CRUDController extends Controller
                 'actualPremium', 'discountPremium', 'listQuotePlanBenefitsInclusions',
                 'listQuotePlanBenefitsExclusions', 'listQuotePlanBenefitsFeatures',
                 'listQuotePlanBenefitsPolicyDetailLink', 'modelName',
-                'listQuotePlanBenefitsCoInsurance', 'listQuotePlanBenefitsRegionCover', 'listQuotePlanBenefitsMaternityCover'
+                'listQuotePlanBenefitsCoInsurance', 'listQuotePlanBenefitsRegionCover', 
+                'listQuotePlanBenefitsMaternityCover', 'members'
             ]));
         }
     }
@@ -609,10 +620,10 @@ class CRUDController extends Controller
     public function addCarQuotePlan(Request $request)
     {
         $quoteUuId = $request->quoteUuId;
-        $insuranceproviders = $this->lookupService->getInsuranceProviders();
+        $insuranceProviders = $this->lookupService->getAllInsuranceProviders();
         $listQuotePlans = $this->carQuoteService->getPlans($quoteUuId);
 
-        return view('components.car-quote-add-plan', compact('quoteUuId', 'insuranceproviders', 'listQuotePlans'));
+        return view('components.car-quote-add-plan', compact('quoteUuId', 'insuranceProviders', 'listQuotePlans'));
     }
 
     public function healthTeamAssign(Request $request)
@@ -798,5 +809,44 @@ class CRUDController extends Controller
         if($quote) {
             return redirect()->back()->with('success', 'Quote Policy Detail has been updated.');
         }
+    }
+
+    public function manualPlanToggle(Request $request) {
+        $response = $this->carQuoteService->updateManualPlansBulk($request);
+        if ($response == 200 || $response == 201) {
+            return redirect()->back()->with('success', 'Car Plan has been updated');
+        } else {
+            return redirect()->back()->with('message', $response);
+        }
+    }
+
+    public function destroyDocument($quoteType, $quoteUuId, $id)
+    {
+        $document = QuoteDocument::find($id);
+
+        if(!$document) {
+            return redirect()->back()->with('message', 'Document not found');
+        }
+
+        $document->delete();
+
+        return redirect()->back()->with('message', 'Document has been deleted.');
+    }
+
+    public function storeDocument(Request $request)
+    {
+        $model = '\\App\\Models\\' . ucwords($this->genericModel->modelType) . "Quote";
+        $quoteModel = $model::where('id', $request->quote_id)->first();
+
+        if (!$request->hasFile('file') && !$quoteModel) {
+            return false;
+        }
+
+        $file = $request->file('file');
+        $fileNameOriginal = $file->getClientOriginalName();
+        $fileMimeType = $file->getClientMimeType();
+        $fileNameAzure = uniqid().'_'.$request->quote_uuid.'_'.$fileNameOriginal;
+        $filePathAzure = $request->file('file')->storeAs('documents/'.$request->folder_path, $fileNameAzure, 'azureIM');
+        $this->quoteDocumentService->createQuoteDocumentRecord($request->document_type_code, $fileNameOriginal, $filePathAzure, $fileMimeType, $quoteModel);
     }
 }

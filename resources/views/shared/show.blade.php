@@ -383,9 +383,10 @@
                 </div>
             </div>
         </div>
-        <x-quote-policy :record="$record" :quoteType="$quoteType" />
         <x-travel-ecom-detail :travelQuotePremium="$record->premium" :travelQuotePaidAt="$record->paid_at" :travelQuotePaymentStatus="$record->payment_status_id_text" :travelQuotePlanName="$record->plan_id_text" />
-        <x-travel-quote-members-detail :members="$members_detail" />
+        <x-quote-policy :record="$record" :quoteType="$quoteType" />
+        <x-quote-documents :record="$record" :quoteDocuments="$quoteDocuments" :quoteType="$quoteType" />
+        <x-travel-quote-members-detail :members="$membersDetail" />
         <x-travel-quote :listQuotePlans="$listQuotePlans" :uuidModal="$record->uuid" :quoteRequestId="$record->id" :ecomUrl="$ecomTravelInsuranceQuoteUrl . $record->uuid" />
     @endif
 
@@ -416,6 +417,9 @@
             :listQuotePlans="$listQuotePlans"
             :uuidModal="$record->uuid"
             :quoteRequestId="$record->id" />
+        <!-- <x-health-quote-members-detail :members="$membersDetail" />
+        <x-health-quote-members-modal :categories="$memberCategories" :salaries="$salaryBands" :id="$record->id" />
+        <x-health-quote-ecom-details :data="$ecomDetails" /> -->
     @endif
 
     <x-lead-activities :lead="$record" :modeltype="$model->modelType" :activities="$activities" />

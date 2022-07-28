@@ -20,6 +20,9 @@ use App\Traits\RolePermissionConditions;
 use App\Traits\CustomerAdditionalInfo as CustomerAdditionalInfoTrait;
 use App\Enums\quoteTypeCode;
 use App\Enums\DatabaseColumnsString;
+use App\Models\HealthMemberDetail;
+use App\Enums\GenericRequestEnum;
+use App\Models\HealthQuotePlan;
 use App\Models\Team;
 use App\Models\User;
 use App\Traits\AddPremiumAllLobs;
@@ -90,6 +93,7 @@ class HealthQuoteService extends BaseService
             'hqr.device',
             'hqr.wcu_id',
             'wcu.name as wcu_id_text',
+            'hqr.plan_id'
         )
             ->leftJoin('marital_status as ms', 'ms.id', '=', 'hqr.marital_status_id')
             ->leftJoin('health_quote_request_detail as hqrd', 'hqrd.health_quote_request_id', '=', 'hqr.id')
@@ -368,8 +372,10 @@ class HealthQuoteService extends BaseService
         $healthQuote->has_home = $request->has_home == 'on' ? true : false;
         $healthQuote->emirate_of_your_visa_id = $request->emirate_of_your_visa_id;
         $healthQuote->premium = $request->premium;
-        if ($healthQuote->salary_band_id != $request->salary_band_id || $healthQuote->member_category_id != $request->member_category_id) {
-            $healthQuote->quote_updated_at = now();
+        if($healthQuote->salary_band_id != $request->salary_band_id || $healthQuote->member_category_id != $request->member_category_id) {
+            $healthQuote->quote_updated_at = Carbon::now();
+            $healthQuote->memberDetails()->update(['member_category_id' => $request->member_category_id,
+            'salary_band_id' => $request->salary_band_id, "gender" => $request->gender,"dob" => $request->dob]);
         }
         $healthQuote->salary_band_id = $request->salary_band_id;
         $healthQuote->member_category_id = $request->member_category_id;
@@ -377,38 +383,6 @@ class HealthQuoteService extends BaseService
         $this->createUpdateCustomerInfo($request, $healthQuote->email, $healthQuote->uuid, quoteTypeCode::HealthQuote);
         if (isset($request->return_to_view))
             return redirect("quote/health/" . $id)->with('success', 'Health Quote has been updated');
-    }
-
-    public function getLeadAuditHistory($id)
-    {
-        $audits = DB::table('audits as a')
-            ->select(
-                'a.created_at as ModifiedAt',
-                DB::raw('(SELECT name from users where id = a.user_id) as ModifiedBy'),
-                DB::raw("(SELECT TEXT FROM quote_status WHERE id = JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.quote_status_id'))) AS NewStatus"),
-                DB::raw("(SELECT NAME FROM users WHERE id = JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.advisor_id'))) AS NewAdvisor"),
-                DB::raw("JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.notes')) AS NewNotes")
-            )
-            ->where(function ($query) {
-                $query->where('a.auditable_type', 'App\Models\HealthQuote')
-                    ->orWhere('a.auditable_type', 'App\Models\HealthQuoteRequestDetail');
-            })
-            ->where(function ($query) {
-                $query->whereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.quote_status_id')"))
-                    ->orWhereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.notes')"))
-                    ->orWhereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.advisor_id')"));
-            })
-            ->where(function ($query) use ($id) {
-                $detailObjId = HealthQuoteRequestDetail::where('health_quote_request_id', $id)->first();
-                if ($detailObjId) {
-                    $query->where('a.auditable_id', $id)
-                        ->orWhere('a.auditable_id', $detailObjId->id);
-                } else {
-                    $query->where('a.auditable_id', $id);
-                }
-            })
-            ->orderBy('a.created_at', 'DESC')->get();
-        return $audits;
     }
 
     public function getHealthOverDueFollowups()
@@ -864,13 +838,17 @@ class HealthQuoteService extends BaseService
             } else if (isset($response->msg)) {
                 $responseBodyAsString = $response->msg;
             } else {
-                $responseBodyAsString = "Quote unavailable for the selected current location and region. Please call 800 ALFRED.";
+                $responseBodyAsString = "Quote unavailable for the selected location and region. Please call 800 ALFRED.";
             }
 
             return $responseBodyAsString;
         }
     }
 
+    public function getMembersDetail($id)
+    {
+        return '';//HealthMemberDetail::where('health_quote_request_id', $id)->get();
+    }
     public function validateRequest($request)
     {
         $userId = $request->assigned_to_id_new;
@@ -1021,6 +999,35 @@ class HealthQuoteService extends BaseService
     public function getEntityPlainByUUID($uuid)
     {
         return HealthQuote::where('uuid', $uuid)->first();
+    }
+    public function getEcomDetails($data){
+        $response['providerName'] = '';
+        $response['premium'] = '';
+        $response['paymentStatus'] = '';
+        $response['paidAt'] = '';
+        $response['planName'] = '';
+        $planData = HealthQuotePlan::where('health_quote_request_id', $data->id)->first();
+        if($planData) {
+            $planPayload = json_decode($planData->plan_payload, true);
+            if(isset($planPayload['plans'])) {
+                foreach($planPayload['plans'] as $plan) {
+                    if($plan['id'] == $data->plan_id) {
+                        $response['providerName'] = $plan['providerName'];
+                        $response['premium'] = $plan['actualPremium'];
+                        $response['paymentStatus'] = '';
+                        $response['paidAt'] = '';
+                        if(isset($plan['benefits'], $plan['benefits']['feature'])) {
+                            foreach ($plan['benefits']['feature'] as $value) {
+                                if($value['code'] == GenericRequestEnum::TPA_Code) {
+                                    $response['planName'] = $value['text'];
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return $response;
     }
 
 }
