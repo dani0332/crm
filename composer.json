@@ -7,7 +7,7 @@
     "require": {
         "php": "^7.3|^8.0",
         "bensampo/laravel-enum": "^3.4",
-        "doctrine/dbal": "*",
+        "doctrine/dbal": "^3.3",
         "fideloper/proxy": "^4.4",
         "fruitcake/laravel-cors": "^2.0",
         "guzzlehttp/guzzle": "^7.0.1",
@@ -32,13 +32,14 @@
         "yajra/laravel-datatables-oracle": "^9.18"
     },
     "require-dev": {
+        "brainmaestro/composer-git-hooks": "^2.8",
         "facade/ignition": "^2.5",
         "fakerphp/faker": "^1.9.1",
+        "laravel/pint": "^1.0",
         "laravel/sail": "^1.6",
         "mockery/mockery": "^1.4.2",
         "nunomaduro/collision": "^5.0",
-        "phpunit/phpunit": "^9.3.3",
-        "squizlabs/php_codesniffer": "^3.6"
+        "phpunit/phpunit": "^9.3.3"
     },
     "autoload": {
         "files": [
@@ -65,12 +66,23 @@
         ],
         "post-create-project-cmd": [
             "@php artisan key:generate --ansi"
-        ]
+        ],
+        "serve": "doppler run -- php artisan serve",
+        "cghooks": "vendor/bin/cghooks",
+        "post-install-cmd": "cghooks add --no-lock",
+        "post-update-cmd": "cghooks update",
+        "pint:fix": "vendor/bin/pint"
     },
     "extra": {
         "laravel": {
             "dont-discover": []
+        },
+        "hooks": {
+            "pre-commit": [
+                "vendor/bin/pint"
+            ]
         }
+
     },
     "config": {
         "optimize-autoloader": true,
