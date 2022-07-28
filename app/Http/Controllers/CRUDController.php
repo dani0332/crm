@@ -7,6 +7,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Models\GenericModel;
+use App\Models\QuoteDocument;
 use App\Models\User;
 use App\Services\ActivitiesService;
 use App\Services\BusinessQuoteService;
@@ -564,7 +565,7 @@ class CRUDController extends Controller
                     $listQuotePlanBenefitsRegionCover = $listQuotePlan->benefits->regionCover;
                     $listQuotePlanBenefitsMaternityCover = $listQuotePlan->benefits->maternityCover;
                     $listQuotePlanBenefitsPolicyDetails = $listQuotePlan->policyWordings;
-                    $members = $listQuotePlan->memberPremiumBreakdown;
+                    $members = [];//$listQuotePlan->memberPremiumBreakdown;
                     foreach ($listQuotePlanBenefitsPolicyDetails as $listQuotePlanBenefitsPolicyDetail) {
                         $listQuotePlanBenefitsPolicyDetailLink = $listQuotePlanBenefitsPolicyDetail->link;
                     }
@@ -821,5 +822,35 @@ class CRUDController extends Controller
         } else {
             return redirect()->back()->with('message', $response);
         }
+    }
+
+    public function destroyDocument($quoteType, $quoteUuId, $id)
+    {
+        $document = QuoteDocument::find($id);
+
+        if(!$document) {
+            return redirect()->back()->with('message', 'Document not found');
+        }
+
+        $document->delete();
+
+        return redirect()->back()->with('message', 'Document has been deleted.');
+    }
+
+    public function storeDocument(Request $request)
+    {
+        $model = '\\App\\Models\\' . ucwords($this->genericModel->modelType) . "Quote";
+        $quoteModel = $model::where('id', $request->quote_id)->first();
+
+        if (!$request->hasFile('file') && !$quoteModel) {
+            return false;
+        }
+
+        $file = $request->file('file');
+        $fileNameOriginal = $file->getClientOriginalName();
+        $fileMimeType = $file->getClientMimeType();
+        $fileNameAzure = uniqid().'_'.$request->quote_uuid.'_'.$fileNameOriginal;
+        $filePathAzure = $request->file('file')->storeAs('documents/'.$request->folder_path, $fileNameAzure, 'azureIM');
+        $this->quoteDocumentService->createQuoteDocumentRecord($request->document_type_code, $fileNameOriginal, $filePathAzure, $fileMimeType, $quoteModel);
     }
 }

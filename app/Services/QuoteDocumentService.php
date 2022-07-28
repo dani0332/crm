@@ -14,7 +14,7 @@ class QuoteDocumentService extends BaseService
         ->get();
 	}
 
-	public function createQuoteDocumentRecord($documentTypeCode, $fileNameOriginal, $filePathAzure, $fileMimeType, $travelQuote)
+	public function createQuoteDocumentRecord($documentTypeCode, $fileNameOriginal, $filePathAzure, $fileMimeType, $quoteModel)
 	{
 		$documentTypeCode_ = DocumentType::where('code', $documentTypeCode)->first();
 
@@ -38,7 +38,7 @@ class QuoteDocumentService extends BaseService
 			'created_by_id' => auth()->id()
         ]);
 
-        $travelQuote->documents()->save($quoteDocument);
+        $quoteModel->documents()->save($quoteDocument);
 	}
 
 	public function getQuoteDocumentUrl($id)
