@@ -4,9 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\RewardSliderRequest;
 use App\Models\RewardSlider;
-use Illuminate\Http\Request;
-use DataTables;
 use Arr;
+use DataTables;
+use Illuminate\Http\Request;
 
 class RewardSliderController extends Controller
 {
@@ -18,10 +18,11 @@ class RewardSliderController extends Controller
     public function index(Request $request, RewardSlider $rewardSlider, Datatables $datatables)
     {
         if ($request->ajax()) {
-            return $datatables::of($rewardSlider::query()->orderBy('start_date','desc'))
+            return $datatables::of($rewardSlider::query()->orderBy('start_date', 'desc'))
                 ->addIndexColumn()
                 ->make(true);
         }
+
         return view('rewardslider.view');
     }
 
@@ -44,16 +45,17 @@ class RewardSliderController extends Controller
     public function store(RewardSliderRequest $request, RewardSlider $rewardSlider)
     {
         if ($request->file()) {
-            $fileName = time() . '_' . $request->image->getClientOriginalName();
+            $fileName = time().'_'.$request->image->getClientOriginalName();
             $filePath = $request->file('image')->storeAs('/rewards-slider/', $fileName, 'azure');
             $rewardSlider->image = $fileName;
         }
 
         $rewardSliderId = $rewardSlider->create(Arr::except($request->validated(), ['image']) + ['image' => $fileName])->id;
 
-        if(isset($request->return_to_view)) {
-            return redirect("rewards/reward-sliders/".$rewardSliderId)->with('success', 'Rewards Slider image has been stored');
+        if (isset($request->return_to_view)) {
+            return redirect('rewards/reward-sliders/'.$rewardSliderId)->with('success', 'Rewards Slider image has been stored');
         }
+
         return redirect()->back()->with('success', 'Rewards Slider image has been stored');
     }
 
@@ -89,19 +91,19 @@ class RewardSliderController extends Controller
     public function update(RewardSliderRequest $request, RewardSlider $rewardSlider)
     {
         if ($request->file()) {
-            $fileName = time() . '_' . $request->image->getClientOriginalName();
+            $fileName = time().'_'.$request->image->getClientOriginalName();
             $filePath = $request->file('image')->storeAs('/rewards-slider/', $fileName, 'azure');
             $rewardSlider->image = $fileName;
-        }
-        else {
+        } else {
             $fileName = $rewardSlider->image;
         }
 
-        $rewardSlider->update(Arr::except($request->validated(), ['image']) + [ 'image' => $fileName]);
+        $rewardSlider->update(Arr::except($request->validated(), ['image']) + ['image' => $fileName]);
 
-        if(isset($request->return_to_view)) {
-            return redirect("rewards/reward-sliders/".$rewardSlider->id)->with('success', 'Rewards Slider image has been updated');
+        if (isset($request->return_to_view)) {
+            return redirect('rewards/reward-sliders/'.$rewardSlider->id)->with('success', 'Rewards Slider image has been updated');
         }
+
         return redirect()->back()->with('success', 'Rewards Slider image has been updated');
     }
 
@@ -114,6 +116,7 @@ class RewardSliderController extends Controller
     public function destroy(RewardSlider $rewardSlider)
     {
         $rewardSlider->delete();
-        return redirect()->route('reward-sliders.index')->with('message','Rewards Slider has been deleted');
+
+        return redirect()->route('reward-sliders.index')->with('message', 'Rewards Slider has been deleted');
     }
 }

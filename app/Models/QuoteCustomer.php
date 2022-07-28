@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class QuoteCustomer extends Model
 {
     use HasFactory;
+
     protected $table = 'quote_customers';
     protected $guarded = [];
 }

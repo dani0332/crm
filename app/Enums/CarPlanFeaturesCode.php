@@ -11,8 +11,8 @@ use BenSampo\Enum\Enum;
  */
 final class CarPlanFeaturesCode extends Enum
 {
-    const TPL_LIABILITY = "tplLiability";
-    const TPL_DAMAGE_LIMIT = "tplDamageLimit";
-    const TPL_DAMAGE_LIMIT_TEXT = "third party damage limit";
-    const DAMAGE_LIMIT = "damageLimit";
+    const TPL_LIABILITY = 'tplLiability';
+    const TPL_DAMAGE_LIMIT = 'tplDamageLimit';
+    const TPL_DAMAGE_LIMIT_TEXT = 'third party damage limit';
+    const DAMAGE_LIMIT = 'damageLimit';
 }

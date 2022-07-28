@@ -14,8 +14,9 @@ class AddIsDeletedToQuoteStatusTable extends Migration
     public function up()
     {
         Schema::table('quote_status', function (Blueprint $table) {
-            if(!Schema::hasColumn('quote_status','deleted_at'))
+            if (! Schema::hasColumn('quote_status', 'deleted_at')) {
                 $table->softDeletes();
+            }
         });
     }
 

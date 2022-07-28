@@ -1,10 +1,11 @@
 <?php
+
 return [
     'car_quote_request' => [
-        'model' => CarQuote::class
+        'model' => CarQuote::class,
     ],
     'car_quote_insurance_coverage' => [
-        'model' => CarQuoteInsuranceCoverage::class
+        'model' => CarQuoteInsuranceCoverage::class,
     ],
     'car_model' => [
         'model' => CarModel::class,
@@ -13,75 +14,75 @@ return [
         'model' => CarMake::class,
     ],
     'car_quote_ftc_documents' => [
-        'model' => FtcDocument::class
+        'model' => FtcDocument::class,
     ],
     'car_quote_documents' => [
-        'model' => CarQuoteDocuments::class
+        'model' => CarQuoteDocuments::class,
     ],
-    'insurance_provider' =>[
-        'model' => InsuranceProvider::class
+    'insurance_provider' => [
+        'model' => InsuranceProvider::class,
     ],
     'car_plan' => [
-        'model' => CarPlan::class
+        'model' => CarPlan::class,
     ],
     'vehicle_type' => [
-        'model' => VehicleType::class
+        'model' => VehicleType::class,
     ],
     'ftc_history' => [
-        'model' => FTCHistory::class
+        'model' => FTCHistory::class,
     ],
     'car_quote_payment' => [
-        'model' => CarQuotePayment::class
+        'model' => CarQuotePayment::class,
     ],
     'car_quote_policy' => [
-        'model' => CarQuotePolicy::class
+        'model' => CarQuotePolicy::class,
     ],
     'ftc_quote_status_history' => [
-        'model' => FtcQuoteStatusHistory::class
+        'model' => FtcQuoteStatusHistory::class,
     ],
-    'car_quote_assign_oe_to_advisor' =>[
-        'model' => CarQuoteAdvisorToOE::class
+    'car_quote_assign_oe_to_advisor' => [
+        'model' => CarQuoteAdvisorToOE::class,
     ],
     'payment_modes' => [
-        'model' => FTCPaymentMode::class
+        'model' => FTCPaymentMode::class,
     ],
     'car_quote_payment_history' => [
-        'model' => CarQuotePaymentHistory::class
+        'model' => CarQuotePaymentHistory::class,
     ],
     'car_quote_vehicle_detail' => [
-        'model' => VehicleDetailCarQuote::class
+        'model' => VehicleDetailCarQuote::class,
     ],
     'car_quote_kyc_status' => [
-        'model' => CarQuoteKYCStatus::class
+        'model' => CarQuoteKYCStatus::class,
     ],
     'kyc_statuses' => [
-        'model' => KycStatus::class
+        'model' => KycStatus::class,
     ],
     'teams' => [
-        'model' => Teams::class
+        'model' => Teams::class,
     ],
     'quote_status' => [
-        'model' => QuoteStatus::class
+        'model' => QuoteStatus::class,
     ],
     'users' => [
-        'model' => User::class
+        'model' => User::class,
     ],
     'car_quote_kyc' => [
-        'model' => CarQuoteKyc::class
+        'model' => CarQuoteKyc::class,
     ],
     'kyc_logs' => [
-        'model' => KycLog::class
+        'model' => KycLog::class,
     ],
     'car_quote_aml_status' => [
-        'model' => CarQuoteAMLStatus::class
+        'model' => CarQuoteAMLStatus::class,
     ],
     'car_quote_aml_status_lookup' => [
-        'model' => CarQuoteAMLStatusLookup::class
+        'model' => CarQuoteAMLStatusLookup::class,
     ],
     'type_of_insurances' => [
-        'model' => CarTypeInsurance::class
+        'model' => CarTypeInsurance::class,
     ],
     'nationality' => [
-        'model' => Nationality::class
+        'model' => Nationality::class,
     ],
 ];

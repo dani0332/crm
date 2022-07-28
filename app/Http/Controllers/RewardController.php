@@ -2,23 +2,20 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Partner;
+use App\Http\Requests\RewardRequest;
+use App\Http\Traits\RewardsTrait;
 use App\Models\Reward;
-use App\Models\RewardCategory;
-use App\Models\RewardTag;
+use App\Models\RewardTranslation;
 use App\Services\RewardCategoryMapping;
 use App\Services\RewardTagMapping;
 use DataTables;
-use DB;
-use App\Models\RewardTranslation;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
-use App\Http\Requests\RewardRequest;
-use App\Http\Traits\RewardsTrait;
 
 class RewardController extends Controller
 {
     use RewardsTrait;
+
     public function __construct()
     {
         $this->middleware('permission:rewards-list|rewards-create|rewards-edit|rewards-delete', ['only' => ['index', 'store']]);
@@ -26,6 +23,7 @@ class RewardController extends Controller
         $this->middleware('permission:rewards-edit', ['only' => ['edit', 'update']]);
         $this->middleware('permission:rewards-delete', ['only' => ['destroy']]);
     }
+
     /**
      * Display a listing of the resource.
      *
@@ -34,8 +32,9 @@ class RewardController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $data = Reward::select('reward.*','partner.name as partner')
-            ->leftjoin('partner','reward.partner_id','partner.id')->orderBy('reward.start_date','desc');;
+            $data = Reward::select('reward.*', 'partner.name as partner')
+            ->leftjoin('partner', 'reward.partner_id', 'partner.id')->orderBy('reward.start_date', 'desc');
+
             return Datatables::of($data)
                 ->addIndexColumn()
                 ->addColumn('action', function ($row) {
@@ -44,8 +43,10 @@ class RewardController extends Controller
                 ->rawColumns(['action'])
                 ->make(true);
         }
+
         return view('reward.view');
     }
+
     /**
      * Show the form for creating a new resource.
      *
@@ -56,8 +57,10 @@ class RewardController extends Controller
         $partners = $this->getPartners();
         $rewardCategories = $this->getRewardCategory();
         $rewardTags = $this->getRewardTag();
+
         return view('reward.add', compact('partners', 'rewardTags', 'rewardCategories'));
     }
+
     /**
      * Store a newly created resource in storage.
      *
@@ -91,11 +94,13 @@ class RewardController extends Controller
                 $rewardTagMapping->mapRewardTag($rewardTag, $reward->id);
             }
         }
-        if(isset($request->return_to_view)) {
-            return redirect("rewards/reward/".$reward->id)->with('success', 'Reward has been stored');
+        if (isset($request->return_to_view)) {
+            return redirect('rewards/reward/'.$reward->id)->with('success', 'Reward has been stored');
         }
+
         return redirect()->back()->with('success', 'Reward has been stored');
     }
+
     /**
      * Display the specified resource.
      *
@@ -106,6 +111,7 @@ class RewardController extends Controller
     {
         return view('reward.show', compact('reward'));
     }
+
     /**
      * Show the form for editing the specified resource.
      *
@@ -117,8 +123,10 @@ class RewardController extends Controller
         $partners = $this->getPartners();
         $rewardCategories = $this->getRewardCategory();
         $rewardTags = $this->getRewardTag();
+
         return view('reward.edit', compact('partners', 'reward', 'rewardCategories', 'rewardTags'));
     }
+
     /**
      * Update the specified resource in storage.
      *
@@ -128,9 +136,10 @@ class RewardController extends Controller
      */
     public function update(RewardRequest $request, reward $reward)
     {
-        if($request->is_active == 'on'){
-            if(RewardTranslation::where('reward_id',$reward->id)->count() == 0)
+        if ($request->is_active == 'on') {
+            if (RewardTranslation::where('reward_id', $reward->id)->count() == 0) {
                 throw ValidationException::withMessages(['is_active' => 'There is no translation against this reward please create one first']);
+            }
         }
 
         $reward->coupon_code = $request->coupon_code;
@@ -159,11 +168,13 @@ class RewardController extends Controller
             }
         }
 
-        if(isset($request->return_to_view)) {
-            return redirect("rewards/reward/".$reward->id)->with('success', 'Reward has been updated');
+        if (isset($request->return_to_view)) {
+            return redirect('rewards/reward/'.$reward->id)->with('success', 'Reward has been updated');
         }
+
         return redirect()->back()->with('success', 'Reward has been updated');
     }
+
     /**
      * Remove the specified resource from storage.
      *
@@ -177,6 +188,7 @@ class RewardController extends Controller
         $reward->rewardTags()->detach();
         $reward->rewardCustomers()->detach();
         $reward->delete();
-        return redirect('rewards/reward')->with('message','Reward has been deleted');
+
+        return redirect('rewards/reward')->with('message', 'Reward has been deleted');
     }
 }

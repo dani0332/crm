@@ -15,13 +15,13 @@ class CreateClaimsTable extends Migration
     {
         Schema::create('claims', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->string('first_name','255');
-            $table->string('last_name','255');
-            $table->string('email_address','150');
-            $table->string('phone_number','20');
-            $table->string('insurance_company','255');
-            $table->string('policy_number','150');
-            $table->string('additional_notes','2000');
+            $table->string('first_name', '255');
+            $table->string('last_name', '255');
+            $table->string('email_address', '150');
+            $table->string('phone_number', '20');
+            $table->string('insurance_company', '255');
+            $table->string('policy_number', '150');
+            $table->string('additional_notes', '2000');
             $table->integer('ticket_number')->nullable();
 
             $table->unsignedBigInteger('assigned_to_id')->nullable();
@@ -57,18 +57,18 @@ class CreateClaimsTable extends Migration
             $table->integer('car_model_id')->nullable();
             $table->foreign('car_model_id')->references('id')->on('car_model')->onDelete('no action');
 
-            $table->string('plate_number','20')->nullable();
-            $table->string('insurer_reference','255')->nullable();
-            $table->string('standard_excess_payable','255')->nullable();
-            $table->string('liability','255')->nullable();
-            $table->string('workshop','255')->nullable();
+            $table->string('plate_number', '20')->nullable();
+            $table->string('insurer_reference', '255')->nullable();
+            $table->string('standard_excess_payable', '255')->nullable();
+            $table->string('liability', '255')->nullable();
+            $table->string('workshop', '255')->nullable();
             $table->date('date_of_loss')->nullable();
             $table->decimal('claim_amount', $precision = 14, $scale = 2)->nullable();
             $table->boolean('is_deleted')->default('0');
-            $table->string('attachment_1','255')->nullable();
-            $table->string('attachment_2','255')->nullable();
-            $table->string('attachment_3','255')->nullable();
-            $table->string('attachment_4','255')->nullable();
+            $table->string('attachment_1', '255')->nullable();
+            $table->string('attachment_2', '255')->nullable();
+            $table->string('attachment_3', '255')->nullable();
+            $table->string('attachment_4', '255')->nullable();
             $table->timestamps();
         });
     }

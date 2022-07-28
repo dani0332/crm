@@ -14,8 +14,9 @@ class AddColumnCarTypeInsuranceTable extends Migration
     public function up()
     {
         Schema::table('car_type_insurance', function (Blueprint $table) {
-            if(!Schema::hasColumn('car_type_insurance','deleted_at'))
+            if (! Schema::hasColumn('car_type_insurance', 'deleted_at')) {
                 $table->softDeletes();
+            }
         });
     }
 

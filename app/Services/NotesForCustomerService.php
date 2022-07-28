@@ -3,12 +3,8 @@
 namespace App\Services;
 
 use App\Models\NotesForCustomer;
-use Illuminate\Support\Facades\Auth;
 use Config;
-use App\Services\EmailActivityService;
-use App\Services\EmailStatusService;
-use App\Services\CustomerService;
-use App\Services\SendEmailCustomerService;
+use Illuminate\Support\Facades\Auth;
 
 class NotesForCustomerService extends BaseService
 {
@@ -29,32 +25,32 @@ class NotesForCustomerService extends BaseService
         $this->sendEmailCustomerService = $sendEmailCustomerService;
     }
 
-	public function getNotesForCustomer($quoteTypeId, $quoteId)
-	{
-		return NotesForCustomer::where(['quote_type_id' => $quoteTypeId, 'quote_id' => $quoteId])
+    public function getNotesForCustomer($quoteTypeId, $quoteId)
+    {
+        return NotesForCustomer::where(['quote_type_id' => $quoteTypeId, 'quote_id' => $quoteId])
         ->orderBy('updated_at', 'desc')
         ->get();
-	}
+    }
 
-	public function addCustomerNote($request)
-	{
-		$newNote = new NotesForCustomer();
-		$newNote->quote_type_id = $request->quote_type_id;
-		$newNote->quote_id = $request->quote_id;
-		$newNote->description = nl2br($request->description);
-		$newNote->created_by_id = Auth::user()->id;
-		$newNote->save();
+    public function addCustomerNote($request)
+    {
+        $newNote = new NotesForCustomer();
+        $newNote->quote_type_id = $request->quote_type_id;
+        $newNote->quote_id = $request->quote_id;
+        $newNote->description = nl2br($request->description);
+        $newNote->created_by_id = Auth::user()->id;
+        $newNote->save();
 
-		return $newNote->id;
-	}
+        return $newNote->id;
+    }
 
     public function notesSendToCustomer($request)
-	{
+    {
         $ecomCarInsuranceQuoteUrl = Config::get('constants.ECOM_CAR_INSURANCE_QUOTE_URL');
-        $emailTemplateId = (int)Config::get('constants.SIB_CAR_QUOTE_UPDATE_NOTES_TO_CUSTOMER_TEMPLATE');
+        $emailTemplateId = (int) Config::get('constants.SIB_CAR_QUOTE_UPDATE_NOTES_TO_CUSTOMER_TEMPLATE');
         $customer = $this->customerService->getUniqueCustomerByEmail($request->customer_email);
 
-        $emailData = array(
+        $emailData = [
             'customerName' => $request->customer_name,
             'customerEmail' => $request->customer_email,
             'buttonUrl' => $ecomCarInsuranceQuoteUrl.$request->quote_uuid,
@@ -63,12 +59,11 @@ class NotesForCustomerService extends BaseService
             'quoteId' => $request->quote_id,
             'notesForCustomer' => $request->description,
             'templateId' => $emailTemplateId,
-            'customerId' => $customer->id
-        );
+            'customerId' => $customer->id,
+        ];
 
         $response = $this->sendEmailCustomerService->sendEmail($emailTemplateId, $emailData, 'car-quote-update-notes-to-customer');
 
         return $response;
-	}
-
+    }
 }

@@ -2,13 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Partner;
-use DataTables;
-use Illuminate\Http\Request;
-use DB;
 use App\Http\Requests\PartnerAddRequest;
 use App\Http\Requests\PartnerEditRequest;
 use App\Http\Resources\PartnerResource;
+use App\Models\Partner;
+use DataTables;
+use Illuminate\Http\Request;
 
 class PartnerController extends Controller
 {
@@ -33,7 +32,8 @@ class PartnerController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $data = Partner::select('*')->orderBy('created_at','desc');
+            $data = Partner::select('*')->orderBy('created_at', 'desc');
+
             return Datatables::of($data)
                 ->addIndexColumn()
                 ->addColumn('action', function ($row) {
@@ -42,8 +42,10 @@ class PartnerController extends Controller
                 ->rawColumns(['action'])
                 ->make(true);
         }
+
         return view('partner.view');
     }
+
     /**
      * Show the form for creating a new resource.
      *
@@ -53,6 +55,7 @@ class PartnerController extends Controller
     {
         return view('partner.add');
     }
+
     /**
      * Store a newly created resource in storage.
      *
@@ -60,21 +63,23 @@ class PartnerController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function store(PartnerAddRequest $request, Partner $partner)
-    {  
+    {
         $validated = $request->validated();
         if ($request->file()) {
-            $fileName = time() . '_' . $request->logo_image->getClientOriginalName();
+            $fileName = time().'_'.$request->logo_image->getClientOriginalName();
             $filePath = $request->file('logo_image')->storeAs('/', $fileName, 'azure');
-           $validated['logo_image'] = $fileName;
+            $validated['logo_image'] = $fileName;
         }
         $validated['is_active'] = $validated['is_active'] ?? 0;
         $id = $partner->create($validated)->id;
 
-        if(isset($request->return_to_view)) {
-            return redirect("rewards/partner/".$id)->with('success', 'Partner has been stored');
+        if (isset($request->return_to_view)) {
+            return redirect('rewards/partner/'.$id)->with('success', 'Partner has been stored');
         }
+
         return redirect()->back()->with('success', 'Partner has been stored');
     }
+
     /**
      * Display the specified resource.
      *
@@ -84,8 +89,10 @@ class PartnerController extends Controller
     public function show(Partner $partner)
     {
         $partner = new PartnerResource($partner);
+
         return view('partner.show', compact('partner'));
     }
+
     /**
      * Show the form for editing the specified resource.
      *
@@ -95,8 +102,10 @@ class PartnerController extends Controller
     public function edit(Partner $partner)
     {
         $partner = new PartnerResource($partner);
+
         return view('partner.edit', compact('partner'));
     }
+
     /**
      * Update the specified resource in storage.
      *
@@ -108,17 +117,19 @@ class PartnerController extends Controller
     {
         $validated = $request->validated();
         if ($request->file()) {
-            $fileName = time() . '_' . $request->logo_image->getClientOriginalName();
+            $fileName = time().'_'.$request->logo_image->getClientOriginalName();
             $filePath = $request->file('logo_image')->storeAs('/', $fileName, 'azure');
             $validated['logo_image'] = $fileName;
         }
         $validated['is_active'] = $validated['is_active'] ?? 0;
         $partner->update($validated);
-        if(isset($request->return_to_view)) {
-            return redirect("rewards/partner/".$partner->id)->with('success', 'Partner has been updated');
+        if (isset($request->return_to_view)) {
+            return redirect('rewards/partner/'.$partner->id)->with('success', 'Partner has been updated');
         }
+
         return redirect()->back()->with('success', 'Partner has been updated');
     }
+
     /**
      * Remove the specified resource from storage.
      *
@@ -127,12 +138,12 @@ class PartnerController extends Controller
      */
     public function destroy(Partner $partner)
     {
-        if($partner->rewards()->count()) {
-            return redirect()->route('partner.index')->with('message','Partner is linked with Reward and cannot be deleted');
-        }
-        else {
+        if ($partner->rewards()->count()) {
+            return redirect()->route('partner.index')->with('message', 'Partner is linked with Reward and cannot be deleted');
+        } else {
             $partner->delete();
-            return redirect()->route('partner.index')->with('message','Partner has been deleted');
+
+            return redirect()->route('partner.index')->with('message', 'Partner has been deleted');
         }
     }
 }

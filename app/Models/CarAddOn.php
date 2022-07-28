@@ -10,6 +10,7 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 class CarAddOn extends Model implements AuditableContract
 {
     use HasFactory, Auditable;
+
     protected $table = 'car_addon';
     protected $fillable = ['text', 'text_ar', 'type', 'created_at', 'updated_at', 'code'];
     public $access = [
@@ -18,19 +19,19 @@ class CarAddOn extends Model implements AuditableContract
         'update' => ['advisor', 'oe'],
         'delete' => ['advisor', 'oe'],
         'access' => [
-            "pa" => [],
-            "advisor" => [],
-            "oe" => [],
-            "admin" => [],
-            "invoicing" => []
+            'pa' => [],
+            'advisor' => [],
+            'oe' => [],
+            'admin' => [],
+            'invoicing' => [],
         ],
-        "list" => [
-            "pa" => ['id', 'text', 'description'],
-            "advisor" => ['id', 'text', 'description'],
-            "oe" => ['id', 'text', 'description'],
-            "admin" => ['id', 'text', 'description'],
-            "invoicing" => ['id', 'text', 'description'],
-        ]
+        'list' => [
+            'pa' => ['id', 'text', 'description'],
+            'advisor' => ['id', 'text', 'description'],
+            'oe' => ['id', 'text', 'description'],
+            'admin' => ['id', 'text', 'description'],
+            'invoicing' => ['id', 'text', 'description'],
+        ],
     ];
 
     public function relations()

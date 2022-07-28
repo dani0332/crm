@@ -4,19 +4,18 @@ namespace App\Imports;
 
 use App\Jobs\RenewalImportJob;
 use App\Models\Customer;
-use App\Services\RenewalsUploadService;
 use App\Services\CustomerService;
+use App\Services\RenewalsUploadService;
 use Carbon\Carbon;
-use Maatwebsite\Excel\Row;
+use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Concerns\Importable;
 use Maatwebsite\Excel\Concerns\OnEachRow;
-use Maatwebsite\Excel\Concerns\SkipsOnFailure;
-use Maatwebsite\Excel\Concerns\WithValidation;
-use Maatwebsite\Excel\Concerns\WithStartRow;
 use Maatwebsite\Excel\Concerns\SkipsFailures;
+use Maatwebsite\Excel\Concerns\SkipsOnFailure;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
+use Maatwebsite\Excel\Concerns\WithStartRow;
+use Maatwebsite\Excel\Concerns\WithValidation;
+use Maatwebsite\Excel\Row;
 
 class RenewalsImport implements OnEachRow, WithStartRow, WithValidation, SkipsOnFailure, WithChunkReading
 {
@@ -29,7 +28,7 @@ class RenewalsImport implements OnEachRow, WithStartRow, WithValidation, SkipsOn
     private $renewalImportCode;
     private $uploadType;
 
-    function __construct(RenewalsUploadService $renewalsUploadService, $fileName, $renewalImportCode, $uploadType)
+    public function __construct(RenewalsUploadService $renewalsUploadService, $fileName, $renewalImportCode, $uploadType)
     {
         $this->renewalsUploadService = $renewalsUploadService;
         $this->fileName = $fileName;
@@ -38,32 +37,31 @@ class RenewalsImport implements OnEachRow, WithStartRow, WithValidation, SkipsOn
     }
 
     /**
-    * @param Row $row
-    */
+     * @param  Row  $row
+     */
     public function onRow(Row $row)
     {
-        ++$this->rows;
+        $this->rows++;
         $row = $row->toArray();
         $qouteType = $row[2];
         $email = $row[1];
 
-        if(!empty($email)) {
-
+        if (! empty($email)) {
             $quoteData = 0;
 
             // customer information
-            $customerName = explode(" ", $row[0], 2);
-            $lastName = "";
-            if (!empty($customerName[1])) {
+            $customerName = explode(' ', $row[0], 2);
+            $lastName = '';
+            if (! empty($customerName[1])) {
                 $firstName = $customerName[0];
                 $lastName = $customerName[1];
             } else {
                 $firstName = $row[0];
-                $lastName = "";
+                $lastName = '';
             }
 
             // product information
-            $insurer = $this->insurersMapping(trim(str_replace("  ", " ", strtolower($row[3]))));
+            $insurer = $this->insurersMapping(trim(str_replace('  ', ' ', strtolower($row[3]))));
             $product = $row[4];
             $productType = $row[5];
             $source = $row[6];
@@ -90,164 +88,148 @@ class RenewalsImport implements OnEachRow, WithStartRow, WithValidation, SkipsOn
 
             $email = $emailResult['0']; // assign the sanitized email to the email variable
             $customerPhone = $phoneResult['0']; // assign the sanitized phone number to the phone variable
-            $notes = $emailResult['1'] != '' ? $notes . $emailResult['2'] : $notes; // if the notes variable is not empty, add the notes from the email sanitization to the notes variable
-            $notes = $phoneResult['1'] != '' ? $notes . $phoneResult['2'] : $notes; // if the notes variable is not empty, add the notes from the phone sanitization to the notes variable
+            $notes = $emailResult['1'] != '' ? $notes.$emailResult['2'] : $notes; // if the notes variable is not empty, add the notes from the email sanitization to the notes variable
+            $notes = $phoneResult['1'] != '' ? $notes.$phoneResult['2'] : $notes; // if the notes variable is not empty, add the notes from the phone sanitization to the notes variable
 
             $findCustomerByEmail = CustomerService::getCustomerByEmail($email);
-            if($findCustomerByEmail->isEmpty()) {
+            if ($findCustomerByEmail->isEmpty()) {
                 $newCustomer = new Customer([
-                    "first_name" => $firstName,
-                    "last_name" => $lastName,
-                    "email" => $email,
-                    "mobile_no" => $customerPhone,
-                    "has_alfred_access" => false,
-                    "has_reward_access" => false,
+                    'first_name' => $firstName,
+                    'last_name' => $lastName,
+                    'email' => $email,
+                    'mobile_no' => $customerPhone,
+                    'has_alfred_access' => false,
+                    'has_reward_access' => false,
                 ]);
                 $newCustomer->save();
                 $customerId = $newCustomer->getAttribute('id');
-                $quoteData = (object) array(
-                    "customer_id" => $customerId,
-                    "first_name" => $firstName,
-                    "last_name" => $lastName,
-                    "email" => $email,
-                    "phoneNumber" => $customerPhone,
-                    "insurer" => $insurer,
-                    "product" => $product,
-                    "product_type" => $productType,
-                    "source" => $source,
-                    "make" => $carMake,
-                    "model" => $carModel,
-                    "year" => $carYear,
-                    "advisor" => $advisor,
-                    "pAdvisor" => $previousAdvisor,
-                    "policy" => $policy,
-                    "batch" => $batch,
-                    "startDate" => $startDate,
-                    "endDate" => $endDate,
-                    "object" => $object,
-                    "gross_premium" => $premium,
-                    "notes" => $notes,
-                    "other_email_ids" => $emailResult['1'],
-                );
+                $quoteData = (object) [
+                    'customer_id' => $customerId,
+                    'first_name' => $firstName,
+                    'last_name' => $lastName,
+                    'email' => $email,
+                    'phoneNumber' => $customerPhone,
+                    'insurer' => $insurer,
+                    'product' => $product,
+                    'product_type' => $productType,
+                    'source' => $source,
+                    'make' => $carMake,
+                    'model' => $carModel,
+                    'year' => $carYear,
+                    'advisor' => $advisor,
+                    'pAdvisor' => $previousAdvisor,
+                    'policy' => $policy,
+                    'batch' => $batch,
+                    'startDate' => $startDate,
+                    'endDate' => $endDate,
+                    'object' => $object,
+                    'gross_premium' => $premium,
+                    'notes' => $notes,
+                    'other_email_ids' => $emailResult['1'],
+                ];
             } else {
                 $customer = $findCustomerByEmail->first();
-                $quoteData = (object) array(
-                    "customer_id" => $customer->id,
-                    "first_name" => $customer->first_name,
-                    "last_name" => $customer->last_name,
-                    "email" => $customer->email,
-                    "phoneNumber" => $customerPhone,
-                    "insurer" => $insurer,
-                    "product" => $product,
-                    "product_type" => $productType,
-                    "source" => $source,
-                    "make" => $carMake,
-                    "model" => $carModel,
-                    "year" => $carYear,
-                    "advisor" => $advisor,
-                    "pAdvisor" => $previousAdvisor,
-                    "policy" => $policy,
-                    "batch" => $batch,
-                    "startDate" => $startDate,
-                    "endDate" => $endDate,
-                    "object" => $object,
-                    "gross_premium" => $premium,
-                    "notes" => $notes,
-                    "other_email_ids" => $emailResult['1'],
-                );
+                $quoteData = (object) [
+                    'customer_id' => $customer->id,
+                    'first_name' => $customer->first_name,
+                    'last_name' => $customer->last_name,
+                    'email' => $customer->email,
+                    'phoneNumber' => $customerPhone,
+                    'insurer' => $insurer,
+                    'product' => $product,
+                    'product_type' => $productType,
+                    'source' => $source,
+                    'make' => $carMake,
+                    'model' => $carModel,
+                    'year' => $carYear,
+                    'advisor' => $advisor,
+                    'pAdvisor' => $previousAdvisor,
+                    'policy' => $policy,
+                    'batch' => $batch,
+                    'startDate' => $startDate,
+                    'endDate' => $endDate,
+                    'object' => $object,
+                    'gross_premium' => $premium,
+                    'notes' => $notes,
+                    'other_email_ids' => $emailResult['1'],
+                ];
             }
 
             dispatch(new RenewalImportJob($quoteData, $qouteType, $this->renewalsUploadService, $this->fileName, $this->renewalImportCode, $this->uploadType, Auth::user()->id));
         }
     }
 
-    function sanitizePhoneNumber($phone)
+    public function sanitizePhoneNumber($phone)
     {
         $delimiterArray = [',', ':', '/', ';']; // delimiters
         $phoneClean = preg_replace('/\s/', '', strtolower(trim(ltrim(rtrim($phone)))));
-        $phoneNoReplaceComma = str_replace($delimiterArray,',',$phoneClean);
+        $phoneNoReplaceComma = str_replace($delimiterArray, ',', $phoneClean);
         $primaryPhoneNumber = strtok($phoneNoReplaceComma, ',');
 
-        if(strpos($phoneNoReplaceComma, ',') !== false) {
-            $otherphoneNos = substr($phoneNoReplaceComma, strpos($phoneNoReplaceComma, ",") + 1);
+        if (strpos($phoneNoReplaceComma, ',') !== false) {
+            $otherphoneNos = substr($phoneNoReplaceComma, strpos($phoneNoReplaceComma, ',') + 1);
         } else {
             $otherphoneNos = '';
         }
 
-        $notes = " - Additional phone numbers from phone column : ". $otherphoneNos;
+        $notes = ' - Additional phone numbers from phone column : '.$otherphoneNos;
 
         return [$primaryPhoneNumber, $otherphoneNos, $notes];
     }
 
-    function sanitizeEmail($email)
+    public function sanitizeEmail($email)
     {
         $delimiterArray = [',', ':', '/', ';'];	// delimiters
         $emailClean = preg_replace('/\s/', '', strtolower(trim(ltrim(rtrim($email)))));
-        $emailReplaceComma = str_replace($delimiterArray,',',$emailClean);
+        $emailReplaceComma = str_replace($delimiterArray, ',', $emailClean);
         $primaryEmail = strtok($emailReplaceComma, ',');
 
-        if(strpos($emailReplaceComma, ',') !== false) {
-            $otherEmailIds = substr($emailReplaceComma, strpos($emailReplaceComma, ",") + 1);
+        if (strpos($emailReplaceComma, ',') !== false) {
+            $otherEmailIds = substr($emailReplaceComma, strpos($emailReplaceComma, ',') + 1);
         } else {
             $otherEmailIds = '';
         }
 
-        $notes = " - Additional Emails from email column : ". $otherEmailIds;
+        $notes = ' - Additional Emails from email column : '.$otherEmailIds;
 
         return [$primaryEmail, $otherEmailIds, $notes];
     }
 
-    function insurersMapping($insurerName)
+    public function insurersMapping($insurerName)
     {
-        if(strpos($insurerName, 'tokio marine') !== false){
+        if (strpos($insurerName, 'tokio marine') !== false) {
             $insurerinCdb = 'Tokio Marine & Nichido Fire Insurance Co';
-        }
-        else if(strpos($insurerName, 'new india') !== false){
+        } elseif (strpos($insurerName, 'new india') !== false) {
             $insurerinCdb = 'New India Assurance';
-        }
-        else if(strpos($insurerName, 'axa') !== false){
+        } elseif (strpos($insurerName, 'axa') !== false) {
             $insurerinCdb = 'AXA Insurance (Gulf)';
-        }
-        else if(strpos($insurerName, 'dhabi national insurance') !== false){
+        } elseif (strpos($insurerName, 'dhabi national insurance') !== false) {
             $insurerinCdb = 'Abu Dhabi National Insurance Company';
-        }
-        else if((strpos($insurerName, 'royal') !== false && strpos($insurerName, 'sun') !== false) || strpos($insurerName, 'rsa') !== false){
+        } elseif ((strpos($insurerName, 'royal') !== false && strpos($insurerName, 'sun') !== false) || strpos($insurerName, 'rsa') !== false) {
             $insurerinCdb = 'Royal & Sun Alliance Insurance (RSA)';
-        }
-        else if(strpos($insurerName, 'qatar insurance') !== false || strpos($insurerName, 'qic') !== false){
+        } elseif (strpos($insurerName, 'qatar insurance') !== false || strpos($insurerName, 'qic') !== false) {
             $insurerinCdb = 'Qatar Insurance Company';
-        }
-        else if(strpos($insurerName, 'national general insurance') !== false || strpos($insurerName, 'ngi') !== false){
+        } elseif (strpos($insurerName, 'national general insurance') !== false || strpos($insurerName, 'ngi') !== false) {
             $insurerinCdb = 'National General Insurance';
-        }
-        else if(strpos($insurerName, 'salama') !== false){
+        } elseif (strpos($insurerName, 'salama') !== false) {
             $insurerinCdb = 'Salama Insurance';
-        }
-        else if(strpos($insurerName, 'noor takaful') !== false){
+        } elseif (strpos($insurerName, 'noor takaful') !== false) {
             $insurerinCdb = 'Noor Takaful';
-        }
-        else if(strpos($insurerName, 'oriental insurance') !== false){
+        } elseif (strpos($insurerName, 'oriental insurance') !== false) {
             $insurerinCdb = 'Oriental Insurance';
-        }
-        else if(strpos($insurerName, 'union insurance') !== false){
+        } elseif (strpos($insurerName, 'union insurance') !== false) {
             $insurerinCdb = 'Union Insurance';
-        }
-        else if(strpos($insurerName, 'oman insurance') !== false || strpos($insurerName, 'oic') !== false){
+        } elseif (strpos($insurerName, 'oman insurance') !== false || strpos($insurerName, 'oic') !== false) {
             $insurerinCdb = 'Oman Insurance Company';
-        }
-        else if(strpos($insurerName, 'dhabi national takaful') !== false){
+        } elseif (strpos($insurerName, 'dhabi national takaful') !== false) {
             $insurerinCdb = 'Abu Dhabi National Takaful';
-        }
-        else if(strpos($insurerName, 'watania') !== false){
+        } elseif (strpos($insurerName, 'watania') !== false) {
             $insurerinCdb = 'Watania';
-        }
-        else if(strpos($insurerName, 'insurance house') !== false){
+        } elseif (strpos($insurerName, 'insurance house') !== false) {
             $insurerinCdb = 'Insurance House';
-        }
-        else if(strpos($insurerName, 'other') !== false){
+        } elseif (strpos($insurerName, 'other') !== false) {
             $insurerinCdb = 'Other';
-        }
-        else {
+        } else {
             $insurerinCdb = $insurerName;
         }
 
@@ -272,127 +254,127 @@ class RenewalsImport implements OnEachRow, WithStartRow, WithValidation, SkipsOn
     public function rules(): array
     {
         return [
-            '*.0' => function($attribute, $value, $onFailure) { // Customer Name
-                if(!$value) {
+            '*.0' => function ($attribute, $value, $onFailure) { // Customer Name
+                if (! $value) {
                     $onFailure('Customer Name is required');
                 }
-                if(strlen($value) > 100) {
+                if (strlen($value) > 100) {
                     $onFailure('Customer Name should not exceed length of 100 characters');
                 }
             },
-            '*.1' => function($attribute, $value, $onFailure) { // Customer Email
-                if(!$value) {
+            '*.1' => function ($attribute, $value, $onFailure) { // Customer Email
+                if (! $value) {
                     $onFailure('Customer Email is required');
                 }
-                if(strlen($value) > 255) {
+                if (strlen($value) > 255) {
                     $onFailure('Customer Email should not exceed length of 255 characters');
                 }
             },
-            '*.2' => function($attribute, $value, $onFailure) { // Type
-                if(!$value) {
+            '*.2' => function ($attribute, $value, $onFailure) { // Type
+                if (! $value) {
                     $onFailure('Type of quote is required');
                 }
-                if(strlen($value) > 4) {
+                if (strlen($value) > 4) {
                     $onFailure('Type of quote should not exceed length of 4 characters');
                 }
             },
-            '*.3' => function($attribute, $value, $onFailure) { // Insurer
-                if(!$value) {
+            '*.3' => function ($attribute, $value, $onFailure) { // Insurer
+                if (! $value) {
                     $onFailure('Insurer is required');
                 }
-                if(strlen($value) > 100) {
+                if (strlen($value) > 100) {
                     $onFailure('Insurer should not exceed length of 100 characters');
                 }
             },
-            '*.4' => function($attribute, $value, $onFailure) { // Product
-                if(!$value) {
+            '*.4' => function ($attribute, $value, $onFailure) { // Product
+                if (! $value) {
                     $onFailure('Product is required');
                 }
-                if(strlen($value) > 100) {
+                if (strlen($value) > 100) {
                     $onFailure('Product should not exceed length of 100 characters');
                 }
             },
-            '*.5' => function($attribute, $value, $onFailure) { // Product Type
-                if(strlen($value) > 100) {
+            '*.5' => function ($attribute, $value, $onFailure) { // Product Type
+                if (strlen($value) > 100) {
                     $onFailure('Product Type should not exceed length of 100 characters');
                 }
-                if(strlen($value) > 0 && $value != 'Comprehensive' && $value != 'Third Party Only') {
+                if (strlen($value) > 0 && $value != 'Comprehensive' && $value != 'Third Party Only') {
                     //$onFailure('Product Type should be either Comprehensive or Third Party  Only');
                 }
             },
-            '*.6' => function($attribute, $value, $onFailure) { // Sales Channel
-                if(strlen($value) > 100) {
+            '*.6' => function ($attribute, $value, $onFailure) { // Sales Channel
+                if (strlen($value) > 100) {
                     $onFailure('Sales Channel should not exceed length of 100 characters');
                 }
             },
-            '*.7' => function($attribute, $value, $onFailure) { // Customer Mobile
-                if(strlen($value) > 100) {
+            '*.7' => function ($attribute, $value, $onFailure) { // Customer Mobile
+                if (strlen($value) > 100) {
                     $onFailure('Customer Mobile should not exceed length of 100 characters');
                 }
             },
-            '*.8' => function($attribute, $value, $onFailure) { // Advisor Email
-                if(strlen($value) > 100) {
+            '*.8' => function ($attribute, $value, $onFailure) { // Advisor Email
+                if (strlen($value) > 100) {
                     $onFailure('Advisor Email should not exceed length of 100 characters');
                 }
             },
-            '*.9' => function($attribute, $value, $onFailure) { // Previous Advisor Email
-                if(strlen($value) > 100) {
+            '*.9' => function ($attribute, $value, $onFailure) { // Previous Advisor Email
+                if (strlen($value) > 100) {
                     $onFailure('Previous Advisor Email should not exceed length of 100 characters');
                 }
             },
-            '*.10' => function($attribute, $value, $onFailure) { // Policy
-                if(!$value) {
+            '*.10' => function ($attribute, $value, $onFailure) { // Policy
+                if (! $value) {
                     $onFailure('Policy is required');
                 }
-                if(strlen($value) > 100) {
+                if (strlen($value) > 100) {
                     $onFailure('Policy should not exceed length of 100 characters');
                 }
             },
-            '*.11' => function($attribute, $value, $onFailure) { // Batch
-                if(strlen($value) > 25) {
+            '*.11' => function ($attribute, $value, $onFailure) { // Batch
+                if (strlen($value) > 25) {
                     $onFailure('Batch should not exceed length of 25 characters');
                 }
             },
-            '*.12' => function($attribute, $value, $onFailure) { // Start Date
-                if(strlen($value) > 10) {
+            '*.12' => function ($attribute, $value, $onFailure) { // Start Date
+                if (strlen($value) > 10) {
                     $onFailure('Start Date should not exceed length of 10 characters');
                 }
             },
-            '*.13' => function($attribute, $value, $onFailure) { // End Date
-                if(!$value) {
+            '*.13' => function ($attribute, $value, $onFailure) { // End Date
+                if (! $value) {
                     $onFailure('End Date is required');
                 }
-                if(strlen($value) > 10) {
+                if (strlen($value) > 10) {
                     $onFailure('End Date should not exceed length of 10 characters');
                 }
             },
-            '*.14' => function($attribute, $value, $onFailure) { // Object
-                if(strlen($value) > 200) {
+            '*.14' => function ($attribute, $value, $onFailure) { // Object
+                if (strlen($value) > 200) {
                     $onFailure('Object should not exceed length of 200 characters');
                 }
             },
-            '*.15' => function($attribute, $value, $onFailure) { // Premium
-                if(strlen($value) > 25) {
+            '*.15' => function ($attribute, $value, $onFailure) { // Premium
+                if (strlen($value) > 25) {
                     $onFailure('Gross Premium should not exceed length of 25 characters');
                 }
             },
-            '*.16' => function($attribute, $value, $onFailure) { // Notes
-                if(strlen($value) > 200) {
+            '*.16' => function ($attribute, $value, $onFailure) { // Notes
+                if (strlen($value) > 200) {
                     $onFailure('Notes should not exceed length of 200 characters');
                 }
             },
-            '*.17' => function($attribute, $value, $onFailure) { // Make
-                if(strlen($value) > 50) {
+            '*.17' => function ($attribute, $value, $onFailure) { // Make
+                if (strlen($value) > 50) {
                     $onFailure('Car Make should not exceed length of 50 characters');
                 }
             },
-            '*.18' => function($attribute, $value, $onFailure) { // Model
-                if(strlen($value) > 50) {
+            '*.18' => function ($attribute, $value, $onFailure) { // Model
+                if (strlen($value) > 50) {
                     $onFailure('Car Model should not exceed length of 50 characters');
                 }
             },
-            '*.19' => function($attribute, $value, $onFailure) { // Year
-                if(strlen($value) > 4) {
+            '*.19' => function ($attribute, $value, $onFailure) { // Year
+                if (strlen($value) > 4) {
                     $onFailure('Year of Manufacture should not exceed length of 4 characters');
                 }
             },

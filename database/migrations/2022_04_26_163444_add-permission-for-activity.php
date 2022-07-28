@@ -1,8 +1,6 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 
 class AddPermissionForActivity extends Migration
 {
@@ -17,12 +15,12 @@ class AddPermissionForActivity extends Migration
         $activitiesList = DB::table('permissions')->where('name', 'activities-list')->first();
         if ($activitiesList === null) {
             DB::table('permissions')->insert(
-                array(
+                [
                     'name' => 'activities-list',
                     'guard_name' => 'web',
                     'created_at' => $datetime,
-                    'updated_at' => $datetime
-                )
+                    'updated_at' => $datetime,
+                ]
             );
         }
     }

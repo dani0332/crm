@@ -14,8 +14,9 @@ class AddDeletedAtPaymentModesTable extends Migration
     public function up()
     {
         Schema::table('payment_modes', function (Blueprint $table) {
-            if(!Schema::hasColumn('payment_modes','deleted_at'))
+            if (! Schema::hasColumn('payment_modes', 'deleted_at')) {
                 $table->softDeletes();
+            }
         });
     }
 

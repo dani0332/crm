@@ -3,18 +3,19 @@
 namespace App\Http\Controllers;
 
 use App\Models\TmInsuranceType;
-use Illuminate\Http\Request;
 use DataTables;
+use Illuminate\Http\Request;
 
 class TmInsuranceTypeController extends Controller
 {
-    function __construct()
+    public function __construct()
     {
-         $this->middleware('permission:tm-insurance-type-list|tm-insurance-type-create|tm-insurance-type-edit|tm-insurance-type-delete', ['only' => ['index','store']]);
-         $this->middleware('permission:tm-insurance-type-create', ['only' => ['create','store']]);
-         $this->middleware('permission:tm-insurance-type-edit', ['only' => ['edit','update']]);
-         $this->middleware('permission:tm-insurance-type-delete', ['only' => ['destroy']]);
+        $this->middleware('permission:tm-insurance-type-list|tm-insurance-type-create|tm-insurance-type-edit|tm-insurance-type-delete', ['only' => ['index', 'store']]);
+        $this->middleware('permission:tm-insurance-type-create', ['only' => ['create', 'store']]);
+        $this->middleware('permission:tm-insurance-type-edit', ['only' => ['edit', 'update']]);
+        $this->middleware('permission:tm-insurance-type-delete', ['only' => ['destroy']]);
     }
+
     /**
      * Display a listing of the resource.
      *
@@ -23,7 +24,8 @@ class TmInsuranceTypeController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $data = TmInsuranceType::select('*')->where('is_deleted', 0)->orderBy('sort_order','asc');
+            $data = TmInsuranceType::select('*')->where('is_deleted', 0)->orderBy('sort_order', 'asc');
+
             return Datatables::of($data)
                 ->addIndexColumn()
                 ->addColumn('action', function ($row) {
@@ -32,6 +34,7 @@ class TmInsuranceTypeController extends Controller
                 ->rawColumns(['action'])
                 ->make(true);
         }
+
         return view('tminsurancetype.view');
     }
 
@@ -68,9 +71,10 @@ class TmInsuranceTypeController extends Controller
         $TmInsuranceType->sort_order = $request->sort_order;
         $TmInsuranceType->save();
 
-        if(isset($request->return_to_view)) {
-            return redirect("telemarketing/tminsurancetype/".$TmInsuranceType->id)->with('success', 'TM Insurance Type has been stored');
+        if (isset($request->return_to_view)) {
+            return redirect('telemarketing/tminsurancetype/'.$TmInsuranceType->id)->with('success', 'TM Insurance Type has been stored');
         }
+
         return redirect()->back()->with('success', 'TM Insurance Type has been stored');
     }
 
@@ -82,7 +86,7 @@ class TmInsuranceTypeController extends Controller
      */
     public function show(TmInsuranceType $tminsurancetype)
     {
-        return view('tminsurancetype.show',compact('tminsurancetype'));
+        return view('tminsurancetype.show', compact('tminsurancetype'));
     }
 
     /**
@@ -93,7 +97,7 @@ class TmInsuranceTypeController extends Controller
      */
     public function edit(TmInsuranceType $tminsurancetype)
     {
-        return view('tminsurancetype.edit',compact('tminsurancetype'));
+        return view('tminsurancetype.edit', compact('tminsurancetype'));
     }
 
     /**
@@ -119,9 +123,10 @@ class TmInsuranceTypeController extends Controller
         $tminsurancetype->sort_order = $request->sort_order;
         $tminsurancetype->save();
 
-        if(isset($request->return_to_view)) {
-            return redirect("telemarketing/tminsurancetype/".$tminsurancetype->id)->with('success', 'TM Insurance Type has been updated');
+        if (isset($request->return_to_view)) {
+            return redirect('telemarketing/tminsurancetype/'.$tminsurancetype->id)->with('success', 'TM Insurance Type has been updated');
         }
+
         return redirect()->back()->with('success', 'TM Insurance Type has been updated');
     }
 
@@ -135,6 +140,7 @@ class TmInsuranceTypeController extends Controller
     {
         $tminsurancetype->is_deleted = 1;
         $tminsurancetype->save();
-        return redirect()->route('tminsurancetype.index')->with('message','TM Insurance Type has been deleted');
+
+        return redirect()->route('tminsurancetype.index')->with('message', 'TM Insurance Type has been deleted');
     }
 }

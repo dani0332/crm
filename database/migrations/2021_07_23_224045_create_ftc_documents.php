@@ -1,8 +1,9 @@
 <?php
 
+use App\Models\BaseMigration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use App\Models\BaseMigration;
+
 class CreateFtcDocuments extends BaseMigration
 {
     /**
@@ -12,10 +13,10 @@ class CreateFtcDocuments extends BaseMigration
      */
     public function up()
     {
-        if (!Schema::hasTable('car_quote_ftc_documents')) {
+        if (! Schema::hasTable('car_quote_ftc_documents')) {
             Schema::create('car_quote_ftc_documents', function (Blueprint $table) {
                 $table->id()->autoIncrement();
-                $table->string('file_name','255')->nullable();
+                $table->string('file_name', '255')->nullable();
                 $table->integer('document');
 
                 $table->bigInteger('car_quote_id');

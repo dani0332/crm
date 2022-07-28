@@ -3,10 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Reason;
-use Illuminate\Http\Request;
-use DataTables;
 use Auth;
-use DB;
+use DataTables;
+use Illuminate\Http\Request;
 
 class ReasonController extends Controller
 {
@@ -31,7 +30,8 @@ class ReasonController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $data = Reason::select('*')->where('is_deleted', 0)->orderBy('created_at','desc');
+            $data = Reason::select('*')->where('is_deleted', 0)->orderBy('created_at', 'desc');
+
             return Datatables::of($data)
                 ->addIndexColumn()
                 ->addColumn('action', function ($row) {
@@ -40,6 +40,7 @@ class ReasonController extends Controller
                 ->rawColumns(['action'])
                 ->make(true);
         }
+
         return view('reason.view');
     }
 
@@ -72,9 +73,10 @@ class ReasonController extends Controller
         $reason->updated_by = Auth::user()->email;
         $reason->save();
 
-        if(isset($request->return_to_view)) {
-            return redirect("transapp/reason/".$reason->id)->with('success', 'Reason Description has been stored');
+        if (isset($request->return_to_view)) {
+            return redirect('transapp/reason/'.$reason->id)->with('success', 'Reason Description has been stored');
         }
+
         return redirect()->back()->with('success', 'Reason Description has been stored');
     }
 
@@ -107,7 +109,7 @@ class ReasonController extends Controller
      * @param  Reason  $reason
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request,Reason $reason)
+    public function update(Request $request, Reason $reason)
     {
         $this->validate($request, [
             'name' => 'required|max:150',
@@ -116,9 +118,10 @@ class ReasonController extends Controller
         $reason->is_active = $request->is_active == 'on' ? 1 : 0;
         $reason->updated_by = Auth::user()->email;
         $reason->save();
-        if(isset($request->return_to_view)) {
-            return redirect("transapp/reason/".$reason->id)->with('success', 'Reason Description has been updated');
+        if (isset($request->return_to_view)) {
+            return redirect('transapp/reason/'.$reason->id)->with('success', 'Reason Description has been updated');
         }
+
         return redirect()->back()->with('success', 'Reason Description has been updated');
     }
 
@@ -132,6 +135,7 @@ class ReasonController extends Controller
     {
         $reason->is_deleted = 1;
         $reason->save();
-        return redirect()->route('reason.index')->with('message','Reason Description has been deleted');
+
+        return redirect()->route('reason.index')->with('message', 'Reason Description has been deleted');
     }
 }

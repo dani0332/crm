@@ -13,14 +13,14 @@ class CreateQuoteStatusMapTable extends Migration
      */
     public function up()
     {
-        if (!Schema::hasTable('quote_status_map')) {
+        if (! Schema::hasTable('quote_status_map')) {
             Schema::create('quote_status_map', function (Blueprint $table) {
                 $table->id();
-                $table->string('type_of_insurance','150')->nullable();
+                $table->string('type_of_insurance', '150')->nullable();
                 $table->integer('quote_status_id')->nullable();
                 $table->integer('sort_order')->nullable();
-                $table->string('created_by','100')->nullable();
-                $table->string('updated_by','100')->nullable();
+                $table->string('created_by', '100')->nullable();
+                $table->string('updated_by', '100')->nullable();
                 $table->timestamps();
             });
         }

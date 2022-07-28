@@ -1,30 +1,28 @@
 <?php
 
 namespace App\Http\Controllers;
-use DataTables;
-use App\Models\VehicleDepreciation;
+
 use App\Models\CarMake;
 use App\Models\CarModel;
 use App\Models\InsuranceProvider;
+use App\Models\VehicleDepreciation;
+use DataTables;
 use Illuminate\Http\Request;
-use Spatie\Permission\Models\Role;
-use DB;
 
 class VehicleDepreciationController extends Controller
 {
-        /**
+    /**
      * Display a listing of the resource.
      *
      * @return \Illuminate\Http\Response
      */
-        function __construct()
-        {
-         $this->middleware('permission:vehicle-depreciation-list|vehicle-depreciation-create|vehicle-depreciation-edit|vehicle-depreciation-delete', ['only' => ['index','store']]);
-         $this->middleware('permission:vehicle-depreciation-create', ['only' => ['create','store']]);
-         $this->middleware('permission:vehicle-depreciation-edit', ['only' => ['edit','update']]);
-         $this->middleware('permission:vehicle-depreciation-delete', ['only' => ['destroy']]);
-     }
-
+    public function __construct()
+    {
+        $this->middleware('permission:vehicle-depreciation-list|vehicle-depreciation-create|vehicle-depreciation-edit|vehicle-depreciation-delete', ['only' => ['index', 'store']]);
+        $this->middleware('permission:vehicle-depreciation-create', ['only' => ['create', 'store']]);
+        $this->middleware('permission:vehicle-depreciation-edit', ['only' => ['edit', 'update']]);
+        $this->middleware('permission:vehicle-depreciation-delete', ['only' => ['destroy']]);
+    }
 
     /**
      * Display a listing of the resource.
@@ -34,21 +32,23 @@ class VehicleDepreciationController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-
-            $data = VehicleDepreciation::select('vehicle_depreciation.*','car_make.text as car_make_text', 'ip.text as ip_text'
-                ,'car_model.text as car_model_text')
+            $data = VehicleDepreciation::select('vehicle_depreciation.*', 'car_make.text as car_make_text', 'ip.text as ip_text', 'car_model.text as car_model_text')
             ->leftJoin('insurance_provider as ip', 'ip.id', '=', 'vehicle_depreciation.insurance_provider_id')
-            ->leftjoin('car_make','vehicle_depreciation.car_make_id','car_make.id')
-            ->leftjoin('car_model','vehicle_depreciation.car_model_id','car_model.id')
-            ->orderBy('created_at','desc');
-            if(isset($request->carmake) && !empty($request->carmake))
+            ->leftjoin('car_make', 'vehicle_depreciation.car_make_id', 'car_make.id')
+            ->leftjoin('car_model', 'vehicle_depreciation.car_model_id', 'car_model.id')
+            ->orderBy('created_at', 'desc');
+            if (isset($request->carmake) && ! empty($request->carmake)) {
                 $data->where('car_make_id', $request->carmake);
-            if(isset($request->carmodel) && !empty($request->carmodel))
+            }
+            if (isset($request->carmodel) && ! empty($request->carmodel)) {
                 $data->where('car_model_id', $request->carmodel);
+            }
+
             return DataTables::of($data)
                     ->addIndexColumn()
                     ->make(true);
         }
+
         return view('vehicledepreciation.view');
     }
 
@@ -62,7 +62,8 @@ class VehicleDepreciationController extends Controller
         $carmakes = CarMake::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
         $carmodels = CarModel::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
         $insuranceProviders = InsuranceProvider::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
-        return view('vehicledepreciation.add',compact('carmakes', 'carmodels', 'insuranceProviders'));
+
+        return view('vehicledepreciation.add', compact('carmakes', 'carmodels', 'insuranceProviders'));
     }
 
     /**
@@ -73,7 +74,7 @@ class VehicleDepreciationController extends Controller
      */
     public function store(Request $request)
     {
-        $this->validate($request,[
+        $this->validate($request, [
             'first_year' => 'required|numeric|min:1',
             'second_year' => 'required|numeric|min:1',
             'third_year' => 'required|numeric|min:1',
@@ -86,14 +87,12 @@ class VehicleDepreciationController extends Controller
             'tenth_year' => 'required|numeric|min:1',
             'insurance_provider_value' => 'required',
         ]);
-        if($request->car_make_value || $request->car_model_value || $request->insurance_provider_value)
-        {
+        if ($request->car_make_value || $request->car_model_value || $request->insurance_provider_value) {
             $existingDepreciation = VehicleDepreciation::where('car_make_id', $request->car_make_value)
                                                         ->where('car_model_id', $request->car_model_value)
                                                         ->where('insurance_provider_id', $request->insurance_provider_value)
                                                         ->first();
-            if($existingDepreciation)
-            {
+            if ($existingDepreciation) {
                 return redirect()->back()->with('message', 'Depreciation with same Make, Model, Insurer already exists.')->withInput($request->input());
             }
         }
@@ -108,14 +107,21 @@ class VehicleDepreciationController extends Controller
         $depreciation->eighth_year = $request->eighth_year;
         $depreciation->ninth_year = $request->ninth_year;
         $depreciation->tenth_year = $request->tenth_year;
-        if( $request->car_model_id) $depreciation->car_model_id =  $request->car_model_value;
-        if( $request->car_make_value) $depreciation->car_make_id =  $request->car_make_value;
-        if( $request->insurance_provider_value) $depreciation->insurance_provider_id =  $request->insurance_provider_value;
+        if ($request->car_model_id) {
+            $depreciation->car_model_id = $request->car_model_value;
+        }
+        if ($request->car_make_value) {
+            $depreciation->car_make_id = $request->car_make_value;
+        }
+        if ($request->insurance_provider_value) {
+            $depreciation->insurance_provider_id = $request->insurance_provider_value;
+        }
         $depreciation->save();
 
-        if(isset($request->return_to_view)) {
-            return redirect("valuation/vehicledepreciation/".$depreciation->id)->with('success', 'Vechile Depreciation has been stored');
+        if (isset($request->return_to_view)) {
+            return redirect('valuation/vehicledepreciation/'.$depreciation->id)->with('success', 'Vechile Depreciation has been stored');
         }
+
         return redirect()->back()->with('success', 'Vechile Depreciation has been stored');
     }
 
@@ -130,7 +136,8 @@ class VehicleDepreciationController extends Controller
         $carMake = CarMake::where('id', '=', $vehicledepreciation->car_make_id)->first();
         $carModel = CarModel::where('id', '=', $vehicledepreciation->car_model_id)->first();
         $insuranceProvider = InsuranceProvider::where('id', '=', $vehicledepreciation->insurance_provider_id)->first();
-        return view('vehicledepreciation.show',compact('vehicledepreciation', 'carMake', 'carModel', 'insuranceProvider'));
+
+        return view('vehicledepreciation.show', compact('vehicledepreciation', 'carMake', 'carModel', 'insuranceProvider'));
     }
 
     /**
@@ -144,7 +151,8 @@ class VehicleDepreciationController extends Controller
         $carMakes = CarMake::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
         $carModels = CarModel::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
         $insuranceProviders = InsuranceProvider::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
-        return view('vehicledepreciation.edit',compact('vehicledepreciation','carMakes','carModels', 'insuranceProviders'));
+
+        return view('vehicledepreciation.edit', compact('vehicledepreciation', 'carMakes', 'carModels', 'insuranceProviders'));
     }
 
     /**
@@ -156,7 +164,7 @@ class VehicleDepreciationController extends Controller
      */
     public function update(Request $request, VehicleDepreciation $vehicledepreciation)
     {
-        $this->validate($request,[
+        $this->validate($request, [
             'first_year' => 'required|numeric|min:1',
             'second_year' => 'required|numeric|min:1',
             'third_year' => 'required|numeric|min:1',
@@ -180,14 +188,21 @@ class VehicleDepreciationController extends Controller
         $vehicledepreciation->ninth_year = $request->ninth_year;
         $vehicledepreciation->tenth_year = $request->tenth_year;
 
-        if( $request->car_model_id) $vehicledepreciation->car_model_id =  $request->car_model_value;
-        if( $request->car_make_value) $vehicledepreciation->car_make_id =  $request->car_make_value;
-        if( $request->insurance_provider_value) $vehicledepreciation->insurance_provider_id =  $request->insurance_provider_value;
-        
-        $vehicledepreciation->save();
-        if(isset($request->return_to_view)) {
-            return redirect("valuation/vehicledepreciation/".$vehicledepreciation->id)->with('success', 'Vehicle Depreciation has been updated');
+        if ($request->car_model_id) {
+            $vehicledepreciation->car_model_id = $request->car_model_value;
         }
+        if ($request->car_make_value) {
+            $vehicledepreciation->car_make_id = $request->car_make_value;
+        }
+        if ($request->insurance_provider_value) {
+            $vehicledepreciation->insurance_provider_id = $request->insurance_provider_value;
+        }
+
+        $vehicledepreciation->save();
+        if (isset($request->return_to_view)) {
+            return redirect('valuation/vehicledepreciation/'.$vehicledepreciation->id)->with('success', 'Vehicle Depreciation has been updated');
+        }
+
         return redirect()->back()->with('success', 'Vehicle Depreciation has been updated');
     }
 
@@ -200,6 +215,7 @@ class VehicleDepreciationController extends Controller
     public function destroy(VehicleDepreciation $vehicledepreciation)
     {
         $vehicledepreciation->delete();
-        return redirect()->route('vehicledepreciation.index')->with('message','Vehicle Depreciation has been deleted');
+
+        return redirect()->route('vehicledepreciation.index')->with('message', 'Vehicle Depreciation has been deleted');
     }
 }

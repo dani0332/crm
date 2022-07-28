@@ -3,54 +3,57 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Auditable;
-use App\Models\BaseModel;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
 class InsuranceProvider extends BaseModel implements AuditableContract
 {
     use HasFactory, Auditable;
+
     protected $table = 'insurance_provider';
     protected $guarded = ['id'];
-
     public $access = [
 
         'write' => ['advisor', 'oe'],
         'update' => ['advisor', 'oe'],
         'delete' => ['advisor', 'oe'],
         'access' => [
-            "pa" => [ 'code', 'text'],
-            "advisor" => [ 'code', 'text'],
-            "oe" => [ 'code', 'text'],
-            "admin" => [ 'code', 'text' ],
-            "invoicing" => [ 'code', 'text']
+            'pa' => ['code', 'text'],
+            'advisor' => ['code', 'text'],
+            'oe' => ['code', 'text'],
+            'admin' => ['code', 'text'],
+            'invoicing' => ['code', 'text'],
         ],
-        "list" => [
-            "pa" => ['id','code', 'text', 'insurance_company_id' ],
-            "advisor" => [ 'id','code', 'text', 'insurance_company_id'],
-            "oe" => [ 'id','code', 'text', 'insurance_company_id'],
-            "admin" => [ 'id','code', 'text', 'insurance_company_id'],
-            "invoicing" => [ 'code', 'text', 'insurance_company_id']
-        ]
+        'list' => [
+            'pa' => ['id', 'code', 'text', 'insurance_company_id'],
+            'advisor' => ['id', 'code', 'text', 'insurance_company_id'],
+            'oe' => ['id', 'code', 'text', 'insurance_company_id'],
+            'admin' => ['id', 'code', 'text', 'insurance_company_id'],
+            'invoicing' => ['code', 'text', 'insurance_company_id'],
+        ],
     ];
 
-    public function relations() {
+    public function relations()
+    {
         return [];
     }
 
-    public function processGetDSL($filters) {
+    public function processGetDSL($filters)
+    {
         return self::processGetBaseDSL($filters, false);
     }
 
     public function getCreatedAtAttribute($table)
     {
-        $date_time_format = env("DATETIME_FORMAT");
+        $date_time_format = env('DATETIME_FORMAT');
+
         return $this->asDateTime($table)->timezone(config('app.timezone'))->format($date_time_format);
     }
+
     public function getUpdatedAtAttribute($table)
     {
-        $date_time_format = env("DATETIME_FORMAT");
+        $date_time_format = env('DATETIME_FORMAT');
+
         return $this->asDateTime($table)->timezone(config('app.timezone'))->format($date_time_format);
     }
 }

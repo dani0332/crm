@@ -2,12 +2,12 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
-use App\Services\InslyDataService;
 use App\Jobs\InslyDataProcessingJob;
 use App\Models\ApplicationStorage;
+use App\Services\InslyDataService;
+use Carbon\Carbon;
 use Config;
-use \Carbon\Carbon;
+use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 
 class InslyOldDataCapture extends Command
@@ -54,15 +54,15 @@ class InslyOldDataCapture extends Command
 
             $numberOfDays = Config::get('constants.INSLY_DAYS_TO_CAPTURE');
 
-            Log::info('number of days' . $numberOfDays);
+            Log::info('number of days'.$numberOfDays);
 
-            $defaultStartDate = (string)Config::get('constants.INSLY_DEFAULT_DATE_TO_CAPTURE');
+            $defaultStartDate = (string) Config::get('constants.INSLY_DEFAULT_DATE_TO_CAPTURE');
 
-            Log::info('default start date : ' . $defaultStartDate);
+            Log::info('default start date : '.$defaultStartDate);
 
             $sortedDate = Carbon::createFromFormat($format, $defaultStartDate)->format($format);
 
-            Log::info('Parsed Default Date : ' . $sortedDate);
+            Log::info('Parsed Default Date : '.$sortedDate);
 
             $lastBatch = InslyDataService::GetLastInslyBatchLog();
 
@@ -70,22 +70,22 @@ class InslyOldDataCapture extends Command
 
             Log::info($lastBatch);
 
-            if ($lastBatch == "") {
+            if ($lastBatch == '') {
                 Log::info('Record not found');
                 $nextStartDate = $sortedDate;
 
-                Log::info('Next Start Date : ' . $nextStartDate);
-                $nextEndDate = date($format, strtotime($nextStartDate . ' + ' . $numberOfDays . ' days'));
+                Log::info('Next Start Date : '.$nextStartDate);
+                $nextEndDate = date($format, strtotime($nextStartDate.' + '.$numberOfDays.' days'));
 
-                Log::info('Next End Date : ' . $nextEndDate);
+                Log::info('Next End Date : '.$nextEndDate);
             } else {
                 Log::info('Record found');
-                $nextStartDate = date($format, strtotime($lastBatch->batch_end_date . ' + 1 days'));
+                $nextStartDate = date($format, strtotime($lastBatch->batch_end_date.' + 1 days'));
 
-                Log::info('Next Start Date : ' . $nextStartDate);
-                $nextEndDate = date($format, strtotime($nextStartDate . ' + ' . $numberOfDays . ' days'));
+                Log::info('Next Start Date : '.$nextStartDate);
+                $nextEndDate = date($format, strtotime($nextStartDate.' + '.$numberOfDays.' days'));
 
-                Log::info('Next End Date : ' . $nextEndDate);
+                Log::info('Next End Date : '.$nextEndDate);
             }
             Log::info('Process FetchAndProcessInslyData trigged');
 
@@ -93,11 +93,11 @@ class InslyOldDataCapture extends Command
 
             $dataCount = count(json_decode($data)->policies);
 
-            Log::info('Data from url fetched with number of records  : ' . $dataCount);
+            Log::info('Data from url fetched with number of records  : '.$dataCount);
 
             InslyDataService::AddInslyBatchLog($nextStartDate, $nextEndDate, $dataCount);
 
-            Log::info('Record added in db for batch log for start date : ' . $nextStartDate . ', end date : ' . $nextEndDate . ', count : ' . $dataCount);
+            Log::info('Record added in db for batch log for start date : '.$nextStartDate.', end date : '.$nextEndDate.', count : '.$dataCount);
 
             dispatch(new InslyDataProcessingJob($data));
         } else {

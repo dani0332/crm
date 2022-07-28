@@ -14,11 +14,10 @@ class AlterTableTmLeadContactInformation extends Migration
     public function up()
     {
         Schema::table('tm_lead_contact_information', function (Blueprint $table) {
-            
-            if(Schema::hasColumn('tm_lead_contact_information', 'email_address')) {
+            if (Schema::hasColumn('tm_lead_contact_information', 'email_address')) {
                 $table->string('email_address')->nullable()->change();
             }
-            if(Schema::hasColumn('tm_lead_contact_information', 'phone_number')) {
+            if (Schema::hasColumn('tm_lead_contact_information', 'phone_number')) {
                 $table->string('phone_number')->nullable()->change();
             }
         });

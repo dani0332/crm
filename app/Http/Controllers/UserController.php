@@ -6,19 +6,19 @@ use App\Enums\quoteTypeCode;
 use App\Enums\RolesEnum;
 use App\Models\Team;
 use App\Models\User;
-use App\Models\LeadAllocation;
 use App\Services\LeadAllocationService;
 use App\Services\UserService;
+use Auth;
 use DataTables;
 use DB;
 use Illuminate\Http\Request;
 use Spatie\Permission\Models\Role;
-use Auth;
 
 class UserController extends Controller
 {
     protected $leadAllocationService;
     protected $userService;
+
     public function __construct(LeadAllocationService $leadAllocationService, UserService $userService)
     {
         $this->leadAllocationService = $leadAllocationService;
@@ -38,7 +38,7 @@ class UserController extends Controller
     {
         if ($request->ajax()) {
             $filteredData = [];
-            $users = DB::select("SELECT u1.id
+            $users = DB::select('SELECT u1.id
                                         ,u1.name
                                         ,u1.email
                                         ,u2.roles
@@ -63,20 +63,21 @@ class UserController extends Controller
                                             ,u2.roles
                                             ,teams.name
                                             ,u1.created_at
-                                            ,u1.updated_at");
+                                            ,u1.updated_at');
             $filteredData = $users;
 
-            if (!empty($request->email)) {
+            if (! empty($request->email)) {
                 $collection = collect($filteredData);
                 $filteredData = $collection->filter(function ($value, $key) use ($request) {
                     return $value->email == $request->email;
                 });
             }
-            if (!empty($request->name)) {
+            if (! empty($request->name)) {
                 $collection = collect($filteredData);
                 $filteredData = $collection->filter(function ($value, $key) use ($request) {
-                    if (str_contains(strtoupper($value->name), strtoupper($request->name)))
+                    if (str_contains(strtoupper($value->name), strtoupper($request->name))) {
                         return $value;
+                    }
                 });
             }
 
@@ -87,6 +88,7 @@ class UserController extends Controller
 
         return view('user.view');
     }
+
     /**
      * Show the form for creating a new resource.
      *
@@ -97,8 +99,10 @@ class UserController extends Controller
         $roles = Role::pluck('name', 'name')->all(); // get all roles
         $teams = Team::whereNull('parent_team_id')->orderBy('name', 'asc')->get(); // get all teams
         $subTeams = [];
+
         return view('user.add', compact('roles', 'teams', 'subTeams'));
     }
+
     /**
      * Store a newly created resource in storage.
      *
@@ -120,9 +124,11 @@ class UserController extends Controller
         $this->leadAllocationService->createLeadAllocationRecord($user->id);
 
         $user->assignRole($request->input('roles'));
-        if (isset($request->return_to_view))
-            return redirect("admin/users/" . $user->id)->with('success', 'User has been stored');
+        if (isset($request->return_to_view)) {
+            return redirect('admin/users/'.$user->id)->with('success', 'User has been stored');
+        }
     }
+
     /**
      * Display the specified resource.
      *
@@ -132,14 +138,14 @@ class UserController extends Controller
     public function show(User $user)
     {
         // getting current user's team names
-        $teamName = "";
-        $subTeamName = "";
-        $additionalTeamNames = "";
-        $managerName = "";
+        $teamName = '';
+        $subTeamName = '';
+        $additionalTeamNames = '';
+        $managerName = '';
         if ($user->manager_id) {
             $managerName = User::find($user->manager_id)->name;
         }
-        if ($user->additional_team_ids != "") {
+        if ($user->additional_team_ids != '') {
             $additionalTeamNamesArray = Team::whereIn('id', explode(',', $user->additional_team_ids))->pluck('name')->toArray();
             $additionalTeamNames = implode(', ', $additionalTeamNamesArray);
         }
@@ -149,8 +155,10 @@ class UserController extends Controller
         if ($user->team_id) {
             $teamName = Team::find($user->team_id)->name;
         }
+
         return view('user.show', compact('user', 'teamName', 'subTeamName', 'additionalTeamNames', 'managerName'));
     }
+
     /**
      * Show the form for editing the specified resource.
      *
@@ -164,12 +172,16 @@ class UserController extends Controller
         $teams = Team::whereNull('parent_team_id')->orderBy('name', 'asc')->get(); // get all teams
         $subTeams = Team::where('parent_team_id', $user->team_id)->orderBy('name', 'asc')->get();
         $managers = [];
-        if ($user->teamId)  $managers = $this->getManagersBasedOnTeamId($user->team_id, $user->id); // get all managers based on current user's team
+        if ($user->teamId) {
+            $managers = $this->getManagersBasedOnTeamId($user->team_id, $user->id);
+        } // get all managers based on current user's team
         $selectedAdditionalTeams = $user->additional_team_ids; // get all additional teams of current user
         $selectedTeam = $user->team_id; // current user team
         $selectedManager = $user->manager_id; // current user manager
+
         return view('user.edit', compact('user', 'roles', 'userRole', 'teams', 'selectedTeam', 'managers', 'selectedManager', 'selectedAdditionalTeams', 'subTeams'));
     }
+
     /**
      * Update the specified resource in storage.
      *
@@ -183,7 +195,7 @@ class UserController extends Controller
             'name' => 'required|max:120',
             'email' => 'required|email',
             'roles' => 'required',
-            'team' => 'required'
+            'team' => 'required',
         ]);
         // Updating user
         $user->name = $request->name;
@@ -191,28 +203,37 @@ class UserController extends Controller
         $user->mobile_no = $request->mobile_no;
         $user->landline_no = $request->landline_no;
         $user->password = bcrypt($request->password);
-        $user->is_active = $request->is_active == "on" ? 1 : 0;
+        $user->is_active = $request->is_active == 'on' ? 1 : 0;
         $this->leadAllocationService->updateUserAllocationRecord($user->id, null, null, $user->is_active);
-        if ($request->manager_id != "0") $user->manager_id = $request->manager_id;
-        else $user->manager_id = null;
+        if ($request->manager_id != '0') {
+            $user->manager_id = $request->manager_id;
+        } else {
+            $user->manager_id = null;
+        }
         if (isset($request->additionalTeams)) {
-            if (count((array)$request->additionalTeams) > 1) {
+            if (count((array) $request->additionalTeams) > 1) {
                 $user->additional_team_ids = implode(',', $request->additionalTeams);
             } else {
                 $user->additional_team_ids = $request->additionalTeams[0];
             }
         }
-        if ($request->sub_team_id != "0") $user->sub_team_id = $request->sub_team_id;
-        if ($request->team != "0" || $request->team != null) $user->team_id = $request->team;
+        if ($request->sub_team_id != '0') {
+            $user->sub_team_id = $request->sub_team_id;
+        }
+        if ($request->team != '0' || $request->team != null) {
+            $user->team_id = $request->team;
+        }
         $user->save();
 
         // Updating user roles
         DB::table('model_has_roles')->where('model_id', $user->id)->delete();
         $user->assignRole($request->input('roles'));
 
-        if (isset($request->return_to_view))
-            return redirect("admin/users/" . $user->id)->with('success', 'User has been updated');
+        if (isset($request->return_to_view)) {
+            return redirect('admin/users/'.$user->id)->with('success', 'User has been updated');
+        }
     }
+
     /**
      * Remove the specified resource from storage.
      *
@@ -222,6 +243,7 @@ class UserController extends Controller
     public function destroy(User $user)
     {
         $user->delete();
+
         return redirect()->route('users.index')->with('message', 'User has been deleted');
     }
 
@@ -233,18 +255,19 @@ class UserController extends Controller
     public function getSubTeams(Request $request)
     {
         $teamId = $request->query()['teamId'];
+
         return Team::where('parent_team_id', $teamId)->select('id', 'name')->orderBy('name', 'asc')->get();
     }
 
     public function getTeamManagers(Request $request)
     {
         $teamId = $request->query()['teamId'];
+
         return $this->getManagersBasedOnTeamId($teamId, $request->userId);
     }
 
     public function getManagersBasedOnTeamId($teamId, $userId = null)
     {
-
         $team = Team::find($teamId);
         $teamUsers = User::Where('team_id', $teamId)->where('id', '!=', $userId)->get();
         $teamName = strtoupper($team->name);
@@ -252,11 +275,10 @@ class UserController extends Controller
         $roleNames = [];
         if ($teamName == strtoupper(quoteTypeCode::Health)) {
             $roleNames = [RolesEnum::RMManager, RolesEnum::RMDeputyManager, RolesEnum::EBPManager, RolesEnum::EBPDeputyManager, RolesEnum::HealthManager, RolesEnum::HealthDeputyManager, RolesEnum::HealthRenewalManager, RolesEnum::HealthNewBusinessManager];
-
-        } else if ($teamName == strtoupper(quoteTypeCode::Business)) {
+        } elseif ($teamName == strtoupper(quoteTypeCode::Business)) {
             $roleNames = [RolesEnum::GMManager, RolesEnum::GMDeputyManager, RolesEnum::CorplineManager, RolesEnum::CorplineDeputyManager, RolesEnum::BusinessManager, RolesEnum::BusinessDeputyManager, RolesEnum::GMRenewalManager, RolesEnum::CorplineRenewalManager, RolesEnum::GMNewBusinessManager, RolesEnum::CorplineNewBusinessManager];
         } else {
-            $roleNames = [$teamName . '_MANAGER', $teamName . '_DEPUTY_MANAGER', $teamName . '_RENEWAL_MANAGER', $teamName . '_NEW_BUSINESS_MANAGER'];
+            $roleNames = [$teamName.'_MANAGER', $teamName.'_DEPUTY_MANAGER', $teamName.'_RENEWAL_MANAGER', $teamName.'_NEW_BUSINESS_MANAGER'];
         }
         $teamManagers = [];
         foreach ($teamUsers as $teamUser) {
@@ -268,9 +290,10 @@ class UserController extends Controller
             });
             // if user has any of the roles we are looking for then add him to the list of managers
             if (count($filteredRoles) > 0) {
-                array_push($teamManagers, ['id' => $teamUser->id, 'name' => $teamUser->name . ' - ' . implode(', ', $filteredRoles)]);
+                array_push($teamManagers, ['id' => $teamUser->id, 'name' => $teamUser->name.' - '.implode(', ', $filteredRoles)]);
             }
         }
+
         return $teamManagers;
     }
 }

@@ -14,7 +14,7 @@ class AddPreviousQuotePolicyPremiumToBusinessQuoteRequestTable extends Migration
     public function up()
     {
         Schema::table('business_quote_request', function (Blueprint $table) {
-            if(!Schema::hasColumn('business_quote_request', 'previous_quote_policy_premium')) {
+            if (! Schema::hasColumn('business_quote_request', 'previous_quote_policy_premium')) {
                 $table->decimal('previous_quote_policy_premium')->nullable();
             }
         });

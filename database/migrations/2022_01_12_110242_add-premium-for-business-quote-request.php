@@ -14,7 +14,7 @@ class AddPremiumForBusinessQuoteRequest extends Migration
     public function up()
     {
         Schema::table('business_quote_request', function (Blueprint $table) {
-            if (!Schema::hasColumn('business_quote_request', 'premium')) {
+            if (! Schema::hasColumn('business_quote_request', 'premium')) {
                 $table->decimal('premium')->nullable();
             }
         });

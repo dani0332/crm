@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class CustomerAdditionalInfo extends Model
 {
     use HasFactory;
+
     protected $table = 'customer_additional_info';
 
     public function customer()

@@ -3,14 +3,13 @@
 namespace App\Services;
 
 use App\Models\CarQuote;
-use App\Models\CarModelDetail;
 use Config;
 
 class CapiRequestService
 {
     public static function sendCAPIRequest($endpoint, $data)
     {
-        $apiEndPoint = Config::get('constants.CENTRAL_API_ENDPOINT') . $endpoint;
+        $apiEndPoint = Config::get('constants.CENTRAL_API_ENDPOINT').$endpoint;
         $apiToken = Config::get('constants.CENTRAL_API_TOKEN');
         $apiTimeout = Config::get('constants.CENTRAL_API_TIMEOUT');
 
@@ -46,14 +45,17 @@ class CapiRequestService
 
             return $getdecodeContents;
         } else {
-            return "API failed";
+            return 'API failed';
         }
     }
 
     public static function getUUID($type)
     {
-        $response = CapiRequestService::sendCAPIRequest('/api/v1-get-uuid', array("quoteTypeId" => $type));
-        if($response) return $response;
-        else return false;
+        $response = CapiRequestService::sendCAPIRequest('/api/v1-get-uuid', ['quoteTypeId' => $type]);
+        if ($response) {
+            return $response;
+        } else {
+            return false;
+        }
     }
 }

@@ -1,7 +1,6 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 class AlterTablesAddFulltextSearch extends Migration
@@ -27,19 +26,19 @@ class AlterTablesAddFulltextSearch extends Migration
      */
     public function down()
     {
-        Schema::table('health_quote_request', function($table) {
+        Schema::table('health_quote_request', function ($table) {
             $table->dropIndex('search');
         });
-        Schema::table('travel_quote_request', function($table) {
+        Schema::table('travel_quote_request', function ($table) {
             $table->dropIndex('search');
         });
-        Schema::table('home_quote_request', function($table) {
+        Schema::table('home_quote_request', function ($table) {
             $table->dropIndex('search');
         });
-        Schema::table('life_quote_request', function($table) {
+        Schema::table('life_quote_request', function ($table) {
             $table->dropIndex('search');
         });
-        Schema::table('business_quote_request', function($table) {
+        Schema::table('business_quote_request', function ($table) {
             $table->dropIndex('search');
         });
     }

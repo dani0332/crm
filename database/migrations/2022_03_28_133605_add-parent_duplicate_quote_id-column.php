@@ -14,42 +14,35 @@ class AddParentDuplicateQuoteIdColumn extends Migration
     public function up()
     {
         Schema::table('business_quote_request', function (Blueprint $table) {
-            if(!Schema::hasColumn('business_quote_request','parent_duplicate_quote_id'))
-            {
+            if (! Schema::hasColumn('business_quote_request', 'parent_duplicate_quote_id')) {
                 $table->string('parent_duplicate_quote_id', 30)->nullable();
             }
         });
         Schema::table('car_quote_request', function (Blueprint $table) {
-            if(!Schema::hasColumn('car_quote_request','parent_duplicate_quote_id'))
-            {
+            if (! Schema::hasColumn('car_quote_request', 'parent_duplicate_quote_id')) {
                 $table->string('parent_duplicate_quote_id', 30)->nullable();
             }
         });
         Schema::table('home_quote_request', function (Blueprint $table) {
-            if(!Schema::hasColumn('home_quote_request','parent_duplicate_quote_id'))
-            {
+            if (! Schema::hasColumn('home_quote_request', 'parent_duplicate_quote_id')) {
                 $table->string('parent_duplicate_quote_id', 30)->nullable();
             }
         });
         Schema::table('health_quote_request', function (Blueprint $table) {
-            if(!Schema::hasColumn('health_quote_request','parent_duplicate_quote_id'))
-            {
+            if (! Schema::hasColumn('health_quote_request', 'parent_duplicate_quote_id')) {
                 $table->string('parent_duplicate_quote_id', 30)->nullable();
             }
         });
         Schema::table('life_quote_request', function (Blueprint $table) {
-            if(!Schema::hasColumn('life_quote_request','parent_duplicate_quote_id'))
-            {
+            if (! Schema::hasColumn('life_quote_request', 'parent_duplicate_quote_id')) {
                 $table->string('parent_duplicate_quote_id', 30)->nullable();
             }
         });
         Schema::table('travel_quote_request', function (Blueprint $table) {
-            if(!Schema::hasColumn('travel_quote_request','parent_duplicate_quote_id'))
-            {
+            if (! Schema::hasColumn('travel_quote_request', 'parent_duplicate_quote_id')) {
                 $table->string('parent_duplicate_quote_id', 30)->nullable();
             }
         });
-
     }
 
     /**

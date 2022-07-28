@@ -2,12 +2,10 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
 use App\Models\CarQuote;
-use App\Jobs\FTCMailServiceJob;
-use \Carbon\Carbon;
-use App\Models\FTCHistory;
 use App\Models\CarQuoteEmailUniqueLink;
+use App\Models\FTCHistory;
+use Illuminate\Console\Command;
 
 class FTCAcKEmail extends Command
 {
@@ -42,12 +40,12 @@ class FTCAcKEmail extends Command
      */
     public function handle()
     {
-        $getAckEmailWhichProcessedArr = $carQuoteUniqueEmail = CarQuoteEmailUniqueLink::where([['is_ack_email', '=', 0],['status', '=', 'Processed']])->select('id','car_quote_id','is_ack_email')->skip(0)->take(10)->get();
+        $getAckEmailWhichProcessedArr = $carQuoteUniqueEmail = CarQuoteEmailUniqueLink::where([['is_ack_email', '=', 0], ['status', '=', 'Processed']])->select('id', 'car_quote_id', 'is_ack_email')->skip(0)->take(10)->get();
         foreach ($getAckEmailWhichProcessedArr as &$value) {
-           \Log::info("Send Ack Email to CarQuote:".$value->car_quote_id);
-            $row = CarQuote::with(["payment_detail","quote_status_id", "kyc_status_id", "insurance_coverage.insurance_company_id", "insurance_coverage.insurance_plan_id", "insurance_coverage.vehicle_type_id", "uae_license_held_for_id", "car_make_id", "car_model_id", "emirate_of_registration_id", "claim_history_id",  "nationality_id", "vehicle_detail_id", "pa_id", "car_quote_kyc"])->where("id",$value->car_quote_id)->first();
+            \Log::info('Send Ack Email to CarQuote:'.$value->car_quote_id);
+            $row = CarQuote::with(['payment_detail', 'quote_status_id', 'kyc_status_id', 'insurance_coverage.insurance_company_id', 'insurance_coverage.insurance_plan_id', 'insurance_coverage.vehicle_type_id', 'uae_license_held_for_id', 'car_make_id', 'car_model_id', 'emirate_of_registration_id', 'claim_history_id',  'nationality_id', 'vehicle_detail_id', 'pa_id', 'car_quote_kyc'])->where('id', $value->car_quote_id)->first();
             $getQuote = new FTCHistory;
-            $getQuote->sendFtcEmail($row,"motor_ack_email"); 
+            $getQuote->sendFtcEmail($row, 'motor_ack_email');
 
             $carQuoteUniqueLink = CarQuoteEmailUniqueLink::find($value->id);
             $carQuoteUniqueLink->is_ack_email = 1;

@@ -3,12 +3,13 @@
 namespace App\Services;
 
 use App\Models\Team;
-use Illuminate\Http\Request;
 use DB;
+use Illuminate\Http\Request;
 
 class TeamService extends BaseService
 {
     protected $query;
+
     public function __construct()
     {
         $this->query = DB::table('teams as t')
@@ -30,14 +31,15 @@ class TeamService extends BaseService
     {
         $existingTeam = Team::where('name', $request->name)->first();
         if ($existingTeam != null) {
-            return "Error: name already exists";
+            return 'Error: name already exists';
         }
         $team = new Team();
         $team->name = $request->name;
-        if(isset($request->parent_team_id)){
+        if (isset($request->parent_team_id)) {
             $team->parent_team_id = $request->parent_team_id;
         }
         $team->save();
+
         return $team;
     }
 
@@ -46,53 +48,55 @@ class TeamService extends BaseService
         $searchProperties = $model->searchProperties;
         if ($request->ajax()) {
             foreach ($searchProperties as $item) {
-                if (!empty($request[$item])) {
+                if (! empty($request[$item])) {
                     if ($request[$item] == 'null') {
                         $this->query->whereNull($item);
                     } else {
-                        $this->query->where('t.' . $item, $request[$item]);
+                        $this->query->where('t.'.$item, $request[$item]);
                     }
                 }
             }
         }
+
         return $this->query->orderBy('t.created_at', 'DESC');
     }
-
 
     public function updateTeams(Request $request, $id)
     {
         $team = Team::where('id', $id)->first();
         $team->name = $request->name;
-        if(isset($request->parent_team_id)){
+        if (isset($request->parent_team_id)) {
             $team->parent_team_id = $request->parent_team_id;
         }
         $team->save();
-        if (isset($request->return_to_view))
-            return redirect("/quotes/teams/" . $id)->with('success', 'Team has been updated');
+        if (isset($request->return_to_view)) {
+            return redirect('/quotes/teams/'.$id)->with('success', 'Team has been updated');
+        }
     }
 
     public function fillModelProperties()
     {
-        return array(
-            "id" => "readonly|none",
-            "name" => "input|text|required|title",
-            "parent_team_id" => "select|title",
-        );
+        return [
+            'id' => 'readonly|none',
+            'name' => 'input|text|required|title',
+            'parent_team_id' => 'select|title',
+        ];
     }
 
     public function getCustomTitleByProperty($propertyName)
     {
-        $title = "";
+        $title = '';
         switch ($propertyName) {
             case 'name':
-                $title = "Team Name";
+                $title = 'Team Name';
                 break;
             case 'parent_team_id':
-                $title = "Parent Team";
+                $title = 'Parent Team';
                 break;
             default:
                 break;
         }
+
         return $title;
     }
 
@@ -108,6 +112,6 @@ class TeamService extends BaseService
 
     public function fillModelSearchProperties()
     {
-        return ["name"];
+        return ['name'];
     }
 }

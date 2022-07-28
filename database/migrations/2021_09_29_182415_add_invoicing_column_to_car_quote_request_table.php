@@ -14,8 +14,7 @@ class AddInvoicingColumnToCarQuoteRequestTable extends Migration
     public function up()
     {
         Schema::table('car_quote_request', function (Blueprint $table) {
-
-            if(!Schema::hasColumn('car_quote_request','invoicing')){
+            if (! Schema::hasColumn('car_quote_request', 'invoicing')) {
                 $table->bigInteger('invoicing')->nullable()->unsigned();
                 $table->index('invoicing');
                 $table->foreign('invoicing')->references('id')->on('users');
