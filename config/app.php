@@ -1,7 +1,5 @@
 <?php
 
-use App\Providers\RepositoryServiceProvider;
-
 return [
 
     /*
@@ -164,7 +162,7 @@ return [
         Illuminate\Validation\ValidationServiceProvider::class,
         Illuminate\View\ViewServiceProvider::class,
         Laravel\Socialite\SocialiteServiceProvider::class,
-        RepositoryServiceProvider::class,
+        App\Providers\RepositoryServiceProvider::class,
 
         /*
          * Package Service Providers...

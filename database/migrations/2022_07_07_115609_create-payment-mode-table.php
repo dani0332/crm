@@ -16,8 +16,10 @@ class CreatePaymentModeTable extends Migration
         if (!Schema::hasTable('payment_methods')) {
             Schema::create('payment_methods', function (Blueprint $table) {
                 $table->string('code', 25)->primary();
-                $table->string('text');
+                $table->string('name', 255);
                 $table->string('parent_code', 25)->nullable();
+                $table->string('description', 500)->nullable();
+                $table->boolean('is_active')->default(true);
                 $table->timestamps();
             });
         }

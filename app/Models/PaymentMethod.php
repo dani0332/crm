@@ -2,8 +2,9 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Model;
 
-class PaymentMethod extends CRMBaseModel
+class PaymentMethod extends Model
 {
 
     protected $table = 'payment_methods';

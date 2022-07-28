@@ -60,6 +60,7 @@ use App\Http\Controllers\VehicleValueController;
 use App\Http\Controllers\AjaxController;
 use App\Http\Controllers\QuoteDocumentController;
 use App\Http\Controllers\MembersDetailController;
+use App\Http\Controllers\PaymentController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -90,6 +91,7 @@ Route::middleware(['auth'])->get('/home', function () {
 
 
 Route::group(['middleware' =>  ['auth']], function () {
+    Route::resource('payments', PaymentController::class);
     Route::resource('myleads', MyLeadsController::class);
     Route::get('getOverDueFollowupLeads', [MyLeadsController::class, 'getOverDueFollowupLeads'])->name('getOverDueFollowupLeads');
 

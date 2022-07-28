@@ -17,11 +17,18 @@ class CreatePaymentsTable extends Migration
             Schema::create('payments', function (Blueprint $table) {
                 $table->float('captured_amount', 16,2);
                 $table->string('code', 15);
-                $table->dateTime('captured_at');
-                $table->string('payment_reference',1000);
+                $table->unsignedBigInteger('paymentable_id')->nullable();
+                $table->string('paymentable_type', 255)->nullable();
+                $table->string('reference',1000);
                 $table->integer('payment_status_id');
-                $table->integer('provider_id');
-                $table->string('payment_method_code');
+                $table->integer('insurance_provider_id');
+                $table->integer('plan_id');
+                $table->string('payment_methods_code');
+                $table->string('description', 1000);
+                $table->unsignedBigInteger('created_by');
+                $table->unsignedBigInteger('updated_by');
+                $table->boolean('is_approved')->default(false);
+                $table->dateTime('captured_at');
                 $table->timestamps();
             });
         }

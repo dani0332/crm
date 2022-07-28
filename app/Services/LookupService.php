@@ -12,6 +12,7 @@ use App\Models\LostReasons;
 use App\Models\QuoteStatus;
 use App\Models\UAELicenseHeldFor;
 use App\Models\MemberCategory;
+use App\Models\PaymentMethod;
 use App\Models\SalaryBand;
 
 class LookupService extends BaseService
@@ -72,6 +73,11 @@ class LookupService extends BaseService
         ->where("is_active", true)
         ->orderBy('sort_order', 'asc')
         ->get();
+    }
+
+    public function getPaymentMethods()
+    {
+        return PaymentMethod::select('code', 'name', 'parent_code')->get();
     }
 
 }

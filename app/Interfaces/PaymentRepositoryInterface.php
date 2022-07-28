@@ -4,10 +4,10 @@ namespace App\Interfaces;
 
 interface PaymentRepositoryInterface
 {
-    public function getAllPayments($leadId, $quoteTypeId);
+    public function getPaymentsByQuoteId($quoteId, $quoteTypeId);
     public function getPaymentById($paymentId);
     public function deletePayment($paymentId);
-    public function createOrder(array $paymentInformation);
-    public function updateOrder($paymentId, array $newInformation);
+    public function createPayment(array $paymentInformation);
+    public function updatePayment($paymentId, array $newInformation);
     public function getPaymentLink($paymentId, $quoteTypeId, $leadId);
 }

@@ -4,7 +4,7 @@ namespace App\Providers;
 
 use App\Interfaces\PaymentRepositoryInterface;
 use Illuminate\Support\ServiceProvider;
-use PaymentRepository;
+use App\Repositories\PaymentRepository;
 
 class RepositoryServiceProvider extends ServiceProvider
 {

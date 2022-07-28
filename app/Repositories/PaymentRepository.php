@@ -1,5 +1,7 @@
 <?php
 
+namespace App\Repositories;
+
 use App\Interfaces\PaymentRepositoryInterface;
 use App\Models\Payment;
 use App\Services\PaymentLinkService;
@@ -13,9 +15,9 @@ class PaymentRepository implements  PaymentRepositoryInterface
         $this->paymentService = $paymentService;
     }
 
-    public function getAllPayments($leadId, $quoteTypeId)
+    public function getPaymentsByQuoteId($quoteId, $quoteTypeId)
     {
-        return Payment::where('quote_id', $leadId)->where('quote_type_id', $quoteTypeId)->get();
+        return Payment::where('quote_id', $quoteId)->where('quote_type_id', $quoteTypeId)->get();
     }
 
     public function getPaymentById($paymentId)
@@ -28,12 +30,12 @@ class PaymentRepository implements  PaymentRepositoryInterface
         return Payment::destroy($paymentId);
     }
 
-    public function createOrder(array $paymentInformation)
+    public function createPayment(array $paymentInformation)
     {
         return Payment::create($paymentInformation);
     }
 
-    public function updateOrder($paymentId, array $newInformation)
+    public function updatePayment($paymentId, array $newInformation)
     {
         return Payment::find($paymentId)->update($newInformation);
     }

@@ -239,6 +239,7 @@ class CRUDController extends Controller
     {
         $quoteType = strtolower($this->genericModel->modelType);
         $record = $this->crudService->getEntity($this->genericModel->modelType, $id);
+        $payments=[];
         if (!$record) abort(404);
         $autoAllocationDisabled = $this->lookupService->getApplicationStorageValue('LEAD_ALLOCATION_JOB_SWITCH');
         if(strtolower($this->genericModel->modelType) == strtolower(quoteTypeCode::Health) &&  Auth::user()->isHealthWCUAdvisor() && $record->wcu_id != Auth::user()->id && $autoAllocationDisabled == '1'){
@@ -336,16 +337,19 @@ class CRUDController extends Controller
                     $listQuotePlans = $quotePlans;
                 }
             }
+            $travelPlainModel = $this->travelQuoteService->getEntityPlain($record->id);
+            $payments = $travelPlainModel->payments;
+            $paymentMethods = $this->lookupService->getPaymentMethods();
 
             $membersDetail = $this->travelQuoteService->getMembersDetail($record->id);
             $quoteDocuments = $this->travelQuoteService->getQuoteDocuments($record->id);
 
             return view('shared.show', compact([
                 'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList',
-                'leadStatuses', 'lostReasons', 'selectedLostReasonId', 'membersDetail','model_name', 
+                'leadStatuses', 'lostReasons', 'selectedLostReasonId', 'membersDetail','model_name',
                 'allowedDuplicateLOB', 'audits', 'activities', 'advisors','isRenewalUser',
-                'isNewBusinessUser', 'ecomTravelInsuranceQuoteUrl', 'quoteType', 'quoteDocuments', 
-                'autoAllocationDisabled'
+                'isNewBusinessUser', 'ecomTravelInsuranceQuoteUrl', 'quoteType', 'quoteDocuments',
+                'autoAllocationDisabled', 'payments', 'paymentMethods', 'travelPlainModel'
             ]));
         } else if ($this->genericModel->modelType == quoteTypeCode::Health) { // Health plans to display on detail view
             $listQuotePlans = '';
@@ -572,7 +576,7 @@ class CRUDController extends Controller
                 'actualPremium', 'discountPremium', 'listQuotePlanBenefitsInclusions',
                 'listQuotePlanBenefitsExclusions', 'listQuotePlanBenefitsFeatures',
                 'listQuotePlanBenefitsPolicyDetailLink', 'modelName',
-                'listQuotePlanBenefitsCoInsurance', 'listQuotePlanBenefitsRegionCover', 
+                'listQuotePlanBenefitsCoInsurance', 'listQuotePlanBenefitsRegionCover',
                 'listQuotePlanBenefitsMaternityCover', 'members'
             ]));
         }
