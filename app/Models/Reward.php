@@ -10,6 +10,7 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 class Reward extends Model implements AuditableContract
 {
     use HasFactory, Auditable;
+
     protected $table = 'reward';
     public $timestamps = false;
 
@@ -48,7 +49,6 @@ class Reward extends Model implements AuditableContract
         parent::boot();
 
         static::deleting(function ($reward) {
-
             $reward->rewardTranslations()->delete();
         });
     }

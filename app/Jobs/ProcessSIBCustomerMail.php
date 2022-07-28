@@ -6,14 +6,14 @@ use App\Models\MyAlFredUser;
 use App\Services\CustomerService;
 use App\Services\CustomerWEGenerateUrlService;
 use App\Services\SendEmailCustomerService;
+use DB;
+use Exception;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Config;
-use DB;
-use Exception;
 
 class ProcessSIBCustomerMail implements ShouldQueue
 {
@@ -33,14 +33,14 @@ class ProcessSIBCustomerMail implements ShouldQueue
     public function handle()
     {
         try {
-            $emailTemplateId = (int)Config::get('constants.SIB_CORPORATE_TEMPLATE');
+            $emailTemplateId = (int) Config::get('constants.SIB_CORPORATE_TEMPLATE');
             $WEGenerateUrlResponse = CustomerWEGenerateUrlService::getCustomerWeUrl($this->email);
 
-            $emailData = array(
+            $emailData = [
                 'customerName' => $this->name,
                 'customerEmail' => $this->email,
-                'signUpButtonUrl' => $WEGenerateUrlResponse
-            );
+                'signUpButtonUrl' => $WEGenerateUrlResponse,
+            ];
 
             $getStatusCode = $this->sendEmailCustomerService->sendEmail($emailTemplateId, $emailData, 'corporate-myalfred-we');
 
@@ -53,12 +53,12 @@ class ProcessSIBCustomerMail implements ShouldQueue
                 $existingCustomer = MyAlFredUser::where('customer_id', '=', $updateCustomer->id)->get();
 
                 if ($existingCustomer->isEmpty()) {
-                    $code = substr($WEGenerateUrlResponse, strpos($WEGenerateUrlResponse, "signup/") + 7);
+                    $code = substr($WEGenerateUrlResponse, strpos($WEGenerateUrlResponse, 'signup/') + 7);
                     $newMyAlFredUser = new MyAlFredUser;
                     $newMyAlFredUser->signup_url = $WEGenerateUrlResponse;
                     $newMyAlFredUser->customer_id = $updateCustomer->id;
                     $newMyAlFredUser->code = $code;
-                    $newMyAlFredUser->source = "CORPORATE";
+                    $newMyAlFredUser->source = 'CORPORATE';
                     $newMyAlFredUser->save();
                 }
             }

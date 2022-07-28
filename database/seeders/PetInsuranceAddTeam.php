@@ -14,7 +14,7 @@ class PetInsuranceAddTeam extends Seeder
     public function run()
     {
         \DB::table('teams')->insert([
-            'name'=>'Pet'
+            'name' => 'Pet',
         ]);
     }
 }

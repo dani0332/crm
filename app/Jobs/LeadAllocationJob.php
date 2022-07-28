@@ -41,26 +41,23 @@ class LeadAllocationJob implements ShouldQueue
     {
         try {
             Log::info('Lead Allocation Job Started');
-            if (!$this->leadAllocationService->leadAllocationSwitchStatus()) {
+            if (! $this->leadAllocationService->leadAllocationSwitchStatus()) {
                 info('Lead Allocation Job Switch is OFF');
+
                 return;
-            }
-            else
-            {
+            } else {
                 $this->leadAllocationService->setAdvisorsToUnavailable();
                 $unAllocatedLeads = $this->leadAllocationService->getUnAllocatedLeads();
-                if(count($unAllocatedLeads) > 0)
-                {
+                if (count($unAllocatedLeads) > 0) {
                     $availableUsers = $this->leadAllocationService->getAvailableAdvisors();
                     $healthTeams = ['EBP', 'RM-Speed', 'RM-NB'];
                     $availableUsersString = '';
                     $availableUsers->each(function ($user) use (&$availableUsersString) {
-                        $availableUsersString .= $user->name . '|'. $user->last_allocated. ',' ;
+                        $availableUsersString .= $user->name.'|'.$user->last_allocated.',';
                     });
-                    info('availableUsers: ' . $availableUsersString);
-                    foreach($healthTeams as $healthTeam)
-                    {
-                        info('Lead Allocation Started for health team: ' . $healthTeam);
+                    info('availableUsers: '.$availableUsersString);
+                    foreach ($healthTeams as $healthTeam) {
+                        info('Lead Allocation Started for health team: '.$healthTeam);
                         $filteredLeadsByHealthTeam = $unAllocatedLeads->filter(function ($lead) use ($healthTeam) {
                             return strtolower($lead->health_team_type) == strtolower($healthTeam) ? $lead : false;
                         });
@@ -68,45 +65,37 @@ class LeadAllocationJob implements ShouldQueue
                             return strtolower($user->sub_team_name) == strtolower($healthTeam) ? $user : false;
                         });
 
-                        if($filteredLeadsByHealthTeam->count() > 0 && $filteredUsersByHealthTeam->count() > 0)
-                        {
-                            foreach($filteredLeadsByHealthTeam as $lead)
-                            {
+                        if ($filteredLeadsByHealthTeam->count() > 0 && $filteredUsersByHealthTeam->count() > 0) {
+                            foreach ($filteredLeadsByHealthTeam as $lead) {
                                 sleep(1);
                                 $filteredUsersByHealthTeam = $filteredUsersByHealthTeam->sortBy('last_allocated', SORT_NATURAL)->flatten();
                                 $advisor = $filteredUsersByHealthTeam->first();
-                                $this->leadAllocationService->assignLead($lead, $advisor->id , false);
-                                info('------->Lead Allocation Done for lead: ' . $lead->uuid . ' and advisor: ' . $advisor->name);
+                                $this->leadAllocationService->assignLead($lead, $advisor->id, false);
+                                info('------->Lead Allocation Done for lead: '.$lead->uuid.' and advisor: '.$advisor->name);
                                 $filteredUsersByHealthTeam->each(function ($user) use ($advisor) {
-                                    if($user->id == $advisor->id)
-                                    {
+                                    if ($user->id == $advisor->id) {
                                         $user->last_allocated = microtime(true);
                                     }
                                 });
-                            };
-
-                            foreach($filteredUsersByHealthTeam as $user)
-                            {
-                                LeadAllocation::where('user_id', $user->id)->update(['last_allocated' => (float)$user->last_allocated]);
                             }
 
-                        }
-                        else
-                        {
-                            info($healthTeam . ' Leads count is '. $filteredLeadsByHealthTeam->count() . ' and available users count is ' . $filteredUsersByHealthTeam->count());
-                            info('No leads or users available for health team: ' . $healthTeam);
+                            foreach ($filteredUsersByHealthTeam as $user) {
+                                LeadAllocation::where('user_id', $user->id)->update(['last_allocated' => (float) $user->last_allocated]);
+                            }
+                        } else {
+                            info($healthTeam.' Leads count is '.$filteredLeadsByHealthTeam->count().' and available users count is '.$filteredUsersByHealthTeam->count());
+                            info('No leads or users available for health team: '.$healthTeam);
                         }
                     }
-                }
-                else
-                {
+                } else {
                     info('No Unallocated Leads');
                 }
+
                 return;
             }
         } catch (\Exception $e) {
             info('Lead Allocation Job Failed');
-            info("message: " . $e->getMessage());
+            info('message: '.$e->getMessage());
             if ($this->attempts() < 4) {
                 $delayInSeconds = 2 * 60;
                 $this->release($delayInSeconds);

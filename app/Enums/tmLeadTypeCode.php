@@ -11,11 +11,11 @@ use BenSampo\Enum\Enum;
  */
 final class tmLeadTypeCode extends Enum
 {
-    const Organic = "Organic";
-    const Revival = "Revival";
-    const Recycle = "Recycle";
-    const Aqeed = "Aqeed";
-    const Aqeedrenewal = "Aqeed renewal";
-    const Aqeedrevival = "Aqeed revival";
-    const Whatsapp = "Whatsapp";
+    const Organic = 'Organic';
+    const Revival = 'Revival';
+    const Recycle = 'Recycle';
+    const Aqeed = 'Aqeed';
+    const Aqeedrenewal = 'Aqeed renewal';
+    const Aqeedrevival = 'Aqeed revival';
+    const Whatsapp = 'Whatsapp';
 }

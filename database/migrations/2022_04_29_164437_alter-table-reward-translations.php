@@ -13,9 +13,9 @@ class AlterTableRewardTranslations extends Migration
      */
     public function up()
     {
-            Schema::table('reward_translation', function (Blueprint $table) {
-                $table->string('terms_and_conditions', 3000)->change();
-            });
+        Schema::table('reward_translation', function (Blueprint $table) {
+            $table->string('terms_and_conditions', 3000)->change();
+        });
     }
 
     /**
@@ -25,9 +25,8 @@ class AlterTableRewardTranslations extends Migration
      */
     public function down()
     {
-        Schema::table('reward_translation', function (Blueprint $table)
-        {
-            $table->dropColumn([ 'terms_and_conditions']);
+        Schema::table('reward_translation', function (Blueprint $table) {
+            $table->dropColumn(['terms_and_conditions']);
         });
     }
 }

@@ -1,17 +1,18 @@
 <?php
 
 namespace App\Services;
+
 use Illuminate\Support\Facades\Config;
 
 class CustomerWEGenerateUrlService extends BaseService
 {
-	public static function getCustomerWeUrl()
+    public static function getCustomerWeUrl()
     {
         $magicUrlGenerateEndPoint = Config::get('constants.BERLIN_API_ENDPOINT').'/auth/generate-url';
         $magicUrlGenerateUserName = Config::get('constants.BERLIN_BASIC_AUTH_USER_NAME');
         $magicUrlGeneratePassword = Config::get('constants.BERLIN_BASIC_AUTH_PASSWORD');
 
-        $magicUrlGeneratauthBasic = base64_encode($magicUrlGenerateUserName . ":" . $magicUrlGeneratePassword);
+        $magicUrlGeneratauthBasic = base64_encode($magicUrlGenerateUserName.':'.$magicUrlGeneratePassword);
         $clientBerlin = new \GuzzleHttp\Client();
 
         try {
@@ -21,7 +22,7 @@ class CustomerWEGenerateUrlService extends BaseService
                     'headers' => [
                         'Content-Type' => 'application/json',
                         'Accept' => 'application/json',
-                        'Authorization' => 'Basic ' . $magicUrlGeneratauthBasic
+                        'Authorization' => 'Basic '.$magicUrlGeneratauthBasic,
                     ],
                 ]
             );
@@ -34,14 +35,14 @@ class CustomerWEGenerateUrlService extends BaseService
             $responseErrorCode = $e->getResponse()->getStatusCode();
         }
 
-        if(isset($getResponseUrl)) {
+        if (isset($getResponseUrl)) {
             $apiResponse = $getResponseUrl;
-        }
-        else {
-            if(isset($responseErrorCode)) {
+        } else {
+            if (isset($responseErrorCode)) {
                 $apiResponse = $responseErrorCode;
             }
         }
+
         return $apiResponse;
     }
 }

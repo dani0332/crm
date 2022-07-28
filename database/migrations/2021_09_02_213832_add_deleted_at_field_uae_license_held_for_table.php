@@ -14,8 +14,9 @@ class AddDeletedAtFieldUaeLicenseHeldForTable extends Migration
     public function up()
     {
         Schema::table('uae_license_held_for', function (Blueprint $table) {
-            if(!Schema::hasColumn('uae_license_held_for','deleted_at'))
+            if (! Schema::hasColumn('uae_license_held_for', 'deleted_at')) {
                 $table->softDeletes();
+            }
         });
     }
 

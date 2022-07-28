@@ -14,7 +14,7 @@ class UpdateColumnAdvisorIdForHealthQuoteRequest extends Migration
     public function up()
     {
         Schema::table('health_quote_request', function (Blueprint $table) {
-            if(Schema::hasColumn('health_quote_request', 'advisor_id')) {
+            if (Schema::hasColumn('health_quote_request', 'advisor_id')) {
                 $table->unsignedBigInteger('advisor_id')->nullable()->change();
                 $table->foreign('advisor_id')->references('id')->on('users')->onDelete('no action');
             }

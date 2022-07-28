@@ -14,8 +14,9 @@ class AddModeIdToCarQuotePaymentTable extends Migration
     public function up()
     {
         Schema::table('car_quote_payment', function (Blueprint $table) {
-            if(!Schema::hasColumn('car_quote_payment','mode_id'))
+            if (! Schema::hasColumn('car_quote_payment', 'mode_id')) {
                 $table->integer('mode_id');
+            }
         });
     }
 

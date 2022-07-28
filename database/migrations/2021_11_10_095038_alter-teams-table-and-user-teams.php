@@ -15,7 +15,6 @@ class AlterTeamsTableAndUserTeams extends Migration
     public function up()
     {
         Schema::table('teams', function (Blueprint $table) {
-
             DB::statement('SET FOREIGN_KEY_CHECKS=0;');
             if (Schema::hasColumn('teams', 'lead_id')) {
                 $table->dropForeign('teams_lead_id_foreign');

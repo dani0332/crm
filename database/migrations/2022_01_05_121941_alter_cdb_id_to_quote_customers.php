@@ -15,7 +15,7 @@ class AlterCdbIdToQuoteCustomers extends Migration
     {
         if (Schema::hasTable('quote_customers')) {
             Schema::table('quote_customers', function (Blueprint $table) {
-                if(Schema::hasColumn('quote_customers', 'cdb_id')) {
+                if (Schema::hasColumn('quote_customers', 'cdb_id')) {
                     $table->string('cdb_id', 30)->change();
                 }
             });

@@ -3,20 +3,20 @@
 namespace App\Http\Controllers;
 
 use App\Models\RentACar;
-use Illuminate\Http\Request;
 use DataTables;
-use Spatie\Permission\Models\Role;
 use DB;
+use Illuminate\Http\Request;
 
 class RentACarController extends Controller
 {
-    function __construct()
+    public function __construct()
     {
-         $this->middleware('permission:rent-a-car-list|rent-a-car-create|rent-a-car-edit|rent-a-car-delete', ['only' => ['index','store']]);
-         $this->middleware('permission:rent-a-car-create', ['only' => ['create','store']]);
-         $this->middleware('permission:rent-a-car-edit', ['only' => ['edit','update']]);
-         $this->middleware('permission:rent-a-car-delete', ['only' => ['destroy']]);
+        $this->middleware('permission:rent-a-car-list|rent-a-car-create|rent-a-car-edit|rent-a-car-delete', ['only' => ['index', 'store']]);
+        $this->middleware('permission:rent-a-car-create', ['only' => ['create', 'store']]);
+        $this->middleware('permission:rent-a-car-edit', ['only' => ['edit', 'update']]);
+        $this->middleware('permission:rent-a-car-delete', ['only' => ['destroy']]);
     }
+
     /**
      * Display a listing of the resource.
      *
@@ -25,10 +25,11 @@ class RentACarController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $data = RentACar::select('*')->orderBy('sort_order','asc');
+            $data = RentACar::select('*')->orderBy('sort_order', 'asc');
+
             return DataTables::of($data)
                     ->addIndexColumn()
-                    ->addColumn('action', function($row){
+                    ->addColumn('action', function ($row) {
                         return view('rentacar.actions', compact('row'))->render();
                     })
                     ->rawColumns(['action'])
@@ -56,20 +57,22 @@ class RentACarController extends Controller
      */
     public function store(Request $request)
     {
-        $this->validate($request,[
+        $this->validate($request, [
             'text' => 'required|max:120',
             'text_ar' => 'required|max:120',
         ]);
 
         $rentacar = new RentACar();
-        $rentacar->text=  $request->text;
-        $rentacar->text_ar=  $request->text_ar;
-        $rentacar->is_active =  $request->is_active == 'on' ? 1 : 0;
-        $rentacar->sort_order =  $request->sort_order;
+        $rentacar->text = $request->text;
+        $rentacar->text_ar = $request->text_ar;
+        $rentacar->is_active = $request->is_active == 'on' ? 1 : 0;
+        $rentacar->sort_order = $request->sort_order;
         $rentacar->save();
-        if(isset($request->return_to_view))
-            return redirect("claim/rentacar");
-        return back()->with('success','Rent a Car has been stored');
+        if (isset($request->return_to_view)) {
+            return redirect('claim/rentacar');
+        }
+
+        return back()->with('success', 'Rent a Car has been stored');
     }
 
     /**
@@ -80,7 +83,7 @@ class RentACarController extends Controller
      */
     public function show(RentACar $rentacar)
     {
-        return view('rentacar.show',compact('rentacar'));
+        return view('rentacar.show', compact('rentacar'));
     }
 
     /**
@@ -91,7 +94,7 @@ class RentACarController extends Controller
      */
     public function edit(RentACar $rentacar)
     {
-        return view('rentacar.edit',compact('rentacar'));
+        return view('rentacar.edit', compact('rentacar'));
     }
 
     /**
@@ -103,18 +106,20 @@ class RentACarController extends Controller
      */
     public function update(Request $request, RentACar $rentacar)
     {
-        $this->validate($request,[
+        $this->validate($request, [
             'text' => 'required|max:120',
             'text_ar' => 'required|max:120',
         ]);
-        $rentacar->text=  $request->text;
-        $rentacar->text_ar=  $request->text_ar;
-        $rentacar->is_active =  $request->is_active == 'on' ? 1 : 0;
-        $rentacar->sort_order =  $request->sort_order;
+        $rentacar->text = $request->text;
+        $rentacar->text_ar = $request->text_ar;
+        $rentacar->is_active = $request->is_active == 'on' ? 1 : 0;
+        $rentacar->sort_order = $request->sort_order;
         $rentacar->save();
-        if(isset($request->return_to_view))
-            return redirect("claim/rentacar");
-        return back()->with('success','Rent a Car has been Updated');
+        if (isset($request->return_to_view)) {
+            return redirect('claim/rentacar');
+        }
+
+        return back()->with('success', 'Rent a Car has been Updated');
     }
 
     /**
@@ -128,6 +133,7 @@ class RentACarController extends Controller
         DB::statement('SET FOREIGN_KEY_CHECKS=0');
         $rentacar->delete();
         DB::statement('SET FOREIGN_KEY_CHECKS=1');
+
         return redirect()->route('rentacar.index');
     }
 }

@@ -14,7 +14,7 @@ class AlterNotesForCustomerTable extends Migration
     public function up()
     {
         Schema::table('notes_for_customer', function (Blueprint $table) {
-            if(Schema::hasColumn('notes_for_customer', 'description')) {
+            if (Schema::hasColumn('notes_for_customer', 'description')) {
                 $table->string('description', 500)->nullable()->change();
             }
         });

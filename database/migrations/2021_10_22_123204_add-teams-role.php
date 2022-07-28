@@ -1,8 +1,6 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 
 class AddTeamsRole extends Migration
 {
@@ -14,10 +12,10 @@ class AddTeamsRole extends Migration
     public function up()
     {
         DB::table('permissions')->insert(
-            array(
+            [
                 'name' => 'teams-list',
                 'guard_name' => 'web',
-            )
+            ]
         );
     }
 

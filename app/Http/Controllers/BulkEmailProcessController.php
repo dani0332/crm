@@ -9,15 +9,12 @@ use Illuminate\Support\Facades\Log;
 class BulkEmailProcessController extends Controller
 {
     /**
-
      * Display a listing of the resource.
 
      *
 
      * @return \Illuminate\Http\Response
-
      */
-
     public function __construct()
     {
     }
@@ -26,6 +23,7 @@ class BulkEmailProcessController extends Controller
     {
         Log::info('Process Bulk Welcome Email Method trigged');
         dispatch(new RewardsBulkWEJob(json_encode($request), $request->dateTo, $request->dateFrom));
-        return "Success";
+
+        return 'Success';
     }
 }

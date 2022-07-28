@@ -14,11 +14,11 @@ class AlterHealthQuoteRequest extends Migration
     public function up()
     {
         Schema::table('health_quote_request', function (Blueprint $table) {
-            if(!Schema::hasColumn('health_quote_request', 'uuid')){
-                $table->string('uuid', '100')->default(DB::raw('(UUID())'));    
+            if (! Schema::hasColumn('health_quote_request', 'uuid')) {
+                $table->string('uuid', '100')->default(DB::raw('(UUID())'));
                 $table->string('policy_number', '50')->nullable();
-                $table->bigInteger('previous_quote_id')->nullable();        
-                $table->bigInteger('advisor_id')->nullable();        
+                $table->bigInteger('previous_quote_id')->nullable();
+                $table->bigInteger('advisor_id')->nullable();
             }
         });
     }

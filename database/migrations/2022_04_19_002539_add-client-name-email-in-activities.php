@@ -14,10 +14,10 @@ class AddClientNameEmailInActivities extends Migration
     public function up()
     {
         Schema::table('activites', function (Blueprint $table) {
-            if(!Schema::hasColumn('activites', 'client_name')) {
+            if (! Schema::hasColumn('activites', 'client_name')) {
                 $table->string('client_name', 255)->nullable();
             }
-            if(!Schema::hasColumn('activites', 'client_email')) {
+            if (! Schema::hasColumn('activites', 'client_email')) {
                 $table->string('client_email', 255)->nullable();
             }
         });

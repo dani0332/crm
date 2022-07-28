@@ -4,14 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Claim;
 use App\Models\ClaimsAttachments;
-use Illuminate\Http\Request;
-use Illuminate\Validation\ValidationException;
-
 use Auth;
-use DataTables;
-use Spatie\Permission\Models\Role;
-use DB;
 use Config;
+use Illuminate\Http\Request;
 
 class ClaimsAttachmentsController extends Controller
 {
@@ -22,7 +17,8 @@ class ClaimsAttachmentsController extends Controller
      */
     public function index(Claim $claim)
     {
-        $claims = Claim::orderBy('created_at','desc')->get();
+        $claims = Claim::orderBy('created_at', 'desc')->get();
+
         return view('claim.view', compact('claims'));
     }
 
@@ -64,9 +60,10 @@ class ClaimsAttachmentsController extends Controller
         $claimsAttachment->modified_by_id = Auth::user()->id;
         $claimsAttachment->save();
 
-        if(isset($request->return_to_view)) {
-            return redirect("claim/claims/".$claim->id."/"."claim-attachment/".$claimsAttachment->id)->with('success', 'Claim Attachment has been stored');  
+        if (isset($request->return_to_view)) {
+            return redirect('claim/claims/'.$claim->id.'/'.'claim-attachment/'.$claimsAttachment->id)->with('success', 'Claim Attachment has been stored');
         }
+
         return redirect()->back()->with('success', 'Claim Attachment has been stored');
     }
 
@@ -76,7 +73,6 @@ class ClaimsAttachmentsController extends Controller
      * @param  \App\Models\ClaimsAttachments  $claimsAttachments
      * @return \Illuminate\Http\Response
      */
-
     public function show(Claim $claim, ClaimsAttachments $claimAttachment)
     {
         return view('claimsattachments.show', compact('claim', 'claimAttachment'));
@@ -108,7 +104,7 @@ class ClaimsAttachmentsController extends Controller
         ]);
 
         if ($request->file('file_name')) {
-            $fileName = get_guid().'_' .$request->file_name->getClientOriginalName();
+            $fileName = get_guid().'_'.$request->file_name->getClientOriginalName();
             $filePath = $request->file('file_name')->storeAs('/', $fileName, 'azure');
             $claimAttachment->file_name = $fileName;
             $claimAttachment->file_original_name = $request->file_name->getClientOriginalName();
@@ -118,9 +114,10 @@ class ClaimsAttachmentsController extends Controller
         $claimAttachment->modified_by_id = Auth::user()->id;
         $claimAttachment->save();
 
-        if(isset($request->return_to_view)) {
-            return redirect("claim/claims/".$claim->id."/"."claim-attachment/".$claimAttachment->id)->with('success', 'Claim Attachment has been updated');  
+        if (isset($request->return_to_view)) {
+            return redirect('claim/claims/'.$claim->id.'/'.'claim-attachment/'.$claimAttachment->id)->with('success', 'Claim Attachment has been updated');
         }
+
         return redirect()->back()->with('success', 'Claim Attachment has been updated');
     }
 
@@ -133,6 +130,7 @@ class ClaimsAttachmentsController extends Controller
     public function destroy(Claim $claim, ClaimsAttachments $claimAttachment)
     {
         $claimAttachment->delete();
-        return redirect("claim/claims/".$claim->id)->with('message','Claim Attachment has been deleted');
+
+        return redirect('claim/claims/'.$claim->id)->with('message', 'Claim Attachment has been deleted');
     }
 }

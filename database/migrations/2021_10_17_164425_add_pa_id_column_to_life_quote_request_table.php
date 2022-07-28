@@ -15,7 +15,7 @@ class AddPaIdColumnToLifeQuoteRequestTable extends Migration
     {
         if (Schema::hasTable('life_quote_request')) {
             Schema::table('life_quote_request', function (Blueprint $table) {
-                if (!Schema::hasColumn('life_quote_request', 'pa_id')) {
+                if (! Schema::hasColumn('life_quote_request', 'pa_id')) {
                     $table->unsignedBigInteger('pa_id')->nullable();
                     $table->foreign('pa_id')->references('id')->on('users')->onDelete('no action');
                 }

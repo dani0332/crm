@@ -1,9 +1,8 @@
 <?php
 
-use Illuminate\Database\Migrations\Migration;
+use App\Models\BaseMigration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use App\Models\BaseMigration;
 
 class CreateFtcHistoryStatusTable extends BaseMigration
 {
@@ -14,12 +13,12 @@ class CreateFtcHistoryStatusTable extends BaseMigration
      */
     public function up()
     {
-        if (!Schema::hasTable('ftc_history_status')) {
+        if (! Schema::hasTable('ftc_history_status')) {
             Schema::create('ftc_history_status', function (Blueprint $table) {
                 $table->id()->autoIncrement();
                 $table->string('code')->nullable();
                 $table->string('text');
-                $table->string('text_ar')->nullable();;
+                $table->string('text_ar')->nullable();
                 parent::commonFields($table);
             });
         }

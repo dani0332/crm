@@ -14,7 +14,7 @@ class AlterBusinesssRequestAddDescription extends Migration
     public function up()
     {
         Schema::table('group_medical_types', function (Blueprint $table) {
-            if (!Schema::hasColumn('group_medical_types', 'description')) {
+            if (! Schema::hasColumn('group_medical_types', 'description')) {
                 $table->string('description', 500);
             }
         });

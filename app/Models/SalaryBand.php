@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class SalaryBand extends Model
 {
     use HasFactory;
+
     protected $table = 'salary_band';
 
     public function scopeActive($query)

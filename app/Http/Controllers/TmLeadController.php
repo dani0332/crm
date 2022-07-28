@@ -2,23 +2,26 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use App\Models\TmLead;
+use App\Enums\tmLeadStatusCode;
+use App\Http\Requests\TmLeadRequest;
+use App\Http\Traits\TmLeadTrait;
 use App\Models\TmInsuranceType;
+use App\Models\TmLead;
 use App\Models\TmLeadStatus;
 use App\Models\User;
-use App\Http\Requests\TmLeadRequest;
 use App\Services\TMLeadsService;
-use App\Enums\tmLeadStatusCode;
-use App\Http\Traits\TmLeadTrait;
-use \Carbon\Carbon;
-use DataTables;
 use Auth;
+use Carbon\Carbon;
+use DataTables;
+use Illuminate\Http\Request;
+
 class TmLeadController extends Controller
 {
     use TmLeadTrait;
+
     private $teleMarketingLeadsService;
-    function __construct(TMLeadsService $tmLeadsCreateUpdateService)
+
+    public function __construct(TMLeadsService $tmLeadsCreateUpdateService)
     {
         $this->teleMarketingLeadsService = $tmLeadsCreateUpdateService;
         $this->middleware('permission:telemarketing-list|telemarketing-create|telemarketing-edit|telemarketing-delete', ['only' => ['index', 'store']]);
@@ -26,6 +29,7 @@ class TmLeadController extends Controller
         $this->middleware('permission:telemarketing-edit', ['only' => ['edit', 'update']]);
         $this->middleware('permission:telemarketing-delete', ['only' => ['destroy']]);
     }
+
     /**
      * Display a listing of the resource.
      *
@@ -42,10 +46,10 @@ class TmLeadController extends Controller
         $tmLeadTypes = $this->getLeadTypes();
         $tmLeadStatuses = $this->getLeadStatuses();
 
-        if (Auth::user()->hasAnyRole(['TM_ADVISOR','TM_AUDIT'])) {
-            $isCurrentUserIsAdvisor = "1";
+        if (Auth::user()->hasAnyRole(['TM_ADVISOR', 'TM_AUDIT'])) {
+            $isCurrentUserIsAdvisor = '1';
         } else {
-            $isCurrentUserIsAdvisor = "0";
+            $isCurrentUserIsAdvisor = '0';
         }
 
         if ($request->ajax()) {
@@ -76,49 +80,48 @@ class TmLeadController extends Controller
                 $queryTmLeads->where('tm_leads.assigned_to_id', Auth::user()->id);
             }
 
-            if (isset($request->tm_lead_statuses_id) && !empty($request->tm_lead_statuses_id)) {
+            if (isset($request->tm_lead_statuses_id) && ! empty($request->tm_lead_statuses_id)) {
                 $queryTmLeads->where('tm_leads.tm_lead_statuses_id', $request->tm_lead_statuses_id);
             }
 
             if (
-                isset($request->searchType) && !empty($request->searchType)
-                && isset($request->searchField) && !empty($request->searchField)
+                isset($request->searchType) && ! empty($request->searchType)
+                && isset($request->searchField) && ! empty($request->searchField)
             ) {
                 if ($request->searchType == 'cdbID') {
                     $queryTmLeads->where('tm_leads.cdb_id', $request->searchField);
-                } else if ($request->searchType == 'emailAddress') {
+                } elseif ($request->searchType == 'emailAddress') {
                     $queryTmLeads->where('tm_leads.email_address', $request->searchField);
-                } else if ($request->searchType == 'phoneNumber') {
+                } elseif ($request->searchType == 'phoneNumber') {
                     $queryTmLeads->where('tm_leads.phone_number', $request->searchField);
                 } else {
                     $queryTmLeads->where($request->searchType, $request->searchField);
                 }
             }
             if (
-                isset($request->searchType) && !empty($request->searchType)
-                && isset($request->tmLeadsStartDate) && !empty($request->tmLeadsStartDate)
-                && isset($request->tmLeadsEndDate) && !empty($request->tmLeadsEndDate)
+                isset($request->searchType) && ! empty($request->searchType)
+                && isset($request->tmLeadsStartDate) && ! empty($request->tmLeadsStartDate)
+                && isset($request->tmLeadsEndDate) && ! empty($request->tmLeadsEndDate)
             ) {
-
                 if ($request->tmLeadsEndDate >= $request->tmLeadsStartDate) {
                     $tmLeadsDateFrom = Carbon::createFromFormat('Y-m-d', $request->tmLeadsStartDate)->startOfDay()->toDateTimeString();
                     $tmLeadsDateTo = Carbon::createFromFormat('Y-m-d', $request->tmLeadsEndDate)->endOfDay()->toDateTimeString();
-                    $queryTmLeads->whereBetween("tm_leads.".$request->searchType, [$tmLeadsDateFrom, $tmLeadsDateTo]);
+                    $queryTmLeads->whereBetween('tm_leads.'.$request->searchType, [$tmLeadsDateFrom, $tmLeadsDateTo]);
                 }
             }
-            if (isset($request->assigned_to_id) && !empty($request->assigned_to_id)) {
-                if ($request->assigned_to_id == "Unassigned") {
+            if (isset($request->assigned_to_id) && ! empty($request->assigned_to_id)) {
+                if ($request->assigned_to_id == 'Unassigned') {
                     $queryTmLeads->where('tm_leads.assigned_to_id', '=', '')->orWhereNull('tm_leads.assigned_to_id');
-                } else if ($request->assigned_to_id == "MyLeads") {
+                } elseif ($request->assigned_to_id == 'MyLeads') {
                     $queryTmLeads->where('tm_leads.assigned_to_id', Auth::user()->id);
                 } else {
                     $queryTmLeads->where('tm_leads.assigned_to_id', $request->assigned_to_id);
                 }
             }
-            if (isset($request->tm_insurance_types_id) && !empty($request->tm_insurance_types_id)) {
+            if (isset($request->tm_insurance_types_id) && ! empty($request->tm_insurance_types_id)) {
                 $queryTmLeads->where('tm_leads.tm_insurance_types_id', $request->tm_insurance_types_id);
             }
-            if (isset($request->tm_lead_types_id) && !empty($request->tm_lead_types_id)) {
+            if (isset($request->tm_lead_types_id) && ! empty($request->tm_lead_types_id)) {
                 $queryTmLeads->where('tm_leads.tm_lead_types_id', $request->tm_lead_types_id);
             }
 
@@ -126,12 +129,13 @@ class TmLeadController extends Controller
                 ->addIndexColumn()
                 ->make(true);
         }
+
         return view('tmlead.view', compact(
-            "handlers",
-            "isCurrentUserIsAdvisor",
-            "tmInsuranceTypes",
-            "tmLeadTypes",
-            "tmLeadStatuses"
+            'handlers',
+            'isCurrentUserIsAdvisor',
+            'tmInsuranceTypes',
+            'tmLeadTypes',
+            'tmLeadStatuses'
         ));
     }
 
@@ -157,9 +161,9 @@ class TmLeadController extends Controller
             ->whereIn('roles.name', ['TM_ADVISOR', 'TM_DEPUTY', 'TM_MANAGER'])->orderBy('roles.name', 'asc')->get();
 
         if (Auth::user()->hasRole('TM_ADVISOR')) {
-            $isUserTmAdvisor = "1";
+            $isUserTmAdvisor = '1';
         } else {
-            $isUserTmAdvisor = "0";
+            $isUserTmAdvisor = '0';
         }
 
         return view('tmlead.add', compact(
@@ -185,12 +189,12 @@ class TmLeadController extends Controller
      */
     public function store(TmLeadRequest $request)
     {
-
-        $tmLeadID = $this->teleMarketingLeadsService->tmLeadsCreateUpdate($request, "create", $tmLeadID = "");
+        $tmLeadID = $this->teleMarketingLeadsService->tmLeadsCreateUpdate($request, 'create', $tmLeadID = '');
 
         if (isset($request->return_to_view)) {
-            return redirect("telemarketing/tmleads/" . $tmLeadID)->with('success', 'TM Lead has been stored');
+            return redirect('telemarketing/tmleads/'.$tmLeadID)->with('success', 'TM Lead has been stored');
         }
+
         return redirect()->back()->with('success', 'TM Lead has been stored');
     }
 
@@ -203,9 +207,9 @@ class TmLeadController extends Controller
     public function show(TmLead $tmlead)
     {
         $customerCorrectPhoneNo = mapPhoneNumber($tmlead->phone_number);
-        if (Auth::user()->hasRole("TM_ADVISOR")) {
+        if (Auth::user()->hasRole('TM_ADVISOR')) {
             if (Auth::user()->id != $tmlead->assigned_to_id) {
-                return redirect()->route("tmleads.index")->with("message", "You don't have access to view this lead");
+                return redirect()->route('tmleads.index')->with('message', "You don't have access to view this lead");
             }
         }
 
@@ -220,22 +224,22 @@ class TmLeadController extends Controller
                 || $tmLeadStatusCode == tmLeadStatusCode::Duplicate || $tmLeadStatusCode == tmLeadStatusCode::Revived
                 || $tmLeadStatusCode == tmLeadStatusCode::Recycled)
         ) {
-            $isLeadEditable = "0";
+            $isLeadEditable = '0';
         } else {
-            $isLeadEditable = "1";
+            $isLeadEditable = '1';
         }
 
         $tmLeadStatusCode = TmLeadStatus::where('id', '=', $tmlead->tm_lead_statuses_id)->value('code');
         $tmInsuranceTypeCode = TmInsuranceType::where('id', '=', $tmlead->tm_insurance_types_id)->value('code');
         $tmLeadStatuses = $this->getLeadStatuses();
 
-        return view("tmlead.show", compact(
-            "tmlead",
-            "tmLeadStatusCode",
-            "tmInsuranceTypeCode",
-            "tmLeadStatuses",
-            "isLeadEditable",
-            "customerCorrectPhoneNo"
+        return view('tmlead.show', compact(
+            'tmlead',
+            'tmLeadStatusCode',
+            'tmInsuranceTypeCode',
+            'tmLeadStatuses',
+            'isLeadEditable',
+            'customerCorrectPhoneNo'
         ));
     }
 
@@ -247,13 +251,13 @@ class TmLeadController extends Controller
      */
     public function edit(TmLead $tmlead)
     {
-        if (Auth::user()->hasRole("TM_ADVISOR")) {
+        if (Auth::user()->hasRole('TM_ADVISOR')) {
             if (Auth::user()->id != $tmlead->assigned_to_id) {
-                return redirect()->route("tmleads.index")->with("message", "You don't have access to edit this lead");
+                return redirect()->route('tmleads.index')->with('message', "You don't have access to edit this lead");
             }
-            $isUserTmAdvisor = "1";
+            $isUserTmAdvisor = '1';
         } else {
-            $isUserTmAdvisor = "0";
+            $isUserTmAdvisor = '0';
         }
         $tmLeadStatuses = $this->getLeadStatuses();
         $tmInsuranceTypes = $this->getInsuranceTypes();
@@ -295,12 +299,12 @@ class TmLeadController extends Controller
      */
     public function update(TmLeadRequest $request, TmLead $tmlead)
     {
-
-        $tmLeadID = $this->teleMarketingLeadsService->tmLeadsCreateUpdate($request, "update", $tmlead->id);
+        $tmLeadID = $this->teleMarketingLeadsService->tmLeadsCreateUpdate($request, 'update', $tmlead->id);
 
         if (isset($request->return_to_view)) {
-            return redirect("telemarketing/tmleads/" . $tmLeadID)->with('success', 'TM Lead has been updated');
+            return redirect('telemarketing/tmleads/'.$tmLeadID)->with('success', 'TM Lead has been updated');
         }
+
         return redirect()->back()->with('success', 'TM Lead has been updated');
     }
 
@@ -314,7 +318,8 @@ class TmLeadController extends Controller
     {
         $tmlead->is_deleted = 1;
         $tmlead->save();
-        return redirect()->route("tmleads.index")->with("message", "TM Lead has been deleted");
+
+        return redirect()->route('tmleads.index')->with('message', 'TM Lead has been deleted');
     }
 
     public function tmLeadUpdate(Request $request)
@@ -327,19 +332,19 @@ class TmLeadController extends Controller
             'notes' => 'max:500',
         ]);
 
-        if ((($tmLeadStatusCode == tmLeadStatusCode::NoAnswer || $tmLeadStatusCode == tmLeadStatusCode::SwitchedOff) && $request->no_answer_count < "3")
+        if ((($tmLeadStatusCode == tmLeadStatusCode::NoAnswer || $tmLeadStatusCode == tmLeadStatusCode::SwitchedOff) && $request->no_answer_count < '3')
             || ($tmLeadStatusCode == tmLeadStatusCode::PipelineNoInfo || $tmLeadStatusCode == tmLeadStatusCode::PipelineImmediate
                 || $tmLeadStatusCode == tmLeadStatusCode::PipelineFuture || $tmLeadStatusCode == tmLeadStatusCode::DealingWithAnAdvisor)
         ) {
             $this->validate($request, [
                 'next_followup_date' => 'required',
-                'next_followup_date' => 'date_format:Y-m-d H:i:s|after_or_equal:' . $currentDateTime
+                'next_followup_date' => 'date_format:Y-m-d H:i:s|after_or_equal:'.$currentDateTime,
             ]);
         }
 
         $tmLeadID = $this->teleMarketingLeadsService->tmLeadStatusNotesUpdate($request);
 
-        if (Auth::user()->hasRole("TM_ADVISOR")) { // advisors redirection
+        if (Auth::user()->hasRole('TM_ADVISOR')) { // advisors redirection
 
             //$currentUserID = 27;
             $currentUserID = Auth::user()->id;
@@ -347,13 +352,13 @@ class TmLeadController extends Controller
             $prioritizeLeadId = $this->teleMarketingLeadsService->tmLeadsGetPrioritizeLead($currentUserID);
 
             if ($prioritizeLeadId) { // if more lead in queue
-                return redirect("telemarketing/tmleads/" . $prioritizeLeadId)
-                    ->with('success', 'Previous Lead#' . $tmLeadID . ' updated. Please proceed with below queued lead');
+                return redirect('telemarketing/tmleads/'.$prioritizeLeadId)
+                    ->with('success', 'Previous Lead#'.$tmLeadID.' updated. Please proceed with below queued lead');
             } else { // if more lead not in queue
-                return redirect("telemarketing/tmleads")->with('success', 'No more leads for now!');
+                return redirect('telemarketing/tmleads')->with('success', 'No more leads for now!');
             }
         } else { // non-advisors redirection
-            return redirect("telemarketing/tmleads/" . $tmLeadID)->with('success', 'TM Lead has been updated');
+            return redirect('telemarketing/tmleads/'.$tmLeadID)->with('success', 'TM Lead has been updated');
         }
     }
 
@@ -361,6 +366,7 @@ class TmLeadController extends Controller
     {
         $assignedToUserIdNew = $this->teleMarketingLeadsService->tmLeadsUpdateAssignedTo($request);
         $assignedUserName = User::where('id', '=', $assignedToUserIdNew)->value('name');
-        return redirect("telemarketing/tmleads")->with('success', 'TM Leads has been Assigned To ' . $assignedUserName);
+
+        return redirect('telemarketing/tmleads')->with('success', 'TM Leads has been Assigned To '.$assignedUserName);
     }
 }

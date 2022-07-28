@@ -2,10 +2,9 @@
 
 namespace App\Console\Commands;
 
-use App\Models\Customer;
 use App\Jobs\myalfredMigrationJob;
+use App\Models\Customer;
 use Illuminate\Console\Command;
-
 
 class migrateCustomerToAlfred extends Command
 {

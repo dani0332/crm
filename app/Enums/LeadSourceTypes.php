@@ -11,5 +11,5 @@ use BenSampo\Enum\Enum;
  */
 final class LeadSourceTypes extends Enum
 {
-    const EBPRENEWALS = "EBP_RENEWALS";
+    const EBPRENEWALS = 'EBP_RENEWALS';
 }

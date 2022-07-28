@@ -14,7 +14,7 @@ class AddInsuranceTypeToCarPlanTable extends Migration
     public function up()
     {
         Schema::table('car_plan', function (Blueprint $table) {
-            if(!Schema::hasColumn('car_plan', 'insurance_type')) {
+            if (! Schema::hasColumn('car_plan', 'insurance_type')) {
                 $table->string('insurance_type', 200)->nullable();
             }
         });

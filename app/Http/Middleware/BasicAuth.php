@@ -19,15 +19,16 @@ class BasicAuth
     {
         $AUTH_USER = Config::get('constants.IMCRM_BASIC_AUTH_USER_NAME');
         $AUTH_PASS = Config::get('constants.IMCRM_BASIC_AUTH_PASSWORD');
-        $has_supplied_credentials = !(empty($request->getUser()) && empty($request->getPassword()));
+        $has_supplied_credentials = ! (empty($request->getUser()) && empty($request->getPassword()));
         $is_not_authenticated = (
-            !$has_supplied_credentials ||
+            ! $has_supplied_credentials ||
             $request->getUser() != $AUTH_USER ||
-            $request->getPassword()   != $AUTH_PASS
+            $request->getPassword() != $AUTH_PASS
         );
         if ($is_not_authenticated) {
             return response()->json(['Authorization Required'], 401);
         }
+
         return $next($request);
     }
 }

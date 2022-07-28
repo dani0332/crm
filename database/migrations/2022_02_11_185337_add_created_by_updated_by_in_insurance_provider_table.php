@@ -14,12 +14,10 @@ class AddCreatedByUpdatedByInInsuranceProviderTable extends Migration
     public function up()
     {
         Schema::table('insurance_provider', function (Blueprint $table) {
-            if(!Schema::hasColumn('insurance_provider','created_by'))
-            {
-                $table->string('created_by')->nullable(); 
+            if (! Schema::hasColumn('insurance_provider', 'created_by')) {
+                $table->string('created_by')->nullable();
             }
-            if(!Schema::hasColumn('insurance_provider','updated_by'))
-            {
+            if (! Schema::hasColumn('insurance_provider', 'updated_by')) {
                 $table->string('updated_by')->nullable();
             }
         });

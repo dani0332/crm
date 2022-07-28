@@ -1,9 +1,9 @@
 <?php
 
-use Illuminate\Database\Migrations\Migration;
+use App\Models\BaseMigration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use App\Models\BaseMigration;
+
 class CreateTmLeadContactInformationTable extends BaseMigration
 {
     /**
@@ -13,8 +13,7 @@ class CreateTmLeadContactInformationTable extends BaseMigration
      */
     public function up()
     {
-        if (!Schema::hasTable('tm_lead_contact_information')) {
-            
+        if (! Schema::hasTable('tm_lead_contact_information')) {
             Schema::create('tm_lead_contact_information', function (Blueprint $table) {
                 $table->id()->autoIncrement();
                 $table->unsignedBigInteger('tm_lead_id');

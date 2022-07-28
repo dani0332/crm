@@ -2,42 +2,42 @@
 
 namespace App\Imports;
 
-use Maatwebsite\Excel\Concerns\ToModel;
-use Maatwebsite\Excel\Concerns\WithChunkReading;
-use App\Enums\tmInsuranceTypeCode;
 use App\Enums\carTypeInsuranceCode;
+use App\Enums\tmInsuranceTypeCode;
 use App\Enums\tmLeadStatusCode;
-use App\Models\TmLead;
-use App\Models\User;
-use App\Models\TmLeadType;
-use App\Models\TmInsuranceType;
 use App\Models\CarMake;
 use App\Models\CarModel;
-use App\Models\Nationality;
-use App\Models\UAELicenseHeldFor;
-use App\Models\Emirate;
 use App\Models\CarTypeInsurance;
+use App\Models\Emirate;
+use App\Models\Nationality;
+use App\Models\TmInsuranceType;
+use App\Models\TmLead;
 use App\Models\TmLeadStatus;
+use App\Models\TmLeadType;
+use App\Models\UAELicenseHeldFor;
+use App\Models\User;
 use Auth;
 use Maatwebsite\Excel\Concerns\Importable;
-use Maatwebsite\Excel\Concerns\SkipsOnFailure;
-use Maatwebsite\Excel\Concerns\WithValidation;
 use Maatwebsite\Excel\Concerns\SkipsFailures;
+use Maatwebsite\Excel\Concerns\SkipsOnFailure;
+use Maatwebsite\Excel\Concerns\ToModel;
+use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Maatwebsite\Excel\Concerns\WithStartRow;
+use Maatwebsite\Excel\Concerns\WithValidation;
 
 class TMLeadsImport implements ToModel, WithValidation, SkipsOnFailure, WithStartRow, WithChunkReading
 {
     use Importable, SkipsFailures;
 
     private $rows = 0;
+
     /**
-    * @param array $row
-    *
-    * @return \Illuminate\Database\Eloquent\Model|null
-    */
+     * @param  array  $row
+     * @return \Illuminate\Database\Eloquent\Model|null
+     */
     public function model(array $row)
     {
-        ++$this->rows;
+        $this->rows++;
 
         $customerName = $row[0];
         $phoneNo = $row[1];
@@ -60,21 +60,19 @@ class TMLeadsImport implements ToModel, WithValidation, SkipsOnFailure, WithStar
         $createdDateFinal = date('Y-m-d', strtotime($createdDate));
         $advisorEmail = $this->changeEmailDomain($row[16]);
 
-        if($row[17] != "" && $row[18] != "") {
+        if ($row[17] != '' && $row[18] != '') {
             $followpDate = strtr($row[17], '/', '-');
             $followpDatebFinal = date('Y-m-d', strtotime($followpDate));
-            $followpTime = date("H:i:s", strtotime($row[18]));
-            $followpDateTime = $followpDatebFinal." ".$followpTime;
-            $followpDateTimeFinal = date("Y-m-d H:i:s", strtotime($followpDateTime));
-        }
-        else {
-            $followpDateTimeFinal = NULL;
+            $followpTime = date('H:i:s', strtotime($row[18]));
+            $followpDateTime = $followpDatebFinal.' '.$followpTime;
+            $followpDateTimeFinal = date('Y-m-d H:i:s', strtotime($followpDateTime));
+        } else {
+            $followpDateTimeFinal = null;
         }
 
         if (strpos($insuranceType, '-') !== false) { // Get Type of Insurance > Get string before hiphen '-'
             $tmInsuranceType = strstr($insuranceType, '-', true); // Motor Insurance TPL/Comp
-        }
-        else {
+        } else {
             $tmInsuranceType = $insuranceType; // Non Motor Insurance
         }
 
@@ -88,8 +86,7 @@ class TMLeadsImport implements ToModel, WithValidation, SkipsOnFailure, WithStar
 
         $tmInsuranceTypeCode = TmInsuranceType::where('text', '=', $tmInsuranceType)->value('code');
 
-        if($tmInsuranceTypeCode == tmInsuranceTypeCode::Car) {
-
+        if ($tmInsuranceTypeCode == tmInsuranceTypeCode::Car) {
             $carMakeId = CarMake::where('text', '=', $carManufacturer)->value('id');
             $carModelId = CarModel::where('text', '=', $model)->value('id');
             $nationalityId = Nationality::where('code', '=', $nationality)->value('id');
@@ -105,13 +102,13 @@ class TMLeadsImport implements ToModel, WithValidation, SkipsOnFailure, WithStar
             $emiratesOfRegistrationId = $emiratesOfRegistrationId;
 
             // Get Car Type of Insurance > Get string after hiphen '-'
-            $tmCarInsuranceType = substr($insuranceType, strpos($insuranceType, "-") + 2);
+            $tmCarInsuranceType = substr($insuranceType, strpos($insuranceType, '-') + 2);
 
-            if($tmCarInsuranceType) {
-                if($tmCarInsuranceType == "TPL") {
+            if ($tmCarInsuranceType) {
+                if ($tmCarInsuranceType == 'TPL') {
                     $tmCarInsuranceTypeCode = carTypeInsuranceCode::ThirdPartyOnly;
                 }
-                if($tmCarInsuranceType == "Comp") {
+                if ($tmCarInsuranceType == 'Comp') {
                     $tmCarInsuranceTypeCode = carTypeInsuranceCode::Comprehensive;
                 }
 
@@ -120,66 +117,67 @@ class TMLeadsImport implements ToModel, WithValidation, SkipsOnFailure, WithStar
             }
         }
 
-        if($tmInsuranceTypeCode != tmInsuranceTypeCode::Car) {
-            $yearOfManufacture = NULL;
-            $carValue = NULL;
-            $carModelId = NULL;
-            $carMakeId = NULL;
-            $nationalityId = NULL;
-            $yearsOfDrivingId = NULL;
-            $emiratesOfRegistrationId = NULL;
-            $tmCarInsuranceTypeId = NULL;
+        if ($tmInsuranceTypeCode != tmInsuranceTypeCode::Car) {
+            $yearOfManufacture = null;
+            $carValue = null;
+            $carModelId = null;
+            $carMakeId = null;
+            $nationalityId = null;
+            $yearsOfDrivingId = null;
+            $emiratesOfRegistrationId = null;
+            $tmCarInsuranceTypeId = null;
         }
 
-        if($tmInsuranceTypeCode == tmInsuranceTypeCode::Car || $tmInsuranceTypeCode == tmInsuranceTypeCode::Bike
+        if ($tmInsuranceTypeCode == tmInsuranceTypeCode::Car || $tmInsuranceTypeCode == tmInsuranceTypeCode::Bike
         || $tmInsuranceTypeCode == tmInsuranceTypeCode::Life || $tmInsuranceTypeCode == tmInsuranceTypeCode::Health) {
             $dob = $dobFinal;
-        }
-        else {
-            $dob = NULL;
+        } else {
+            $dob = null;
         }
 
         $newTmLead = new TmLead([
-            "customer_name" => $customerName,
-            "phone_number" => $phoneNo,
-            "email_address" => $emailId,
-            "enquiry_date" => $enquiryDateFinal,
-            "allocation_date" => $createdDateFinal,
-            "notes" => $notes,
-            "created_by_id" => Auth::user()->id,
-            "assigned_to_id" => $assignUserId,
-            "tm_lead_types_id" => $tmLeadTypeId,
-            "tm_insurance_types_id" => $tmInsuranceTypeId,
-            "tm_lead_statuses_id" => $tmLeadStatusID,
-            "dob" => $dob,
-            "year_of_manufacture" => $yearOfManufacture,
-            "car_value" => $carValue,
-            "car_model_id" => $carModelId,
-            "car_make_id" => $carMakeId,
-            "nationality_id" => $nationalityId,
-            "years_of_driving_id" => $yearsOfDrivingId,
-            "emirates_of_registration_id" => $emiratesOfRegistrationId,
-            "car_type_insurance_id" => $tmCarInsuranceTypeId,
-            "next_followup_date" => $followpDateTimeFinal,
+            'customer_name' => $customerName,
+            'phone_number' => $phoneNo,
+            'email_address' => $emailId,
+            'enquiry_date' => $enquiryDateFinal,
+            'allocation_date' => $createdDateFinal,
+            'notes' => $notes,
+            'created_by_id' => Auth::user()->id,
+            'assigned_to_id' => $assignUserId,
+            'tm_lead_types_id' => $tmLeadTypeId,
+            'tm_insurance_types_id' => $tmInsuranceTypeId,
+            'tm_lead_statuses_id' => $tmLeadStatusID,
+            'dob' => $dob,
+            'year_of_manufacture' => $yearOfManufacture,
+            'car_value' => $carValue,
+            'car_model_id' => $carModelId,
+            'car_make_id' => $carMakeId,
+            'nationality_id' => $nationalityId,
+            'years_of_driving_id' => $yearsOfDrivingId,
+            'emirates_of_registration_id' => $emiratesOfRegistrationId,
+            'car_type_insurance_id' => $tmCarInsuranceTypeId,
+            'next_followup_date' => $followpDateTimeFinal,
         ]);
 
         $newTmLead->save();
 
         $updateNewTmLead = TmLead::find($newTmLead->id);
-        $updateNewTmLead->cdb_id = "TM-".$newTmLead->id;
+        $updateNewTmLead->cdb_id = 'TM-'.$newTmLead->id;
         $updateNewTmLead->save();
 
         return $newTmLead;
     }
 
     // if email has afia.ae domain replace with insurancemarket.ae domain
-    public function changeEmailDomain($email) {
+    public function changeEmailDomain($email)
+    {
         $emailTrimmed = strtolower(trim($email));
         if (strpos($emailTrimmed, '@afia.ae')) {
             $advisorEmail = str_replace('@afia.ae', '@insurancemarket.ae', $emailTrimmed);
         } else {
             $advisorEmail = $emailTrimmed;
         }
+
         return $advisorEmail;
     }
 

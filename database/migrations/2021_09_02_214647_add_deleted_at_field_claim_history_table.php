@@ -14,8 +14,9 @@ class AddDeletedAtFieldClaimHistoryTable extends Migration
     public function up()
     {
         Schema::table('claim_history', function (Blueprint $table) {
-            if(!Schema::hasColumn('claim_history','deleted_at'))
+            if (! Schema::hasColumn('claim_history', 'deleted_at')) {
                 $table->softDeletes();
+            }
         });
     }
 

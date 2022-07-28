@@ -2,21 +2,22 @@
 
 namespace App\Jobs;
 
-
+use App\Models\InslyBatchLog;
+use DB;
+use Exception;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Exception;
 use Illuminate\Support\Facades\Log;
-use App\Models\InslyBatchLog;
-use DB;
 
 class InslyDataProcessingJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+
     public $request;
+
     /**
      * Create a new job instance.
      *
@@ -36,10 +37,10 @@ class InslyDataProcessingJob implements ShouldQueue
     {
         try {
             Log::info('Process InslyDataProcessingJob trigged');
-            $arrayOfPolicyArray = array_chunk((array)$this->request->policies, 100);
+            $arrayOfPolicyArray = array_chunk((array) $this->request->policies, 100);
             $count = 1;
             foreach ($arrayOfPolicyArray as $policyArray) {
-                Log::info('Dispatched Job # ' . $count . ' for creating customer using policy');
+                Log::info('Dispatched Job # '.$count.' for creating customer using policy');
                 dispatch(new InslyCustomerCreationJob($policyArray));
                 $count++;
             }
@@ -47,6 +48,7 @@ class InslyDataProcessingJob implements ShouldQueue
             $lastBatch = InslyBatchLog::orderBy('created_at', 'desc')->get()->first();
             $lastBatch->is_batch_completed = true;
             $lastBatch->save();
+
             return;
         } catch (Exception $ex) {
             return $ex;
@@ -57,12 +59,13 @@ class InslyDataProcessingJob implements ShouldQueue
 
     public static function GetWEEmailRequestObject($first_name, $last_name, $customer_email)
     {
-        $params = ["customerName" => $first_name . ' ' . $last_name];
-        $emailRequest = array();
+        $params = ['customerName' => $first_name.' '.$last_name];
+        $emailRequest = [];
         $emailRequest['to'] = $customer_email;
         $emailRequest['subject'] = 'Welcome to myAlfred by InsuranceMarket.ae';
         $emailRequest['templateName'] = 'customerWelcome';
         $emailRequest['templateParams'] = $params;
+
         return $emailRequest;
     }
 

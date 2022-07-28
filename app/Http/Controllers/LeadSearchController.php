@@ -3,22 +3,20 @@
 namespace App\Http\Controllers;
 
 use App\Enums\quoteTypeCode;
-use App\Http\Requests\LeadSearch;
-use App\Models\UserTeams;
 use App\Services\CRUDService;
-use Illuminate\Http\Request;
 use DataTables;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-
-use function PHPUnit\Framework\isEmpty;
 
 class LeadSearchController extends Controller
 {
     protected $crudService;
+
     public function __construct(CRUDService $crudService)
     {
         $this->crudService = $crudService;
     }
+
     /**
      * Display a listing of the resource.
      *
@@ -48,13 +46,15 @@ class LeadSearchController extends Controller
         }
         $isManager = Auth::user()->isManagerOrDeputy();
         if ($request->ajax()) {
-            if (isset($leadType) && !empty($leadType)) {
+            if (isset($leadType) && ! empty($leadType)) {
                 $quoteResults = $this->crudService->getLeads($request->cdbID, $request->email, $request->phnNumber, $leadType);
+
                 return DataTables::of($quoteResults)
                     ->addIndexColumn()
                     ->make(true);
             }
         }
+
         return view('leadsearch.view', compact('leadType', 'isManager', 'managerRole'));
     }
 

@@ -2,23 +2,22 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\TypeOfInsurance;
-use Illuminate\Http\Request;
-use DataTables;
-use Spatie\Permission\Models\Role;
-use DB;
 use App\Http\Requests\TypeInsuranceRequest;
 use App\Http\Resources\TypeInsuranceResource;
+use App\Models\TypeOfInsurance;
+use DataTables;
+use Illuminate\Http\Request;
 
 class TypeOfInsuranceController extends Controller
 {
-    function __construct()
+    public function __construct()
     {
-         $this->middleware('permission:type-of-insurance-list|type-of-insurance-create|type-of-insurance-edit|type-of-insurance-delete', ['only' => ['index','store']]);
-         $this->middleware('permission:type-of-insurance-create', ['only' => ['create','store']]);
-         $this->middleware('permission:type-of-insurance-edit', ['only' => ['edit','update']]);
-         $this->middleware('permission:type-of-insurance-delete', ['only' => ['destroy']]);
+        $this->middleware('permission:type-of-insurance-list|type-of-insurance-create|type-of-insurance-edit|type-of-insurance-delete', ['only' => ['index', 'store']]);
+        $this->middleware('permission:type-of-insurance-create', ['only' => ['create', 'store']]);
+        $this->middleware('permission:type-of-insurance-edit', ['only' => ['edit', 'update']]);
+        $this->middleware('permission:type-of-insurance-delete', ['only' => ['destroy']]);
     }
+
     /**
      * Display a listing of the resource.
      *
@@ -27,15 +26,17 @@ class TypeOfInsuranceController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $data = TypeOfInsurance::select('*')->orderBy('sort_order','asc');
+            $data = TypeOfInsurance::select('*')->orderBy('sort_order', 'asc');
+
             return DataTables::of($data)
                     ->addIndexColumn()
-                    ->addColumn('action', function($row){
+                    ->addColumn('action', function ($row) {
                         return view('typeofinsurance.actions', compact('row'))->render();
                     })
                     ->rawColumns(['action'])
                     ->make(true);
         }
+
         return view('typeofinsurance.view');
     }
 
@@ -60,9 +61,10 @@ class TypeOfInsuranceController extends Controller
         $validated = $request->validated();
         $validated['is_active'] = $validated['is_active'] ?? 0;
         $id = $typeofinsurance->create($validated)->id;
-        if(isset($request->return_to_view)) {
-            return redirect("claim/typeofinsurance/".$id)->with('success', 'Type Of Insurance has been stored');
+        if (isset($request->return_to_view)) {
+            return redirect('claim/typeofinsurance/'.$id)->with('success', 'Type Of Insurance has been stored');
         }
+
         return redirect()->back()->with('success', 'Type Of Insurance has been stored');
     }
 
@@ -75,7 +77,8 @@ class TypeOfInsuranceController extends Controller
     public function show(TypeOfInsurance $typeofinsurance)
     {
         $typeofinsurance = new TypeInsuranceResource($typeofinsurance);
-        return view('typeofinsurance.show',compact('typeofinsurance'));
+
+        return view('typeofinsurance.show', compact('typeofinsurance'));
     }
 
     /**
@@ -87,7 +90,8 @@ class TypeOfInsuranceController extends Controller
     public function edit(TypeOfInsurance $typeofinsurance)
     {
         $typeofinsurance = new TypeInsuranceResource($typeofinsurance);
-        return view('typeofinsurance.edit',compact('typeofinsurance'));
+
+        return view('typeofinsurance.edit', compact('typeofinsurance'));
     }
 
     /**
@@ -102,9 +106,10 @@ class TypeOfInsuranceController extends Controller
         $validated = $request->validated();
         $validated['is_active'] = $validated['is_active'] ?? 0;
         $typeofinsurance->update($validated);
-        if(isset($request->return_to_view)) {
-            return redirect("claim/typeofinsurance/".$typeofinsurance->id)->with('success', 'Type Of Insurance has been updated');
+        if (isset($request->return_to_view)) {
+            return redirect('claim/typeofinsurance/'.$typeofinsurance->id)->with('success', 'Type Of Insurance has been updated');
         }
+
         return redirect()->back()->with('success', 'Type Of Insurance has been updated');
     }
 
@@ -117,6 +122,7 @@ class TypeOfInsuranceController extends Controller
     public function destroy(TypeOfInsurance $typeofinsurance)
     {
         $typeofinsurance->delete();
-        return redirect()->route('typeofinsurance.index')->with('message','Type of Insurance has been deleted');
+
+        return redirect()->route('typeofinsurance.index')->with('message', 'Type of Insurance has been deleted');
     }
 }

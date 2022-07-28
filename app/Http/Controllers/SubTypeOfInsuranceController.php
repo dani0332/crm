@@ -2,22 +2,22 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\SubTypeOfInsurance;
-use Illuminate\Http\Request;
-use DataTables;
-use Spatie\Permission\Models\Role;
-use DB;
 use App\Http\Requests\SubTypeInsuranceRequest;
 use App\Http\Resources\SubTypeInsuranceResource;
+use App\Models\SubTypeOfInsurance;
+use DataTables;
+use Illuminate\Http\Request;
+
 class SubTypeOfInsuranceController extends Controller
 {
-    function __construct()
+    public function __construct()
     {
-         $this->middleware('permission:sub-type-of-insurance-list|sub-type-of-insurance-create|sub-type-of-insurance-edit|sub-type-of-insurance-delete', ['only' => ['index','store']]);
-         $this->middleware('permission:sub-type-of-insurance-create', ['only' => ['create','store']]);
-         $this->middleware('permission:sub-type-of-insurance-edit', ['only' => ['edit','update']]);
-         $this->middleware('permission:sub-type-of-insurance-delete', ['only' => ['destroy']]);
+        $this->middleware('permission:sub-type-of-insurance-list|sub-type-of-insurance-create|sub-type-of-insurance-edit|sub-type-of-insurance-delete', ['only' => ['index', 'store']]);
+        $this->middleware('permission:sub-type-of-insurance-create', ['only' => ['create', 'store']]);
+        $this->middleware('permission:sub-type-of-insurance-edit', ['only' => ['edit', 'update']]);
+        $this->middleware('permission:sub-type-of-insurance-delete', ['only' => ['destroy']]);
     }
+
     /**
      * Display a listing of the resource.
      *
@@ -26,15 +26,17 @@ class SubTypeOfInsuranceController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $data = SubTypeOfInsurance::select('*')->orderBy('sort_order','asc');
+            $data = SubTypeOfInsurance::select('*')->orderBy('sort_order', 'asc');
+
             return DataTables::of($data)
                     ->addIndexColumn()
-                    ->addColumn('action', function($row){
+                    ->addColumn('action', function ($row) {
                         return view('subtypeofinsurance.actions', compact('row'))->render();
                     })
                     ->rawColumns(['action'])
                     ->make(true);
         }
+
         return view('subtypeofinsurance.view');
     }
 
@@ -59,9 +61,10 @@ class SubTypeOfInsuranceController extends Controller
         $validated = $request->validated();
         $validated['is_active'] = $validated['is_active'] ?? 0;
         $id = $subtypeofinsurance->create($validated)->id;
-        if(isset($request->return_to_view)) {
-            return redirect("claim/subtypeofinsurance/".$id)->with('success', 'Sub Type Of Insurance has been stored');
+        if (isset($request->return_to_view)) {
+            return redirect('claim/subtypeofinsurance/'.$id)->with('success', 'Sub Type Of Insurance has been stored');
         }
+
         return redirect()->back()->with('success', 'Sub Type Of Insurance has been stored');
     }
 
@@ -74,7 +77,8 @@ class SubTypeOfInsuranceController extends Controller
     public function show(SubTypeOfInsurance $subtypeofinsurance)
     {
         $subtypeofinsurance = new SubTypeInsuranceResource($subtypeofinsurance);
-        return view('subtypeofinsurance.show',compact('subtypeofinsurance'));
+
+        return view('subtypeofinsurance.show', compact('subtypeofinsurance'));
     }
 
     /**
@@ -86,7 +90,8 @@ class SubTypeOfInsuranceController extends Controller
     public function edit(SubTypeOfInsurance $subtypeofinsurance)
     {
         $subtypeofinsurance = new SubTypeInsuranceResource($subtypeofinsurance);
-        return view('subtypeofinsurance.edit',compact('subtypeofinsurance'));
+
+        return view('subtypeofinsurance.edit', compact('subtypeofinsurance'));
     }
 
     /**
@@ -101,9 +106,10 @@ class SubTypeOfInsuranceController extends Controller
         $validated = $request->validated();
         $validated['is_active'] = $validated['is_active'] ?? 0;
         $subtypeofinsurance->update($validated);
-        if(isset($request->return_to_view)) {
-            return redirect("claim/subtypeofinsurance/".$subtypeofinsurance->id)->with('success', 'Sub Type Of Insurance has been updated');
+        if (isset($request->return_to_view)) {
+            return redirect('claim/subtypeofinsurance/'.$subtypeofinsurance->id)->with('success', 'Sub Type Of Insurance has been updated');
         }
+
         return redirect()->back()->with('success', 'Sub Type Of Insurance has been updated');
     }
 
@@ -116,6 +122,7 @@ class SubTypeOfInsuranceController extends Controller
     public function destroy(SubTypeOfInsurance $subtypeofinsurance)
     {
         $subtypeofinsurance->delete();
-        return redirect()->route('subtypeofinsurance.index')->with('message','Sub Type of Insurance has been deleted');
+
+        return redirect()->route('subtypeofinsurance.index')->with('message', 'Sub Type of Insurance has been deleted');
     }
 }

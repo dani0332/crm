@@ -14,7 +14,7 @@ class AddReasonToEmailStatusTable extends Migration
     public function up()
     {
         Schema::table('email_status', function (Blueprint $table) {
-            if(!Schema::hasColumn('email_status', 'reason')) {
+            if (! Schema::hasColumn('email_status', 'reason')) {
                 $table->string('reason', 1000)->nullable();
             }
         });

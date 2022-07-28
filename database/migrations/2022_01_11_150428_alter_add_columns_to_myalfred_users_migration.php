@@ -15,10 +15,10 @@ class AlterAddColumnsToMyalfredUsersMigration extends Migration
     {
         if (Schema::hasTable('myalfred_users_migration')) {
             Schema::table('myalfred_users_migration', function (Blueprint $table) {
-                if(!Schema::hasColumn('myalfred_users_migration', 'code')) {
+                if (! Schema::hasColumn('myalfred_users_migration', 'code')) {
                     $table->string('code', 250)->nullable();
                 }
-                if(!Schema::hasColumn('myalfred_users_migration', 'source')) {
+                if (! Schema::hasColumn('myalfred_users_migration', 'source')) {
                     $table->string('source', 250)->nullable();
                 }
             });
