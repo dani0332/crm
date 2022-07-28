@@ -199,52 +199,52 @@ class RenewalsImport implements OnEachRow, WithStartRow, WithValidation, SkipsOn
 
     function insurersMapping($insurerName)
     {
-        if(strpos($insurerName, 'tokio marine') !== false){
+        if(strpos($insurerName, 'tokio marine')){
             $insurerinCdb = 'Tokio Marine & Nichido Fire Insurance Co';
         }
-        else if(strpos($insurerName, 'new india') !== false){
+        else if(strpos($insurerName, 'new india')){
             $insurerinCdb = 'New India Assurance';
         }
-        else if(strpos($insurerName, 'axa') !== false){
-            $insurerinCdb = 'AXA Insurance (Gulf)';
+        else if(strpos($insurerName, 'axa') || strpos($insurerName, 'gig')){
+            $insurerinCdb = 'GIG Gulf (AXA)';
         }
-        else if(strpos($insurerName, 'dhabi national insurance') !== false){
+        else if(strpos($insurerName, 'dhabi national insurance')){
             $insurerinCdb = 'Abu Dhabi National Insurance Company';
         }
-        else if((strpos($insurerName, 'royal') !== false && strpos($insurerName, 'sun') !== false) || strpos($insurerName, 'rsa') !== false){
+        else if((strpos($insurerName, 'royal') && strpos($insurerName, 'sun')) || strpos($insurerName, 'rsa')){
             $insurerinCdb = 'Royal & Sun Alliance Insurance (RSA)';
         }
-        else if(strpos($insurerName, 'qatar insurance') !== false || strpos($insurerName, 'qic') !== false){
+        else if(strpos($insurerName, 'qatar insurance') || strpos($insurerName, 'qic')){
             $insurerinCdb = 'Qatar Insurance Company';
         }
-        else if(strpos($insurerName, 'national general insurance') !== false || strpos($insurerName, 'ngi') !== false){
+        else if(strpos($insurerName, 'national general insurance') || strpos($insurerName, 'ngi')){
             $insurerinCdb = 'National General Insurance';
         }
-        else if(strpos($insurerName, 'salama') !== false){
+        else if(strpos($insurerName, 'salama')){
             $insurerinCdb = 'Salama Insurance';
         }
-        else if(strpos($insurerName, 'noor takaful') !== false){
+        else if(strpos($insurerName, 'noor takaful')){
             $insurerinCdb = 'Noor Takaful';
         }
-        else if(strpos($insurerName, 'oriental insurance') !== false){
+        else if(strpos($insurerName, 'oriental insurance')){
             $insurerinCdb = 'Oriental Insurance';
         }
-        else if(strpos($insurerName, 'union insurance') !== false){
+        else if(strpos($insurerName, 'union insurance')){
             $insurerinCdb = 'Union Insurance';
         }
-        else if(strpos($insurerName, 'oman insurance') !== false || strpos($insurerName, 'oic') !== false){
+        else if(strpos($insurerName, 'oman insurance') || strpos($insurerName, 'oic')){
             $insurerinCdb = 'Oman Insurance Company';
         }
-        else if(strpos($insurerName, 'dhabi national takaful') !== false){
+        else if(strpos($insurerName, 'dhabi national takaful')){
             $insurerinCdb = 'Abu Dhabi National Takaful';
         }
-        else if(strpos($insurerName, 'watania') !== false){
+        else if(strpos($insurerName, 'watania')){
             $insurerinCdb = 'Watania';
         }
-        else if(strpos($insurerName, 'insurance house') !== false){
+        else if(strpos($insurerName, 'insurance house')){
             $insurerinCdb = 'Insurance House';
         }
-        else if(strpos($insurerName, 'other') !== false){
+        else if(strpos($insurerName, 'other')){
             $insurerinCdb = 'Other';
         }
         else {
