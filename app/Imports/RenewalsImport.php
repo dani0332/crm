@@ -2,6 +2,7 @@
 
 namespace App\Imports;
 
+use App\Enums\CurrentInsurersEnums;
 use App\Jobs\RenewalImportJob;
 use App\Models\Customer;
 use App\Services\RenewalsUploadService;
@@ -199,55 +200,54 @@ class RenewalsImport implements OnEachRow, WithStartRow, WithValidation, SkipsOn
 
     function insurersMapping($insurerName)
     {
-        if(strpos($insurerName, 'tokio marine')){
+        if(strpos($insurerName, CurrentInsurersEnums::TokioMarine)){
             $insurerinCdb = 'Tokio Marine & Nichido Fire Insurance Co';
         }
-        else if(strpos($insurerName, 'new india')){
+        else if(strpos($insurerName, CurrentInsurersEnums::NewIndia)){
             $insurerinCdb = 'New India Assurance';
         }
-        else if(strpos($insurerName, 'axa') || strpos($insurerName, 'gig')){
+        else if(strpos($insurerName, CurrentInsurersEnums::Axa) || strpos($insurerName, CurrentInsurersEnums::Gig)){
             $insurerinCdb = 'GIG Gulf (AXA)';
         }
-        else if(strpos($insurerName, 'dhabi national insurance')){
+        else if(strpos($insurerName, CurrentInsurersEnums::AbudhabiNational)){
             $insurerinCdb = 'Abu Dhabi National Insurance Company';
         }
-        else if((strpos($insurerName, 'royal') && strpos($insurerName, 'sun')) || strpos($insurerName, 'rsa')){
+        else if((strpos($insurerName, CurrentInsurersEnums::Royal) && strpos($insurerName, CurrentInsurersEnums::Sun)) || strpos($insurerName, CurrentInsurersEnums::Rsa)){
             $insurerinCdb = 'Royal & Sun Alliance Insurance (RSA)';
         }
-        else if(strpos($insurerName, 'qatar insurance') || strpos($insurerName, 'qic')){
+        else if(strpos($insurerName, CurrentInsurersEnums::QatarInsurance) || strpos($insurerName, CurrentInsurersEnums::Qic)){
             $insurerinCdb = 'Qatar Insurance Company';
         }
-        else if(strpos($insurerName, 'national general insurance') || strpos($insurerName, 'ngi')){
+        else if(strpos($insurerName, CurrentInsurersEnums::NationalGeneralInsurance) || strpos($insurerName, CurrentInsurersEnums::Ngi)){
             $insurerinCdb = 'National General Insurance';
         }
-        else if(strpos($insurerName, 'salama')){
+        else if(strpos($insurerName, CurrentInsurersEnums::Salama)){
             $insurerinCdb = 'Salama Insurance';
         }
-        else if(strpos($insurerName, 'noor takaful')){
+        else if(strpos($insurerName, CurrentInsurersEnums::NoorTakaful)){
             $insurerinCdb = 'Noor Takaful';
         }
-        else if(strpos($insurerName, 'oriental insurance')){
+        else if(strpos($insurerName, CurrentInsurersEnums::OrientalInsurance)){
             $insurerinCdb = 'Oriental Insurance';
         }
-        else if(strpos($insurerName, 'union insurance')){
+        else if(strpos($insurerName, CurrentInsurersEnums::UnionInsurance)){
             $insurerinCdb = 'Union Insurance';
         }
-        else if(strpos($insurerName, 'oman insurance') || strpos($insurerName, 'oic')){
+        else if(strpos($insurerName, CurrentInsurersEnums::OmanInsurance) || strpos($insurerName, CurrentInsurersEnums::Oic)){
             $insurerinCdb = 'Oman Insurance Company';
         }
-        else if(strpos($insurerName, 'dhabi national takaful')){
+        else if(strpos($insurerName, CurrentInsurersEnums::AbudhabiNationalTakaful)){
             $insurerinCdb = 'Abu Dhabi National Takaful';
         }
-        else if(strpos($insurerName, 'watania')){
+        else if(strpos($insurerName, CurrentInsurersEnums::Watania)){
             $insurerinCdb = 'Watania';
         }
-        else if(strpos($insurerName, 'insurance house')){
+        else if(strpos($insurerName, CurrentInsurersEnums::InsuranceHouse)){
             $insurerinCdb = 'Insurance House';
         }
-        else if(strpos($insurerName, 'other')){
+        else if(strpos($insurerName, CurrentInsurersEnums::Other)){
             $insurerinCdb = 'Other';
-        }
-        else {
+        } else {
             $insurerinCdb = $insurerName;
         }
 
