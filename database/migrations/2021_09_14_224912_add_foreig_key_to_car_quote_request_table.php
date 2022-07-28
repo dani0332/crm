@@ -14,12 +14,12 @@ class AddForeigKeyToCarQuoteRequestTable extends Migration
     public function up()
     {
         Schema::table('car_quote_request', function (Blueprint $table) {
-            if(Schema::hasColumn('car_quote_request','kyc_status')){
+            if (Schema::hasColumn('car_quote_request', 'kyc_status')) {
                 $table->dropColumn('kyc_status');
-             }
+            }
 
-             $table->bigInteger('kyc_status_id')->nullable()->unsigned();
-             $table->foreign('kyc_status_id')->references('id')->on('kyc_statuses');
+            $table->bigInteger('kyc_status_id')->nullable()->unsigned();
+            $table->foreign('kyc_status_id')->references('id')->on('kyc_statuses');
         });
     }
 

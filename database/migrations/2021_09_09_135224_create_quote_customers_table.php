@@ -13,15 +13,14 @@ class CreateQuoteCustomersTable extends Migration
      */
     public function up()
     {
-        if(!Schema::hasTable('quote_customers')){
+        if (! Schema::hasTable('quote_customers')) {
             Schema::create('quote_customers', function (Blueprint $table) {
                 $table->id();
-                $table->string('cdb_id','11')->nullable();
+                $table->string('cdb_id', '11')->nullable();
                 $table->integer('customer_id')->unsigned();
                 $table->timestamps();
             });
         }
- 
     }
 
     /**

@@ -2,23 +2,22 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\ClaimsStatus;
-use Illuminate\Http\Request;
-use DataTables;
-use Spatie\Permission\Models\Role;
-use DB;
 use App\Http\Requests\ClaimStatusRequest;
 use App\Http\Resources\ClaimStatusResource;
+use App\Models\ClaimsStatus;
+use DataTables;
+use Illuminate\Http\Request;
 
 class ClaimsStatusController extends Controller
 {
-    function __construct()
+    public function __construct()
     {
-         $this->middleware('permission:claims-status-list|claims-status-create|claims-status-edit|claims-status-delete', ['only' => ['index','store']]);
-         $this->middleware('permission:claims-status-create', ['only' => ['create','store']]);
-         $this->middleware('permission:claims-status-edit', ['only' => ['edit','update']]);
-         $this->middleware('permission:claims-status-delete', ['only' => ['destroy']]);
+        $this->middleware('permission:claims-status-list|claims-status-create|claims-status-edit|claims-status-delete', ['only' => ['index', 'store']]);
+        $this->middleware('permission:claims-status-create', ['only' => ['create', 'store']]);
+        $this->middleware('permission:claims-status-edit', ['only' => ['edit', 'update']]);
+        $this->middleware('permission:claims-status-delete', ['only' => ['destroy']]);
     }
+
     /**
      * Display a listing of the resource.
      *
@@ -27,15 +26,17 @@ class ClaimsStatusController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $data = ClaimsStatus::select('*')->orderBy('sort_order','asc');
+            $data = ClaimsStatus::select('*')->orderBy('sort_order', 'asc');
+
             return DataTables::of($data)
                     ->addIndexColumn()
-                    ->addColumn('action', function($row){
+                    ->addColumn('action', function ($row) {
                         return view('claimsstatus.actions', compact('row'))->render();
                     })
                     ->rawColumns(['action'])
                     ->make(true);
         }
+
         return view('claimsstatus.view');
     }
 
@@ -60,9 +61,10 @@ class ClaimsStatusController extends Controller
         $validated = $request->validated();
         $validated['is_active'] = $validated['is_active'] ?? 0;
         $id = $claimsstatus->create($validated)->id;
-        if(isset($request->return_to_view)) {
-            return redirect("claim/claimsstatus/".$id)->with('success', 'Claim Status has been stored');
+        if (isset($request->return_to_view)) {
+            return redirect('claim/claimsstatus/'.$id)->with('success', 'Claim Status has been stored');
         }
+
         return redirect()->back()->with('success', 'Claim Status has been stored');
     }
 
@@ -75,7 +77,8 @@ class ClaimsStatusController extends Controller
     public function show(ClaimsStatus $claimsstatus)
     {
         $claimsstatus = new ClaimStatusResource($claimsstatus);
-        return view('claimsstatus.show',compact('claimsstatus'));
+
+        return view('claimsstatus.show', compact('claimsstatus'));
     }
 
     /**
@@ -87,7 +90,8 @@ class ClaimsStatusController extends Controller
     public function edit(ClaimsStatus $claimsstatus)
     {
         $claimsstatus = new ClaimStatusResource($claimsstatus);
-        return view('claimsstatus.edit',compact('claimsstatus'));
+
+        return view('claimsstatus.edit', compact('claimsstatus'));
     }
 
     /**
@@ -102,9 +106,10 @@ class ClaimsStatusController extends Controller
         $validated = $request->validated();
         $validated['is_active'] = $validated['is_active'] ?? 0;
         $claimsstatus->update($validated);
-        if(isset($request->return_to_view)) {
-            return redirect("claim/claimsstatus/".$claimsstatus->id)->with('success', 'Claim Status has been updated');
+        if (isset($request->return_to_view)) {
+            return redirect('claim/claimsstatus/'.$claimsstatus->id)->with('success', 'Claim Status has been updated');
         }
+
         return redirect()->back()->with('success', 'Claim Status has been updated');
     }
 
@@ -117,6 +122,7 @@ class ClaimsStatusController extends Controller
     public function destroy(ClaimsStatus $claimsstatus)
     {
         $claimsstatus->delete();
-        return redirect()->route('claimsstatus.index')->with('message','Claim Status has been deleted');
+
+        return redirect()->route('claimsstatus.index')->with('message', 'Claim Status has been deleted');
     }
 }

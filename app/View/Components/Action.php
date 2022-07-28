@@ -16,7 +16,7 @@ class Action extends Component
      *
      * @return void
      */
-    public function __construct($editRoute, $deleteRoute, $viewRoute,$permission)
+    public function __construct($editRoute, $deleteRoute, $viewRoute, $permission)
     {
         $this->editRoute = $editRoute;
         $this->deleteRoute = $deleteRoute;
@@ -35,6 +35,7 @@ class Action extends Component
         $deleteRoute = $this->deleteRoute;
         $viewRoute = $this->viewRoute;
         $permission = $this->permission;
-        return view('components.action',compact('editRoute','deleteRoute','viewRoute','permission'));
+
+        return view('components.action', compact('editRoute', 'deleteRoute', 'viewRoute', 'permission'));
     }
 }

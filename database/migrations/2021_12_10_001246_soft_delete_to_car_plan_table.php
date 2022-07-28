@@ -14,8 +14,9 @@ class SoftDeleteToCarPlanTable extends Migration
     public function up()
     {
         Schema::table('car_plan', function (Blueprint $table) {
-            if(!Schema::hasColumn('car_plan','deleted_at'))
+            if (! Schema::hasColumn('car_plan', 'deleted_at')) {
                 $table->softDeletes();
+            }
         });
     }
 

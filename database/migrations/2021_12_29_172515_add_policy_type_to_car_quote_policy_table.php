@@ -13,9 +13,8 @@ class AddPolicyTypeToCarQuotePolicyTable extends Migration
      */
     public function up()
     {
-        
         Schema::table('car_quote_policy', function (Blueprint $table) {
-            if(!Schema::hasColumn('car_quote_policy', 'policy_type')) {
+            if (! Schema::hasColumn('car_quote_policy', 'policy_type')) {
                 $table->string('policy_type', 200)->nullable();
             }
         });

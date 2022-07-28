@@ -13,7 +13,7 @@ class InslyBatchLog extends Migration
      */
     public function up()
     {
-        if (!Schema::hasTable('insly_batch_log')) {
+        if (! Schema::hasTable('insly_batch_log')) {
             Schema::create('insly_batch_log', function (Blueprint $table) {
                 $table->bigIncrements('id');
                 $table->string('batch_start_date');

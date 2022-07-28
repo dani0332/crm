@@ -3,10 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\InsuranceCompany;
-use Illuminate\Http\Request;
-use DataTables;
 use Auth;
-use DB;
+use DataTables;
+use Illuminate\Http\Request;
 
 class InsuranceCompanyController extends Controller
 {
@@ -31,7 +30,8 @@ class InsuranceCompanyController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $data = InsuranceCompany::select('*')->where('is_deleted', 0)->orderBy('created_at','desc');
+            $data = InsuranceCompany::select('*')->where('is_deleted', 0)->orderBy('created_at', 'desc');
+
             return Datatables::of($data)
                 ->addIndexColumn()
                 ->addColumn('action', function ($row) {
@@ -40,6 +40,7 @@ class InsuranceCompanyController extends Controller
                 ->rawColumns(['action'])
                 ->make(true);
         }
+
         return view('Insurancecompany.view');
     }
 
@@ -71,9 +72,10 @@ class InsuranceCompanyController extends Controller
         $insurancecompany->created_by = Auth::user()->email;
         $insurancecompany->updated_by = Auth::user()->email;
         $insurancecompany->save();
-        if(isset($request->return_to_view)) {
-            return redirect("transapp/insurancecompany/".$insurancecompany->id)->with('success', 'Insurance Company has been stored');
+        if (isset($request->return_to_view)) {
+            return redirect('transapp/insurancecompany/'.$insurancecompany->id)->with('success', 'Insurance Company has been stored');
         }
+
         return redirect()->back()->with('success', 'Insurance Company has been stored');
     }
 
@@ -106,7 +108,7 @@ class InsuranceCompanyController extends Controller
      * @param  InsuranceCompany  $insurancecompany
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request,InsuranceCompany $insurancecompany)
+    public function update(Request $request, InsuranceCompany $insurancecompany)
     {
         $this->validate($request, [
             'name' => 'required|max:150',
@@ -117,9 +119,10 @@ class InsuranceCompanyController extends Controller
         $insurancecompany->updated_by = Auth::user()->email;
         $insurancecompany->save();
 
-        if(isset($request->return_to_view)) {
-            return redirect("transapp/insurancecompany/".$insurancecompany->id)->with('success', 'Insurance Company has been updated');
+        if (isset($request->return_to_view)) {
+            return redirect('transapp/insurancecompany/'.$insurancecompany->id)->with('success', 'Insurance Company has been updated');
         }
+
         return redirect()->back()->with('success', 'Insurance Company has been updated');
     }
 
@@ -133,6 +136,7 @@ class InsuranceCompanyController extends Controller
     {
         $insurancecompany->is_deleted = 1;
         $insurancecompany->save();
-        return redirect()->route('insurancecompany.index')->with('message','Insurance Company has been deleted');
+
+        return redirect()->route('insurancecompany.index')->with('message', 'Insurance Company has been deleted');
     }
 }

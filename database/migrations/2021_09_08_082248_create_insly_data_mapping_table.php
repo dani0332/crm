@@ -13,7 +13,7 @@ class CreateInslyDataMappingTable extends Migration
      */
     public function up()
     {
-        if (!Schema::hasTable('insly_data_mapping')) {
+        if (! Schema::hasTable('insly_data_mapping')) {
             Schema::create('insly_data_mapping', function (Blueprint $table) {
                 $table->bigIncrements('id');
                 $table->string('customer_email')->index();

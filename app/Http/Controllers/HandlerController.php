@@ -3,26 +3,22 @@
 namespace App\Http\Controllers;
 
 use App\Models\Handler;
-use Illuminate\Http\Request;
-use DataTables;
 use Auth;
+use DataTables;
 use DB;
+use Illuminate\Http\Request;
 
 class HandlerController extends Controller
 {
     /**
-
      * Display a listing of the resource.
 
      *
 
      * @return \Illuminate\Http\Response
-
      */
-
     public function __construct()
     {
-
         $this->middleware('permission:handler-list|handler-create|handler-edit|handler-delete', ['only' => ['index', 'store']]);
 
         $this->middleware('permission:handler-create', ['only' => ['create', 'store']]);
@@ -33,19 +29,17 @@ class HandlerController extends Controller
     }
 
     /**
-
      * Display a listing of the resource.
 
      *
 
      * @return \Illuminate\Http\Response
-
      */
-
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $data = Handler::select('*')->orderBy('created_at','desc');
+            $data = Handler::select('*')->orderBy('created_at', 'desc');
+
             return Datatables::of($data)
                 ->addIndexColumn()
                 ->addColumn('action', function ($row) {
@@ -54,6 +48,7 @@ class HandlerController extends Controller
                 ->rawColumns(['action'])
                 ->make(true);
         }
+
         return view('handler.view');
     }
 
@@ -62,7 +57,6 @@ class HandlerController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-
     public function create()
     {
         return view('handler.add');
@@ -74,10 +68,8 @@ class HandlerController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-
     public function store(Request $request)
     {
-
         $this->validate($request, [
 
             'name' => 'required',
@@ -89,8 +81,9 @@ class HandlerController extends Controller
         $handler->is_active = $request->is_active == 'on' ? 1 : 0;
         $handler->created_by = Auth::user()->email;
         $handler->save();
-        if(isset($request->return_to_view))
-            return redirect("transapp/handler");
+        if (isset($request->return_to_view)) {
+            return redirect('transapp/handler');
+        }
 
         return redirect()->back()
         ->with('success', 'Handler created successfully');
@@ -102,7 +95,6 @@ class HandlerController extends Controller
      * @param  Handler  $handler
      * @return \Illuminate\Http\Response
      */
-
     public function show(Handler $handler)
     {
         return view('handler.show', compact('handler'));
@@ -114,7 +106,6 @@ class HandlerController extends Controller
      * @param  Handler  $handler
      * @return \Illuminate\Http\Response
      */
-
     public function edit(Handler $handler)
     {
         return view('handler.edit', compact('handler'));
@@ -127,8 +118,7 @@ class HandlerController extends Controller
      * @param  Handler  $handler
      * @return \Illuminate\Http\Response
      */
-
-    public function update(Request $request,Handler $handler)
+    public function update(Request $request, Handler $handler)
     {
         $this->validate($request, [
 
@@ -139,8 +129,9 @@ class HandlerController extends Controller
         $handler->is_active = $request->is_active == 'on' ? 1 : 0;
         $handler->updated_by = Auth::user()->email;
         $handler->save();
-        if(isset($request->return_to_view))
-        return redirect("transapp/handler");
+        if (isset($request->return_to_view)) {
+            return redirect('transapp/handler');
+        }
 
         return redirect()->back()
             ->with('success', 'Handler updated successfully');
@@ -152,7 +143,6 @@ class HandlerController extends Controller
      * @param  Handler  $handler
      * @return \Illuminate\Http\Response
      */
-
     public function destroy(Handler $handler)
     {
         DB::statement('SET FOREIGN_KEY_CHECKS=0');

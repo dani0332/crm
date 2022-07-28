@@ -1,9 +1,8 @@
 <?php
 
-use Illuminate\Database\Migrations\Migration;
+use App\Models\BaseMigration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use App\Models\BaseMigration;
 
 class CreateFtcQuoteStatusHistoryTable extends BaseMigration
 {
@@ -14,7 +13,7 @@ class CreateFtcQuoteStatusHistoryTable extends BaseMigration
      */
     public function up()
     {
-        if (!Schema::hasTable('ftc_quote_status_history')) {
+        if (! Schema::hasTable('ftc_quote_status_history')) {
             Schema::create('ftc_quote_status_history', function (Blueprint $table) {
                 $table->id()->autoIncrement();
                 $table->bigInteger('car_quote_id');

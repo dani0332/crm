@@ -2,23 +2,23 @@
 
 namespace App\Imports;
 
+use App\Jobs\ProcessSIBCustomerMail;
 use App\Models\Customer;
 use App\Models\QuoteCustomer;
 use App\Services\CustomerService;
+use App\Services\SendEmailCustomerService;
 use Illuminate\Support\Facades\Log;
-use Maatwebsite\Excel\Row;
 use Maatwebsite\Excel\Concerns\OnEachRow;
 use Maatwebsite\Excel\Concerns\WithStartRow;
-use App\Jobs\ProcessSIBCustomerMail;
-use App\Services\SendEmailCustomerService;
+use Maatwebsite\Excel\Row;
 
 class CustomersImport implements OnEachRow, WithStartRow
 {
-
     public $myalfredExpiryDate;
     public $CDBId;
     public $inviatationEmail;
     public $sendEmailCustomerService;
+
     public function __construct($myalfredExpiryDate, $cdbId, $inviatationEmail, SendEmailCustomerService $sendEmailCustomerService)
     {
         $this->myalfredExpiryDate = $myalfredExpiryDate;
@@ -28,8 +28,7 @@ class CustomersImport implements OnEachRow, WithStartRow
     }
 
     /**
-     * @param array $row
-     *
+     * @param  array  $row
      * @return \Illuminate\Database\Eloquent\Model|null
      */
     public function onRow(Row $row)
@@ -42,18 +41,18 @@ class CustomersImport implements OnEachRow, WithStartRow
         if ($email != null) {
             $customerId = 0;
             $myalfredExpiryDate = date('Y-m-d H:i:s', strtotime(str_replace('"', '', $this->myalfredExpiryDate)));
-            $customerName = explode(" ", $row[0], 2);
-            $lastName = "";
-            if (!empty($customerName[1])) {
+            $customerName = explode(' ', $row[0], 2);
+            $lastName = '';
+            if (! empty($customerName[1])) {
                 $firstName = $customerName[0];
                 $lastName = $customerName[1];
             } else {
                 $firstName = $row[0];
-                $lastName = "";
+                $lastName = '';
             }
 
             $findCustomerByEmail = CustomerService::getCustomerByEmail($email);
-            if (!$findCustomerByEmail->isEmpty()) {
+            if (! $findCustomerByEmail->isEmpty()) {
                 $updateCustomer = $findCustomerByEmail->first();
                 $updateCustomer->first_name = $firstName;
                 $updateCustomer->last_name = $lastName;
@@ -66,12 +65,12 @@ class CustomersImport implements OnEachRow, WithStartRow
                 $customerId = $updateCustomer->id;
             } else {
                 $newCustomer = new Customer([
-                    "first_name" => $firstName,
-                    "last_name" => $lastName,
-                    "email" => $email,
-                    "has_alfred_access" => true,
-                    "has_reward_access" => true,
-                    "myalfred_expiry_date" => $myalfredExpiryDate,
+                    'first_name' => $firstName,
+                    'last_name' => $lastName,
+                    'email' => $email,
+                    'has_alfred_access' => true,
+                    'has_reward_access' => true,
+                    'myalfred_expiry_date' => $myalfredExpiryDate,
                 ]);
                 $newCustomer->save();
                 $customerId = $newCustomer->id;
@@ -79,7 +78,7 @@ class CustomersImport implements OnEachRow, WithStartRow
 
             $customerModel = Customer::find($customerId);
             if ($this->inviatationEmail == 'on') {
-                if($customerModel->is_we_sent == 0) {
+                if ($customerModel->is_we_sent == 0) {
                     dispatch(new ProcessSIBCustomerMail($email, $firstName, $this->sendEmailCustomerService));
                 }
             }
@@ -90,7 +89,7 @@ class CustomersImport implements OnEachRow, WithStartRow
                 $newQuoteCustomer->cdb_id = $this->CDBId;
                 $newQuoteCustomer->customer_id = $customerId;
                 $newQuoteCustomer->save();
-                Log::info('Saved in quote customer with Customer Id-> ' . $customerId . ' , CDB Id ->' . $this->CDBId);
+                Log::info('Saved in quote customer with Customer Id-> '.$customerId.' , CDB Id ->'.$this->CDBId);
             }
         }
     }

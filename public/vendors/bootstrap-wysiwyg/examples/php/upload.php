@@ -1,7 +1,8 @@
 <?php
 
-	header ( 'Content-type: text/plain');
-	echo "
+    header('Content-type: text/plain');
+
+    echo "
 		Now see here, you will see the output of the param most 
 		interesting to PHP. \$_POST.
 		
@@ -12,5 +13,6 @@
 		Otherwise, it will send it all in the single form field.
 		
 		print_r(\$_POST);
-	";	
-	print_r($_POST);
+	";
+
+    print_r($_POST);

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\RolesEnum;
+use Auth;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -12,7 +13,6 @@ use Laravel\Sanctum\HasApiTokens;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 use Spatie\Permission\Traits\HasRoles;
-use Auth;
 
 class User extends Authenticatable implements AuditableContract
 {
@@ -72,12 +72,15 @@ class User extends Authenticatable implements AuditableContract
 
     public function getCreatedAtAttribute($table)
     {
-        $date_time_format = env("DATETIME_FORMAT");
+        $date_time_format = env('DATETIME_FORMAT');
+
         return $this->asDateTime($table)->timezone(config('app.timezone'))->format($date_time_format);
     }
+
     public function getUpdatedAtAttribute($table)
     {
-        $date_time_format = env("DATETIME_FORMAT");
+        $date_time_format = env('DATETIME_FORMAT');
+
         return $this->asDateTime($table)->timezone(config('app.timezone'))->format($date_time_format);
     }
 
@@ -92,6 +95,7 @@ class User extends Authenticatable implements AuditableContract
         }
         if ($isManager) {
             $userIds = User::where('manager_id', $this->id)->get()->pluck('id');
+
             return $userIds->implode(',');
         } else {
             return 0;
@@ -107,6 +111,7 @@ class User extends Authenticatable implements AuditableContract
                 $isManagerORDeputy = true;
             }
         }
+
         return $isManagerORDeputy;
     }
 
@@ -119,18 +124,22 @@ class User extends Authenticatable implements AuditableContract
     {
         return Auth::user()->hasAnyRole([RolesEnum::CarRenewalAdvisor, RolesEnum::TravelRenewalAdvisor, RolesEnum::HealthRenewalAdvisor, RolesEnum::HomeRenewalAdvisor, RolesEnum::LifeRenewalAdvisor, RolesEnum::GMRenewalAdvisor, RolesEnum::CorpLineRenewalAdvisor, RolesEnum::PetRenewalAdvisor]);
     }
+
     public function isRenewalManager()
     {
         return Auth::user()->hasAnyRole([RolesEnum::CarRenewalManager, RolesEnum::TravelRenewalManager, RolesEnum::HealthRenewalManager, RolesEnum::HomeRenewalManager, RolesEnum::LifeRenewalManager, RolesEnum::GMRenewalManager, RolesEnum::CorpLineRenewalManager, RolesEnum::PetRenewalManager]);
     }
+
     public function isNewBusinessManager()
     {
         return Auth::user()->hasAnyRole([RolesEnum::HealthNewBusinessManager, RolesEnum::TravelNewBusinessManager, RolesEnum::HomeNewBusinessManager, RolesEnum::LifeNewBusinessManager, RolesEnum::GMNewBusinessManager, RolesEnum::CorpLineNewBusinessManager, RolesEnum::PetNewBusinessManager]);
     }
+
     public function isNewBusinessAdvisor()
     {
         return Auth::user()->hasAnyRole([RolesEnum::CarNewBusinessAdvisor, RolesEnum::TravelNewBusinessAdvisor, RolesEnum::HealthNewBusinessAdvisor, RolesEnum::HomeNewBusinessAdvisor, RolesEnum::LifeNewBusinessAdvisor, RolesEnum::GMNewBusinessAdvisor, RolesEnum::CorpLineNewBusinessAdvisor, RolesEnum::PetNewBusinessAdvisor]);
     }
+
     public function isAdvisor()
     {
         $userRoles = Auth::user()->usersroles()->get();
@@ -140,6 +149,7 @@ class User extends Authenticatable implements AuditableContract
                 $isAdvisor = true;
             }
         }
+
         return $isAdvisor;
     }
 
@@ -148,10 +158,11 @@ class User extends Authenticatable implements AuditableContract
         $userRoles = Auth::user()->usersroles()->get();
         $isAdvisor = false;
         foreach ($userRoles as $userRole) {
-            if (str_contains(strtolower($userRole->name), strtolower($teamType) . '_advisor')) {
+            if (str_contains(strtolower($userRole->name), strtolower($teamType).'_advisor')) {
                 $isAdvisor = true;
             }
         }
+
         return $isAdvisor;
     }
 
@@ -163,18 +174,19 @@ class User extends Authenticatable implements AuditableContract
     public function getUserTeams($userId)
     {
         $userTeamIds = UserTeams::where('user_id', $userId)->get()->pluck('team_id');
+
         return Team::whereIn('id', $userTeamIds)->get()->pluck('name');
     }
 
     public function processGetDSL($filters = [])
     {
-
         if (Auth::user()->hasAnyRole([RolesEnum::ProductionApprovalManager, RolesEnum::Advisor, RolesEnum::Admin])) {
             return $this->getUserRoles();
         }
-        return self::with(array('usersroles' => function ($query) {
+
+        return self::with(['usersroles' => function ($query) {
             $query->where('name', 'admin');
-        }))->get();
+        }])->get();
     }
 
     public function hasMyLeadAccess()
@@ -187,7 +199,7 @@ class User extends Authenticatable implements AuditableContract
             RolesEnum::TravelRenewalAdvisor, RolesEnum::TravelNewBusinessAdvisor, RolesEnum::LifeRenewalAdvisor, RolesEnum::LifeNewBusinessAdvisor,
             RolesEnum::HomeRenewalAdvisor, RolesEnum::HomeNewBusinessAdvisor, RolesEnum::GMNewBusinessAdvisor, RolesEnum::GMRenewalAdvisor,
             RolesEnum::CorpLineRenewalAdvisor,
-            RolesEnum::CorpLineNewBusinessAdvisor, RolesEnum::PetRenewalAdvisor, RolesEnum::PetNewBusinessAdvisor, RolesEnum::CarRenewalAdvisor,RolesEnum::PetAdvisor
+            RolesEnum::CorpLineNewBusinessAdvisor, RolesEnum::PetRenewalAdvisor, RolesEnum::PetNewBusinessAdvisor, RolesEnum::CarRenewalAdvisor, RolesEnum::PetAdvisor,
         ]);
     }
 
@@ -195,7 +207,7 @@ class User extends Authenticatable implements AuditableContract
     {
         return Auth::user()->hasAnyRole([
             RolesEnum::Advisor, RolesEnum::PA, RolesEnum::Payment, RolesEnum::Invoicing,
-            RolesEnum::ProductionApprovalManager
+            RolesEnum::ProductionApprovalManager,
         ]);
     }
 
@@ -219,6 +231,7 @@ class User extends Authenticatable implements AuditableContract
                 $isAdvisor = true;
             }
         }
+
         return $isAdvisor;
     }
 }

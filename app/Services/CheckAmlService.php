@@ -2,21 +2,21 @@
 
 namespace App\Services;
 
-use App\Models\User;
-use App\Models\QuoteType;
+use App\Enums\quoteTypeCode;
+use App\Models\BikeQuote;
+use App\Models\BusinessQuote;
 use App\Models\CarQuote;
 use App\Models\HealthQuote;
 use App\Models\HomeQuote;
 use App\Models\LifeQuote;
-use App\Models\BusinessQuote;
-use App\Models\BikeQuote;
-use App\Models\YachtQuote;
+use App\Models\QuoteType;
 use App\Models\TravelQuote;
-use App\Enums\quoteTypeCode;
-use Illuminate\Support\Facades\Http;
-use Config;
-use Illuminate\Support\Facades\Mail;
+use App\Models\User;
+use App\Models\YachtQuote;
 use Auth;
+use Config;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Mail;
 
 class CheckAmlService
 {
@@ -25,14 +25,14 @@ class CheckAmlService
         $amlEndPoint = Config::get('constants.AML_SEARCH_API_ENDPOINT');
         $emailL_sys = Config::get('constants.emailL_sys');
         $appUrl = env('APP_URL');
-        $amlUrl = $appUrl . '/kyc/aml/' . $quoteTypeId . '/details/' . $quoteRequestId;
+        $amlUrl = $appUrl.'/kyc/aml/'.$quoteTypeId.'/details/'.$quoteRequestId;
         $checkAMLResponseEntity = '';
         if ($companyName != null) {
             $checkAMLResponseEntity = $this->checkAMLRequestEntity($quoteRequestId, $quoteTypeId, $companyName, $amlEndPoint, $amlUrl);
         }
         $checkAMLResponseIndividual = $this->checkAMLRequestIndividual($firstName, $lastName, $quoteRequestId, $quoteTypeId, $yob, $amlEndPoint, $amlUrl);
 
-        $isAMLResultFound = $checkAMLResponseEntity && $checkAMLResponseEntity["resultsFound"] > 0 || $checkAMLResponseIndividual['resultsFound'] > 0 ? true : false;
+        $isAMLResultFound = $checkAMLResponseEntity && $checkAMLResponseEntity['resultsFound'] > 0 || $checkAMLResponseIndividual['resultsFound'] > 0 ? true : false;
 
         // Match is found
         if ($isAMLResultFound) {
@@ -68,7 +68,7 @@ class CheckAmlService
             }
 
             if ($isEmailSendingEnabled == true) {
-                $fullName = $firstName . " " . $lastName;
+                $fullName = $firstName.' '.$lastName;
                 if ($companyName != null) {
                     $this->sendAMLMatchedEmailComplianceTeam($emailL_sys, $amlUrl, $checkAMLResponseEntity, $companyName, $quoteTypeName, $quoteCdbId);
                 }
@@ -84,13 +84,13 @@ class CheckAmlService
     public function checkAMLRequestIndividual($firstName, $lastName, $quoteRequestId, $quoteTypeId, $yob, $amlEndPoint, $amlUrl)
     {
         // creating the data for the request
-        $requestDataForIndividual = array();
-        $requestDataForIndividual['search'] = $firstName . ' ' . $lastName;
+        $requestDataForIndividual = [];
+        $requestDataForIndividual['search'] = $firstName.' '.$lastName;
         $requestDataForIndividual['quoteRequestId'] = $quoteRequestId;
         $requestDataForIndividual['quoteTypeId'] = $quoteTypeId;
         $requestDataForIndividual['yob'] = $yob;
         //executing request
-        $amlRequest = Http::contentType("application/json")->send('POST', $amlEndPoint . '/search', ['body' => json_encode($requestDataForIndividual)]);
+        $amlRequest = Http::contentType('application/json')->send('POST', $amlEndPoint.'/search', ['body' => json_encode($requestDataForIndividual)]);
         //capturing response
         $requestStatus = $amlRequest->status();
         $response = $amlRequest->json();
@@ -98,14 +98,14 @@ class CheckAmlService
         if ($requestStatus != 201 && $requestStatus != 200) {
             $requestMessage = '';
             foreach ($response as $key1 => $value1) {
-                $requestMessage .= $key1 . ': ' . $value1;
-                $requestMessage .= "<pre>";
+                $requestMessage .= $key1.': '.$value1;
+                $requestMessage .= '<pre>';
             }
 
             $emailAmlData = '';
             foreach ($requestDataForIndividual as $key => $value) {
-                $emailAmlData .= $key . ': ' . $value;
-                $emailAmlData .= "<pre>";
+                $emailAmlData .= $key.': '.$value;
+                $emailAmlData .= '<pre>';
             }
 
             // Send Error Email alert to engineering team
@@ -114,15 +114,16 @@ class CheckAmlService
 
         return $response;
     }
+
     public function checkAMLRequestEntity($quoteRequestId, $quoteTypeId, $companyName, $amlEndPoint, $amlUrl)
     {
         // creating the data for the request
-        $requestDataForEntity = array();
+        $requestDataForEntity = [];
         $requestDataForEntity['search'] = $companyName;
         $requestDataForEntity['quoteRequestId'] = $quoteRequestId;
         $requestDataForEntity['quoteTypeId'] = $quoteTypeId;
         //executing request
-        $amlRequest = Http::contentType("application/json")->send('POST', $amlEndPoint . '/search-entity', ['body' => json_encode($requestDataForEntity)]);
+        $amlRequest = Http::contentType('application/json')->send('POST', $amlEndPoint.'/search-entity', ['body' => json_encode($requestDataForEntity)]);
         //capturing response
         $requestStatus = $amlRequest->status();
         $response = $amlRequest->json();
@@ -130,42 +131,43 @@ class CheckAmlService
         if ($requestStatus != 201 && $requestStatus != 200) {
             $requestMessage = '';
             foreach ($response as $key1 => $value1) {
-                $requestMessage .= $key1 . ': ' . $value1;
-                $requestMessage .= "<pre>";
+                $requestMessage .= $key1.': '.$value1;
+                $requestMessage .= '<pre>';
             }
 
             $emailAmlData = '';
             foreach ($requestDataForEntity as $key => $value) {
-                $emailAmlData .= $key . ': ' . $value;
-                $emailAmlData .= "<pre>";
+                $emailAmlData .= $key.': '.$value;
+                $emailAmlData .= '<pre>';
             }
 
             // Send Error Email alert to engineering team
             $this->sendAMLErrorEmailEngTeam($emailAmlData, $amlUrl, $requestStatus, $requestMessage);
         }
+
         return $response;
     }
 
     // Match found Email
     public function sendAMLMatchedEmailComplianceTeam($emailL_sys, $amlUrl, $AMLResponse, $fullName, $quoteTypeName, $quoteCdbId)
     {
-        if($AMLResponse['resultsFound'] == 0) {
+        if ($AMLResponse['resultsFound'] == 0) {
             return;
         }
         $recipients = User::select('users.email as user_email')
             ->leftjoin('model_has_roles', 'users.id', 'model_has_roles.model_id')
             ->leftjoin('roles', 'model_has_roles.role_id', 'roles.id')
-            ->whereIn('roles.name', array("COMPLIANCE"))->get();
+            ->whereIn('roles.name', ['COMPLIANCE'])->get();
 
-        $emailRecipients = array();
+        $emailRecipients = [];
         foreach ($recipients as $recipient) {
             $emailRecipients[] = $recipient->user_email;
         }
 
-        if ($emailL_sys == "PRODUCTION") {
-            $emailSubject = "IMCRM | New AML Matches Found for CDB ID : " . $quoteCdbId;
+        if ($emailL_sys == 'PRODUCTION') {
+            $emailSubject = 'IMCRM | New AML Matches Found for CDB ID : '.$quoteCdbId;
         } else {
-            $emailSubject = $emailL_sys . " | IMCRM | New AML Matches Found for CDB ID : " . $quoteCdbId;
+            $emailSubject = $emailL_sys.' | IMCRM | New AML Matches Found for CDB ID : '.$quoteCdbId;
         }
 
         $this->amlComplianceMail('AmlComplianceMail', [
@@ -179,7 +181,7 @@ class CheckAmlService
 
     public function amlComplianceMail($templateName, $templateParams, $emailSubject, $emailRecipients, $emailL_sys)
     {
-        if ($emailL_sys == "PRODUCTION") {
+        if ($emailL_sys == 'PRODUCTION') {
             $fromEmail = Config::get('constants.MAIL_FROM_ADDRESS_AML');
             $fromName = Config::get('constants.MAIL_FROM_NAME_AML');
         } else {
@@ -202,14 +204,14 @@ class CheckAmlService
         $complianceUsersEmails = User::select('users.email as user_email')
             ->leftjoin('model_has_roles', 'users.id', 'model_has_roles.model_id')
             ->leftjoin('roles', 'model_has_roles.role_id', 'roles.id')
-            ->whereIn('roles.name', array("COMPLIANCE"))->get();
+            ->whereIn('roles.name', ['COMPLIANCE'])->get();
 
-        $complianceEmailRecipients = array();
+        $complianceEmailRecipients = [];
         foreach ($complianceUsersEmails as $complianceUsersEmail) {
             $complianceEmailRecipients[] = $complianceUsersEmail->user_email;
         }
 
-        if ($quotePaID != "") {
+        if ($quotePaID != '') {
             // TO will be quotePaID
             $paUserEmailId = User::where('id', '=', $quotePaID)->value('email');
             $toRecipient = $paUserEmailId;
@@ -226,14 +228,14 @@ class CheckAmlService
         }
 
         $emailL_sys = Config::get('constants.emailL_sys');
-        if ($emailL_sys == "PRODUCTION") {
-            $emailSubject = "IMCRM | New AML Matches Found for CDB ID : " . $quoteCdbId;
+        if ($emailL_sys == 'PRODUCTION') {
+            $emailSubject = 'IMCRM | New AML Matches Found for CDB ID : '.$quoteCdbId;
         } else {
-            $emailSubject = $emailL_sys . " | IMCRM | New AML Matches Found for CDB ID : " . $quoteCdbId;
+            $emailSubject = $emailL_sys.' | IMCRM | New AML Matches Found for CDB ID : '.$quoteCdbId;
         }
 
         $appUrl = env('APP_URL');
-        $amlUrl = $appUrl . '/kyc/aml/' . $quoteTypeId . '/details/' . $quoteRequestId;
+        $amlUrl = $appUrl.'/kyc/aml/'.$quoteTypeId.'/details/'.$quoteRequestId;
 
         $this->amlQuoteStatusUpdateMail('AmlQuoteStatusUpdateMail', [
             'amlUrl' => $amlUrl,
@@ -246,7 +248,7 @@ class CheckAmlService
 
     public function amlQuoteStatusUpdateMail($templateName, $templateParams, $emailSubject, $toRecipient, $ccRecipients, $emailL_sys)
     {
-        if ($emailL_sys == "PRODUCTION") {
+        if ($emailL_sys == 'PRODUCTION') {
             $fromEmail = Config::get('constants.MAIL_FROM_ADDRESS_AML');
             $fromName = Config::get('constants.MAIL_FROM_NAME_AML');
         } else {
@@ -270,7 +272,7 @@ class CheckAmlService
         $email_sys = Config::get('constants.emailL_sys');
         $errorEmailRecipients = Config::get('constants.ERROR_EMAIL_RECIPIENTS');
         $errorEmailRecipients = explode(',', $errorEmailRecipients);
-        $subject = $email_sys . " RYU SEARCH API ERROR | " . \Request::url() . " | " . date('d-m-Y H:i:s');
+        $subject = $email_sys.' RYU SEARCH API ERROR | '.\Request::url().' | '.date('d-m-Y H:i:s');
         MailService::sendEmail('AmlErrorMail', [
             'amlUrl' => $amlUrl,
             'emailAmlData' => $emailAmlData,

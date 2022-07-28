@@ -5,21 +5,21 @@ namespace App\Http\Controllers;
 use App\Models\LeadAllocation;
 use App\Services\ApplicationStorageService;
 use App\Services\LeadAllocationService;
+use DataTables;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
-use Auth;
-use DataTables;
 
 class LeadAllocationController extends Controller
 {
-
     protected $leadAllocationService;
     protected $applicationStorageService;
+
     public function __construct(LeadAllocationService $leadAllocationService, ApplicationStorageService $applicationStorageService)
     {
         $this->leadAllocationService = $leadAllocationService;
         $this->applicationStorageService = $applicationStorageService;
     }
+
     /**
      * Display a listing of the resource.
      *
@@ -42,11 +42,11 @@ class LeadAllocationController extends Controller
                 }
             }
             if ($request->ajax()) {
-
                 return Datatables::of($data)
                     ->addIndexColumn()
                     ->make(true);
             }
+
             return view('user.lead-allocation', compact(['totalAssignedLeadCount', 'availableUsers', 'unAvailableUsers', 'isAutoAllocationWorking']));
         } else {
             abort(403, 'Unauthorized action.');
@@ -123,10 +123,15 @@ class LeadAllocationController extends Controller
     {
         $leadAllocationUser = LeadAllocation::where('user_id', $request->aid)->where('id', $request->id)->first();
 
-        if (isset($request->is_available)) $leadAllocationUser->is_available = $request->is_available;
-        if (isset($request->max_cap)) $leadAllocationUser->max_capacity = $request->max_cap;
+        if (isset($request->is_available)) {
+            $leadAllocationUser->is_available = $request->is_available;
+        }
+        if (isset($request->max_cap)) {
+            $leadAllocationUser->max_capacity = $request->max_cap;
+        }
         $leadAllocationUser->save();
     }
+
     public function setLeadAllocationJobStatus()
     {
         $this->applicationStorageService->updateLeadAllocationJobStatus();

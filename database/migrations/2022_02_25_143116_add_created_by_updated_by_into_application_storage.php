@@ -14,16 +14,13 @@ class AddCreatedByUpdatedByIntoApplicationStorage extends Migration
     public function up()
     {
         Schema::table('application_storage', function (Blueprint $table) {
-            if(!Schema::hasColumn('application_storage','created_by'))
-            {
-                $table->string('created_by')->nullable(); 
+            if (! Schema::hasColumn('application_storage', 'created_by')) {
+                $table->string('created_by')->nullable();
             }
-            if(!Schema::hasColumn('application_storage','updated_by'))
-            {
+            if (! Schema::hasColumn('application_storage', 'updated_by')) {
                 $table->string('updated_by')->nullable();
             }
-            if(!Schema::hasColumn('application_storage','deleted_at'))
-            {
+            if (! Schema::hasColumn('application_storage', 'deleted_at')) {
                 $table->dateTime('deleted_at')->nullable();
             }
         });

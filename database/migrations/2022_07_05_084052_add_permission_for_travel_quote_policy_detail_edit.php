@@ -17,12 +17,12 @@ class AddPermissionForTravelQuotePolicyDetailEdit extends Migration
         $travelQuotePolicyDetail = DB::table('permissions')->where('name', 'travel-quotes-policy-detail-edit')->first();
         if ($travelQuotePolicyDetail === null) {
             DB::table('permissions')->insert(
-                array(
+                [
                     'name' => 'travel-quotes-policy-detail-edit',
                     'guard_name' => 'web',
                     'created_at' => $datetime,
-                    'updated_at' => $datetime
-                )
+                    'updated_at' => $datetime,
+                ]
             );
         }
     }

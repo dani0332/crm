@@ -18,7 +18,6 @@ class CreateTableLeadStatus extends Migration
 
             $table->string('name', '250');
             $table->boolean('is_active')->default(true);
-
         });
     }
 

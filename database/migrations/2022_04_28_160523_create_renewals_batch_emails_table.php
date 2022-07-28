@@ -13,14 +13,14 @@ class CreateRenewalsBatchEmailsTable extends Migration
      */
     public function up()
     {
-        if (!Schema::hasTable('renewals_batch_emails')) {
+        if (! Schema::hasTable('renewals_batch_emails')) {
             Schema::create('renewals_batch_emails', function (Blueprint $table) {
                 $table->id();
                 $table->integer('batch')->nullable();
                 $table->integer('total_leads')->nullable();
                 $table->integer('total_sent')->nullable();
                 $table->integer('total_bounced')->nullable();
-                $table->string('status','20')->nullable();
+                $table->string('status', '20')->nullable();
                 $table->unsignedBigInteger('created_by_id')->nullable();
                 $table->foreign('created_by_id')->references('id')->on('users')->onDelete('no action');
                 $table->timestamps();

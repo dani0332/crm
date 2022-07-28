@@ -2,22 +2,20 @@
 
 namespace App\View\Components;
 
-use Illuminate\View\Component;
 use DB;
+use Illuminate\View\Component;
+
 class Auditable extends Component
 {
-
     public $auditableId;
     public $auditableType;
-
-
 
     /**
      * Create a new component instance.
      *
      * @return void
      */
-    public function __construct($auditableId , $auditableType)
+    public function __construct($auditableId, $auditableType)
     {
         $this->auditableId = $auditableId;
         $this->auditableType = $auditableType;
@@ -30,14 +28,14 @@ class Auditable extends Component
      */
     public function render()
     {
-       $audits =  DB::table('audits')
-       ->select('audits.*','users.name')
-       ->join('users','audits.user_id','users.id')
-       ->where('auditable_id',$this->auditableId)
-       ->where('auditable_type',$this->auditableType)
-       
+        $audits = DB::table('audits')
+       ->select('audits.*', 'users.name')
+       ->join('users', 'audits.user_id', 'users.id')
+       ->where('auditable_id', $this->auditableId)
+       ->where('auditable_type', $this->auditableType)
+
        ->get();
 
-        return view('components.auditable',compact('audits'));
+        return view('components.auditable', compact('audits'));
     }
 }

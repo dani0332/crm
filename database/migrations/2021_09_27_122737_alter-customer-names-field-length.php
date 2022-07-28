@@ -14,7 +14,7 @@ class AlterCustomerNamesFieldLength extends Migration
     public function up()
     {
         Schema::table('customer', function (Blueprint $table) {
-            $table->string('last_name',500)->change();
+            $table->string('last_name', 500)->change();
         });
     }
 

@@ -14,7 +14,7 @@ class AlterTableCarQuoteRequestAddColumnPolicyNumber extends Migration
     public function up()
     {
         Schema::table('car_quote_request', function (Blueprint $table) {
-            if (!Schema::hasColumn('car_quote_request', 'policy_number')) {
+            if (! Schema::hasColumn('car_quote_request', 'policy_number')) {
                 $table->string('policy_number', '50')->nullable();
                 $table->bigInteger('previous_quote_id')->nullable();
             }

@@ -1,9 +1,8 @@
 <?php
 
-use Illuminate\Database\Migrations\Migration;
+use App\Models\BaseMigration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use App\Models\BaseMigration;
 
 class CreateCarQuoteAssignOeToAdvisorTable extends BaseMigration
 {
@@ -15,7 +14,6 @@ class CreateCarQuoteAssignOeToAdvisorTable extends BaseMigration
     public function up()
     {
         Schema::create('car_quote_assign_oe_to_advisor', function (Blueprint $table) {
-            
             $table->id()->autoIncrement();
             parent::commonFields($table);
 
@@ -26,7 +24,6 @@ class CreateCarQuoteAssignOeToAdvisorTable extends BaseMigration
             $table->unsignedBigInteger('advisor_id');
             $table->index('advisor_id');
             $table->foreign('advisor_id')->references('id')->on('users');
-
         });
     }
 

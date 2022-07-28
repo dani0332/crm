@@ -13,8 +13,7 @@ class AlterUsersTableAddMobileNumber extends Migration
      */
     public function up()
     {
-        if (!Schema::hasColumn('users', 'mobile_no') && !Schema::hasColumn('users', 'landline_no'))
-        {
+        if (! Schema::hasColumn('users', 'mobile_no') && ! Schema::hasColumn('users', 'landline_no')) {
             Schema::table('users', function (Blueprint $table) {
                 $table->string('mobile_no', '20')->nullable();
                 $table->string('landline_no', '20')->nullable();
@@ -29,10 +28,8 @@ class AlterUsersTableAddMobileNumber extends Migration
      */
     public function down()
     {
-        if (Schema::hasColumn('users', 'mobile_no') && Schema::hasColumn('users', 'landline_no'))
-        {
-            Schema::table('users', function (Blueprint $table)
-            {
+        if (Schema::hasColumn('users', 'mobile_no') && Schema::hasColumn('users', 'landline_no')) {
+            Schema::table('users', function (Blueprint $table) {
                 $table->dropColumn(['mobile_no', 'landline_no']);
             });
         }

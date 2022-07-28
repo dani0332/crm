@@ -14,12 +14,15 @@ class AddFieldsToCarQuoteVehicleDetailTable extends Migration
     public function up()
     {
         Schema::table('car_quote_vehicle_detail', function (Blueprint $table) {
-            if(!Schema::hasColumn('car_quote_vehicle_detail','specs'))
+            if (! Schema::hasColumn('car_quote_vehicle_detail', 'specs')) {
                 $table->string('specs')->nullable();
-            if(!Schema::hasColumn('car_quote_vehicle_detail','current_cover'))
+            }
+            if (! Schema::hasColumn('car_quote_vehicle_detail', 'current_cover')) {
                 $table->string('current_cover')->nullable();
-            if(!Schema::hasColumn('car_quote_vehicle_detail','date_first_registration'))
+            }
+            if (! Schema::hasColumn('car_quote_vehicle_detail', 'date_first_registration')) {
                 $table->date('date_first_registration')->nullable();
+            }
         });
     }
 

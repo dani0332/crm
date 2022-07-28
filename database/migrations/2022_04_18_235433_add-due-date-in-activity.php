@@ -13,11 +13,10 @@ class AddDueDateInActivity extends Migration
      */
     public function up()
     {
-        
         Schema::table('activites', function (Blueprint $table) {
-            if(!Schema::hasColumn('activites', 'uuid')){
+            if (! Schema::hasColumn('activites', 'uuid')) {
                 $table->string('uuid')->unique()->nullable(false);
-                $table->dateTime('due_date')->nullable(false); 
+                $table->dateTime('due_date')->nullable(false);
             }
         });
     }

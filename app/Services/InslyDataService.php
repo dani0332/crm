@@ -2,13 +2,10 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\Log;
-use App\Models\InslyDataMapping;
 use App\Models\InslyBatchLog;
-use Illuminate\Support\Facades\Http;
+use App\Models\InslyDataMapping;
 use Config;
-use GuzzleHttp\Client;
-
+use Illuminate\Support\Facades\Log;
 
 class InslyDataService extends BaseService
 {
@@ -20,15 +17,14 @@ class InslyDataService extends BaseService
         $uri = Config::get('constants.INSLY_API_RENEWAL_URI');
         $timeout = Config::get('constants.INSLY_REQUEST_TIMEOUT_IN_SECONDS');
 
+        Log::info('User : '.$user.', Pass : '.$pass.', URI : '.$uri);
 
-        Log::info('User : ' . $user . ', Pass : ' . $pass . ', URI : ' . $uri);
-
-        $requestBody = array(
+        $requestBody = [
             'username' => $user,
             'password' => $pass,
             'policy_date_begin' => $nextStartDate,
             'policy_date_end' => $nextEndDate,
-        );
+        ];
 
         $inslyRequest = $client->post(
             $uri,
@@ -38,6 +34,7 @@ class InslyDataService extends BaseService
                 'timeout' => $timeout, // Response timeout
             ]
         );
+
         return $inslyRequest->getBody();
     }
 

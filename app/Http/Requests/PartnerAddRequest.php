@@ -28,7 +28,7 @@ class PartnerAddRequest extends FormRequest
             'name_ar' => 'required|max:120',
             'logo_image' => 'required|image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
             'is_active' => 'nullable',
-            'return_to_view' => 'nullable'
+            'return_to_view' => 'nullable',
         ];
     }
 }

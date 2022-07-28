@@ -2,62 +2,56 @@
 
 use App\Http\Controllers\ActivitesController;
 use App\Http\Controllers\AgeDiscountController;
-use App\Http\Controllers\AuditableController;
-use App\Http\Controllers\CarQuoteController;
-use App\Http\Controllers\CustomerController;
-use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\HealthQuoteController;
-use App\Http\Controllers\PartnerController;
-use App\Http\Controllers\RewardCategoryController;
-use App\Http\Controllers\RewardController;
-use App\Http\Controllers\RewardTagController;
-use App\Http\Controllers\RewardTranslationController;
-use App\Http\Controllers\RoleController;
-use App\Http\Controllers\CarQouteController;
-use App\Http\Controllers\HealthQouteController;
-use App\Http\Controllers\LeadAllocationController;
-use App\Http\Controllers\ClaimController;
-use App\Http\Controllers\TypeOfInsuranceController;
-use App\Http\Controllers\SubTypeOfInsuranceController;
-use App\Http\Controllers\ClaimsStatusController;
-use App\Http\Controllers\CarRepairCoverageController;
-use App\Http\Controllers\CarRepairTypeController;
-use App\Http\Controllers\RentACarController;
-use App\Http\Controllers\ClaimsAttachmentsController;
+use App\Http\Controllers\AjaxController;
 use App\Http\Controllers\AMLController;
 use App\Http\Controllers\AMTController;
+use App\Http\Controllers\AuditableController;
 use App\Http\Controllers\BaseDiscountController;
 use App\Http\Controllers\BulkEmailProcessController;
+use App\Http\Controllers\CarQuoteController;
+use App\Http\Controllers\CarRepairCoverageController;
+use App\Http\Controllers\CarRepairTypeController;
+use App\Http\Controllers\ClaimController;
+use App\Http\Controllers\ClaimsAttachmentsController;
+use App\Http\Controllers\ClaimsStatusController;
 use App\Http\Controllers\CRUDController;
-use App\Http\Controllers\GenericCrudController;
-use App\Http\Controllers\FtcFormController;
+use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FormController;
-use App\Http\Controllers\UploadResourceController;
-use App\Http\Controllers\ValuationController;
-
-use App\Http\Controllers\UserController;
-use App\Http\Controllers\InsuranceCompanyController;
+use App\Http\Controllers\FtcFormController;
+use App\Http\Controllers\GenericCrudController;
 use App\Http\Controllers\HandlerController;
+use App\Http\Controllers\HealthQuoteController;
+use App\Http\Controllers\InsuranceCompanyController;
+use App\Http\Controllers\LeadAllocationController;
 use App\Http\Controllers\LeadAssignmentController;
 use App\Http\Controllers\LeadSearchController;
 use App\Http\Controllers\MyLeadsController;
-use App\Http\Controllers\ReasonController;
-use App\Http\Controllers\StatusController;
+use App\Http\Controllers\PartnerController;
 use App\Http\Controllers\PaymentModeController;
+use App\Http\Controllers\ReasonController;
 use App\Http\Controllers\RenewalDataProcessingController;
-use App\Http\Controllers\TransactionController;
-use App\Http\Controllers\VehicleDepreciationController;
-use App\Models\DiscountEngineBase;
-use App\Http\Controllers\TmInsuranceTypeController;
-use App\Http\Controllers\TmCallStatusController;
-use App\Http\Controllers\TmLeadStatusController;
-use App\Http\Controllers\TmLeadController;
-use App\Http\Controllers\TmUploadLeadController;
 use App\Http\Controllers\RenewalsUploadController;
+use App\Http\Controllers\RentACarController;
+use App\Http\Controllers\RewardCategoryController;
+use App\Http\Controllers\RewardController;
 use App\Http\Controllers\RewardSliderController;
-use App\Http\Controllers\VehicleRangeController;
-use App\Http\Controllers\VehicleValueController;
-use App\Http\Controllers\AjaxController;
+use App\Http\Controllers\RewardTagController;
+use App\Http\Controllers\RewardTranslationController;
+use App\Http\Controllers\RoleController;
+use App\Http\Controllers\StatusController;
+use App\Http\Controllers\SubTypeOfInsuranceController;
+use App\Http\Controllers\TmCallStatusController;
+use App\Http\Controllers\TmInsuranceTypeController;
+use App\Http\Controllers\TmLeadController;
+use App\Http\Controllers\TmLeadStatusController;
+use App\Http\Controllers\TmUploadLeadController;
+use App\Http\Controllers\TransactionController;
+use App\Http\Controllers\TypeOfInsuranceController;
+use App\Http\Controllers\UploadResourceController;
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\ValuationController;
+use App\Http\Controllers\VehicleDepreciationController;
 use App\Http\Controllers\QuoteDocumentController;
 use App\Http\Controllers\MembersDetailController;
 use App\Http\Controllers\PaymentController;
@@ -89,8 +83,7 @@ Route::middleware(['auth'])->get('/home', function () {
     return view('home');
 });
 
-
-Route::group(['middleware' =>  ['auth']], function () {
+Route::group(['middleware' => ['auth']], function () {
     Route::resource('payments', PaymentController::class);
     Route::post('/payments/{quoteType}/store', [CRUDController::class, 'storePayment']);
     Route::resource('myleads', MyLeadsController::class);
@@ -299,15 +292,12 @@ Route::group(['middleware' =>  ['auth']], function () {
     Route::post('/car-plan-manual-update-process', [ClaimController::class, 'carPlanUpdateManualProcess']);
 });
 
-
-
 Route::POST('/sendBulkWelcomeEmails', [BulkEmailProcessController::class, 'ProcessBulkWelcomeEmails'])
     ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
 
-
 /***** RestAPI */
 
-Route::group(['middleware' =>  ['auth.rest']], function () use ($router) {
+Route::group(['middleware' => ['auth.rest']], function () {
     Route::resource('ftcform', FtcFormController::class);
     Route::resource('assignOE', FtcFormController::class);
     Route::group(['prefix' => 'form'], function () {
@@ -320,14 +310,11 @@ Route::group(['middleware' =>  ['auth.rest']], function () use ($router) {
     // Route::POST('/sendReviewEmail', [FormController::class,'sendReviewEmail'])
     //         ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);;
 
-
-
-
-    Route::group(['prefix' => 'users'], function () use ($router) {
+    Route::group(['prefix' => 'users'], function () {
         Route::GET('/me', [UserController::class, 'me']);
     });
 
-    Route::group(['prefix' => 'resource'], function () use ($router) {
+    Route::group(['prefix' => 'resource'], function () {
         Route::POST('/store', [UploadResourceController::class, 'store']);
     });
 });

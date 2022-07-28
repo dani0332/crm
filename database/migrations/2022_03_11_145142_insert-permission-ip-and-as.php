@@ -18,67 +18,67 @@ class InsertPermissionIpAndAs extends Migration
         $insuranceProviderList = DB::table('permissions')->where('name', 'inusrance-provider-list')->first();
         if ($insuranceProviderList === null) {
             DB::table('permissions')->insert(
-                array(
+                [
                     'name' => 'inusrance-provider-list',
                     'guard_name' => 'web',
                     'created_at' => $datetime,
-                    'updated_at' => $datetime
-                )
+                    'updated_at' => $datetime,
+                ]
             );
         }
         $insuranceProviderCreate = DB::table('permissions')->where('name', 'inusrance-provider-create')->first();
         if ($insuranceProviderCreate === null) {
             DB::table('permissions')->insert(
-                array(
+                [
                     'name' => 'inusrance-provider-create',
                     'guard_name' => 'web',
                     'created_at' => $datetime,
-                    'updated_at' => $datetime
-                )
+                    'updated_at' => $datetime,
+                ]
             );
         }
         $insuranceProviderEdit = DB::table('permissions')->where('name', 'inusrance-provider-edit')->first();
         if ($insuranceProviderEdit === null) {
             DB::table('permissions')->insert(
-                array(
+                [
                     'name' => 'inusrance-provider-edit',
                     'guard_name' => 'web',
                     'created_at' => $datetime,
-                    'updated_at' => $datetime
-                )
+                    'updated_at' => $datetime,
+                ]
             );
         }
         $appStorageList = DB::table('permissions')->where('name', 'application-storage-list')->first();
         if ($appStorageList === null) {
             DB::table('permissions')->insert(
-                array(
+                [
                     'name' => 'application-storage-list',
                     'guard_name' => 'web',
                     'created_at' => $datetime,
-                    'updated_at' => $datetime
-                )
+                    'updated_at' => $datetime,
+                ]
             );
         }
         $appStorageEdit = DB::table('permissions')->where('name', 'application-storage-edit')->first();
         if ($appStorageEdit === null) {
             DB::table('permissions')->insert(
-                array(
+                [
                     'name' => 'application-storage-edit',
                     'guard_name' => 'web',
                     'created_at' => $datetime,
-                    'updated_at' => $datetime
-                )
+                    'updated_at' => $datetime,
+                ]
             );
         }
         $appStorageCreate = DB::table('permissions')->where('name', 'application-storage-create')->first();
         if ($appStorageCreate === null) {
             DB::table('permissions')->insert(
-                array(
+                [
                     'name' => 'application-storage-create',
                     'guard_name' => 'web',
                     'created_at' => $datetime,
-                    'updated_at' => $datetime
-                )
+                    'updated_at' => $datetime,
+                ]
             );
         }
     }

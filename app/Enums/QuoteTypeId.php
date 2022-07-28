@@ -21,14 +21,16 @@ final class QuoteTypeId extends Enum
     const Yacht = 7;
     const Travel = 8;
     const Pet = 9;
-    public static function getOptions() 
+
+    public static function getOptions()
     {
         $oClass = new ReflectionClass(__CLASS__);
         $constants = $oClass->getConstants();
-        $retval = array();
-        foreach($constants as $name => $val) {
-                $retval[$val] = $name;
+        $retval = [];
+        foreach ($constants as $name => $val) {
+            $retval[$val] = $name;
         }
+
         return $retval;
     }
 }

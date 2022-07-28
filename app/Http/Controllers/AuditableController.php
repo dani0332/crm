@@ -3,10 +3,6 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\CarQuote;
-use DataTables;
-use Spatie\Permission\Models\Role;
-use DB;
 
 class AuditableController extends Controller
 {
@@ -14,6 +10,7 @@ class AuditableController extends Controller
     {
         $auditableType = $request->auditableType;
         $auditableId = $request->auditableId;
+
         return view('auditable', compact('auditableId', 'auditableType'));
     }
 }

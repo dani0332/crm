@@ -17,25 +17,25 @@ class AddRootDataInleadType extends Migration
         $individual = DB::table('health_lead_type')->where('text', 'Individual')->first();
         if ($individual === null) {
             DB::table('health_lead_type')->insert(
-                array(
+                [
                     'text' => 'Individual',
                     'is_active' => true,
                     'is_deleted' => false,
                     'created_at' => $datetime,
-                    'updated_at' => $datetime
-                )
+                    'updated_at' => $datetime,
+                ]
             );
         }
         $SME = DB::table('health_lead_type')->where('text', 'SME')->first();
         if ($SME === null) {
             DB::table('health_lead_type')->insert(
-                array(
+                [
                     'text' => 'SME',
                     'is_active' => true,
                     'is_deleted' => false,
                     'created_at' => $datetime,
-                    'updated_at' => $datetime
-                )
+                    'updated_at' => $datetime,
+                ]
             );
         }
     }

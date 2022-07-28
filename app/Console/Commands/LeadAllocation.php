@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Log;
 class LeadAllocation extends Command
 {
     use SerializesModels;
+
     /**
      * The name and signature of the console command.
      *

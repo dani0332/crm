@@ -14,8 +14,8 @@ class UpdateColumnPolicyNumberLifeQuoteRequest extends Migration
     public function up()
     {
         Schema::table('life_quote_request', function (Blueprint $table) {
-            if(Schema::hasColumn('life_quote_request', 'policy_number')) {
-                $table->string('policy_number', 100)->nullable()->change();        
+            if (Schema::hasColumn('life_quote_request', 'policy_number')) {
+                $table->string('policy_number', 100)->nullable()->change();
             }
         });
     }

@@ -11,8 +11,8 @@ use BenSampo\Enum\Enum;
  */
 final class GenericRequestEnum extends Enum
 {
-    const Yes = "Yes";
-    const No = "No";
-    const TPA_Code = "tpa";
-    const TypeString = "string";
+    const Yes = 'Yes';
+    const No = 'No';
+    const TPA_Code = 'tpa';
+    const TypeString = 'string';
 }

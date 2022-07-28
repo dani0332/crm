@@ -1,7 +1,7 @@
 <?php
+
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use DataTables;
 use DB;
 use Illuminate\Http\Request;
@@ -27,21 +27,23 @@ class RoleController extends Controller
     {
         $date_time_format = config('constants.datetime_format');
         if ($request->ajax()) {
-            $data = Role::select('*')->orderBy('created_at','desc');
+            $data = Role::select('*')->orderBy('created_at', 'desc');
+
             return Datatables::of($data)
                 ->addIndexColumn()
                 ->addColumn('action', function ($row) {
                     return view('roles.actions', compact('row'))->render();
                 })
                 ->rawColumns(['action'])
-                ->editColumn('created_at', function ($q) use($date_time_format){
+                ->editColumn('created_at', function ($q) use ($date_time_format) {
                     return date($date_time_format, strtotime($q->created_at));
                 })
-                ->editColumn('updated_at', function ($q) use($date_time_format){
+                ->editColumn('updated_at', function ($q) use ($date_time_format) {
                     return date($date_time_format, strtotime($q->updated_at));
                 })
                 ->make(true);
         }
+
         return view('roles.view');
     }
 
@@ -53,6 +55,7 @@ class RoleController extends Controller
     public function create()
     {
         $permission = Permission::get();
+
         return view('roles.add', compact('permission'));
     }
 
@@ -70,8 +73,10 @@ class RoleController extends Controller
         ]);
         $role = Role::create(['name' => $request->input('name')]);
         $role->syncPermissions($request->input('permission'));
-        if(isset($request->return_to_view))
-            return redirect("admin/roles/".$role->id)->with('success','Role has been stored');
+        if (isset($request->return_to_view)) {
+            return redirect('admin/roles/'.$role->id)->with('success', 'Role has been stored');
+        }
+
         return redirect()->back()->with('success', 'Role has been updated');
     }
 
@@ -84,10 +89,11 @@ class RoleController extends Controller
     public function show($id)
     {
         $role = Role::find($id);
-        $rolePermissions = Permission::join("role_has_permissions", "role_has_permissions.permission_id", "=", "permissions.id")
-        ->where("role_has_permissions.role_id", $id)->get();
+        $rolePermissions = Permission::join('role_has_permissions', 'role_has_permissions.permission_id', '=', 'permissions.id')
+        ->where('role_has_permissions.role_id', $id)->get();
         $permission = Permission::get();
-        return view('roles.show', compact('role', 'rolePermissions','permission'));
+
+        return view('roles.show', compact('role', 'rolePermissions', 'permission'));
     }
 
     /**
@@ -100,8 +106,9 @@ class RoleController extends Controller
     {
         $role = Role::find($id);
         $permission = Permission::orderBy('name')->get();
-        $rolePermissions = DB::table("role_has_permissions")->where("role_has_permissions.role_id", $id)
+        $rolePermissions = DB::table('role_has_permissions')->where('role_has_permissions.role_id', $id)
             ->pluck('role_has_permissions.permission_id', 'role_has_permissions.permission_id')->all();
+
         return view('roles.edit', compact('role', 'permission', 'rolePermissions'));
     }
 
@@ -122,8 +129,9 @@ class RoleController extends Controller
         $role->name = $request->input('name');
         $role->save();
         $role->syncPermissions($request->input('permission'));
-        if(isset($request->return_to_view))
-            return redirect("admin/roles/".$role->id)->with('success','Role has been updated');
+        if (isset($request->return_to_view)) {
+            return redirect('admin/roles/'.$role->id)->with('success', 'Role has been updated');
+        }
     }
 
     /**
@@ -134,7 +142,8 @@ class RoleController extends Controller
      */
     public function destroy($id)
     {
-        DB::table("roles")->where('id', $id)->delete();
-        return redirect()->route('roles.index')->with('message','Role has been deleted');
+        DB::table('roles')->where('id', $id)->delete();
+
+        return redirect()->route('roles.index')->with('message', 'Role has been deleted');
     }
 }

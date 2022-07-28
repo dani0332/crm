@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class MemberCategory extends Model
 {
     use HasFactory;
+
     protected $table = 'member_category';
 
     public function scopeActive($query)
@@ -19,6 +20,7 @@ class MemberCategory extends Model
     {
         $query->orderBy('sort_order', 'asc');
     }
+
     public function scopeSortOrderDesc($query)
     {
         $query->orderBy('sort_order', 'desc');

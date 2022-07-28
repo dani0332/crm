@@ -4,23 +4,26 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Models\Customer;
-use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 use OwenIt\Auditing\Auditable;
+use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
 class Transaction extends Model implements AuditableContract
 {
     use HasFactory,Auditable;
+
     protected $table = 'transactions';
 
     public function getCreatedAtAttribute($table)
     {
-        $date_time_format = env("DATETIME_FORMAT");
+        $date_time_format = env('DATETIME_FORMAT');
+
         return $this->asDateTime($table)->timezone(config('app.timezone'))->format($date_time_format);
     }
+
     public function getUpdatedAtAttribute($table)
     {
-        $date_time_format = env("DATETIME_FORMAT");
+        $date_time_format = env('DATETIME_FORMAT');
+
         return $this->asDateTime($table)->timezone(config('app.timezone'))->format($date_time_format);
     }
 
@@ -31,18 +34,18 @@ class Transaction extends Model implements AuditableContract
 
     public function assignedto()
     {
-        return $this->belongsTo(User::class,'assigned_to_id','id');
+        return $this->belongsTo(User::class, 'assigned_to_id', 'id');
     }
+
     public function type_of_insurance_id()
     {
-        return $this->belongsTo(TypeOfInsurance::class,'type_of_insurance_id','id');
+        return $this->belongsTo(TypeOfInsurance::class, 'type_of_insurance_id', 'id');
     }
 
     public function typeofinsurance()
     {
-        return $this->belongsTo(TypeOfInsurance::class,'type_of_insurance_id','id');
+        return $this->belongsTo(TypeOfInsurance::class, 'type_of_insurance_id', 'id');
     }
-
 
     public function insurance_company_id()
     {
@@ -54,13 +57,13 @@ class Transaction extends Model implements AuditableContract
         return $this->hasOne(PaymentMode::class, 'id', 'payment_mode_id');
     }
 
-    
     public function createdby()
     {
-        return $this->belongsTo(User::class,'created_by_id','id');
+        return $this->belongsTo(User::class, 'created_by_id', 'id');
     }
+
     public function modifiedby()
     {
-        return $this->belongsTo(User::class,'modified_by_id','id');
+        return $this->belongsTo(User::class, 'modified_by_id', 'id');
     }
 }
