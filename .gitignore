@@ -13,6 +13,7 @@ Homestead.yaml
 npm-debug.log
 yarn-error.log
 resources/views/.DS_Store
+.DS_Store
 public/.DS_Store
 public/dist/.DS_Store
 storage/framework/laravel-excel/*.tmp
