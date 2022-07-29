@@ -17,12 +17,17 @@
                 @foreach ($documentUploadTypes as $documentType)
                 <table width="100%">
                     <tr>
-                        <td width="25%">
+                        <td width="25%" valign="middle">
                             <b>{{ ucwords($documentType->text) }}</b>
                             <div><small class="text-muted">
-                            Allowed files: {{ $documentType->max_files }}<br>
-                            Allowed formats: {{ $documentType->accepted_files }}<br>
-                            Allowed upload size: {{ $documentType->max_size }} MB<br></small></div>
+                                <table>
+                                    <tr><td width="45%">Max file(s) </td><td>{{ $documentType->max_files }}</td></tr>
+                                    <tr><td>Supported </td><td>{{ $documentType->accepted_files }}</td></tr>
+                                    <tr><td>File max size </td><td>{{ $documentType->max_size }} MB</td></tr>
+                                    <tr><td>Is Required? </td><td>{{ $documentType->is_required ? 'Yes' : 'No' }}</td></tr>
+                                    <tr><td>Email Attach? </td><td>{{ $documentType->send_to_customer ? 'Yes' : 'No' }}</td></tr>
+                                </table>
+                            </small></div>
                         </td>
                         <td>
                             <div class="container">

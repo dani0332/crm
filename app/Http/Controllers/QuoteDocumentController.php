@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\TravelQuote;
 use App\Services\ActivitiesService;
 use App\Services\CRUDService;
 use App\Services\QuoteDocumentService;
@@ -54,5 +55,21 @@ class QuoteDocumentController extends Controller
 
         return view('components.quote-documents-upload', compact('quoteUuId', 'quoteId', 'quoteCdbId',
             'quoteType', 'quoteTypeId', 'documentUploadTypes'));
+    }
+
+    public function sendPolicyDocument($quoteType, $quoteUuId)
+    {
+        $model = '\\App\\Models\\'.ucwords($quoteType).'Quote';
+        $quoteModel = $model::where('uuid', $quoteUuId)->first();
+
+        dd($quoteModel->documents->sortDesc());
+
+        if ($quoteModel) {
+            return $quoteModel->documents->sortDesc();
+        } else {
+            return false;
+        }
+
+        dd('sendPolicyDocument', $quoteType, $quoteUuId);
     }
 }

@@ -4,6 +4,9 @@
             <div class="x_title">
                 <h2>Documents</h2>
                 <a href="{{ url('quotes/'.$quoteType.'/'.$record->uuid.'/documents') }}" class="btn btn-primary btn-sm" style="float:right;">Upload Documents</a>
+                @if($record->advisor_id == auth()->user()->id)
+                <a href="{{ url('quotes/'.$quoteType.'/'.$record->uuid.'/send-policy-documents') }}" class="btn btn-primary btn-sm" style="float:right;">Send Policy</a>
+                @endif
                 <div class="clearfix"></div>
             </div>
             <div class="x_content">
