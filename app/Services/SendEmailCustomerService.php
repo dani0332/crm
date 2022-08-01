@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Enums\EnvEnum;
-use Config;
 use Exception;
 use Illuminate\Support\Facades\Log;
 
@@ -23,9 +22,9 @@ class SendEmailCustomerService extends BaseService
     public function sendEmail($emailTemplateId, $emailData, $tag)
     {
         try {
-            $apiKey = Config::get('constants.SENDINBLUE_KEY');
-            $url = Config::get('constants.SIB_URL');
-            $appEnv = Config::get('constants.APP_ENV');
+            $apiKey = config('constants.SENDINBLUE_KEY');
+            $url = config('constants.SIB_URL');
+            $appEnv = config('constants.APP_ENV');
 
             $tag = $appEnv == EnvEnum::PRODUCTION ? $tag : $appEnv.'-'.$tag;
 
@@ -48,11 +47,19 @@ class SendEmailCustomerService extends BaseService
                     'buttonUrl' => isset($emailData['buttonUrl']) ? $emailData['buttonUrl'] : null,
                     'cdbId' => isset($emailData['quoteCdbId']) ? $emailData['quoteCdbId'] : null,
                     'notesForCustomer' => isset($emailData['notesForCustomer']) ? nl2br(htmlentities(str_replace('<br />', '', $emailData['notesForCustomer']))) : null,
+                    'advisorName' => isset($emailData['advisorName']) ? $emailData['advisorName'] : null,
+                    'advisorLandlineNo' => isset($emailData['advisorLandlineNo']) ? $emailData['advisorLandlineNo'] : null,
+                    'advisorMobileNo' => isset($emailData['advisorMobileNo']) ? $emailData['advisorMobileNo'] : null,
                 ],
                 'tags' => [
                     $tag,
                 ],
-            ]);
+                'attachment' => [[
+                    'url' => 'https://insurancemarket.ae/wp-content/uploads/2022/07/myAlfred-Offers-July-2022.pdf',
+                    'name' => 'myAlfred-Offers-July-2022.pdf',
+                ]],
+            ], JSON_UNESCAPED_SLASHES);
+            //dd($body);
 
             $client = new \GuzzleHttp\Client();
             $clientRequest = $client->post(
