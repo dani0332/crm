@@ -66,22 +66,12 @@
         ],
         "post-create-project-cmd": [
             "@php artisan key:generate --ansi"
-        ],
-        "serve": "doppler run -- php artisan serve",
-        "post-install-cmd": "vendor/bin/cghooks add --no-lock",
-        "post-update-cmd": "vendor/bin/cghooks update",
-        "pint:fix": "vendor/bin/pint"
+        ]
     },
     "extra": {
         "laravel": {
             "dont-discover": []
-        },
-        "hooks": {
-            "pre-commit": [
-                "vendor/bin/pint"
-            ]
         }
-
     },
     "config": {
         "optimize-autoloader": true,
