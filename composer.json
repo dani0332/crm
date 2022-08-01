@@ -31,7 +31,6 @@
         "yajra/laravel-datatables-oracle": "^9.18"
     },
     "require-dev": {
-        "brainmaestro/composer-git-hooks": "^2.8",
         "facade/ignition": "^2.5",
         "fakerphp/faker": "^1.9.1",
         "laravel/pint": "^1.0",
