@@ -13,13 +13,13 @@ class CreatePaymentsTable extends Migration
      */
     public function up()
     {
-        if (!Schema::hasTable('payments')) {
+        if (! Schema::hasTable('payments')) {
             Schema::create('payments', function (Blueprint $table) {
-                $table->float('captured_amount', 16,2);
+                $table->float('captured_amount', 16, 2);
                 $table->string('code', 15);
                 $table->unsignedBigInteger('paymentable_id')->nullable();
                 $table->string('paymentable_type', 255)->nullable();
-                $table->string('reference',1000);
+                $table->string('reference', 1000);
                 $table->integer('payment_status_id');
                 $table->integer('insurance_provider_id');
                 $table->integer('plan_id');

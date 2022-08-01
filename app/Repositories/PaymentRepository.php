@@ -6,7 +6,7 @@ use App\Interfaces\PaymentRepositoryInterface;
 use App\Models\Payment;
 use App\Services\PaymentLinkService;
 
-class PaymentRepository implements  PaymentRepositoryInterface
+class PaymentRepository implements PaymentRepositoryInterface
 {
     protected $paymentService;
 
@@ -44,6 +44,7 @@ class PaymentRepository implements  PaymentRepositoryInterface
     {
         $payment = $this->getPaymentById($paymentId);
         $paymentLink = $this->paymentService->getPaymentLink($payment, $quoteTypeId, $leadId);
+
         return $paymentLink;
     }
 }

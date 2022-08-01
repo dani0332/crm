@@ -13,7 +13,6 @@ class Payment extends Model
     protected $fillable = ['code', 'payment_status_id', 'plan_id', 'captured_amount', 'captured_at', 'payment_methods_code', 'insurance_provider_id', 'created_by', 'updated_by', 'is_approved', 'reference', 'collection_type'];
     protected $forceDeleting = true;
 
-
     public function paymentable()
     {
         return $this->morphTo();

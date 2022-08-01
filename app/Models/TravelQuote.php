@@ -57,5 +57,4 @@ class TravelQuote extends Model implements AuditableContract
     {
         return $this->belongsTo(TravelPlan::class, 'plan_id');
     }
-
 }

@@ -3,12 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Interfaces\PaymentRepositoryInterface;
-use App\Models\Payment;
 use Illuminate\Http\Request;
 
 class PaymentController extends Controller
 {
-
     private PaymentRepositoryInterface $paymentRepository;
 
     public function __construct(PaymentRepositoryInterface $paymentRepository)
@@ -22,7 +20,6 @@ class PaymentController extends Controller
      */
     public function index(Request $request)
     {
-
     }
 
     /**
@@ -43,7 +40,7 @@ class PaymentController extends Controller
      */
     public function store(Request $request)
     {
-        $model = '\\App\\Models\\' . ucwords($this->genericModel->modelType) . "Quote";
+        $model = '\\App\\Models\\'.ucwords($this->genericModel->modelType).'Quote';
         $quoteModel = $model::where('id', $request->quote_id)->first();
 
         dd($quoteModel);
@@ -57,7 +54,6 @@ class PaymentController extends Controller
      */
     public function show($id)
     {
-
     }
 
     /**
@@ -69,6 +65,7 @@ class PaymentController extends Controller
     public function edit($id)
     {
         $payment = $this->paymentRepository->getPaymentById($id);
+
         return view('components.payment-edit', compact('payment'));
     }
 
@@ -93,6 +90,7 @@ class PaymentController extends Controller
     public function destroy($id)
     {
         $this->paymentRepository->deletePayment($id);
+
         return redirect()->back()->with('message', 'Payment has been deleted.');
     }
 }

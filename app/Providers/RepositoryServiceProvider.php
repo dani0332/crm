@@ -3,8 +3,8 @@
 namespace App\Providers;
 
 use App\Interfaces\PaymentRepositoryInterface;
-use Illuminate\Support\ServiceProvider;
 use App\Repositories\PaymentRepository;
+use Illuminate\Support\ServiceProvider;
 
 class RepositoryServiceProvider extends ServiceProvider
 {

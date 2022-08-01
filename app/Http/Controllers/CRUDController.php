@@ -352,10 +352,10 @@ class CRUDController extends Controller
 
             return view('shared.show', compact([
                 'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList',
-                'leadStatuses', 'lostReasons', 'selectedLostReasonId', 'membersDetail','model_name',
-                'allowedDuplicateLOB', 'audits', 'activities', 'advisors','isRenewalUser',
+                'leadStatuses', 'lostReasons', 'selectedLostReasonId', 'membersDetail', 'model_name',
+                'allowedDuplicateLOB', 'audits', 'activities', 'advisors', 'isRenewalUser',
                 'isNewBusinessUser', 'ecomTravelInsuranceQuoteUrl', 'quoteType', 'quoteDocuments',
-                'autoAllocationDisabled', 'payments', 'paymentMethods', 'travelPlainModel'
+                'autoAllocationDisabled', 'payments', 'paymentMethods', 'travelPlainModel',
             ]));
         } elseif ($this->genericModel->modelType == quoteTypeCode::Health) { // Health plans to display on detail view
             $listQuotePlans = '';
@@ -890,13 +890,13 @@ class CRUDController extends Controller
 
     public function storePayment(Request $request)
     {
-        $model = '\\App\\Models\\' . ucwords($request->modelType) . "Quote";
+        $model = '\\App\\Models\\'.ucwords($request->modelType).'Quote';
         $quoteModel = $model::where('id', $request->quote_id)->first();
-        if (!$quoteModel) {
+        if (! $quoteModel) {
             return false;
         }
         $paymentInformation = [
-            'code' => substr(uniqid('',), 0, 8),
+            'code' => substr(uniqid('', ), 0, 8),
             'collection_type' => $request->collection_type,
             'captured_amount' => $request->captured_amount,
             'payment_methods_code' => $request->payment_methods,
@@ -906,11 +906,12 @@ class CRUDController extends Controller
             'created_by' => $request->user()->id,
             'updated_by' => $request->user()->id,
         ];
-        if($request->reference){
+        if ($request->reference) {
             $paymentInformation['reference'] = $request->reference;
         }
         $payment = Payment::create($paymentInformation);
         $quoteModel->payments()->save($payment);
+
         return back()->with('success', 'Payment has been created');
     }
 
@@ -922,11 +923,12 @@ class CRUDController extends Controller
             'payment_methods_code' => $request->payment_methods,
             'updated_by' => $request->user()->id,
         ];
-        if($request->reference){
+        if ($request->reference) {
             $paymentInformation['reference'] = $request->reference;
         }
         $payment = Payment::where('code', $request->paymentCode)->first();
         $payment->update($paymentInformation);
+
         return back()->with('success', 'Payment has been updated');
     }
 }
