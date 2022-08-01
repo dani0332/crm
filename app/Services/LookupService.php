@@ -59,7 +59,7 @@ class LookupService extends BaseService
 
     public function getAllInsuranceProviders()
     {
-        return InsuranceProvider::select('id', 'text')->orderBy('sort_order', 'asc')->get();
+        return InsuranceProvider::select('id', 'text')->orderBy('text', 'asc')->get();
     }
 
     public function getLeadStatuses()
