@@ -14,12 +14,10 @@ class AddCreatedByUpdatedByInCarPlanTable extends Migration
     public function up()
     {
         Schema::table('car_plan', function (Blueprint $table) {
-            if(!Schema::hasColumn('car_plan','created_by'))
-            {
-                $table->string('created_by')->nullable(); 
+            if (! Schema::hasColumn('car_plan', 'created_by')) {
+                $table->string('created_by')->nullable();
             }
-            if(!Schema::hasColumn('car_plan','updated_by'))
-            {
+            if (! Schema::hasColumn('car_plan', 'updated_by')) {
                 $table->string('updated_by')->nullable();
             }
         });

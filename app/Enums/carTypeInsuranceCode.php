@@ -11,6 +11,6 @@ use BenSampo\Enum\Enum;
  */
 final class carTypeInsuranceCode extends Enum
 {
-    const Comprehensive = "Comprehensive";
-    const ThirdPartyOnly = "Third Party Only";
+    const Comprehensive = 'Comprehensive';
+    const ThirdPartyOnly = 'Third Party Only';
 }

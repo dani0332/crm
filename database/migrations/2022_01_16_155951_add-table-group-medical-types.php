@@ -13,7 +13,7 @@ class AddTableGroupMedicalTypes extends Migration
      */
     public function up()
     {
-        if (!Schema::hasTable('group_medical_types')) {
+        if (! Schema::hasTable('group_medical_types')) {
             Schema::create('group_medical_types', function (Blueprint $table) {
                 $table->bigInteger('id')->autoIncrement();
                 $table->string('text', 250);

@@ -13,7 +13,6 @@ class RewardSliderRequest extends FormRequest
      */
     public function authorize()
     {
-
         return true;
     }
 
@@ -25,13 +24,13 @@ class RewardSliderRequest extends FormRequest
     public function rules()
     {
         return [
-                'image' => ($this->method() == 'POST' ? 'required|': '') . 'image|mimes:jpeg,png,jpg,gif,svg,webp|max:1024',
-                'link' => ($this->method() == 'POST' ? 'required|': '') .'url|max:1000',
-                'sort_order' => ($this->method() == 'POST' ? 'required|': '') .'integer',
-                'is_active' => 'boolean',
-                'start_date' => 'required|date_format:Y-m-d H:i:s',
-                'end_date' => 'required|date_format:Y-m-d H:i:s',
-                'is_public' => 'boolean',
+            'image' => ($this->method() == 'POST' ? 'required|' : '').'image|mimes:jpeg,png,jpg,gif,svg,webp|max:1024',
+            'link' => ($this->method() == 'POST' ? 'required|' : '').'url|max:1000',
+            'sort_order' => ($this->method() == 'POST' ? 'required|' : '').'integer',
+            'is_active' => 'boolean',
+            'start_date' => 'required|date_format:Y-m-d H:i:s',
+            'end_date' => 'required|date_format:Y-m-d H:i:s',
+            'is_public' => 'boolean',
         ];
     }
 }

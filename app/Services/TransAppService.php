@@ -2,25 +2,24 @@
 
 namespace App\Services;
 
+use App\Models\CarQuote;
+use App\Models\CarQuotePaymentHistory;
+use App\Models\CarQuotePolicy;
+use App\Models\InsuranceCompany;
+use App\Models\MyAlFredUser;
+use App\Models\PaymentMode;
+use App\Models\Reason;
+use App\Models\Status;
+use App\Models\Transaction;
+use App\Models\TypeOfInsurance;
+use App\Models\User;
+use Auth;
+use Carbon\Carbon;
+use Config;
+use DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use Auth;
-use DB;
-use Config;
 use LookUpModel;
-use Carbon\Carbon;
-use App\Models\Transaction;
-use App\Models\CarQuote;
-use App\Models\CarQuotePolicy;
-use App\Models\CarQuotePaymentHistory;
-use App\Models\MyAlFredUser;
-use App\Models\User;
-use App\Models\PaymentMode;
-use App\Models\InsuranceCompany;
-use App\Models\Reason;
-use App\Models\TypeOfInsurance;
-use App\Models\Status;
-use App\Services\SendEmailCustomerService;
 
 class TransAppService extends BaseService
 {
@@ -32,14 +31,13 @@ class TransAppService extends BaseService
         $this->sendEmailCustomerService = $sendEmailCustomerService;
     }
 
-	public function createTransaction(Request $request)
+    public function createTransaction(Request $request)
     {
         $WEGenerateUrlResponse = CustomerWEGenerateUrlService::getCustomerWeUrl();
 
         if (gettype($WEGenerateUrlResponse) == 'string') {
-
             $existingCustomer = CustomerService::getCustomerByEmail($request->email)->first();
-            $sendWelcomeEmail = ($existingCustomer && !$existingCustomer->is_we_sent) || !$existingCustomer ? true : false;
+            $sendWelcomeEmail = ($existingCustomer && ! $existingCustomer->is_we_sent) || ! $existingCustomer ? true : false;
             $customerId = CustomerService::getCustomerIdAndCreateIfNotExists($request->first_name, $request->last_name, $request->email);
             $statusId = DB::table('statuses')->where('name', 'Active')->value('id');
 
@@ -52,16 +50,16 @@ class TransAppService extends BaseService
                     $responseContact = CreateUpdateContactService::contactCreateUpdate($listId, $request->first_name, $request->last_name, $request->email, $WEGenerateUrlResponse);
 
                     if ($responseContact != 201 && $responseContact != 204) {
-                        $message = "myAlfred signup link to issued policy cases (SIB API)<br>
-                        Customer Email: " . $request->email;
+                        $message = 'myAlfred signup link to issued policy cases (SIB API)<br>
+                        Customer Email: '.$request->email;
                         Log::info($message);
                     }
 
                     if ($responseExtend != 201) {
                         $customerToken = MyAlFredUser::select('code')->where('customer_id', '=', $customerId)->orderBy('created_at', 'asc')->first();
-                        $message = "Customer trying to extend subscription but not exist in myAflred<br>
-                        Customer Email: " . $request->email . "<br>
-                        Token: " . $customerToken;
+                        $message = 'Customer trying to extend subscription but not exist in myAflred<br>
+                        Customer Email: '.$request->email.'<br>
+                        Token: '.$customerToken;
                         Log::info($message);
                     }
                 }
@@ -78,26 +76,24 @@ class TransAppService extends BaseService
             $transaction->amount_paid = $request->amount_paid;
             $transaction->status_id = $statusId;
             $transaction->save();
-            $approvalCode = generate_code('T') . $transaction->id;
+            $approvalCode = generate_code('T').$transaction->id;
             Transaction::where('id', $transaction->id)->update(['approval_code' => $approvalCode]);
             CustomerService::setCustomerAccess($customerId);
 
-            if ($request->has("car_quote_id")) {
-
-                $carQuoteObj = CarQuote::where("id", $request->input("car_quote_id"))->first();
+            if ($request->has('car_quote_id')) {
+                $carQuoteObj = CarQuote::where('id', $request->input('car_quote_id'))->first();
                 if ($carQuoteObj) {
-                    $carQuoteObj->quote_status_id =  LookUpModel::getLookModel('QuoteStatus', ['code', '=', 'transaction_approved']); // Transaction Approved
+                    $carQuoteObj->quote_status_id = LookUpModel::getLookModel('QuoteStatus', ['code', '=', 'transaction_approved']); // Transaction Approved
                     $carQuoteObj->pa_id = null;
                     if ($carQuoteObj->save()) {
-
                         $newPayment = new CarQuotePaymentHistory();
-                        $newPayment->status = "Transaction Approved";
+                        $newPayment->status = 'Transaction Approved';
                         $newPayment->notes = $approvalCode;
-                        $newPayment->car_quote_id = $request->input("car_quote_id");
+                        $newPayment->car_quote_id = $request->input('car_quote_id');
                         $newPayment->save();
 
                         $createPolicy = new CarQuotePolicy();
-                        $createPolicy->car_quote_id = $request->input("car_quote_id");
+                        $createPolicy->car_quote_id = $request->input('car_quote_id');
                         $createPolicy->transactions_id = $transaction->id;
                         $createPolicy->save();
                     }
@@ -111,9 +107,10 @@ class TransAppService extends BaseService
 
             $isCustomerExisting = MyAlFredUser::where('customer_id', '=', $customerId)->get();
 
-            if($sendWelcomeEmail && Config::get('constants.ENABLE_TRANSAPP_WE') == '1' && $isCustomerExisting->isEmpty()) {
+            if ($sendWelcomeEmail && Config::get('constants.ENABLE_TRANSAPP_WE') == '1' && $isCustomerExisting->isEmpty()) {
                 $this->sendWelcomeEmail($customerId, $WEGenerateUrlResponse, 'transapp-myalfred-we');
             }
+
             return $approvalCode;
         } else {
             return $WEGenerateUrlResponse;
@@ -123,27 +120,26 @@ class TransAppService extends BaseService
     public function sendWelcomeEmail($customerId, $WEGenerateUrlResponse, $tag)
     {
         $customer = CustomerService::getCustomerById($customerId);
-        $emailTemplateId = (int)Config::get('constants.SIB_MYALFRED_CUSTOMER_WE_TEMPLATE_ID'); //290
+        $emailTemplateId = (int) Config::get('constants.SIB_MYALFRED_CUSTOMER_WE_TEMPLATE_ID'); //290
 
-        $emailData = array(
-            'customerName' => $customer->first_name . " " . $customer->last_name,
+        $emailData = [
+            'customerName' => $customer->first_name.' '.$customer->last_name,
             'customerEmail' => $customer->email,
-            'signUpButtonUrl' => $WEGenerateUrlResponse
-        );
+            'signUpButtonUrl' => $WEGenerateUrlResponse,
+        ];
 
         $getStatusCode = $this->sendEmailCustomerService->sendEmail($emailTemplateId, $emailData, $tag);
 
         if ($getStatusCode == 201) {
-
             $customer->is_we_sent = true;
             $customer->save();
 
-            $code = substr($WEGenerateUrlResponse, strpos($WEGenerateUrlResponse, "signup/") + 7);
+            $code = substr($WEGenerateUrlResponse, strpos($WEGenerateUrlResponse, 'signup/') + 7);
             $newMyAlFredUser = new MyAlFredUser;
             $newMyAlFredUser->signup_url = $WEGenerateUrlResponse;
             $newMyAlFredUser->customer_id = $customerId;
             $newMyAlFredUser->code = $code;
-            $newMyAlFredUser->source = "TRANSAPP";
+            $newMyAlFredUser->source = 'TRANSAPP';
             $newMyAlFredUser->save();
         }
     }
@@ -205,9 +201,9 @@ class TransAppService extends BaseService
     public function checkTransappAdmin()
     {
         if (Auth::user()->hasRole('TRANSAPP_ADMIN')) {
-            $isTransappAdmin = "1";
+            $isTransappAdmin = '1';
         } else {
-            $isTransappAdmin = "0";
+            $isTransappAdmin = '0';
         }
 
         return $isTransappAdmin;
@@ -216,9 +212,9 @@ class TransAppService extends BaseService
     public function checkTransappNonAdmin()
     {
         if (Auth::user()->hasAnyRole(['TRANSAPP_ADVISOR', 'TRANSAPP_APPROVER'])) {
-            $isTransappNonAdmin = "1";
+            $isTransappNonAdmin = '1';
         } else {
-            $isTransappNonAdmin = "0";
+            $isTransappNonAdmin = '0';
         }
 
         return $isTransappNonAdmin;
@@ -254,7 +250,7 @@ class TransAppService extends BaseService
             ->where(['transactions.id' => $transappId, 'transactions.is_deleted' => 0])
             ->first();
 
-        if ($isTransappNonAdmin == "1") {
+        if ($isTransappNonAdmin == '1') {
             $transaction->where('transactions.assigned_to_id', Auth::user()->id);
         }
 
@@ -280,7 +276,7 @@ class TransAppService extends BaseService
             ->where('approval_code', $approvalCode)
             ->first();
 
-        if ($isTransappNonAdmin == "1") {
+        if ($isTransappNonAdmin == '1') {
             $transaction->where('transactions.assigned_to_id', Auth::user()->id);
         }
 

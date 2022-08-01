@@ -3,10 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\PaymentMode;
-use Illuminate\Http\Request;
-use DataTables;
 use Auth;
-use DB;
+use DataTables;
+use Illuminate\Http\Request;
+
 class PaymentModeController extends Controller
 {
     /**
@@ -30,7 +30,8 @@ class PaymentModeController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $data = PaymentMode::select('*')->where('is_deleted', 0)->orderBy('created_at','desc');
+            $data = PaymentMode::select('*')->where('is_deleted', 0)->orderBy('created_at', 'desc');
+
             return Datatables::of($data)
                 ->addIndexColumn()
                 ->addColumn('action', function ($row) {
@@ -39,6 +40,7 @@ class PaymentModeController extends Controller
                 ->rawColumns(['action'])
                 ->make(true);
         }
+
         return view('paymentmode.view');
     }
 
@@ -71,9 +73,10 @@ class PaymentModeController extends Controller
         $paymentmode->updated_by = Auth::user()->email;
         $paymentmode->save();
 
-        if(isset($request->return_to_view)) {
-            return redirect("transapp/paymentmode/".$paymentmode->id)->with('success', 'Payment Mode has been stored');
+        if (isset($request->return_to_view)) {
+            return redirect('transapp/paymentmode/'.$paymentmode->id)->with('success', 'Payment Mode has been stored');
         }
+
         return redirect()->back()->with('success', 'Payment Mode has been stored');
     }
 
@@ -106,7 +109,7 @@ class PaymentModeController extends Controller
      * @param  PaymentMode  $paymentmode
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request,PaymentMode $paymentmode)
+    public function update(Request $request, PaymentMode $paymentmode)
     {
         $this->validate($request, [
             'name' => 'required|max:150',
@@ -115,9 +118,10 @@ class PaymentModeController extends Controller
         $paymentmode->is_active = $request->is_active == 'on' ? 1 : 0;
         $paymentmode->updated_by = Auth::user()->email;
         $paymentmode->save();
-        if(isset($request->return_to_view)) {
-            return redirect("transapp/paymentmode/".$paymentmode->id)->with('success', 'Payment Mode has been updated');
+        if (isset($request->return_to_view)) {
+            return redirect('transapp/paymentmode/'.$paymentmode->id)->with('success', 'Payment Mode has been updated');
         }
+
         return redirect()->back()->with('success', 'Payment Mode has been updated');
     }
 
@@ -131,6 +135,7 @@ class PaymentModeController extends Controller
     {
         $paymentmode->is_deleted = 1;
         $paymentmode->save();
-        return redirect()->route('paymentmode.index')->with('message','Payment Mode has been deleted');
+
+        return redirect()->route('paymentmode.index')->with('message', 'Payment Mode has been deleted');
     }
 }

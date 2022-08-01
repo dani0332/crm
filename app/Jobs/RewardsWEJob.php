@@ -2,22 +2,24 @@
 
 namespace App\Jobs;
 
+use App\Mail\MailerService;
+use App\Models\Customer;
+use DB;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use App\Mail\MailerService;
-use App\Models\Customer;
 use Illuminate\Support\Facades\Log;
 use Mail;
-use DB;
 
 class RewardsWEJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+
     protected $request;
     protected $customerId;
+
     /**
      * Create a new job instance.
      *
@@ -37,17 +39,17 @@ class RewardsWEJob implements ShouldQueue
     public function handle()
     {
         try {
-            Log::info('Entered in RewardWEJob with customer id : ' . $this->customerId);
+            Log::info('Entered in RewardWEJob with customer id : '.$this->customerId);
             $customer = Customer::select('*')->where('id', $this->customerId)->first();
-            if (!$customer->is_we_sent && $customer->has_reward_access && $customer->has_alfred_access) {
+            if (! $customer->is_we_sent && $customer->has_reward_access && $customer->has_alfred_access) {
                 $email = new MailerService($this->request);
                 Mail::to($this->request->to)->send($email);
-                Log::info('Email sent to customer having id: ' . $this->customerId);
+                Log::info('Email sent to customer having id: '.$this->customerId);
                 $customer->is_we_sent = true;
                 $customer->save();
-                Log::info('isWESent flag set to true for customer having id: ' . $this->customerId);
+                Log::info('isWESent flag set to true for customer having id: '.$this->customerId);
             } else {
-                Log::info('Welcome email not sent to customer having id : ' . $this->customerId . ' , is_we_sent: ' . $customer->is_we_sent . ', has_alfred_access: ' . $customer->has_alfred_access . ', has_reward_access: ' . $customer->has_reward_access);
+                Log::info('Welcome email not sent to customer having id : '.$this->customerId.' , is_we_sent: '.$customer->is_we_sent.', has_alfred_access: '.$customer->has_alfred_access.', has_reward_access: '.$customer->has_reward_access);
             }
         } catch (Exception $ex) {
             return $ex;

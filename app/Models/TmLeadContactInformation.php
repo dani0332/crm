@@ -13,6 +13,4 @@ class TmLeadContactInformation extends Model implements AuditableContract
 
     protected $table = 'tm_lead_contact_information';
     protected $guarded = ['id'];
-
 }
-

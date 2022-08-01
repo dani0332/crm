@@ -2,13 +2,12 @@
 
 namespace App\Services;
 
-use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Models\Activities;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use \Carbon\Carbon;
 
 class ActivitiesService extends BaseService
 {
@@ -37,8 +36,8 @@ class ActivitiesService extends BaseService
     public function getGridData(Request $request)
     {
         $activities = $this->getAllActivitesBasedOnUser();
-        
-        if($request->period == null){
+
+        if ($request->period == null) {
             $request->period = 'today';
         }
         if (isset($request->period) && $request->period != '') {
@@ -58,7 +57,7 @@ class ActivitiesService extends BaseService
                 case 'yesterday':
                     $activities = $activities->whereBetween('due_date', [Carbon::yesterday()->startOfDay()->toDateTimeString(), Carbon::yesterday()->endOfDay()->toDateTimeString()]);
                     break;
-               case 'this_week':
+                case 'this_week':
                     $activities = $activities->whereBetween('due_date', [Carbon::now()->startOfWeek()->startOfDay()->toDateTimeString(), Carbon::now()->endOfWeek()->endOfDay()->toDateTimeString()]);
                     break;
                 case 'this_month':
@@ -76,11 +75,10 @@ class ActivitiesService extends BaseService
             $activities = $activities->where('status', $request->status);
         }
         $rawActivities = $activities->get()->sortBy('status');
-        foreach($rawActivities as $act)
-        {
+        foreach ($rawActivities as $act) {
             $act->assignee_name = User::where('id', $act->assignee_id)->first()->name;
-            
         }
+
         return $rawActivities;
     }
 
@@ -99,8 +97,8 @@ class ActivitiesService extends BaseService
     {
         $activity = new Activities();
         $activity->uuid = $this->helperService->generateUUID();
-        if(isset($record) && $record != '') {
-            $activity->client_name = $record->first_name . ' ' . $record->last_name;	
+        if (isset($record) && $record != '') {
+            $activity->client_name = $record->first_name.' '.$record->last_name;
             $activity->quote_request_id = $request->entityId;
             $activity->quote_type_id = $this->getQuoteTypeId($request->modelType);
             $activity->quote_uuid = $request->entityUId;
@@ -112,14 +110,14 @@ class ActivitiesService extends BaseService
         $activity->created_at = Carbon::now();
         $activity->updated_at = Carbon::now();
         $activity->save();
+
         return $activity;
     }
 
     public function getQuoteTypeId($modelType)
     {
         $quoteTypeId = null;
-        switch($modelType)
-        {
+        switch ($modelType) {
             case 'car':
                 $quoteTypeId = QuoteTypeId::Car;
                 break;
@@ -138,9 +136,10 @@ class ActivitiesService extends BaseService
             case 'business':
                 $quoteTypeId = QuoteTypeId::Business;
                 break;
-            default :
+            default:
                 break;
         }
+
         return $quoteTypeId;
     }
 
@@ -153,7 +152,7 @@ class ActivitiesService extends BaseService
             case 'yesterday':
                 $activities = $activities->where('created_at', Carbon::yesterday())->orWhere('updated_at', Carbon::yesterday());
                 break;
-           case 'this_week':
+            case 'this_week':
                 $activities = $activities->whereBetween('created_at', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()])->orWhereBetween('updated_at', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()]);
                 break;
             case 'this_month':
@@ -170,8 +169,7 @@ class ActivitiesService extends BaseService
         $subOrdinateIds = $this->helperService->walkTree(Auth::user()->id);
         array_push($subOrdinateIds, Auth::user()->id);
         $activites = Activities::whereIn('assignee_id', $subOrdinateIds);
-        
+
         return $activites;
     }
-
 }

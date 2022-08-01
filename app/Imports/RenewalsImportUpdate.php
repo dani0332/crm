@@ -5,15 +5,15 @@ namespace App\Imports;
 use App\Enums\QuoteTypeShortCode;
 use App\Jobs\RenewalImportJob;
 use App\Services\RenewalsUploadService;
-use Maatwebsite\Excel\Row;
+use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Concerns\Importable;
 use Maatwebsite\Excel\Concerns\OnEachRow;
-use Maatwebsite\Excel\Concerns\SkipsOnFailure;
-use Maatwebsite\Excel\Concerns\WithValidation;
-use Maatwebsite\Excel\Concerns\WithStartRow;
 use Maatwebsite\Excel\Concerns\SkipsFailures;
+use Maatwebsite\Excel\Concerns\SkipsOnFailure;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
-use Illuminate\Support\Facades\Auth;
+use Maatwebsite\Excel\Concerns\WithStartRow;
+use Maatwebsite\Excel\Concerns\WithValidation;
+use Maatwebsite\Excel\Row;
 
 class RenewalsImportUpdate implements OnEachRow, WithStartRow, WithValidation, SkipsOnFailure, WithChunkReading
 {
@@ -26,7 +26,7 @@ class RenewalsImportUpdate implements OnEachRow, WithStartRow, WithValidation, S
     private $renewalImportCode;
     private $uploadType;
 
-    function __construct(RenewalsUploadService $renewalsUploadService, $fileName, $renewalImportCode, $uploadType)
+    public function __construct(RenewalsUploadService $renewalsUploadService, $fileName, $renewalImportCode, $uploadType)
     {
         $this->renewalsUploadService = $renewalsUploadService;
         $this->fileName = $fileName;
@@ -35,17 +35,16 @@ class RenewalsImportUpdate implements OnEachRow, WithStartRow, WithValidation, S
     }
 
     /**
-    * @param Row $row
-    */
+     * @param  Row  $row
+     */
     public function onRow(Row $row)
     {
-        ++$this->rows;
+        $this->rows++;
         $row = $row->toArray();
         $quoteType = $row[0];
         $policy = $row[4];
 
-        if (!empty($policy) && $quoteType == QuoteTypeShortCode::CAR) {
-
+        if (! empty($policy) && $quoteType == QuoteTypeShortCode::CAR) {
             $quoteData = 0;
 
             // product information
@@ -62,18 +61,18 @@ class RenewalsImportUpdate implements OnEachRow, WithStartRow, WithValidation, S
             $batch = $row[5];
             $notes = $row[6];
 
-            $quoteData = (object) array(
-                "type" => $quoteType,
-                "product_type" => $productType,
-                "make" => $carMake,
-                "model" => $carModel,
-                "year" => $carYear,
-                "advisor" => $advisor,
-                "pAdvisor" => $previousAdvisor,
-                "policy" => $policy,
-                "batch" => $batch,
-                "notes" => $notes
-            );
+            $quoteData = (object) [
+                'type' => $quoteType,
+                'product_type' => $productType,
+                'make' => $carMake,
+                'model' => $carModel,
+                'year' => $carYear,
+                'advisor' => $advisor,
+                'pAdvisor' => $previousAdvisor,
+                'policy' => $policy,
+                'batch' => $batch,
+                'notes' => $notes,
+            ];
 
             dispatch(new RenewalImportJob($quoteData, $quoteType, $this->renewalsUploadService, $this->fileName, $this->renewalImportCode, $this->uploadType, Auth::user()->id));
         }
@@ -97,62 +96,62 @@ class RenewalsImportUpdate implements OnEachRow, WithStartRow, WithValidation, S
     public function rules(): array
     {
         return [
-            '*.0' => function($attribute, $value, $onFailure) { // Type
-                if(!$value) {
+            '*.0' => function ($attribute, $value, $onFailure) { // Type
+                if (! $value) {
                     $onFailure('Type of quote is required');
                 }
-                if(strlen($value) > 4) {
+                if (strlen($value) > 4) {
                     $onFailure('Type of quote should not exceed length of 4 characters');
                 }
             },
-            '*.1' => function($attribute, $value, $onFailure) { // Product Type
-                if(strlen($value) > 50) {
+            '*.1' => function ($attribute, $value, $onFailure) { // Product Type
+                if (strlen($value) > 50) {
                     $onFailure('Product Type should not exceed length of 50 characters');
                 }
-                if(strlen($value) > 0 && $value != 'Comprehensive' && $value != 'Third Party Only') {
+                if (strlen($value) > 0 && $value != 'Comprehensive' && $value != 'Third Party Only') {
                     $onFailure('Product Type should be either Comprehensive or Third Party  Only');
                 }
             },
-            '*.2' => function($attribute, $value, $onFailure) { // Advisor Email
-                if(strlen($value) > 100) {
+            '*.2' => function ($attribute, $value, $onFailure) { // Advisor Email
+                if (strlen($value) > 100) {
                     $onFailure('Advisor Email should not exceed length of 100 characters');
                 }
             },
-            '*.3' => function($attribute, $value, $onFailure) { // Previous Advisor Email
-                if(strlen($value) > 100) {
+            '*.3' => function ($attribute, $value, $onFailure) { // Previous Advisor Email
+                if (strlen($value) > 100) {
                     $onFailure('Previous Advisor Email should not exceed length of 100 characters');
                 }
             },
-            '*.4' => function($attribute, $value, $onFailure) { // Policy
-                if(!$value) {
+            '*.4' => function ($attribute, $value, $onFailure) { // Policy
+                if (! $value) {
                     $onFailure('Policy is required');
                 }
-                if(strlen($value) > 100) {
+                if (strlen($value) > 100) {
                     $onFailure('Policy should not exceed length of 100 characters');
                 }
             },
-            '*.5' => function($attribute, $value, $onFailure) { // Batch
-                if(strlen($value) > 25) {
+            '*.5' => function ($attribute, $value, $onFailure) { // Batch
+                if (strlen($value) > 25) {
                     $onFailure('Batch should not exceed length of 25 characters');
                 }
             },
-            '*.6' => function($attribute, $value, $onFailure) { // Notes
-                if(strlen($value) > 200) {
+            '*.6' => function ($attribute, $value, $onFailure) { // Notes
+                if (strlen($value) > 200) {
                     $onFailure('Notes should not exceed length of 200 characters');
                 }
             },
-            '*.7' => function($attribute, $value, $onFailure) { // Make
-                if(strlen($value) > 50) {
+            '*.7' => function ($attribute, $value, $onFailure) { // Make
+                if (strlen($value) > 50) {
                     $onFailure('Car Make should not exceed length of 50 characters');
                 }
             },
-            '*.8' => function($attribute, $value, $onFailure) { // Model
-                if(strlen($value) > 50) {
+            '*.8' => function ($attribute, $value, $onFailure) { // Model
+                if (strlen($value) > 50) {
                     $onFailure('Car Model should not exceed length of 50 characters');
                 }
             },
-            '*.9' => function($attribute, $value, $onFailure) { // Year
-                if(strlen($value) > 4) {
+            '*.9' => function ($attribute, $value, $onFailure) { // Year
+                if (strlen($value) > 4) {
                     $onFailure('Year of Manufacture should not exceed length of 4 characters');
                 }
             },

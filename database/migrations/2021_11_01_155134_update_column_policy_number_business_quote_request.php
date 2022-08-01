@@ -14,8 +14,8 @@ class UpdateColumnPolicyNumberBusinessQuoteRequest extends Migration
     public function up()
     {
         Schema::table('business_quote_request', function (Blueprint $table) {
-            if(Schema::hasColumn('business_quote_request', 'policy_number')) {
-                $table->string('policy_number', 100)->nullable()->change();        
+            if (Schema::hasColumn('business_quote_request', 'policy_number')) {
+                $table->string('policy_number', 100)->nullable()->change();
             }
         });
     }

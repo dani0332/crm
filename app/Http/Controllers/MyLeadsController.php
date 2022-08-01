@@ -2,27 +2,29 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\QuoteStatus;
-use App\Services\CRUDService;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use DataTables;
 use App\Enums\quoteTypeCode;
 use App\Models\CarTypeInsurance;
 use App\Models\InsuranceProvider;
 use App\Models\PaymentStatus;
+use App\Models\QuoteStatus;
 use App\Models\Team;
 use App\Models\User;
 use App\Models\VehicleType;
+use App\Services\CRUDService;
+use DataTables;
 use DB;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class MyLeadsController extends Controller
 {
     protected $crudService;
+
     public function __construct(CRUDService $crudService)
     {
         $this->crudService = $crudService;
     }
+
     /**
      * Display a listing of the resource.
      *
@@ -42,39 +44,40 @@ class MyLeadsController extends Controller
         $parentTeamId = $team->id;
         $leadStatusList = QuoteStatus::select('id', 'text')->where('is_active', 1)->get();
         $paymentStatusList = PaymentStatus::select('id', 'text')->where('is_active', 1)->get();
-        $vehicleTypeList = VehicleType::select('id', 'text')->where("is_active", true)->get();
+        $vehicleTypeList = VehicleType::select('id', 'text')->where('is_active', true)->get();
         $insuranceProviderList = InsuranceProvider::select('id', 'text')->where('is_active', true)->get();
-        $carTypeInsuranceList = CarTypeInsurance::select('id', 'text')->where("is_active", true)->get();
+        $carTypeInsuranceList = CarTypeInsurance::select('id', 'text')->where('is_active', true)->get();
 
         $allowedTeamTypes = [];
-        array_push($allowedTeamTypes, ['id' => $team->id, 'name' => $teamName]);        
+        array_push($allowedTeamTypes, ['id' => $team->id, 'name' => $teamName]);
         $userAdditionalTeams = User::where('id', Auth::user()->id)->first()->additional_team_ids;
-        if (!empty($userAdditionalTeams)) {
-            if(str_contains($userAdditionalTeams, ',')) {
+        if (! empty($userAdditionalTeams)) {
+            if (str_contains($userAdditionalTeams, ',')) {
                 $userAdditionalTeamsIds = explode(',', $userAdditionalTeams);
                 $allowedTeamTypes = Team::whereIn('id', $userAdditionalTeamsIds)->pluck('id', 'name')->toArray();
-            }else{
+            } else {
                 $additionalTeam = Team::where('id', $userAdditionalTeams)->first();
                 array_push($allowedTeamTypes, ['id' => $additionalTeam->id, 'name' => $additionalTeam->name]);
             }
         }
-       
+
         if ($request->ajax()) {
-            
-            if(isset($request->teamType)){
-                $teamName = strtolower($request->teamType); 
+            if (isset($request->teamType)) {
+                $teamName = strtolower($request->teamType);
             }
-            if(Auth::user()->isRenewalAdvisor()){
-                $teamName = strtolower($request->leadType); 
+            if (Auth::user()->isRenewalAdvisor()) {
+                $teamName = strtolower($request->leadType);
             }
-            $allowedTypes = ['car', 'home', 'business', 'health', 'life', 'travel','pet'];
+            $allowedTypes = ['car', 'home', 'business', 'health', 'life', 'travel', 'pet'];
             $gridData = in_array($teamName, $allowedTypes) ? $this->crudService->getAdvisorLeads($request, $teamName) : [];
+
             return DataTables::of($gridData)
                 ->addIndexColumn()
                 ->make(true);
         }
-        return view('myleads.view', compact('teamName', 'leadStatusList', 'allowedTeamTypes', 
-        'parentTeamId','paymentStatusList','vehicleTypeList','insuranceProviderList','carTypeInsuranceList'));
+
+        return view('myleads.view', compact('teamName', 'leadStatusList', 'allowedTeamTypes',
+            'parentTeamId', 'paymentStatusList', 'vehicleTypeList', 'insuranceProviderList', 'carTypeInsuranceList'));
     }
 
     /**
@@ -141,6 +144,4 @@ class MyLeadsController extends Controller
     {
         //
     }
-
-
 }

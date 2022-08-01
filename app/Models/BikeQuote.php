@@ -2,32 +2,38 @@
 
 namespace App\Models;
 
+use Config;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
-use Config;
 
 class BikeQuote extends Model implements AuditableContract
 {
     use HasFactory, Auditable;
+
     protected $table = 'bike_quote_request';
     protected $guarded = [];
 
     public function getCreatedAtAttribute($table)
     {
         $date_time_format = Config::get('constants.datetime_format');
+
         return $this->asDateTime($table)->timezone(config('app.timezone'))->format($date_time_format);
     }
+
     public function getUpdatedAtAttribute($table)
     {
         $date_time_format = Config::get('constants.datetime_format');
+
         return $this->asDateTime($table)->timezone(config('app.timezone'))->format($date_time_format);
     }
+
     public function quoteStatus()
     {
         return $this->hasOne(QuoteStatus::class, 'id', 'quote_status_id');
     }
+
     public function bikeQuoteRequestDetail()
     {
         return $this->hasOne(BikeQuoteRequestDetail::class, 'bike_quote_request_id', 'id');

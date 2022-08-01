@@ -11,5 +11,5 @@ use BenSampo\Enum\Enum;
  */
 final class CarPlanAddons extends Enum
 {
-    const CAR_HIRE = "carHire";
+    const CAR_HIRE = 'carHire';
 }

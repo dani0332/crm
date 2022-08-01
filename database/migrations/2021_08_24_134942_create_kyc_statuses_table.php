@@ -1,9 +1,9 @@
 <?php
 
-use Illuminate\Database\Migrations\Migration;
+use App\Models\BaseMigration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use App\Models\BaseMigration;
+
 class CreateKycStatusesTable extends BaseMigration
 {
     /**
@@ -13,12 +13,12 @@ class CreateKycStatusesTable extends BaseMigration
      */
     public function up()
     {
-        if (!Schema::hasTable('kyc_statuses')) {
+        if (! Schema::hasTable('kyc_statuses')) {
             Schema::create('kyc_statuses', function (Blueprint $table) {
                 $table->id()->autoIncrement();
                 $table->string('code')->nullable();
                 $table->string('text');
-                $table->string('text_ar')->nullable();;
+                $table->string('text_ar')->nullable();
                 parent::commonFields($table);
             });
         }

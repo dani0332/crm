@@ -23,7 +23,6 @@ class CreateTableUserTeams extends Migration
             $table->unsignedBigInteger('team_id');
             $table->index('team_id');
             $table->foreign('team_id')->references('id')->on('teams');
-
         });
     }
 

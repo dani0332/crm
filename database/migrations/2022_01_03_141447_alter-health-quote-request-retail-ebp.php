@@ -14,7 +14,7 @@ class AlterHealthQuoteRequestRetailEbp extends Migration
     public function up()
     {
         Schema::table('health_quote_request', function (Blueprint $table) {
-            if (!Schema::hasColumn('health_quote_request', 'health_team_type')) {
+            if (! Schema::hasColumn('health_quote_request', 'health_team_type')) {
                 $table->string('health_team_type', 200)->nullable();
             }
         });

@@ -2,19 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-
 use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
 
-
-use App\Transformers\LeadsTransformer;
-use App\Models\Customer;
-
 class ApiController extends Controller
 {
-
     /**
      * return response
      *
@@ -29,7 +22,8 @@ class ApiController extends Controller
 
     /**
      * response for error
-     * @param  Exception $e
+     *
+     * @param  Exception  $e
      * @return Response Json
      */
     public function respondFatalError($e)
@@ -41,13 +35,13 @@ class ApiController extends Controller
             $errorCode = 422;
         }
 
-        if($e instanceof \Illuminate\Validation\ValidationException) {
+        if ($e instanceof \Illuminate\Validation\ValidationException) {
             return $this->respondValidationError($e->validator, $errorCode);
         }
 
-        if($e instanceof ValidationException) {
+        if ($e instanceof ValidationException) {
             $exception = $e->getPrevious();
-            if($exception) {
+            if ($exception) {
                 $error = json_decode($exception->getResponse()->getBody(), true);
                 $message = arrayKeyExists('message', $error);
             }
@@ -58,17 +52,18 @@ class ApiController extends Controller
 
     /**
      * response for error
-     * @param  Exception $e
+     *
+     * @param  Exception  $e
      * @return Response Json
      */
-    public function respondError($message, $errorCode=Response::HTTP_UNPROCESSABLE_ENTITY, $e = null)
+    public function respondError($message, $errorCode = Response::HTTP_UNPROCESSABLE_ENTITY, $e = null)
     {
         $response = [
             'error' => true,
             'message' => $message,
         ];
 
-        if(env('APP_DEBUG') && $e) {
+        if (env('APP_DEBUG') && $e) {
             $response['file'] = $e->getFile();
             $response['line'] = $e->getLine();
         }
@@ -79,9 +74,9 @@ class ApiController extends Controller
     /**
      * response for collection
      *
-     * @param Collection $data
-     * @param Transformer $transformer
-     * @param String $type
+     * @param  Collection  $data
+     * @param  Transformer  $transformer
+     * @param  string  $type
      * @return Response json
      */
     public function respondCollection($data, $transformer)
@@ -89,10 +84,11 @@ class ApiController extends Controller
         $manager = new Manager();
         $resource = new Collection($data, $transformer);
         $res = $manager->createData($resource)->toArray();
+
         return response()->json($res, Response::HTTP_OK);
     }
 
-    public function respondSuccess($message="Success", $data=[])
+    public function respondSuccess($message = 'Success', $data = [])
     {
         $response = [
             'data' => $data,
@@ -121,7 +117,7 @@ class ApiController extends Controller
     /**
      * Format error response in json.
      *
-     * @param  $e: Exception
+     * @param    $e: Exception
      * @return json.
      */
     public function getExceptionErrors($e)
@@ -131,8 +127,8 @@ class ApiController extends Controller
         $status = ($e->getCode() == 0) ? Response::HTTP_UNPROCESSABLE_ENTITY : $e->getCode();
         $error = [
             'message' => $message,
-            'status'    => $e->getCode(),
-            'line'    => $e->getLine(),
+            'status' => $e->getCode(),
+            'line' => $e->getLine(),
         ];
 
         return response()->json($error, $status);

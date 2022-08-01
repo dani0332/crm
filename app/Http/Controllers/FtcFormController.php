@@ -1,22 +1,21 @@
 <?php
+
 namespace App\Http\Controllers;
+
 use Illuminate\Http\Request;
 
 class FtcFormController extends Controller
 {
     /**
-
      * Display a listing of the resource.
 
      *
 
      * @return \Illuminate\Http\Response
-
      */
-
     public function __construct()
     {
-       // $this->middleware('permission:customers-list', ['only' => ['index', 'store']]);
+        // $this->middleware('permission:customers-list', ['only' => ['index', 'store']]);
     }
 
     /**
@@ -28,6 +27,4 @@ class FtcFormController extends Controller
     {
         return view('ftc.home');
     }
-
-
 }

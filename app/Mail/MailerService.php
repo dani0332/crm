@@ -2,16 +2,17 @@
 
 namespace App\Mail;
 
+use Config;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
-use Config;
 
 class MailerService extends Mailable
 {
     use Queueable, SerializesModels;
+
     protected $request;
+
     /**
      * Create a new message instance.
      *
@@ -31,6 +32,7 @@ class MailerService extends Mailable
     {
         $fromEmail = Config::get('constants.MAIL_FROM_ADDRESS');
         $fromName = Config::get('constants.MAIL_FROM_NAME');
+
         return $this
             ->subject($this->request->subject)
             ->from($fromEmail, $fromName)

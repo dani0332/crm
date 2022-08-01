@@ -15,10 +15,10 @@ class CreateClaimsAttachmentsTable extends Migration
     {
         Schema::create('claims_attachments', function (Blueprint $table) {
             $table->id();
-            $table->string('file_name','255')->nullable();
-            $table->string('file_original_name','255')->nullable();
-            $table->string('file_path','255')->nullable();
-            $table->string('file_type','255')->nullable();
+            $table->string('file_name', '255')->nullable();
+            $table->string('file_original_name', '255')->nullable();
+            $table->string('file_path', '255')->nullable();
+            $table->string('file_type', '255')->nullable();
             $table->boolean('is_deleted')->default('0');
             $table->unsignedBigInteger('claims_id')->nullable();
             $table->foreign('claims_id')->references('id')->on('claims')->onDelete('no action');

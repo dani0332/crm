@@ -13,17 +13,17 @@ class CreateQuoteDocumentsTable extends Migration
      */
     public function up()
     {
-		if (!Schema::hasTable('quote_documents')) {
+        if (! Schema::hasTable('quote_documents')) {
             Schema::create('quote_documents', function (Blueprint $table) {
                 $table->id();
                 $table->unsignedBigInteger('quote_documentable_id')->nullable();
-                $table->string('quote_documentable_type','255')->nullable();
-                $table->string('doc_name','255')->nullable();
-                $table->string('doc_url','255')->nullable();
-                $table->string('doc_mime_type','100')->nullable();
-                $table->string('document_type_code','10');
-                $table->string('document_type_text','100');
-                $table->string('doc_uuid','20');
+                $table->string('quote_documentable_type', '255')->nullable();
+                $table->string('doc_name', '255')->nullable();
+                $table->string('doc_url', '255')->nullable();
+                $table->string('doc_mime_type', '100')->nullable();
+                $table->string('document_type_code', '10');
+                $table->string('document_type_text', '100');
+                $table->string('doc_uuid', '20');
                 $table->unsignedBigInteger('created_by_id')->nullable();
                 $table->timestamps();
                 $table->softDeletes();

@@ -2,20 +2,20 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
-use App\Services\CRUDService;
 use App\Models\CarQuoteAdvisorToOE;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use App\Models\User;
 use App\Services\BusinessQuoteService;
-use App\Services\HealthQuoteService;
 use App\Services\CarQuoteService;
+use App\Services\CRUDService;
+use App\Services\HealthQuoteService;
 use App\Services\HomeQuoteService;
 use App\Services\LifeQuoteService;
 use App\Services\TravelQuoteService;
 use App\Services\UserService;
+use Carbon\Carbon;
 use DataTables;
-use \Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class LeadAssignmentController extends Controller
 {
@@ -50,6 +50,7 @@ class LeadAssignmentController extends Controller
         $this->crudService = $crudService;
         $this->quotTypes = 'home,health,life,business,travel,car';
     }
+
     /**
      * Display a listing of the resource.
      *
@@ -57,7 +58,6 @@ class LeadAssignmentController extends Controller
      */
     public function index(Request $request)
     {
-
         $userTeams = Auth::user()->getUserTeams(Auth::user()->id);
         $userId = Auth::user()->getTeamUserIds();
         $assignToUsers = User::whereIn('id', explode(',', $userId))->get();
@@ -67,24 +67,25 @@ class LeadAssignmentController extends Controller
                 array_push($insuranceTypes, $teamName);
             }
         }
-        if (isset($request->leadType) && !empty($request->leadType)) {
-
+        if (isset($request->leadType) && ! empty($request->leadType)) {
             $gridData = $this->crudService->getLeads('', '', '', strtolower($request->leadType));
             $suffix = $this->getQuerySuffix(strtolower($request->leadType));
             if ($request->ajax()) {
-                if (!empty($request->assignedToId)) {
-                    $gridData->orWhere($suffix . '.advisor_name', $request->assignedToId);
+                if (! empty($request->assignedToId)) {
+                    $gridData->orWhere($suffix.'.advisor_name', $request->assignedToId);
                 }
-                if (!empty($request->startDate)) {
+                if (! empty($request->startDate)) {
                     $dateFrom = Carbon::createFromFormat('Y-m-d', $request->startDate)->startOfDay()->toDateTimeString();
                     $dateTo = Carbon::createFromFormat('Y-m-d', $request->endDate)->endOfDay()->toDateTimeString();
-                    $gridData->whereBetween($suffix . '.created_at', [$dateFrom, $dateTo]);
+                    $gridData->whereBetween($suffix.'.created_at', [$dateFrom, $dateTo]);
                 }
-                return DataTables::of($gridData->orderBy($suffix . '.created_at'))
+
+                return DataTables::of($gridData->orderBy($suffix.'.created_at'))
                     ->addIndexColumn()
                     ->make(true);
             }
         }
+
         return view('leadassignment.view', compact('assignToUsers', 'advisors', 'insuranceTypes'));
     }
 
@@ -111,6 +112,7 @@ class LeadAssignmentController extends Controller
                 $suffix = 'bqr';
                 break;
         }
+
         return $suffix;
     }
 
@@ -187,6 +189,7 @@ class LeadAssignmentController extends Controller
         foreach ($adItems as $item) {
             array_push($advisors, $item->toArray());
         }
+
         return $advisors;
     }
 
@@ -198,8 +201,8 @@ class LeadAssignmentController extends Controller
         foreach ($leadsIds as $tmLeadsId) {
             $id = explode('|', $tmLeadsId)[0];
             $type = strtolower(explode('|', $tmLeadsId)[1]);
-            $entity = $this->{$type . 'QuoteService'}->getEntityPlain($id);
-            $userId = (int)$assignedToUserIdNew;
+            $entity = $this->{$type.'QuoteService'}->getEntityPlain($id);
+            $userId = (int) $assignedToUserIdNew;
             if (Auth::user()->hasRole('WCU_ADVISOR')) {
                 $entity->wcu_id = $userId;
             } else {
@@ -207,7 +210,7 @@ class LeadAssignmentController extends Controller
             }
             if ($type == 'car') {
                 $advisorOE = CarQuoteAdvisorToOE::where('advisor_id', $userId)->first();
-                if (!empty($advisorOE)) {
+                if (! empty($advisorOE)) {
                     $entity->oe_id = $advisorOE->oe_id;
                 }
             }
@@ -215,6 +218,7 @@ class LeadAssignmentController extends Controller
         }
 
         $assignedUserName = $this->userService->getUserNameById($assignedToUserIdNew);
-        return 'Leads has been Assigned To ' . $assignedUserName;
+
+        return 'Leads has been Assigned To '.$assignedUserName;
     }
 }

@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class HealthQuotePlan extends Model
 {
     use HasFactory;
+
     protected $table = 'health_quote_plans';
     protected $guarded = ['id'];
 }

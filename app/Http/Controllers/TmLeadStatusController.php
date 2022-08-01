@@ -3,18 +3,19 @@
 namespace App\Http\Controllers;
 
 use App\Models\TmLeadStatus;
-use Illuminate\Http\Request;
 use DataTables;
+use Illuminate\Http\Request;
 
 class TmLeadStatusController extends Controller
 {
-    function __construct()
+    public function __construct()
     {
-         $this->middleware('permission:tm-lead-status-list|tm-lead-status-create|tm-lead-status-edit|tm-lead-status-delete', ['only' => ['index','store']]);
-         $this->middleware('permission:tm-lead-status-create', ['only' => ['create','store']]);
-         $this->middleware('permission:tm-lead-status-edit', ['only' => ['edit','update']]);
-         $this->middleware('permission:tm-lead-status-delete', ['only' => ['destroy']]);
+        $this->middleware('permission:tm-lead-status-list|tm-lead-status-create|tm-lead-status-edit|tm-lead-status-delete', ['only' => ['index', 'store']]);
+        $this->middleware('permission:tm-lead-status-create', ['only' => ['create', 'store']]);
+        $this->middleware('permission:tm-lead-status-edit', ['only' => ['edit', 'update']]);
+        $this->middleware('permission:tm-lead-status-delete', ['only' => ['destroy']]);
     }
+
     /**
      * Display a listing of the resource.
      *
@@ -23,7 +24,8 @@ class TmLeadStatusController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $data = TmLeadStatus::select('*')->where('is_deleted', 0)->orderBy('sort_order','asc');
+            $data = TmLeadStatus::select('*')->where('is_deleted', 0)->orderBy('sort_order', 'asc');
+
             return Datatables::of($data)
                 ->addIndexColumn()
                 ->addColumn('action', function ($row) {
@@ -32,6 +34,7 @@ class TmLeadStatusController extends Controller
                 ->rawColumns(['action'])
                 ->make(true);
         }
+
         return view('tmleadstatus.view');
     }
 
@@ -68,9 +71,10 @@ class TmLeadStatusController extends Controller
         $TmLeadStatus->sort_order = $request->sort_order;
         $TmLeadStatus->save();
 
-        if(isset($request->return_to_view)) {
-            return redirect("telemarketing/tmleadstatus/".$TmLeadStatus->id)->with('success', 'TM Lead Status has been stored');
+        if (isset($request->return_to_view)) {
+            return redirect('telemarketing/tmleadstatus/'.$TmLeadStatus->id)->with('success', 'TM Lead Status has been stored');
         }
+
         return redirect()->back()->with('success', 'TM Lead Status has been stored');
     }
 
@@ -82,7 +86,7 @@ class TmLeadStatusController extends Controller
      */
     public function show(TmLeadStatus $tmleadstatus)
     {
-        return view('tmleadstatus.show',compact('tmleadstatus'));
+        return view('tmleadstatus.show', compact('tmleadstatus'));
     }
 
     /**
@@ -93,7 +97,7 @@ class TmLeadStatusController extends Controller
      */
     public function edit(TmLeadStatus $tmleadstatus)
     {
-        return view('tmleadstatus.edit',compact('tmleadstatus'));
+        return view('tmleadstatus.edit', compact('tmleadstatus'));
     }
 
     /**
@@ -119,9 +123,10 @@ class TmLeadStatusController extends Controller
         $tmleadstatus->sort_order = $request->sort_order;
         $tmleadstatus->save();
 
-        if(isset($request->return_to_view)) {
-            return redirect("telemarketing/tmleadstatus/".$tmleadstatus->id)->with('success', 'TM Lead Status has been updated');
+        if (isset($request->return_to_view)) {
+            return redirect('telemarketing/tmleadstatus/'.$tmleadstatus->id)->with('success', 'TM Lead Status has been updated');
         }
+
         return redirect()->back()->with('success', 'TM Lead Status has been updated');
     }
 
@@ -135,6 +140,7 @@ class TmLeadStatusController extends Controller
     {
         $tmleadstatus->is_deleted = 1;
         $tmleadstatus->save();
-        return redirect()->route('tmleadstatus.index')->with('message','TM Lead Status has been deleted');
+
+        return redirect()->route('tmleadstatus.index')->with('message', 'TM Lead Status has been deleted');
     }
 }

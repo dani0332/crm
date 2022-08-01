@@ -11,6 +11,6 @@ use BenSampo\Enum\Enum;
  */
 final class CarPlanType extends Enum
 {
-    const TPL = "TPL";
-    const COMP = "COMP";
+    const TPL = 'TPL';
+    const COMP = 'COMP';
 }

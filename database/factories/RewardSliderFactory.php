@@ -21,7 +21,6 @@ class RewardSliderFactory extends Factory
      */
     public function definition()
     {
-
         return [
             'image' => 'googlelogo_light_color_272x92dp.png',
             'link' => $this->faker->url(),

@@ -14,7 +14,7 @@ class AddPremiumToYachtQuoteRequestTable extends Migration
     public function up()
     {
         Schema::table('yacht_quote_request', function (Blueprint $table) {
-            if(!Schema::hasColumn('yacht_quote_request', 'premium')) {
+            if (! Schema::hasColumn('yacht_quote_request', 'premium')) {
                 $table->decimal('premium')->nullable();
             }
         });

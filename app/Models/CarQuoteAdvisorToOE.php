@@ -3,13 +3,11 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
-use App\Models\BaseModel;
-use App\Models\CarQuote;
 
 class CarQuoteAdvisorToOE extends BaseModel
 {
     use HasFactory;
+
     protected $table = 'car_quote_assign_oe_to_advisor';
     public $access = [
 
@@ -17,51 +15,55 @@ class CarQuoteAdvisorToOE extends BaseModel
         'update' => ['admin'],
         'delete' => ['admin'],
         'access' => [
-            "pa" => [],
-            "advisor" => [ ],
-            "oe" => [ ],
-            "admin" => ['oe_id', 'advisor_id' ],
-            "invoicing" => [ ],
-            "payment" => [ ]
+            'pa' => [],
+            'advisor' => [],
+            'oe' => [],
+            'admin' => ['oe_id', 'advisor_id'],
+            'invoicing' => [],
+            'payment' => [],
 
         ],
-        "list" => [
-            "pa" => ['id','oe_id', 'advisor_id' ],
-            "advisor" => ['id','oe_id', 'advisor_id'],
-            "oe" => ['id','oe_id', 'advisor_id'],
-            "admin" => ['id','oe_id', 'advisor_id'],
-            "invoicing" => ['id','oe_id', 'advisor_id'],
-            "payment" => ['id','oe_id', 'advisor_id']
-        ]
+        'list' => [
+            'pa' => ['id', 'oe_id', 'advisor_id'],
+            'advisor' => ['id', 'oe_id', 'advisor_id'],
+            'oe' => ['id', 'oe_id', 'advisor_id'],
+            'admin' => ['id', 'oe_id', 'advisor_id'],
+            'invoicing' => ['id', 'oe_id', 'advisor_id'],
+            'payment' => ['id', 'oe_id', 'advisor_id'],
+        ],
     ];
 
     public function advisor_id()
     {
-        return $this->hasOne(User::class, 'id', 'advisor_id')->select(['id', 'email','name']);
+        return $this->hasOne(User::class, 'id', 'advisor_id')->select(['id', 'email', 'name']);
     }
 
     public function oe_id()
     {
-        return $this->hasOne(User::class, 'id', 'oe_id')->select(['id', 'email','name']);
+        return $this->hasOne(User::class, 'id', 'oe_id')->select(['id', 'email', 'name']);
     }
 
-    public function relations() {
+    public function relations()
+    {
         return ['advisor_id', 'oe_id'];
     }
 
-    public function processGetDSL($filters) {
+    public function processGetDSL($filters)
+    {
         return self::processGetBaseDSL($filters, false);
     }
 
-    public function saveForm($request, $update = false) {
-        try{
-            if(self::where($request->all())->exists())
-                return $this->APIController->respondData(["message" => "This relation already exists."], 500);
+    public function saveForm($request, $update = false)
+    {
+        try {
+            if (self::where($request->all())->exists()) {
+                return $this->APIController->respondData(['message' => 'This relation already exists.'], 500);
+            }
 
-            CarQuote::where("advisor_id", $request->input('advisor_id'))->update(["oe_id" => $request->input('oe_id')]);
+            CarQuote::where('advisor_id', $request->input('advisor_id'))->update(['oe_id' => $request->input('oe_id')]);
+
             return parent::saveForm($request, $update);
-        }
-        catch(\Exception $e) {
+        } catch (\Exception $e) {
             return $e->getMessage();
         }
     }

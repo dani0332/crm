@@ -13,8 +13,7 @@ class ChangeCustomerToAddIsEmailSentInTransappWelcomeEmail extends Migration
      */
     public function up()
     {
-        if (!Schema::hasColumn('customer', 'is_we_sent'))
-        {
+        if (! Schema::hasColumn('customer', 'is_we_sent')) {
             Schema::table('customer', function (Blueprint $table) {
                 $table->boolean('is_we_sent')->default(0);
             });

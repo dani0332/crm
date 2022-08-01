@@ -2,25 +2,27 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use App\Imports\TMLeadsImport;
 use App\Models\TmUploadLead;
 use App\Services\TMUploadLeadsService;
-use App\Imports\TMLeadsImport;
-use DataTables;
 use Auth;
 use Config;
+use DataTables;
+use Illuminate\Http\Request;
 
 class TmUploadLeadController extends Controller
 {
     private $teleMarketingUploadLeadsService;
-    function __construct(TMUploadLeadsService $tmUploadLeadsCreateUpdateService)
+
+    public function __construct(TMUploadLeadsService $tmUploadLeadsCreateUpdateService)
     {
         $this->teleMarketingUploadLeadsService = $tmUploadLeadsCreateUpdateService;
-        $this->middleware('permission:tm-upload-leads-list|tm-upload-leads-create|tm-upload-leads-edit|tm-upload-leads-delete', ['only' => ['index','store']]);
-        $this->middleware('permission:tm-upload-leads-create', ['only' => ['create','store']]);
-        $this->middleware('permission:tm-upload-leads-edit', ['only' => ['edit','update']]);
+        $this->middleware('permission:tm-upload-leads-list|tm-upload-leads-create|tm-upload-leads-edit|tm-upload-leads-delete', ['only' => ['index', 'store']]);
+        $this->middleware('permission:tm-upload-leads-create', ['only' => ['create', 'store']]);
+        $this->middleware('permission:tm-upload-leads-edit', ['only' => ['edit', 'update']]);
         $this->middleware('permission:tm-upload-leads-delete', ['only' => ['destroy']]);
     }
+
     /**
      * Display a listing of the resource.
      *
@@ -29,10 +31,11 @@ class TmUploadLeadController extends Controller
     public function index(Request $request, TmUploadLead $tmUploadLead, Datatables $datatables)
     {
         if ($request->ajax()) {
-            $dataTmLeads = $tmUploadLead::select('tm_upload_leads.*','users.name as user_name')
-            ->leftjoin('users', 'tm_upload_leads.created_by_id','users.id')
+            $dataTmLeads = $tmUploadLead::select('tm_upload_leads.*', 'users.name as user_name')
+            ->leftjoin('users', 'tm_upload_leads.created_by_id', 'users.id')
             ->where('tm_upload_leads.is_deleted', 0)
-            ->orderBy('tm_upload_leads.created_at','desc');
+            ->orderBy('tm_upload_leads.created_at', 'desc');
+
             return $datatables::of($dataTmLeads)->addIndexColumn()->make(true);
         }
 
@@ -62,7 +65,6 @@ class TmUploadLeadController extends Controller
         ]);
 
         if ($request->hasFile('file_name')) {
-
             $tmLeadsImport = new TMLeadsImport;
             $fileNameOriginal = $request->file_name->getClientOriginalName();
             $fileNameAzure = get_guid().'_'.$fileNameOriginal;
@@ -71,8 +73,8 @@ class TmUploadLeadController extends Controller
             $tmLeadsImport->import(request()->file('file_name'));
             $countRows = $tmLeadsImport->getRowCount();
 
-            if($tmLeadsImport->failures()->count() > 100) {
-                return redirect("telemarketing/tmuploadlead")->with('message', 'Data is not valid in csv file, kindly follow the import instructions, correct the data and import it again.');
+            if ($tmLeadsImport->failures()->count() > 100) {
+                return redirect('telemarketing/tmuploadlead')->with('message', 'Data is not valid in csv file, kindly follow the import instructions, correct the data and import it again.');
             }
 
             $azureStorageUrl = Config::get('constants.AZURE_IM_STORAGE_URL');
@@ -86,11 +88,11 @@ class TmUploadLeadController extends Controller
             $tmUploadLead->save();
 
             if ($tmLeadsImport->failures()->isNotEmpty()) {
-                return redirect("telemarketing/tmuploadlead/".$tmUploadLead->id)->withFailures($tmLeadsImport->failures());
+                return redirect('telemarketing/tmuploadlead/'.$tmUploadLead->id)->withFailures($tmLeadsImport->failures());
             }
         }
 
-        return redirect("telemarketing/tmuploadlead/".$tmUploadLead->id)->with('success', 'Upload TM Leads file has been stored');
+        return redirect('telemarketing/tmuploadlead/'.$tmUploadLead->id)->with('success', 'Upload TM Leads file has been stored');
     }
 
     /**
@@ -101,7 +103,7 @@ class TmUploadLeadController extends Controller
      */
     public function show(TmUploadLead $tmuploadlead)
     {
-        return view('tmuploadlead.show',compact('tmuploadlead'));
+        return view('tmuploadlead.show', compact('tmuploadlead'));
     }
 
     /**
@@ -112,7 +114,7 @@ class TmUploadLeadController extends Controller
      */
     public function edit(TmUploadLead $tmuploadlead)
     {
-        return view('tmuploadlead.edit',compact('tmuploadlead'));
+        return view('tmuploadlead.edit', compact('tmuploadlead'));
     }
 
     /**
@@ -128,9 +130,9 @@ class TmUploadLeadController extends Controller
             'file_name' => 'required|mimetypes:text/csv,text/plain,application/csv,text/comma-separated-values,text/anytext,application/octet-stream,application/txt|max:2048',
         ]);
 
-        $tmUploadLeadID = $this->teleMarketingUploadLeadsService->tmUploadLeadsCreateUpdate($request,"update",$tmuploadlead->id);
+        $tmUploadLeadID = $this->teleMarketingUploadLeadsService->tmUploadLeadsCreateUpdate($request, 'update', $tmuploadlead->id);
 
-        return redirect("telemarketing/tmuploadlead/".$tmUploadLeadID)->with('success', 'Upload TM Leads file has been updated');
+        return redirect('telemarketing/tmuploadlead/'.$tmUploadLeadID)->with('success', 'Upload TM Leads file has been updated');
     }
 
     /**
@@ -143,6 +145,7 @@ class TmUploadLeadController extends Controller
     {
         $tmuploadlead->is_deleted = 1;
         $tmuploadlead->save();
-        return redirect()->route("tmuploadlead.index")->with("message", "Upload TM Leads file has been deleted");
+
+        return redirect()->route('tmuploadlead.index')->with('message', 'Upload TM Leads file has been deleted');
     }
 }

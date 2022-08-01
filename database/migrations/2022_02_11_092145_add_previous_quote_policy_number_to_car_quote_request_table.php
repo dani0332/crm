@@ -14,8 +14,8 @@ class AddPreviousQuotePolicyNumberToCarQuoteRequestTable extends Migration
     public function up()
     {
         Schema::table('car_quote_request', function (Blueprint $table) {
-            if (!Schema::hasColumn('car_quote_request', 'previous_quote_policy_number')) {
-                $table->string('previous_quote_policy_number','100')->nullable();
+            if (! Schema::hasColumn('car_quote_request', 'previous_quote_policy_number')) {
+                $table->string('previous_quote_policy_number', '100')->nullable();
                 $table->index('previous_quote_policy_number', 'idx_previous_quote_policy_number');
             }
         });

@@ -11,8 +11,8 @@ use BenSampo\Enum\Enum;
  */
 final class InsuranceProvderConstants extends Enum
 {
-    const PLANNAME =   "CarPlan";
-    const PLANADDON =   "CarPlanAddOn";
-    const NAME =   "InsuranceProvider";
-    const COVERAGE = "CarPlanCoverage";
+    const PLANNAME = 'CarPlan';
+    const PLANADDON = 'CarPlanAddOn';
+    const NAME = 'InsuranceProvider';
+    const COVERAGE = 'CarPlanCoverage';
 }
