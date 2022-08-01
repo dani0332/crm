@@ -5,12 +5,12 @@ namespace App\Http\Controllers;
 use App\Models\DocumentType;
 use App\Services\ActivitiesService;
 use App\Services\CRUDService;
+use App\Services\CustomerService;
 use App\Services\QuoteDocumentService;
+use App\Services\SendEmailCustomerService;
+use App\Services\UserService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
-use App\Services\SendEmailCustomerService;
-use App\Services\CustomerService;
-use App\Services\UserService;
 
 class QuoteDocumentController extends Controller
 {
@@ -82,10 +82,10 @@ class QuoteDocumentController extends Controller
     {
         $documents = $this->getQuoteDocumentsForEmail($quoteType, $quoteUuId);
 
-        foreach($documents as $document) {
+        foreach ($documents as $document) {
             $documentType = DocumentType::where('code', $document->document_type_code)->first();
 
-            if($documentType->send_to_customer == 1){
+            if ($documentType->send_to_customer == 1) {
                 $documentUrls[] = $document->doc_url;
             }
         }
@@ -113,10 +113,11 @@ class QuoteDocumentController extends Controller
         dd('response: '.$response);
         //echo '<pre>'; print_r($documentUrls); echo '</pre>';
     }
-    
+
     public function quoteModel($quoteType, $quoteUuId)
     {
         $model = '\\App\\Models\\'.ucwords($quoteType).'Quote';
+
         return $model::where('uuid', $quoteUuId)->first();
     }
 }
