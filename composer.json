@@ -67,7 +67,6 @@
         "post-create-project-cmd": [
             "@php artisan key:generate --ansi"
         ],
-        "serve": "doppler run -- php artisan serve",
         "cghooks": "vendor/bin/cghooks",
         "post-install-cmd": "cghooks add --no-lock",
         "post-update-cmd": "cghooks update",
