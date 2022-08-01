@@ -903,11 +903,30 @@ class CRUDController extends Controller
             'payment_status_id' => PaymentStatusEnum::PENDING,
             'plan_id' => $request->plan_id,
             'insurance_provider_id' => $request->insurance_provider_id,
+            'created_by' => $request->user()->id,
+            'updated_by' => $request->user()->id,
         ];
         if($request->reference){
             $paymentInformation['reference'] = $request->reference;
         }
-        $quoteDocument = Payment::create($paymentInformation);
-        $quoteModel->payments()->save($quoteDocument);
+        $payment = Payment::create($paymentInformation);
+        $quoteModel->payments()->save($payment);
+        return back()->with('success', 'Payment has been created');
+    }
+
+    public function updatePayment(Request $request)
+    {
+        $paymentInformation = [
+            'collection_type' => $request->collection_type,
+            'captured_amount' => $request->captured_amount,
+            'payment_methods_code' => $request->payment_methods,
+            'updated_by' => $request->user()->id,
+        ];
+        if($request->reference){
+            $paymentInformation['reference'] = $request->reference;
+        }
+        $payment = Payment::where('code', $request->paymentCode)->first();
+        $payment->update($paymentInformation);
+        return back()->with('success', 'Payment has been updated');
     }
 }

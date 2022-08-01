@@ -2105,6 +2105,11 @@ $(document).ready(function () {
         ],
     });
 
+    $(".generateCCLink").click(function () {
+        navigator.clipboard.writeText('Copied');
+        $("#generateCCLinkMsg").show().delay(1000).fadeOut();
+    });
+
 });
 
 
@@ -2303,21 +2308,21 @@ $("#toggle-plans-div").hide();
 $('#flowcheckall').click(function(e) {
     if($(this).hasClass('checkedAll')) {
         $("#toggle-plans-div").hide(200);
-        $(".car_plans_checkbox").prop('checked', false);   
+        $(".car_plans_checkbox").prop('checked', false);
         $(this).removeClass('checkedAll');
     } else {
         $(".car_plans_checkbox").prop('checked', true);
         $(this).addClass('checkedAll');
         $("#toggle-plans-div").show(300);
     }
-}); 
+});
 $('.car_plans_checkbox').click(function(e) {
     if($(this).is(':checked')) {
         $("#toggle-plans-div").show(300);
     } else {
         $("#toggle-plans-div").hide(200);
     }
-}); 
+});
 
 $("#togglePlans").on('click', function (){
     if($("#toggle").val() != "") {

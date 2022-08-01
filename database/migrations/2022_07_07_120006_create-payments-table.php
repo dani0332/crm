@@ -24,11 +24,10 @@ class CreatePaymentsTable extends Migration
                 $table->integer('insurance_provider_id');
                 $table->integer('plan_id');
                 $table->string('payment_methods_code');
-                $table->string('description', 1000);
                 $table->unsignedBigInteger('created_by');
                 $table->unsignedBigInteger('updated_by');
                 $table->boolean('is_approved')->default(false);
-                $table->dateTime('captured_at');
+                $table->dateTime('captured_at')->nullable();
                 $table->string('collection_type', 255);
                 $table->timestamps();
             });
