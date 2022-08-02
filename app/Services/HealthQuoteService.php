@@ -862,7 +862,7 @@ class HealthQuoteService extends BaseService
 
     public function getMembersDetail($id)
     {
-        return ''; //HealthMemberDetail::where('health_quote_request_id', $id)->get();
+        return HealthMemberDetail::where('health_quote_request_id', $id)->get();
     }
 
     public function validateRequest($request)
