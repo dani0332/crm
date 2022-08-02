@@ -70,8 +70,14 @@
                                             <td valign="top">
                                                 <table>
                                                     <tr>
-                                                        <td style="width: 53px;">Free</td>
-                                                        <td><input type="checkbox" checked style="height: unset !important;" disabled></td>
+                                                        <td style="width: 53px;">{{ $carQuotePlanAddon->car_quote_request_addon_price ? $carQuotePlanAddon->car_quote_request_addon_price: 'Free' }}</td>
+                                                        <td>
+                                                            @if($carQuotePlanAddon->car_quote_request_addon_price)
+                                                                <i class="fa fa-check" style="color:green"></i>
+                                                            @else
+                                                                <i class="fa fa-check" style="color:lightgray"></i>
+                                                            @endif
+                                                        </td>
                                                     </tr>
                                                 </table>
                                             </td>
