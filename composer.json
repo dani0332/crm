@@ -28,8 +28,7 @@
         "sentry/sentry-laravel": "^2.7",
         "spatie/laravel-fractal": "^5.8",
         "spatie/laravel-permission": "^4.0",
-        "yajra/laravel-datatables-oracle": "^9.18",
-        "brainmaestro/composer-git-hooks": "^2.8"
+        "yajra/laravel-datatables-oracle": "^9.18"
     },
     "require-dev": {
         "facade/ignition": "^2.5",
@@ -68,9 +67,6 @@
             "@php artisan key:generate --ansi"
         ],
         "serve": "doppler run -- php artisan serve",
-        "cghooks": "vendor/bin/cghooks",
-        "post-install-cmd": "cghooks add --no-lock",
-        "post-update-cmd": "cghooks update",
         "pint:fix": "vendor/bin/pint"
     },
     "extra": {
@@ -82,7 +78,6 @@
                 "vendor/bin/pint"
             ]
         }
-
     },
     "config": {
         "optimize-autoloader": true,
