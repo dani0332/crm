@@ -765,11 +765,7 @@ class TravelQuoteService extends BaseService
 
     public function getMembersDetail($id)
     {
-<<<<<<< HEAD
         return TravelMemberDetail::where('travel_quote_request_id', $id)->get();
-=======
-        return DB::table('travel_quote_request_member_details')->where('travel_quote_request_id', $id)->get();
->>>>>>> 5c34d9978987a81e0df8a6d158fb42e4b7e42a2e
     }
 
     public function getDuplicateEntityByCode($code)
