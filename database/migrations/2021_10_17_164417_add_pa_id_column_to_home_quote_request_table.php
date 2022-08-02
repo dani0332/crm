@@ -15,7 +15,7 @@ class AddPaIdColumnToHomeQuoteRequestTable extends Migration
     {
         if (Schema::hasTable('home_quote_request')) {
             Schema::table('home_quote_request', function (Blueprint $table) {
-                if (!Schema::hasColumn('home_quote_request', 'pa_id')) {
+                if (! Schema::hasColumn('home_quote_request', 'pa_id')) {
                     $table->unsignedBigInteger('pa_id')->nullable();
                     $table->foreign('pa_id')->references('id')->on('users')->onDelete('no action');
                 }

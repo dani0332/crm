@@ -2,21 +2,23 @@
 
 namespace App\Jobs;
 
+use App\Services\CustomerService;
+use App\Services\InslyDataService;
+use DB;
+use Exception;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use App\Services\CustomerService;
-use App\Services\InslyDataService;
-use Exception;
 use Illuminate\Support\Facades\Log;
-use DB;
 
 class InslyCustomerCreationJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+
     protected $policies;
+
     /**
      * Create a new job instance.
      *
@@ -35,7 +37,7 @@ class InslyCustomerCreationJob implements ShouldQueue
     public function handle()
     {
         try {
-            foreach ((array)$this->policies as $policy) {
+            foreach ((array) $this->policies as $policy) {
                 $customer_name = $policy->customer_name;
                 $customer_email = preg_replace('/\s+/', '', $policy->customer_email);
                 $customer_email = strtolower($customer_email);
@@ -44,26 +46,26 @@ class InslyCustomerCreationJob implements ShouldQueue
 
                     $customer_email = $getValidEmail != $customer_email ? $getValidEmail : $customer_email;
 
-                    Log::info('Initiating process for customer with email: ' . $customer_email);
+                    Log::info('Initiating process for customer with email: '.$customer_email);
 
                     $customer = CustomerService::getCustomerByEmail($customer_email)->first();
                     $customerId = 0;
                     if ($customer != '') { // If customer already exists in our database
-                        Log::info('Customer with email: ' . $customer_email . ' found in database');
+                        Log::info('Customer with email: '.$customer_email.' found in database');
 
                         $customer->has_reward_access = true;
                         $customer->has_alfred_access = true;
                         $customerId = $customer->id;
                         $customer->save();
                     } else { // If customer doesn't exist in our database
-                        Log::info('Customer with email: ' . $customer_email . ' not found in database');
+                        Log::info('Customer with email: '.$customer_email.' not found in database');
                         $first_name = '';
                         $last_name = '';
                         $customer_name = trim($customer_name);
-                        if (!strpos($customer_name, ' ')) {
+                        if (! strpos($customer_name, ' ')) {
                             $first_name = $customer_name;
                         } else {
-                            list($first_name, $last_name) = explode(' ', $customer_name, 2);
+                            [$first_name, $last_name] = explode(' ', $customer_name, 2);
                         }
 
                         try {
@@ -71,7 +73,7 @@ class InslyCustomerCreationJob implements ShouldQueue
                             CustomerService::setCustomerAccess($customerId); // enabling has_alfred_access and has_reward_access for newly created customer
                         } catch (Exception $ex) {
                             Log::info($ex->__toString());
-                            Log::info('Failed to create customer with email: ' . $customer_email);
+                            Log::info('Failed to create customer with email: '.$customer_email);
                         }
                     }
                     Log::info('Initiating complete insly data insertion in database table');
@@ -81,7 +83,7 @@ class InslyCustomerCreationJob implements ShouldQueue
                     CustomerService::updatePolicyExpiry($customer_email, $policy->policy_date_end);
                 } else {
                     Log::info('Customer Email OR Name is empty so adding data into the insly mapping with flag true');
-                    Log::info('Customer Email : ' . $customer_email . ' Customer Name : ' . $customer_name);
+                    Log::info('Customer Email : '.$customer_email.' Customer Name : '.$customer_name);
                     InslyDataService::AddInslyRecordInDatabase($customer_name, $customer_email, $policy, true);
                 }
             }

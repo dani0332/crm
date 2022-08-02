@@ -11,8 +11,8 @@ use BenSampo\Enum\Enum;
  */
 final class EnvEnum extends Enum
 {
-    const LOCAL = "local";
-    const DEVELOPMENT = "development";
-    const STAGING = "staging";
-    const PRODUCTION = "production";
+    const LOCAL = 'local';
+    const DEVELOPMENT = 'development';
+    const STAGING = 'staging';
+    const PRODUCTION = 'production';
 }

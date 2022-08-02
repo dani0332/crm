@@ -14,24 +14,24 @@ class PetInsurancePermission extends Seeder
     public function run()
     {
         \DB::table('permissions')->insert([
-            'name'=>'pet-quotes-list',
-            'guard_name'=>'web',
+            'name' => 'pet-quotes-list',
+            'guard_name' => 'web',
         ]);
         \DB::table('permissions')->insert([
-            'name'=>'pet-quotes-create',
-            'guard_name'=>'web',
+            'name' => 'pet-quotes-create',
+            'guard_name' => 'web',
         ]);
         \DB::table('permissions')->insert([
-            'name'=>'pet-quotes-update',
-            'guard_name'=>'web',
+            'name' => 'pet-quotes-update',
+            'guard_name' => 'web',
         ]);
         \DB::table('permissions')->insert([
-            'name'=>'pet-quotes-delete',
-            'guard_name'=>'web',
+            'name' => 'pet-quotes-delete',
+            'guard_name' => 'web',
         ]);
         \DB::table('permissions')->insert([
-            'name'=>'pet-quotes-view',
-            'guard_name'=>'web',
+            'name' => 'pet-quotes-view',
+            'guard_name' => 'web',
         ]);
     }
 }

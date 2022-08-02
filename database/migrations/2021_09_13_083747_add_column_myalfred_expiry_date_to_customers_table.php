@@ -14,8 +14,9 @@ class AddColumnMyalfredExpiryDateToCustomersTable extends Migration
     public function up()
     {
         Schema::table('customer', function (Blueprint $table) {
-            if(!Schema::hasColumn('customer', 'myalfred_expiry_date'))
+            if (! Schema::hasColumn('customer', 'myalfred_expiry_date')) {
                 $table->dateTime('myalfred_expiry_date')->nullable();
+            }
         });
     }
 

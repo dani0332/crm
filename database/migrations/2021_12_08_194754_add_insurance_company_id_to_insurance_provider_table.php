@@ -14,8 +14,7 @@ class AddInsuranceCompanyIdToInsuranceProviderTable extends Migration
     public function up()
     {
         Schema::table('insurance_provider', function (Blueprint $table) {
-            
-            if(!Schema::hasColumn('insurance_provider', 'insurance_company_id')) {
+            if (! Schema::hasColumn('insurance_provider', 'insurance_company_id')) {
                 $table->bigInteger('insurance_company_id')->nullable()->unsigned();
                 $table->index('insurance_company_id');
                 $table->foreign('insurance_company_id')->references('id')->on('insurance_companies');

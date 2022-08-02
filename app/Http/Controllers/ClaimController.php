@@ -2,26 +2,25 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Claim;
-use App\Models\TypeOfInsurance;
-use App\Models\SubTypeOfInsurance;
-use App\Models\ClaimsStatus;
-use App\Models\CarRepairCoverage;
-use App\Models\CarRepairType;
-use App\Models\RentACar;
-use App\Models\User;
 use App\Models\CarMake;
 use App\Models\CarModel;
-use App\Models\CarPlan;
+use App\Models\CarRepairCoverage;
+use App\Models\CarRepairType;
+use App\Models\Claim;
+use App\Models\ClaimsStatus;
 use App\Models\InsuranceProvider;
-use Illuminate\Http\Request;
-use Auth;
-use DataTables;
-use DB;
-use Config;
+use App\Models\RentACar;
+use App\Models\SubTypeOfInsurance;
+use App\Models\TypeOfInsurance;
+use App\Models\User;
+use App\Services\CarPlanService;
 use App\Services\CarQuoteService;
 use App\Services\CRUDService;
-use App\Services\CarPlanService;
+use Auth;
+use Config;
+use DataTables;
+use DB;
+use Illuminate\Http\Request;
 
 class ClaimController extends Controller
 {
@@ -31,10 +30,11 @@ class ClaimController extends Controller
      * @return \Illuminate\Http\Response
      */
     protected $carQuoteService;
+
     protected $crudService;
     protected $carPlanService;
 
-    function __construct(CarQuoteService $carQuoteService, CRUDService $crudService, CarPlanService $carPlanService)
+    public function __construct(CarQuoteService $carQuoteService, CRUDService $crudService, CarPlanService $carPlanService)
     {
         $this->middleware('permission:claim-list|claim-create|claim-edit|claim-delete', ['only' => ['index', 'store']]);
         $this->middleware('permission:claim-create', ['only' => ['create', 'store']]);
@@ -55,7 +55,6 @@ class ClaimController extends Controller
             ->whereIn('roles.name', ['CLAIMS_ADVISOR', 'CLAIMS_MANAGER', 'CLAIMS_ADMIN'])->orderBy('roles.name', 'asc')->get();
 
         if ($request->ajax()) {
-
             $data = Claim::select(
                 'claims.*',
                 'type_of_insurances.text as type_of_insurance_text',
@@ -70,8 +69,8 @@ class ClaimController extends Controller
             }
 
             if (
-                isset($request->searchtype) && !empty($request->searchtype)
-                && isset($request->searchfield) && !empty($request->searchfield)
+                isset($request->searchtype) && ! empty($request->searchtype)
+                && isset($request->searchfield) && ! empty($request->searchfield)
             ) {
                 if ($request->searchtype == 'id') {
                     $data->where('claims.id', $request->searchfield);
@@ -79,12 +78,15 @@ class ClaimController extends Controller
                     $data->where($request->searchtype, $request->searchfield);
                 }
             }
-            if (isset($request->claimstatus) && !empty($request->claimstatus))
+            if (isset($request->claimstatus) && ! empty($request->claimstatus)) {
                 $data->where('claims_status_id', $request->claimstatus);
-            if (isset($request->assignedto) && !empty($request->assignedto))
+            }
+            if (isset($request->assignedto) && ! empty($request->assignedto)) {
                 $data->where('assigned_to_id', $request->assignedto);
-            if (isset($request->type_of_insurance) && !empty($request->type_of_insurance))
+            }
+            if (isset($request->type_of_insurance) && ! empty($request->type_of_insurance)) {
                 $data->where('type_of_insurances_id', $request->type_of_insurance);
+            }
 
             return DataTables::of($data)
                 ->addIndexColumn()
@@ -94,6 +96,7 @@ class ClaimController extends Controller
                 ->rawColumns(['action'])
                 ->make(true);
         }
+
         return view('claim.view', compact('claimsstatuses', 'typeofinsurances', 'advisors'));
     }
 
@@ -114,6 +117,7 @@ class ClaimController extends Controller
         $carmakes = CarMake::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
         $carmodels = CarModel::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
         $insuranceproviders = InsuranceProvider::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
+
         return view('claim.add', compact(
             'typeofinsurances',
             'subtypeofinsurances',
@@ -187,8 +191,9 @@ class ClaimController extends Controller
         $claim->save();
 
         if (isset($request->return_to_view)) {
-            return redirect("claim/claims/" . $claim->id)->with('success', 'Claim has been stored');
+            return redirect('claim/claims/'.$claim->id)->with('success', 'Claim has been stored');
         }
+
         return redirect()->back()->with('success', 'Claim has been stored');
     }
 
@@ -205,6 +210,7 @@ class ClaimController extends Controller
                 return redirect()->route('claims.index')->with('message', 'Access Forbidden');
             }
         }
+
         return view('claim.show', compact('claim'));
     }
 
@@ -231,6 +237,7 @@ class ClaimController extends Controller
         $carmakes = CarMake::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
         $carmodels = CarModel::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
         $insuranceproviders = InsuranceProvider::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
+
         return view('claim.edit', compact(
             'typeofinsurances',
             'claim',
@@ -303,75 +310,73 @@ class ClaimController extends Controller
         $claim->is_rent_a_car = $request->is_rent_a_car == 'on' ? 1 : 0;
 
         if ($claim_status_text == 'Settled') {
-
-            $name = $request->first_name . ' ' . $request->last_name;
+            $name = $request->first_name.' '.$request->last_name;
             $phone = $request->phone_number;
             $email = $request->email_address;
 
             $phonefirstCharacter = substr($phone, 0, 1);
-            if ($phonefirstCharacter == "0") {
+            if ($phonefirstCharacter == '0') {
                 $phone_number = ltrim($phone, $phone[0]);
             } else {
                 $phone_number = $phone;
             }
 
-            $dayOfWeek = date("l");
-            if ($dayOfWeek == "Sunday") {
+            $dayOfWeek = date('l');
+            if ($dayOfWeek == 'Sunday') {
                 $nps_delay = 259200;
-            } else if ($dayOfWeek == "Monday") {
+            } elseif ($dayOfWeek == 'Monday') {
                 $nps_delay = 259200;
-            } else if ($dayOfWeek == "Tuesday") {
+            } elseif ($dayOfWeek == 'Tuesday') {
                 $nps_delay = 432000;
-            } else if ($dayOfWeek == "Wednesday") {
+            } elseif ($dayOfWeek == 'Wednesday') {
                 $nps_delay = 432000;
-            } else if ($dayOfWeek == "Thursday") {
+            } elseif ($dayOfWeek == 'Thursday') {
                 $nps_delay = 432000;
-            } else if ($dayOfWeek == "Friday") {
+            } elseif ($dayOfWeek == 'Friday') {
                 $nps_delay = 345600;
-            } else if ($dayOfWeek == "Saturday") {
+            } elseif ($dayOfWeek == 'Saturday') {
                 $nps_delay = 259200;
             } else {
             }
 
-            $data_d = array();
+            $data_d = [];
             $data_d['name'] = "$name";
             $data_d['email'] = "$email";
-            $data_d['phone_number'] = "+971" . $phone_number;
+            $data_d['phone_number'] = '+971'.$phone_number;
             $data_d['delay'] = $nps_delay;
-            $data_d['properties'] = array();
+            $data_d['properties'] = [];
             $data_d['properties']['Type of Insurance'] = $type_of_insurances_text;
             $delighted_data = json_encode($data_d);
             $delighted_curl = curl_init();
             curl_setopt_array(
                 $delighted_curl,
-                array(
-                    CURLOPT_URL => "https://api.delighted.com/v1/peopjosle.n",
+                [
+                    CURLOPT_URL => 'https://api.delighted.com/v1/peopjosle.n',
                     CURLOPT_RETURNTRANSFER => true,
-                    CURLOPT_ENCODING => "",
+                    CURLOPT_ENCODING => '',
                     CURLOPT_MAXREDIRS => 10,
                     CURLOPT_TIMEOUT => 0,
                     CURLOPT_FOLLOWLOCATION => true,
                     CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-                    CURLOPT_CUSTOMREQUEST => "POST",
+                    CURLOPT_CUSTOMREQUEST => 'POST',
                     CURLOPT_POSTFIELDS => $delighted_data,
-                    CURLOPT_HTTPHEADER => array("Content-Type: application/json", "Authorization: Basic " . base64_encode("sU5Iy4HKzOoIILcRH8P4Rnzax6bbcje7"),),
-                )
+                    CURLOPT_HTTPHEADER => ['Content-Type: application/json', 'Authorization: Basic '.base64_encode('sU5Iy4HKzOoIILcRH8P4Rnzax6bbcje7')],
+                ]
             );
             $delighted_response = curl_exec($delighted_curl);
             $delighted_decoded_response = json_decode($delighted_response, true);
             if (isset($delighted_decoded_response['errors'])) {
-
                 $emailSys = Config::get('constants.email_sys');
                 $refUrl = Request::url();
-                $subject = $emailSys . " NPS API ERROR | CLAIMS FORM | " . \Request::url() . " | " . date('d-m-Y H:i:s');
+                $subject = $emailSys.' NPS API ERROR | CLAIMS FORM | '.\Request::url().' | '.date('d-m-Y H:i:s');
                 $curlMesg =
-                    'Customer Name: ' . $name .
-                    ', Email: ' . $email .
-                    ', Phone: ' . $phone .
-                    ', Error status: ' . $delighted_decoded_response['status'] .
-                    ', Error Message: ' . $delighted_decoded_response['message'] .
-                    ', Errors: ' . $delighted_decoded_response['errors'] .
-                    ',' . date('d-m-Y H:i:s') . "\n";
+                    'Customer Name: '.$name.
+                    ', Email: '.$email.
+                    ', Phone: '.$phone.
+                    ', Error status: '.$delighted_decoded_response['status'].
+                    ', Error Message: '.$delighted_decoded_response['message'].
+                    ', Errors: '.$delighted_decoded_response['errors'].
+                    ','.date('d-m-Y H:i:s')."\n";
 
                 Mail::send(['html' => 'apiemail'], [
                     'refUrl' => $refUrl,
@@ -388,8 +393,9 @@ class ClaimController extends Controller
         $claim->save();
 
         if (isset($request->return_to_view)) {
-            return redirect("claim/claims/" . $claim->id)->with('success', 'Claim has been updated');
+            return redirect('claim/claims/'.$claim->id)->with('success', 'Claim has been updated');
         }
+
         return redirect()->back()->with('success', 'Claim has been updated');
     }
 
@@ -403,6 +409,7 @@ class ClaimController extends Controller
     {
         $claim->claimsAttachments()->delete(); // Delete related attachments
         $claim->delete();
+
         return redirect()->route('claims.index')->with('message', 'Claim has been deleted');
     }
 
@@ -441,25 +448,25 @@ class ClaimController extends Controller
             } else {
                 $responseMessage = $response;
             }
-            $message = 'Car Plan has not been updated ' . $responseMessage;
+            $message = 'Car Plan has not been updated '.$responseMessage;
         }
 
         return $message;
     }
 
-
     public function getoverdueleads(Request $request)
     {
         return DataTables::of([])
             ->addIndexColumn()
-            ->make(true);;
+            ->make(true);
         $allowedTypes = ['car', 'home', 'business', 'health', 'life', 'travel'];
-        if (!in_array(strtolower($request->teamName), $allowedTypes)) {
+        if (! in_array(strtolower($request->teamName), $allowedTypes)) {
             return DataTables::of([])
                 ->addIndexColumn()
                 ->make(true);
         } else {
             $gridData = $this->crudService->getOverDueFollowups($request, $request->teamName)->get();
+
             return DataTables::of($gridData)
                 ->addIndexColumn()
                 ->make(true);

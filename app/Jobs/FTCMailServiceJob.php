@@ -2,19 +2,21 @@
 
 namespace App\Jobs;
 
+use App\Mail\FTCMailerService;
+use DB;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use App\Mail\FTCMailerService;
 use Mail;
-use DB;
 
 class FTCMailServiceJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+
     protected $request;
+
     /**
      * Create a new job instance.
      *
@@ -33,7 +35,6 @@ class FTCMailServiceJob implements ShouldQueue
     public function handle()
     {
         try {
-
             $email = new FTCMailerService($this->request);
             $sender = Mail::to($this->request['to']);
             if (isset($this->request['cc'])) {
@@ -41,7 +42,7 @@ class FTCMailServiceJob implements ShouldQueue
             }
             $sender->send($email);
 
-            return "Success";
+            return 'Success';
         } catch (Exception $ex) {
             return $ex;
         } finally {

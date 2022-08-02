@@ -1,11 +1,13 @@
 <?php
 
 namespace App\Services;
-use App\Models\TmUploadLead;
-use Illuminate\Http\Request;
-use Auth;
+
 use App\Imports\TMLeadsImport;
+use App\Models\TmUploadLead;
+use Auth;
+use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
+
 ini_set('max_execution_time', 10000);
 
 class TMUploadLeadsService
@@ -42,6 +44,5 @@ class TMUploadLeadsService
         //     $tmUploadLead->save();
 
         // }
-
     }
 }

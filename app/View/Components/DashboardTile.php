@@ -15,10 +15,10 @@ class DashboardTile extends Component
      *
      * @return void
      */
-    public function __construct($icon,$class,$title)
+    public function __construct($icon, $class, $title)
     {
         $this->icon = $icon;
-        $this->class= $class;
+        $this->class = $class;
         $this->title = $title;
     }
 
@@ -32,6 +32,7 @@ class DashboardTile extends Component
         $icon = $this->icon;
         $class = $this->class;
         $title = $this->title;
-        return view('components.dashboard-tile',compact('icon','class','title'));
+
+        return view('components.dashboard-tile', compact('icon', 'class', 'title'));
     }
 }

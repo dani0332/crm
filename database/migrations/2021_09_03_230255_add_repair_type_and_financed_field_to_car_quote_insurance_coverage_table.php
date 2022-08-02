@@ -14,11 +14,12 @@ class AddRepairTypeAndFinancedFieldToCarQuoteInsuranceCoverageTable extends Migr
     public function up()
     {
         Schema::table('car_quote_insurance_coverage', function (Blueprint $table) {
-
-            if(!Schema::hasColumn('car_quote_insurance_coverage','repair_type'))
+            if (! Schema::hasColumn('car_quote_insurance_coverage', 'repair_type')) {
                 $table->string('repair_type')->nullable();
-            if(!Schema::hasColumn('car_quote_insurance_coverage','financed_by'))
+            }
+            if (! Schema::hasColumn('car_quote_insurance_coverage', 'financed_by')) {
                 $table->string('financed_by')->nullable();
+            }
         });
     }
 

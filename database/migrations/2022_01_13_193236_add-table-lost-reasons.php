@@ -14,7 +14,6 @@ class AddTableLostReasons extends Migration
     public function up()
     {
         Schema::create('lost_reasons', function (Blueprint $table) {
-
             $table->bigInteger('id')->autoIncrement();
             $table->string('text', 255);
             $table->string('text_ar', 255);
@@ -24,7 +23,6 @@ class AddTableLostReasons extends Migration
             $table->timestamps();
         });
     }
-
 
     /**
      * Reverse the migrations.

@@ -24,7 +24,11 @@
                                 <td><a href="/documents/{{ $document->doc_uuid }}" target="_blank">{{ $document->doc_name }}</a></td>
                                 <td>{{ $document->created_at }}</td>
                                 <td>{{ $document->createdBy ? $document->createdBy->name : '' }}</td>
-                                <td><button class="btn btn-sm btn-warning" data-record-id="{{ $document->id }}" onclick="deleteQuoteDocument(this)">Delete</button></td>
+                                <td><button class="btn btn-sm btn-warning" 
+                                        data-record-id="{{ $document->id }}" 
+                                        data-record-quote-type="{{ $quoteType }}" 
+                                        data-record-uuid="{{ $record->uuid }}" 
+                                        onclick="deleteQuoteDocument(this)">Delete</button></td>
                             </tr>
                         @endforeach
                     </tbody>

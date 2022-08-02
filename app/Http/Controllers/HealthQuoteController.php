@@ -11,15 +11,12 @@ use Illuminate\Support\Facades\Log;
 class HealthQuoteController extends Controller
 {
     /**
-
      * Display a listing of the resource.
 
      *
 
      * @return \Illuminate\Http\Response
-
      */
-
     public function __construct()
     {
         $this->middleware('permission:health-quotes-list|health-quotes-resubmit-api', ['only' => ['index', 'store']]);
@@ -35,6 +32,7 @@ class HealthQuoteController extends Controller
         if ($request->ajax()) {
             Log::info('Inside HealthQuote Index');
             $data = HealthQuote::select('*')->orderBy('created_at', 'desc');
+
             return Datatables::of($data)
                 ->addIndexColumn()
                 ->addColumn('action', function ($row) {
@@ -67,19 +65,19 @@ class HealthQuoteController extends Controller
                 $this->sendDataCentralizedApi($HealthQuoteModel);
             }
         }
+
         return true;
     }
 
     public function sendDataCentralizedApi($bean)
     {
-
         $refUrl = $bean->reference_url;
         $carQuoteSaveApi = '/api/v1-wrapper-save-car-quote';
         $emailSys = Config::get('constants.emailL_sys');
-        $centralApi = Config::get('constants.central_api_endpoint') . $carQuoteSaveApi;
+        $centralApi = Config::get('constants.central_api_endpoint').$carQuoteSaveApi;
         $centralApiToken = Config::get('constants.central_api_token');
 
-        $carValue = $bean->car_value == "?" ? "0" : $bean->car_value;
+        $carValue = $bean->car_value == '?' ? '0' : $bean->car_value;
 
         $uaeLicenseHeldFor = $bean->uae_license_held_for == '' ? null : $bean->uae_license_held_for_id;
 
@@ -98,30 +96,30 @@ class HealthQuoteController extends Controller
         $carModelCode = \App\Models\CarModel::find($bean->car_model_id);
         $carModelCode = $carModelCode ? $carModelCode->code : '';
 
-        $data = array(
-            "firstName" => $bean->first_name,
-            "lastName" => $bean->last_name,
-            "email" => $bean->email,
-            "mobileNo" => $bean->mobile_no,
-            "nationality" => $nationality,
-            "carValue" => $carValue,
-            "currentlyInsuredWith" => $bean->currently_insured_with,
-            "carMakeCode" => $carMakeCode,
-            "carModelCode" => $carModelCode,
-            "yearOfManufacture" => $bean->year_of_manufacture,
-            "source" => $bean->source,
-            "lang" => $bean->lang,
-            "dob" => $bean->dob,
-            "uaeLicenseHeldFor" => $bean->uae_license_held_for_id,
-            "emirateOfRegistration" => $emirateOfRegistration,
-            "carTypeInsurance" => $typeOfCarIns,
-            "claimHistory" => $claimsHistory,
-            "referenceUrl" => $refUrl,
-            "device" => $bean->device,
-            "additionalNotes" => $bean->additional_notes,
-            "reviverName" => $bean->reviver_name,
-            "promoCode" => $bean->promo_code,
-        );
+        $data = [
+            'firstName' => $bean->first_name,
+            'lastName' => $bean->last_name,
+            'email' => $bean->email,
+            'mobileNo' => $bean->mobile_no,
+            'nationality' => $nationality,
+            'carValue' => $carValue,
+            'currentlyInsuredWith' => $bean->currently_insured_with,
+            'carMakeCode' => $carMakeCode,
+            'carModelCode' => $carModelCode,
+            'yearOfManufacture' => $bean->year_of_manufacture,
+            'source' => $bean->source,
+            'lang' => $bean->lang,
+            'dob' => $bean->dob,
+            'uaeLicenseHeldFor' => $bean->uae_license_held_for_id,
+            'emirateOfRegistration' => $emirateOfRegistration,
+            'carTypeInsurance' => $typeOfCarIns,
+            'claimHistory' => $claimsHistory,
+            'referenceUrl' => $refUrl,
+            'device' => $bean->device,
+            'additionalNotes' => $bean->additional_notes,
+            'reviverName' => $bean->reviver_name,
+            'promoCode' => $bean->promo_code,
+        ];
 
         $dataCentr = array_filter($data);
 
@@ -133,8 +131,8 @@ class HealthQuoteController extends Controller
         curl_setopt($chCenter, CURLOPT_CONNECTTIMEOUT, 15);
         $dataCentrProcess = json_encode($dataCentr);
         curl_setopt($chCenter, CURLOPT_POSTFIELDS, $dataCentrProcess);
-        curl_setopt($chCenter, CURLOPT_CUSTOMREQUEST, "POST");
-        curl_setopt($chCenter, CURLOPT_HTTPHEADER, array('x-api-token: ' . $centralApiToken . '', 'Content-Type: application/json'));
+        curl_setopt($chCenter, CURLOPT_CUSTOMREQUEST, 'POST');
+        curl_setopt($chCenter, CURLOPT_HTTPHEADER, ['x-api-token: '.$centralApiToken.'', 'Content-Type: application/json']);
         curl_setopt($chCenter, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($chCenter, CURLOPT_TIMEOUT, 15);
         $resultCentr = curl_exec($chCenter);
@@ -149,12 +147,12 @@ class HealthQuoteController extends Controller
 
         $emailCntrData = '';
         foreach ($emailDataCenter as $key => $value) {
-            $emailCntrData .= $key . ': ' . $value;
-            $emailCntrData .= "<pre>";
+            $emailCntrData .= $key.': '.$value;
+            $emailCntrData .= '<pre>';
         }
 
         $infoCentr = curl_getinfo($chCenter);
-        $subject = $emailSys . " CENTRAL API ERROR | " . $formName . " | " . \Request::url() . " | " . date('d-m-Y H:i:s');
+        $subject = $emailSys.' CENTRAL API ERROR | '.$formName.' | '.\Request::url().' | '.date('d-m-Y H:i:s');
         if ($infoCentr['http_code'] != 200 || $curlErrnoCentr > 0) {
             Mail::send(['html' => 'apiemail'], [
                 'refUrl' => $refUrl,

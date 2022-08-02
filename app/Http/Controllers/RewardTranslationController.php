@@ -17,8 +17,10 @@ class RewardTranslationController extends Controller
     public function index(Reward $reward)
     {
         $rewards = Reward::all();
+
         return view('reward.view', compact('rewards'));
     }
+
     /**
      * Show the form for creating a new resource.
      *
@@ -28,6 +30,7 @@ class RewardTranslationController extends Controller
     {
         return view('rewardtranslation.add', compact('reward'));
     }
+
     /**
      * Store a newly created resource in storage.
      *
@@ -60,32 +63,35 @@ class RewardTranslationController extends Controller
         $rewardTranslation->reward_id = $reward->id;
         $rewardTranslation->lang = $request->lang;
         if ($request->file('product_image')) {
-            $fileName = time() . '_' . $request->product_image->getClientOriginalName();
+            $fileName = time().'_'.$request->product_image->getClientOriginalName();
             $filePath = $request->file('product_image')->storeAs('/', $fileName, 'azure');
             $rewardTranslation->product_image = $fileName;
         }
         if ($request->file('full_width_banner_image')) {
-            $fileName = time() . '_' . $request->full_width_banner_image->getClientOriginalName();
+            $fileName = time().'_'.$request->full_width_banner_image->getClientOriginalName();
             $filePath = $request->file('full_width_banner_image')->storeAs('/', $fileName, 'azure');
             $rewardTranslation->full_width_banner_image = $fileName;
         }
         if ($request->file('generic_banner_image')) {
-            $fileName = time() . '_' . $request->generic_banner_image->getClientOriginalName();
+            $fileName = time().'_'.$request->generic_banner_image->getClientOriginalName();
             $filePath = $request->file('generic_banner_image')->storeAs('/', $fileName, 'azure');
             $rewardTranslation->generic_banner_image = $fileName;
         }
         $rewardTranslation->save();
-        if(isset($request->active_reward)){
+        if (isset($request->active_reward)) {
             $reward->is_active = 1;
             $reward->save();
-            return redirect("rewards/reward/".$reward->id)->with('success', 'Reward Translation has been stored');
+
+            return redirect('rewards/reward/'.$reward->id)->with('success', 'Reward Translation has been stored');
         }
 
-        if(isset($request->return_to_view)) {
-            return redirect("rewards/reward/".$reward->id."/"."reward-translation/".$rewardTranslation->id)->with('success', 'Reward Translation has been stored');
+        if (isset($request->return_to_view)) {
+            return redirect('rewards/reward/'.$reward->id.'/'.'reward-translation/'.$rewardTranslation->id)->with('success', 'Reward Translation has been stored');
         }
+
         return redirect()->back()->with('success', 'Reward Translation has been stored');
     }
+
     /**
      * Display the specified resource.
      *
@@ -96,6 +102,7 @@ class RewardTranslationController extends Controller
     {
         return view('rewardtranslation.show', compact('reward', 'rewardTranslation'));
     }
+
     /**
      * Show the form for editing the specified resource.
      *
@@ -106,6 +113,7 @@ class RewardTranslationController extends Controller
     {
         return view('rewardtranslation.edit', compact('reward', 'rewardTranslation'));
     }
+
     /**
      * Update the specified resource in storage.
      *
@@ -134,27 +142,29 @@ class RewardTranslationController extends Controller
         $rewardTranslation->reward_id = $reward->id;
 
         if ($request->file('product_image')) {
-            $fileName = time() . '_' . $request->product_image->getClientOriginalName();
+            $fileName = time().'_'.$request->product_image->getClientOriginalName();
             $filePath = $request->file('product_image')->storeAs('/', $fileName, 'azure');
             $rewardTranslation->product_image = $fileName;
         }
         if ($request->file('full_width_banner_image')) {
-            $fileName = time() . '_' . $request->full_width_banner_image->getClientOriginalName();
+            $fileName = time().'_'.$request->full_width_banner_image->getClientOriginalName();
             $filePath = $request->file('full_width_banner_image')->storeAs('/', $fileName, 'azure');
             $rewardTranslation->full_width_banner_image = $fileName;
         }
         if ($request->file('generic_banner_image')) {
-            $fileName = time() . '_' . $request->generic_banner_image->getClientOriginalName();
+            $fileName = time().'_'.$request->generic_banner_image->getClientOriginalName();
             $filePath = $request->file('generic_banner_image')->storeAs('/', $fileName, 'azure');
             $rewardTranslation->generic_banner_image = $fileName;
         }
         $rewardTranslation->save();
 
-        if(isset($request->return_to_view)) {
-            return redirect("rewards/reward/".$reward->id."/"."reward-translation/".$rewardTranslation->id)->with('success', 'Reward Translation has been updated');
+        if (isset($request->return_to_view)) {
+            return redirect('rewards/reward/'.$reward->id.'/'.'reward-translation/'.$rewardTranslation->id)->with('success', 'Reward Translation has been updated');
         }
+
         return redirect()->back()->with('success', 'Reward Translation has been updated');
     }
+
     /**
      * Remove the specified resource from storage.
      *
@@ -164,7 +174,8 @@ class RewardTranslationController extends Controller
     public function destroy(Reward $reward, RewardTranslation $rewardTranslation)
     {
         $rewardTranslation->delete();
-        return redirect("rewards/reward/".$reward->id)->with('message','Reward Translation has been deleted');
+
+        return redirect('rewards/reward/'.$reward->id)->with('message', 'Reward Translation has been deleted');
     }
 
     public function validateLang($lang, $reward)

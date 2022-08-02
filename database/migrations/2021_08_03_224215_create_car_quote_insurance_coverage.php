@@ -1,9 +1,8 @@
 <?php
 
-
+use App\Models\BaseMigration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use App\Models\BaseMigration;
 
 class CreateCarQuoteInsuranceCoverage extends BaseMigration
 {
@@ -14,9 +13,8 @@ class CreateCarQuoteInsuranceCoverage extends BaseMigration
      */
     public function up()
     {
-        if (!Schema::hasTable('car_quote_insurance_coverage')) {
+        if (! Schema::hasTable('car_quote_insurance_coverage')) {
             Schema::create('car_quote_insurance_coverage', function (Blueprint $table) {
-
                 $table->id()->autoIncrement();
                 $table->date('start_date');
 
@@ -35,11 +33,11 @@ class CreateCarQuoteInsuranceCoverage extends BaseMigration
                 $table->float('excess');
                 $table->float('ancillary_excess');
                 $table->float('premium_price');
-                $table->string('personal_accident_benefit','200')->nullable();
-                $table->string('breakdown_recovery','200')->nullable();
-                $table->string('off_road_cover','200')->nullable();
-                $table->string('rend_a_car','200')->nullable();
-                $table->string('geographical_area','500')->nullable();
+                $table->string('personal_accident_benefit', '200')->nullable();
+                $table->string('breakdown_recovery', '200')->nullable();
+                $table->string('off_road_cover', '200')->nullable();
+                $table->string('rend_a_car', '200')->nullable();
+                $table->string('geographical_area', '500')->nullable();
                 $table->timestamps();
                 $table->softDeletes();
             });

@@ -1,8 +1,8 @@
 <?php
 
+use App\Models\BaseMigration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use App\Models\BaseMigration;
 
 class CreateCarQuoteKycStatusTable extends BaseMigration
 {
@@ -13,7 +13,7 @@ class CreateCarQuoteKycStatusTable extends BaseMigration
      */
     public function up()
     {
-        if (!Schema::hasTable('car_quote_kyc_status')) {
+        if (! Schema::hasTable('car_quote_kyc_status')) {
             Schema::create('car_quote_kyc_status', function (Blueprint $table) {
                 $table->id()->autoIncrement();
                 $table->bigInteger('car_quote_id');
@@ -35,4 +35,3 @@ class CreateCarQuoteKycStatusTable extends BaseMigration
         Schema::dropIfExists('car_quote_kyc_status');
     }
 }
-

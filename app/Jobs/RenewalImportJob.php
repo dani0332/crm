@@ -2,14 +2,14 @@
 
 namespace App\Jobs;
 
+use App\Services\RenewalsUploadService;
+use DB;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use App\Services\RenewalsUploadService;
 use Illuminate\Support\Facades\Log;
-use DB;
 
 class RenewalImportJob implements ShouldQueue
 {
@@ -22,7 +22,6 @@ class RenewalImportJob implements ShouldQueue
     protected $renewalImportCode;
     protected $uploadType;
     protected $currentUserId;
-
     public $tries = 5;
     public $timeout = 300;
     public $backoff = 3;
@@ -57,7 +56,7 @@ class RenewalImportJob implements ShouldQueue
             // Sending request with data to create renewal and normal quote
             $this->renewalsUploadService->createUpdateQuote($quoteData, $quoteType, $this->fileName, $this->renewalImportCode, $this->uploadType, $this->currentUserId);
         } catch (\Exception $e) {
-            Log::info("message: " . $e->getMessage() . " line: " . $e->getLine() . " file: " . $e->getFile());
+            Log::info('message: '.$e->getMessage().' line: '.$e->getLine().' file: '.$e->getFile());
             if ($this->attempts() < 4) {
                 $delayInSeconds = 5 * 60;
                 $this->release($delayInSeconds);

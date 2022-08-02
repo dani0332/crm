@@ -13,14 +13,14 @@ class CreateEmailStatusTable extends Migration
      */
     public function up()
     {
-        if (!Schema::hasTable('email_status')) {
+        if (! Schema::hasTable('email_status')) {
             Schema::create('email_status', function (Blueprint $table) {
                 $table->id();
                 $table->integer('quote_type_id')->nullable();
                 $table->integer('quote_id')->nullable();
-                $table->string('email_address','100')->nullable();
-                $table->string('msg_id','100')->nullable();
-                $table->string('email_status','30')->nullable();
+                $table->string('email_address', '100')->nullable();
+                $table->string('msg_id', '100')->nullable();
+                $table->string('email_status', '30')->nullable();
                 $table->timestamps();
             });
         }

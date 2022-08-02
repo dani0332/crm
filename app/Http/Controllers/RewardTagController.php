@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\RewardTag;
 use DataTables;
 use Illuminate\Http\Request;
-use DB;
 
 class RewardTagController extends Controller
 {
@@ -16,6 +15,7 @@ class RewardTagController extends Controller
         $this->middleware('permission:reward-tags-edit', ['only' => ['edit', 'update']]);
         $this->middleware('permission:reward-tags-delete', ['only' => ['destroy']]);
     }
+
     /**
      * Display a listing of the resource.
      *
@@ -24,7 +24,8 @@ class RewardTagController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $data = RewardTag::select('*')->orderBy('sort_order','asc');
+            $data = RewardTag::select('*')->orderBy('sort_order', 'asc');
+
             return DataTables::of($data)
                 ->addIndexColumn()
                 ->addColumn('action', function ($row) {
@@ -33,8 +34,10 @@ class RewardTagController extends Controller
                 ->rawColumns(['action'])
                 ->make(true);
         }
+
         return view('rewardtag.view');
     }
+
     /**
      * Show the form for creating a new resource.
      *
@@ -44,6 +47,7 @@ class RewardTagController extends Controller
     {
         return view('rewardtag.add');
     }
+
     /**
      * Store a newly created resource in storage.
      *
@@ -65,11 +69,13 @@ class RewardTagController extends Controller
         $rewardTag->sort_order = $request->sort_order;
         $rewardTag->save();
 
-        if(isset($request->return_to_view)) {
-            return redirect("rewards/reward-tags/".$rewardTag->id)->with('success', 'Reward Tag has been stored');
+        if (isset($request->return_to_view)) {
+            return redirect('rewards/reward-tags/'.$rewardTag->id)->with('success', 'Reward Tag has been stored');
         }
+
         return redirect()->back()->with('success', 'Reward Tag has been stored');
     }
+
     /**
      * Display the specified resource.
      *
@@ -80,6 +86,7 @@ class RewardTagController extends Controller
     {
         return view('rewardtag.show', compact('rewardTag'));
     }
+
     /**
      * Show the form for editing the specified resource.
      *
@@ -90,6 +97,7 @@ class RewardTagController extends Controller
     {
         return view('rewardtag.edit', compact('rewardTag'));
     }
+
     /**
      * Update the specified resource in storage.
      *
@@ -110,11 +118,13 @@ class RewardTagController extends Controller
         $rewardTag->sort_order = $request->sort_order;
         $rewardTag->save();
 
-        if(isset($request->return_to_view)) {
-            return redirect("rewards/reward-tags/".$rewardTag->id)->with('success', 'Reward Tag has been updated');
+        if (isset($request->return_to_view)) {
+            return redirect('rewards/reward-tags/'.$rewardTag->id)->with('success', 'Reward Tag has been updated');
         }
+
         return redirect()->back()->with('success', 'Reward Tag has been updated');
     }
+
     /**
      * Remove the specified resource from storage.
      *
@@ -123,12 +133,12 @@ class RewardTagController extends Controller
      */
     public function destroy(RewardTag $rewardTag)
     {
-        if($rewardTag->Rewards()->count()) {
-            return redirect()->route('reward-tags.index')->with('message','Reward Tag is linked with Reward and cannot be deleted');
-        }
-        else {
+        if ($rewardTag->Rewards()->count()) {
+            return redirect()->route('reward-tags.index')->with('message', 'Reward Tag is linked with Reward and cannot be deleted');
+        } else {
             $rewardTag->delete();
-            return redirect()->route('reward-tags.index')->with('message','Reward Tag has been deleted');
+
+            return redirect()->route('reward-tags.index')->with('message', 'Reward Tag has been deleted');
         }
     }
 }

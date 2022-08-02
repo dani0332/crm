@@ -14,10 +14,12 @@ class AddCreatedUpdatedFieldsToCarQuoteDocuments extends Migration
     public function up()
     {
         Schema::table('car_quote_documents', function (Blueprint $table) {
-            if(!Schema::hasColumn('car_quote_documents','created_by'))
+            if (! Schema::hasColumn('car_quote_documents', 'created_by')) {
                 $table->string('created_by')->nullable();
-            if(!Schema::hasColumn('car_quote_documents','updated_by'))
+            }
+            if (! Schema::hasColumn('car_quote_documents', 'updated_by')) {
                 $table->string('updated_by')->nullable();
+            }
         });
     }
 

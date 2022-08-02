@@ -14,12 +14,12 @@ class AddColumnsToRenewalsUploadLeadsTable extends Migration
     public function up()
     {
         Schema::table('renewals_upload_leads', function (Blueprint $table) {
-            if (!Schema::hasColumn('renewals_upload_leads', 'renewal_import_code')) {
-                $table->string('renewal_import_code','20')->nullable();
+            if (! Schema::hasColumn('renewals_upload_leads', 'renewal_import_code')) {
+                $table->string('renewal_import_code', '20')->nullable();
                 $table->index('renewal_import_code', 'idx_renewal_import_code');
             }
-            if (!Schema::hasColumn('renewals_upload_leads', 'renewal_import_type')) {
-                $table->string('renewal_import_type','100')->nullable();
+            if (! Schema::hasColumn('renewals_upload_leads', 'renewal_import_type')) {
+                $table->string('renewal_import_type', '100')->nullable();
             }
         });
     }

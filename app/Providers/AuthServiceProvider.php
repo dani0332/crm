@@ -27,7 +27,6 @@ class AuthServiceProvider extends ServiceProvider
         $this->registerPolicies();
 
         Gate::define('view-lead-allocation', function ($user) {
-
             $userRoles = $user->usersroles()->get();
             $isAllowed = false;
             foreach ($userRoles as $userRole) {
@@ -35,6 +34,7 @@ class AuthServiceProvider extends ServiceProvider
                     $isAllowed = true;
                 }
             }
+
             return $isAllowed;
         });
 
@@ -62,6 +62,7 @@ class AuthServiceProvider extends ServiceProvider
                     $isAllowed = true; // admin can view all leads
                 }
             }
+
             return $isAllowed;
         });
     }

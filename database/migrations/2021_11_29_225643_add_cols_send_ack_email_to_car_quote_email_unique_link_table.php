@@ -14,8 +14,8 @@ class AddColsSendAckEmailToCarQuoteEmailUniqueLinkTable extends Migration
     public function up()
     {
         Schema::table('car_quote_email_unique_link', function (Blueprint $table) {
-            if(!Schema::hasColumn('car_quote_email_unique_link', 'is_ack_email')) {
-                $table->integer('is_ack_email')->default(0);;
+            if (! Schema::hasColumn('car_quote_email_unique_link', 'is_ack_email')) {
+                $table->integer('is_ack_email')->default(0);
             }
         });
     }

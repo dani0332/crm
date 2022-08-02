@@ -3,12 +3,11 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
-use App\Models\BaseModel;
 
 class FTCPaymentMode extends BaseModel
 {
     use HasFactory;
+
     protected $table = 'payment_modes';
     public $access = [
 
@@ -16,28 +15,30 @@ class FTCPaymentMode extends BaseModel
         'update' => [''],
         'delete' => [''],
         'access' => [
-            "pa" => [],
-            "invoicing" => [ ],
-            "payment" => [ ],
-            "advisor" => [],
-            "oe" => [],
-            "admin" => [ ],
+            'pa' => [],
+            'invoicing' => [],
+            'payment' => [],
+            'advisor' => [],
+            'oe' => [],
+            'admin' => [],
         ],
-        "list" => [
-            "pa" => ['id' , 'name'  ],
-            "invoicing" => ['id' , 'name'  ],
-            "payment" => ['id' , 'name'  ],
-            "advisor" => ['id' , 'name'  ],
-            "oe" => ['id' , 'name'  ],
-            "admin" => ['id' , 'name'  ],
-        ]
+        'list' => [
+            'pa' => ['id', 'name'],
+            'invoicing' => ['id', 'name'],
+            'payment' => ['id', 'name'],
+            'advisor' => ['id', 'name'],
+            'oe' => ['id', 'name'],
+            'admin' => ['id', 'name'],
+        ],
     ];
 
-    public function relations() {
+    public function relations()
+    {
         return [];
     }
 
-    public function processGetDSL($filters) {
+    public function processGetDSL($filters)
+    {
         return self::processGetBaseDSL($filters, false);
     }
 }

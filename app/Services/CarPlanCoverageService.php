@@ -3,11 +3,9 @@
 namespace App\Services;
 
 use App\Models\CarPlanCoverage;
-use Illuminate\Http\Request;
+use Carbon\Carbon;
 use DB;
-use Auth;
-use \Carbon\Carbon;
-use Config;
+use Illuminate\Http\Request;
 
 class CarPlanCoverageService extends BaseService
 {
@@ -36,6 +34,7 @@ class CarPlanCoverageService extends BaseService
     {
         return $this->query->where('cpv.id', $id)->first();
     }
+
     public function getPlanCoverage($id)
     {
         return $this->query->where('cpv.plan_id', $id)->get();
@@ -45,32 +44,31 @@ class CarPlanCoverageService extends BaseService
     {
         $searchProperties = $model->searchProperties;
         if ($request->ajax()) {
-
-            if (in_array('created_at', $searchProperties) && isset($request->created_at) && $request->created_at != "") {
+            if (in_array('created_at', $searchProperties) && isset($request->created_at) && $request->created_at != '') {
                 $dateFrom = Carbon::createFromFormat('Y-m-d', $request['created_at'])->startOfDay()->toDateTimeString();
                 $dateTo = Carbon::createFromFormat('Y-m-d', $request['created_at_end'])->endOfDay()->toDateTimeString();
                 $this->query->whereBetween('cpv.created_at', [$dateFrom, $dateTo]);
             }
-            if (in_array('text_ar', $searchProperties) && isset($request->text_ar) && $request->text_ar != "") {
-                $this->query->Where('cpv.text_ar', 'like', '%' . $request->text_ar . '%');
+            if (in_array('text_ar', $searchProperties) && isset($request->text_ar) && $request->text_ar != '') {
+                $this->query->Where('cpv.text_ar', 'like', '%'.$request->text_ar.'%');
             }
-            if (in_array('text', $searchProperties) && isset($request->text) && $request->text != "") {
-                $this->query->Where('cpv.text', 'like', '%' . $request->text . '%');
+            if (in_array('text', $searchProperties) && isset($request->text) && $request->text != '') {
+                $this->query->Where('cpv.text', 'like', '%'.$request->text.'%');
             }
-            if (in_array('value', $searchProperties) && isset($request->value) && $request->value != "") {
-                $this->query->Where('cpv.value', 'like', '%' . $request->value . '%');
+            if (in_array('value', $searchProperties) && isset($request->value) && $request->value != '') {
+                $this->query->Where('cpv.value', 'like', '%'.$request->value.'%');
             }
-            if (in_array('code', $searchProperties) && isset($request->code) && $request->code != "") {
-                $this->query->Where('cpv.code', 'like', '%' . $request->code . '%');
+            if (in_array('code', $searchProperties) && isset($request->code) && $request->code != '') {
+                $this->query->Where('cpv.code', 'like', '%'.$request->code.'%');
             }
-            if (in_array('type', $searchProperties) && isset($request->type) && $request->type != "") {
-                $this->query->Where('cpv.type', 'like', '%' . $request->type . '%');
+            if (in_array('type', $searchProperties) && isset($request->type) && $request->type != '') {
+                $this->query->Where('cpv.type', 'like', '%'.$request->type.'%');
             }
-            if (in_array('value_ar', $searchProperties) && isset($request->value_ar) && $request->value_ar != "") {
-                $this->query->Where('cpv.value_ar', 'like', '%' . $request->value_ar . '%');
+            if (in_array('value_ar', $searchProperties) && isset($request->value_ar) && $request->value_ar != '') {
+                $this->query->Where('cpv.value_ar', 'like', '%'.$request->value_ar.'%');
             }
             foreach ($searchProperties as $item) {
-                if (!empty($request[$item]) && $item != "created_at") {
+                if (! empty($request[$item]) && $item != 'created_at') {
                     if ($request[$item] == 'null') {
                         $this->query->whereNull($item);
                     }
@@ -81,32 +79,33 @@ class CarPlanCoverageService extends BaseService
         $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';
         if ($column != '' && $column != 0 && $direction != '') {
             if ($column == 1) {
-                $column = "cpv.code";
+                $column = 'cpv.code';
             }
             if ($column == 2) {
-                $column = "cpv.text";
+                $column = 'cpv.text';
             }
             if ($column == 3) {
-                $column = "cpv.text_ar";
+                $column = 'cpv.text_ar';
             }
             if ($column == 4) {
-                $column = "cpv.value";
+                $column = 'cpv.value';
             }
             if ($column == 5) {
-                $column = "cpv.value_ar";
+                $column = 'cpv.value_ar';
             }
             if ($column == 6) {
-                $column = "cpv.type";
+                $column = 'cpv.type';
             }
             if ($column == 7) {
-                $column = "cpv.created_at";
+                $column = 'cpv.created_at';
             }
             if ($column == 8) {
-                $column = "cpv.updated_at";
+                $column = 'cpv.updated_at';
             }
             if ($column == 9) {
-                $column = "cpv.plan_id";
+                $column = 'cpv.plan_id';
             }
+
             return $this->query->orderBy($column, $direction);
         } else {
             return $this->query->orderBy('cpv.created_at', 'DESC');
@@ -122,8 +121,9 @@ class CarPlanCoverageService extends BaseService
             'value' => $request->value,
             'value_ar' => $request->value_ar,
             'type' => $request->type,
-            'plan_id' => $request->plan_id
+            'plan_id' => $request->plan_id,
         ];
+
         return CarPlanCoverage::create($data);
     }
 
@@ -138,73 +138,75 @@ class CarPlanCoverageService extends BaseService
         $carPlanCoverage->type = $request->type;
         $carPlanCoverage->plan_id = $request->plan_id;
         $carPlanCoverage->save();
+
         return true;
     }
 
     public function fillModelProperties()
     {
-        return array(
-            "id" => "readonly|none",
-            "code" => "select|title|required",
-            "text" => "input|text|title|required",
-            "text_ar" => "input|text|title|required",
-            "value" => "input|text|title|required",
-            "value_ar" => "input|text|title|required",
-            "created_at" => "input|title|date|range",
-            "updated_at" => "input|title|date",
-            "type" => "input|title",
-            "plan_id" => "select|title",
-            "planName" => "readonly|title"
-        );
+        return [
+            'id' => 'readonly|none',
+            'code' => 'select|title|required',
+            'text' => 'input|text|title|required',
+            'text_ar' => 'input|text|title|required',
+            'value' => 'input|text|title|required',
+            'value_ar' => 'input|text|title|required',
+            'created_at' => 'input|title|date|range',
+            'updated_at' => 'input|title|date',
+            'type' => 'input|title',
+            'plan_id' => 'select|title',
+            'planName' => 'readonly|title',
+        ];
     }
 
     public function getCustomTitleByProperty($propertyName)
     {
-        $title = "";
+        $title = '';
         switch ($propertyName) {
             case 'code':
-                $title = "Code";
+                $title = 'Code';
                 break;
             case 'created_at':
-                $title = "Created Date";
+                $title = 'Created Date';
                 break;
             case 'updated_at':
-                $title = "Last Modified Date";
+                $title = 'Last Modified Date';
                 break;
             case 'text':
-                $title = "Plan Coverage Name";
+                $title = 'Plan Coverage Name';
                 break;
             case 'text_ar':
-                $title = "Plan Coverage Name (Arabic)";
+                $title = 'Plan Coverage Name (Arabic)';
                 break;
             case 'type':
-                $title = "Type";
+                $title = 'Type';
                 break;
             case 'value':
-                $title = "Value";
+                $title = 'Value';
                 break;
             case 'value_ar':
-                $title = "Value (Arabic)";
+                $title = 'Value (Arabic)';
                 break;
             case 'plan_id':
-                $title = "Plan";
+                $title = 'Plan';
                 break;
             case 'planName':
-                $title = "Plan Name";
+                $title = 'Plan Name';
                 break;
             default:
                 break;
         }
+
         return $title;
     }
 
     public function fillModelSkipProperties()
     {
         return [
-            "create" => "created_at,updated_at,planName",
-            "list" => "",
-            "update" => "id,created_at,updated_at,planName",
-            "show" => "",
+            'create' => 'created_at,updated_at,planName',
+            'list' => '',
+            'update' => 'id,created_at,updated_at,planName',
+            'show' => '',
         ];
     }
 

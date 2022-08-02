@@ -2321,8 +2321,10 @@ $("#dataTableCarQuotePlans").DataTable({
 function deleteQuoteDocument(el) {
     if (confirm('Are you sure you want to delete this document?')) {
         var id = $(el).attr('data-record-id');
+        var quoteType = $(el).attr('data-record-quote-type');
+        var quoteUuId = $(el).attr('data-record-quote-uuid');
         $.ajax({
-            url: '/documents/' + id + '/delete',
+            url: '/quotes/' + quoteType + '/' + quoteUuId + '/documents/' + id + '/delete',
             method: "POST",
             data: {
                 _token: $('input[name=_token]').val(),

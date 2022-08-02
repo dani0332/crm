@@ -2,9 +2,10 @@
 
 namespace App\Http\Requests;
 
+use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
-use Illuminate\Contracts\Validation\Validator;
+
 class APiFetchUrl extends FormRequest
 {
     /**
@@ -25,12 +26,12 @@ class APiFetchUrl extends FormRequest
     public function rules()
     {
         return [
-            'email' => 'required|email'
+            'email' => 'required|email',
         ];
     }
 
     public function failedValidation(Validator $validator)
     {
-       throw new HttpResponseException(response()->json(['message' => $validator->errors()]), 422);
+        throw new HttpResponseException(response()->json(['message' => $validator->errors()]), 422);
     }
 }

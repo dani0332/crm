@@ -1,8 +1,8 @@
 <?php
 
+use App\Models\BaseMigration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use App\Models\BaseMigration;
 
 class CreateSubmittedHistoryTable extends BaseMigration
 {
@@ -11,15 +11,14 @@ class CreateSubmittedHistoryTable extends BaseMigration
      *
      * @return void
      */
-
     public function up()
     {
-        if (!Schema::hasTable('ftc_history')) {
+        if (! Schema::hasTable('ftc_history')) {
             Schema::create('ftc_history', function (Blueprint $table) {
                 $table->id()->autoIncrement();
                 $table->bigInteger('car_quote_id');
                 $table->foreign('car_quote_id')->references('id')->on('car_quote_request');
-                $table->string('status','100')->nullable();
+                $table->string('status', '100')->nullable();
                 $table->text('data');
                 $table->timestamps();
                 $table->softDeletes();

@@ -24,7 +24,7 @@ class LeadSearch extends FormRequest
     public function rules()
     {
         return [
-            'leadType' => 'required'
+            'leadType' => 'required',
         ];
     }
 }

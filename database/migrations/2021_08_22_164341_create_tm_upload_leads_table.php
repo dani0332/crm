@@ -15,8 +15,8 @@ class CreateTmUploadLeadsTable extends Migration
     {
         Schema::create('tm_upload_leads', function (Blueprint $table) {
             $table->id();
-            $table->string('file_name','255')->nullable();
-            $table->string('file_path','255')->nullable();
+            $table->string('file_name', '255')->nullable();
+            $table->string('file_path', '255')->nullable();
             $table->integer('total_records')->nullable();
             $table->integer('good')->nullable();
             $table->integer('cannot_upload')->nullable();

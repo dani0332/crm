@@ -14,8 +14,8 @@ class PetInsuranceAddEditPermissions extends Seeder
     public function run()
     {
         \DB::table('permissions')->insert([
-            'name'=>'pet-quotes-edit',
-            'guard_name'=>'web',
+            'name' => 'pet-quotes-edit',
+            'guard_name' => 'web',
         ]);
     }
 }

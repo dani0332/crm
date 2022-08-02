@@ -15,18 +15,18 @@ class CreateTmLeadsTable extends Migration
     {
         Schema::create('tm_leads', function (Blueprint $table) {
             $table->id();
-            $table->string('customer_name','50');
-            $table->string('phone_number','20');
-            $table->string('email_address','50');
+            $table->string('customer_name', '50');
+            $table->string('phone_number', '20');
+            $table->string('email_address', '50');
             $table->date('enquiry_date');
             $table->date('allocation_date');
-            $table->string('notes','2000')->nullable();
+            $table->string('notes', '2000')->nullable();
             $table->boolean('is_deleted')->default('0');
-            $table->string('cdb_id','11')->nullable();
+            $table->string('cdb_id', '11')->nullable();
             $table->dateTime('next_followup_date')->nullable();
             $table->integer('no_answer_count')->nullable();
             $table->date('dob')->nullable();
-            $table->string('year_of_manufacture','50')->nullable();
+            $table->string('year_of_manufacture', '50')->nullable();
             $table->decimal('car_value', $precision = 14, $scale = 2)->nullable();
             $table->timestamps();
 

@@ -2,11 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\RewardCategoriesRequest;
 use App\Models\RewardCategory;
 use DataTables;
 use Illuminate\Http\Request;
-use DB;
-use App\Http\Requests\RewardCategoriesRequest;
 
 class RewardCategoryController extends Controller
 {
@@ -17,6 +16,7 @@ class RewardCategoryController extends Controller
         $this->middleware('permission:reward-categories-edit', ['only' => ['edit', 'update']]);
         $this->middleware('permission:reward-categories-delete', ['only' => ['destroy']]);
     }
+
     /**
      * Display a listing of the resource.
      *
@@ -25,7 +25,8 @@ class RewardCategoryController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $data = RewardCategory::select('*')->orderBy('sort_order','asc');
+            $data = RewardCategory::select('*')->orderBy('sort_order', 'asc');
+
             return DataTables::of($data)
                 ->addIndexColumn()
                 ->addColumn('action', function ($row) {
@@ -34,8 +35,10 @@ class RewardCategoryController extends Controller
                 ->rawColumns(['action'])
                 ->make(true);
         }
+
         return view('rewardcategory.view');
     }
+
     /**
      * Show the form for creating a new resource.
      *
@@ -45,6 +48,7 @@ class RewardCategoryController extends Controller
     {
         return view('rewardcategory.add');
     }
+
     /**
      * Store a newly created resource in storage.
      *
@@ -60,11 +64,13 @@ class RewardCategoryController extends Controller
         $rewardCategory->sort_order = $request->sort_order;
         $rewardCategory->save();
 
-        if(isset($request->return_to_view)) {
-            return redirect("rewards/reward-categories/".$rewardCategory->id)->with('success', 'Reward Category has been stored');
+        if (isset($request->return_to_view)) {
+            return redirect('rewards/reward-categories/'.$rewardCategory->id)->with('success', 'Reward Category has been stored');
         }
+
         return redirect()->back()->with('success', 'Reward Category has been stored');
     }
+
     /**
      * Display the specified resource.
      *
@@ -75,6 +81,7 @@ class RewardCategoryController extends Controller
     {
         return view('rewardcategory.show', compact('rewardCategory'));
     }
+
     /**
      * Show the form for editing the specified resource.
      *
@@ -85,6 +92,7 @@ class RewardCategoryController extends Controller
     {
         return view('rewardcategory.edit', compact('rewardCategory'));
     }
+
     /**
      * Update the specified resource in storage.
      *
@@ -100,11 +108,13 @@ class RewardCategoryController extends Controller
         $rewardCategory->sort_order = $request->sort_order;
         $rewardCategory->save();
 
-        if(isset($request->return_to_view)) {
-            return redirect("rewards/reward-categories/".$rewardCategory->id)->with('success', 'Reward Category has been updated');
+        if (isset($request->return_to_view)) {
+            return redirect('rewards/reward-categories/'.$rewardCategory->id)->with('success', 'Reward Category has been updated');
         }
+
         return redirect()->back()->with('success', 'Reward Category has been updated');
     }
+
     /**
      * Remove the specified resource from storage.
      *
@@ -113,12 +123,12 @@ class RewardCategoryController extends Controller
      */
     public function destroy(RewardCategory $rewardCategory)
     {
-        if($rewardCategory->Rewards()->count()) {
-            return redirect()->route('reward-categories.index')->with('message','Reward Category is linked with Reward and cannot be deleted');
-        }
-        else {
+        if ($rewardCategory->Rewards()->count()) {
+            return redirect()->route('reward-categories.index')->with('message', 'Reward Category is linked with Reward and cannot be deleted');
+        } else {
             $rewardCategory->delete();
-            return redirect()->route('reward-categories.index')->with('message','Reward Category has been deleted');
+
+            return redirect()->route('reward-categories.index')->with('message', 'Reward Category has been deleted');
         }
     }
 }

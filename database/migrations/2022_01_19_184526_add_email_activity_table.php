@@ -13,13 +13,13 @@ class AddEmailActivityTable extends Migration
      */
     public function up()
     {
-        if (!Schema::hasTable('email_activity')) {
-                Schema::create('email_activity', function (Blueprint $table) {
-                    $table->bigIncrements('id');
-                    $table->longText('api_response');
-                    $table->boolean('successful');
-                    $table->string('email','255');
-                    $table->timestamps();
+        if (! Schema::hasTable('email_activity')) {
+            Schema::create('email_activity', function (Blueprint $table) {
+                $table->bigIncrements('id');
+                $table->longText('api_response');
+                $table->boolean('successful');
+                $table->string('email', '255');
+                $table->timestamps();
             });
         }
     }

@@ -7,49 +7,48 @@ use App\Models\QuoteDocument;
 
 class QuoteDocumentService extends BaseService
 {
-	public function getQuoteDocumentsForUpload($quoteTypeId)
-	{
-		return DocumentType::where(['quote_type_id' => $quoteTypeId, 'is_active' => true])
+    public function getQuoteDocumentsForUpload($quoteTypeId)
+    {
+        return DocumentType::where(['quote_type_id' => $quoteTypeId, 'is_active' => true])
         ->orderBy('sort_order', 'asc')
         ->get();
-	}
+    }
 
-	public function createQuoteDocumentRecord($documentTypeCode, $fileNameOriginal, $filePathAzure, $fileMimeType, $travelQuote)
-	{
-		$documentTypeCode_ = DocumentType::where('code', $documentTypeCode)->first();
+    public function createQuoteDocumentRecord($documentTypeCode, $fileNameOriginal, $filePathAzure, $fileMimeType, $quoteModel)
+    {
+        $documentTypeCode_ = DocumentType::where('code', $documentTypeCode)->first();
 
-		if(!$documentTypeCode_) {
-			return false;
-		}
+        if (! $documentTypeCode_) {
+            return false;
+        }
 
-		$docUuid = uniqid();
+        $docUuid = uniqid();
 
-		while (QuoteDocument::where('doc_uuid', $docUuid)->first()) {
-			$docUuid = uniqid().rand(1, 100);
-		}
+        while (QuoteDocument::where('doc_uuid', $docUuid)->first()) {
+            $docUuid = uniqid().rand(1, 100);
+        }
 
-		$quoteDocument = QuoteDocument::create([
-            'doc_name'=> $fileNameOriginal,
-            'doc_url'=> $filePathAzure,
+        $quoteDocument = QuoteDocument::create([
+            'doc_name' => $fileNameOriginal,
+            'doc_url' => $filePathAzure,
             'doc_mime_type' => $fileMimeType,
-			'document_type_code' => $documentTypeCode_->code,
-			'document_type_text' => $documentTypeCode_->text,
-			'doc_uuid' => $docUuid,
-			'created_by_id' => auth()->id()
+            'document_type_code' => $documentTypeCode_->code,
+            'document_type_text' => $documentTypeCode_->text,
+            'doc_uuid' => $docUuid,
+            'created_by_id' => auth()->id(),
         ]);
 
-        $travelQuote->documents()->save($quoteDocument);
-	}
+        $quoteModel->documents()->save($quoteDocument);
+    }
 
-	public function getQuoteDocumentUrl($id)
-	{
-		$quoteDocument = QuoteDocument::where('doc_uuid', $id)->first();
+    public function getQuoteDocumentUrl($id)
+    {
+        $quoteDocument = QuoteDocument::where('doc_uuid', $id)->first();
 
-		if(!$quoteDocument) {
-			abort(404);
-		}
+        if (! $quoteDocument) {
+            abort(404);
+        }
 
-		return (object)['doc_url' => $quoteDocument->doc_url, 'doc_mime_type' => $quoteDocument->doc_mime_type];
-	}
-
+        return (object) ['doc_url' => $quoteDocument->doc_url, 'doc_mime_type' => $quoteDocument->doc_mime_type];
+    }
 }

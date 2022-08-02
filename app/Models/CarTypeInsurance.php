@@ -2,58 +2,61 @@
 
 namespace App\Models;
 
+use Config;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
-use Config;
-use App\Models\BaseModel;
 
 class CarTypeInsurance extends BaseModel implements AuditableContract
 {
     use HasFactory, Auditable;
-    protected $table = 'car_type_insurance';
 
+    protected $table = 'car_type_insurance';
     public $access = [
 
-        'write' => ['advisor','oe'],
-        'update' => ['advisor','oe'],
-        'delete' => ['advisor','oe'],
+        'write' => ['advisor', 'oe'],
+        'update' => ['advisor', 'oe'],
+        'delete' => ['advisor', 'oe'],
         'access' => [
-            "pa" => [ ],
-            "advisor" => [ ],
-            "oe" => [ ],
-            "admin" => [  ],
-            "invoicing" => [ ],
-            "payment" => [ ]
+            'pa' => [],
+            'advisor' => [],
+            'oe' => [],
+            'admin' => [],
+            'invoicing' => [],
+            'payment' => [],
 
         ],
-        "list" => [
-            "pa" => ['id', 'text' ],
-            "advisor" => [ 'id', 'text'],
-            "oe" => [ 'id', 'text'],
-            "admin" => ['id', 'text'],
-            "invoicing" => [ 'id', 'text'],
-            "payment" => [ 'id', 'text']
-        ]
+        'list' => [
+            'pa' => ['id', 'text'],
+            'advisor' => ['id', 'text'],
+            'oe' => ['id', 'text'],
+            'admin' => ['id', 'text'],
+            'invoicing' => ['id', 'text'],
+            'payment' => ['id', 'text'],
+        ],
     ];
 
-    public function relations() {
+    public function relations()
+    {
         return [];
     }
 
-    public function processGetDSL($filters) {
+    public function processGetDSL($filters)
+    {
         return self::processGetBaseDSL($filters, false);
     }
 
     public function getCreatedAtAttribute($table)
     {
         $date_time_format = Config::get('constants.datetime_format');
+
         return $this->asDateTime($table)->timezone(config('app.timezone'))->format($date_time_format);
     }
+
     public function getUpdatedAtAttribute($table)
     {
         $date_time_format = Config::get('constants.datetime_format');
+
         return $this->asDateTime($table)->timezone(config('app.timezone'))->format($date_time_format);
     }
 }

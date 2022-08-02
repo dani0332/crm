@@ -1,9 +1,8 @@
 <?php
 
-use Illuminate\Database\Migrations\Migration;
+use App\Models\BaseMigration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use App\Models\BaseMigration;
 
 class CreateCarQuoteEmailUniqueLinkTable extends BaseMigration
 {
@@ -14,7 +13,7 @@ class CreateCarQuoteEmailUniqueLinkTable extends BaseMigration
      */
     public function up()
     {
-        if (!Schema::hasTable('car_quote_email_unique_link')) {
+        if (! Schema::hasTable('car_quote_email_unique_link')) {
             Schema::create('car_quote_email_unique_link', function (Blueprint $table) {
                 $table->id()->autoIncrement();
                 $table->bigInteger('car_quote_id');

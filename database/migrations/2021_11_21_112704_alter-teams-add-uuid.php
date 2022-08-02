@@ -13,14 +13,11 @@ class AlterTeamsAddUuid extends Migration
      */
     public function up()
     {
-        if (!Schema::hasColumn('teams', 'uuid'))
-        {
-            Schema::table('teams', function (Blueprint $table)
-            {
+        if (! Schema::hasColumn('teams', 'uuid')) {
+            Schema::table('teams', function (Blueprint $table) {
                 $table->uuid('uuid')->default(DB::raw('(UUID())'));
             });
         }
-
     }
 
     /**

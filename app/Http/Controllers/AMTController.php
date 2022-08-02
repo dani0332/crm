@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\quoteStatusCode;
+use App\Enums\quoteTypeCode;
 use App\Models\BusinessInsuranceType;
 use App\Models\BusinessQuote;
 use App\Models\GroupMedicalType;
@@ -10,15 +12,14 @@ use App\Models\User;
 use App\Services\BusinessQuoteService;
 use App\Services\CRUDService;
 use App\Services\LookupService;
-use Illuminate\Http\Request;
-use DB;
-use DataTables;
-use \Carbon\Carbon;
-use Auth;
-use Illuminate\Support\Facades\Redirect;
 use App\Traits\RolePermissionConditions;
-use App\Enums\quoteStatusCode;
-use App\Enums\quoteTypeCode;
+use Auth;
+use Carbon\Carbon;
+use DataTables;
+use DB;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Redirect;
+
 class AMTController extends Controller
 {
     protected $businessQuoteService;
@@ -26,12 +27,14 @@ class AMTController extends Controller
     protected $lookupService;
 
     use RolePermissionConditions;
+
     public function __construct(BusinessQuoteService $businessQuoteService, CRUDService $crudService, LookupService $lookupService)
     {
         $this->businessQuoteService = $businessQuoteService;
         $this->crudService = $crudService;
         $this->lookupService = $lookupService;
     }
+
     /**
      * Display a listing of the resource.
      *
@@ -71,14 +74,14 @@ class AMTController extends Controller
                 'bqr.device',
                 'bqr.previous_quote_policy_premium'
             )->orderBy('bqr.advisor_id', 'asc');
-            if(Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::Business) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::Amt) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::GM)){
-                // if user has advisor Role then fetch leads assigned to the user only
-                $data->where('bqr.advisor_id', Auth::user()->id);	// fetch leads assigned to the user
-            }
+        if (Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::Business) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::Amt) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::GM)) {
+            // if user has advisor Role then fetch leads assigned to the user only
+            $data->where('bqr.advisor_id', Auth::user()->id);	// fetch leads assigned to the user
+        }
         $this->whereBasedOnRole($data, 'bqr');
 
         $leadStatuses = $this->lookupService->getLeadStatuses();
-       
+
         $advisors = DB::table('users as u')
             ->join('model_has_roles as mr', 'mr.model_id', '=', 'u.id')
             ->join('roles as r', 'r.id', '=', 'mr.role_id')
@@ -87,12 +90,11 @@ class AMTController extends Controller
         $isManagerORDeputy = Auth::user()->isManagerORDeputy();
         $model = 'Business';
         if ($request->ajax()) {
-
-            if (!isset($request->email) && $request->email == '') {
+            if (! isset($request->email) && $request->email == '') {
                 $data->where('qs.id', '!=', 9);
             }
             if (isset($request->first_name) && $request->first_name != '') {
-                $data->where('bqr.first_name', 'like', '%' . $request->first_name . '%');
+                $data->where('bqr.first_name', 'like', '%'.$request->first_name.'%');
             }
             if (isset($request->created_at_start) && $request->created_at_start != '' && isset($request->created_at_end) && $request->created_at_end != '') {
                 $dateFrom = Carbon::createFromFormat('Y-m-d', $request->created_at_start)->startOfDay()->toDateTimeString();
@@ -100,10 +102,10 @@ class AMTController extends Controller
                 $data->whereBetween('bqr.created_at', [$dateFrom, $dateTo]);
             }
             if (isset($request->last_name) && $request->last_name != '') {
-                $data->where('bqr.last_name', 'like', '%' . $request->last_name . '%');
+                $data->where('bqr.last_name', 'like', '%'.$request->last_name.'%');
             }
             if (isset($request->email) && $request->email != '') {
-                $data->where('bqr.email', 'like', '%' . $request->email . '%');
+                $data->where('bqr.email', 'like', '%'.$request->email.'%');
             }
             if (isset($request->code) && $request->code != '') {
                 $data->where('bqr.code', '=', $request->code);
@@ -136,23 +138,26 @@ class AMTController extends Controller
             $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';
             if ($column != '' && $column != 0 && $direction != '') {
                 if ($column == 11) {
-                    $column = "bqr.created_at";
+                    $column = 'bqr.created_at';
                 }
                 if ($column == 12) {
-                    $column = "bqr.updated_at";
+                    $column = 'bqr.updated_at';
                 }
                 if ($column == 8) {
-                    $column = "bqrd.next_followup_date";
+                    $column = 'bqrd.next_followup_date';
                 }
                 $data->orderBy($column, $direction);
             } else {
                 $data->orderBy('bqr.created_at', 'DESC');
             }
+
             return DataTables::of($data)
                 ->addIndexColumn()
                 ->make(true);
+
             return view('amt.view', compact('model', 'leadStatuses', 'advisors', 'isManagerORDeputy'));
         }
+
         return view('amt.view', compact('model', 'leadStatuses', 'advisors', 'isManagerORDeputy'));
     }
 
@@ -164,6 +169,7 @@ class AMTController extends Controller
     public function create()
     {
         $businessInsuranceType = BusinessInsuranceType::select('id', 'text')->where('text', 'Group Medical')->get();
+
         return view('amt.add', compact('businessInsuranceType'));
     }
 
@@ -183,16 +189,16 @@ class AMTController extends Controller
             'business_type_of_insurance_id' => 'required',
             'company_name' => 'required|max:150',
             'number_of_employees' => 'required',
-            "brief_details" => "required",
+            'brief_details' => 'required',
         ]);
         $record = $this->businessQuoteService->saveBusinessQuote($request);
         if (isset($record->message) && str_contains($record->message, 'Error')) {
             return Redirect::back()->with('message', $record->message)->withInput();
         } else {
-            if (!isset($record->quoteUID)) {
+            if (! isset($record->quoteUID)) {
                 return redirect('medical/amt')->with('success', 'Lead has been stored');
             } else {
-                return redirect('medical/amt/' . $record->quoteUID)->with('success', 'Lead has been stored');
+                return redirect('medical/amt/'.$record->quoteUID)->with('success', 'Lead has been stored');
             }
         }
     }
@@ -211,7 +217,7 @@ class AMTController extends Controller
             ->select('id', 'text')
             ->whereNotIn('text', [
                 'AML Screening Cleared', 'Draft', 'Cancelled', 'AML Screening Failed', 'Transaction Declined', 'Policy Issued', 'Policy Invoiced',
-                'Completed', 'Pending', 'Rejected', 'Issued', 'Approved', 'Approval required', 'Resubmit for approval'
+                'Completed', 'Pending', 'Rejected', 'Issued', 'Approved', 'Approval required', 'Resubmit for approval',
             ])
             ->orderBy('sort_order', 'asc')->get();
         $lostReasons = DB::table('lost_reasons')
@@ -221,11 +227,11 @@ class AMTController extends Controller
 
         $selectedLeadStatus = '';
         if (isset($record->quote_status_id) && $record->quote_status_id != '') {
-            $selectedLeadStatus  = QuoteStatus::where('id', $record->quote_status_id)->first();
+            $selectedLeadStatus = QuoteStatus::where('id', $record->quote_status_id)->first();
         }
         $assignedUserName = '';
         $assignedGMType = '';
-        if (isset($record->group_medical_type_id) &&  $record->group_medical_type_id != '') {
+        if (isset($record->group_medical_type_id) && $record->group_medical_type_id != '') {
             $assignedGMType = GroupMedicalType::where('id', $record->group_medical_type_id)->first()->text;
         }
         if (isset($record->advisor_id) && $record->advisor_id != '') {
@@ -243,6 +249,7 @@ class AMTController extends Controller
         if ($selectedLeadStatus != '') {
             $selectedLeadStatus = $selectedLeadStatus->text;
         }
+
         return view('amt.show', compact('businessInsuranceType', 'record', 'selectedLeadStatus', 'advisors', 'assignedUserName', 'assignedGMType', 'leadStatuses', 'lostReasons', 'selectedLostReasonId', 'modeltype', 'allowedDuplicateLOB'));
     }
 
@@ -263,9 +270,10 @@ class AMTController extends Controller
             ->select('gmt.text as text')
             ->first();
         $selectedGmType = '';
-        if (!is_null($GMType)) {
+        if (! is_null($GMType)) {
             $selectedGmType = $GMType->text;
         }
+
         return view('amt.edit', compact('businessInsuranceType', 'record', 'gmTypes', 'selectedGmType'));
     }
 
@@ -284,12 +292,13 @@ class AMTController extends Controller
             'business_type_of_insurance_id' => 'required',
             'company_name' => 'required|max:150',
             'number_of_employees' => 'required',
-            "brief_details" => "required",
-            "group_medical_type_id" => "required",
-            "premium" => "required",
+            'brief_details' => 'required',
+            'group_medical_type_id' => 'required',
+            'premium' => 'required',
         ]);
         $this->crudService->updateModelByType('business', $request, $id);
-        return redirect('medical/amt/' . $id)->with('success', 'Lead has been updated');
+
+        return redirect('medical/amt/'.$id)->with('success', 'Lead has been updated');
     }
 
     /**

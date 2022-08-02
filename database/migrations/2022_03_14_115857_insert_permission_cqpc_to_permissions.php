@@ -17,12 +17,12 @@ class InsertPermissionCqpcToPermissions extends Migration
         $carQuotesPlansCreate = DB::table('permissions')->where('name', 'car-quotes-plans-create')->first();
         if ($carQuotesPlansCreate === null) {
             DB::table('permissions')->insert(
-                array(
+                [
                     'name' => 'car-quotes-plans-create',
                     'guard_name' => 'web',
                     'created_at' => $datetime,
-                    'updated_at' => $datetime
-                )
+                    'updated_at' => $datetime,
+                ]
             );
         }
     }

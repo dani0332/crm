@@ -3,28 +3,31 @@
 namespace App\Services;
 
 use App\Models\QuoteStatus;
-use Illuminate\Http\Request;
 use DB;
+use Illuminate\Http\Request;
 
 class LeadStatusService extends BaseService
 {
     protected $query;
+
     public function __construct()
     {
         $this->query = DB::table('quote_status as ls')
             ->select('ls.id', 'ls.uuid', 'ls.text', 'ls.created_at', 'ls.updated_at');
     }
+
     public function saveLeadStatus(Request $request)
     {
         $existingStatus = QuoteStatus::where('text', $request->text)->first();
         if ($existingStatus != null) {
-            return "Error: name already exists";
+            return 'Error: name already exists';
         }
         $leadStatus = new QuoteStatus();
         $leadStatus->code = $request->text;
         $leadStatus->text = $request->text;
         $leadStatus->is_active = true;
         $leadStatus->save();
+
         return QuoteStatus::find($leadStatus->id);
     }
 
@@ -34,8 +37,9 @@ class LeadStatusService extends BaseService
         $quoteStatus->text = $request->text;
         $quoteStatus->save();
 
-        if (isset($request->return_to_view))
-            return redirect("quote/leadstatus/" . $id)->with('success', 'Lead Status has been updated');
+        if (isset($request->return_to_view)) {
+            return redirect('quote/leadstatus/'.$id)->with('success', 'Lead Status has been updated');
+        }
     }
 
     public function getGridData($model, $request)
@@ -43,15 +47,16 @@ class LeadStatusService extends BaseService
         $searchProperties = $model->searchProperties;
         if ($request->ajax()) {
             foreach ($searchProperties as $item) {
-                if (!empty($request[$item])) {
+                if (! empty($request[$item])) {
                     if ($request[$item] == 'null') {
                         $this->query->whereNull($item);
                     } else {
-                        $this->query->where('ls.' . $item, $request[$item]);
+                        $this->query->where('ls.'.$item, $request[$item]);
                     }
                 }
             }
         }
+
         return $this->query->orderBy('ls.created_at', 'DESC');
     }
 
@@ -67,22 +72,23 @@ class LeadStatusService extends BaseService
 
     public function fillModelProperties()
     {
-        return array(
-            "id" => "readonly|none",
-            "text" => "input|text|required|title",
-        );
+        return [
+            'id' => 'readonly|none',
+            'text' => 'input|text|required|title',
+        ];
     }
 
     public function getCustomTitleByProperty($propertyName)
     {
-        $title = "";
+        $title = '';
         switch ($propertyName) {
             case 'text':
-                $title = "Status Name";
+                $title = 'Status Name';
                 break;
             default:
                 break;
         }
+
         return $title;
     }
 
@@ -95,6 +101,7 @@ class LeadStatusService extends BaseService
             'show' => '',
         ];
     }
+
     public function fillModelSearchProperties()
     {
         return ['text'];

@@ -11,6 +11,6 @@ use BenSampo\Enum\Enum;
  */
 final class InsuranceProviders extends Enum
 {
-    const AXA = "AXA";
-    const RSA = "RSA";
+    const AXA = 'AXA';
+    const RSA = 'RSA';
 }
