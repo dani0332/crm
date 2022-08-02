@@ -1,4 +1,11 @@
 $(document).ready(function () {
+    $("#ebp_dob").datepicker({
+        changeMonth: true,
+        changeYear: true,
+        dateFormat: "dd-mm-yy",
+        yearRange: "-80:+00"
+    });
+
     $(".selectpicker").selectpicker();
     $("#datepicker").datepicker({ dateFormat: "yy-mm-dd" });
     $("#datepicker_2").datepicker({ dateFormat: "yy-mm-dd" });
@@ -1747,6 +1754,7 @@ $(document).ready(function () {
         $('#activityModal').modal({ show: true });
     });
     $('#add-edit-health-members-btn').on('click', function(){
+        $("#ebp_gender,#ebp_dob,#ebp_category,#ebp_salary").val('');
         $('#addHealthMemberModal').modal({ show: true });
     });
     $('#add-edit-travel-members-btn').on('click', function(){

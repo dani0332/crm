@@ -17,6 +17,6 @@ class TravelMemberDetail extends Model
     }
 
     public function getDobAttribute($value){
-        return Carbon::parse($value)->format('Y-m-d');
+        return Carbon::parse($value)->format('d-m-Y');
     }
 }
