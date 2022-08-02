@@ -27,6 +27,7 @@ use App\Http\Controllers\LeadAllocationController;
 use App\Http\Controllers\LeadAssignmentController;
 use App\Http\Controllers\LeadSearchController;
 use App\Http\Controllers\MembersDetailController;
+use App\Http\Controllers\TravelMembersDetailController;
 use App\Http\Controllers\MyLeadsController;
 use App\Http\Controllers\PartnerController;
 use App\Http\Controllers\PaymentModeController;

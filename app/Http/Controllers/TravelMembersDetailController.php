@@ -50,8 +50,13 @@ class TravelMembersDetailController extends Controller
             'travel_quote_request_id' => $request->travel_quote_request_id,
             'dob' => $request->dob
         ];
-        TravelMemberDetail::find($id)->update($data);
-        TravelQuote::find($request->travel_quote_request_id)->update(['quote_updated_at' => Carbon::now()]);
+        $memberDetail = TravelMemberDetail::find($id);
+        if($memberDetail) {
+            $memberDetail->update($data);
+            TravelQuote::find($request->travel_quote_request_id)->update(['quote_updated_at' => Carbon::now()]);
+            unset($data['travel_quote_request_id']);
+            TravelQuote::where('primary_member_id', $memberDetail->id)->update($data);
+        }
         return redirect()->back();
     }
 
