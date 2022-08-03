@@ -1,3 +1,4 @@
+<link href="{{ asset('build/css/car_quote_ecom.css') }}" rel="stylesheet">
 <div class="row">
     <div class="col-md-12 col-sm-12">
         <div class="x_panel">
@@ -70,8 +71,14 @@
                                             <td valign="top">
                                                 <table>
                                                     <tr>
-                                                        <td style="width: 53px;">Free</td>
-                                                        <td><input type="checkbox" checked style="height: unset !important;" disabled></td>
+                                                        <td style="width: 53px;">{{ $carQuotePlanAddon->car_quote_request_addon_price ? $carQuotePlanAddon->car_quote_request_addon_price: 'Free' }}</td>
+                                                        <td>
+                                                            @if($carQuotePlanAddon->car_quote_request_addon_price)
+                                                                <input type="checkbox" checked class="car-quote-ecom-non-free-plan-check">
+                                                            @else
+                                                                <input type="checkbox" checked class="car-quote-ecom-free-plan-check">
+                                                            @endif
+                                                        </td>
                                                     </tr>
                                                 </table>
                                             </td>

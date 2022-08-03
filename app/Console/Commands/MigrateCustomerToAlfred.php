@@ -6,7 +6,7 @@ use App\Jobs\myalfredMigrationJob;
 use App\Models\Customer;
 use Illuminate\Console\Command;
 
-class migrateCustomerToAlfred extends Command
+class MigrateCustomerToAlfred extends Command
 {
     /**
      * The name and signature of the console command.
