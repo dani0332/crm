@@ -125,7 +125,7 @@ class CarPlanAddOnOptionService extends BaseService
         return [
             'id' => 'readonly|none',
             'value' => 'input|title|required',
-            'value_ar' => 'input|text|title|required',
+            'value_ar' => 'input|text|title',
             'price' => 'input|number|title|required',
             'created_at' => 'input|title|date|range',
             'updated_at' => 'input|title|date',

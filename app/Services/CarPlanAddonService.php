@@ -138,7 +138,7 @@ class CarPlanAddonService extends BaseService
             'id' => 'readonly|none',
             'code' => '|static|required|title|driverCover,passengerCover,breakdownCover,carHire,waiverOfDepreciation,omanCover,myAlfred,gccCover,fastTrackClaim',
             'text' => 'input|text|title|required',
-            'text_ar' => 'input|text|title|required',
+            'text_ar' => 'input|text|title',
             'created_at' => 'input|title|date|range',
             'updated_at' => 'input|title|date',
             'type' => '|static|required|title|Select,Checkbox',

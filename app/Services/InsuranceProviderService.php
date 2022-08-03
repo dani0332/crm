@@ -109,7 +109,7 @@ class InsuranceProviderService extends BaseService
             'code' => $request->code,
             'lower_limit' => $request->lower_limit,
             'upper_limit' => $request->upper_limit,
-            'is_active' => $request->has('is_active') ? $request->is_active : 0,
+            'is_active' => $request->is_active == 'on' ? 1 : 0
         ];
         InsuranceProvider::where('id', $id)->update($updateArray);
 
@@ -122,7 +122,7 @@ class InsuranceProviderService extends BaseService
             'id' => 'readonly|none',
             'code' => 'input|title|required',
             'text' => 'input|text|title|required',
-            'text_ar' => 'input|text|title|required',
+            'text_ar' => 'input|text|title',
             'created_at' => 'input|title|date|range',
             'updated_at' => 'input|title|date',
             'lower_limit' => 'input|number|title|required|min:0',
