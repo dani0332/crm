@@ -77,6 +77,7 @@ use App\Enums\CarPlanExclusionsCode;
                                 <th style="width: 80px !important">Repair Type</th>
                                 <th style="width: 80px !important">Insurer Quote No.</th>
                                 <th style="width: 100px !important">TPL Limit</th>
+                                <th style="width: 100px !important">Car Trim</th>
                                 <th style="width: 100px !important">PAB cover</th>
                                 <th style="width: 100px !important">Roadside assistance</th>
                                 <th style="width: 100px !important">Oman cover TPL</th>
@@ -124,6 +125,7 @@ use App\Enums\CarPlanExclusionsCode;
                                     @endif
                                     @endforeach
                                 </td>
+                                <td>{{ $quotePlan->insurerTrim }}</td>
                                 <td>
                                     <table style="margin-left: -10px;margin-top: -10px !important;">
                                         <?php
@@ -211,6 +213,7 @@ use App\Enums\CarPlanExclusionsCode;
                             <th>Repair Type</th>
                             <th>Insurer Quote No.</th>
                             <th>TPL Limit</th>
+                            <th>Car Trim</th>
                             <th>PAB cover</th>
                             <th>Roadside assistance</th>
                             <th>Oman cover TPL</th>
