@@ -158,6 +158,9 @@
                                         @endif
                                         <select @if(strpos($value, 'multiple')) name="{{$property.'[]'}}" multiple="multiple" class="form-control select2 select-roles" @else class="form-control" name="{{$property}}" @endif id="{{$property}}" >
                                             @foreach($staticOptions as $item)
+                                            @if($item == "Select" || $item == "Checkbox")
+                                            @php $item = strtolower($item); @endphp
+                                            @endif
                                             <option value="{{ $item }}" {{ $item == old($item, $record->$property) ? 'selected' : ''}}>{{ $item }}</option>
                                             @endforeach
                                         </select>
