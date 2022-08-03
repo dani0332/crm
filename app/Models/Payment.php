@@ -21,7 +21,7 @@ class Payment extends Model
     public function plan()
     {
         return $this->belongsTo('App\Models\Plan', 'plan_id');
-    } 
+    }
 
     public function paymentStatus()
     {
