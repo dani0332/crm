@@ -62,7 +62,7 @@ class RenewalsImport implements OnEachRow, WithStartRow, WithValidation, SkipsOn
             }
 
             // product information
-            $insurer = $this->insurersMapping(trim(str_replace('  ', ' ', strtolower($row[3]))));
+            $insurer = $this->insurersMapping($row[3]);
             $product = $row[4];
             $productType = $row[5];
             $source = $row[6];
@@ -74,8 +74,8 @@ class RenewalsImport implements OnEachRow, WithStartRow, WithValidation, SkipsOn
 
             // other information
             $customerPhone = $row[7];
-            $advisor = preg_replace('/\s/', '', strtolower(trim(ltrim(rtrim($row[8])))));
-            $previousAdvisor = preg_replace('/\s/', '', strtolower(trim(ltrim(rtrim($row[9])))));
+            $advisor = preg_replace('/\s/', '', strtolower(trim($row[8])));
+            $previousAdvisor = preg_replace('/\s/', '', strtolower(trim($row[9])));
             $policy = $row[10];
             $batch = $row[11];
             $startDate = Carbon::instance(\PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($row[12]))->toDateTimeString();
@@ -163,7 +163,7 @@ class RenewalsImport implements OnEachRow, WithStartRow, WithValidation, SkipsOn
     public function sanitizePhoneNumber($phone)
     {
         $delimiterArray = [',', ':', '/', ';']; // delimiters
-        $phoneClean = preg_replace('/\s/', '', strtolower(trim(ltrim(rtrim($phone)))));
+        $phoneClean = preg_replace('/\s/', '', strtolower(trim($phone)));
         $phoneNoReplaceComma = str_replace($delimiterArray, ',', $phoneClean);
         $primaryPhoneNumber = strtok($phoneNoReplaceComma, ',');
 
@@ -181,7 +181,7 @@ class RenewalsImport implements OnEachRow, WithStartRow, WithValidation, SkipsOn
     public function sanitizeEmail($email)
     {
         $delimiterArray = [',', ':', '/', ';'];	// delimiters
-        $emailClean = preg_replace('/\s/', '', strtolower(trim(ltrim(rtrim($email)))));
+        $emailClean = preg_replace('/\s/', '', strtolower(trim($email)));
         $emailReplaceComma = str_replace($delimiterArray, ',', $emailClean);
         $primaryEmail = strtok($emailReplaceComma, ',');
 
@@ -198,55 +198,59 @@ class RenewalsImport implements OnEachRow, WithStartRow, WithValidation, SkipsOn
 
     public function insurersMapping($insurerName)
     {
-        if(strpos($insurerName, CurrentInsurersEnums::TokioMarine)){
-            $insurerinCdb = 'Tokio Marine & Nichido Fire Insurance Co';
-        }
-        else if(strpos($insurerName, CurrentInsurersEnums::NewIndia)){
-            $insurerinCdb = 'New India Assurance';
-        }
-        else if(strpos($insurerName, CurrentInsurersEnums::Axa) || strpos($insurerName, CurrentInsurersEnums::Gig)){
-            $insurerinCdb = 'GIG Gulf (AXA)';
-        }
-        else if(strpos($insurerName, CurrentInsurersEnums::AbudhabiNational)){
-            $insurerinCdb = 'Abu Dhabi National Insurance Company';
-        }
-        else if((strpos($insurerName, CurrentInsurersEnums::Royal) && strpos($insurerName, CurrentInsurersEnums::Sun)) || strpos($insurerName, CurrentInsurersEnums::Rsa)){
-            $insurerinCdb = 'Royal & Sun Alliance Insurance (RSA)';
-        }
-        else if(strpos($insurerName, CurrentInsurersEnums::QatarInsurance) || strpos($insurerName, CurrentInsurersEnums::Qic)){
-            $insurerinCdb = 'Qatar Insurance Company';
-        }
-        else if(strpos($insurerName, CurrentInsurersEnums::NationalGeneralInsurance) || strpos($insurerName, CurrentInsurersEnums::Ngi)){
-            $insurerinCdb = 'National General Insurance';
-        }
-        else if(strpos($insurerName, CurrentInsurersEnums::Salama)){
-            $insurerinCdb = 'Salama Insurance';
-        }
-        else if(strpos($insurerName, CurrentInsurersEnums::NoorTakaful)){
-            $insurerinCdb = 'Noor Takaful';
-        }
-        else if(strpos($insurerName, CurrentInsurersEnums::OrientalInsurance)){
-            $insurerinCdb = 'Oriental Insurance';
-        }
-        else if(strpos($insurerName, CurrentInsurersEnums::UnionInsurance)){
-            $insurerinCdb = 'Union Insurance';
-        }
-        else if(strpos($insurerName, CurrentInsurersEnums::OmanInsurance) || strpos($insurerName, CurrentInsurersEnums::Oic)){
-            $insurerinCdb = 'Oman Insurance Company';
-        }
-        else if(strpos($insurerName, CurrentInsurersEnums::AbudhabiNationalTakaful)){
-            $insurerinCdb = 'Abu Dhabi National Takaful';
-        }
-        else if(strpos($insurerName, CurrentInsurersEnums::Watania)){
-            $insurerinCdb = 'Watania';
-        }
-        else if(strpos($insurerName, CurrentInsurersEnums::InsuranceHouse)){
-            $insurerinCdb = 'Insurance House';
-        }
-        else if(strpos($insurerName, CurrentInsurersEnums::Other)){
-            $insurerinCdb = 'Other';
-        } else {
-            $insurerinCdb = $insurerName;
+        $insurerName = strtolower(trim($insurerName));
+        switch ($insurerName) {
+            case (strpos($insurerName, CurrentInsurersEnums::TokioMarine) !== false):
+                $insurerinCdb = 'Tokio Marine & Nichido Fire Insurance Co';
+                break;
+            case (strpos($insurerName, CurrentInsurersEnums::NewIndia) !== false):
+                $insurerinCdb = 'New India Assurance';
+                break;
+            case (strpos($insurerName, CurrentInsurersEnums::Axa) !== false || strpos($insurerName, CurrentInsurersEnums::Gig) !== false):
+                $insurerinCdb = 'GIG Gulf (AXA)';
+                break;
+            case (strpos($insurerName, CurrentInsurersEnums::AbudhabiNational) !== false):
+                $insurerinCdb = 'Abu Dhabi National Insurance Company';
+                break;
+            case ((strpos($insurerName, CurrentInsurersEnums::Royal) !== false && strpos($insurerName, CurrentInsurersEnums::Sun)) || strpos($insurerName, CurrentInsurersEnums::Rsa) !== false):
+                $insurerinCdb = 'Royal & Sun Alliance Insurance (RSA)';
+                break;
+            case (strpos($insurerName, CurrentInsurersEnums::QatarInsurance) !== false || strpos($insurerName, CurrentInsurersEnums::Qic) !== false):
+                $insurerinCdb = 'Qatar Insurance Company';
+                break;
+            case (strpos($insurerName, CurrentInsurersEnums::NationalGeneralInsurance) !== false || strpos($insurerName, CurrentInsurersEnums::Ngi) !== false):
+                $insurerinCdb = 'National General Insurance';
+                break;
+            case (strpos($insurerName, CurrentInsurersEnums::Salama) !== false):
+                $insurerinCdb = 'Salama Insurance';
+                break;
+            case (strpos($insurerName, CurrentInsurersEnums::NoorTakaful) !== false):
+                $insurerinCdb = 'Noor Takaful';
+                break;
+            case (strpos($insurerName, CurrentInsurersEnums::OrientalInsurance) !== false):
+                $insurerinCdb = 'Oriental Insurance';
+                break;
+            case (strpos($insurerName, CurrentInsurersEnums::UnionInsurance) !== false):
+                $insurerinCdb = 'Union Insurance';
+                break;
+            case (strpos($insurerName, CurrentInsurersEnums::OmanInsurance) !== false || strpos($insurerName, CurrentInsurersEnums::Oic) !== false):
+                $insurerinCdb = 'Oman Insurance Company';
+                break;
+            case (strpos($insurerName, CurrentInsurersEnums::AbudhabiNationalTakaful) !== false):
+                $insurerinCdb = 'Abu Dhabi National Takaful';
+                break;
+            case (strpos($insurerName, CurrentInsurersEnums::Watania) !== false):
+                $insurerinCdb = 'Watania';
+                break;
+            case (strpos($insurerName, CurrentInsurersEnums::InsuranceHouse) !== false):
+                $insurerinCdb = 'Insurance House';
+                break;
+            case (strpos($insurerName, CurrentInsurersEnums::Other) !== false):
+                $insurerinCdb = 'Other';
+                break;
+            default:
+                $insurerinCdb = $insurerName;
+                break;
         }
 
         return $insurerinCdb;
