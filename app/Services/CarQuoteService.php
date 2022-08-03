@@ -907,7 +907,7 @@ class CarQuoteService extends BaseService
             ->select(
                 'car_addon.text AS car_addon_text',
                 'car_addon_option.value AS car_addon_option_value',
-                'car_addon_option.price AS car_addon_option_price',
+                'car_quote_request_addon.price AS car_quote_request_addon_price',
                 'car_addon.type AS car_addon_type'
             )
             ->leftJoin('car_addon', 'car_addon.id', '=', 'car_addon_option.addon_id')

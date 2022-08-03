@@ -240,6 +240,10 @@ class CRUDController extends Controller
      */
     public function show($id, Request $request)
     {
+        if (strrpos(request()->getRequestUri(), '/') === strlen(request()->getRequestUri()) - 1) {
+            //Fix for trailing slash when loading plans through jQuery
+            return redirect(request()->url());
+        }
         $quoteType = strtolower($this->genericModel->modelType);
         $record = $this->crudService->getEntity($this->genericModel->modelType, $id);
         if (! $record) {

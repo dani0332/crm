@@ -1,0 +1,16 @@
+.car-quote-ecom-free-plan-check {
+  height: unset !important;
+  pointer-events: none;
+  accent-color: grey !important;
+}
+.car-quote-ecom-non-free-plan-check {
+  height: unset !important;
+  pointer-events: none;
+  accent-color: green !important;
+}
+.car-quote-ecom-free-plan-price {
+  color: grey !important;
+}
+.car-quote-ecom-non-free-plan-price {
+  color: green !important;
+}
