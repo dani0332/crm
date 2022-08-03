@@ -1,3 +1,4 @@
+<link href="{{ asset('build/css/car_quote_ecom.css') }}" rel="stylesheet">
 <div class="row">
     <div class="col-md-12 col-sm-12">
         <div class="x_panel">
@@ -73,9 +74,9 @@
                                                         <td style="width: 53px;">{{ $carQuotePlanAddon->car_quote_request_addon_price ? $carQuotePlanAddon->car_quote_request_addon_price: 'Free' }}</td>
                                                         <td>
                                                             @if($carQuotePlanAddon->car_quote_request_addon_price)
-                                                                <i class="fa fa-check" style="color:green"></i>
+                                                                <input type="checkbox" checked class="car-quote-ecom-non-free-plan-check">
                                                             @else
-                                                                <i class="fa fa-check" style="color:lightgray"></i>
+                                                                <input type="checkbox" checked class="car-quote-ecom-free-plan-check">
                                                             @endif
                                                         </td>
                                                     </tr>
