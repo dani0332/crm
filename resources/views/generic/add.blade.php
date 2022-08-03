@@ -32,7 +32,7 @@
                         <input type="hidden" name="model" value={{ json_encode($model->properties) }} />
                         <input type="hidden" name="modelSkipProperties" value={{ json_encode($model->skipProperties) }} />
                         <input type="hidden" name="modelType" value={{ json_encode($model->modelType) }} />
-                        <input type="hidden" name="addon_id" @if(isset($id)) value={{$id}} @endif />
+                        <input type="hidden" name="addon_id" value={{ isset($id) ? $id : '' }} />
                         @php
                         $index = 0
                         @endphp
