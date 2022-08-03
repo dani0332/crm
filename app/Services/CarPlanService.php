@@ -130,7 +130,7 @@ class CarPlanService extends BaseService
         $carPlan->repair_type = $request->repair_type;
         $carPlan->insurance_type = $request->insurance_type;
         $carPlan->provider_id = $request->provider_id;
-        $carPlan->is_active = $request->has('is_active') ? $request->is_active : 0;
+        $carPlan->is_active = $request->is_active == 'on' ? 1 : 0;
         $carPlan->save();
 
         return true;
@@ -142,7 +142,7 @@ class CarPlanService extends BaseService
             'id' => 'readonly|none',
             'code' => 'input|title|required',
             'text' => 'input|text|title|required',
-            'text_ar' => 'input|text|title|required',
+            'text_ar' => 'input|text|title',
             'repair_type' => 'static|title|TPL,COMP,AGENCY',
             'insurance_type' => 'input|text|title|required',
             'provider_id' => 'select|title',

@@ -200,52 +200,52 @@ class RenewalsImport implements OnEachRow, WithStartRow, WithValidation, SkipsOn
     {
         $insurerName = strtolower(trim($insurerName));
         switch ($insurerName) {
-            case (strpos($insurerName, CurrentInsurersEnums::TokioMarine) !== false):
+            case strpos($insurerName, CurrentInsurersEnums::TokioMarine) !== false:
                 $insurerinCdb = 'Tokio Marine & Nichido Fire Insurance Co';
                 break;
-            case (strpos($insurerName, CurrentInsurersEnums::NewIndia) !== false):
+            case strpos($insurerName, CurrentInsurersEnums::NewIndia) !== false:
                 $insurerinCdb = 'New India Assurance';
                 break;
-            case (strpos($insurerName, CurrentInsurersEnums::Axa) !== false || strpos($insurerName, CurrentInsurersEnums::Gig) !== false):
+            case strpos($insurerName, CurrentInsurersEnums::Axa) !== false || strpos($insurerName, CurrentInsurersEnums::Gig) !== false:
                 $insurerinCdb = 'GIG Gulf (AXA)';
                 break;
-            case (strpos($insurerName, CurrentInsurersEnums::AbudhabiNational) !== false):
+            case strpos($insurerName, CurrentInsurersEnums::AbudhabiNational) !== false:
                 $insurerinCdb = 'Abu Dhabi National Insurance Company';
                 break;
-            case ((strpos($insurerName, CurrentInsurersEnums::Royal) !== false && strpos($insurerName, CurrentInsurersEnums::Sun)) || strpos($insurerName, CurrentInsurersEnums::Rsa) !== false):
+            case (strpos($insurerName, CurrentInsurersEnums::Royal) !== false && strpos($insurerName, CurrentInsurersEnums::Sun)) || strpos($insurerName, CurrentInsurersEnums::Rsa) !== false:
                 $insurerinCdb = 'Royal & Sun Alliance Insurance (RSA)';
                 break;
-            case (strpos($insurerName, CurrentInsurersEnums::QatarInsurance) !== false || strpos($insurerName, CurrentInsurersEnums::Qic) !== false):
+            case strpos($insurerName, CurrentInsurersEnums::QatarInsurance) !== false || strpos($insurerName, CurrentInsurersEnums::Qic) !== false:
                 $insurerinCdb = 'Qatar Insurance Company';
                 break;
-            case (strpos($insurerName, CurrentInsurersEnums::NationalGeneralInsurance) !== false || strpos($insurerName, CurrentInsurersEnums::Ngi) !== false):
+            case strpos($insurerName, CurrentInsurersEnums::NationalGeneralInsurance) !== false || strpos($insurerName, CurrentInsurersEnums::Ngi) !== false:
                 $insurerinCdb = 'National General Insurance';
                 break;
-            case (strpos($insurerName, CurrentInsurersEnums::Salama) !== false):
+            case strpos($insurerName, CurrentInsurersEnums::Salama) !== false:
                 $insurerinCdb = 'Salama Insurance';
                 break;
-            case (strpos($insurerName, CurrentInsurersEnums::NoorTakaful) !== false):
+            case strpos($insurerName, CurrentInsurersEnums::NoorTakaful) !== false:
                 $insurerinCdb = 'Noor Takaful';
                 break;
-            case (strpos($insurerName, CurrentInsurersEnums::OrientalInsurance) !== false):
+            case strpos($insurerName, CurrentInsurersEnums::OrientalInsurance) !== false:
                 $insurerinCdb = 'Oriental Insurance';
                 break;
-            case (strpos($insurerName, CurrentInsurersEnums::UnionInsurance) !== false):
+            case strpos($insurerName, CurrentInsurersEnums::UnionInsurance) !== false:
                 $insurerinCdb = 'Union Insurance';
                 break;
-            case (strpos($insurerName, CurrentInsurersEnums::OmanInsurance) !== false || strpos($insurerName, CurrentInsurersEnums::Oic) !== false):
+            case strpos($insurerName, CurrentInsurersEnums::OmanInsurance) !== false || strpos($insurerName, CurrentInsurersEnums::Oic) !== false:
                 $insurerinCdb = 'Oman Insurance Company';
                 break;
-            case (strpos($insurerName, CurrentInsurersEnums::AbudhabiNationalTakaful) !== false):
+            case strpos($insurerName, CurrentInsurersEnums::AbudhabiNationalTakaful) !== false:
                 $insurerinCdb = 'Abu Dhabi National Takaful';
                 break;
-            case (strpos($insurerName, CurrentInsurersEnums::Watania) !== false):
+            case strpos($insurerName, CurrentInsurersEnums::Watania) !== false:
                 $insurerinCdb = 'Watania';
                 break;
-            case (strpos($insurerName, CurrentInsurersEnums::InsuranceHouse) !== false):
+            case strpos($insurerName, CurrentInsurersEnums::InsuranceHouse) !== false:
                 $insurerinCdb = 'Insurance House';
                 break;
-            case (strpos($insurerName, CurrentInsurersEnums::Other) !== false):
+            case strpos($insurerName, CurrentInsurersEnums::Other) !== false:
                 $insurerinCdb = 'Other';
                 break;
             default:
