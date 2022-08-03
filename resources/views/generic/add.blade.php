@@ -139,7 +139,7 @@
 
                                         <select @if(strpos($value, 'multiple')) name="{{$property.'[]'}}" multiple="multiple" class="form-control select2 select-roles" @else class="form-control" name="{{$property}}" @endif id="{{$property}}" >
                                             @foreach($staticOptions as $item)
-                                            @if($item == \App\Enums\GenericRequestEnum::Selectstring || $item == \App\Enums\GenericRequestEnum::CheckboxString)
+                                            @if($item == \App\Enums\GenericRequestEnum::SelectString || $item == \App\Enums\GenericRequestEnum::CheckboxString)
                                             @php $item = strtolower($item); @endphp
                                             @endif
                                             <option value="{{ $item }}">{{ $item }}</option>

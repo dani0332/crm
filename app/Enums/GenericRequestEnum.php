@@ -15,6 +15,6 @@ final class GenericRequestEnum extends Enum
     const No = 'No';
     const TPA_Code = 'tpa';
     const TypeString = 'string';
-    const Selectstring = 'Select';
+    const SelectString = 'Select';
     const CheckboxString = 'Checkbox';
 }
