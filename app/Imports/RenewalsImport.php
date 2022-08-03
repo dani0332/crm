@@ -196,7 +196,7 @@ class RenewalsImport implements OnEachRow, WithStartRow, WithValidation, SkipsOn
         return [$primaryEmail, $otherEmailIds, $notes];
     }
 
-    function insurersMapping($insurerName)
+    public function insurersMapping($insurerName)
     {
         if(strpos($insurerName, CurrentInsurersEnums::TokioMarine)){
             $insurerinCdb = 'Tokio Marine & Nichido Fire Insurance Co';
