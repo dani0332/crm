@@ -21,7 +21,7 @@ class Payment extends Model
     public function plan()
     {
         return $this->belongsTo('App\Models\Plan', 'plan_id');
-    }
+    } 
 
     public function paymentStatus()
     {
@@ -31,5 +31,10 @@ class Payment extends Model
     public function paymentMethod()
     {
         return $this->belongsTo('App\Models\PaymentMethod', 'payment_methods_code', 'code');
+    }
+
+    public function paymentStatusLog()
+    {
+        return $this->belongsTo('App\Models\PaymentStatusLog', 'payment_code', 'code');
     }
 }

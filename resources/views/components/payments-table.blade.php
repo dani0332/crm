@@ -1,5 +1,6 @@
 <?php
     use App\Enums\PaymentStatusEnum;
+    use App\Enums\PermissionsEnum;
     ?>
 <script>
     $(document).ready(function () {
@@ -66,9 +67,12 @@
         <div class="x_panel">
             <div class="x_title">
                 <h2>Payments</h2>
-                @if($travelPlainModel->plan()->first())
-                <button class="btn btn-success btn-sm" style="float:right;width:110px;" type="button"
-                    id="add-payment-btn">Add Payment</button>
+                @if($travelPlainModel->plan)
+                    @cannot(PermissionsEnum::ApprovePayments)
+                        <button class="btn btn-success btn-sm" style="float:right;width:110px;" type="button"
+                        id="add-payment-btn">Add Payment</button>
+                    @endcannot
+
                 @endif
                 <div class="clearfix"></div>
             </div>
@@ -85,7 +89,9 @@
                                 <th>Payment Status</th>
                                 <th>Plan Name</th>
                                 <th>Captured Amount</th>
-                                <th>Payment Status date</th>
+                                <th>Last Status Changed</th>
+                                <th>Caputred At</th>
+                                <th>Authorized At</th>
                                 <th>Payment method</th>
                                 <th>Reference</th>
                                 <th>Actions</th>
@@ -98,32 +104,35 @@
                                 <td>{{ $payment->paymentStatus->text }}</td>
                                 <td>{{ $travelPlainModel->plan->text }}</td>
                                 <td>{{ $payment->captured_amount }}</td>
-                                <td>{{ $payment->captured_at ? $payment->captured_at : ''}}</td>
+                                <td>{{ $payment->paymentStatusLog ? $payment->paymentStatusLog->latest()->first()->created_at :  '' }}</td>
+                                <td>{{ $payment->captured_at}}</td>
+                                <td>{{ $payment->authorized_at}}</td>
                                 <td>{{ $payment->paymentMethod->name }}</td>
                                 <td>{{$payment->reference}}</td>
                                 <td>
-                                    <button class="btn btn-sm btn-success generateCCLink">Copy Link</button>
-                                    @if($payment->payment_status_id != PaymentStatusEnum::PAID &&
-                                    $payment->payment_status_id != PaymentStatusEnum::CAPTURED)
-                                    <button class="btn btn-primary btn-sm edit-payment-btn" data-code="{{$payment->code}}"
-                                        data-reference="{{$payment->reference}}"
-                                        data-amount="{{$payment->captured_amount}}"
-                                        data-plan="{{$travelPlainModel->plan->text}}"
-                                        data-collection="{{$payment->collection_type}}"
-                                        data-payment-method="{{$payment->paymentMethod->code}}"
-                                        data-provider="{{$travelPlainModel->plan->insuranceProvider->text}}">Edit</button>
-                                    @endif
-                                    @can('approve-payments')
-                                    @if($payment->payment_status_id != PaymentStatusEnum::PAID &&
-                                    $payment->payment_status_id != PaymentStatusEnum::CAPTURED)
-                                    <button class="btn btn-primary btn-sm" id="approve-paymnet-btn" data-code="{{$payment->code}}"
-                                        data-reference="{{$payment->reference}}"
-                                        data-amount="{{$payment->captured_amount}}"
-                                        data-plan="{{$travelPlainModel->plan->text}}"
-                                        data-collection="{{$payment->collection_type}}"
-                                        data-payment-method="{{$payment->paymentMethod->code}}"
-                                        data-provider="{{$travelPlainModel->plan->insuranceProvider->text}}">Edit</button>
-                                    @endif
+                                    @cannot(PermissionsEnum::ApprovePayments)
+                                        <button class="btn btn-sm btn-success generateCCLink">Copy Link</button>
+                                        @if($payment->payment_status_id != PaymentStatusEnum::PAID &&
+                                        $payment->payment_status_id != PaymentStatusEnum::CAPTURED)
+                                            <button class="btn btn-primary btn-sm edit-payment-btn" data-code="{{$payment->code}}"
+                                                data-reference="{{$payment->reference}}"
+                                                data-amount="{{$payment->captured_amount}}"
+                                                data-plan="{{$travelPlainModel->plan->text}}"
+                                                data-collection="{{$payment->collection_type}}"
+                                                data-payment-method="{{$payment->paymentMethod->code}}"
+                                                data-provider="{{$travelPlainModel->plan->insuranceProvider->text}}">Edit</button>
+                                        @endif
+                                    @endcannot
+                                    @can(PermissionsEnum::ApprovePayments)
+                                        @if( $payment->paymentMethod->code != 'CC' && $payment->payment_status_id != PaymentStatusEnum::PAID && $payment->payment_status_id != PaymentStatusEnum::CAPTURED)
+                                            <button class="btn btn-success btn-sm" id="approve-paymnet-btn" data-code="{{$payment->code}}"
+                                                data-reference="{{$payment->reference}}"
+                                                data-amount="{{$payment->captured_amount}}"
+                                                data-plan="{{$travelPlainModel->plan->text}}"
+                                                data-collection="{{$payment->collection_type}}"
+                                                data-payment-method="{{$payment->paymentMethod->code}}"
+                                                data-provider="{{$travelPlainModel->plan->insuranceProvider->text}}">Approve</button>
+                                        @endif
                                     @endcan
 
                                 </td>
