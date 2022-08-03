@@ -13,7 +13,7 @@ class CreateDocumentTypesTable extends Migration
      */
     public function up()
     {
-		if (!Schema::hasTable('document_types')) {
+        if (! Schema::hasTable('document_types')) {
             Schema::create('document_types', function (Blueprint $table) {
                 $table->string('code', '10');
                 $table->string('text', '100');
@@ -32,15 +32,15 @@ class CreateDocumentTypesTable extends Migration
             $travelPolicySchedule = DB::table('document_types')->where('code', 'TravelPolicySchedule')->first();
             if ($travelPolicySchedule === null) {
                 DB::table('document_types')->insert([
-                        'code' => 'TPS',
-                        'text' => 'Policy Schedule',
-                        'max_files' => 1,
-                        'max_size' => 5,
-                        'folder_path' => 'travel',
-                        'accepted_files' => '.xlsm,.xlsx,.pdf,.jpeg,.jpg',
-                        'quote_type_id' => 8,
-                        'send_to_customer' => true,
-                        'sort_order' => 1
+                    'code' => 'TPS',
+                    'text' => 'Policy Schedule',
+                    'max_files' => 1,
+                    'max_size' => 5,
+                    'folder_path' => 'travel',
+                    'accepted_files' => '.xlsm,.xlsx,.pdf,.jpeg,.jpg',
+                    'quote_type_id' => 8,
+                    'send_to_customer' => true,
+                    'sort_order' => 1,
                 ]);
             }
 
@@ -55,7 +55,7 @@ class CreateDocumentTypesTable extends Migration
                     'accepted_files' => '.xlsm,.xlsx,.pdf,.jpeg,.jpg',
                     'quote_type_id' => 8,
                     'send_to_customer' => true,
-                    'sort_order' => 2
+                    'sort_order' => 2,
                 ]);
             }
 
@@ -70,7 +70,7 @@ class CreateDocumentTypesTable extends Migration
                     'accepted_files' => '.xlsm,.xlsx,.pdf,.jpeg,.jpg',
                     'quote_type_id' => 8,
                     'send_to_customer' => false,
-                    'sort_order' => 3
+                    'sort_order' => 3,
                 ]);
             }
 
@@ -85,7 +85,7 @@ class CreateDocumentTypesTable extends Migration
                     'accepted_files' => '.xlsm,.xlsx,.pdf,.jpeg,.jpg',
                     'quote_type_id' => 8,
                     'send_to_customer' => false,
-                    'sort_order' => 4
+                    'sort_order' => 4,
                 ]);
             }
         }

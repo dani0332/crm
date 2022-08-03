@@ -13,17 +13,13 @@ class AlterTeamsToAddTimesstampFields extends Migration
      */
     public function up()
     {
-        if (!Schema::hasColumn('teams', 'created_at'))
-        {
-            Schema::table('teams', function (Blueprint $table)
-            {
+        if (! Schema::hasColumn('teams', 'created_at')) {
+            Schema::table('teams', function (Blueprint $table) {
                 $table->date('created_at')->nullable(false)->default(now());
             });
         }
-        if (!Schema::hasColumn('teams', 'updated_at'))
-        {
-            Schema::table('teams', function (Blueprint $table)
-            {
+        if (! Schema::hasColumn('teams', 'updated_at')) {
+            Schema::table('teams', function (Blueprint $table) {
                 $table->date('updated_at')->nullable(true);
             });
         }

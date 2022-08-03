@@ -2,8 +2,8 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class AddCompanySearchFlag extends Migration
 {
@@ -15,13 +15,13 @@ class AddCompanySearchFlag extends Migration
     public function up()
     {
         DB::table('application_storage')->insert(
-            array(
+            [
                 'key_name' => 'IS_AML_ENTITY_SEARCH_ENABLED',
                 'value' => true,
                 'created_at' => date('Y-m-d H:i:s'),
                 'updated_at' => date('Y-m-d H:i:s'),
                 'is_active' => 1,
-            )
+            ]
         );
     }
 

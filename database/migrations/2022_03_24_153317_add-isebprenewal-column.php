@@ -14,8 +14,7 @@ class AddIsebprenewalColumn extends Migration
     public function up()
     {
         Schema::table('health_quote_request', function (Blueprint $table) {
-            if(!Schema::hasColumn('health_quote_request','is_ebp_renewal'))
-            {
+            if (! Schema::hasColumn('health_quote_request', 'is_ebp_renewal')) {
                 $table->boolean('is_ebp_renewal')->default(false);
             }
         });

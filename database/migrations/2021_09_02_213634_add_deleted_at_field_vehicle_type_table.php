@@ -14,8 +14,9 @@ class AddDeletedAtFieldVehicleTypeTable extends Migration
     public function up()
     {
         Schema::table('vehicle_type', function (Blueprint $table) {
-            if(!Schema::hasColumn('vehicle_type','deleted_at'))
+            if (! Schema::hasColumn('vehicle_type', 'deleted_at')) {
                 $table->softDeletes();
+            }
         });
     }
 

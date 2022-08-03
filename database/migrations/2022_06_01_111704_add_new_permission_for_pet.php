@@ -1,8 +1,6 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 
 class AddNewPermissionForPet extends Migration
 {
@@ -15,7 +13,7 @@ class AddNewPermissionForPet extends Migration
     {
         \Artisan::call('db:seed', [
             '--class' => PetInsurancePermission::class,
-            '--force' => true
+            '--force' => true,
         ]);
     }
 

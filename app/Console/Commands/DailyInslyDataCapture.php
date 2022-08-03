@@ -2,12 +2,11 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Support\Facades\Log;
-use Illuminate\Console\Command;
-use App\Services\InslyDataService;
 use App\Jobs\InslyDataProcessingJob;
+use App\Services\InslyDataService;
 use Config;
-
+use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Log;
 
 class DailyInslyDataCapture extends Command
 {
@@ -46,7 +45,7 @@ class DailyInslyDataCapture extends Command
         date_default_timezone_set(config('app.timezone'));
         $format = Config::get('constants.datetime_format');
         $endDate = date($format);
-        $startDate = date($format, strtotime($endDate . ' - 1 days'));
+        $startDate = date($format, strtotime($endDate.' - 1 days'));
         $data = InslyDataService::GetDataFromInsly($startDate, $endDate);
         dispatch(new InslyDataProcessingJob($data));
     }

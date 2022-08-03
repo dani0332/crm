@@ -16,7 +16,7 @@ class UAEAMLListUpload extends Seeder
     {
         DB::table('uae_aml_list_uploads')->insert([
             'file_name' => '10-11-2021_UAESanctionList.xls',
-            'is_updated' => true
+            'is_updated' => true,
         ]);
     }
 }

@@ -14,8 +14,9 @@ class AddFieldsAmlStatusToCarQuoteRequestTable extends Migration
     public function up()
     {
         Schema::table('car_quote_request', function (Blueprint $table) {
-            if(!Schema::hasColumn('car_quote_request','aml_status'))
+            if (! Schema::hasColumn('car_quote_request', 'aml_status')) {
                 $table->string('aml_status')->nullable();
+            }
         });
     }
 

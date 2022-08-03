@@ -13,7 +13,7 @@ class CreateTableRenewalsDump extends Migration
      */
     public function up()
     {
-        if(!Schema::hasTable('renewals_dump')){
+        if (! Schema::hasTable('renewals_dump')) {
             Schema::create('renewals_dump', function (Blueprint $table) {
                 $table->id()->autoIncrement();
                 $table->string('quote_type', '30');

@@ -3,13 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\Status;
-use Illuminate\Http\Request;
 use Auth;
 use DataTables;
+use Illuminate\Http\Request;
 
 class StatusController extends Controller
 {
-     /**
+    /**
      * Display a listing of the resource.
      *
      * @return \Illuminate\Http\Response
@@ -30,7 +30,8 @@ class StatusController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $data = Status::select('*')->where('is_deleted', 0)->orderBy('created_at','desc');
+            $data = Status::select('*')->where('is_deleted', 0)->orderBy('created_at', 'desc');
+
             return Datatables::of($data)
                 ->addIndexColumn()
                 ->addColumn('action', function ($row) {
@@ -39,6 +40,7 @@ class StatusController extends Controller
                 ->rawColumns(['action'])
                 ->make(true);
         }
+
         return view('status.view');
     }
 
@@ -71,9 +73,10 @@ class StatusController extends Controller
         $status->updated_by = Auth::user()->email;
         $status->save();
 
-        if(isset($request->return_to_view)) {
-            return redirect("transapp/status/".$status->id)->with('success', 'Status has been stored');
+        if (isset($request->return_to_view)) {
+            return redirect('transapp/status/'.$status->id)->with('success', 'Status has been stored');
         }
+
         return redirect()->back()->with('success', 'Status has been stored');
     }
 
@@ -106,7 +109,7 @@ class StatusController extends Controller
      * @param  Status  $status
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request,Status $status)
+    public function update(Request $request, Status $status)
     {
         $this->validate($request, [
             'name' => 'required|max:150',
@@ -115,9 +118,10 @@ class StatusController extends Controller
         $status->is_active = $request->is_active == 'on' ? 1 : 0;
         $status->updated_by = Auth::user()->email;
         $status->save();
-        if(isset($request->return_to_view)) {
-            return redirect("transapp/status/".$status->id)->with('success', 'Status has been updated');
+        if (isset($request->return_to_view)) {
+            return redirect('transapp/status/'.$status->id)->with('success', 'Status has been updated');
         }
+
         return redirect()->back()->with('success', 'Status has been updated');
     }
 
@@ -131,6 +135,7 @@ class StatusController extends Controller
     {
         $status->is_deleted = 1;
         $status->save();
-        return redirect()->route('status.index')->with('message','Status has been deleted');
+
+        return redirect()->route('status.index')->with('message', 'Status has been deleted');
     }
 }

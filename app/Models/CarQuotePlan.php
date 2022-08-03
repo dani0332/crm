@@ -8,6 +8,6 @@ use Illuminate\Database\Eloquent\Model;
 class CarQuotePlan extends Model
 {
     use HasFactory;
-    protected $table = 'car_plan';
 
+    protected $table = 'car_plan';
 }

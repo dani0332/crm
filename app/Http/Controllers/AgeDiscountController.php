@@ -2,15 +2,15 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\AgeDiscount;
-use Illuminate\Http\Request;
 use App\Http\Requests\AgeDiscountRequest;
 use App\Http\Resources\AgeDiscountResource;
+use App\Models\AgeDiscount;
 use DataTables;
+use Illuminate\Http\Request;
 
 class AgeDiscountController extends Controller
 {
-    /** 
+    /**
      * Display a listing of the resource.
      *
      * @return \Illuminate\Http\Response
@@ -18,14 +18,15 @@ class AgeDiscountController extends Controller
     public function index(Request $request, AgeDiscount $age)
     {
         if ($request->ajax()) {
-
             $data = $age::orderBy('created_at', 'desc');
 
             return DataTables::of($data)
                 ->addIndexColumn()
                 ->make(true);
+
             return view('agediscount.view');
         }
+
         return view('agediscount.view');
     }
 
@@ -52,7 +53,8 @@ class AgeDiscountController extends Controller
             return redirect()->back()->with('message', 'Discount with specified age already exists.')->withInput();
         }
         $id = $age->create($request->validated())->id;
-        return redirect("discount/age/" . $id)->with('success', 'Age Discount has been stored');
+
+        return redirect('discount/age/'.$id)->with('success', 'Age Discount has been stored');
     }
 
     /**
@@ -63,7 +65,8 @@ class AgeDiscountController extends Controller
      */
     public function show(AgeDiscount $age)
     {
-       $agediscount = new AgeDiscountResource($age);
+        $agediscount = new AgeDiscountResource($age);
+
         return view('agediscount.show', compact('agediscount'));
     }
 
@@ -76,6 +79,7 @@ class AgeDiscountController extends Controller
     public function edit(AgeDiscount $age)
     {
         $agediscount = new AgeDiscountResource($age);
+
         return view('agediscount.edit', compact('agediscount'));
     }
 
@@ -89,8 +93,9 @@ class AgeDiscountController extends Controller
     public function update(AgeDiscountRequest $request, AgeDiscount $age)
     {
         $age->update($request->validated());
-        if (isset($request->return_to_view))
-            return redirect("discount/age/" . $age->id)->with('success', 'Age Discount has been updated');
+        if (isset($request->return_to_view)) {
+            return redirect('discount/age/'.$age->id)->with('success', 'Age Discount has been updated');
+        }
     }
 
     /**

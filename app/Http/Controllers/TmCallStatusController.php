@@ -3,18 +3,19 @@
 namespace App\Http\Controllers;
 
 use App\Models\TmCallStatus;
-use Illuminate\Http\Request;
 use DataTables;
+use Illuminate\Http\Request;
 
 class TmCallStatusController extends Controller
 {
-    function __construct()
+    public function __construct()
     {
-         $this->middleware('permission:tm-call-status-list|tm-call-status-create|tm-call-status-edit|tm-call-status-delete', ['only' => ['index','store']]);
-         $this->middleware('permission:tm-call-status-create', ['only' => ['create','store']]);
-         $this->middleware('permission:tm-call-status-edit', ['only' => ['edit','update']]);
-         $this->middleware('permission:tm-call-status-delete', ['only' => ['destroy']]);
+        $this->middleware('permission:tm-call-status-list|tm-call-status-create|tm-call-status-edit|tm-call-status-delete', ['only' => ['index', 'store']]);
+        $this->middleware('permission:tm-call-status-create', ['only' => ['create', 'store']]);
+        $this->middleware('permission:tm-call-status-edit', ['only' => ['edit', 'update']]);
+        $this->middleware('permission:tm-call-status-delete', ['only' => ['destroy']]);
     }
+
     /**
      * Display a listing of the resource.
      *
@@ -23,7 +24,8 @@ class TmCallStatusController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $data = TmCallStatus::select('*')->where('is_deleted', 0)->orderBy('created_at','desc');
+            $data = TmCallStatus::select('*')->where('is_deleted', 0)->orderBy('created_at', 'desc');
+
             return Datatables::of($data)
                 ->addIndexColumn()
                 ->addColumn('action', function ($row) {
@@ -32,6 +34,7 @@ class TmCallStatusController extends Controller
                 ->rawColumns(['action'])
                 ->make(true);
         }
+
         return view('tmcallstatus.view');
     }
 
@@ -68,9 +71,10 @@ class TmCallStatusController extends Controller
         $tmCallStatus->sort_order = $request->sort_order;
         $tmCallStatus->save();
 
-        if(isset($request->return_to_view)) {
-            return redirect("telemarketing/tmcallstatus/".$tmCallStatus->id)->with('success', 'TM Call Status has been stored');
+        if (isset($request->return_to_view)) {
+            return redirect('telemarketing/tmcallstatus/'.$tmCallStatus->id)->with('success', 'TM Call Status has been stored');
         }
+
         return redirect()->back()->with('success', 'TM Call Status has been stored');
     }
 
@@ -82,7 +86,7 @@ class TmCallStatusController extends Controller
      */
     public function show(TmCallStatus $tmcallstatus)
     {
-        return view('tmcallstatus.show',compact('tmcallstatus'));
+        return view('tmcallstatus.show', compact('tmcallstatus'));
     }
 
     /**
@@ -93,7 +97,7 @@ class TmCallStatusController extends Controller
      */
     public function edit(TmCallStatus $tmcallstatus)
     {
-        return view('tmcallstatus.edit',compact('tmcallstatus'));
+        return view('tmcallstatus.edit', compact('tmcallstatus'));
     }
 
     /**
@@ -119,9 +123,10 @@ class TmCallStatusController extends Controller
         $tmcallstatus->sort_order = $request->sort_order;
         $tmcallstatus->save();
 
-        if(isset($request->return_to_view)) {
-            return redirect("telemarketing/tmcallstatus/".$tmcallstatus->id)->with('success', 'TM Call Status has been updated');
+        if (isset($request->return_to_view)) {
+            return redirect('telemarketing/tmcallstatus/'.$tmcallstatus->id)->with('success', 'TM Call Status has been updated');
         }
+
         return redirect()->back()->with('success', 'TM Call Status has been updated');
     }
 
@@ -135,6 +140,7 @@ class TmCallStatusController extends Controller
     {
         $tmcallstatus->is_deleted = 1;
         $tmcallstatus->save();
-        return redirect()->route('tmcallstatus.index')->with('message','TM Call Status has been deleted');
+
+        return redirect()->route('tmcallstatus.index')->with('message', 'TM Call Status has been deleted');
     }
 }

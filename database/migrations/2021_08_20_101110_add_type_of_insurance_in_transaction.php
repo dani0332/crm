@@ -13,12 +13,11 @@ class AddTypeOfInsuranceInTransaction extends Migration
      */
     public function up()
     {
-        if (!Schema::hasColumn('transactions', 'type_of_insurance_id'))
-        {
+        if (! Schema::hasColumn('transactions', 'type_of_insurance_id')) {
             Schema::table('transactions', function (Blueprint $table) {
                 $table->bigInteger('type_of_insurance_id')->nullable()->unsigned();
             });
-            Schema::table('transactions', function($table) {
+            Schema::table('transactions', function ($table) {
                 $table->foreign('type_of_insurance_id')->references('id')->on('type_of_insurances')->onDelete('no action');
             });
         }

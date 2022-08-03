@@ -14,8 +14,7 @@ class AddLeadTypeColumnInHealth extends Migration
     public function up()
     {
         Schema::table('health_quote_request', function (Blueprint $table) {
-            if(!Schema::hasColumn('health_quote_request','lead_type_id'))
-            {
+            if (! Schema::hasColumn('health_quote_request', 'lead_type_id')) {
                 $table->integer('lead_type_id')->unsigned()->nullable();
                 $table->foreign('lead_type_id')->references('id')->on('health_lead_type');
             }

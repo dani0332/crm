@@ -14,8 +14,9 @@ class AlterInslyBatcLog extends Migration
     public function up()
     {
         Schema::table('insly_batch_log', function (Blueprint $table) {
-            if(!Schema::hasColumn('insly_batch_log','is_batch_completed'))
+            if (! Schema::hasColumn('insly_batch_log', 'is_batch_completed')) {
                 $table->boolean('is_batch_completed')->default(0);
+            }
         });
     }
 

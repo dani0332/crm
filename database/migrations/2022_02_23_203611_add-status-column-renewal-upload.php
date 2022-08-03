@@ -14,7 +14,7 @@ class AddStatusColumnRenewalUpload extends Migration
     public function up()
     {
         Schema::table('renewals_upload_leads', function (Blueprint $table) {
-            $table->string('status','100')->nullable();
+            $table->string('status', '100')->nullable();
         });
     }
 

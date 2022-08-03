@@ -1,14 +1,15 @@
 <?php
 
 namespace App\Services;
-use App\Models\TmLead;
-use App\Models\TmInsuranceType;
-use App\Models\TmLeadStatus;
-use Illuminate\Http\Request;
+
 use App\Enums\tmInsuranceTypeCode;
 use App\Enums\tmLeadStatusCode;
-use Auth;
+use App\Models\TmInsuranceType;
+use App\Models\TmLead;
 use App\Models\TmLeadContactInformation;
+use App\Models\TmLeadStatus;
+use Auth;
+use Illuminate\Http\Request;
 
 class TMLeadsService
 {
@@ -16,14 +17,14 @@ class TMLeadsService
     {
         $tmInsuranceTypeCode = TmInsuranceType::where('id', '=', $request->tm_insurance_types_id)->value('code');
 
-        if($type == "create") {
+        if ($type == 'create') {
             $tmLead = new TmLead();
 
             $tmLeadStatusEnum = tmLeadStatusCode::NewLead;
             $tmLeadStatusId = TmLeadStatus::where('code', '=', $tmLeadStatusEnum)->value('id');
             $tmLead->tm_lead_statuses_id = $tmLeadStatusId;
         }
-        if($type == "update") {
+        if ($type == 'update') {
             $tmLead = TmLead::find($tmLeadID);
         }
 
@@ -33,24 +34,23 @@ class TMLeadsService
         $tmLead->enquiry_date = $request->enquiry_date;
         $tmLead->allocation_date = $request->allocation_date;
 
-        if($type == "create") {
+        if ($type == 'create') {
             $tmLead->created_by_id = Auth::user()->id;
             $tmLead->modified_by_id = Auth::user()->id;
 
-            if(Auth::user()->hasRole('TM_ADVISOR')) {
+            if (Auth::user()->hasRole('TM_ADVISOR')) {
                 $tmLead->assigned_to_id = Auth::user()->id;
-            }
-            else {
-                $tmLead->assigned_to_id = NULL;
+            } else {
+                $tmLead->assigned_to_id = null;
             }
         }
-        if($type == "update") {
+        if ($type == 'update') {
             $tmLead->modified_by_id = Auth::user()->id;
         }
         $tmLead->tm_lead_types_id = $request->tm_lead_types_id;
         $tmLead->tm_insurance_types_id = $request->tm_insurance_types_id;
 
-        if($tmInsuranceTypeCode == tmInsuranceTypeCode::Car) {
+        if ($tmInsuranceTypeCode == tmInsuranceTypeCode::Car) {
             $tmLead->year_of_manufacture = $request->year_of_manufacture;
             $tmLead->car_value = floatval(preg_replace('/[^\d.]/', '', $request->car_value));
             $tmLead->car_model_id = $request->car_model_id;
@@ -61,37 +61,36 @@ class TMLeadsService
             $tmLead->car_type_insurance_id = $request->car_type_insurance_id;
         }
 
-        if($tmInsuranceTypeCode != tmInsuranceTypeCode::Car) {
-            $tmLead->year_of_manufacture = NULL;
-            $tmLead->car_value = NULL;
-            $tmLead->car_model_id = NULL;
-            $tmLead->car_make_id = NULL;
-            $tmLead->nationality_id = NULL;
-            $tmLead->years_of_driving_id = NULL;
-            $tmLead->emirates_of_registration_id = NULL;
-            $tmLead->car_type_insurance_id = NULL;
+        if ($tmInsuranceTypeCode != tmInsuranceTypeCode::Car) {
+            $tmLead->year_of_manufacture = null;
+            $tmLead->car_value = null;
+            $tmLead->car_model_id = null;
+            $tmLead->car_make_id = null;
+            $tmLead->nationality_id = null;
+            $tmLead->years_of_driving_id = null;
+            $tmLead->emirates_of_registration_id = null;
+            $tmLead->car_type_insurance_id = null;
         }
-        if($tmInsuranceTypeCode == tmInsuranceTypeCode::Car || $tmInsuranceTypeCode == tmInsuranceTypeCode::Bike
+        if ($tmInsuranceTypeCode == tmInsuranceTypeCode::Car || $tmInsuranceTypeCode == tmInsuranceTypeCode::Bike
         || $tmInsuranceTypeCode == tmInsuranceTypeCode::Life || $tmInsuranceTypeCode == tmInsuranceTypeCode::Health) {
             $tmLead->dob = $request->dob;
-        }
-        else {
-            $tmLead->dob = NULL;
+        } else {
+            $tmLead->dob = null;
         }
         $tmLead->save();
-    
+
         $updateTmLead = TmLead::find($tmLead->id);
-        $updateTmLead->cdb_id = "TM-".$tmLead->id;
+        $updateTmLead->cdb_id = 'TM-'.$tmLead->id;
         $updateTmLead->save();
 
         $tmLead->additionalInformation()->delete();
-        if ($request->has('phones') && $request->has('emails')) 
-        {
+        if ($request->has('phones') && $request->has('emails')) {
             $phones = $request->phones;
             $emails = $request->emails;
-            for ($i=0; $i < count($phones); $i ++) {
-                if (empty ($phones[$i]) && empty ($emails[$i]) )
+            for ($i = 0; $i < count($phones); $i++) {
+                if (empty($phones[$i]) && empty($emails[$i])) {
                     continue;
+                }
                 $model = new TmLeadContactInformation();
                 $model->phone_number = $phones[$i];
                 $model->email_address = $emails[$i];
@@ -101,7 +100,7 @@ class TMLeadsService
                 $model->save();
             }
         }
-        
+
         return $tmLead->id;
     }
 
@@ -111,38 +110,33 @@ class TMLeadsService
 
         $tmLead = TmLead::find($request->tmLeadId);
 
-        if($tmLeadStatusCode == tmLeadStatusCode::NoAnswer || $tmLeadStatusCode == tmLeadStatusCode::SwitchedOff)
-        {
-            if($request->no_answer_count < "3" && $request->next_followup_date != ""
+        if ($tmLeadStatusCode == tmLeadStatusCode::NoAnswer || $tmLeadStatusCode == tmLeadStatusCode::SwitchedOff) {
+            if ($request->no_answer_count < '3' && $request->next_followup_date != ''
             && $request->next_followup_date != $tmLead->next_followup_date) {
                 $no_answer_count = $tmLead->no_answer_count + 1;
                 $tmLead->no_answer_count = $no_answer_count;
-                if($no_answer_count == 3) {
-
+                if ($no_answer_count == 3) {
                     $tmLeadStatusEnum = tmLeadStatusCode::NotContactablePE;
                     $tmLeadStatusId = TmLeadStatus::where('code', '=', $tmLeadStatusEnum)->value('id');
                     $tmLead->tm_lead_statuses_id = $tmLeadStatusId;
-                    $tmLead->next_followup_date = NULL;
-                }
-                else {
+                    $tmLead->next_followup_date = null;
+                } else {
                     $tmLead->tm_lead_statuses_id = $request->tm_lead_statuses_id;
                     $tmLead->next_followup_date = $request->next_followup_date;
                 }
             }
-        }
-        else {
+        } else {
             $tmLead->tm_lead_statuses_id = $request->tm_lead_statuses_id;
 
-            if($tmLeadStatusCode == tmLeadStatusCode::NotContactablePE || $tmLeadStatusCode == tmLeadStatusCode::CarSold
+            if ($tmLeadStatusCode == tmLeadStatusCode::NotContactablePE || $tmLeadStatusCode == tmLeadStatusCode::CarSold
             || $tmLeadStatusCode == tmLeadStatusCode::NotEligible || $tmLeadStatusCode == tmLeadStatusCode::NotInterested
             || $tmLeadStatusCode == tmLeadStatusCode::PurchasedBeforeFirstCall || $tmLeadStatusCode == tmLeadStatusCode::PurchasedFromCompetitor
             || $tmLeadStatusCode == tmLeadStatusCode::RevivedByNewBusiness || $tmLeadStatusCode == tmLeadStatusCode::RevivedByRenewals
             || $tmLeadStatusCode == tmLeadStatusCode::WrongNumber || $tmLeadStatusCode == tmLeadStatusCode::DONOTCALL
             || $tmLeadStatusCode == tmLeadStatusCode::Duplicate || $tmLeadStatusCode == tmLeadStatusCode::Revived
-            || $tmLeadStatusCode == tmLeadStatusCode::Recycled || ($tmLeadStatusCode == tmLeadStatusCode::NewLead && $tmLead->next_followup_date == "")) {
-                $tmLead->next_followup_date = NULL;
-            }
-            else {
+            || $tmLeadStatusCode == tmLeadStatusCode::Recycled || ($tmLeadStatusCode == tmLeadStatusCode::NewLead && $tmLead->next_followup_date == '')) {
+                $tmLead->next_followup_date = null;
+            } else {
                 $tmLead->next_followup_date = $request->next_followup_date;
             }
         }
@@ -159,37 +153,34 @@ class TMLeadsService
         $assignedToUserIdNew = $request->assigned_to_id_new;
         $tmLeadsIds = $request->selectTmLeadId;
 
-        if(substr($tmLeadsIds, 0, 1) == ',') {
+        if (substr($tmLeadsIds, 0, 1) == ',') {
             $tmLeadsIds = substr($tmLeadsIds, 1);
         }
 
         $tmLeadsIds = array_map('intval', explode(',', $tmLeadsIds));
-        foreach($tmLeadsIds as $tmLeadsId) {
+        foreach ($tmLeadsIds as $tmLeadsId) {
             $updateTmLead = TmLead::find($tmLeadsId);
             $updateTmLead->assigned_to_id = $assignedToUserIdNew;
             $updateTmLead->save();
         }
+
         return $assignedToUserIdNew;
     }
 
     public function tmLeadsGetPrioritizeLead($currentUserID)
     {
         $prioritizeLeads = TmLead::select('tm_leads.id as tmLeadId')
-        ->leftjoin('tm_lead_statuses','tm_leads.tm_lead_statuses_id','tm_lead_statuses.id')
-        ->whereNotIn('tm_lead_statuses.code', ['NotContactablePE','CarSold','NotEligible','NotInterested'
-        ,'PurchasedBeforeFirstCall','PurchasedFromCompetitor','WrongNumber','DONOTCALL','Duplicate'
-        ,'Recycled','Revived','RevivedByNewBusiness','RevivedByRenewals'])
+        ->leftjoin('tm_lead_statuses', 'tm_leads.tm_lead_statuses_id', 'tm_lead_statuses.id')
+        ->whereNotIn('tm_lead_statuses.code', ['NotContactablePE', 'CarSold', 'NotEligible', 'NotInterested', 'PurchasedBeforeFirstCall', 'PurchasedFromCompetitor', 'WrongNumber', 'DONOTCALL', 'Duplicate', 'Recycled', 'Revived', 'RevivedByNewBusiness', 'RevivedByRenewals'])
         ->whereRaw('tm_leads.is_deleted=0 AND (tm_leads.next_followup_date IS NULL OR tm_leads.next_followup_date < now()) AND tm_leads.assigned_to_id='.$currentUserID)
         ->orderByRaw('tm_leads.next_followup_date IS NULL, tm_leads.next_followup_date, tm_leads.created_at')->limit(1)->get();
-        $prioritizeLeadId = "";
-        if(!empty($prioritizeLeads)) {
-            foreach($prioritizeLeads as $prioritizeLead)
-            {
+        $prioritizeLeadId = '';
+        if (! empty($prioritizeLeads)) {
+            foreach ($prioritizeLeads as $prioritizeLead) {
                 $prioritizeLeadId = $prioritizeLead->tmLeadId;
             }
-        }
-        else {
-            $prioritizeLeadId = "";
+        } else {
+            $prioritizeLeadId = '';
         }
 
         return $prioritizeLeadId;

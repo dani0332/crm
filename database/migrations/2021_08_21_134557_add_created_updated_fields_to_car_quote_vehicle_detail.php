@@ -14,10 +14,12 @@ class AddCreatedUpdatedFieldsToCarQuoteVehicleDetail extends Migration
     public function up()
     {
         Schema::table('car_quote_vehicle_detail', function (Blueprint $table) {
-            if(!Schema::hasColumn('car_quote_vehicle_detail','created_by'))
+            if (! Schema::hasColumn('car_quote_vehicle_detail', 'created_by')) {
                 $table->string('created_by')->nullable();
-            if(!Schema::hasColumn('car_quote_vehicle_detail','updated_by'))
+            }
+            if (! Schema::hasColumn('car_quote_vehicle_detail', 'updated_by')) {
                 $table->string('updated_by')->nullable();
+            }
         });
     }
 

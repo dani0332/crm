@@ -14,8 +14,9 @@ class AddDeletedAtFieldNationalityTable extends Migration
     public function up()
     {
         Schema::table('nationality', function (Blueprint $table) {
-            if(!Schema::hasColumn('nationality','deleted_at'))
+            if (! Schema::hasColumn('nationality', 'deleted_at')) {
                 $table->softDeletes();
+            }
         });
     }
 

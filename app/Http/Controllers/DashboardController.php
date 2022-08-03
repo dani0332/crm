@@ -27,10 +27,11 @@ class DashboardController extends Controller
     {
         $statsArray = $this->getWeeklyStats($quoteType);
         $headingArray = $this->getWeeklyHeading();
+
         return view('dashboard.'.$quoteType.'-conversion', compact('statsArray', 'headingArray'));
     }
 
-    public function getWeeklyStats ($type)
+    public function getWeeklyStats($type)
     {
         return [
             '1Week' => $this->dashboardService->getDashboardStatsByDate(
@@ -55,6 +56,7 @@ class DashboardController extends Controller
             ),
         ];
     }
+
     public function getWeeklyHeading()
     {
         return [

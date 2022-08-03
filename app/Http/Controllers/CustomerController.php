@@ -1,25 +1,29 @@
 <?php
+
 namespace App\Http\Controllers;
 
-use DataTables;
-use Config;
-use Illuminate\Http\Request;
 use App\Models\Customer;
 use App\Models\Nationality;
-use App\Services\TransAppService;
 use App\Services\CustomerUploadService;
 use App\Services\CustomerWEGenerateUrlService;
+use App\Services\TransAppService;
+use Config;
+use DataTables;
+use Illuminate\Http\Request;
 
 class CustomerController extends Controller
 {
-    private $customerUploadFileService, $transAppService, $customerWeEmailGenerateUrlService;
+    private $customerUploadFileService;
+    private $transAppService;
+    private $customerWeEmailGenerateUrlService;
+
     public function __construct(CustomerUploadService $customerUploadFileService, TransAppService $transAppService, CustomerWEGenerateUrlService $customerWeEmailGenerateUrlService)
     {
         $this->customerUploadFileService = $customerUploadFileService;
         $this->transAppService = $transAppService;
         $this->customerWeEmailGenerateUrlService = $customerWeEmailGenerateUrlService;
         $this->middleware('permission:customers-list', ['only' => ['index', 'store']]);
-        $this->middleware('permission:customers-edit', ['only' => ['edit','update']]);
+        $this->middleware('permission:customers-edit', ['only' => ['edit', 'update']]);
     }
 
     /**
@@ -30,10 +34,10 @@ class CustomerController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $data =[];
-            if (isset($request->searchtype) && !empty($request->searchtype)
-            && isset($request->searchfield) && !empty($request->searchfield)) {
-                $data = Customer::select('*')->orderBy('created_at','desc');
+            $data = [];
+            if (isset($request->searchtype) && ! empty($request->searchtype)
+            && isset($request->searchfield) && ! empty($request->searchfield)) {
+                $data = Customer::select('*')->orderBy('created_at', 'desc');
                 $data->where($request->searchtype, $request->searchfield);
             }
 
@@ -45,6 +49,7 @@ class CustomerController extends Controller
                 ->rawColumns(['action'])
                 ->make(true);
         }
+
         return view('customers.view');
     }
 
@@ -68,8 +73,10 @@ class CustomerController extends Controller
     public function edit(Customer $customer)
     {
         $nationalities = Nationality::all();
+
         return view('customers.edit', compact('customer', 'nationalities'));
     }
+
     /**
      * Update the specified resource in storage.
      *
@@ -86,7 +93,7 @@ class CustomerController extends Controller
 
         ]);
         $existingCustomer = $customer;
-        $sendWelcomeEmail = (!$existingCustomer->has_alfred_access || !$existingCustomer->has_reward_access) && ($request->has_alfred_access && $request->has_reward_access) ? true : false;
+        $sendWelcomeEmail = (! $existingCustomer->has_alfred_access || ! $existingCustomer->has_reward_access) && ($request->has_alfred_access && $request->has_reward_access) ? true : false;
 
         $customer->first_name = $request->first_name;
         $customer->last_name = $request->last_name;
@@ -99,44 +106,44 @@ class CustomerController extends Controller
         $customer->has_reward_access = $request->has_reward_access == 'on' ? 1 : 0;
         $customer->save();
 
-        if($sendWelcomeEmail && Config::get('constants.ENABLE_TRANSAPP_WE') == '1' && !$customer->is_we_sent) {
-
+        if ($sendWelcomeEmail && Config::get('constants.ENABLE_TRANSAPP_WE') == '1' && ! $customer->is_we_sent) {
             $WEGenerateUrlResponse = $this->customerWeEmailGenerateUrlService->getCustomerWeUrl();
 
-            if(gettype($WEGenerateUrlResponse) == 'string') {
-                $this->transAppService->sendWelcomeEmail($customer->id, $WEGenerateUrlResponse, $tag='customer-myalfred-we');
+            if (gettype($WEGenerateUrlResponse) == 'string') {
+                $this->transAppService->sendWelcomeEmail($customer->id, $WEGenerateUrlResponse, $tag = 'customer-myalfred-we');
             }
             $customer->is_we_sent = true;
             $customer->save();
         }
 
-        return redirect("customer/".$customer->id)->with('success', 'Customer has been Updated');
+        return redirect('customer/'.$customer->id)->with('success', 'Customer has been Updated');
     }
 
     /**
      * Store a newly uploaded customer
      *
-     * @param \Illuminate\Http\Request $request
+     * @param  \Illuminate\Http\Request  $request
      * @param \Illuminate\Http\Response
      */
-    public function processCustomerCSV(Request $request) {
-
+    public function processCustomerCSV(Request $request)
+    {
         $this->validate($request, [
             'file_name' => 'required|mimetypes:text/csv,text/plain,application/csv,text/comma-separated-values,text/anytext,application/octet-stream,application/txt,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet|max:2048',
             'cdb_id' => 'required',
-            'myalfred_expiry_date' => 'required'
+            'myalfred_expiry_date' => 'required',
         ]);
 
         $customerUploadID = $this->customerUploadFileService->customerUploadRecordsCreate($request);
 
-        if($customerUploadID == 0){
-            return redirect("customer-upload")->with('message', "CDB Id : ".$request->cdb_id." doesn't exists in system.")->withInput();
+        if ($customerUploadID == 0) {
+            return redirect('customer-upload')->with('message', 'CDB Id : '.$request->cdb_id." doesn't exists in system.")->withInput();
         }
 
-        return redirect("customer-upload")->with('success', 'Upload customers records has been stored');
+        return redirect('customer-upload')->with('success', 'Upload customers records has been stored');
     }
 
-    public function uploadCustomers() {
+    public function uploadCustomers()
+    {
         return view('customers.upload');
     }
 }

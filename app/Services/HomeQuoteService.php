@@ -2,30 +2,32 @@
 
 namespace App\Services;
 
+use App\Enums\DatabaseColumnsString;
+use App\Enums\QuoteStatusEnum;
+use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Models\HomeQuote;
 use App\Models\HomeQuoteRequestDetail;
-use App\Models\QuoteStatus;
-use Illuminate\Http\Request;
-use DB;
-use Illuminate\Support\Facades\Auth;
-use \Carbon\Carbon;
-use Config;
-use App\Traits\RolePermissionConditions;
+use App\Traits\AddPremiumAllLobs;
 use App\Traits\CustomerAdditionalInfo as CustomerAdditionalInfoTrait;
-use App\Enums\quoteTypeCode;
-use App\Enums\DatabaseColumnsString;
-use App\Enums\QuoteStatusEnum;
+use App\Traits\RolePermissionConditions;
+use Carbon\Carbon;
+use Config;
+use DB;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
-use App\Traits\AddPremiumAllLobs;
 class HomeQuoteService extends BaseService
 {
     protected $query;
+
     use RolePermissionConditions;
     use CustomerAdditionalInfoTrait;
     use AddPremiumAllLobs;
+
     protected $leadAllocationService;
+
     public function __construct(LeadAllocationService $leadAllocationService)
     {
         $this->leadAllocationService = $leadAllocationService;
@@ -86,18 +88,20 @@ class HomeQuoteService extends BaseService
     {
         $entity = HomeQuoteRequestDetail::where('home_quote_request_id', $id)->first();
         $lostId = 0;
-        if (!is_null($entity) && $entity->lost_reason_id) {
+        if (! is_null($entity) && $entity->lost_reason_id) {
             $lostId = $entity->lost_reason_id;
         }
+
         return $lostId;
     }
 
     public function getDetailEntity($id)
     {
         $entity = HomeQuoteRequestDetail::where('home_quote_request_id', $id)->first();
-        if (!$entity) {
+        if (! $entity) {
             $entity = $this->createDetailEntity($id);
         }
+
         return $entity;
     }
 
@@ -114,32 +118,35 @@ class HomeQuoteService extends BaseService
     {
         $sourceName = Config::get('constants.SOURCE_NAME');
         $appUrl = Config::get('constants.APP_URL');
-        $dataArr = array(
-            "firstName" => $request->first_name,
-            "lastName" => $request->last_name,
-            "email" => $request->email,
-            "address" => $request->address,
-            "mobileNo" => $request->mobile_no,
-            "contentsAed" => $request->contents_aed,
-            "premium" => $request->premium,
-            "iamPossesionTypeId" => $request->iam_possesion_type_id,
-            "iliveinAccommodationTypeId" => $request->ilivein_accommodation_type_id,
-            "personalBelongingsAed" => $request->personal_belongings_aed,
-            "buildingAed" => $request->building_aed,
-            "hasContents" => $request->has_contents == 'on' ?  true : false,
-            "nationalityId" => $request->nationality_id,
-            "hasBuilding" => $request->has_building == 'on' ? true : false,
-            "hasPersonalBelongings" => $request->has_personal_belongings == 'on' ?  true : false,
-            "source" => $sourceName,
-            "isPropertyRentedHolidayHome" => $request->is_property_rented_holiday_home == 'on' ? true : false,
-            "referenceUrl" => $appUrl,
-        );
-        if (!Auth::user()->hasRole("ADMIN")) $dataArr['advisorId'] = Auth::user()->id;
+        $dataArr = [
+            'firstName' => $request->first_name,
+            'lastName' => $request->last_name,
+            'email' => $request->email,
+            'address' => $request->address,
+            'mobileNo' => $request->mobile_no,
+            'contentsAed' => $request->contents_aed,
+            'premium' => $request->premium,
+            'iamPossesionTypeId' => $request->iam_possesion_type_id,
+            'iliveinAccommodationTypeId' => $request->ilivein_accommodation_type_id,
+            'personalBelongingsAed' => $request->personal_belongings_aed,
+            'buildingAed' => $request->building_aed,
+            'hasContents' => $request->has_contents == 'on' ? true : false,
+            'nationalityId' => $request->nationality_id,
+            'hasBuilding' => $request->has_building == 'on' ? true : false,
+            'hasPersonalBelongings' => $request->has_personal_belongings == 'on' ? true : false,
+            'source' => $sourceName,
+            'isPropertyRentedHolidayHome' => $request->is_property_rented_holiday_home == 'on' ? true : false,
+            'referenceUrl' => $appUrl,
+        ];
+        if (! Auth::user()->hasRole('ADMIN')) {
+            $dataArr['advisorId'] = Auth::user()->id;
+        }
         $response = CapiRequestService::sendCAPIRequest('/api/v1-save-home-quote', $dataArr);
-        if(isset($response->quoteUID)) {
+        if (isset($response->quoteUID)) {
             $this->savePremium(quoteTypeCode::HomeQuote, $request, $response);
+
             return $this->createUpdateCustomerInfo($request, $request->email, $response->quoteUID, quoteTypeCode::HomeQuote);
-        }else {
+        } else {
             return $response;
         }
     }
@@ -154,7 +161,7 @@ class HomeQuoteService extends BaseService
         $isNewAdvisor = Auth::user()->isNewBusinessAdvisor();
         if ($isRenewalUser || $isRenewalManager || $isRenewalAdvisor) {
             $searchProperties = $model->renewalSearchProperties;
-        } else if ($isNewManager || $isNewAdvisor) {
+        } elseif ($isNewManager || $isNewAdvisor) {
             $searchProperties = $model->newBusinessSearchProperties;
         } else {
             $searchProperties = $model->searchProperties;
@@ -165,7 +172,7 @@ class HomeQuoteService extends BaseService
                 $dateTo = Carbon::createFromFormat('Y-m-d', $request['assigned_to_date_end'])->endOfDay()->toDateTimeString();
                 $this->query->whereBetween('hqrd.advisor_assigned_date', [$dateFrom, $dateTo]);
             }
-            if (in_array('created_at', $searchProperties) && isset($request->created_at) && $request->created_at != "") {
+            if (in_array('created_at', $searchProperties) && isset($request->created_at) && $request->created_at != '') {
                 $dateFrom = Carbon::createFromFormat('Y-m-d', $request['created_at'])->startOfDay()->toDateTimeString();
                 $dateTo = Carbon::createFromFormat('Y-m-d', $request['created_at_end'])->endOfDay()->toDateTimeString();
                 $this->query->whereBetween('hqr.created_at', [$dateFrom, $dateTo]);
@@ -211,31 +218,34 @@ class HomeQuoteService extends BaseService
                 // if user has advisor Role then fetch leads assigned to the user only
                 $this->query->where('hqr.advisor_id', Auth::user()->id);    // fetch leads assigned to the user
             }
-            $this->whereBasedOnRole($this->query,'hqr');
+            $this->whereBasedOnRole($this->query, 'hqr');
 
             if (isset($request->is_renewal) && $request->is_renewal != '') {
-                if ($request->is_renewal == quoteTypeCode::yesText)
+                if ($request->is_renewal == quoteTypeCode::yesText) {
                     $this->query->whereNotNull('hqr.previous_quote_id');
-                if ($request->is_renewal == quoteTypeCode::noText)
+                }
+                if ($request->is_renewal == quoteTypeCode::noText) {
                     $this->query->whereNull('hqr.previous_quote_id');
+                }
             }
             foreach ($searchProperties as $item) {
-                if (!empty($request[$item]) && $item != "created_at") {
+                if (! empty($request[$item]) && $item != 'created_at') {
                     if ($request[$item] == 'null') {
                         $this->query->whereNull($item);
-                    } else if ($item == 'advisor_id' && is_array($request[$item]) && !empty($request[$item])) {
-                        if ($request[$item][0] == 'null')
+                    } elseif ($item == 'advisor_id' && is_array($request[$item]) && ! empty($request[$item])) {
+                        if ($request[$item][0] == 'null') {
                             $this->query->whereNull('advisor_id');
-                        else
+                        } else {
                             $this->query->whereIn('advisor_id', $request[$item]);
-                    } else if ($item == DatabaseColumnsString::QUOTE_STATUS_ID && is_array($request[$item]) && !empty($request[$item])) {
+                        }
+                    } elseif ($item == DatabaseColumnsString::QUOTE_STATUS_ID && is_array($request[$item]) && ! empty($request[$item])) {
                         $this->query->whereIn('quote_status_id', $request[$item]);
                     } else {
-                        $skipped = array('is_renewal','previous_policy_expiry_date','next_followup_date');
-                        if(in_array($item, $skipped)){
+                        $skipped = ['is_renewal', 'previous_policy_expiry_date', 'next_followup_date'];
+                        if (in_array($item, $skipped)) {
                             continue;
                         }
-                        $this->query->where($this->getQuerySuffix($item) . '.' . $item, $request[$item]);
+                        $this->query->where($this->getQuerySuffix($item).'.'.$item, $request[$item]);
                     }
                 }
             }
@@ -244,28 +254,29 @@ class HomeQuoteService extends BaseService
         $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';
         if ($column != '' && $column != 0 && $direction != '') {
             $isManagerORDeputy = Auth::user()->isManagerOrDeputy();
-            $isAdmin = Auth::user()->hasRole("ADMIN");
-            if ($isAdmin || $isManagerORDeputy == "1") {
+            $isAdmin = Auth::user()->hasRole('ADMIN');
+            if ($isAdmin || $isManagerORDeputy == '1') {
                 if ($column == 6) {
-                    $column = "hqr.created_at";
+                    $column = 'hqr.created_at';
                 }
                 if ($column == 7) {
-                    $column = "hqr.updated_at";
+                    $column = 'hqr.updated_at';
                 }
                 if ($column == 8) {
-                    $column = "hqrd.next_followup_date";
+                    $column = 'hqrd.next_followup_date';
                 }
             } else {
                 if ($column == 5) {
-                    $column = "hqr.created_at";
+                    $column = 'hqr.created_at';
                 }
                 if ($column == 6) {
-                    $column = "hqr.updated_at";
+                    $column = 'hqr.updated_at';
                 }
                 if ($column == 7) {
-                    $column = "hqrd.next_followup_date";
+                    $column = 'hqrd.next_followup_date';
                 }
             }
+
             return $this->query->orderBy($column, $direction);
         } else {
             return $this->query->orderBy('hqr.created_at', 'DESC');
@@ -317,6 +328,7 @@ class HomeQuoteService extends BaseService
             ->where('hqrd.next_followup_date', '<', date('Y-m-d H:i:s'))
             ->whereIn('qs.text', ['Followed Up', 'Qualification Pending', 'Quoted', 'FTC Pending', 'FTC Sent', 'Missing Documents Requested', 'Policy Documents Pending', 'Payment Pending', 'Pending with UW', 'Application Pending', 'In Negotiation'])
             ->where('hqr.advisor_id', Auth::user()->id);
+
         return $query;
     }
 
@@ -354,19 +366,19 @@ class HomeQuoteService extends BaseService
             ->leftJoin('payment_status as ps', 'ps.id', '=', 'hqr.payment_status_id')
             ->where('hqr.quote_status_id', '!=', 9)
             ->where('hqr.advisor_id', Auth::user()->id)
-            ->orderBy('hqr.created_at', "DESC");
+            ->orderBy('hqr.created_at', 'DESC');
 
         $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
         $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';
         if ($column != '' && $column != 0 && $direction != '') {
             if ($column == 3) {
-                $column = "hqr.created_at";
+                $column = 'hqr.created_at';
             }
             if ($column == 4) {
-                $column = "hqrd.advisor_assigned_date";
+                $column = 'hqrd.advisor_assigned_date';
             }
             if ($column == 7) {
-                $column = "hqrd.next_followup_date";
+                $column = 'hqrd.next_followup_date';
             }
             $query->orderBy($column, $direction);
         }
@@ -415,6 +427,7 @@ class HomeQuoteService extends BaseService
             $dateTo = Carbon::createFromFormat('Y-m-d', $request['previous_policy_expiry_date_end'])->endOfDay()->toDateTimeString();
             $query->whereBetween('hqr.previous_policy_expiry_date', [$dateFrom, $dateTo]);
         }
+
         return $query;
     }
 
@@ -454,15 +467,16 @@ class HomeQuoteService extends BaseService
             ->leftJoin('users as u', 'u.id', '=', 'hqr.advisor_id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'hqr.quote_status_id')
             ->orderBy('advisor_id', 'ASC');
-        if (!empty($CDBID)) {
+        if (! empty($CDBID)) {
             $query->where('hqr.id', '=', $CDBID);
         }
-        if (!empty($email)) {
+        if (! empty($email)) {
             $query->where('hqr.email', '=', $email);
         }
-        if (!empty($mobile_no)) {
+        if (! empty($mobile_no)) {
             $query->where('hqr.mobile_no', '=', $mobile_no);
         }
+
         return $query;
     }
 
@@ -477,137 +491,139 @@ class HomeQuoteService extends BaseService
         $homeQuote->ilivein_accommodation_type_id = $request->ilivein_accommodation_type_id;
         $homeQuote->personal_belongings_aed = $request->personal_belongings_aed;
         $homeQuote->building_aed = $request->building_aed;
-        $homeQuote->has_contents = $request->has_contents == 'on' ?  true : false;
+        $homeQuote->has_contents = $request->has_contents == 'on' ? true : false;
         $homeQuote->nationality_id = $request->nationality_id;
         $homeQuote->premium = $request->premium;
         $homeQuote->has_building = $request->has_building == 'on' ? true : false;
-        $homeQuote->has_personal_belongings = $request->has_personal_belongings == 'on' ?  true : false;
+        $homeQuote->has_personal_belongings = $request->has_personal_belongings == 'on' ? true : false;
         $homeQuote->save();
         $this->createUpdateCustomerInfo($request, $homeQuote->email, $homeQuote->uuid, quoteTypeCode::HomeQuote);
-        if (isset($request->return_to_view))
-            return redirect("quote/home/" . $id)->with('success', 'Home Quote has been updated');
+        if (isset($request->return_to_view)) {
+            return redirect('quote/home/'.$id)->with('success', 'Home Quote has been updated');
+        }
     }
 
     public function fillModelProperties()
     {
-        return array(
-            "id" => "readonly|none",
-            "code" => "input|title",
-            "first_name" => "input|text|required",
-            "last_name" => "input|text|required",
-            "email" => "input|email|required",
-            "mobile_no" => "input|title|number|required",
-            "quote_status_id" => "select|title|multiple",
-            "advisor_id" => "select|title|multiple",
-            "created_at" => "input|date|title|range",
-            "updated_at" => "input|date|title",
-            "next_followup_date" => "input|date|title|range",
-            "transapp_code" => "readonly|none",
-            "source" => "input|text|required",
-            "lost_reason" => "input|text",
-            "premium" => "input|number",
-            "policy_number" => "input|text",
-            "contents_aed" => "input|number|required",
-            "personal_belongings_aed" => "input|number|required",
-            "building_aed" => "input|number|required",
-            "iam_possesion_type_id" => "select|title|required",
-            "ilivein_accommodation_type_id" => "select|title|required",
-            "has_contents" => "input|checkbox|required",
-            "has_personal_belongings" => "input|checkbox|required",
-            "has_building" => "input|checkbox|required",
+        return [
+            'id' => 'readonly|none',
+            'code' => 'input|title',
+            'first_name' => 'input|text|required',
+            'last_name' => 'input|text|required',
+            'email' => 'input|email|required',
+            'mobile_no' => 'input|title|number|required',
+            'quote_status_id' => 'select|title|multiple',
+            'advisor_id' => 'select|title|multiple',
+            'created_at' => 'input|date|title|range',
+            'updated_at' => 'input|date|title',
+            'next_followup_date' => 'input|date|title|range',
+            'transapp_code' => 'readonly|none',
+            'source' => 'input|text|required',
+            'lost_reason' => 'input|text',
+            'premium' => 'input|number',
+            'policy_number' => 'input|text',
+            'contents_aed' => 'input|number|required',
+            'personal_belongings_aed' => 'input|number|required',
+            'building_aed' => 'input|number|required',
+            'iam_possesion_type_id' => 'select|title|required',
+            'ilivein_accommodation_type_id' => 'select|title|required',
+            'has_contents' => 'input|checkbox|required',
+            'has_personal_belongings' => 'input|checkbox|required',
+            'has_building' => 'input|checkbox|required',
             // "is_property_rented_holiday_home" => "input|checkbox|required",
-            "address" => 'textarea|required',
-            "previous_quote_id" => "readonly|title",
-            "is_renewal" => "|static|Yes,No",
-            "renewal_expiry_date" => "input|date|title|range",
-            "renewal_batch" => "input|none",
-            "previous_quote_policy_number" => "input|title",
-            "previous_policy_expiry_date" => "input|date|title|range",
-            "previous_quote_policy_premium" =>  "input|number|title"
-        );
+            'address' => 'textarea|required',
+            'previous_quote_id' => 'readonly|title',
+            'is_renewal' => '|static|Yes,No',
+            'renewal_expiry_date' => 'input|date|title|range',
+            'renewal_batch' => 'input|none',
+            'previous_quote_policy_number' => 'input|title',
+            'previous_policy_expiry_date' => 'input|date|title|range',
+            'previous_quote_policy_premium' => 'input|number|title',
+        ];
     }
 
     public function getCustomTitleByProperty($propertyName)
     {
-        $title = "";
+        $title = '';
         switch ($propertyName) {
             case 'iam_possesion_type_id':
-                $title = "I am";
+                $title = 'I am';
                 break;
             case 'created_at':
-                $title = "Created Date";
+                $title = 'Created Date';
                 break;
             case 'updated_at':
-                $title = "Last Modified Date";
+                $title = 'Last Modified Date';
                 break;
             case 'created_at_end':
-                $title = "End Date";
+                $title = 'End Date';
                 break;
             case 'quote_status_id':
-                $title = "Lead Status";
+                $title = 'Lead Status';
                 break;
             case 'advisor_id':
-                $title = "Assigned To";
+                $title = 'Assigned To';
                 break;
             case 'ilivein_accommodation_type_id':
-                $title = "I Live In";
+                $title = 'I Live In';
                 break;
             case 'mobile_no':
-                $title = "Mobile Number";
+                $title = 'Mobile Number';
                 break;
             case 'code':
-                $title = "CDB ID";
+                $title = 'CDB ID';
                 break;
             case 'next_followup_date':
-                $title = "Next Followup Date";
+                $title = 'Next Followup Date';
                 break;
             case 'previous_quote_id':
-                $title = "Previous Quote ID";
+                $title = 'Previous Quote ID';
                 break;
             case 'renewal_expiry_date':
-                $title = "Expiry Date";
+                $title = 'Expiry Date';
                 break;
             case 'previous_quote_policy_number':
-                $title = "Previous Policy Number";
+                $title = 'Previous Policy Number';
                 break;
             case 'previous_policy_expiry_date':
-                $title = "Previous Policy Expiry Date";
+                $title = 'Previous Policy Expiry Date';
                 break;
             case 'is_property_rented_holiday_home':
-                $title = "Is Property Rented Holiday Home ?";
+                $title = 'Is Property Rented Holiday Home ?';
                 break;
-            case 'previous_quote_policy_premium';
-                $title = "Previous Quote Premium";
+            case 'previous_quote_policy_premium':
+                $title = 'Previous Quote Premium';
                 break;
             default:
                 break;
         }
+
         return $title;
     }
 
     public function fillModelSkipProperties()
     {
         return [
-            "create" => "previous_quote_policy_premium,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,is_renewal,previous_quote_id,id,code,quote_status_id,advisor_id,created_at,updated_at,next_followup_date,lost_reason,source,transapp_code,renewal_expiry_date",
-            "list" => "previous_quote_policy_premium,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,renewal_expiry_date,is_renewal,previous_quote_id,email,address,iam_possesion_type_id,next_followup_date,ilivein_accommodation_type_id,mobile_no,personal_belongings_aed,building_aed,contents_aed,has_contents,has_personal_belongings,has_building,address,renewal_expiry_date",
-            "update" => "previous_quote_policy_premium,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,is_renewal,previous_quote_id,id,code,quote_status_id,advisor_id,created_at,updated_at,next_followup_date,lost_reason,source,transapp_code,renewal_expiry_date",
-            "show" => "previous_quote_policy_premium,is_renewal,id,next_followup_date,lost_reason"
+            'create' => 'previous_quote_policy_premium,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,is_renewal,previous_quote_id,id,code,quote_status_id,advisor_id,created_at,updated_at,next_followup_date,lost_reason,source,transapp_code,renewal_expiry_date',
+            'list' => 'previous_quote_policy_premium,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,renewal_expiry_date,is_renewal,previous_quote_id,email,address,iam_possesion_type_id,next_followup_date,ilivein_accommodation_type_id,mobile_no,personal_belongings_aed,building_aed,contents_aed,has_contents,has_personal_belongings,has_building,address,renewal_expiry_date',
+            'update' => 'previous_quote_policy_premium,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,is_renewal,previous_quote_id,id,code,quote_status_id,advisor_id,created_at,updated_at,next_followup_date,lost_reason,source,transapp_code,renewal_expiry_date',
+            'show' => 'previous_quote_policy_premium,is_renewal,id,next_followup_date,lost_reason',
         ];
     }
 
     public function fillModelSearchProperties()
     {
-        return ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'advisor_id', 'created_at','is_renewal'];
+        return ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'advisor_id', 'created_at', 'is_renewal'];
     }
 
     public function fillRenewalProperties($model)
     {
         $model->renewalSearchProperties = ['created_at', 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'renewal_batch', 'previous_quote_policy_number', 'previous_policy_expiry_date', 'previous_quote_policy_premium'];
         $model->renewalSkipProperties = [
-            "create" => "previous_quote_policy_premium,previous_policy_expiry_date,policy_number,renewal_batch,previous_quote_policy_number,renewal_expiry_date,is_renewal,previous_quote_id,id,code,quote_status_id,advisor_id,created_at,updated_at,next_followup_date,lost_reason,premium,source,transapp_code,renewal_expiry_date",
-            "list" => "policy_number,renewal_expiry_date,is_renewal,email,address,iam_possesion_type_id,ilivein_accommodation_type_id,mobile_no,personal_belongings_aed,building_aed,contents_aed,has_contents,has_personal_belongings,has_building,address,next_followup_date,lost_reason,premium,source,transapp_code,renewal_expiry_date",
-            "update" => "premium,previous_quote_policy_premium,previous_policy_expiry_date,policy_number,renewal_batch,previous_quote_policy_number,renewal_expiry_date,is_renewal,previous_quote_id,id,code,quote_status_id,advisor_id,created_at,updated_at,next_followup_date,lost_reason,source,transapp_code,renewal_expiry_date",
-            "show" => "premium,id,next_followup_date,is_renewal",
+            'create' => 'previous_quote_policy_premium,previous_policy_expiry_date,policy_number,renewal_batch,previous_quote_policy_number,renewal_expiry_date,is_renewal,previous_quote_id,id,code,quote_status_id,advisor_id,created_at,updated_at,next_followup_date,lost_reason,premium,source,transapp_code,renewal_expiry_date',
+            'list' => 'policy_number,renewal_expiry_date,is_renewal,email,address,iam_possesion_type_id,ilivein_accommodation_type_id,mobile_no,personal_belongings_aed,building_aed,contents_aed,has_contents,has_personal_belongings,has_building,address,next_followup_date,lost_reason,premium,source,transapp_code,renewal_expiry_date',
+            'update' => 'premium,previous_quote_policy_premium,previous_policy_expiry_date,policy_number,renewal_batch,previous_quote_policy_number,renewal_expiry_date,is_renewal,previous_quote_id,id,code,quote_status_id,advisor_id,created_at,updated_at,next_followup_date,lost_reason,source,transapp_code,renewal_expiry_date',
+            'show' => 'premium,id,next_followup_date,is_renewal',
         ];
     }
 
@@ -615,10 +631,10 @@ class HomeQuoteService extends BaseService
     {
         $model->newBusinessSearchProperties = ['created_at', 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'policy_number'];
         $model->newBusinessSkipProperties = [
-            "create" => "previous_quote_policy_premium,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,member_category_id,salary_band_id,gender,is_renewal,previous_quote_id,created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,source,transapp_code,renewal_expiry_date",
-            "list" => "previous_quote_policy_premium,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,member_category_id,salary_band_id,gender,is_renewal,email,cover_for_id,has_worldwide_cover,has_home,details,preference,mobile_no,dob,marital_status_id,nationality_id,has_dental,emirate_of_your_visa_id,is_ebp_renewal,health_team_type,next_followup_date,lost_reason,source,transapp_code,lead_type_id,renewal_expiry_date,previous_quote_id",
-            "update" => "previous_quote_policy_premium,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,member_category_id,salary_band_id,gender,is_renewal,previous_quote_id,created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,source,transapp_code,renewal_expiry_date",
-            "show" => "previous_quote_policy_premium,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,member_category_id,salary_band_id,gender,is_renewal,id,previous_quote_id",
+            'create' => 'previous_quote_policy_premium,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,member_category_id,salary_band_id,gender,is_renewal,previous_quote_id,created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,source,transapp_code,renewal_expiry_date',
+            'list' => 'previous_quote_policy_premium,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,member_category_id,salary_band_id,gender,is_renewal,email,cover_for_id,has_worldwide_cover,has_home,details,preference,mobile_no,dob,marital_status_id,nationality_id,has_dental,emirate_of_your_visa_id,is_ebp_renewal,health_team_type,next_followup_date,lost_reason,source,transapp_code,lead_type_id,renewal_expiry_date,previous_quote_id',
+            'update' => 'previous_quote_policy_premium,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,member_category_id,salary_band_id,gender,is_renewal,previous_quote_id,created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,source,transapp_code,renewal_expiry_date',
+            'show' => 'previous_quote_policy_premium,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,member_category_id,salary_band_id,gender,is_renewal,id,previous_quote_id',
         ];
     }
 
@@ -627,13 +643,14 @@ class HomeQuoteService extends BaseService
         $validationArray = [];
         $skipProperties = explode(',', $modelSkipPropertiesList);
         foreach ($modelPropertiesList as $propertyName => $propertyValue) {
-            if (in_array($propertyName, $skipProperties))
+            if (in_array($propertyName, $skipProperties)) {
                 continue;
-            if ($propertyName == 'contents_aed' || $propertyName ==  'personal_belongings_aed' || $propertyName == 'building_aed' || $propertyName == 'has_contents' || $propertyName == 'has_personal_belongings' || $propertyName == 'has_building') {
+            }
+            if ($propertyName == 'contents_aed' || $propertyName == 'personal_belongings_aed' || $propertyName == 'building_aed' || $propertyName == 'has_contents' || $propertyName == 'has_personal_belongings' || $propertyName == 'has_building') {
                 if ($request['iam_possesion_type_id'] == null) {
                     $validationArray['has_contents'] = 'required';
                 }
-                if ($request['iam_possesion_type_id'] == "1") {
+                if ($request['iam_possesion_type_id'] == '1') {
                     if ($request['has_building'] == null) {
                         $validationArray['has_contents'] = 'required';
                     }
@@ -651,7 +668,7 @@ class HomeQuoteService extends BaseService
                     }
                 }
 
-                if ($request['iam_possesion_type_id'] == "2") {
+                if ($request['iam_possesion_type_id'] == '2') {
                     $validationArray['has_contents'] = 'required';
                     if ($request['has_contents'] == 'on') {
                         $validationArray['contents_aed'] = 'required';
@@ -662,11 +679,12 @@ class HomeQuoteService extends BaseService
                     }
                 }
             } else {
-                if ($propertyName != 'id' && $propertyName != 'email' && $propertyName != 'code'  && $propertyName != 'created_at' && $propertyName != 'updated_at' && $propertyName != 'mobile_no' && $propertyName != 'quote_status_id' && $propertyName != 'next_followup_date' && $propertyName != 'lost_reason' && $propertyName != 'source' && $propertyName != 'advisor_id' && $propertyName != 'policy_number' && $propertyName != 'previous_quote_policy_premium' && $propertyName != 'transapp_code' && $propertyName != 'premium' && $propertyName != 'previous_quote_id' && $propertyName != 'is_renewal' && $propertyName != 'renewal_expiry_date' && $propertyName != 'renewal_batch' && $propertyName != 'previous_quote_policy_number' && $propertyName != 'previous_policy_expiry_date') {
+                if ($propertyName != 'id' && $propertyName != 'email' && $propertyName != 'code' && $propertyName != 'created_at' && $propertyName != 'updated_at' && $propertyName != 'mobile_no' && $propertyName != 'quote_status_id' && $propertyName != 'next_followup_date' && $propertyName != 'lost_reason' && $propertyName != 'source' && $propertyName != 'advisor_id' && $propertyName != 'policy_number' && $propertyName != 'previous_quote_policy_premium' && $propertyName != 'transapp_code' && $propertyName != 'premium' && $propertyName != 'previous_quote_id' && $propertyName != 'is_renewal' && $propertyName != 'renewal_expiry_date' && $propertyName != 'renewal_batch' && $propertyName != 'previous_quote_policy_number' && $propertyName != 'previous_policy_expiry_date') {
                     $validationArray[$propertyName] = 'required';
                 }
             }
         }
+
         return $validationArray;
     }
 
@@ -674,6 +692,7 @@ class HomeQuoteService extends BaseService
     {
         return HomeQuote::where('id', $id)->first();
     }
+
     public function getDuplicateEntityByCode($code)
     {
         return HomeQuote::where('parent_duplicate_quote_id', $code)->first();
@@ -686,7 +705,7 @@ class HomeQuoteService extends BaseService
         $response = CapiRequestService::getUUID(QuoteTypeId::Home);
         if ($response) {
             $quote->uuid = $response->uuid;
-            $quote->code = 'HOM-' . $response->uuid;
+            $quote->code = 'HOM-'.$response->uuid;
         }
         $quote->quote_status_id = QuoteStatusEnum::NewLead;
         $quote->first_name = $parentRecord->first_name;
@@ -699,23 +718,23 @@ class HomeQuoteService extends BaseService
 
     public function processManualLeadAssignment($request): array
     {
-        if($request->selectTmLeadId == '' || $request->selectTmLeadId == null) {
+        if ($request->selectTmLeadId == '' || $request->selectTmLeadId == null) {
             $leadsIds = array_map('intval', explode(',', trim($request->entityId, ',')));
-        }
-        else{
+        } else {
             $leadsIds = array_map('intval', explode(',', trim($request->selectTmLeadId, ',')));
         }
-        $userId = (int)$request->assigned_to_id_new;
-        Log::info('Leads ids to assign: ' . json_encode($leadsIds));
+        $userId = (int) $request->assigned_to_id_new;
+        Log::info('Leads ids to assign: '.json_encode($leadsIds));
         $result = [];
-        foreach($leadsIds as $leadId)
-        {
+        foreach ($leadsIds as $leadId) {
             $lead = $this->getEntityPlain($leadId);
             $lead->advisor_id = $userId;
             $lead->save();
         }
+
         return $result;
     }
+
     public function getEntityPlainByUUID($uuid)
     {
         return HomeQuote::where('uuid', $uuid)->first();
@@ -741,7 +760,7 @@ class HomeQuoteService extends BaseService
         if ($userId == '' || $userId == null) {
             return 'Please select user to assign leads';
         }
+
         return 'true';
     }
-
 }

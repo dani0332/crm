@@ -14,8 +14,9 @@ class SoftDeleteToInsuranceProviderTable extends Migration
     public function up()
     {
         Schema::table('insurance_provider', function (Blueprint $table) {
-            if(!Schema::hasColumn('insurance_provider','deleted_at'))
+            if (! Schema::hasColumn('insurance_provider', 'deleted_at')) {
                 $table->softDeletes();
+            }
         });
     }
 

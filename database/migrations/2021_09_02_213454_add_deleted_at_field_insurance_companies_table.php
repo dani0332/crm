@@ -14,8 +14,9 @@ class AddDeletedAtFieldInsuranceCompaniesTable extends Migration
     public function up()
     {
         Schema::table('insurance_companies', function (Blueprint $table) {
-            if(!Schema::hasColumn('insurance_companies','deleted_at'))
+            if (! Schema::hasColumn('insurance_companies', 'deleted_at')) {
                 $table->softDeletes();
+            }
         });
     }
 

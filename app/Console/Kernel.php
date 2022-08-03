@@ -28,9 +28,8 @@ class Kernel extends ConsoleKernel
             ->command('LeadAllocation:cron')
             ->timezone('Asia/Dubai')
             ->everyMinute()
-            ->runInBackground()
             ->onOneServer()
-            ->withoutOverlapping();
+            ->withoutOverlapping(1);
     }
 
     /**
@@ -40,7 +39,7 @@ class Kernel extends ConsoleKernel
      */
     protected function commands()
     {
-        $this->load(__DIR__ . '/Commands');
+        $this->load(__DIR__.'/Commands');
 
         require base_path('routes/console.php');
     }

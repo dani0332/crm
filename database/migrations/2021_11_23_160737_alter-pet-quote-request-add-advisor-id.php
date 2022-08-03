@@ -14,8 +14,8 @@ class AlterPetQuoteRequestAddAdvisorId extends Migration
     public function up()
     {
         Schema::table('pet_quote_request', function (Blueprint $table) {
-            if(!Schema::hasColumn('pet_quote_request', 'uuid')){
-                $table->string('uuid', '100')->default(DB::raw('(UUID())'));    
+            if (! Schema::hasColumn('pet_quote_request', 'uuid')) {
+                $table->string('uuid', '100')->default(DB::raw('(UUID())'));
                 $table->unsignedBigInteger('advisor_id')->nullable();
                 $table->foreign('advisor_id')->references('id')->on('users')->onDelete('no action');
             }

@@ -2,17 +2,18 @@
 
 namespace App\Mail;
 
+use Config;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
-use Config;
 use Illuminate\Support\Arr;
 
 class FTCMailerService extends Mailable
 {
     use Queueable, SerializesModels;
+
     protected $request;
+
     /**
      * Create a new message instance.
      *
@@ -35,14 +36,15 @@ class FTCMailerService extends Mailable
         $email = $this
             ->subject($this->request['subject'])
             ->from($fromEmail, $fromName)
-            ->view('email.'. $this->request['templateName'].'', collect($this->request['templateParams'])->toArray());
+            ->view('email.'.$this->request['templateName'].'', collect($this->request['templateParams'])->toArray());
 
-        if(Arr::has($this->request['templateParams'], 'attachment')){
-            $attachment =  $this->request['templateParams']['attachment'];
-            foreach($attachment as $filePath){
+        if (Arr::has($this->request['templateParams'], 'attachment')) {
+            $attachment = $this->request['templateParams']['attachment'];
+            foreach ($attachment as $filePath) {
                 $email->attach($filePath);
             }
         }
+
         return $email;
     }
 }

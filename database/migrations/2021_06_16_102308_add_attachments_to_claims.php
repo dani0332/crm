@@ -14,10 +14,10 @@ class AddAttachmentsToClaims extends Migration
     public function up()
     {
         Schema::table('claims', function (Blueprint $table) {
-            $table->string('attachment_1','255')->nullable();
-            $table->string('attachment_2','255')->nullable();
-            $table->string('attachment_3','255')->nullable();
-            $table->string('attachment_4','255')->nullable();
+            $table->string('attachment_1', '255')->nullable();
+            $table->string('attachment_2', '255')->nullable();
+            $table->string('attachment_3', '255')->nullable();
+            $table->string('attachment_4', '255')->nullable();
         });
     }
 

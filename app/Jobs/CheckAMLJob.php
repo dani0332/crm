@@ -2,19 +2,18 @@
 
 namespace App\Jobs;
 
-use App\Models\RenewalsUploadLeads;
 use App\Services\CheckAmlService;
+use DB;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use App\Services\RenewalsUploadService;
-use DB;
 
 class CheckAMLJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+
     protected $firstName;
     protected $lastName;
     protected $quoteRequestId;
@@ -23,6 +22,7 @@ class CheckAMLJob implements ShouldQueue
     protected $yob;
     protected $companyName;
     protected $amlService;
+
     /**
      * Create a new job instance.
      *

@@ -14,7 +14,7 @@ class AddUuidInActivity extends Migration
     public function up()
     {
         Schema::table('activitìes', function (Blueprint $table) {
-            if(!Schema::hasColumn('activitìes', 'quote_uuid')) {
+            if (! Schema::hasColumn('activitìes', 'quote_uuid')) {
                 $table->string('quote_uuid', 255)->nullable(false);
             }
         });

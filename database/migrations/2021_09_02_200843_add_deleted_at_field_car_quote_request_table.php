@@ -1,9 +1,9 @@
 <?php
 
-use Illuminate\Database\Migrations\Migration;
+use App\Models\BaseMigration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use App\Models\BaseMigration;
+
 class AddDeletedAtFieldCarQuoteRequestTable extends BaseMigration
 {
     /**
@@ -14,8 +14,9 @@ class AddDeletedAtFieldCarQuoteRequestTable extends BaseMigration
     public function up()
     {
         Schema::table('car_quote_request', function (Blueprint $table) {
-            if(!Schema::hasColumn('car_quote_request','deleted_at'))
+            if (! Schema::hasColumn('car_quote_request', 'deleted_at')) {
                 $table->softDeletes();
+            }
         });
     }
 

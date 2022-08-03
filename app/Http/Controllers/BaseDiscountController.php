@@ -2,14 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\BaseDiscount;
-use Illuminate\Http\Request;
-use Auth;
-use DataTables;
-use Illuminate\Support\Facades\Log;
 use App\Http\Requests\BaseDiscountRequest;
 use App\Http\Resources\BaseDiscountResource;
 use App\Http\Traits\VehicleTypeTrait;
+use App\Models\BaseDiscount;
+use DataTables;
+use Illuminate\Http\Request;
 
 class BaseDiscountController extends Controller
 {
@@ -24,19 +22,21 @@ class BaseDiscountController extends Controller
     {
         $vehicleTypes = $this->getVehicleTypes();
         if ($request->ajax()) {
-
             $data = $base::select('discount_engine_base.*', 'vehicle_type.text as vehicle_type_text')
                 ->leftjoin('vehicle_type', 'vehicle_type.id', 'discount_engine_base.vehicle_type_id')
                 ->where('discount_engine_base.vehicle_type_id', '!=', null)
                 ->orderBy('discount_engine_base.created_at', 'desc');
-            if (!empty($request->vehicle_type)) {
+            if (! empty($request->vehicle_type)) {
                 $data->where('discount_engine_base.vehicle_type_id', $request->vehicle_type);
             }
+
             return DataTables::of($data)
                 ->addIndexColumn()
                 ->make(true);
+
             return view('basediscount.view', compact('vehicleTypes'));
         }
+
         return view('basediscount.view', compact('vehicleTypes'));
     }
 
@@ -48,6 +48,7 @@ class BaseDiscountController extends Controller
     public function create()
     {
         $vehicleTypes = $this->getVehicleTypes();
+
         return view('basediscount.add', compact('vehicleTypes'));
     }
 
@@ -65,7 +66,8 @@ class BaseDiscountController extends Controller
         }
 
         $id = $base->create($request->validated())->id;
-        return redirect("discount/base/" . $id)->with('success', 'Base Discount has been stored');
+
+        return redirect('discount/base/'.$id)->with('success', 'Base Discount has been stored');
     }
 
     /**
@@ -76,8 +78,8 @@ class BaseDiscountController extends Controller
      */
     public function show(BaseDiscount $base)
     {
-
         $basediscount = new BaseDiscountResource($base);
+
         return view('basediscount.show', compact('basediscount'));
     }
 
@@ -91,6 +93,7 @@ class BaseDiscountController extends Controller
     {
         $vehicleTypes = $this->getVehicleTypes();
         $basediscount = new BaseDiscountResource($base);
+
         return view('basediscount.edit', compact('basediscount', 'vehicleTypes'));
     }
 
@@ -104,8 +107,9 @@ class BaseDiscountController extends Controller
     public function update(BaseDiscountRequest $request, BaseDiscount $base)
     {
         $base->update($request->validated());
-        if (isset($request->return_to_view))
-            return redirect("discount/base/" . $base->id)->with('success', 'Base Discount has been updated');
+        if (isset($request->return_to_view)) {
+            return redirect('discount/base/'.$base->id)->with('success', 'Base Discount has been updated');
+        }
     }
 
     /**
@@ -117,6 +121,7 @@ class BaseDiscountController extends Controller
     public function destroy(BaseDiscount $base)
     {
         $base->delete();
+
         return redirect()->route('basediscount.index')->with('message', 'Base discount has been deleted');
     }
 }

@@ -4,27 +4,29 @@ namespace App\Http\Controllers;
 
 use App\Enums\HealthTeamType;
 use App\Enums\quoteTypeCode;
+use App\Http\Requests\ActivitiesRequest;
 use App\Models\Activities;
 use App\Models\User;
 use App\Services\ActivitiesService;
 use App\Services\CRUDService;
 use App\Services\HelperService;
-use Illuminate\Http\Request;
 use DataTables;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class ActivitesController extends Controller
 {
-
     protected $activitesService;
     protected $crudService;
     protected $helperService;
+
     public function __construct(ActivitiesService $activitesService, CRUDService $crudService, HelperService $helperService)
     {
         $this->activitesService = $activitesService;
         $this->crudService = $crudService;
         $this->helperService = $helperService;
     }
+
     /**
      * Display a listing of the resource.
      *
@@ -32,27 +34,25 @@ class ActivitesController extends Controller
      */
     public function index(Request $request)
     {
-        $advisors  = [];
+        $advisors = [];
         $subOrdinates = $this->helperService->walkTree(Auth::user()->id);
-        foreach($subOrdinates as $subOrdinate){
-            $user =User::where('id', $subOrdinate)->first();
-            if($user->hasAnyRole(['CAR_ADVISOR', 'HEALTH_ADVISOR', 'TRAVEL_ADVISOR', 'HOME_ADVISOR', 'LIFE_ADVISOR', 'PET_ADVISOR', 
-            'BUSINESS_ADVISOR', 'CORPLINE_ADVISOR', 'RM_ADVISOR', 'GM_ADVISOR', 'EBP_ADVISOR', ])){
+        foreach ($subOrdinates as $subOrdinate) {
+            $user = User::where('id', $subOrdinate)->first();
+            if ($user->hasAnyRole(['CAR_ADVISOR', 'HEALTH_ADVISOR', 'TRAVEL_ADVISOR', 'HOME_ADVISOR', 'LIFE_ADVISOR', 'PET_ADVISOR',
+                'BUSINESS_ADVISOR', 'CORPLINE_ADVISOR', 'RM_ADVISOR', 'GM_ADVISOR', 'EBP_ADVISOR', ])) {
                 array_push($advisors, $user);
             }
-
         }
         if ($request->ajax()) {
-            
             $activites = $this->activitesService->getGridData($request);
+
             return DataTables::of($activites)
                 ->addIndexColumn()
                 ->make(true);
         }
+
         return view('activities.view', compact('advisors'));
     }
-
-
 
     /**
      * Show the form for creating a new resource.
@@ -70,19 +70,18 @@ class ActivitesController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store(ActivitiesRequest $request)
     {
         $record = '';
-        if(isset($request->entityId)){
+        if (isset($request->entityId)) {
             $record = $this->crudService->getEntity($request->modelType, $request->entityUId);
         }
-        $this->activitesService->createActivity($request, $record);  
-        if(isset($request->isActivityView)){
+        $this->activitesService->createActivity($request, $record);
+        if (isset($request->isActivityView)) {
             return redirect()->to('/activities/')->with('success', ' Activity has been Created');
-        }else{
-            return redirect()->to('/quotes/' . strtolower($request->parentType) . '/' . $request->entityUId)->with('success', ' Activity has been Created');
+        } else {
+            return redirect()->to('/quotes/'.strtolower($request->parentType).'/'.$request->entityUId)->with('success', ' Activity has been Created');
         }
-        
     }
 
     /**
@@ -95,6 +94,7 @@ class ActivitesController extends Controller
     {
         $record = $this->activitesService->getActivityByUUID($id);
         $record->assignee_name = User::where('id', $record->assignee_id)->first()->name;
+
         return view('activities.show', compact('record'));
     }
 
@@ -109,7 +109,8 @@ class ActivitesController extends Controller
         $record = $this->activitesService->getActivityByUUID($id);
         $record->assignee_name = User::where('id', $record->assignee_id)->first()->name;
         $quotetypename = $this->getQuoteTypeNameFromId($record->quote_type_id);
-        $advisors  = $this->getAdvisorsForActivity($quotetypename, $record->health_team_type);
+        $advisors = $this->getAdvisorsForActivity($quotetypename, $record->health_team_type);
+
         return view('activities.edit', compact('record', 'advisors'));
     }
 
@@ -120,9 +121,8 @@ class ActivitesController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+    public function update(ActivitiesRequest $request, $id)
     {
-        
         $record = $this->activitesService->getActivityByUUID($id);
         if (isset($request->assignee_id) && $request->assignee_id != '') {
             $record->assignee_id = $request->assignee_id;
@@ -132,8 +132,9 @@ class ActivitesController extends Controller
         $record->due_date = $request->due_date;
         $record->save();
         if (isset($request->fromLeadView) && $request->fromLeadView == 1) {
-            return redirect('/quotes/' . $this->getQuoteTypeNameFromId($request->quoteType) . '/' . $request->quote_uuid)->with('success', 'Activity updated successfully');
+            return redirect('/quotes/'.$this->getQuoteTypeNameFromId($request->quoteType).'/'.$request->quote_uuid)->with('success', 'Activity updated successfully');
         }
+
         return redirect('/activities')->with('success', 'Activity updated successfully');
     }
 
@@ -145,10 +146,11 @@ class ActivitesController extends Controller
      */
     public function destroy(Request $request, $id)
     {
-        Activities::where('id',$id)->delete();
+        Activities::where('id', $id)->delete();
         if (isset($request->isLeadView) && $request->isLeadView == 1) {
-            return redirect('/quotes/' . $request->quoteType . '/' . $request->quote_uuid)->with('success', 'Activity deleted successfully');
+            return redirect('/quotes/'.$request->quoteType.'/'.$request->quote_uuid)->with('success', 'Activity deleted successfully');
         }
+
         return redirect('/activities')->with('success', 'Activity deleted successfully');
     }
 
@@ -163,25 +165,26 @@ class ActivitesController extends Controller
     {
         $record = $this->activitesService->getActivityById($request->activity_id);
         $advisors = [];
-        if(isset($request->quote_uuid)){
+        if (isset($request->quote_uuid)) {
             $quoteRecord = $this->crudService->getEntityByUUID($request->quote_uuid, $request->quoteType);
-            $advisors  = $this->getAdvisorsForActivity($request->quoteType, isset($quoteRecord->health_team_type) ? $quoteRecord->health_team_type : '');
+            $advisors = $this->getAdvisorsForActivity($request->quoteType, isset($quoteRecord->health_team_type) ? $quoteRecord->health_team_type : '');
         }
-        
+
         return view('activities.edit', compact('record', 'advisors'));
     }
 
     public function getAdvisorsForActivity($quoteType, $healthTeamType)
     {
-        $advisors  = [];
+        $advisors = [];
         if (strtolower($quoteType) == strtolower(quoteTypeCode::Health) && ($healthTeamType == HealthTeamType::EBP ||
             $healthTeamType == HealthTeamType::RM_NB || $healthTeamType == HealthTeamType::RM_SPEED)) {
             $advisors = $this->crudService->getEBPAndRMAdvisors();
-        } else if (strtolower($quoteType) == 'business') {
+        } elseif (strtolower($quoteType) == 'business') {
             $advisors = $this->crudService->getRMAndBusinessAdvisors();
         } else {
             $advisors = $this->crudService->getAdvisorsByModelType($quoteType);
         }
+
         return $advisors;
     }
 
@@ -214,6 +217,7 @@ class ActivitesController extends Controller
                 $quotetypename = 'travel';
                 break;
         }
+
         return $quotetypename;
     }
 }

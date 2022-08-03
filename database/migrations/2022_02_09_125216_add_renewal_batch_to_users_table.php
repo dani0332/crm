@@ -15,7 +15,7 @@ class AddRenewalBatchToUsersTable extends Migration
     {
         if (Schema::hasTable('car_quote_request')) {
             Schema::table('car_quote_request', function (Blueprint $table) {
-                if (!Schema::hasColumn('car_quote_request', 'renewal_batch')) {
+                if (! Schema::hasColumn('car_quote_request', 'renewal_batch')) {
                     $table->integer('renewal_batch')->nullable();
                 }
             });
@@ -31,7 +31,7 @@ class AddRenewalBatchToUsersTable extends Migration
     {
         if (Schema::hasTable('car_quote_request')) {
             Schema::table('car_quote_request', function (Blueprint $table) {
-                if (!Schema::hasColumn('car_quote_request', 'renewal_batch')) {
+                if (! Schema::hasColumn('car_quote_request', 'renewal_batch')) {
                     $table->dropColumn('renewal_batch');
                 }
             });

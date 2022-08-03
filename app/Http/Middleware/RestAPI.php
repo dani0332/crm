@@ -2,9 +2,10 @@
 
 namespace App\Http\Middleware;
 
+use Auth;
 use Closure;
 use Illuminate\Http\Request;
-use Auth;
+
 class RestAPI
 {
     /**
@@ -16,7 +17,7 @@ class RestAPI
      */
     public function handle(Request $request, Closure $next)
     {
-        if (!Auth::user()) {
+        if (! Auth::user()) {
             return response()->json(['error' => 'Unauthenticated.'], 401);
         }
 

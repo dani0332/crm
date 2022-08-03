@@ -11,6 +11,6 @@ use BenSampo\Enum\Enum;
  */
 final class RenewalsUploadType extends Enum
 {
-    const CREATE_LEADS = "create";
-    const UPDATE_LEADS = "update";
+    const CREATE_LEADS = 'create';
+    const UPDATE_LEADS = 'update';
 }

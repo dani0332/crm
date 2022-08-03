@@ -13,24 +13,18 @@ class AlterQuoteStatusAddUuid extends Migration
      */
     public function up()
     {
-        if (!Schema::hasColumn('quote_status', 'uuid'))
-        {
-            Schema::table('quote_status', function (Blueprint $table)
-            {
+        if (! Schema::hasColumn('quote_status', 'uuid')) {
+            Schema::table('quote_status', function (Blueprint $table) {
                 $table->uuid('uuid')->default(DB::raw('(UUID())'));
             });
         }
-        if (!Schema::hasColumn('quote_status', 'created_by'))
-        {
-            Schema::table('quote_status', function (Blueprint $table)
-            {
+        if (! Schema::hasColumn('quote_status', 'created_by')) {
+            Schema::table('quote_status', function (Blueprint $table) {
                 $table->string('created_by');
             });
         }
-        if (!Schema::hasColumn('quote_status', 'updated_by'))
-        {
-            Schema::table('quote_status', function (Blueprint $table)
-            {
+        if (! Schema::hasColumn('quote_status', 'updated_by')) {
+            Schema::table('quote_status', function (Blueprint $table) {
                 $table->string('updated_by');
             });
         }

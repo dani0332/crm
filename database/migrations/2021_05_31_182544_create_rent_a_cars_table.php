@@ -15,8 +15,8 @@ class CreateRentACarsTable extends Migration
     {
         Schema::create('rent_a_cars', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->string('text','255');
-            $table->string('text_ar','255');
+            $table->string('text', '255');
+            $table->string('text_ar', '255');
             $table->boolean('is_active')->default('1');
             $table->integer('sort_order');
             $table->boolean('is_deleted')->default('0');

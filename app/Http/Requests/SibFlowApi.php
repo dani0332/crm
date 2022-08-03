@@ -2,9 +2,9 @@
 
 namespace App\Http\Requests;
 
+use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
-use Illuminate\Contracts\Validation\Validator;
 
 class SibFlowApi extends FormRequest
 {
@@ -18,12 +18,12 @@ class SibFlowApi extends FormRequest
         return [
             'quoteUID' => 'required',
             'quoteTypeID' => 'required',
-            'QuoteStatus' => 'required'
+            'QuoteStatus' => 'required',
         ];
     }
 
     public function failedValidation(Validator $validator)
     {
-       throw new HttpResponseException(response()->json(['message' => $validator->errors()]), 422);
+        throw new HttpResponseException(response()->json(['message' => $validator->errors()]), 422);
     }
 }

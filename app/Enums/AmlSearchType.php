@@ -11,6 +11,6 @@ use BenSampo\Enum\Enum;
  */
 final class AmlSearchType extends Enum
 {
-    const ENTITY = "Entity";
-    const INDIVIDUAL = "Individual";
+    const ENTITY = 'Entity';
+    const INDIVIDUAL = 'Individual';
 }

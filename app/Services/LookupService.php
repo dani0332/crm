@@ -4,32 +4,31 @@ namespace App\Services;
 
 use App\Enums\QuoteStatusEnum;
 use App\Models\ApplicationStorage;
-use App\Models\VehicleType;
-use App\Models\YearOfManufacture;
 use App\Models\CarModelDetail;
 use App\Models\InsuranceProvider;
 use App\Models\LostReasons;
-use App\Models\QuoteStatus;
-use App\Models\UAELicenseHeldFor;
 use App\Models\MemberCategory;
+use App\Models\QuoteStatus;
 use App\Models\SalaryBand;
+use App\Models\UAELicenseHeldFor;
+use App\Models\VehicleType;
+use App\Models\YearOfManufacture;
 
 class LookupService extends BaseService
 {
-
     public function getYearsOfManufacture()
-	{
-        return YearOfManufacture::select('text as id', 'text')->get();
-	}
-
-	public function getVehicleTypes()
     {
-        return VehicleType::select('id', 'text')->where("is_active", true)->get();
+        return YearOfManufacture::select('text as id', 'text')->get();
+    }
+
+    public function getVehicleTypes()
+    {
+        return VehicleType::select('id', 'text')->where('is_active', true)->get();
     }
 
     public function getTrimListByCarModel($id)
     {
-        return CarModelDetail::select('id', 'text')->where("is_active", true)->where("car_model_id", $id)->get();
+        return CarModelDetail::select('id', 'text')->where('is_active', true)->where('car_model_id', $id)->get();
     }
 
     public function getBackHomeLicensed()
@@ -46,9 +45,10 @@ class LookupService extends BaseService
     {
         return SalaryBand::active()->get();
     }
+
     public function getApplicationStorageValue($key)
     {
-        return ApplicationStorage::where("key_name", $key)->first()->value;
+        return ApplicationStorage::where('key_name', $key)->first()->value;
     }
 
     public function getLostReasons()
@@ -58,7 +58,7 @@ class LookupService extends BaseService
 
     public function getAllInsuranceProviders()
     {
-        return InsuranceProvider::select('id', 'text')->orderBy('sort_order', 'asc')->get();
+        return InsuranceProvider::select('id', 'text')->orderBy('text', 'asc')->get();
     }
 
     public function getLeadStatuses()
@@ -67,11 +67,10 @@ class LookupService extends BaseService
         ->whereNotIn('id', [
             QuoteStatusEnum::AMLScreeningCleared, QuoteStatusEnum::Draft, QuoteStatusEnum::Cancelled, QuoteStatusEnum::AMLScreeningFailed,
             QuoteStatusEnum::TransactionDeclined, QuoteStatusEnum::PolicyIssued, QuoteStatusEnum::PolicyInvoiced,
-            QuoteStatusEnum::Issued
+            QuoteStatusEnum::Issued,
         ])
-        ->where("is_active", true)
+        ->where('is_active', true)
         ->orderBy('sort_order', 'asc')
         ->get();
     }
-
 }

@@ -14,7 +14,7 @@ class UpdateColumnAdvisorIdForBikeQuoteRequest extends Migration
     public function up()
     {
         Schema::table('bike_quote_request', function (Blueprint $table) {
-            if(Schema::hasColumn('bike_quote_request', 'advisor_id')) {
+            if (Schema::hasColumn('bike_quote_request', 'advisor_id')) {
                 $table->unsignedBigInteger('advisor_id')->nullable()->change();
                 $table->foreign('advisor_id')->references('id')->on('users')->onDelete('no action');
             }

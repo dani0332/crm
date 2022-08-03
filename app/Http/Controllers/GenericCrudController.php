@@ -2,20 +2,20 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\GenericModel;
-use App\Services\InsuranceProviderService;
-use App\Services\CarPlanService;
-use App\Services\DropdownSourceService;
-use App\Services\CRUDService;
-use App\Services\CarPlanCoverageService;
-use App\Services\CarPlanAddOnService;
-use App\Services\CarPlanAddOnOptionService;
-use App\Services\ApplicationStorageService;
 use App\Enums\InsuranceProvderConstants;
-use App\Services\TeamService;
+use App\Models\GenericModel;
+use App\Services\ApplicationStorageService;
+use App\Services\CarPlanAddOnOptionService;
+use App\Services\CarPlanAddOnService;
+use App\Services\CarPlanCoverageService;
+use App\Services\CarPlanService;
+use App\Services\CRUDService;
+use App\Services\DropdownSourceService;
+use App\Services\InsuranceProviderService;
 use App\Services\LeadStatusService;
-use Illuminate\Http\Request;
+use App\Services\TeamService;
 use DataTables;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redirect;
 
 class GenericCrudController extends Controller
@@ -30,6 +30,7 @@ class GenericCrudController extends Controller
     protected $applicationStorageService;
     protected $teamsService;
     protected $leadStatusService;
+
     public function __construct(
         InsuranceProviderService $insuranceProviderService,
         CRUDService $crudService,
@@ -82,8 +83,10 @@ class GenericCrudController extends Controller
             return DataTables::of($gridData)
                 ->addIndexColumn()
                 ->make(true);
+
             return view('generic.view', compact('model', 'dropdownSource', 'customTitles'));
         }
+
         return view('generic.view', compact('model', 'dropdownSource', 'customTitles'));
     }
 
@@ -106,9 +109,11 @@ class GenericCrudController extends Controller
             }
         }
         $model = $this->genericModel;
-        if($request->has('id'))
+        if ($request->has('id')) {
             $id = $request->id;
-        return view('generic.add', compact('model', 'dropdownSource', 'customTitles','id'));
+        }
+
+        return view('generic.add', compact('model', 'dropdownSource', 'customTitles', 'id'));
     }
 
     /**
@@ -124,14 +129,13 @@ class GenericCrudController extends Controller
         $modelType = json_decode($request->get('modelType'), true);
         $validateArray = [];
         foreach ($modelPropertiesList as $property => $value) {
-            if (strpos($value, 'required') && $property != 'id' && !strpos($modelSkipPropertiesList['create'], $property)) {
-                if(strpos($value, 'min')){
-                    $min = explode(':', $value)[1]; 
+            if (strpos($value, 'required') && $property != 'id' && ! strpos($modelSkipPropertiesList['create'], $property)) {
+                if (strpos($value, 'min')) {
+                    $min = explode(':', $value)[1];
                     $validateArray[$property] = 'required|numeric|min:'.$min;
-                }else{
+                } else {
                     $validateArray[$property] = 'required';
                 }
-                
             }
         }
         $this->validate($request, $validateArray);
@@ -139,10 +143,11 @@ class GenericCrudController extends Controller
         if (isset($record->message) && str_contains($record->message, 'Error')) {
             return Redirect::back()->with('message', $record->message)->withInput();
         } else {
-            if(isset($request->return_to_view)) {
-                return redirect('/generic/' . strtolower($modelType) . '/create')->with('success', $modelType . ' has been stored');
+            if (isset($request->return_to_view)) {
+                return redirect('/generic/'.strtolower($modelType).'/create')->with('success', $modelType.' has been stored');
             }
-                return redirect('/generic/' . strtolower($modelType) . '/'.$record->id)->with('success', $modelType . ' has been stored');
+
+            return redirect('/generic/'.strtolower($modelType).'/'.$record->id)->with('success', $modelType.' has been stored');
         }
     }
 
@@ -155,7 +160,9 @@ class GenericCrudController extends Controller
     public function show($id)
     {
         $record = $this->crudService->getEntity($this->genericModel->modelType, $id);
-        if (!$record) abort(404);
+        if (! $record) {
+            abort(404);
+        }
         $model = $this->genericModel;
         $customTitles = $customTableList = [];
         foreach ($model->properties as $property => $value) {
@@ -166,27 +173,30 @@ class GenericCrudController extends Controller
                 $customTableList[$property] = $this->dropdownSourceService->getOnlySelectedItemName($property, $id);
             }
         }
-        $serviceType = $model->modelType . 'Service';
+        $serviceType = $model->modelType.'Service';
         if ($this->genericModel->modelType == InsuranceProvderConstants::NAME) {
             $plansList = $this->carPlanService->getProvderPlans($id);
+
             return view('generic.show', compact([
-                'record', 'model', 'customTitles', 'plansList', 'customTableList'
+                'record', 'model', 'customTitles', 'plansList', 'customTableList',
             ]));
         }
         if ($this->genericModel->modelType == InsuranceProvderConstants::PLANNAME) {
             $coverageList = $this->carPlanCoverageService->getPlanCoverage($id);
             $plansList = $this->carPlanAddOnService->getPlanAddon($id);
+
             return view('generic.show', compact([
-                'record', 'model', 'customTitles', 'coverageList', 'customTableList','plansList'
+                'record', 'model', 'customTitles', 'coverageList', 'customTableList', 'plansList',
             ]));
         }
         if ($this->genericModel->modelType == InsuranceProvderConstants::PLANADDON) {
             $plansList = $this->carPlanAddOnOptionService->getPlanAddonOption($record->addon_id);
 
             return view('generic.show', compact([
-                'record', 'model', 'customTitles', 'plansList', 'customTableList'
+                'record', 'model', 'customTitles', 'plansList', 'customTableList',
             ]));
         }
+
         return view('generic.show', compact(['record', 'model', 'customTitles', 'customTableList']));
     }
 
@@ -216,6 +226,7 @@ class GenericCrudController extends Controller
                 $customLists[$property] = $data;
             }
         }
+
         return view('generic.edit', compact(['record', 'model', 'dropdownSource', 'customTitles', 'customLists']));
     }
 
@@ -233,43 +244,60 @@ class GenericCrudController extends Controller
         $modelSkipPropertiesList = json_decode($request->get('modelSkipProperties'), true);
         $validateArray = [];
         foreach ($modelPropertiesList as $property => $value) {
-            if (strpos($value, 'required') && $property != 'id' && $property != 'code' && $property != 'email' && $property != 'mobile_no' && !strpos($modelSkipPropertiesList, $property)) {
-                if(strpos($value, 'min')){
-                    $min = explode(':', $value)[1]; 
+            if (strpos($value, 'required') && $property != 'id' && $property != 'code' && $property != 'email' && $property != 'mobile_no' && ! strpos($modelSkipPropertiesList, $property)) {
+                if (strpos($value, 'min')) {
+                    $min = explode(':', $value)[1];
                     $validateArray[$property] = 'required|numeric|min:'.$min;
-                }else{
+                } else {
                     $validateArray[$property] = 'required';
                 }
             }
         }
         $this->validate($request, $validateArray);
         $this->crudService->updateModelByType(json_decode($request->modelType, true), $request, $id);
-        if($request->has("is_active"))
-            return redirect('/generic/' . strtolower(str_replace('"', '', $request->modelType)) . '/' . $id)->with('success', json_decode($request->modelType, true) . ' has been updated');
-        else
-            return redirect('/generic/' . strtolower(str_replace('"', '', $request->modelType)))->with('success', json_decode($request->modelType, true) . ' has been updated');
+        if ($request->has('is_active')) {
+            return redirect('/generic/'.strtolower(str_replace('"', '', $request->modelType)).'/'.$id)->with('success', json_decode($request->modelType, true).' has been updated');
+        } else {
+            return redirect('/generic/'.strtolower(str_replace('"', '', $request->modelType)))->with('success', json_decode($request->modelType, true).' has been updated');
+        }
     }
-
-
 
     private function setModelType(Request $request)
     {
         $url = strpos($request->fullUrl(), '?') ? explode('?', $request->fullUrl())[0] : $request->fullUrl();
-        if (strpos($url, 'insuranceprovider')) $this->genericModel->modelType = 'InsuranceProvider';
-        if (strpos($url, 'carplan')) $this->genericModel->modelType = 'CarPlan';
-        if (strpos($url, 'carplancoverage')) $this->genericModel->modelType = 'CarPlanCoverage';
-        if (strpos($url, 'carplanaddon')) $this->genericModel->modelType = 'CarPlanAddOn';
-        if (strpos($url, 'carplanaddonoption')) $this->genericModel->modelType = 'CarPlanAddOnOption';
-        if (strpos($url, 'applicationstorage')) $this->genericModel->modelType = 'ApplicationStorage';
-        if (strpos($url, 'teams')) $this->genericModel->modelType = 'Teams';
-        if (strpos($url, 'leadstatus')) $this->genericModel->modelType = 'LeadStatus';
+        if (strpos($url, 'insuranceprovider')) {
+            $this->genericModel->modelType = 'InsuranceProvider';
+        }
+        if (strpos($url, 'carplan')) {
+            $this->genericModel->modelType = 'CarPlan';
+        }
+        if (strpos($url, 'carplancoverage')) {
+            $this->genericModel->modelType = 'CarPlanCoverage';
+        }
+        if (strpos($url, 'carplanaddon')) {
+            $this->genericModel->modelType = 'CarPlanAddOn';
+        }
+        if (strpos($url, 'carplanaddonoption')) {
+            $this->genericModel->modelType = 'CarPlanAddOnOption';
+        }
+        if (strpos($url, 'applicationstorage')) {
+            $this->genericModel->modelType = 'ApplicationStorage';
+        }
+        if (strpos($url, 'teams')) {
+            $this->genericModel->modelType = 'Teams';
+        }
+        if (strpos($url, 'leadstatus')) {
+            $this->genericModel->modelType = 'LeadStatus';
+        }
     }
 
     private function fillModelByModelType($type, Request $request)
     {
         $modelType = json_decode($request->get('modelType'), true) ?? $type;
-        if ($modelType == null) $modelType = $request->get('modelType');
-        $serviceType = lcfirst(ucwords($modelType)) . 'Service';
+        if ($modelType == null) {
+            $modelType = $request->get('modelType');
+        }
+        $serviceType = lcfirst(ucwords($modelType)).'Service';
         $this->genericModel->properties = $this->{$serviceType}->fillModelProperties();
         $this->genericModel->skipProperties = $this->{$serviceType}->fillModelSkipProperties();
         $this->genericModel->searchProperties = $this->{$serviceType}->fillModelSearchProperties();
