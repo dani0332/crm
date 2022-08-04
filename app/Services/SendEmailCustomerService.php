@@ -67,16 +67,6 @@ class SendEmailCustomerService extends BaseService
                     $tag,
                 ],
                 'attachment' => $attachments,
-                // 'attachment' => [
-                //     [
-                //         'url' => 'https://insurancemarket.blob.core.windows.net/imcrmdev/documents/travel/62ea39a43ef23_3KXQVSQ8_sample1.pdf',
-                //         'name' => 'sample1.pdf',
-                //     ],
-                //     [
-                //         'url' => 'https://insurancemarket.blob.core.windows.net/imcrmdev/documents/travel/62ea39abed454_3KXQVSQ8_sample2.pdf',
-                //         'name' => 'sample2.pdf',
-                //     ]
-                // ],
             ], JSON_UNESCAPED_SLASHES);
 
             $client = new \GuzzleHttp\Client();

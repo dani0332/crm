@@ -93,9 +93,9 @@ class QuoteDocumentController extends Controller
         $response = $this->sendEmailCustomerService->sendEmail($emailTemplateId, $emailData, 'policy-documents-'.$quoteType.'-quote');
 
         if($response == 201) {
-            return redirect()->back()->with('success', 'Quote Policy has been sent');
+            return redirect()->back()->with('success', 'Quote Policy has been sent.');
         } else {
-            return redirect()->back()->with('error', 'Quote Policy has not been sent');
+            return redirect()->back()->with('error', 'Quote Policy has not been sent. '.$response);
         }
     }
 
