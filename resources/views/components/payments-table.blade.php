@@ -104,7 +104,7 @@
                                 <td>{{ $payment->paymentStatus->text }}</td>
                                 <td>{{ $travelPlainModel->plan->text }}</td>
                                 <td>{{ $payment->captured_amount }}</td>
-                                <td>{{ $payment->paymentStatusLog ? $payment->paymentStatusLog->created_at :  '' }}</td>
+                                <td>{{ $payment->paymentStatusLogs->first() ? $payment->paymentStatusLogs->first()->created_at :  '' }}</td>
                                 <td>{{ $payment->captured_at}}</td>
                                 <td>{{ $payment->authorized_at}}</td>
                                 <td>{{ $payment->paymentMethod->name }}</td>

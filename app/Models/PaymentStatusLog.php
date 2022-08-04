@@ -8,8 +8,8 @@ class PaymentStatusLog extends Model
 {
     protected $table = 'payment_status_log';
 
-    public function payments()
+    public function payment()
     {
-        return $this->hasMany('App\Models\Payment', 'payment_code', 'code');
+        return $this->belongsTo('App\Models\Payment', 'code', 'payment_code');
     }
 }

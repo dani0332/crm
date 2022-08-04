@@ -33,8 +33,8 @@ class Payment extends Model
         return $this->belongsTo('App\Models\PaymentMethod', 'payment_methods_code', 'code');
     }
 
-    public function paymentStatusLog()
+    public function paymentStatusLogs()
     {
-        return $this->belongsTo('App\Models\PaymentStatusLog', 'payment_code', 'code');
+        return $this->hasMany('App\Models\PaymentStatusLog', 'payment_code', 'code')->latest();
     }
 }
