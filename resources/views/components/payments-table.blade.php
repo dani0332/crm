@@ -104,7 +104,7 @@
                                 <td>{{ $payment->paymentStatus->text }}</td>
                                 <td>{{ $travelPlainModel->plan->text }}</td>
                                 <td>{{ $payment->captured_amount }}</td>
-                                <td>{{ $payment->paymentStatusLog ? $payment->paymentStatusLog->latest()->first()->created_at :  '' }}</td>
+                                <td>{{ $payment->paymentStatusLog ? $payment->paymentStatusLog->created_at :  '' }}</td>
                                 <td>{{ $payment->captured_at}}</td>
                                 <td>{{ $payment->authorized_at}}</td>
                                 <td>{{ $payment->paymentMethod->name }}</td>
@@ -113,7 +113,7 @@
                                     @cannot(PermissionsEnum::ApprovePayments)
                                         <button class="btn btn-sm btn-success generateCCLink">Copy Link</button>
                                         @if($payment->payment_status_id != PaymentStatusEnum::PAID &&
-                                        $payment->payment_status_id != PaymentStatusEnum::CAPTURED)
+                                        $payment->payment_status_id != PaymentStatusEnum::CAPTURED && $payment->payment_status_id != PaymentStatusEnum::AUTHORISED)
                                             <button class="btn btn-primary btn-sm edit-payment-btn" data-code="{{$payment->code}}"
                                                 data-reference="{{$payment->reference}}"
                                                 data-amount="{{$payment->captured_amount}}"
