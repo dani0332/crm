@@ -34,7 +34,7 @@ class SendEmailCustomerService extends BaseService
                 'Content-Type' => 'application/json',
             ];
 
-            $emailAttachments = isset($emailData['documentUrl']) ? $emailData['documentUrl'] : null;
+            $emailAttachments = isset($emailData->documentUrl) ? $emailData->documentUrl : null;
 
             if($emailAttachments) {
                 $attachments = [];
@@ -48,20 +48,20 @@ class SendEmailCustomerService extends BaseService
 
             $body = json_encode([
                 'to' => [[
-                    'email' => $emailData['customerEmail'],
-                    'name' => $emailData['customerName'],
+                    'email' => $emailData->customerEmail,
+                    'name' => $emailData->customerName,
                 ]],
                 'templateId' => $emailTemplateId,
                 'params' => [
-                    'customerName' => $emailData['customerName'],
-                    'customerEmail' => $emailData['customerEmail'],
-                    'signUpButtonUrl' => isset($emailData['signUpButtonUrl']) ? $emailData['signUpButtonUrl'] : null,
-                    'buttonUrl' => isset($emailData['buttonUrl']) ? $emailData['buttonUrl'] : null,
-                    'cdbId' => isset($emailData['quoteCdbId']) ? $emailData['quoteCdbId'] : null,
-                    'notesForCustomer' => isset($emailData['notesForCustomer']) ? nl2br(htmlentities(str_replace('<br />', '', $emailData['notesForCustomer']))) : null,
-                    'advisorName' => isset($emailData['advisorName']) ? $emailData['advisorName'] : null,
-                    'advisorLandlineNo' => isset($emailData['advisorLandlineNo']) ? $emailData['advisorLandlineNo'] : null,
-                    'advisorMobileNo' => isset($emailData['advisorMobileNo']) ? $emailData['advisorMobileNo'] : null,
+                    'customerName' => $emailData->customerName,
+                    'customerEmail' => $emailData->customerEmail,
+                    'signUpButtonUrl' => isset($emailData->signUpButtonUrl) ? $emailData->signUpButtonUrl : null,
+                    'buttonUrl' => isset($emailData->buttonUrl) ? $emailData->buttonUrl : null,
+                    'cdbId' => isset($emailData->quoteCdbId) ? $emailData->quoteCdbId : null,
+                    'notesForCustomer' => isset($emailData->notesForCustomer) ? nl2br(htmlentities(str_replace('<br />', '', $emailData->notesForCustomer))) : null,
+                    'advisorName' => isset($emailData->advisorName) ? $emailData->advisorName : null,
+                    'advisorLandlineNo' => isset($emailData->advisorLandlineNo) ? $emailData->advisorLandlineNo : null,
+                    'advisorMobileNo' => isset($emailData->advisorMobileNo) ? $emailData->advisorMobileNo : null,
                 ],
                 'tags' => [
                     $tag,
@@ -86,17 +86,17 @@ class SendEmailCustomerService extends BaseService
                 $isEmailSent = 1;
             }
         } catch (Exception $ex) {
-            $errorMessage = 'SIB:  getCode/getMessage: '.$ex->getCode().'/'.$ex->getMessage().' customerEmail: '.$emailData['customerEmail'].' quoteCdbId: '.$emailData['quoteCdbId'].' get_class: '.get_class();
+            $errorMessage = 'SIB: Code/Message: '.$ex->getCode().'/'.$ex->getMessage().' customerEmail: '.$emailData->customerEmail.' quoteCdbId: '.$emailData->quoteCdbId.' get_class: '.get_class();
             Log::channel('daily')->error($errorMessage);
             $getStatusCode = $ex->getCode();
             $getResponse = json_encode($ex->getCode().' '.$ex->getMessage());
             $isEmailSent = 0;
         }
 
-        $this->emailActivityService->addEmailActivity($getResponse, $isEmailSent, $emailData['customerEmail']);
+        $this->emailActivityService->addEmailActivity($getResponse, $isEmailSent, $emailData->customerEmail);
 
         // addEmailStatus is for quote modules only
-        if (isset($messageId) && isset($emailData['quoteTypeId']) && isset($emailData['quoteId'])) {
+        if (isset($messageId) && isset($emailData->quoteTypeId) && isset($emailData->quoteId)) {
             $this->emailStatusService->addEmailStatus($emailData, $messageId);
         }
 

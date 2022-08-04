@@ -81,7 +81,7 @@ class QuoteDocumentController extends Controller
         $advisor = $this->userService->getUserById($quoteModel->advisor_id);
         $quoteTypeId = $this->activityService->getQuoteTypeId($quoteType);
 
-        $emailData = [
+        $emailData = (object)[
             'customerName' => $customer->first_name.' '.$customer->last_name,
             'customerEmail' => $customer->email,
             'advisorName' => $advisor->name,

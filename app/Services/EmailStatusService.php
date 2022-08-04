@@ -17,12 +17,12 @@ class EmailStatusService extends BaseService
     public function addEmailStatus($emailData, $messageId)
     {
         $newEmailStatus = new EmailStatus();
-        $newEmailStatus->quote_type_id = $emailData['quoteTypeId'];
-        $newEmailStatus->quote_id = $emailData['quoteId'];
-        $newEmailStatus->email_address = $emailData['customerEmail'];
+        $newEmailStatus->quote_type_id = $emailData->quoteTypeId;
+        $newEmailStatus->quote_id = $emailData->quoteId;
+        $newEmailStatus->email_address = $emailData->customerEmail;
         $newEmailStatus->msg_id = $messageId;
-        $newEmailStatus->template_id = $emailData['templateId'];
-        $newEmailStatus->customer_id = $emailData['customerId'];
+        $newEmailStatus->template_id = $emailData->templateId;
+        $newEmailStatus->customer_id = $emailData->customerId;
         $newEmailStatus->email_status = ProcessStatusCode::IN_PROGRESS;
         $newEmailStatus->save();
 
