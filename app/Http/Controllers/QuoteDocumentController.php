@@ -79,6 +79,7 @@ class QuoteDocumentController extends Controller
         $documentUrl = array_merge($quoteDocuments, $policyWordingDocuments);
         $customer = $this->customerService->getCustomerById($quoteModel->customer_id);
         $advisor = $this->userService->getUserById($quoteModel->advisor_id);
+        $quoteTypeId = $this->activityService->getQuoteTypeId($quoteType);
 
         $emailData = [
             'customerName' => $customer->first_name.' '.$customer->last_name,
@@ -87,6 +88,10 @@ class QuoteDocumentController extends Controller
             'advisorLandlineNo' => $advisor->landline_no,
             'advisorMobileNo' => $advisor->mobile_no,
             'quoteCdbId' => $quoteModel->code,
+            'quoteTypeId' => $quoteTypeId,
+            'quoteId' => $quoteModel->id,
+            'templateId' => $emailTemplateId,
+            'customerId' => $customer->id,
             'documentUrl' => $documentUrl,
         ];
 
