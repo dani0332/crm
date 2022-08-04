@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\DocumentType;
+use App\Models\TravelPlanPolicyWording;
 use App\Services\ActivitiesService;
 use App\Services\CRUDService;
 use App\Services\CustomerService;
@@ -69,30 +70,13 @@ class QuoteDocumentController extends Controller
             'quoteType', 'quoteTypeId', 'documentUploadTypes'));
     }
 
-    public function getQuoteDocumentsForEmail($quoteType, $quoteUuId)
-    {
-        $quoteModel = $this->quoteModel($quoteType, $quoteUuId);
-
-        $documents = $quoteModel->documents;
-
-        return $documents;
-    }
-
     public function sendPolicyDocument($quoteType, $quoteUuId)
     {
-        $documents = $this->getQuoteDocumentsForEmail($quoteType, $quoteUuId);
-
-        foreach ($documents as $document) {
-            $documentType = DocumentType::where('code', $document->document_type_code)->first();
-
-            if ($documentType->send_to_customer == 1) {
-                $documentUrls[] = $document->doc_url;
-            }
-        }
-
-        $emailTemplateId = (int) config('constants.SIB_SEND_QUOTE_POLICY_TEMPLATE_ID');
-        $emailTemplateId = $emailTemplateId ? $emailTemplateId : 375;
+        $emailTemplateId = (int) config('constants.SIB_TRAVEL_QUOTE_POLICY_TEMPLATE_ID');
         $quoteModel = $this->quoteModel($quoteType, $quoteUuId);
+        $quoteDocuments = $this->getQuoteUploadedDocuments($quoteType, $quoteUuId);
+        $policyWordingDocuments = $this->getPolicyWordingDocuments($quoteType, $quoteModel->plan_id);
+        $documentsUrls = array_merge($quoteDocuments, $policyWordingDocuments);
         $customer = $this->customerService->getCustomerById($quoteModel->customer_id);
         $advisor = $this->userService->getUserById($quoteModel->advisor_id);
 
@@ -103,14 +87,12 @@ class QuoteDocumentController extends Controller
             'advisorLandlineNo' => $advisor->landline_no,
             'advisorMobileNo' => $advisor->mobile_no,
             'quoteCdbId' => $quoteModel->code,
-            'documentUrls' => $documentUrls,
+            'documentsUrls' => $documentsUrls,
         ];
-
-        //dd($emailData);
 
         $response = $this->sendEmailCustomerService->sendEmail($emailTemplateId, $emailData, 'policy-documents-'.$quoteType.'-quote');
 
-        dd('response: '.$response);
+        //dd('response: '.$response);
         //echo '<pre>'; print_r($documentUrls); echo '</pre>';
     }
 
@@ -119,5 +101,35 @@ class QuoteDocumentController extends Controller
         $model = '\\App\\Models\\'.ucwords($quoteType).'Quote';
 
         return $model::where('uuid', $quoteUuId)->first();
+    }
+
+    public function getQuoteUploadedDocuments($quoteType, $quoteUuId)
+    {
+        $azureStorageUrl = config('constants.AZURE_IM_STORAGE_URL');
+        $azureStorageContainer = config('constants.AZURE_IM_STORAGE_CONTAINER');
+        $quoteModel = $this->quoteModel($quoteType, $quoteUuId);
+
+        $quoteDocumentUrls = [];
+        foreach ($quoteModel->documents as $quoteDocument) {
+            $documentType = DocumentType::where('code', $quoteDocument->document_type_code)->first();
+
+            if ($documentType->send_to_customer == 1) {
+                $quoteDocumentUrls[] = $azureStorageUrl.$azureStorageContainer.'/'.$quoteDocument->doc_url;
+            }
+        }
+
+        return $quoteDocumentUrls;
+    }
+
+    public function getPolicyWordingDocuments($quoteType, $quotePlanId)
+    {
+        $model = '\\App\\Models\\'.ucwords($quoteType).'PlanPolicyWording';
+        $policyWordingDocumentUrl = [];
+        $policyWordingDocuments = $model::select('link')->where('plan_id', $quotePlanId)->get();
+        foreach ($policyWordingDocuments as $policyWordingDocument) {
+            $policyWordingDocumentUrl[] = $policyWordingDocument->link;
+        }
+
+        return $policyWordingDocumentUrl;
     }
 }

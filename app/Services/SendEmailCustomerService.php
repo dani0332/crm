@@ -56,10 +56,8 @@ class SendEmailCustomerService extends BaseService
                 ],
                 'attachment' => [[
                     'url' => 'https://insurancemarket.ae/wp-content/uploads/2022/07/myAlfred-Offers-July-2022.pdf',
-                    'name' => 'myAlfred-Offers-July-2022.pdf',
                 ]],
             ], JSON_UNESCAPED_SLASHES);
-            //dd($body);
 
             $client = new \GuzzleHttp\Client();
             $clientRequest = $client->post(
