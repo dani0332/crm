@@ -158,6 +158,9 @@
                                         @endif
                                         <select @if(strpos($value, 'multiple')) name="{{$property.'[]'}}" multiple="multiple" class="form-control select2 select-roles" @else class="form-control" name="{{$property}}" @endif id="{{$property}}" >
                                             @foreach($staticOptions as $item)
+                                            @if($item == \App\Enums\GenericRequestEnum::SelectString || $item == \App\Enums\GenericRequestEnum::CheckboxString)
+                                            @php $item = strtolower($item); @endphp
+                                            @endif
                                             <option value="{{ $item }}" {{ $item == old($item, $record->$property) ? 'selected' : ''}}>{{ $item }}</option>
                                             @endforeach
                                         </select>
@@ -187,7 +190,8 @@
                                             </label>
                                         </div>
                                         <div class="col-md-3">
-                                            <input type="checkbox" {{ $record->$property ? 'checked' : '' }} style="float: right;" id={{$property}} name={{$property}} value={{$record->$property}}>                                        </div>
+                                            <input type="checkbox" {{ $record->$property ? 'checked' : '' }} style="float: right;" id={{$property}} name={{$property}}>
+                                        </div>
                                     </div>
                                     <br />
                                     @if ($errors->has($property))
