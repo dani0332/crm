@@ -34,6 +34,18 @@ class SendEmailCustomerService extends BaseService
                 'Content-Type' => 'application/json',
             ];
 
+            $emailAttachments = isset($emailData['documentUrl']) ? $emailData['documentUrl'] : null;
+
+            if($emailAttachments) {
+                $attachments = [];
+                foreach ($emailAttachments as $emailAttachment) {
+                    $attachments[] = [
+                        'url' => $emailAttachment,
+                        'name' => basename($emailAttachment),
+                    ];
+                }
+            }
+
             $body = json_encode([
                 'to' => [[
                     'email' => $emailData['customerEmail'],
@@ -54,9 +66,17 @@ class SendEmailCustomerService extends BaseService
                 'tags' => [
                     $tag,
                 ],
-                'attachment' => [[
-                    'url' => 'https://insurancemarket.ae/wp-content/uploads/2022/07/myAlfred-Offers-July-2022.pdf',
-                ]],
+                'attachment' => $attachments,
+                // 'attachment' => [
+                //     [
+                //         'url' => 'https://insurancemarket.blob.core.windows.net/imcrmdev/documents/travel/62ea39a43ef23_3KXQVSQ8_sample1.pdf',
+                //         'name' => 'sample1.pdf',
+                //     ],
+                //     [
+                //         'url' => 'https://insurancemarket.blob.core.windows.net/imcrmdev/documents/travel/62ea39abed454_3KXQVSQ8_sample2.pdf',
+                //         'name' => 'sample2.pdf',
+                //     ]
+                // ],
             ], JSON_UNESCAPED_SLASHES);
 
             $client = new \GuzzleHttp\Client();

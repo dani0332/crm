@@ -76,7 +76,7 @@ class QuoteDocumentController extends Controller
         $quoteModel = $this->quoteModel($quoteType, $quoteUuId);
         $quoteDocuments = $this->getQuoteUploadedDocuments($quoteType, $quoteUuId);
         $policyWordingDocuments = $this->getPolicyWordingDocuments($quoteType, $quoteModel->plan_id);
-        $documentsUrls = array_merge($quoteDocuments, $policyWordingDocuments);
+        $documentUrl = array_merge($quoteDocuments, $policyWordingDocuments);
         $customer = $this->customerService->getCustomerById($quoteModel->customer_id);
         $advisor = $this->userService->getUserById($quoteModel->advisor_id);
 
@@ -87,13 +87,16 @@ class QuoteDocumentController extends Controller
             'advisorLandlineNo' => $advisor->landline_no,
             'advisorMobileNo' => $advisor->mobile_no,
             'quoteCdbId' => $quoteModel->code,
-            'documentsUrls' => $documentsUrls,
+            'documentUrl' => $documentUrl,
         ];
 
         $response = $this->sendEmailCustomerService->sendEmail($emailTemplateId, $emailData, 'policy-documents-'.$quoteType.'-quote');
 
-        //dd('response: '.$response);
-        //echo '<pre>'; print_r($documentUrls); echo '</pre>';
+        if($response == 201) {
+            return redirect()->back()->with('success', 'Quote Policy has been sent');
+        } else {
+            return redirect()->back()->with('error', 'Quote Policy has not been sent');
+        }
     }
 
     public function quoteModel($quoteType, $quoteUuId)
