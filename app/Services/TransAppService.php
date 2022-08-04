@@ -275,11 +275,11 @@ class TransAppService extends BaseService
             ->where(['approval_code' => $approvalCode, 'transactions.is_deleted' => 0])
             ->where('approval_code', $approvalCode)
             ->first();
-
-        if ($isTransappNonAdmin == '1') {
-            $transaction->where('transactions.assigned_to_id', Auth::user()->id);
+        if($transaction) {
+            if ($isTransappNonAdmin == '1') {
+                $transaction->where('transactions.assigned_to_id', Auth::user()->id);
+            }
         }
-
         return $transaction;
     }
 
