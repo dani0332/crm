@@ -100,7 +100,7 @@
                         <tbody>
                             @foreach ($payments as $payment)
                             <tr>
-                                <td>{{ strtoupper($payment->code) }}</td>
+                                <td>{{ strtoupper($payment->code). ' ' .$payment->payment_status_id }}</td>
                                 <td>{{ $payment->paymentStatus->text }}</td>
                                 <td>{{ $travelPlainModel->plan->text }}</td>
                                 <td>{{ $payment->captured_amount }}</td>
@@ -131,7 +131,7 @@
                                                 data-plan="{{$travelPlainModel->plan->text}}"
                                                 data-collection="{{$payment->collection_type}}"
                                                 data-payment-method="{{$payment->paymentMethod->code}}"
-                                                data-provider="{{$travelPlainModel->plan->insuranceProvider->text}}">Approve</button>
+                                                data-provider="{{$travelPlainModel->plan->insuranceProvider->text}}" onclick="approvePayment('{{$payment->code}}')">Approve</button>
                                         @endif
                                     @endcan
 

@@ -3,6 +3,7 @@
 use App\Enums\CarPlanFeaturesCode;
 use App\Enums\CarPlanAddonsCode;
 use App\Enums\CarPlanExclusionsCode;
+use App\Enums\PermissionsEnum;
 ?>
 <div class="row">
     <div class="col-md-12 col-sm-12">
@@ -17,16 +18,16 @@ use App\Enums\CarPlanExclusionsCode;
                     <span class="alert alert-success" id="quotePlansGenerateMsg" style="display: none">Copied</span>
                     <div class="col-auto">
                         <input type="hidden" id="quotePlansGenerateUrl" name="quotePlansGenerateUrl" value="{{ $ecomUrl }}">
+                        @cannot(PermissionsEnum::ApprovePayments)
                         @can('car-quotes-plans-create')
                         <a href="{{ url('quotes/car/'.$record->uuid.'/create-quote') }}" class="btn btn-primary btn-sm">Create Quote</a>
                         @endcan
                         @if(gettype($listQuotePlans) != 'string')
-                        <input type="hidden" id="quoteRequestUuId" name="quoteRequestUuId" value="{{ $record->id }}">
-                        <button type="submit" class="btn btn-primary btn-sm" id="update_discounted_premium" style="display:none;">Update Discounted Premium</button>
                         @if(count($listQuotePlans) > 0)
                         <button type="button" id="quotePlansGenerateButton" name="quotePlansGenerateButton" class="btn btn-warning btn-sm">Copy link</button>
                         @endif
                         @endif
+                        @endcannot
                     </div>
                 </div>
                 @if(gettype($listQuotePlans) != 'string')
@@ -56,8 +57,10 @@ use App\Enums\CarPlanExclusionsCode;
                                             <label class="col-form-label col-md-2 col-sm-2" for="first-name"> </label>
                                             <div class="col-md-6 col-sm-6">
                                                 <div class="input-group">
+                                                    @cannot(PermissionsEnum::ApprovePayments)
                                                     <button id="togglePlans" type="button"
-                                                        class="btn btn-warning btn-sm">Update</button>
+                                                    class="btn btn-warning btn-sm">Update</button>
+                                                    @endcannot
                                                 </div>
                                             </div>
                                         </div>

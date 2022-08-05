@@ -286,6 +286,7 @@ Route::group(['middleware' => ['auth']], function () {
     Route::get('/getCarModelTrimValues', [AjaxController::class, 'getCarModelTrimValues']);
     Route::post('auditable', [AuditableController::class, 'loadAuditableComponent']);
     Route::get('/car-model-by-id', [AjaxController::class, 'carModelBasedOnCarMakeId']);
+    Route::post('/update-payment-status', [AjaxController::class, 'updatePaymentStatus']);
     Route::get('/insurance-provider-plans', [ClaimController::class, 'carPlansBasedOnInsuranceProvider']);
 
     Route::resource('members', MembersDetailController::class);

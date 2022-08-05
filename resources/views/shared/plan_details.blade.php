@@ -7,6 +7,8 @@ use App\Enums\quoteTypeCode;
 use App\Enums\CarPlanType;
 use App\Enums\CarPlanAddons;
 use App\Enums\InsuranceProviders;
+use App\Enums\PermissionsEnum;
+
 
 if (!isset($modelName)) {
 
@@ -703,7 +705,9 @@ if (!isset($modelName)) {
                                 </td>
                                 <td> </td>
                                 <td align="right">
+                                    @cannot(PermissionsEnum::ApprovePayments)
                                     <button type="submit" class="btn btn-warning btn-sm update-car-quote-plan-button" {{ $carQuoteEditDisable }}>Update</button>
+                                    @endcannot
                                 </td>
                             </tr>
                             <tr>
@@ -787,7 +791,9 @@ if (!isset($modelName)) {
                                             <td align="center"> </td>
                                         </tr>
                                         <tr>
+                                            @cannot(PermissionsEnum::ApprovePayments)
                                             <td colspan="5" align="right"><button type="submit" class="btn btn-warning btn-sm update-car-quote-plan-button" {{ $carQuoteEditDisable }}>Update</button></td>
+                                            @endcannot
                                         </tr>
                                         <tr>
                                             <td colspan="5">

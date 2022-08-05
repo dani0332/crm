@@ -2334,3 +2334,24 @@ $("#togglePlans").on('click', function (){
         $("#togglePlanForm").submit();
     }
 });
+
+function approvePayment(paymentCode)
+{
+    if (confirm('Are you sure you want to approve this payment?')) {
+        $.ajax({
+            url: '/update-payment-status/',
+            method: "POST",
+            data: {
+                _token: $('input[name=_token]').val(),
+                code: paymentCode,
+            },
+            success: function (data) {
+                debugger;
+                window.location.reload();
+            },
+        });
+    }
+    else {
+        return false;
+    }
+}

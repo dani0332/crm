@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\PaymentStatusEnum;
 use App\Models\CarMake;
 use App\Models\CarModel;
 use App\Models\CarModelDetail;
+use App\Models\Payment;
 use Illuminate\Http\Request;
 
 class AjaxController extends Controller
@@ -60,5 +62,13 @@ class AjaxController extends Controller
         ->first();
 
         return response()->json($carModelDetail);
+    }
+
+    public function updatePaymentStatus(Request $request)
+    {
+        $payment = Payment::where('code', $request->code)->first();
+        $payment->payment_status_id = PaymentStatusEnum::PAID;
+        $payment->save();
+        return response()->json(['success' => true]);
     }
 }
