@@ -309,16 +309,16 @@ class CRUDController extends Controller
         $audits = [];
         $quoteTypeId = $this->activityService->getQuoteTypeId($quoteType);
         $emailStatuses = $this->emailStatusService->getEmailStatus($quoteTypeId, $record->id);
+        $notesForCustomers = $this->notesForCustomerService->getNotesForCustomer($quoteTypeId, $record->id);
         if ($this->genericModel->modelType == quoteTypeCode::Car) { // Car plans to display on detail view
 
-            $ecomCarInsuranceQuoteUrl = Config::get('constants.ECOM_CAR_INSURANCE_QUOTE_URL');
+            $ecomCarInsuranceQuoteUrl = config('constants.ECOM_CAR_INSURANCE_QUOTE_URL');
             $listQuotePlans = null;
             $carQuotePlanAddons = $this->carQuoteService->getCarQuotePlanAddons($id);
             $listQuotePlans = $this->carQuoteService->getPlans($id);
             $vehicleTypes = $this->lookupService->getVehicleTypes();
             $trimList = $this->lookupService->getTrimListByCarModel($record->car_model_id);
             $yearsOfManufacture = $this->lookupService->getYearsOfManufacture();
-            $notesForCustomers = $this->notesForCustomerService->getNotesForCustomer(QuoteTypeId::Car, $record->id);
             $quoteTypeId = QuoteTypeId::Car;
 
             return view('shared.show', compact([
@@ -329,7 +329,7 @@ class CRUDController extends Controller
                 'yearsOfManufacture', 'notesForCustomers', 'quoteTypeId', 'trimList', 'autoAllocationDisabled',
             ]));
         } elseif ($this->genericModel->modelType == quoteTypeCode::Travel) { // Travel plans to display on detail view
-            $ecomTravelInsuranceQuoteUrl = Config::get('constants.ECOM_TRAVEL_INSURANCE_QUOTE_URL');
+            $ecomTravelInsuranceQuoteUrl = config('constants.ECOM_TRAVEL_INSURANCE_QUOTE_URL');
             $listQuotePlans = '';
             $quotePlans = $this->travelQuoteService->getQuotePlans($id);
             if (isset($quotePlans->message) && $quotePlans->message != '') {
