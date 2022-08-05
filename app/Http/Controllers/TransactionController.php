@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\ShowTransactionRequest;
 use App\Models\CarQuote;
 use App\Models\Transaction;
 use App\Services\CustomerService;
@@ -254,20 +255,14 @@ class TransactionController extends Controller
         return view('transaction.re-issue.search', compact('route', 'title'));
     }
 
-    public function showTransaction(Request $request)
+    public function showTransaction(ShowTransactionRequest $request)
     {
-        $this->validate($request, [
-            'approval_code' => 'required|max:50',
-        ]);
-
         $isTransappNonAdmin = $this->transactionService->checkTransappNonAdmin();
         $transaction = $this->transactionService->getTransactionDetailByApprovalCode($request->approval_code);
 
-        if ($isTransappNonAdmin == '1') {
-            if ($transaction && auth()->id() != $transaction->assigned_to_id) {
-                return redirect('transapp/home')->withErrors([
-                    'approval_code' => [__('Access Forbidden')], ]);
-            }
+        if ($isTransappNonAdmin == '1' && $transaction && auth()->id() != $transaction->assigned_to_id) {
+
+            return redirect('transapp/home')->withErrors(['approval_code' => [__('Access Forbidden')], ]);
         }
 
         if (empty($transaction)) {
