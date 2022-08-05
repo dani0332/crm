@@ -79,27 +79,27 @@ class SendEmailCustomerService extends BaseService
             );
 
             $messageId = json_decode($clientRequest->getBody()->getContents())->messageId;
-            $getResponse = json_decode(json_encode($clientRequest->getStatusCode().' '.$clientRequest->getBody()->getContents()), true);
-            $getStatusCode = $clientRequest->getStatusCode();
+            $response = json_decode(json_encode($clientRequest->getStatusCode().' '.$clientRequest->getBody()->getContents()), true);
+            $responseCode = $clientRequest->getStatusCode();
 
-            if ($getStatusCode == 201) {
+            if ($responseCode == 201) {
                 $isEmailSent = 1;
             }
         } catch (Exception $ex) {
-            $errorMessage = 'SIB: Code/Message: '.$ex->getCode().'/'.$ex->getMessage().' customerEmail: '.$emailData->customerEmail.' quoteCdbId: '.$emailData->quoteCdbId.' get_class: '.get_class();
-            Log::channel('daily')->error($errorMessage);
-            $getStatusCode = $ex->getCode();
-            $getResponse = json_encode($ex->getCode().' '.$ex->getMessage());
+            $responseCode = $ex->getCode();
+            $responseDetail = 'SIB: Code/Message: '.$responseCode.'/'.$ex->getMessage().' CustomerEmail: '.$emailData->customerEmail.' QuoteCdbId: '.$emailData->quoteCdbId.' Class: '.get_class();
+            Log::error($responseDetail);
+            $response = json_encode($ex->getCode().' '.$ex->getMessage());
             $isEmailSent = 0;
         }
 
-        $this->emailActivityService->addEmailActivity($getResponse, $isEmailSent, $emailData->customerEmail);
+        $this->emailActivityService->addEmailActivity($response, $isEmailSent, $emailData->customerEmail);
 
         // addEmailStatus is for quote modules only
         if (isset($messageId) && isset($emailData->quoteTypeId) && isset($emailData->quoteId)) {
             $this->emailStatusService->addEmailStatus($emailData, $messageId);
         }
 
-        return $getStatusCode;
+        return $responseCode;
     }
 }
