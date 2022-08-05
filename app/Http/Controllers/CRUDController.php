@@ -315,11 +315,10 @@ class CRUDController extends Controller
             $listQuotePlans = null;
             $carQuotePlanAddons = $this->carQuoteService->getCarQuotePlanAddons($id);
             $listQuotePlans = $this->carQuoteService->getPlans($id);
-            $entity = $this->carQuoteService->getQuoteByUuid($id);
             $vehicleTypes = $this->lookupService->getVehicleTypes();
             $trimList = $this->lookupService->getTrimListByCarModel($record->car_model_id);
             $yearsOfManufacture = $this->lookupService->getYearsOfManufacture();
-            $notesForCustomers = $this->notesForCustomerService->getNotesForCustomer(QuoteTypeId::Car, $entity->id);
+            $notesForCustomers = $this->notesForCustomerService->getNotesForCustomer(QuoteTypeId::Car, $record->id);
             $quoteTypeId = QuoteTypeId::Car;
 
             return view('shared.show', compact([

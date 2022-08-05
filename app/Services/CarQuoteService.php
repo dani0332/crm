@@ -1002,11 +1002,6 @@ class CarQuoteService extends BaseService
         $quote->save();
     }
 
-    public function getQuoteByUuid($uuid)
-    {
-        return CarQuote::where('uuid', '=', $uuid)->first();
-    }
-
     public function getPlans($id)
     {
         $quotePlans = $this->getQuotePlans($id);
