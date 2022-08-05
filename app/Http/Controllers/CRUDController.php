@@ -307,6 +307,8 @@ class CRUDController extends Controller
             array_push($activities, $updatedActivity);
         }
         $audits = [];
+        $quoteTypeId = $this->activityService->getQuoteTypeId($quoteType);
+        $emailStatuses = $this->emailStatusService->getEmailStatus($quoteTypeId, $record->id);
         if ($this->genericModel->modelType == quoteTypeCode::Car) { // Car plans to display on detail view
 
             $ecomCarInsuranceQuoteUrl = Config::get('constants.ECOM_CAR_INSURANCE_QUOTE_URL');
@@ -317,7 +319,6 @@ class CRUDController extends Controller
             $vehicleTypes = $this->lookupService->getVehicleTypes();
             $trimList = $this->lookupService->getTrimListByCarModel($record->car_model_id);
             $yearsOfManufacture = $this->lookupService->getYearsOfManufacture();
-            $emailStatuses = $this->emailStatusService->getEmailStatus(QuoteTypeId::Car, $entity->id);
             $notesForCustomers = $this->notesForCustomerService->getNotesForCustomer(QuoteTypeId::Car, $entity->id);
             $quoteTypeId = QuoteTypeId::Car;
 
@@ -350,7 +351,7 @@ class CRUDController extends Controller
                 'leadStatuses', 'lostReasons', 'selectedLostReasonId', 'membersDetail', 'model_name',
                 'allowedDuplicateLOB', 'audits', 'activities', 'advisors', 'isRenewalUser',
                 'isNewBusinessUser', 'ecomTravelInsuranceQuoteUrl', 'quoteType', 'quoteDocuments',
-                'autoAllocationDisabled',
+                'autoAllocationDisabled', 'emailStatuses',
             ]));
         } elseif ($this->genericModel->modelType == quoteTypeCode::Health) { // Health plans to display on detail view
             $listQuotePlans = '';

@@ -73,7 +73,7 @@ class QuoteDocumentController extends Controller
     public function sendPolicyDocument($quoteType, $quoteUuId)
     {
         $emailTemplateId = (int) config('constants.SIB_TRAVEL_QUOTE_POLICY_TEMPLATE_ID');
-        $quoteModel = $this->quoteModel($quoteType, $quoteUuId);
+        $quoteModel = $this->crudService->quoteModel($quoteType, $quoteUuId);
         $quoteDocuments = $this->getQuoteUploadedDocuments($quoteType, $quoteUuId);
         $policyWordingDocuments = $this->getPolicyWordingDocuments($quoteType, $quoteModel->plan_id);
         $documentUrl = array_merge($quoteDocuments, $policyWordingDocuments);
@@ -104,18 +104,11 @@ class QuoteDocumentController extends Controller
         }
     }
 
-    public function quoteModel($quoteType, $quoteUuId)
-    {
-        $model = '\\App\\Models\\'.ucwords($quoteType).'Quote';
-
-        return $model::where('uuid', $quoteUuId)->first();
-    }
-
     public function getQuoteUploadedDocuments($quoteType, $quoteUuId)
     {
         $azureStorageUrl = config('constants.AZURE_IM_STORAGE_URL');
         $azureStorageContainer = config('constants.AZURE_IM_STORAGE_CONTAINER');
-        $quoteModel = $this->quoteModel($quoteType, $quoteUuId);
+        $quoteModel = $this->crudService->quoteModel($quoteType, $quoteUuId);
 
         $quoteDocumentUrls = [];
         foreach ($quoteModel->documents as $quoteDocument) {
