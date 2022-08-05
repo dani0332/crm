@@ -56,6 +56,8 @@ if (!isset($modelName)) {
             }
 
             $totalPremium = $discountPremium + $vat + $totalSelectedAddonsPriceWithVat;
+            $insurerAvailableTrims = isset($listQuotePlan->insurerAvailableTrims) ? $listQuotePlan->insurerAvailableTrims : [];
+            $insurerSelectedTrim = isset($listQuotePlan->insurerTrim) ? $listQuotePlan->insurerTrim : [];
         }
     }
 
@@ -152,7 +154,8 @@ if (!isset($modelName)) {
                         is_disabled: $('#is_disabled').val(),
                         is_create: $('#is_create').val(),
                         addons,
-                        _token: '{{ csrf_token() }}'
+                        _token: '{{ csrf_token() }}',
+                        insurerTrim : $("#insurerTrim").val(),
                     }),
                     success: function(result) {
                         $(".loader").hide();
@@ -701,7 +704,17 @@ if (!isset($modelName)) {
                                         <option value="true" {{ $isDisabled == "true" ? 'selected="selected"' : '' }}>Yes</option>
                                     </select>
                                 </td>
-                                <td> </td>
+                                <td> Car Trim </td>
+                                <td><select class="form-control" id='insurerTrim' name="insurerTrim">
+                                       @foreach($insurerAvailableTrims as $trim)
+                                       <option value="{{$trim->description}}" {{ $trim->description == $insurerSelectedTrim ? 'selected="selected"' : '' }}>{{$trim->description}}</option>
+                                       @endforeach
+                                    </select>
+                                </td>
+                               
+                            </tr>
+                            <tr>
+                                <td valign="top"></td>
                                 <td align="right">
                                     <button type="submit" class="btn btn-warning btn-sm update-car-quote-plan-button" {{ $carQuoteEditDisable }}>Update</button>
                                 </td>

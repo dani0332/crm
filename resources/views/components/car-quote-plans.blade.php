@@ -72,19 +72,19 @@ use App\Enums\CarPlanExclusionsCode;
                         <thead>
                             <tr>
                                 <th> <input type="checkbox" id="flowcheckall" value="" /></th>
-                                <th style="width: 100px !important">Provider Name</th>
-                                <th style="width: 80px !important">Plan Name</th>
-                                <th style="width: 80px !important">Repair Type</th>
-                                <th style="width: 80px !important">Insurer Quote No.</th>
-                                <th style="width: 100px !important">TPL Limit</th>
-                                <th style="width: 100px !important">Car Trim</th>
-                                <th style="width: 100px !important">PAB cover</th>
-                                <th style="width: 100px !important">Roadside assistance</th>
-                                <th style="width: 100px !important">Oman cover TPL</th>
-                                <th style="width: 80px !important">Actual Premium</th>
-                                <th style="width: 80px !important">Discounted Premium</th>
-                                <th style="width: 80px !important">Premium with VAT.</th>
-                                <th style="width: 50px !important">Action</th>
+                                <th>Provider Name</th>
+                                <th >Plan Name</th>
+                                <th>Repair Type</th>
+                                <th>Insurer Quote No.</th>
+                                <th>TPL Limit</th>
+                                <th>Car Trim</th>
+                                <th>PAB cover</th>
+                                <th>Roadside assistance</th>
+                                <th>Oman cover TPL</th>
+                                <th>Actual Premium</th>
+                                <th>Discounted Premium</th>
+                                <th>Premium with VAT.</th>
+                                <th>Action</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -125,7 +125,7 @@ use App\Enums\CarPlanExclusionsCode;
                                     @endif
                                     @endforeach
                                 </td>
-                                <td>{{ $quotePlan->insurerTrim }}</td>
+                                <td>{{ isset($quotePlan->insurerTrim) ? $quotePlan->insurerTrim : '' }}</td>
                                 <td>
                                     <table style="margin-left: -10px;margin-top: -10px !important;">
                                         <?php

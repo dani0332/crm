@@ -275,4 +275,14 @@ ul.drag-inner-list, ul.drag-list {
 .change-layout.active {
     background: #4183bd !important;
 }
+#dataTableCarQuotePlans td {
+    word-wrap:break-word;
+    white-space: normal;
+    padding: auto;
+  }
+#dataTableCarQuotePlans table td {
+    padding:1px;
+    padding-bottom:3px;
+}
+
 
