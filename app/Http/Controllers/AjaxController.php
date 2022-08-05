@@ -69,6 +69,7 @@ class AjaxController extends Controller
         $payment = Payment::where('code', $request->code)->first();
         $payment->payment_status_id = PaymentStatusEnum::PAID;
         $payment->save();
+
         return response()->json(['success' => true]);
     }
 }
