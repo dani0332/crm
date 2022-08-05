@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\ShowTransactionRequest;
+use App\Http\Requests\TransactionRequest;
 use App\Models\CarQuote;
 use App\Models\Transaction;
 use App\Services\CustomerService;
@@ -255,7 +255,7 @@ class TransactionController extends Controller
         return view('transaction.re-issue.search', compact('route', 'title'));
     }
 
-    public function showTransaction(ShowTransactionRequest $request)
+    public function showTransaction(TransactionRequest $request)
     {
         $isTransappNonAdmin = $this->transactionService->checkTransappNonAdmin();
         $transaction = $this->transactionService->getTransactionDetailByApprovalCode($request->approval_code);

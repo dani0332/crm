@@ -4,7 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class ShowTransactionRequest extends FormRequest
+class TransactionRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -24,7 +24,7 @@ class ShowTransactionRequest extends FormRequest
     public function rules()
     {
         return [
-            'approval_code' => 'required|max:50',
+            'approval_code' => 'sometimes|required|max:50',
         ];
     }
 }
