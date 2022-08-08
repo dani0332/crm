@@ -914,13 +914,14 @@ class HealthQuoteService extends BaseService
                 Log::info('Cannot assign WCU as lead is in Transaction Approved state , lead id: '.$leadId);
                 array_push($result, ['leadId' => $lead->code, 'msg' => 'Cannot assign WCU as lead is in Transaction Approved state']);
                 continue;
+            } elseif ($lead) {
+                $lead->advisor_id = null;
+                $lead->quote_status_id = QuoteStatusEnum::NewLead;
+                $lead->wcu_id = $userId;
+                $lead->health_team_type = $request->assign_team;
+                $lead->save();
+                Log::info('WCU advisor : '.$userId.' assigned to lead: '.$leadId);
             }
-            $lead->advisor_id = null;
-            $lead->quote_status_id = QuoteStatusEnum::NewLead;
-            $lead->wcu_id = $userId;
-            $lead->health_team_type = $request->assign_team;
-            $lead->save();
-            Log::info('WCU advisor : '.$userId.' assigned to lead: '.$leadId);
         }
 
         return $result;
@@ -957,10 +958,8 @@ class HealthQuoteService extends BaseService
 
     public function isLeadTransactionApproved($lead): bool
     {
-        if ($lead != null) {
-            if ($lead->quote_status_id == QuoteStatusEnum::TransactionApproved) {
-                return true;
-            }
+        if ($lead != null && $lead->quote_status_id == QuoteStatusEnum::TransactionApproved) {
+            return true;
         }
 
         return false;
