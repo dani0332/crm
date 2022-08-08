@@ -34,8 +34,6 @@ class Add2023ToYearOfManufactureTable extends Migration
      */
     public function down()
     {
-        Schema::table('year_of_manufacture', function (Blueprint $table) {
-            //
-        });
+
     }
 }

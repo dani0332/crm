@@ -149,7 +149,7 @@ class CarQuoteService extends BaseService
             'vehicleTypeId' => $request->vehicle_type_id,
             'trim' => $request->trim,
             'premium' => $request->premium,
-            'carMakeId' => CarMake::where('code', '=', $request->car_make_id)->value('id'), // ID
+            'carMakeId' => isset($request->car_make_id) ? CarMake::where('code', '=', $request->car_make_id)->value('id') : null, // ID
             'carModelId' => $request->car_model_id, // ID
             'currentlyInsuredWith' => $request->currently_insured_with,
             'source' => config('constants.SOURCE_NAME'),
