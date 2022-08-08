@@ -14,7 +14,6 @@ use App\Traits\CustomerAdditionalInfo as CustomerAdditionalInfoTrait;
 use App\Traits\RolePermissionConditions;
 use Auth;
 use Carbon\Carbon;
-use Config;
 use DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -96,8 +95,6 @@ class LifeQuoteService extends BaseService
 
     public function saveLifeQuote(Request $request)
     {
-        $sourceName = Config::get('constants.SOURCE_NAME');
-        $appUrl = Config::get('constants.APP_URL');
         $dataArr = [
             'firstName' => $request->first_name,
             'lastName' => $request->last_name,
@@ -116,8 +113,8 @@ class LifeQuoteService extends BaseService
             'isSmoker' => $request->is_smoker == 'Yes' ? true : false,
             'gender' => $request->gender,
             'othersInfo' => $request->others_info,
-            'source' => $sourceName,
-            'referenceUrl' => $appUrl,
+            'source' => config('constants.SOURCE_NAME'),
+            'referenceUrl' => config('constants.APP_URL'),
         ];
         if (! Auth::user()->hasRole('ADMIN')) {
             $dataArr['advisorId'] = Auth::user()->id;
