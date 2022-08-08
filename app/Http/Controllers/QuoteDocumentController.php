@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\DocumentType;
+use App\Models\QuoteDocument;
 use App\Services\ActivitiesService;
 use App\Services\CRUDService;
 use App\Services\CustomerService;
@@ -75,6 +76,22 @@ class QuoteDocumentController extends Controller
         ));
     }
 
+    public function store(Request $request, $quoteType)
+    {
+        $model = '\\App\\Models\\'.ucwords($quoteType).'Quote';
+        $quoteModel = $model::where('id', $request->quote_id)->first();
+        if (! $request->hasFile('file') || ! $quoteModel) {
+            return false;
+        }
+
+        $file = $request->file('file');
+        $fileNameOriginal = $file->getClientOriginalName();
+        $fileMimeType = $file->getClientMimeType();
+        $fileNameAzure = uniqid().'_'.$request->quote_uuid.'_'.$fileNameOriginal;
+        $filePathAzure = $request->file('file')->storeAs('documents/'.$request->folder_path, $fileNameAzure, 'azureIM');
+        $this->quoteDocumentService->createQuoteDocumentRecord($request->document_type_code, $fileNameOriginal, $filePathAzure, $fileMimeType, $quoteModel);
+    }
+
     public function sendPolicyDocument($quoteType, $quoteUuId)
     {
         $emailTemplateId = (int) config('constants.SIB_TRAVEL_QUOTE_POLICY_TEMPLATE_ID');
@@ -137,5 +154,19 @@ class QuoteDocumentController extends Controller
         }
 
         return $policyWordingDocumentUrl;
+    }
+
+    public function destroy($quoteType, $quoteUuId, $id)
+    {
+        $model = 'App\\Models\\'.ucwords($quoteType).'Quote';
+        $document = QuoteDocument::where('id', $id)->where('quote_documentable_type', $model)->first();
+
+        if (! $document) {
+            return redirect()->back()->with('message', 'Document not found');
+        }
+
+        $document->delete();
+
+        return redirect()->back()->with('message', 'Document has been deleted.');
     }
 }
