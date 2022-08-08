@@ -57,7 +57,7 @@ class QuoteDocumentController extends Controller
         }
     }
 
-    public function listQuoteDocuments(Request $request, $quoteType, $quoteUuId)
+    public function list(Request $request, $quoteType, $quoteUuId)
     {
         $quoteModel = $this->crudService->quoteModel($quoteType, $quoteUuId);
         $quoteId = $quoteModel->id;

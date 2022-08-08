@@ -127,7 +127,7 @@ Route::group(['middleware' => ['auth']], function () {
     Route::post('/lead-allocation/updateAvailability', [LeadAllocationController::class, 'updateAvailability']);
     Route::post('/lead-allocation/setLeadAllocationJobStatus', [LeadAllocationController::class, 'setLeadAllocationJobStatus']);
 
-    Route::get('quotes/{quoteType}/{quoteUuId}/documents', [QuoteDocumentController::class, 'listQuoteDocuments']);
+    Route::get('quotes/{quoteType}/{quoteUuId}/documents', [QuoteDocumentController::class, 'list']);
     Route::post('quotes/{quoteType}/{quoteUuId}/documents/store', [CRUDController::class, 'storeDocument']);
     Route::post('quotes/{quoteType}/{quoteUuId}/documents/{id}/delete', [CRUDController::class, 'destroyDocument']);
     Route::get('documents/{id}', [QuoteDocumentController::class, 'show'])->name('documents.show');
