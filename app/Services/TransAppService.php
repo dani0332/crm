@@ -272,9 +272,10 @@ class TransAppService extends BaseService
             ->leftjoin('payment_modes', 'payment_modes.id', 'transactions.payment_mode_id')
             ->where(['approval_code' => $approvalCode, 'transactions.is_deleted' => 0])
             ->where('approval_code', $approvalCode);
-            if ($this->checkTransappNonAdmin() == '1') {
-                $query->where('transactions.assigned_to_id', auth()->id());
-            }
+        if ($this->checkTransappNonAdmin() == '1') {
+            $query->where('transactions.assigned_to_id', auth()->id());
+        }
+
         return $query->first();
     }
 
