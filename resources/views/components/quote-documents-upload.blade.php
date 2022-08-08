@@ -31,33 +31,40 @@
                         </td>
                         <td>
                             <div class="container">
+                                @if($documentType->max_files > $documents->where('document_type_code',$documentType->code)->count())
                                 <form method='post' enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left dropzone" id="{{ $documentType->code }}">
                                     {{csrf_field()}}
                                 </form>
+                                <script type="text/javascript">
+                                    Dropzone.autoDiscover = false;
+                                    var myDropzone = new Dropzone('#{{ $documentType->code }}', {
+                                        paramName: "file",
+                                        url: "{{ url('/quotes/'.$quoteType.'/documents/store') }}",
+                                        maxFiles: JSON.parse('<?php echo json_encode($documentType->max_files) ?>'),
+                                        maxFilesize: JSON.parse('<?php echo json_encode($documentType->max_size) ?>'),
+                                        autoProcessQueue: true,
+                                        uploadMultiple: false,
+                                        acceptedFiles: JSON.parse('<?php echo json_encode($documentType->accepted_files) ?>'),
+                                        sending: function(file, xhr, formData) {
+                                            formData.append("_token", "{{{ csrf_token() }}}");
+                                            formData.append("quote_id", "{{ $quoteId }}");
+                                            formData.append("quote_type_id", "{{ $quoteTypeId }}");
+                                            formData.append("document_type_code", "{{ $documentType->code}}");
+                                            formData.append("folder_path", "{{ $documentType->folder_path }}");
+                                            formData.append("quote_uuid", "{{ $quoteUuId }}");
+                                        },
+                                        complete: function(file) {
+                                            window.location.reload();
+                                        },
+                                    });
+                                </script>
+                                @else
+                                    <p>Respective document(s) already uploaded. If you need to replace it, please go back to delete the document first and than upload it again</p>
+                                @endif
                             </div>
                         </td>
                     </tr>
                 </table>
-                <script type="text/javascript">
-                    Dropzone.autoDiscover = false;
-                    var myDropzone = new Dropzone('#{{ $documentType->code }}', {
-                        paramName: "file",
-                        url: "{{ url('/quotes/'.$quoteType.'/'.$quoteUuId.'/documents/store') }}",
-                        maxFiles: JSON.parse('<?php echo json_encode($documentType->max_files) ?>'),
-                        maxFilesize: JSON.parse('<?php echo json_encode($documentType->max_size) ?>'),
-                        autoProcessQueue: true,
-                        uploadMultiple: false,
-                        acceptedFiles: JSON.parse('<?php echo json_encode($documentType->accepted_files) ?>'),
-                        sending: function(file, xhr, formData) {
-                            formData.append("_token", "{{{ csrf_token() }}}");
-                            formData.append("quote_id", "{{ $quoteId }}");
-                            formData.append("quote_type_id", "{{ $quoteTypeId }}");
-                            formData.append("document_type_code", "{{ $documentType->code}}");
-                            formData.append("folder_path", "{{ $documentType->folder_path }}");
-                            formData.append("quote_uuid", "{{ $quoteUuId }}");
-                        },
-                    });
-                </script>
                 @endforeach
             </div>
         </div>

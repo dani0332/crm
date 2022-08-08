@@ -65,6 +65,7 @@ class QuoteDocumentController extends Controller
         $quoteCdbId = $quoteModel->code;
         $quoteTypeId = $this->activityService->getQuoteTypeId($quoteType);
         $documentUploadTypes = $this->quoteDocumentService->getQuoteDocumentsForUpload($quoteTypeId);
+        $documents = $quoteModel->documents;
 
         return view('components.quote-documents-upload', compact(
             'quoteUuId',
@@ -72,7 +73,8 @@ class QuoteDocumentController extends Controller
             'quoteCdbId',
             'quoteType',
             'quoteTypeId',
-            'documentUploadTypes'
+            'documentUploadTypes',
+            'documents'
         ));
     }
 
