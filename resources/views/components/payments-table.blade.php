@@ -111,7 +111,9 @@
                                 <td>{{$payment->reference}}</td>
                                 <td>
                                     @cannot(PermissionsEnum::ApprovePayments)
-                                        <button class="btn btn-sm btn-success generateCCLink">Copy Link</button>
+                                        @if($payment->paymentMethod->code == 'CC')
+                                            <button class="btn btn-sm btn-success generateCCLink">Copy Link</button>
+                                        @endif
                                         @if($payment->payment_status_id != PaymentStatusEnum::PAID &&
                                         $payment->payment_status_id != PaymentStatusEnum::CAPTURED && $payment->payment_status_id != PaymentStatusEnum::AUTHORISED)
                                             <button class="btn btn-primary btn-sm edit-payment-btn" data-code="{{$payment->code}}"
