@@ -10,5 +10,4 @@ class TravelPlanPolicyWording extends Model
     use HasFactory;
 
     protected $table = 'travel_plan_policy_wording';
-
 }

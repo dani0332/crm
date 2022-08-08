@@ -36,7 +36,7 @@ class SendEmailCustomerService extends BaseService
 
             $emailAttachments = isset($emailData->documentUrl) ? $emailData->documentUrl : null;
 
-            if($emailAttachments) {
+            if ($emailAttachments) {
                 $attachments = [];
                 foreach ($emailAttachments as $emailAttachment) {
                     $attachments[] = [

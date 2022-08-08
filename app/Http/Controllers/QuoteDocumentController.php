@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\DocumentType;
-use App\Models\TravelPlanPolicyWording;
 use App\Services\ActivitiesService;
 use App\Services\CRUDService;
 use App\Services\CustomerService;
@@ -28,8 +27,8 @@ class QuoteDocumentController extends Controller
         QuoteDocumentService $quoteDocumentService,
         SendEmailCustomerService $sendEmailCustomerService,
         CustomerService $customerService,
-        UserService $userService)
-    {
+        UserService $userService
+    ) {
         $this->crudService = $crudService;
         $this->activityService = $activityService;
         $this->quoteDocumentService = $quoteDocumentService;
@@ -66,8 +65,14 @@ class QuoteDocumentController extends Controller
         $quoteTypeId = $this->activityService->getQuoteTypeId($quoteType);
         $documentUploadTypes = $this->quoteDocumentService->getQuoteDocumentsForUpload($quoteTypeId);
 
-        return view('components.quote-documents-upload', compact('quoteUuId', 'quoteId', 'quoteCdbId',
-            'quoteType', 'quoteTypeId', 'documentUploadTypes'));
+        return view('components.quote-documents-upload', compact(
+            'quoteUuId',
+            'quoteId',
+            'quoteCdbId',
+            'quoteType',
+            'quoteTypeId',
+            'documentUploadTypes'
+        ));
     }
 
     public function sendPolicyDocument($quoteType, $quoteUuId)
@@ -81,7 +86,7 @@ class QuoteDocumentController extends Controller
         $advisor = $this->userService->getUserById($quoteModel->advisor_id);
         $quoteTypeId = $this->activityService->getQuoteTypeId($quoteType);
 
-        $emailData = (object)[
+        $emailData = (object) [
             'customerName' => $customer->first_name.' '.$customer->last_name,
             'customerEmail' => $customer->email,
             'advisorName' => $advisor->name,
@@ -97,7 +102,7 @@ class QuoteDocumentController extends Controller
 
         $response = $this->sendEmailCustomerService->sendEmail($emailTemplateId, $emailData, 'policy-documents-'.$quoteType.'-quote');
 
-        if($response == 201) {
+        if ($response == 201) {
             return redirect()->back()->with('success', 'Quote Policy has been sent.');
         } else {
             return redirect()->back()->with('error', 'Quote Policy has not been sent. '.$response);

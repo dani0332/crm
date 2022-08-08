@@ -36,7 +36,7 @@ class ProcessSIBCustomerMail implements ShouldQueue
             $emailTemplateId = (int) Config::get('constants.SIB_CORPORATE_TEMPLATE');
             $WEGenerateUrlResponse = CustomerWEGenerateUrlService::getCustomerWeUrl($this->email);
 
-            $emailData = (object)[
+            $emailData = (object) [
                 'customerName' => $this->name,
                 'customerEmail' => $this->email,
                 'signUpButtonUrl' => $WEGenerateUrlResponse,

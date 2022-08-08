@@ -50,7 +50,7 @@ class NotesForCustomerService extends BaseService
         $emailTemplateId = (int) Config::get('constants.SIB_CAR_QUOTE_UPDATE_NOTES_TO_CUSTOMER_TEMPLATE');
         $customer = $this->customerService->getUniqueCustomerByEmail($request->customer_email);
 
-        $emailData = (object)[
+        $emailData = (object) [
             'customerName' => $request->customer_name,
             'customerEmail' => $request->customer_email,
             'buttonUrl' => $ecomCarInsuranceQuoteUrl.$request->quote_uuid,
