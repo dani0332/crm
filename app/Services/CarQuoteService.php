@@ -8,11 +8,8 @@ use App\Enums\QuoteTypeId;
 use App\Models\CarMake;
 use App\Models\CarQuote;
 use App\Models\CarQuoteRequestDetail;
-use App\Models\InsuranceProvider;
 use App\Models\User;
-use App\Models\YearOfManufacture;
 use Carbon\Carbon;
-use Config;
 use DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -130,12 +127,6 @@ class CarQuoteService extends BaseService
 
     public function saveCarQuote(Request $request)
     {
-        $yearOfManufactureText = YearOfManufacture::where('id', '=', $request->year_of_manufacture)->value('text');
-        $insuranceProviderText = InsuranceProvider::where('id', '=', $request->currently_insured_with)->value('text');
-        $carMakeId = CarMake::where('code', '=', $request->car_make_id)->value('id');
-        $sourceName = Config::get('constants.SOURCE_NAME');
-        $appUrl = Config::get('constants.APP_URL');
-
         $dataArr = [
             'firstName' => $request->first_name,
             'lastName' => $request->last_name,
@@ -158,11 +149,11 @@ class CarQuoteService extends BaseService
             'vehicleTypeId' => $request->vehicle_type_id,
             'trim' => $request->trim,
             'premium' => $request->premium,
-            'carMakeId' => $carMakeId, // ID
+            'carMakeId' => CarMake::where('code', $request->car_make_id)->first() ? CarMake::where('code', $request->car_make_id)->first()->id : null, // ID
             'carModelId' => $request->car_model_id, // ID
             'currentlyInsuredWith' => $request->currently_insured_with,
-            'source' => $sourceName,
-            'referenceUrl' => $appUrl,
+            'source' => config('constants.SOURCE_NAME'),
+            'referenceUrl' => config('constants.APP_URL'),
         ];
         if (! Auth::user()->hasRole('ADMIN')) {
             $dataArr['advisorId'] = Auth::user()->id;
@@ -283,7 +274,7 @@ class CarQuoteService extends BaseService
             'year_of_manufacture' => 'select|title|required',
             'email' => 'input|email|required',
             'mobile_no' => 'input|title|number|required',
-            'dob' => 'input|date|title|date|required',
+            'dob' => 'input|date|title|required',
             'nationality_id' => 'select|title|required',
             'uae_license_held_for_id' => 'select|title|required',
             'back_home_license_held_for_id' => 'select|title',
@@ -292,9 +283,9 @@ class CarQuoteService extends BaseService
             'cylinder' => 'input|number|title|required',
             'emirate_of_registration_id' => 'select|title|required',
             'claim_history_id' => 'select|title|required',
-            'has_ncd_supporting_documents' => '|static|title|Yes,No',
+            'has_ncd_supporting_documents' => '|static|title|,Yes,No',
             'source' => 'input|text',
-            'additional_notes' => 'textarea|required',
+            'additional_notes' => 'textarea',
             'is_ecommerce' => '|static|title|Yes,No',
             'payment_status_id' => 'select|title',
             'transapp_code' => 'readonly|none',
@@ -846,11 +837,11 @@ class CarQuoteService extends BaseService
     public function getQuotePlans($id)
     {
         $quoteUuId = CarQuote::where('uuid', '=', $id)->value('uuid');
-        $plansApiEndPoint = Config::get('constants.KEN_API_ENDPOINT').'/get-car-quote-plans';
-        $plansApiToken = Config::get('constants.KEN_API_TOKEN');
-        $plansApiTimeout = Config::get('constants.KEN_API_TIMEOUT');
-        $plansApiUserName = Config::get('constants.KEN_API_USER');
-        $plansApiPassword = Config::get('constants.KEN_API_PWD');
+        $plansApiEndPoint = config('constants.KEN_API_ENDPOINT').'/get-car-quote-plans';
+        $plansApiToken = config('constants.KEN_API_TOKEN');
+        $plansApiTimeout = config('constants.KEN_API_TIMEOUT');
+        $plansApiUserName = config('constants.KEN_API_USER');
+        $plansApiPassword = config('constants.KEN_API_PWD');
         $authBasic = base64_encode($plansApiUserName.':'.$plansApiPassword);
 
         $plansDataArr = [
@@ -920,11 +911,11 @@ class CarQuoteService extends BaseService
 
     public function carPlanModify($request)
     {
-        $apiEndPoint = Config::get('constants.KEN_API_ENDPOINT').'/save-manual-car-quote-plan';
-        $apiToken = Config::get('constants.KEN_API_TOKEN');
-        $apiTimeout = Config::get('constants.KEN_API_TIMEOUT');
-        $apiUserName = Config::get('constants.KEN_API_USER');
-        $apiPassword = Config::get('constants.KEN_API_PWD');
+        $apiEndPoint = config('constants.KEN_API_ENDPOINT').'/save-manual-car-quote-plan';
+        $apiToken = config('constants.KEN_API_TOKEN');
+        $apiTimeout = config('constants.KEN_API_TIMEOUT');
+        $apiUserName = config('constants.KEN_API_USER');
+        $apiPassword = config('constants.KEN_API_PWD');
 
         if (isset($request->is_create)) {
             if ($request->is_create == 1) {
