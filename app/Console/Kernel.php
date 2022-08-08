@@ -28,9 +28,8 @@ class Kernel extends ConsoleKernel
             ->command('LeadAllocation:cron')
             ->timezone('Asia/Dubai')
             ->everyMinute()
-            ->runInBackground()
             ->onOneServer()
-            ->withoutOverlapping();
+            ->withoutOverlapping(1);
     }
 
     /**

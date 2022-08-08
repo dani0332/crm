@@ -413,6 +413,15 @@
                 @if (session()->has('success'))
                     <div class="alert alert-success">{{ session()->get('success') }}</div>
                 @endif
+                @if ($errors->any())
+                    <div class="row">
+                        <div class="x_panel">
+                            @foreach($errors->all() as $error)
+                                <div class="alert alert-danger">{{ $error }}</div>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
                 <form method="POST" id="search-activities" action="" class="form-horizontal form-label-left" role="form"
                     data-parsley-validate="" novalidate="">
                     @method('POST')
@@ -535,7 +544,7 @@
                         <div class="col-md-12" id="followup-div">
                             <div class="col">
                                 <div class="input-group">
-                                    <input id="email" type="text" class="form-control" name="title" placeholder="Title" />
+                                    <input id="email" type="text" class="form-control" name="title" value="{{ old('title') ?? '' }}" placeholder="Title" />
                                 </div>
                             </div>
                             <div class="col">

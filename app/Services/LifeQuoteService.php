@@ -740,6 +740,7 @@ class LifeQuoteService extends BaseService
             $lead = $this->getEntityPlain($leadId);
             $lead->advisor_id = $userId;
             $lead->save();
+            $this->updateChildRecord($lead->id);
         }
 
         return $result;

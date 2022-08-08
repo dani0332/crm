@@ -32,7 +32,7 @@
                         <input type="hidden" name="model" value={{ json_encode($model->properties) }} />
                         <input type="hidden" name="modelSkipProperties" value={{ json_encode($model->skipProperties) }} />
                         <input type="hidden" name="modelType" value={{ json_encode($model->modelType) }} />
-
+                        <input type="hidden" name="addon_id" value={{ isset($id) ? $id : '' }} />
                         @php
                         $index = 0
                         @endphp
@@ -81,7 +81,7 @@
                                             @endif
                                         </span>
                                         
-                                        <select @if(strpos($value, 'multiple')) name="{{$property.'[]'}}" multiple="multiple" class="form-control select2 select-roles" @else class="form-control" name="{{$property}}" @endif id="{{$property}}" >
+                                        <select @if(strpos($value, 'multiple')) name="{{$property.'[]'}}" multiple="multiple" class="form-control select2 select-roles" @else class="form-control" name="{{$property}}" @endif id="{{$property}}">
                                             @if(strpos($value, 'title'))
                                                 <option value="">{{"Please select ".$customTitles[$property] }}</option>
                                             @else
@@ -139,6 +139,9 @@
 
                                         <select @if(strpos($value, 'multiple')) name="{{$property.'[]'}}" multiple="multiple" class="form-control select2 select-roles" @else class="form-control" name="{{$property}}" @endif id="{{$property}}" >
                                             @foreach($staticOptions as $item)
+                                            @if($item == \App\Enums\GenericRequestEnum::SelectString || $item == \App\Enums\GenericRequestEnum::CheckboxString)
+                                            @php $item = strtolower($item); @endphp
+                                            @endif
                                             <option value="{{ $item }}">{{ $item }}</option>
                                             @endforeach
                                         </select>

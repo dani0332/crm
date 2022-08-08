@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\HealthTeamType;
 use App\Enums\quoteTypeCode;
+use App\Http\Requests\ActivitiesRequest;
 use App\Models\Activities;
 use App\Models\User;
 use App\Services\ActivitiesService;
@@ -69,7 +70,7 @@ class ActivitesController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store(ActivitiesRequest $request)
     {
         $record = '';
         if (isset($request->entityId)) {
@@ -120,7 +121,7 @@ class ActivitesController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+    public function update(ActivitiesRequest $request, $id)
     {
         $record = $this->activitesService->getActivityByUUID($id);
         if (isset($request->assignee_id) && $request->assignee_id != '') {

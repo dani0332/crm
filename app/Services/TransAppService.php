@@ -259,9 +259,7 @@ class TransAppService extends BaseService
 
     public function getTransactionDetailByApprovalCode($approvalCode)
     {
-        $isTransappNonAdmin = $this->checkTransappNonAdmin();
-
-        $transaction = Transaction::select(
+        $query = Transaction::select(
             'transactions.*',
             'insurance_companies.name as insurance',
             'handlers.name as handler_name',
@@ -273,14 +271,11 @@ class TransAppService extends BaseService
             ->leftjoin('users as creaters', 'transactions.created_by_id', 'creaters.id')
             ->leftjoin('payment_modes', 'payment_modes.id', 'transactions.payment_mode_id')
             ->where(['approval_code' => $approvalCode, 'transactions.is_deleted' => 0])
-            ->where('approval_code', $approvalCode)
-            ->first();
-
-        if ($isTransappNonAdmin == '1') {
-            $transaction->where('transactions.assigned_to_id', Auth::user()->id);
-        }
-
-        return $transaction;
+            ->where('approval_code', $approvalCode);
+            if ($this->checkTransappNonAdmin() == '1') {
+                $query->where('transactions.assigned_to_id', auth()->id());
+            }
+        return $query->first();
     }
 
     public function getTransappAssignedToIdByApprovalCode($approvalCode)
