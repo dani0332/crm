@@ -256,8 +256,8 @@
 								$title = 'Please confirm '. str_replace("_"," ",strtolower($property));
 								}
 								@endphp
-								<input @if(explode("|", $value)[1]=="date" ) readonly="readonly" @endif type={{
-									explode("|", $value)[1] }} id={{$property}} name={{$property}}
+								<input @if(explode("|", $value)[1]=="date" || $property=='dob' ) readonly="readonly"
+									@endif type={{ explode("|", $value)[1] }} id={{$property}} name={{$property}}
 									value="{{ old($property) }}" @if($property=='seat_capacity' || $property=='cylinder'
 									) data-toggle="tooltip" data-placement="top" title="{{$title}}" @endif
 									class="form-control">
