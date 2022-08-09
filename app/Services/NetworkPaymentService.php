@@ -2,9 +2,7 @@
 
 namespace App\Services;
 
-use App\Models\CarQuote;
 use Config;
-use Illuminate\Support\Facades\Config as FacadesConfig;
 
 class NetworkPaymentService
 {
@@ -19,7 +17,7 @@ class NetworkPaymentService
             $apiEndPoint,
 
             [
-                'headers' => ['Content-Type' => 'application/vnd.ni-identity.v1+json', 'Accept' => 'application/vnd.ni-identity.v1+json', 'Authorization' => 'Basic '. $apiMerchantToken],
+                'headers' => ['Content-Type' => 'application/vnd.ni-identity.v1+json', 'Accept' => 'application/vnd.ni-identity.v1+json', 'Authorization' => 'Basic '.$apiMerchantToken],
                 'timeout' => $apiTimeout,
             ]
         );
@@ -27,9 +25,9 @@ class NetworkPaymentService
         return $networkTokenRequest;
     }
 
-    public  static function sendNetworkInvoiceRequest($data, $token)
+    public static function sendNetworkInvoiceRequest($data, $token)
     {
-        $apiEndPoint = Config::get('constants.NETWORK_INVOICE_ENDPOINT') . Config::get('constants.NETWORK_OUTLET_REFERENCE') . '/invoice';
+        $apiEndPoint = Config::get('constants.NETWORK_INVOICE_ENDPOINT').Config::get('constants.NETWORK_OUTLET_REFERENCE').'/invoice';
         $apiTimeout = Config::get('constants.NETWORK_REQUEST_TIMEOUT');
 
         $client = new \GuzzleHttp\Client();
@@ -41,7 +39,7 @@ class NetworkPaymentService
                     'Origin' => Config::get('constants.NETWORK_CORS_DOMAIN'),
                     'Accept' => 'application/vnd.ni-invoice.v1+json',
                     'Content-Type' => 'application/vnd.ni-invoice.v1+json',
-                    'Authorization' => 'Bearer ' . $token
+                    'Authorization' => 'Bearer '.$token,
                 ],
                 'timeout' => $apiTimeout,
                 'json' => $data,

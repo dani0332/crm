@@ -900,7 +900,7 @@ class CRUDController extends Controller
         if (! $quoteModel) {
             return false;
         }
-        $code = 'P-'. strtoupper(substr(uniqid('', ), 0, 8));
+        $code = 'P-'.strtoupper(substr(uniqid('', ), 0, 8));
         $paymentInformation = [
             'code' => $code,
             'collection_type' => $request->collection_type,
@@ -925,7 +925,6 @@ class CRUDController extends Controller
         ]);
         $paymentLog->save();
 
-
         return back()->with('success', 'Payment has been created');
     }
 
@@ -942,6 +941,7 @@ class CRUDController extends Controller
         }
         $payment = Payment::where('code', $request->paymentCode)->first();
         $payment->update($paymentInformation);
+
         return back()->with('success', 'Payment has been updated');
     }
 }
