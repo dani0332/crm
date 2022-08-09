@@ -347,8 +347,8 @@
 									<span class='required'>*</span>
 									@endif
 								</span>
-								<textarea id={{$property}} name={{$property}} value="{{ old($property) }}"
-									class="form-control"></textarea>
+								<textarea id={{$property}} name={{$property}}
+									class="form-control">{{ old($property) }}</textarea>
 								@if ($errors->has($property))
 								<span class="text-danger">{{ $errors->first($property) }}</span>
 								@endif
