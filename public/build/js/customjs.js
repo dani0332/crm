@@ -2375,3 +2375,11 @@ function approvePayment(paymentCode)
         return false;
     }
 }
+// Car Quote: Change the type than format the date
+$("#dob").prop("type", "text");
+$("#dob_div #dob").datepicker({ // TM Leads
+    changeMonth: true,
+    changeYear: true,
+    dateFormat: "dd/mm/yy",
+    yearRange: "-80:+00"
+});

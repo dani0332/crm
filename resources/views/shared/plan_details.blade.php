@@ -1,7 +1,6 @@
 <meta name="csrf-token" content="{{ csrf_token() }}" />
 
-<?php
-
+@php
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\quoteTypeCode;
 use App\Enums\CarPlanType;
@@ -62,7 +61,7 @@ if (!isset($modelName)) {
     }
 
     $readonlyFieldCss = $repairType == CarPlanType::TPL ? "pointer-events: none;background-color: #f6f6f6;" : "";
-?>
+@endphp
     <script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
     <script>
         $.ajaxSetup({
@@ -675,7 +674,7 @@ if (!isset($modelName)) {
                             </tr>
                             <tr>
                                 <td valign="top">Repair Type:</td>
-                                <td>{{ $repairType }}</td>
+                                <td>{{ $repairType == CarPlanType::COMP ? 'NON-AGENCY' : $repairType }}</td>
                                 <td>Insurer Quote No.:</td>
                                 <td>{{ $insurerQuoteNo }}</td>
                             </tr>

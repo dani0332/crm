@@ -32,6 +32,7 @@ use App\Services\SendEmailCustomerService;
 use App\Services\TeamService;
 use App\Services\TravelQuoteService;
 use App\Services\UserService;
+use Carbon\Carbon;
 use Config;
 use DataTables;
 use Illuminate\Http\Request;
@@ -222,6 +223,7 @@ class CRUDController extends Controller
                 }
             }
         }
+        $request->dob = isset($request->dob) ? Carbon::createFromFormat('d/m/Y', $request->dob)->format(get_dob_date_format()) : null;
         $this->validate($request, $validateArray);
         $record = $this->crudService->saveModelByType($modelType, $request);
         if (isset($record->message) && str_contains($record->message, 'Error')) {
@@ -314,9 +316,10 @@ class CRUDController extends Controller
             array_push($activities, $updatedActivity);
         }
         $audits = [];
+        $record->dob = isset($record->dob) ? date('d/m/Y', strtotime($record->dob)) : null;
         if ($this->genericModel->modelType == quoteTypeCode::Car) { // Car plans to display on detail view
 
-            $ecomCarInsuranceQuoteUrl = Config::get('constants.ECOM_CAR_INSURANCE_QUOTE_URL');
+            $ecomCarInsuranceQuoteUrl = config('constants.ECOM_CAR_INSURANCE_QUOTE_URL');
             $listQuotePlans = null;
             $carQuotePlanAddons = $this->carQuoteService->getCarQuotePlanAddons($id);
             $listQuotePlans = $this->carQuoteService->getPlans($id);
@@ -336,7 +339,7 @@ class CRUDController extends Controller
                 'yearsOfManufacture', 'notesForCustomers', 'quoteTypeId', 'trimList', 'autoAllocationDisabled',
             ]));
         } elseif ($this->genericModel->modelType == quoteTypeCode::Travel) { // Travel plans to display on detail view
-            $ecomTravelInsuranceQuoteUrl = Config::get('constants.ECOM_TRAVEL_INSURANCE_QUOTE_URL');
+            $ecomTravelInsuranceQuoteUrl = config('constants.ECOM_TRAVEL_INSURANCE_QUOTE_URL');
             $listQuotePlans = '';
             $quotePlans = $this->travelQuoteService->getQuotePlans($id);
             if (isset($quotePlans->message) && $quotePlans->message != '') {
@@ -422,6 +425,8 @@ class CRUDController extends Controller
             }
         }
 
+        $record->dob = isset($record->dob) ? date('d/m/Y', strtotime($record->dob)) : null;
+
         return view('shared.edit', compact(['record', 'model', 'dropdownSource', 'customTitles', 'customLists', 'isRenewalUser']));
     }
 
@@ -448,6 +453,7 @@ class CRUDController extends Controller
                 }
             }
         }
+        $request->dob = isset($request->dob) ? Carbon::createFromFormat('d/m/Y', $request->dob)->format(get_dob_date_format()) : null;
         $this->validate($request, $validateArray);
         $this->crudService->updateModelByType(json_decode($request->modelType, true), $request, $id);
 
