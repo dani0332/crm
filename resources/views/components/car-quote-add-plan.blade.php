@@ -73,7 +73,7 @@
                         <div class="col-auto mr-auto"></div>
                         <div class="col-auto">
                             <span id="error-car-create-quote-form"></span> 
-                            <button type="submit" class="btn btn-warning btn-sm">Create Quote</button>
+                            <button type="submit" class="btn btn-warning btn-sm" id="car-quote-create-btn">Create Quote</button>
                         </div>
                     </div>
                 </form>

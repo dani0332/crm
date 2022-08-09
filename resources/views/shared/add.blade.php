@@ -406,7 +406,7 @@
                             <div class="col-auto mr-auto"></div>
                             <div class="col-auto">
                                 <button
-                                    type="submit" class="btn btn-warning btn-sm">Create</button>
+                                    type="submit" class="btn btn-warning btn-sm" onClick="this.form.submit(); this.disabled=true; this.innerHTML='Creating…';">Create</button>
                             </div>
                         </div>
                     </form>

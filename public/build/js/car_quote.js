@@ -31,6 +31,7 @@ $(document).ready(function() {
             return false;
         } else {
             validationDivText("#error-car-create-quote-form", "");
+            lockButtonShowText("#car-quote-create-btn", "Creating");
         }
     });
 
@@ -40,6 +41,12 @@ $(document).ready(function() {
 
     function changeFieldBgColor(id, color) {
         $(id).animate({ backgroundColor: color }).delay(1);
+    }
+
+    function lockButtonShowText(id, text) {
+        console.log("text: " + text);
+        $(id).prop("disabled",true);
+        $(id).text(text);
     }
 
 });

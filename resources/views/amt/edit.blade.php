@@ -160,7 +160,7 @@
                         <div class="row">
                             <div class="col-auto mr-auto"></div>
                             <div class="col-auto">
-                                <button type="submit" class="btn btn-warning btn-sm">Update</button>
+                                <button type="submit" class="btn btn-warning btn-sm" onClick="this.form.submit(); this.disabled=true; this.innerHTML='Updating…';">Update</button>
                             </div>
                         </div>
                     </form>
