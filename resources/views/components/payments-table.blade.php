@@ -3,6 +3,28 @@
     use App\Enums\PermissionsEnum;
     ?>
 <script>
+    var wasSubmitted = false;
+    function createPayment()
+        {
+            if (wasSubmitted) {
+                return;
+            } else {
+                wasSubmitted = true;
+                $('#create-payment-btn').text('Creating Payment').prop('disabled', true);
+                if($('#captured_amount').val() != '' && $('#payment_methods').val() != '' && ($('#payment_methods').val() == 'CC' || ($('#reference').val() != '' && $('#payment_methods').val() != 'CC')) && $('#collection_type').val() != ''){
+                    $('#create-payment-form').submit();
+                    $('#paymentCreateModel').modal('show');
+                    wasSubmitted = false;
+                }else{
+                    $('#captured_amount').val() == '' ? $('#captured_amount_validation').show().delay(3000).fadeOut(800) : '';
+                    $('#payment_methods').val() != 'CC' && $('#payment_methods').val() != ''  && $('#reference').val() == '' ? $('#reference_validation').show().delay(3000).fadeOut(800) : '';
+                    $('#collection_type').val() == '' ? $('#collection_type_validation').show().delay(3000).fadeOut(800) : '';
+                    wasSubmitted = false;
+                    $('#create-payment-btn').text('Create Payment').removeAttr('disabled');
+                }
+
+            }
+        }
     $(document).ready(function () {
         $('#add-payment-btn').on('click',function () {
             $('#captured_amount').val('');
@@ -18,17 +40,7 @@
 
         $('#upayment-reference-div, #payment-reference-div').hide();
 
-        $('#create-payment-btn').on('click',function (e) {
-            e.preventDefault();
-            if($('#captured_amount').val() != '' && $('#payment_methods').val() != '' && ($('#payment_methods').val() == 'CC' || ($('#reference').val() != '' && $('#payment_methods').val() != 'CC')) && $('#collection_type').val() != ''){
-                $('#create-payment-form').submit();
-            }else{
-                $('#captured_amount').val() == '' ? $('#captured_amount_validation').show().delay(3000).fadeOut(800) : '';
-                $('#captured_amount').val() == '' ? $('#payment_methods_validation').show().delay(3000).fadeOut(800) : '';
-                $('#payment_methods').val() != 'CC' && $('#payment_methods').val() != ''  && $('#reference').val() == '' ? $('#reference_validation').show().delay(3000).fadeOut(800) : '';
-                $('#collection_type').val() == '' ? $('#collection_type_validation').show().delay(3000).fadeOut(800) : '';
-            }
-        });
+
 
         $('#update-payment-btn').on('click',function (e) {
             e.preventDefault();
@@ -78,18 +90,17 @@
             </div>
             <div class="x_content">
                 <div id="lead-history-div">
-                    <span class="alert alert-success" id="generateCCLinkMsg"
-                        style="display: none;float:right">Copied</span>
+
 
                     <table id="datatabless" class="table table-striped jambo_table"
                         style="width:100%;table-layout : fixed">
                         <thead>
                             <tr>
-                                <th>Transaction ID</th>
+                                <th>Payment ID</th>
                                 <th>Payment Status</th>
                                 <th>Plan Name</th>
                                 <th>Captured Amount</th>
-                                <th>Last Status Changed</th>
+                                <th>Status Change Date</th>
                                 <th>Caputred At</th>
                                 <th>Authorized At</th>
                                 <th>Payment method</th>
@@ -100,11 +111,11 @@
                         <tbody>
                             @foreach ($payments as $payment)
                             <tr>
-                                <td>{{ strtoupper($payment->code). ' ' .$payment->payment_status_id }}</td>
+                                <td>{{ strtoupper($payment->code)}}</td>
                                 <td>{{ $payment->paymentStatus->text }}</td>
                                 <td>{{ $travelPlainModel->plan->text }}</td>
                                 <td>{{ $payment->captured_amount }}</td>
-                                <td>{{ $payment->paymentStatusLogs->first() ? $payment->paymentStatusLogs->first()->created_at :  '' }}</td>
+                                <td>{{ $payment->paymentStatusLogs->last() ? $payment->paymentStatusLogs->last()->created_at :  '' }}</td>
                                 <td>{{ $payment->captured_at}}</td>
                                 <td>{{ $payment->authorized_at}}</td>
                                 <td>{{ $payment->paymentMethod->name }}</td>
@@ -112,7 +123,11 @@
                                 <td>
                                     @cannot(PermissionsEnum::ApprovePayments)
                                         @if($payment->paymentMethod->code == 'CC')
-                                            <button class="btn btn-sm btn-success generateCCLink">Copy Link</button>
+                                            <button
+                                            data-modelType="{{$modeltype}}"
+                                            data-quoteId="{{$travelPlainModel->id}}"
+                                            data-paymentCode="{{$payment->code}}"
+                                            class="btn btn-sm btn-success generateCCLink" style="float: left;">Copy Link</button>
                                         @endif
                                         @if($payment->payment_status_id != PaymentStatusEnum::PAID &&
                                         $payment->payment_status_id != PaymentStatusEnum::CAPTURED && $payment->payment_status_id != PaymentStatusEnum::AUTHORISED)
@@ -142,6 +157,8 @@
                             @endforeach
                         </tbody>
                     </table>
+                    <span class="alert alert-success" id="generateCCLinkMsg"
+                        style="display: none;float:right;position: absolute;z-index: 1;top: -16px;right: 0;">Copied</span>
                 </div>
             </div>
         </div>
@@ -256,7 +273,7 @@
                     </div>
                 </div>
                 <div class="modal-footer" style="justify-content: center;">
-                    <button type="button" id="create-payment-btn" class="btn btn-sm btn-success">Create Payment</button>
+                    <button type="button" id="create-payment-btn" onClick="this.disabled=true;createPayment();" class="btn btn-sm btn-success">Create Payment</button>
                 </div>
             </form>
         </div>

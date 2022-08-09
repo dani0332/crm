@@ -10,7 +10,7 @@ class Payment extends Model
     protected $primaryKey = 'code';
     public $incrementing = false;
     protected $keyType = 'string';
-    protected $fillable = ['code', 'payment_status_id', 'plan_id', 'captured_amount', 'captured_at', 'payment_methods_code', 'insurance_provider_id', 'created_by', 'updated_by', 'is_approved', 'reference', 'collection_type'];
+    protected $fillable = ['code', 'payment_status_id', 'plan_id', 'captured_amount', 'captured_at', 'payment_methods_code', 'insurance_provider_id', 'created_by', 'updated_by', 'is_approved', 'reference', 'collection_type', 'payment_link'];
     protected $forceDeleting = true;
 
     public function paymentable()
@@ -35,6 +35,6 @@ class Payment extends Model
 
     public function paymentStatusLogs()
     {
-        return $this->hasMany('App\Models\PaymentStatusLog', 'payment_code', 'code')->latest();
+        return $this->hasMany('App\Models\PaymentStatusLog', 'payment_code', 'code');
     }
 }

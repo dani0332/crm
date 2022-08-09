@@ -2106,8 +2106,28 @@ $(document).ready(function () {
     });
 
     $(".generateCCLink").click(function () {
-        navigator.clipboard.writeText('Copied');
-        $("#generateCCLinkMsg").show().delay(1000).fadeOut();
+        $('.loader').show();
+        $.ajax({
+            url: '/generate-payment-link',
+            method: "POST",
+            data: {
+                _token: $('input[name=_token]').val(),
+                modelType: $(this).attr('data-modelType'),
+                quoteId : $(this).attr('data-quoteId'),
+                paymentCode : $(this).attr('data-paymentCode'),
+            },
+            success: function (data) {
+                if (data.success) {
+                    navigator.clipboard.writeText(data.payment_link);
+                    $('.loader').hide();
+                    $("#generateCCLinkMsg").show().delay(1000).fadeOut();
+                }else{
+                    $('.loader').hide();
+                    alert(data);
+                }
+            },
+        });
+
     });
 
 });

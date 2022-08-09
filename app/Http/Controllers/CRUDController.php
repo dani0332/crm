@@ -9,6 +9,7 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Models\GenericModel;
 use App\Models\Payment;
+use App\Models\PaymentStatusLog;
 use App\Models\QuoteDocument;
 use App\Models\User;
 use App\Services\ActivitiesService;
@@ -899,8 +900,9 @@ class CRUDController extends Controller
         if (! $quoteModel) {
             return false;
         }
+        $code = 'P-'. strtoupper(substr(uniqid('', ), 0, 8));
         $paymentInformation = [
-            'code' => substr(uniqid('', ), 0, 8),
+            'code' => $code,
             'collection_type' => $request->collection_type,
             'captured_amount' => $request->captured_amount,
             'payment_methods_code' => $request->payment_methods,
@@ -915,6 +917,14 @@ class CRUDController extends Controller
         }
         $payment = Payment::create($paymentInformation);
         $quoteModel->payments()->save($payment);
+        $paymentLog = new PaymentStatusLog([
+            'current_payment_status_id' => PaymentStatusEnum::PENDING,
+            'payment_code' => $code,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        $paymentLog->save();
+
 
         return back()->with('success', 'Payment has been created');
     }
@@ -932,7 +942,6 @@ class CRUDController extends Controller
         }
         $payment = Payment::where('code', $request->paymentCode)->first();
         $payment->update($paymentInformation);
-
         return back()->with('success', 'Payment has been updated');
     }
 }
