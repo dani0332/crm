@@ -2366,7 +2366,6 @@ function approvePayment(paymentCode)
                 code: paymentCode,
             },
             success: function (data) {
-                debugger;
                 window.location.reload();
             },
         });
