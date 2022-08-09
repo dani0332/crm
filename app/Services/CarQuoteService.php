@@ -274,7 +274,7 @@ class CarQuoteService extends BaseService
             'year_of_manufacture' => 'select|title|required',
             'email' => 'input|email|required',
             'mobile_no' => 'input|title|number|required',
-            'dob' => 'input|date|title|required',
+            'dob' => 'input|text|title|required',
             'nationality_id' => 'select|title|required',
             'uae_license_held_for_id' => 'select|title|required',
             'back_home_license_held_for_id' => 'select|title',
