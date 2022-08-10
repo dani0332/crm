@@ -48,23 +48,29 @@ class PaymentMethodsSeeder extends Seeder
             ]);
             PaymentMethod::create([
                 'code' => 'CR_FAYAZ',
-                'name' => 'Unpaid but approved by Fayaz - credit period granted - with email approval',
-                'description' => 'Unpaid but approved by Fayaz - credit period granted - with email approval',
+                'name' => 'Approved by General Manager - credit period granted - with email approval',
+                'description' => 'Approved by General Manager - credit period granted - with email approval',
                 'parent_code' => 'CR',
                 'is_active' => true,
             ]);
             PaymentMethod::create([
                 'code' => 'CR_HITESH',
-                'name' => 'Unpaid but approved by Hitesh - credit period granted - with email approval',
-                'description' => 'Unpaid but approved by Hitesh - credit period granted - with email approval',
+                'name' => 'Approved by Chief Marketing Officer - credit period granted - with email approval',
+                'description' => 'Approved by Chief Marketing Officer - credit period granted - with email approval',
                 'parent_code' => 'CR',
                 'is_active' => true,
             ]);
             PaymentMethod::create([
                 'code' => 'CR_MAHESH',
-                'name' => 'Unpaid but approved by Mahesh - credit period granted - with email approval',
-                'description' => 'Unpaid but approved by Mahesh - credit period granted - with email approval',
+                'name' => 'Approved by Chief Operations Officer - credit period granted - with email approval',
+                'description' => 'Approved by Chief Operations Officer - credit period granted - with email approval',
                 'parent_code' => 'CR',
+                'is_active' => true,
+            ]);
+            PaymentMethod::create([
+                'code' => 'IN_PL',
+                'name' => 'Insure Now, Pay Later',
+                'description' => 'Insure Now, Pay Later',
                 'is_active' => true,
             ]);
         }

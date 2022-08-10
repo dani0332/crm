@@ -77,6 +77,6 @@ class LookupService extends BaseService
 
     public function getPaymentMethods()
     {
-        return PaymentMethod::select('code', 'name', 'parent_code')->get();
+        return PaymentMethod::select('code', 'name', 'parent_code')->orderBy('name')->get();
     }
 }

@@ -151,7 +151,9 @@
                                                 data-provider="{{$travelPlainModel->plan->insuranceProvider->text}}" onclick="approvePayment('{{$payment->code}}')">Approve</button>
                                         @endif
                                     @endcan
-
+                                    @if($payment->payment_status_id == PaymentStatusEnum::PAID)
+                                    <button class="btn btn-success btn-sm" disabled >Approved</button>
+                                    @endif
                                 </td>
                             </tr>
                             @endforeach
