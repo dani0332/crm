@@ -30,7 +30,6 @@ use App\Services\TeamService;
 use App\Services\TravelQuoteService;
 use App\Services\UserService;
 use Carbon\Carbon;
-use Config;
 use DataTables;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -229,7 +228,7 @@ class CRUDController extends Controller
             if (! isset($record->quoteUID)) {
                 return redirect('/quotes/'.strtolower($modelType))->with('success', ((str_contains(strtolower($modelType), 'team') ? 'Team' : (str_contains(strtolower($modelType), 'leadstatus') ? 'Lead Status' : $modelType))).' has been stored');
             } else {
-                return redirect('/quotes/'.strtolower($modelType).'/'.$record->quoteUID)->with('success', ((str_contains(strtolower($modelType), 'team') ? 'Team' : (str_contains(strtolower($modelType), 'leadstatus') ? 'Lead Status' : $modelType))).' has been stored');
+                return redirect('/quotes/'.strtolower($modelType).'/'.$record->quoteUID)->with('success', ((str_contains(strtolower($modelType), 'team') ? 'Team' : (str_contains(strtolower($modelType), 'leadstatus') ? 'Lead Status' : 'Lead'))).' has been created');
             }
         }
     }
