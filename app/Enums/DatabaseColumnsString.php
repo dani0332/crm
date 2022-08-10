@@ -14,5 +14,5 @@ final class DatabaseColumnsString extends Enum
     const QUOTE_STATUS_ID = 'quote_status_id';
     const MOBILE = 'mobile_no';
     const EMAIL = 'email';
-    const CarValue = 'car_value';
+    const CAR_VALUE = 'car_value';
 }
