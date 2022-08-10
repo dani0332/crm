@@ -3,6 +3,7 @@
 @section('content')
 @php
     use App\Enums\GenericRequestEnum;
+    use App\Enums\CarPlanType;
 @endphp
 <script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
 <script src="{{ asset('build/js/car_quote.js') }}"></script>
@@ -30,6 +31,7 @@
                     <input type="hidden" id="car_quote_uuid" name="car_quote_uuid" value="{{ $quoteUuId }}">
                     <input type="hidden" id="is_disabled" name="is_disabled" value="0">
                     <input type="hidden" id="is_create" name="is_create" value="1">
+                    <input type="hidden" id="repair_type_comp" name="repair_type_comp" value="{{ CarPlanType::COMP }}">
                     <div class="item form-group">
                         <div class="col-md-6 col-sm-6">
                             <div class="row">
@@ -71,7 +73,7 @@
                         <div class="col-auto mr-auto"></div>
                         <div class="col-auto">
                             <span id="error-car-create-quote-form"></span> 
-                            <button type="submit" class="btn btn-warning btn-sm">Create Quote</button>
+                            <button type="submit" class="btn btn-warning btn-sm" id="car-quote-create-btn">Create Quote</button>
                         </div>
                     </div>
                 </form>
@@ -92,7 +94,7 @@
                         <tr>
                             <td>{{ ucwords($quotePlan->providerName) }}</td>
                             <td>{{ ucwords($quotePlan->name) }}</td>
-                            <td>{{ $quotePlan->repairType }}</td>
+                            <td>{{ $quotePlan->repairType == CarPlanType::COMP ? 'NON-AGENCY' : $quotePlan->repairType }}</td>
                             <td>
                                 @php
                                     $totalSelectedAddonsPriceWithVat = 0;
