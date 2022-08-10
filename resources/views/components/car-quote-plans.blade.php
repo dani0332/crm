@@ -135,7 +135,7 @@ use App\Enums\CarPlanType;
 								@endif
 								@endforeach
 							</td>
-							<td>{{ $quotePlan->insurerTrim }}</td>
+							<td>{{ isset($quotePlan->insurerTrim) ? $quotePlan->insurerTrim : '' }}</td>
 							<td>
 								<table style="margin-left: -10px;margin-top: -10px !important;">
 									<?php
