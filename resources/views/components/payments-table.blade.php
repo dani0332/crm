@@ -101,7 +101,7 @@
                                 <th>Plan Name</th>
                                 <th>Captured Amount</th>
                                 <th>Status Change Date</th>
-                                <th>Caputred At</th>
+                                <th>Captured At</th>
                                 <th>Authorized At</th>
                                 <th>Payment method</th>
                                 <th>Reference</th>
