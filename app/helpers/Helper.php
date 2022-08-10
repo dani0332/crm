@@ -288,3 +288,8 @@ function divideNumber($numerator, $denominator)
 {
     return $denominator == 0 ? 0 : ($numerator / $denominator);
 }
+
+function get_dob_date_format()
+{
+    return 'Y-m-d';
+}

@@ -93,7 +93,7 @@ class DropdownSourceService extends BaseService
                 $data = MartialStatus::select('id', 'text')->where('is_active', true)->get();
                 break;
             case 'nationality_id':
-                $data = Nationality::select('id', 'text')->where('is_active', true)->get();
+                $data = Nationality::select('id', 'text')->where('is_active', true)->orderBy('text')->get();
                 break;
             case 'quote_status_id':
                 $data = QuoteStatus::select('id', 'text')
@@ -146,7 +146,7 @@ class DropdownSourceService extends BaseService
                 $data = LifeNumberOfYears::select('id', 'text')->where('is_active', true)->get();
                 break;
             case 'year_of_manufacture':
-                $data = YearOfManufacture::select('text as id', 'text')->get();
+                $data = YearOfManufacture::select('text as id', 'text')->orderBy('sort_order')->get();
                 break;
             case 'advisor_id':
                 if (Auth::user()->isRenewalUser() || Auth::user()->isRenewalManager() || Auth::user()->isRenewalAdvisor()) {

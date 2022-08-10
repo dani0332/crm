@@ -10,7 +10,6 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Models\BusinessInsuranceType;
 use App\Models\BusinessQuote;
-use App\Models\HealthMemberDetail;
 use App\Models\HealthQuote;
 use App\Models\HealthQuotePlan;
 use App\Models\HealthQuoteRequestDetail;
@@ -22,7 +21,6 @@ use App\Traits\GetUserTree;
 use App\Traits\RolePermissionConditions;
 use Auth;
 use Carbon\Carbon;
-use Config;
 use DB;
 use Hidehalo\Nanoid\Client;
 use Illuminate\Http\Request;
@@ -157,8 +155,7 @@ class HealthQuoteService extends BaseService
 
     public function saveHealthQuote(Request $request)
     {
-        $sourceName = $request->is_ebp_renewal == 'on' ? LeadSourceTypes::EBPRENEWALS : Config::get('constants.SOURCE_NAME');
-        $appUrl = Config::get('constants.APP_URL');
+        $sourceName = $request->is_ebp_renewal == 'on' ? LeadSourceTypes::EBPRENEWALS : config('constants.SOURCE_NAME');
         $dataArr = [
             'firstName' => $request->first_name,
             'lastName' => $request->last_name,
@@ -170,7 +167,7 @@ class HealthQuoteService extends BaseService
             'maritalStatusId' => $request->marital_status_id,
             'premium' => $request->premium,
             'leadTypeId' => $request->lead_type_id,
-            'referenceUrl' => $appUrl,
+            'referenceUrl' => config('constants.APP_URL'),
             'dob' => $request->dob,
             'gender' => $request->gender,
             'is_ebp_renewal' => $request->is_ebp_renewal == 'on' ? true : false,
@@ -363,7 +360,7 @@ class HealthQuoteService extends BaseService
 
     public function updateHealthQuote(Request $request, $id)
     {
-        $sourceName = $request->is_ebp_renewal == 'on' ? LeadSourceTypes::EBPRENEWALS : Config::get('constants.SOURCE_NAME');
+        $sourceName = $request->is_ebp_renewal == 'on' ? LeadSourceTypes::EBPRENEWALS : config('constants.SOURCE_NAME');
         $healthQuote = HealthQuote::where('uuid', $id)->first();
         $healthQuote->first_name = $request->first_name;
         $healthQuote->last_name = $request->last_name;
@@ -805,11 +802,11 @@ class HealthQuoteService extends BaseService
     public function getQuotePlans($id)
     {
         $quoteUuId = HealthQuote::where('uuid', '=', $id)->value('uuid');
-        $plansApiEndPoint = Config::get('constants.KEN_API_ENDPOINT').'/get-health-quote-plans';
-        $plansApiToken = Config::get('constants.KEN_API_TOKEN');
-        $plansApiTimeout = Config::get('constants.KEN_API_TIMEOUT');
-        $plansApiUserName = Config::get('constants.KEN_API_USER');
-        $plansApiPassword = Config::get('constants.KEN_API_PWD');
+        $plansApiEndPoint = config('constants.KEN_API_ENDPOINT').'/get-health-quote-plans';
+        $plansApiToken = config('constants.KEN_API_TOKEN');
+        $plansApiTimeout = config('constants.KEN_API_TIMEOUT');
+        $plansApiUserName = config('constants.KEN_API_USER');
+        $plansApiPassword = config('constants.KEN_API_PWD');
         $authBasic = base64_encode($plansApiUserName.':'.$plansApiPassword);
 
         $plansDataArr = [
@@ -914,13 +911,14 @@ class HealthQuoteService extends BaseService
                 Log::info('Cannot assign WCU as lead is in Transaction Approved state , lead id: '.$leadId);
                 array_push($result, ['leadId' => $lead->code, 'msg' => 'Cannot assign WCU as lead is in Transaction Approved state']);
                 continue;
+            } elseif ($lead) {
+                $lead->advisor_id = null;
+                $lead->quote_status_id = QuoteStatusEnum::NewLead;
+                $lead->wcu_id = $userId;
+                $lead->health_team_type = $request->assign_team;
+                $lead->save();
+                Log::info('WCU advisor : '.$userId.' assigned to lead: '.$leadId);
             }
-            $lead->advisor_id = null;
-            $lead->quote_status_id = QuoteStatusEnum::NewLead;
-            $lead->wcu_id = $userId;
-            $lead->health_team_type = $request->assign_team;
-            $lead->save();
-            Log::info('WCU advisor : '.$userId.' assigned to lead: '.$leadId);
         }
 
         return $result;
@@ -957,10 +955,8 @@ class HealthQuoteService extends BaseService
 
     public function isLeadTransactionApproved($lead): bool
     {
-        if ($lead != null) {
-            if ($lead->quote_status_id == QuoteStatusEnum::TransactionApproved) {
-                return true;
-            }
+        if ($lead != null && $lead->quote_status_id == QuoteStatusEnum::TransactionApproved) {
+            return true;
         }
 
         return false;

@@ -8,11 +8,13 @@ $(document).ready(function() {
             type: 'get',
             success: function(response) {
                 var carPlan = $("#car_plan_id").empty();
+                var repairTypeComp = $('#repair_type_comp').val();
                 changeFieldBgColor("#car_plan_id", "#ced4da");
                 changeFieldBgColor("#car_plan_id", "");
                 for (let index = 0; index < response.length; index++) {
                     const element = response[index];
-                    carPlan.append('<option value="' + element.id + '">' + element.text + ' (' + element.repair_type + ')</option>');
+                    var repairType = element.repair_type == repairTypeComp ? "NON-AGENCY" : element.repair_type;
+                    carPlan.append('<option value="' + element.id + '">' + element.text + ' (' + repairType + ')</option>');
                 }
                 if(response.length == 0) {
                     carPlan.append('<option value="">Select Plan</option>');
@@ -29,6 +31,7 @@ $(document).ready(function() {
             return false;
         } else {
             validationDivText("#error-car-create-quote-form", "");
+            lockButtonShowText("#car-quote-create-btn", "Creating");
         }
     });
 
@@ -38,6 +41,12 @@ $(document).ready(function() {
 
     function changeFieldBgColor(id, color) {
         $(id).animate({ backgroundColor: color }).delay(1);
+    }
+
+    function lockButtonShowText(id, text) {
+        console.log("text: " + text);
+        $(id).prop("disabled",true);
+        $(id).text(text);
     }
 
 });
