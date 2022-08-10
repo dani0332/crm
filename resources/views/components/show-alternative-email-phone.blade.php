@@ -21,5 +21,5 @@ if($property == DatabaseColumnsString::MOBILE)
         <?php }
     }  
 } else { ?>
-    {{$record->$property }}
+    {{ $property==DatabaseColumnsString::CarValue ? number_format($record->$property, 2) : $record->$property }}
 <?php } ?>
