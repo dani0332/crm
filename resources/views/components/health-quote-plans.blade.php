@@ -30,7 +30,7 @@
                                             <tr>
                                                 <td>{{ ucwords($quotePlan->providerName) }}</td>
                                                 <td>{{ ucwords($quotePlan->name) }}</td>
-                                                <td>{{ $quotePlan->actualPremium }}</td>
+                                                <td>{{ $quotePlan->actualPremium + $quotePlan->basmah }}</td>
                                                 <td> {{ $quotePlan->discountPremium + $quotePlan->vat }}</td>
                                                 <td><a href="#" planDetailUrl="{{ $uuidModal }}/plan_details/{{ $quotePlan->id }}"
                                                     data-toggle="modal" data-target="#quotePlanModal" class="quotePlanModalPopup">View</a></td>
