@@ -85,6 +85,9 @@ class AMLController extends Controller
                 if ($quoteTypeCode == quoteTypeCode::Travel) {
                     $quoteRequestTable = 'travel_quote_request';
                 }
+                if ($quoteTypeCode == quoteTypeCode::Pet) {
+                    $quoteRequestTable = 'pet_quote_request';
+                }
 
                 $dataAml = AML::select('kyc_logs.*', 'quote_type.text as quote_type_text', $quoteRequestTable.'.code as cdb_id')
                     ->leftjoin('quote_type', 'quote_type.id', 'kyc_logs.quote_type_id')
