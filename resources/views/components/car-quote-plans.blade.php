@@ -184,19 +184,21 @@ use App\Enums\CarPlanType;
 							<td>
 								<table style="margin-left: -10px;margin-top: -10px !important;">
 									@foreach ($quotePlan->benefits->exclusion as $key => $quotePlanExclusion)
-										@if(isset($quotePlanExclusion->code) && (strtolower($quotePlanExclusion->code) ==
-										strtolower(CarPlanExclusionsCode::TPL_OMAN_COVER) || strtolower($quotePlanExclusion->code) ==
-										strtolower(CarPlanExclusionsCode::OMAN_COVER)))
-											<tr style="background-color: transparent;">
-												<td style="border-top: none !important;">{{ $quotePlanExclusion->text }}:</td>
-												<td style="border-top: none !important;">{{ $quotePlanExclusion->value }}</td>
-											</tr>
+										@if(isset($quotePlanExclusion->code))
+											@if(strtolower($quotePlanExclusion->code) ==
+												strtolower(CarPlanExclusionsCode::TPL_OMAN_COVER) || strtolower($quotePlanExclusion->code) ==
+												strtolower(CarPlanExclusionsCode::OMAN_COVER))
+													<tr style="background-color: transparent;">
+														<td style="border-top: none !important;">{{ $quotePlanExclusion->text }}:</td>
+														<td style="border-top: none !important;">{{ $quotePlanExclusion->value }}</td>
+													</tr>
+											@endif
 										@endif
 									@endforeach
 									@foreach ($quotePlan->benefits->inclusion as $key => $quotePlanInclusion)
 										@if(isset($quotePlanExclusion->code) && (strtolower($quotePlanInclusion->code) ==
-										strtolower(CarPlanExclusionsCode::TPL_OMAN_COVER) || strtolower($quotePlanInclusion->code) ==
-										strtolower(CarPlanExclusionsCode::OMAN_COVER)))
+										strtolower(CarPlanExclusionsCode::TPL_OMAN_COVER) || (strtolower($quotePlanInclusion->code) ==
+										strtolower(CarPlanExclusionsCode::OMAN_COVER))))
 											<tr style="background-color: transparent;">
 												<td style="border-top: none !important;">{{ $quotePlanInclusion->text }}:</td>
 												<td style="border-top: none !important;">{{ $quotePlanInclusion->value }}</td>
