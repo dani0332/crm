@@ -2324,3 +2324,27 @@ $("#dob_div #dob").datepicker({ // TM Leads
     dateFormat: "dd/mm/yy",
     yearRange: "-80:+00"
 });
+
+function sendQuoteDocumentsToCustomer(el) {
+    if (confirm('Are you sure you want to send documents to customer?')) {
+        var quoteType = $(el).attr('data-quote-type');
+        var quoteUuId = $(el).attr('data-quote-uuid');
+        $(".loader").show();
+        $.ajax({
+            url: '/quotes/' + quoteType + '/' + quoteUuId + '/send-policy-documents',
+            method: "POST",
+            data: {
+                _token: $('input[name=_token]').val(),
+            },
+            success: function (data) {
+                $(".loader").hide();
+                $("#email-send-success").show();
+                setTimeout(function(){
+                    window.location.reload();
+                },5000);
+            },
+        });
+    } else {
+        return false;
+    }
+}

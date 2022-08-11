@@ -131,7 +131,7 @@ Route::group(['middleware' => ['auth']], function () {
     Route::post('quotes/{quoteType}/documents/store', [QuoteDocumentController::class, 'store']);
     Route::post('quotes/{quoteType}/{quoteUuId}/documents/{id}/delete', [QuoteDocumentController::class, 'destroy']);
     Route::get('documents/{id}', [QuoteDocumentController::class, 'show'])->name('documents.show');
-    Route::get('quotes/{quoteType}/{quoteUuId}/send-policy-documents', [QuoteDocumentController::class, 'sendPolicyDocument']);
+    Route::post('quotes/{quoteType}/{quoteUuId}/send-policy-documents', [QuoteDocumentController::class, 'sendPolicyDocument']);
 
     Route::group(['prefix' => 'renewals'], function () {
         Route::resource('uploaded-leads', RenewalsUploadController::class);
