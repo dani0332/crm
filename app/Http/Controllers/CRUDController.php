@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Enums\HealthTeamType;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
-use App\Enums\QuoteTypeId;
 use App\Models\GenericModel;
 use App\Models\User;
 use App\Services\ActivitiesService;
@@ -28,6 +27,7 @@ use App\Services\SendEmailCustomerService;
 use App\Services\TeamService;
 use App\Services\TravelQuoteService;
 use App\Services\UserService;
+use Carbon\Carbon;
 use DataTables;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -217,6 +217,7 @@ class CRUDController extends Controller
                 }
             }
         }
+        $request->dob = isset($request->dob) ? Carbon::createFromFormat('d/m/Y', $request->dob)->format(get_dob_date_format()) : null;
         $this->validate($request, $validateArray);
         $record = $this->crudService->saveModelByType($modelType, $request);
         if (isset($record->message) && str_contains($record->message, 'Error')) {
@@ -225,7 +226,7 @@ class CRUDController extends Controller
             if (! isset($record->quoteUID)) {
                 return redirect('/quotes/'.strtolower($modelType))->with('success', ((str_contains(strtolower($modelType), 'team') ? 'Team' : (str_contains(strtolower($modelType), 'leadstatus') ? 'Lead Status' : $modelType))).' has been stored');
             } else {
-                return redirect('/quotes/'.strtolower($modelType).'/'.$record->quoteUID)->with('success', ((str_contains(strtolower($modelType), 'team') ? 'Team' : (str_contains(strtolower($modelType), 'leadstatus') ? 'Lead Status' : $modelType))).' has been stored');
+                return redirect('/quotes/'.strtolower($modelType).'/'.$record->quoteUID)->with('success', ((str_contains(strtolower($modelType), 'team') ? 'Team' : (str_contains(strtolower($modelType), 'leadstatus') ? 'Lead Status' : 'Lead'))).' has been created');
             }
         }
     }
@@ -312,8 +313,9 @@ class CRUDController extends Controller
         $quoteTypeId = $this->activityService->getQuoteTypeId($quoteType);
         $emailStatuses = $this->emailStatusService->getEmailStatus($quoteTypeId, $record->id);
         $notesForCustomers = $this->notesForCustomerService->getNotesForCustomer($quoteTypeId, $record->id);
-        if ($this->genericModel->modelType == quoteTypeCode::Car) { // Car plans to display on detail view
+        $record->dob = isset($record->dob) ? date('d/m/Y', strtotime($record->dob)) : null;
 
+        if ($this->genericModel->modelType == quoteTypeCode::Car) { // Car plans to display on detail view
             $ecomCarInsuranceQuoteUrl = config('constants.ECOM_CAR_INSURANCE_QUOTE_URL');
             $listQuotePlans = null;
             $carQuotePlanAddons = $this->carQuoteService->getCarQuotePlanAddons($id);
@@ -321,7 +323,6 @@ class CRUDController extends Controller
             $vehicleTypes = $this->lookupService->getVehicleTypes();
             $trimList = $this->lookupService->getTrimListByCarModel($record->car_model_id);
             $yearsOfManufacture = $this->lookupService->getYearsOfManufacture();
-            $quoteTypeId = QuoteTypeId::Car;
 
             return view('shared.show', compact([
                 'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList',
@@ -414,6 +415,8 @@ class CRUDController extends Controller
             }
         }
 
+        $record->dob = isset($record->dob) ? date('d/m/Y', strtotime($record->dob)) : null;
+
         return view('shared.edit', compact(['record', 'model', 'dropdownSource', 'customTitles', 'customLists', 'isRenewalUser']));
     }
 
@@ -440,6 +443,7 @@ class CRUDController extends Controller
                 }
             }
         }
+        $request->dob = isset($request->dob) ? Carbon::createFromFormat('d/m/Y', $request->dob)->format(get_dob_date_format()) : null;
         $this->validate($request, $validateArray);
         $this->crudService->updateModelByType(json_decode($request->modelType, true), $request, $id);
 
