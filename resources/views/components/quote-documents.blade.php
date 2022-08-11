@@ -8,7 +8,8 @@
                 <a class="btn btn-sm btn-primary" style="float:right;" data-quote-type="{{ $quoteType }}" 
                 data-quote-uuid="{{ $record->uuid }}" onclick="sendQuoteDocumentsToCustomer(this)">Send Policy</a>
                 <br clear="all" />
-                <div class="alert alert-success" id="email-send-success" style="display:none;">Page will be refresh in 5 seconds. Please check email status table for further detail.</div>
+                <div class="alert alert-success" id="email-send-success" style="display:none;">Email sent. Page will be refresh in 5 seconds. Please check email status table for further detail.</div>
+                <div class="alert alert-success" id="document-delete-success" style="display:none;">Document deleted. Page will be refresh in 2 seconds.</div>
                 @endif
                 <div class="clearfix"></div>
             </div>

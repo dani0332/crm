@@ -2269,6 +2269,7 @@ function deleteQuoteDocument(el) {
         var id = $(el).attr('data-record-id');
         var quoteType = $(el).attr('data-record-quote-type');
         var quoteUuId = $(el).attr('data-record-quote-uuid');
+        $(".loader").show();
         $.ajax({
             url: '/quotes/' + quoteType + '/' + quoteUuId + '/documents/' + id + '/delete',
             method: "POST",
@@ -2276,7 +2277,11 @@ function deleteQuoteDocument(el) {
                 _token: $('input[name=_token]').val(),
             },
             success: function (data) {
-                window.location.reload();
+                $(".loader").hide();
+                $("#document-delete-success").show();
+                setTimeout(function(){
+                    window.location.reload();
+                },2000);
             },
         });
     }
