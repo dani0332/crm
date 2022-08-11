@@ -54,7 +54,7 @@
                                             formData.append("quote_uuid", "{{ $quoteUuId }}");
                                         },
                                         complete: function(file) {
-                                            //window.location.reload();
+                                            window.location.reload();
                                         },
                                     });
                                 </script>

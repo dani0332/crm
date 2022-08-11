@@ -2281,7 +2281,7 @@ function deleteQuoteDocument(el) {
                 $("#document-delete-success").show();
                 setTimeout(function(){
                     window.location.reload();
-                },2000);
+                },0);
             },
         });
     }
