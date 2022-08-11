@@ -196,7 +196,7 @@ use App\Enums\CarPlanType;
 										@endif
 									@endforeach
 									@foreach ($quotePlan->benefits->inclusion as $key => $quotePlanInclusion)
-										@if(isset($quotePlanExclusion->code) && (strtolower($quotePlanInclusion->code) ==
+										@if(isset($quotePlanInclusion->code) && (strtolower($quotePlanInclusion->code) ==
 										strtolower(CarPlanExclusionsCode::TPL_OMAN_COVER) || (strtolower($quotePlanInclusion->code) ==
 										strtolower(CarPlanExclusionsCode::OMAN_COVER))))
 											<tr style="background-color: transparent;">
