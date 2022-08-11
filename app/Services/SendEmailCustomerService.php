@@ -71,7 +71,8 @@ class SendEmailCustomerService extends BaseService
 
             $client = new \GuzzleHttp\Client();
             $clientRequest = $client->post(
-                $url, [
+                $url,
+                [
                     'headers' => $headers,
                     'body' => $body,
                     'timeout' => 10000,
@@ -87,7 +88,7 @@ class SendEmailCustomerService extends BaseService
             }
         } catch (Exception $ex) {
             $responseCode = $ex->getCode();
-            $responseDetail = 'SIB: Code/Message: '.$responseCode.'/'.$ex->getMessage().' CustomerEmail: '.$emailData->customerEmail.' QuoteCdbId: '.$emailData->quoteCdbId.' Class: '.get_class();
+            $responseDetail = 'SIB Send Email: Code/Message: '.$responseCode.'/'.$ex->getMessage().' CustomerEmail: '.$emailData->customerEmail.' QuoteCdbId: '.$emailData->quoteCdbId.' Class: '.get_class();
             Log::error($responseDetail);
             $response = json_encode($ex->getCode().' '.$ex->getMessage());
             $isEmailSent = 0;
@@ -97,9 +98,38 @@ class SendEmailCustomerService extends BaseService
 
         // addEmailStatus is for quote modules only
         if (isset($messageId) && isset($emailData->quoteTypeId) && isset($emailData->quoteId)) {
-            $this->emailStatusService->addEmailStatus($emailData, $messageId);
+            $emailSubject = $this->getEmailSubjectFromSib($emailTemplateId, $emailData->quoteCdbId);
+            $this->emailStatusService->addEmailStatus($emailData, $messageId, $emailSubject);
         }
 
         return $responseCode;
+    }
+
+    public function getEmailSubjectFromSib($templateId, $quoteCdbId)
+    {
+        $apiKey = config('constants.SENDINBLUE_KEY');
+        $url = config('constants.SIB_URL');
+
+        try {
+            $client = new \GuzzleHttp\Client();
+            $response = $client->request(
+                'GET',
+                $url.'s?templateId='.$templateId.'&sort=desc&limit=1&offset=0',
+                [
+                    'headers' => [
+                        'Accept' => 'application/json',
+                        'api-key' => $apiKey,
+                    ],
+                ]
+            );
+            $content = json_decode($response->getBody()->getContents());
+            $emailSubject = $content->transactionalEmails[0]->subject;
+        } catch (Exception $ex) {
+            $emailSubject = null;
+            $responseDetail = 'SIB Get Email Subject: Code/Message: '.$ex->getCode().'/'.$ex->getMessage().' templateId: '.$templateId.' QuoteCdbId: '.$quoteCdbId.' Class: '.get_class();
+            Log::error($responseDetail);
+        }
+
+        return $emailSubject;
     }
 }
