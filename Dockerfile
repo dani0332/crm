@@ -1,6 +1,6 @@
 FROM php:8.0-fpm
 ARG IMCRM_TOKEN
-ARG NGINX_FILE
+#ARG NGINX_FILE
 #ARG NEW_RELIC_LICENSE_KEY
 #ARG NEW_RELIC_APP_NAME
 # Set working directory
@@ -62,7 +62,7 @@ RUN chmod -R ugo+w /var/www/storage
 RUN cp docker/supervisor.conf /etc/supervisord.conf
 RUN cp docker/blanka.ini /usr/local/etc/php/conf.d/app.ini
 RUN cp docker/info.php /var/www/public/
-RUN cp docker/${NGINX_FILE} /etc/nginx/sites-enabled/default
+RUN cp docker/nginx.conf /etc/nginx/sites-enabled/default
 RUN cp -r docker/*.pem /etc/nginx/conf.d/
 RUN cp docker/log_files.yml /etc/
 
