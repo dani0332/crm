@@ -14,18 +14,18 @@
                 <div class="clearfix"></div>
             </div>
             <div class="x_content">
-                @foreach ($documentUploadTypes as $documentType)
                 <table width="100%">
-                    <tr>
+                @foreach ($documentUploadTypes as $documentType)
+                    <tr height="150px">
                         <td width="25%" valign="middle">
                             <b>{{ ucwords($documentType->text) }}</b>
                             <div><small class="text-muted">
                                 <table>
-                                    <tr><td width="45%">Max file(s) </td><td>{{ $documentType->max_files }}</td></tr>
+                                    <tr><td width="50%">Max file(s) </td><td>{{ $documentType->max_files }}</td></tr>
                                     <tr><td>Supported </td><td>{{ $documentType->accepted_files }}</td></tr>
                                     <tr><td>File max size </td><td>{{ $documentType->max_size }} MB</td></tr>
                                     <tr><td>Is Required? </td><td>{{ $documentType->is_required ? 'Yes' : 'No' }}</td></tr>
-                                    <tr><td>Email Attach? </td><td>{{ $documentType->send_to_customer ? 'Yes' : 'No' }}</td></tr>
+                                    <tr><td>Customer Document? </td><td>{{ $documentType->send_to_customer ? 'Yes' : 'No' }}</td></tr>
                                 </table>
                             </small></div>
                         </td>
@@ -59,13 +59,13 @@
                                     });
                                 </script>
                                 @else
-                                    <p>Respective document(s) already uploaded. If you need to replace it, please go back to delete the document first and than upload it again</p>
+                                    <p align="center">Document(s) already uploaded. <br>If you need to replace it, please go back to delete the document & upload it again.</p>
                                 @endif
                             </div>
                         </td>
                     </tr>
+                    @endforeach
                 </table>
-                @endforeach
             </div>
         </div>
     </div>
