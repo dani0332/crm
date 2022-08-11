@@ -31,12 +31,12 @@
             $('#activityModal').modal({ show: true });
         });
     </script>
-    <?php
+    @php
     use App\Enums\quoteTypeCode;
     use App\Models\CarQuote;
     use App\Enums\RolesEnum;
     use App\Enums\QuoteStatusEnum;
-    ?>
+    @endphp
     <div class="row">
         <div class="col-md-12 col-sm-12 admin-detail">
             <div class="x_panel">

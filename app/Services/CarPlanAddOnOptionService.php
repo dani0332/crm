@@ -108,10 +108,9 @@ class CarPlanAddOnOptionService extends BaseService
         return CarAddOnOption::create($data);
     }
 
-    public function updateCarPlanAddon(Request $request, $id)
+    public function updateCarPlanAddOnOption(Request $request, $id)
     {
         $carAdddonOption = CarAddOnOption::where('id', $id)->first();
-        $carAdddonOption->addon_id = $request->addon_id;
         $carAdddonOption->price = $request->price;
         $carAdddonOption->value = $request->value;
         $carAdddonOption->value_ar = $request->value_ar;
@@ -126,11 +125,11 @@ class CarPlanAddOnOptionService extends BaseService
         return [
             'id' => 'readonly|none',
             'value' => 'input|title|required',
-            'value_ar' => 'input|text|title|required',
-            'price' => 'input|text|title|required',
+            'value_ar' => 'input|text|title',
+            'price' => 'input|number|title|required',
             'created_at' => 'input|title|date|range',
             'updated_at' => 'input|title|date',
-            'addon_id' => 'select|title',
+            'addon_id' => 'readonly|title',
             'text' => 'readonly|title',
         ];
     }

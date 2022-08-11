@@ -17,7 +17,6 @@ use App\Traits\GetTravelPreviousQuoteIds;
 use App\Traits\RolePermissionConditions;
 use Auth;
 use Carbon\Carbon;
-use Config;
 use DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -101,8 +100,6 @@ class TravelQuoteService extends BaseService
 
     public function saveTravelQuote(Request $request)
     {
-        $sourceName = Config::get('constants.SOURCE_NAME');
-        $appUrl = Config::get('constants.APP_URL');
         $dataArr = [
             'firstName' => $request->first_name,
             'lastName' => $request->last_name,
@@ -114,8 +111,8 @@ class TravelQuoteService extends BaseService
             'daysCoverFor' => $request->days_cover_for,
             'destinationId' => $request->destination_id,
             'regionCoverForId' => $request->region_cover_for_id,
-            'source' => $sourceName,
-            'referenceUrl' => $appUrl,
+            'source' => config('constants.SOURCE_NAME'),
+            'referenceUrl' => config('constants.APP_URL'),
             'currentlyLocatedInId' => $request->currently_located_in_id,
             'dob' => $request->dob,
         ];
@@ -708,11 +705,11 @@ class TravelQuoteService extends BaseService
     public function getQuotePlans($id)
     {
         $quoteUuId = TravelQuote::where('uuid', '=', $id)->value('uuid');
-        $plansApiEndPoint = Config::get('constants.KEN_API_ENDPOINT').'/get-travel-quote-plans';
-        $plansApiToken = Config::get('constants.KEN_API_TOKEN');
-        $plansApiTimeout = Config::get('constants.KEN_API_TIMEOUT');
-        $plansApiUserName = Config::get('constants.KEN_API_USER');
-        $plansApiPassword = Config::get('constants.KEN_API_PWD');
+        $plansApiEndPoint = config('constants.KEN_API_ENDPOINT').'/get-travel-quote-plans';
+        $plansApiToken = config('constants.KEN_API_TOKEN');
+        $plansApiTimeout = config('constants.KEN_API_TIMEOUT');
+        $plansApiUserName = config('constants.KEN_API_USER');
+        $plansApiPassword = config('constants.KEN_API_PWD');
         $authBasic = base64_encode($plansApiUserName.':'.$plansApiPassword);
 
         $plansDataArr = [
@@ -805,6 +802,7 @@ class TravelQuoteService extends BaseService
             $lead = $this->getEntityPlain($leadId);
             $lead->advisor_id = $userId;
             $lead->save();
+            $this->updateChildRecord($lead->id);
         }
 
         return $result;
