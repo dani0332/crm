@@ -54,13 +54,13 @@ class MyLeadsController extends Controller
         if (! empty($userAdditionalTeams)) {
             if (str_contains($userAdditionalTeams, ',')) {
                 $userAdditionalTeamsIds = explode(',', $userAdditionalTeams);
+                $userAdditionalTeamsIds = array_merge([$team->id], $userAdditionalTeamsIds);
                 $allowedTeamTypes = Team::whereIn('id', $userAdditionalTeamsIds)->select('id','name')->get()->toArray();
             } else {
                 $additionalTeam = Team::where('id', $userAdditionalTeams)->first();
                 array_push($allowedTeamTypes, ['id' => $additionalTeam->id, 'name' => $additionalTeam->name]);
             }
         }
-
         if ($request->ajax()) {
             if (isset($request->teamType)) {
                 $teamName = strtolower($request->teamType);
