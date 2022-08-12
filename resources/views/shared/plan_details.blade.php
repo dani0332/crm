@@ -56,7 +56,7 @@ if (!isset($modelName)) {
 
             $totalPremium = $discountPremium + $vat + $totalSelectedAddonsPriceWithVat;
             $insurerAvailableTrims = isset($listQuotePlan->insurerAvailableTrims) ? $listQuotePlan->insurerAvailableTrims : [];
-            $insurerSelectedTrim = isset($listQuotePlan->insurerTrim) ? $listQuotePlan->insurerTrim : [];
+            $insurerSelectedTrim = isset($listQuotePlan->insurerTrimId) ? $listQuotePlan->insurerTrimId : null;
         }
     }
 
@@ -706,7 +706,7 @@ if (!isset($modelName)) {
                                 <td> Car Trim </td>
                                 <td><select class="form-control" id='insurerTrim' name="insurerTrim">
                                        @foreach($insurerAvailableTrims as $trim)
-                                       <option value="{{$trim->description}}" {{ $trim->description == $insurerSelectedTrim ? 'selected="selected"' : '' }}>{{$trim->description}}</option>
+                                       <option value="{{$trim->admeId}}" {{ $trim->admeId == $insurerSelectedTrim ? 'selected="selected"' : '' }}>{{$trim->description}}</option>
                                        @endforeach
                                     </select>
                                 </td>
