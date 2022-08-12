@@ -97,15 +97,15 @@ if (!isset($modelName)) {
                     validationDivText('.car-quote-plan-validation-div', 'Discounted Premium must be filled');
                     return false;
                 } else {
-                    if(discounted_premium > actual_premium) {
+                    if(parseFloat(discounted_premium) > parseFloat(actual_premium)) {
                         validationDivText('.car-quote-plan-validation-div', 'Discounted Premium must be lower than Actual Premium');
                         return false;
                     }
                     validationDivText('.car-quote-plan-validation-div', '');
                     // Validations as per plan_type
                     if (repair_type == carPlanTypeTpl) { // TPL Plan
-                        if (discounted_premium > 0) {
-                            if (actual_premium > 0) { // actual_premium should not empty or 0
+                        if (parseFloat(discounted_premium) > 0) {
+                            if (parseFloat(actual_premium) > 0) { // actual_premium should not empty or 0
                                 validationDivText('.car-quote-plan-validation-div', '');
                             } else {
                                 validationDivText('.car-quote-plan-validation-div', 'Actual Premium must be filled');
@@ -113,9 +113,9 @@ if (!isset($modelName)) {
                             }
                         }
                     } else { // COMP Plan
-                        if (discounted_premium > 0) {
+                        if (parseFloat(discounted_premium) > 0) {
                             // actual_premium, excess, car_value should not empty or 0
-                            if (actual_premium > 0 && excess > 0 && car_value > 0) { // actual_premium should not empty or 0
+                            if (parseFloat(actual_premium) > 0 && parseFloat(excess) > 0 && parseFloat(car_value) > 0) { // actual_premium should not empty or 0
                                 validationDivText('.car-quote-plan-validation-div', '');
                             } else {
                                 validationDivText('.car-quote-plan-validation-div', 'Actual Premium, Excess, Car Value must be filled');
