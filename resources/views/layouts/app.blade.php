@@ -1,6 +1,3 @@
-@php
-$appName = Config::get('constants.APP_NAME');
-@endphp
 <!DOCTYPE html>
 <html lang="en">
 
@@ -11,15 +8,12 @@ $appName = Config::get('constants.APP_NAME');
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="icon" type="image/png" href="{{ asset('image/favicon.ico') }}">
-    <title>@yield('title') |
-        {{$appName}}
-    </title>
+    <title>@yield('title') | {{config('constants.APP_NAME')}}</title>
     <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
     <!-- Bootstrap -->
     <link href="{{ asset('vendors/bootstrap/dist/css/bootstrap.min.css') }}" rel="stylesheet">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css">
-    <link rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.1/css/bootstrap-select.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.1/css/bootstrap-select.css" />
 
     <!-- Font Awesome -->
     <link href="{{ asset('vendors/font-awesome/css/font-awesome.min.css') }}" rel="stylesheet">
@@ -32,12 +26,11 @@ $appName = Config::get('constants.APP_NAME');
     <link href="{{ asset('vendors/google-code-prettify/bin/prettify.min.css') }}" rel="stylesheet">
 
     <!-- Custom styling plus plugins -->
-    <link href="{{ asset('build/css/custom.min.css') }}" rel="stylesheet">
-    <link href="{{ asset('build/style.css') }}" rel="stylesheet">
+    <!-- <link href="{{ asset('build/css/custom.min.css') }}" rel="stylesheet"> -->
+    <link href="{{ mix('build/css/style.min.css') }}" rel="stylesheet">
     <link href="{{ asset('vendors/datatables.net-bs/css/dataTables.bootstrap.min.css') }}" rel="stylesheet">
     <link href="{{ asset('vendors/datatables.net-buttons-bs/css/buttons.bootstrap.min.css') }}" rel="stylesheet">
-    <link href="{{ asset('vendors/datatables.net-fixedheader-bs/css/fixedHeader.bootstrap.min.css') }}"
-        rel="stylesheet">
+    <link href="{{ asset('vendors/datatables.net-fixedheader-bs/css/fixedHeader.bootstrap.min.css') }}" rel="stylesheet">
     <link href="{{ asset('vendors/datatables.net-responsive-bs/css/responsive.bootstrap.min.css') }}" rel="stylesheet">
     <link href="{{ asset('vendors/datatables.net-scroller-bs/css/scroller.bootstrap.min.css') }}" rel="stylesheet">
     <link href="https://www.jquery-az.com/jquery/css/bootstrap-markdown-editor.css" rel="stylesheet">
@@ -216,8 +209,9 @@ $appName = Config::get('constants.APP_NAME');
             image_path_rewards_slider: "{{ \Config::get('constants.azure_storage_url') . 'myrewards/rewards-slider/' }}"
         };
     </script>
-    <script src="{{ asset('build/js/customjs.js') }}"></script>
-    <script src="{{ asset('build/js/tm_js.js') }}"></script>
+    <!-- <script src="{{ asset('build/js/customjs.js') }}"></script> -->
+    <script src="{{ mix('build/js/customjs.min.js') }}"></script>
+    <!-- <script src="{{ asset('build/js/tm_js.js') }}"></script> -->
     <script>
         $(document).ajaxError(function(event, jqxhr, settings, exception) {
             if (exception == 'Unauthorized') {
