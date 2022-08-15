@@ -68,7 +68,7 @@ use App\Enums\CarPlanType;
                         <input type="hidden" id="planIds" name="planIds" value="">
                         <input type="hidden" id="car_quote_uuid" name="car_quote_uuid" value="{{$record->uuid}}">
                     </form>
-                    <table id="dataTableCarQuotePlans" class="table table-striped jambo_table" style="table-layout: fixed;" style="width:100%">
+                    <table id="dataTableCarQuotePlans" class="table table-striped jambo_table datatable-car-quote-plans" style="table-layout: fixed;" style="width:100%">
                         <thead>
                             <tr>
                                 <th> <input type="checkbox" id="flowcheckall" value="" /></th>
