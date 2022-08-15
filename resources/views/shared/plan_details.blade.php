@@ -668,41 +668,39 @@ if (!isset($modelName)) {
                         <input type="hidden" id="is_create" name="is_create" value="0">
                         <table cellpadding="8" cellspacing="8">
                             <tr>
-                                <td valign="top" style="width: 120px;">Provider Code:</td>
-                                <td>{{ $providerCode }}</td>
-                                <td valign="top">Provider Name:</td>
+                                <td >Hide Plan?</td>
+                                <td><select class="form-control" id='is_disabled' name="is_disabled">
+                                        <option value="false" {{ $isDisabled == "false" ? 'selected="selected"' : '' }}>No</option>
+                                        <option value="true" {{ $isDisabled == "true" ? 'selected="selected"' : '' }}>Yes</option>
+                                    </select>
+                                </td>
+                                <td>Provider Name:</td>
                                 <td>{{ $providerName }}</td>
                             </tr>
                             <tr>
-                                <td valign="top">Repair Type:</td>
+                                <td >Repair Type:</td>
                                 <td>{{ $repairType == CarPlanType::COMP ? 'NON-AGENCY' : $repairType }}</td>
                                 <td>Insurer Quote No.:</td>
                                 <td>{{ $insurerQuoteNo }}</td>
                             </tr>
                             <tr>
-                                <td valign="top">Actual Premium:</td>
+                                <td >Actual Premium:</td>
                                 <td><input type="number" id="actual_premium" name="actual_premium" value="{{ old('actual_premium', $actualPremium) }}" class="form-control" onKeyDown="if(this.value.length==8) return false;" onkeypress="return isNumberKey(event,this)"></td>
-                                <td valign="top">Discounted Premium:</td>
+                                <td >Discounted Premium:</td>
                                 <td>
                                     <input type="number" id="discounted_premium" name="discounted_premium" value="{{ old('discounted_premium', $discountPremium) }}" class="form-control" onKeyDown="if(this.value.length==8) return false;" onkeypress="return isNumberKey(event,this)">
                                     <input type="hidden" id="premium_vat" name="premium_vat" value="{{ $vat }}">
                                 </td>
                             </tr>
                             <tr>
-                                <td valign="top">Car value:</td>
+                                <td >Car value:</td>
                                 <td><input type="number" id="car_value" name="car_value" value="{{ old('car_value', $carValue) }}" class="form-control" onKeyDown="if(this.value.length==8) return false;" style="{{ $readonlyFieldCss }}" onkeypress="return isNumberKey(event,this)">
                                     <span style="font-size: 10px;">Min: AED {{ number_format($carValueLowerLimit) }} - Max: AED {{ number_format($carValueUpperLimit) }}</span>
                                 </td>
-                                <td valign="top">Excess:</td>
+                                <td >Excess:</td>
                                 <td><input type="number" id="excess" name="excess" value="{{ old('excess', $excess) }}" class="form-control" onKeyDown="if(this.value.length==8) return false;" style="{{ $readonlyFieldCss }}" onkeypress="return isNumberKey(event,this)"></td>
                             </tr>
                             <tr>
-                                <td valign="top">Hide Plan?</td>
-                                <td><select class="form-control" id='is_disabled' name="is_disabled">
-                                        <option value="false" {{ $isDisabled == "false" ? 'selected="selected"' : '' }}>No</option>
-                                        <option value="true" {{ $isDisabled == "true" ? 'selected="selected"' : '' }}>Yes</option>
-                                    </select>
-                                </td>
                                 <td> Car Trim </td>
                                 <td><select class="form-control" id='insurerTrim' name="insurerTrim">
                                        @foreach($insurerAvailableTrims as $trim)
@@ -710,17 +708,16 @@ if (!isset($modelName)) {
                                        @endforeach
                                     </select>
                                 </td>
-                               
-                            </tr>
-                            <tr>
                                 <td valign="top"></td>
                                 <td align="right">
                                     <button type="submit" class="btn btn-warning btn-sm update-car-quote-plan-button" {{ $carQuoteEditDisable }}>Update</button>
                                 </td>
+                               
                             </tr>
+                            
                             <tr>
                                 <td colspan="4">
-                                    <div class="car-quote-plan-validation-div" style="color:red;font-weight:bold;text-align:right;"></div>
+                                    <div class="car-quote-plan-validation-div" style="color:green;font-weight:bold;text-align:right;"></div>
                                 </td>
                             </tr>
                         </table>
