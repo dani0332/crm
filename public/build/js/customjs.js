@@ -2265,7 +2265,7 @@ $("#dataTableCarQuotePlans").DataTable({
 });
 
 function deleteQuoteDocument(el) {
-    if (confirm('Do you sure you want to delete this document?')) {
+    if (confirm('Are you sure to delete this document?')) {
         var id = $(el).attr('data-record-id');
         var quoteType = $(el).attr('data-record-quote-type');
         var quoteUuId = $(el).attr('data-record-quote-uuid');
@@ -2280,7 +2280,7 @@ function deleteQuoteDocument(el) {
                 $(".loader").hide();
                 $("#document-delete-success").show();
                 setTimeout(function(){
-                    
+                    alert('Document has been deleted.');
                     window.location.reload();
                 },0);
             },

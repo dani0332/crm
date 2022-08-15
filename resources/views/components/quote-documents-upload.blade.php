@@ -52,7 +52,7 @@
                                         acceptedFiles: JSON.parse('<?php echo json_encode($documentType->accepted_files) ?>'),
                                         addRemoveLinks: true,
                                         dictDefaultMessage: "<b>Drop files here or click to upload.</b>",
-                                        dictRemoveFileConfirmation:  "Do you want to delete document?",
+                                        dictRemoveFileConfirmation:  "Are you sure to delete this document?",
                                         sending: function(file, xhr, formData) {
                                             formData.append("_token", "{{{ csrf_token() }}}");
                                             formData.append("quote_id", "{{ $quoteId }}");
