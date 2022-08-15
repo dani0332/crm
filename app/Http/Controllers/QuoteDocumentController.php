@@ -184,6 +184,6 @@ class QuoteDocumentController extends Controller
         $document = QuoteDocument::where('doc_name', $request->name)->first();
         $document->delete();
 
-        return response()->json(['message' => 'Document deleted successfully']);
+        return response()->json(['message' => 'Document has been deleted.']);
     }
 }

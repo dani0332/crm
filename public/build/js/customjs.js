@@ -2280,6 +2280,7 @@ function deleteQuoteDocument(el) {
                 $(".loader").hide();
                 $("#document-delete-success").show();
                 setTimeout(function(){
+                    
                     window.location.reload();
                 },0);
             },
