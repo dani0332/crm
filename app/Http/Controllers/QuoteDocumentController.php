@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\DocumentType;
 use App\Models\QuoteDocument;
+use App\Models\TravelQuote;
 use App\Services\ActivitiesService;
 use App\Services\CRUDService;
 use App\Services\CustomerService;
@@ -85,9 +86,9 @@ class QuoteDocumentController extends Controller
         if (! $request->hasFile('file') || ! $quoteModel) {
             return false;
         }
-
+        
         $file = $request->file('file');
-        $fileNameOriginal = $file->getClientOriginalName();
+        $fileNameOriginal = preg_replace('/\s+/','', uniqid().'_'.$file->getClientOriginalName());
         $fileMimeType = $file->getClientMimeType();
         $fileNameAzure = uniqid().'_'.$request->quote_uuid.'_'.$fileNameOriginal;
         $filePathAzure = $request->file('file')->storeAs('documents/'.$request->folder_path, $fileNameAzure, 'azureIM');
@@ -170,5 +171,19 @@ class QuoteDocumentController extends Controller
         $document->delete();
 
         return redirect()->back()->with('message', 'Document has been deleted.');
+    }
+
+    public function getQuoteDocumentsUploaded($quoteType, $quoteId, $documentCode)
+    {
+        return QuoteDocument::where(['quote_documentable_id' => $quoteId, 
+        'document_type_code' => $documentCode])->get();
+    }
+
+    public function deleteQuoteDocument(Request $request)
+    {
+        $document = QuoteDocument::where('doc_name', $request->name)->first();
+        $document->delete();
+
+        return response()->json(['message' => 'Document deleted successfully']);
     }
 }

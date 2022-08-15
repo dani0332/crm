@@ -3,6 +3,12 @@
 @section('content')
 <script src="https://unpkg.com/dropzone@5/dist/min/dropzone.min.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/dropzone@5/dist/min/dropzone.min.css" type="text/css" />
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+<style>
+    .dz-size {
+        display: none;
+    }
+</style>
 <div class="row">
     <div class="col-md-12 col-sm-12 ">
         <div class="x_panel">
@@ -15,7 +21,7 @@
             </div>
             <div class="x_content">
                 <table width="100%">
-                @foreach ($documentUploadTypes as $documentType)
+                @foreach($documentUploadTypes as $documentType)
                     <tr height="150px">
                         <td width="25%" valign="middle">
                             <b>{{ ucwords($documentType->text) }}</b>
@@ -31,8 +37,7 @@
                         </td>
                         <td>
                             <div class="container">
-                                @if($documentType->max_files > $documents->where('document_type_code',$documentType->code)->count())
-                                <form method='post' enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left dropzone" id="{{ $documentType->code }}">
+                                <form method='post' enctype="multipart/form-data" class="dropzone" id="{{ $documentType->code }}">
                                     {{csrf_field()}}
                                 </form>
                                 <script type="text/javascript">
@@ -45,6 +50,9 @@
                                         autoProcessQueue: true,
                                         uploadMultiple: false,
                                         acceptedFiles: JSON.parse('<?php echo json_encode($documentType->accepted_files) ?>'),
+                                        addRemoveLinks: true,
+                                        dictDefaultMessage: "<b>Drop files here or click to upload.</b>",
+                                        dictRemoveFileConfirmation:  "Do you want to delete document?",
                                         sending: function(file, xhr, formData) {
                                             formData.append("_token", "{{{ csrf_token() }}}");
                                             formData.append("quote_id", "{{ $quoteId }}");
@@ -53,14 +61,49 @@
                                             formData.append("folder_path", "{{ $documentType->folder_path }}");
                                             formData.append("quote_uuid", "{{ $quoteUuId }}");
                                         },
-                                        complete: function(file) {
-                                            window.location.reload();
+                                        init: function() {
+                                            let myDropzone = this;
+                                            $.get("/quotes/<?php echo $quoteType; ?>/<?php echo $quoteId; ?>/documents/<?php echo $documentType->code; ?>/get-uploaded", function(data) { 
+                                                $.each(data, function(key,value){
+                                                    var docName = value.doc_name;
+                                                    var mockFile = { 
+                                                        name: docName, 
+                                                        type: value.doc_mime_type, 
+                                                        accepted: false,
+                                                    };
+                                                    myDropzone.options.addedfile.call(myDropzone, mockFile);
+                                                    myDropzone.options.complete.call(myDropzone, mockFile);
+
+                                                    if(key == data.length - 1){
+                                                        myDropzone.options.maxFiles = myDropzone.options.maxFiles - data.length;
+                                                    }
+                                                });
+                                            });
+
+                                            this.on('queuecomplete', function (file) {
+                                                $(".loader").show();
+                                                location.reload();
+                                            });
+
+                                            this.on('maxfilesexceeded', function (file) {
+                                                alert("You can only upload a maximum of " + <?php echo $documentType->max_files; ?> + " files");
+                                                this.removeFile(file);
+                                            });
+
+                                            this.on('removedfile', function (file) {
+                                                var docName = file.name;
+                                                $.ajax({
+                                                    type: 'POST',
+                                                    url: "{{ url('/documents/delete') }}",
+                                                    data: { name: docName, _token: '{{ csrf_token() }}' },
+                                                    success: function(data){
+                                                        alert(data.message);
+                                                    }
+                                                });
+                                            });
                                         },
                                     });
                                 </script>
-                                @else
-                                    <p align="center">Document(s) already uploaded. <br>If you need to replace it, please go back to delete the document & upload it again.</p>
-                                @endif
                             </div>
                         </td>
                     </tr>
