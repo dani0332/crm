@@ -868,7 +868,7 @@ class CRUDController extends Controller
     {
         $response = $this->carQuoteService->updateManualPlansBulk($request);
         if ($response == 200 || $response == 201) {
-            return redirect()->back()->with('success', 'Car Plan has been updated');
+            return redirect()->back()->with('success', 'Plan has been updated');
         } else {
             return redirect()->back()->with('message', $response);
         }
