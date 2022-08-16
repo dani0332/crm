@@ -84,6 +84,7 @@ use App\Enums\CarPlanType;
                                 <th>Actual Premium</th>
                                 <th>Discounted Premium</th>
                                 <th>Premium with VAT.</th>
+                                <th>Excess</th>
                                 <th>Action</th>
                             </tr>
                         </thead>
@@ -206,6 +207,7 @@ use App\Enums\CarPlanType;
 								@endphp
 								{{ $totalPremium ? number_format($totalPremium, 2) : '0.00' }}
 							</td>
+                            <td>{{ $quotePlan->excess ? number_format($quotePlan->excess, 2) : '0.00' }}</td>
 							<td><a href="#" planDetailUrl="{{ $record->uuid }}/plan_details/{{ $quotePlan->id }}"
 									data-toggle="modal" data-target="#quotePlanModal"
 									class="quotePlanModalPopup">View</a></td>
@@ -229,6 +231,7 @@ use App\Enums\CarPlanType;
 							<th>Actual Premium</th>
 							<th>Discounted Premium</th>
 							<th>Premium with VAT.</th>
+                            <th>Excess</th>
 							<th>Action</th>
 						</tr>
 					</thead>
