@@ -169,8 +169,8 @@ if (!isset($modelName)) {
                         });
 
                         const premiumWithVat = getPremiumWithVat(5, actual_premium);
-
                         totalPremium('.car-quote-plan-total-premium', discounted_premium, premiumWithVat, totalPriceSelectedAddonsWithVat);
+                        location.reload();
                     },
                     error: function(jqXhr, textStatus, errorMessage) {
                         $(".loader").hide();
@@ -228,9 +228,9 @@ if (!isset($modelName)) {
             }
         });
     </script>
-<?php
+@php
 }
-?>
+@endphp
 
 @if(isset($modelName) && $modelName == quoteTypeCode::Travel)
 <div class="row">
@@ -702,7 +702,7 @@ if (!isset($modelName)) {
                             </tr>
                             <tr>
                                 <td> Car Trim </td>
-                                <td><select class="form-control" id='insurerTrim' name="insurerTrim">
+                                <td><select class="form-control car-quote-plan-popup-trim-dropdown" id='insurerTrim' name="insurerTrim">
                                        @foreach($insurerAvailableTrims as $trim)
                                        <option value="{{$trim->admeId}}" {{ $trim->admeId == $insurerSelectedTrim ? 'selected="selected"' : '' }}>{{$trim->description}}</option>
                                        @endforeach
