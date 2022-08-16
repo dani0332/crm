@@ -948,6 +948,7 @@ class CarQuoteService extends BaseService
                     'discountPremium' => (float) $discountedPremium,
                     'isDisabled' => filter_var($request->is_disabled, FILTER_VALIDATE_BOOLEAN),
                     'addons' => $addons,
+                    'insurerTrimId' => strval($request->insurerTrim),
                 ],
 
             ],
