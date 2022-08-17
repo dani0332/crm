@@ -218,6 +218,18 @@ class CRUDController extends Controller
             }
         }
         $request->dob = isset($request->dob) ? Carbon::createFromFormat('d/m/Y', $request->dob)->format(get_dob_date_format()) : null;
+
+        if ($request->has('email')) {
+            $this->validate($request, [
+                'email' => 'required|email|max:150',
+            ]);
+        }
+        if ($request->has('mobile_no')) {
+            $this->validate($request, [
+                'mobile_no' => 'required|regex:/(0)[0-9]/|not_regex:/[a-z]/|min:7|max:20',
+            ]);
+        }
+
         $this->validate($request, $validateArray);
         $record = $this->crudService->saveModelByType($modelType, $request);
         if (isset($record->message) && str_contains($record->message, 'Error')) {
@@ -854,7 +866,7 @@ class CRUDController extends Controller
     {
         $response = $this->carQuoteService->updateManualPlansBulk($request);
         if ($response == 200 || $response == 201) {
-            return redirect()->back()->with('success', 'Car Plan has been updated');
+            return redirect()->back()->with('success', 'Plan has been updated');
         } else {
             return redirect()->back()->with('message', $response);
         }
