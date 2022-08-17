@@ -11,10 +11,11 @@ use BenSampo\Enum\Enum;
  */
 final class GenericRequestEnum extends Enum
 {
-    const Yes = 'Yes';
-    const No = 'No';
-    const TPA_Code = 'tpa';
-    const TypeString = 'string';
-    const SelectString = 'Select';
-    const CheckboxString = 'Checkbox';
+    public const Yes = 'Yes';
+    public const No = 'No';
+    public const TPA_Code = 'tpa';
+    public const TypeString = 'string';
+    public const SelectString = 'Select';
+    public const CheckboxString = 'Checkbox';
+    public const INTEGER = 'integer';
 }
