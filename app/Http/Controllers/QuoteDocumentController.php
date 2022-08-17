@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\QuoteStatusEnum;
 use App\Models\DocumentType;
 use App\Models\QuoteDocument;
-use App\Models\TravelQuote;
 use App\Services\ActivitiesService;
 use App\Services\CRUDService;
 use App\Services\CustomerService;
@@ -86,9 +86,9 @@ class QuoteDocumentController extends Controller
         if (! $request->hasFile('file') || ! $quoteModel) {
             return false;
         }
-        
+
         $file = $request->file('file');
-        $fileNameOriginal = preg_replace('/\s+/','', uniqid().'_'.$file->getClientOriginalName());
+        $fileNameOriginal = preg_replace('/\s+/', '', uniqid().'_'.$file->getClientOriginalName());
         $fileMimeType = $file->getClientMimeType();
         $fileNameAzure = uniqid().'_'.$request->quote_uuid.'_'.$fileNameOriginal;
         $filePathAzure = $request->file('file')->storeAs('documents/'.$request->folder_path, $fileNameAzure, 'azureIM');
@@ -123,6 +123,8 @@ class QuoteDocumentController extends Controller
         $response = $this->sendEmailCustomerService->sendEmail($emailTemplateId, $emailData, 'policy-documents-'.$quoteType.'-quote');
 
         if ($response == 201) {
+            $this->crudService->updateQuoteStatusbyModel($quoteModel, QuoteStatusEnum::PolicyIssued);
+
             return redirect()->back()->with('success', 'Quote Policy has been sent.');
         } else {
             return redirect()->back()->with('error', 'Quote Policy has not been sent. '.$response);
@@ -175,8 +177,8 @@ class QuoteDocumentController extends Controller
 
     public function getQuoteDocumentsUploaded($quoteType, $quoteId, $documentCode)
     {
-        return QuoteDocument::where(['quote_documentable_id' => $quoteId, 
-        'document_type_code' => $documentCode])->get();
+        return QuoteDocument::where(['quote_documentable_id' => $quoteId,
+        'document_type_code' => $documentCode, ])->get();
     }
 
     public function deleteQuoteDocument(Request $request)

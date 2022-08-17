@@ -369,4 +369,12 @@ class CRUDService extends BaseService
 
         return $model::where('uuid', $quoteUuId)->first();
     }
+
+    public function updateQuoteStatusbyModel($model, $status)
+    {
+        $model->quote_status_id = $status;
+        $model->save();
+
+        return $model;
+    }
 }
