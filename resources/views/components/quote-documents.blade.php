@@ -4,7 +4,7 @@
             <div class="x_title">
                 <h2>Documents</h2>
                 <a href="{{ url('quotes/'.$quoteType.'/'.$record->uuid.'/documents') }}" class="btn btn-primary btn-sm" style="float:right;">Upload Documents</a>
-                @if($record->advisor_id == auth()->user()->id)
+                @if($record->advisor_id == auth()->user()->id && isset($displaySendPolicyButton) && $displaySendPolicyButton)
                 <a class="btn btn-sm btn-primary" style="float:right;" data-quote-type="{{ $quoteType }}" 
                 data-quote-uuid="{{ $record->uuid }}" onclick="sendQuoteDocumentsToCustomer(this)">Send Policy</a>
                 <br clear="all" />

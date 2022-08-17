@@ -347,12 +347,13 @@ class CRUDController extends Controller
 
             $membersDetail = $this->travelQuoteService->getMembersDetail($record->id);
             $quoteDocuments = $this->travelQuoteService->getQuoteDocuments($record->id);
+            $displaySendPolicyButton = $this->quoteDocumentService->areRequiredDocumentsUploaded($quoteDocuments, $quoteTypeId);
 
             return view('shared.show', compact([
                 'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList',
                 'leadStatuses', 'lostReasons', 'selectedLostReasonId', 'membersDetail', 'model_name',
                 'allowedDuplicateLOB', 'audits', 'activities', 'advisors', 'isRenewalUser',
-                'isNewBusinessUser', 'ecomTravelInsuranceQuoteUrl', 'quoteType', 'quoteDocuments',
+                'isNewBusinessUser', 'ecomTravelInsuranceQuoteUrl', 'quoteType', 'quoteDocuments', 'displaySendPolicyButton',
                 'autoAllocationDisabled', 'emailStatuses',
             ]));
         } elseif ($this->genericModel->modelType == quoteTypeCode::Health) { // Health plans to display on detail view

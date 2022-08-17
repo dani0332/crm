@@ -386,7 +386,7 @@
         <x-travel-ecom-detail :travelQuotePremium="$record->premium" :travelQuotePaidAt="$record->paid_at" :travelQuotePaymentStatus="$record->payment_status_id_text" :travelQuotePlanName="$record->plan_id_text" />
         <x-quote-policy :record="$record" :quoteType="$quoteType" />
         <x-travel-quote-members-detail :members="$membersDetail" />
-        <x-quote-documents :record="$record" :quoteDocuments="$quoteDocuments" :quoteType="$quoteType" />
+        <x-quote-documents :displaySendPolicyButton="$displaySendPolicyButton" :record="$record" :quoteDocuments="$quoteDocuments" :quoteType="$quoteType" />
         <x-email-status :emailStatuses="$emailStatuses" />
         <x-travel-quote :listQuotePlans="$listQuotePlans" :uuidModal="$record->uuid" :quoteRequestId="$record->id" :ecomUrl="$ecomTravelInsuranceQuoteUrl . $record->uuid" />
     @endif
