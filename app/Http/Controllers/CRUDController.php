@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\GenericRequestEnum;
 use App\Enums\HealthTeamType;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -867,10 +868,15 @@ class CRUDController extends Controller
     public function manualPlanToggle(Request $request)
     {
         $response = $this->carQuoteService->updateManualPlansBulk($request);
-        if ($response == 200 || $response == 201) {
+        if (gettype($response) == GenericRequestEnum::INTEGER && ($response == 200 || $response == 201)) {
             return redirect()->back()->with('success', 'Plan has been updated');
         } else {
-            return redirect()->back()->with('message', $response);
+            if (isset($response->message)) {
+                $responseMessage = $response->message;
+            } else {
+                $responseMessage = $response;
+            }
+            return redirect()->back()->with('message', $responseMessage);
         }
     }
 
