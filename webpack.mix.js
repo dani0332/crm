@@ -1,5 +1,9 @@
 const mix = require('laravel-mix');
-
+mix.options({
+  terser: {
+    extractComments: false,
+  },
+});
 /*
  |--------------------------------------------------------------------------
  | Mix Asset Management
@@ -17,6 +21,16 @@ mix
   .version()
   .postCss('resources/css/app.css', 'build/css', [require('tailwindcss')]);
 
+mix
+  .scripts(
+    ['resources/js/includes/customjs.js', 'resources/js/includes/tm_js.js'],
+    'public/build/js/customjs.min.js',
+  )
+  .styles(
+    ['resources/css/custom.css', 'resources/css/style.css'],
+    'public/build/css/style.min.css',
+  )
+  .version();
 // mix.js('resources/js/app.js', 'public/js')
 //     .react()
 //     .less('resources/less/app.less', 'public/build', {

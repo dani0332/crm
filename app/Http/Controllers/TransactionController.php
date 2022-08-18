@@ -261,8 +261,7 @@ class TransactionController extends Controller
         $transaction = $this->transactionService->getTransactionDetailByApprovalCode($request->approval_code);
 
         if ($isTransappNonAdmin == '1' && $transaction && auth()->id() != $transaction->assigned_to_id) {
-
-            return redirect('transapp/home')->withErrors(['approval_code' => [__('Access Forbidden')], ]);
+            return redirect('transapp/home')->withErrors(['approval_code' => [__('Access Forbidden')]]);
         }
 
         if (empty($transaction)) {

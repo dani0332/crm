@@ -71,24 +71,25 @@ use App\Enums\CarPlanType;
 					<input type="hidden" id="planIds" name="planIds" value="">
 					<input type="hidden" id="car_quote_uuid" name="car_quote_uuid" value="{{$record->uuid}}">
 				</form>
-				<table id="dataTableCarQuotePlans" class="table table-striped jambo_table" style="table-layout: fixed;"
-					style="width:100%">
+				<table id="dataTableCarQuotePlans" class="table table-striped jambo_table datatable-car-quote-plans"
+					style="table-layout: fixed;" style="width:100%">
 					<thead>
 						<tr>
 							<th> <input type="checkbox" id="flowcheckall" value="" /></th>
-							<th style="width: 100px !important">Provider Name</th>
-							<th style="width: 80px !important">Plan Name</th>
-							<th style="width: 80px !important">Repair Type</th>
-							<th style="width: 80px !important">Insurer Quote No.</th>
-							<th style="width: 100px !important">TPL Limit</th>
-							<th style="width: 100px !important">Car Trim</th>
-							<th style="width: 100px !important">PAB cover</th>
-							<th style="width: 100px !important">Roadside assistance</th>
-							<th style="width: 100px !important">Oman cover TPL</th>
-							<th style="width: 80px !important">Actual Premium</th>
-							<th style="width: 80px !important">Discounted Premium</th>
-							<th style="width: 80px !important">Premium with VAT.</th>
-							<th style="width: 50px !important">Action</th>
+							<th>Provider Name</th>
+							<th>Plan Name</th>
+							<th>Repair Type</th>
+							<th>Insurer Quote No.</th>
+							<th>TPL Limit</th>
+							<th>Car Trim</th>
+							<th>PAB cover</th>
+							<th>Roadside assistance</th>
+							<th>Oman cover TPL</th>
+							<th>Actual Premium</th>
+							<th>Discounted Premium</th>
+							<th>Premium with VAT.</th>
+							<th>Excess</th>
+							<th>Action</th>
 						</tr>
 					</thead>
 					<tbody>
@@ -135,39 +136,38 @@ use App\Enums\CarPlanType;
 								@endif
 								@endforeach
 							</td>
-							<td>{{ isset($quotePlan->insurerTrim) ? $quotePlan->insurerTrim : '' }}</td>
+							<td>{{ isset($quotePlan->insurerTrimText) ? $quotePlan->insurerTrimText : '' }}</td>
 							<td>
 								<table style="margin-left: -10px;margin-top: -10px !important;">
-									<?php
-                                        $totalSelectedAddonsPriceWithVat = 0;
-									?>
+									@php
+									$totalSelectedAddonsPriceWithVat = 0;
+									@endphp
 									@foreach ($quotePlan->addons as $quotePlanAddon)
 									@foreach ($quotePlanAddon->carAddonOption as $quotePlanOptions)
 									<?php
-									if (isset($quotePlanOptions->isSelected)) {
-									    if ($quotePlanOptions->isSelected == true && $quotePlanOptions->price != 0) {
-									        $totalSelectedAddonsPriceWithVat += $quotePlanOptions->price + $quotePlanOptions->vat;
-									    }
-									} else {
-									    $totalSelectedAddonsPriceWithVat = 0;
-									}
+                                    if (isset($quotePlanOptions->isSelected)) {
+                                        if ($quotePlanOptions->isSelected == true && $quotePlanOptions->price != 0) {
+                                            $totalSelectedAddonsPriceWithVat += $quotePlanOptions->price + $quotePlanOptions->vat;
+                                        }
+                                    } else {
+                                        $totalSelectedAddonsPriceWithVat = 0;
+                                    }
 									?>
 									@if(isset($quotePlanAddon->code))
-									@if($quotePlanAddon->code == CarPlanAddonsCode::DRIVER_COVER ||
-									$quotePlanAddon->code == CarPlanAddonsCode::PASSENGER_COVER)
+									@if(strtolower($quotePlanAddon->code) == strtolower(CarPlanAddonsCode::DRIVER_COVER)
+									||
+									strtolower($quotePlanAddon->code) == strtolower(CarPlanAddonsCode::PASSENGER_COVER))
 									<tr style="background-color: transparent;">
 										<td style="border-top: none !important;">{{ $quotePlanAddon->text }}:</td>
 										<td style="border-top: none !important;">{{ $quotePlanOptions->value }}</td>
 									</tr>
 									@endif
-									@else
-									@if(strtolower($quotePlanAddon->text) == CarPlanAddonsCode::DRIVER_COVER_TEXT ||
+									@elseif(strtolower($quotePlanAddon->text) == CarPlanAddonsCode::DRIVER_COVER_TEXT ||
 									strtolower($quotePlanAddon->text) == CarPlanAddonsCode::PASSENGER_COVER_TEXT)
 									<tr style="background-color: transparent;">
 										<td style="border-top: none !important;">{{ $quotePlanAddon->text }}:</td>
 										<td style="border-top: none !important;">{{ $quotePlanOptions->value }}</td>
 									</tr>
-									@endif
 									@endif
 									@endforeach
 									@endforeach
@@ -186,19 +186,23 @@ use App\Enums\CarPlanType;
 							<td>
 								<table style="margin-left: -10px;margin-top: -10px !important;">
 									@foreach ($quotePlan->benefits->exclusion as $key => $quotePlanExclusion)
-									@if(isset($quotePlanExclusion->code) && ($quotePlanExclusion->code ==
-									CarPlanExclusionsCode::TPL_OMAN_COVER || $quotePlanExclusion->code ==
-									CarPlanExclusionsCode::OMAN_COVER))
+									@if(isset($quotePlanExclusion->code))
+									@if(strtolower($quotePlanExclusion->code) ==
+									strtolower(CarPlanExclusionsCode::TPL_OMAN_COVER) ||
+									strtolower($quotePlanExclusion->code) ==
+									strtolower(CarPlanExclusionsCode::OMAN_COVER))
 									<tr style="background-color: transparent;">
 										<td style="border-top: none !important;">{{ $quotePlanExclusion->text }}:</td>
 										<td style="border-top: none !important;">{{ $quotePlanExclusion->value }}</td>
 									</tr>
 									@endif
+									@endif
 									@endforeach
 									@foreach ($quotePlan->benefits->inclusion as $key => $quotePlanInclusion)
-									@if(isset($quotePlanExclusion->code) && ($quotePlanInclusion->code ==
-									CarPlanExclusionsCode::TPL_OMAN_COVER || $quotePlanInclusion->code ==
-									CarPlanExclusionsCode::OMAN_COVER))
+									@if(isset($quotePlanInclusion->code) && (strtolower($quotePlanInclusion->code) ==
+									strtolower(CarPlanExclusionsCode::TPL_OMAN_COVER) ||
+									(strtolower($quotePlanInclusion->code) ==
+									strtolower(CarPlanExclusionsCode::OMAN_COVER))))
 									<tr style="background-color: transparent;">
 										<td style="border-top: none !important;">{{ $quotePlanInclusion->text }}:</td>
 										<td style="border-top: none !important;">{{ $quotePlanInclusion->value }}</td>
@@ -209,8 +213,8 @@ use App\Enums\CarPlanType;
 							</td>
 							<td>{{ $quotePlan->actualPremium ? number_format($quotePlan->actualPremium, 2) : '0.00' }}
 							</td>
-							<td>{{ $quotePlan->discountPremium ? number_format($quotePlan->discountPremium, 2) : '0.00'
-								}}</td>
+							<td>{{ $quotePlan->discountPremium ? number_format($quotePlan->discountPremium, 2) :
+								'0.00'}}</td>
 							<td>
 								@php
 								$totalPremium = $quotePlan->discountPremium + $quotePlan->vat +
@@ -218,9 +222,10 @@ use App\Enums\CarPlanType;
 								@endphp
 								{{ $totalPremium ? number_format($totalPremium, 2) : '0.00' }}
 							</td>
+							<td>{{ $quotePlan->excess ? number_format($quotePlan->excess, 2) : '0.00' }}</td>
 							<td><a href="#" planDetailUrl="{{ $record->uuid }}/plan_details/{{ $quotePlan->id }}"
 									data-toggle="modal" data-target="#quotePlanModal"
-									class="quotePlanModalPopup">View</a></td>
+									class="btn btn-warning btn-sm quotePlanModalPopup">View</a></td>
 						</tr>
 						@endforeach
 					</tbody>
@@ -241,6 +246,7 @@ use App\Enums\CarPlanType;
 							<th>Actual Premium</th>
 							<th>Discounted Premium</th>
 							<th>Premium with VAT.</th>
+							<th>Excess</th>
 							<th>Action</th>
 						</tr>
 					</thead>

@@ -1,6 +1,6 @@
 FROM php:8.0-fpm
 ARG IMCRM_TOKEN
-ARG NGINX_FILE
+#ARG NGINX_FILE
 #ARG NEW_RELIC_LICENSE_KEY
 #ARG NEW_RELIC_APP_NAME
 # Set working directory
@@ -29,8 +29,14 @@ RUN apt-get update && apt-get install -y \
     libmemcached-dev \
     nginx \
     wget \
-    gnupg
+    gnupg 
     
+# Install yarn
+RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
+RUN echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list
+RUN apt update 
+RUN apt install yarn npm -y
+
 RUN (curl -Ls --tlsv1.2 --proto "=https" --retry 3 https://cli.doppler.com/install.sh || wget -t 3 -qO- https://cli.doppler.com/install.sh) | sh
 
 # Install papertrail
@@ -62,7 +68,7 @@ RUN chmod -R ugo+w /var/www/storage
 RUN cp docker/supervisor.conf /etc/supervisord.conf
 RUN cp docker/blanka.ini /usr/local/etc/php/conf.d/app.ini
 RUN cp docker/info.php /var/www/public/
-RUN cp docker/${NGINX_FILE} /etc/nginx/sites-enabled/default
+RUN cp docker/nginx.conf /etc/nginx/sites-enabled/default
 RUN cp -r docker/*.pem /etc/nginx/conf.d/
 RUN cp docker/log_files.yml /etc/
 
@@ -74,6 +80,8 @@ RUN touch /var/log/php/errors.log && chmod 777 /var/log/php/errors.log
 
 # Deployment steps
 RUN composer install --optimize-autoloader --no-dev
+RUN yarn 
+RUN yarn run prod
 RUN chmod +x /var/www/docker/run.sh
 
 RUN \

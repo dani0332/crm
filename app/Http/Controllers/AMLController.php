@@ -14,6 +14,7 @@ use App\Models\CommunicationMode;
 use App\Models\HealthQuote;
 use App\Models\HomeQuote;
 use App\Models\LifeQuote;
+use App\Models\PetQuote;
 use App\Models\QuoteStatus;
 use App\Models\QuoteType;
 use App\Models\SanctionListDownloads;
@@ -84,6 +85,9 @@ class AMLController extends Controller
                 }
                 if ($quoteTypeCode == quoteTypeCode::Travel) {
                     $quoteRequestTable = 'travel_quote_request';
+                }
+                if ($quoteTypeCode == quoteTypeCode::Pet) {
+                    $quoteRequestTable = 'pet_quote_request';
                 }
 
                 $dataAml = AML::select('kyc_logs.*', 'quote_type.text as quote_type_text', $quoteRequestTable.'.code as cdb_id')
@@ -318,6 +322,19 @@ class AMLController extends Controller
                 $businessTypeCode = BusinessQuoteType::where('id', '=', $quoteRequest->business_type_of_insurance_id)->value('code');
                 $businessCoverTypeText = BusinessCoverType::where('id', '=', $quoteRequest->business_cover_type_id)->value('text');
                 $businessCommuModeText = CommunicationMode::where('id', '=', $quoteRequest->communication_mode_id)->value('text');
+            } elseif ($quoteTypeCode == quoteTypeCode::Pet) {
+                $quoteRequest = PetQuote::select(
+                    'pet_quote_request.*',
+                    'quote_status.text as quote_status_text',
+                    'payment_status.text as payment_status_text',
+                    'customer.first_name as cust_f_name',
+                    'customer.last_name as cust_l_name'
+                )
+                    ->leftjoin('quote_status', 'pet_quote_request.quote_status_id', 'quote_status.id')
+                    ->leftjoin('payment_status', 'pet_quote_request.payment_status_id', 'payment_status.id')
+                    ->leftjoin('customer', 'pet_quote_request.customer_id', 'customer.id')
+                    ->where('pet_quote_request.id', $quoteRequestId)->first();
+                $auditLogLine = 'PetQuote';
             } else {
                 $quoteRequest = '';
             }
