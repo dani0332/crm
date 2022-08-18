@@ -1018,10 +1018,11 @@ class HealthQuoteService extends BaseService
     public function getEcomDetails($data)
     {
         $response['providerName'] = '';
-        $response['premium'] = '';
+        $response['network'] = '';
         $response['paymentStatus'] = '';
         $response['paidAt'] = '';
         $response['planName'] = '';
+        
         $planData = HealthQuotePlan::where('health_quote_request_id', $data->id)->first();
         if ($planData) {
             $planPayload = json_decode($planData->plan_payload, true);
@@ -1029,13 +1030,13 @@ class HealthQuoteService extends BaseService
                 foreach ($planPayload['plans'] as $plan) {
                     if ($plan['id'] == $data->plan_id) {
                         $response['providerName'] = $plan['providerName'];
-                        $response['premium'] = $plan['actualPremium'];
-                        $response['paymentStatus'] = '';
-                        $response['paidAt'] = '';
+                        $response['paymentStatus'] = GenericRequestEnum::NotApplicable;
+                        $response['paidAt'] = GenericRequestEnum::NotApplicable;
+                        $response['planName'] = $plan['name'];
                         if (isset($plan['benefits'], $plan['benefits']['feature'])) {
                             foreach ($plan['benefits']['feature'] as $value) {
                                 if ($value['code'] == GenericRequestEnum::TPA_Code) {
-                                    $response['planName'] = $value['text'];
+                                    $response['network'] = $value['value'];
                                 }
                             }
                         }

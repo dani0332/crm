@@ -34,7 +34,9 @@ class MyLeadsController extends Controller
     {
         $user = User::where('id', Auth::user()->id)->first();
         $team = DB::table('teams')->where('id', $user->team_id)->first();
-        $teamName = $team->name;
+        if($team) {
+            $teamName = $team->name;
+        }
         if (strtolower($teamName) == strtolower(quoteTypeCode::RetailMedical) || strtolower($teamName) == strtolower(quoteTypeCode::EBP) || strtolower($teamName) == strtolower(quoteTypeCode::RM)) {
             $teamName = 'health';
         }

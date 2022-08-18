@@ -66,6 +66,11 @@ class LeadAllocationService extends BaseService
         try {
             DB::beginTransaction();
             $leadAllocation = LeadAllocation::where('user_id', $userId)->first();
+            if (! $leadAllocation) {
+                DB::commit();
+
+                return false;
+            }
             if (isset($allocationCount)) {
                 $leadAllocation->allocation_count = $allocationCount;
             }

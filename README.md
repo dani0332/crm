@@ -33,6 +33,13 @@ Once you have doppler CLI installed on your local machine, run the following com
 - ```composer serve``` This will initiate the local server on your machine using th doppler env variables.
 - ```doppler run -- php artisan <any command>``` will run the laravel commands using your doppler configured profile.
 
+**Assets Configuration**
+This repository use Laravel Mix to build assets like CSS and JavaScript, use the following commands once modifying these files. Yarn will be our default package manager.
+
+- Run ```yarn``` so all the necassary packages are installed
+- Run ```yarn run prod``` to generate a production build
+- Run ```yarn watch``` to hot load the changes as you make them while development.
+
 ## Contributing
 - ```develop``` branch is the main coding branch where new branches will be generated from, and PRs will be merged into. Same branch is connected with stage for testing and QA.
 - ```main``` branch is used for production deployments.

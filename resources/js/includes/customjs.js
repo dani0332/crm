@@ -2110,10 +2110,6 @@ $("#renewals-upload-button").click(function () {
     $("#renewals-upload-button-text").text("Please wait until file will be uploaded. More waiting time is depending on number of records.");
 });
 
-$('#quotePlanModal').on('hidden.bs.modal', function () {
-    location.reload();
-});
-
 function activityEdit1(el) {
     var id = $(el).attr('data-record-id');
     var type = $(el).attr('data-type');

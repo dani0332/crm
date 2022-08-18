@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\GenericRequestEnum;
 use App\Models\CarMake;
 use App\Models\CarModel;
 use App\Models\CarRepairCoverage;
@@ -440,8 +441,8 @@ class ClaimController extends Controller
         $response = $this->carQuoteService->carPlanModify($request);
 
         $message = '';
-        if (gettype($response) == 'integer' && ($response == 200 || $response == 201)) {
-            $message = 'Car Plan has been updated';
+        if (gettype($response) == GenericRequestEnum::INTEGER && ($response == 200 || $response == 201)) {
+            $message = 'Plan has been updated';
         } else {
             if (isset($response->message)) {
                 $responseMessage = $response->message;
