@@ -25,11 +25,11 @@
 					@foreach($documentUploadTypes as $documentType)
 					<tr height="150px">
 						<td width="25%" valign="middle">
-							<b>{{ ucwords($documentType->text) }} 
+							<b>{{ ucwords($documentType->text) }}
 								@if($documentType->is_required)
-									<span class="required">*</span>
+								<span class="required">*</span>
 								@else
-									<span> </span>
+								<span> </span>
 								@endif
 							</b>
 							<div><small class="text-muted">
@@ -45,10 +45,6 @@
 										<tr>
 											<td>File max size </td>
 											<td>{{ $documentType->max_size }} MB</td>
-										</tr>
-										<tr>
-											<td>Required </td>
-											<td>{{ $documentType->is_required ? 'Yes' : 'No' }}</td>
 										</tr>
 										<tr>
 											<td>Email Attachment </td>
