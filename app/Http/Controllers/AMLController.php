@@ -480,6 +480,9 @@ class AMLController extends Controller
         if ($quoteTypeCode == quoteTypeCode::Travel) {
             $updateQuote = TravelQuote::find($quoteRequestId);
         }
+        if ($quoteTypeCode == quoteTypeCode::Pet) {
+            $updateQuote = PetQuote::find($quoteRequestId);
+        }
 
         $quoteUpdate = $updateQuote;
         $firstName = ucwords(strtolower($request->first_name));
