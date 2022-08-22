@@ -27,13 +27,13 @@ use App\Services\SanctionListService;
 use Auth;
 use DataTables;
 use Illuminate\Http\Request;
-
+use App\Traits\GenericQueriesAllLobs;
 class AMLController extends Controller
 {
     protected $checkAmlService;
     protected $quoteStatusService;
     protected $sanctionListService;
-
+    use GenericQueriesAllLobs;
     /**
      * Display a listing of the resource.
      *
@@ -455,34 +455,7 @@ class AMLController extends Controller
         ]);
 
         $quoteTypeCode = QuoteType::where('id', '=', $quoteTypeId)->value('code');
-
-        if ($quoteTypeCode == quoteTypeCode::Car) {
-            $updateQuote = CarQuote::find($quoteRequestId);
-        }
-        if ($quoteTypeCode == quoteTypeCode::Home) {
-            $updateQuote = HomeQuote::find($quoteRequestId);
-        }
-        if ($quoteTypeCode == quoteTypeCode::Health) {
-            $updateQuote = HealthQuote::find($quoteRequestId);
-        }
-        if ($quoteTypeCode == quoteTypeCode::Life) {
-            $updateQuote = LifeQuote::find($quoteRequestId);
-        }
-        if ($quoteTypeCode == quoteTypeCode::Business) {
-            $updateQuote = BusinessQuote::find($quoteRequestId);
-        }
-        if ($quoteTypeCode == quoteTypeCode::Bike) {
-            $updateQuote = BikeQuote::find($quoteRequestId);
-        }
-        if ($quoteTypeCode == quoteTypeCode::Yacht) {
-            $updateQuote = YachtQuote::find($quoteRequestId);
-        }
-        if ($quoteTypeCode == quoteTypeCode::Travel) {
-            $updateQuote = TravelQuote::find($quoteRequestId);
-        }
-        if ($quoteTypeCode == quoteTypeCode::Pet) {
-            $updateQuote = PetQuote::find($quoteRequestId);
-        }
+        $updateQuote = $this->getModelObject($quoteTypeCode, $quoteRequestId);
 
         $quoteUpdate = $updateQuote;
         $firstName = ucwords(strtolower($request->first_name));
