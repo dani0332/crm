@@ -28,6 +28,7 @@ $excess = isset($listQuotePlan->excess) ? $listQuotePlan->excess : 0;
 $carValue = isset($listQuotePlan->carValue) ? $listQuotePlan->carValue : 0;
 $isDisabled = isset($listQuotePlan->isDisabled) ? $listQuotePlan->isDisabled : 0;
 $insurerQuoteNo = isset($listQuotePlan->insurerQuoteNo) ? $listQuotePlan->insurerQuoteNo : ''; // Insurer Quote No.
+$isManualPlan = isset($listQuotePlan->isManualPlan) ? $listQuotePlan->isManualPlan : 0;
 
 $listQuotePlanAddonss = $listQuotePlan->addons;
 $listQuotePlanBenefitsInclusions = $listQuotePlan->benefits->inclusion;
@@ -76,6 +77,8 @@ $readonlyFieldCss = $repairType == CarPlanType::TPL ? "pointer-events: none;back
 			'<?php echo json_encode($repairType) ?>');
 		var carPlanTypeTpl = JSON.parse(
 			'<?php echo json_encode(CarPlanType::TPL) ?>');
+		var isManualPlan = JSON.parse(
+			'<?php echo json_encode($isManualPlan) ?>');
 
 		$('.update-car-quote-plan-button').on('click', function(e) {
 			var actual_premium = $("#actual_premium").val();
@@ -90,11 +93,13 @@ $readonlyFieldCss = $repairType == CarPlanType::TPL ? "pointer-events: none;back
 			var carPlanTypeTpl = JSON.parse(
 				'<?php echo json_encode(CarPlanType::TPL) ?>');
 
-			// For COMP, car_value should greater than or equal to lower_limit
-			if (repair_type == carPlanTypeComp && parseInt(car_value) < parseInt(car_value_lower_limit)) {
-				validationDivText('red', '.car-quote-plan-validation-div',
-					'Car Value should be greater than or equal to ' + car_value_lower_limit);
-				return false;
+			if (repair_type == carPlanTypeComp) { // if non-tpl
+				// if not manual plan and car_value < car_value_lower_limit not allow to update
+				if (isManualPlan == false && parseInt(car_value) < parseInt(car_value_lower_limit)) {
+					validationDivText('red', '.car-quote-plan-validation-div',
+						'Car Value should be greater than or equal to ' + car_value_lower_limit);
+					return false;
+				}
 			}
 
 			// discounted_premium always must filled
