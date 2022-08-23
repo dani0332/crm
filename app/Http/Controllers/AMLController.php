@@ -455,7 +455,7 @@ class AMLController extends Controller
         ]);
 
         $quoteTypeCode = QuoteType::where('id', '=', $quoteTypeId)->value('code');
-        $updateQuote = $this->getModelObject($quoteTypeCode, $quoteRequestId);
+        $updateQuote = $this->getQuoteObject($quoteTypeCode, $quoteRequestId);
         if($updateQuote) {
             $quoteUpdate = $updateQuote;
             $firstName = ucwords(strtolower($request->first_name));

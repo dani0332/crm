@@ -15,7 +15,7 @@ trait GenericQueriesAllLobs
             return false;
         }
     }
-    public function getModelObject($quoteType, $id)
+    public function getQuoteObject($quoteType, $id)
     {
         $nameSpace = '\\App\\Models\\';
         $modelType = $nameSpace.$quoteType."Quote";
