@@ -8,12 +8,22 @@ trait GenericQueriesAllLobs
     {
         $nameSpace = '\\App\\Models\\';
         $modelType = $nameSpace.$quoteType;
-        return $modelType::whereId($id)->value('code');
+        $result = $modelType::whereId($id)->value('code');
+        if($result) {
+            return $result;
+        } else {
+            return false;
+        }
     }
     public function getModelObject($quoteType, $id)
     {
         $nameSpace = '\\App\\Models\\';
         $modelType = $nameSpace.$quoteType."Quote";
-        return $modelType::find($id);
+        $result = $modelType::find($id);
+        if($result) {
+            return $result;
+        } else {
+            return false;
+        }
     }
 }

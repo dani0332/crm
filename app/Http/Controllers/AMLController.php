@@ -456,21 +456,20 @@ class AMLController extends Controller
 
         $quoteTypeCode = QuoteType::where('id', '=', $quoteTypeId)->value('code');
         $updateQuote = $this->getModelObject($quoteTypeCode, $quoteRequestId);
-
-        $quoteUpdate = $updateQuote;
-        $firstName = ucwords(strtolower($request->first_name));
-        $lastName = ucwords(strtolower($request->last_name));
-        $nationality = $request->nationality;
-        $yob = $request->yob;
-        $quoteUpdate->first_name = $firstName;
-        $quoteUpdate->last_name = $lastName;
-
-        // Check current user role is pa/AML > If yes > update pa_id - current_user_id
-        if (Auth::user()->hasRole('AML') || Auth::user()->hasRole('pa')) {
-            $quoteUpdate->pa_id = Auth::user()->id;
+        if($updateQuote) {
+            $quoteUpdate = $updateQuote;
+            $firstName = ucwords(strtolower($request->first_name));
+            $lastName = ucwords(strtolower($request->last_name));
+            $nationality = $request->nationality;
+            $yob = $request->yob;
+            $quoteUpdate->first_name = $firstName;
+            $quoteUpdate->last_name = $lastName;
+            // Check current user role is pa/AML > If yes > update pa_id - current_user_id
+            if (Auth::user()->hasRole('AML') || Auth::user()->hasRole('pa')) {
+                $quoteUpdate->pa_id = Auth::user()->id;
+            }
+            $quoteUpdate->save();
         }
-
-        $quoteUpdate->save();
 
         if ($quoteTypeCode == quoteTypeCode::Business && $request->company_name != null) {
             $companyName = $request->company_name;

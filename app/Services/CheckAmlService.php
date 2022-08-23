@@ -46,7 +46,7 @@ class CheckAmlService
             $quoteTypeCode = QuoteType::where('id', '=', $quoteTypeId)->value('code');
             $quoteCdbId = $this->getCode($quoteTypeCode, $quoteRequestId);
 
-            if ($isEmailSendingEnabled == true) {
+            if ($isEmailSendingEnabled == true && $quoteCdbId) {
                 $fullName = $firstName.' '.$lastName;
                 if ($companyName != null) {
                     $this->sendAMLMatchedEmailComplianceTeam($emailL_sys, $amlUrl, $checkAMLResponseEntity, $companyName, $quoteTypeName, $quoteCdbId);
