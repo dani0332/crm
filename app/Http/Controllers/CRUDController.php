@@ -360,7 +360,7 @@ class CRUDController extends Controller
 
             $membersDetail = $this->travelQuoteService->getMembersDetail($record->id);
             $quoteDocuments = $this->travelQuoteService->getQuoteDocuments($record->id);
-            $displaySendPolicyButton = $this->quoteDocumentService->areRequiredDocumentsUploaded($quoteDocuments, $quoteTypeId);
+            $displaySendPolicyButton = $this->quoteDocumentService->showSendPolicyButton($record, $quoteDocuments, $quoteTypeId);
 
             return view('shared.show', compact([
                 'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList',
@@ -552,7 +552,6 @@ class CRUDController extends Controller
         if (gettype($quotePlans) != 'string') {
             $listQuotePlans = $quotePlans->quotes->plans;
             foreach ($listQuotePlans as $listQuotePlan) { // Main
-
                 if ($listQuotePlan->id == $planId) {
                     $listQuotePlansMembers = $listQuotePlan->memberPremiumBreakdown;
                     $listQuotePlanName = $listQuotePlan->name;
@@ -594,7 +593,6 @@ class CRUDController extends Controller
         if (gettype($quotePlans) != 'string') {
             $listQuotePlans = $quotePlans->quote->plans;
             foreach ($listQuotePlans as $listQuotePlan) { // Main
-
                 if ($listQuotePlan->id == $planId) {
                     $listQuotePlanName = $listQuotePlan->name;
                     $providerCode = $listQuotePlan->providerCode;
@@ -874,6 +872,7 @@ class CRUDController extends Controller
             } else {
                 $responseMessage = $response;
             }
+
             return redirect()->back()->with('message', $responseMessage);
         }
     }

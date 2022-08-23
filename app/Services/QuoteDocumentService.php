@@ -52,8 +52,15 @@ class QuoteDocumentService extends BaseService
         return (object) ['doc_url' => $quoteDocument->doc_url, 'doc_mime_type' => $quoteDocument->doc_mime_type];
     }
 
-    public function areRequiredDocumentsUploaded($quoteDocuments, $quoteTypeId)
+    public function showSendPolicyButton($record, $quoteDocuments, $quoteTypeId)
     {
+        if (! $record) {
+            return 0;
+        }
+
+        if (! $record->policy_number || $record->policy_issuance_date || ! $record->policy_start_date || ! $record->renewal_expiry_date || ! $record->quote_premium) {
+            return 0;
+        }
         $documentUploadTypes = $this->getQuoteDocumentsForUpload($quoteTypeId);
         if (! $documentUploadTypes) {
             return 0;
