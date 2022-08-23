@@ -4,7 +4,7 @@ namespace App\Traits;
 
 trait GenericQueriesAllLobs
 {
-    public function getCode($quoteType, $id)
+    public function getQuoteCode($quoteType, $id)
     {
         $nameSpace = '\\App\\Models\\';
         $modelType = $nameSpace.$quoteType;

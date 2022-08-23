@@ -44,7 +44,7 @@ class CheckAmlService
 
             // Get CDB ID
             $quoteTypeCode = QuoteType::where('id', '=', $quoteTypeId)->value('code');
-            $quoteCdbId = $this->getCode($quoteTypeCode, $quoteRequestId);
+            $quoteCdbId = $this->getQuoteCode($quoteTypeCode, $quoteRequestId);
 
             if ($isEmailSendingEnabled == true && $quoteCdbId) {
                 $fullName = $firstName.' '.$lastName;
