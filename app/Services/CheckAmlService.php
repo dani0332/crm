@@ -29,12 +29,14 @@ class CheckAmlService
         $appUrl = env('APP_URL');
         $amlUrl = $appUrl.'/kyc/aml/'.$quoteTypeId.'/details/'.$quoteRequestId;
         $checkAMLResponseEntity = '';
+        $isAMLResultFound = false;
         if ($companyName != null) {
             $checkAMLResponseEntity = $this->checkAMLRequestEntity($quoteRequestId, $quoteTypeId, $companyName, $amlEndPoint, $amlUrl);
         }
         $checkAMLResponseIndividual = $this->checkAMLRequestIndividual($firstName, $lastName, $quoteRequestId, $quoteTypeId, $yob, $amlEndPoint, $amlUrl);
-
-        $isAMLResultFound = $checkAMLResponseEntity && $checkAMLResponseEntity['resultsFound'] > 0 || $checkAMLResponseIndividual['resultsFound'] > 0 ? true : false;
+        if($checkAMLResponseEntity) {
+            $isAMLResultFound = $checkAMLResponseEntity && $checkAMLResponseEntity['resultsFound'] > 0 || $checkAMLResponseIndividual['resultsFound'] > 0 ? true : false;
+        }
 
         // Match is found
         if ($isAMLResultFound) {
