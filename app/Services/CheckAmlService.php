@@ -28,13 +28,15 @@ class CheckAmlService
         $emailL_sys = Config::get('constants.emailL_sys');
         $appUrl = env('APP_URL');
         $amlUrl = $appUrl.'/kyc/aml/'.$quoteTypeId.'/details/'.$quoteRequestId;
-        $checkAMLResponseEntity = '';
+        $checkAMLResponseEntity = false;
+        $isAMLResultFound = false;
         if ($companyName != null) {
             $checkAMLResponseEntity = $this->checkAMLRequestEntity($quoteRequestId, $quoteTypeId, $companyName, $amlEndPoint, $amlUrl);
         }
         $checkAMLResponseIndividual = $this->checkAMLRequestIndividual($firstName, $lastName, $quoteRequestId, $quoteTypeId, $yob, $amlEndPoint, $amlUrl);
-
-        $isAMLResultFound = $checkAMLResponseEntity && $checkAMLResponseEntity['resultsFound'] > 0 || $checkAMLResponseIndividual['resultsFound'] > 0 ? true : false;
+        if($checkAMLResponseEntity) {
+            $isAMLResultFound = $checkAMLResponseEntity && $checkAMLResponseEntity['resultsFound'] > 0 || $checkAMLResponseIndividual['resultsFound'] > 0 ? true : false;
+        }
 
         // Match is found
         if ($isAMLResultFound) {
