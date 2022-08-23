@@ -224,7 +224,7 @@ class CRUDController extends Controller
 
         if ($request->has('email')) {
             $this->validate($request, [
-                'email' => 'required|email|max:150',
+                'email' => 'required|email:rfc,dns|max:150',
             ]);
         }
         if ($request->has('mobile_no')) {
@@ -327,7 +327,6 @@ class CRUDController extends Controller
         $audits = [];
         $record->dob = isset($record->dob) ? date('d/m/Y', strtotime($record->dob)) : null;
         if ($this->genericModel->modelType == quoteTypeCode::Car) { // Car plans to display on detail view
-
             $ecomCarInsuranceQuoteUrl = config('constants.ECOM_CAR_INSURANCE_QUOTE_URL');
             $listQuotePlans = null;
             $carQuotePlanAddons = $this->carQuoteService->getCarQuotePlanAddons($id);
@@ -554,7 +553,6 @@ class CRUDController extends Controller
         if (gettype($quotePlans) != 'string') {
             $listQuotePlans = $quotePlans->quotes->plans;
             foreach ($listQuotePlans as $listQuotePlan) { // Main
-
                 if ($listQuotePlan->id == $planId) {
                     $listQuotePlansMembers = $listQuotePlan->memberPremiumBreakdown;
                     $listQuotePlanName = $listQuotePlan->name;
@@ -596,7 +594,6 @@ class CRUDController extends Controller
         if (gettype($quotePlans) != 'string') {
             $listQuotePlans = $quotePlans->quote->plans;
             foreach ($listQuotePlans as $listQuotePlan) { // Main
-
                 if ($listQuotePlan->id == $planId) {
                     $listQuotePlanName = $listQuotePlan->name;
                     $providerCode = $listQuotePlan->providerCode;
@@ -876,6 +873,7 @@ class CRUDController extends Controller
             } else {
                 $responseMessage = $response;
             }
+
             return redirect()->back()->with('message', $responseMessage);
         }
     }
