@@ -28,7 +28,7 @@ class CheckAmlService
         $emailL_sys = Config::get('constants.emailL_sys');
         $appUrl = env('APP_URL');
         $amlUrl = $appUrl.'/kyc/aml/'.$quoteTypeId.'/details/'.$quoteRequestId;
-        $checkAMLResponseEntity = '';
+        $checkAMLResponseEntity = false;
         $isAMLResultFound = false;
         if ($companyName != null) {
             $checkAMLResponseEntity = $this->checkAMLRequestEntity($quoteRequestId, $quoteTypeId, $companyName, $amlEndPoint, $amlUrl);
