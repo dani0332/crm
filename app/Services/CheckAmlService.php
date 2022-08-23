@@ -17,9 +17,11 @@ use Auth;
 use Config;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
-
+use App\Traits\GenericQueriesAllLobs;
 class CheckAmlService
 {
+    use GenericQueriesAllLobs;
+
     public function checkAml($firstName, $lastName, $quoteRequestId, $quoteTypeId, $isEmailSendingEnabled, $yob, $companyName)
     {
         $amlEndPoint = Config::get('constants.AML_SEARCH_API_ENDPOINT');
@@ -42,32 +44,9 @@ class CheckAmlService
 
             // Get CDB ID
             $quoteTypeCode = QuoteType::where('id', '=', $quoteTypeId)->value('code');
-            if ($quoteTypeCode == quoteTypeCode::Car) {
-                $quoteCdbId = CarQuote::where('id', '=', $quoteRequestId)->value('code');
-            }
-            if ($quoteTypeCode == quoteTypeCode::Home) {
-                $quoteCdbId = HomeQuote::where('id', '=', $quoteRequestId)->value('code');
-            }
-            if ($quoteTypeCode == quoteTypeCode::Health) {
-                $quoteCdbId = HealthQuote::where('id', '=', $quoteRequestId)->value('code');
-            }
-            if ($quoteTypeCode == quoteTypeCode::Life) {
-                $quoteCdbId = LifeQuote::where('id', '=', $quoteRequestId)->value('code');
-            }
-            if ($quoteTypeCode == quoteTypeCode::Business) {
-                $quoteCdbId = BusinessQuote::where('id', '=', $quoteRequestId)->value('code');
-            }
-            if ($quoteTypeCode == quoteTypeCode::Bike) {
-                $quoteCdbId = BikeQuote::where('id', '=', $quoteRequestId)->value('code');
-            }
-            if ($quoteTypeCode == quoteTypeCode::Yacht) {
-                $quoteCdbId = YachtQuote::where('id', '=', $quoteRequestId)->value('code');
-            }
-            if ($quoteTypeCode == quoteTypeCode::Travel) {
-                $quoteCdbId = TravelQuote::where('id', '=', $quoteRequestId)->value('code');
-            }
+            $quoteCdbId = $this->getQuoteCode($quoteTypeCode, $quoteRequestId);
 
-            if ($isEmailSendingEnabled == true) {
+            if ($isEmailSendingEnabled == true && $quoteCdbId) {
                 $fullName = $firstName.' '.$lastName;
                 if ($companyName != null) {
                     $this->sendAMLMatchedEmailComplianceTeam($emailL_sys, $amlUrl, $checkAMLResponseEntity, $companyName, $quoteTypeName, $quoteCdbId);
