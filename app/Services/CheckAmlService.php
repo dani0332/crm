@@ -76,15 +76,21 @@ class CheckAmlService
         // checking if the request wasn't successful
         if ($requestStatus != 201 && $requestStatus != 200) {
             $requestMessage = '';
-            foreach ($response as $key1 => $value1) {
-                $requestMessage .= $key1.': '.$value1;
-                $requestMessage .= '<pre>';
+            if (is_array($response) || is_object($response))
+            {
+                foreach ($response as $key1 => $value1) {
+                    $requestMessage .= $key1.': '.$value1;
+                    $requestMessage .= '<pre>';
+                }
             }
 
             $emailAmlData = '';
-            foreach ($requestDataForIndividual as $key => $value) {
-                $emailAmlData .= $key.': '.$value;
-                $emailAmlData .= '<pre>';
+            if (is_array($requestDataForIndividual) || is_object($requestDataForIndividual))
+            {
+                foreach ($requestDataForIndividual as $key => $value) {
+                    $emailAmlData .= $key.': '.$value;
+                    $emailAmlData .= '<pre>';
+                }
             }
 
             // Send Error Email alert to engineering team
