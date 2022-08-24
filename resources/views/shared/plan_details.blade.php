@@ -814,7 +814,7 @@ $readonlyFieldCss = $repairType == CarPlanType::TPL ? "pointer-events: none;back
 								<td><input type="text" id="insurer_quote_no" name="insurer_quote_no"
 										value="{{ $insurerQuoteNo }}" class="form-control"></td>
 								<td>Actual Premium:</td>
-								<td><input type="number" id="actual_premium" name="actual_premium"
+								<td><input type="text" id="actual_premium" name="actual_premium"
 										value="{{ $actualPremium }}" class="form-control"
 										onKeyDown="if(this.value.length==8) return false;"
 										onkeypress="return isNumberKey(event,this)"></td>
@@ -822,14 +822,14 @@ $readonlyFieldCss = $repairType == CarPlanType::TPL ? "pointer-events: none;back
 							<tr>
 								<td>Discounted Premium:</td>
 								<td>
-									<input type="number" id="discounted_premium" name="discounted_premium"
+									<input type="text" id="discounted_premium" name="discounted_premium"
 										value="{{ $discountPremium }}" class="form-control"
 										onKeyDown="if(this.value.length==8) return false;"
 										onkeypress="return isNumberKey(event,this)">
 									<input type="hidden" id="premium_vat" name="premium_vat" value="{{ $vat }}">
 								</td>
 								<td>Car value:</td>
-								<td><input type="number" id="car_value" name="car_value" value="{{ $carValue }}"
+								<td><input type="text" id="car_value" name="car_value" value="{{ $carValue }}"
 										class="form-control" onKeyDown="if(this.value.length==8) return false;"
 										style="{{ $readonlyFieldCss }}" onkeypress="return isNumberKey(event,this)">
 									<span style="font-size: 10px;">Min: AED {{ number_format($carValueLowerLimit) }} -
@@ -838,7 +838,7 @@ $readonlyFieldCss = $repairType == CarPlanType::TPL ? "pointer-events: none;back
 							</tr>
 							<tr>
 								<td>Excess:</td>
-								<td><input type="number" id="excess" name="excess" value="{{ $excess }}"
+								<td><input type="text" id="excess" name="excess" value="{{ $excess }}"
 										class="form-control" onKeyDown="if(this.value.length==8) return false;"
 										style="{{ $readonlyFieldCss }}" onkeypress="return isNumberKey(event,this)">
 								</td>
@@ -920,9 +920,10 @@ $readonlyFieldCss = $repairType == CarPlanType::TPL ? "pointer-events: none;back
 												@if($listQuotePlanAddon->code == CarPlanAddons::CAR_HIRE &&
 												($providerCode == InsuranceProviders::AXA || $providerCode ==
 												InsuranceProviders::RSA))
-												<input type="number" id="addon_price" name="addon_price"
+												<input type="text" id="addon_price" name="addon_price"
 													value="{{ $carAddonOption->price }}" style="width: 100px;"
-													onKeyDown="if(this.value.length==5) return false;"
+													onKeyDown="if(this.value.length==5) return false;" 
+													onkeypress="return isNumberKey(event,this)" 
 													class="form-control addon_price">
 												@else
 												AED {{ $carAddonOption->price }}
