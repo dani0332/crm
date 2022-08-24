@@ -949,8 +949,9 @@ class CarQuoteService extends BaseService
                     'isDisabled' => filter_var($request->is_disabled, FILTER_VALIDATE_BOOLEAN),
                     'addons' => $addons,
                     'insurerTrimId' => strval($request->insurerTrim),
+                    'insurerQuoteNo' => strval($request->insurer_quote_no),
+                    'isManualUpdate' => filter_var($request->is_manual_update, FILTER_VALIDATE_BOOLEAN),
                 ],
-
             ],
         ];
 
