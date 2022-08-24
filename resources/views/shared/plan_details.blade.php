@@ -842,7 +842,11 @@ $readonlyFieldCss = $repairType == CarPlanType::TPL ? "pointer-events: none;back
 										class="form-control" onKeyDown="if(this.value.length==8) return false;"
 										style="{{ $readonlyFieldCss }}" onkeypress="return isNumberKey(event,this)">
 								</td>
-								<td> Car Trim </td>
+								<td> </td>
+								<td> </td>
+							</tr>
+							<tr>
+								<td>Car Trim</td>
 								<td><select class="form-control car-quote-plan-popup-trim-dropdown" id='insurerTrim'
 										name="insurerTrim">
 										@foreach($insurerAvailableTrims as $trim)
@@ -851,10 +855,6 @@ $readonlyFieldCss = $repairType == CarPlanType::TPL ? "pointer-events: none;back
 										@endforeach
 									</select>
 								</td>
-							</tr>
-							<tr>
-								<td> </td>
-								<td> </td>
 								<td valign="top"></td>
 								<td align="right">
 									<button type="submit" class="btn btn-warning btn-sm update-car-quote-plan-button" {{
