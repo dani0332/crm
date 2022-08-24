@@ -946,11 +946,11 @@ class CarQuoteService extends BaseService
                     'carValue' => (float) $request->car_value,
                     'excess' => (float) $request->excess,
                     'discountPremium' => (float) $discountedPremium,
-                    'isDisabled' => filter_var($request->is_disabled, FILTER_VALIDATE_BOOLEAN),
+                    'isDisabled' => $request->is_disabled,
                     'addons' => $addons,
                     'insurerTrimId' => strval($request->insurerTrim),
                     'insurerQuoteNo' => strval($request->insurer_quote_no),
-                    'isManualUpdate' => filter_var($request->is_manual_update, FILTER_VALIDATE_BOOLEAN),
+                    'isManualUpdate' => $request->is_manual_update,
                 ],
             ],
         ];
