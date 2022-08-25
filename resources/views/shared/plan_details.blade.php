@@ -16,8 +16,7 @@ if (!isset($modelName)) {
 		$listQuotePlanName = $listQuotePlan->name;
 		$providerCode = $listQuotePlan->providerCode;
 		$providerName = $listQuotePlan->providerName;
-		$repairType = $listQuotePlan->repairType;
-		$actualPremium = $listQuotePlan->actualPremium;
+		$repairType = isset($listQuotePlan->repairType) ? $listQuotePlan->repairType : '';
 		$actualPremium = isset($listQuotePlan->actualPremium) ? $listQuotePlan->actualPremium : 0;
 		$discountPremium = isset($listQuotePlan->discountPremium) ? $listQuotePlan->discountPremium : 0;
 		$vat = isset($listQuotePlan->vat) ? $listQuotePlan->vat : 0;
