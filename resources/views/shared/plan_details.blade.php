@@ -81,8 +81,6 @@ $readonlyFieldCss = $repairType == CarPlanType::TPL ? "pointer-events: none;back
 			'<?php echo json_encode($repairType) ?>');
 		var carPlanTypeTpl = JSON.parse(
 			'<?php echo json_encode(CarPlanType::TPL) ?>');
-		var isManualUpdate = JSON.parse(
-			'<?php echo json_encode($isManualUpdate) ?>');
 		var shouldReviseQuote = JSON.parse(
 			'<?php echo json_encode($shouldReviseQuote) ?>');
 
@@ -98,10 +96,11 @@ $readonlyFieldCss = $repairType == CarPlanType::TPL ? "pointer-events: none;back
 				'<?php echo json_encode(CarPlanType::COMP) ?>');
 			var carPlanTypeTpl = JSON.parse(
 				'<?php echo json_encode(CarPlanType::TPL) ?>');
+			var is_manual_update = $('#is_manual_update').is(':checked');
 
 			if (repair_type == carPlanTypeComp) { // if non-tpl
 				// if not manual plan and car_value < car_value_lower_limit not allow to update
-				if (isManualUpdate == false && parseInt(car_value) < parseInt(car_value_lower_limit)) {
+				if (is_manual_update == false && parseInt(car_value) < parseInt(car_value_lower_limit)) {
 					validationDivText('red', '.car-quote-plan-validation-div',
 						'Car Value should be greater than or equal to ' + car_value_lower_limit);
 					return false;
