@@ -19,6 +19,7 @@ foreach ($listQuotePlans as $listQuotePlan) { // Car quote plans
 		$repairType = $listQuotePlan->repairType;
 		$actualPremium = $listQuotePlan->actualPremium;
 
+		$repairType = isset($listQuotePlan->repairType) ? $listQuotePlan->repairType : '';
 		$actualPremium = isset($listQuotePlan->actualPremium) ? $listQuotePlan->actualPremium : 0;
 		$discountPremium = isset($listQuotePlan->discountPremium) ? $listQuotePlan->discountPremium : 0;
 		$vat = isset($listQuotePlan->vat) ? $listQuotePlan->vat : 0;
