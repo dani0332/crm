@@ -13,7 +13,6 @@ use App\Models\VehicleType;
 use App\Services\CRUDService;
 use DataTables;
 use DB;
-use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
