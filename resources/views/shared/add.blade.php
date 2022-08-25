@@ -35,9 +35,6 @@
 			if (oldCarMakeId != '' && oldCarMakeId != null) {
 				getCarModels(oldCarMakeId, oldCarModelId);
 			}
-			if (oldCarModelId != '' && oldCarModelId != null) {
-				ajaxCallScript(oldCarModelId);
-			}
 		}
 
 		$('#car_model_id').on('change', function() {

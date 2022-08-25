@@ -235,7 +235,9 @@
                                         <div class="col-md-6 col-sm-6"
                                             style="text-overflow: ellipsis;overflow: auto;white-space: nowrap;width: 495px;">
                                             <p class="label-align-center">
-                                                @if($property == 'previous_quote_id')
+                                                @if($property == 'is_ecommerce')
+                                                    {{ $record->is_ecommerce ? 'Yes' : 'No' }}
+                                                @elseif($property == 'previous_quote_id')
                                                     @php
                                                         $previousQuote = CarQuote::select('uuid')->where('id', $record->previous_quote_id)->first();
                                                     @endphp

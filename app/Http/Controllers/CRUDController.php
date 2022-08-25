@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\GenericRequestEnum;
 use App\Enums\HealthTeamType;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
@@ -223,6 +224,18 @@ class CRUDController extends Controller
             }
         }
         $request->dob = isset($request->dob) ? Carbon::createFromFormat('d/m/Y', $request->dob)->format(get_dob_date_format()) : null;
+
+        if ($request->has('email')) {
+            $this->validate($request, [
+                'email' => 'required|email:rfc,dns|max:150',
+            ]);
+        }
+        if ($request->has('mobile_no')) {
+            $this->validate($request, [
+                'mobile_no' => 'required|regex:/(0)[0-9]/|not_regex:/[a-z]/|min:7|max:20',
+            ]);
+        }
+
         $this->validate($request, $validateArray);
         $record = $this->crudService->saveModelByType($modelType, $request);
         if (isset($record->message) && str_contains($record->message, 'Error')) {
@@ -317,7 +330,6 @@ class CRUDController extends Controller
         $audits = [];
         $record->dob = isset($record->dob) ? date('d/m/Y', strtotime($record->dob)) : null;
         if ($this->genericModel->modelType == quoteTypeCode::Car) { // Car plans to display on detail view
-
             $ecomCarInsuranceQuoteUrl = config('constants.ECOM_CAR_INSURANCE_QUOTE_URL');
             $listQuotePlans = null;
             $carQuotePlanAddons = $this->carQuoteService->getCarQuotePlanAddons($id);
@@ -547,7 +559,6 @@ class CRUDController extends Controller
         if (gettype($quotePlans) != 'string') {
             $listQuotePlans = $quotePlans->quotes->plans;
             foreach ($listQuotePlans as $listQuotePlan) { // Main
-
                 if ($listQuotePlan->id == $planId) {
                     $listQuotePlansMembers = $listQuotePlan->memberPremiumBreakdown;
                     $listQuotePlanName = $listQuotePlan->name;
@@ -589,7 +600,6 @@ class CRUDController extends Controller
         if (gettype($quotePlans) != 'string') {
             $listQuotePlans = $quotePlans->quote->plans;
             foreach ($listQuotePlans as $listQuotePlan) { // Main
-
                 if ($listQuotePlan->id == $planId) {
                     $listQuotePlanName = $listQuotePlan->name;
                     $providerCode = $listQuotePlan->providerCode;
@@ -861,10 +871,16 @@ class CRUDController extends Controller
     public function manualPlanToggle(Request $request)
     {
         $response = $this->carQuoteService->updateManualPlansBulk($request);
-        if ($response == 200 || $response == 201) {
-            return redirect()->back()->with('success', 'Car Plan has been updated');
+        if (gettype($response) == GenericRequestEnum::INTEGER && ($response == 200 || $response == 201)) {
+            return redirect()->back()->with('success', 'Plan has been updated');
         } else {
-            return redirect()->back()->with('message', $response);
+            if (isset($response->message)) {
+                $responseMessage = $response->message;
+            } else {
+                $responseMessage = $response;
+            }
+
+            return redirect()->back()->with('message', $responseMessage);
         }
     }
 

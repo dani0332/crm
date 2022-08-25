@@ -14,6 +14,7 @@ use App\Models\CommunicationMode;
 use App\Models\HealthQuote;
 use App\Models\HomeQuote;
 use App\Models\LifeQuote;
+use App\Models\PetQuote;
 use App\Models\QuoteStatus;
 use App\Models\QuoteType;
 use App\Models\SanctionListDownloads;
@@ -26,13 +27,13 @@ use App\Services\SanctionListService;
 use Auth;
 use DataTables;
 use Illuminate\Http\Request;
-
+use App\Traits\GenericQueriesAllLobs;
 class AMLController extends Controller
 {
     protected $checkAmlService;
     protected $quoteStatusService;
     protected $sanctionListService;
-
+    use GenericQueriesAllLobs;
     /**
      * Display a listing of the resource.
      *
@@ -84,6 +85,9 @@ class AMLController extends Controller
                 }
                 if ($quoteTypeCode == quoteTypeCode::Travel) {
                     $quoteRequestTable = 'travel_quote_request';
+                }
+                if ($quoteTypeCode == quoteTypeCode::Pet) {
+                    $quoteRequestTable = 'pet_quote_request';
                 }
 
                 $dataAml = AML::select('kyc_logs.*', 'quote_type.text as quote_type_text', $quoteRequestTable.'.code as cdb_id')
@@ -318,6 +322,19 @@ class AMLController extends Controller
                 $businessTypeCode = BusinessQuoteType::where('id', '=', $quoteRequest->business_type_of_insurance_id)->value('code');
                 $businessCoverTypeText = BusinessCoverType::where('id', '=', $quoteRequest->business_cover_type_id)->value('text');
                 $businessCommuModeText = CommunicationMode::where('id', '=', $quoteRequest->communication_mode_id)->value('text');
+            } elseif ($quoteTypeCode == quoteTypeCode::Pet) {
+                $quoteRequest = PetQuote::select(
+                    'pet_quote_request.*',
+                    'quote_status.text as quote_status_text',
+                    'payment_status.text as payment_status_text',
+                    'customer.first_name as cust_f_name',
+                    'customer.last_name as cust_l_name'
+                )
+                    ->leftjoin('quote_status', 'pet_quote_request.quote_status_id', 'quote_status.id')
+                    ->leftjoin('payment_status', 'pet_quote_request.payment_status_id', 'payment_status.id')
+                    ->leftjoin('customer', 'pet_quote_request.customer_id', 'customer.id')
+                    ->where('pet_quote_request.id', $quoteRequestId)->first();
+                $auditLogLine = 'PetQuote';
             } else {
                 $quoteRequest = '';
             }
@@ -438,46 +455,21 @@ class AMLController extends Controller
         ]);
 
         $quoteTypeCode = QuoteType::where('id', '=', $quoteTypeId)->value('code');
-
-        if ($quoteTypeCode == quoteTypeCode::Car) {
-            $updateQuote = CarQuote::find($quoteRequestId);
+        $updateQuote = $this->getQuoteObject($quoteTypeCode, $quoteRequestId);
+        if($updateQuote) {
+            $quoteUpdate = $updateQuote;
+            $firstName = ucwords(strtolower($request->first_name));
+            $lastName = ucwords(strtolower($request->last_name));
+            $nationality = $request->nationality;
+            $yob = $request->yob;
+            $quoteUpdate->first_name = $firstName;
+            $quoteUpdate->last_name = $lastName;
+            // Check current user role is pa/AML > If yes > update pa_id - current_user_id
+            if (Auth::user()->hasRole('AML') || Auth::user()->hasRole('pa')) {
+                $quoteUpdate->pa_id = Auth::user()->id;
+            }
+            $quoteUpdate->save();
         }
-        if ($quoteTypeCode == quoteTypeCode::Home) {
-            $updateQuote = HomeQuote::find($quoteRequestId);
-        }
-        if ($quoteTypeCode == quoteTypeCode::Health) {
-            $updateQuote = HealthQuote::find($quoteRequestId);
-        }
-        if ($quoteTypeCode == quoteTypeCode::Life) {
-            $updateQuote = LifeQuote::find($quoteRequestId);
-        }
-        if ($quoteTypeCode == quoteTypeCode::Business) {
-            $updateQuote = BusinessQuote::find($quoteRequestId);
-        }
-        if ($quoteTypeCode == quoteTypeCode::Bike) {
-            $updateQuote = BikeQuote::find($quoteRequestId);
-        }
-        if ($quoteTypeCode == quoteTypeCode::Yacht) {
-            $updateQuote = YachtQuote::find($quoteRequestId);
-        }
-        if ($quoteTypeCode == quoteTypeCode::Travel) {
-            $updateQuote = TravelQuote::find($quoteRequestId);
-        }
-
-        $quoteUpdate = $updateQuote;
-        $firstName = ucwords(strtolower($request->first_name));
-        $lastName = ucwords(strtolower($request->last_name));
-        $nationality = $request->nationality;
-        $yob = $request->yob;
-        $quoteUpdate->first_name = $firstName;
-        $quoteUpdate->last_name = $lastName;
-
-        // Check current user role is pa/AML > If yes > update pa_id - current_user_id
-        if (Auth::user()->hasRole('AML') || Auth::user()->hasRole('pa')) {
-            $quoteUpdate->pa_id = Auth::user()->id;
-        }
-
-        $quoteUpdate->save();
 
         if ($quoteTypeCode == quoteTypeCode::Business && $request->company_name != null) {
             $companyName = $request->company_name;

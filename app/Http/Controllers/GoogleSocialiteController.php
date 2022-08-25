@@ -3,9 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
-use Auth;
-use Config;
-use Socialite;
+use Laravel\Socialite\Facades\Socialite;
+use Laravel\Socialite\Two\InvalidStateException;
 
 class GoogleSocialiteController extends Controller
 {
@@ -27,7 +26,7 @@ class GoogleSocialiteController extends Controller
     public function handleCallback()
     {
         try {
-            $socialUser = Socialite::driver(Config::get('constants.social_driver'))->user();
+            $socialUser = Socialite::driver(config('constants.social_driver'))->stateless()->user();
         } catch (InvalidStateException $exception) {
             return redirect()->route('login')
                 ->withErrors([
@@ -46,7 +45,7 @@ class GoogleSocialiteController extends Controller
                 ]);
         }
 
-        Auth::login($isExisted[0]);
+        auth()->login($isExisted[0]);
 
         return redirect()->intended('/leadsearch');
     }

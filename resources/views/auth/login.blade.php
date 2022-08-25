@@ -22,8 +22,8 @@
         <svg class="block mx-auto mb-6" xmlns="http://www.w3.org/2000/svg" width="100" height="2" viewBox="0 0 100 2">
             <path fill="#D8E3EC" d="M0 0h100v2H0z"></path>
         </svg>
-        <p class="m-4">
-            You can only sign in with a afia.ae account.
+        <p class="m-4" align="center">
+            You can only sign in with your <a href="https://insurancemarket.ae" target="_blank">insurancemarket.ae</a> account
         </p>
         <form method="POST" action="{{ route('login') }}">
             @csrf
