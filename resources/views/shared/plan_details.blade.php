@@ -215,23 +215,22 @@ $readonlyFieldCss = $repairType == CarPlanType::TPL ? "pointer-events: none;back
 
 		// Conditionally lock fields
 		conditionallyLockFields(shouldReviseQuote);
-		manualPlanToggle($("#is_manual_update").is(':checked'));
 
 		// if plan set to manual do unlock fields
 		$(document).on("change", "#is_manual_update", function() {
 			var ischecked = $(this).is(':checked');
-			manualPlanToggle(ischecked);
+			manualPlanToggle(ischecked, shouldReviseQuote);
 		});
 
-		function manualPlanToggle(ischecked) {
+		function manualPlanToggle(ischecked, shouldReviseQuote) {
 			if (ischecked) {
 				unlockField(['#insurer_quote_no', '#actual_premium', '#discounted_premium', , '#car_value',
 					'#excess', '#insurerTrim'
 				]);
 			} else {
-				lockField(['#insurer_quote_no', '#actual_premium', '#discounted_premium', , '#car_value',
-					'#excess', '#insurerTrim'
-				]);
+				if (shouldReviseQuote == true) {
+					lockField(['#insurer_quote_no', '#actual_premium', '#excess']);
+				}
 			}
 		}
 
@@ -267,7 +266,7 @@ $readonlyFieldCss = $repairType == CarPlanType::TPL ? "pointer-events: none;back
 		}
 
 		function conditionallyLockFields(shouldReviseQuote) {
-			console.log('shouldReviseQuote: ', shouldReviseQuote);
+
 			lockField(['#insurer_quote_no', '#actual_premium', '#discounted_premium', , '#car_value', '#excess',
 				'#insurerTrim'
 			]);
