@@ -33,18 +33,19 @@ class MyLeadsController extends Controller
      */
     public function index(Request $request)
     {
-        try{
-            $user = User::where('id', Auth::user()->id)->first();
-            $team = DB::table('teams')->where('id', $user->team_id)->first();
-            if ($team) {
-                $teamName = $team->name;
-            }
-            if (strtolower($teamName) == strtolower(quoteTypeCode::RetailMedical) || strtolower($teamName) == strtolower(quoteTypeCode::EBP) || strtolower($teamName) == strtolower(quoteTypeCode::RM)) {
-                $teamName = 'health';
-            }
-            if (strtolower($teamName) == strtolower(quoteTypeCode::CORPLINE) || strtolower($teamName) == strtolower(quoteTypeCode::GroupMedical) || strtolower($teamName) == strtolower(quoteTypeCode::GM)) {
-                $teamName = 'business';
-            }
+        $user = User::where('id', Auth::user()->id)->first();
+        $team = DB::table('teams')->where('id', $user->team_id)->first();
+        if (!$team) {
+            $message= "Please ask the admin to assign a team to you to access this page OR contact to our support team.";
+            return view("errors.message", compact("message"));
+        }
+        $teamName = $team->name;
+        if (strtolower($teamName) == strtolower(quoteTypeCode::RetailMedical) || strtolower($teamName) == strtolower(quoteTypeCode::EBP) || strtolower($teamName) == strtolower(quoteTypeCode::RM)) {
+            $teamName = 'health';
+        }
+        if (strtolower($teamName) == strtolower(quoteTypeCode::CORPLINE) || strtolower($teamName) == strtolower(quoteTypeCode::GroupMedical) || strtolower($teamName) == strtolower(quoteTypeCode::GM)) {
+            $teamName = 'business';
+        }
         $parentTeamId = $team->id;
         $leadStatusList = QuoteStatus::select('id', 'text')->where('is_active', 1)->get();
         $paymentStatusList = PaymentStatus::select('id', 'text')->where('is_active', 1)->get();
@@ -82,10 +83,6 @@ class MyLeadsController extends Controller
 
         return view('myleads.view', compact('teamName', 'leadStatusList', 'allowedTeamTypes',
             'parentTeamId', 'paymentStatusList', 'vehicleTypeList', 'insuranceProviderList', 'carTypeInsuranceList'));
-        } catch(Exception $e) {
-            $message= "Please ask the admin to assign a team to you to access this page OR contact to our support team.";
-            return view("errors.message", compact("message"));
-        }
     }
 
     /**
