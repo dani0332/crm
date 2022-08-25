@@ -222,7 +222,7 @@ use App\Enums\CarPlanType;
 								@endphp
 								{{ $totalPremium ? number_format($totalPremium, 2) : '0.00' }}
 							</td>
-							<td>{{ $quotePlan->excess ? number_format($quotePlan->excess, 2) : '0.00' }}</td>
+							<td>{{ isset($quotePlan->excess) ? number_format($quotePlan->excess, 2) : '0.00' }}</td>
 							<td><a href="#" planDetailUrl="{{ $record->uuid }}/plan_details/{{ $quotePlan->id }}"
 									data-toggle="modal" data-target="#quotePlanModal"
 									class="btn btn-warning btn-sm quotePlanModalPopup">View</a></td>
