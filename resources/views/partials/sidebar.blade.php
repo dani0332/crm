@@ -36,7 +36,7 @@ use App\Enums\PermissionsEnum;
                     </li>
                 </ul>
                 @endcan
-                @if (Auth::user()->hasMyLeadAccess())
+                @if (auth()->check() && auth()->user()->hasMyLeadAccess())
                 <ul class="nav side-menu">
                     <li>
                         <a href="{{ url('/myleads') }}"><i class="fa fa-inbox"></i> My Leads</a>
@@ -245,12 +245,12 @@ use App\Enums\PermissionsEnum;
                     </li>
                 </ul>
                 @endcan
-                @if (Auth::user()->hasPolicyIssuanceAccess())
+                @if (auth()->check() && auth()->user()->hasPolicyIssuanceAccess())
                 <ul class="nav side-menu">
                     <li><a href="{{ url('ftcform') }}"><i></i> Policy Issuance </a>
                 </ul>
                 @endif
-                @if (Auth::user()->isAdmin())
+                @if (auth()->check() && auth()->user()->isAdmin())
                 <ul class="nav side-menu">
                     <li><a href="{{ url('assignOE') }}"><i></i> Assign OE </a>
                 </ul>
