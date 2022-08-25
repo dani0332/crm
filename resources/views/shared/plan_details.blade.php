@@ -27,7 +27,7 @@ if (!isset($modelName)) {
 		$carValue = isset($listQuotePlan->carValue) ? $listQuotePlan->carValue : 0;
 		$isDisabled = isset($listQuotePlan->isDisabled) ? $listQuotePlan->isDisabled : 0;
 		$insurerQuoteNo = isset($listQuotePlan->insurerQuoteNo) ? $listQuotePlan->insurerQuoteNo : ''; // Insurer Quote No.
-		$isManualPlan = isset($listQuotePlan->isManualPlan) ? $listQuotePlan->isManualPlan : 0;
+		$isManualUpdate = isset($listQuotePlan->isManualUpdate) ? $listQuotePlan->isManualUpdate : 0;
 		$shouldReviseQuote  = isset($listQuotePlan->shouldReviseQuote ) ? $listQuotePlan->shouldReviseQuote  : 0;
 		$listQuotePlanAddonss = $listQuotePlan->addons;
 		$listQuotePlanBenefitsInclusions = $listQuotePlan->benefits->inclusion;
@@ -82,8 +82,8 @@ $readonlyFieldCss = $repairType == CarPlanType::TPL ? "pointer-events: none;back
 			'<?php echo json_encode($repairType) ?>');
 		var carPlanTypeTpl = JSON.parse(
 			'<?php echo json_encode(CarPlanType::TPL) ?>');
-		var isManualPlan = JSON.parse(
-			'<?php echo json_encode($isManualPlan) ?>');
+		var isManualUpdate = JSON.parse(
+			'<?php echo json_encode($isManualUpdate) ?>');
 		var shouldReviseQuote = JSON.parse(
 			'<?php echo json_encode($shouldReviseQuote) ?>');
 
@@ -102,7 +102,7 @@ $readonlyFieldCss = $repairType == CarPlanType::TPL ? "pointer-events: none;back
 
 			if (repair_type == carPlanTypeComp) { // if non-tpl
 				// if not manual plan and car_value < car_value_lower_limit not allow to update
-				if (isManualPlan == false && parseInt(car_value) < parseInt(car_value_lower_limit)) {
+				if (isManualUpdate == false && parseInt(car_value) < parseInt(car_value_lower_limit)) {
 					validationDivText('red', '.car-quote-plan-validation-div',
 						'Car Value should be greater than or equal to ' + car_value_lower_limit);
 					return false;
@@ -802,7 +802,7 @@ $readonlyFieldCss = $repairType == CarPlanType::TPL ? "pointer-events: none;back
 									<span class="status-text"></span><label class="switch "
 										style="float: left;margin-top: 5px;">
 										<input type="checkbox" class="leadSwitch success" id="is_manual_update"
-											name="is_manual_update" @if($isManualPlan=="true" ) checked="checked" @endif>
+											name="is_manual_update" @if($isManualUpdate=="true" ) checked="checked" @endif>
 										<span class="slider round"></span>
 								</td>
 							</tr>
