@@ -8,6 +8,7 @@ use App\Enums\LeadSourceTypes;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
+use App\Events\HealthQuoteUpdated;
 use App\Models\BusinessInsuranceType;
 use App\Models\BusinessQuote;
 use App\Models\HealthQuote;
@@ -951,7 +952,9 @@ class HealthQuoteService extends BaseService
             }
             $lead->save();
         }
-
+        if ($lead->quote_status_id != QuoteStatusEnum::Qualified && auth()->user()->isHealthWCUAdvisor()) {
+            HealthQuoteUpdated::dispatch($lead);
+        }
         return true;
     }
 
