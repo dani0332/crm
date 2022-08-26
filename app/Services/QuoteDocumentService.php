@@ -58,7 +58,7 @@ class QuoteDocumentService extends BaseService
             return 0;
         }
 
-        if (! $record->policy_number || $record->policy_issuance_date || ! $record->policy_start_date || ! $record->renewal_expiry_date || ! $record->quote_premium) {
+        if (! $record->policy_number || ! $record->policy_issuance_date || ! $record->policy_start_date || ! $record->renewal_expiry_date || ! $record->premium) {
             return 0;
         }
         $documentUploadTypes = $this->getQuoteDocumentsForUpload($quoteTypeId);
