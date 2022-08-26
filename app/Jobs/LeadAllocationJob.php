@@ -19,11 +19,11 @@ class LeadAllocationJob implements ShouldQueue
     public $tries = 3;
     public $timeout = 30;
     public $backoff = 3;
-    public $leadAllocationService;
+    private $leadAllocationService;
 
-    public function __construct(LeadAllocationService $leadAllocationService)
+    public function __construct()
     {
-        $this->leadAllocationService = $leadAllocationService;
+        $this->leadAllocationService = new LeadAllocationService();
     }
 
     /**
