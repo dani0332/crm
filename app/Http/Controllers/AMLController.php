@@ -24,10 +24,11 @@ use App\Models\YachtQuote;
 use App\Services\CheckAmlService;
 use App\Services\QuoteStatusService;
 use App\Services\SanctionListService;
+use App\Traits\GenericQueriesAllLobs;
 use Auth;
 use DataTables;
 use Illuminate\Http\Request;
-use App\Traits\GenericQueriesAllLobs;
+
 class AMLController extends Controller
 {
     protected $checkAmlService;
@@ -456,7 +457,7 @@ class AMLController extends Controller
 
         $quoteTypeCode = QuoteType::where('id', '=', $quoteTypeId)->value('code');
         $updateQuote = $this->getQuoteObject($quoteTypeCode, $quoteRequestId);
-        if($updateQuote) {
+        if ($updateQuote) {
             $quoteUpdate = $updateQuote;
             $firstName = ucwords(strtolower($request->first_name));
             $lastName = ucwords(strtolower($request->last_name));

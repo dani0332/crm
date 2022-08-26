@@ -9,22 +9,15 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 
 class LeadAllocationJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, GetUserTree, SerializesModels;
+    use Dispatchable, InteractsWithQueue, Queueable, GetUserTree;
 
     public $tries = 3;
     public $timeout = 30;
     public $backoff = 3;
-    private $leadAllocationService;
-
-    public function __construct()
-    {
-        $this->leadAllocationService = new LeadAllocationService();
-    }
 
     /**
      * Create a new job instance.
@@ -37,19 +30,19 @@ class LeadAllocationJob implements ShouldQueue
      *
      * @return void
      */
-    public function handle()
+    public function handle(LeadAllocationService $leadAllocationService)
     {
         try {
             Log::info('Lead Allocation Job Started');
-            if (! $this->leadAllocationService->leadAllocationSwitchStatus()) {
+            if (! $leadAllocationService->leadAllocationSwitchStatus()) {
                 info('Lead Allocation Job Switch is OFF');
 
                 return;
             } else {
-                $this->leadAllocationService->setAdvisorsToUnavailable();
-                $unAllocatedLeads = $this->leadAllocationService->getUnAllocatedLeads();
+                $leadAllocationService->setAdvisorsToUnavailable();
+                $unAllocatedLeads = $leadAllocationService->getUnAllocatedLeads();
                 if (count($unAllocatedLeads) > 0) {
-                    $availableUsers = $this->leadAllocationService->getAvailableAdvisors();
+                    $availableUsers = $leadAllocationService->getAvailableAdvisors();
                     $healthTeams = ['EBP', 'RM-Speed', 'RM-NB'];
                     $availableUsersString = '';
                     $availableUsers->each(function ($user) use (&$availableUsersString) {
@@ -70,7 +63,7 @@ class LeadAllocationJob implements ShouldQueue
                                 sleep(1);
                                 $filteredUsersByHealthTeam = $filteredUsersByHealthTeam->sortBy('last_allocated', SORT_NATURAL)->flatten();
                                 $advisor = $filteredUsersByHealthTeam->first();
-                                $this->leadAllocationService->assignLead($lead, $advisor->id, false);
+                                $leadAllocationService->assignLead($lead, $advisor->id, false);
                                 info('------->Lead Allocation Done for lead: '.$lead->uuid.' and advisor: '.$advisor->name);
                                 $filteredUsersByHealthTeam->each(function ($user) use ($advisor) {
                                     if ($user->id == $advisor->id) {

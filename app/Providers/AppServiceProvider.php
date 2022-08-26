@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Jobs\LeadAllocationJob;
+use App\Services\LeadAllocationService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\ServiceProvider;
@@ -15,7 +17,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        //
+        $this->app->bind(LeadAllocationJob::class, function ($app) {
+            return new LeadAllocationService($app->make(LeadAllocationService::class));
+        });
     }
 
     /**
