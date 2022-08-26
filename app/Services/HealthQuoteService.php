@@ -380,8 +380,10 @@ class HealthQuoteService extends BaseService
         $healthQuote->premium = $request->premium;
         if ($healthQuote->salary_band_id != $request->salary_band_id || $healthQuote->member_category_id != $request->member_category_id) {
             $healthQuote->quote_updated_at = Carbon::now();
-            $healthQuote->memberDetails()->update(['member_category_id' => $request->member_category_id,
+            if($healthQuote->primary_member_id) {
+                $healthQuote->memberDetails()->update(['member_category_id' => $request->member_category_id,
                 'salary_band_id' => $request->salary_band_id, 'gender' => $request->gender, 'dob' => $request->dob, ]);
+            }
         }
         $healthQuote->salary_band_id = $request->salary_band_id;
         $healthQuote->member_category_id = $request->member_category_id;

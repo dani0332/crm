@@ -222,7 +222,7 @@ class CRUDController extends Controller
 
         if ($request->has('email')) {
             $this->validate($request, [
-                'email' => 'required|email|max:150',
+                'email' => 'required|email:rfc,dns|max:150',
             ]);
         }
         if ($request->has('mobile_no')) {
