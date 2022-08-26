@@ -129,11 +129,11 @@ class LeadAllocationService extends BaseService
                 }
                 $lead->advisor_id = $advisorId;
                 $lead->save();
-                info('Lead Id '.$lead->id.' assigned to advisor '.$advisorId);
+                info('Lead Id '.$lead->uuid.' assigned to advisor '.$advisorId);
                 if ($lead->source != LeadSourceEnum::REFERRAL) {
                     $this->updateLeadAllocationRecord($advisorId);
                 }
-                $this->updateLeadDetailRecord($lead->id);
+                $this->updateLeadDetailRecord($lead->id, $lead->uuid);
                 DB::commit();
 
                 return true;
