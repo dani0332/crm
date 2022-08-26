@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Log;
 
 class LeadAllocationJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, GetUserTree, SerializesModels;
+    use Dispatchable, InteractsWithQueue, Queueable, GetUserTree;
 
     public $tries = 3;
     public $timeout = 30;
