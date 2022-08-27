@@ -104,7 +104,7 @@ $readonlyFieldCss = $repairType == CarPlanType::TPL ? "pointer-events: none;back
 				if (is_manual_update == false && 
 					(parseInt(car_value) < parseInt(car_value_lower_limit) || parseInt(car_value) > parseInt(car_value_upper_limit))) {
 					validationDivText('red', '.car-quote-plan-validation-div',
-						'Car Value should be within the given min/max range');
+						'Car Value should be within the displayed acceptable range.');
 					return false;
 				}
 			}
