@@ -92,6 +92,7 @@ $readonlyFieldCss = $repairType == CarPlanType::TPL ? "pointer-events: none;back
 			var excess = $("#excess").val();
 			var repair_type = $("#repair_type").val();
 			var car_value_lower_limit = $("#car_value_lower_limit").val();
+			var car_value_upper_limit = $("#car_value_upper_limit").val();
 			var carPlanTypeComp = JSON.parse(
 				'<?php echo json_encode(CarPlanType::COMP) ?>');
 			var carPlanTypeTpl = JSON.parse(
@@ -99,10 +100,11 @@ $readonlyFieldCss = $repairType == CarPlanType::TPL ? "pointer-events: none;back
 			var is_manual_update = $('#is_manual_update').is(':checked');
 
 			if (repair_type == carPlanTypeComp) { // if non-tpl
-				// if not manual plan and car_value < car_value_lower_limit not allow to update
-				if (is_manual_update == false && parseInt(car_value) < parseInt(car_value_lower_limit)) {
+				// Car Value should be within the given min/max range
+				if (is_manual_update == false && 
+					(parseInt(car_value) < parseInt(car_value_lower_limit) || parseInt(car_value) > parseInt(car_value_upper_limit))) {
 					validationDivText('red', '.car-quote-plan-validation-div',
-						'Car Value should be greater than or equal to ' + car_value_lower_limit);
+						'Car Value should be within the given min/max range');
 					return false;
 				}
 			}
@@ -817,7 +819,6 @@ $readonlyFieldCss = $repairType == CarPlanType::TPL ? "pointer-events: none;back
 								<td>Actual Premium:</td>
 								<td><input type="text" id="actual_premium" name="actual_premium"
 										value="{{ $actualPremium }}" class="form-control"
-										onKeyDown="if(this.value.length==8) return false;"
 										onkeypress="return isNumberKey(event,this)"></td>
 							</tr>
 							<tr>
@@ -825,14 +826,12 @@ $readonlyFieldCss = $repairType == CarPlanType::TPL ? "pointer-events: none;back
 								<td>
 									<input type="text" id="discounted_premium" name="discounted_premium"
 										value="{{ $discountPremium }}" class="form-control"
-										onKeyDown="if(this.value.length==8) return false;"
 										onkeypress="return isNumberKey(event,this)">
 									<input type="hidden" id="premium_vat" name="premium_vat" value="{{ $vat }}">
 								</td>
 								<td>Car value:</td>
 								<td><input type="text" id="car_value" name="car_value" value="{{ $carValue }}"
-										class="form-control" onKeyDown="if(this.value.length==8) return false;"
-										style="{{ $readonlyFieldCss }}" onkeypress="return isNumberKey(event,this)">
+										class="form-control" style="{{ $readonlyFieldCss }}" onkeypress="return isNumberKey(event,this)">
 									<span style="font-size: 10px;">Min: AED {{ number_format($carValueLowerLimit) }} -
 										Max: AED {{ number_format($carValueUpperLimit) }}</span>
 								</td>
@@ -840,8 +839,7 @@ $readonlyFieldCss = $repairType == CarPlanType::TPL ? "pointer-events: none;back
 							<tr>
 								<td>Excess:</td>
 								<td><input type="text" id="excess" name="excess" value="{{ $excess }}"
-										class="form-control" onKeyDown="if(this.value.length==8) return false;"
-										style="{{ $readonlyFieldCss }}" onkeypress="return isNumberKey(event,this)">
+										class="form-control" style="{{ $readonlyFieldCss }}" onkeypress="return isNumberKey(event,this)">
 								</td>
 								<td> </td>
 								<td> </td>
