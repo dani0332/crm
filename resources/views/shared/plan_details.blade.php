@@ -1,5 +1,3 @@
-<meta name="csrf-token" content="{{ csrf_token() }}" />
-
 @php
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\quoteTypeCode;
@@ -9,60 +7,67 @@ use App\Enums\InsuranceProviders;
 
 if (!isset($modelName)) {
 
-$carQuoteEditDisable = $isPlanUpdateActive == ApplicationStorageEnums::INACTIVE ? 'disabled' : '';
+	$carQuoteEditDisable = $isPlanUpdateActive == ApplicationStorageEnums::INACTIVE ? 'disabled' : '';
+	
+	foreach ($listQuotePlans as $listQuotePlan) { // Car quote plans
 
-foreach ($listQuotePlans as $listQuotePlan) { // Car quote plans
-if ($listQuotePlan->id == $planId) {
-$listQuotePlanName = $listQuotePlan->name;
-$providerCode = $listQuotePlan->providerCode;
-$providerName = $listQuotePlan->providerName;
-$repairType = $listQuotePlan->repairType;
-$actualPremium = $listQuotePlan->actualPremium;
+	if ($listQuotePlan->id == $planId) {
 
-$actualPremium = isset($listQuotePlan->actualPremium) ? $listQuotePlan->actualPremium : 0;
-$discountPremium = isset($listQuotePlan->discountPremium) ? $listQuotePlan->discountPremium : 0;
-$vat = isset($listQuotePlan->vat) ? $listQuotePlan->vat : 0;
-$carValueLowerLimit = isset($listQuotePlan->carValueLowerLimit) ? $listQuotePlan->carValueLowerLimit : 0;
-$carValueUpperLimit = isset($listQuotePlan->carValueUpperLimit) ? $listQuotePlan->carValueUpperLimit : 0;
-$excess = isset($listQuotePlan->excess) ? $listQuotePlan->excess : 0;
-$carValue = isset($listQuotePlan->carValue) ? $listQuotePlan->carValue : 0;
-$isDisabled = isset($listQuotePlan->isDisabled) ? $listQuotePlan->isDisabled : 0;
-$insurerQuoteNo = isset($listQuotePlan->insurerQuoteNo) ? $listQuotePlan->insurerQuoteNo : ''; // Insurer Quote No.
+		$listQuotePlanName = $listQuotePlan->name;
+		$providerCode = $listQuotePlan->providerCode;
+		$providerName = $listQuotePlan->providerName;
+		$repairType = isset($listQuotePlan->repairType) ? $listQuotePlan->repairType : '';
+		$actualPremium = isset($listQuotePlan->actualPremium) ? $listQuotePlan->actualPremium : 0;
+		$discountPremium = isset($listQuotePlan->discountPremium) ? $listQuotePlan->discountPremium : 0;
+		$vat = isset($listQuotePlan->vat) ? $listQuotePlan->vat : 0;
+		$carValueLowerLimit = isset($listQuotePlan->carValueLowerLimit) ? $listQuotePlan->carValueLowerLimit : 0;
+		$carValueUpperLimit = isset($listQuotePlan->carValueUpperLimit) ? $listQuotePlan->carValueUpperLimit : 0;
+		$excess = isset($listQuotePlan->excess) ? $listQuotePlan->excess : 0;
+		$carValue = isset($listQuotePlan->carValue) ? $listQuotePlan->carValue : 0;
+		$isDisabled = isset($listQuotePlan->isDisabled) ? $listQuotePlan->isDisabled : 0;
+		$insurerQuoteNo = isset($listQuotePlan->insurerQuoteNo) ? $listQuotePlan->insurerQuoteNo : ''; // Insurer Quote No.
+		$isManualUpdate = isset($listQuotePlan->isManualUpdate) ? $listQuotePlan->isManualUpdate : 0;
+		$shouldReviseQuote  = isset($listQuotePlan->shouldReviseQuote ) ? $listQuotePlan->shouldReviseQuote  : 0;
+		$listQuotePlanAddonss = $listQuotePlan->addons;
+		$listQuotePlanBenefitsInclusions = $listQuotePlan->benefits->inclusion;
+		$listQuotePlanBenefitsExclusions = $listQuotePlan->benefits->exclusion;
+		$listQuotePlanBenefitsFeatures = $listQuotePlan->benefits->feature;
+		$listQuotePlanBenefitsRsas = $listQuotePlan->benefits->roadSideAssistance;
+		$listQuotePlanBenefitsPolicyDetails = $listQuotePlan->policyWordings;
+		
+		$listQuotePlanAddons = [];
+		foreach ($listQuotePlanAddonss as $listQuotePlanAddon) {
+			$listQuotePlanAddons[] = $listQuotePlanAddon; // Get Addons Names
+		}
 
-$listQuotePlanAddonss = $listQuotePlan->addons;
-$listQuotePlanBenefitsInclusions = $listQuotePlan->benefits->inclusion;
-$listQuotePlanBenefitsExclusions = $listQuotePlan->benefits->exclusion;
-$listQuotePlanBenefitsFeatures = $listQuotePlan->benefits->feature;
-$listQuotePlanBenefitsRsas = $listQuotePlan->benefits->roadSideAssistance;
-$listQuotePlanBenefitsPolicyDetails = $listQuotePlan->policyWordings;
-foreach ($listQuotePlanAddonss as $listQuotePlanAddon) {
-$listQuotePlanAddons[] = $listQuotePlanAddon; // Get Addons Names
-}
-$listQuotePlanBenefitsPolicyDetailLink = '';
-foreach ($listQuotePlanBenefitsPolicyDetails as $listQuotePlanBenefitsPolicyDetail) {
-$listQuotePlanBenefitsPolicyDetailLink = $listQuotePlanBenefitsPolicyDetail->link;
-}
+		$listQuotePlanBenefitsPolicyDetailLink = '';
+		foreach ($listQuotePlanBenefitsPolicyDetails as $listQuotePlanBenefitsPolicyDetail) {
+			$listQuotePlanBenefitsPolicyDetailLink = $listQuotePlanBenefitsPolicyDetail->link;
+		}
 
-$totalSelectedAddonsPriceWithVat = 0;
-foreach ($listQuotePlanAddons as $listQuotePlanAddon) {
-foreach ($listQuotePlanAddon->carAddonOption as $carAddonOption) {
-if (isset($carAddonOption->isSelected)) {
-if ($carAddonOption->isSelected == 1) {
-$totalSelectedAddonsPriceWithVat += $carAddonOption->price + $carAddonOption->vat;
-}
-}
-}
-}
+		$totalSelectedAddonsPriceWithVat = 0;
+		foreach ($listQuotePlanAddons as $listQuotePlanAddon) {
+			foreach ($listQuotePlanAddon->carAddonOption as $carAddonOption) {
+				if (isset($carAddonOption->isSelected)) {
+					if ($carAddonOption->isSelected == 1) {
+						$totalSelectedAddonsPriceWithVat += $carAddonOption->price + $carAddonOption->vat;
+					}
+				}
+			}
+		}
 
-$totalPremium = $discountPremium + $vat + $totalSelectedAddonsPriceWithVat;
-$insurerAvailableTrims = isset($listQuotePlan->insurerAvailableTrims) ? $listQuotePlan->insurerAvailableTrims : [];
-$insurerSelectedTrim = isset($listQuotePlan->insurerTrimId) ? $listQuotePlan->insurerTrimId : null;
-}
+		$totalPremium = $discountPremium + $vat + $totalSelectedAddonsPriceWithVat;
+		$insurerAvailableTrims = isset($listQuotePlan->insurerAvailableTrims) ? $listQuotePlan->insurerAvailableTrims : [];
+		$insurerSelectedTrim = isset($listQuotePlan->insurerTrimId) ? $listQuotePlan->insurerTrimId : null;
+	}
 }
 
 $readonlyFieldCss = $repairType == CarPlanType::TPL ? "pointer-events: none;background-color: #f6f6f6;" : "";
+
 @endphp
 <script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
+<script src="{{ asset('js/bootstrap-toggle.min.js') }}"></script>
+<link href="{{ asset('css/bootstrap-toggle.css') }}" rel="stylesheet">
 <script>
 	$.ajaxSetup({
 		headers: {
@@ -76,6 +81,8 @@ $readonlyFieldCss = $repairType == CarPlanType::TPL ? "pointer-events: none;back
 			'<?php echo json_encode($repairType) ?>');
 		var carPlanTypeTpl = JSON.parse(
 			'<?php echo json_encode(CarPlanType::TPL) ?>');
+		var shouldReviseQuote = JSON.parse(
+			'<?php echo json_encode($shouldReviseQuote) ?>');
 
 		$('.update-car-quote-plan-button').on('click', function(e) {
 			var actual_premium = $("#actual_premium").val();
@@ -85,16 +92,21 @@ $readonlyFieldCss = $repairType == CarPlanType::TPL ? "pointer-events: none;back
 			var excess = $("#excess").val();
 			var repair_type = $("#repair_type").val();
 			var car_value_lower_limit = $("#car_value_lower_limit").val();
+			var car_value_upper_limit = $("#car_value_upper_limit").val();
 			var carPlanTypeComp = JSON.parse(
 				'<?php echo json_encode(CarPlanType::COMP) ?>');
 			var carPlanTypeTpl = JSON.parse(
 				'<?php echo json_encode(CarPlanType::TPL) ?>');
+			var is_manual_update = $('#is_manual_update').is(':checked');
 
-			// For COMP, car_value should greater than or equal to lower_limit
-			if (repair_type == carPlanTypeComp && parseInt(car_value) < parseInt(car_value_lower_limit)) {
-				validationDivText('red', '.car-quote-plan-validation-div',
-					'Car Value should be greater than or equal to ' + car_value_lower_limit);
-				return false;
+			if (repair_type == carPlanTypeComp) { // if non-tpl
+				// Car Value should be within the given min/max range
+				if (is_manual_update == false && 
+					(parseInt(car_value) < parseInt(car_value_lower_limit) || parseInt(car_value) > parseInt(car_value_upper_limit))) {
+					validationDivText('red', '.car-quote-plan-validation-div',
+						'Car Value should be within the displayed acceptable range.');
+					return false;
+				}
 			}
 
 			// discounted_premium always must filled
@@ -160,16 +172,18 @@ $readonlyFieldCss = $repairType == CarPlanType::TPL ? "pointer-events: none;back
 					premium_vat: $('#premium_vat').val(),
 					car_value: $('#car_value').val(),
 					excess: $('#excess').val(),
-					is_disabled: $('#is_disabled').val(),
+					is_disabled: $('#is_disabled').is(':checked'),
 					is_create: $('#is_create').val(),
 					addons,
 					_token: '{{ csrf_token() }}',
 					insurerTrim: $("#insurerTrim").val(),
+					insurer_quote_no: $("#insurer_quote_no").val(),
+					is_manual_update: $('#is_manual_update').is(':checked'),
 				}),
 				success: function(result) {
 					$(".loader").hide();
 					validationDivText('green', '.car-quote-plan-validation-div', result);
-					conditionallyLockFields(discounted_premium, carPlanType, carPlanTypeTpl);
+					conditionallyLockFields(shouldReviseQuote);
 
 					var totalPriceSelectedAddonsWithVat = 0;
 					$.each(addons, function(i, jsondata) {
@@ -200,7 +214,25 @@ $readonlyFieldCss = $repairType == CarPlanType::TPL ? "pointer-events: none;back
 			));
 
 		// Conditionally lock fields
-		conditionallyLockFields(discountedPremium, carPlanType, carPlanTypeTpl);
+		conditionallyLockFields(shouldReviseQuote);
+
+		// if plan set to manual do unlock fields
+		$(document).on("change", "#is_manual_update", function() {
+			var ischecked = $(this).is(':checked');
+			manualPlanToggle(ischecked, shouldReviseQuote);
+		});
+
+		function manualPlanToggle(ischecked, shouldReviseQuote) {
+			if (ischecked) {
+				unlockField(['#insurer_quote_no', '#actual_premium', '#discounted_premium', , '#car_value',
+					'#excess', '#insurerTrim'
+				]);
+			} else {
+				if (shouldReviseQuote == true) {
+					lockField(['#insurer_quote_no', '#actual_premium', '#excess']);
+				}
+			}
+		}
 
 		function lockField(elementId) {
 			for (a = 0; a <= elementId.length; a++) {
@@ -233,19 +265,19 @@ $readonlyFieldCss = $repairType == CarPlanType::TPL ? "pointer-events: none;back
 			$(elementId).show().html(totalPremiumHtml).delay(5000);
 		}
 
-		function conditionallyLockFields(discountedPremium, carPlanType, carPlanTypeTpl) {
-			if (carPlanType == carPlanTypeTpl) { // TPL
-				if (discountedPremium > 0) {
-					lockField(["#actual_premium"]);
-				} else {
-					unlockField(["#actual_premium"]);
-				}
-			} else { // COMP
-				if (discountedPremium > 0) {
-					lockField(["#actual_premium", "#car_value", "#excess"]);
-				} else {
-					unlockField(["#actual_premium", "#car_value", "#excess"]);
-				}
+		function conditionallyLockFields(shouldReviseQuote) {
+
+			lockField(['#insurer_quote_no', '#actual_premium', '#discounted_premium', , '#car_value', '#excess',
+				'#insurerTrim'
+			]);
+
+			if (shouldReviseQuote == true) {
+				unlockField(["#discounted_premium", "#car_value", "#insurerTrim"]);
+			}
+			if (shouldReviseQuote == false) {
+				unlockField(['#insurer_quote_no', '#actual_premium', '#discounted_premium', , '#car_value',
+					'#excess', '#insurerTrim'
+				]);
 			}
 		}
 
@@ -717,7 +749,6 @@ $readonlyFieldCss = $repairType == CarPlanType::TPL ? "pointer-events: none;back
 				<div class="h5">{{ ucwords($listQuotePlanName) }}</div>
 				<div class="clearfix"></div>
 			</div>
-
 			<div class="x_content">
 				<ul class="nav nav-tabs" id="myTab" role="tablist" style="font-weight: bold;">
 					<li class="nav-item">
@@ -745,7 +776,6 @@ $readonlyFieldCss = $repairType == CarPlanType::TPL ? "pointer-events: none;back
 							aria-controls="policy-detail" aria-selected="false">Policy Detail</a>
 					</li>
 				</ul>
-
 				<div class="tab-content" style="padding-top: 20px;">
 					<div class="tab-pane fade show active" id="general" role="tabpanel" aria-labelledby="general-tab">
 						{{csrf_field()}}
@@ -757,57 +787,65 @@ $readonlyFieldCss = $repairType == CarPlanType::TPL ? "pointer-events: none;back
 							value="{{ $carValueUpperLimit }}">
 						<input type="hidden" id="repair_type" name="repair_type" value="{{ $repairType }}">
 						<input type="hidden" id="is_create" name="is_create" value="0">
-						<table cellpadding="8" cellspacing="8">
+						<table cellpadding="10" cellspacing="10">
 							<tr>
 								<td>Hide Plan?</td>
-								<td><select class="form-control" id='is_disabled' name="is_disabled">
-										<option value="false" {{ $isDisabled=="false" ? 'selected="selected"' : '' }}>No
-										</option>
-										<option value="true" {{ $isDisabled=="true" ? 'selected="selected"' : '' }}>Yes
-										</option>
-									</select>
+								<td>
+									<span class="status-text"></span><label class="switch "
+										style="float: left;margin-top: 5px;">
+										<input type="checkbox" class="leadSwitch success" id="is_disabled"
+											name="is_disabled" @if($isDisabled=="false" ) checked="checked" @endif>
+										<span class="slider round"></span>
 								</td>
+								<td>Manual</td>
+								<td>
+									<span class="status-text"></span><label class="switch "
+										style="float: left;margin-top: 5px;">
+										<input type="checkbox" class="leadSwitch success" id="is_manual_update"
+											name="is_manual_update" @if($isManualUpdate=="true" ) checked="checked" @endif>
+										<span class="slider round"></span>
+								</td>
+							</tr>
+							<tr>
 								<td>Provider Name:</td>
 								<td>{{ $providerName }}</td>
-							</tr>
-							<tr>
 								<td>Repair Type:</td>
 								<td>{{ $repairType == CarPlanType::COMP ? 'NON-AGENCY' : $repairType }}</td>
-								<td>Insurer Quote No.:</td>
-								<td>{{ $insurerQuoteNo }}</td>
 							</tr>
 							<tr>
+								<td>Insurer Quote No.:</td>
+								<td><input type="text" id="insurer_quote_no" name="insurer_quote_no"
+										value="{{ $insurerQuoteNo }}" class="form-control"></td>
 								<td>Actual Premium:</td>
-								<td><input type="number" id="actual_premium" name="actual_premium"
-										value="{{ old('actual_premium', $actualPremium) }}" class="form-control"
-										onKeyDown="if(this.value.length==8) return false;"
+								<td><input type="text" id="actual_premium" name="actual_premium"
+										value="{{ $actualPremium }}" class="form-control"
 										onkeypress="return isNumberKey(event,this)"></td>
+							</tr>
+							<tr>
 								<td>Discounted Premium:</td>
 								<td>
-									<input type="number" id="discounted_premium" name="discounted_premium"
-										value="{{ old('discounted_premium', $discountPremium) }}" class="form-control"
-										onKeyDown="if(this.value.length==8) return false;"
+									<input type="text" id="discounted_premium" name="discounted_premium"
+										value="{{ $discountPremium }}" class="form-control"
 										onkeypress="return isNumberKey(event,this)">
 									<input type="hidden" id="premium_vat" name="premium_vat" value="{{ $vat }}">
 								</td>
-							</tr>
-							<tr>
 								<td>Car value:</td>
-								<td><input type="number" id="car_value" name="car_value"
-										value="{{ old('car_value', $carValue) }}" class="form-control"
-										onKeyDown="if(this.value.length==8) return false;"
-										style="{{ $readonlyFieldCss }}" onkeypress="return isNumberKey(event,this)">
+								<td><input type="text" id="car_value" name="car_value" value="{{ $carValue }}"
+										class="form-control" style="{{ $readonlyFieldCss }}" onkeypress="return isNumberKey(event,this)">
 									<span style="font-size: 10px;">Min: AED {{ number_format($carValueLowerLimit) }} -
 										Max: AED {{ number_format($carValueUpperLimit) }}</span>
 								</td>
-								<td>Excess:</td>
-								<td><input type="number" id="excess" name="excess" value="{{ old('excess', $excess) }}"
-										class="form-control" onKeyDown="if(this.value.length==8) return false;"
-										style="{{ $readonlyFieldCss }}" onkeypress="return isNumberKey(event,this)">
-								</td>
 							</tr>
 							<tr>
-								<td> Car Trim </td>
+								<td>Excess:</td>
+								<td><input type="text" id="excess" name="excess" value="{{ $excess }}"
+										class="form-control" style="{{ $readonlyFieldCss }}" onkeypress="return isNumberKey(event,this)">
+								</td>
+								<td> </td>
+								<td> </td>
+							</tr>
+							<tr>
+								<td>Car Trim</td>
 								<td><select class="form-control car-quote-plan-popup-trim-dropdown" id='insurerTrim'
 										name="insurerTrim">
 										@foreach($insurerAvailableTrims as $trim)
@@ -821,16 +859,13 @@ $readonlyFieldCss = $repairType == CarPlanType::TPL ? "pointer-events: none;back
 									<button type="submit" class="btn btn-warning btn-sm update-car-quote-plan-button" {{
 										$carQuoteEditDisable }}>Update</button>
 								</td>
-
 							</tr>
-
 							<tr>
 								<td colspan="4">
 									<div class="car-quote-plan-validation-div"></div>
 								</td>
 							</tr>
 						</table>
-						<br />
 						<p>
 							<strong>Features</strong>
 						<table cellpadding="3" cellspacing="3">
@@ -884,9 +919,10 @@ $readonlyFieldCss = $repairType == CarPlanType::TPL ? "pointer-events: none;back
 												@if($listQuotePlanAddon->code == CarPlanAddons::CAR_HIRE &&
 												($providerCode == InsuranceProviders::AXA || $providerCode ==
 												InsuranceProviders::RSA))
-												<input type="number" id="addon_price" name="addon_price"
+												<input type="text" id="addon_price" name="addon_price"
 													value="{{ $carAddonOption->price }}" style="width: 100px;"
-													onKeyDown="if(this.value.length==5) return false;"
+													onKeyDown="if(this.value.length==5) return false;" 
+													onkeypress="return isNumberKey(event,this)" 
 													class="form-control addon_price">
 												@else
 												AED {{ $carAddonOption->price }}
