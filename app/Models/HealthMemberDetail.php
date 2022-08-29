@@ -9,7 +9,6 @@ use Illuminate\Database\Eloquent\Model;
 class HealthMemberDetail extends Model
 {
     use HasFactory;
-
     protected $table = 'health_quote_request_member_details';
     protected $guarded = ['id'];
 
@@ -30,6 +29,6 @@ class HealthMemberDetail extends Model
 
     public function getDobAttribute($value)
     {
-        return Carbon::parse($value)->format('d-M-Y');
+        return Carbon::parse($value)->format('Y-m-d');
     }
 }

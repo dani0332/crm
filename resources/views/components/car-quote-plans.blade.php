@@ -94,6 +94,9 @@ use App\Enums\CarPlanType;
 					</thead>
 					<tbody>
 						@foreach ($listQuotePlans as $key => $quotePlan)
+							@if(!isset($quotePlan->id))
+								@continue;
+							@endif
 						<tr>
 							<td>
 								<input type="checkbox" class="car_plans_checkbox" name="toggle_plans_checkbox"
