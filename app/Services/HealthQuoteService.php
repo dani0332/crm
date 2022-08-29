@@ -1024,7 +1024,7 @@ class HealthQuoteService extends BaseService
         $response['paymentStatus'] = '';
         $response['paidAt'] = '';
         $response['planName'] = '';
-        
+
         $planData = HealthQuotePlan::where('health_quote_request_id', $data->id)->first();
         if ($planData) {
             $planPayload = json_decode($planData->plan_payload, true);
