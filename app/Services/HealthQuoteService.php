@@ -10,6 +10,7 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Models\BusinessInsuranceType;
 use App\Models\BusinessQuote;
+use App\Models\HealthMemberDetail;
 use App\Models\HealthQuote;
 use App\Models\HealthQuotePlan;
 use App\Models\HealthQuoteRequestDetail;
@@ -360,8 +361,8 @@ class HealthQuoteService extends BaseService
 
     public function updateHealthQuote(Request $request, $id)
     {
-        $sourceName = $request->is_ebp_renewal == 'on' ? LeadSourceTypes::EBPRENEWALS : config('constants.SOURCE_NAME');
         $healthQuote = HealthQuote::where('uuid', $id)->first();
+        $sourceName = $request->is_ebp_renewal == 'on' ? LeadSourceTypes::EBPRENEWALS : $healthQuote->source;
         $healthQuote->first_name = $request->first_name;
         $healthQuote->last_name = $request->last_name;
         $healthQuote->details = $request->details;
@@ -861,7 +862,7 @@ class HealthQuoteService extends BaseService
 
     public function getMembersDetail($id)
     {
-        return ''; //HealthMemberDetail::where('health_quote_request_id', $id)->get();
+        return HealthMemberDetail::where('health_quote_request_id', $id)->get();
     }
 
     public function validateRequest($request)
@@ -1019,10 +1020,11 @@ class HealthQuoteService extends BaseService
     public function getEcomDetails($data)
     {
         $response['providerName'] = '';
-        $response['premium'] = '';
+        $response['network'] = '';
         $response['paymentStatus'] = '';
         $response['paidAt'] = '';
         $response['planName'] = '';
+        
         $planData = HealthQuotePlan::where('health_quote_request_id', $data->id)->first();
         if ($planData) {
             $planPayload = json_decode($planData->plan_payload, true);
@@ -1030,13 +1032,13 @@ class HealthQuoteService extends BaseService
                 foreach ($planPayload['plans'] as $plan) {
                     if ($plan['id'] == $data->plan_id) {
                         $response['providerName'] = $plan['providerName'];
-                        $response['premium'] = $plan['actualPremium'];
-                        $response['paymentStatus'] = '';
-                        $response['paidAt'] = '';
+                        $response['paymentStatus'] = GenericRequestEnum::NotApplicable;
+                        $response['paidAt'] = GenericRequestEnum::NotApplicable;
+                        $response['planName'] = $plan['name'];
                         if (isset($plan['benefits'], $plan['benefits']['feature'])) {
                             foreach ($plan['benefits']['feature'] as $value) {
                                 if ($value['code'] == GenericRequestEnum::TPA_Code) {
-                                    $response['planName'] = $value['text'];
+                                    $response['network'] = $value['value'];
                                 }
                             }
                         }

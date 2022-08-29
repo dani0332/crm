@@ -518,9 +518,9 @@ $readonlyFieldCss = $repairType == CarPlanType::TPL ? "pointer-events: none;back
 						<a class="nav-link active" id="general-tab" data-toggle="tab" href="#general" role="tab"
 							aria-controls="general" aria-selected="true">General Info</a>
 					</li>
-					<!-- <li class="nav-item">
+					<li class="nav-item">
                         <a class="nav-link" id="members-tab" data-toggle="tab" href="#members" role="tab" aria-controls="members" aria-selected="true">Members</a>
-                    </li> -->
+                    </li>
 					<li class="nav-item">
 						<a class="nav-link" id="benefits-inclusion-tab" data-toggle="tab" href="#benefits-inclusion"
 							role="tab" aria-controls="benefits-inclusion" aria-selected="false">Inclusions</a>
@@ -581,11 +581,11 @@ $readonlyFieldCss = $repairType == CarPlanType::TPL ? "pointer-events: none;back
 							</tr>
 							<tr>
 								<td style="width: 50px;font-weight: bold;">Category</td>
-								<td style="width: 50px;">{{$member->memberCategoryText}}</td>
+								<td style="width: 120px;">{{$member->memberCategoryText}}</td>
 								<td style="width: 50px;font-weight: bold;">DOB</td>
 								<td style="width: 120px;">{{$member->dob}}</td>
 								<td style="width: 50px;font-weight: bold;">Gender</td>
-								<td style="width: 50px;">{{$member->gender}}</td>
+								<td style="width: 120px;">{{$member->gender}}</td>
 								<td style="width: 50px;font-weight: bold;">Premium</td>
 								<td style="width: 120px;">{{$member->premium}}</td>
 							</tr>
