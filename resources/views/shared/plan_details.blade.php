@@ -11,6 +11,10 @@ if (!isset($modelName)) {
 	
 	foreach ($listQuotePlans as $listQuotePlan) { // Car quote plans
 
+		if(!isset($listQuotePlan->id)) {
+			continue;
+		}
+
 	if ($listQuotePlan->id == $planId) {
 
 		$listQuotePlanName = $listQuotePlan->name;
