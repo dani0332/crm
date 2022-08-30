@@ -946,7 +946,7 @@ class CarQuoteService extends BaseService
                     'carValue' => (float) $request->car_value,
                     'excess' => (float) $request->excess,
                     'discountPremium' => (float) $discountedPremium,
-                    'isDisabled' => isset($request->is_disabled) ? (boolean) $request->is_disabled : (boolean) false,
+                    'isDisabled' => isset($request->is_disabled) ? (bool) $request->is_disabled : (bool) false,
                     'addons' => $addons,
                     'insurerTrimId' => strval($request->insurerTrim),
                     'insurerQuoteNo' => strval($request->insurer_quote_no),

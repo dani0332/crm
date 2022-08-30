@@ -4,11 +4,9 @@ namespace App\Services;
 
 use App\Enums\DatabaseColumnsString;
 use App\Enums\QuoteStatusEnum;
-use App\Enums\quoteStatusCode;
-use App\Models\TravelMemberDetail;
-use App\Models\QuoteDocument;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
+use App\Models\TravelMemberDetail;
 use App\Models\TravelQuote;
 use App\Models\TravelQuoteRequestDetail;
 use App\Traits\AddPremiumAllLobs;
@@ -116,12 +114,13 @@ class TravelQuoteService extends BaseService
             'currentlyLocatedInId' => $request->currently_located_in_id,
             'dob' => $request->dob,
         ];
-        if (! Auth::user()->hasRole('ADMIN')  && !Auth::user()->hasRole("Call Desk")) {
+        if (! Auth::user()->hasRole('ADMIN') && ! Auth::user()->hasRole('Call Desk')) {
             $dataArr['advisorId'] = Auth::user()->id;
         }
         $response = CapiRequestService::sendCAPIRequest('/api/v1-save-travel-quote', $dataArr);
         if (isset($response->quoteUID)) {
             $this->savePremium(quoteTypeCode::TravelQuote, $request, $response);
+
             return $this->createUpdateCustomerInfo($request, $request->email, $response->quoteUID, quoteTypeCode::TravelQuote);
         } else {
             return $response;

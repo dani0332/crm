@@ -60,7 +60,7 @@ class MyLeadsController extends Controller
             if (str_contains($userAdditionalTeams, ',')) {
                 $userAdditionalTeamsIds = explode(',', $userAdditionalTeams);
                 $userAdditionalTeamsIds = array_merge([$team->id], $userAdditionalTeamsIds);
-                $allowedTeamTypes = Team::whereIn('id', $userAdditionalTeamsIds)->select('id','name')->get()->toArray();
+                $allowedTeamTypes = Team::whereIn('id', $userAdditionalTeamsIds)->select('id', 'name')->get()->toArray();
             } else {
                 $additionalTeam = Team::where('id', $userAdditionalTeams)->first();
                 array_push($allowedTeamTypes, ['id' => $additionalTeam->id, 'name' => $additionalTeam->name]);
@@ -80,6 +80,7 @@ class MyLeadsController extends Controller
                 ->addIndexColumn()
                 ->make(true);
         }
+
         return view('myleads.view', compact('teamName', 'leadStatusList', 'allowedTeamTypes',
             'parentTeamId', 'paymentStatusList', 'vehicleTypeList', 'insuranceProviderList', 'carTypeInsuranceList'));
     }
