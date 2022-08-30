@@ -26,18 +26,29 @@ class CheckAmlService
             $checkAMLResponseEntity = $this->checkAMLRequestEntity($quoteRequestId, $quoteTypeId, $companyName, $amlEndPoint, $amlUrl);
         }
         $checkAMLResponseIndividual = $this->checkAMLRequestIndividual($firstName, $lastName, $quoteRequestId, $quoteTypeId, $yob, $amlEndPoint, $amlUrl);
-        if ($checkAMLResponseEntity) {
-            $isAMLResultFound = $checkAMLResponseEntity && $checkAMLResponseEntity['resultsFound'] > 0 || $checkAMLResponseIndividual['resultsFound'] > 0 ? true : false;
+
+        if (isset($checkAMLResponseEntity['resultsFound'])) {
+            if ($checkAMLResponseEntity['resultsFound'] > 0) {
+                $isAMLResultFound = true;
+            } else {
+                $isAMLResultFound = false;
+            }
+        }
+        if (isset($checkAMLResponseIndividual['resultsFound'])) {
+            if ($checkAMLResponseIndividual['resultsFound'] > 0) {
+                $isAMLResultFound = true;
+            } else {
+                $isAMLResultFound = false;
+            }
         }
 
         // Match is found
         if ($isAMLResultFound) {
-
             // Send Email alert to Compliance team only
-            $quoteTypeName = QuoteType::where('id', '=', $quoteTypeId)->value('text'); // Get quote type text
+            $quoteTypeName = QuoteType::where('id', $quoteTypeId)->value('text'); // Get quote type text
 
             // Get CDB ID
-            $quoteTypeCode = QuoteType::where('id', '=', $quoteTypeId)->value('code');
+            $quoteTypeCode = QuoteType::where('id', $quoteTypeId)->value('code');
             $quoteCdbId = $this->getQuoteCode($quoteTypeCode, $quoteRequestId);
 
             if ($isEmailSendingEnabled == true && $quoteCdbId) {
