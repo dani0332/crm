@@ -10,7 +10,6 @@ use Carbon\Carbon;
 
 class MembersDetailController extends Controller
 {
-
     /**
      * Store a newly created resource in storage.
      *
@@ -65,12 +64,13 @@ class MembersDetailController extends Controller
             'salary_band_id' => $request->salary_band,
         ];
         $memberDetail = HealthMemberDetail::find($id);
-        if($memberDetail) {
+        if ($memberDetail) {
             $memberDetail->update($data);
             HealthQuote::find($request->health_quote_request_id)->update(['quote_updated_at' => Carbon::now()]);
             unset($data['health_quote_request_id']);
             HealthQuote::where('primary_member_id', $memberDetail->id)->update($data);
         }
+
         return redirect()->back();
     }
 
