@@ -3,7 +3,6 @@
 namespace App\Console\Commands;
 
 use App\Jobs\LeadAllocationJob;
-use App\Services\LeadAllocationService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 
@@ -41,7 +40,6 @@ class LeadAllocation extends Command
     public function handle()
     {
         Log::info('Lead Allocation Command Started');
-        $leadAllocationService = new LeadAllocationService();
-        dispatch(new LeadAllocationJob($leadAllocationService));
+        dispatch(new LeadAllocationJob());
     }
 }

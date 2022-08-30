@@ -2,22 +2,14 @@
 
 namespace App\Services;
 
-use App\Enums\quoteTypeCode;
-use App\Models\BikeQuote;
-use App\Models\BusinessQuote;
-use App\Models\CarQuote;
-use App\Models\HealthQuote;
-use App\Models\HomeQuote;
-use App\Models\LifeQuote;
 use App\Models\QuoteType;
-use App\Models\TravelQuote;
 use App\Models\User;
-use App\Models\YachtQuote;
+use App\Traits\GenericQueriesAllLobs;
 use Auth;
 use Config;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
-use App\Traits\GenericQueriesAllLobs;
+
 class CheckAmlService
 {
     use GenericQueriesAllLobs;
@@ -34,7 +26,7 @@ class CheckAmlService
             $checkAMLResponseEntity = $this->checkAMLRequestEntity($quoteRequestId, $quoteTypeId, $companyName, $amlEndPoint, $amlUrl);
         }
         $checkAMLResponseIndividual = $this->checkAMLRequestIndividual($firstName, $lastName, $quoteRequestId, $quoteTypeId, $yob, $amlEndPoint, $amlUrl);
-        if($checkAMLResponseEntity) {
+        if ($checkAMLResponseEntity) {
             $isAMLResultFound = $checkAMLResponseEntity && $checkAMLResponseEntity['resultsFound'] > 0 || $checkAMLResponseIndividual['resultsFound'] > 0 ? true : false;
         }
 
@@ -78,8 +70,7 @@ class CheckAmlService
         // checking if the request wasn't successful
         if ($requestStatus != 201 && $requestStatus != 200) {
             $requestMessage = '';
-            if (is_array($response) || is_object($response))
-            {
+            if (is_array($response) || is_object($response)) {
                 foreach ($response as $key1 => $value1) {
                     $requestMessage .= $key1.': '.$value1;
                     $requestMessage .= '<pre>';
@@ -87,8 +78,7 @@ class CheckAmlService
             }
 
             $emailAmlData = '';
-            if (is_array($requestDataForIndividual) || is_object($requestDataForIndividual))
-            {
+            if (is_array($requestDataForIndividual) || is_object($requestDataForIndividual)) {
                 foreach ($requestDataForIndividual as $key => $value) {
                     $emailAmlData .= $key.': '.$value;
                     $emailAmlData .= '<pre>';

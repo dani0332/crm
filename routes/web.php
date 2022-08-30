@@ -27,6 +27,7 @@ use App\Http\Controllers\LeadAllocationController;
 use App\Http\Controllers\LeadAssignmentController;
 use App\Http\Controllers\LeadSearchController;
 use App\Http\Controllers\MembersDetailController;
+use App\Http\Controllers\TravelMembersDetailController;
 use App\Http\Controllers\MyLeadsController;
 use App\Http\Controllers\PartnerController;
 use App\Http\Controllers\PaymentModeController;
@@ -292,6 +293,7 @@ Route::group(['middleware' => ['auth']], function () {
     Route::resource('members', MembersDetailController::class);
     Route::get('/insurance-provider-plans', [ClaimController::class, 'carPlansByInsuranceProvider']);
     Route::post('/car-plan-manual-update-process', [ClaimController::class, 'carPlanUpdateManualProcess']);
+    Route::resource('travelers', TravelMembersDetailController::class);
 });
 
 Route::POST('/sendBulkWelcomeEmails', [BulkEmailProcessController::class, 'ProcessBulkWelcomeEmails'])

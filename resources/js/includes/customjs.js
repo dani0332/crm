@@ -1,4 +1,11 @@
 $(document).ready(function () {
+    $("#ebp_dob").datepicker({
+        changeMonth: true,
+        changeYear: true,
+        dateFormat: "dd-mm-yy",
+        yearRange: "-80:+00"
+    });
+
     $(".selectpicker").selectpicker();
     $("#datepicker").datepicker({ dateFormat: "yy-mm-dd" });
     $("#datepicker_2").datepicker({ dateFormat: "yy-mm-dd" });
@@ -1733,7 +1740,11 @@ $(document).ready(function () {
         $('#activityModal').modal({ show: true });
     });
     $('#add-edit-health-members-btn').on('click', function(){
+        $("#ebp_gender,#ebp_dob,#ebp_category,#ebp_salary").val('');
         $('#addHealthMemberModal').modal({ show: true });
+    });
+    $('#add-edit-travel-members-btn').on('click', function(){
+        $('#addTravelMemberModal').modal({ show: true });
     });
 
     $("#due_date").daterangepicker({
@@ -2251,6 +2262,35 @@ function deleteMemberDetail(member) {
         return false;
     }
 }
+
+function editTravelMemberDetail(member) {
+    $.ajax({
+        url: '/travelers/'+member+'/edit',
+        method: "GET",
+        success: function(data) {
+            $('#member_model_content_form').html(data);
+            $('#addTravelMemberModal').modal({ show: true });
+        },
+    });
+}
+
+function deleteTravelMemberDetail(member) {
+    if(confirm('Are you sure you want to delete this member?')){
+        $.ajax({
+            url: '/travelers/'+member,
+            method: "delete",
+            data: {
+                _token: $('input[name=_token]').val()
+            },
+            success: function(data) {
+                location.reload();
+            },
+        });
+    }else {
+        return false;
+    }
+}
+
 $("#dataTableCarQuotePlans").DataTable({
     paging: false,
     ordering: false,

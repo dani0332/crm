@@ -391,6 +391,7 @@
         <x-quote-documents :displaySendPolicyButton="$displaySendPolicyButton" :record="$record" :quoteDocuments="$quoteDocuments" :quoteType="$quoteType" />
         <x-email-status :emailStatuses="$emailStatuses" />
         <x-travel-quote :listQuotePlans="$listQuotePlans" :uuidModal="$record->uuid" :quoteRequestId="$record->id" :ecomUrl="$ecomTravelInsuranceQuoteUrl . $record->uuid" />
+        <x-travel-quote-members-modal :id="$record->id" />
     @endif
 
     @if ($model->modelType == quoteTypeCode::Health)
@@ -419,10 +420,11 @@
         <x-health-quote-plans
             :listQuotePlans="$listQuotePlans"
             :uuidModal="$record->uuid"
-            :quoteRequestId="$record->id" />
-        <!-- <x-health-quote-members-detail :members="$membersDetail" />
+            :quoteRequestId="$record->id"
+            :ecomHealthInsuranceQuoteUrl="$ecomHealthInsuranceQuoteUrl. $record->uuid" />
+        <x-health-quote-members-detail :members="$membersDetail" />
         <x-health-quote-members-modal :categories="$memberCategories" :salaries="$salaryBands" :id="$record->id" />
-        <x-health-quote-ecom-details :data="$ecomDetails" /> -->
+        <x-health-quote-ecom-details :data="$ecomDetails" />
     @endif
 
     <x-lead-activities :lead="$record" :modeltype="$model->modelType" :activities="$activities" />
