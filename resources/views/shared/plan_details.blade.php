@@ -66,6 +66,10 @@ if (!isset($modelName)) {
 	}
 }
 
+if(!isset($repairType)) {
+	continue;
+}
+
 $readonlyFieldCss = $repairType == CarPlanType::TPL ? "pointer-events: none;background-color: #f6f6f6;" : "";
 
 @endphp
