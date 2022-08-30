@@ -270,7 +270,9 @@ class CRUDController extends Controller
         if (strtolower($this->genericModel->modelType) == strtolower(quoteTypeCode::Health) && Auth::user()->isHealthWCUAdvisor() && $record->wcu_id != Auth::user()->id && $autoAllocationDisabled == '1') {
             abort(403, 'Unauthorized action.');
         }
-
+        $paymentEntityModel = $this->{strtolower($this->genericModel->modelType) . 'QuoteService'}->getEntityPlain($record->id);
+        $payments = $paymentEntityModel->payments;
+        $paymentMethods = $this->lookupService->getPaymentMethods();
         $isRenewalUser = false;
         $isNewBusinessUser = false;
         $model = $this->genericModel;
@@ -347,7 +349,7 @@ class CRUDController extends Controller
                 'ecomCarInsuranceQuoteUrl', 'carQuotePlanAddons', 'vehicleTypes', 'leadStatuses',
                 'lostReasons', 'selectedLostReasonId', 'model_name', 'allowedDuplicateLOB', 'audits',
                 'activities', 'advisors', 'isRenewalUser', 'isNewBusinessUser', 'emailStatuses',
-                'yearsOfManufacture', 'notesForCustomers', 'quoteTypeId', 'trimList', 'autoAllocationDisabled',
+                'yearsOfManufacture', 'notesForCustomers', 'quoteTypeId', 'trimList', 'autoAllocationDisabled', 'paymentEntityModel', 'payments', 'paymentMethods'
             ]));
         } elseif ($this->genericModel->modelType == quoteTypeCode::Travel) { // Travel plans to display on detail view
             $ecomTravelInsuranceQuoteUrl = config('constants.ECOM_TRAVEL_INSURANCE_QUOTE_URL');
@@ -362,9 +364,6 @@ class CRUDController extends Controller
                     $listQuotePlans = $quotePlans;
                 }
             }
-            $travelPlainModel = $this->travelQuoteService->getEntityPlain($record->id);
-            $payments = $travelPlainModel->payments;
-            $paymentMethods = $this->lookupService->getPaymentMethods();
 
             $membersDetail = $this->travelQuoteService->getMembersDetail($record->id);
             $quoteDocuments = $this->travelQuoteService->getQuoteDocuments($record->id);
@@ -374,7 +373,7 @@ class CRUDController extends Controller
                 'leadStatuses', 'lostReasons', 'selectedLostReasonId', 'membersDetail', 'model_name',
                 'allowedDuplicateLOB', 'audits', 'activities', 'advisors', 'isRenewalUser',
                 'isNewBusinessUser', 'ecomTravelInsuranceQuoteUrl', 'quoteType', 'quoteDocuments',
-                'autoAllocationDisabled', 'payments', 'paymentMethods', 'travelPlainModel',
+                'autoAllocationDisabled', 'paymentEntityModel', 'payments', 'paymentMethods'
             ]));
         } elseif ($this->genericModel->modelType == quoteTypeCode::Health) { // Health plans to display on detail view
             $listQuotePlans = '';

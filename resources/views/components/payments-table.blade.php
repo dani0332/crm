@@ -79,11 +79,11 @@
         <div class="x_panel">
             <div class="x_title">
                 <h2>Payments</h2>
-                @if($travelPlainModel->plan)
-                    @cannot(PermissionsEnum::ApprovePayments)
-                        <button class="btn btn-success btn-sm" style="float:right;width:110px;" type="button"
-                        id="add-payment-btn">Add Payment</button>
-                    @endcannot
+                @if($paymentPlainModel->plan)
+                @cannot(PermissionsEnum::ApprovePayments)
+                    <button class="btn btn-success btn-sm" style="float:right;width:110px;" type="button"
+                    id="add-payment-btn">Add Payment</button>
+                @endcannot
 
                 @endif
                 <div class="clearfix"></div>
@@ -113,7 +113,7 @@
                             <tr>
                                 <td>{{ strtoupper($payment->code)}}</td>
                                 <td>{{ $payment->paymentStatus->text }}</td>
-                                <td>{{ $travelPlainModel->plan->text }}</td>
+                                <td>{{ $paymentPlainModel->plan->text }}</td>
                                 <td>{{ $payment->captured_amount }}</td>
                                 <td>{{ $payment->paymentStatusLogs->last() ? $payment->paymentStatusLogs->last()->created_at :  '' }}</td>
                                 <td>{{ $payment->captured_at}}</td>
@@ -125,7 +125,7 @@
                                         @if($payment->paymentMethod->code == 'CC')
                                             <button
                                             data-modelType="{{$modeltype}}"
-                                            data-quoteId="{{$travelPlainModel->id}}"
+                                            data-quoteId="{{$paymentPlainModel->id}}"
                                             data-paymentCode="{{$payment->code}}"
                                             class="btn btn-sm btn-success generateCCLink" style="float: left;">Copy Link</button>
                                         @endif
@@ -134,10 +134,10 @@
                                             <button class="btn btn-primary btn-sm edit-payment-btn" data-code="{{$payment->code}}"
                                                 data-reference="{{$payment->reference}}"
                                                 data-amount="{{$payment->captured_amount}}"
-                                                data-plan="{{$travelPlainModel->plan->text}}"
+                                                data-plan="{{$paymentPlainModel->plan->text}}"
                                                 data-collection="{{$payment->collection_type}}"
                                                 data-payment-method="{{$payment->paymentMethod->code}}"
-                                                data-provider="{{$travelPlainModel->plan->insuranceProvider->text}}">Edit</button>
+                                                data-provider="{{$paymentPlainModel->plan->insuranceProvider->text}}">Edit</button>
                                         @endif
                                     @endcannot
                                     @can(PermissionsEnum::ApprovePayments)
@@ -145,10 +145,10 @@
                                             <button class="btn btn-success btn-sm" id="approve-paymnet-btn" data-code="{{$payment->code}}"
                                                 data-reference="{{$payment->reference}}"
                                                 data-amount="{{$payment->captured_amount}}"
-                                                data-plan="{{$travelPlainModel->plan->text}}"
+                                                data-plan="{{$paymentPlainModel->plan->text}}"
                                                 data-collection="{{$payment->collection_type}}"
                                                 data-payment-method="{{$payment->paymentMethod->code}}"
-                                                data-provider="{{$travelPlainModel->plan->insuranceProvider->text}}" onclick="approvePayment('{{$payment->code}}')">Approve</button>
+                                                data-provider="{{$paymentPlainModel->plan->insuranceProvider->text}}" onclick="approvePayment('{{$payment->code}}')">Approve</button>
                                         @endif
                                     @endcan
                                     @if($payment->payment_status_id == PaymentStatusEnum::PAID)
@@ -175,11 +175,11 @@
             <form id="create-payment-form" method="post" action={{url('/payments/'. $modeltype . '/store' )}}
                 autocomplete="off">
                 @csrf
-                <input type="hidden" name="quote_id" value="{{ $travelPlainModel->id }}">
+                <input type="hidden" name="quote_id" value="{{ $paymentPlainModel->id }}">
                 <input type="hidden" name="modelType" value="{{ $modeltype }}">
-                <input type="hidden" name="plan_id" value="{{ $travelPlainModel->plan_id }}">
+                <input type="hidden" name="plan_id" value="{{ $paymentPlainModel->plan_id }}">
                 <input type="hidden" name="insurance_provider_id"
-                    value="{{ $travelPlainModel->plan ? $travelPlainModel->plan->insuranceProvider->id : null }}">
+                    value="{{ $paymentPlainModel->plan ? $paymentPlainModel->plan->insuranceProvider->id : null }}">
                 <div class="modal-header">
                     <h5 class="modal-title" style="font-size: 16px !important;">
                         <i class="fa fa-cog" aria-hidden="true"></i>
@@ -249,14 +249,14 @@
                             <div class="col">
                                 <div class="input-group">
                                     <label>Provider Name : </label> &nbsp;&nbsp;&nbsp;<b id="provider_id">{{
-                                        $travelPlainModel->plan ? $travelPlainModel->plan->insuranceProvider->text :
+                                        $paymentPlainModel->plan ? $paymentPlainModel->plan->insuranceProvider->text :
                                         'Not Found' }}</b>
                                 </div>
                             </div>
                             <div class="col">
                                 <div class="input-group">
                                     <label>Plan Name : </label> &nbsp;&nbsp;&nbsp;<b
-                                        id="plan_id">{{$travelPlainModel->plan ? $travelPlainModel->plan->text : 'Not
+                                        id="plan_id">{{$paymentPlainModel->plan ? $paymentPlainModel->plan->text : 'Not
                                         Found'}}</b>
                                 </div>
                             </div>
@@ -292,11 +292,11 @@
             <form id="update-payment-form" method="post" action={{url('/payments/'. $modeltype . '/update' )}}
                 autocomplete="off">
                 @csrf
-                <input type="hidden" name="quote_id" value="{{ $travelPlainModel->id }}">
+                <input type="hidden" name="quote_id" value="{{ $paymentPlainModel->id }}">
                 <input type="hidden" name="modelType" value="{{ $modeltype }}">
-                <input type="hidden" name="plan_id" value="{{ $travelPlainModel->plan_id }}">
+                <input type="hidden" name="plan_id" value="{{ $paymentPlainModel->plan_id }}">
                 <input type="hidden" name="insurance_provider_id"
-                    value="{{ $travelPlainModel->plan ? $travelPlainModel->plan->insuranceProvider->id : null }}">
+                    value="{{ $paymentPlainModel->plan ? $paymentPlainModel->plan->insuranceProvider->id : null }}">
                 <input type="hidden" name="paymentCode" id="ucode" value="" />
                 <div class="modal-header">
                     <h5 class="modal-title" style="font-size: 16px !important;">
@@ -367,14 +367,14 @@
                             <div class="col">
                                 <div class="input-group">
                                     <label>Provider Name : </label> &nbsp;&nbsp;&nbsp;<b id="uprovider_id">{{
-                                        $travelPlainModel->plan ? $travelPlainModel->plan->insuranceProvider->text :
+                                        $paymentPlainModel->plan ? $paymentPlainModel->plan->insuranceProvider->text :
                                         'Not Found' }}</b>
                                 </div>
                             </div>
                             <div class="col">
                                 <div class="input-group">
                                     <label>Plan Name : </label> &nbsp;&nbsp;&nbsp;<b
-                                        id="uplan_id">{{$travelPlainModel->plan ? $travelPlainModel->plan->text : 'Not
+                                        id="uplan_id">{{$paymentPlainModel->plan ? $paymentPlainModel->plan->text : 'Not
                                         Found'}}</b>
                                 </div>
                             </div>

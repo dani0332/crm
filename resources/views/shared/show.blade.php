@@ -359,7 +359,7 @@
         </div>
 
 
-
+        <x-payments-table :payments="$payments" :paymentMethods="$paymentMethods" :paymentPlainModel="$paymentEntityModel" :modeltype="$model->modelType" />
         <x-car-quote-assumptions :record="$record" :vehicleTypes="$vehicleTypes" :yearsOfManufacture="$yearsOfManufacture" :trimList="$trimList" />
         <x-car-ecom-detail :record="$record" :carQuotePlanAddons="$carQuotePlanAddons" />
         <x-car-quote-plans :record="$record" :listQuotePlans="$listQuotePlans" :ecomUrl="$ecomCarInsuranceQuoteUrl . $record->uuid" />
@@ -394,7 +394,6 @@
             </div>
         </div>
         <x-travel-ecom-detail :travelQuotePremium="$record->premium" :travelQuotePaidAt="$record->paid_at" :travelQuotePaymentStatus="$record->payment_status_id_text" :travelQuotePlanName="$record->plan_id_text" />
-        <x-payments-table :payments="$payments" :paymentMethods="$paymentMethods" :travelPlainModel="$travelPlainModel" :modeltype="$model->modelType" />
         <x-quote-policy :record="$record" :quoteType="$quoteType" />
         <x-quote-documents :record="$record" :quoteDocuments="$quoteDocuments" :quoteType="$quoteType" />
         <x-travel-quote-members-detail :members="$membersDetail" />

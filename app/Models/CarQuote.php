@@ -138,6 +138,16 @@ class CarQuote extends BaseModel
         return $this->hasOne(CarPlan::class, 'id', 'plan_id');
     }
 
+    public function payments()
+    {
+        return $this->morphMany(Payment::class, 'paymentable');
+    }
+
+    public function plan()
+    {
+        return $this->belongsTo(CarPlan::class, 'plan_id');
+    }
+
     public function kyc_status_id()
     {
         return $this->hasOne(KycStatus::class, 'id', 'kyc_status_id');
