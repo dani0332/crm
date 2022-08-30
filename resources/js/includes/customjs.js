@@ -2326,10 +2326,11 @@ $("#dataTableCarQuotePlans").DataTable({
 });
 
 function deleteQuoteDocument(el) {
-    if (confirm('Are you sure you want to delete this document?')) {
+    if (confirm('Are you sure to delete this document?')) {
         var id = $(el).attr('data-record-id');
         var quoteType = $(el).attr('data-record-quote-type');
         var quoteUuId = $(el).attr('data-record-quote-uuid');
+        $(".loader").show();
         $.ajax({
             url: '/quotes/' + quoteType + '/' + quoteUuId + '/documents/' + id + '/delete',
             method: "POST",
@@ -2337,7 +2338,12 @@ function deleteQuoteDocument(el) {
                 _token: $('input[name=_token]').val(),
             },
             success: function (data) {
-                window.location.reload();
+                $(".loader").hide();
+                $("#document-delete-success").show();
+                setTimeout(function(){
+                    alert('Document has been deleted.');
+                    window.location.reload();
+                },0);
             },
         });
     }
@@ -2404,3 +2410,28 @@ $("#dob_div #dob").datepicker({ // TM Leads
     dateFormat: "dd/mm/yy",
     yearRange: "-80:+00"
 });
+
+
+function sendQuoteDocumentsToCustomer(el) {
+    if (confirm('Are you sure you want to send documents to customer?')) {
+        var quoteType = $(el).attr('data-quote-type');
+        var quoteUuId = $(el).attr('data-quote-uuid');
+        $(".loader").show();
+        $.ajax({
+            url: '/quotes/' + quoteType + '/' + quoteUuId + '/send-policy-documents',
+            method: "POST",
+            data: {
+                _token: $('input[name=_token]').val(),
+            },
+            success: function (data) {
+                $(".loader").hide();
+                $("#email-send-success").show();
+                setTimeout(function(){
+                    window.location.reload();
+                },5000);
+            },
+        });
+    } else {
+        return false;
+    }
+}

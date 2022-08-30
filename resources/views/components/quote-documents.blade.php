@@ -10,6 +10,13 @@ use App\Enums\PermissionsEnum;
                 <h2>Documents</h2>
                 @cannot(PermissionsEnum::ApprovePayments)
                 <a href="{{ url('quotes/'.$quoteType.'/'.$record->uuid.'/documents') }}" class="btn btn-primary btn-sm" style="float:right;">Upload Documents</a>
+                @if($record->advisor_id == auth()->user()->id && isset($displaySendPolicyButton) && $displaySendPolicyButton)
+                <a class="btn btn-sm btn-primary" style="float:right;" data-quote-type="{{ $quoteType }}"
+                data-quote-uuid="{{ $record->uuid }}" onclick="sendQuoteDocumentsToCustomer(this)">Send Policy</a>
+                <br clear="all" />
+                <div class="alert alert-success" id="email-send-success" style="display:none;">Email sent. Page will be refresh in 5 seconds. Please check email status table for further detail.</div>
+                <div class="alert alert-success" id="document-delete-success" style="display:none;">Document deleted. Page will be refresh now.</div>
+                @endif
                 @endcannot
                 <div class="clearfix"></div>
             </div>
