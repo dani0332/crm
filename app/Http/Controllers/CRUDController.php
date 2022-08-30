@@ -374,6 +374,7 @@ class CRUDController extends Controller
                 'allowedDuplicateLOB', 'audits', 'activities', 'advisors', 'isRenewalUser',
                 'isNewBusinessUser', 'ecomTravelInsuranceQuoteUrl', 'quoteType', 'quoteDocuments',
                 'autoAllocationDisabled', 'paymentEntityModel', 'payments', 'paymentMethods', 'emailStatuses',
+                'displaySendPolicyButton'
             ]));
         } elseif ($this->genericModel->modelType == quoteTypeCode::Health) { // Health plans to display on detail view
             $listQuotePlans = '';
