@@ -7,20 +7,21 @@ trait GenericQueriesAllLobs
     public function getQuoteCode($quoteType, $id)
     {
         $nameSpace = '\\App\\Models\\';
-        $modelType = $nameSpace.$quoteType;
+        $modelType = $nameSpace.$quoteType.'Quote';
         $result = $modelType::whereId($id)->value('code');
-        if($result) {
+        if ($result) {
             return $result;
         } else {
             return false;
         }
     }
+
     public function getQuoteObject($quoteType, $id)
     {
         $nameSpace = '\\App\\Models\\';
-        $modelType = $nameSpace.$quoteType."Quote";
+        $modelType = $nameSpace.$quoteType.'Quote';
         $result = $modelType::find($id);
-        if($result) {
+        if ($result) {
             return $result;
         } else {
             return false;

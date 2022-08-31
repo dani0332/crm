@@ -18,4 +18,5 @@ final class GenericRequestEnum extends Enum
     public const SelectString = 'Select';
     public const CheckboxString = 'Checkbox';
     public const INTEGER = 'integer';
+    public const NotApplicable = 'N/A';
 }

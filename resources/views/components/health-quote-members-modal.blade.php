@@ -20,7 +20,7 @@
                                 <div class="col-md-6">
                                     <div class="input-group">
                                     <label class="col-form-label col-md-3 col-sm-3 label-align">Gender</label>
-                                        <select name="gender" id="" class="form-control">
+                                        <select name="gender" id="ebp_gender" class="form-control">
                                             <option>Please Select Gender</option>
                                             <option value="Male">Male</option>
                                             <option value="Female">Female</option>
@@ -30,7 +30,7 @@
                                 <div class="col-md-6">
                                     <div class="input-group">
                                         <label class="col-form-label col-md-3 col-sm-3 label-align">DOB</label>
-                                        <input type="date" name="dob" id="" class="form-control" title="DOB"/>
+                                        <input type="date" name="dob" id="ebp_dob" class="form-control" title="DOB" />
                                     </div>
                                 </div>
                             </div>
@@ -38,7 +38,7 @@
                                 <div class="col-md-6">
                                     <div class="input-group">
                                     <label class="col-form-label col-md-3 col-sm-3 label-align">Category</label>
-                                        <select name="member_category" id="" class="form-control">
+                                        <select name="member_category" id="ebp_category" class="form-control">
                                             <option>Please Select Member Category</option>
                                             @foreach($categories as $member)
                                             <option value="{{$member->id}}">{{$member->text}}</option>
@@ -49,7 +49,7 @@
                                 <div class="col-md-6">
                                     <div class="input-group">
                                     <label class="col-form-label col-md-3 col-sm-3 label-align">Salary Band</label>
-                                    <select name="salary_band" id="" class="form-control">
+                                    <select name="salary_band" id="ebp_salary" class="form-control">
                                             <option>Please Select Salary Band</option>
                                             @foreach($salaries as $salary)
                                             <option value="{{$salary->id}}">{{$salary->text}}</option>
