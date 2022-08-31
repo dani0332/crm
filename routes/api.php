@@ -18,3 +18,4 @@ Route::middleware(['basicAuth'])->group(function () {
     Route::post('/alfred/signupLink', [ApiController::class, 'fetchSignupUrl']);
     Route::post('/imcrm/sib-flow', [ApiController::class, 'triggerSibFlow']);
 });
+Route::get('/imcrm/sib-health-callback/{uuid}', [ApiController::class, 'sibHealthQuoteCallBack']);
