@@ -13,6 +13,10 @@ if (!isset($modelName)) {
 	
 	foreach ($listQuotePlans as $listQuotePlan) { // Car quote plans
 
+		if(!isset($listQuotePlan->id)) {
+			continue;
+		}
+
 	if ($listQuotePlan->id == $planId) {
 
 		$listQuotePlanName = $listQuotePlan->name;
@@ -64,7 +68,7 @@ if (!isset($modelName)) {
 	}
 }
 
-$readonlyFieldCss = $repairType == CarPlanType::TPL ? "pointer-events: none;background-color: #f6f6f6;" : "";
+$readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "pointer-events: none;background-color: #f6f6f6;" : "";
 
 @endphp
 <script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
