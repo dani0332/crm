@@ -9,6 +9,7 @@ use App\Models\CarQuote;
 use App\Models\HealthQuote;
 use App\Models\HomeQuote;
 use App\Models\LifeQuote;
+use App\Models\PetQuote;
 use App\Models\QuoteStatus;
 use App\Models\QuoteType;
 use App\Models\TravelQuote;
@@ -49,6 +50,9 @@ class QuoteStatusService
                 }
                 if ($quoteTypeCode == quoteTypeCode::Travel) {
                     $updateQuote = TravelQuote::find($quoteRequestId);
+                }
+                if ($quoteTypeCode == quoteTypeCode::Pet) {
+                    $updateQuote = PetQuote::find($quoteRequestId);
                 }
 
                 $updateQuote->quote_status_id = $quoteStatusId;
