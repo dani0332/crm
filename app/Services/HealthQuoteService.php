@@ -954,7 +954,9 @@ class HealthQuoteService extends BaseService
             $lead->save();
         }
         if ($lead->quote_status_id != QuoteStatusEnum::Qualified && auth()->user()->isHealthWCUAdvisor()) {
-            HealthQuoteUpdated::dispatch($lead);
+            if($lead->health_team_type && $lead->quote_status_id != QuoteStatusEnum::Qualified && $lead->is_ecommerce == 1) {
+                HealthQuote::find($lead->id)->update(['quote_status_id' => QuoteStatusEnum::Qualified]);
+            }
         }
         return true;
     }
