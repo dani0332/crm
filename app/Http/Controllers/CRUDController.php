@@ -334,6 +334,10 @@ class CRUDController extends Controller
         $notesForCustomers = $this->notesForCustomerService->getNotesForCustomer($quoteTypeId, $record->id);
         $record->dob = isset($record->dob) ? date('d/m/Y', strtotime($record->dob)) : null;
 
+        $isQuoteDocumentEnabled = $this->quoteDocumentService->isEnabled($model->modelType);
+        $quoteDocuments = $this->quoteDocumentService->getQuoteDocuments($model->modelType, $record->id);
+        $displaySendPolicyButton = $this->quoteDocumentService->showSendPolicyButton($record, $quoteDocuments, $quoteTypeId);
+
         if ($this->genericModel->modelType == quoteTypeCode::Car) { // Car plans to display on detail view
             $ecomCarInsuranceQuoteUrl = config('constants.ECOM_CAR_INSURANCE_QUOTE_URL');
             $listQuotePlans = null;
@@ -348,7 +352,8 @@ class CRUDController extends Controller
                 'ecomCarInsuranceQuoteUrl', 'carQuotePlanAddons', 'vehicleTypes', 'leadStatuses',
                 'lostReasons', 'selectedLostReasonId', 'model_name', 'allowedDuplicateLOB', 'audits',
                 'activities', 'advisors', 'isRenewalUser', 'isNewBusinessUser', 'emailStatuses',
-                'yearsOfManufacture', 'notesForCustomers', 'quoteTypeId', 'trimList', 'autoAllocationDisabled', 'paymentEntityModel', 'payments', 'paymentMethods',
+                'yearsOfManufacture', 'notesForCustomers', 'quoteType', 'quoteTypeId', 'trimList', 'autoAllocationDisabled',
+                'paymentEntityModel', 'payments', 'paymentMethods', 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton',
             ]));
         } elseif ($this->genericModel->modelType == quoteTypeCode::Travel) { // Travel plans to display on detail view
             $ecomTravelInsuranceQuoteUrl = config('constants.ECOM_TRAVEL_INSURANCE_QUOTE_URL');
@@ -365,16 +370,14 @@ class CRUDController extends Controller
             }
 
             $membersDetail = $this->travelQuoteService->getMembersDetail($record->id);
-            $quoteDocuments = $this->travelQuoteService->getQuoteDocuments($record->id);
-            $displaySendPolicyButton = $this->quoteDocumentService->showSendPolicyButton($record, $quoteDocuments, $quoteTypeId);
 
             return view('shared.show', compact([
                 'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList',
                 'leadStatuses', 'lostReasons', 'selectedLostReasonId', 'membersDetail', 'model_name',
                 'allowedDuplicateLOB', 'audits', 'activities', 'advisors', 'isRenewalUser',
-                'isNewBusinessUser', 'ecomTravelInsuranceQuoteUrl', 'quoteType', 'quoteDocuments',
-                'autoAllocationDisabled', 'paymentEntityModel', 'payments', 'paymentMethods', 'emailStatuses',
-                'displaySendPolicyButton'
+                'isNewBusinessUser', 'ecomTravelInsuranceQuoteUrl', 'quoteType', 'autoAllocationDisabled',
+                'paymentEntityModel', 'payments', 'paymentMethods', 'emailStatuses',
+                'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton',
             ]));
         } elseif ($this->genericModel->modelType == quoteTypeCode::Health) { // Health plans to display on detail view
             $listQuotePlans = '';
@@ -397,7 +400,9 @@ class CRUDController extends Controller
             return view('shared.show', compact([
                 'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList',
                 'leadStatuses', 'lostReasons', 'selectedLostReasonId', 'model_name', 'allowedDuplicateLOB', 'audits', 'advisors', 'activities', 'isRenewalUser',
-                'isNewBusinessUser', 'membersDetail', 'memberCategories', 'salaryBands', 'autoAllocationDisabled', 'ecomDetails', 'ecomHealthInsuranceQuoteUrl', ]));
+                'isNewBusinessUser', 'membersDetail', 'memberCategories', 'salaryBands', 'autoAllocationDisabled', 'ecomDetails', 'ecomHealthInsuranceQuoteUrl',
+                'quoteType', 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton',
+            ]));
         } else {
             return view('shared.show', compact([
                 'record', 'model', 'customTitles', 'customTableList', 'advisors', 'leadStatuses', 'lostReasons', 'selectedLostReasonId', 'model_name', 'allowedDuplicateLOB', 'audits', 'activities', 'isRenewalUser',

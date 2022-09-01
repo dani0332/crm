@@ -15,8 +15,7 @@
 			<div class="x_title">
 				<h2>Upload Documents - {{ $quoteCdbId }}</h2>
 				<ul class="nav navbar-right panel_toolbox">
-					<li><a href="{{ url('quotes/'.$quoteType.'/'.$quoteUuId.'') }}" class="btn btn-warning btn-sm">Go
-							back</a></li>
+					<li><a href="{{ url('quotes/'.$quoteType.'/'.$quoteUuId.'') }}" class="btn btn-warning btn-sm">Go Back</a></li>
 				</ul>
 				<div class="clearfix"></div>
 			</div>
@@ -64,17 +63,11 @@
 									var myDropzone = new Dropzone('#{{ $documentType->code }}', {
 										paramName: "file",
 										url: "{{ url('/quotes/'.$quoteType.'/documents/store') }}",
-										maxFiles: JSON.parse(
-											'<?php echo json_encode($documentType->max_files) ?>'
-										),
-										maxFilesize: JSON.parse(
-											'<?php echo json_encode($documentType->max_size) ?>'
-										),
+										maxFiles: {{ $documentType->max_files }},
+										maxFilesize: {{$documentType->max_size}},
 										autoProcessQueue: true,
 										uploadMultiple: false,
-										acceptedFiles: JSON.parse(
-											'<?php echo json_encode($documentType->accepted_files) ?>'
-										),
+										acceptedFiles: '{{$documentType->accepted_files}}',
 										addRemoveLinks: true,
 										dictDefaultMessage: "<b>Drop files here or click to upload.</b>",
 										dictRemoveFileConfirmation: "Are you sure to delete this document?",
@@ -88,12 +81,13 @@
 										},
 										init: function() {
 											let myDropzone = this;
-											$.get("/quotes/<?php echo $quoteType; ?>/<?php echo $quoteId; ?>/documents/<?php echo $documentType->code; ?>/get-uploaded",
+											$.get("/quotes/{{$quoteType}}/{{$quoteId}}/documents/{{$documentType->code}}/get-uploaded",
 												function(data) {
 													$.each(data, function(key, value) {
 														var docName = value.doc_name;
 														var mockFile = {
-															name: docName,
+															name: docName.split('_').pop(),
+															fileName: docName,
 															type: value.doc_mime_type,
 															accepted: false,
 														};
@@ -107,25 +101,24 @@
 													});
 												});
 
-											this.on('queuecomplete', function(file) {
-												$(".loader").show();
+											this.on('success', function(file) {
+												alert("File Uploaded Successfully");
+												location.reload();
+											});
+											
+											this.on('maxfilesexceeded', function(file) {
+												alert("You can only upload a maximum of {{$documentType->max_files}} files");
 												location.reload();
 											});
 
-											this.on('maxfilesexceeded', function(file) {
-												alert("You can only upload a maximum of " +
-													<?php echo $documentType->max_files; ?>
-													+" files");
-												this.removeFile(file);
-											});
-
 											this.on('removedfile', function(file) {
-												var docName = file.name;
+												var docName = file.fileName;
 												$.ajax({
 													type: 'POST',
 													url: "{{ url('/documents/delete') }}",
 													data: {
-														name: docName,
+														docName: docName,
+														quoteId: {{ $quoteId }},
 														_token: '{{ csrf_token() }}'
 													},
 													success: function(data) {

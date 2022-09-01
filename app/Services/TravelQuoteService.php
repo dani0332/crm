@@ -849,15 +849,4 @@ class TravelQuoteService extends BaseService
 
         return $quote;
     }
-
-    public function getQuoteDocuments($quoteId)
-    {
-        $travelQuote = TravelQuote::where('id', $quoteId)->first();
-
-        if ($travelQuote) {
-            return $travelQuote->documents->sortDesc();
-        } else {
-            return false;
-        }
-    }
 }

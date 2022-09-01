@@ -105,6 +105,8 @@ class CarQuoteService extends BaseService
                 'cqr.has_ncd_supporting_documents',
                 'cqr.back_home_license_held_for_id',
                 'ulhfs.TEXT as back_home_license_held_for_id_text',
+                'cqr.policy_start_date',
+                'cqr.policy_issuance_date'
             )
             ->leftJoin('nationality as n', 'n.id', '=', 'cqr.nationality_id')
             ->leftJoin('car_quote_request_detail as cqrd', 'cqrd.car_quote_request_id', '=', 'cqr.id')

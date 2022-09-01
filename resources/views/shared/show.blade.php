@@ -363,6 +363,9 @@
         <x-car-quote-assumptions :record="$record" :vehicleTypes="$vehicleTypes" :yearsOfManufacture="$yearsOfManufacture" :trimList="$trimList" />
         <x-car-ecom-detail :record="$record" :carQuotePlanAddons="$carQuotePlanAddons" />
         <x-car-quote-plans :record="$record" :listQuotePlans="$listQuotePlans" :ecomUrl="$ecomCarInsuranceQuoteUrl . $record->uuid" />
+        @if (isset($isQuoteDocumentEnabled) && $isQuoteDocumentEnabled)
+            <x-quote-documents :displaySendPolicyButton="$displaySendPolicyButton" :record="$record" :quoteDocuments="$quoteDocuments" :quoteType="$quoteType" />
+        @endif
         @isset($record->previous_quote_id)
         <x-email-status :emailStatuses="$emailStatuses" />
         @endisset
@@ -396,7 +399,9 @@
         <x-travel-ecom-detail :travelQuotePremium="$record->premium" :travelQuotePaidAt="$record->paid_at" :travelQuotePaymentStatus="$record->payment_status_id_text" :travelQuotePlanName="$record->plan_id_text" />
         <x-quote-policy :record="$record" :quoteType="$quoteType" />
         <x-travel-quote-members-detail :members="$membersDetail" />
-        <x-quote-documents :displaySendPolicyButton="$displaySendPolicyButton" :record="$record" :quoteDocuments="$quoteDocuments" :quoteType="$quoteType" />
+        @if (isset($isQuoteDocumentEnabled) && $isQuoteDocumentEnabled)
+            <x-quote-documents :displaySendPolicyButton="$displaySendPolicyButton" :record="$record" :quoteDocuments="$quoteDocuments" :quoteType="$quoteType" />
+        @endif
         <x-email-status :emailStatuses="$emailStatuses" />
         <x-travel-quote :listQuotePlans="$listQuotePlans" :uuidModal="$record->uuid" :quoteRequestId="$record->id" :ecomUrl="$ecomTravelInsuranceQuoteUrl . $record->uuid" />
         <x-travel-quote-members-modal :id="$record->id" />
@@ -433,6 +438,9 @@
         <x-health-quote-members-detail :members="$membersDetail" />
         <x-health-quote-members-modal :categories="$memberCategories" :salaries="$salaryBands" :id="$record->id" />
         <x-health-quote-ecom-details :data="$ecomDetails" />
+        @if (isset($isQuoteDocumentEnabled) && $isQuoteDocumentEnabled)
+            <x-quote-documents :displaySendPolicyButton="$displaySendPolicyButton" :record="$record" :quoteDocuments="$quoteDocuments" :quoteType="$quoteType" />
+        @endif
     @endif
 
     <x-lead-activities :lead="$record" :modeltype="$model->modelType" :activities="$activities" />
