@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\QuoteStatusEnum;
 use App\Models\Customer;
 use App\Models\HealthQuote;
 use App\Models\MyAlFredUser;
@@ -71,17 +72,21 @@ class ApiService
                     'advisorMobile' => $quoteData->advisor->mobile_no,
                     'customerLastName' => $quoteData->last_name,
                     'customerFirstName' => $quoteData->first_name,
-                    'lead_status' => $quoteData->quoteStatus->text,
+                    'leadStatus' => $quoteData->quoteStatus->text,
                     'cbdid' => $quoteData->code,
                     'link' => config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$quoteData->uuid,
+                    'sibHealthCallBack' => config('constants.APP_URL')."/imcrm/sib-health-callback/".$quoteData->uuid,
                 ];
 
                 return CreateUpdateContactService::contactCreateUpdate(config('constants.SIB_HEALTH_EBP_LIST_ID'), $quoteData->first_name, $quoteData->last_name, $quoteData->email, false, $data);
             }
         } catch (Exception $e) {
-            Log::error($e->getLine().' '.$e->getMessage().' '.$e->getFile());
-
             return response()->json(['message' => 'Something went wrong. Please try again later.'], 500);
         }
+    }
+
+    public function sibHealthQuoteCallBack($uuid)
+    {
+        HealthQuote::where('uuid', $uuid)->update(['quote_status_id' => QuoteStatusEnum::InNegotiation]);
     }
 }
