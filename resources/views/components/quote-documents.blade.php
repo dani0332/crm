@@ -33,22 +33,17 @@ use App\Enums\PermissionsEnum;
                         @foreach ($quoteDocuments as $key => $document)
                             <tr>
                                 <td>{{ $document->document_type_text ? $document->document_type_text : '' }}</td>
-                                <td><a href="/documents/{{ $document->doc_uuid }}" target="_blank">{{ $document->doc_name }}</a></td>
+                                <td><a href="/documents/{{ $document->doc_uuid }}" target="_blank">{{ Str::of($document->doc_name)->explode('_')->last() }}</a></td>
                                 <td>{{ $document->created_at }}</td>
                                 <td>{{ $document->createdBy ? $document->createdBy->name : '' }}</td>
                                 <td>
                                     @cannot(PermissionsEnum::ApprovePayments)
-
-
                                     <button class="btn btn-sm btn-warning"
-                                        data-record-id="{{ $document->id }}"
-                                        data-record-quote-type="{{ $quoteType }}"
-                                        data-record-uuid="{{ $record->uuid }}"
+                                        data-document-name="{{ $document->doc_name }}"
+                                        data-quote-id="{{ $record->id }}"
                                         onclick="deleteQuoteDocument(this)">Delete</button>
                                         @endcannot
                                     </td>
-
-
                             </tr>
                         @endforeach
                     </tbody>

@@ -2763,6 +2763,7 @@ function deleteQuoteDocument(el) {
   if (confirm('Are you sure to delete this document?')) {
     var quoteId = $(el).attr('data-quote-id');
     var documentName = $(el).attr('data-document-name');
+    console.log(documentName);
     $('.loader').show();
     $.ajax({
       url: '/documents/delete',
