@@ -161,28 +161,21 @@ class QuoteDocumentController extends Controller
         return $policyWordingDocumentUrl;
     }
 
-    public function destroy($quoteType, $quoteUuId, $id)
-    {
-        $model = 'App\\Models\\'.ucwords($quoteType).'Quote';
-        $document = QuoteDocument::where('id', $id)->where('quote_documentable_type', $model)->first();
-
-        if (! $document) {
-            return redirect()->back()->with('message', 'Document not found');
-        }
-
-        $document->delete();
-
-        return redirect()->back()->with('message', 'Document has been deleted.');
-    }
-
     public function getQuoteDocumentsUploaded($quoteType, $quoteId, $documentCode)
     {
         return QuoteDocument::where(['quote_documentable_id' => $quoteId, 'document_type_code' => $documentCode])->get();
     }
 
-    public function deleteQuoteDocument(Request $request)
+    public function destroy(Request $request)
     {
-        $document = QuoteDocument::where('doc_name', $request->name)->first();
+        request()->validate([
+            'docName' => 'required|string',
+            'quoteId' => 'required|integer',
+        ]);
+        $document = QuoteDocument::where('doc_name', $request->docName)->where('quote_documentable_id', $request->quoteId)->first();
+        if (! $document) {
+            return redirect()->back()->with('message', 'Document not found');
+        }
         $document->delete();
 
         return response()->json(['message' => 'Document has been deleted.']);
