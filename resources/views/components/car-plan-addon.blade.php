@@ -28,8 +28,8 @@
                                     @foreach ($plansList as $key => $plan)
                                             <tr>
                                                 <td><a href="{{ url('generic/carplanaddon/'.$plan->id) }}">{{$plan->id}}</a></td>
-                                                <td>{{ ucwords($plan->text) }}</td>
-                                                <td>{{ ucwords($plan->text_ar) }}</td>
+                                                <td>{{ $plan->text }}</td>
+                                                <td>{{ $plan->text_ar }}</td>
                                                 <td>{{ $plan->code }}</td>
                                                 <td>{{ ucwords($plan->type) }}</td>
                                                 <td>{{ $plan->created_at }}</td>
