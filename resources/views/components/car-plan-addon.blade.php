@@ -30,7 +30,7 @@
                                                 <td><a href="{{ url('generic/carplanaddon/'.$plan->id) }}">{{$plan->id}}</a></td>
                                                 <td>{{ ucwords($plan->text) }}</td>
                                                 <td>{{ ucwords($plan->text_ar) }}</td>
-                                                <td>{{ ucwords($plan->code) }}</td>
+                                                <td>{{ $plan->code }}</td>
                                                 <td>{{ ucwords($plan->type) }}</td>
                                                 <td>{{ $plan->created_at }}</td>
                                                 <td>{{ $plan->updated_at }}</td>
