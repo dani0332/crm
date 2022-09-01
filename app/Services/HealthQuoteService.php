@@ -8,7 +8,6 @@ use App\Enums\LeadSourceTypes;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
-use App\Events\HealthQuoteUpdated;
 use App\Models\BusinessInsuranceType;
 use App\Models\BusinessQuote;
 use App\Models\HealthMemberDetail;
