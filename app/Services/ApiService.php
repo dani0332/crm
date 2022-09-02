@@ -75,7 +75,7 @@ class ApiService
                     'leadStatus' => $quoteData->quoteStatus->text,
                     'cbdid' => $quoteData->code,
                     'link' => config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$quoteData->uuid,
-                    'sibHealthCallBack' => config('constants.APP_URL')."/imcrm/sib-health-callback/".$quoteData->uuid,
+                    'sibHealthCallBack' => config('constants.APP_URL')."/api/imcrm/sib-health-callback/".$quoteData->uuid,
                 ];
 
                 return CreateUpdateContactService::contactCreateUpdate(config('constants.SIB_HEALTH_EBP_LIST_ID'), $quoteData->first_name, $quoteData->last_name, $quoteData->email, false, $data);
