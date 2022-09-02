@@ -122,6 +122,7 @@ class AjaxController extends Controller
                     ],
                     'merchantOrderReference' => strtoupper($payment->code),
                 ];
+                info('Request object for '. $quoteModel->uuid . ' is '. json_encode($invoiceRequestData));
                 $invoiceRequest = NetworkPaymentService::sendNetworkInvoiceRequest($invoiceRequestData, $token);
                 if ($invoiceRequest->getStatusCode() == 201) {
                     $invoiceResponse = $invoiceRequest->getBody();
