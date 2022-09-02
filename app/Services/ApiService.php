@@ -8,7 +8,7 @@ use App\Models\HealthQuote;
 use App\Models\MyAlFredUser;
 use Exception;
 use Log;
-
+use Illuminate\Http\Request;
 class ApiService
 {
     public function fetchSignupUrl($request)
@@ -85,8 +85,8 @@ class ApiService
         }
     }
 
-    public function sibHealthQuoteCallBack($uuid)
+    public function sibHealthQuoteCallBack(Request $request)
     {
-        HealthQuote::where('uuid', $uuid)->update(['quote_status_id' => QuoteStatusEnum::InNegotiation]);
+        HealthQuote::where('code', $request->CDBID)->update(['quote_status_id' => QuoteStatusEnum::InNegotiation]);
     }
 }
