@@ -29,7 +29,6 @@ class CreateUpdateContactService extends BaseService
             'listIds' => [(int) $listId],
             'updateEnabled' => true,
         ]);
-
         $clientExtendSubscription = new \GuzzleHttp\Client();
 
         try {
