@@ -27,7 +27,7 @@ class QuoteDocumentService extends BaseService
 
     public function createQuoteDocumentRecord($documentTypeCode, $fileNameOriginal, $filePathAzure, $fileMimeType, $quoteModel)
     {
-        $documentTypeCode_ = DocumentType::where('code', $documentTypeCode)->first();
+        $documentTypeCode_ = DocumentType::where('code', $documentTypeCode)->where('is_active', 1)->first();
 
         if (! $documentTypeCode_) {
             return false;

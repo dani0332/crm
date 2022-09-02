@@ -139,9 +139,9 @@ class QuoteDocumentController extends Controller
 
         $quoteDocumentUrls = [];
         foreach ($quoteModel->documents as $quoteDocument) {
-            $documentType = DocumentType::where('code', $quoteDocument->document_type_code)->first();
+            $documentType = DocumentType::where('code', $quoteDocument->document_type_code)->where('is_active', 1)->first();
 
-            if ($documentType->send_to_customer == 1) {
+            if ($documentType && $documentType->send_to_customer == 1) {
                 $quoteDocumentUrls[] = $azureStorageUrl.$azureStorageContainer.'/'.$quoteDocument->doc_url;
             }
         }
