@@ -428,7 +428,7 @@ class ClaimController extends Controller
         }
 
         foreach ($listQuotePlans as $key => $quotePlan) {
-            if(!isset($quotePlan->id)) {
+            if (! isset($quotePlan->id)) {
                 continue;
             }
 
