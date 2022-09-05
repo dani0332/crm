@@ -34,115 +34,19 @@ class AddIdToDocumentTypesTable extends Migration
             $table->index('is_active');
         });
 
-        $travelPolicySchedule = DB::table('document_types')->where('code', 'TravelPolicySchedule')->first();
-        if ($travelPolicySchedule === null) {
-            DB::table('document_types')->insert([
-                'code' => 'TPC',
-                'text' => 'Policy Certificate',
-                'max_files' => 1,
-                'max_size' => 5,
-                'folder_path' => 'car',
-                'accepted_files' => '.xlsm,.xlsx,.pdf,.jpeg,.jpg',
-                'quote_type_id' => 1,
-                'send_to_customer' => true,
-                'sort_order' => 1,
-            ]);
-        }
-
-        $travelDebitNote = DB::table('document_types')->where('code', 'TravelDebitNote')->first();
-        if ($travelDebitNote === null) {
-            DB::table('document_types')->insert([
-                'code' => 'TTI',
-                'text' => 'Tax Invoice',
-                'max_files' => 1,
-                'max_size' => 5,
-                'folder_path' => 'car',
-                'accepted_files' => '.xlsm,.xlsx,.pdf,.jpeg,.jpg',
-                'quote_type_id' => 1,
-                'send_to_customer' => true,
-                'sort_order' => 2,
-            ]);
-        }
-
-        $travelEmiratesId = DB::table('document_types')->where('code', 'TravelEmiratesId')->first();
-        if ($travelEmiratesId === null) {
-            DB::table('document_types')->insert([
-                'code' => 'TTIRBB',
-                'text' => 'Tax Invoice Raise by Buyer',
-                'max_files' => 2,
-                'max_size' => 5,
-                'folder_path' => 'car',
-                'accepted_files' => '.xlsm,.xlsx,.pdf,.jpeg,.jpg',
-                'quote_type_id' => 1,
-                'send_to_customer' => false,
-                'sort_order' => 3,
-            ]);
-        }
-
-        $travelOther = DB::table('document_types')->where('code', 'TravelOther')->first();
-        if ($travelOther === null) {
-            DB::table('document_types')->insert([
-                'code' => 'TEID',
-                'text' => 'Emirates ID',
-                'max_files' => 20,
-                'max_size' => 5,
-                'folder_path' => 'car',
-                'accepted_files' => '.xlsm,.xlsx,.pdf,.jpeg,.jpg',
-                'quote_type_id' => 1,
-                'send_to_customer' => false,
-                'sort_order' => 4,
-            ]);
-        }
-
-        $travelOther = DB::table('document_types')->where('code', 'TravelOther')->first();
-        if ($travelOther === null) {
-            DB::table('document_types')->insert([
-                'code' => 'TR',
-                'text' => 'Receipt',
-                'max_files' => 20,
-                'max_size' => 5,
-                'folder_path' => 'car',
-                'accepted_files' => '.xlsm,.xlsx,.pdf,.jpeg,.jpg',
-                'quote_type_id' => 1,
-                'send_to_customer' => false,
-                'sort_order' => 5,
-            ]);
-        }
-
-        $travelOther = DB::table('document_types')->where('code', 'TravelOther')->first();
-        if ($travelOther === null) {
-            DB::table('document_types')->insert([
-                'code' => 'TAD',
-                'text' => 'Additional Documents',
-                'max_files' => 20,
-                'max_size' => 5,
-                'folder_path' => 'car',
-                'accepted_files' => '.xlsm,.xlsx,.pdf,.jpeg,.jpg',
-                'quote_type_id' => 1,
-                'send_to_customer' => false,
-                'sort_order' => 6,
-            ]);
-        }
-
-        $travelOther = DB::table('document_types')->where('code', 'TravelOther')->first();
-        if ($travelOther === null) {
-            DB::table('document_types')->insert([
-                'code' => 'TAEA',
-                'text' => 'Additional Email Attachments',
-                'max_files' => 20,
-                'max_size' => 5,
-                'folder_path' => 'car',
-                'accepted_files' => '.xlsm,.xlsx,.pdf,.jpeg,.jpg',
-                'quote_type_id' => 1,
-                'send_to_customer' => false,
-                'sort_order' => 7,
-            ]);
-        }
-
         if (Schema::hasTable('payments')) {
-            Schema::table('payments', function (Blueprint $table) {
-                $table->primary('code');
-            });
+            $keyExists = DB::select(
+                DB::raw(
+                    'SHOW KEYS
+                    FROM payments
+                    WHERE Key_name=\'PRIMARY\''
+                )
+            );
+            if (! $keyExists) {
+                Schema::table('payments', function (Blueprint $table) {
+                    $table->primary('code');
+                });
+            }
         }
     }
 
