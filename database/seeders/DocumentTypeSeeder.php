@@ -27,6 +27,7 @@ class DocumentTypeSeeder extends Seeder
                 'quote_type_id' => 1,
                 'send_to_customer' => true,
                 'sort_order' => 1,
+                'is_required' => 1,
             ], [
                 'code' => 'CTI',
                 'text' => 'Tax Invoice',
@@ -37,6 +38,7 @@ class DocumentTypeSeeder extends Seeder
                 'quote_type_id' => 1,
                 'send_to_customer' => true,
                 'sort_order' => 2,
+                'is_required' => 1,
             ], [
                 'code' => 'CTIRBB',
                 'text' => 'Tax Invoice Raise by Buyer',
@@ -47,6 +49,7 @@ class DocumentTypeSeeder extends Seeder
                 'quote_type_id' => 1,
                 'send_to_customer' => false,
                 'sort_order' => 3,
+                'is_required' => 1,
             ], [
                 'code' => 'CEID',
                 'text' => 'Emirates ID',
@@ -57,6 +60,7 @@ class DocumentTypeSeeder extends Seeder
                 'quote_type_id' => 1,
                 'send_to_customer' => false,
                 'sort_order' => 4,
+                'is_required' => 1,
             ], [
                 'code' => 'TR',
                 'text' => 'Receipt',
@@ -67,6 +71,7 @@ class DocumentTypeSeeder extends Seeder
                 'quote_type_id' => 1,
                 'send_to_customer' => false,
                 'sort_order' => 5,
+                'is_required' => 1,
             ], [
                 'code' => 'TAD',
                 'text' => 'Additional Documents',
