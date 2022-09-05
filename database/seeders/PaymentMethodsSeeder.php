@@ -14,8 +14,8 @@ class PaymentMethodsSeeder extends Seeder
      */
     public function run()
     {
-        $paymentMethods = PaymentMethod::all();
-        if ($paymentMethods === null) {
+        $paymentMethodsCount = PaymentMethod::all()->count();
+        if ($paymentMethodsCount == 0) {
             PaymentMethod::create([
                 'code' => 'BT',
                 'name' => 'Bank Transfer',
