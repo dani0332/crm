@@ -122,7 +122,7 @@ class TransAppService extends BaseService
         $customer = CustomerService::getCustomerById($customerId);
         $emailTemplateId = (int) Config::get('constants.SIB_MYALFRED_CUSTOMER_WE_TEMPLATE_ID'); //290
 
-        $emailData = [
+        $emailData = (object) [
             'customerName' => $customer->first_name.' '.$customer->last_name,
             'customerEmail' => $customer->email,
             'signUpButtonUrl' => $WEGenerateUrlResponse,

@@ -2,9 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\PaymentStatusEnum;
 use App\Models\CarMake;
 use App\Models\CarModel;
 use App\Models\CarModelDetail;
+use App\Models\Payment;
+use App\Models\PaymentStatusLog;
+use App\Services\NetworkPaymentService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class AjaxController extends Controller
@@ -60,5 +65,80 @@ class AjaxController extends Controller
         ->first();
 
         return response()->json($carModelDetail);
+    }
+
+    public function updatePaymentStatus(Request $request)
+    {
+        $payment = Payment::where('code', $request->code)->first();
+        $payment->payment_status_id = PaymentStatusEnum::PAID;
+        $payment->save();
+        $paymentLog = new PaymentStatusLog([
+            'previous_payment_status_id' => $payment->paymentStatusLogs->last()->current_payment_status_id,
+            'current_payment_status_id' => PaymentStatusEnum::PAID,
+            'payment_code' => $request->code,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        $paymentLog->save();
+
+        return response()->json(['success' => true]);
+    }
+
+    public function generatePaymentLink(Request $request)
+    {
+        $payment = Payment::where('code', '=', $request->paymentCode)->first();
+        if ($payment->payment_link != null && now() < Carbon::parse($payment->payment_link_created_at)->addDays(3)) {
+            return response()->json(['success' => true, 'payment_link' => $payment->payment_link]);
+        } else {
+            $model = '\\App\\Models\\'.ucwords($request->modelType).'Quote';
+            $quoteModel = $model::where('id', $request->quoteId)->first();
+
+            $tokenRequest = NetworkPaymentService::sendNetworkTokenRequest();
+            if ($tokenRequest->getStatusCode() == 200) {
+                $getContents = $tokenRequest->getBody();
+                $decodedContent = json_decode($getContents);
+                $token = $decodedContent->access_token;
+                $invoiceRequestData = [
+                    'firstName' => $quoteModel->first_name,
+                    'lastName' => $quoteModel->last_name,
+                    'email' => $quoteModel->email,
+                    'emailSubject' => 'Payment Request',
+                    'invoiceExpiryDate' => now()->addDays(3)->format('Y-m-d'),
+                    'transactionType' => 'AUTH',
+                    'paymentAttempts' => 3,
+                    'items' => [
+                        [
+                            'description' => $quoteModel->plan->text,
+                            'totalPrice' => [
+                                'currencyCode' => 'AED',
+                                'value' => ceil($payment->captured_amount * 100),
+                            ],
+                            'quantity' => 1,
+                        ],
+                    ],
+                    'total' => [
+                        'currencyCode' => 'AED',
+                        'value' => ceil($payment->captured_amount * 100),
+                    ],
+                    'merchantOrderReference' => strtoupper($payment->code),
+                ];
+                info('Request object for '.$quoteModel->uuid.' is '.json_encode($invoiceRequestData));
+                $invoiceRequest = NetworkPaymentService::sendNetworkInvoiceRequest($invoiceRequestData, $token);
+                if ($invoiceRequest->getStatusCode() == 201) {
+                    $invoiceResponse = $invoiceRequest->getBody();
+                    $parsedInvoiceResponse = json_decode($invoiceResponse);
+                    $paymentLink = $parsedInvoiceResponse->_links->payment->href;
+                    $payment->payment_link = $paymentLink;
+                    $payment->payment_link_created_at = now();
+                    $payment->save();
+
+                    return response()->json(['success' => true, 'payment_link' => $paymentLink]);
+                } else {
+                    return response()->json(['success' => false, 'message' => 'Something went wrong', 'exception' => $invoiceRequest->getBody(), 'status_code' => $invoiceRequest->getStatusCode()]);
+                }
+            } else {
+                return 'API failed';
+            }
+        }
     }
 }

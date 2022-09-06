@@ -93,7 +93,9 @@ class HealthQuoteService extends BaseService
             'hqr.device',
             'hqr.wcu_id',
             'wcu.name as wcu_id_text',
-            'hqr.plan_id'
+            'hqr.plan_id',
+            'hqr.policy_start_date',
+            'hqr.policy_issuance_date'
         )
             ->leftJoin('marital_status as ms', 'ms.id', '=', 'hqr.marital_status_id')
             ->leftJoin('health_quote_request_detail as hqrd', 'hqrd.health_quote_request_id', '=', 'hqr.id')

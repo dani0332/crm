@@ -1,6 +1,10 @@
+<?php
+    use App\Enums\PermissionsEnum;
+?>
 <meta name="csrf-token" content="{{ csrf_token() }}" />
 <script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
 <script>
+
 $(document).ready(function() {
     $("#update-motor-assumptions-btn").hide();
     $("#cancel-motor-assumptions-btn").hide();
@@ -23,8 +27,8 @@ $(document).ready(function() {
 
     $("#error-motor-assumptions-form").hide();
     $("#update-assumptions-form").submit(function (e) {
-        if($("#cylinder").val() == "" || $("#seat_capacity").val() == "" 
-            || $("#vehicle_type_id").val() == "" || $("#current_insurance_status").val() == "" 
+        if($("#cylinder").val() == "" || $("#seat_capacity").val() == ""
+            || $("#vehicle_type_id").val() == "" || $("#current_insurance_status").val() == ""
             || $("#year_of_first_registration").val() == "") {
             $("#error-motor-assumptions-form").show();
             return false;
@@ -148,8 +152,10 @@ $(document).ready(function() {
                     <span style="color:red;" id="error-motor-assumptions-form">All fields are required.</span>
                     <input type="hidden" id="car_quote_id" name="car_quote_id" value="{{ $record->id }}">
                     <button type="button" class="btn btn-primary btn-sm" id="cancel-motor-assumptions-btn">Cancel</button>
+                    @cannot(PermissionsEnum::ApprovePayments)
                     <button type="submit" class="btn btn-success btn-sm" id="update-motor-assumptions-btn">Update</button>
                     <button type="button" class="btn btn-primary btn-sm" id="edit-motor-assumptions-btn">Edit Assumptions</button>
+                    @endcannot
                 </div>
                 @endcan
             </form>

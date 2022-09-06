@@ -48,4 +48,13 @@ class TravelQuote extends Model implements AuditableContract
     {
         return $this->morphMany(QuoteDocument::class, 'quote_documentable');
     }
+    public function payments()
+    {
+        return $this->morphMany(Payment::class, 'paymentable');
+    }
+
+    public function plan()
+    {
+        return $this->belongsTo(TravelPlan::class, 'plan_id');
+    }
 }

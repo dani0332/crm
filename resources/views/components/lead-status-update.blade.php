@@ -1,6 +1,7 @@
 <script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
 <?php
     use App\Enums\QuoteStatusEnum;
+    use App\Enums\PermissionsEnum;
     ?>
 <script>
     $(document).ready(function () {
@@ -138,10 +139,12 @@
 
                         </div>
                         <div class="col">
+                            @cannot(PermissionsEnum::ApprovePayments)
                             <button type="submit" style="float: right;" @if($lead->quote_status_id ==
                                 QuoteStatusEnum::TransactionApproved) disabled @endif class="btn btn-success
                                 btn-sm" id="lead-change-status-btn">Change
                                 Status</button>
+                            @endcannot
                         </div>
                     </div>
                 </form>
