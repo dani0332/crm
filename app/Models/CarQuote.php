@@ -432,6 +432,11 @@ class CarQuote extends BaseModel
         }
     }
 
+    public function customerAdditionalInfo()
+    {
+        return $this->hasMany(CustomerAdditionalInfo::class, 'quote_request_id', 'id');
+    }
+
     public function documents()
     {
         return $this->morphMany(QuoteDocument::class, 'quote_documentable');

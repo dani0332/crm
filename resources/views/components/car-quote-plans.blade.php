@@ -114,6 +114,11 @@ use App\Enums\CarPlanType;
 								<span class="badge badge-success">Renewal</span>
 								@endif
 								@endisset
+								@isset($quotePlan->isManualUpdate)
+								@if($quotePlan->isManualUpdate)
+								<span class="badge badge-primary">Manual</span>
+								@endif
+								@endisset
 							</td>
 							<td><a href="#" planDetailUrl="{{ $record->uuid }}/plan_details/{{ $quotePlan->id }}"
 									data-toggle="modal" data-target="#quotePlanModal" class="quotePlanModalPopup">{{
