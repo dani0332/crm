@@ -82,6 +82,7 @@ class DocumentTypeSeeder extends Seeder
                 'quote_type_id' => 1,
                 'send_to_customer' => false,
                 'sort_order' => 6,
+                'is_required' => 0,
             ], [
                 'code' => 'TAEA',
                 'text' => 'Additional Email Attachments',
@@ -92,6 +93,7 @@ class DocumentTypeSeeder extends Seeder
                 'quote_type_id' => 1,
                 'send_to_customer' => false,
                 'sort_order' => 7,
+                'is_required' => 0,
             ]]);
         }
     }
