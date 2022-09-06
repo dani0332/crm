@@ -30,6 +30,6 @@ class HealthMemberDetail extends Model
 
     public function getDobAttribute($value)
     {
-        return Carbon::parse($value)->format('d-M-Y');
+        return Carbon::parse($value)->format('Y-m-d');
     }
 }

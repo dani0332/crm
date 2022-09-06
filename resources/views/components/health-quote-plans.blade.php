@@ -6,6 +6,13 @@
                     <div class="clearfix"></div>
                 </div>
                 <div class="x_content">
+                    <span class="alert alert-success" id="quotePlansGenerateMsg" style="display: none">Copied</span>
+                    <div class="col-auto">
+                        <input type="hidden" id="quotePlansGenerateUrl" name="quotePlansGenerateUrl" value="{{ $ecomHealthInsuranceQuoteUrl }}">
+                        @if(gettype($listQuotePlans) != 'string')
+                        <button type="button" id="quotePlansGenerateButton" name="quotePlansGenerateButton" class="btn btn-warning btn-sm" style="float: right;">Copy link</button>
+                        @endif
+                    </div>
                     <div id="quote-plans">
                         @if(gettype($listQuotePlans) != 'string')
                                 <table id="datatable" class="table table-striped jambo_table" style="width:100%">
@@ -13,8 +20,8 @@
                                         <tr>
                                             <th>Provider Name</th>
                                             <th>Plan Name</th>
-                                            <th>Actual Premium</th>
-                                            <th>Premium with VAT</th>
+                                            <th>Actual Premium with BASMAH</th>
+                                            <th>Premium with VAT and BASMAH</th>
                                             <th>Action</th>
                                         </tr>
                                     </thead>
@@ -23,8 +30,8 @@
                                             <tr>
                                                 <td>{{ ucwords($quotePlan->providerName) }}</td>
                                                 <td>{{ ucwords($quotePlan->name) }}</td>
-                                                <td>{{ $quotePlan->actualPremium }}</td>
-                                                <td> {{ $quotePlan->discountPremium + $quotePlan->vat }}</td>
+                                                <td>{{ $quotePlan->actualPremium + $quotePlan->basmah }}</td>
+                                                <td> {{ $quotePlan->discountPremium + $quotePlan->vat + $quotePlan->basmah}}</td>
                                                 <td><a href="#" planDetailUrl="{{ $uuidModal }}/plan_details/{{ $quotePlan->id }}"
                                                     data-toggle="modal" data-target="#quotePlanModal" class="quotePlanModalPopup">View</a></td>
                                             </tr>

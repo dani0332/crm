@@ -558,20 +558,20 @@ class LifeQuoteService extends BaseService
             'advisor_id' => 'select|title|multiple',
             'created_at' => 'input|date|title|range',
             'updated_at' => 'input|date|title',
-            'dob' => 'input|date|title|required',
-            'sum_insured_value' => 'input|number|title|required',
+            'dob' => 'input|date|title',
+            'nationality_id' => 'select|title',
+            'sum_insured_value' => 'input|number|title',
             'next_followup_date' => 'input|date|title|range',
             'transapp_code' => 'readonly|none',
             'source' => 'input|text',
             'lost_reason' => 'input|text',
             'premium' => 'input|number',
-            'policy_number' => 'input|text',
-            'sum_insured_currency_id' => 'select|title|required',
-            'purpose_of_insurance_id' => 'select|title|required',
-            'marital_status_id' => 'select|title|required',
-            'children_id' => 'select|title|required',
-            'tenure_of_insurance_id' => 'select|title|required',
-            'number_of_years_id' => 'select|title|required',
+            'sum_insured_currency_id' => 'select|title',
+            'purpose_of_insurance_id' => 'select|title',
+            'marital_status_id' => 'select|title',
+            'children_id' => 'select|title',
+            'tenure_of_insurance_id' => 'select|title',
+            'number_of_years_id' => 'select|title',
             'gender' => '|static|Male,Female',
             'is_smoker' => '|static|title|Yes,No',
             'others_info' => 'textarea',
@@ -616,6 +616,9 @@ class LifeQuoteService extends BaseService
                 break;
             case 'is_smoker':
                 $title = 'Smoker';
+                break;
+            case 'nationality_id':
+                $title = 'Nationality';
                 break;
             case 'mobile_no':
                 $title = 'Mobile Number';
