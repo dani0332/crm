@@ -216,13 +216,13 @@ class HealthQuoteService extends BaseService
                 $this->query->where('hqr.quote_status_id', '!=', 9);
             }
             if (isset($request->assigned_to_date_start) && $request->assigned_to_date_start != '') {
-                $dateFrom = Carbon::createFromFormat('Y-m-d', $request['assigned_to_date_start'])->startOfDay()->toDateTimeString();
-                $dateTo = Carbon::createFromFormat('Y-m-d', $request['assigned_to_date_end'])->endOfDay()->toDateTimeString();
+                $dateFrom = Carbon::createFromTimestamp(strtotime($request['assigned_to_date_start']))->startOfDay()->toDateTimeString();
+                $dateTo = Carbon::createFromTimestamp(strtotime($request['assigned_to_date_end']))->endOfDay()->toDateTimeString();
                 $this->query->whereBetween('hqrd.advisor_assigned_date', [$dateFrom, $dateTo]);
             }
             if (isset($request->next_followup_date) && $request->next_followup_date != '') {
-                $dateFrom = Carbon::createFromFormat('Y-m-d', $request['next_followup_date'])->startOfDay()->toDateTimeString();
-                $dateTo = Carbon::createFromFormat('Y-m-d', $request['next_followup_date_end'])->endOfDay()->toDateTimeString();
+                $dateFrom = Carbon::createFromTimestamp(strtotime($request['next_followup_date']))->startOfDay()->toDateTimeString();
+                $dateTo = Carbon::createFromTimestamp(strtotime($request['next_followup_date_end']))->endOfDay()->toDateTimeString();
                 $this->query->whereBetween('hqrd.next_followup_date', [$dateFrom, $dateTo]);
             }
             if (in_array('created_at', $searchProperties) && isset($request->created_at) && $request->created_at != '') {
