@@ -908,11 +908,9 @@ class CRUDController extends Controller
 
     public function storeDocument(Request $request)
     {
-        $model = '\\App\\Models\\'.ucwords($this->genericModel->modelType).'Quote';
-        $quoteModel = $model::where('id', $request->quote_id)->first();
-
+        $quoteModel = $this->getQuoteObject($this->genericModel->modelType, $request->quote_id);
         if (! $request->hasFile('file') && ! $quoteModel) {
-            return false;
+            return response()->json(['success' => false]);
         }
 
         $file = $request->file('file');
@@ -925,10 +923,10 @@ class CRUDController extends Controller
 
     public function storePayment(Request $request)
     {
-       $quoteModel = $this->getQuoteObject($request->modelType, $request->quote_id);
-       if(!$quoteModel){
-        return response()->json(['success' => false]);
-       }
+        $quoteModel = $this->getQuoteObject($request->modelType, $request->quote_id);
+        if (! $quoteModel) {
+            return response()->json(['success' => false]);
+        }
         $code = 'P-'.strtoupper(substr(uniqid('', ), 0, 8));
         $paymentInformation = [
             'code' => $code,
