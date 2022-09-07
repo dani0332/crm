@@ -3,11 +3,19 @@
 namespace App\Http\Controllers;
 
 use App\Enums\PaymentStatusEnum;
+use App\Enums\QuoteStatusEnum;
+use App\Models\BusinessQuote;
 use App\Models\CarMake;
 use App\Models\CarModel;
 use App\Models\CarModelDetail;
+use App\Models\CarQuote;
+use App\Models\HealthQuote;
+use App\Models\HomeQuote;
+use App\Models\LifeQuote;
 use App\Models\Payment;
 use App\Models\PaymentStatusLog;
+use App\Models\PetQuote;
+use App\Models\TravelQuote;
 use App\Services\NetworkPaymentService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -69,6 +77,13 @@ class AjaxController extends Controller
 
     public function updatePaymentStatus(Request $request)
     {
+        $model = '\\App\\Models\\'.ucwords($request->modelType).'Quote';
+        $quoteModel = $model::where('id', $request->quote_id)->first();
+        dd($model);
+        if (! $quoteModel) {
+            return false;
+        }
+
         $payment = Payment::where('code', $request->code)->first();
         $payment->payment_status_id = PaymentStatusEnum::PAID;
         $payment->save();
@@ -80,6 +95,9 @@ class AjaxController extends Controller
             'updated_at' => now(),
         ]);
         $paymentLog->save();
+
+        $quoteModel->quote_status_id = QuoteStatusEnum::TransactionApproved;
+        $quoteModel->save();
 
         return response()->json(['success' => true]);
     }

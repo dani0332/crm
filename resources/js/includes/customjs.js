@@ -2817,23 +2817,6 @@ $('#togglePlans').on('click', function () {
   }
 });
 
-function approvePayment(paymentCode) {
-  if (confirm('Are you sure you want to approve this payment?')) {
-    $.ajax({
-      url: '/update-payment-status/',
-      method: 'POST',
-      data: {
-        _token: $('input[name=_token]').val(),
-        code: paymentCode,
-      },
-      success: function (data) {
-        window.location.reload();
-      },
-    });
-  } else {
-    return false;
-  }
-}
 // Car Quote: Change the type than format the date
 $('#dob').prop('type', 'text');
 $('#dob_div #dob').datepicker({

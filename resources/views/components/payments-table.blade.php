@@ -71,6 +71,28 @@
             $('#paymentUpdateModel').modal('show');
         });
 
+        $('#approve-paymnet-btn').on('click', function (e) {
+            var code = $(this).attr('data-code');
+            var modelType = $(this).attr('data-type');
+            var quoteId = $(this).attr('data-quoteId');
+            if (confirm('Are you sure you want to approve this payment?')) {
+                $.ajax({
+                url: '/update-payment-status/',
+                method: 'POST',
+                data: {
+                    _token: $('input[name=_token]').val(),
+                    code: code,
+                    modelType: modelType,
+                },
+                success: function (data) {
+                    window.location.reload();
+                },
+                });
+            } else {
+                return false;
+            }
+        });
+
     });
 </script>
 
@@ -148,7 +170,10 @@
                                                 data-plan="{{$paymentPlainModel->plan->text}}"
                                                 data-collection="{{$payment->collection_type}}"
                                                 data-payment-method="{{$payment->paymentMethod->code}}"
-                                                data-provider="{{$paymentPlainModel->plan->insuranceProvider->text}}" onclick="approvePayment('{{$payment->code}}')">Approve</button>
+                                                data-code="{{$payment->code}}"
+                                                data-type="{{$modeltype}}"
+                                                data-quoteId="{{$paymentPlainModel->id}}"
+                                                data-provider="{{$paymentPlainModel->plan->insuranceProvider->text}}">Approve</button>
                                         @endif
                                     @endcan
                                     @if($payment->payment_status_id == PaymentStatusEnum::PAID)
