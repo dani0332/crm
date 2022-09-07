@@ -4,18 +4,6 @@ use App\Enums\CarPlanAddonsCode;
 use App\Enums\CarPlanExclusionsCode;
 use App\Enums\CarPlanType;
 @endphp
-<script>
-    $(document).ready(function(){
-        $('.payment-link-copy').on('click', function(){
-            var planId = $(this).attr('data-planId');
-            var quoteUUID = $(this).attr('data-quoteUUId');
-            var providerCode = $(this).attr('data-providerCode');
-            var paymentLink = window.location.origin + '/car-insurance/quote/payment?quoteUid='+quoteUUID+'&providerCode='+providerCode+'&planId=' + planId;
-            navigator.clipboard.writeText(paymentLink);
-            $('#paymentLinkCopyMsg').show().delay(1000).fadeOut();
-        });
-    });
-</script>
 <div class="row">
 	<div class="col-md-12 col-sm-12">
 		<div class="x_panel">
