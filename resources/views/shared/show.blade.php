@@ -364,6 +364,7 @@
         <x-car-ecom-detail :record="$record" :carQuotePlanAddons="$carQuotePlanAddons" />
         <x-car-quote-plans :record="$record" :listQuotePlans="$listQuotePlans" :ecomUrl="$ecomCarInsuranceQuoteUrl . $record->uuid" />
         @if (isset($isQuoteDocumentEnabled) && $isQuoteDocumentEnabled)
+            <x-quote-policy :record="$record" :quoteType="$quoteType" />
             <x-quote-documents :displaySendPolicyButton="$displaySendPolicyButton" :record="$record" :quoteDocuments="$quoteDocuments" :quoteType="$quoteType" />
         @endif
         <x-email-status :emailStatuses="$emailStatuses" />
@@ -395,9 +396,9 @@
             </div>
         </div>
         <x-travel-ecom-detail :travelQuotePremium="$record->premium" :travelQuotePaidAt="$record->paid_at" :travelQuotePaymentStatus="$record->payment_status_id_text" :travelQuotePlanName="$record->plan_id_text" />
-        <x-quote-policy :record="$record" :quoteType="$quoteType" />
         <x-travel-quote-members-detail :members="$membersDetail" />
         @if (isset($isQuoteDocumentEnabled) && $isQuoteDocumentEnabled)
+            <x-quote-policy :record="$record" :quoteType="$quoteType" />
             <x-quote-documents :displaySendPolicyButton="$displaySendPolicyButton" :record="$record" :quoteDocuments="$quoteDocuments" :quoteType="$quoteType" />
         @endif
         <x-email-status :emailStatuses="$emailStatuses" />
@@ -437,6 +438,7 @@
         <x-health-quote-members-modal :categories="$memberCategories" :salaries="$salaryBands" :id="$record->id" />
         <x-health-quote-ecom-details :data="$ecomDetails" />
         @if (isset($isQuoteDocumentEnabled) && $isQuoteDocumentEnabled)
+            <x-quote-policy :record="$record" :quoteType="$quoteType" />
             <x-quote-documents :displaySendPolicyButton="$displaySendPolicyButton" :record="$record" :quoteDocuments="$quoteDocuments" :quoteType="$quoteType" />
         @endif
     @endif
