@@ -628,7 +628,7 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 								<td style="width: 50px;font-weight: bold;">Category</td>
 								<td style="width: 120px;">{{$member->memberCategoryText}}</td>
 								<td style="width: 50px;font-weight: bold;">DOB</td>
-								<td style="width: 120px;">{{$member->dob}}</td>
+								<td style="width: 120px;">{{\Carbon\Carbon::createFromTimestamp(strtotime($member->dob))->format('d-m-Y')}}</td>
 								<td style="width: 50px;font-weight: bold;">Gender</td>
 								<td style="width: 120px;">{{$member->gender}}</td>
 								<td style="width: 50px;font-weight: bold;">Premium</td>
