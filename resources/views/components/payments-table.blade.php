@@ -83,6 +83,7 @@
                     _token: $('input[name=_token]').val(),
                     code: code,
                     modelType: modelType,
+                    quote_id: quoteId,
                 },
                 success: function (data) {
                     window.location.reload();

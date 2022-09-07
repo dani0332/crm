@@ -72,11 +72,9 @@ class AjaxController extends Controller
     {
         $model = '\\App\\Models\\'.ucwords($request->modelType).'Quote';
         $quoteModel = $model::where('id', $request->quote_id)->first();
-        dd($model);
         if (! $quoteModel) {
             return false;
         }
-
         $payment = Payment::where('code', $request->code)->first();
         $payment->payment_status_id = PaymentStatusEnum::PAID;
         $payment->save();
@@ -88,7 +86,6 @@ class AjaxController extends Controller
             'updated_at' => now(),
         ]);
         $paymentLog->save();
-
         $quoteModel->quote_status_id = QuoteStatusEnum::TransactionApproved;
         $quoteModel->save();
 
