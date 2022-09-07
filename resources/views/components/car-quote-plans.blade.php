@@ -233,7 +233,7 @@ use App\Enums\CarPlanType;
 							<td>{{ isset($quotePlan->excess) ? number_format($quotePlan->excess, 2) : '0.00' }}</td>
 							<td><a href="#" planDetailUrl="{{ $record->uuid }}/plan_details/{{ $quotePlan->id }}"
 									data-toggle="modal" data-target="#quotePlanModal"
-									class="btn btn-warning btn-sm quotePlanModalPopup">View</a></td>
+									class="btn btn-warning btn-sm quotePlanModalPopup">View</a><button>Copy</button></td>
 						</tr>
 						@endforeach
 					</tbody>

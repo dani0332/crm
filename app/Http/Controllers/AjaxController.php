@@ -77,6 +77,7 @@ class AjaxController extends Controller
         }
         $payment = Payment::where('code', $request->code)->first();
         $payment->payment_status_id = PaymentStatusEnum::PAID;
+        $payment->captured_at = now();
         $payment->save();
         $paymentLog = new PaymentStatusLog([
             'previous_payment_status_id' => $payment->paymentStatusLogs->last()->current_payment_status_id,

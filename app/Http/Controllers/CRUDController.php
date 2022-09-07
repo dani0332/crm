@@ -941,6 +941,9 @@ class CRUDController extends Controller
         if ($request->reference) {
             $paymentInformation['reference'] = $request->reference;
         }
+        if($request->payment_methods != 'CC'){
+            $paymentInformation['authorized_at'] = now();
+        }
         $payment = Payment::create($paymentInformation);
         $quoteModel->payments()->save($payment);
         $paymentLog = new PaymentStatusLog([
