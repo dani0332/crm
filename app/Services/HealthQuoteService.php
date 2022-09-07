@@ -769,6 +769,9 @@ class HealthQuoteService extends BaseService
         $healthMemberIds = HealthMemberDetail::where('health_quote_request_id', $lead->id)->pluck('id');
         foreach ($healthMemberIds as $id) {
             $hmd = HealthMemberDetail::findOrFail($id);
+            $hmd->health_quote_request_id = null;
+            $hmd->member_category_id = null;
+            $hmd->save();
             $hmd->delete();
         }
         $businessLead->save();
