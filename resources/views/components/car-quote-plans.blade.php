@@ -3,6 +3,7 @@ use App\Enums\CarPlanFeaturesCode;
 use App\Enums\CarPlanAddonsCode;
 use App\Enums\CarPlanExclusionsCode;
 use App\Enums\CarPlanType;
+$websitURL = Config::get('constants.AFIA_WEBSITE_DOMAIN');
 @endphp
 <div class="row">
 	<div class="col-md-12 col-sm-12">
@@ -240,6 +241,7 @@ use App\Enums\CarPlanType;
                                     data-planId="{{$quotePlan->id}}"
                                     data-quoteUUId="{{$record->uuid}}"
                                     data-providerCode="{{$quotePlan->providerCode}}"
+                                    data-websiteURL="{{$websitURL}}"
                                     >Copy</button>
                                 @endif
                                 </td>
