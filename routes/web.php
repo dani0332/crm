@@ -199,7 +199,7 @@ Route::group(['middleware' => ['auth']], function () {
         Route::post('car/carAssumptionsUpdate', [CRUDController::class, 'carAssumptionsUpdate']);
         Route::post('car/addNoteForCustomer', [CRUDController::class, 'addNoteForCustomer']);
         Route::post('car/sendNotesToCustomer', [CRUDController::class, 'sendNotesToCustomer']);
-        Route::post('{quoteType}/updateQuotePolicy', [CRUDController::class, 'updateQuotePolicy']);
+        Route::post('{quoteType}/update-quote-policy', [CRUDController::class, 'updateQuotePolicy']);
         Route::post('car/manual-plan-toggle', [CRUDController::class, 'manualPlanToggle'])->name('manualPlanToggle');
     });
 
