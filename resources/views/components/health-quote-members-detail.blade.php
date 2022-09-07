@@ -25,7 +25,7 @@
                                         <tr>
                                             <td>Member {{$key+1}}</td>
                                             <td>@if($member->memberCategory){{$member->memberCategory->text}}@endif</td>
-                                            <td>{{$member->dob}}</td>
+                                            <td>{{\Carbon\Carbon::createFromTimestamp(strtotime($member->dob))->format('d-m-Y')}}</td>
                                             <td>{{$member->gender}}</td>
                                             <td>@if($member->salaryBand){{$member->salaryBand->text}}@endif</td>
                                             <td><button id="member-details-edit-btn" class="btn btn-sm btn-warning" onclick="editMemberDetail('{{$member->id}}')">Edit</button>

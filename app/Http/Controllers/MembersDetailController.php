@@ -18,7 +18,7 @@ class MembersDetailController extends Controller
      */
     public function store(MemberDetail $request)
     {
-        $dob = isset($request->dob) ? Carbon::createFromFormat('d/m/Y', $request->dob)->format(get_dob_date_format()) : null;
+        $dob = isset($request->dob) ? Carbon::createFromFormat('d-m-Y', $request->dob)->format(get_dob_date_format()) : null;
         $data = [
             'health_quote_request_id' => $request->health_quote_request_id,
             'gender' => $request->gender,
@@ -57,7 +57,7 @@ class MembersDetailController extends Controller
      */
     public function update(MemberDetail $request, $id)
     {
-        $dob = isset($request->dob) ? Carbon::createFromFormat('d/m/Y', $request->dob)->format(get_dob_date_format()) : null;
+        $dob = isset($request->dob) ? Carbon::createFromFormat('d-m-Y', $request->dob)->format(get_dob_date_format()) : null;
         $data = [
             'health_quote_request_id' => $request->health_quote_request_id,
             'gender' => $request->gender,
