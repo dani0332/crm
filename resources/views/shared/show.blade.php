@@ -235,12 +235,8 @@
                                         <div class="col-md-6 col-sm-6"
                                             style="text-overflow: ellipsis;overflow: auto;white-space: nowrap;width: 495px;">
                                             <p class="label-align-center">
-                                                @if(str_contains($value, 'checkbox'))
+                                                @if(str_contains($value, 'checkbox') || str_contains($value, 'static'))
                                                 {{ $record->$property ? 'Yes' : 'No' }}
-                                                @elseif(str_contains($value, 'static'))
-                                                    @if(str_contains($value, 'Yes'))
-                                                    {{ $record->$property ? 'Yes' : 'No' }}
-                                                    @endif
                                                 @elseif($property == 'previous_quote_id')
                                                     @php
                                                         $previousQuote = CarQuote::select('uuid')->where('id', $record->previous_quote_id)->first();
