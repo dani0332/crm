@@ -247,7 +247,7 @@ use App\Enums\CarPlanType;
 						@endforeach
 					</tbody>
 				</table>
-                <span class="alert alert-success" id="paymentLinkCopyMsg"
+                <span class="alert alert-success" id="payment-link-copy-msg"
                 style="display: none;float:right;position: absolute;z-index: 1;top: -16px;right: 0;">Copied</span>
 				@else
 				<table id="datatable" class="table table-striped jambo_table" style="width:100%">

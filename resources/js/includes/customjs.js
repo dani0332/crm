@@ -2551,7 +2551,7 @@ $(document).ready(function () {
         var providerCode = $(this).attr('data-providerCode');
         var paymentLink = window.location.origin + '/car-insurance/quote/payment?quoteUid='+quoteUUID+'&providerCode='+providerCode+'&planId=' + planId;
         navigator.clipboard.writeText(paymentLink);
-        $('#paymentLinkCopyMsg').show().delay(1000).fadeOut();
+        $('#payment-link-copy-msg').show().delay(1000).fadeOut();
     });
 });
 
