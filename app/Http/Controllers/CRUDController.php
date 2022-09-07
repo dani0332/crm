@@ -952,6 +952,7 @@ class CRUDController extends Controller
         $paymentLog->save();
         $quoteModel->quote_status_id = QuoteStatusEnum::PaymentPending;
         $quoteModel->save();
+
         return back()->with('success', 'Payment has been created');
     }
 
