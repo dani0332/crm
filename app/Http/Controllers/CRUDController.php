@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\GenericRequestEnum;
 use App\Enums\HealthTeamType;
+use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -32,6 +33,7 @@ use App\Services\SendEmailCustomerService;
 use App\Services\TeamService;
 use App\Services\TravelQuoteService;
 use App\Services\UserService;
+use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use DataTables;
 use Illuminate\Http\Request;
@@ -62,6 +64,8 @@ class CRUDController extends Controller
     protected $customerService;
     protected $sendEmailCustomerService;
     protected $quoteDocumentService;
+
+    use GenericQueriesAllLobs;
 
     public function __construct(
         HealthQuoteService $healthService,
@@ -914,11 +918,9 @@ class CRUDController extends Controller
 
     public function storeDocument(Request $request)
     {
-        $model = '\\App\\Models\\'.ucwords($this->genericModel->modelType).'Quote';
-        $quoteModel = $model::where('id', $request->quote_id)->first();
-
+        $quoteModel = $this->getQuoteObject($this->genericModel->modelType, $request->quote_id);
         if (! $request->hasFile('file') && ! $quoteModel) {
-            return false;
+            return response()->json(['success' => false]);
         }
 
         $file = $request->file('file');
@@ -931,10 +933,9 @@ class CRUDController extends Controller
 
     public function storePayment(Request $request)
     {
-        $model = '\\App\\Models\\'.ucwords($request->modelType).'Quote';
-        $quoteModel = $model::where('id', $request->quote_id)->first();
+        $quoteModel = $this->getQuoteObject($request->modelType, $request->quote_id);
         if (! $quoteModel) {
-            return false;
+            return response()->json(['success' => false]);
         }
         $code = 'P-'.strtoupper(substr(uniqid('', ), 0, 8));
         $paymentInformation = [
@@ -951,6 +952,9 @@ class CRUDController extends Controller
         if ($request->reference) {
             $paymentInformation['reference'] = $request->reference;
         }
+        if ($request->payment_methods != PaymentMethodsEnum::CreditCard) {
+            $paymentInformation['authorized_at'] = now();
+        }
         $payment = Payment::create($paymentInformation);
         $quoteModel->payments()->save($payment);
         $paymentLog = new PaymentStatusLog([
@@ -960,6 +964,8 @@ class CRUDController extends Controller
             'updated_at' => now(),
         ]);
         $paymentLog->save();
+        $quoteModel->quote_status_id = QuoteStatusEnum::PaymentPending;
+        $quoteModel->save();
 
         return back()->with('success', 'Payment has been created');
     }

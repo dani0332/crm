@@ -2545,6 +2545,14 @@ $(document).ready(function () {
       },
     });
   });
+  $('.payment-link-copy').on('click', function(){
+        var planId = $(this).attr('data-planId');
+        var quoteUUID = $(this).attr('data-quoteUUId');
+        var providerCode = $(this).attr('data-providerCode');
+        var paymentLink = window.location.origin + '/car-insurance/quote/payment?quoteUid='+quoteUUID+'&providerCode='+providerCode+'&planId=' + planId;
+        navigator.clipboard.writeText(paymentLink);
+        $('#payment-link-copy-msg').show().delay(1000).fadeOut();
+    });
 });
 
 $('#renewals-upload-button').click(function () {
@@ -2817,23 +2825,6 @@ $('#togglePlans').on('click', function () {
   }
 });
 
-function approvePayment(paymentCode) {
-  if (confirm('Are you sure you want to approve this payment?')) {
-    $.ajax({
-      url: '/update-payment-status/',
-      method: 'POST',
-      data: {
-        _token: $('input[name=_token]').val(),
-        code: paymentCode,
-      },
-      success: function (data) {
-        window.location.reload();
-      },
-    });
-  } else {
-    return false;
-  }
-}
 // Car Quote: Change the type than format the date
 $('#dob').prop('type', 'text');
 $('#dob_div #dob').datepicker({
