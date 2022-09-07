@@ -835,18 +835,4 @@ class TravelQuoteService extends BaseService
 
         return 'true';
     }
-
-    public function updateQuotePolicy($request)
-    {
-        $quote = TravelQuote::where('id', $request->quote_id)
-        ->update([
-            'policy_number' => $request->quote_policy_number,
-            'policy_issuance_date' => Carbon::parse($request->quote_policy_issuance_date)->format('Y-m-d'),
-            'policy_start_date' => Carbon::parse($request->quote_policy_start_date)->format('Y-m-d'),
-            'renewal_expiry_date' => Carbon::parse($request->quote_policy_expiry_date)->format('Y-m-d'),
-            'premium' => $request->quote_premium,
-        ]);
-
-        return $quote;
-    }
 }
