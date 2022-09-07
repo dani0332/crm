@@ -3,6 +3,7 @@ use App\Enums\CarPlanFeaturesCode;
 use App\Enums\CarPlanAddonsCode;
 use App\Enums\CarPlanExclusionsCode;
 use App\Enums\CarPlanType;
+$websitURL = Config::get('constants.AFIA_WEBSITE_DOMAIN');
 @endphp
 <div class="row">
 	<div class="col-md-12 col-sm-12">
@@ -233,11 +234,23 @@ use App\Enums\CarPlanType;
 							<td>{{ isset($quotePlan->excess) ? number_format($quotePlan->excess, 2) : '0.00' }}</td>
 							<td><a href="#" planDetailUrl="{{ $record->uuid }}/plan_details/{{ $quotePlan->id }}"
 									data-toggle="modal" data-target="#quotePlanModal"
-									class="btn btn-warning btn-sm quotePlanModalPopup">View</a></td>
+									class="btn btn-warning btn-sm quotePlanModalPopup">View</a>
+                                @if($totalPremium > 0)
+                                    <button
+                                    class="btn btn-success btn-sm payment-link-copy"
+                                    data-planId="{{$quotePlan->id}}"
+                                    data-quoteUUId="{{$record->uuid}}"
+                                    data-providerCode="{{$quotePlan->providerCode}}"
+                                    data-websiteURL="{{$websitURL}}"
+                                    >Copy</button>
+                                @endif
+                                </td>
 						</tr>
 						@endforeach
 					</tbody>
 				</table>
+                <span class="alert alert-success" id="payment-link-copy-msg"
+                style="display: none;float:right;position: absolute;z-index: 1;top: -16px;right: 0;">Copied</span>
 				@else
 				<table id="datatable" class="table table-striped jambo_table" style="width:100%">
 					<thead>

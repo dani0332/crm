@@ -9,5 +9,6 @@ class PaymentStatus extends Model
 {
     use HasFactory;
 
+    protected $hidden = ['text_ar'];
     protected $table = 'payment_status';
 }

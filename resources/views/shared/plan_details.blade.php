@@ -4,6 +4,8 @@ use App\Enums\quoteTypeCode;
 use App\Enums\CarPlanType;
 use App\Enums\CarPlanAddons;
 use App\Enums\InsuranceProviders;
+use App\Enums\PermissionsEnum;
+
 
 if (!isset($modelName)) {
 

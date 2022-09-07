@@ -1,7 +1,6 @@
-<?php
-    use Illuminate\Support\Facades\Config;
-    $dateFormat = Config::get('constants.DATE_FORMAT');
-?>
+@php
+    $dateFormat = config('constants.DATE_FORMAT');
+@endphp
 
 <meta name="csrf-token" content="{{ csrf_token() }}" />
 <script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
@@ -14,8 +13,9 @@
                 <div class="clearfix"></div>
             </div>
             <div class="x_content">
-            <form id="update-quote-policy-form" method='post' action="{{ url('/quotes/'.$quoteType.'/updateQuotePolicy') }}" enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left" autocomplete="off">
+            <form id="update-quote-policy-form" method='post' action="{{ url('/quotes/'.$quoteType.'/update-quote-policy') }}" enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left" autocomplete="off">
             {{csrf_field()}}
+                <input type="hidden" name="modelType" value="{{ $quoteType ?? ''}}">
                 <input type="hidden" id="quote_id" name="quote_id" value="{{ $record->id }}">
                 <div class="item form-group">
                     <div class="col">
