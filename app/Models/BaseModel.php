@@ -40,7 +40,7 @@ class BaseModel extends Model implements AuditableContract
             $exploded = explode('\\', get_class($model));
             $getModel = end($exploded);
             if ($getModel == 'CarQuote') {
-                if ($model->isDirty('quote_status_id')) {
+                if ($model->isDirty('quote_status_id') && !is_null($model->quote_status_id)) {
                     $ftcModel = new FtcQuoteStatusHistory;
                     $ftcModel->quote_status_id = $model->quote_status_id;
                     $ftcModel->car_quote_id = $model->id;
