@@ -4,6 +4,18 @@ use App\Enums\CarPlanAddonsCode;
 use App\Enums\CarPlanExclusionsCode;
 use App\Enums\CarPlanType;
 @endphp
+<script>
+    $(document).ready(function(){
+        $('.payment-link-copy').on('click', function(){
+            var planId = $(this).attr('data-planId');
+            var quoteUUID = $(this).attr('data-quoteUUId');
+            var providerCode = $(this).attr('data-providerCode');
+            var paymentLink = window.location.origin + '/car-insurance/quote/payment?quoteUid='+quoteUUID+'&providerCode='+providerCode+'&planId=' + planId;
+            navigator.clipboard.writeText(paymentLink);
+            $('#paymentLinkCopyMsg').show().delay(1000).fadeOut();
+        });
+    });
+</script>
 <div class="row">
 	<div class="col-md-12 col-sm-12">
 		<div class="x_panel">
@@ -233,11 +245,22 @@ use App\Enums\CarPlanType;
 							<td>{{ isset($quotePlan->excess) ? number_format($quotePlan->excess, 2) : '0.00' }}</td>
 							<td><a href="#" planDetailUrl="{{ $record->uuid }}/plan_details/{{ $quotePlan->id }}"
 									data-toggle="modal" data-target="#quotePlanModal"
-									class="btn btn-warning btn-sm quotePlanModalPopup">View</a><button>Copy</button></td>
+									class="btn btn-warning btn-sm quotePlanModalPopup">View</a>
+                                @if($totalPremium > 0)
+                                    <button
+                                    class="btn btn-success btn-sm payment-link-copy"
+                                    data-planId="{{$quotePlan->id}}"
+                                    data-quoteUUId="{{$record->uuid}}"
+                                    data-providerCode="{{$quotePlan->providerCode}}"
+                                    >Copy</button>
+                                @endif
+                                </td>
 						</tr>
 						@endforeach
 					</tbody>
 				</table>
+                <span class="alert alert-success" id="paymentLinkCopyMsg"
+                style="display: none;float:right;position: absolute;z-index: 1;top: -16px;right: 0;">Copied</span>
 				@else
 				<table id="datatable" class="table table-striped jambo_table" style="width:100%">
 					<thead>
