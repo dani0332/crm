@@ -84,7 +84,7 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 	$(document).ready(function() {
 		var discountedPremium = $('#discounted_premium').val();
 		var carPlanTypeTpl = JSON.parse('<?php echo json_encode(CarPlanType::TPL) ?>');
-		var shouldReviseQuote = JSON.parse('<?php echo json_encode($shouldReviseQuote) ?>');
+		var shouldReviseQuote = JSON.parse('<?php echo json_encode(isset($shouldReviseQuote) ? $shouldReviseQuote : false) ?>');
 
 		$('.update-car-quote-plan-button').on('click', function(e) {
 			var actual_premium = $("#actual_premium").val();
