@@ -1,5 +1,6 @@
 @php
     $dateFormat = config('constants.DATE_FORMAT');
+    use App\Enums\QuoteStatusEnum;
 @endphp
 
 <meta name="csrf-token" content="{{ csrf_token() }}" />
@@ -67,15 +68,13 @@
                     </div>
                 </div>
                 <!-- Transaction Approved -->
-                @if($record->quote_status_id == 15) 
-                <div align="right">
-                    <span style="color:red;" id="error-quote-policy-form"></span>
-                    <button type="button" class="btn btn-primary btn-sm" id="cancel-quote-policy-btn">Cancel</button>
-                    <button type="submit" class="btn btn-success btn-sm" id="update-quote-policy-btn">Update</button>
-                    @can('travel-quotes-policy-detail-edit')
-                    <button type="button" class="btn btn-primary btn-sm" id="edit-quote-policy-btn">Edit</button>
-                    @endcan
-                </div>
+                @if($record->quote_status_id == QuoteStatusEnum::TransactionApproved) 
+                    <div align="right">
+                        <span style="color:red;" id="error-quote-policy-form"></span>
+                        <button type="button" class="btn btn-primary btn-sm" id="cancel-quote-policy-btn">Cancel</button>
+                        <button type="submit" class="btn btn-success btn-sm" id="update-quote-policy-btn">Update</button>
+                        <button type="button" class="btn btn-primary btn-sm" id="edit-quote-policy-btn">Edit</button>
+                    </div>
                 @endif
             </form>
             </div>
