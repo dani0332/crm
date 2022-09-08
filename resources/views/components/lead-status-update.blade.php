@@ -83,7 +83,7 @@
                                     id="leadStatus" name="leadStatus">
                                     <option value="">Select Lead Status</option>
                                     @foreach ($statuses as $item)
-                                        @if($item->id == 33 && isset($isQuoteDocumentEnabled) && $isQuoteDocumentEnabled)
+                                        @if($item->id == QuoteStatusEnum::PolicyIssued && isset($isQuoteDocumentEnabled) && $isQuoteDocumentEnabled)
                                         <option @if($status==$item->id) selected="selected" @endif
                                             value="{{$item->id}}" >{{$item->text}}</option>
                                         @elseif($item->id != 33)
