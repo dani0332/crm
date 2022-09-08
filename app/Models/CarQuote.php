@@ -217,11 +217,6 @@ class CarQuote extends BaseModel
         }
     }
 
-    public function customerAdditionalInfo()
-    {
-        return $this->hasMany(CustomerAdditionalInfo::class, 'quote_request_id', 'id');
-    }
-
     public $access = [
 
         'write' => ['advisor', 'oe'],
