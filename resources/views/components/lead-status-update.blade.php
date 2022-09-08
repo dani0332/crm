@@ -86,7 +86,7 @@
                                         @if($item->id == QuoteStatusEnum::PolicyIssued && isset($isQuoteDocumentEnabled) && $isQuoteDocumentEnabled)
                                         <option @if($status==$item->id) selected="selected" @endif
                                             value="{{$item->id}}" >{{$item->text}}</option>
-                                        @elseif($item->id != 33)
+                                        @elseif($item->id != QuoteStatusEnum::PolicyIssued)
                                             <option @if($status==$item->id) selected="selected" @endif
                                                 value="{{$item->id}}" >{{$item->text}}</option>
                                         @endif
