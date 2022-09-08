@@ -296,7 +296,7 @@
 
     @if (strtolower($model->modelType) != 'teams' && strtolower($model->modelType) != 'leadstatus')
         <x-lead-status-update :lead="$record" :modeltype="$model->modelType" :status="$record->quote_status_id" :statuses="$leadStatuses" :lostreasons="$lostReasons"
-            :selectedlostreason="$selectedLostReasonId" :activityassignees="$advisors" />
+            :selectedlostreason="$selectedLostReasonId" :activityassignees="$advisors" :isQuoteDocumentEnabled="$isQuoteDocumentEnabled" />
     @endif
     @if (count($allowedDuplicateLOB) > 0)
         <div class="modal fade" id="duplicateLeadModal" name="duplicateLeadModal" tabindex="-1" role="dialog"
