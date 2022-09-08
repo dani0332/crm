@@ -68,8 +68,9 @@ class QuoteDocumentService extends BaseService
         if (! $record) {
             return 0;
         }
-        if (! $record->policy_number || ! $record->policy_issuance_date || ! $record->policy_start_date ||
-            ! $record->premium || ! $record->renewal_expiry_date) {
+
+        if (! isset($record->policy_number) || ! isset($record->policy_issuance_date) || ! isset($record->policy_start_date) ||
+            ! isset($record->premium) || ! isset($record->renewal_expiry_date)) {
             return 0;
         }
         $documentUploadTypes = $this->getQuoteDocumentsForUpload($quoteTypeId);
@@ -90,7 +91,7 @@ class QuoteDocumentService extends BaseService
     public function getQuoteDocuments($quoteType, $recordId)
     {
         $quote = app()->make('App\\Models\\'.$quoteType.'Quote')::where('id', $recordId)->first();
-        if ($quote) {
+        if ($quote && $quote->documents) {
             return $quote->documents->sortDesc();
         } else {
             return [];
