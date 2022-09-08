@@ -27,7 +27,7 @@
             <div class="col-md-6">
                 <div class="input-group">
                     <label class="col-form-label col-md-3 col-sm-3 label-align">DOB</label>
-                    <input type="date" name="dob" id="ebp_dob" class="form-control" title="DOB" value="{{$data->dob}}"/>
+                    <input type="text" name="dob" class="form-control ebp_dob" title="DOB" value="{{\Carbon\Carbon::createFromTimestamp(strtotime($data->dob))->format('d-m-Y')}}"/>
                 </div>
             </div>
         </div>
@@ -60,3 +60,13 @@
         <button type="submit" class="btn btn-sm btn-success">Save</button>
     </div>
 </form>
+<script>
+    $(document).ready(function () {
+        $('.ebp_dob').datepicker({
+            changeMonth: true,
+            changeYear: true,
+            dateFormat: 'dd-mm-yy',
+            yearRange: '-80:+00',
+        });
+    });
+</script>

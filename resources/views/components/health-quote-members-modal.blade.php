@@ -30,7 +30,7 @@
                                 <div class="col-md-6">
                                     <div class="input-group">
                                         <label class="col-form-label col-md-3 col-sm-3 label-align">DOB</label>
-                                        <input type="date" name="dob" id="ebp_dob" class="form-control" title="DOB" />
+                                        <input type="text" name="dob" id="ebp_dob" class="form-control ebp_dob" title="DOB" />
                                     </div>
                                 </div>
                             </div>

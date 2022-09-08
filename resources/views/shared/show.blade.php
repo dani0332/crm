@@ -25,6 +25,7 @@
         .col {
             padding-left: 8px;
         }
+        .ebp_dob { z-index:99999 !important; }
     </style>
     <script>
          $('#add-activity-btn').on('click', function(){
