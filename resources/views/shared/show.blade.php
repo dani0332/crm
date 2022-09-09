@@ -362,8 +362,9 @@
             </div>
         </div>
 
-
+        @if(auth()->user()->hasRole(RolesEnum::BetaUser))
         <x-payments-table :payments="$payments" :paymentMethods="$paymentMethods" :paymentPlainModel="$paymentEntityModel" :modeltype="$model->modelType" />
+        @endif
         <x-car-quote-assumptions :record="$record" :vehicleTypes="$vehicleTypes" :yearsOfManufacture="$yearsOfManufacture" :trimList="$trimList" />
         <x-car-ecom-detail :record="$record" :carQuotePlanAddons="$carQuotePlanAddons" />
         <x-car-quote-plans :record="$record" :listQuotePlans="$listQuotePlans" :ecomUrl="$ecomCarInsuranceQuoteUrl . $record->uuid" />
