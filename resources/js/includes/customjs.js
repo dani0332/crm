@@ -2550,7 +2550,7 @@ $(document).ready(function () {
         var quoteUUID = $(this).attr('data-quoteUUId');
         var providerCode = $(this).attr('data-providerCode');
         var websiteURL = $(this).attr('data-websiteURL');
-        var paymentLink = websiteURL + '/car-insurance/quote/payment?quoteUid='+quoteUUID+'&providerCode='+providerCode+'&planId=' + planId;
+        var paymentLink = `https://ecom.alfred.ae/car-insurance/quote/${quoteUUID}/payment/?providerCode=${providerCode}&planId=${planId}&token=MAGIC_LINK_TOKEN`;
         navigator.clipboard.writeText(paymentLink);
         $('#payment-link-copy-msg').show().delay(1000).fadeOut();
     });
