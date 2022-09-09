@@ -967,6 +967,7 @@ class CarQuoteService extends BaseService
                     'insurerTrimId' => strval($request->insurerTrim),
                     'insurerQuoteNo' => strval($request->insurer_quote_no),
                     'isManualUpdate' => $request->is_manual_update,
+                    'ancillaryExcess' => (int) $request->ancillary_excess,
                 ],
             ],
         ];
