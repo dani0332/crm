@@ -34,9 +34,12 @@ class MyLeadsController extends Controller
     {
         $user = User::where('id', Auth::user()->id)->first();
         $team = DB::table('teams')->where('id', $user->team_id)->first();
-        if($team) {
-            $teamName = $team->name;
+        if (! $team) {
+            $message = 'Please ask the admin to assign a team to you to access this page OR contact to our support team.';
+
+            return view('errors.message', compact('message'));
         }
+        $teamName = $team->name;
         if (strtolower($teamName) == strtolower(quoteTypeCode::RetailMedical) || strtolower($teamName) == strtolower(quoteTypeCode::EBP) || strtolower($teamName) == strtolower(quoteTypeCode::RM)) {
             $teamName = 'health';
         }
@@ -56,13 +59,13 @@ class MyLeadsController extends Controller
         if (! empty($userAdditionalTeams)) {
             if (str_contains($userAdditionalTeams, ',')) {
                 $userAdditionalTeamsIds = explode(',', $userAdditionalTeams);
-                $allowedTeamTypes = Team::whereIn('id', $userAdditionalTeamsIds)->pluck('id', 'name')->toArray();
+                $userAdditionalTeamsIds = array_merge([$team->id], $userAdditionalTeamsIds);
+                $allowedTeamTypes = Team::whereIn('id', $userAdditionalTeamsIds)->select('id', 'name')->get()->toArray();
             } else {
                 $additionalTeam = Team::where('id', $userAdditionalTeams)->first();
                 array_push($allowedTeamTypes, ['id' => $additionalTeam->id, 'name' => $additionalTeam->name]);
             }
         }
-
         if ($request->ajax()) {
             if (isset($request->teamType)) {
                 $teamName = strtolower($request->teamType);

@@ -5,6 +5,7 @@
     use App\Enums\quoteTypeCode;
     use App\Enums\RolesEnum;
     use App\Enums\QuoteStatusEnum;
+    use App\Enums\PermissionsEnum;
     ?>
 <meta name="csrf-token" content="{{ csrf_token() }}" />
 <script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
@@ -528,6 +529,9 @@
                 <h2>{{ str_contains(strtolower($model->modelType), 'teams')? 'Teams':
                     (str_contains(strtolower($model->modelType), 'leadstatus')? 'Lead Status': $model->modelType) }}
                     List</h2>
+                @cannot(PermissionsEnum::ApprovePayments)
+
+
                 <ul class="nav navbar-right panel_toolbox">
                     @if (str_contains(strtolower($model->modelType), 'teams') ||
                     str_contains(strtolower($model->modelType), 'leadstatus'))
@@ -555,6 +559,7 @@
                     @endcan
 
                 </ul>
+                @endcannot
                 <div class="clearfix"></div>
             </div>
             <div class="x_content">

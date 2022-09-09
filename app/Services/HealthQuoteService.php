@@ -10,6 +10,7 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Models\BusinessInsuranceType;
 use App\Models\BusinessQuote;
+use App\Models\HealthMemberDetail;
 use App\Models\HealthQuote;
 use App\Models\HealthQuotePlan;
 use App\Models\HealthQuoteRequestDetail;
@@ -92,7 +93,9 @@ class HealthQuoteService extends BaseService
             'hqr.device',
             'hqr.wcu_id',
             'wcu.name as wcu_id_text',
-            'hqr.plan_id'
+            'hqr.plan_id',
+            'hqr.policy_start_date',
+            'hqr.policy_issuance_date'
         )
             ->leftJoin('marital_status as ms', 'ms.id', '=', 'hqr.marital_status_id')
             ->leftJoin('health_quote_request_detail as hqrd', 'hqrd.health_quote_request_id', '=', 'hqr.id')
@@ -360,8 +363,8 @@ class HealthQuoteService extends BaseService
 
     public function updateHealthQuote(Request $request, $id)
     {
-        $sourceName = $request->is_ebp_renewal == 'on' ? LeadSourceTypes::EBPRENEWALS : config('constants.SOURCE_NAME');
         $healthQuote = HealthQuote::where('uuid', $id)->first();
+        $sourceName = $request->is_ebp_renewal == 'on' ? LeadSourceTypes::EBPRENEWALS : $healthQuote->source;
         $healthQuote->first_name = $request->first_name;
         $healthQuote->last_name = $request->last_name;
         $healthQuote->details = $request->details;
@@ -380,8 +383,10 @@ class HealthQuoteService extends BaseService
         $healthQuote->premium = $request->premium;
         if ($healthQuote->salary_band_id != $request->salary_band_id || $healthQuote->member_category_id != $request->member_category_id) {
             $healthQuote->quote_updated_at = Carbon::now();
-            $healthQuote->memberDetails()->update(['member_category_id' => $request->member_category_id,
-                'salary_band_id' => $request->salary_band_id, 'gender' => $request->gender, 'dob' => $request->dob, ]);
+            if ($healthQuote->primary_member_id) {
+                $healthQuote->memberDetails()->update(['member_category_id' => $request->member_category_id,
+                    'salary_band_id' => $request->salary_band_id, 'gender' => $request->gender, 'dob' => $request->dob, ]);
+            }
         }
         $healthQuote->salary_band_id = $request->salary_band_id;
         $healthQuote->member_category_id = $request->member_category_id;
@@ -859,7 +864,7 @@ class HealthQuoteService extends BaseService
 
     public function getMembersDetail($id)
     {
-        return ''; //HealthMemberDetail::where('health_quote_request_id', $id)->get();
+        return HealthMemberDetail::where('health_quote_request_id', $id)->get();
     }
 
     public function validateRequest($request)
@@ -949,6 +954,10 @@ class HealthQuoteService extends BaseService
             }
             $lead->save();
         }
+        //check if team is assigned,must have plans and status not qualified yet so mark it qualified.
+        if ($lead->health_team_type && $lead->is_ecommerce == 1 && $lead->quote_status_id != QuoteStatusEnum::Qualified && auth()->user()->isHealthWCUAdvisor()) {
+            HealthQuote::find($lead->id)->update(['quote_status_id' => QuoteStatusEnum::Qualified]);
+        }
 
         return true;
     }
@@ -1017,10 +1026,11 @@ class HealthQuoteService extends BaseService
     public function getEcomDetails($data)
     {
         $response['providerName'] = '';
-        $response['premium'] = '';
+        $response['network'] = '';
         $response['paymentStatus'] = '';
         $response['paidAt'] = '';
         $response['planName'] = '';
+
         $planData = HealthQuotePlan::where('health_quote_request_id', $data->id)->first();
         if ($planData) {
             $planPayload = json_decode($planData->plan_payload, true);
@@ -1028,13 +1038,13 @@ class HealthQuoteService extends BaseService
                 foreach ($planPayload['plans'] as $plan) {
                     if ($plan['id'] == $data->plan_id) {
                         $response['providerName'] = $plan['providerName'];
-                        $response['premium'] = $plan['actualPremium'];
-                        $response['paymentStatus'] = '';
-                        $response['paidAt'] = '';
+                        $response['paymentStatus'] = GenericRequestEnum::NotApplicable;
+                        $response['paidAt'] = GenericRequestEnum::NotApplicable;
+                        $response['planName'] = $plan['name'];
                         if (isset($plan['benefits'], $plan['benefits']['feature'])) {
                             foreach ($plan['benefits']['feature'] as $value) {
                                 if ($value['code'] == GenericRequestEnum::TPA_Code) {
-                                    $response['planName'] = $value['text'];
+                                    $response['network'] = $value['value'];
                                 }
                             }
                         }

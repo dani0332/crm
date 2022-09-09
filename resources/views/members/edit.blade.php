@@ -27,7 +27,7 @@
             <div class="col-md-6">
                 <div class="input-group">
                     <label class="col-form-label col-md-3 col-sm-3 label-align">DOB</label>
-                    <input type="date" name="dob" id="" class="form-control" title="DOB" value="{{$data->dob}}"/>
+                    <input type="date" name="dob" id="ebp_dob" class="form-control" title="DOB" value="{{$data->dob}}"/>
                 </div>
             </div>
         </div>

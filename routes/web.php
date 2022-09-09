@@ -29,6 +29,7 @@ use App\Http\Controllers\LeadSearchController;
 use App\Http\Controllers\MembersDetailController;
 use App\Http\Controllers\MyLeadsController;
 use App\Http\Controllers\PartnerController;
+use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PaymentModeController;
 use App\Http\Controllers\QuoteDocumentController;
 use App\Http\Controllers\ReasonController;
@@ -49,13 +50,12 @@ use App\Http\Controllers\TmLeadController;
 use App\Http\Controllers\TmLeadStatusController;
 use App\Http\Controllers\TmUploadLeadController;
 use App\Http\Controllers\TransactionController;
+use App\Http\Controllers\TravelMembersDetailController;
 use App\Http\Controllers\TypeOfInsuranceController;
 use App\Http\Controllers\UploadResourceController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ValuationController;
 use App\Http\Controllers\VehicleDepreciationController;
-use App\Http\Controllers\VehicleRangeController;
-use App\Http\Controllers\VehicleValueController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -85,6 +85,9 @@ Route::middleware(['auth'])->get('/home', function () {
 });
 
 Route::group(['middleware' => ['auth']], function () {
+    Route::resource('payments', PaymentController::class);
+    Route::post('/payments/{quoteType}/store', [CRUDController::class, 'storePayment']);
+    Route::post('/payments/{quoteType}/update', [CRUDController::class, 'updatePayment']);
     Route::resource('myleads', MyLeadsController::class);
     Route::get('getOverDueFollowupLeads', [MyLeadsController::class, 'getOverDueFollowupLeads'])->name('getOverDueFollowupLeads');
 
@@ -127,10 +130,12 @@ Route::group(['middleware' => ['auth']], function () {
     Route::post('/lead-allocation/updateAvailability', [LeadAllocationController::class, 'updateAvailability']);
     Route::post('/lead-allocation/setLeadAllocationJobStatus', [LeadAllocationController::class, 'setLeadAllocationJobStatus']);
 
-    Route::get('quotes/{quoteType}/{quoteUuId}/documents', [QuoteDocumentController::class, 'listQuoteDocuments']);
-    Route::post('quotes/{quoteType}/{quoteUuId}/documents/store', [CRUDController::class, 'storeDocument']);
-    Route::post('quotes/{quoteType}/{quoteUuId}/documents/{id}/delete', [CRUDController::class, 'destroyDocument']);
+    Route::get('quotes/{quoteType}/{quoteUuId}/documents', [QuoteDocumentController::class, 'list']);
+    Route::post('quotes/{quoteType}/documents/store', [QuoteDocumentController::class, 'store']);
     Route::get('documents/{id}', [QuoteDocumentController::class, 'show'])->name('documents.show');
+    Route::post('quotes/{quoteType}/{quoteUuId}/send-policy-documents', [QuoteDocumentController::class, 'sendPolicyDocument']);
+    Route::get('quotes/{quoteType}/{quoteId}/documents/{documentTypeCode}/get-uploaded', [QuoteDocumentController::class, 'getQuoteDocumentsUploaded']);
+    Route::post('documents/delete', [QuoteDocumentController::class, 'destroy']);
 
     Route::group(['prefix' => 'renewals'], function () {
         Route::resource('uploaded-leads', RenewalsUploadController::class);
@@ -284,11 +289,14 @@ Route::group(['middleware' => ['auth']], function () {
     Route::get('/getCarModelTrimValues', [AjaxController::class, 'getCarModelTrimValues']);
     Route::post('auditable', [AuditableController::class, 'loadAuditableComponent']);
     Route::get('/car-model-by-id', [AjaxController::class, 'carModelBasedOnCarMakeId']);
+    Route::post('/update-payment-status', [AjaxController::class, 'updatePaymentStatus']);
     Route::get('/insurance-provider-plans', [ClaimController::class, 'carPlansBasedOnInsuranceProvider']);
+    Route::post('/generate-payment-link', [AjaxController::class, 'generatePaymentLink']);
 
     Route::resource('members', MembersDetailController::class);
     Route::get('/insurance-provider-plans', [ClaimController::class, 'carPlansByInsuranceProvider']);
     Route::post('/car-plan-manual-update-process', [ClaimController::class, 'carPlanUpdateManualProcess']);
+    Route::resource('travelers', TravelMembersDetailController::class);
 });
 
 Route::POST('/sendBulkWelcomeEmails', [BulkEmailProcessController::class, 'ProcessBulkWelcomeEmails'])

@@ -8,6 +8,7 @@ use App\Models\CarModelDetail;
 use App\Models\InsuranceProvider;
 use App\Models\LostReasons;
 use App\Models\MemberCategory;
+use App\Models\PaymentMethod;
 use App\Models\QuoteStatus;
 use App\Models\SalaryBand;
 use App\Models\UAELicenseHeldFor;
@@ -72,5 +73,10 @@ class LookupService extends BaseService
         ->where('is_active', true)
         ->orderBy('sort_order', 'asc')
         ->get();
+    }
+
+    public function getPaymentMethods()
+    {
+        return PaymentMethod::select('code', 'name', 'parent_code')->orderBy('name')->get();
     }
 }

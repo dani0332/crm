@@ -11,26 +11,6 @@ use Carbon\Carbon;
 class MembersDetailController extends Controller
 {
     /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function index()
-    {
-        //
-    }
-
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
      * Store a newly created resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
@@ -49,17 +29,6 @@ class MembersDetailController extends Controller
         HealthQuote::find($request->health_quote_request_id)->update(['quote_updated_at' => Carbon::now()]);
 
         return redirect()->back();
-    }
-
-    /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function show($id)
-    {
-        //
     }
 
     /**
@@ -94,8 +63,13 @@ class MembersDetailController extends Controller
             'member_category_id' => $request->member_category,
             'salary_band_id' => $request->salary_band,
         ];
-        HealthMemberDetail::find($id)->update($data);
-        HealthQuote::find($request->health_quote_request_id)->update(['quote_updated_at' => Carbon::now()]);
+        $memberDetail = HealthMemberDetail::find($id);
+        if ($memberDetail) {
+            $memberDetail->update($data);
+            HealthQuote::find($request->health_quote_request_id)->update(['quote_updated_at' => Carbon::now()]);
+            unset($data['health_quote_request_id']);
+            HealthQuote::where('primary_member_id', $memberDetail->id)->update($data);
+        }
 
         return redirect()->back();
     }

@@ -25,4 +25,9 @@ class ApiController extends Controller
     {
         return $this->apiService->triggerSibFlow($request);
     }
+
+    public function sibHealthQuoteCallBack($uuid)
+    {
+        return $this->apiService->sibHealthQuoteCallBack($uuid);
+    }
 }

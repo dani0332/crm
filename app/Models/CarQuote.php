@@ -138,6 +138,16 @@ class CarQuote extends BaseModel
         return $this->hasOne(CarPlan::class, 'id', 'plan_id');
     }
 
+    public function payments()
+    {
+        return $this->morphMany(Payment::class, 'paymentable');
+    }
+
+    public function plan()
+    {
+        return $this->belongsTo(CarPlan::class, 'plan_id');
+    }
+
     public function kyc_status_id()
     {
         return $this->hasOne(KycStatus::class, 'id', 'kyc_status_id');
@@ -329,7 +339,7 @@ class CarQuote extends BaseModel
         if (Auth::user()->hasRole('pa') && $request->has('action')) {
             $request->request->add(['pa_id' => Auth::user()->id]);
 
-            $carQuote = CarQuote::where(['id' => $request->form_id])->whereNull('pa_id')->first();
+            $carQuote = self::where(['id' => $request->form_id])->whereNull('pa_id')->first();
             if ($carQuote) {
                 $templateParams = [
                     'notes' => 'Your approval request has been assigned to a Production team member',
@@ -360,7 +370,7 @@ class CarQuote extends BaseModel
         } elseif (Auth::user()->hasRole('payment') && $request->has('action')) {
             $request->request->add(['payment_id' => Auth::user()->id]);
 
-            $carQuote = CarQuote::where(['id' => $request->form_id])->whereNull('payment_id')->first();
+            $carQuote = self::where(['id' => $request->form_id])->whereNull('payment_id')->first();
             if ($carQuote) {
                 $templateParams = [
                     'notes' => 'Lead has been assigned to a Payment team member',
@@ -390,7 +400,7 @@ class CarQuote extends BaseModel
         } elseif (Auth::user()->hasRole('invoicing') && $request->has('action')) {
             $request->request->add(['invoicing' => Auth::user()->id]);
 
-            $carQuote = CarQuote::where(['id' => $request->form_id])->whereNull('invoicing')->first();
+            $carQuote = self::where(['id' => $request->form_id])->whereNull('invoicing')->first();
             if ($carQuote) {
                 $templateParams = [
                     'notes' => 'Lead has been assigned to a Invoicing team member',
@@ -420,5 +430,15 @@ class CarQuote extends BaseModel
         } else {
             return parent::saveForm($request, $update);
         }
+    }
+
+    public function customerAdditionalInfo()
+    {
+        return $this->hasMany(CustomerAdditionalInfo::class, 'quote_request_id', 'id');
+    }
+
+    public function documents()
+    {
+        return $this->morphMany(QuoteDocument::class, 'quote_documentable');
     }
 }

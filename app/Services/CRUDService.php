@@ -363,10 +363,18 @@ class CRUDService extends BaseService
             ->validateRequest($request);
     }
 
-    public function quoteModel($modelType, $quoteUuId)
+    public function quoteModel($quoteType, $quoteUuId)
     {
-        $model = '\\App\\Models\\'.ucwords($modelType).'Quote';
+        $model = '\\App\\Models\\'.ucwords($quoteType).'Quote';
 
-        return $model::where('uuid', $quoteUuId)->select('id', 'code')->first();
+        return $model::where('uuid', $quoteUuId)->first();
+    }
+
+    public function updateQuoteStatusbyModel($model, $status)
+    {
+        $model->quote_status_id = $status;
+        $model->save();
+
+        return $model;
     }
 }

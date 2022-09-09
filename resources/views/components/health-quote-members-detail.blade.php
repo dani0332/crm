@@ -44,13 +44,10 @@
                                         <th>DOB</th>
                                         <th>Gender</th>
                                         <th>Salary Band</th>
+                                        <th>Action</th>
                                     </tr>
                                 </thead>
-                            <tbody>
-                                <tr class="odd">
-                                    <td valign="top" colspan="11" class="dataTables_empty">No Data Available</td>
-                                </tr>
-                            </tbody>
+                            
                             </table>
                         @endif
                     </div>

@@ -1,9 +1,17 @@
+<?php
+
+use App\Enums\PermissionsEnum;
+
+?>
 <div class="row">
     <div class="col-md-12 col-sm-12">
         <div class="x_panel">
             <div class="x_title">
                 <h2>Notes for Customer</h2>
+                @cannot(PermissionsEnum::ApprovePayments)
                 <button class="btn btn-sm btn-warning" style="float:right;width:170px;" type="button" id="send-note-for-customer-btn">Send Notes to Customer</button>
+                @endcannot
+
                 <div class="clearfix"></div>
             </div>
             <div class="x_content">

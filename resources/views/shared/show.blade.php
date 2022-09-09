@@ -36,6 +36,7 @@
     use App\Models\CarQuote;
     use App\Enums\RolesEnum;
     use App\Enums\QuoteStatusEnum;
+    use App\Enums\PermissionsEnum;
     @endphp
     <div class="row">
         <div class="col-md-12 col-sm-12 admin-detail">
@@ -52,15 +53,18 @@
                     <h2>{{ (str_contains(strtolower($model->modelType), 'team')? 'Team': (str_contains(strtolower($model->modelType), 'leadstatus')? 'Lead Status': $model->modelType)) . ' Detail' }}
                     </h2>
                     <ul class="nav navbar-right panel_toolbox">
-                        @if (count($allowedDuplicateLOB) > 0)
-                            <li> <a id="duplicateLeadModalBtn" class="btn btn-warning btn-sm">Duplicate Lead</a> </li>
-                        @endif
+                        @cannot(PermissionsEnum::ApprovePayments)
+                            @if (count($allowedDuplicateLOB) > 0)
+                                <li> <a id="duplicateLeadModalBtn" class="btn btn-warning btn-sm">Duplicate Lead</a> </li>
+                            @endif
+                        @endcannot
                         <li><a href="{{ url('quotes/' . strtolower($model->modelType)) }}"
                                 class="btn btn-warning btn-sm">{{ (str_contains(strtolower($model->modelType), 'team')? 'Team': (str_contains(strtolower($model->modelType), 'leadstatus')? 'Lead Status': $model->modelType)) . ' List' }}</a>
                         </li>
                     </ul>
                     <div class="clearfix"></div>
                 </div>
+                @cannot(PermissionsEnum::ApprovePayments)
                 @if(Auth::user()->hasAnyRole([RolesEnum::Admin, RolesEnum::HealthManager, RolesEnum::HealthWCUAdvisor, RolesEnum::HealthDeputyManager]))
                     @if (strtolower($model->modelType) == strtolower(quoteTypeCode::Health) && $record->quote_status_id != QuoteStatusEnum::TransactionApproved)
                         <form method="post" id="healthTeamAssignForm" action="healthTeamAssign"
@@ -135,6 +139,7 @@
                         @endif
                     @endif
                 @endif
+
                 @if (strtolower($model->modelType) == strtolower(quoteTypeCode::Business) && Auth::user()->hasAnyRole(['ADMIN', 'BUSINESS_MANAGER', 'WCU_ADVISOR', 'BUSINESS_DEPUTY']) && ($record->business_type_of_insurance_id_text = 'Group Medical'))
                     <form method="post" action="manualBusinessLeadAssign" class="form-horizontal form-label-left"
                         autocomplete="off">
@@ -166,6 +171,7 @@
                         </div>
                     </form>
                 @endif
+                @endcannot
                 <div class="x_content">
 
                     @php
@@ -229,7 +235,9 @@
                                         <div class="col-md-6 col-sm-6"
                                             style="text-overflow: ellipsis;overflow: auto;white-space: nowrap;width: 495px;">
                                             <p class="label-align-center">
-                                                @if($property == 'previous_quote_id')
+                                                @if($property == 'is_ecommerce')
+                                                    {{ $record->is_ecommerce ? 'Yes' : 'No' }}
+                                                @elseif($property == 'previous_quote_id')
                                                     @php
                                                         $previousQuote = CarQuote::select('uuid')->where('id', $record->previous_quote_id)->first();
                                                     @endphp
@@ -258,18 +266,20 @@
             <div class="row">
                 <div class="col-auto mr-auto"></div>
                 <div class="col-auto">
-                    @if (strtolower($model->modelType) == 'business')
-                        @can('corpline-quotes-edit')
+                    @cannot(PermissionsEnum::ApprovePayments)
+                        @if (strtolower($model->modelType) == 'business')
+                            @can('corpline-quotes-edit')
+                                <a id="texta"
+                                    href="{{ url('quotes/' . strtolower($model->modelType) . '/' . $record->uuid . '/edit') }}"
+                                    class='btn btn-warning btn-sm'>Edit</a>
+                            @endcan
+                        @endif
+                        @can(strtolower($model->modelType) . '-quotes-edit')
                             <a id="texta"
                                 href="{{ url('quotes/' . strtolower($model->modelType) . '/' . $record->uuid . '/edit') }}"
                                 class='btn btn-warning btn-sm'>Edit</a>
                         @endcan
-                    @endif
-                    @can(strtolower($model->modelType) . '-quotes-edit')
-                        <a id="texta"
-                            href="{{ url('quotes/' . strtolower($model->modelType) . '/' . $record->uuid . '/edit') }}"
-                            class='btn btn-warning btn-sm'>Edit</a>
-                    @endcan
+                    @endcannot
                 </div>
             </div>
         </div>
@@ -349,13 +359,15 @@
         </div>
 
 
-
+        <x-payments-table :payments="$payments" :paymentMethods="$paymentMethods" :paymentPlainModel="$paymentEntityModel" :modeltype="$model->modelType" />
         <x-car-quote-assumptions :record="$record" :vehicleTypes="$vehicleTypes" :yearsOfManufacture="$yearsOfManufacture" :trimList="$trimList" />
         <x-car-ecom-detail :record="$record" :carQuotePlanAddons="$carQuotePlanAddons" />
         <x-car-quote-plans :record="$record" :listQuotePlans="$listQuotePlans" :ecomUrl="$ecomCarInsuranceQuoteUrl . $record->uuid" />
-        @isset($record->previous_quote_id)
+        @if (isset($isQuoteDocumentEnabled) && $isQuoteDocumentEnabled)
+            <x-quote-policy :record="$record" :quoteType="$quoteType" />
+            <x-quote-documents :displaySendPolicyButton="$displaySendPolicyButton" :record="$record" :quoteDocuments="$quoteDocuments" :quoteType="$quoteType" />
+        @endif
         <x-email-status :emailStatuses="$emailStatuses" />
-        @endisset
         <x-notes-for-customer :record="$record" :notesForCustomers="$notesForCustomers" :quoteTypeId="$quoteTypeId" />
         <x-notes-for-customer-modal :record="$record" :quoteTypeId="$quoteTypeId" />
     @endif
@@ -384,10 +396,14 @@
             </div>
         </div>
         <x-travel-ecom-detail :travelQuotePremium="$record->premium" :travelQuotePaidAt="$record->paid_at" :travelQuotePaymentStatus="$record->payment_status_id_text" :travelQuotePlanName="$record->plan_id_text" />
-        <x-quote-policy :record="$record" :quoteType="$quoteType" />
-        <x-quote-documents :record="$record" :quoteDocuments="$quoteDocuments" :quoteType="$quoteType" />
         <x-travel-quote-members-detail :members="$membersDetail" />
+        @if (isset($isQuoteDocumentEnabled) && $isQuoteDocumentEnabled)
+            <x-quote-policy :record="$record" :quoteType="$quoteType" />
+            <x-quote-documents :displaySendPolicyButton="$displaySendPolicyButton" :record="$record" :quoteDocuments="$quoteDocuments" :quoteType="$quoteType" />
+        @endif
+        <x-email-status :emailStatuses="$emailStatuses" />
         <x-travel-quote :listQuotePlans="$listQuotePlans" :uuidModal="$record->uuid" :quoteRequestId="$record->id" :ecomUrl="$ecomTravelInsuranceQuoteUrl . $record->uuid" />
+        <x-travel-quote-members-modal :id="$record->id" />
     @endif
 
     @if ($model->modelType == quoteTypeCode::Health)
@@ -416,10 +432,15 @@
         <x-health-quote-plans
             :listQuotePlans="$listQuotePlans"
             :uuidModal="$record->uuid"
-            :quoteRequestId="$record->id" />
-        <!-- <x-health-quote-members-detail :members="$membersDetail" />
+            :quoteRequestId="$record->id"
+            :ecomHealthInsuranceQuoteUrl="$ecomHealthInsuranceQuoteUrl. $record->uuid" />
+        <x-health-quote-members-detail :members="$membersDetail" />
         <x-health-quote-members-modal :categories="$memberCategories" :salaries="$salaryBands" :id="$record->id" />
-        <x-health-quote-ecom-details :data="$ecomDetails" /> -->
+        <x-health-quote-ecom-details :data="$ecomDetails" />
+        @if (isset($isQuoteDocumentEnabled) && $isQuoteDocumentEnabled)
+            <x-quote-policy :record="$record" :quoteType="$quoteType" />
+            <x-quote-documents :displaySendPolicyButton="$displaySendPolicyButton" :record="$record" :quoteDocuments="$quoteDocuments" :quoteType="$quoteType" />
+        @endif
     @endif
 
     <x-lead-activities :lead="$record" :modeltype="$model->modelType" :activities="$activities" />

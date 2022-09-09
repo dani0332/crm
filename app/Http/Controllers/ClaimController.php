@@ -428,6 +428,10 @@ class ClaimController extends Controller
         }
 
         foreach ($listQuotePlans as $key => $quotePlan) {
+            if (! isset($quotePlan->id)) {
+                continue;
+            }
+
             $quotePlanId[] = $quotePlan->id;
         }
 

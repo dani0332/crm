@@ -38,6 +38,11 @@ class CarPlan extends BaseModel implements AuditableContract
         return $this->hasOne(InsuranceProvider::class, 'id', 'provider_id');
     }
 
+    public function insuranceProvider()
+    {
+        return $this->belongsTo(InsuranceProvider::class, 'provider_id');
+    }
+
     public function relations()
     {
         return [];

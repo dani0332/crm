@@ -2,17 +2,9 @@
 
 namespace App\Services;
 
-use App\Enums\quoteTypeCode;
-use App\Models\BikeQuote;
-use App\Models\BusinessQuote;
-use App\Models\CarQuote;
-use App\Models\HealthQuote;
-use App\Models\HomeQuote;
-use App\Models\LifeQuote;
 use App\Models\QuoteType;
-use App\Models\TravelQuote;
 use App\Models\User;
-use App\Models\YachtQuote;
+use App\Traits\GenericQueriesAllLobs;
 use Auth;
 use Config;
 use Illuminate\Support\Facades\Http;
@@ -20,54 +12,46 @@ use Illuminate\Support\Facades\Mail;
 
 class CheckAmlService
 {
+    use GenericQueriesAllLobs;
+
     public function checkAml($firstName, $lastName, $quoteRequestId, $quoteTypeId, $isEmailSendingEnabled, $yob, $companyName)
     {
         $amlEndPoint = Config::get('constants.AML_SEARCH_API_ENDPOINT');
         $emailL_sys = Config::get('constants.emailL_sys');
         $appUrl = env('APP_URL');
         $amlUrl = $appUrl.'/kyc/aml/'.$quoteTypeId.'/details/'.$quoteRequestId;
-        $checkAMLResponseEntity = '';
+        $checkAMLResponseEntity = false;
+        $isAMLResultFound = false;
         if ($companyName != null) {
             $checkAMLResponseEntity = $this->checkAMLRequestEntity($quoteRequestId, $quoteTypeId, $companyName, $amlEndPoint, $amlUrl);
         }
         $checkAMLResponseIndividual = $this->checkAMLRequestIndividual($firstName, $lastName, $quoteRequestId, $quoteTypeId, $yob, $amlEndPoint, $amlUrl);
 
-        $isAMLResultFound = $checkAMLResponseEntity && $checkAMLResponseEntity['resultsFound'] > 0 || $checkAMLResponseIndividual['resultsFound'] > 0 ? true : false;
+        if (isset($checkAMLResponseEntity['resultsFound'])) {
+            if ($checkAMLResponseEntity['resultsFound'] > 0) {
+                $isAMLResultFound = true;
+            } else {
+                $isAMLResultFound = false;
+            }
+        }
+        if (isset($checkAMLResponseIndividual['resultsFound'])) {
+            if ($checkAMLResponseIndividual['resultsFound'] > 0) {
+                $isAMLResultFound = true;
+            } else {
+                $isAMLResultFound = false;
+            }
+        }
 
         // Match is found
         if ($isAMLResultFound) {
-
             // Send Email alert to Compliance team only
-            $quoteTypeName = QuoteType::where('id', '=', $quoteTypeId)->value('text'); // Get quote type text
+            $quoteTypeName = QuoteType::where('id', $quoteTypeId)->value('text'); // Get quote type text
 
             // Get CDB ID
-            $quoteTypeCode = QuoteType::where('id', '=', $quoteTypeId)->value('code');
-            if ($quoteTypeCode == quoteTypeCode::Car) {
-                $quoteCdbId = CarQuote::where('id', '=', $quoteRequestId)->value('code');
-            }
-            if ($quoteTypeCode == quoteTypeCode::Home) {
-                $quoteCdbId = HomeQuote::where('id', '=', $quoteRequestId)->value('code');
-            }
-            if ($quoteTypeCode == quoteTypeCode::Health) {
-                $quoteCdbId = HealthQuote::where('id', '=', $quoteRequestId)->value('code');
-            }
-            if ($quoteTypeCode == quoteTypeCode::Life) {
-                $quoteCdbId = LifeQuote::where('id', '=', $quoteRequestId)->value('code');
-            }
-            if ($quoteTypeCode == quoteTypeCode::Business) {
-                $quoteCdbId = BusinessQuote::where('id', '=', $quoteRequestId)->value('code');
-            }
-            if ($quoteTypeCode == quoteTypeCode::Bike) {
-                $quoteCdbId = BikeQuote::where('id', '=', $quoteRequestId)->value('code');
-            }
-            if ($quoteTypeCode == quoteTypeCode::Yacht) {
-                $quoteCdbId = YachtQuote::where('id', '=', $quoteRequestId)->value('code');
-            }
-            if ($quoteTypeCode == quoteTypeCode::Travel) {
-                $quoteCdbId = TravelQuote::where('id', '=', $quoteRequestId)->value('code');
-            }
+            $quoteTypeCode = QuoteType::where('id', $quoteTypeId)->value('code');
+            $quoteCdbId = $this->getQuoteCode($quoteTypeCode, $quoteRequestId);
 
-            if ($isEmailSendingEnabled == true) {
+            if ($isEmailSendingEnabled == true && $quoteCdbId) {
                 $fullName = $firstName.' '.$lastName;
                 if ($companyName != null) {
                     $this->sendAMLMatchedEmailComplianceTeam($emailL_sys, $amlUrl, $checkAMLResponseEntity, $companyName, $quoteTypeName, $quoteCdbId);
@@ -97,15 +81,19 @@ class CheckAmlService
         // checking if the request wasn't successful
         if ($requestStatus != 201 && $requestStatus != 200) {
             $requestMessage = '';
-            foreach ($response as $key1 => $value1) {
-                $requestMessage .= $key1.': '.$value1;
-                $requestMessage .= '<pre>';
+            if (is_array($response) || is_object($response)) {
+                foreach ($response as $key1 => $value1) {
+                    $requestMessage .= $key1.': '.$value1;
+                    $requestMessage .= '<pre>';
+                }
             }
 
             $emailAmlData = '';
-            foreach ($requestDataForIndividual as $key => $value) {
-                $emailAmlData .= $key.': '.$value;
-                $emailAmlData .= '<pre>';
+            if (is_array($requestDataForIndividual) || is_object($requestDataForIndividual)) {
+                foreach ($requestDataForIndividual as $key => $value) {
+                    $emailAmlData .= $key.': '.$value;
+                    $emailAmlData .= '<pre>';
+                }
             }
 
             // Send Error Email alert to engineering team

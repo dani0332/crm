@@ -94,6 +94,9 @@ use App\Enums\CarPlanType;
 					</thead>
 					<tbody>
 						@foreach ($listQuotePlans as $key => $quotePlan)
+							@if(!isset($quotePlan->id))
+								@continue;
+							@endif
 						<tr>
 							<td>
 								<input type="checkbox" class="car_plans_checkbox" name="toggle_plans_checkbox"
@@ -109,6 +112,11 @@ use App\Enums\CarPlanType;
 								@isset($quotePlan->isRenewal)
 								@if($quotePlan->isRenewal)
 								<span class="badge badge-success">Renewal</span>
+								@endif
+								@endisset
+								@isset($quotePlan->isManualUpdate)
+								@if($quotePlan->isManualUpdate)
+								<span class="badge badge-primary">Manual</span>
 								@endif
 								@endisset
 							</td>
@@ -222,7 +230,7 @@ use App\Enums\CarPlanType;
 								@endphp
 								{{ $totalPremium ? number_format($totalPremium, 2) : '0.00' }}
 							</td>
-							<td>{{ $quotePlan->excess ? number_format($quotePlan->excess, 2) : '0.00' }}</td>
+							<td>{{ isset($quotePlan->excess) ? number_format($quotePlan->excess, 2) : '0.00' }}</td>
 							<td><a href="#" planDetailUrl="{{ $record->uuid }}/plan_details/{{ $quotePlan->id }}"
 									data-toggle="modal" data-target="#quotePlanModal"
 									class="btn btn-warning btn-sm quotePlanModalPopup">View</a></td>

@@ -120,7 +120,7 @@ class LeadAllocationService extends BaseService
                 $this->removeLeadAllocationForOldAdvisor($lead);
             }
 
-            info('Assigning lead '.$lead->id.' to advisor '.$advisorId);
+            info('Assigning lead '.$lead->uuid.' to advisor '.$advisorId);
             try {
                 DB::beginTransaction();
 
@@ -129,11 +129,11 @@ class LeadAllocationService extends BaseService
                 }
                 $lead->advisor_id = $advisorId;
                 $lead->save();
-                info('Lead Id '.$lead->id.' assigned to advisor '.$advisorId);
+                info('Lead Id '.$lead->uuid.' assigned to advisor '.$advisorId);
                 if ($lead->source != LeadSourceEnum::REFERRAL) {
                     $this->updateLeadAllocationRecord($advisorId);
                 }
-                $this->updateLeadDetailRecord($lead->id);
+                $this->updateLeadDetailRecord($lead->id, $lead->uuid);
                 DB::commit();
 
                 return true;
@@ -172,16 +172,16 @@ class LeadAllocationService extends BaseService
         }
     }
 
-    public function updateLeadDetailRecord($leadId)
+    public function updateLeadDetailRecord($leadId, $leadUId)
     {
-        info('updateLeadDetailRecord -- started for lead id: '.$leadId);
+        info('updateLeadDetailRecord -- started for lead UUID: '.$leadUId);
         $leadDetail = HealthQuoteRequestDetail::where('health_quote_request_id', $leadId)->first();
         if ($leadDetail) {
             $leadDetail->advisor_assigned_date = now();
             $leadDetail->advisor_assigned_by_id = auth()->id();
             $leadDetail->save();
         }
-        info('updateLeadDetailRecord -- completed for lead id: '.$leadId);
+        info('updateLeadDetailRecord -- completed for lead uuid: '.$leadUId);
     }
 
     public function removeLeadAllocationForOldAdvisor($lead)

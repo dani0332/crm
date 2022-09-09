@@ -266,9 +266,12 @@ class UserController extends Controller
         return $this->getManagersBasedOnTeamId($teamId, $request->userId);
     }
 
-    public function getManagersBasedOnTeamId($teamId, $userId = null)
+    private function getManagersBasedOnTeamId($teamId, $userId = null)
     {
         $team = Team::find($teamId);
+        if (! $team) {
+            return [];
+        }
         $teamUsers = User::Where('team_id', $teamId)->where('id', '!=', $userId)->get();
         $teamName = strtoupper($team->name);
         // devicing role name based on primary team name as we have to show manager name based on primary team name

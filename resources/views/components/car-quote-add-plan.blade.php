@@ -55,10 +55,10 @@
                                             </select>
                                         </td>
                                         <td>
-                                            <input type="number" id="actual_premium" name="actual_premium" placeholder="Enter Premium (without VAT)" class="form-control" data-toggle="tooltip" data-placement="top" title="Please enter premium (without VAT)" onkeypress="return isNumberKey(event,this)">
+                                            <input type="text" id="actual_premium" name="actual_premium" placeholder="Enter Premium (without VAT)" class="form-control" data-toggle="tooltip" data-placement="top" title="Please enter premium (without VAT)" onkeypress="return isNumberKey(event,this)">
                                         </td>
                                         <td>
-                                            <input type="number" id="car_value" name="car_value" placeholder="Enter Car Value" class="form-control" data-toggle="tooltip" data-placement="top" title="Please enter car value" onkeypress="return isNumberKey(event,this)">
+                                            <input type="text" id="car_value" name="car_value" placeholder="Enter Car Value" class="form-control" data-toggle="tooltip" data-placement="top" title="Please enter car value" onkeypress="return isNumberKey(event,this)">
                                         </td>
                                         <td>
                                             <input type="number" id="excess" name="excess" placeholder="Enter Excess" class="form-control" data-toggle="tooltip" data-placement="top" title="Please enter excess" onkeypress="return isNumberKey(event,this)">
@@ -91,6 +91,9 @@
                     <tbody>
                         @if(gettype($listQuotePlans) != GenericRequestEnum::TypeString)
                         @forelse ($listQuotePlans as $key => $quotePlan)
+                            @if(!isset($quotePlan->id))
+								@continue;
+							@endif
                         <tr>
                             <td>{{ ucwords($quotePlan->providerName) }}</td>
                             <td>{{ ucwords($quotePlan->name) }}</td>

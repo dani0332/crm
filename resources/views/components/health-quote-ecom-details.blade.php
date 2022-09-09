@@ -8,17 +8,18 @@
             <div class="x_content">
                 <div class="item form-group">
                     <div class="col">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="PREMIUM"><b>PREMIUM</b></label>
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="PLAN NAME"><b>PLAN NAME</b></label>
                         <div class="col-md-6 col-sm-6">
-                        <p class="label-align-center">{{ $data['premium'] ? $data['premium']: '' }}</p>
+                        <p class="label-align-center">{{ $data['planName'] ? ucwords($data['planName']): '' }}</p>
                         </div>
                     </div>
                     <div class="col">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="PAID AT"><b>PAID AT</b></label>
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="PROVIDER NAME"><b>PROVIDER NAME</b></label>
                         <div class="col-md-6 col-sm-6">
-                        <p class="label-align-center">{{ $data['paidAt'] ? $data['paidAt']: '' }}</p>
+                        <p class="label-align-center">{{ $data['providerName'] ? $data['providerName']: '' }}</p>
                         </div>
                     </div>
+                    
                 </div>
                 <div class="item form-group">
                     <div class="col">
@@ -28,17 +29,18 @@
                         </div>
                     </div>
                     <div class="col">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="PROVIDER NAME"><b>PROVIDER NAME</b></label>
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="PAID AT"><b>PAID AT</b></label>
                         <div class="col-md-6 col-sm-6">
-                        <p class="label-align-center">{{ $data['providerName'] ? $data['providerName']: '' }}</p>
+                        <p class="label-align-center">{{ $data['paidAt'] ? $data['paidAt']: '' }}</p>
                         </div>
                     </div>
+                    
                 </div>
                 <div class="item form-group">
                 <div class="col">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="PLAN NAME"><b>PLAN NAME</b></label>
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Network"><b>Network</b></label>
                         <div class="col-md-6 col-sm-6">
-                        <p class="label-align-center">{{ $data['planName'] ? ucwords($data['planName']): '' }}</p>
+                        <p class="label-align-center">{{ $data['network'] ? ucwords($data['network']): '' }}</p>
                         </div>
                     </div>
                     <div class="col">
