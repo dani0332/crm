@@ -48,18 +48,16 @@ class AddRoleForBetaUserSeeder extends Seeder
                 'updated_at' => now(),
             ]);
             $paymentPermissionIds = Permission::whereIn('name', ['payment-edit', 'payment-list', 'payment-create'])->pluck('id');
-            info('paymentPermissionIds '. json_encode($paymentPermissionIds));
+            info('paymentPermissionIds '.json_encode($paymentPermissionIds));
             $carAdvisorRoleId = Role::where('name', 'CAR_ADVISOR')->pluck('id');
             $carAdvisorPermissionIds = DB::table('role_has_permissions')->where('role_id', $carAdvisorRoleId)->pluck('permission_id');
-            foreach($paymentPermissionIds as $id)
-            {
+            foreach ($paymentPermissionIds as $id) {
                 DB::table('role_has_permissions')->insert([
                     'role_id' => $betaUserRoleId,
                     'permission_id' => $id,
                 ]);
             }
-            foreach($carAdvisorPermissionIds as $id)
-            {
+            foreach ($carAdvisorPermissionIds as $id) {
                 DB::table('role_has_permissions')->insert([
                     'role_id' => $betaUserRoleId,
                     'permission_id' => $id,
