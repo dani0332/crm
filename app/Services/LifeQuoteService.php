@@ -356,6 +356,7 @@ class LifeQuoteService extends BaseService
         $lifeQuote->first_name = $request->first_name;
         $lifeQuote->last_name = $request->last_name;
         $lifeQuote->dob = $request->dob;
+        $lifeQuote->gender = $request->gender;
         $lifeQuote->sum_insured_value = $request->sum_insured_value;
         $lifeQuote->sum_insured_currency_id = $request->sum_insured_currency_id;
         $lifeQuote->marital_status_id = $request->marital_status_id;

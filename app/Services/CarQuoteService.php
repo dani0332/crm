@@ -109,6 +109,8 @@ class CarQuoteService extends BaseService
                 'cqr.has_ncd_supporting_documents',
                 'cqr.back_home_license_held_for_id',
                 'ulhfs.TEXT as back_home_license_held_for_id_text',
+                'cqr.policy_start_date',
+                'cqr.policy_issuance_date'
             )
             ->leftJoin('nationality as n', 'n.id', '=', 'cqr.nationality_id')
             ->leftJoin('car_quote_request_detail as cqrd', 'cqrd.car_quote_request_id', '=', 'cqr.id')
@@ -965,6 +967,7 @@ class CarQuoteService extends BaseService
                     'insurerTrimId' => strval($request->insurerTrim),
                     'insurerQuoteNo' => strval($request->insurer_quote_no),
                     'isManualUpdate' => $request->is_manual_update,
+                    'ancillaryExcess' => (int) $request->ancillary_excess,
                 ],
             ],
         ];
@@ -1007,11 +1010,6 @@ class CarQuoteService extends BaseService
         $quote->mobile_no = $parentRecord->mobile_no;
         $quote->advisor_id = Auth::user()->id;
         $quote->save();
-    }
-
-    public function getQuoteByUuid($uuid)
-    {
-        return CarQuote::where('uuid', '=', $uuid)->first();
     }
 
     public function getPlans($id)

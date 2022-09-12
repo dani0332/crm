@@ -1,3 +1,6 @@
+<?php
+    use App\Enums\PermissionsEnum;
+    ?>
 <div class="row">
         <div class="col-md-12 col-sm-12">
             <div class="x_panel">
@@ -11,7 +14,10 @@
                         <span class="alert alert-success" id="quotePlansGenerateMsg" style="display: none">Copied</span>
                         <div class="col-auto">
                             <input type="hidden" id="quotePlansGenerateUrl" name="quotePlansGenerateUrl" value="{{ $ecomUrl }}">
-                            <button type="button" id="quotePlansGenerateButton" name="quotePlansGenerateButton" class="btn btn-warning btn-sm">Copy link</button>
+                            @cannot(PermissionsEnum::ApprovePayments)
+                                <button type="button" id="quotePlansGenerateButton" name="quotePlansGenerateButton" class="btn btn-warning btn-sm">Copy link</button>
+                            @endcannot
+
                         </div>
                     </div>
                     <div id="quote-plans">

@@ -2,11 +2,27 @@
 
 namespace App\Services;
 
+use App\Enums\quoteTypeCode;
+use App\Enums\RolesEnum;
 use App\Models\DocumentType;
 use App\Models\QuoteDocument;
 
 class QuoteDocumentService extends BaseService
 {
+    public function isEnabled($quoteModelType)
+    {
+        if (! auth()->user()->hasRole(RolesEnum::BetaUser)) {
+            return false;
+        }
+
+        $enabledLOBs = [quoteTypeCode::Car];
+        if (in_array($quoteModelType, $enabledLOBs)) {
+            return true;
+        }
+
+        return false;
+    }
+
     public function getQuoteDocumentsForUpload($quoteTypeId)
     {
         return DocumentType::where(['quote_type_id' => $quoteTypeId, 'is_active' => true])
@@ -16,7 +32,7 @@ class QuoteDocumentService extends BaseService
 
     public function createQuoteDocumentRecord($documentTypeCode, $fileNameOriginal, $filePathAzure, $fileMimeType, $quoteModel)
     {
-        $documentTypeCode_ = DocumentType::where('code', $documentTypeCode)->first();
+        $documentTypeCode_ = DocumentType::where('code', $documentTypeCode)->where('is_active', 1)->first();
 
         if (! $documentTypeCode_) {
             return false;
@@ -50,5 +66,41 @@ class QuoteDocumentService extends BaseService
         }
 
         return (object) ['doc_url' => $quoteDocument->doc_url, 'doc_mime_type' => $quoteDocument->doc_mime_type];
+    }
+
+    public function showSendPolicyButton($record, $quoteDocuments, $quoteTypeId)
+    {
+        if (! $record) {
+            return 0;
+        }
+
+        if (! isset($record->policy_number) || ! isset($record->policy_issuance_date) || ! isset($record->policy_start_date) ||
+            ! isset($record->premium) || ! isset($record->renewal_expiry_date) || $record->advisor_id != auth()->user()->id) {
+            return 0;
+        }
+
+        $documentUploadTypes = $this->getQuoteDocumentsForUpload($quoteTypeId);
+        if (! $documentUploadTypes) {
+            return 0;
+        }
+        $displaySendPolicyButton = 1;
+        foreach ($documentUploadTypes->where('is_required', 1) as $documentUploadType) {
+            if ($quoteDocuments->where('document_type_code', $documentUploadType->code)->count() == 0) {
+                $displaySendPolicyButton = 0;
+                break;
+            }
+        }
+
+        return $displaySendPolicyButton;
+    }
+
+    public function getQuoteDocuments($quoteType, $recordId)
+    {
+        $quote = app()->make('App\\Models\\'.$quoteType.'Quote')::where('id', $recordId)->first();
+        if ($quote && $quote->documents) {
+            return $quote->documents->sortDesc();
+        } else {
+            return [];
+        }
     }
 }

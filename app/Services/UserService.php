@@ -49,4 +49,9 @@ class UserService extends BaseService
 
         return $user;
     }
+
+    public function getUserById($userId)
+    {
+        return User::where('id', $userId)->first();
+    }
 }

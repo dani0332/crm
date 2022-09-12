@@ -289,6 +289,10 @@ function divideNumber($numerator, $denominator)
     return $denominator == 0 ? 0 : ($numerator / $denominator);
 }
 
+function getUniqueCode($limit)
+{
+    return strtoupper(substr(base_convert(sha1(uniqid(mt_rand())), 16, 36), 0, $limit));
+}
 function get_dob_date_format()
 {
     return 'Y-m-d';

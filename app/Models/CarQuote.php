@@ -138,6 +138,16 @@ class CarQuote extends BaseModel
         return $this->hasOne(CarPlan::class, 'id', 'plan_id');
     }
 
+    public function payments()
+    {
+        return $this->morphMany(Payment::class, 'paymentable');
+    }
+
+    public function plan()
+    {
+        return $this->belongsTo(CarPlan::class, 'plan_id');
+    }
+
     public function kyc_status_id()
     {
         return $this->hasOne(KycStatus::class, 'id', 'kyc_status_id');
@@ -205,11 +215,6 @@ class CarQuote extends BaseModel
         } else {
             return ['car_type_insurance_id', 'payment_detail', 'quote_status_id', 'kyc_status_id', 'insurance_coverage.insurance_company_id', 'insurance_coverage.insurance_plan_id', 'insurance_coverage.vehicle_type_id', 'uae_license_held_for_id', 'car_make_id', 'car_model_id', 'emirate_of_registration_id', 'claim_history_id',  'nationality_id', 'vehicle_detail_id', 'pa_id', 'car_quote_kyc',  'plan_id', 'plan_id.provider_id'];
         }
-    }
-
-    public function customerAdditionalInfo()
-    {
-        return $this->hasMany(CustomerAdditionalInfo::class, 'quote_request_id', 'id');
     }
 
     public $access = [
@@ -425,5 +430,15 @@ class CarQuote extends BaseModel
         } else {
             return parent::saveForm($request, $update);
         }
+    }
+
+    public function customerAdditionalInfo()
+    {
+        return $this->hasMany(CustomerAdditionalInfo::class, 'quote_request_id', 'id');
+    }
+
+    public function documents()
+    {
+        return $this->morphMany(QuoteDocument::class, 'quote_documentable');
     }
 }

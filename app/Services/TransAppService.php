@@ -122,7 +122,7 @@ class TransAppService extends BaseService
         $customer = CustomerService::getCustomerById($customerId);
         $emailTemplateId = (int) Config::get('constants.SIB_MYALFRED_CUSTOMER_WE_TEMPLATE_ID'); //290
 
-        $emailData = [
+        $emailData = (object) [
             'customerName' => $customer->first_name.' '.$customer->last_name,
             'customerEmail' => $customer->email,
             'signUpButtonUrl' => $WEGenerateUrlResponse,
@@ -281,20 +281,18 @@ class TransAppService extends BaseService
 
     public function getTransappAssignedToIdByApprovalCode($approvalCode)
     {
-        $transappAssignedToId = Transaction::select('assigned_to_id')
-            ->where('approval_code', $approvalCode)
-            ->first();
+        $transappAssignedToId = Transaction::where('approval_code', $approvalCode)
+            ->pluck('assigned_to_id')->first();
 
-        return $transappAssignedToId->assigned_to_id;
+        return $transappAssignedToId;
     }
 
     public function getTransappIsCancelledByApprovalCode($approvalCode)
     {
-        $isCancelled = Transaction::select('is_cancelled')
-            ->where('approval_code', $approvalCode)
-            ->first();
+        $isCancelled = Transaction::where('approval_code', $approvalCode)
+            ->pluck('is_cancelled')->first();
 
-        return $isCancelled->is_cancelled;
+        return $isCancelled;
     }
 
     public function getTransactionByApprovalCode($approvalCode)
