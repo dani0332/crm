@@ -983,6 +983,9 @@ class CRUDController extends Controller
             $paymentInformation['reference'] = $request->reference;
         }
         $payment = Payment::where('code', $request->paymentCode)->first();
+        if (! $payment) {
+            return back()->with('message', 'Payment record not found');
+        }
         $payment->update($paymentInformation);
 
         return back()->with('success', 'Payment has been updated');
