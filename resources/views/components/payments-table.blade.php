@@ -146,7 +146,8 @@
                                 <td>{{$payment->reference}}</td>
                                 <td>
                                     @cannot(PermissionsEnum::ApprovePayments)
-                                        @if($payment->paymentMethod->code == 'CC')
+                                        @if($payment->paymentMethod->code == 'CC' && $payment->payment_status_id != PaymentStatusEnum::PAID &&
+                                        $payment->payment_status_id != PaymentStatusEnum::CAPTURED && $payment->payment_status_id != PaymentStatusEnum::AUTHORISED)
                                             <button
                                             data-modelType="{{$modeltype}}"
                                             data-quoteId="{{$paymentPlainModel->id}}"
