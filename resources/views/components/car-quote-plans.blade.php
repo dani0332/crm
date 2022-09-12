@@ -3,7 +3,7 @@ use App\Enums\CarPlanFeaturesCode;
 use App\Enums\CarPlanAddonsCode;
 use App\Enums\CarPlanExclusionsCode;
 use App\Enums\CarPlanType;
-$websitURL = Config::get('constants.AFIA_WEBSITE_DOMAIN');
+$websitURL = config('constants.AFIA_WEBSITE_DOMAIN');
 @endphp
 <div class="row">
 	<div class="col-md-12 col-sm-12">
