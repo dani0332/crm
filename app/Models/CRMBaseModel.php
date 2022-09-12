@@ -2,8 +2,6 @@
 
 namespace App\Models;
 
-use Config;
-
 class CRMBaseModel extends BaseModel
 {
     public function getCreatedAtAttribute($table)
