@@ -250,13 +250,13 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 			var addon_is_selected = document.getElementsByName("addon_is_selected");
 			if (ischecked) {
 				unlockField(['#insurer_quote_no', '#actual_premium', '#discounted_premium', , '#car_value',
-					'#excess', '#insurerTrim', '#ancillary_excess'
+					'#excess', '#insurerTrim'
 				]);
 				hide_element("#car-value-range-validation-text");
 				unlock_addons([addon_price, addon_is_selected]);
 			} else {
 				if (shouldReviseQuote == true) {
-					lockField(['#insurer_quote_no', '#actual_premium', '#excess', '#ancillary_excess']);
+					lockField(['#insurer_quote_no', '#actual_premium', '#excess']);
 				}
 				show_element("#car-value-range-validation-text");
 				lock_addons([addon_price, addon_is_selected]);
@@ -315,7 +315,7 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 
 		function conditionallyLockFields(shouldReviseQuote) {
 			lockField(['#insurer_quote_no', '#actual_premium', '#discounted_premium', , '#car_value', '#excess',
-				'#insurerTrim', '#ancillary_excess'
+				'#insurerTrim'
 			]);
 
 			if (shouldReviseQuote == true) {
@@ -323,7 +323,7 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 			}
 			if (shouldReviseQuote == false) {
 				unlockField(['#insurer_quote_no', '#actual_premium', '#discounted_premium', , '#car_value',
-					'#excess', '#insurerTrim', '#ancillary_excess'
+					'#excess', '#insurerTrim'
 				]);
 			}
 		}
