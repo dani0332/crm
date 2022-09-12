@@ -8,6 +8,16 @@ use App\Models\QuoteDocument;
 
 class QuoteDocumentService extends BaseService
 {
+    public function createFileName($document)
+    {
+        return preg_replace('/\s+/', '', uniqid().'_'.$document->getClientOriginalName());
+    }
+
+    public function createAzureFileName($uuid, $fileName)
+    {
+        return uniqid(). '_' . $uuid . '_' . $fileName;
+    }
+
     public function isEnabled($quoteModelType)
     {
         $enabledLOBs = [quoteTypeCode::Car];
@@ -39,17 +49,17 @@ class QuoteDocumentService extends BaseService
             $docUuid = uniqid().rand(1, 100);
         }
 
-        $quoteDocument = QuoteDocument::create([
-            'doc_name' => $fileNameOriginal,
-            'doc_url' => $filePathAzure,
-            'doc_mime_type' => $fileMimeType,
-            'document_type_code' => $documentTypeCode_->code,
-            'document_type_text' => $documentTypeCode_->text,
-            'doc_uuid' => $docUuid,
-            'created_by_id' => auth()->id(),
-        ]);
 
-        $quoteModel->documents()->save($quoteDocument);
+
+        $quoteModel->documents()->create([
+            'doc_name'              => $fileNameOriginal,
+            'doc_url'               => $filePathAzure,
+            'doc_mime_type'         => $fileMimeType,
+            'document_type_code'    => $documentTypeCode_->code,
+            'document_type_text'    => $documentTypeCode_->text,
+            'doc_uuid'              => $docUuid,
+            'created_by_id'         => auth()->id(),
+        ]);
     }
 
     public function getQuoteDocumentUrl($id)
