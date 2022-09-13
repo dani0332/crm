@@ -515,7 +515,7 @@
         aria-labelledby="activityModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
 
-            <div class="modal-content" id="activityEditModalContent">1
+            <div class="modal-content" id="activityEditModalContent">
 
             </div>
 
