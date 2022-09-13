@@ -521,4 +521,51 @@
 
         </div>
     </div>
+    <div class="modal fade" id="activityModal" name="activityModal" tabindex="-1" role="dialog"
+        aria-labelledby="activityModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+
+            <div class="modal-content">
+                <form method="post" action="/activities/createActivity" autocomplete="off">
+                    {{ csrf_field() }}
+                    @method('POST')
+                    <input type="hidden" name="isActivityView" value="1" id="quote_uuid">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="duplicateLeadModalLabel" style="font-size: 16px !important;">
+                            <i class="fa fa-cog" aria-hidden="true"></i>
+                            <strong style="margin-left: 13px;">New Activity</strong>
+                        </h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="col-md-12" id="followup-div">
+                            <div class="col">
+                                <div class="input-group">
+                                    <input id="email" type="text" class="form-control" name="title" value="{{ old('title') ?? '' }}" placeholder="Title" />
+                                </div>
+                            </div>
+                            <div class="col">
+                                <div class="input-group">
+                                    <textarea placeholder="Description" class="form-control" id="description" rows="5" name="description"></textarea>
+                                </div>
+                            </div>
+                            <div class="col">
+                                <div class="input-group">
+                                    <span class="input-group-addon"><i class="glyphicon glyphicon-time"></i></span>
+                                    <input id="due_date" type="text" class="form-control" name="due_date"
+                                        placeholder="Due Date" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer" style="justify-content: center;">
+                        <button type="submit" class="btn btn-sm btn-success">Add Activity</button>
+                    </div>
+                </form>
+            </div>
+
+        </div>
+    </div>
 @endsection
