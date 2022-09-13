@@ -30,7 +30,7 @@ RUN apt-get update && apt-get install -y \
     nginx \
     wget \
     gnupg \
-    php8.0-redis
+    php-redis
     
 # Install yarn
 RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
