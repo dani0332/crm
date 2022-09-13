@@ -29,7 +29,8 @@ RUN apt-get update && apt-get install -y \
     libmemcached-dev \
     nginx \
     wget \
-    gnupg
+    gnupg \
+    php8.0-redis
     
 # Install yarn
 RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
