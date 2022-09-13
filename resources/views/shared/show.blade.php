@@ -27,11 +27,6 @@
         }
         .ebp_dob { z-index:99999 !important; }
     </style>
-    <script>
-         $('#add-activity-btn').on('click', function(){
-            $('#activityModal').modal({ show: true });
-        });
-    </script>
     @php
     use App\Enums\quoteTypeCode;
     use App\Models\CarQuote;

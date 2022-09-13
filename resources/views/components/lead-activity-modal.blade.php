@@ -20,7 +20,7 @@
                         </button>
                     </div>
                     <div class="modal-body">
-                        <div class="col-md-12" id="followup-div">
+                        <div class="col-md-12">
                             <div class="col">
                                 <div class="input-group">
                                     <input id="email" type="text" class="form-control" name="title" placeholder="Title" />
