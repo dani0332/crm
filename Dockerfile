@@ -11,7 +11,10 @@ ADD https://github.com/mlocati/docker-php-extension-installer/releases/latest/do
 
 # Install php extensions
 RUN chmod +x /usr/local/bin/install-php-extensions && sync && \
-    install-php-extensions mbstring pdo_mysql zip exif pcntl gd memcached redis
+    install-php-extensions mbstring pdo_mysql zip exif pcntl gd memcached
+
+RUN pecl install redis \
+    && docker-php-ext-enable redis
 
 # Install dependencies
 RUN apt-get update && apt-get install -y \
@@ -29,9 +32,7 @@ RUN apt-get update && apt-get install -y \
     libmemcached-dev \
     nginx \
     wget \
-    gnupg \
-    redis-server \
-    php-redis
+    gnupg
     
 # Install yarn
 RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
