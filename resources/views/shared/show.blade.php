@@ -25,6 +25,7 @@
         .col {
             padding-left: 8px;
         }
+        .ebp_dob { z-index:99999 !important; }
     </style>
     <script>
          $('#add-activity-btn').on('click', function(){
@@ -235,8 +236,11 @@
                                         <div class="col-md-6 col-sm-6"
                                             style="text-overflow: ellipsis;overflow: auto;white-space: nowrap;width: 495px;">
                                             <p class="label-align-center">
-                                                @if($property == 'is_ecommerce')
-                                                    {{ $record->is_ecommerce ? 'Yes' : 'No' }}
+
+                                                @if(str_contains($value, 'checkbox') || (str_contains($value, 'static') && str_contains(strtolower($value), 'yes')))
+                                                {{ $record->$property ? 'Yes' : 'No' }}
+                                                @elseif( (str_contains($value, 'static') && !str_contains(strtolower($value), 'yes')))
+                                                {{ $record->$property }}
                                                 @elseif($property == 'previous_quote_id')
                                                     @php
                                                         $previousQuote = CarQuote::select('uuid')->where('id', $record->previous_quote_id)->first();
@@ -292,7 +296,7 @@
 
     @if (strtolower($model->modelType) != 'teams' && strtolower($model->modelType) != 'leadstatus')
         <x-lead-status-update :lead="$record" :modeltype="$model->modelType" :status="$record->quote_status_id" :statuses="$leadStatuses" :lostreasons="$lostReasons"
-            :selectedlostreason="$selectedLostReasonId" :activityassignees="$advisors" />
+            :selectedlostreason="$selectedLostReasonId" :activityassignees="$advisors" :isQuoteDocumentEnabled="$isQuoteDocumentEnabled" />
     @endif
     @if (count($allowedDuplicateLOB) > 0)
         <div class="modal fade" id="duplicateLeadModal" name="duplicateLeadModal" tabindex="-1" role="dialog"
@@ -358,8 +362,9 @@
             </div>
         </div>
 
-
+        @if(auth()->user()->hasRole(RolesEnum::BetaUser))
         <x-payments-table :payments="$payments" :paymentMethods="$paymentMethods" :paymentPlainModel="$paymentEntityModel" :modeltype="$model->modelType" />
+        @endif
         <x-car-quote-assumptions :record="$record" :vehicleTypes="$vehicleTypes" :yearsOfManufacture="$yearsOfManufacture" :trimList="$trimList" />
         <x-car-ecom-detail :record="$record" :carQuotePlanAddons="$carQuotePlanAddons" />
         <x-car-quote-plans :record="$record" :listQuotePlans="$listQuotePlans" :ecomUrl="$ecomCarInsuranceQuoteUrl . $record->uuid" />
@@ -397,8 +402,8 @@
         </div>
         <x-travel-ecom-detail :travelQuotePremium="$record->premium" :travelQuotePaidAt="$record->paid_at" :travelQuotePaymentStatus="$record->payment_status_id_text" :travelQuotePlanName="$record->plan_id_text" />
         <x-travel-quote-members-detail :members="$membersDetail" />
+        <x-quote-policy :record="$record" :quoteType="$quoteType" />
         @if (isset($isQuoteDocumentEnabled) && $isQuoteDocumentEnabled)
-            <x-quote-policy :record="$record" :quoteType="$quoteType" />
             <x-quote-documents :displaySendPolicyButton="$displaySendPolicyButton" :record="$record" :quoteDocuments="$quoteDocuments" :quoteType="$quoteType" />
         @endif
         <x-email-status :emailStatuses="$emailStatuses" />

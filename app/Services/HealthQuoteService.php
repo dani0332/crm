@@ -216,13 +216,13 @@ class HealthQuoteService extends BaseService
                 $this->query->where('hqr.quote_status_id', '!=', 9);
             }
             if (isset($request->assigned_to_date_start) && $request->assigned_to_date_start != '') {
-                $dateFrom = Carbon::createFromFormat('Y-m-d', $request['assigned_to_date_start'])->startOfDay()->toDateTimeString();
-                $dateTo = Carbon::createFromFormat('Y-m-d', $request['assigned_to_date_end'])->endOfDay()->toDateTimeString();
+                $dateFrom = Carbon::createFromTimestamp(strtotime($request['assigned_to_date_start']))->startOfDay()->toDateTimeString();
+                $dateTo = Carbon::createFromTimestamp(strtotime($request['assigned_to_date_end']))->endOfDay()->toDateTimeString();
                 $this->query->whereBetween('hqrd.advisor_assigned_date', [$dateFrom, $dateTo]);
             }
             if (isset($request->next_followup_date) && $request->next_followup_date != '') {
-                $dateFrom = Carbon::createFromFormat('Y-m-d', $request['next_followup_date'])->startOfDay()->toDateTimeString();
-                $dateTo = Carbon::createFromFormat('Y-m-d', $request['next_followup_date_end'])->endOfDay()->toDateTimeString();
+                $dateFrom = Carbon::createFromTimestamp(strtotime($request['next_followup_date']))->startOfDay()->toDateTimeString();
+                $dateTo = Carbon::createFromTimestamp(strtotime($request['next_followup_date_end']))->endOfDay()->toDateTimeString();
                 $this->query->whereBetween('hqrd.next_followup_date', [$dateFrom, $dateTo]);
             }
             if (in_array('created_at', $searchProperties) && isset($request->created_at) && $request->created_at != '') {
@@ -768,6 +768,16 @@ class HealthQuoteService extends BaseService
         $businessLead->uuid = $uuid;
         $businessLead->code = 'BUS-'.$uuid;
         $businessLead->customer_id = $lead->customer_id;
+        $healthMemberIds = HealthMemberDetail::where('health_quote_request_id', $lead->id)->pluck('id');
+        foreach ($healthMemberIds as $id) {
+            $healthQuotePlan = HealthQuotePlan::where('health_quote_request_id', $lead->id)->first();
+            $healthQuotePlan->health_quote_request_id = null;
+            $healthQuotePlan->save();
+            $lead->primary_member_id = null;
+            $lead->plan_id = null;
+            $lead->save();
+            HealthMemberDetail::findOrFail($id)->delete();
+        }
         $businessLead->save();
         HealthQuote::find($lead->id)->delete();
     }

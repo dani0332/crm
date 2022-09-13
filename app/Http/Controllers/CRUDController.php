@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\GenericRequestEnum;
 use App\Enums\HealthTeamType;
+use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -32,6 +33,7 @@ use App\Services\SendEmailCustomerService;
 use App\Services\TeamService;
 use App\Services\TravelQuoteService;
 use App\Services\UserService;
+use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use DataTables;
 use Illuminate\Http\Request;
@@ -62,6 +64,8 @@ class CRUDController extends Controller
     protected $customerService;
     protected $sendEmailCustomerService;
     protected $quoteDocumentService;
+
+    use GenericQueriesAllLobs;
 
     public function __construct(
         HealthQuoteService $healthService,
@@ -405,8 +409,9 @@ class CRUDController extends Controller
             ]));
         } else {
             return view('shared.show', compact([
-                'record', 'model', 'customTitles', 'customTableList', 'advisors', 'leadStatuses', 'lostReasons', 'selectedLostReasonId', 'model_name', 'allowedDuplicateLOB', 'audits', 'activities', 'isRenewalUser',
-                'isNewBusinessUser', 'autoAllocationDisabled',
+                'record', 'model', 'customTitles', 'customTableList', 'advisors', 'leadStatuses', 'lostReasons',
+                'selectedLostReasonId', 'model_name', 'allowedDuplicateLOB', 'audits', 'activities', 'isRenewalUser',
+                'isNewBusinessUser', 'autoAllocationDisabled', 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton',
             ]));
         }
     }
@@ -866,11 +871,21 @@ class CRUDController extends Controller
 
     public function updateQuotePolicy(Request $request)
     {
-        $quote = $this->travelQuoteService->updateQuotePolicy($request);
-
-        if ($quote) {
-            return redirect()->back()->with('success', 'Quote Policy Detail has been updated.');
+        $model = '\\App\\Models\\'.ucwords($request->modelType).'Quote';
+        $quoteModel = $model::where('id', $request->quote_id)->first();
+        if (! $quoteModel) {
+            return redirect()->back()->with('success', 'Error Updating Policy Details.');
         }
+
+        $quoteModel->update([
+            'policy_number' => $request->quote_policy_number,
+            'policy_issuance_date' => Carbon::parse($request->quote_policy_issuance_date)->format('Y-m-d'),
+            'policy_start_date' => Carbon::parse($request->quote_policy_start_date)->format('Y-m-d'),
+            'renewal_expiry_date' => Carbon::parse($request->quote_policy_expiry_date)->format('Y-m-d'),
+            'premium' => $request->quote_premium,
+        ]);
+
+        return redirect()->back()->with('success', 'Quote Policy Detail has been updated.');
     }
 
     public function manualPlanToggle(Request $request)
@@ -904,11 +919,9 @@ class CRUDController extends Controller
 
     public function storeDocument(Request $request)
     {
-        $model = '\\App\\Models\\'.ucwords($this->genericModel->modelType).'Quote';
-        $quoteModel = $model::where('id', $request->quote_id)->first();
-
+        $quoteModel = $this->getQuoteObject($this->genericModel->modelType, $request->quote_id);
         if (! $request->hasFile('file') && ! $quoteModel) {
-            return false;
+            return response()->json(['success' => false]);
         }
 
         $file = $request->file('file');
@@ -921,10 +934,9 @@ class CRUDController extends Controller
 
     public function storePayment(Request $request)
     {
-        $model = '\\App\\Models\\'.ucwords($request->modelType).'Quote';
-        $quoteModel = $model::where('id', $request->quote_id)->first();
+        $quoteModel = $this->getQuoteObject($request->modelType, $request->quote_id);
         if (! $quoteModel) {
-            return false;
+            return response()->json(['success' => false]);
         }
         $code = 'P-'.strtoupper(substr(uniqid('', ), 0, 8));
         $paymentInformation = [
@@ -941,6 +953,9 @@ class CRUDController extends Controller
         if ($request->reference) {
             $paymentInformation['reference'] = $request->reference;
         }
+        if ($request->payment_methods != PaymentMethodsEnum::CreditCard) {
+            $paymentInformation['authorized_at'] = now();
+        }
         $payment = Payment::create($paymentInformation);
         $quoteModel->payments()->save($payment);
         $paymentLog = new PaymentStatusLog([
@@ -950,6 +965,8 @@ class CRUDController extends Controller
             'updated_at' => now(),
         ]);
         $paymentLog->save();
+        $quoteModel->quote_status_id = QuoteStatusEnum::PaymentPending;
+        $quoteModel->save();
 
         return back()->with('success', 'Payment has been created');
     }
@@ -966,6 +983,9 @@ class CRUDController extends Controller
             $paymentInformation['reference'] = $request->reference;
         }
         $payment = Payment::where('code', $request->paymentCode)->first();
+        if (! $payment) {
+            return back()->with('message', 'Payment record not found');
+        }
         $payment->update($paymentInformation);
 
         return back()->with('success', 'Payment has been updated');

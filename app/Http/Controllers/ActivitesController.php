@@ -157,8 +157,10 @@ class ActivitesController extends Controller
     public function updateStatus(Request $request)
     {
         $record = $this->activitesService->getActivityById($request->activity_id);
-        $record->status = $record->status == 0 ? 1 : 0;
-        $record->save();
+        if (isset($record)) {
+            $record->status = $record->status == 0 ? 1 : 0;
+            $record->save();
+        }
     }
 
     public function getEditView(Request $request)

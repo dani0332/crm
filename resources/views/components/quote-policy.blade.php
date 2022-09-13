@@ -1,7 +1,7 @@
-<?php
-    use Illuminate\Support\Facades\Config;
-    $dateFormat = Config::get('constants.DATE_FORMAT');
-?>
+@php
+    $dateFormat = config('constants.DATE_FORMAT');
+    use App\Enums\QuoteStatusEnum;
+@endphp
 
 <meta name="csrf-token" content="{{ csrf_token() }}" />
 <script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
@@ -14,8 +14,9 @@
                 <div class="clearfix"></div>
             </div>
             <div class="x_content">
-            <form id="update-quote-policy-form" method='post' action="{{ url('/quotes/'.$quoteType.'/updateQuotePolicy') }}" enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left" autocomplete="off">
+            <form id="update-quote-policy-form" method='post' action="{{ url('/quotes/'.$quoteType.'/update-quote-policy') }}" enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left" autocomplete="off">
             {{csrf_field()}}
+                <input type="hidden" name="modelType" value="{{ $quoteType ?? ''}}">
                 <input type="hidden" id="quote_id" name="quote_id" value="{{ $record->id }}">
                 <div class="item form-group">
                     <div class="col">
@@ -67,15 +68,13 @@
                     </div>
                 </div>
                 <!-- Transaction Approved -->
-                @if($record->quote_status_id == 15) 
-                <div align="right">
-                    <span style="color:red;" id="error-quote-policy-form"></span>
-                    <button type="button" class="btn btn-primary btn-sm" id="cancel-quote-policy-btn">Cancel</button>
-                    <button type="submit" class="btn btn-success btn-sm" id="update-quote-policy-btn">Update</button>
-                    @can('travel-quotes-policy-detail-edit')
-                    <button type="button" class="btn btn-primary btn-sm" id="edit-quote-policy-btn">Edit</button>
-                    @endcan
-                </div>
+                @if($record->quote_status_id == QuoteStatusEnum::TransactionApproved) 
+                    <div align="right">
+                        <span style="color:red;" id="error-quote-policy-form"></span>
+                        <button type="button" class="btn btn-primary btn-sm" id="cancel-quote-policy-btn">Cancel</button>
+                        <button type="submit" class="btn btn-success btn-sm" id="update-quote-policy-btn">Update</button>
+                        <button type="button" class="btn btn-primary btn-sm" id="edit-quote-policy-btn">Edit</button>
+                    </div>
                 @endif
             </form>
             </div>

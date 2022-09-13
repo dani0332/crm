@@ -3,17 +3,20 @@
 namespace App\Http\Controllers;
 
 use App\Enums\PaymentStatusEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Models\CarMake;
 use App\Models\CarModel;
 use App\Models\CarModelDetail;
 use App\Models\Payment;
 use App\Models\PaymentStatusLog;
 use App\Services\NetworkPaymentService;
+use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class AjaxController extends Controller
 {
+    use GenericQueriesAllLobs;
     public function carModelBasedOnCarMake(Request $request)
     {
         $carmodel = CarModel::activeWithCode($request->make_code)
@@ -69,8 +72,17 @@ class AjaxController extends Controller
 
     public function updatePaymentStatus(Request $request)
     {
+        $quoteModel = $this->getQuoteObject($request->modelType, $request->quote_id);
+        if (! $quoteModel) {
+            return response()->json(['success' => false]);
+        }
         $payment = Payment::where('code', $request->code)->first();
+        if (! $payment) {
+            return response()->json(['success' => false]);
+        }
+
         $payment->payment_status_id = PaymentStatusEnum::PAID;
+        $payment->captured_at = now();
         $payment->save();
         $paymentLog = new PaymentStatusLog([
             'previous_payment_status_id' => $payment->paymentStatusLogs->last()->current_payment_status_id,
@@ -80,6 +92,8 @@ class AjaxController extends Controller
             'updated_at' => now(),
         ]);
         $paymentLog->save();
+        $quoteModel->quote_status_id = QuoteStatusEnum::TransactionApproved;
+        $quoteModel->save();
 
         return response()->json(['success' => true]);
     }
@@ -87,12 +101,13 @@ class AjaxController extends Controller
     public function generatePaymentLink(Request $request)
     {
         $payment = Payment::where('code', '=', $request->paymentCode)->first();
+        if (! $payment) {
+            return response()->json(['success' => false]);
+        }
         if ($payment->payment_link != null && now() < Carbon::parse($payment->payment_link_created_at)->addDays(3)) {
             return response()->json(['success' => true, 'payment_link' => $payment->payment_link]);
         } else {
-            $model = '\\App\\Models\\'.ucwords($request->modelType).'Quote';
-            $quoteModel = $model::where('id', $request->quoteId)->first();
-
+            $quoteModel = $this->getQuoteObject($request->modelType, $request->quoteId);
             $tokenRequest = NetworkPaymentService::sendNetworkTokenRequest();
             if ($tokenRequest->getStatusCode() == 200) {
                 $getContents = $tokenRequest->getBody();

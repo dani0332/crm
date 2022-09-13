@@ -168,8 +168,8 @@ class CarQuoteService extends BaseService
         $response = CapiRequestService::sendCAPIRequest('/api/v1-save-car-quote', $dataArr);
 
         if (isset($response->quoteUID) && isset($request->email)) {
-            return $this->createUpdateCustomerInfo($request, $request->email, $response->quoteUID, quoteTypeCode::CarQuote);
-        } else {
+            $this->createUpdateCustomerInfo($request, $request->email, $response->quoteUID, quoteTypeCode::CarQuote);
+
             return $response;
         }
     }
@@ -967,6 +967,7 @@ class CarQuoteService extends BaseService
                     'insurerTrimId' => strval($request->insurerTrim),
                     'insurerQuoteNo' => strval($request->insurer_quote_no),
                     'isManualUpdate' => $request->is_manual_update,
+                    'ancillaryExcess' => (int) $request->ancillary_excess,
                 ],
             ],
         ];
