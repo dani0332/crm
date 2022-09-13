@@ -2552,7 +2552,11 @@ $(document).ready(function () {
         var websiteURL = $(this).attr('data-websiteURL');
         var paymentLink = `${websiteURL}/car-insurance/quote/${quoteUUID}/payment/?providerCode=${providerCode}&planId=${planId}`;
         navigator.clipboard.writeText(paymentLink);
-        $('#payment-link-copy-msg').show().delay(1000).fadeOut();
+        var self = this;
+        $(this).text('Copied !');
+        setTimeout(function(){
+            $(self).text('Copy');
+        }, 2000);
     });
 });
 
