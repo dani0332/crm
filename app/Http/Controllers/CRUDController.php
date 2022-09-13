@@ -2,44 +2,45 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\GenericRequestEnum;
-use App\Enums\HealthTeamType;
-use App\Enums\PaymentMethodsEnum;
-use App\Enums\PaymentStatusEnum;
-use App\Enums\QuoteStatusEnum;
+use DataTables;
+use Carbon\Carbon;
+use App\Models\User;
+use App\Models\Payment;
+use PDF;
 use App\Enums\quoteTypeCode;
 use App\Models\GenericModel;
-use App\Models\Payment;
-use App\Models\PaymentStatusLog;
+use Illuminate\Http\Request;
+use App\Enums\HealthTeamType;
 use App\Models\QuoteDocument;
-use App\Models\User;
-use App\Services\ActivitiesService;
-use App\Services\ApplicationStorageService;
-use App\Services\BusinessQuoteService;
-use App\Services\CarQuoteService;
 use App\Services\CRUDService;
+use App\Services\TeamService;
+use App\Services\UserService;
+use App\Enums\QuoteStatusEnum;
+use App\Services\LookupService;
+use App\Enums\PaymentStatusEnum;
+use App\Models\PaymentStatusLog;
+use App\Enums\GenericRequestEnum;
+use App\Enums\PaymentMethodsEnum;
+use App\Services\CarQuoteService;
 use App\Services\CustomerService;
-use App\Services\DropdownSourceService;
+use App\Services\PetQuoteService;
+use App\Services\HomeQuoteService;
+use App\Services\LifeQuoteService;
+use App\Services\ActivitiesService;
+use Illuminate\Support\Facades\Log;
 use App\Services\EmailStatusService;
 use App\Services\HealthQuoteService;
-use App\Services\HomeQuoteService;
-use App\Services\LeadAllocationService;
-use App\Services\LifeQuoteService;
-use App\Services\LookupService;
-use App\Services\NotesForCustomerService;
-use App\Services\PetQuoteService;
-use App\Services\QuoteDocumentService;
-use App\Services\SendEmailCustomerService;
-use App\Services\TeamService;
 use App\Services\TravelQuoteService;
-use App\Services\UserService;
-use App\Traits\GenericQueriesAllLobs;
-use Carbon\Carbon;
-use DataTables;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
+use App\Traits\GenericQueriesAllLobs;
+use App\Services\BusinessQuoteService;
+use App\Services\QuoteDocumentService;
+use App\Services\DropdownSourceService;
+use App\Services\LeadAllocationService;
 use Illuminate\Support\Facades\Redirect;
+use App\Services\NotesForCustomerService;
+use App\Services\SendEmailCustomerService;
+use App\Services\ApplicationStorageService;
 
 class CRUDController extends Controller
 {
@@ -901,6 +902,25 @@ class CRUDController extends Controller
             }
 
             return redirect()->back()->with('message', $responseMessage);
+        }
+    }
+
+    public function manualPlanPdf(Request $request)
+    {
+        $quoteId =$request->car_quote_pdf_uuid;
+        $planIds = explode(',', $request->planPdfIds);
+
+        $quotePlans = $this->carQuoteService->getQuotePlans($quoteId);
+        $isPlanUpdateActive = $this->applicationStorageService->getKeyValue('IMCRM_CAR_QUOTE_PLANS_EDIT_IS_DISABLED');
+        if (gettype($quotePlans) != 'string') {
+            $listQuotePlans = $quotePlans->quotes->plans;
+            // dd($listQuotePlans);
+
+            // $pdf = PDF::loadView('shared.pdf_plan_details', compact('listQuotePlans', 'quoteId', 'planIds', 'isPlanUpdateActive'));
+            // $pdf_name = 'plans-' . date("y-m-d-h-i-m") . '.pdf';
+            // return $pdf->download($pdf_name);
+            return view('shared.pdf_plan_details', compact(['listQuotePlans', 'quoteId', 'planIds', 'isPlanUpdateActive']));
+
         }
     }
 

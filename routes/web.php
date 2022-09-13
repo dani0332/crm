@@ -201,6 +201,7 @@ Route::group(['middleware' => ['auth']], function () {
         Route::post('car/sendNotesToCustomer', [CRUDController::class, 'sendNotesToCustomer']);
         Route::post('{quoteType}/update-quote-policy', [CRUDController::class, 'updateQuotePolicy']);
         Route::post('car/manual-plan-toggle', [CRUDController::class, 'manualPlanToggle'])->name('manualPlanToggle');
+        Route::post('car/manual-plan-pdf', [CRUDController::class, 'manualPlanPdf'])->name('manualPlanPdf');
     });
 
     Route::group(['prefix' => 'generic'], function () {

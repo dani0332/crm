@@ -1,3 +1,5 @@
+var selectedPkgIds = new Set();
+
 $(document).ready(function () {
   $('#ebp_dob').datepicker({
     changeMonth: true,
@@ -2859,3 +2861,35 @@ function sendQuoteDocumentsToCustomer(el) {
     return false;
   }
 }
+
+
+$(document).ready(function () {
+  $(document).on("change", ".car_plans_checkbox", function () {
+
+    let $checkbox = $(this);
+    let pkg_id = $checkbox.val();
+    if($checkbox.is(":checked")){
+        selectedPkgIds.add(pkg_id);
+    }else{
+        selectedPkgIds.delete(pkg_id);
+    }
+    if(selectedPkgIds.size){
+        $("#conandcheckout").fadeIn("fast");
+    }else{
+        $("#conandcheckout").fadeOut("fast");
+    }
+
+    $(".total_packages").html(selectedPkgIds.size);
+    //selected_packages = Array.from(selectedPkgIds); 
+  });
+  $('#togglePlanPdfDownload').on('click', function () {
+    
+    var planIds = [];
+    $.each($("input[name='toggle_plans_checkbox']:checked"), function () {
+      planIds.push($(this).val());
+    });
+    $('#planPdfIds').val(planIds);
+    $('#togglePlanPdf').submit();
+    
+  });
+});

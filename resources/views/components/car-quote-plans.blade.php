@@ -19,6 +19,9 @@ $websitURL = Config::get('constants.AFIA_WEBSITE_DOMAIN');
 					<div class="col-auto">
 						<input type="hidden" id="quotePlansGenerateUrl" name="quotePlansGenerateUrl"
 							value="{{ $ecomUrl }}">
+						<span id="conandcheckout" style="display:none;">
+							<button id="togglePlanPdfDownload" type="button" class="btn btn-success btn-sm">Download PDF</button>
+						</span>
 						@can('car-quotes-plans-create')
 						<a href="{{ url('quotes/car/'.$record->uuid.'/create-quote') }}"
 							class="btn btn-primary btn-sm">Create Quote</a>
@@ -35,6 +38,12 @@ $websitURL = Config::get('constants.AFIA_WEBSITE_DOMAIN');
 					</div>
 				</div>
 				@if(gettype($listQuotePlans) != 'string')
+				<form method="post" action={{route('manualPlanPdf')}} class="form-horizontal form-label-left"
+					role="form" id="togglePlanPdf" data-parsley-validate="" novalidate="" autocomplete="off">
+					{{ csrf_field() }}
+					<input type="hidden" id="planPdfIds" name="planPdfIds" value="">
+					<input type="hidden" id="car_quote_pdf_uuid" name="car_quote_pdf_uuid" value="{{$record->uuid}}">
+				</form>
 				<form method="post" action={{route('manualPlanToggle')}} class="form-horizontal form-label-left"
 					role="form" id="togglePlanForm" data-parsley-validate="" novalidate="" autocomplete="off">
 					{{ csrf_field() }}
