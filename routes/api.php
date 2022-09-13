@@ -25,8 +25,8 @@ Route::post('/imcrm/sib-health-callback/{uuid}', [ApiController::class, 'sibHeal
 
 Route::prefix('v1')->group(function ()
 {
-    Route::post('quotes/{type}/documents',  [QuoteDocumentController::class, 'store']);
-    Route::get('document-types',            [DocumentTypeController::class, 'getCustomerAllowedTypes']);
+    Route::post('quotes/{type}/documents',      [QuoteDocumentController::class, 'store']);
+    Route::get('quotes/{type}/document-types',  [QuoteDocumentController::class, 'getQuoteDocumentsToReceive']);
 });
 
 

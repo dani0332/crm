@@ -8,15 +8,22 @@ use App\Models\QuoteDocument;
 
 class QuoteDocumentService extends BaseService
 {
-    public function createFileName($document)
+    /**
+     * get list of active document types can be presented to customer to upload documents
+     * @param $quoteTypeId
+     * @return mixed
+     */
+    public function getQuoteDocumentsToReceive($quoteTypeId)
     {
-        return preg_replace('/\s+/', '', uniqid().'_'.$document->getClientOriginalName());
+        return DocumentType::where([
+            'is_active'                 => 1,
+            'receive_from_customer'     => 1,
+            'quote_type_id'             => $quoteTypeId,
+        ])
+        ->orderBy('sort_order')
+        ->get();
     }
 
-    public function createAzureFileName($uuid, $fileName)
-    {
-        return uniqid(). '_' . $uuid . '_' . $fileName;
-    }
 
     public function isEnabled($quoteModelType)
     {
@@ -35,31 +42,64 @@ class QuoteDocumentService extends BaseService
         ->get();
     }
 
+    /**
+     * upload quote document and store document record in db
+     * @param $file
+     * @param $documentTypeCode
+     * @param $uuid
+     * @param $quote
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function uploadQuoteDocument($file, $data, $quote)
+    {
+        try
+        {
+            $documentType       = DocumentType::where('code', $data['document_type_code'])->first();
+
+            $fileNameOriginal   = preg_replace('/\s+/', '', uniqid().'_'.$file->getClientOriginalName());
+            $fileMimeType       = $file->getClientMimeType();
+
+            //upload file to azure
+            $fileNameAzure      = uniqid() . '_' . $data['quote_uuid'] . '_' . $fileNameOriginal;
+            $filePathAzure      = $file->storeAs('documents/' . $documentType->folder_path, $fileNameAzure, 'azureIM');
+
+            //generate unique uuid
+            $docUuid = uniqid();
+            while (QuoteDocument::where('doc_uuid', $docUuid)->first()) {
+                $docUuid = uniqid().rand(1, 100);
+            }
+
+            $quote->documents()->create([
+                'doc_name'              => $fileNameOriginal,
+                'doc_url'               => $filePathAzure,
+                'doc_mime_type'         => $fileMimeType,
+                'document_type_code'    => $documentType->code,
+                'document_type_text'    => $documentType->text,
+                'doc_uuid'              => $docUuid,
+                'created_by_id'         => auth()->id(),
+            ]);
+
+            return response()->json(['message'  => 'file uploaded successfully.']);
+        }
+        catch (\Exception $exception)
+        {
+            return response()->json(['error'  => 'Document upload failed, please try again'], 500);
+        }
+    }
+
+    /**
+     * this function is not in use any more, merged with $this->uploadQuoteDocument() function
+     *
+     * @param $documentTypeCode
+     * @param $fileNameOriginal
+     * @param $filePathAzure
+     * @param $fileMimeType
+     * @param $quoteModel
+     * @return false|void
+     */
     public function createQuoteDocumentRecord($documentTypeCode, $fileNameOriginal, $filePathAzure, $fileMimeType, $quoteModel)
     {
-        $documentTypeCode_ = DocumentType::where('code', $documentTypeCode)->where('is_active', 1)->first();
 
-        if (! $documentTypeCode_) {
-            return false;
-        }
-
-        $docUuid = uniqid();
-
-        while (QuoteDocument::where('doc_uuid', $docUuid)->first()) {
-            $docUuid = uniqid().rand(1, 100);
-        }
-
-
-
-        $quoteModel->documents()->create([
-            'doc_name'              => $fileNameOriginal,
-            'doc_url'               => $filePathAzure,
-            'doc_mime_type'         => $fileMimeType,
-            'document_type_code'    => $documentTypeCode_->code,
-            'document_type_text'    => $documentTypeCode_->text,
-            'doc_uuid'              => $docUuid,
-            'created_by_id'         => auth()->id(),
-        ]);
     }
 
     public function getQuoteDocumentUrl($id)

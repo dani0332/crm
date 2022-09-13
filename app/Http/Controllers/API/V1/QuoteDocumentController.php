@@ -4,15 +4,31 @@ namespace App\Http\Controllers\API\V1;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\QuoteDocumentRequest;
-use App\Models\DocumentType;
+use App\Http\Resources\DocumentTypeResource;
+use App\Services\ActivitiesService;
 use App\Services\QuoteDocumentService;
-use Illuminate\Http\Request;
 
 class QuoteDocumentController extends Controller
 {
-    public function __construct()
-    {
+    protected $quoteDocumentService;
 
+    public function __construct(QuoteDocumentService $quoteDocumentService)
+    {
+        $this->quoteDocumentService = $quoteDocumentService;
+    }
+
+    /**
+     * get list of active document types can be presented to customer to upload documents
+     *
+     * @param $quoteType
+     * @param ActivitiesService $activitiesService
+     * @return \Illuminate\Http\Resources\Json\AnonymousResourceCollection
+     */
+    public function getQuoteDocumentsToReceive($quoteType, ActivitiesService $activitiesService)
+    {
+        $quoteTypeId    = $activitiesService->getQuoteTypeId($quoteType);
+        $documentTypes  = $this->quoteDocumentService->getQuoteDocumentsToReceive($quoteTypeId);
+        return DocumentTypeResource::collection($documentTypes);
     }
 
     /**
@@ -22,28 +38,14 @@ class QuoteDocumentController extends Controller
      * @param QuoteDocumentService $quoteDocumentService
      * @return \Illuminate\Http\JsonResponse
      */
-    public function store($type, QuoteDocumentRequest $request, QuoteDocumentService $quoteDocumentService)
+    public function store($type, QuoteDocumentRequest $request)
     {
-        try
-        {
-            $model          = '\\App\\Models\\'.ucwords($type).'Quote';
-            $quote          = $model::where('uuid', $request->uuid)->first();
-            $documentType   = DocumentType::where('code', $request->document_type_code)->first();
-            $document       = $request->file('document');
+        $model          = '\\App\\Models\\'.ucwords($type).'Quote';
+        $quote          = $model::where('uuid', $request->quote_uuid)->first();
 
-            $fileNameOriginal   = $quoteDocumentService->createFileName($document);
-            $fileNameAzure      = $quoteDocumentService->createAzureFileName($request->uuid, $fileNameOriginal);
+        //$request->document_type_code, $request->quote_uuid, $quote
+        $response = $this->quoteDocumentService->uploadQuoteDocument($request->file('file'), $request->validated(), $quote);
 
-            $filePathAzure      = $document->storeAs('documents/' . $documentType->folder_path, $fileNameAzure, 'azureIM');
-
-            $quoteDocumentService->createQuoteDocumentRecord($request->document_type_code, $fileNameOriginal, $filePathAzure, $document->getClientMimeType(), $quote);
-
-            return response()->json(['message'  => 'file uploaded successfully.']);
-        }
-        catch (\Exception $exception)
-        {
-            return response()->json(['error'  => 'Document upload failed, please try again'], 500);
-        }
-
+        return $response;
     }
 }

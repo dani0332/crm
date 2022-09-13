@@ -81,18 +81,13 @@ class QuoteDocumentController extends Controller
 
     public function store(Request $request, $quoteType)
     {
-        $model = '\\App\\Models\\'.ucwords($quoteType).'Quote';
-        $quoteModel = $model::where('id', $request->quote_id)->first();
-        if (! $request->hasFile('file') || ! $quoteModel) {
+        $model      = '\\App\\Models\\'.ucwords($quoteType).'Quote';
+
+        if (!$request->hasFile('file') || !($quoteModel = $model::where('id', $request->quote_id)->first()) ) {
             return false;
         }
 
-        $file = $request->file('file');
-        $fileNameOriginal = preg_replace('/\s+/', '', uniqid().'_'.$file->getClientOriginalName());
-        $fileMimeType = $file->getClientMimeType();
-        $fileNameAzure = uniqid().'_'.$request->quote_uuid.'_'.$fileNameOriginal;
-        $filePathAzure = $request->file('file')->storeAs('documents/'.$request->folder_path, $fileNameAzure, 'azureIM');
-        $this->quoteDocumentService->createQuoteDocumentRecord($request->document_type_code, $fileNameOriginal, $filePathAzure, $fileMimeType, $quoteModel);
+        return $this->quoteDocumentService->uploadQuoteDocument($request->file('file'), $request->all() , $quoteModel);
     }
 
     public function sendPolicyDocument($quoteType, $quoteUuId)

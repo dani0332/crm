@@ -27,13 +27,13 @@ class QuoteDocumentRequest extends FormRequest
     {
         $rules =
         [
-            'document'              => 'required|file',//|mimes:xlsm,xlsx,pdf,jpeg,jpg|max:5120
+            'file'                  => 'required|file',//|mimes:xlsm,xlsx,pdf,jpeg,jpg|max:5120
             'document_type_code'    => 'required|exists:document_types,code,is_active,1',
-            'uuid'                  => 'required',
+            'quote_uuid'            => 'required',
         ];
 
         if(!empty(request()->document_type_code) && ($documentType = DocumentType::where('code', request()->document_type_code)->first()) ) {
-            $rules['document'] .= '|mimes:' . (str_replace('.', '', $documentType->accepted_files)) . '|max:' . ($documentType->max_size * 1024) ;
+            $rules['file']      .= '|mimes:' . (str_replace('.', '', $documentType->accepted_files)) . '|max:' . ($documentType->max_size * 1024) ;
         }
 
         return  $rules;
@@ -55,7 +55,7 @@ class QuoteDocumentRequest extends FormRequest
         {
             $model = '\\App\\Models\\'.ucwords(request()->type).'Quote';
 
-            if( !class_exists($model) ||  (!$quote = $model::where('uuid', @request()->uuid)->first()) ) {
+            if( !class_exists($model) ||  (!$quote = $model::where('uuid', @request()->quote_uuid)->first()) ) {
                 $validator->errors()->add('type', 'Invalid quote type or uuid provided');
             }
 

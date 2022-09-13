@@ -917,19 +917,18 @@ class CRUDController extends Controller
         return redirect()->back()->with('message', 'Document has been deleted.');
     }
 
+    /**
+     * todo: testing pending, not sure how to trigger this or in use
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function storeDocument(Request $request)
     {
-        $quoteModel = $this->getQuoteObject($this->genericModel->modelType, $request->quote_id);
-        if (! $request->hasFile('file') && ! $quoteModel) {
+        if (! $request->hasFile('file') && !($quoteModel = $this->getQuoteObject($this->genericModel->modelType, $request->quote_id)) ) {
             return response()->json(['success' => false]);
         }
 
-        $file = $request->file('file');
-        $fileNameOriginal = $file->getClientOriginalName();
-        $fileMimeType = $file->getClientMimeType();
-        $fileNameAzure = uniqid().'_'.$request->quote_uuid.'_'.$fileNameOriginal;
-        $filePathAzure = $request->file('file')->storeAs('documents/'.$request->folder_path, $fileNameAzure, 'azureIM');
-        $this->quoteDocumentService->createQuoteDocumentRecord($request->document_type_code, $fileNameOriginal, $filePathAzure, $fileMimeType, $quoteModel);
+        return $this->quoteDocumentService->uploadQuoteDocument($request->file('file'), $request->all(), $quoteModel);
     }
 
     public function storePayment(Request $request)
