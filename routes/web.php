@@ -76,16 +76,10 @@ Route::get('/', function () {
 Route::get('/clear-cache', function () {
     Artisan::call('cache:clear');
     Artisan::call('optimize');
-    Artisan::call('route:cache');
-    Artisan::call('route:clear');
-    Artisan::call('view:clear');
+    Artisan::call('view:cache');
     Artisan::call('config:cache');
 
     return '<h1>All cache cleared and optimized</h1>';
-});
-
-Route::get('/debug-sentry', function () {
-    throw new Exception('My first Sentry error!');
 });
 
 Route::get('auth/google', 'App\Http\Controllers\GoogleSocialiteController@redirectToGoogle');
