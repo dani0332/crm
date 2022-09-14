@@ -917,21 +917,6 @@ class CRUDController extends Controller
         return redirect()->back()->with('message', 'Document has been deleted.');
     }
 
-    public function storeDocument(Request $request)
-    {
-        $quoteModel = $this->getQuoteObject($this->genericModel->modelType, $request->quote_id);
-        if (! $request->hasFile('file') && ! $quoteModel) {
-            return response()->json(['success' => false]);
-        }
-
-        $file = $request->file('file');
-        $fileNameOriginal = $file->getClientOriginalName();
-        $fileMimeType = $file->getClientMimeType();
-        $fileNameAzure = uniqid().'_'.$request->quote_uuid.'_'.$fileNameOriginal;
-        $filePathAzure = $request->file('file')->storeAs('documents/'.$request->folder_path, $fileNameAzure, 'azureIM');
-        $this->quoteDocumentService->createQuoteDocumentRecord($request->document_type_code, $fileNameOriginal, $filePathAzure, $fileMimeType, $quoteModel);
-    }
-
     public function storePayment(Request $request)
     {
         $quoteModel = $this->getQuoteObject($request->modelType, $request->quote_id);
