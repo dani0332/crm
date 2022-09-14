@@ -910,17 +910,18 @@ class CRUDController extends Controller
         $quoteId =$request->car_quote_pdf_uuid;
         $planIds = explode(',', $request->planPdfIds);
 
+        if (count($planIds) > 4) {
+            return redirect()->back()->with('message', 'Plans Must not be greater then 4');
+        }
+
         $quotePlans = $this->carQuoteService->getQuotePlans($quoteId);
         $isPlanUpdateActive = $this->applicationStorageService->getKeyValue('IMCRM_CAR_QUOTE_PLANS_EDIT_IS_DISABLED');
         if (gettype($quotePlans) != 'string') {
             $listQuotePlans = $quotePlans->quotes->plans;
-            // dd($listQuotePlans);
 
-            // $pdf = PDF::loadView('shared.pdf_plan_details', compact('listQuotePlans', 'quoteId', 'planIds', 'isPlanUpdateActive'));
-            // $pdf_name = 'plans-' . date("y-m-d-h-i-m") . '.pdf';
-            // return $pdf->download($pdf_name);
-            return view('shared.pdf_plan_details', compact(['listQuotePlans', 'quoteId', 'planIds', 'isPlanUpdateActive']));
-
+            $pdf = PDF::setOption(['isHtml5ParserEnabled' => true,'dpi' => 150])->loadView('shared.pdf_plan_details', compact('listQuotePlans', 'quoteId', 'planIds', 'isPlanUpdateActive'));
+            $pdf_name = 'plans-' . date("y-m-d-h-i-m") . '.pdf';
+            return $pdf->download($pdf_name);
         }
     }
 
