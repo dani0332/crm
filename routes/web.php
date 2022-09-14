@@ -80,6 +80,7 @@ Route::get('/clear-cache', function () {
     Artisan::call('route:clear');
     Artisan::call('view:clear');
     Artisan::call('config:cache');
+
     return '<h1>All cache cleared and optimized</h1>';
 });
 
