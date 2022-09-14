@@ -3,11 +3,15 @@
 namespace App\Http\Requests;
 
 use App\Models\DocumentType;
+use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Support\Facades\Validator;
 
 class QuoteDocumentRequest extends FormRequest
 {
+    use GenericQueriesAllLobs;
+
+    protected $documentType;
+
     /**
      * Determine if the user is authorized to make this request.
      *
@@ -25,41 +29,37 @@ class QuoteDocumentRequest extends FormRequest
      */
     public function rules()
     {
-        $rules =
-        [
-            'file'                  => 'required|file',//|mimes:xlsm,xlsx,pdf,jpeg,jpg|max:5120
-            'document_type_code'    => 'required|exists:document_types,code,is_active,1',
-            'quote_uuid'            => 'required',
+        $rules = [
+            'file' => 'required|file',
+            'document_type_code' => 'required|exists:document_types,code,is_active,1',
+            'quote_uuid' => 'required',
         ];
 
-        if(!empty(request()->document_type_code) && ($documentType = DocumentType::where('code', request()->document_type_code)->first()) ) {
-            $rules['file']      .= '|mimes:' . (str_replace('.', '', $documentType->accepted_files)) . '|max:' . ($documentType->max_size * 1024) ;
+        if (! empty(request()->document_type_code) && ($this->documentType = DocumentType::where('code', request()->document_type_code)->first())) {
+            $rules['file'] .= '|mimes:'.(str_replace('.', '', $this->documentType->accepted_files)).'|max:'.($this->documentType->max_size * 1024);
         }
 
         return  $rules;
-
     }
 
-
-
-
     /**
-     * check for valid quote model and quote record
-     * e.g. first check for valid model class like (CarQuote)
-     * and then validate quote record using that model
+     * validate quote record and maximum number of alread uploaded files
+     *
      * @param $validator
      */
     public function withValidator($validator)
     {
-        $validator->after(function ($validator)
-        {
-            $model = '\\App\\Models\\'.ucwords(request()->type).'Quote';
+        $validator->after(function ($validator) {
 
-            if( !class_exists($model) ||  (!$quote = $model::where('uuid', @request()->quote_uuid)->first()) ) {
+            //check for quote records if exists
+            if ((! $quote = $this->getQuote(request()->quoteType, 'uuid', request()->quote_uuid))) {
                 $validator->errors()->add('type', 'Invalid quote type or uuid provided');
             }
 
+            //check for maximum number of files uploaded against selected quote and document type
+            if ($quote->documents->where('document_type_code', request()->document_type_code)->count() >= $this->documentType->max_files) {
+                $validator->errors()->add('file', 'You can only upload a maximum of '.$this->documentType->max_files.' files');
+            }
         });
     }
-
 }

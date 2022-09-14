@@ -1,9 +1,8 @@
 <?php
 
 use App\Http\Controllers\API\ApiController;
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\API\V1\QuoteDocumentController;
-use App\Http\Controllers\API\V1\DocumentTypeController;
+use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
@@ -23,10 +22,7 @@ Route::middleware(['basicAuth'])->group(function () {
 
 Route::post('/imcrm/sib-health-callback/{uuid}', [ApiController::class, 'sibHealthQuoteCallBack']);
 
-Route::prefix('v1')->group(function ()
-{
-    Route::post('quotes/{type}/documents',      [QuoteDocumentController::class, 'store']);
-    Route::get('quotes/{type}/document-types',  [QuoteDocumentController::class, 'getQuoteDocumentsToReceive']);
+Route::prefix('v1')->group(function () {
+    Route::post('quotes/{quoteType}/documents', [QuoteDocumentController::class, 'store']);
+    Route::get('quotes/{quoteType}/document-types', [QuoteDocumentController::class, 'getQuoteDocumentsToReceive']);
 });
-
-

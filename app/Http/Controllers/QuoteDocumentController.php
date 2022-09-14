@@ -11,11 +11,14 @@ use App\Services\CustomerService;
 use App\Services\QuoteDocumentService;
 use App\Services\SendEmailCustomerService;
 use App\Services\UserService;
+use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
 class QuoteDocumentController extends Controller
 {
+    use GenericQueriesAllLobs;
+
     protected $crudService;
     protected $activityService;
     protected $quoteDocumentService;
@@ -81,13 +84,13 @@ class QuoteDocumentController extends Controller
 
     public function store(Request $request, $quoteType)
     {
-        $model      = '\\App\\Models\\'.ucwords($quoteType).'Quote';
-
-        if (!$request->hasFile('file') || !($quoteModel = $model::where('id', $request->quote_id)->first()) ) {
+        if (! $request->hasFile('file') ||
+            ! ($quote = $this->getQuote($quoteType, 'id', $request->quote_id))
+        ) {
             return false;
         }
 
-        return $this->quoteDocumentService->uploadQuoteDocument($request->file('file'), $request->all() , $quoteModel);
+        return $this->quoteDocumentService->uploadQuoteDocument($request->file('file'), $request->all(), $quote);
     }
 
     public function sendPolicyDocument($quoteType, $quoteUuId)

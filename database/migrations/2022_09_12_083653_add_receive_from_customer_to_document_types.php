@@ -14,11 +14,9 @@ class AddReceiveFromCustomerToDocumentTypes extends Migration
     public function up()
     {
         Schema::table('document_types', function (Blueprint $table) {
-
             if (! Schema::hasColumn('document_types', 'receive_from_customer')) {
                 $table->boolean('receive_from_customer')->default(0);
             }
-
         });
     }
 

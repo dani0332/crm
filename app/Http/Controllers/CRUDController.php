@@ -917,20 +917,6 @@ class CRUDController extends Controller
         return redirect()->back()->with('message', 'Document has been deleted.');
     }
 
-    /**
-     * todo: testing pending, not sure how to trigger this or in use
-     * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function storeDocument(Request $request)
-    {
-        if (! $request->hasFile('file') && !($quoteModel = $this->getQuoteObject($this->genericModel->modelType, $request->quote_id)) ) {
-            return response()->json(['success' => false]);
-        }
-
-        return $this->quoteDocumentService->uploadQuoteDocument($request->file('file'), $request->all(), $quoteModel);
-    }
-
     public function storePayment(Request $request)
     {
         $quoteModel = $this->getQuoteObject($request->modelType, $request->quote_id);

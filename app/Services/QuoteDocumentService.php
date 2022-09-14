@@ -5,25 +5,26 @@ namespace App\Services;
 use App\Enums\quoteTypeCode;
 use App\Models\DocumentType;
 use App\Models\QuoteDocument;
+use Illuminate\Support\Facades\Log;
 
 class QuoteDocumentService extends BaseService
 {
     /**
      * get list of active document types can be presented to customer to upload documents
+     *
      * @param $quoteTypeId
      * @return mixed
      */
     public function getQuoteDocumentsToReceive($quoteTypeId)
     {
         return DocumentType::where([
-            'is_active'                 => 1,
-            'receive_from_customer'     => 1,
-            'quote_type_id'             => $quoteTypeId,
+            'is_active' => 1,
+            'receive_from_customer' => 1,
+            'quote_type_id' => $quoteTypeId,
         ])
         ->orderBy('sort_order')
         ->get();
     }
-
 
     public function isEnabled($quoteModelType)
     {
@@ -44,6 +45,7 @@ class QuoteDocumentService extends BaseService
 
     /**
      * upload quote document and store document record in db
+     *
      * @param $file
      * @param $documentTypeCode
      * @param $uuid
@@ -52,16 +54,17 @@ class QuoteDocumentService extends BaseService
      */
     public function uploadQuoteDocument($file, $data, $quote)
     {
-        try
-        {
-            $documentType       = DocumentType::where('code', $data['document_type_code'])->first();
+        if (! ($documentType = DocumentType::where('code', $data['document_type_code'])->first())) {
+            return response()->json(['error' => 'Invalid document type code provided'], 500);
+        }
 
-            $fileNameOriginal   = preg_replace('/\s+/', '', uniqid().'_'.$file->getClientOriginalName());
-            $fileMimeType       = $file->getClientMimeType();
+        try {
+            $fileNameOriginal = preg_replace('/\s+/', '', uniqid().'_'.$file->getClientOriginalName());
+            $fileMimeType = $file->getClientMimeType();
 
             //upload file to azure
-            $fileNameAzure      = uniqid() . '_' . $data['quote_uuid'] . '_' . $fileNameOriginal;
-            $filePathAzure      = $file->storeAs('documents/' . $documentType->folder_path, $fileNameAzure, 'azureIM');
+            $fileNameAzure = uniqid().'_'.$data['quote_uuid'].'_'.$fileNameOriginal;
+            $filePathAzure = $file->storeAs('documents/'.$documentType->folder_path, $fileNameAzure, 'azureIM');
 
             //generate unique uuid
             $docUuid = uniqid();
@@ -70,36 +73,21 @@ class QuoteDocumentService extends BaseService
             }
 
             $quote->documents()->create([
-                'doc_name'              => $fileNameOriginal,
-                'doc_url'               => $filePathAzure,
-                'doc_mime_type'         => $fileMimeType,
-                'document_type_code'    => $documentType->code,
-                'document_type_text'    => $documentType->text,
-                'doc_uuid'              => $docUuid,
-                'created_by_id'         => auth()->id(),
+                'doc_name' => $fileNameOriginal,
+                'doc_url' => $filePathAzure,
+                'doc_mime_type' => $fileMimeType,
+                'document_type_code' => $documentType->code,
+                'document_type_text' => $documentType->text,
+                'doc_uuid' => $docUuid,
+                'created_by_id' => auth()->id(),
             ]);
 
-            return response()->json(['message'  => 'file uploaded successfully.']);
-        }
-        catch (\Exception $exception)
-        {
-            return response()->json(['error'  => 'Document upload failed, please try again'], 500);
-        }
-    }
+            return response()->json(['message' => 'file uploaded successfully.']);
+        } catch (\Exception $exception) {
+            Log::info('FN: uploadQuoteDocument  UUID: '.$data['quote_uuid'].' Error Code/Message: '.$exception->getCode().'/'.$exception->getMessage());
 
-    /**
-     * this function is not in use any more, merged with $this->uploadQuoteDocument() function
-     *
-     * @param $documentTypeCode
-     * @param $fileNameOriginal
-     * @param $filePathAzure
-     * @param $fileMimeType
-     * @param $quoteModel
-     * @return false|void
-     */
-    public function createQuoteDocumentRecord($documentTypeCode, $fileNameOriginal, $filePathAzure, $fileMimeType, $quoteModel)
-    {
-
+            return response()->json(['error' => 'Document upload failed, please try again'], 500);
+        }
     }
 
     public function getQuoteDocumentUrl($id)
