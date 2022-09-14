@@ -45,7 +45,7 @@ class QuoteDocumentController extends Controller
      */
     public function store($quoteType, QuoteDocumentRequest $request)
     {
-        $quote = $this->getQuote($quoteType, 'uuid', $request->quote_uuid);
+        $quote = $this->getQuoteObject($quoteType, $request->quote_uuid);
 
         return $this->quoteDocumentService->uploadQuoteDocument($request->file('file'), $request->validated(), $quote);
     }

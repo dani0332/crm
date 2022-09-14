@@ -52,7 +52,7 @@ class QuoteDocumentRequest extends FormRequest
         $validator->after(function ($validator) {
 
             //check for quote records if exists
-            if ((! $quote = $this->getQuote(request()->quoteType, 'uuid', request()->quote_uuid))) {
+            if ((! $quote = $this->getQuoteObject(request()->quoteType, request()->quote_uuid))) {
                 $validator->errors()->add('type', 'Invalid quote type or uuid provided');
             }
 

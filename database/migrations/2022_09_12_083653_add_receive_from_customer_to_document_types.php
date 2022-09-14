@@ -19,15 +19,4 @@ class AddReceiveFromCustomerToDocumentTypes extends Migration
             }
         });
     }
-
-    /**
-     * Reverse the migrations.
-     *
-     * @return void
-     */
-    public function down()
-    {
-        Schema::table('document_types', function (Blueprint $table) {
-        });
-    }
 }

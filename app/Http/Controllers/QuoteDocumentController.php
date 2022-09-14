@@ -85,7 +85,7 @@ class QuoteDocumentController extends Controller
     public function store(Request $request, $quoteType)
     {
         if (! $request->hasFile('file') ||
-            ! ($quote = $this->getQuote($quoteType, 'id', $request->quote_id))
+            ! ($quote = $this->getQuoteObject($quoteType, $request->quote_id))
         ) {
             return false;
         }
