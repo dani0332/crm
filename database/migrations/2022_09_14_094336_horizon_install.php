@@ -12,6 +12,7 @@ class HorizonInstall extends Migration
     public function up()
     {
         Artisan::call('horizon:install');
+        Artisan::call('horizon');
     }
 
     /**
