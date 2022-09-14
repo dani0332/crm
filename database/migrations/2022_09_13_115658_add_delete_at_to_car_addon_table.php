@@ -14,11 +14,9 @@ class AddDeleteAtToCarAddonTable extends Migration
     public function up()
     {
         Schema::table('car_addon', function (Blueprint $table) {
-
-            if (!Schema::hasColumn('car_addon', 'deleted_at')) {
+            if (! Schema::hasColumn('car_addon', 'deleted_at')) {
                 $table->softDeletes();
             }
-
         });
     }
 
