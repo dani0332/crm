@@ -19,7 +19,7 @@ trait GenericQueriesAllLobs
     public function getQuoteObject($quoteType, $id)
     {
         $nameSpace = '\\App\\Models\\';
-        $modelType = $nameSpace.$quoteType.'Quote';
+        $modelType = $nameSpace.ucwords($quoteType).'Quote';
         $result = (intval($id)) ? $modelType::find($id) : $modelType::where('uuid', $id)->first();
         if ($result) {
             return $result;
