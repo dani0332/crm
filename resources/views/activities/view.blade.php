@@ -4,7 +4,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}" />
     <script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
     <style>
-        
+
         #filters-div button {
             border-radius: 12px;
             border: 1px solid black;
@@ -268,7 +268,7 @@
             $('#hiddenField').on('apply.daterangepicker', function(ev, picker) {
                 var startDate = picker.startDate.format('YYYY-MM-DD HH:mm:ss');
                 var endDate = picker.endDate.format('YYYY-MM-DD HH:mm:ss');
-               
+
                 $('#customPeriodStart').val(startDate);
                 $('#customPeriodEnd').val(endDate);
                 $('#period').val('custom');
@@ -276,7 +276,7 @@
                 $('#hiddenField').css("background-color", "#030303").css('color', 'white');
                 $('.activities-datatable').DataTable().ajax.reload();
             });
-            
+
             var activitiesTable = $(".activities-datatable").DataTable({
                 ordering: false,
                 info: false,
@@ -303,7 +303,7 @@
                         data: 'quote_request_id',
                         name: 'quote_request_id',
                         render: function(data, type, row) {
-                            
+
                             var url = '/quotes/' + getQuoteTypeById(row.quote_type_id) + '/' + row
                                 .quote_uuid;
                             if (row.quote_uuid) {
@@ -521,7 +521,6 @@
 
         </div>
     </div>
-
     <div class="modal fade" id="activityModal" name="activityModal" tabindex="-1" role="dialog"
         aria-labelledby="activityModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
@@ -569,5 +568,4 @@
 
         </div>
     </div>
-
 @endsection

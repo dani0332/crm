@@ -290,7 +290,7 @@ class TransAppService extends BaseService
     public function getTransappIsCancelledByApprovalCode($approvalCode)
     {
         $isCancelled = Transaction::where('approval_code', $approvalCode)
-            ->pluck("is_cancelled")->first();
+            ->pluck('is_cancelled')->first();
 
         return $isCancelled;
     }

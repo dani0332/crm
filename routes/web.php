@@ -29,7 +29,6 @@ use App\Http\Controllers\LeadSearchController;
 use App\Http\Controllers\MembersDetailController;
 use App\Http\Controllers\MyLeadsController;
 use App\Http\Controllers\PartnerController;
-use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PaymentModeController;
 use App\Http\Controllers\QuoteDocumentController;
 use App\Http\Controllers\ReasonController;
@@ -56,6 +55,7 @@ use App\Http\Controllers\UploadResourceController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ValuationController;
 use App\Http\Controllers\VehicleDepreciationController;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -73,10 +73,6 @@ Route::get('/', function () {
     return redirect('login');
 });
 
-Route::get('/debug-sentry', function () {
-    throw new Exception('My first Sentry error!');
-});
-
 Route::get('auth/google', 'App\Http\Controllers\GoogleSocialiteController@redirectToGoogle');
 Route::get('google/callback', 'App\Http\Controllers\GoogleSocialiteController@handleCallback');
 
@@ -85,7 +81,13 @@ Route::middleware(['auth'])->get('/home', function () {
 });
 
 Route::group(['middleware' => ['auth']], function () {
-    Route::resource('payments', PaymentController::class);
+    Route::get('/clear-cache', function () {
+        Artisan::call('cache:clear');
+        Artisan::call('view:cache');
+        Artisan::call('config:cache');
+
+        return '<h1>All cache cleared and optimized</h1>';
+    });
     Route::post('/payments/{quoteType}/store', [CRUDController::class, 'storePayment']);
     Route::post('/payments/{quoteType}/update', [CRUDController::class, 'updatePayment']);
     Route::resource('myleads', MyLeadsController::class);

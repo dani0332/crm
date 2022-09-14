@@ -8,8 +8,8 @@
         <input type="hidden" name="quote_uuid" value="{{$record->quote_uuid}}" />
 
         <div class="modal-header">
-            <h5 class="modal-title" id="duplicateLeadModalLabel" style="font-size: 16px !important;"><img src="https://i.ibb.co/SRHGR0S/system.png" height="30px" width="30px" />
-                <strong style="margin-left: 13px;">Lead Activity</strong>
+            <h5 class="modal-title" id="duplicateLeadModalLabel" style="font-size: 16px !important;"><i class="fa fa-cog" aria-hidden="true"></i>
+                <strong style="margin-left: 13px;">Update Lead Activity</strong>
             </h5>
             <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                 <span aria-hidden="true">&times;</span>

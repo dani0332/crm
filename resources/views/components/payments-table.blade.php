@@ -104,10 +104,11 @@
                 <h2>Payments</h2>
                 @if($paymentPlainModel->plan)
                 @cannot(PermissionsEnum::ApprovePayments)
+                @can(PermissionsEnum::PaymentsCreate)
                     <button class="btn btn-success btn-sm" style="float:right;width:110px;" type="button"
                     id="add-payment-btn">Add Payment</button>
+                @endcan
                 @endcannot
-
                 @endif
                 <div class="clearfix"></div>
             </div>
@@ -145,7 +146,8 @@
                                 <td>{{$payment->reference}}</td>
                                 <td>
                                     @cannot(PermissionsEnum::ApprovePayments)
-                                        @if($payment->paymentMethod->code == 'CC')
+                                        @if($payment->paymentMethod->code == 'CC' && $payment->payment_status_id != PaymentStatusEnum::PAID &&
+                                        $payment->payment_status_id != PaymentStatusEnum::CAPTURED && $payment->payment_status_id != PaymentStatusEnum::AUTHORISED)
                                             <button
                                             data-modelType="{{$modeltype}}"
                                             data-quoteId="{{$paymentPlainModel->id}}"
@@ -154,6 +156,7 @@
                                         @endif
                                         @if($payment->payment_status_id != PaymentStatusEnum::PAID &&
                                         $payment->payment_status_id != PaymentStatusEnum::CAPTURED && $payment->payment_status_id != PaymentStatusEnum::AUTHORISED)
+                                         @can(PermissionsEnum::PaymentsEdit)
                                             <button class="btn btn-primary btn-sm edit-payment-btn" data-code="{{$payment->code}}"
                                                 data-reference="{{$payment->reference}}"
                                                 data-amount="{{$payment->captured_amount}}"
@@ -161,6 +164,7 @@
                                                 data-collection="{{$payment->collection_type}}"
                                                 data-payment-method="{{$payment->paymentMethod->code}}"
                                                 data-provider="{{$paymentPlainModel->plan->insuranceProvider->text}}">Edit</button>
+                                            @endcan
                                         @endif
                                     @endcannot
                                     @can(PermissionsEnum::ApprovePayments)
