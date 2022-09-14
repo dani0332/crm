@@ -57,7 +57,7 @@ class QuoteDocumentRequest extends FormRequest
             }
 
             //check for maximum number of files uploaded against selected quote and document type
-            if ($this->documentType && $quote->documents->where('document_type_code', request()->document_type_code)->count() >= $this->documentType->max_files) {
+            if ($this->documentType && $quote && $quote->documents->where('document_type_code', request()->document_type_code)->count() >= $this->documentType->max_files) {
                 $validator->errors()->add('file', 'You can only upload a maximum of '.$this->documentType->max_files.' files');
             }
         });
