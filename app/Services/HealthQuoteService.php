@@ -381,7 +381,7 @@ class HealthQuoteService extends BaseService
         $healthQuote->has_home = $request->has_home == 'on' ? true : false;
         $healthQuote->emirate_of_your_visa_id = $request->emirate_of_your_visa_id;
         $healthQuote->premium = $request->premium;
-        if ($healthQuote->salary_band_id != $request->salary_band_id || $healthQuote->member_category_id != $request->member_category_id) {
+        if ($healthQuote->salary_band_id != $request->salary_band_id || $healthQuote->member_category_id != $request->member_category_id || $healthQuote->emirate_of_your_visa_id != $request->emirate_of_your_visa_id) {
             $healthQuote->quote_updated_at = Carbon::now();
             if ($healthQuote->primary_member_id) {
                 $healthQuote->memberDetails()->update(['member_category_id' => $request->member_category_id,
