@@ -15,13 +15,11 @@ class InsuranceProviderLogoSeeder extends Seeder
     public function run()
     {
         $insurance_providers = InsuranceProvider::all();
-        if(isset($insurance_providers))
-        {
+        if (isset($insurance_providers)) {
             foreach ($insurance_providers as $key => $insurance_provider) {
-                $insurance_provider->logo_url = url("/insurer_logos/".$insurance_provider->code.".png");
+                $insurance_provider->logo_url = url('/insurer_logos/'.$insurance_provider->code.'.png');
                 $insurance_provider->save();
             }
         }
-        
     }
 }

@@ -907,7 +907,7 @@ class CRUDController extends Controller
 
     public function plansExportPdf(Request $request, $quoteType)
     {
-        $quoteId =$request->quote_pdf_uuid;
+        $quoteId = $request->quote_pdf_uuid;
         $planIds = explode(',', $request->plan_pdf_ids);
         if (count($planIds) > 6) {
             return redirect()->back()->with('message', 'Plans must not be greater than 6');
@@ -917,9 +917,9 @@ class CRUDController extends Controller
             case quoteTypeCode::Car:
                 $quotePlans = $this->carQuoteService->getQuotePlans($quoteId);
                 break;
-            
+
             default:
-                # code...
+                // code...
                 break;
         }
 
@@ -928,11 +928,11 @@ class CRUDController extends Controller
             $listQuotePlans = $quotePlans->quotes->plans;
             $record = $this->crudService->getEntity($this->genericModel->modelType, $quoteId);
 
-            $pdf = PDF::setOption(['isHtml5ParserEnabled' => true,'dpi' => 150])->loadView('shared.pdf_plan_details', compact('listQuotePlans', 'quoteId', 'planIds', 'isPlanUpdateActive'));
-            $pdf_name = $record->code.'_Plans' . '.pdf';
-            return $pdf->download($pdf_name);
-        }   
+            $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150])->loadView('shared.pdf_plan_details', compact('listQuotePlans', 'quoteId', 'planIds', 'isPlanUpdateActive'));
+            $pdf_name = $record->code.'_Plans'.'.pdf';
 
+            return $pdf->download($pdf_name);
+        }
     }
 
     public function destroyDocument($quoteType, $quoteUuId, $id)
