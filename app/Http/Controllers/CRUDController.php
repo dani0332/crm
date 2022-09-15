@@ -905,24 +905,31 @@ class CRUDController extends Controller
         }
     }
 
-    public function manualPlanPdf(Request $request)
+    public function plansExportPdf(Request $request,$quoteType)
     {
-        $quoteId =$request->car_quote_pdf_uuid;
-        $planIds = explode(',', $request->planPdfIds);
-
-        if (count($planIds) > 4) {
-            return redirect()->back()->with('message', 'Plans Must not be greater then 4');
+        try {
+            $quoteId =$request->quote_pdf_uuid;
+            $planIds = explode(',', $request->plan_pdf_ids);
+            if (count($planIds) > 4) {
+                return redirect()->back()->with('message', 'Plans must not be greater than 4');
+            }
+            if($this->genericModel->modelType == quoteTypeCode::Car)
+            {
+                $quotePlans = $this->carQuoteService->getQuotePlans($quoteId);
+            }
+    
+            $isPlanUpdateActive = $this->applicationStorageService->getKeyValue('IMCRM_CAR_QUOTE_PLANS_EDIT_IS_DISABLED');
+            if (gettype($quotePlans) != GenericRequestEnum::TypeString) {
+                $listQuotePlans = $quotePlans->quotes->plans;
+    
+                $pdf = PDF::setOption(['isHtml5ParserEnabled' => true,'dpi' => 150])->loadView('shared.pdf_plan_details', compact('listQuotePlans', 'quoteId', 'planIds', 'isPlanUpdateActive'));
+                $pdf_name = 'plans-' . date("y-m-d-h-i-m") . '.pdf';
+                return $pdf->download($pdf_name);
+            }   
+        } catch (\Throwable $th) {
+            return redirect()->back()->with('message', 'Plan Not Found');
         }
 
-        $quotePlans = $this->carQuoteService->getQuotePlans($quoteId);
-        $isPlanUpdateActive = $this->applicationStorageService->getKeyValue('IMCRM_CAR_QUOTE_PLANS_EDIT_IS_DISABLED');
-        if (gettype($quotePlans) != 'string') {
-            $listQuotePlans = $quotePlans->quotes->plans;
-
-            $pdf = PDF::setOption(['isHtml5ParserEnabled' => true,'dpi' => 150])->loadView('shared.pdf_plan_details', compact('listQuotePlans', 'quoteId', 'planIds', 'isPlanUpdateActive'));
-            $pdf_name = 'plans-' . date("y-m-d-h-i-m") . '.pdf';
-            return $pdf->download($pdf_name);
-        }
     }
 
     public function destroyDocument($quoteType, $quoteUuId, $id)

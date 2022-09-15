@@ -20,7 +20,7 @@ $websitURL = Config::get('constants.AFIA_WEBSITE_DOMAIN');
 						<input type="hidden" id="quotePlansGenerateUrl" name="quotePlansGenerateUrl"
 							value="{{ $ecomUrl }}">
 						<span id="conandcheckout" style="display:none;">
-							<button id="togglePlanPdfDownload" type="button" class="btn btn-success btn-sm">Download PDF</button>
+							<button id="toggle_plan_pdf_download" type="button" class="btn btn-success btn-sm">Download PDF</button>
 						</span>
 						@can('car-quotes-plans-create')
 						<a href="{{ url('quotes/car/'.$record->uuid.'/create-quote') }}"
@@ -38,11 +38,11 @@ $websitURL = Config::get('constants.AFIA_WEBSITE_DOMAIN');
 					</div>
 				</div>
 				@if(gettype($listQuotePlans) != 'string')
-				<form method="post" action={{route('manualPlanPdf')}} class="form-horizontal form-label-left"
-					role="form" id="togglePlanPdf" data-parsley-validate="" novalidate="" autocomplete="off">
+				<form method="post" action={{route('plansExportPdf',$quoteType)}} class="form-horizontal form-label-left"
+					role="form" id="toggle_plan_pdf" data-parsley-validate="" novalidate="" autocomplete="off">
 					{{ csrf_field() }}
-					<input type="hidden" id="planPdfIds" name="planPdfIds" value="">
-					<input type="hidden" id="car_quote_pdf_uuid" name="car_quote_pdf_uuid" value="{{$record->uuid}}">
+					<input type="hidden" id="plan_pdf_ids" name="plan_pdf_ids" value="">
+					<input type="hidden" id="quote_pdf_uuid" name="quote_pdf_uuid" value="{{$record->uuid}}">
 				</form>
 				<form method="post" action={{route('manualPlanToggle')}} class="form-horizontal form-label-left"
 					role="form" id="togglePlanForm" data-parsley-validate="" novalidate="" autocomplete="off">

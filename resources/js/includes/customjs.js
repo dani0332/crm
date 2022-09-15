@@ -2880,16 +2880,15 @@ $(document).ready(function () {
     }
 
     $(".total_packages").html(selectedPkgIds.size);
-    //selected_packages = Array.from(selectedPkgIds); 
   });
-  $('#togglePlanPdfDownload').on('click', function () {
+  $('#toggle_plan_pdf_download').on('click', function () {
     
     var planIds = [];
     $.each($("input[name='toggle_plans_checkbox']:checked"), function () {
       planIds.push($(this).val());
     });
-    $('#planPdfIds').val(planIds);
-    $('#togglePlanPdf').submit();
+    $('#plan_pdf_ids').val(planIds);
+    $('#toggle_plan_pdf').submit();
     
   });
 });
