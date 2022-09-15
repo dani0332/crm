@@ -28,8 +28,8 @@ class ApiController extends Controller
 
     public function sibHealthQuoteCallBack(Request $request)
     {
-        if ($request->has('attributes')) {
-            return $this->apiService->sibHealthQuoteCallBack($request);
+        if ($request->has('attributes') && isset($request['attributes']['CDBID'])) {
+            return $this->apiService->sibHealthQuoteCallBack($request['attributes']['CDBID']);
         }
     }
 }

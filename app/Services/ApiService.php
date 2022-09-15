@@ -85,8 +85,8 @@ class ApiService
         }
     }
 
-    public function sibHealthQuoteCallBack(Request $request)
+    public function sibHealthQuoteCallBack($code)
     {
-        HealthQuote::where('code', $request['attributes']['CDBID'])->update(['quote_status_id' => QuoteStatusEnum::InNegotiation]);
+        HealthQuote::where('code', $code)->update(['quote_status_id' => QuoteStatusEnum::InNegotiation]);
     }
 }
