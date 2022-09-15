@@ -907,29 +907,31 @@ class CRUDController extends Controller
 
     public function plansExportPdf(Request $request,$quoteType)
     {
-        try {
-            $quoteId =$request->quote_pdf_uuid;
-            $planIds = explode(',', $request->plan_pdf_ids);
-            if (count($planIds) > 4) {
-                return redirect()->back()->with('message', 'Plans must not be greater than 4');
-            }
-            if($this->genericModel->modelType == quoteTypeCode::Car)
-            {
-                $quotePlans = $this->carQuoteService->getQuotePlans($quoteId);
-            }
-    
-            $isPlanUpdateActive = $this->applicationStorageService->getKeyValue('IMCRM_CAR_QUOTE_PLANS_EDIT_IS_DISABLED');
-            if (gettype($quotePlans) != GenericRequestEnum::TypeString) {
-                $listQuotePlans = $quotePlans->quotes->plans;
-                $record = $this->crudService->getEntity($this->genericModel->modelType, $quoteId);
-
-                $pdf = PDF::setOption(['isHtml5ParserEnabled' => true,'dpi' => 150])->loadView('shared.pdf_plan_details', compact('listQuotePlans', 'quoteId', 'planIds', 'isPlanUpdateActive'));
-                $pdf_name = $record->code.'_Plans' . '.pdf';
-                return $pdf->download($pdf_name);
-            }   
-        } catch (\Throwable $th) {
-            return redirect()->back()->with('message', 'Plan Not Found');
+        $quoteId =$request->quote_pdf_uuid;
+        $planIds = explode(',', $request->plan_pdf_ids);
+        if (count($planIds) > 6) {
+            return redirect()->back()->with('message', 'Plans must not be greater than 6');
         }
+
+        switch ($this->genericModel->modelType) {
+            case quoteTypeCode::Car:
+                $quotePlans = $this->carQuoteService->getQuotePlans($quoteId);
+                break;
+            
+            default:
+                # code...
+                break;
+        }
+
+        $isPlanUpdateActive = $this->applicationStorageService->getKeyValue('IMCRM_CAR_QUOTE_PLANS_EDIT_IS_DISABLED');
+        if (gettype($quotePlans) != GenericRequestEnum::TypeString) {
+            $listQuotePlans = $quotePlans->quotes->plans;
+            $record = $this->crudService->getEntity($this->genericModel->modelType, $quoteId);
+
+            $pdf = PDF::setOption(['isHtml5ParserEnabled' => true,'dpi' => 150])->loadView('shared.pdf_plan_details', compact('listQuotePlans', 'quoteId', 'planIds', 'isPlanUpdateActive'));
+            $pdf_name = $record->code.'_Plans' . '.pdf';
+            return $pdf->download($pdf_name);
+        }   
 
     }
 

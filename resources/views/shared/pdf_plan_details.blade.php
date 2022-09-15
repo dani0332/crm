@@ -169,6 +169,8 @@
                         }
                     }
                     $providerName[$count] = ucwords($listQuotePlan->providerName);
+                    $providerLogo[$count] = App\Models\InsuranceProvider::where('code', $listQuotePlan->providerCode)->pluck('logo_url')->first();
+
                     $discountPremium[$count] = isset($listQuotePlan->discountPremium) ? $listQuotePlan->discountPremium : 0;
                     $vat[$count] = isset($listQuotePlan->vat) ? $listQuotePlan->vat : 0;
                     ++$count;
@@ -216,6 +218,22 @@
                                 <div class="mb-2">{{ isset($providerName[3]) ? $providerName[3] : "" }}</div>
                             </th>
                         @endif
+                        @if ($listQuotePlansCount >= 5)
+                              <th class="vender">
+                                 <div class="mx-auto my-2 h-20 w-20 rounded-full bg-blue-50">
+                                    <p class="relative top-[40%] m-auto text-xs">LOGO</p>
+                                 </div>
+                                 <div class="mb-2">{{ isset($providerName[4]) ? $providerName[4] : "" }}</div>
+                              </th>
+                        @endif
+                        @if ($listQuotePlansCount >= 6)
+                           <th class="vender">
+                                 <div class="mx-auto my-2 h-20 w-20 rounded-full bg-blue-50">
+                                    <p class="relative top-[40%] m-auto text-xs">LOGO</p>
+                                 </div>
+                                 <div class="mb-2">{{ isset($providerName[5]) ? $providerName[5] : "" }}</div>
+                           </th>
+                        @endif
                     </tr>
                 </thead>
                 <tbody>
@@ -241,6 +259,16 @@
                         @if ($listQuotePlansCount >= 4)
                         <td>
                            <p>{!!  isset($exclusion_perils[3]) ? $exclusion_perils[3]->value : '&cross;'  !!}</p>
+                        </td>
+                        @endif
+                        @if ($listQuotePlansCount >= 5)
+                        <td>
+                           <p>{!!  isset($exclusion_perils[4]) ? $exclusion_perils[4]->value : '&cross;'  !!}</p>
+                        </td>
+                        @endif
+                        @if ($listQuotePlansCount >= 6)
+                        <td>
+                           <p>{!!  isset($exclusion_perils[5]) ? $exclusion_perils[5]->value : '&cross;'  !!}</p>
                         </td>
                         @endif
                     </tr>
@@ -275,6 +303,16 @@
                               {!! isset($exclusion_damage[3]) ? '<p class="text-2xl">&check;</p>' : '<p class="text-2xl">&cross;</p>' !!}                            
                            </td>
                         @endif
+                        @if ($listQuotePlansCount >= 5)
+                           <td>
+                              {!! isset($exclusion_damage[4]) ? '<p class="text-2xl">&check;</p>' : '<p class="text-2xl">&cross;</p>' !!}                            
+                           </td>
+                        @endif
+                        @if ($listQuotePlansCount >= 6)
+                           <td>
+                              {!! isset($exclusion_damage[5]) ? '<p class="text-2xl">&check;</p>' : '<p class="text-2xl">&cross;</p>' !!}                            
+                           </td>
+                        @endif
                     </tr>
 
                     <tr>
@@ -299,6 +337,16 @@
                         @if ($listQuotePlansCount >= 4)
                         <td>
                             <p>{!!  isset($feature_liability[3]) ? $feature_liability[3]->value : '&cross;'  !!}</p>
+                        </td>
+                        @endif
+                        @if ($listQuotePlansCount >= 5)
+                        <td>
+                            <p>{!!  isset($feature_liability[4]) ? $feature_liability[4]->value : '&cross;'  !!}</p>
+                        </td>
+                        @endif
+                        @if ($listQuotePlansCount >= 6)
+                        <td>
+                            <p>{!!  isset($feature_liability[5]) ? $feature_liability[5]->value : '&cross;'  !!}</p>
                         </td>
                         @endif
                     </tr>
@@ -327,6 +375,16 @@
                             <p>{!!  isset($inclusion_bloodMoney[3]) ? $inclusion_bloodMoney[3]->value : '&cross;'  !!}</p>
                         </td>
                         @endif
+                        @if ($listQuotePlansCount >= 5)
+                        <td>
+                            <p>{!!  isset($inclusion_bloodMoney[4]) ? $inclusion_bloodMoney[4]->value : '&cross;'  !!}</p>
+                        </td>
+                        @endif
+                        @if ($listQuotePlansCount >= 6)
+                        <td>
+                            <p>{!!  isset($inclusion_bloodMoney[5]) ? $inclusion_bloodMoney[5]->value : '&cross;'  !!}</p>
+                        </td>
+                        @endif
                     </tr>
                     <tr>
                         <td>
@@ -350,6 +408,16 @@
                         @if ($listQuotePlansCount >= 4)
                         <td>
                            <p>{!!  isset($exclusion_fireAndTheft[3]) ? $exclusion_fireAndTheft[3]->value : '&cross;'  !!}</p>
+                        </td>
+                        @endif
+                        @if ($listQuotePlansCount >= 5)
+                        <td>
+                           <p>{!!  isset($exclusion_fireAndTheft[4]) ? $exclusion_fireAndTheft[4]->value : '&cross;'  !!}</p>
+                        </td>
+                        @endif
+                        @if ($listQuotePlansCount >= 6)
+                        <td>
+                           <p>{!!  isset($exclusion_fireAndTheft[5]) ? $exclusion_fireAndTheft[5]->value : '&cross;'  !!}</p>
                         </td>
                         @endif
                   </tr>
@@ -377,6 +445,16 @@
                         <p>{!!  isset($exclusion_stormAndFlood[3]) ? $exclusion_stormAndFlood[3]->value : '&cross;'  !!}</p>
                      </td>
                      @endif
+                     @if ($listQuotePlansCount >= 5)
+                     <td>
+                        <p>{!!  isset($exclusion_stormAndFlood[4]) ? $exclusion_stormAndFlood[4]->value : '&cross;'  !!}</p>
+                     </td>
+                     @endif
+                     @if ($listQuotePlansCount >= 6)
+                     <td>
+                        <p>{!!  isset($exclusion_stormAndFlood[5]) ? $exclusion_stormAndFlood[5]->value : '&cross;'  !!}</p>
+                     </td>
+                     @endif
                   </tr>
                   <tr>
                      <td>
@@ -400,6 +478,16 @@
                      @if ($listQuotePlansCount >= 4)
                      <td>
                         <p>{!!  isset($exclusion_perils[3]) ? $exclusion_perils[3]->value : '&cross;'  !!}</p>
+                     </td>
+                     @endif
+                     @if ($listQuotePlansCount >= 5)
+                     <td>
+                        <p>{!!  isset($exclusion_perils[4]) ? $exclusion_perils[4]->value : '&cross;'  !!}</p>
+                     </td>
+                     @endif
+                     @if ($listQuotePlansCount >= 6)
+                     <td>
+                        <p>{!!  isset($exclusion_perils[5]) ? $exclusion_perils[5]->value : '&cross;'  !!}</p>
                      </td>
                      @endif
                   </tr>
@@ -427,6 +515,16 @@
                         <p>{!!  isset($exclusion_riotAndStrike[3]) ? $exclusion_riotAndStrike[3]->value : '&cross;'  !!}</p>
                      </td>
                      @endif
+                     @if ($listQuotePlansCount >= 5)
+                     <td>
+                        <p>{!!  isset($exclusion_riotAndStrike[4]) ? $exclusion_riotAndStrike[4]->value : '&cross;'  !!}</p>
+                     </td>
+                     @endif
+                     @if ($listQuotePlansCount >= 6)
+                     <td>
+                        <p>{!!  isset($exclusion_riotAndStrike[6]) ? $exclusion_riotAndStrike[6]->value : '&cross;'  !!}</p>
+                     </td>
+                     @endif
                   </tr>
                   <tr>
                      <td>
@@ -450,6 +548,16 @@
                      @if ($listQuotePlansCount >= 4)
                      <td>
                         <p>{!!  isset($exclusion_repairs[3]) ? $exclusion_repairs[3]->value : '&cross;'  !!}</p>
+                     </td>
+                     @endif
+                     @if ($listQuotePlansCount >= 5)
+                     <td>
+                        <p>{!!  isset($exclusion_repairs[4]) ? $exclusion_repairs[4]->value : '&cross;'  !!}</p>
+                     </td>
+                     @endif
+                     @if ($listQuotePlansCount >= 6)
+                     <td>
+                        <p>{!!  isset($exclusion_repairs[5]) ? $exclusion_repairs[5]->value : '&cross;'  !!}</p>
                      </td>
                      @endif
                   </tr>
@@ -477,6 +585,16 @@
                         <p>{!!  isset($exclusion_emergencyMedicalExpenses[3]) ? $exclusion_emergencyMedicalExpenses[3]->value : '&cross;'  !!}</p>
                      </td>
                      @endif
+                     @if ($listQuotePlansCount >= 5)
+                     <td>
+                        <p>{!!  isset($exclusion_emergencyMedicalExpenses[4]) ? $exclusion_emergencyMedicalExpenses[4]->value : '&cross;'  !!}</p>
+                     </td>
+                     @endif
+                     @if ($listQuotePlansCount >= 6)
+                     <td>
+                        <p>{!!  isset($exclusion_emergencyMedicalExpenses[5]) ? $exclusion_emergencyMedicalExpenses[5]->value : '&cross;'  !!}</p>
+                     </td>
+                     @endif
                   </tr>
                   <tr>
                      <td>
@@ -500,6 +618,16 @@
                      @if ($listQuotePlansCount >= 4)
                      <td>
                         <p>{!!  isset($exclusion_personalBelongings[3]) ? $exclusion_personalBelongings[3]->value : '&cross;'  !!}</p>
+                     </td>
+                     @endif
+                     @if ($listQuotePlansCount >= 5)
+                     <td>
+                        <p>{!!  isset($exclusion_personalBelongings[4]) ? $exclusion_personalBelongings[4]->value : '&cross;'  !!}</p>
+                     </td>
+                     @endif
+                     @if ($listQuotePlansCount >= 6)
+                     <td>
+                        <p>{!!  isset($exclusion_personalBelongings[5]) ? $exclusion_personalBelongings[5]->value : '&cross;'  !!}</p>
                      </td>
                      @endif
                   </tr>
@@ -527,6 +655,16 @@
                         <p>{!!  isset($addons_omanCover[3]) ? $addons_omanCover[3]->value : '&cross;'  !!}</p>
                      </td>
                      @endif
+                     @if ($listQuotePlansCount >= 5)
+                     <td>
+                        <p>{!!  isset($addons_omanCover[4]) ? $addons_omanCover[4]->value : '&cross;'  !!}</p>
+                     </td>
+                     @endif
+                     @if ($listQuotePlansCount >= 6)
+                     <td>
+                        <p>{!!  isset($addons_omanCover[5]) ? $addons_omanCover[5]->value : '&cross;'  !!}</p>
+                     </td>
+                     @endif
                   </tr>
                   <tr>
                      <td>
@@ -550,6 +688,16 @@
                      @if ($listQuotePlansCount >= 4)
                      <td>
                         <p>{!!  isset($roadSideAssistance_offRoadCover[3]) ? $roadSideAssistance_offRoadCover[3]->value : '&cross;'  !!}</p>
+                     </td>
+                     @endif
+                     @if ($listQuotePlansCount >= 5)
+                     <td>
+                        <p>{!!  isset($roadSideAssistance_offRoadCover[4]) ? $roadSideAssistance_offRoadCover[4]->value : '&cross;'  !!}</p>
+                     </td>
+                     @endif
+                     @if ($listQuotePlansCount >= 6)
+                     <td>
+                        <p>{!!  isset($roadSideAssistance_offRoadCover[5]) ? $roadSideAssistance_offRoadCover[5]->value : '&cross;'  !!}</p>
                      </td>
                      @endif
                   </tr>
@@ -577,6 +725,16 @@
                         <p>{!!  isset($exclusion_guaranteedRepairs[3]) ? $exclusion_guaranteedRepairs[3]->value : '&cross;'  !!}</p>
                      </td>
                      @endif
+                     @if ($listQuotePlansCount >= 5)
+                     <td>
+                        <p>{!!  isset($exclusion_guaranteedRepairs[4]) ? $exclusion_guaranteedRepairs[4]->value : '&cross;'  !!}</p>
+                     </td>
+                     @endif
+                     @if ($listQuotePlansCount >= 6)
+                     <td>
+                        <p>{!!  isset($exclusion_guaranteedRepairs[5]) ? $exclusion_guaranteedRepairs[5]->value : '&cross;'  !!}</p>
+                     </td>
+                     @endif
                   </tr>
                   <tr>
                      <td>
@@ -600,6 +758,16 @@
                      @if ($listQuotePlansCount >= 4)
                      <td>
                         <p>{!!  isset($inclusion_breakdownRecovery[3]) ? $inclusion_breakdownRecovery[3]->value : '&cross;'  !!}</p>
+                     </td>
+                     @endif
+                     @if ($listQuotePlansCount >= 5)
+                     <td>
+                        <p>{!!  isset($inclusion_breakdownRecovery[4]) ? $inclusion_breakdownRecovery[4]->value : '&cross;'  !!}</p>
+                     </td>
+                     @endif
+                     @if ($listQuotePlansCount >= 6)
+                     <td>
+                        <p>{!!  isset($inclusion_breakdownRecovery[5]) ? $inclusion_breakdownRecovery[5]->value : '&cross;'  !!}</p>
                      </td>
                      @endif
                   </tr>
@@ -627,6 +795,16 @@
                         <p>{!!  isset($inclusion_ambulanceCover[3]) ? $inclusion_ambulanceCover[3]->value : '&cross;'  !!}</p>
                      </td>
                      @endif
+                     @if ($listQuotePlansCount >= 5)
+                     <td>
+                        <p>{!!  isset($inclusion_ambulanceCover[4]) ? $inclusion_ambulanceCover[4]->value : '&cross;'  !!}</p>
+                     </td>
+                     @endif
+                     @if ($listQuotePlansCount >= 6)
+                     <td>
+                        <p>{!!  isset($inclusion_ambulanceCover[5]) ? $inclusion_ambulanceCover[5]->value : '&cross;'  !!}</p>
+                     </td>
+                     @endif
                   </tr>
                   <tr>
                      <td>
@@ -652,6 +830,16 @@
                         <p>{!!  isset($exclusion_excessForWindscreenDamage[3]) ? $exclusion_excessForWindscreenDamage[3]->value : '&cross;'  !!}</p>
                      </td>
                      @endif
+                     @if ($listQuotePlansCount >= 5)
+                     <td>
+                        <p>{!!  isset($exclusion_excessForWindscreenDamage[4]) ? $exclusion_excessForWindscreenDamage[4]->value : '&cross;'  !!}</p>
+                     </td>
+                     @endif
+                     @if ($listQuotePlansCount >= 6)
+                     <td>
+                        <p>{!!  isset($exclusion_excessForWindscreenDamage[5]) ? $exclusion_excessForWindscreenDamage[5]->value : '&cross;'  !!}</p>
+                     </td>
+                     @endif
                   </tr>
                     <tr>
                         <td colspan="1">
@@ -672,6 +860,16 @@
                      @if ($listQuotePlansCount >= 2)
                      <td>
                         <p>{!!  isset($addons_driverCover[1]) ? $addons_driverCover[1]->value : '&cross;'  !!}</p>
+                     </td>
+                     @endif
+                     @if ($listQuotePlansCount >= 3)
+                     <td>
+                        <p>{!!  isset($addons_driverCover[2]) ? $addons_driverCover[2]->value : '&cross;'  !!}</p>
+                     </td>
+                     @endif
+                     @if ($listQuotePlansCount >= 4)
+                     <td>
+                        <p>{!!  isset($addons_driverCover[3]) ? $addons_driverCover[3]->value : '&cross;'  !!}</p>
                      </td>
                      @endif
                      @if ($listQuotePlansCount >= 3)
@@ -710,6 +908,16 @@
                         <p>{!!  isset($addons_passengerCover[3]) ? $addons_passengerCover[3]->value : '&cross;'  !!}</p>
                      </td>
                      @endif
+                     @if ($listQuotePlansCount >= 5)
+                     <td>
+                        <p>{!!  isset($addons_passengerCover[4]) ? $addons_passengerCover[4]->value : '&cross;'  !!}</p>
+                     </td>
+                     @endif
+                     @if ($listQuotePlansCount >= 6)
+                     <td>
+                        <p>{!!  isset($addons_passengerCover[5]) ? $addons_passengerCover[5]->value : '&cross;'  !!}</p>
+                     </td>
+                     @endif
                   </tr>
 
 
@@ -735,6 +943,16 @@
                      @if ($listQuotePlansCount >= 4)
                      <td>
                         <p>{!!  isset($exclusion_carHire[3]) ? $exclusion_carHire[3]->value : '&cross;'  !!}</p>
+                     </td>
+                     @endif
+                     @if ($listQuotePlansCount >= 5)
+                     <td>
+                        <p>{!!  isset($exclusion_carHire[4]) ? $exclusion_carHire[4]->value : '&cross;'  !!}</p>
+                     </td>
+                     @endif
+                     @if ($listQuotePlansCount >= 6)
+                     <td>
+                        <p>{!!  isset($exclusion_carHire[5]) ? $exclusion_carHire[5]->value : '&cross;'  !!}</p>
                      </td>
                      @endif
                   </tr>
@@ -768,6 +986,16 @@
                             <p class="font-semibold">{{ isset($discountPremium[3]) ? $discountPremium[3] : 'AED 0.0' }}</p>
                         </td>
                         @endif
+                        @if ($listQuotePlansCount >= 5)
+                        <td class="bg-indigo-100">
+                            <p class="font-semibold">{{ isset($discountPremium[4]) ? $discountPremium[4] : 'AED 0.0' }}</p>
+                        </td>
+                        @endif
+                        @if ($listQuotePlansCount >= 6)
+                        <td class="bg-indigo-100">
+                            <p class="font-semibold">{{ isset($discountPremium[5]) ? $discountPremium[5] : 'AED 0.0' }}</p>
+                        </td>
+                        @endif
                     </tr>
 
                     <tr>
@@ -792,6 +1020,16 @@
                         @if ($listQuotePlansCount >= 4)
                         <td class="bg-indigo-100">
                             <p class="font-semibold">{{ isset($vat[3]) ? $vat[3] : 'AED 0.0' }}</p>
+                        </td>
+                        @endif
+                        @if ($listQuotePlansCount >= 5)
+                        <td class="bg-indigo-100">
+                            <p class="font-semibold">{{ isset($vat[4]) ? $vat[4] : 'AED 0.0' }}</p>
+                        </td>
+                        @endif
+                        @if ($listQuotePlansCount >= 6)
+                        <td class="bg-indigo-100">
+                            <p class="font-semibold">{{ isset($vat[5]) ? $vat[5] : 'AED 0.0' }}</p>
                         </td>
                         @endif
                     </tr>
@@ -820,6 +1058,16 @@
                             <p class="font-semibold">{{ (isset($discountPremium[3]) && isset($vat[3])) ? $discountPremium[3] + $vat[3] : 'AED 0.0' }}</p>
                         </td>
                         @endif
+                        @if ($listQuotePlansCount >= 5)
+                        <td class="bg-indigo-100">
+                            <p class="font-semibold">{{ (isset($discountPremium[4]) && isset($vat[4])) ? $discountPremium[2] + $vat[2] : 'AED 0.0' }}</p>
+                        </td>
+                        @endif
+                        @if ($listQuotePlansCount >= 6)
+                        <td class="bg-indigo-100">
+                            <p class="font-semibold">{{ (isset($discountPremium[5]) && isset($vat[5])) ? $discountPremium[3] + $vat[3] : 'AED 0.0' }}</p>
+                        </td>
+                        @endif
                     </tr>
 
                     <tr>
@@ -844,6 +1092,16 @@
                         @if ($listQuotePlansCount >= 4)
                         <td>
                             <p class="text-cyan-600">{!! isset($listQuotePlans[3]->excess) ? $listQuotePlans[3]->excess : '&cross;' !!}</p>
+                        </td>
+                        @endif
+                        @if ($listQuotePlansCount >= 5)
+                        <td>
+                            <p class="text-cyan-600">{!! isset($listQuotePlans[4]->excess) ? $listQuotePlans[4]->excess : '&cross;' !!}</p>
+                        </td>
+                        @endif
+                        @if ($listQuotePlansCount >= 6)
+                        <td>
+                            <p class="text-cyan-600">{!! isset($listQuotePlans[5]->excess) ? $listQuotePlans[5]->excess : '&cross;' !!}</p>
                         </td>
                         @endif
                     </tr>
