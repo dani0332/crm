@@ -2,45 +2,45 @@
 
 namespace App\Http\Controllers;
 
-use DataTables;
-use Carbon\Carbon;
-use App\Models\User;
-use App\Models\Payment;
-use PDF;
+use App\Enums\GenericRequestEnum;
+use App\Enums\HealthTeamType;
+use App\Enums\PaymentMethodsEnum;
+use App\Enums\PaymentStatusEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Models\GenericModel;
-use Illuminate\Http\Request;
-use App\Enums\HealthTeamType;
-use App\Models\QuoteDocument;
-use App\Services\CRUDService;
-use App\Services\TeamService;
-use App\Services\UserService;
-use App\Enums\QuoteStatusEnum;
-use App\Services\LookupService;
-use App\Enums\PaymentStatusEnum;
+use App\Models\Payment;
 use App\Models\PaymentStatusLog;
-use App\Enums\GenericRequestEnum;
-use App\Enums\PaymentMethodsEnum;
-use App\Services\CarQuoteService;
-use App\Services\CustomerService;
-use App\Services\PetQuoteService;
-use App\Services\HomeQuoteService;
-use App\Services\LifeQuoteService;
+use App\Models\QuoteDocument;
+use App\Models\User;
 use App\Services\ActivitiesService;
-use Illuminate\Support\Facades\Log;
+use App\Services\ApplicationStorageService;
+use App\Services\BusinessQuoteService;
+use App\Services\CarQuoteService;
+use App\Services\CRUDService;
+use App\Services\CustomerService;
+use App\Services\DropdownSourceService;
 use App\Services\EmailStatusService;
 use App\Services\HealthQuoteService;
-use App\Services\TravelQuoteService;
-use Illuminate\Support\Facades\Auth;
-use App\Traits\GenericQueriesAllLobs;
-use App\Services\BusinessQuoteService;
-use App\Services\QuoteDocumentService;
-use App\Services\DropdownSourceService;
+use App\Services\HomeQuoteService;
 use App\Services\LeadAllocationService;
-use Illuminate\Support\Facades\Redirect;
+use App\Services\LifeQuoteService;
+use App\Services\LookupService;
 use App\Services\NotesForCustomerService;
+use App\Services\PetQuoteService;
+use App\Services\QuoteDocumentService;
 use App\Services\SendEmailCustomerService;
-use App\Services\ApplicationStorageService;
+use App\Services\TeamService;
+use App\Services\TravelQuoteService;
+use App\Services\UserService;
+use App\Traits\GenericQueriesAllLobs;
+use Carbon\Carbon;
+use DataTables;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Redirect;
+use PDF;
 
 class CRUDController extends Controller
 {
@@ -905,7 +905,7 @@ class CRUDController extends Controller
         }
     }
 
-    public function plansExportPdf(Request $request,$quoteType)
+    public function plansExportPdf(Request $request, $quoteType)
     {
         $quoteId =$request->quote_pdf_uuid;
         $planIds = explode(',', $request->plan_pdf_ids);
