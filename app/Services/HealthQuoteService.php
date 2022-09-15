@@ -372,7 +372,6 @@ class HealthQuoteService extends BaseService
         $healthQuote->source = $sourceName;
         $healthQuote->marital_status_id = $request->marital_status_id;
         $healthQuote->dob = $request->dob;
-        $healthQuote->gender = $request->gender;
         $healthQuote->cover_for_id = $request->cover_for_id;
         $healthQuote->nationality_id = $request->nationality_id;
         $healthQuote->is_ebp_renewal = $request->is_ebp_renewal == 'on' ? true : false;
@@ -380,8 +379,8 @@ class HealthQuoteService extends BaseService
         $healthQuote->has_worldwide_cover = $request->has_worldwide_cover == 'on' ? true : false;
         $healthQuote->has_home = $request->has_home == 'on' ? true : false;
         $healthQuote->premium = $request->premium;
-        //check if salary band ,member category or emirates of your visa is updated we need to update quote_updated_at for latest ratings
-        if ($healthQuote->salary_band_id != $request->salary_band_id || $healthQuote->member_category_id != $request->member_category_id || $healthQuote->emirate_of_your_visa_id != $request->emirate_of_your_visa_id) {
+        //check if salary band ,member category ,gender or emirates of your visa is updated we need to update quote_updated_at for latest ratings
+        if ($healthQuote->salary_band_id != $request->salary_band_id || $healthQuote->member_category_id != $request->member_category_id || $healthQuote->emirate_of_your_visa_id != $request->emirate_of_your_visa_id || $healthQuote->gender != $request->gender) {
             $healthQuote->quote_updated_at = Carbon::now();
             if ($healthQuote->primary_member_id) {
                 $healthQuote->memberDetails()->update(['member_category_id' => $request->member_category_id,
@@ -391,6 +390,7 @@ class HealthQuoteService extends BaseService
         $healthQuote->salary_band_id = $request->salary_band_id;
         $healthQuote->member_category_id = $request->member_category_id;
         $healthQuote->emirate_of_your_visa_id = $request->emirate_of_your_visa_id;
+        $healthQuote->gender = $request->gender;
         $healthQuote->save();
         $this->createUpdateCustomerInfo($request, $healthQuote->email, $healthQuote->uuid, quoteTypeCode::HealthQuote);
         if (isset($request->return_to_view)) {
@@ -610,8 +610,8 @@ class HealthQuoteService extends BaseService
             'previous_quote_id' => 'readonly|title',
             'renewal_expiry_date' => 'input|date|title|range',
             'is_renewal' => '|static|Yes,No',
-            'salary_band_id' => 'select|title|required',
-            'member_category_id' => 'select|title|required',
+            'salary_band_id' => 'select|title',
+            'member_category_id' => 'select|title',
 
             'gender' => '|static|Male,Female',
             'renewal_batch' => 'input|none',
