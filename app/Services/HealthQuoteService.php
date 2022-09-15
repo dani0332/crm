@@ -772,10 +772,9 @@ class HealthQuoteService extends BaseService
         $healthMemberIds = HealthMemberDetail::where('health_quote_request_id', $lead->id)->pluck('id');
         foreach ($healthMemberIds as $id) {
             $healthQuotePlan = HealthQuotePlan::where('health_quote_request_id', $lead->id)->first();
-            if(isset($healthQuotePlan))
-            {
+            if (isset($healthQuotePlan)) {
                 $healthQuotePlan->health_quote_request_id = null;
-                $healthQuotePlan->save();    
+                $healthQuotePlan->save();
             }
             $lead->primary_member_id = null;
             $lead->plan_id = null;

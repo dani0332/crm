@@ -8,7 +8,7 @@ use App\Models\HealthQuote;
 use App\Models\MyAlFredUser;
 use Exception;
 use Log;
-use Illuminate\Http\Request;
+
 class ApiService
 {
     public function fetchSignupUrl($request)
