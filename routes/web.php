@@ -55,8 +55,7 @@ use App\Http\Controllers\UploadResourceController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ValuationController;
 use App\Http\Controllers\VehicleDepreciationController;
-use App\Http\Controllers\VehicleRangeController;
-use App\Http\Controllers\VehicleValueController;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -74,10 +73,6 @@ Route::get('/', function () {
     return redirect('login');
 });
 
-Route::get('/debug-sentry', function () {
-    throw new Exception('My first Sentry error!');
-});
-
 Route::get('auth/google', 'App\Http\Controllers\GoogleSocialiteController@redirectToGoogle');
 Route::get('google/callback', 'App\Http\Controllers\GoogleSocialiteController@handleCallback');
 
@@ -86,6 +81,15 @@ Route::middleware(['auth'])->get('/home', function () {
 });
 
 Route::group(['middleware' => ['auth']], function () {
+    Route::get('/clear-cache', function () {
+        Artisan::call('cache:clear');
+        Artisan::call('view:cache');
+        Artisan::call('config:cache');
+
+        return '<h1>All cache cleared and optimized</h1>';
+    });
+    Route::post('/payments/{quoteType}/store', [CRUDController::class, 'storePayment']);
+    Route::post('/payments/{quoteType}/update', [CRUDController::class, 'updatePayment']);
     Route::resource('myleads', MyLeadsController::class);
     Route::get('getOverDueFollowupLeads', [MyLeadsController::class, 'getOverDueFollowupLeads'])->name('getOverDueFollowupLeads');
 
@@ -128,10 +132,12 @@ Route::group(['middleware' => ['auth']], function () {
     Route::post('/lead-allocation/updateAvailability', [LeadAllocationController::class, 'updateAvailability']);
     Route::post('/lead-allocation/setLeadAllocationJobStatus', [LeadAllocationController::class, 'setLeadAllocationJobStatus']);
 
-    Route::get('quotes/{quoteType}/{quoteUuId}/documents', [QuoteDocumentController::class, 'listQuoteDocuments']);
-    Route::post('quotes/{quoteType}/{quoteUuId}/documents/store', [CRUDController::class, 'storeDocument']);
-    Route::post('quotes/{quoteType}/{quoteUuId}/documents/{id}/delete', [CRUDController::class, 'destroyDocument']);
+    Route::get('quotes/{quoteType}/{quoteUuId}/documents', [QuoteDocumentController::class, 'list']);
+    Route::post('quotes/{quoteType}/documents/store', [QuoteDocumentController::class, 'store']);
     Route::get('documents/{id}', [QuoteDocumentController::class, 'show'])->name('documents.show');
+    Route::post('quotes/{quoteType}/{quoteUuId}/send-policy-documents', [QuoteDocumentController::class, 'sendPolicyDocument']);
+    Route::get('quotes/{quoteType}/{quoteId}/documents/{documentTypeCode}/get-uploaded', [QuoteDocumentController::class, 'getQuoteDocumentsUploaded']);
+    Route::post('documents/delete', [QuoteDocumentController::class, 'destroy']);
 
     Route::group(['prefix' => 'renewals'], function () {
         Route::resource('uploaded-leads', RenewalsUploadController::class);
@@ -195,7 +201,7 @@ Route::group(['middleware' => ['auth']], function () {
         Route::post('car/carAssumptionsUpdate', [CRUDController::class, 'carAssumptionsUpdate']);
         Route::post('car/addNoteForCustomer', [CRUDController::class, 'addNoteForCustomer']);
         Route::post('car/sendNotesToCustomer', [CRUDController::class, 'sendNotesToCustomer']);
-        Route::post('{quoteType}/updateQuotePolicy', [CRUDController::class, 'updateQuotePolicy']);
+        Route::post('{quoteType}/update-quote-policy', [CRUDController::class, 'updateQuotePolicy']);
         Route::post('car/manual-plan-toggle', [CRUDController::class, 'manualPlanToggle'])->name('manualPlanToggle');
     });
 
@@ -285,7 +291,9 @@ Route::group(['middleware' => ['auth']], function () {
     Route::get('/getCarModelTrimValues', [AjaxController::class, 'getCarModelTrimValues']);
     Route::post('auditable', [AuditableController::class, 'loadAuditableComponent']);
     Route::get('/car-model-by-id', [AjaxController::class, 'carModelBasedOnCarMakeId']);
+    Route::post('/update-payment-status', [AjaxController::class, 'updatePaymentStatus']);
     Route::get('/insurance-provider-plans', [ClaimController::class, 'carPlansBasedOnInsuranceProvider']);
+    Route::post('/generate-payment-link', [AjaxController::class, 'generatePaymentLink']);
 
     Route::resource('members', MembersDetailController::class);
     Route::get('/insurance-provider-plans', [ClaimController::class, 'carPlansByInsuranceProvider']);

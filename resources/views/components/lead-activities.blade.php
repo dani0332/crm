@@ -1,10 +1,16 @@
+<?php
+use App\Enums\PermissionsEnum;
+?>
+
 <div class="row">
     <div class="col-md-12 col-sm-12">
         <div class="x_panel">
             <div class="x_title">
                 <h2>Lead Activities</h2>
+                @cannot(PermissionsEnum::ApprovePayments)
+                    <button class="btn btn-warning btn-sm" style="float:right;width:110px;" type="button" id="add-activity-btn">Add Activity</button>
+                @endcannot
 
-                <button class="btn btn-warning btn-sm" style="float:right;width:110px;" type="button" id="add-activity-btn">Add Activity</button>
                 <div class="clearfix"></div>
             </div>
             <div class="x_content">
@@ -35,7 +41,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            
+
                             @foreach ($activities as $activity)
                             @php
                              $quotetypename = '';
@@ -83,14 +89,20 @@
                                     <td>{{ $activity['due_date'] }}</td>
                                     <td>{{ $activity['assignee'] }}</td>
                                     <td>
+                                        @cannot(PermissionsEnum::ApprovePayments)
                                         <label class="custom-checkbox"><input type="checkbox"
                                                 @if ($activity['status'] == 1) checked="checked" @endif
                                                 class="activityChk1" name="activityChk" value="{{ $activity['id'] }}">
                                             <span class="checkbox"></span>
                                         </label>
+                                        @endcannot
                                     </td>
-                                    <td><button id="activity-edit-btn" data-type="{{$quotetypename}}" data-quote-uuid="{{ $activity['quote_uuid'] }}" data-record-id="{{ $activity['id'] }}" class="btn btn-sm btn-warning" onclick="activityEdit1(this)">Edit</button>
-                                        <button id="activity-edit-btn" class="btn btn-sm btn-warning" data-type="{{$quotetypename}}" data-quote-uuid="{{ $activity['quote_uuid'] }}" data-record-id="{{ $activity['id'] }}" onclick="deleteActivity1(this)">Delete</button></td>
+                                    <td>
+                                        @cannot(PermissionsEnum::ApprovePayments)
+                                        <button id="activity-edit-btn" data-type="{{$quotetypename}}" data-quote-uuid="{{ $activity['quote_uuid'] }}" data-record-id="{{ $activity['id'] }}" class="btn btn-sm btn-warning" onclick="activityEdit1(this)">Edit</button>
+                                        <button id="activity-edit-btn" class="btn btn-sm btn-warning" data-type="{{$quotetypename}}" data-quote-uuid="{{ $activity['quote_uuid'] }}" data-record-id="{{ $activity['id'] }}" onclick="deleteActivity1(this)">Delete</button>
+                                        @endcannot
+                                    </td>
                                 </tr>
                             @endforeach
                         </tbody>

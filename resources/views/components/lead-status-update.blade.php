@@ -1,7 +1,8 @@
-<script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
-<?php
+@php
     use App\Enums\QuoteStatusEnum;
-    ?>
+    use App\Enums\PermissionsEnum;
+@endphp
+<script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
 <script>
     $(document).ready(function () {
         var showFollowupStatuses = ['Followed Up','Qualification Pending', 'Quoted', 'FTC Pending', 'FTC Sent', 'Missing Documents Requested', 'Policy Documents Pending', 'Payment Pending', 'Pending with UW', 'Application Pending', 'In Negotiation'];
@@ -82,17 +83,18 @@
                                     id="leadStatus" name="leadStatus">
                                     <option value="">Select Lead Status</option>
                                     @foreach ($statuses as $item)
-                                    <option @if($status==$item->id) selected="selected" @endif
-                                        value="{{$item->id}}" >{{$item->text}}</option>
+                                        @if($item->id == QuoteStatusEnum::PolicyIssued && isset($isQuoteDocumentEnabled) && $isQuoteDocumentEnabled)
+                                        <option @if($status==$item->id) selected="selected" @endif
+                                            value="{{$item->id}}" >{{$item->text}}</option>
+                                        @elseif($item->id != QuoteStatusEnum::PolicyIssued)
+                                            <option @if($status==$item->id) selected="selected" @endif
+                                                value="{{$item->id}}" >{{$item->text}}</option>
+                                        @endif
                                     @endforeach
                                 </select>
                             </div>
                         </div>
                         <div class="col">
-                            <div id="followup-div" style="display: none">
-                                {{-- <button class="btn btn-warning btn-sm" style="float:right;width:110px;"
-                                    type="button" id="add-activity-btn">Add Activity</button> --}}
-                            </div>
                         </div>
                     </div>
                     <div class="item form-group">
@@ -138,10 +140,12 @@
 
                         </div>
                         <div class="col">
+                            @cannot(PermissionsEnum::ApprovePayments)
                             <button type="submit" style="float: right;" @if($lead->quote_status_id ==
                                 QuoteStatusEnum::TransactionApproved) disabled @endif class="btn btn-success
                                 btn-sm" id="lead-change-status-btn">Change
                                 Status</button>
+                            @endcannot
                         </div>
                     </div>
                 </form>

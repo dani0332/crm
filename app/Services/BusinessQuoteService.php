@@ -490,6 +490,7 @@ class BusinessQuoteService extends BaseService
             $businessQuote->first_name = $request->first_name;
             $businessQuote->last_name = $request->last_name;
             $businessQuote->company_name = $request->company_name;
+            $businessQuote->gender = $request->gender;
             $businessQuote->brief_details = $request->brief_details;
             $businessQuote->premium = $request->premium;
             $businessQuote->business_type_of_insurance_id = $request->business_type_of_insurance_id;

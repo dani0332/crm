@@ -7,7 +7,7 @@ use App\Http\Requests\APiFetchUrl;
 use App\Http\Requests\SibFlowApi;
 use App\Services\ApiService;
 use Illuminate\Http\Request;
-
+use Log;
 class ApiController extends Controller
 {
     private $apiService;
@@ -27,7 +27,8 @@ class ApiController extends Controller
         return $this->apiService->triggerSibFlow($request);
     }
 
-    public function sibHealthQuoteCallBack($uuid){
-        return $this->apiService->sibHealthQuoteCallBack($uuid);
+    public function sibHealthQuoteCallBack(Request $request)
+    {
+        Log::info($request->all());
     }
 }

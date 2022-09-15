@@ -93,7 +93,9 @@ class HealthQuoteService extends BaseService
             'hqr.device',
             'hqr.wcu_id',
             'wcu.name as wcu_id_text',
-            'hqr.plan_id'
+            'hqr.plan_id',
+            'hqr.policy_start_date',
+            'hqr.policy_issuance_date'
         )
             ->leftJoin('marital_status as ms', 'ms.id', '=', 'hqr.marital_status_id')
             ->leftJoin('health_quote_request_detail as hqrd', 'hqrd.health_quote_request_id', '=', 'hqr.id')
@@ -214,13 +216,13 @@ class HealthQuoteService extends BaseService
                 $this->query->where('hqr.quote_status_id', '!=', 9);
             }
             if (isset($request->assigned_to_date_start) && $request->assigned_to_date_start != '') {
-                $dateFrom = Carbon::createFromFormat('Y-m-d', $request['assigned_to_date_start'])->startOfDay()->toDateTimeString();
-                $dateTo = Carbon::createFromFormat('Y-m-d', $request['assigned_to_date_end'])->endOfDay()->toDateTimeString();
+                $dateFrom = Carbon::createFromTimestamp(strtotime($request['assigned_to_date_start']))->startOfDay()->toDateTimeString();
+                $dateTo = Carbon::createFromTimestamp(strtotime($request['assigned_to_date_end']))->endOfDay()->toDateTimeString();
                 $this->query->whereBetween('hqrd.advisor_assigned_date', [$dateFrom, $dateTo]);
             }
             if (isset($request->next_followup_date) && $request->next_followup_date != '') {
-                $dateFrom = Carbon::createFromFormat('Y-m-d', $request['next_followup_date'])->startOfDay()->toDateTimeString();
-                $dateTo = Carbon::createFromFormat('Y-m-d', $request['next_followup_date_end'])->endOfDay()->toDateTimeString();
+                $dateFrom = Carbon::createFromTimestamp(strtotime($request['next_followup_date']))->startOfDay()->toDateTimeString();
+                $dateTo = Carbon::createFromTimestamp(strtotime($request['next_followup_date_end']))->endOfDay()->toDateTimeString();
                 $this->query->whereBetween('hqrd.next_followup_date', [$dateFrom, $dateTo]);
             }
             if (in_array('created_at', $searchProperties) && isset($request->created_at) && $request->created_at != '') {
@@ -377,9 +379,9 @@ class HealthQuoteService extends BaseService
         $healthQuote->has_dental = $request->has_dental == 'on' ? true : false;
         $healthQuote->has_worldwide_cover = $request->has_worldwide_cover == 'on' ? true : false;
         $healthQuote->has_home = $request->has_home == 'on' ? true : false;
-        $healthQuote->emirate_of_your_visa_id = $request->emirate_of_your_visa_id;
         $healthQuote->premium = $request->premium;
-        if ($healthQuote->salary_band_id != $request->salary_band_id || $healthQuote->member_category_id != $request->member_category_id) {
+        //check if salary band ,member category or emirates of your visa is updated we need to update quote_updated_at for latest ratings
+        if ($healthQuote->salary_band_id != $request->salary_band_id || $healthQuote->member_category_id != $request->member_category_id || $healthQuote->emirate_of_your_visa_id != $request->emirate_of_your_visa_id) {
             $healthQuote->quote_updated_at = Carbon::now();
             if ($healthQuote->primary_member_id) {
                 $healthQuote->memberDetails()->update(['member_category_id' => $request->member_category_id,
@@ -388,6 +390,7 @@ class HealthQuoteService extends BaseService
         }
         $healthQuote->salary_band_id = $request->salary_band_id;
         $healthQuote->member_category_id = $request->member_category_id;
+        $healthQuote->emirate_of_your_visa_id = $request->emirate_of_your_visa_id;
         $healthQuote->save();
         $this->createUpdateCustomerInfo($request, $healthQuote->email, $healthQuote->uuid, quoteTypeCode::HealthQuote);
         if (isset($request->return_to_view)) {
@@ -766,6 +769,19 @@ class HealthQuoteService extends BaseService
         $businessLead->uuid = $uuid;
         $businessLead->code = 'BUS-'.$uuid;
         $businessLead->customer_id = $lead->customer_id;
+        $healthMemberIds = HealthMemberDetail::where('health_quote_request_id', $lead->id)->pluck('id');
+        foreach ($healthMemberIds as $id) {
+            $healthQuotePlan = HealthQuotePlan::where('health_quote_request_id', $lead->id)->first();
+            if(isset($healthQuotePlan))
+            {
+                $healthQuotePlan->health_quote_request_id = null;
+                $healthQuotePlan->save();    
+            }
+            $lead->primary_member_id = null;
+            $lead->plan_id = null;
+            $lead->save();
+            HealthMemberDetail::findOrFail($id)->delete();
+        }
         $businessLead->save();
         HealthQuote::find($lead->id)->delete();
     }
@@ -953,9 +969,10 @@ class HealthQuoteService extends BaseService
             $lead->save();
         }
         //check if team is assigned,must have plans and status not qualified yet so mark it qualified.
-        if ($lead->health_team_type  && $lead->is_ecommerce == 1 && $lead->quote_status_id != QuoteStatusEnum::Qualified && auth()->user()->isHealthWCUAdvisor()) {
+        if ($lead->health_team_type && $lead->is_ecommerce == 1 && $lead->quote_status_id != QuoteStatusEnum::Qualified && auth()->user()->isHealthWCUAdvisor()) {
             HealthQuote::find($lead->id)->update(['quote_status_id' => QuoteStatusEnum::Qualified]);
         }
+
         return true;
     }
 

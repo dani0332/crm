@@ -99,8 +99,7 @@ class DropdownSourceService extends BaseService
                 $data = QuoteStatus::select('id', 'text')
                     ->whereNotIn('id', [
                         QuoteStatusEnum::AMLScreeningCleared, QuoteStatusEnum::Draft, QuoteStatusEnum::Cancelled, QuoteStatusEnum::AMLScreeningFailed,
-                        QuoteStatusEnum::TransactionDeclined, QuoteStatusEnum::PolicyIssued, QuoteStatusEnum::PolicyInvoiced,
-                        QuoteStatusEnum::Issued,
+                        QuoteStatusEnum::TransactionDeclined, QuoteStatusEnum::PolicyInvoiced, QuoteStatusEnum::Issued,
                     ])
                     ->where('is_active', true)
                     ->orderBy('sort_order', 'asc')
