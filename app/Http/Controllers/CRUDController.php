@@ -921,9 +921,10 @@ class CRUDController extends Controller
             $isPlanUpdateActive = $this->applicationStorageService->getKeyValue('IMCRM_CAR_QUOTE_PLANS_EDIT_IS_DISABLED');
             if (gettype($quotePlans) != GenericRequestEnum::TypeString) {
                 $listQuotePlans = $quotePlans->quotes->plans;
-    
+                $record = $this->crudService->getEntity($this->genericModel->modelType, $quoteId);
+
                 $pdf = PDF::setOption(['isHtml5ParserEnabled' => true,'dpi' => 150])->loadView('shared.pdf_plan_details', compact('listQuotePlans', 'quoteId', 'planIds', 'isPlanUpdateActive'));
-                $pdf_name = 'plans-' . date("y-m-d-h-i-m") . '.pdf';
+                $pdf_name = $record->code.'_Plans' . '.pdf';
                 return $pdf->download($pdf_name);
             }   
         } catch (\Throwable $th) {
