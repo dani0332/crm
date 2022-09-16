@@ -25,7 +25,7 @@
                                 <td>{{ $customerAdditionalContact->created_at }}</td>
                                 <td style="float:right;">
                                     @if($customerAdditionalContact->key == 'email')
-                                    <button class="btn btn-success btn-sm additional-email-make-primary-btn" data-record-id="{{ $customerAdditionalContact->id }}">Make Primary</button>
+                                    <button class="btn btn-success btn-sm additional-email-make-primary-btn" data-record-id="{{ $customerAdditionalContact->id }}" data-quote-id="{{ $record->id }}">Make Primary</button>
                                     @endif
                                     <button class="btn btn-danger btn-sm additional-contact-delete-btn" data-record-id="{{ $customerAdditionalContact->id }}">Delete</button>
                                 </td>
