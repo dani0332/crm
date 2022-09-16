@@ -12,6 +12,7 @@ $(function()  {
             var quote_id = $(this).attr('data-quote-id');
             var key = $(this).attr('data-key');
             var value = $(this).attr('data-value');
+            var quote_type = $(this).attr('data-quote-type');
             $.ajax({
                 url: '/customer-additional-contact/' + id + '/make-primary',
                 method: 'POST',
@@ -19,6 +20,7 @@ $(function()  {
                     quote_id: quote_id,
                     key: key,
                     value:value,
+                    quote_type : quote_type,
                     _token: $('input[name=_token]').val(),
                 },
                 success: function (data) {
