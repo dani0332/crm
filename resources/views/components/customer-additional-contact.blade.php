@@ -3,8 +3,7 @@
         <div class="x_panel">
             <div class="x_title">
                 <h2>Customer Additional Contacts</h2>
-                <button id="additional-email-add-btn" class="btn btn-warning btn-sm" style="float:right;">Add Email</button>
-                <button id="additional-mobile-no-add-btn" class="btn btn-warning btn-sm" style="float:right;">Add Mobile</button>
+                <button id="additional-contact-add-btn" class="btn btn-warning btn-sm" style="float:right;">Add Additional Contact</button>
                 <div class="clearfix"></div>
             </div>
             <div class="x_content">
@@ -30,6 +29,7 @@
                                             data-quote-id="{{ $record->id }}" 
                                             data-key="{{ $customerAdditionalContact->key }}" 
                                             data-value="{{ $customerAdditionalContact->value }}" 
+                                            data-quote-type="{{ $quoteType }}" 
                                             >Make Primary</button>
                                     @endif
                                     <button class="btn btn-danger btn-sm additional-contact-delete-btn" data-record-id="{{ $customerAdditionalContact->id }}">Delete</button>

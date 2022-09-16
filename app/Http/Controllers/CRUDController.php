@@ -414,7 +414,7 @@ class CRUDController extends Controller
                 'record', 'model', 'customTitles', 'customTableList', 'advisors', 'leadStatuses', 'lostReasons',
                 'selectedLostReasonId', 'model_name', 'allowedDuplicateLOB', 'audits', 'activities', 'isRenewalUser',
                 'isNewBusinessUser', 'autoAllocationDisabled', 'isQuoteDocumentEnabled', 'quoteDocuments',
-                'displaySendPolicyButton', 'customerAdditionalContacts',
+                'displaySendPolicyButton', 'customerAdditionalContacts', 'quoteType'
             ]));
         }
     }
