@@ -358,7 +358,7 @@ class CRUDController extends Controller
                 'lostReasons', 'selectedLostReasonId', 'model_name', 'allowedDuplicateLOB', 'audits',
                 'activities', 'advisors', 'isRenewalUser', 'isNewBusinessUser', 'emailStatuses',
                 'yearsOfManufacture', 'notesForCustomers', 'quoteType', 'quoteTypeId', 'trimList', 'autoAllocationDisabled',
-                'paymentEntityModel', 'payments', 'paymentMethods', 'isQuoteDocumentEnabled', 'quoteDocuments', 
+                'paymentEntityModel', 'payments', 'paymentMethods', 'isQuoteDocumentEnabled', 'quoteDocuments',
                 'displaySendPolicyButton', 'customerAdditionalContacts',
             ]));
         } elseif ($this->genericModel->modelType == quoteTypeCode::Travel) { // Travel plans to display on detail view
@@ -413,7 +413,7 @@ class CRUDController extends Controller
             return view('shared.show', compact([
                 'record', 'model', 'customTitles', 'customTableList', 'advisors', 'leadStatuses', 'lostReasons',
                 'selectedLostReasonId', 'model_name', 'allowedDuplicateLOB', 'audits', 'activities', 'isRenewalUser',
-                'isNewBusinessUser', 'autoAllocationDisabled', 'isQuoteDocumentEnabled', 'quoteDocuments', 
+                'isNewBusinessUser', 'autoAllocationDisabled', 'isQuoteDocumentEnabled', 'quoteDocuments',
                 'displaySendPolicyButton', 'customerAdditionalContacts',
             ]));
         }

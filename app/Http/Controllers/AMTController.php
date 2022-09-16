@@ -11,8 +11,8 @@ use App\Models\QuoteStatus;
 use App\Models\User;
 use App\Services\BusinessQuoteService;
 use App\Services\CRUDService;
-use App\Services\LookupService;
 use App\Services\CustomerService;
+use App\Services\LookupService;
 use App\Traits\RolePermissionConditions;
 use Auth;
 use Carbon\Carbon;
@@ -31,12 +31,11 @@ class AMTController extends Controller
     use RolePermissionConditions;
 
     public function __construct(
-        BusinessQuoteService $businessQuoteService, 
-        CRUDService $crudService, 
+        BusinessQuoteService $businessQuoteService,
+        CRUDService $crudService,
         LookupService $lookupService,
         CustomerService $customerService
-        )
-    {
+    ) {
         $this->businessQuoteService = $businessQuoteService;
         $this->crudService = $crudService;
         $this->lookupService = $lookupService;
@@ -261,9 +260,9 @@ class AMTController extends Controller
 
         $customerAdditionalContacts = $this->customerService->getAddtionalContacts($record->customer_id);
 
-        return view('amt.show', compact('businessInsuranceType', 'record', 'selectedLeadStatus', 'advisors', 
-        'assignedUserName', 'assignedGMType', 'leadStatuses', 'lostReasons', 'selectedLostReasonId', 
-        'modeltype', 'allowedDuplicateLOB', 'customerAdditionalContacts'));
+        return view('amt.show', compact('businessInsuranceType', 'record', 'selectedLeadStatus', 'advisors',
+            'assignedUserName', 'assignedGMType', 'leadStatuses', 'lostReasons', 'selectedLostReasonId',
+            'modeltype', 'allowedDuplicateLOB', 'customerAdditionalContacts'));
     }
 
     /**
