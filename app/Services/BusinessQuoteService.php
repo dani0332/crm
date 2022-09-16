@@ -9,7 +9,6 @@ use App\Enums\QuoteTypeId;
 use App\Models\BusinessQuote;
 use App\Models\BusinessQuoteRequestDetail;
 use App\Traits\AddPremiumAllLobs;
-use App\Traits\CustomerAdditionalInfo as CustomerAdditionalInfoTrait;
 use App\Traits\GetUserTree;
 use App\Traits\RolePermissionConditions;
 use Auth;
@@ -23,7 +22,6 @@ class BusinessQuoteService extends BaseService
 {
     protected $query;
 
-    use CustomerAdditionalInfoTrait;
     use GetUserTree;
     use RolePermissionConditions;
     use AddPremiumAllLobs;
@@ -319,14 +317,14 @@ class BusinessQuoteService extends BaseService
         if (! Auth::user()->hasRole('ADMIN')) {
             $dataArr['advisorId'] = Auth::user()->id;
         }
+
         $response = CapiRequestService::sendCAPIRequest('/api/v1-save-business-quote', $dataArr);
+
         if (isset($response->quoteUID)) {
             $this->savePremium(quoteTypeCode::BusinessQuote, $request, $response);
-
-            return $this->createUpdateCustomerInfo($request, $request->email, $response->quoteUID, quoteTypeCode::BusinessQuote);
-        } else {
-            return $response;
         }
+
+        return $response;
     }
 
     public function getGridData($model, $request)
@@ -500,7 +498,6 @@ class BusinessQuoteService extends BaseService
             }
             $businessQuote->save();
 
-            $this->createUpdateCustomerInfo($request, $businessQuote->email, $businessQuote->uuid, quoteTypeCode::BusinessQuote);
             if (isset($request->return_to_view)) {
                 return redirect('quote/business/'.$businessQuote->id)->with('success', 'Business Quote has been updated');
             }

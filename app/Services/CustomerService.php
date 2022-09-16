@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Customer;
+use App\Models\CustomerAdditionalContact;
 use Illuminate\Support\Facades\Log;
 
 class CustomerService extends BaseService
@@ -97,5 +98,11 @@ class CustomerService extends BaseService
         }
 
         return $customer_email;
+    }
+
+    public function getAddtionalContacts($customerId)
+    {
+        return CustomerAdditionalContact::where('customer_id', $customerId)
+        ->orderBy('created_at', 'desc')->get();
     }
 }

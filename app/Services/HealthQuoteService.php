@@ -17,7 +17,6 @@ use App\Models\HealthQuoteRequestDetail;
 use App\Models\Team;
 use App\Models\User;
 use App\Traits\AddPremiumAllLobs;
-use App\Traits\CustomerAdditionalInfo as CustomerAdditionalInfoTrait;
 use App\Traits\GetUserTree;
 use App\Traits\RolePermissionConditions;
 use Auth;
@@ -34,7 +33,6 @@ class HealthQuoteService extends BaseService
 
     use GetUserTree;
     use RolePermissionConditions;
-    use CustomerAdditionalInfoTrait;
     use AddPremiumAllLobs;
 
     public function __construct(LeadAllocationService $leadAllocationService)
@@ -95,7 +93,8 @@ class HealthQuoteService extends BaseService
             'wcu.name as wcu_id_text',
             'hqr.plan_id',
             'hqr.policy_start_date',
-            'hqr.policy_issuance_date'
+            'hqr.policy_issuance_date',
+            'hqr.customer_id'
         )
             ->leftJoin('marital_status as ms', 'ms.id', '=', 'hqr.marital_status_id')
             ->leftJoin('health_quote_request_detail as hqrd', 'hqrd.health_quote_request_id', '=', 'hqr.id')
@@ -186,14 +185,14 @@ class HealthQuoteService extends BaseService
         if (! Auth::user()->hasRole('ADMIN')) {
             $dataArr['advisorId'] = Auth::user()->id;
         }
+
         $response = CapiRequestService::sendCAPIRequest('/api/v1-save-health-quote', $dataArr);
+
         if (isset($response->quoteUID)) {
             $this->savePremium(quoteTypeCode::HealthQuote, $request, $response);
-
-            return $this->createUpdateCustomerInfo($request, $request->email, $response->quoteUID, quoteTypeCode::HealthQuote);
-        } else {
-            return $response;
         }
+
+        return $response;
     }
 
     public function getGridData($model, $request)
@@ -392,7 +391,7 @@ class HealthQuoteService extends BaseService
         $healthQuote->emirate_of_your_visa_id = $request->emirate_of_your_visa_id;
         $healthQuote->gender = $request->gender;
         $healthQuote->save();
-        $this->createUpdateCustomerInfo($request, $healthQuote->email, $healthQuote->uuid, quoteTypeCode::HealthQuote);
+
         if (isset($request->return_to_view)) {
             return redirect('quote/health/'.$id)->with('success', 'Health Quote has been updated');
         }

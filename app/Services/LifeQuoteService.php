@@ -10,7 +10,6 @@ use App\Enums\QuoteTypeId;
 use App\Models\LifeQuote;
 use App\Models\LifeQuoteRequestDetail;
 use App\Traits\AddPremiumAllLobs;
-use App\Traits\CustomerAdditionalInfo as CustomerAdditionalInfoTrait;
 use App\Traits\RolePermissionConditions;
 use Auth;
 use Carbon\Carbon;
@@ -23,7 +22,6 @@ class LifeQuoteService extends BaseService
     protected $query;
 
     use RolePermissionConditions;
-    use CustomerAdditionalInfoTrait;
     use AddPremiumAllLobs;
 
     protected $leadAllocationService;
@@ -119,14 +117,14 @@ class LifeQuoteService extends BaseService
         if (! Auth::user()->hasRole('ADMIN')) {
             $dataArr['advisorId'] = Auth::user()->id;
         }
+
         $response = CapiRequestService::sendCAPIRequest('/api/v1-save-life-quote', $dataArr);
+
         if (isset($response->quoteUID)) {
             $this->savePremium(quoteTypeCode::LifeQuote, $request, $response);
-
-            return $this->createUpdateCustomerInfo($request, $request->email, $response->quoteUID, quoteTypeCode::LifeQuote);
-        } else {
-            return $response;
         }
+
+        return $response;
     }
 
     public function getEntity($id)
@@ -368,7 +366,6 @@ class LifeQuoteService extends BaseService
         $lifeQuote->others_info = $request->others_info;
         $lifeQuote->save();
 
-        $this->createUpdateCustomerInfo($request, $lifeQuote->email, $lifeQuote->uuid, quoteTypeCode::LifeQuote);
         if (isset($request->return_to_view)) {
             return redirect('quotes/life')->with('success', 'Life Quote has been updated');
         }

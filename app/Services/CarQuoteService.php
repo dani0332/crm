@@ -4,13 +4,11 @@ namespace App\Services;
 
 use App\Enums\GenericRequestEnum;
 use App\Enums\QuoteStatusEnum;
-use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Models\CarMake;
 use App\Models\CarQuote;
 use App\Models\CarQuoteRequestDetail;
 use App\Models\User;
-use App\Traits\CustomerAdditionalInfo as CustomerAdditionalInfoTrait;
 use Carbon\Carbon;
 use DB;
 use Illuminate\Http\Request;
@@ -19,8 +17,6 @@ use Illuminate\Support\Facades\Log;
 
 class CarQuoteService extends BaseService
 {
-    use CustomerAdditionalInfoTrait;
-
     protected $query;
     protected $httpService;
     protected $childUserIds = [];
@@ -110,7 +106,8 @@ class CarQuoteService extends BaseService
                 'cqr.back_home_license_held_for_id',
                 'ulhfs.TEXT as back_home_license_held_for_id_text',
                 'cqr.policy_start_date',
-                'cqr.policy_issuance_date'
+                'cqr.policy_issuance_date',
+                'cqr.customer_id'
             )
             ->leftJoin('nationality as n', 'n.id', '=', 'cqr.nationality_id')
             ->leftJoin('car_quote_request_detail as cqrd', 'cqrd.car_quote_request_id', '=', 'cqr.id')
@@ -161,17 +158,12 @@ class CarQuoteService extends BaseService
             'source' => config('constants.SOURCE_NAME'),
             'referenceUrl' => config('constants.APP_URL'),
         ];
+
         if (! Auth::user()->hasRole('ADMIN')) {
             $dataArr['advisorId'] = Auth::user()->id;
         }
 
-        $response = CapiRequestService::sendCAPIRequest('/api/v1-save-car-quote', $dataArr);
-
-        if (isset($response->quoteUID) && isset($request->email)) {
-            $this->createUpdateCustomerInfo($request, $request->email, $response->quoteUID, quoteTypeCode::CarQuote);
-
-            return $response;
-        }
+        return CapiRequestService::sendCAPIRequest('/api/v1-save-car-quote', $dataArr);
     }
 
     public function updateCarQuote(Request $request, $id)
@@ -201,10 +193,6 @@ class CarQuoteService extends BaseService
         $carQuote->is_quote_locked = true;
         $carQuote->car_model_detail_id = $request->trim;
         $carQuote->save();
-
-        if (isset($carQuote->id) && isset($carQuote->email)) {
-            $this->createUpdateCustomerInfo($request, $carQuote->email, $carQuote->uuid, quoteTypeCode::CarQuote);
-        }
 
         if (isset($request->return_to_view)) {
             return redirect('quote/car/'.$carQuote->id)->with('success', 'Car Quote has been updated');

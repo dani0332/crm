@@ -146,4 +146,14 @@ class CustomerController extends Controller
     {
         return view('customers.upload');
     }
+
+    public function deleteAdditionalContact(Request $request)
+    {
+        dd('deleteAdditionalContact: ', $request->all());
+    }
+
+    public function makeAdditionalContactPrimary(Request $request)
+    {
+        dd('makeAdditionalContactPrimary: ', $request->all());
+    }
 }

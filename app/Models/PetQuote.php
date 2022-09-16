@@ -38,9 +38,4 @@ class PetQuote extends Model implements AuditableContract
     {
         return $this->hasOne(PetQuoteRequestDetail::class, 'pet_quote_request_id', 'id');
     }
-
-    public function customerAdditionalInfo()
-    {
-        return $this->hasMany(CustomerAdditionalInfo::class, 'quote_request_id', 'id');
-    }
 }
