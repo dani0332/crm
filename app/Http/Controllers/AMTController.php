@@ -12,6 +12,7 @@ use App\Models\User;
 use App\Services\BusinessQuoteService;
 use App\Services\CRUDService;
 use App\Services\LookupService;
+use App\Services\CustomerService;
 use App\Traits\RolePermissionConditions;
 use Auth;
 use Carbon\Carbon;
@@ -25,14 +26,21 @@ class AMTController extends Controller
     protected $businessQuoteService;
     protected $crudService;
     protected $lookupService;
+    protected $customerService;
 
     use RolePermissionConditions;
 
-    public function __construct(BusinessQuoteService $businessQuoteService, CRUDService $crudService, LookupService $lookupService)
+    public function __construct(
+        BusinessQuoteService $businessQuoteService, 
+        CRUDService $crudService, 
+        LookupService $lookupService,
+        CustomerService $customerService
+        )
     {
         $this->businessQuoteService = $businessQuoteService;
         $this->crudService = $crudService;
         $this->lookupService = $lookupService;
+        $this->customerService = $customerService;
     }
 
     /**
@@ -72,7 +80,8 @@ class AMTController extends Controller
                 'bqr.previous_quote_policy_number',
                 'bqr.previous_policy_expiry_date',
                 'bqr.device',
-                'bqr.previous_quote_policy_premium'
+                'bqr.previous_quote_policy_premium',
+                'bqr.customer_id'
             )->orderBy('bqr.advisor_id', 'asc');
         if (Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::Business) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::Amt) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::GM)) {
             // if user has advisor Role then fetch leads assigned to the user only
@@ -250,7 +259,11 @@ class AMTController extends Controller
             $selectedLeadStatus = $selectedLeadStatus->text;
         }
 
-        return view('amt.show', compact('businessInsuranceType', 'record', 'selectedLeadStatus', 'advisors', 'assignedUserName', 'assignedGMType', 'leadStatuses', 'lostReasons', 'selectedLostReasonId', 'modeltype', 'allowedDuplicateLOB'));
+        $customerAdditionalContacts = $this->customerService->getAddtionalContacts($record->customer_id);
+
+        return view('amt.show', compact('businessInsuranceType', 'record', 'selectedLeadStatus', 'advisors', 
+        'assignedUserName', 'assignedGMType', 'leadStatuses', 'lostReasons', 'selectedLostReasonId', 
+        'modeltype', 'allowedDuplicateLOB', 'customerAdditionalContacts'));
     }
 
     /**

@@ -76,7 +76,8 @@ class LifeQuoteService extends BaseService
                 'lqr.renewal_expiry_date',
                 'lqr.device',
                 'lqr.previous_policy_expiry_date',
-                'lqr.previous_quote_policy_premium'
+                'lqr.previous_quote_policy_premium',
+                'lqr.customer_id'
             )
             ->leftJoin('life_quote_request_detail as lqrd', 'lqrd.life_quote_request_id', 'lqr.id')
             ->leftJoin('currency_type as ct', 'ct.id', '=', 'lqr.sum_insured_currency_id')

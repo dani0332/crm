@@ -73,7 +73,8 @@ class PetQuoteService extends BaseService
                 'pqr.is_microchipped',
                 'pqr.is_neutered',
                 'pqr.is_mixed_breed',
-                'pqr.has_injury'
+                'pqr.has_injury',
+                'pqr.customer_id'
             )
             ->leftJoin('pet_quote_request_detail as pqrd', 'pqrd.pet_quote_request_id', 'pqr.id')
             ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'pqrd.lost_reason_id')

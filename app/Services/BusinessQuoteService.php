@@ -66,6 +66,7 @@ class BusinessQuoteService extends BaseService
                 'bqr.previous_quote_policy_premium',
                 'bqr.gender',
                 'bqr.device',
+                'bqr.customer_id'
             )
             ->leftJoin('business_type_of_insurance as bti', 'bti.id', '=', 'bqr.business_type_of_insurance_id')
             ->leftJoin('business_quote_request_detail as bqrd', 'bqrd.business_quote_request_id', '=', 'bqr.id')

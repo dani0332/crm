@@ -68,6 +68,7 @@ class HomeQuoteService extends BaseService
             'hqr.previous_quote_policy_number',
             'hqr.previous_policy_expiry_date',
             'hqr.previous_quote_policy_premium',
+            'hqr.customer_id'
         )
             ->leftJoin('home_quote_request_detail as hqrd', 'hqrd.home_quote_request_id', '=', 'hqr.id')
             ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'hqrd.lost_reason_id')

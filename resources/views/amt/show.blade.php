@@ -228,6 +228,8 @@
             :selectedlostreason="$selectedLostReasonId"
         />
 
+            <x-customer-additional-contact :customerAdditionalContacts="$customerAdditionalContacts" />
+
             <div class="row" st>
                 <div class="col-md-12 col-sm-12">
                     <div class="x_panel">
