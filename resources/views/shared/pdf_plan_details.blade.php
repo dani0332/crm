@@ -164,7 +164,6 @@
         $websitURL = Config::get('constants.AFIA_WEBSITE_DOMAIN');
 
         $features = [
-            //["code" => "perils", "title" => "EXACT VEHICLE AND VALUE (INSURER SPECIFIC)", "object" => "exclusion", "row_class" => "green-box"],
             ["code" => "heading", "title" => "BENEFITS"],
             ["code" => "damage", "title" => "Loss or Damage to the Insured Vehicle", "object" => "exclusion"],
             ["code" => "liability", "title" => "Third Party Property Liability", "object" => "feature"],

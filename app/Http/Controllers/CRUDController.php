@@ -917,9 +917,6 @@ class CRUDController extends Controller
     {
         $quoteId = $request->quote_pdf_uuid;
 
-        $quote = $this->getQuoteObject($quoteType, $quoteId);
-        $quote->load(['carMake', 'carModel']);
-
         $planIds = $request->plan_pdf_ids;
 
         $quotePlans = $this->carQuoteService->getQuotePlans($quoteId);
@@ -948,10 +945,11 @@ class CRUDController extends Controller
             $plans[$quotePlan->id] = $quotePlan;
         }
 
-        $record = $this->crudService->getEntity($this->genericModel->modelType, $quoteId);
+        $quote = $this->getQuoteObject($quoteType, $quoteId);
+        $quote->load(['carMake', 'carModel']);
 
         $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150])->loadView('shared.pdf_plan_details', compact('plans', 'quoteId', 'planIds', 'quote'));
-        $pdf_name = $record->code.'_Plans'.'.pdf';
+        $pdf_name = $quote->code.'_Plans'.'.pdf';
 
         return $pdf->download($pdf_name);
     }
