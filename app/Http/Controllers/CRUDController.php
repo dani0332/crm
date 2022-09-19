@@ -8,6 +8,7 @@ use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Http\Requests\PlanPdfRequest;
 use App\Models\GenericModel;
 use App\Models\Payment;
 use App\Models\PaymentStatusLog;
@@ -905,34 +906,54 @@ class CRUDController extends Controller
         }
     }
 
-    public function plansExportPdf(Request $request, $quoteType)
+    /**
+     * export selected plans to PDF
+     *
+     * @param  Request  $request
+     * @param $quoteType
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function plansExportPdf(PlanPdfRequest $request, $quoteType)
     {
         $quoteId = $request->quote_pdf_uuid;
-        $planIds = explode(',', $request->plan_pdf_ids);
-        if (count($planIds) > 6) {
-            return redirect()->back()->with('message', 'Plans must not be greater than 6');
+
+        $quote = $this->getQuoteObject($quoteType, $quoteId);
+        $quote->load(['carMake', 'carModel']);
+
+        $planIds = $request->plan_pdf_ids;
+
+        $quotePlans = $this->carQuoteService->getQuotePlans($quoteId);
+
+        if (! isset($quotePlans->quotes->plans)) {
+            return redirect()->back()->with('message', 'Quote plans not available');
         }
 
-        switch ($this->genericModel->modelType) {
-            case quoteTypeCode::Car:
-                $quotePlans = $this->carQuoteService->getQuotePlans($quoteId);
-                break;
+        $plans = [];
+        foreach ($quotePlans->quotes->plans as $quotePlan) {
+            if (! isset($quotePlan->id) || ! in_array($quotePlan->id, $planIds)) {
+                continue;
+            }
 
-            default:
-                // code...
-                break;
+            $quotePlan->exclusion = json_decode(collect($quotePlan->benefits->exclusion)->keyBy('code')->toJson());
+            $quotePlan->inclusion = json_decode(collect($quotePlan->benefits->inclusion)->keyBy('code')->toJson());
+            $quotePlan->feature = json_decode(collect($quotePlan->benefits->feature)->keyBy('code')->toJson());
+            $quotePlan->roadSideAssistance = json_decode(collect($quotePlan->benefits->roadSideAssistance)->keyBy('code')->toJson());
+            $quotePlan->addons = json_decode(collect($quotePlan->addons)->keyBy('code')->toJson());
+
+            foreach ($quotePlan->addons as &$addon) {
+                $addon->value = $addon->carAddonOption[0]->value;
+            }
+
+            $quotePlan->total = $quotePlan->discountPremium + $quotePlan->vat;
+            $plans[$quotePlan->id] = $quotePlan;
         }
 
-        $isPlanUpdateActive = $this->applicationStorageService->getKeyValue('IMCRM_CAR_QUOTE_PLANS_EDIT_IS_DISABLED');
-        if (gettype($quotePlans) != GenericRequestEnum::TypeString) {
-            $listQuotePlans = $quotePlans->quotes->plans;
-            $record = $this->crudService->getEntity($this->genericModel->modelType, $quoteId);
+        $record = $this->crudService->getEntity($this->genericModel->modelType, $quoteId);
 
-            $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150])->loadView('shared.pdf_plan_details', compact('listQuotePlans', 'quoteId', 'planIds', 'isPlanUpdateActive'));
-            $pdf_name = $record->code.'_Plans'.'.pdf';
+        $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150])->loadView('shared.pdf_plan_details', compact('plans', 'quoteId', 'planIds', 'quote'));
+        $pdf_name = $record->code.'_Plans'.'.pdf';
 
-            return $pdf->download($pdf_name);
-        }
+        return $pdf->download($pdf_name);
     }
 
     public function destroyDocument($quoteType, $quoteUuId, $id)
@@ -969,7 +990,7 @@ class CRUDController extends Controller
         if (! $quoteModel) {
             return response()->json(['success' => false]);
         }
-        $code = 'P-'.strtoupper(substr(uniqid('', ), 0, 8));
+        $code = 'P-'.strtoupper(substr(uniqid(''), 0, 8));
         $paymentInformation = [
             'code' => $code,
             'collection_type' => $request->collection_type,

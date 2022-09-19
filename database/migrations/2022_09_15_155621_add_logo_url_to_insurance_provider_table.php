@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class UpdateInsuranceProviderAddLogo extends Migration
+class AddLogoUrlToInsuranceProviderTable extends Migration
 {
     /**
      * Run the migrations.
@@ -27,10 +27,6 @@ class UpdateInsuranceProviderAddLogo extends Migration
      */
     public function down()
     {
-        Schema::table('insurance_provider', function (Blueprint $table) {
-            if (Schema::hasColumn('insurance_provider', 'logo_url')) {
-                $table->dropColumn('logo_url');
-            }
-        });
+
     }
 }
