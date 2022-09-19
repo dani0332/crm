@@ -7,12 +7,16 @@ use App\Models\Nationality;
 use App\Services\CustomerUploadService;
 use App\Services\CustomerWEGenerateUrlService;
 use App\Services\TransAppService;
+use App\Traits\GenericQueriesAllLobs;
 use Config;
 use DataTables;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 
 class CustomerController extends Controller
 {
+    use GenericQueriesAllLobs;
+
     private $customerUploadFileService;
     private $transAppService;
     private $customerWeEmailGenerateUrlService;
@@ -120,7 +124,7 @@ class CustomerController extends Controller
     }
 
     /**
-     * Store a newly uploaded customer
+     * Store a newly uploaded customer.
      *
      * @param  \Illuminate\Http\Request  $request
      * @param \Illuminate\Http\Response
@@ -154,6 +158,33 @@ class CustomerController extends Controller
 
     public function makeAdditionalContactPrimary(Request $request)
     {
-        dd('makeAdditionalContactPrimary: ', $request->all());
+        $validator = Validator::make($request->all(), [
+            'quote_id' => 'required',
+            'quote_type' => 'required',
+            'key' => 'required',
+            'value' => 'required',
+        ]);
+        if ($validator->fails()) {
+            return response()->json(['error'=>[
+                'message' => $validator->errors(),
+            ]]);
+        }
+        $quoteObject = $this->getQuoteObject($request->quote_type, $request->quote_id);
+        if ($request->key == 'email') {
+            $quoteObject->email = $request->value;
+            if ($quoteObject->customer) {
+                $quoteObject->customer->update(['email' => $request->value]);
+            }
+        } elseif ($request->key == 'mobile_no') {
+            $quoteObject->mobile_no = $request->value;
+            if ($quoteObject->customer) {
+                $quoteObject->customer->update(['mobile_no' => $request->value]);
+            }
+        }
+        $quoteObject->save();
+
+        return response()->json(['data'=>[
+            'message' => 'success',
+        ]]);
     }
 }
