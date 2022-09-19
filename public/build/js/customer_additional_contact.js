@@ -90,7 +90,7 @@ $(function()  {
                         validation_div_text('#additional-contact-modal-validation-msg', data.error.message, 'red');
                     }
                     else if(data.data.message) {
-                        alert('Email Address Added.');
+                        alert('Contact Added.');
                         location.reload();
                     } else {
                         validation_div_text('#additional-contact-modal-validation-msg', 'There was an error!', 'red');

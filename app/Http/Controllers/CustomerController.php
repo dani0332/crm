@@ -254,7 +254,7 @@ class CustomerController extends Controller
         ]);
 
         return response()->json(['data'=>[
-            'message' => 'Email Address added successfully.',
+            'message' => 'Contact added successfully.',
         ]]);
     }
 }
