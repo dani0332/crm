@@ -250,7 +250,7 @@ class CustomerController extends Controller
         CustomerAdditionalContact::create([
             'customer_id' => $request->customer_id,
             'key' => $key,
-            'value' => $value,
+            'value' => trim($value),
         ]);
 
         return response()->json(['data'=>[

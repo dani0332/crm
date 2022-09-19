@@ -221,14 +221,15 @@
 
             <x-lead-status-update
             :lead="$record"
-            :modeltype="$modeltype"
+            :modeltype="$quoteType"
             :status="$record->quote_status_id"
             :statuses="$leadStatuses"
             :lostreasons="$lostReasons"
             :selectedlostreason="$selectedLostReasonId"
         />
 
-            <x-customer-additional-contact :record="$record" :customerAdditionalContacts="$customerAdditionalContacts" />
+            <x-customer-additional-contact :record="$record" :quoteType="$quoteType" :customerAdditionalContacts="$customerAdditionalContacts" />
+            <x-customer-additional-contact-modal :record="$record" :quoteType="$quoteType" />
 
             <div class="row" st>
                 <div class="col-md-12 col-sm-12">
@@ -273,8 +274,8 @@
                         <form method="post" action="/quotes/createDuplicate" autocomplete="off">
                             {{ csrf_field() }}
                             @method('POST')
-                            <input type="hidden" value="{{ strtolower($modeltype) }}" name="modelType">
-                            <input type="hidden" value="{{ strtolower($modeltype) }}" name="parentType">
+                            <input type="hidden" value="{{ strtolower($quoteType) }}" name="modelType">
+                            <input type="hidden" value="{{ strtolower($quoteType) }}" name="parentType">
                             <input type="hidden" value="{{ strtolower($record->id) }}" name="entityId">
                             <input type="hidden" value="{{ strtolower($record->code) }}" name="entityCode">
                             <input type="hidden" value="{{ strtolower($record->uuid) }}" name="entityUId">

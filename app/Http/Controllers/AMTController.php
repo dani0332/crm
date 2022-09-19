@@ -246,7 +246,7 @@ class AMTController extends Controller
             $assignedUser = User::where('id', $record->advisor_id)->first();
             $assignedUserName = $assignedUser->name;
         }
-        $modeltype = 'business';
+        $quoteType = 'business';
         $allowedDuplicateLOB = $this->crudService->getAllowedDuplicateLOB('Group Medical', $record->code);
         $advisors = DB::table('users as u')
             ->join('model_has_roles as mr', 'mr.model_id', '=', 'u.id')
@@ -262,7 +262,7 @@ class AMTController extends Controller
 
         return view('amt.show', compact('businessInsuranceType', 'record', 'selectedLeadStatus', 'advisors',
             'assignedUserName', 'assignedGMType', 'leadStatuses', 'lostReasons', 'selectedLostReasonId',
-            'modeltype', 'allowedDuplicateLOB', 'customerAdditionalContacts'));
+            'quoteType', 'allowedDuplicateLOB', 'customerAdditionalContacts'));
     }
 
     /**
