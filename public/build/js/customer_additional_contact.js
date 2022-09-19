@@ -58,15 +58,15 @@ $(function()  {
         var additional_mobile_no_reg_exp = new RegExp('[a-zA-Z]');
 
         if(additional_contact_type_val == 'email' && is_valid_email(additional_contact_val) === false) {
-            validationDivText('#additional-contact-modal-validation-msg', 'Please enter a valid email address.');
+            validation_div_text('#additional-contact-modal-validation-msg', 'Please enter a valid email address.');
             return false;
         }
         if(additional_contact_type_val == 'mobile_no' && (additional_contact_val == '' || additional_mobile_no_reg_exp.test(additional_contact_val))) {
-            validationDivText('#additional-contact-modal-validation-msg', 'Please enter a valid  mobile number.');
+            validation_div_text('#additional-contact-modal-validation-msg', 'Please enter a valid  mobile number.');
             return false;
         }
         else {
-            validationDivText('#additional-contact-modal-validation-msg', '');
+            validation_div_text('#additional-contact-modal-validation-msg', '');
         }
     });
 
@@ -75,7 +75,7 @@ $(function()  {
         return email_regex.test(email);
     }
 
-    function validationDivText(id, text) {
+    function validation_div_text(id, text) {
         $(id).text(text);
     }
 
