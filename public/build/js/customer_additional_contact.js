@@ -53,26 +53,30 @@ $(function()  {
 
     // On Add button click do validate Email/MobileNo
     $('#additional-contact-modal-add-btn').on('click', function(){
-        var additional_contact_type = $('#additional_contact_type').val();
-        var additional_contact = $('#additional_contact').val();
+        var additional_contact_type_val = $('#additional_contact_type').val();
+        var additional_contact_val = $('#additional_contact').val();
         var additional_mobile_no_reg_exp = new RegExp('[a-zA-Z]');
 
-        if(additional_contact_type == 'email' && is_valid_email(additional_contact) === false) {
-            $('#additional-contact-modal-validation-msg').text('Please enter a valid email address.');
+        if(additional_contact_type_val == 'email' && is_valid_email(additional_contact_val) === false) {
+            validationDivText('#additional-contact-modal-validation-msg', 'Please enter a valid email address.');
             return false;
         }
-        if(additional_contact_type == 'mobile_no' && (additional_contact == '' || additional_mobile_no_reg_exp.test(additional_contact))) {
-            $('#additional-contact-modal-validation-msg').text('Please enter a valid mobile number.');
+        if(additional_contact_type_val == 'mobile_no' && (additional_contact_val == '' || additional_mobile_no_reg_exp.test(additional_contact_val))) {
+            validationDivText('#additional-contact-modal-validation-msg', 'Please enter a valid  mobile number.');
             return false;
         }
         else {
-            $('#additional-contact-modal-validation-msg').text('');
+            validationDivText('#additional-contact-modal-validation-msg', '');
         }
     });
 
     function is_valid_email(email) {
-        var EmailRegex = /^([a-zA-Z0-9_.+-])+\@(([a-zA-Z0-9-])+\.)+([a-zA-Z0-9]{2,4})+$/;
-        return EmailRegex.test(email);
+        var email_regex = /^([a-zA-Z0-9_.+-])+\@(([a-zA-Z0-9-])+\.)+([a-zA-Z0-9]{2,4})+$/;
+        return email_regex.test(email);
+    }
+
+    function validationDivText(id, text) {
+        $(id).text(text);
     }
 
 });
