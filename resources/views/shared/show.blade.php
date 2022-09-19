@@ -452,7 +452,7 @@
     <x-lead-activities :lead="$record" :modeltype="$model->modelType" :activities="$activities" />
     <x-lead-activity-modal :advisors="$advisors" :modeltype="$model->modelType" :record="$record" />
     <x-customer-additional-contact :record="$record" :quoteType="$quoteType" :customerAdditionalContacts="$customerAdditionalContacts" />
-    <x-customer-additional-contact-modal  />
+    <x-customer-additional-contact-modal :record="$record" :quoteType="$quoteType" />
 
     <div class="row" st>
         <div class="col-md-12 col-sm-12">

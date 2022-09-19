@@ -78,4 +78,14 @@ class Customer extends Model implements AuditableContract
 
         return $this->asDateTime($table)->timezone(config('app.timezone'))->format($dateTimeFormat);
     }
+
+    public function additionalContactInfo()
+    {
+        return $this->hasMany(CustomerAdditionalContact::class, 'customer_id', 'id');
+    }
+
+    public function customer()
+    {
+        return $this->belongsTo(self::class, 'id', 'customer_id');
+    }
 }

@@ -18,8 +18,11 @@
                     </thead>
                     <tbody>
                         @foreach ($customerAdditionalContacts as $key => $customerAdditionalContact)
+                            @if($record->email == $customerAdditionalContact->value || $record->mobile_no == $customerAdditionalContact->value)
+                                @continue
+                            @endif
                             <tr>
-                                <td>{{ $customerAdditionalContact->key }}</td>
+                                <td>{{ ucwords(str_replace("_", " ", $customerAdditionalContact->key)) }}</td>
                                 <td>{{ $customerAdditionalContact->value }}</td>
                                 <td>{{ $customerAdditionalContact->created_at }}</td>
                                 <td style="float:right;">
@@ -32,7 +35,7 @@
                                             data-quote-type="{{ $quoteType }}" 
                                             >Make Primary</button>
                                     @endif
-                                    <button class="btn btn-danger btn-sm additional-contact-delete-btn" data-record-id="{{ $customerAdditionalContact->id }}">Delete</button>
+                                    <button class="btn btn-danger btn-sm additional-contact-delete-btn" data-customer-additional-contact-id="{{ $customerAdditionalContact->id }}">Delete</button>
                                 </td>
                             </tr>
                         @endforeach

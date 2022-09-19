@@ -129,6 +129,7 @@ Route::group(['middleware' => ['auth']], function () {
     Route::post('/customer-process', [CustomerController::class, 'processCustomerCSV']);
     Route::post('/customer-additional-contact/{id}/delete', [CustomerController::class, 'deleteAdditionalContact']);
     Route::post('/customer-additional-contact/{id}/make-primary', [CustomerController::class, 'makeAdditionalContactPrimary']);
+    Route::post('/customer-additional-contact/add', [CustomerController::class, 'addAdditionalContact']);
 
     Route::resource('lead-allocation', LeadAllocationController::class);
     Route::post('/lead-allocation/updateAvailability', [LeadAllocationController::class, 'updateAvailability']);
