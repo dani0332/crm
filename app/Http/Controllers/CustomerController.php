@@ -14,8 +14,8 @@ use App\Traits\GenericQueriesAllLobs;
 use Config;
 use DataTables;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
 
 class CustomerController extends Controller
 {
@@ -165,12 +165,12 @@ class CustomerController extends Controller
     {
         $deleteCustomerAdditionalContact = CustomerAdditionalContact::find($id);
 
-        if($deleteCustomerAdditionalContact) {
+        if ($deleteCustomerAdditionalContact) {
             Log::info('Customer additional contact deleted. ID: '.$id);
             $deleteCustomerAdditionalContact->delete();
         }
 
-        return response()->json(['data'=>[
+        return response()->json(['data' => [
             'message' => 'Additional Contact Deleted.',
         ]]);
     }
@@ -184,7 +184,7 @@ class CustomerController extends Controller
             'value' => 'required',
         ]);
         if ($validator->fails()) {
-            return response()->json(['error'=>[
+            return response()->json(['error' => [
                 'message' => $validator->errors(),
             ]]);
         }
@@ -204,7 +204,7 @@ class CustomerController extends Controller
         }
         $quoteObject->save();
 
-        return response()->json(['data'=>[
+        return response()->json(['data' => [
             'message' => 'success',
         ]]);
     }
@@ -217,7 +217,7 @@ class CustomerController extends Controller
             'additional_contact_val' => 'required',
         ]);
         if ($validator->fails()) {
-            return response()->json(['error'=>[
+            return response()->json(['error' => [
                 'message' => $validator->errors(),
             ]]);
         }
@@ -230,7 +230,7 @@ class CustomerController extends Controller
             $isAdditionalEmailExist = $this->customerService->checkAdditionalEmailExist($quoteObject, $value);
 
             if ($isAdditionalEmailExist) {
-                return response()->json(['error'=>[
+                return response()->json(['error' => [
                     'message' => 'Email Address already in use for a customer. Please try another.',
                 ]]);
             }
@@ -240,7 +240,7 @@ class CustomerController extends Controller
             $isAdditionalMobileNoExist = $this->customerService->checkAdditionalMobileNoExist($quoteObject, $value);
 
             if ($isAdditionalMobileNoExist) {
-                return response()->json(['error'=>[
+                return response()->json(['error' => [
                     'message' => 'Mobile Number already in use for a customer. Please try another.',
                 ]]);
             }
@@ -253,7 +253,7 @@ class CustomerController extends Controller
             'value' => trim($value),
         ]);
 
-        return response()->json(['data'=>[
+        return response()->json(['data' => [
             'message' => 'Contact added successfully.',
         ]]);
     }
