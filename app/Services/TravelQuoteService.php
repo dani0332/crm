@@ -10,7 +10,6 @@ use App\Models\TravelMemberDetail;
 use App\Models\TravelQuote;
 use App\Models\TravelQuoteRequestDetail;
 use App\Traits\AddPremiumAllLobs;
-use App\Traits\CustomerAdditionalInfo as CustomerAdditionalInfoTrait;
 use App\Traits\GetTravelPreviousQuoteIds;
 use App\Traits\RolePermissionConditions;
 use Auth;
@@ -25,7 +24,6 @@ class TravelQuoteService extends BaseService
 
     use RolePermissionConditions;
     use GetTravelPreviousQuoteIds;
-    use CustomerAdditionalInfoTrait;
     use AddPremiumAllLobs;
 
     public function __construct(LeadAllocationService $leadAllocationService)
@@ -82,6 +80,7 @@ class TravelQuoteService extends BaseService
             'tqr.previous_quote_policy_premium',
             'tqr.policy_issuance_date',
             'tqr.policy_start_date',
+            'tqr.customer_id'
         )
             ->leftJoin('travel_cover_for as tcf', 'tcf.id', '=', 'tqr.travel_cover_for_id')
             ->leftJoin('travel_quote_request_detail as tqrd', 'tqr.id', '=', 'tqrd.travel_quote_request_id')
@@ -117,14 +116,14 @@ class TravelQuoteService extends BaseService
         if (! Auth::user()->hasRole('ADMIN') && ! Auth::user()->hasRole('Call Desk')) {
             $dataArr['advisorId'] = Auth::user()->id;
         }
+
         $response = CapiRequestService::sendCAPIRequest('/api/v1-save-travel-quote', $dataArr);
+
         if (isset($response->quoteUID)) {
             $this->savePremium(quoteTypeCode::TravelQuote, $request, $response);
-
-            return $this->createUpdateCustomerInfo($request, $request->email, $response->quoteUID, quoteTypeCode::TravelQuote);
-        } else {
-            return $response;
         }
+
+        return $response;
     }
 
     public function getTravelOverDueFollowups()
@@ -529,8 +528,6 @@ class TravelQuoteService extends BaseService
         $travelQuote->destination_id = $request->destination_id;
         $travelQuote->dob = $request->dob;
         $travelQuote->save();
-
-        $this->createUpdateCustomerInfo($request, $travelQuote->email, $travelQuote->uuid, quoteTypeCode::TravelQuote);
 
         if (isset($request->return_to_view)) {
             return redirect('quote/travel/'.$id)->with('success', 'Travel Quote has been updated');

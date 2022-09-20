@@ -4,9 +4,8 @@ use App\Models\CustomerAdditionalInfo;
 use Illuminate\Support\Facades\DB;
 
 if (! function_exists('generate_code')) {
-
     /**
-     * Checks if a value exists in an array in a case-insensitive manner
+     * Checks if a value exists in an array in a case-insensitive manner.
      *
      * @param  string  $prefix
      * The searched value

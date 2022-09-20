@@ -63,24 +63,6 @@
                                     <span class="text-danger">{{ $errors->first('mobile_no') }}</span>
                                 @endif
                             </div>
-                            <a href="javascript:void(0);" class="remove_additional_btn" id="add_additional_btn" title="Add field" style="float:right"><img src="/image/add-icon.png"/></a>
-                        </div>
-                        <div id="additional_info">
-                        @if(count($record->customerAdditionalInfo) > 0)
-                            @foreach($record->customerAdditionalInfo as $info)
-                                <div class="item form-group">
-                                    <div class="col">
-                                        <span class="col-form-label col-md-6 col-sm-6"><b> Email Address (Optional)</b> </span>
-                                        <input type="email" name="emails[]" class="form-control" data-toggle="tooltip" data-placement="top" title="Please enter email address" value="{{$info->email_address}}">
-                                    </div>
-                                    <div class="col">
-                                        <span class="col-form-label col-md-6 col-sm-6"><b>Phone number (Optional)</b> </span>
-                                        <input type="text" name="phones[]"class="form-control" data-toggle="tooltip" data-placement="top" title="Please enter 11 digit phone number. Example: 0563264418"  value="{{$info->mobile_no}}">
-                                    </div>
-                                    <a href="javascript:void(0);" class="remove_additional_btn" title="Add field"><img src="/image/remove-icon.png"/></a>
-                                </div>
-                            @endforeach
-                            @endif
                         </div>
                         <div class="item form-group">
                             <div class="col">

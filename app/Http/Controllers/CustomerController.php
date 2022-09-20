@@ -2,26 +2,40 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\GenericRequestEnum;
 use App\Models\Customer;
+use App\Models\CustomerAdditionalContact;
 use App\Models\Nationality;
+use App\Services\CustomerService;
 use App\Services\CustomerUploadService;
 use App\Services\CustomerWEGenerateUrlService;
 use App\Services\TransAppService;
+use App\Traits\GenericQueriesAllLobs;
 use Config;
 use DataTables;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
 
 class CustomerController extends Controller
 {
+    use GenericQueriesAllLobs;
+
     private $customerUploadFileService;
     private $transAppService;
     private $customerWeEmailGenerateUrlService;
+    private $customerService;
 
-    public function __construct(CustomerUploadService $customerUploadFileService, TransAppService $transAppService, CustomerWEGenerateUrlService $customerWeEmailGenerateUrlService)
-    {
+    public function __construct(
+        CustomerUploadService $customerUploadFileService,
+        TransAppService $transAppService,
+        CustomerWEGenerateUrlService $customerWeEmailGenerateUrlService,
+        CustomerService $customerService
+    ) {
         $this->customerUploadFileService = $customerUploadFileService;
         $this->transAppService = $transAppService;
         $this->customerWeEmailGenerateUrlService = $customerWeEmailGenerateUrlService;
+        $this->customerService = $customerService;
         $this->middleware('permission:customers-list', ['only' => ['index', 'store']]);
         $this->middleware('permission:customers-edit', ['only' => ['edit', 'update']]);
     }
@@ -120,7 +134,7 @@ class CustomerController extends Controller
     }
 
     /**
-     * Store a newly uploaded customer
+     * Store a newly uploaded customer.
      *
      * @param  \Illuminate\Http\Request  $request
      * @param \Illuminate\Http\Response
@@ -145,5 +159,102 @@ class CustomerController extends Controller
     public function uploadCustomers()
     {
         return view('customers.upload');
+    }
+
+    public function deleteAdditionalContact($id)
+    {
+        $deleteCustomerAdditionalContact = CustomerAdditionalContact::find($id);
+
+        if ($deleteCustomerAdditionalContact) {
+            Log::info('Customer additional contact deleted. ID: '.$id);
+            $deleteCustomerAdditionalContact->delete();
+        }
+
+        return response()->json(['data' => [
+            'message' => 'Additional Contact Deleted.',
+        ]]);
+    }
+
+    public function makeAdditionalContactPrimary(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'quote_id' => 'required',
+            'quote_type' => 'required',
+            'key' => 'required',
+            'value' => 'required',
+        ]);
+        if ($validator->fails()) {
+            return response()->json(['error' => [
+                'message' => $validator->errors(),
+            ]]);
+        }
+        $quoteObject = $this->getQuoteObject($request->quote_type, $request->quote_id);
+        if ($request->key == GenericRequestEnum::EMAIL) {
+            $quoteObject->email = $request->value;
+            if ($quoteObject->customer) {
+                Log::info('Customer additional contact primary email updated. Previous Email: '.$quoteObject->email.' New Email: '.$request->value);
+                $quoteObject->customer->update(['email' => $request->value]);
+            }
+        } elseif ($request->key == GenericRequestEnum::MOBILE_NO) {
+            $quoteObject->mobile_no = $request->value;
+            if ($quoteObject->customer) {
+                Log::info('Customer additional contact primary mobile_no updated. Previous Mobile_No: '.$quoteObject->mobile_no.' New Mobile_No: '.$request->value);
+                $quoteObject->customer->update(['mobile_no' => $request->value]);
+            }
+        }
+        $quoteObject->save();
+
+        return response()->json(['data' => [
+            'message' => 'success',
+        ]]);
+    }
+
+    public function addAdditionalContact(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'customer_id' => 'required',
+            'additional_contact_type' => 'required',
+            'additional_contact_val' => 'required',
+        ]);
+        if ($validator->fails()) {
+            return response()->json(['error' => [
+                'message' => $validator->errors(),
+            ]]);
+        }
+
+        $key = $request->additional_contact_type;
+        $value = $request->additional_contact_val;
+        $quoteObject = $this->getQuoteObject($request->quote_type, $request->quote_id);
+
+        if ($key == GenericRequestEnum::EMAIL) {
+            $isAdditionalEmailExist = $this->customerService->checkAdditionalEmailExist($quoteObject, $value);
+
+            if ($isAdditionalEmailExist) {
+                return response()->json(['error' => [
+                    'message' => 'Email Address already in use for a customer. Please try another.',
+                ]]);
+            }
+        }
+
+        if ($key == GenericRequestEnum::MOBILE_NO) {
+            $isAdditionalMobileNoExist = $this->customerService->checkAdditionalMobileNoExist($quoteObject, $value);
+
+            if ($isAdditionalMobileNoExist) {
+                return response()->json(['error' => [
+                    'message' => 'Mobile Number already in use for a customer. Please try another.',
+                ]]);
+            }
+        }
+
+        Log::info('Customer additional contact id: '.$request->customer_id.' new: '.$key.' value: '.$value);
+        CustomerAdditionalContact::create([
+            'customer_id' => $request->customer_id,
+            'key' => $key,
+            'value' => trim($value),
+        ]);
+
+        return response()->json(['data' => [
+            'message' => 'Contact added successfully.',
+        ]]);
     }
 }
