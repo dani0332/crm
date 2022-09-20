@@ -435,6 +435,7 @@
                 </div>
             </div>
         </div>
+        <x-health-quote-ecom-details :data="$ecomDetails" />
         <x-health-quote-plans
             :listQuotePlans="$listQuotePlans"
             :uuidModal="$record->uuid"
@@ -442,7 +443,6 @@
             :ecomHealthInsuranceQuoteUrl="$ecomHealthInsuranceQuoteUrl. $record->uuid" />
         <x-health-quote-members-detail :members="$membersDetail" />
         <x-health-quote-members-modal :categories="$memberCategories" :salaries="$salaryBands" :id="$record->id" />
-        <x-health-quote-ecom-details :data="$ecomDetails" />
         @if (isset($isQuoteDocumentEnabled) && $isQuoteDocumentEnabled)
             <x-quote-policy :record="$record" :quoteType="$quoteType" />
             <x-quote-documents :displaySendPolicyButton="$displaySendPolicyButton" :record="$record" :quoteDocuments="$quoteDocuments" :quoteType="$quoteType" />
