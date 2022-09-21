@@ -24,13 +24,14 @@ class QuoteDocumentController extends Controller
 
     /**
      * return list of quote documents
+     *
      * @param $quoteType
      * @param $quoteUuid
      * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\Resources\Json\AnonymousResourceCollection
      */
     public function index($quoteType, $quoteUuid)
     {
-        if( ($quote = $this->getQuoteObject($quoteType, $quoteUuid)) ) {
+        if (($quote = $this->getQuoteObject($quoteType, $quoteUuid))) {
             return QuoteDocumentResource::collection($quote->documents);
         }
 
@@ -65,13 +66,15 @@ class QuoteDocumentController extends Controller
         $quote = $this->getQuoteObject($quoteType, $request->quote_uuid);
 
         $document = $this->quoteDocumentService->uploadQuoteDocument($request->file('file'), $request->validated(), $quote);
+
         return new QuoteDocumentResource($document);
     }
 
     /**
      * delete quote document
+     *
      * @param $quoteType
-     * @param DeleteQuoteDocumentRequest $request
+     * @param  DeleteQuoteDocumentRequest  $request
      * @return \Illuminate\Http\JsonResponse|void
      */
     public function destroy($quoteType, DeleteQuoteDocumentRequest $request)

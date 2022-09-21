@@ -18,7 +18,7 @@ class ValidateQuoteObject implements Rule
      */
     public function passes($attribute, $value)
     {
-        return (  $this->getQuoteObject(request()->quoteType, request()->quote_uuid));
+        return   $this->getQuoteObject(request()->quoteType, request()->quote_uuid);
     }
 
     /**

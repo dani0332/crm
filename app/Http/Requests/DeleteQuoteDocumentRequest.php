@@ -25,9 +25,9 @@ class DeleteQuoteDocumentRequest extends FormRequest
     public function rules()
     {
         return [
-            'quote_uuid'    => ['required', new ValidateQuoteObject],
-            'doc_name'  => 'required|exists:quote_documents,doc_name',
-            'doc_uuid'  => 'required|exists:quote_documents,doc_uuid'
+            'quote_uuid' => ['required', new ValidateQuoteObject],
+            'doc_name' => 'required|exists:quote_documents,doc_name',
+            'doc_uuid' => 'required|exists:quote_documents,doc_uuid',
         ];
     }
 }

@@ -15,11 +15,11 @@ class QuoteDocumentResource extends JsonResource
     public function toArray($request)
     {
         return [
-            'doc_name'  => $this->doc_name,
-            'doc_uuid'  => $this->doc_uuid,
+            'doc_name' => $this->doc_name,
+            'doc_uuid' => $this->doc_uuid,
             'original_name' => $this->original_name,
             'document_type_code' => $this->document_type_code,
-            'document_type_text' => $this->document_type_text
+            'document_type_text' => $this->document_type_text,
         ];
     }
 }
