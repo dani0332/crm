@@ -27,6 +27,5 @@ class AddLogoUrlToInsuranceProviderTable extends Migration
      */
     public function down()
     {
-
     }
 }

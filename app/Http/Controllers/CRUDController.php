@@ -925,31 +925,12 @@ class CRUDController extends Controller
             return redirect()->back()->with('message', 'Quote plans not available');
         }
 
-        $plans = [];
-        foreach ($quotePlans->quotes->plans as $quotePlan) {
-            if (! isset($quotePlan->id) || ! in_array($quotePlan->id, $planIds)) {
-                continue;
-            }
-
-            $quotePlan->exclusion = json_decode(collect($quotePlan->benefits->exclusion)->keyBy('code')->toJson());
-            $quotePlan->inclusion = json_decode(collect($quotePlan->benefits->inclusion)->keyBy('code')->toJson());
-            $quotePlan->feature = json_decode(collect($quotePlan->benefits->feature)->keyBy('code')->toJson());
-            $quotePlan->roadSideAssistance = json_decode(collect($quotePlan->benefits->roadSideAssistance)->keyBy('code')->toJson());
-            $quotePlan->addons = json_decode(collect($quotePlan->addons)->keyBy('code')->toJson());
-
-            foreach ($quotePlan->addons as &$addon) {
-                $addon->value = $addon->carAddonOption[0]->value;
-            }
-
-            $quotePlan->total = $quotePlan->discountPremium + $quotePlan->vat;
-            $plans[$quotePlan->id] = $quotePlan;
-        }
-
         $quote = $this->getQuoteObject($quoteType, $quoteId);
         $quote->load(['carMake', 'carModel']);
 
-        $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150])->loadView('shared.pdf_plan_details', compact('plans', 'quoteId', 'planIds', 'quote'));
-        $pdf_name = $quote->code.'_Plans'.'.pdf';
+        $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150])->loadView('pdf.quote_plans', compact('quotePlans', 'quoteId', 'planIds', 'quote'));
+
+        $pdf_name = strtolower($quote->code).'_plans'.'.pdf';
 
         return $pdf->download($pdf_name);
     }
