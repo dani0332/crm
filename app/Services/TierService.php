@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Models\Tier;
-use Carbon\Carbon;
 use DB;
 use Illuminate\Http\Request;
 
@@ -39,6 +38,7 @@ class TierService extends BaseService
         $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';
         if ($column != '' && $column != 0 && $direction != '') {
             $columnName = $request->get('columns')[$column]['name'];
+
             return $this->query->orderBy($this->getSortingColumnNameWithPrefix($columnName), $direction);
         } else {
             return $this->query->orderBy('t.created_at', 'DESC');
@@ -72,6 +72,7 @@ class TierService extends BaseService
             'is_auto_assignment_enabled' => $request->has('is_auto_assignment_enabled') && $request->is_auto_assignment_enabled == 'on' ? 1 : 0,
             'is_active' => $request->has('is_active') && $request->is_active == 'on' ? 1 : 0,
         ]);
+
         return $tier;
     }
 
@@ -86,6 +87,7 @@ class TierService extends BaseService
         $tier->is_auto_assignment_enabled = $request->has('is_auto_assignment_enabled') && $request->is_auto_assignment_enabled == 'on' ? 1 : 0;
         $tier->is_active = $request->has('is_active') && $request->is_active == 'on' ? 1 : 0;
         $tier->save();
+
         return $tier;
     }
 
@@ -99,7 +101,7 @@ class TierService extends BaseService
             'cost_per_lead' => 'input|number|title',
             'is_tpl' => 'input|checkbox|title',
             'is_auto_assignment_enabled' => 'input|checkbox|title',
-            'is_active' => 'input|checkbox|title'
+            'is_active' => 'input|checkbox|title',
         ];
     }
 

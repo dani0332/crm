@@ -62,7 +62,7 @@ class DropdownSourceService extends BaseService
                 ->groupBy('t.id')->get();
                 break;
             case 'quad_tiers':
-                $query = "select t.id, t.name from quadrants q inner join tiers t on t.quad_id = q.id where q.id = ".  $id ." group by t.id";
+                $query = 'select t.id, t.name from quadrants q inner join tiers t on t.quad_id = q.id where q.id = '.$id.' group by t.id';
                 $data = DB::select($query);
                 break;
             default:

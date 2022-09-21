@@ -119,6 +119,7 @@ class GenericCrudController extends Controller
         if ($request->has('id')) {
             $id = $request->id;
         }
+
         return view('generic.add', compact('model', 'dropdownSource', 'customTitles', 'id'));
     }
 
@@ -226,13 +227,13 @@ class GenericCrudController extends Controller
             if (str_contains($value, 'select')) {
                 $data = $this->dropdownSourceService->getDropdownSource($property);
                 $dropdownSource[$property] = $data;
-
             }
             if (str_contains($value, 'customTable')) {
                 $data = $this->dropdownSourceService->getCustomDropdownList($property, $record->id);
                 $customLists[$property] = $data;
             }
         }
+
         return view('generic.edit', compact(['record', 'model', 'dropdownSource', 'customTitles', 'customLists']));
     }
 

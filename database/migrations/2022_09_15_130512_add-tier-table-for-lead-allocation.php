@@ -48,7 +48,6 @@ class AddTierTableForLeadAllocation extends Migration
             $table->unsignedBigInteger('quad_id')->nullable();
             $table->foreign('quad_id')->references('id')->on('quadrants');
         });
-
     }
 
     /**
@@ -61,4 +60,3 @@ class AddTierTableForLeadAllocation extends Migration
         //
     }
 }
-

@@ -37,6 +37,7 @@ class QuadrantService extends BaseService
         $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';
         if ($column != '' && $column != 0 && $direction != '') {
             $columnName = $request->get('columns')[$column]['name'];
+
             return $this->query->orderBy($this->getSortingColumnNameWithPrefix($columnName), $direction);
         } else {
             return $this->query->orderBy('t.created_at', 'DESC');
@@ -62,15 +63,15 @@ class QuadrantService extends BaseService
             'name' => $request->name,
             'is_active' => $request->has('is_active') && $request->is_active == 'on' ? 1 : 0,
         ]);
-        if(isset($request->quad_tiers)){
+        if (isset($request->quad_tiers)) {
             $tierIds = $request->quad_tiers;
-            foreach ($tierIds as $tierId)
-            {
-               $tier = Tier::where('id', $tierId)->first();
-               $tier->quad_id = $quad->id;
-               $tier->save();
+            foreach ($tierIds as $tierId) {
+                $tier = Tier::where('id', $tierId)->first();
+                $tier->quad_id = $quad->id;
+                $tier->save();
             }
         }
+
         return $quad;
     }
 
@@ -81,20 +82,19 @@ class QuadrantService extends BaseService
         $quad->is_active = $request->has('is_active') && $request->is_active == 'on' ? 1 : 0;
         $quad->save();
         $tiers = Tier::where('quad_id', $quad->id)->get();
-        foreach($tiers as $tier)
-        {
+        foreach ($tiers as $tier) {
             $tier->quad_id = null;
             $tier->save();
         }
-        if(isset($request->quad_tiers)){
+        if (isset($request->quad_tiers)) {
             $tierIds = $request->quad_tiers;
-            foreach ($tierIds as $tierId)
-            {
-               $tier = Tier::where('id', $tierId)->first();
-               $tier->quad_id = $quad->id;
-               $tier->save();
+            foreach ($tierIds as $tierId) {
+                $tier = Tier::where('id', $tierId)->first();
+                $tier->quad_id = $quad->id;
+                $tier->save();
             }
         }
+
         return $quad;
     }
 
@@ -106,7 +106,7 @@ class QuadrantService extends BaseService
             'is_active' => 'input|checkbox|title',
             'updated_at' => 'input|date',
             'quad_tiers' => 'select|title||multiple',
-            'created_at' => 'input|date'
+            'created_at' => 'input|date',
         ];
     }
 
