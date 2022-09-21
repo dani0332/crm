@@ -27,7 +27,7 @@ Please make sure to go through the last two lines to familiarize yourself with t
 
 **Doppler Configuration**
 
-Once you have doppler CLI installed on your local machine, run the following command to initiate the login setup
+Once you have doppler CLI installed on your local machine, run the following command to initiate the login setup.
 - ```doppler setup``` This will initiate the login process, use Google login. Once logged in you will be prompted to select the profile you want to use the environment variables. You can run the command again to switch profile.
 - ```doppler secrets``` This will show you the current environment variables.
 - ```composer serve``` This will initiate the local server on your machine using th doppler env variables.
