@@ -72,11 +72,11 @@ class QuoteDocumentService extends BaseService
         //check for document and force delete if found
         if(($document = $quote->documents->first())) {
             $document->forceDelete();
-            Log::info('FN: deleteQuoteDocument  UUID: '.$data['quote_uuid'].' Message: document ('.$data['doc_name'].') deleted');
+            Log::info('CL: ' . get_class() .' FN: deleteQuoteDocument  UUID: '.$data['quote_uuid'].' Message: document ('.$data['doc_name'].') deleted');
             return response()->json(['message'  => 'document deleted successfully']);
         }
 
-        vAbort('Invalid document detail provided');
+        vAbort('Invalid document detail provided.');
     }
 
 
@@ -123,7 +123,7 @@ class QuoteDocumentService extends BaseService
             ]);
 
         } catch (\Exception $exception) {
-            Log::info('FN: uploadQuoteDocument  UUID: '.$data['quote_uuid'].' Error Code/Message: '.$exception->getCode().'/'.$exception->getMessage());
+            Log::info('CL: ' . get_class() . 'FN: uploadQuoteDocument  UUID: '.$data['quote_uuid'].' Error Code/Message: '.$exception->getCode().'/'.$exception->getMessage());
 
             return response()->json(['error' => 'Document upload failed, please try again'], 500);
         }

@@ -10,17 +10,6 @@ class ValidateQuoteObject implements Rule
     use GenericQueriesAllLobs;
 
     /**
-     * Create a new rule instance.
-     *
-     * @return void
-     */
-    public function __construct()
-    {
-        //
-    }
-
-
-    /**
      * Determine if the validation rule passes.
      *
      * @param  string  $attribute
@@ -39,6 +28,6 @@ class ValidateQuoteObject implements Rule
      */
     public function message()
     {
-        return 'Invalid quote type or uuid provided';
+        return 'Quote not found.';
     }
 }

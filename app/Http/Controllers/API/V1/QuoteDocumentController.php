@@ -23,6 +23,21 @@ class QuoteDocumentController extends Controller
     }
 
     /**
+     * return list of quote documents
+     * @param $quoteType
+     * @param $quoteUuid
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\Resources\Json\AnonymousResourceCollection
+     */
+    public function index($quoteType, $quoteUuid)
+    {
+        if( ($quote = $this->getQuoteObject($quoteType, $quoteUuid)) ) {
+            return QuoteDocumentResource::collection($quote->documents);
+        }
+
+        return response()->json(['message' => 'Quote not found.'], 404);
+    }
+
+    /**
      * get list of active document types can be presented to customer to upload documents
      *
      * @param $quoteType
