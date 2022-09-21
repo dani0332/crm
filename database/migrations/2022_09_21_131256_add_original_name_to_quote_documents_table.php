@@ -14,7 +14,7 @@ class AddOriginalNameToQuoteDocumentsTable extends Migration
     public function up()
     {
         Schema::table('quote_documents', function (Blueprint $table) {
-            if (! Schema::hasColumn('quote_documents', 'original_name')) {
+            if (Schema::hasTable('quote_documents') && !Schema::hasColumn('quote_documents', 'original_name')) {
                 $table->string('original_name', 255)->nullable();
             }
         });
