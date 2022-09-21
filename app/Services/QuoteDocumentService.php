@@ -6,10 +6,14 @@ use App\Enums\quoteTypeCode;
 use App\Enums\RolesEnum;
 use App\Models\DocumentType;
 use App\Models\QuoteDocument;
+use App\Traits\GenericQueriesAllLobs;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
 
 class QuoteDocumentService extends BaseService
 {
+    use GenericQueriesAllLobs;
+
     /**
      * get list of active document types can be presented to customer to upload documents
      *
@@ -49,6 +53,34 @@ class QuoteDocumentService extends BaseService
     }
 
     /**
+     * @param $quoteType
+     * @param $data doc_name, doc_uuid
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function deleteQuoteDocument($quoteType, $data)
+    {
+        $quote = $this->getQuoteObject($quoteType, $data['quote_uuid']);
+
+        //load quote document with provided detail
+        $quote->load(['documents' => function($q) use($data) {
+            $q->where([
+                'doc_name'  => $data['doc_name'],
+                'doc_uuid'  => $data['doc_uuid']
+            ]);
+        }]);
+
+        //check for document and force delete if found
+        if(($document = $quote->documents->first())) {
+            $document->forceDelete();
+            Log::info('FN: deleteQuoteDocument  UUID: '.$data['quote_uuid'].' Message: document ('.$data['doc_name'].') deleted');
+            return response()->json(['message'  => 'document deleted successfully']);
+        }
+
+        vAbort('Invalid document detail provided');
+    }
+
+
+    /**
      * upload quote document and store document record in db
      *
      * @param $file
@@ -64,11 +96,13 @@ class QuoteDocumentService extends BaseService
         }
 
         try {
-            $fileNameOriginal = preg_replace('/\s+/', '', uniqid().'_'.$file->getClientOriginalName());
+
+            $originalName = $file->getClientOriginalName();
+            $docName = preg_replace('/\s+/', '', uniqid().'_'. $originalName);
             $fileMimeType = $file->getClientMimeType();
 
             //upload file to azure
-            $fileNameAzure = uniqid().'_'.$data['quote_uuid'].'_'.$fileNameOriginal;
+            $fileNameAzure = uniqid().'_'.$data['quote_uuid'].'_'.$docName;
             $filePathAzure = $file->storeAs('documents/'.$documentType->folder_path, $fileNameAzure, 'azureIM');
 
             //generate unique uuid
@@ -77,8 +111,9 @@ class QuoteDocumentService extends BaseService
                 $docUuid = uniqid().rand(1, 100);
             }
 
-            $quote->documents()->create([
-                'doc_name' => $fileNameOriginal,
+           return $quote->documents()->create([
+                'doc_name' => $docName,
+                'original_name' => $originalName,
                 'doc_url' => $filePathAzure,
                 'doc_mime_type' => $fileMimeType,
                 'document_type_code' => $documentType->code,
@@ -87,7 +122,6 @@ class QuoteDocumentService extends BaseService
                 'created_by_id' => auth()->id(),
             ]);
 
-            return response()->json(['message' => 'file uploaded successfully.']);
         } catch (\Exception $exception) {
             Log::info('FN: uploadQuoteDocument  UUID: '.$data['quote_uuid'].' Error Code/Message: '.$exception->getCode().'/'.$exception->getMessage());
 

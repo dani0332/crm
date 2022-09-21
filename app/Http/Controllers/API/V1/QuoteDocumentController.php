@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\API\V1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\DeleteQuoteDocumentRequest;
 use App\Http\Requests\QuoteDocumentRequest;
 use App\Http\Resources\DocumentTypeResource;
+use App\Http\Resources\QuoteDocumentResource;
 use App\Services\ActivitiesService;
 use App\Services\QuoteDocumentService;
 use App\Traits\GenericQueriesAllLobs;
@@ -47,6 +49,18 @@ class QuoteDocumentController extends Controller
     {
         $quote = $this->getQuoteObject($quoteType, $request->quote_uuid);
 
-        return $this->quoteDocumentService->uploadQuoteDocument($request->file('file'), $request->validated(), $quote);
+        $document = $this->quoteDocumentService->uploadQuoteDocument($request->file('file'), $request->validated(), $quote);
+        return new QuoteDocumentResource($document);
+    }
+
+    /**
+     * delete quote document
+     * @param $quoteType
+     * @param DeleteQuoteDocumentRequest $request
+     * @return \Illuminate\Http\JsonResponse|void
+     */
+    public function destroy($quoteType, DeleteQuoteDocumentRequest $request)
+    {
+        return $this->quoteDocumentService->deleteQuoteDocument($quoteType, $request->validated());
     }
 }

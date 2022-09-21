@@ -20,7 +20,9 @@ Route::middleware(['basicAuth'])->group(function () {
     Route::post('/imcrm/sib-flow', [ApiController::class, 'triggerSibFlow']);
 });
 Route::post('/imcrm/sib-health-callback', [ApiController::class, 'sibHealthQuoteCallBack']);
+
 Route::prefix('v1')->group(function () {
-    Route::post('quotes/{quoteType}/documents', [QuoteDocumentController::class, 'store']);
+    Route::post('quotes/{quoteType}/documents',     [QuoteDocumentController::class, 'store']);
+    Route::delete('quotes/{quoteType}/documents',   [QuoteDocumentController::class, 'destroy']);
     Route::get('quotes/{quoteType}/document-types', [QuoteDocumentController::class, 'getQuoteDocumentsToReceive']);
 });
