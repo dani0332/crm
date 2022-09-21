@@ -15,6 +15,8 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([PaymentMethodsSeeder::class,
             DocumentTypeSeeder::class,
-            AddRoleForBetaUserSeeder::class, ]);
+            AddRoleForBetaUserSeeder::class,
+            CustomerAdditionalContactSeeder::class,
+        ]);
     }
 }

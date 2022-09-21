@@ -11,6 +11,7 @@ use App\Models\QuoteStatus;
 use App\Models\User;
 use App\Services\BusinessQuoteService;
 use App\Services\CRUDService;
+use App\Services\CustomerService;
 use App\Services\LookupService;
 use App\Traits\RolePermissionConditions;
 use Auth;
@@ -25,14 +26,20 @@ class AMTController extends Controller
     protected $businessQuoteService;
     protected $crudService;
     protected $lookupService;
+    protected $customerService;
 
     use RolePermissionConditions;
 
-    public function __construct(BusinessQuoteService $businessQuoteService, CRUDService $crudService, LookupService $lookupService)
-    {
+    public function __construct(
+        BusinessQuoteService $businessQuoteService,
+        CRUDService $crudService,
+        LookupService $lookupService,
+        CustomerService $customerService
+    ) {
         $this->businessQuoteService = $businessQuoteService;
         $this->crudService = $crudService;
         $this->lookupService = $lookupService;
+        $this->customerService = $customerService;
     }
 
     /**
@@ -72,7 +79,8 @@ class AMTController extends Controller
                 'bqr.previous_quote_policy_number',
                 'bqr.previous_policy_expiry_date',
                 'bqr.device',
-                'bqr.previous_quote_policy_premium'
+                'bqr.previous_quote_policy_premium',
+                'bqr.customer_id'
             )->orderBy('bqr.advisor_id', 'asc');
         if (Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::Business) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::Amt) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::GM)) {
             // if user has advisor Role then fetch leads assigned to the user only
@@ -238,7 +246,7 @@ class AMTController extends Controller
             $assignedUser = User::where('id', $record->advisor_id)->first();
             $assignedUserName = $assignedUser->name;
         }
-        $modeltype = 'business';
+        $quoteType = 'business';
         $allowedDuplicateLOB = $this->crudService->getAllowedDuplicateLOB('Group Medical', $record->code);
         $advisors = DB::table('users as u')
             ->join('model_has_roles as mr', 'mr.model_id', '=', 'u.id')
@@ -250,7 +258,11 @@ class AMTController extends Controller
             $selectedLeadStatus = $selectedLeadStatus->text;
         }
 
-        return view('amt.show', compact('businessInsuranceType', 'record', 'selectedLeadStatus', 'advisors', 'assignedUserName', 'assignedGMType', 'leadStatuses', 'lostReasons', 'selectedLostReasonId', 'modeltype', 'allowedDuplicateLOB'));
+        $customerAdditionalContacts = $this->customerService->getAddtionalContacts($record->customer_id);
+
+        return view('amt.show', compact('businessInsuranceType', 'record', 'selectedLeadStatus', 'advisors',
+            'assignedUserName', 'assignedGMType', 'leadStatuses', 'lostReasons', 'selectedLostReasonId',
+            'quoteType', 'allowedDuplicateLOB', 'customerAdditionalContacts'));
     }
 
     /**
