@@ -13,7 +13,9 @@ use App\Services\CRUDService;
 use App\Services\DropdownSourceService;
 use App\Services\InsuranceProviderService;
 use App\Services\LeadStatusService;
+use App\Services\QuadrantService;
 use App\Services\TeamService;
+use App\Services\TierService;
 use DataTables;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redirect;
@@ -30,6 +32,8 @@ class GenericCrudController extends Controller
     protected $applicationStorageService;
     protected $teamsService;
     protected $leadStatusService;
+    protected $tierService;
+    protected $quadrantService;
 
     public function __construct(
         InsuranceProviderService $insuranceProviderService,
@@ -42,7 +46,9 @@ class GenericCrudController extends Controller
         CarPlanAddOnOptionService $carPlanAddOnOptionService,
         ApplicationStorageService $applicationStorageService,
         TeamService $teamsService,
-        LeadStatusService $leadStatusService
+        LeadStatusService $leadStatusService,
+        TierService $tierService,
+        QuadrantService $quadrantService
     ) {
         $this->genericModel = new GenericModel();
         $this->crudService = $crudService;
@@ -55,6 +61,8 @@ class GenericCrudController extends Controller
         $this->applicationStorageService = $applicationStorageService;
         $this->teamsService = $teamsService;
         $this->leadStatusService = $leadStatusService;
+        $this->tierService = $tierService;
+        $this->quadrantService = $quadrantService;
         $this->setModelType($request);
         $this->fillModelByModelType(ucwords($this->genericModel->modelType), $request);
     }
@@ -78,7 +86,6 @@ class GenericCrudController extends Controller
             }
         }
         $model = $this->genericModel;
-
         if ($request->ajax()) {
             return DataTables::of($gridData)
                 ->addIndexColumn()
@@ -112,7 +119,6 @@ class GenericCrudController extends Controller
         if ($request->has('id')) {
             $id = $request->id;
         }
-
         return view('generic.add', compact('model', 'dropdownSource', 'customTitles', 'id'));
     }
 
@@ -220,13 +226,13 @@ class GenericCrudController extends Controller
             if (str_contains($value, 'select')) {
                 $data = $this->dropdownSourceService->getDropdownSource($property);
                 $dropdownSource[$property] = $data;
+
             }
             if (str_contains($value, 'customTable')) {
-                $data = $this->dropdownSourceService->getCustomDropdownList($property, $record[0]->id);
+                $data = $this->dropdownSourceService->getCustomDropdownList($property, $record->id);
                 $customLists[$property] = $data;
             }
         }
-
         return view('generic.edit', compact(['record', 'model', 'dropdownSource', 'customTitles', 'customLists']));
     }
 
@@ -288,6 +294,12 @@ class GenericCrudController extends Controller
         }
         if (strpos($url, 'leadstatus')) {
             $this->genericModel->modelType = 'LeadStatus';
+        }
+        if (strpos($url, 'tier')) {
+            $this->genericModel->modelType = 'Tier';
+        }
+        if (strpos($url, 'quadrant')) {
+            $this->genericModel->modelType = 'Quadrant';
         }
     }
 

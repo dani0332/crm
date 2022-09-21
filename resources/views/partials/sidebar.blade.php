@@ -294,6 +294,8 @@ use App\Enums\PermissionsEnum;
                             @can(PermissionsEnum::TeamsList)
                             <li><a href="{{ url('generic/teams') }}">Teams</a></li>
                             @endcan
+                            <li><a href="{{ url('generic/tier') }}">Tiers</a></li>
+                            <li><a href="{{ url('generic/quadrant') }}">Quadrants</a></li>
                             {{-- @can(PermissionsEnum::TeamsList)
                             <li><a href="{{ url('generic/leadstatus') }}">Lead Status</a></li>
                             @endcan --}}

@@ -443,7 +443,7 @@
         <x-health-quote-members-modal :categories="$memberCategories" :salaries="$salaryBands" :id="$record->id" />
         <x-health-quote-ecom-details :data="$ecomDetails" />
         @if (isset($isQuoteDocumentEnabled) && $isQuoteDocumentEnabled)
-            <x-quote-policy :record="$record" :quoteType="$quoteType" />
+            <pax-quote-policy :record="$record" :quoteType="$quoteType" />
             <x-quote-documents :displaySendPolicyButton="$displaySendPolicyButton" :record="$record" :quoteDocuments="$quoteDocuments" :quoteType="$quoteType" />
         @endif
     @endif

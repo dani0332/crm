@@ -214,6 +214,8 @@ Route::group(['middleware' => ['auth']], function () {
         Route::resource('applicationstorage', GenericCrudController::class);
         Route::resource('teams', GenericCrudController::class);
         Route::resource('leadstatus', GenericCrudController::class);
+        Route::resource('tier', GenericCrudController::class);
+        Route::resource('quadrant', GenericCrudController::class);
         Route::post('save', [GenericCrudController::class, 'store'])->name('save');
         Route::post('update', [GenericCrudController::class, 'update'])->name('update');
     });
