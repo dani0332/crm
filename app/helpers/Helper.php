@@ -22,19 +22,21 @@ if (! function_exists('generate_code')) {
     }
 }
 
-
-if(!function_exists('vAbort')) {
-
+if (! function_exists('vAbort')) {
     /**
      * abort script execution and return errors in validation format with http status 422
+     *
      * @param $messages message string or array of messages
+     *
      * @throws \Illuminate\Validation\ValidationException
      */
-    function vAbort($messages, $field = 'error'){
-        if(!is_array($messages)) $messages = [$field => [$messages]];
+    function vAbort($messages, $field = 'error')
+    {
+        if (! is_array($messages)) {
+            $messages = [$field => [$messages]];
+        }
         throw Illuminate\Validation\ValidationException::withMessages($messages);
     }
-
 }
 
 function get_guid()

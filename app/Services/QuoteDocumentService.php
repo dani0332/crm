@@ -68,9 +68,9 @@ class QuoteDocumentService extends BaseService
             ]);
         }]);
 
-        //check for document and force delete if found
+        //check for document and delete if found
         if (($document = $quote->documents->first())) {
-            $document->forceDelete();
+            $document->delete();
             Log::info('CL: '.get_class().' FN: deleteQuoteDocument  UUID: '.$data['quote_uuid'].' Message: document ('.$data['doc_name'].') deleted');
 
             return response()->json(['message' => 'document deleted successfully']);
