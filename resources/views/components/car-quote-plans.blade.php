@@ -19,7 +19,7 @@ $websiteURL = config('constants.AFIA_WEBSITE_DOMAIN');
 					<div class="col-auto">
 						<input type="hidden" id="quotePlansGenerateUrl" name="quotePlansGenerateUrl"
 							value="{{ $ecomUrl }}">
-						<span id="conandcheckout" style="display:none;">
+						<span id="span_pdf_download" style="display:none;">
 							<button id="toggle_plan_pdf_download" type="button" class="btn btn-success btn-sm">Download PDF</button>
 						</span>
 						@can('car-quotes-plans-create')

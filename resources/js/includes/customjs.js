@@ -2804,10 +2804,12 @@ function deleteQuoteDocument(el) {
 $('#toggle-plans-div').hide();
 $('#flowcheckall').click(function (e) {
   if ($(this).hasClass('checkedAll')) {
+    $("#span_pdf_download").fadeOut("fast");
     $('#toggle-plans-div').hide(200);
     $('.car_plans_checkbox').prop('checked', false);
     $(this).removeClass('checkedAll');
   } else {
+    $("#span_pdf_download").fadeIn("fast");
     $('.car_plans_checkbox').prop('checked', true);
     $(this).addClass('checkedAll');
     $('#toggle-plans-div').show(300);
@@ -2878,9 +2880,9 @@ $(document).ready(function () {
         selectedPkgIds.delete(pkg_id);
     }
     if(selectedPkgIds.size){
-        $("#conandcheckout").fadeIn("fast");
+        $("#span_pdf_download").fadeIn("fast");
     }else{
-        $("#conandcheckout").fadeOut("fast");
+        $("#span_pdf_download").fadeOut("fast");
     }
 
     $(".total_packages").html(selectedPkgIds.size);
