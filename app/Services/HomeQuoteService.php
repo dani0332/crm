@@ -9,7 +9,6 @@ use App\Enums\QuoteTypeId;
 use App\Models\HomeQuote;
 use App\Models\HomeQuoteRequestDetail;
 use App\Traits\AddPremiumAllLobs;
-use App\Traits\CustomerAdditionalInfo as CustomerAdditionalInfoTrait;
 use App\Traits\RolePermissionConditions;
 use Carbon\Carbon;
 use Config;
@@ -23,7 +22,6 @@ class HomeQuoteService extends BaseService
     protected $query;
 
     use RolePermissionConditions;
-    use CustomerAdditionalInfoTrait;
     use AddPremiumAllLobs;
 
     protected $leadAllocationService;
@@ -70,6 +68,7 @@ class HomeQuoteService extends BaseService
             'hqr.previous_quote_policy_number',
             'hqr.previous_policy_expiry_date',
             'hqr.previous_quote_policy_premium',
+            'hqr.customer_id'
         )
             ->leftJoin('home_quote_request_detail as hqrd', 'hqrd.home_quote_request_id', '=', 'hqr.id')
             ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'hqrd.lost_reason_id')
@@ -141,14 +140,14 @@ class HomeQuoteService extends BaseService
         if (! Auth::user()->hasRole('ADMIN')) {
             $dataArr['advisorId'] = Auth::user()->id;
         }
+
         $response = CapiRequestService::sendCAPIRequest('/api/v1-save-home-quote', $dataArr);
+
         if (isset($response->quoteUID)) {
             $this->savePremium(quoteTypeCode::HomeQuote, $request, $response);
-
-            return $this->createUpdateCustomerInfo($request, $request->email, $response->quoteUID, quoteTypeCode::HomeQuote);
-        } else {
-            return $response;
         }
+
+        return $response;
     }
 
     public function getGridData($model, $request)
@@ -497,7 +496,7 @@ class HomeQuoteService extends BaseService
         $homeQuote->has_building = $request->has_building == 'on' ? true : false;
         $homeQuote->has_personal_belongings = $request->has_personal_belongings == 'on' ? true : false;
         $homeQuote->save();
-        $this->createUpdateCustomerInfo($request, $homeQuote->email, $homeQuote->uuid, quoteTypeCode::HomeQuote);
+
         if (isset($request->return_to_view)) {
             return redirect('quote/home/'.$id)->with('success', 'Home Quote has been updated');
         }

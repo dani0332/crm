@@ -34,6 +34,7 @@ if (!isset($modelName)) {
 		$insurerQuoteNo = isset($listQuotePlan->insurerQuoteNo) ? $listQuotePlan->insurerQuoteNo : ''; // Insurer Quote No.
 		$isManualUpdate = isset($listQuotePlan->isManualUpdate) ? $listQuotePlan->isManualUpdate : 0;
 		$shouldReviseQuote  = isset($listQuotePlan->shouldReviseQuote ) ? $listQuotePlan->shouldReviseQuote  : 0;
+		$ancillaryExcess  = isset($listQuotePlan->ancillaryExcess ) ? $listQuotePlan->ancillaryExcess  : 0;
 		$listQuotePlanAddonss = $listQuotePlan->addons;
 		$listQuotePlanBenefitsInclusions = $listQuotePlan->benefits->inclusion;
 		$listQuotePlanBenefitsExclusions = $listQuotePlan->benefits->exclusion;
@@ -181,6 +182,7 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 					insurerTrim: $("#insurerTrim").val(),
 					insurer_quote_no: $("#insurer_quote_no").val(),
 					is_manual_update: $('#is_manual_update').is(':checked'),
+					ancillary_excess: $("#ancillary_excess").val(),
 				}),
 				success: function(result) {
 					$(".loader").hide();
@@ -884,8 +886,13 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 								<td><input type="text" id="excess" name="excess" value="{{ $excess }}"
 										class="form-control" style="{{ $readonlyFieldCss }}" onkeypress="return isNumberKey(event,this)">
 								</td>
-								<td> </td>
-								<td> </td>
+								<td>Ancillary Excess:</td>
+								<td><select class="form-control" id='ancillary_excess' name="ancillary_excess">
+									@for ($i = 0; $i <= 20; $i++)
+										<option value="{{$i}}" {{ $i == $ancillaryExcess ? 'selected="selected"' : '' }}>{{$i}}%</option>
+									@endfor
+									</select>
+								</td>
 							</tr>
 							<tr>
 								<td>Car Trim</td>

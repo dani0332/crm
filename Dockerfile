@@ -3,6 +3,7 @@ ARG IMCRM_TOKEN
 #ARG NGINX_FILE
 #ARG NEW_RELIC_LICENSE_KEY
 #ARG NEW_RELIC_APP_NAME
+
 # Set working directory
 WORKDIR /var/www
 
@@ -12,6 +13,9 @@ ADD https://github.com/mlocati/docker-php-extension-installer/releases/latest/do
 # Install php extensions
 RUN chmod +x /usr/local/bin/install-php-extensions && sync && \
     install-php-extensions mbstring pdo_mysql zip exif pcntl gd memcached
+
+RUN pecl install redis \
+    && docker-php-ext-enable redis
 
 # Install dependencies
 RUN apt-get update && apt-get install -y \
@@ -29,7 +33,7 @@ RUN apt-get update && apt-get install -y \
     libmemcached-dev \
     nginx \
     wget \
-    gnupg 
+    gnupg
     
 # Install yarn
 RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
@@ -85,7 +89,7 @@ RUN yarn run prod
 RUN chmod +x /var/www/docker/run.sh
 
 RUN \
-  curl -L https://download.newrelic.com/php_agent/release/newrelic-php5-10.0.0.312-linux.tar.gz | tar -C /tmp -zx && \
+  curl -L https://download.newrelic.com/php_agent/release/newrelic-php5-10.1.0.313-linux.tar.gz | tar -C /tmp -zx && \
   export NR_INSTALL_USE_CP_NOT_LN=1 && \
   export NR_INSTALL_SILENT=1 && \
   /tmp/newrelic-php5-*/newrelic-install install && \

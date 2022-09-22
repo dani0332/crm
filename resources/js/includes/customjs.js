@@ -2552,9 +2552,13 @@ $(document).ready(function () {
         var quoteUUID = $(this).attr('data-quoteUUId');
         var providerCode = $(this).attr('data-providerCode');
         var websiteURL = $(this).attr('data-websiteURL');
-        var paymentLink = websiteURL + '/car-insurance/quote/payment?quoteUid='+quoteUUID+'&providerCode='+providerCode+'&planId=' + planId;
+        var paymentLink = `${websiteURL}/car-insurance/quote/${quoteUUID}/payment/?providerCode=${providerCode}&planId=${planId}`;
         navigator.clipboard.writeText(paymentLink);
-        $('#payment-link-copy-msg').show().delay(1000).fadeOut();
+        var self = this;
+        $(this).text('Copied !');
+        setTimeout(function(){
+            $(self).text('Copy');
+        }, 2000);
     });
 });
 

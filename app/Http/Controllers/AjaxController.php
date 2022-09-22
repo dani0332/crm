@@ -77,6 +77,10 @@ class AjaxController extends Controller
             return response()->json(['success' => false]);
         }
         $payment = Payment::where('code', $request->code)->first();
+        if (! $payment) {
+            return response()->json(['success' => false]);
+        }
+
         $payment->payment_status_id = PaymentStatusEnum::PAID;
         $payment->captured_at = now();
         $payment->save();
@@ -97,6 +101,9 @@ class AjaxController extends Controller
     public function generatePaymentLink(Request $request)
     {
         $payment = Payment::where('code', '=', $request->paymentCode)->first();
+        if (! $payment) {
+            return response()->json(['success' => false]);
+        }
         if ($payment->payment_link != null && now() < Carbon::parse($payment->payment_link_created_at)->addDays(3)) {
             return response()->json(['success' => true, 'payment_link' => $payment->payment_link]);
         } else {

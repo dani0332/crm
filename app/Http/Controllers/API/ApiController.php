@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\APiFetchUrl;
 use App\Http\Requests\SibFlowApi;
 use App\Services\ApiService;
+use Illuminate\Http\Request;
 
 class ApiController extends Controller
 {
@@ -26,8 +27,10 @@ class ApiController extends Controller
         return $this->apiService->triggerSibFlow($request);
     }
 
-    public function sibHealthQuoteCallBack($uuid)
+    public function sibHealthQuoteCallBack(Request $request)
     {
-        return $this->apiService->sibHealthQuoteCallBack($uuid);
+        if ($request->has('attributes') && isset($request['attributes']['CDBID'])) {
+            return $this->apiService->sibHealthQuoteCallBack($request['attributes']['CDBID']);
+        }
     }
 }

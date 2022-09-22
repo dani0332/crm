@@ -13,7 +13,10 @@ class DatabaseSeeder extends Seeder
      */
     public function run()
     {
-        $this->call(PaymentMethodsSeeder::class);
-        $this->call(DocumentTypeSeeder::class);
+        $this->call([PaymentMethodsSeeder::class,
+            DocumentTypeSeeder::class,
+            AddRoleForBetaUserSeeder::class,
+            CustomerAdditionalContactSeeder::class,
+        ]);
     }
 }

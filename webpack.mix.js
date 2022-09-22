@@ -23,7 +23,7 @@ mix
 
 mix
   .scripts(
-    ['resources/js/includes/customjs.js', 'resources/js/includes/tm_js.js'],
+    ['resources/js/includes/customjs.js', 'resources/js/includes/tm_js.js', 'public/build/js/customer_additional_contact.js'],
     'public/build/js/customjs.min.js',
   )
   .styles(

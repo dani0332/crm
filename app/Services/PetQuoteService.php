@@ -9,7 +9,6 @@ use App\Enums\QuoteTypeId;
 use App\Models\PetQuote;
 use App\Models\PetQuoteRequestDetail;
 use App\Traits\AddPremiumAllLobs;
-use App\Traits\CustomerAdditionalInfo as CustomerAdditionalInfoTrait;
 use App\Traits\RolePermissionConditions;
 use Auth;
 use Carbon\Carbon;
@@ -23,7 +22,6 @@ class PetQuoteService extends BaseService
     protected $query;
 
     use RolePermissionConditions;
-    use CustomerAdditionalInfoTrait;
     use AddPremiumAllLobs;
 
     protected $leadAllocationService;
@@ -75,7 +73,8 @@ class PetQuoteService extends BaseService
                 'pqr.is_microchipped',
                 'pqr.is_neutered',
                 'pqr.is_mixed_breed',
-                'pqr.has_injury'
+                'pqr.has_injury',
+                'pqr.customer_id'
             )
             ->leftJoin('pet_quote_request_detail as pqrd', 'pqrd.pet_quote_request_id', 'pqr.id')
             ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'pqrd.lost_reason_id')
@@ -117,14 +116,14 @@ class PetQuoteService extends BaseService
         if (! Auth::user()->hasRole('ADMIN')) {
             $dataArr['advisorId'] = Auth::user()->id;
         }
+
         $response = CapiRequestService::sendCAPIRequest('/api/v1-save-pet-quote', $dataArr);
+
         if (isset($response->quoteUID)) {
             $this->savePremium(quoteTypeCode::PetQuote, $request, $response);
-
-            return $this->createUpdateCustomerInfo($request, $request->email, $response->quoteUID, quoteTypeCode::PetQuote);
-        } else {
-            return $response;
         }
+
+        return $response;
     }
 
     public function getEntity($id)
@@ -357,7 +356,6 @@ class PetQuoteService extends BaseService
         $petQuote->iam_possesion_type_id = $request->iam_possesion_type_id;
         $petQuote->save();
 
-        $this->createUpdateCustomerInfo($request, $petQuote->email, $petQuote->uuid, quoteTypeCode::PetQuote);
         if (isset($request->return_to_view)) {
             return redirect('quotes/pet')->with('success', 'Pet Quote has been updated');
         }

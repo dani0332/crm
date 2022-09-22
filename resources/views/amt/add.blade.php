@@ -62,9 +62,7 @@
                                     <span class="text-danger">{{ $errors->first('mobile_no') }}</span>
                                 @endif
                             </div>
-                            <a href="javascript:void(0);" class="remove_additional_btn" id="add_additional_btn" title="Add field" style="float:right"><img src="/image/add-icon.png"/></a>
                         </div>
-                        <div id="additional_info"></div>
                         <div class="item form-group">
                             <div class="col">
                                 <span class="col-form-label col-md-6 col-sm-6">Company Name<span

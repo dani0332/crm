@@ -27,17 +27,18 @@
         }
         .ebp_dob { z-index:99999 !important; }
     </style>
-    <script>
-         $('#add-activity-btn').on('click', function(){
-            $('#activityModal').modal({ show: true });
-        });
-    </script>
+        <script>
+            $('#add-activity-btn').on('click', function(){
+               $('#activityModal').modal({ show: true });
+           });
+       </script>
     @php
     use App\Enums\quoteTypeCode;
     use App\Models\CarQuote;
     use App\Enums\RolesEnum;
     use App\Enums\QuoteStatusEnum;
     use App\Enums\PermissionsEnum;
+    use App\Enums\DatabaseColumnsString;
     @endphp
     <div class="row">
         <div class="col-md-12 col-sm-12 admin-detail">
@@ -249,7 +250,7 @@
                                                         <a href="/quotes/{{strtolower($model->modelType)}}/{{ $previousQuote->uuid }}" target="_blank" style="text-decoration: underline;">{{ $record->$property }}</a>
                                                     @endif
                                                 @else
-                                                    <x-show-alternative-email-phone :property="$property" :record="$record" :model="$model" />
+                                                    {{ $property==DatabaseColumnsString::CAR_VALUE ? number_format($record->$property, 2) : $record->$property }}
                                                 @endif
                                             </p>
                                         </div>
@@ -362,8 +363,9 @@
             </div>
         </div>
 
-
+        @if(auth()->user()->hasRole(RolesEnum::BetaUser))
         <x-payments-table :payments="$payments" :paymentMethods="$paymentMethods" :paymentPlainModel="$paymentEntityModel" :modeltype="$model->modelType" />
+        @endif
         <x-car-quote-assumptions :record="$record" :vehicleTypes="$vehicleTypes" :yearsOfManufacture="$yearsOfManufacture" :trimList="$trimList" />
         <x-car-ecom-detail :record="$record" :carQuotePlanAddons="$carQuotePlanAddons" />
         <x-car-quote-plans :record="$record" :listQuotePlans="$listQuotePlans" :ecomUrl="$ecomCarInsuranceQuoteUrl . $record->uuid" :quoteType="$quoteType" />
@@ -433,6 +435,7 @@
                 </div>
             </div>
         </div>
+        <x-health-quote-ecom-details :data="$ecomDetails" />
         <x-health-quote-plans
             :listQuotePlans="$listQuotePlans"
             :uuidModal="$record->uuid"
@@ -440,7 +443,6 @@
             :ecomHealthInsuranceQuoteUrl="$ecomHealthInsuranceQuoteUrl. $record->uuid" />
         <x-health-quote-members-detail :members="$membersDetail" />
         <x-health-quote-members-modal :categories="$memberCategories" :salaries="$salaryBands" :id="$record->id" />
-        <x-health-quote-ecom-details :data="$ecomDetails" />
         @if (isset($isQuoteDocumentEnabled) && $isQuoteDocumentEnabled)
             <x-quote-policy :record="$record" :quoteType="$quoteType" />
             <x-quote-documents :displaySendPolicyButton="$displaySendPolicyButton" :record="$record" :quoteDocuments="$quoteDocuments" :quoteType="$quoteType" />
@@ -449,8 +451,10 @@
 
     <x-lead-activities :lead="$record" :modeltype="$model->modelType" :activities="$activities" />
     <x-lead-activity-modal :advisors="$advisors" :modeltype="$model->modelType" :record="$record" />
+    <x-customer-additional-contact :record="$record" :quoteType="$quoteType" :customerAdditionalContacts="$customerAdditionalContacts" />
+    <x-customer-additional-contact-modal :record="$record" :quoteType="$quoteType" />
 
-    <div class="row" st>
+    <div class="row">
         <div class="col-md-12 col-sm-12">
             <div class="x_panel">
                 <div class="x_title">
