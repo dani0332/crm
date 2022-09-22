@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - develop
+      - vendorskip
 jobs:
   build:
     name: Build
